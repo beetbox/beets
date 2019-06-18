@@ -901,27 +901,27 @@ class ReplayGainPlugin(BeetsPlugin):
         item.rg_track_gain = track_gain.gain
         item.rg_track_peak = track_gain.peak
         item.store()
-
-        self._log.debug(u'applied track gain {0}, peak {1}',
+        self._log.debug(u'applied track gain {0} LU, peak {1} of FS',
                         item.rg_track_gain, item.rg_track_peak)
-
-    def store_track_r128_gain(self, item, track_gain):
-        item.r128_track_gain = int(round(track_gain.gain * pow(2, 8)))
-        item.store()
-
-        self._log.debug(u'applied r128 track gain {0}', item.r128_track_gain)
 
     def store_album_gain(self, item, album_gain):
         item.rg_album_gain = album_gain.gain
         item.rg_album_peak = album_gain.peak
         item.store()
-        self._log.debug(u'applied album gain {0}, peak {1}',
+        self._log.debug(u'applied album gain {0} LU, peak {1} of FS',
                         item.rg_album_gain, item.rg_album_peak)
+
+    def store_track_r128_gain(self, item, track_gain):
+        item.r128_track_gain = track_gain.gain
+        item.store()
+
+        self._log.debug(u'applied r128 track gain {0} LU',
+                        item.r128_track_gain)
 
     def store_album_r128_gain(self, item, album_gain):
         item.r128_album_gain = album_gain.gain
         item.store()
-        self._log.debug(u'applied r128 album gain {0}',
+        self._log.debug(u'applied r128 album gain {0} LU',
                         item.r128_album_gain)
 
     def handle_album(self, album, write, force=False):
