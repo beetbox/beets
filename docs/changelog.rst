@@ -48,6 +48,7 @@ Fixes:
 * :doc:`/plugins/importadded`: Fixed a crash that occurred when the
   ``after_write`` signal was emitted.
   :bug:`3301`
+* doc:`plugins/replaygain`: Fix storage format in R128_ALBUM_GAIN tags.
 
 For plugin developers:
 
