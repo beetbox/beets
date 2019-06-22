@@ -286,3 +286,4 @@ Here are a few of the plugins written by the beets community:
 .. _beets-popularity: https://github.com/abba23/beets-popularity
 .. _beets-ydl: https://github.com/vmassuchetto/beets-ydl
 .. _beet-summarize: https://github.com/steven-murray/beet-summarize
+.. _beet-mosaic: https://github.com/SusannaMaria/beets-mosaic
