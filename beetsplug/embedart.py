@@ -189,7 +189,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
     def remove_artfile(self, album):
         """Possibly delete the album art file for an album (if the
-        appropriate configuration option is enabled.
+        appropriate configuration option is enabled).
         """
         if self.config['remove_art_file'] and album.artpath:
             if os.path.isfile(album.artpath):

@@ -65,7 +65,7 @@ class MPDStatsTest(unittest.TestCase, TestHelper):
 
     @patch("beetsplug.mpdstats.MPDClientWrapper", return_value=Mock(**{
         "events.side_effect": EVENTS, "status.side_effect": STATUSES,
-        "playlist.return_value": {1: item_path}}))
+        "currentsong.return_value": item_path}))
     def test_run_mpdstats(self, mpd_mock):
         item = Item(title=u'title', path=self.item_path, id=1)
         item.add(self.lib)

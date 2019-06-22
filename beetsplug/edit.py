@@ -74,7 +74,7 @@ def load(s):
     """
     try:
         out = []
-        for d in yaml.load_all(s):
+        for d in yaml.safe_load_all(s):
             if not isinstance(d, dict):
                 raise ParseError(
                     u'each entry must be a dictionary; found {}'.format(

@@ -110,6 +110,25 @@ class HookTest(_common.TestCase, TestHelper):
             self.assertTrue(os.path.isfile(path))
             os.remove(path)
 
+    def test_hook_bytes_interpolation(self):
+        temporary_paths = [
+            get_temporary_path().encode('utf-8')
+            for i in range(self.TEST_HOOK_COUNT)
+        ]
+
+        for index, path in enumerate(temporary_paths):
+            self._add_hook('test_bytes_event_{0}'.format(index),
+                           'touch "{path}"')
+
+        self.load_plugins('hook')
+
+        for index, path in enumerate(temporary_paths):
+            plugins.send('test_bytes_event_{0}'.format(index), path=path)
+
+        for path in temporary_paths:
+            self.assertTrue(os.path.isfile(path))
+            os.remove(path)
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

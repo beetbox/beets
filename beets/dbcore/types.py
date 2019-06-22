@@ -97,7 +97,7 @@ class Type(object):
         For fixed fields the type of `value` is determined by the column
         type affinity given in the `sql` property and the SQL to Python
         mapping of the database adapter. For more information see:
-        http://www.sqlite.org/datatype3.html
+        https://www.sqlite.org/datatype3.html
         https://docs.python.org/2/library/sqlite3.html#sqlite-and-python-types
 
         Flexible fields have the type affinity `TEXT`. This means the
@@ -173,14 +173,18 @@ class Id(Integer):
 
 
 class Float(Type):
-    """A basic floating-point type.
+    """A basic floating-point type. The `digits` parameter specifies how
+    many decimal places to use in the human-readable representation.
     """
     sql = u'REAL'
     query = query.NumericQuery
     model_type = float
 
+    def __init__(self, digits=1):
+        self.digits = digits
+
     def format(self, value):
-        return u'{0:.1f}'.format(value or 0.0)
+        return u'{0:.{1}f}'.format(value or 0, self.digits)
 
 
 class NullFloat(Float):

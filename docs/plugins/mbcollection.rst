@@ -4,7 +4,7 @@ MusicBrainz Collection Plugin
 The ``mbcollection`` plugin lets you submit your catalog to MusicBrainz to
 maintain your `music collection`_ list there.
 
-.. _music collection: http://musicbrainz.org/doc/Collections
+.. _music collection: https://musicbrainz.org/doc/Collections
 
 To begin, just enable the ``mbcollection`` plugin in your
 configuration (see :ref:`using-plugins`).

@@ -17,14 +17,14 @@ from __future__ import division, absolute_import, print_function
 
 import os
 
-from beets.util import confit
+import confuse
 
-__version__ = u'1.4.8'
+__version__ = u'1.5.0'
 __author__ = u'Adrian Sampson <adrian@radbox.org>'
 
 
-class IncludeLazyConfig(confit.LazyConfig):
-    """A version of Confit's LazyConfig that also merges in data from
+class IncludeLazyConfig(confuse.LazyConfig):
+    """A version of Confuse's LazyConfig that also merges in data from
     YAML files specified in an `include` setting.
     """
     def read(self, user=True, defaults=True):
@@ -35,7 +35,7 @@ class IncludeLazyConfig(confit.LazyConfig):
                 filename = view.as_filename()
                 if os.path.isfile(filename):
                     self.set_file(filename)
-        except confit.NotFoundError:
+        except confuse.NotFoundError:
             pass
 
 

@@ -22,7 +22,7 @@ Enable the ``metasync`` plugin in your configuration (see
 To synchronize with Amarok, you'll need the `dbus-python`_ library. There are
 packages for most major Linux distributions.
 
-.. _dbus-python: http://dbus.freedesktop.org/releases/dbus-python/
+.. _dbus-python: https://dbus.freedesktop.org/releases/dbus-python/
 
 
 Configuration

@@ -22,8 +22,8 @@ from beets import plugins
 from beets import ui
 from beets import util
 from beets import config
-from beets.util import confit
 from beets.autotag import hooks
+import confuse
 import acoustid
 from collections import defaultdict
 from functools import partial
@@ -93,6 +93,7 @@ def acoustid_match(log, path):
         log.error(u'fingerprinting of {0} failed: {1}',
                   util.displayable_path(repr(path)), exc)
         return None
+    fp = fp.decode()
     _fingerprints[path] = fp
     try:
         res = acoustid.lookup(API_KEY, fp, duration,
@@ -220,7 +221,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         def submit_cmd_func(lib, opts, args):
             try:
                 apikey = config['acoustid']['apikey'].as_str()
-            except confit.NotFoundError:
+            except confuse.NotFoundError:
                 raise ui.UserError(u'no Acoustid user API key provided')
             submit_items(self._log, apikey, lib.items(ui.decargs(args)))
         submit_cmd.func = submit_cmd_func
@@ -334,7 +335,7 @@ def fingerprint_item(log, item, write=False):
                  util.displayable_path(item.path))
         try:
             _, fp = acoustid.fingerprint_file(util.syspath(item.path))
-            item.acoustid_fingerprint = fp
+            item.acoustid_fingerprint = fp.decode()
             if write:
                 log.info(u'{0}: writing fingerprint',
                          util.displayable_path(item.path))

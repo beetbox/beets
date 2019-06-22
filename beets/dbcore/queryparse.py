@@ -20,7 +20,6 @@ from __future__ import division, absolute_import, print_function
 import re
 import itertools
 from . import query
-import beets
 
 PARSE_QUERY_PART_REGEX = re.compile(
     # Non-capturing optional segment for the keyword.
@@ -119,12 +118,13 @@ def construct_query_part(model_cls, prefixes, query_part):
     if not query_part:
         return query.TrueQuery()
 
-    # Use `model_cls` to build up a map from field names to `Query`
-    # classes.
+    # Use `model_cls` to build up a map from field (or query) names to
+    # `Query` classes.
     query_classes = {}
     for k, t in itertools.chain(model_cls._fields.items(),
                                 model_cls._types.items()):
         query_classes[k] = t.query
+    query_classes.update(model_cls._queries)  # Non-field queries.
 
     # Parse the string.
     key, pattern, query_class, negate = \
@@ -137,26 +137,27 @@ def construct_query_part(model_cls, prefixes, query_part):
             # The query type matches a specific field, but none was
             # specified. So we use a version of the query that matches
             # any field.
-            q = query.AnyFieldQuery(pattern, model_cls._search_fields,
-                                    query_class)
-            if negate:
-                return query.NotQuery(q)
-            else:
-                return q
+            out_query = query.AnyFieldQuery(pattern, model_cls._search_fields,
+                                            query_class)
         else:
             # Non-field query type.
-            if negate:
-                return query.NotQuery(query_class(pattern))
-            else:
-                return query_class(pattern)
+            out_query = query_class(pattern)
 
-    # Otherwise, this must be a `FieldQuery`. Use the field name to
-    # construct the query object.
-    key = key.lower()
-    q = query_class(key.lower(), pattern, key in model_cls._fields)
+    # Field queries get constructed according to the name of the field
+    # they are querying.
+    elif issubclass(query_class, query.FieldQuery):
+        key = key.lower()
+        out_query = query_class(key.lower(), pattern, key in model_cls._fields)
+
+    # Non-field (named) query.
+    else:
+        out_query = query_class(pattern)
+
+    # Apply negation.
     if negate:
-        return query.NotQuery(q)
-    return q
+        return query.NotQuery(out_query)
+    else:
+        return out_query
 
 
 def query_from_strings(query_cls, model_cls, prefixes, query_parts):
@@ -172,11 +173,13 @@ def query_from_strings(query_cls, model_cls, prefixes, query_parts):
     return query_cls(subqueries)
 
 
-def construct_sort_part(model_cls, part):
+def construct_sort_part(model_cls, part, case_insensitive=True):
     """Create a `Sort` from a single string criterion.
 
     `model_cls` is the `Model` being queried. `part` is a single string
-    ending in ``+`` or ``-`` indicating the sort.
+    ending in ``+`` or ``-`` indicating the sort. `case_insensitive`
+    indicates whether or not the sort should be performed in a case
+    sensitive manner.
     """
     assert part, "part must be a field name and + or -"
     field = part[:-1]
@@ -185,7 +188,6 @@ def construct_sort_part(model_cls, part):
     assert direction in ('+', '-'), "part must end with + or -"
     is_ascending = direction == '+'
 
-    case_insensitive = beets.config['sort_case_insensitive'].get(bool)
     if field in model_cls._sorts:
         sort = model_cls._sorts[field](model_cls, is_ascending,
                                        case_insensitive)
@@ -197,21 +199,23 @@ def construct_sort_part(model_cls, part):
     return sort
 
 
-def sort_from_strings(model_cls, sort_parts):
+def sort_from_strings(model_cls, sort_parts, case_insensitive=True):
     """Create a `Sort` from a list of sort criteria (strings).
     """
     if not sort_parts:
         sort = query.NullSort()
     elif len(sort_parts) == 1:
-        sort = construct_sort_part(model_cls, sort_parts[0])
+        sort = construct_sort_part(model_cls, sort_parts[0], case_insensitive)
     else:
         sort = query.MultipleSort()
         for part in sort_parts:
-            sort.add_sort(construct_sort_part(model_cls, part))
+            sort.add_sort(construct_sort_part(model_cls, part,
+                                              case_insensitive))
     return sort
 
 
-def parse_sorted_query(model_cls, parts, prefixes={}):
+def parse_sorted_query(model_cls, parts, prefixes={},
+                       case_insensitive=True):
     """Given a list of strings, create the `Query` and `Sort` that they
     represent.
     """
@@ -246,5 +250,5 @@ def parse_sorted_query(model_cls, parts, prefixes={}):
 
     # Avoid needlessly wrapping single statements in an OR
     q = query.OrQuery(query_parts) if len(query_parts) > 1 else query_parts[0]
-    s = sort_from_strings(model_cls, sort_parts)
+    s = sort_from_strings(model_cls, sort_parts, case_insensitive)
     return q, s

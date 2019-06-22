@@ -72,15 +72,15 @@ class AlbumInfo(object):
     - ``data_source``: The original data source (MusicBrainz, Discogs, etc.)
     - ``data_url``: The data source release URL.
 
-    The fields up through ``tracks`` are required. The others are
-    optional and may be None.
+    ``mediums`` along with the fields up through ``tracks`` are required.
+    The others are optional and may be None.
     """
     def __init__(self, album, album_id, artist, artist_id, tracks, asin=None,
                  albumtype=None, va=False, year=None, month=None, day=None,
                  label=None, mediums=None, artist_sort=None,
                  releasegroup_id=None, catalognum=None, script=None,
-                 language=None, country=None, albumstatus=None, media=None,
-                 albumdisambig=None, releasegroupdisambig=None,
+                 language=None, country=None, style=None, albumstatus=None,
+                 media=None, albumdisambig=None, releasegroupdisambig=None,
                  artist_credit=None, original_year=None, original_month=None,
                  original_day=None, data_source=None, data_url=None):
         self.album = album
@@ -102,6 +102,7 @@ class AlbumInfo(object):
         self.script = script
         self.language = language
         self.country = country
+        self.style = style
         self.albumstatus = albumstatus
         self.media = media
         self.albumdisambig = albumdisambig
@@ -121,7 +122,7 @@ class AlbumInfo(object):
         constituent `TrackInfo` objects, are decoded to Unicode.
         """
         for fld in ['album', 'artist', 'albumtype', 'label', 'artist_sort',
-                    'catalognum', 'script', 'language', 'country',
+                    'catalognum', 'script', 'language', 'country', 'style',
                     'albumstatus', 'albumdisambig', 'releasegroupdisambig',
                     'artist_credit', 'media']:
             value = getattr(self, fld)
@@ -159,6 +160,9 @@ class TrackInfo(object):
     - ``composer_sort``: individual track composer sort name
     - ``arranger`: individual track arranger name
     - ``track_alt``: alternative track number (tape, vinyl, etc.)
+    - ``work`: individual track work title
+    - ``mb_workid`: individual track work id
+    - ``work_disambig`: individual track work diambiguation
 
     Only ``title`` and ``track_id`` are required. The rest of the fields
     may be None. The indices ``index``, ``medium``, and ``medium_index``
@@ -169,7 +173,8 @@ class TrackInfo(object):
                  medium_index=None, medium_total=None, artist_sort=None,
                  disctitle=None, artist_credit=None, data_source=None,
                  data_url=None, media=None, lyricist=None, composer=None,
-                 composer_sort=None, arranger=None, track_alt=None):
+                 composer_sort=None, arranger=None, track_alt=None,
+                 work=None, mb_workid=None, work_disambig=None):
         self.title = title
         self.track_id = track_id
         self.release_track_id = release_track_id
@@ -191,6 +196,9 @@ class TrackInfo(object):
         self.composer_sort = composer_sort
         self.arranger = arranger
         self.track_alt = track_alt
+        self.work = work
+        self.mb_workid = mb_workid
+        self.work_disambig = work_disambig
 
     # As above, work around a bug in python-musicbrainz-ngs.
     def decode(self, codec='utf-8'):
