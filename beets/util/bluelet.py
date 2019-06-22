@@ -346,6 +346,10 @@ def run(root_coro):
                             exc.args[0] == errno.EPIPE:
                         # Broken pipe. Remote host disconnected.
                         pass
+                    elif isinstance(exc.args, tuple) and \
+                            exc.args[0] == errno.ECONNRESET:
+                        # Connection was reset by peer.
+                        pass
                     else:
                         traceback.print_exc()
                     # Abort the coroutine.

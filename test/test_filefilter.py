@@ -26,7 +26,7 @@ from test import _common
 from test.helper import capture_log
 from test.test_importer import ImportHelper
 from beets import config
-from beets.mediafile import MediaFile
+from mediafile import MediaFile
 from beets.util import displayable_path, bytestring_path
 from beetsplug.filefilter import FileFilterPlugin
 

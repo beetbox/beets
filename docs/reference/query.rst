@@ -122,7 +122,7 @@ expressions, such as ``()[]|``. To type those characters, you'll need to
 escape them (e.g., with backslashes or quotation marks, depending on your
 shell).
 
-.. _Python's built-in implementation: http://docs.python.org/library/re.html
+.. _Python's built-in implementation: https://docs.python.org/library/re.html
 
 
 .. _numericquery:

@@ -39,7 +39,6 @@ from beets.util import syspath, normpath, ancestry, displayable_path, \
 from beets import library
 from beets import config
 from beets import logging
-from beets.util.confit import _package_path
 import six
 from . import _store_dict
 
@@ -543,7 +542,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             print_(u"No matching release found for {0} tracks."
                    .format(itemcount))
             print_(u'For help, see: '
-                   u'http://beets.readthedocs.org/en/latest/faq.html#nomatch')
+                   u'https://beets.readthedocs.org/en/latest/faq.html#nomatch')
         sel = ui.input_options(choice_opts)
         if sel in choice_actions:
             return choice_actions[sel]
@@ -1177,7 +1176,7 @@ def update_items(lib, query, album, move, pretend, fields):
                 # Manually moving and storing the album.
                 items = list(album.items())
                 for item in items:
-                    item.move(store=False)
+                    item.move(store=False, with_album=False)
                     item.store(fields=fields)
                 album.move(store=False)
                 album.store(fields=fields)
@@ -1490,18 +1489,24 @@ def move_items(lib, dest, query, copy, album, pretend, confirm=False,
     """
     items, albums = _do_query(lib, query, album, False)
     objs = albums if album else items
+    num_objs = len(objs)
 
     # Filter out files that don't need to be moved.
     isitemmoved = lambda item: item.path != item.destination(basedir=dest)
     isalbummoved = lambda album: any(isitemmoved(i) for i in album.items())
     objs = [o for o in objs if (isalbummoved if album else isitemmoved)(o)]
+    num_unmoved = num_objs - len(objs)
+    # Report unmoved files that match the query.
+    unmoved_msg = u''
+    if num_unmoved > 0:
+        unmoved_msg = u' ({} already in place)'.format(num_unmoved)
 
     copy = copy or export  # Exporting always copies.
     action = u'Copying' if copy else u'Moving'
     act = u'copy' if copy else u'move'
     entity = u'album' if album else u'item'
-    log.info(u'{0} {1} {2}{3}.', action, len(objs), entity,
-             u's' if len(objs) != 1 else u'')
+    log.info(u'{0} {1} {2}{3}{4}.', action, len(objs), entity,
+             u's' if len(objs) != 1 else u'', unmoved_msg)
     if not objs:
         return
 
@@ -1720,7 +1725,7 @@ def completion_script(commands):
     ``commands`` is alist of ``ui.Subcommand`` instances to generate
     completion data for.
     """
-    base_script = os.path.join(_package_path('beets.ui'), 'completion_base.sh')
+    base_script = os.path.join(os.path.dirname(__file__), 'completion_base.sh')
     with open(base_script, 'r') as base_script:
         yield util.text_string(base_script.read())
 

@@ -17,10 +17,10 @@ Freenode, drop by `the discussion board`_, send email to `the mailing list`_,
 or `file a bug`_ in the issue tracker. Please let us know where you think this
 documentation can be improved.
 
-.. _beets: http://beets.io/
-.. _the mailing list: http://groups.google.com/group/beets-users
+.. _beets: https://beets.io/
+.. _the mailing list: https://groups.google.com/group/beets-users
 .. _file a bug: https://github.com/beetbox/beets/issues
-.. _the discussion board: http://discourse.beets.io
+.. _the discussion board: https://discourse.beets.io
 
 Contents
 --------

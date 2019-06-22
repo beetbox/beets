@@ -36,12 +36,13 @@ from beets import logging
 from beets import library
 from beets import plugins
 from beets import util
-from beets.util.functemplate import Template
+from beets.util.functemplate import template
 from beets import config
-from beets.util import confit, as_string
+from beets.util import as_string
 from beets.autotag import mb
 from beets.dbcore import query as db_query
 from beets.dbcore import db
+import confuse
 import six
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
@@ -203,7 +204,7 @@ def input_(prompt=None):
     """
     # raw_input incorrectly sends prompts to stderr, not stdout, so we
     # use print_() explicitly to display prompts.
-    # http://bugs.python.org/issue1927
+    # https://bugs.python.org/issue1927
     if prompt:
         print_(prompt, end=u' ')
 
@@ -408,9 +409,14 @@ def input_select_objects(prompt, objs, rep):
         out = []
         for obj in objs:
             rep(obj)
-            if input_yn(u'%s? (yes/no)' % prompt, True):
+            answer = input_options(
+                ('y', 'n', 'q'), True, u'%s? (yes/no/quit)' % prompt,
+                u'Enter Y or N:'
+            )
+            if answer == u'y':
                 out.append(obj)
-            print()  # go to a new line
+            elif answer == u'q':
+                return out
         return out
 
     else:  # No.
@@ -469,7 +475,7 @@ def human_seconds_short(interval):
 # Colorization.
 
 # ANSI terminal colorization code heavily inspired by pygments:
-# http://dev.pocoo.org/hg/pygments-main/file/b2deea5b5030/pygments/console.py
+# https://bitbucket.org/birkenfeld/pygments-main/src/default/pygments/console.py
 # (pygments is by Tim Hatch, Armin Ronacher, et al.)
 COLOR_ESCAPE = "\x1b["
 DARK_COLORS = {
@@ -524,21 +530,21 @@ def colorize(color_name, text):
     """Colorize text if colored output is enabled. (Like _colorize but
     conditional.)
     """
-    if config['ui']['color']:
-        global COLORS
-        if not COLORS:
-            COLORS = dict((name,
-                           config['ui']['colors'][name].as_str())
-                          for name in COLOR_NAMES)
-        # In case a 3rd party plugin is still passing the actual color ('red')
-        # instead of the abstract color name ('text_error')
-        color = COLORS.get(color_name)
-        if not color:
-            log.debug(u'Invalid color_name: {0}', color_name)
-            color = color_name
-        return _colorize(color, text)
-    else:
+    if not config['ui']['color'] or 'NO_COLOR' in os.environ.keys():
         return text
+
+    global COLORS
+    if not COLORS:
+        COLORS = dict((name,
+                       config['ui']['colors'][name].as_str())
+                      for name in COLOR_NAMES)
+    # In case a 3rd party plugin is still passing the actual color ('red')
+    # instead of the abstract color name ('text_error')
+    color = COLORS.get(color_name)
+    if not color:
+        log.debug(u'Invalid color_name: {0}', color_name)
+        color = color_name
+    return _colorize(color, text)
 
 
 def _colordiff(a, b, highlight='text_highlight',
@@ -611,12 +617,12 @@ def get_path_formats(subview=None):
     subview = subview or config['paths']
     for query, view in subview.items():
         query = PF_KEY_QUERIES.get(query, query)  # Expand common queries.
-        path_formats.append((query, Template(view.as_str())))
+        path_formats.append((query, template(view.as_str())))
     return path_formats
 
 
 def get_replacements():
-    """Confit validation function that reads regex/string pairs.
+    """Confuse validation function that reads regex/string pairs.
     """
     replacements = []
     for pattern, repl in config['replace'].get(dict).items():
@@ -923,7 +929,7 @@ class CommonOptionsParser(optparse.OptionParser, object):
 #
 # This is a fairly generic subcommand parser for optparse. It is
 # maintained externally here:
-# http://gist.github.com/462717
+# https://gist.github.com/462717
 # There you will also find a better description of the code and a more
 # succinct example program.
 
@@ -1138,8 +1144,12 @@ def _setup(options, lib=None):
     if lib is None:
         lib = _open_library(config)
         plugins.send("library_opened", lib=lib)
+
+    # Add types and queries defined by plugins.
     library.Item._types.update(plugins.types(library.Item))
     library.Album._types.update(plugins.types(library.Album))
+    library.Item._queries.update(plugins.named_queries(library.Item))
+    library.Album._queries.update(plugins.named_queries(library.Album))
 
     return subcommands, plugins, lib
 
@@ -1268,7 +1278,7 @@ def main(args=None):
         log.debug('{}', traceback.format_exc())
         log.error('{}', exc)
         sys.exit(1)
-    except confit.ConfigError as exc:
+    except confuse.ConfigError as exc:
         log.error(u'configuration error: {0}', exc)
         sys.exit(1)
     except db_query.InvalidQueryError as exc:

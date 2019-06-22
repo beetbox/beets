@@ -53,6 +53,9 @@ aunique:
     disambiguators: albumtype year label catalognum albumdisambig releasegroupdisambig
     bracket: '[]'
 
+overwrite_null:
+  album: []
+  track: []
 
 plugins: []
 pluginpath: []

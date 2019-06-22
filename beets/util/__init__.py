@@ -23,7 +23,9 @@ import locale
 import re
 import shutil
 import fnmatch
+import functools
 from collections import Counter
+from multiprocessing.pool import ThreadPool
 import traceback
 import subprocess
 import platform
@@ -282,13 +284,13 @@ def prune_dirs(path, root=None, clutter=('.DS_Store', 'Thumbs.db')):
             continue
         clutter = [bytestring_path(c) for c in clutter]
         match_paths = [bytestring_path(d) for d in os.listdir(directory)]
-        if fnmatch_all(match_paths, clutter):
-            # Directory contains only clutter (or nothing).
-            try:
+        try:
+            if fnmatch_all(match_paths, clutter):
+                # Directory contains only clutter (or nothing).
                 shutil.rmtree(directory)
-            except OSError:
+            else:
                 break
-        else:
+        except OSError:
             break
 
 
@@ -410,7 +412,7 @@ def syspath(path, prefix=True):
             path = path.decode(encoding, 'replace')
 
     # Add the magic prefix if it isn't already there.
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
     if prefix and not path.startswith(WINDOWS_MAGIC_PREFIX):
         if path.startswith(u'\\\\'):
             # UNC path. Final path should look like \\?\UNC\...
@@ -561,7 +563,7 @@ def unique_path(path):
 # Note: The Windows "reserved characters" are, of course, allowed on
 # Unix. They are forbidden here because they cause problems on Samba
 # shares, which are sufficiently common as to cause frequent problems.
-# http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
+# https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
 CHAR_REPLACE = [
     (re.compile(r'[\\/]'), u'_'),  # / and \ -- forbidden everywhere.
     (re.compile(r'^\.'), u'_'),  # Leading dot (hidden files on Unix).
@@ -1009,3 +1011,47 @@ def asciify_path(path, sep_replace):
                 sep_replace
             )
     return os.sep.join(path_components)
+
+
+def par_map(transform, items):
+    """Apply the function `transform` to all the elements in the
+    iterable `items`, like `map(transform, items)` but with no return
+    value. The map *might* happen in parallel: it's parallel on Python 3
+    and sequential on Python 2.
+
+    The parallelism uses threads (not processes), so this is only useful
+    for IO-bound `transform`s.
+    """
+    if sys.version_info[0] < 3:
+        # multiprocessing.pool.ThreadPool does not seem to work on
+        # Python 2. We could consider switching to futures instead.
+        for item in items:
+            transform(item)
+    else:
+        pool = ThreadPool()
+        pool.map(transform, items)
+        pool.close()
+        pool.join()
+
+
+def lazy_property(func):
+    """A decorator that creates a lazily evaluated property. On first access,
+    the property is assigned the return value of `func`. This first value is
+    stored, so that future accesses do not have to evaluate `func` again.
+
+    This behaviour is useful when `func` is expensive to evaluate, and it is
+    not certain that the result will be needed.
+    """
+    field_name = '_' + func.__name__
+
+    @property
+    @functools.wraps(func)
+    def wrapper(self):
+        if hasattr(self, field_name):
+            return getattr(self, field_name)
+
+        value = func(self)
+        setattr(self, field_name, value)
+        return value
+
+    return wrapper

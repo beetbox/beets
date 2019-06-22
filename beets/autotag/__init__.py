@@ -54,6 +54,12 @@ def apply_item_metadata(item, track_info):
         item.composer_sort = track_info.composer_sort
     if track_info.arranger is not None:
         item.arranger = track_info.arranger
+    if track_info.work is not None:
+        item.work = track_info.work
+    if track_info.mb_workid is not None:
+        item.mb_workid = track_info.mb_workid
+    if track_info.work_disambig is not None:
+        item.work_disambig = track_info.work_disambig
 
     # At the moment, the other metadata is left intact (including album
     # and track number). Perhaps these should be emptied?
@@ -142,34 +148,50 @@ def apply_metadata(album_info, mapping):
         # Compilation flag.
         item.comp = album_info.va
 
-        # Miscellaneous metadata.
-        for field in ('albumtype',
-                      'label',
-                      'asin',
-                      'catalognum',
-                      'script',
-                      'language',
-                      'country',
-                      'albumstatus',
-                      'albumdisambig',
-                      'releasegroupdisambig',
-                      'data_source',):
-            value = getattr(album_info, field)
-            if value is not None:
-                item[field] = value
-        if track_info.disctitle is not None:
-            item.disctitle = track_info.disctitle
-
-        if track_info.media is not None:
-            item.media = track_info.media
-
-        if track_info.lyricist is not None:
-            item.lyricist = track_info.lyricist
-        if track_info.composer is not None:
-            item.composer = track_info.composer
-        if track_info.composer_sort is not None:
-            item.composer_sort = track_info.composer_sort
-        if track_info.arranger is not None:
-            item.arranger = track_info.arranger
-
+        # Track alt.
         item.track_alt = track_info.track_alt
+
+        # Miscellaneous/nullable metadata.
+        misc_fields = {
+            'album': (
+                'albumtype',
+                'label',
+                'asin',
+                'catalognum',
+                'script',
+                'language',
+                'country',
+                'style',
+                'albumstatus',
+                'albumdisambig',
+                'releasegroupdisambig',
+                'data_source',
+            ),
+            'track': (
+                'disctitle',
+                'lyricist',
+                'media',
+                'composer',
+                'composer_sort',
+                'arranger',
+                'work',
+                'mb_workid',
+                'work_disambig',
+            )
+        }
+
+        # Don't overwrite fields with empty values unless the
+        # field is explicitly allowed to be overwritten
+        for field in misc_fields['album']:
+            clobber = field in config['overwrite_null']['album'].as_str_seq()
+            value = getattr(album_info, field)
+            if value is None and not clobber:
+                continue
+            item[field] = value
+
+        for field in misc_fields['track']:
+            clobber = field in config['overwrite_null']['track'].as_str_seq()
+            value = getattr(track_info, field)
+            if value is None and not clobber:
+                continue
+            item[field] = value

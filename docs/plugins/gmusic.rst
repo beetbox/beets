@@ -8,7 +8,7 @@ songs in your library.
 Installation
 ------------
 
-The plugin requires `gmusicapi`_. You can install it using `pip`::
+The plugin requires :pypi:`gmusicapi`. You can install it using ``pip``::
 
     pip install gmusicapi
 

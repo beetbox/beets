@@ -1,11 +1,14 @@
-.. image:: http://img.shields.io/pypi/v/beets.svg
+.. image:: https://img.shields.io/pypi/v/beets.svg
     :target: https://pypi.python.org/pypi/beets
 
-.. image:: http://img.shields.io/codecov/c/github/beetbox/beets.svg
+.. image:: https://img.shields.io/codecov/c/github/beetbox/beets.svg
     :target: https://codecov.io/github/beetbox/beets
 
 .. image:: https://travis-ci.org/beetbox/beets.svg?branch=master
     :target: https://travis-ci.org/beetbox/beets
+
+.. image:: https://repology.org/badge/tiny-repos/beets.svg
+    :target: https://repology.org/project/beets/versions
 
 
 beets
@@ -51,37 +54,39 @@ imagine for your music collection. Via `plugins`_, beets becomes a panacea:
 If beets doesn't do what you want yet, `writing your own plugin`_ is
 shockingly simple if you know a little Python.
 
-.. _plugins: http://beets.readthedocs.org/page/plugins/
-.. _MPD: http://www.musicpd.org/
-.. _MusicBrainz music collection: http://musicbrainz.org/doc/Collections/
+.. _plugins: https://beets.readthedocs.org/page/plugins/
+.. _MPD: https://www.musicpd.org/
+.. _MusicBrainz music collection: https://musicbrainz.org/doc/Collections/
 .. _writing your own plugin:
-    http://beets.readthedocs.org/page/dev/plugins.html
+    https://beets.readthedocs.org/page/dev/plugins.html
 .. _HTML5 Audio:
     http://www.w3.org/TR/html-markup/audio.html
 .. _albums that are missing tracks:
-    http://beets.readthedocs.org/page/plugins/missing.html
+    https://beets.readthedocs.org/page/plugins/missing.html
 .. _duplicate tracks and albums:
-    http://beets.readthedocs.org/page/plugins/duplicates.html
+    https://beets.readthedocs.org/page/plugins/duplicates.html
 .. _Transcode audio:
-    http://beets.readthedocs.org/page/plugins/convert.html
-.. _Discogs: http://www.discogs.com/
+    https://beets.readthedocs.org/page/plugins/convert.html
+.. _Discogs: https://www.discogs.com/
 .. _acoustic fingerprints:
-    http://beets.readthedocs.org/page/plugins/chroma.html
-.. _ReplayGain: http://beets.readthedocs.org/page/plugins/replaygain.html
-.. _tempos: http://beets.readthedocs.org/page/plugins/acousticbrainz.html
-.. _genres: http://beets.readthedocs.org/page/plugins/lastgenre.html
-.. _album art: http://beets.readthedocs.org/page/plugins/fetchart.html
-.. _lyrics: http://beets.readthedocs.org/page/plugins/lyrics.html
-.. _MusicBrainz: http://musicbrainz.org/
+    https://beets.readthedocs.org/page/plugins/chroma.html
+.. _ReplayGain: https://beets.readthedocs.org/page/plugins/replaygain.html
+.. _tempos: https://beets.readthedocs.org/page/plugins/acousticbrainz.html
+.. _genres: https://beets.readthedocs.org/page/plugins/lastgenre.html
+.. _album art: https://beets.readthedocs.org/page/plugins/fetchart.html
+.. _lyrics: https://beets.readthedocs.org/page/plugins/lyrics.html
+.. _MusicBrainz: https://musicbrainz.org/
 .. _Beatport: https://www.beatport.com
 
 Install
 -------
 
-You can install beets by typing ``pip install beets``. Then check out the
-`Getting Started`_ guide.
+You can install beets by typing ``pip install beets``.
+Beets has also been packaged in the `software repositories`_ of several distributions.
+Check out the `Getting Started`_ guide for more information.
 
-.. _Getting Started: http://beets.readthedocs.org/page/guides/main.html
+.. _Getting Started: https://beets.readthedocs.org/page/guides/main.html
+.. _software repositories: https://repology.org/project/beets/versions
 
 Contribute
 ----------
@@ -90,7 +95,7 @@ Check out the `Hacking`_ page on the wiki for tips on how to help out.
 You might also be interested in the `For Developers`_ section in the docs.
 
 .. _Hacking: https://github.com/beetbox/beets/wiki/Hacking
-.. _For Developers: http://docs.beets.io/page/dev/
+.. _For Developers: https://beets.readthedocs.io/en/stable/dev/
 
 Read More
 ---------
@@ -98,8 +103,8 @@ Read More
 Learn more about beets at `its Web site`_. Follow `@b33ts`_ on Twitter for
 news and updates.
 
-.. _its Web site: http://beets.io/
-.. _@b33ts: http://twitter.com/b33ts/
+.. _its Web site: https://beets.io/
+.. _@b33ts: https://twitter.com/b33ts/
 
 Authors
 -------
@@ -108,4 +113,4 @@ Beets is by `Adrian Sampson`_ with a supporting cast of thousands. For help,
 please visit our `forum`_.
 
 .. _forum: https://discourse.beets.io
-.. _Adrian Sampson: http://www.cs.cornell.edu/~asampson/
+.. _Adrian Sampson: https://www.cs.cornell.edu/~asampson/

@@ -27,19 +27,19 @@ The ``bucket_year`` parameter is used for all substitutions occurring on the
 The definition of a range is somewhat loose, and multiple formats are allowed:
 
 - For alpha ranges: the range is defined by the lowest and highest (ASCII-wise)
-  alphanumeric characters in the string you provide. For example, *ABCD*,
-  *A-D*, *A->D*, and *[AD]* are all equivalent.
+  alphanumeric characters in the string you provide. For example, ``ABCD``,
+  ``A-D``, ``A->D``, and ``[AD]`` are all equivalent.
 - For year ranges: digits characters are extracted and the two extreme years
-  define the range. For example, *1975-77*, *1975,76,77* and *1975-1977* are
+  define the range. For example, ``1975-77``, ``1975,76,77`` and ``1975-1977`` are
   equivalent. If no upper bound is given, the range is extended to current year
-  (unless a later range is defined). For example, *1975* encompasses all years
+  (unless a later range is defined). For example, ``1975`` encompasses all years
   from 1975 until now.
 
-The `%bucket` template function guesses whether to use alpha- or year-style
+The ``%bucket`` template function guesses whether to use alpha- or year-style
 buckets depending on the text it receives. It can guess wrong if, for example,
-an artist or album happens to begin with four digits. Provide `alpha` as the
+an artist or album happens to begin with four digits. Provide ``alpha`` as the
 second argument to the template to avoid this automatic detection: for
-example, use `%bucket{$artist,alpha}`.
+example, use ``%bucket{$artist,alpha}``.
 
 
 Configuration
@@ -56,7 +56,7 @@ The available options are:
   overrides original range definition.
   Default: none.
 - **bucket_year**: Ranges to use for all substitutions occurring on the
-  `$year` field.
+  ``$year`` field.
   Default: none.
 - **extrapolate**: Enable this if you want to group your files into multiple
   year ranges without enumerating them all. This option will generate year
@@ -73,5 +73,5 @@ Here's an example::
            'A - D': ^[0-9a-dA-D…äÄ]
 
 This configuration creates five-year ranges for any input year.
-The *A - D* bucket now matches also all artists starting with ä or Ä and 0 to 9
+The `A - D` bucket now matches also all artists starting with ä or Ä and 0 to 9
 and … (ellipsis). The other alpha buckets work as ranges.

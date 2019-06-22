@@ -15,7 +15,7 @@ structure should look like this::
         myawesomeplugin.py
 
 .. _Stack Overflow question about namespace packages:
-    http://stackoverflow.com/questions/1675734/how-do-i-create-a-namespace-package-in-python/1676069#1676069
+    https://stackoverflow.com/questions/1675734/how-do-i-create-a-namespace-package-in-python/1676069#1676069
 
 Then, you'll need to put this stuff in ``__init__.py`` to make ``beetsplug`` a
 namespace package::
@@ -42,7 +42,7 @@ Then, as described above, edit your ``config.yaml`` to include
 ``plugins: myawesomeplugin`` (substituting the name of the Python module
 containing your plugin).
 
-.. _virtualenv: http://pypi.python.org/pypi/virtualenv
+.. _virtualenv: https://pypi.org/project/virtualenv
 
 .. _add_subcommands:
 
@@ -73,7 +73,7 @@ but it defaults to an empty parser (you can extend it later). ``help`` is a
 description of your command, and ``aliases`` is a list of shorthand versions of
 your command name.
 
-.. _OptionParser instance: http://docs.python.org/library/optparse.html
+.. _OptionParser instance: https://docs.python.org/library/optparse.html
 
 You'll need to add a function to your command by saying ``mycommand.func =
 myfunction``. This function should take the following parameters: ``lib`` (a
@@ -81,7 +81,7 @@ beets ``Library`` object) and ``opts`` and ``args`` (command-line options and
 arguments as returned by `OptionParser.parse_args`_).
 
 .. _OptionParser.parse_args:
-    http://docs.python.org/library/optparse.html#parsing-arguments
+    https://docs.python.org/library/optparse.html#parsing-arguments
 
 The function should use any of the utility functions defined in ``beets.ui``.
 Try running ``pydoc beets.ui`` to see what's available.
@@ -103,19 +103,18 @@ operation. For instance, a plugin could write a log message every time an album
 is successfully autotagged or update MPD's index whenever the database is
 changed.
 
-You can "listen" for events using the ``BeetsPlugin.listen`` decorator. Here's
+You can "listen" for events using ``BeetsPlugin.register_listener``. Here's
 an example::
 
     from beets.plugins import BeetsPlugin
 
-    class SomePlugin(BeetsPlugin):
-        pass
-
-    @SomePlugin.listen('pluginload')
     def loaded():
         print 'Plugin loaded!'
 
-Pass the name of the event in question to the ``listen`` decorator.
+    class SomePlugin(BeetsPlugin):
+      def __init__(self):
+        super(SomePlugin, self).__init__()
+        self.register_listener('pluginload', loaded)
 
 Note that if you want to access an attribute of your plugin (e.g. ``config`` or
 ``log``) you'll have to define a method and not a function. Here is the usual
@@ -299,10 +298,10 @@ this in their ``config.yaml``::
         foo: bar
 
 To access this value, say ``self.config['foo'].get()`` at any point in your
-plugin's code. The `self.config` object is a *view* as defined by the `Confit`_
+plugin's code. The `self.config` object is a *view* as defined by the `Confuse`_
 library.
 
-.. _Confit: http://confit.readthedocs.org/
+.. _Confuse: https://confuse.readthedocs.org/
 
 If you want to access configuration values *outside* of your plugin's section,
 import the `config` object from the `beets` module. That is, just put ``from
@@ -371,17 +370,16 @@ template fields by adding a function accepting an ``Album`` argument to the
 Extend MediaFile
 ^^^^^^^^^^^^^^^^
 
-:ref:`MediaFile` is the file tag abstraction layer that beets uses to make
+`MediaFile`_ is the file tag abstraction layer that beets uses to make
 cross-format metadata manipulation simple. Plugins can add fields to MediaFile
 to extend the kinds of metadata that they can easily manage.
 
 The ``MediaFile`` class uses ``MediaField`` descriptors to provide
-access to file tags. Have a look at the ``beets.mediafile`` source code
-to learn how to use this descriptor class. If you have created a
-descriptor you can add it through your plugins ``add_media_field()``
-method.
+access to file tags. If you have created a descriptor you can add it through
+your plugins ``add_media_field()`` method.
 
 .. automethod:: beets.plugins.BeetsPlugin.add_media_field
+.. _MediaFile: https://mediafile.readthedocs.io/
 
 
 Here's an example plugin that provides a meaningless new field "foo"::
@@ -443,15 +441,24 @@ Extend the Query Syntax
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 You can add new kinds of queries to beets' :doc:`query syntax
-</reference/query>` indicated by a prefix. As an example, beets already
+</reference/query>`. There are two ways to add custom queries: using a prefix
+and using a name. Prefix-based query extension can apply to *any* field, while
+named queries are not associated with any field. For example, beets already
 supports regular expression queries, which are indicated by a colon
 prefix---plugins can do the same.
 
-To do so, define a subclass of the ``Query`` type from the
-``beets.dbcore.query`` module. Then, in the ``queries`` method of your plugin
-class, return a dictionary mapping prefix strings to query classes.
+For either kind of query extension, define a subclass of the ``Query`` type
+from the ``beets.dbcore.query`` module. Then:
 
-One simple kind of query you can extend is the ``FieldQuery``, which
+- To define a prefix-based query, define a ``queries`` method in your plugin
+  class. Return from this method a dictionary mapping prefix strings to query
+  classes.
+- To define a named query, defined dictionaries named either ``item_queries``
+  or ``album_queries``. These should map names to query types. So if you
+  use ``{ "foo": FooQuery }``, then the query ``foo:bar`` will construct a
+  query like ``FooQuery("bar")``.
+
+For prefix-based queries, you will want to extend ``FieldQuery``, which
 implements string comparisons on fields. To use it, create a subclass
 inheriting from that class and override the ``value_match`` class method.
 (Remember the ``@classmethod`` decorator!) The following example plugin

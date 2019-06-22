@@ -21,10 +21,10 @@ import six
 import re
 
 from beets.plugins import BeetsPlugin
-from beets.mediafile import MediaFile
+from mediafile import MediaFile
 from beets.importer import action
 from beets.ui import Subcommand, decargs, input_yn
-from beets.util import confit
+import confuse
 
 __author__ = 'baobab@heresiarch.info'
 
@@ -98,7 +98,7 @@ class ZeroPlugin(BeetsPlugin):
                 for pattern in self.config[field].as_str_seq():
                     prog = re.compile(pattern, re.IGNORECASE)
                     self.fields_to_progs.setdefault(field, []).append(prog)
-            except confit.NotFoundError:
+            except confuse.NotFoundError:
                 # Matches everything
                 self.fields_to_progs[field] = []
 

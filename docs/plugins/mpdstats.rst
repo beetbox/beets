@@ -4,12 +4,16 @@ MPDStats Plugin
 ``mpdstats`` is a plugin for beets that collects statistics about your listening
 habits from `MPD`_.  It collects the following information about tracks:
 
-* play_count: The number of times you *fully* listened to this track.
-* skip_count: The number of times you *skipped* this track.
-* last_played:  UNIX timestamp when you last played this track.
-* rating: A rating based on *play_count* and *skip_count*.
+* ``play_count``: The number of times you *fully* listened to this track.
+* ``skip_count``: The number of times you *skipped* this track.
+* ``last_played``:  UNIX timestamp when you last played this track.
+* ``rating``: A rating based on ``play_count`` and ``skip_count``.
 
-.. _MPD: http://www.musicpd.org/
+To gather these statistics it runs as an MPD client and watches the current state
+of MPD. This means that ``mpdstats`` needs to be running continuously for it to
+work.
+
+.. _MPD: https://www.musicpd.org/
 
 Installing Dependencies
 -----------------------
@@ -23,7 +27,7 @@ Install the library from `pip`_, like so::
 
 Add the ``mpdstats`` plugin to your configuration (see :ref:`using-plugins`).
 
-.. _pip: http://www.pip-installer.org/
+.. _pip: https://pip.pypa.io
 
 Usage
 -----
@@ -42,7 +46,8 @@ configuration file. The available options are:
   Default: The ``$MPD_HOST`` environment variable if set,
   falling back to ``localhost`` otherwise.
 - **port**: The MPD server port.
-  Default: 6600.
+  Default: The ``$MPD_PORT`` environment variable if set,
+  falling back to 6600 otherwise.
 - **password**: The MPD server password.
   Default: None.
 - **music_directory**: If your MPD library is at a different location from the

@@ -48,11 +48,11 @@ Here is an example where the FLAC decoder signals a corrupt file::
       00.flac: ERROR while decoding data
                  state = FLAC__STREAM_DECODER_READ_FRAME
 
-Note that the default `mp3val` checker is a bit verbose and can output a lot
+Note that the default ``mp3val`` checker is a bit verbose and can output a lot
 of "stream error" messages, even for files that play perfectly well.
 Generally, if more than one stream error happens, or if a stream error happens
 in the middle of a file, this is a bad sign.
 
 By default, only errors for the bad files will be shown. In order for the
-results for all of the checked files to be seen, including the uncorrupted 
+results for all of the checked files to be seen, including the uncorrupted
 ones, use the ``-v`` or ``--verbose`` option.

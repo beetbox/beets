@@ -24,7 +24,7 @@ import unittest
 from test import _common
 from test.helper import TestHelper
 
-from beets.mediafile import MediaFile
+from mediafile import MediaFile
 from beets import config, logging, ui
 from beets.util import syspath, displayable_path
 from beets.util.artresizer import ArtResizer

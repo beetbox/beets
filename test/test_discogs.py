@@ -45,6 +45,9 @@ class DGAlbumInfoTest(_common.TestCase):
                 'name': 'FORMAT',
                 'qty': 1
             }],
+            'styles': [
+                'STYLE1', 'STYLE2'
+            ],
             'labels': [{
                 'name': 'LABEL NAME',
                 'catno': 'CATALOG NUMBER',

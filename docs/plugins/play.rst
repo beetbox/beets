@@ -32,8 +32,8 @@ command-line oriented, and you'll get its output in real time.
 Interactive Usage
 -----------------
 
-The `play` plugin can also be invoked during an import. If enabled, the plugin
-adds a `plaY` option to the prompt, so pressing `y` will execute the configured
+The ``play`` plugin can also be invoked during an import. If enabled, the plugin
+adds a ``plaY`` option to the prompt, so pressing ``y`` will execute the configured
 command and play the items currently being imported.
 
 Once the configured command exits, you will be returned to the import

@@ -69,7 +69,7 @@ Note: ``compare_threshold`` option requires `ImageMagick`_, and ``maxwidth``
 requires either `ImageMagick`_ or `Pillow`_.
 
 .. _Pillow: https://github.com/python-pillow/Pillow
-.. _ImageMagick: http://www.imagemagick.org/
+.. _ImageMagick: https://www.imagemagick.org/
 .. _PHASH: http://www.fmwconcepts.com/misc_tests/perceptual_hash_test_results_510/
 
 Manually Embedding and Extracting Art
