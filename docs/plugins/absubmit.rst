@@ -20,9 +20,12 @@ Submitting Data
 
 Type::
 
-    beet absubmit [QUERY]
+    beet absubmit [-f] [-d] [QUERY]
 
-to run the analysis program and upload its results.
+to run the analysis program and upload its results. By default, the command will only look for AcousticBrainz data when the tracks
+doesn't already have it; the ``-f`` or ``--force`` switch makes it refetch data even 
+when it already exists. You can use the ``-d`` or ``--dry``swtich to check which files will be 
+analyzed, before you start a longer period of processing.
 
 The plugin works on music with a MusicBrainz track ID attached. The plugin
 will also skip music that the analysis tool doesn't support.
@@ -40,6 +43,11 @@ To configure the plugin, make a ``absubmit:`` section in your configuration file
   Default: ``no``
 - **extractor**: The absolute path to the `streaming_extractor_music`_ binary.
   Default: search for the program in your ``$PATH``
+- **force**: Analyse AcousticBrainz data even for tracks that already have
+  it.
+  Default: ``no``.  
+- **dry**: No analyse AcousticBrainz data but print out the files which would be processed
+  Default: ``no``.    
 
 .. _streaming_extractor_music: https://acousticbrainz.org/download
 .. _FAQ: https://acousticbrainz.org/faq
