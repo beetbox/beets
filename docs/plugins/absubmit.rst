@@ -43,10 +43,10 @@ To configure the plugin, make a ``absubmit:`` section in your configuration file
   Default: ``no``
 - **extractor**: The absolute path to the `streaming_extractor_music`_ binary.
   Default: search for the program in your ``$PATH``
-- **force**: Analyse AcousticBrainz data even for tracks that already have
+- **force**: Analyze items and submit of AcousticBrainz data even for tracks that already have
   it.
   Default: ``no``.  
-- **dry**: No analyse AcousticBrainz data but print out the files which would be processed
+- **dry**: No analyze and submit of AcousticBrainz data but print out the items which would be processed
   Default: ``no``.    
 
 .. _streaming_extractor_music: https://acousticbrainz.org/download
