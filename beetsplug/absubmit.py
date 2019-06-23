@@ -111,14 +111,14 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             u'-d', u'--dry', dest='dry_fetch',
             action='store_true', default=False,
             help=u'dry run, show files which would be processed'
-        )        
+        )
         cmd.func = self.command
         return [cmd]
 
     def command(self, lib, opts, args):
         # Get items from arguments
         items = lib.items(ui.decargs(args))
-        self.opts=opts
+        self.opts = opts
         util.par_map(self.analyze_submit, items)
 
     def analyze_submit(self, item):
@@ -141,7 +141,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             return None
 
         if self.opts.dry_fetch or self.config['dry']:
-            self._log.info(u'dry run - extract item: {}', item)      
+            self._log.info(u'dry run - extract item: {}', item)
             return None
 
         # Temporary file to save extractor output to, extractor only works
