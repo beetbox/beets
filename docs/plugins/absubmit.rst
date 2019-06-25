@@ -55,8 +55,8 @@ file. The available options are:
 - **force**: Analyze items and submit of AcousticBrainz data even for tracks
   that already have it.
   Default: ``no``.
-- **dry**: No analyze and submit of AcousticBrainz data but print out the
-  items which would be processed
+- **pretend**: Do not analyze and submit of AcousticBrainz data but print out
+  the items which would be processed.
   Default: ``no``.
 
 .. _streaming_extractor_music: https://acousticbrainz.org/download
