@@ -58,8 +58,10 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
         self.config.add({
             'extractor': u'',
             'force': False,
-            'dry': False
+            'pretend': False
         })
+
+        self.PROBE_FIELD = 'mood_acoustic'
 
         self.extractor = self.config['extractor'].as_str()
         if self.extractor:
@@ -108,9 +110,9 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             help=u're-download data when already present'
         )
         cmd.parser.add_option(
-            u'-d', u'--dry', dest='dry_fetch',
+            u'-p', u'--pretend', dest='pretend_fetch',
             action='store_true', default=False,
-            help=u'dry run, show files which would be processed'
+            help=u'pretend to perform action, but show only files which would be processed'
         )
         cmd.func = self.command
         return [cmd]
@@ -131,7 +133,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
 
         # If file has no mbid skip it.
         if not self.opts.force_refetch and not self.config['force']:
-            mood_str = item.get('mood_acoustic', u'')
+            mood_str = item.get(self.PROBE_FIELD, u'')
             if mood_str:
                 return None
 
@@ -140,8 +142,8 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                            u'musicbrainz track id.', item)
             return None
 
-        if self.opts.dry_fetch or self.config['dry']:
-            self._log.info(u'dry run - extract item: {}', item)
+        if self.opts.pretend_fetch or self.config['pretend']:
+            self._log.info(u'pretend action - extract item: {}', item)
             return None
 
         # Temporary file to save extractor output to, extractor only works
