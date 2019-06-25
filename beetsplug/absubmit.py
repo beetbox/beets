@@ -112,8 +112,8 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
         cmd.parser.add_option(
             u'-p', u'--pretend', dest='pretend_fetch',
             action='store_true', default=False,
-            help=u'pretend to perform action, but show ' \
-                'only files which would be processed'
+            help=u'pretend to perform action, but show \
+only files which would be processed'
         )
         cmd.func = self.command
         return [cmd]
