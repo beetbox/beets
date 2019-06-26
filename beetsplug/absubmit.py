@@ -61,6 +61,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             'pretend': False
         })
 
+        # Define a field which shows that acousticbrainz info is present
         self.PROBE_FIELD = 'mood_acoustic'
 
         self.extractor = self.config['extractor'].as_str()
