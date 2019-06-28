@@ -32,6 +32,9 @@ from beets import plugins
 from beets import util
 from beets import ui
 
+# We use this field to check whether AcousticBrainz info is present.
+PROBE_FIELD = 'mood_acoustic'
+
 
 class ABSubmitError(Exception):
     """Raised when failing to analyse file with extractor."""
@@ -60,9 +63,6 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             'force': False,
             'pretend': False
         })
-
-        # Define a field which shows that acousticbrainz info is present
-        self.PROBE_FIELD = 'mood_acoustic'
 
         self.extractor = self.config['extractor'].as_str()
         if self.extractor:
@@ -135,7 +135,7 @@ only files which would be processed'
 
         # If file has no mbid skip it.
         if not self.opts.force_refetch and not self.config['force']:
-            mood_str = item.get(self.PROBE_FIELD, u'')
+            mood_str = item.get(PROBE_FIELD, u'')
             if mood_str:
                 return None
 
