@@ -133,12 +133,12 @@ only files which would be processed'
     def _get_analysis(self, item):
         mbid = item['mb_trackid']
 
-        # If file has no mbid skip it.
+        # Avoid re-analyzing files that already have AB data.
         if not self.opts.force_refetch and not self.config['force']:
-            mood_str = item.get(PROBE_FIELD, u'')
-            if mood_str:
+            if item.get(PROBE_FIELD):
                 return None
 
+        # If file has no MBID, skip it.
         if not mbid:
             self._log.info(u'Not analysing {}, missing '
                            u'musicbrainz track id.', item)
