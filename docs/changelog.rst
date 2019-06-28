@@ -29,6 +29,12 @@ New features:
 * :doc:`/plugins/discogs`: The field now collects the "style" field.
   Thanks to :user:`thedevilisinthedetails`.
   :bug:`2579` :bug:`3251`
+* :doc:`/plugins/absubmit`: By default, the plugin now avoids re-analyzing
+  files that already have AB data.
+  There are new ``force`` and ``pretend`` options to help control this new
+  behavior.
+  Thanks to :user:`SusannaMaria`.
+  :bug:`3318`
 
 Fixes:
 
