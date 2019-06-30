@@ -357,7 +357,8 @@ class DiscogsPlugin(BeetsPlugin):
         if classification is None:
             self._log.debug('Classification not Found')
         else:
-            return self.config['separator'].as_str().join(sorted(classification))
+            return self.config['separator'].as_str()\
+                .join(sorted(classification))
 
     def extract_release_id(self, uri):
         if uri:
