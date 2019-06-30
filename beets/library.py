@@ -888,6 +888,9 @@ class Item(LibModel):
                 beets.config['path_sep_replace'].as_str()
             )
 
+        # If present, remove the leading slash to ensure this isn't an absolute path
+        subpath = subpath.lstrip(os.path.sep)
+
         maxlen = beets.config['max_filename_length'].get(int)
         if not maxlen:
             # When zero, try to determine from filesystem.
