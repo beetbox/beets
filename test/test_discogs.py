@@ -35,6 +35,7 @@ class DGAlbumInfoTest(_common.TestCase):
             'uri': 'ALBUM URI',
             'title': 'ALBUM TITLE',
             'year': '3001',
+            'released': '2019-06-07',
             'artists': [{
                 'name': 'ARTIST NAME',
                 'id': 'ARTIST ID',
