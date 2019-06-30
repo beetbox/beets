@@ -373,7 +373,6 @@ class BeatportPlugin(BeetsPlugin):
             return None
         release = self.client.get_release(match.group(2))
         album = self._get_album_info(release)
-        print('ALBUM', album)
         return album
 
     def track_for_id(self, track_id):
