@@ -79,10 +79,12 @@ class AlbumInfo(object):
                  albumtype=None, va=False, year=None, month=None, day=None,
                  label=None, mediums=None, artist_sort=None,
                  releasegroup_id=None, catalognum=None, script=None,
-                 language=None, country=None, style=None, genre=None, albumstatus=None,
-                 media=None, albumdisambig=None, releasegroupdisambig=None,
-                 artist_credit=None, original_year=None, original_month=None,
-                 original_day=None, data_source=None, data_url=None, discogs_release_id=None, released_date=None):
+                 language=None, country=None, style=None, genre=None,
+                 albumstatus=None, media=None, albumdisambig=None,
+                 releasegroupdisambig=None, artist_credit=None,
+                 original_year=None, original_month=None,
+                 original_day=None, data_source=None, data_url=None,
+                 discogs_release_id=None, released_date=None):
         self.album = album
         self.album_id = album_id
         self.artist = artist
@@ -126,8 +128,9 @@ class AlbumInfo(object):
         """
         for fld in ['album', 'artist', 'albumtype', 'label', 'artist_sort',
                     'catalognum', 'script', 'language', 'country', 'style',
-                    'genre', 'albumstatus', 'albumdisambig', 'releasegroupdisambig',
-                    'artist_credit', 'media', 'discogs_release_id', 'released_date']:
+                    'genre', 'albumstatus', 'albumdisambig',
+                    'releasegroupdisambig', 'artist_credit',
+                    'media', 'discogs_release_id', 'released_date']:
             value = getattr(self, fld)
             if isinstance(value, bytes):
                 setattr(self, fld, value.decode(codec, 'ignore'))

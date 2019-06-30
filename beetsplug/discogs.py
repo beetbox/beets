@@ -349,7 +349,9 @@ class DiscogsPlugin(BeetsPlugin):
                          albumdisambig=None, artist_credit=None,
                          original_year=original_year, original_month=None,
                          original_day=None, data_source='Discogs',
-                         data_url=data_url, discogs_release_id=discogs_release_id, released_date=released_date)
+                         data_url=data_url,
+                         discogs_release_id=discogs_release_id,
+                         released_date=released_date)
 
     def format(self, classification):
         if classification is None:
@@ -358,7 +360,8 @@ class DiscogsPlugin(BeetsPlugin):
             return self.config['separator'].as_str().join(sorted(classification))
 
     def extract_release_id(self, uri):
-        return uri.split("/")[-1]
+        if uri:
+            return uri.split("/")[-1]
 
     def get_artist(self, artists):
         """Returns an artist string (all artists) and an artist_id (the main
