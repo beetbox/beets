@@ -32,7 +32,7 @@ class DGAlbumInfoTest(_common.TestCase):
         those required for the tests on this class."""
         data = {
             'id': 'ALBUM ID',
-            'uri': 'ALBUM URI',
+            'uri': 'https://www.discogs.com/release/release/13633721',
             'title': 'ALBUM TITLE',
             'year': '3001',
             'released': '2019-06-07',
