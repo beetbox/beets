@@ -305,8 +305,7 @@ class DiscogsPlugin(BeetsPlugin):
         data_url = result.data.get('uri')
         style = self.format(result.data.get('styles'))
         genre = self.format(result.data.get('genres'))
-        discogs_release_id = self.extract_release_id(result.data.get('uri'))
-        released_date = result.data.get('released')
+        discogs_albumid = self.extract_release_id(result.data.get('uri'))
 
         # Extract information for the optional AlbumInfo fields that are
         # contained on nested discogs fields.
@@ -350,19 +349,20 @@ class DiscogsPlugin(BeetsPlugin):
                          original_year=original_year, original_month=None,
                          original_day=None, data_source='Discogs',
                          data_url=data_url,
-                         discogs_release_id=discogs_release_id,
-                         released_date=released_date)
+                         discogs_albumid=discogs_albumid)
 
     def format(self, classification):
-        if classification is None:
-            self._log.debug('Classification not Found')
-        else:
-            return self.config['separator'].as_str()\
+        if classification:
+            return self.config['separator'].as_str() \
                 .join(sorted(classification))
+        else:
+            return None
 
     def extract_release_id(self, uri):
         if uri:
             return uri.split("/")[-1]
+        else:
+            return None
 
     def get_artist(self, artists):
         """Returns an artist string (all artists) and an artist_id (the main
