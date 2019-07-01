@@ -35,6 +35,10 @@ New features:
   behavior.
   Thanks to :user:`SusannaMaria`.
   :bug:`3318`
+* :doc:`/plugins/discogs`: The plugin now also gets genre information and a
+  new ``discogs_albumid`` field from the Discogs API.
+  Thanks to :user:`thedevilisinthedetails`.
+  :bug:`465` :bug:`3322`
 
 Fixes:
 
