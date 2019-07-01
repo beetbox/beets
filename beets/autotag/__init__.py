@@ -162,6 +162,8 @@ def apply_metadata(album_info, mapping):
                 'language',
                 'country',
                 'style',
+                'genre',
+                'discogs_albumid',
                 'albumstatus',
                 'albumdisambig',
                 'releasegroupdisambig',
