@@ -23,6 +23,7 @@ from mock import patch
 from test.helper import TestHelper, capture_log, has_program
 
 from beets import config
+from beets.util import CommandOutput
 from mediafile import MediaFile
 from beetsplug.replaygain import (FatalGstreamerPluginReplayGainError,
                                   GStreamerBackend)
@@ -169,7 +170,6 @@ class ReplayGainLdnsCliTest(ReplayGainCliTestBase, unittest.TestCase):
 
 
 class ReplayGainLdnsCliMalformedTest(TestHelper, unittest.TestCase):
-
     @patch('beetsplug.replaygain.call')
     def setUp(self, call_patch):
         self.setup_beets()
@@ -186,14 +186,14 @@ class ReplayGainLdnsCliMalformedTest(TestHelper, unittest.TestCase):
     @patch('beetsplug.replaygain.call')
     def test_malformed_output(self, call_patch):
         # Return malformed XML (the ampersand should be &amp;)
-        call_patch.return_value = """
+        call_patch.return_value = CommandOutput(stdout="""
             <album>
                 <track total="1" number="1" file="&">
                     <integrated lufs="0" lu="0" />
                     <sample-peak spfs="0" factor="0" />
                 </track>
             </album>
-        """
+        """, stderr="")
 
         with capture_log('beets.replaygain') as logs:
             self.run_command('replaygain')
