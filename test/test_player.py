@@ -240,6 +240,27 @@ def implements(commands, expectedFailure=False):  # noqa: N803
     return unittest.expectedFailure(_test) if expectedFailure else _test
 
 
+bluelet_listener = bluelet.Listener
+@mock.patch("beets.util.bluelet.Listener")
+def start_server(args, assigned_port, listener_patch):
+    """Start the bpd server, writing the port to `assigned_port`.
+    """
+    def listener_wrap(host, port):
+        """Wrap `bluelet.Listener`, writing the port to `assigend_port`.
+
+        `bluelet.Listener` has previously been saved to
+        `bluelet_listener` as this function will replace it at its
+        original location.
+        """
+        listener = bluelet_listener(host, port)
+        assigned_port.value = listener.sock.getsockname()[1]
+        return listener
+    listener_patch.side_effect = listener_wrap
+
+    import beets.ui
+    beets.ui.main(args)
+
+
 class BPDTestHelper(unittest.TestCase, TestHelper):
     def setUp(self):
         self.setup_beets(disk=True)
@@ -279,34 +300,14 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
                 yaml.dump(config, Dumper=confuse.Dumper, encoding='utf-8'))
         config_file.close()
 
-        bluelet_listener = bluelet.Listener
-        @mock.patch("beets.util.bluelet.Listener")
-        def start_server(assigned_port, listener_patch):
-            """Start the bpd server, writing the port to `assigned_port`.
-            """
-            def listener_wrap(host, port):
-                """Wrap `bluelet.Listener`, writing the port to `assigend_port`.
-
-                `bluelet.Listener` has previously been saved to
-                `bluelet_listener` as this function will replace it at its
-                original location.
-                """
-                listener = bluelet_listener(host, port)
-                assigned_port.value = listener.sock.getsockname()[1]
-                return listener
-            listener_patch.side_effect = listener_wrap
-
-            import beets.ui
-            beets.ui.main([
-                '--library', self.config['library'].as_filename(),
-                '--directory', py3_path(self.libdir),
-                '--config', py3_path(config_file.name),
-                'bpd'
-            ])
-
         # Fork and launch BPD in the new process:
         assigned_port = mp.Value("I", 0)
-        server = mp.Process(target=start_server, args=(assigned_port,))
+        server = mp.Process(target=start_server, args=([
+            '--library', self.config['library'].as_filename(),
+            '--directory', py3_path(self.libdir),
+            '--config', py3_path(config_file.name),
+            'bpd'
+        ], assigned_port))
         server.start()
 
         # Wait until the socket is connected:
