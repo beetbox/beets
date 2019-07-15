@@ -805,7 +805,8 @@ CommandOutput = namedtuple("CommandOutput", ("stdout", "stderr"))
 def command_output(cmd, shell=False):
     """Runs the command and returns its output after it has exited.
 
-    Returns a CommandOutput.
+    Returns a CommandOutput. The attributes ``stdout`` and ``stderr`` contain
+    byte strings of the respective output streams.
 
     ``cmd`` is a list of arguments starting with the command names. The
     arguments are bytes on Unix and strings on Windows.

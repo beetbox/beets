@@ -74,6 +74,9 @@ For plugin developers:
   is almost identical apart from the name change. Again, we'll re-export at the
   old location (with a deprecation warning) for backwards compatibility, but
   might stop doing this in a future release.
+* ``beets.util.command_output`` now returns a named tuple of stdout and stderr
+  instead of only returning stdout. stdout can be accessed as a simple
+  attribute.
 
 For packagers:
 
