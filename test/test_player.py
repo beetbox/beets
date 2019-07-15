@@ -29,9 +29,8 @@ import time
 import yaml
 import tempfile
 from contextlib import contextmanager
-import random
 
-from beets.util import py3_path
+from beets.util import py3_path, bluelet
 from beetsplug import bpd
 import confuse
 
@@ -231,11 +230,6 @@ class MPCClient(object):
                 return line
 
 
-def start_beets(*args):
-    import beets.ui
-    beets.ui.main(list(args))
-
-
 def implements(commands, expectedFailure=False):  # noqa: N803
     def _test(self):
         with self.run_bpd() as client:
@@ -263,22 +257,18 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
         self.unload_plugins()
 
     @contextmanager
-    def run_bpd(self, host='localhost', port=None, password=None,
-                do_hello=True, second_client=False):
+    def run_bpd(self, host='localhost', password=None, do_hello=True,
+                second_client=False):
         """ Runs BPD in another process, configured with the same library
         database as we created in the setUp method. Exposes a client that is
         connected to the server, and kills the server at the end.
         """
-        # Choose a port (randomly) to avoid conflicts between parallel
-        # tests.
-        if not port:
-            port = 9876 + random.randint(0, 10000)
-
         # Create a config file:
         config = {
                 'pluginpath': [py3_path(self.temp_dir)],
                 'plugins': 'bpd',
-                'bpd': {'host': host, 'port': port, 'control_port': port + 1},
+                # use port 0 to let the OS choose a free port
+                'bpd': {'host': host, 'port': 0, 'control_port': 0},
         }
         if password:
             config['bpd']['password'] = password
@@ -289,28 +279,50 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
                 yaml.dump(config, Dumper=confuse.Dumper, encoding='utf-8'))
         config_file.close()
 
+        bluelet_listener = bluelet.Listener
+        @mock.patch("beets.util.bluelet.Listener")
+        def start_server(assigned_port, listener_patch):
+            """Start the bpd server, writing the port to `assigned_port`.
+            """
+            def listener_wrap(host, port):
+                """Wrap `bluelet.Listener`, writing the port to `assigend_port`.
+
+                `bluelet.Listener` has previously been saved to
+                `bluelet_listener` as this function will replace it at its
+                original location.
+                """
+                listener = bluelet_listener(host, port)
+                assigned_port.value = listener.sock.getsockname()[1]
+                return listener
+            listener_patch.side_effect = listener_wrap
+
+            import beets.ui
+            beets.ui.main([
+                '--library', self.config['library'].as_filename(),
+                '--directory', py3_path(self.libdir),
+                '--config', py3_path(config_file.name),
+                'bpd'
+            ])
+
         # Fork and launch BPD in the new process:
-        args = (
-            '--library', self.config['library'].as_filename(),
-            '--directory', py3_path(self.libdir),
-            '--config', py3_path(config_file.name),
-            'bpd'
-        )
-        server = mp.Process(target=start_beets, args=args)
+        assigned_port = mp.Value("I", 0)
+        server = mp.Process(target=start_server, args=(assigned_port,))
         server.start()
 
         # Wait until the socket is connected:
-        sock, sock2 = None, None
         for _ in range(20):
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            if sock.connect_ex((host, port)) == 0:
+            if assigned_port.value != 0:
+                # read which port has been assigned by the OS
+                port = assigned_port.value
                 break
-            else:
-                sock.close()
-                time.sleep(0.01)
+            time.sleep(0.01)
         else:
             raise RuntimeError('Timed out waiting for the BPD server')
 
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((host, port))
+
+        sock2 = None
         try:
             if second_client:
                 sock2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
