@@ -46,7 +46,7 @@ def call(args):
     Raise a AnalysisABSubmitError on failure.
     """
     try:
-        return util.command_output(args)
+        return util.command_output(args).stdout
     except subprocess.CalledProcessError as e:
         raise ABSubmitError(
             u'{0} exited with status {1}'.format(args[0], e.returncode)
