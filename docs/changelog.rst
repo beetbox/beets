@@ -80,6 +80,9 @@ For plugin developers:
   value.
   Thanks to :user:`zsinskri`.
   :bug:`3329`
+* There were sporadic failures in ``test.test_player``. Hopefully these are
+  fixed. If they resurface, please reopen the relevant issue.
+  :bug:`3309` :bug:`3330`
 
 For packagers:
 
