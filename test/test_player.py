@@ -324,19 +324,25 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
                 )
 
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect((host, port))
+            try:
+                sock.connect((host, port))
 
-            sock2 = None
-            if second_client:
-                sock2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock2.connect((host, port))
-                yield MPCClient(sock, do_hello), MPCClient(sock2, do_hello)
-            else:
-                yield MPCClient(sock, do_hello)
+                if second_client:
+                    sock2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    try:
+                        sock2.connect((host, port))
+                        yield (
+                            MPCClient(sock, do_hello),
+                            MPCClient(sock2, do_hello),
+                        )
+                    finally:
+                        sock2.close()
+
+                else:
+                    yield MPCClient(sock, do_hello)
+            finally:
+                sock.close()
         finally:
-            sock.close()
-            if sock2:
-                sock2.close()
             server.terminate()
             server.join(timeout=0.2)
 
