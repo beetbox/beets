@@ -310,21 +310,23 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
         ], assigned_port))
         server.start()
 
-        # Wait until the socket is connected:
-        for _ in range(20):
-            if assigned_port.value != 0:
-                # read which port has been assigned by the OS
-                port = assigned_port.value
-                break
-            time.sleep(0.01)
-        else:
-            raise RuntimeError('Timed out waiting for the BPD server')
-
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((host, port))
-
-        sock2 = None
         try:
+            # Wait until the socket is connected:
+            for _ in range(20):
+                if assigned_port.value != 0:
+                    # read which port has been assigned by the OS
+                    port = assigned_port.value
+                    break
+                time.sleep(0.01)
+            else:
+                raise RuntimeError(
+                    'Timed out waiting for the BPD server to start'
+                )
+
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((host, port))
+
+            sock2 = None
             if second_client:
                 sock2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock2.connect((host, port))
