@@ -252,9 +252,8 @@ def start_server(args, assigned_port, listener_patch):
         # `bluelet_listener` as this function will replace it at its
         # original location.
         listener = bluelet_listener(host, port)
-        # read which port has been assigned by the OS
-        # TODO: change to put_nowait. There should always be a free slot.
-        assigned_port.put(listener.sock.getsockname()[1])
+        # read port assigned by OS
+        assigned_port.put_nowait(listener.sock.getsockname()[1])
         return listener
     listener_patch.side_effect = listener_wrap
 
@@ -302,7 +301,7 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
         config_file.close()
 
         # Fork and launch BPD in the new process:
-        assigned_port = mp.Queue(1)
+        assigned_port = mp.Queue(2)  # 2 slots, `control_port` and `port`
         server = mp.Process(target=start_server, args=([
             '--library', self.config['library'].as_filename(),
             '--directory', py3_path(self.libdir),
@@ -312,12 +311,8 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
         server.start()
 
         try:
-            # TODO: ugly hack. remove
-            print("ignoring port in queue:", assigned_port.get(timeout=2))
-            # Wait until the socket is connected
-            port = assigned_port.get(timeout=2)
-            print("test bpd server on port", port)
-            time.sleep(0.1)
+            assigned_port.get(timeout=1)  # skip control_port
+            port = assigned_port.get(timeout=0.5)  # read port
 
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
