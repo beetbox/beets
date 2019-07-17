@@ -459,25 +459,27 @@ class FfmpegBackend(Backend):
             line_peak = self._find_line(
                 output,
                 "  {0} peak:".format(self._peak_method.capitalize()).encode(),
-                len(output) - 1, -1,
-                )
+                start_line=(len(output) - 1), step_size=-1,
+            )
             peak = self._parse_float(
                 output[self._find_line(
                     output, b"    Peak:",
                     line_peak,
-                )])
+                )]
+            )
             # convert TPFS -> part of FS
             peak = 10**(peak / 20)
 
         line_integrated_loudness = self._find_line(
             output, b"  Integrated loudness:",
-            len(output) - 1, -1,
-            )
+            start_line=(len(output) - 1), step_size=-1,
+        )
         gain = self._parse_float(
             output[self._find_line(
                 output, b"    I:",
                 line_integrated_loudness,
-            )])
+            )]
+        )
         # convert LUFS -> LU from target level
         gain = self._target_level - gain
 
@@ -487,8 +489,9 @@ class FfmpegBackend(Backend):
             gating_threshold = self._parse_float(
                 output[self._find_line(
                     output, b"    Threshold:",
-                    line_integrated_loudness,
-                )])
+                    start_line=line_integrated_loudness,
+                )]
+            )
             for line in output:
                 if not line.startswith(b"[Parsed_ebur128"):
                     continue
@@ -502,27 +505,27 @@ class FfmpegBackend(Backend):
             self._log.debug(
                 u"{0}: {1} blocks over {2} LUFS"
                 .format(item, n_blocks, gating_threshold)
-                )
+            )
 
         self._log.debug(
             u"{0}: gain {1} LU, peak {2}"
             .format(item, gain, peak)
-            )
+        )
 
         return Gain(gain, peak), n_blocks
 
-    def _find_line(self, output, search, start_index=0, step_size=1):
+    def _find_line(self, output, search, start_line=0, step_size=1):
         """Return index of line beginning with `search`.
 
-        Begins searching at index `start_index` in `output`.
+        Begins searching at index `start_line` in `output`.
         """
         end_index = len(output) if step_size > 0 else -1
-        for i in range(start_index, end_index, step_size):
+        for i in range(start_line, end_index, step_size):
             if output[i].startswith(search):
                 return i
         raise ReplayGainError(
             u"ffmpeg output: missing {0} after line {1}"
-            .format(repr(search), start_index)
+            .format(repr(search), start_line)
             )
 
     def _parse_float(self, line):
