@@ -306,7 +306,7 @@ class Bs1770gainBackend(Backend):
 
 # ffmpeg backend
 class FfmpegBackend(Backend):
-    """A replaygain backend using ffmpegs ebur128 filter.
+    """A replaygain backend using ffmpeg's ebur128 filter.
     """
     def __init__(self, config, log):
         super(FfmpegBackend, self).__init__(config, log)
@@ -342,7 +342,7 @@ class FfmpegBackend(Backend):
             )
 
         # check that peak_method is valid
-        valid_peak_method = ("true", "sample")
+        valid_peak_method = "true", "sample"
         if self._peak_method not in valid_peak_method:
             raise ui.UserError(
                 u"Selected ReplayGain peak method {0} is not supported. "
@@ -437,8 +437,8 @@ class FfmpegBackend(Backend):
         ]
 
     def _analyse_item(self, item, count_blocks=True):
-        """Analyse item. Returns a Pair (Gain object, number of gating
-        blocks above threshold).
+        """Analyse item. Return a pair of a Gain object and the number
+        of gating blocks above the threshold.
 
         If `count_blocks` is False, the number of gating blocks returned
         will be 0.
@@ -459,7 +459,7 @@ class FfmpegBackend(Backend):
             line_peak = self._find_line(
                 output,
                 "  {0} peak:".format(self._peak_method.capitalize()).encode(),
-                start_line=(len(output) - 1), step_size=-1,
+                start_line=len(output) - 1, step_size=-1,
             )
             peak = self._parse_float(
                 output[self._find_line(
@@ -472,7 +472,7 @@ class FfmpegBackend(Backend):
 
         line_integrated_loudness = self._find_line(
             output, b"  Integrated loudness:",
-            start_line=(len(output) - 1), step_size=-1,
+            start_line=len(output) - 1, step_size=-1,
         )
         gain = self._parse_float(
             output[self._find_line(
@@ -529,9 +529,10 @@ class FfmpegBackend(Backend):
             )
 
     def _parse_float(self, line):
-        """Extract a float.
+        """Extract a float from a key value pair in `line`.
 
-        Extract a float from a key value pair in `line`.
+        This format is expected: /[^:]:\s*value.*/, where `value` is
+        the float.
         """
         # extract value
         value = line.split(b":", 1)
@@ -543,7 +544,7 @@ class FfmpegBackend(Backend):
         value = value[1].lstrip()
         # strip unit
         value = value.split(b" ", 1)[0]
-        # cast value to as_type
+        # cast value to float
         try:
             return float(value)
         except ValueError:
