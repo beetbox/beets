@@ -12,8 +12,8 @@ Installation
 
 This plugin can use one of many backends to compute the ReplayGain values:
 GStreamer, mp3gain (and its cousin, aacgain), Python Audio Tools or ffmpeg.
-mp3gain can be easier to install but GStreamer, Audio Tools and ffmpeg support
-more audio formats.
+ffmpeg and mp3gain can be easier to install. mp3gain supports less audio formats
+then the other backend.
 
 Once installed, this plugin analyzes all files during the import process. This
 can be a slow process; to instead analyze after the fact, disable automatic
