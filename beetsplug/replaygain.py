@@ -531,7 +531,7 @@ class FfmpegBackend(Backend):
     def _parse_float(self, line):
         """Extract a float from a key value pair in `line`.
 
-        This format is expected: /[^:]:\s*value.*/, where `value` is
+        This format is expected: /[^:]:[[:space:]]*value.*/, where `value` is
         the float.
         """
         # extract value
