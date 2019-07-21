@@ -10,10 +10,10 @@ playback levels.
 Installation
 ------------
 
-This plugin can use one of three backends to compute the ReplayGain values:
-GStreamer, mp3gain (and its cousin, aacgain), Python Audio Tools. mp3gain
-can be easier to install but GStreamer and Audio Tools support more audio
-formats.
+This plugin can use one of many backends to compute the ReplayGain values:
+GStreamer, mp3gain (and its cousin, aacgain), Python Audio Tools or ffmpeg.
+ffmpeg and mp3gain can be easier to install. mp3gain supports less audio formats
+then the other backend.
 
 Once installed, this plugin analyzes all files during the import process. This
 can be a slow process; to instead analyze after the fact, disable automatic
@@ -75,6 +75,15 @@ On OS X, most of the dependencies can be installed with `Homebrew`_::
 
 .. _Python Audio Tools: http://audiotools.sourceforge.net
 
+ffmpeg
+``````
+
+This backend uses ffmpeg to calculate EBU R128 gain values.
+To use it, install the `ffmpeg`_ command-line tool and select the
+``ffmpeg`` backend in your config file.
+
+.. _ffmpeg: https://ffmpeg.org
+
 Configuration
 -------------
 
@@ -105,6 +114,11 @@ These options only work with the "command" backend:
 - **noclip**: Reduce the amount of ReplayGain adjustment to whatever amount
   would keep clipping from occurring.
   Default: ``yes``.
+
+This option only works with the "ffmpeg" backend:
+
+- **peak**: Either ``true`` (the default) or ``sample``. ``true`` is
+  more accurate but slower.
 
 Manual Analysis
 ---------------

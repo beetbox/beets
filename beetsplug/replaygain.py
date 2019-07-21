@@ -18,6 +18,7 @@ from __future__ import division, absolute_import, print_function
 import subprocess
 import os
 import collections
+import math
 import sys
 import warnings
 import xml.parsers.expat
@@ -64,9 +65,22 @@ def call(args, **kwargs):
         raise ReplayGainError(u"argument encoding failed")
 
 
+def db_to_lufs(db):
+    """Convert db to LUFS.
+
+    According to https://wiki.hydrogenaud.io/index.php?title=
+      ReplayGain_2.0_specification#Reference_level
+    """
+    return db - 107
+
+
 # Backend base and plumbing classes.
 
+# gain: in LU to reference level
+# peak: part of full scale (FS is 1.0)
 Gain = collections.namedtuple("Gain", "gain peak")
+# album_gain: Gain object
+# track_gains: list of Gain objects
 AlbumGain = collections.namedtuple("AlbumGain", "album_gain track_gains")
 
 
@@ -81,12 +95,20 @@ class Backend(object):
         self._log = log
 
     def compute_track_gain(self, items):
+        """Computes the track gain of the given tracks, returns a list
+        of Gain objects.
+        """
         raise NotImplementedError()
 
     def compute_album_gain(self, items):
-        # TODO: implement album gain in terms of track gain of the
-        # individual tracks which can be used for any backend.
+        """Computes the album gain of the given album, returns an
+        AlbumGain object.
+        """
         raise NotImplementedError()
+
+    def use_ebu_r128(self):
+        """Set this Backend up to use EBU R128."""
+        pass
 
 
 # bsg1770gain backend
@@ -276,6 +298,265 @@ class Bs1770gainBackend(Backend):
         if is_album:
             out.append(album_gain["album"])
         return out
+
+    def use_ebu_r128(self):
+        """Set this Backend up to use EBU R128."""
+        self.method = '--ebu'
+
+
+# ffmpeg backend
+class FfmpegBackend(Backend):
+    """A replaygain backend using ffmpeg's ebur128 filter.
+    """
+    def __init__(self, config, log):
+        super(FfmpegBackend, self).__init__(config, log)
+        config.add({
+            "peak": "true"
+        })
+        self._peak_method = config["peak"].as_str()
+        self._target_level = db_to_lufs(config['targetlevel'].as_number())
+        self._ffmpeg_path = "ffmpeg"
+
+        # check that ffmpeg is installed
+        try:
+            ffmpeg_version_out = call([self._ffmpeg_path, "-version"])
+        except OSError:
+            raise FatalReplayGainError(
+                u"could not find ffmpeg at {0}".format(self._ffmpeg_path)
+            )
+        incompatible_ffmpeg = True
+        for line in ffmpeg_version_out.stdout.splitlines():
+            if line.startswith(b"configuration:"):
+                if b"--enable-libebur128" in line:
+                    incompatible_ffmpeg = False
+            if line.startswith(b"libavfilter"):
+                version = line.split(b" ", 1)[1].split(b"/", 1)[0].split(b".")
+                version = tuple(map(int, version))
+                if version >= (6, 67, 100):
+                    incompatible_ffmpeg = False
+        if incompatible_ffmpeg:
+            raise FatalReplayGainError(
+                u"Installed FFmpeg version does not support ReplayGain."
+                u"calculation. Either libavfilter version 6.67.100 or above or"
+                u"the --enable-libebur128 configuration option is required."
+            )
+
+        # check that peak_method is valid
+        valid_peak_method = "true", "sample"
+        if self._peak_method not in valid_peak_method:
+            raise ui.UserError(
+                u"Selected ReplayGain peak method {0} is not supported. "
+                u"Please select one of: {1}".format(
+                    self._peak_method,
+                    u', '.join(valid_peak_method)
+                )
+            )
+
+    def compute_track_gain(self, items):
+        """Computes the track gain of the given tracks, returns a list
+        of Gain objects (the track gains).
+        """
+        gains = []
+        for item in items:
+            gains.append(
+                self._analyse_item(
+                    item,
+                    count_blocks=False,
+                )[0]  # take only the gain, discarding number of gating blocks
+            )
+        return gains
+
+    def compute_album_gain(self, items):
+        """Computes the album gain of the given album, returns an
+        AlbumGain object.
+        """
+        # analyse tracks
+        # list of track Gain objects
+        track_gains = []
+        # maximum peak
+        album_peak = 0
+        # sum of BS.1770 gating block powers
+        sum_powers = 0
+        # total number of BS.1770 gating blocks
+        n_blocks = 0
+
+        for item in items:
+            track_gain, track_n_blocks = self._analyse_item(item)
+
+            track_gains.append(track_gain)
+
+            # album peak is maximum track peak
+            album_peak = max(album_peak, track_gain.peak)
+
+            # prepare album_gain calculation
+            # total number of blocks is sum of track blocks
+            n_blocks += track_n_blocks
+
+            # convert `LU to target_level` -> LUFS
+            track_loudness = self._target_level - track_gain.gain
+            # This reverses ITU-R BS.1770-4 p. 6 equation (5) to convert
+            # from loudness to power. The result is the average gating
+            # block power.
+            track_power = 10**((track_loudness + 0.691) / 10)
+
+            # Weight that average power by the number of gating blocks to
+            # get the sum of all their powers. Add that to the sum of all
+            # block powers in this album.
+            sum_powers += track_power * track_n_blocks
+
+        # calculate album gain
+        if n_blocks > 0:
+            # compare ITU-R BS.1770-4 p. 6 equation (5)
+            # Album gain is the replaygain of the concatenation of all tracks.
+            album_gain = -0.691 + 10 * math.log10(sum_powers / n_blocks)
+        else:
+            album_gain = -70
+        # convert LUFS -> `LU to target_level`
+        album_gain = self._target_level - album_gain
+
+        self._log.debug(
+            u"{0}: gain {1} LU, peak {2}"
+            .format(items, album_gain, album_peak)
+            )
+
+        return AlbumGain(Gain(album_gain, album_peak), track_gains)
+
+    def _construct_cmd(self, item, peak_method):
+        """Construct the shell command to analyse items."""
+        return [
+            self._ffmpeg_path,
+            "-nostats",
+            "-hide_banner",
+            "-i",
+            item.path,
+            "-filter",
+            "ebur128=peak={0}".format(peak_method),
+            "-f",
+            "null",
+            "-",
+        ]
+
+    def _analyse_item(self, item, count_blocks=True):
+        """Analyse item. Return a pair of a Gain object and the number
+        of gating blocks above the threshold.
+
+        If `count_blocks` is False, the number of gating blocks returned
+        will be 0.
+        """
+        # call ffmpeg
+        self._log.debug(u"analyzing {0}".format(item))
+        cmd = self._construct_cmd(item, self._peak_method)
+        self._log.debug(
+            u'executing {0}', u' '.join(map(displayable_path, cmd))
+        )
+        output = call(cmd).stderr.splitlines()
+
+        # parse output
+
+        if self._peak_method == "none":
+            peak = 0
+        else:
+            line_peak = self._find_line(
+                output,
+                "  {0} peak:".format(self._peak_method.capitalize()).encode(),
+                start_line=len(output) - 1, step_size=-1,
+            )
+            peak = self._parse_float(
+                output[self._find_line(
+                    output, b"    Peak:",
+                    line_peak,
+                )]
+            )
+            # convert TPFS -> part of FS
+            peak = 10**(peak / 20)
+
+        line_integrated_loudness = self._find_line(
+            output, b"  Integrated loudness:",
+            start_line=len(output) - 1, step_size=-1,
+        )
+        gain = self._parse_float(
+            output[self._find_line(
+                output, b"    I:",
+                line_integrated_loudness,
+            )]
+        )
+        # convert LUFS -> LU from target level
+        gain = self._target_level - gain
+
+        # count BS.1770 gating blocks
+        n_blocks = 0
+        if count_blocks:
+            gating_threshold = self._parse_float(
+                output[self._find_line(
+                    output, b"    Threshold:",
+                    start_line=line_integrated_loudness,
+                )]
+            )
+            for line in output:
+                if not line.startswith(b"[Parsed_ebur128"):
+                    continue
+                if line.endswith(b"Summary:"):
+                    continue
+                line = line.split(b"M:", 1)
+                if len(line) < 2:
+                    continue
+                if self._parse_float(b"M: " + line[1]) >= gating_threshold:
+                    n_blocks += 1
+            self._log.debug(
+                u"{0}: {1} blocks over {2} LUFS"
+                .format(item, n_blocks, gating_threshold)
+            )
+
+        self._log.debug(
+            u"{0}: gain {1} LU, peak {2}"
+            .format(item, gain, peak)
+        )
+
+        return Gain(gain, peak), n_blocks
+
+    def _find_line(self, output, search, start_line=0, step_size=1):
+        """Return index of line beginning with `search`.
+
+        Begins searching at index `start_line` in `output`.
+        """
+        end_index = len(output) if step_size > 0 else -1
+        for i in range(start_line, end_index, step_size):
+            if output[i].startswith(search):
+                return i
+        raise ReplayGainError(
+            u"ffmpeg output: missing {0} after line {1}"
+            .format(repr(search), start_line)
+            )
+
+    def _parse_float(self, line):
+        """Extract a float from a key value pair in `line`.
+
+        This format is expected: /[^:]:[[:space:]]*value.*/, where `value` is
+        the float.
+        """
+        # extract value
+        value = line.split(b":", 1)
+        if len(value) < 2:
+            raise ReplayGainError(
+                u"ffmpeg ouput: expected key value pair, found {0}"
+                .format(line)
+                )
+        value = value[1].lstrip()
+        # strip unit
+        value = value.split(b" ", 1)[0]
+        # cast value to float
+        try:
+            return float(value)
+        except ValueError:
+            raise ReplayGainError(
+                u"ffmpeg output: expected float value, found {1}"
+                .format(value)
+                )
+
+    def use_ebu_r128(self):
+        """Set this Backend up to use EBU R128."""
+        self._target_level = -23
+        self._peak_method = "none"  # R128 tags do not need peak
 
 
 # mpgain/aacgain CLI tool backend.
@@ -828,7 +1109,10 @@ class ReplayGainPlugin(BeetsPlugin):
         "gstreamer": GStreamerBackend,
         "audiotools": AudioToolsBackend,
         "bs1770gain": Bs1770gainBackend,
+        "ffmpeg": FfmpegBackend,
     }
+
+    r128_backend_names = ["bs1770gain", "ffmpeg"]
 
     def __init__(self):
         super(ReplayGainPlugin, self).__init__()
@@ -1024,7 +1308,9 @@ class ReplayGainPlugin(BeetsPlugin):
                 u"Fatal replay gain error: {0}".format(e))
 
     def init_r128_backend(self):
-        backend_name = 'bs1770gain'
+        backend_name = self.config["backend"].as_str()
+        if backend_name not in self.r128_backend_names:
+            backend_name = "bs1770gain"
 
         try:
             self.r128_backend_instance = self.backends[backend_name](
@@ -1034,7 +1320,7 @@ class ReplayGainPlugin(BeetsPlugin):
             raise ui.UserError(
                 u'replaygain initialization failed: {0}'.format(e))
 
-        self.r128_backend_instance.method = '--ebu'
+        self.r128_backend_instance.use_ebu_r128()
 
     def imported(self, session, task):
         """Add replay gain info to items or albums of ``task``.

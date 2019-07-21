@@ -45,6 +45,8 @@ if has_program('bs1770gain', ['--replaygain']):
 else:
     LOUDNESS_PROG_AVAILABLE = False
 
+FFMPEG_AVAILABLE = has_program('ffmpeg', ['-version'])
+
 
 def reset_replaygain(item):
     item['rg_track_peak'] = None
@@ -203,6 +205,11 @@ class ReplayGainLdnsCliMalformedTest(TestHelper, unittest.TestCase):
                     'malformed XML' in line]
 
         self.assertEqual(len(matching), 2)
+
+
+@unittest.skipIf(not FFMPEG_AVAILABLE, u'ffmpeg cannot be found')
+class ReplayGainFfmpegTest(ReplayGainCliTestBase, unittest.TestCase):
+    backend = u'ffmpeg'
 
 
 def suite():
