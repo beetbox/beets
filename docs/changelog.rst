@@ -22,6 +22,9 @@ New features:
   level.
   Thanks to :user:`samuelnilsson`
   :bug:`293`
+* :doc:`/plugins/replaygain`: The new ``ffmpeg`` ReplayGain backend supports
+  ``R128_`` tags, just like the ``bs1770gain`` backend.
+  :bug:`3056`
 * A new :doc:`/plugins/parentwork` gets information about the original work,
   which is useful for classical music.
   Thanks to :user:`dosoe`.
