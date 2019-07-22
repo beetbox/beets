@@ -1164,10 +1164,11 @@ class ReplayGainPlugin(BeetsPlugin):
             'overwrite': False,
             'auto': True,
             'backend': u'command',
+            'per_disc': False,
+            'peak': 'true',
             'targetlevel': 89,
             'r128': ['Opus'],
-            'per_disc': False,
-            "peak": "true",
+            'r128_targetlevel': lufs_to_db(-23),
         })
 
         self.overwrite = self.config['overwrite'].get(bool)
@@ -1262,16 +1263,21 @@ class ReplayGainPlugin(BeetsPlugin):
     def tag_specific_values(self, items):
         """Return some tag specific values.
 
-        Returns a tuple (store_track_gain, store_album_gain).
+        Returns a tuple (store_track_gain, store_album_gain, target_level,
+        peak_method).
         """
         if any([self.should_use_r128(item) for item in items]):
             store_track_gain = self.store_track_r128_gain
             store_album_gain = self.store_album_r128_gain
+            target_level = self.config['r128_targetlevel'].as_number()
+            peak = Peak.none  # R128_* tags do not store the track/album peak
         else:
             store_track_gain = self.store_track_gain
             store_album_gain = self.store_album_gain
+            target_level = self.config['targetlevel'].as_number()
+            peak = self._peak_method
 
-        return store_track_gain, store_album_gain
+        return store_track_gain, store_album_gain, target_level, peak
 
     def handle_album(self, album, write, force=False):
         """Compute album and track replay gain store it in all of the
@@ -1295,7 +1301,7 @@ class ReplayGainPlugin(BeetsPlugin):
             )
 
         tag_vals = self.tag_specific_values(album.items())
-        store_track_gain, store_album_gain = tag_vals
+        store_track_gain, store_album_gain, target_level, peak = tag_vals
 
         discs = dict()
         if self.per_disc:
@@ -1309,9 +1315,7 @@ class ReplayGainPlugin(BeetsPlugin):
         for discnumber, items in discs.items():
             try:
                 album_gain = self.backend_instance.compute_album_gain(
-                    items,
-                    self.config['targetlevel'].as_number(),
-                    self._peak_method,
+                    items, target_level, peak
                 )
                 if len(album_gain.track_gains) != len(items):
                     raise ReplayGainError(
@@ -1344,13 +1348,11 @@ class ReplayGainPlugin(BeetsPlugin):
         self._log.info(u'analyzing {0}', item)
 
         tag_vals = self.tag_specific_values([item])
-        store_track_gain, store_album_gain = tag_vals
+        store_track_gain, store_album_gain, target_level, peak = tag_vals
 
         try:
             track_gains = self.backend_instance.compute_track_gain(
-                [item],
-                self.config['targetlevel'].as_number(),
-                self._peak_method,
+                [item], target_level, peak
             )
             if len(track_gains) != 1:
                 raise ReplayGainError(
