@@ -222,6 +222,10 @@ def sorted_walk(path, ignore=(), ignore_hidden=False, logger=None):
         for res in sorted_walk(cur, ignore, ignore_hidden, logger):
             yield res
 
+def pathlib_as_posix(path):
+    """Return the string representation of the path with forward (/)
+    slashes."""
+    return path.replace(b'\\', b'/')
 
 def mkdirall(path):
     """Make all the enclosing directories of path (like mkdir -p on the
