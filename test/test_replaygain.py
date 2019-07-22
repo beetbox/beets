@@ -179,11 +179,24 @@ class ReplayGainLdnsCliMalformedTest(TestHelper, unittest.TestCase):
 
         # Patch call to return nothing, bypassing the bs1770gain installation
         # check.
-        call_patch.return_value = None
-        self.load_plugins('replaygain')
+        call_patch.return_value = CommandOutput(stdout=b"", stderr=b"")
+        try:
+            self.load_plugins('replaygain')
+        except Exception:
+            import sys
+            exc_info = sys.exc_info()
+            try:
+                self.tearDown()
+            except Exception:
+                pass
+            six.reraise(exc_info[1], None, exc_info[2])
 
         for item in self.add_album_fixture(2).items():
             reset_replaygain(item)
+
+    def tearDown(self):
+        self.teardown_beets()
+        self.unload_plugins()
 
     @patch('beetsplug.replaygain.call')
     def test_malformed_output(self, call_patch):
