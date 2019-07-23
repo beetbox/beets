@@ -163,7 +163,7 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
                     try:
                         new_path = self.changes[beets.util.normpath(lookup)]
                     except KeyError:
-                        if self.config['forward_slash'].get():
+                        if self.config['forward_slash']:
                             line = pathlib_as_posix(line)
                         tempfp.write(line)
                     else:
@@ -176,7 +176,7 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
                         if is_relative:
                             new_path = os.path.relpath(new_path, base_dir)
                         line = line.replace(original_path, new_path)
-                        if self.config['forward_slash'].get():
+                        if self.config['forward_slash']:
                             line = pathlib_as_posix(line)
                         tempfp.write(line)
 
