@@ -42,6 +42,10 @@ New features:
   new ``discogs_albumid`` field from the Discogs API.
   Thanks to :user:`thedevilisinthedetails`.
   :bug:`465` :bug:`3322`
+* :doc:`/plugins/acousticbrainz`: The plugin now fetches two more additional
+  fields: ``moods_mirex`` and ``timbre``.
+  Thanks to :user:`malcops`.
+  :bug:`2860`
 
 Fixes:
 
