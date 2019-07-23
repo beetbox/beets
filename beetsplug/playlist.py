@@ -18,7 +18,7 @@ import os
 import fnmatch
 import tempfile
 import beets
-from beets.util import (pathlib_as_posix)
+from beets.util import pathlib_as_posix
 
 
 
