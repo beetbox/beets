@@ -224,7 +224,8 @@ def sorted_walk(path, ignore=(), ignore_hidden=False, logger=None):
 
 def pathlib_as_posix(path):
     """Return the string representation of the path with forward (/)
-    slashes."""
+    slashes.
+    """
     return path.replace(b'\\', b'/')
 
 def mkdirall(path):
