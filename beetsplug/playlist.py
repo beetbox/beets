@@ -21,7 +21,6 @@ import beets
 from beets.util import pathlib_as_posix
 
 
-
 class PlaylistQuery(beets.dbcore.Query):
     """Matches files listed by a playlist file.
     """
