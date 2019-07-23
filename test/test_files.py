@@ -194,6 +194,7 @@ class HelperTest(_common.TestCase):
         p = 'a/b/c'
         a = ['a', 'b', 'c']
         self.assertEqual(util.components(p), a)
+
     def test_forward_slash(self):
         p = r'C:\a\b\c'
         a = r'C:/a/b/c'
