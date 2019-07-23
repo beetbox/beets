@@ -209,7 +209,6 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 for path in m3us[m3u]:
                     if self.config['forward_slash'].get():
                         path = pathlib_as_posix(path)
-                    f.write(path)
-                    f.write(b'\n')
+                    f.write(path + b'\n')
 
         self._log.info(u"{0} playlists updated", len(self._matched_playlists))
