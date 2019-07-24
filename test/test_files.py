@@ -196,8 +196,8 @@ class HelperTest(_common.TestCase):
         self.assertEqual(util.components(p), a)
 
     def test_forward_slash(self):
-        p = r'C:\a\b\c'
-        a = r'C:/a/b/c'
+        p = br'C:\a\b\c'
+        a = br'C:/a/b/c'
         self.assertEqual(util.path_as_posix(p), a)
 
 
