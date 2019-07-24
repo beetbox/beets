@@ -227,8 +227,6 @@ def path_as_posix(path):
     """Return the string representation of the path with forward (/)
     slashes.
     """
-    if isinstance(path, str):
-        return path.replace('\\', '/')
     return path.replace(b'\\', b'/')
 
 
