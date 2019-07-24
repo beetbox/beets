@@ -49,4 +49,4 @@ other configuration options are:
 - **forward_slah**: Forces forward slashes in the generated playlist files.
   If you intend to use this plugin to generate playlists for MPD on
   Windows, set this to yes.
-  Default: Use system separator
+  Default: Use system separator.
