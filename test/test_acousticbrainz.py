@@ -95,7 +95,9 @@ class MapDataToSchemeTest(unittest.TestCase):
             ('danceable', 0.143928021193),
             ('rhythm', 'VienneseWaltz'),
             ('mood_electronic', 0.339881360531),
-            ('mood_happy', 0.0894767045975)
+            ('mood_happy', 0.0894767045975),
+            ('moods_mirex', "Cluster3"),
+            ('timbre', "bright")
         }
         self.assertEqual(mapping, expected)
 

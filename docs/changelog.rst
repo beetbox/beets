@@ -25,6 +25,13 @@ New features:
 * :doc:`/plugins/replaygain`: The new ``ffmpeg`` ReplayGain backend supports
   ``R128_`` tags, just like the ``bs1770gain`` backend.
   :bug:`3056`
+* :doc:`plugins/replaygain`: ``r128_targetlevel`` is a new configuration option
+  for the ReplayGain plugin: It defines the reference volume for files using
+  ``R128_`` tags. ``targetlevel`` only configures the reference volume for
+  ``REPLAYGAIN_`` files.
+  This also deprecates the ``bs1770gain`` ReplayGain backend's ``method``
+  option. Use ``targetlevel`` and ``r128_targetlevel`` instead.
+  :bug:`3065`
 * A new :doc:`/plugins/parentwork` gets information about the original work,
   which is useful for classical music.
   Thanks to :user:`dosoe`.
@@ -42,13 +49,15 @@ New features:
   new ``discogs_albumid`` field from the Discogs API.
   Thanks to :user:`thedevilisinthedetails`.
   :bug:`465` :bug:`3322`
-* :doc:`plugins/replaygain`: ``r128_targetlevel`` is a new configuration option
-  for the ReplayGain plugin: It defines the reference volume for files using
-  ``R128_`` tags. ``targetlevel`` only configures the reference volume for
-  ``REPLAYGAIN_`` files.
-  This also deprecates the ``bs1770gain`` ReplayGain backend's ``method``
-  option. Use ``targetlevel`` and ``r128_targetlevel`` instead.
-  :bug:`3065`
+* :doc:`/plugins/acousticbrainz`: The plugin now fetches two more additional
+  fields: ``moods_mirex`` and ``timbre``.
+  Thanks to :user:`malcops`.
+  :bug:`2860`
+* :doc:`/plugins/playlist` and :doc:`/plugins/smartplaylist`: A new
+  ``forward_slash`` config option facilitates compatibility with MPD on
+  Windows.
+  Thanks to :user:`MartyLake`.
+  :bug:`3331` :bug:`3334`
 
 Fixes:
 
