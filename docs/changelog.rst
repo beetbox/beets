@@ -25,6 +25,13 @@ New features:
 * :doc:`/plugins/replaygain`: The new ``ffmpeg`` ReplayGain backend supports
   ``R128_`` tags, just like the ``bs1770gain`` backend.
   :bug:`3056`
+* :doc:`plugins/replaygain`: ``r128_targetlevel`` is a new configuration option
+  for the ReplayGain plugin: It defines the reference volume for files using
+  ``R128_`` tags. ``targetlevel`` only configures the reference volume for
+  ``REPLAYGAIN_`` files.
+  This also deprecates the ``bs1770gain`` ReplayGain backend's ``method``
+  option. Use ``targetlevel`` and ``r128_targetlevel`` instead.
+  :bug:`3065`
 * A new :doc:`/plugins/parentwork` gets information about the original work,
   which is useful for classical music.
   Thanks to :user:`dosoe`.
@@ -95,6 +102,10 @@ For plugin developers:
 * There were sporadic failures in ``test.test_player``. Hopefully these are
   fixed. If they resurface, please reopen the relevant issue.
   :bug:`3309` :bug:`3330`
+* The internal structure of the replaygain plugin had some changes: There are no
+  longer separate R128 backend instances. Instead the targetlevel is passed to
+  ``compute_album_gain`` and ``compute_track_gain``.
+  :bug:`3065`
 
 For packagers:
 
