@@ -38,7 +38,9 @@ these fields:
 * ``mood_party``
 * ``mood_relaxed``
 * ``mood_sad``
+* ``moods_mirex``
 * ``rhythm``
+* ``timbre``
 * ``tonal``
 * ``voice_instrumental``
 
