@@ -195,6 +195,11 @@ class HelperTest(_common.TestCase):
         a = ['a', 'b', 'c']
         self.assertEqual(util.components(p), a)
 
+    def test_forward_slash(self):
+        p = br'C:\a\b\c'
+        a = br'C:/a/b/c'
+        self.assertEqual(util.path_as_posix(p), a)
+
 
 class AlbumFileTest(_common.TestCase):
     def setUp(self):
