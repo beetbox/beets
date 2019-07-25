@@ -46,7 +46,7 @@ other configuration options are:
   set it to ``playlist`` to use the playlist's parent directory or to
   ``library`` to use the library directory.
   Default: ``library``
-- **forward_slah**: Forces forward slashes in the generated playlist files.
+- **forward_slash**: Forces forward slashes in the generated playlist files.
   If you intend to use this plugin to generate playlists for MPD on
   Windows, set this to yes.
   Default: Use system separator.

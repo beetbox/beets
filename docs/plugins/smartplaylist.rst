@@ -14,7 +14,7 @@ Then configure your smart playlists like the following example::
     smartplaylist:
         relative_to: ~/Music
         playlist_dir: ~/.mpd/playlists
-        forward_slah: no
+        forward_slash: no
         playlists:
             - name: all.m3u
               query: ''
@@ -97,7 +97,7 @@ other configuration options are:
   directory. If you intend to use this plugin to generate playlists for MPD,
   point this to your MPD music directory.
   Default: Use absolute paths.
-- **forward_slah**: Forces forward slashes in the generated playlist files.
+- **forward_slash**: Forces forward slashes in the generated playlist files.
   If you intend to use this plugin to generate playlists for MPD on
   Windows, set this to yes.
   Default: Use system separator.
