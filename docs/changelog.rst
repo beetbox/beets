@@ -46,6 +46,11 @@ New features:
   fields: ``moods_mirex`` and ``timbre``.
   Thanks to :user:`malcops`.
   :bug:`2860`
+* :doc:`/plugins/playlist` and :doc:`/plugins/smartplaylist`: A new
+  ``forward_slash`` config option facilitates compatibility with MPD on
+  Windows.
+  Thanks to :user:`MartyLake`.
+  :bug:`3331` :bug:`3334`
 
 Fixes:
 
