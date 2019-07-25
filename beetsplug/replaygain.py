@@ -268,10 +268,11 @@ class Bs1770gainBackend(Backend):
         self._log.debug(u'analysis finished: {0}', output)
         results = self.parse_tool_output(output, path_list, is_album)
 
-        if gain_adjustment != 0:
-            for i in range(len(results)):
-                orig = results[i]
-                results[i] = Gain(orig.gain + gain_adjustment, orig.peak)
+        if gain_adjustment:
+            results = [
+                Gain(res.gain + gain_adjustment, res.peak)
+                for res in results
+            ]
 
         self._log.debug(u'{0} items, {1} results', len(items), len(results))
         return results
@@ -470,11 +471,7 @@ class FfmpegBackend(Backend):
         will be 0.
         """
         target_level_lufs = db_to_lufs(target_level)
-        peak_method = {
-            Peak.none: "none",
-            Peak.true: "true",
-            Peak.sample: "sample",
-        }[peak]
+        peak_method = peak.name
 
         # call ffmpeg
         self._log.debug(u"analyzing {0}".format(item))
@@ -486,7 +483,7 @@ class FfmpegBackend(Backend):
 
         # parse output
 
-        if peak is Peak.none:
+        if peak == Peak.none:
             peak = 0
         else:
             line_peak = self._find_line(

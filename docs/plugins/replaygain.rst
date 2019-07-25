@@ -125,13 +125,6 @@ This option only works with the "ffmpeg" backend:
 - **peak**: Either ``true`` (the default) or ``sample``. ``true`` is
   more accurate but slower.
 
-This option is deprecated:
-
-- **method**: The loudness scanning standard: either `replaygain` for
-  ReplayGain 2.0, `ebu` for EBU R128, or `atsc` for ATSC A/85. This dictates
-  the reference level: -18, -23, or -24 LUFS respectively. Only supported by
-  "bs1770gain" backend.
-
 Manual Analysis
 ---------------
 

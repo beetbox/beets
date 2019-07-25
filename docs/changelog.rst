@@ -44,7 +44,7 @@ New features:
   :bug:`465` :bug:`3322`
 * :doc:`plugins/replaygain`: ``r128_targetlevel`` is a new configuration option
   for the ReplayGain plugin: It defines the reference volume for files using
-  ``R128_`` tags. ``targtelevel`` only configures the reference volume for
+  ``R128_`` tags. ``targetlevel`` only configures the reference volume for
   ``REPLAYGAIN_`` files.
   This also deprecates the ``bs1770gain`` ReplayGain backend's ``method``
   option. Use ``targetlevel`` and ``r128_targetlevel`` instead.
