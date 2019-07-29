@@ -456,6 +456,7 @@ class FfmpegBackend(Backend):
             "-hide_banner",
             "-i",
             item.path,
+            "-map a:0",
             "-filter",
             "ebur128=peak={0}".format(peak_method),
             "-f",
