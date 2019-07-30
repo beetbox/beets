@@ -79,6 +79,9 @@ Fixes:
   :bug:`3301`
 * :doc:`plugins/replaygain`: Fix the storage format in R128 gain tags.
   :bug:`3311` :bug:`3314`
+* :doc:`/plugins/discogs`: Fixed a crash that occurred when the Master URI
+  isn't set
+  :bug:`2965` :bug:`3239`
 
 For plugin developers:
 
