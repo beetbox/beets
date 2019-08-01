@@ -7,8 +7,8 @@ the plugin can strip useless comments like "ripped by MyGreatRipper."
 
 The plugin can work in one of two modes:
 
-* ``fields`` - a blacklist, where you choose the tags you want to remove (used by default).
-* ``keep_fields`` -  a whitelist, where you instead specify the tags you want to keep.
+* ``fields``: A blacklist, where you choose the tags you want to remove (used by default).
+* ``keep_fields``: A whitelist, where you instead specify the tags you want to keep.
 
 To use the ``zero`` plugin, enable the plugin in your configuration
 (see :ref:`using-plugins`).
@@ -27,7 +27,7 @@ fields to nullify and the conditions for nullifying them:
   embedded in the media file.
 * Set ``keep_fields`` to *invert* the logic of the plugin. Only these fields
   will be kept; other fields will be removed. Remember to set only
-  ``fields`` or ``keep_fields`` -- not both!
+  ``fields`` or ``keep_fields``---not both!
 * To conditionally filter a field, use ``field: [regexp, regexp]`` to specify
   regular expressions.
 * By default this plugin only affects files' tags; the beets database is left
