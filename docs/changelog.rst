@@ -80,8 +80,10 @@ Fixes:
 * :doc:`plugins/replaygain`: Fix the storage format in R128 gain tags.
   :bug:`3311` :bug:`3314`
 * :doc:`/plugins/discogs`: Fixed a crash that occurred when the Master URI
-  isn't set
+  isn't set.
   :bug:`2965` :bug:`3239`
+* :doc:`/plugins/spotify`: Fix handling of year-only release dates 
+  returned by Spotify Albums API.
 
 For plugin developers:
 
