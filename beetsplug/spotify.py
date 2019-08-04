@@ -173,7 +173,7 @@ class SpotifyPlugin(BeetsPlugin):
             year, month = date_parts
             day = None
         elif release_date_precision == 'year':
-            year = date_parts
+            year = date_parts[0]
             month = None
             day = None
         else:
