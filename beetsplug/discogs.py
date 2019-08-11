@@ -38,6 +38,8 @@ from string import ascii_lowercase
 
 
 USER_AGENT = u'beets/{0} +https://beets.io/'.format(beets.__version__)
+API_KEY    = 'rAzVUQYRaoFjeBjyWuWZ'
+API_SECRET = 'plxtUTqoCzwxZpqdPysCwGuBSmZNdZVy'
 
 # Exceptions that discogs_client should really handle but does not.
 CONNECTION_ERRORS = (ConnectionError, socket.error, http_client.HTTPException,
@@ -50,8 +52,8 @@ class DiscogsPlugin(BeetsPlugin):
     def __init__(self):
         super(DiscogsPlugin, self).__init__()
         self.config.add({
-            'apikey': 'rAzVUQYRaoFjeBjyWuWZ',
-            'apisecret': 'plxtUTqoCzwxZpqdPysCwGuBSmZNdZVy',
+            'apikey': API_KEY,
+            'apisecret': API_SECRET,
             'tokenfile': 'discogs_token.json',
             'source_weight': 0.5,
             'user_token': '',
