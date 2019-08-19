@@ -241,7 +241,8 @@ def show_change(cur_artist, cur_album, match):
             if mediums and mediums > 1:
                 return u'{0}-{1}'.format(medium, medium_index)
             else:
-                return six.text_type(medium_index or index)
+                return six.text_type(medium_index if medium_index is not None
+                                     else index)
         else:
             return six.text_type(index)
 
