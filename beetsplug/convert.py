@@ -170,11 +170,12 @@ class ConvertPlugin(BeetsPlugin):
         cmd.parser.add_option('-y', '--yes', action='store_true', dest='yes',
                               help=u'do not ask for confirmation')
         cmd.parser.add_option('-l', '--link', action='store_true', dest='link',
-                              help=u'symlink files that do not need transcoding. \
-                              Don\'t use with \'embed\'.')
-        cmd.parser.add_option('-H', '--hardlink', action='store_true', dest='hardlink',
-                              help=u'hardlink files that do not need transcoding. \
-                              Overrides --link. Don\'t use with \'embed\'.')
+                              help=u'symlink files that do not \
+                              need transcoding.')
+        cmd.parser.add_option('-H', '--hardlink', action='store_true',
+                              dest='hardlink',
+                              help=u'hardlink files that do not \
+                              need transcoding. Overrides --link.')
         cmd.parser.add_album_option()
         cmd.func = self.convert_func
         return [cmd]
@@ -306,6 +307,8 @@ class ConvertPlugin(BeetsPlugin):
                                    util.displayable_path(original))
                     util.move(item.path, original)
 
+            linked = False
+
             if should_transcode(item, fmt):
                 try:
                     self.encode(command, original, converted, pretend)
@@ -322,6 +325,7 @@ class ConvertPlugin(BeetsPlugin):
                         self._log.info(u'Hardlinking {0}',
                                        util.displayable_path(item.path))
                         util.hardlink(original, converted)
+                        linked = True
                 elif link:
                     if pretend:
                         self._log.info(u'ln -s {0} {1}',
@@ -332,6 +336,7 @@ class ConvertPlugin(BeetsPlugin):
                         self._log.info(u'Linking {0}',
                                        util.displayable_path(item.path))
                         util.link(original, converted)
+                        linked = True
                 else:
                     if pretend:
                         self._log.info(u'cp {0} {1}',
@@ -360,7 +365,7 @@ class ConvertPlugin(BeetsPlugin):
                 item.read()
                 item.store()  # Store new path and audio data.
 
-            if self.config['embed']:
+            if self.config['embed'] and not linked:
                 album = item.get_album()
                 if album and album.artpath:
                     self._log.debug(u'embedding album art from {}',
@@ -479,13 +484,18 @@ class ConvertPlugin(BeetsPlugin):
 
         if opts.link is not None:
             link = opts.link
+
+            if opts.hardlink is not None:
+                hardlink = opts.hardlink
+            else:
+                hardlink = self.config['hardlink'].get(bool) and not link
         else:
             link = self.config['link'].get(bool)
 
-        if opts.hardlink is not None:
-            hardlink = opts.hardlink
-        else:
-            hardlink = self.config['hardlink'].get(bool)
+            if opts.hardlink is not None:
+                hardlink = opts.hardlink
+            else:
+                hardlink = self.config['hardlink'].get(bool)
 
         if opts.album:
             albums = lib.albums(ui.decargs(args))
@@ -507,7 +517,8 @@ class ConvertPlugin(BeetsPlugin):
 
         if opts.album and self.config['copy_album_art']:
             for album in albums:
-                self.copy_album_art(album, dest, path_formats, pretend, link, hardlink)
+                self.copy_album_art(album, dest, path_formats, pretend,
+                                    link, hardlink)
 
         convert = [self.convert_item(dest,
                                      opts.keep_new,
