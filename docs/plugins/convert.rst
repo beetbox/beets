@@ -48,6 +48,10 @@ To test your configuration without taking any actions, use the ``--pretend``
 flag. The plugin will print out the commands it will run instead of executing
 them.
 
+By default, files that do not need to be transcoded will be copied to their
+destination. Passing the ``-l`` (``--link``) flag creates symbolic links
+instead. Refer to the ``link`` option below for potential issues with this.
+
 
 Configuration
 -------------
@@ -93,6 +97,13 @@ file. The available options are:
 - **threads**: The number of threads to use for parallel encoding.
   By default, the plugin will detect the number of processors available and use
   them all.
+- **link**: By default, files that do not need to be transcoded will be copied
+  to their destination. This option creates symbolic links instead. Note that
+  options such as ``embed`` that modify the output files after the transcoding
+  step will cause the original files to be modified as well if ``link`` is
+  enabled. For this reason, it is highly recommended not use to ``link`` and
+  ``embed`` at the same time.
+  Default: ``false``.
 
 You can also configure the format to use for transcoding (see the next
 section):
