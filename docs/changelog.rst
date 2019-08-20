@@ -14,6 +14,10 @@ New features:
 * :doc:`/plugins/convert`: Added new ``-l`` (``--link``) flag and ``link`` option
   which symlinks files that do not need to be converted instead of copying them.
   :bug:`2324`
+* :doc:`/plugins/convert`: Added new ``-H`` (``--hardlink``) flag and ``hardlink``
+  option which hardlinks files that do not need to be converted
+  instead of copying them.
+  :bug:`2324`
 * :doc:`/plugins/bpd`: BPD now supports most of the features of version 0.16
   of the MPD protocol. This is enough to get it talking to more complicated
   clients like ncmpcpp, but there are still some incompatibilities, largely due

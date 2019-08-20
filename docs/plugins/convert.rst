@@ -50,7 +50,9 @@ them.
 
 By default, files that do not need to be transcoded will be copied to their
 destination. Passing the ``-l`` (``--link``) flag creates symbolic links
-instead. Refer to the ``link`` option below for potential issues with this.
+instead, passing ``-H`` (``--hardlink``) creates hard links.
+Refer to the ``link`` and ``hardlink`` options below
+for potential issues with this.
 
 
 Configuration
@@ -103,6 +105,15 @@ file. The available options are:
   step will cause the original files to be modified as well if ``link`` is
   enabled. For this reason, it is highly recommended not use to ``link`` and
   ``embed`` at the same time.
+  Default: ``false``.
+- **hardlink**: By default, files that do not need to be transcoded will be
+  copied to their destination. This option creates hard links instead. Note that
+  options such as ``embed`` that modify the output files after the transcoding
+  step will cause the original files to be modified as well if ``hardlink`` is
+  enabled. For this reason, it is highly recommended not use to ``hardlink`` and
+  ``embed`` at the same time.
+  This option overrides ``link``. Only works when converting to a directory
+  on the same filesystem as the library.
   Default: ``false``.
 
 You can also configure the format to use for transcoding (see the next
