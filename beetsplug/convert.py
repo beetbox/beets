@@ -114,6 +114,7 @@ class ConvertPlugin(BeetsPlugin):
         self.config.add({
             u'dest': None,
             u'pretend': False,
+            u'link': False,
             u'threads': util.cpu_count(),
             u'format': u'mp3',
             u'id3v23': u'inherit',
@@ -167,6 +168,9 @@ class ConvertPlugin(BeetsPlugin):
                               help=u'set the target format of the tracks')
         cmd.parser.add_option('-y', '--yes', action='store_true', dest='yes',
                               help=u'do not ask for confirmation')
+        cmd.parser.add_option('-l', '--link', action='store_true', dest='link',
+                              help=u'symlink files that do not need transcoding. \
+                              Don\'t use with \'embed\'.')
         cmd.parser.add_album_option()
         cmd.func = self.convert_func
         return [cmd]
@@ -251,7 +255,7 @@ class ConvertPlugin(BeetsPlugin):
                            util.displayable_path(source))
 
     def convert_item(self, dest_dir, keep_new, path_formats, fmt,
-                     pretend=False):
+                     pretend=False, link=False):
         """A pipeline thread that converts `Item` objects from a
         library.
         """
@@ -304,15 +308,26 @@ class ConvertPlugin(BeetsPlugin):
                 except subprocess.CalledProcessError:
                     continue
             else:
-                if pretend:
-                    self._log.info(u'cp {0} {1}',
-                                   util.displayable_path(original),
-                                   util.displayable_path(converted))
+                if link:
+                    if pretend:
+                        self._log.info(u'ln -s {0} {1}',
+                                       util.displayable_path(original),
+                                       util.displayable_path(converted))
+                    else:
+                        # No transcoding necessary.
+                        self._log.info(u'Linking {0}',
+                                       util.displayable_path(item.path))
+                        util.link(original, converted)
                 else:
-                    # No transcoding necessary.
-                    self._log.info(u'Copying {0}',
-                                   util.displayable_path(item.path))
-                    util.copy(original, converted)
+                    if pretend:
+                        self._log.info(u'cp {0} {1}',
+                                       util.displayable_path(original),
+                                       util.displayable_path(converted))
+                    else:
+                        # No transcoding necessary.
+                        self._log.info(u'Copying {0}',
+                                       util.displayable_path(item.path))
+                        util.copy(original, converted)
 
             if pretend:
                 continue
@@ -346,7 +361,8 @@ class ConvertPlugin(BeetsPlugin):
                 plugins.send('after_convert', item=item,
                              dest=converted, keepnew=False)
 
-    def copy_album_art(self, album, dest_dir, path_formats, pretend=False):
+    def copy_album_art(self, album, dest_dir, path_formats, pretend=False,
+                       link=False):
         """Copies or converts the associated cover art of the album. Album must
         have at least one track.
         """
@@ -399,15 +415,26 @@ class ConvertPlugin(BeetsPlugin):
             if not pretend:
                 ArtResizer.shared.resize(maxwidth, album.artpath, dest)
         else:
-            if pretend:
-                self._log.info(u'cp {0} {1}',
-                               util.displayable_path(album.artpath),
-                               util.displayable_path(dest))
+            if link:
+                if pretend:
+                    self._log.info(u'ln -s {0} {1}',
+                                   util.displayable_path(album.artpath),
+                                   util.displayable_path(dest))
+                else:
+                    self._log.info(u'Linking cover art from {0} to {1}',
+                                   util.displayable_path(album.artpath),
+                                   util.displayable_path(dest))
+                    util.link(album.artpath, dest)
             else:
-                self._log.info(u'Copying cover art from {0} to {1}',
-                               util.displayable_path(album.artpath),
-                               util.displayable_path(dest))
-                util.copy(album.artpath, dest)
+                if pretend:
+                    self._log.info(u'cp {0} {1}',
+                                   util.displayable_path(album.artpath),
+                                   util.displayable_path(dest))
+                else:
+                    self._log.info(u'Copying cover art from {0} to {1}',
+                                   util.displayable_path(album.artpath),
+                                   util.displayable_path(dest))
+                    util.copy(album.artpath, dest)
 
     def convert_func(self, lib, opts, args):
         dest = opts.dest or self.config['dest'].get()
@@ -425,6 +452,11 @@ class ConvertPlugin(BeetsPlugin):
             pretend = opts.pretend
         else:
             pretend = self.config['pretend'].get(bool)
+
+        if opts.link is not None:
+            link = opts.link
+        else:
+            link = self.config['link'].get(bool)
 
         if opts.album:
             albums = lib.albums(ui.decargs(args))
@@ -446,13 +478,14 @@ class ConvertPlugin(BeetsPlugin):
 
         if opts.album and self.config['copy_album_art']:
             for album in albums:
-                self.copy_album_art(album, dest, path_formats, pretend)
+                self.copy_album_art(album, dest, path_formats, pretend, link)
 
         convert = [self.convert_item(dest,
                                      opts.keep_new,
                                      path_formats,
                                      fmt,
-                                     pretend)
+                                     pretend,
+                                     link)
                    for _ in range(threads)]
         pipe = util.pipeline.Pipeline([iter(items), convert])
         pipe.run_parallel()
