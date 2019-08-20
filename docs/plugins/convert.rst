@@ -103,15 +103,15 @@ file. The available options are:
   to their destination. This option creates symbolic links instead. Note that
   options such as ``embed`` that modify the output files after the transcoding
   step will cause the original files to be modified as well if ``link`` is
-  enabled. For this reason, it is highly recommended not use to ``link`` and
-  ``embed`` at the same time.
+  enabled. For this reason, album-art embedding is disabled
+  for files that are linked.
   Default: ``false``.
 - **hardlink**: By default, files that do not need to be transcoded will be
   copied to their destination. This option creates hard links instead. Note that
   options such as ``embed`` that modify the output files after the transcoding
   step will cause the original files to be modified as well if ``hardlink`` is
-  enabled. For this reason, it is highly recommended not use to ``hardlink`` and
-  ``embed`` at the same time.
+  enabled. For this reason, album-art embedding is disabled
+  for files that are linked.
   This option overrides ``link``. Only works when converting to a directory
   on the same filesystem as the library.
   Default: ``false``.
