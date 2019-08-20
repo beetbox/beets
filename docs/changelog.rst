@@ -86,6 +86,9 @@ Fixes:
   returned by Spotify Albums API.
   Thanks to :user:`rhlahuja`.
   :bug:`3343`
+* Fixed a bug that caused the UI to display incorrect track numbers for tracks
+  with index 0 when the ``per_disc_numbering`` option was set.
+  :bug:`3346`
 
 For plugin developers:
 
