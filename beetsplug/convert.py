@@ -307,45 +307,35 @@ class ConvertPlugin(BeetsPlugin):
                                    util.displayable_path(original))
                     util.move(item.path, original)
 
-            linked = False
-
             if should_transcode(item, fmt):
+                linked = False
                 try:
                     self.encode(command, original, converted, pretend)
                 except subprocess.CalledProcessError:
                     continue
             else:
-                if hardlink:
-                    if pretend:
-                        self._log.info(u'ln {0} {1}',
-                                       util.displayable_path(original),
-                                       util.displayable_path(converted))
-                    else:
-                        # No transcoding necessary.
-                        self._log.info(u'Hardlinking {0}',
-                                       util.displayable_path(item.path))
-                        util.hardlink(original, converted)
-                        linked = True
-                elif link:
-                    if pretend:
-                        self._log.info(u'ln -s {0} {1}',
-                                       util.displayable_path(original),
-                                       util.displayable_path(converted))
-                    else:
-                        # No transcoding necessary.
-                        self._log.info(u'Linking {0}',
-                                       util.displayable_path(item.path))
-                        util.link(original, converted)
-                        linked = True
+                linked = link or hardlink
+                if pretend:
+                    msg = 'ln' if hardlink else ('ln -s' if link else 'cp')
+
+                    self._log.info(u'{2} {0} {1}',
+                                   util.displayable_path(original),
+                                   util.displayable_path(converted),
+                                   msg)
                 else:
-                    if pretend:
-                        self._log.info(u'cp {0} {1}',
-                                       util.displayable_path(original),
-                                       util.displayable_path(converted))
+                    # No transcoding necessary.
+                    msg = 'Hardlinking' if hardlink \
+                        else ('Linking' if link else 'Copying')
+
+                    self._log.info(u'{1} {0}',
+                                   util.displayable_path(item.path),
+                                   msg)
+
+                    if hardlink:
+                        util.hardlink(original, converted)
+                    elif link:
+                        util.link(original, converted)
                     else:
-                        # No transcoding necessary.
-                        self._log.info(u'Copying {0}',
-                                       util.displayable_path(item.path))
                         util.copy(original, converted)
 
             if pretend:
@@ -434,35 +424,26 @@ class ConvertPlugin(BeetsPlugin):
             if not pretend:
                 ArtResizer.shared.resize(maxwidth, album.artpath, dest)
         else:
-            if hardlink:
-                if pretend:
-                    self._log.info(u'ln {0} {1}',
-                                   util.displayable_path(album.artpath),
-                                   util.displayable_path(dest))
-                else:
-                    self._log.info(u'Hardlinking cover art from {0} to {1}',
-                                   util.displayable_path(album.artpath),
-                                   util.displayable_path(dest))
-                    util.hardlink(album.artpath, dest)
-            elif link:
-                if pretend:
-                    self._log.info(u'ln -s {0} {1}',
-                                   util.displayable_path(album.artpath),
-                                   util.displayable_path(dest))
-                else:
-                    self._log.info(u'Linking cover art from {0} to {1}',
-                                   util.displayable_path(album.artpath),
-                                   util.displayable_path(dest))
-                    util.link(album.artpath, dest)
+            if pretend:
+                msg = 'ln' if hardlink else ('ln -s' if link else 'cp')
+
+                self._log.info(u'{2} {0} {1}',
+                               util.displayable_path(album.artpath),
+                               util.displayable_path(dest),
+                               msg)
             else:
-                if pretend:
-                    self._log.info(u'cp {0} {1}',
-                                   util.displayable_path(album.artpath),
-                                   util.displayable_path(dest))
+                msg = 'Hardlinking' if hardlink \
+                    else ('Linking' if link else 'Copying')
+
+                self._log.info(u'{2} cover art from {0} to {1}',
+                               util.displayable_path(album.artpath),
+                               util.displayable_path(dest),
+                               msg)
+                if hardlink:
+                    util.hardlink(album.artpath, dest)
+                elif link:
+                    util.link(album.artpath, dest)
                 else:
-                    self._log.info(u'Copying cover art from {0} to {1}',
-                                   util.displayable_path(album.artpath),
-                                   util.displayable_path(dest))
                     util.copy(album.artpath, dest)
 
     def convert_func(self, lib, opts, args):
@@ -482,20 +463,15 @@ class ConvertPlugin(BeetsPlugin):
         else:
             pretend = self.config['pretend'].get(bool)
 
-        if opts.link is not None:
+        if opts.hardlink is not None:
+            hardlink = opts.hardlink
+            link = False
+        elif opts.link is not None:
+            hardlink = False
             link = opts.link
-
-            if opts.hardlink is not None:
-                hardlink = opts.hardlink
-            else:
-                hardlink = self.config['hardlink'].get(bool) and not link
         else:
+            hardlink = self.config['hardlink'].get(bool)
             link = self.config['link'].get(bool)
-
-            if opts.hardlink is not None:
-                hardlink = opts.hardlink
-            else:
-                hardlink = self.config['hardlink'].get(bool)
 
         if opts.album:
             albums = lib.albums(ui.decargs(args))

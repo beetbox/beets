@@ -51,8 +51,8 @@ them.
 By default, files that do not need to be transcoded will be copied to their
 destination. Passing the ``-l`` (``--link``) flag creates symbolic links
 instead, passing ``-H`` (``--hardlink``) creates hard links.
-Refer to the ``link`` and ``hardlink`` options below
-for potential issues with this.
+Note that album art embedding is disabled for files that are linked.
+Refer to the ``link`` and ``hardlink`` options below.
 
 
 Configuration
@@ -106,12 +106,8 @@ file. The available options are:
   enabled. For this reason, album-art embedding is disabled
   for files that are linked.
   Default: ``false``.
-- **hardlink**: By default, files that do not need to be transcoded will be
-  copied to their destination. This option creates hard links instead. Note that
-  options such as ``embed`` that modify the output files after the transcoding
-  step will cause the original files to be modified as well if ``hardlink`` is
-  enabled. For this reason, album-art embedding is disabled
-  for files that are linked.
+- **hardlink**: This options works similar to ``link``, but it creates
+  hard links instead of symlinks.
   This option overrides ``link``. Only works when converting to a directory
   on the same filesystem as the library.
   Default: ``false``.

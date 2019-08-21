@@ -11,12 +11,10 @@ New features:
   (the MBID), and ``work_disambig`` (the disambiguation string).
   Thanks to :user:`dosoe`.
   :bug:`2580` :bug:`3272`
-* :doc:`/plugins/convert`: Added new ``-l`` (``--link``) flag and ``link`` option
-  which symlinks files that do not need to be converted instead of copying them.
-  :bug:`2324`
-* :doc:`/plugins/convert`: Added new ``-H`` (``--hardlink``) flag and ``hardlink``
-  option which hardlinks files that do not need to be converted
-  instead of copying them.
+* :doc:`/plugins/convert`: Added new ``-l`` (``--link``) flag and ``link``
+  option as well as the ``-H`` (``--hardlink``) flag and ``hardlink``
+  option which symlinks or hardlinks files that do not need to
+  be converted instead of copying them.
   :bug:`2324`
 * :doc:`/plugins/bpd`: BPD now supports most of the features of version 0.16
   of the MPD protocol. This is enough to get it talking to more complicated
