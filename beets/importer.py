@@ -754,7 +754,8 @@ class ImportTask(BaseImportTask):
             self.record_replaced(lib)
             self.remove_replaced(lib)
             self.album = lib.add_album(self.imported_items())
-            self.album.set_parse('data_source', self.imported_items()[0].data_source)
+            if self.imported_items()[0].data_source:
+                self.album.data_source = self.imported_items()[0].data_source
             self.reimport_metadata(lib)
 
     def record_replaced(self, lib):
