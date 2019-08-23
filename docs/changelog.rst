@@ -63,6 +63,9 @@ New features:
   Windows.
   Thanks to :user:`MartyLake`.
   :bug:`3331` :bug:`3334`
+* The 'data_source' field is now also applied as an album-level flexible
+  attribute during imports, allowing for more refined album level searches.
+  :bug:`3350` :bug:`1693`
 
 Fixes:
 
