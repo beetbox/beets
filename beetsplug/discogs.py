@@ -292,7 +292,7 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.warning(u"Release does not contain the required fields")
             return None
 
-        artist, artist_id = self.get_artist([a.data for a in result.artists])
+        artist, artist_id, _ = self.get_artist([a.data for a in result.artists], [a.data for a in result.credits] if result.data.get('credits') else None)
         album = re.sub(r' +', ' ', result.title)
         album_id = result.data['id']
         # Use `.data` to access the tracklist directly instead of the
@@ -330,6 +330,12 @@ class DiscogsPlugin(BeetsPlugin):
         # Explicitly set the `media` for the tracks, since it is expected by
         # `autotag.apply_metadata`, and set `medium_total`.
         for track in tracks:
+            if artist and not track.artist and not va:
+                # If a track artist isn't set, use the album artist, but we
+                # still need to append any featuring artists to that.
+                track.artist = artist
+                if track.extraartist:
+                    track.artist += ' ' + track.extraartist
             track.media = media
             track.medium_total = mediums.count(track.medium)
             # Discogs does not have track IDs. Invent our own IDs as proposed
@@ -368,7 +374,7 @@ class DiscogsPlugin(BeetsPlugin):
         else:
             return None
 
-    def get_artist(self, artists):
+    def get_artist(self, artists, extraartists=None):
         """Returns an artist string (all artists) and an artist_id (the main
         artist) for a list of discogs album or track artists.
         """
@@ -385,8 +391,29 @@ class DiscogsPlugin(BeetsPlugin):
             bits.append(name)
             if artist['join'] and i < len(artists) - 1:
                 bits.append(artist['join'])
+
         artist = ' '.join(bits).replace(' ,', ',') or None
-        return artist, artist_id
+
+        extraartist = None
+        feats = []
+        if extraartists:
+            for extraartist in extraartists:
+                # Ignoring other roles for now, i.e. Producer
+                if extraartist['role'] == 'Featuring':
+                    name = extraartist['name']
+                    # Strip disambiguation number.
+                    name = re.sub(r' \(\d+\)$', '', name)
+                    # Move articles to the front.
+                    name = re.sub(r'(?i)^(.*?), (a|an|the)$', r'\2 \1', name)
+                    feats.append(name)
+
+            if feats:
+                extraartist = 'feat. ' + ', '.join(feats)
+
+        if artist and extraartist:
+            artist = artist + ' ' + extraartist
+
+        return artist, artist_id, extraartist
 
     def get_tracks(self, tracklist):
         """Returns a list of TrackInfo objects for a discogs tracklist.
@@ -551,12 +578,14 @@ class DiscogsPlugin(BeetsPlugin):
         title = track['title']
         track_id = None
         medium, medium_index, _ = self.get_track_index(track['position'])
-        artist, artist_id = self.get_artist(track.get('artists', []))
+        artist, artist_id, extraartist = self.get_artist(track.get('artists', []), track.get('extraartists', []))
         length = self.get_track_length(track['duration'])
-        return TrackInfo(title, track_id, artist=artist, artist_id=artist_id,
-                         length=length, index=index,
-                         medium=medium, medium_index=medium_index,
-                         artist_sort=None, disctitle=None, artist_credit=None)
+        trackinfo = TrackInfo(title, track_id, artist=artist, artist_id=artist_id,
+                              length=length, index=index,
+                              medium=medium, medium_index=medium_index,
+                              artist_sort=None, disctitle=None, artist_credit=None)
+        trackinfo.extraartist = extraartist
+        return trackinfo
 
     def get_track_index(self, position):
         """Returns the medium, medium index and subtrack index for a discogs

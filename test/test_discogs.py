@@ -68,11 +68,12 @@ class DGAlbumInfoTest(_common.TestCase):
                    title=data['title'],
                    artists=[Bag(data=d) for d in data['artists']])
 
-    def _make_track(self, title, position='', duration='', type_=None):
+    def _make_track(self, title, position='', duration='', type_=None, extraartists=None):
         track = {
             'title': title,
             'position': position,
-            'duration': duration
+            'duration': duration,
+            'extraartists': extraartists or [],
         }
         if type_ is not None:
             # Test samples on discogs_client do not have a 'type_' field, but
@@ -345,6 +346,22 @@ class DGAlbumInfoTest(_common.TestCase):
                       artists=[Bag(data=d) for d in data['artists']])
         d = DiscogsPlugin().get_album_info(release)
         self.assertEqual(d.artist, 'ARTIST NAME')
+        self.assertEqual(d.album, 'TITLE')
+        self.assertEqual(len(d.tracks), 1)
+
+    def test_parse_with_featuring(self):
+        """Test parsing of a release with featuring artists."""
+        data = {'id': 123,
+                'tracklist': [self._make_track('A', '1', '01:01', extraartists=[{'name': 'ANOTHER ARTIST NAME', 'id': 320, 'role': 'Featuring'}])],
+                'artists': [{'name': 'ARTIST NAME', 'id': 321, 'join': ''}],
+                'title': 'TITLE'}
+        release = Bag(data=data,
+                      title=data['title'],
+                      artists=[Bag(data=d) for d in data['artists']])
+        d = DiscogsPlugin().get_album_info(release)
+        self.assertEqual(d.artist, 'ARTIST NAME')
+        print(d.tracks[0])
+        self.assertEqual(d.tracks[0].artist, 'ARTIST NAME feat. ANOTHER ARTIST NAME')
         self.assertEqual(d.album, 'TITLE')
         self.assertEqual(len(d.tracks), 1)
 
