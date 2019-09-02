@@ -100,7 +100,7 @@ class DeezerPlugin(BeetsPlugin):
         ).json()['data']
         tracks = []
         medium_totals = collections.defaultdict(int)
-        for i, track_data in enumerate(tracks_data):
+        for i, track_data in enumerate(tracks_data, start=1):
             track = self._get_track(track_data)
             track.index = i
             medium_totals[track.medium] += 1

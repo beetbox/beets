@@ -200,7 +200,9 @@ class SpotifyPlugin(BeetsPlugin):
 
         tracks = []
         medium_totals = collections.defaultdict(int)
-        for i, track_data in enumerate(response_data['tracks']['items']):
+        for i, track_data in enumerate(
+            response_data['tracks']['items'], start=1
+        ):
             track = self._get_track(track_data)
             track.index = i
             medium_totals[track.medium] += 1
