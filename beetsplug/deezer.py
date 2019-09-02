@@ -38,19 +38,7 @@ class DeezerPlugin(BeetsPlugin):
 
     def __init__(self):
         super(DeezerPlugin, self).__init__()
-        self.config.add(
-            {
-                'mode': 'list',
-                'tiebreak': 'popularity',
-                'show_failures': False,
-                'artist_field': 'albumartist',
-                'album_field': 'album',
-                'track_field': 'title',
-                'region_filter': None,
-                'regex': [],
-                'source_weight': 0.5,
-            }
-        )
+        self.config.add({'source_weight': 0.5})
 
     def _get_deezer_id(self, url_type, id_):
         """Parse a Deezer ID from its URL if necessary.
@@ -103,9 +91,9 @@ class DeezerPlugin(BeetsPlugin):
                 u"by Deezer API: '{}'".format(release_date)
             )
 
-        tracks_data = requests.get(
-            self.album_url + deezer_id + '/tracks'
-        ).json()['data']
+        tracks_data = requests.get(self.album_url + deezer_id + '/tracks').json()[
+            'data'
+        ]
         tracks = []
         medium_totals = collections.defaultdict(int)
         for i, track_data in enumerate(tracks_data):
@@ -255,9 +243,7 @@ class DeezerPlugin(BeetsPlugin):
         query_filters = {'album': album}
         if not va_likely:
             query_filters['artist'] = artist
-        response_data = self._search_deezer(
-            query_type='album', filters=query_filters
-        )
+        response_data = self._search_deezer(query_type='album', filters=query_filters)
         if response_data is None:
             return []
         return [
@@ -326,9 +312,7 @@ class DeezerPlugin(BeetsPlugin):
             if no search results are returned.
         :rtype: dict or None
         """
-        query = self._construct_search_query(
-            keywords=keywords, filters=filters
-        )
+        query = self._construct_search_query(keywords=keywords, filters=filters)
         if not query:
             return None
         self._log.debug(u"Searching Deezer for '{}'".format(query))
@@ -336,7 +320,5 @@ class DeezerPlugin(BeetsPlugin):
             self.search_url + query_type, params={'q': query}
         ).json()
         num_results = len(response_data['data'])
-        self._log.debug(
-            u"Found {} results from Deezer for '{}'", num_results, query
-        )
+        self._log.debug(u"Found {} results from Deezer for '{}'", num_results, query)
         return response_data if num_results > 0 else None
