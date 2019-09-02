@@ -2,7 +2,7 @@ Deezer Plugin
 ==============
 
 The ``deezer`` plugin provides metadata matches for the importer using the
-`Deezer_` `Album`_ and `Track`_ APIs.
+`Deezer`_ `Album`_ and `Track`_ APIs.
 
 .. _Deezer: https://www.deezer.com
 .. _Album: https://developers.deezer.com/api/album

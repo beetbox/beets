@@ -104,9 +104,9 @@ Autotagger Extensions
 
 * :doc:`chroma`: Use acoustic fingerprinting to identify audio files with
   missing or incorrect metadata.
-* :doc:`discogs`: Search for releases in the `Discogs`_ database.
-* :doc:`spotify`: Search for releases in the `Spotify`_ database.
-* :doc:`deezer`: Search for releases in the `Deezer`_ database.
+* :doc:`/plugins/discogs`: Search for releases in the `Discogs`_ database.
+* :doc:`/plugins/spotify`: Search for releases in the `Spotify`_ database.
+* :doc:`/plugins/deezer`: Search for releases in the `Deezer`_ database.
 * :doc:`fromfilename`: Guess metadata for untagged tracks from their
   filenames.
 
