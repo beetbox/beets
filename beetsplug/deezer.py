@@ -54,11 +54,8 @@ class DeezerPlugin(BeetsPlugin):
         id_regex = r'(^|deezer\.com/([a-z]*/)?{}/)([0-9]*)'
         self._log.debug(u'Searching for {} {}', url_type, id_)
         match = re.search(id_regex.format(url_type), str(id_))
-        if match:
-            deezer_id = match.group(3)
-            if deezer_id:
-                return deezer_id
-        return None
+        deezer_id = match.group(3)
+        return deezer_id if deezer_id else None
 
     def album_for_id(self, album_id):
         """Fetch an album by its Deezer ID or URL and return an
