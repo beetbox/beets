@@ -47,6 +47,7 @@ like this::
    bucket
    chroma
    convert
+   deezer
    discogs
    duplicates
    edit
