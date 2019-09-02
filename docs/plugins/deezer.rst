@@ -1,4 +1,4 @@
-Spotify Plugin
+Deezer Plugin
 ==============
 
 The ``deezer`` plugin provides metadata matches for the importer using the
