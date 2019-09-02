@@ -66,7 +66,7 @@ class DeezerPlugin(BeetsPlugin):
         :rtype: beets.autotag.hooks.AlbumInfo or None
         """
         deezer_id = self._get_deezer_id('album', album_id)
-        if deezer_id is None:
+        if not deezer_id:
             return None
 
         album_data = requests.get(self.album_url + deezer_id).json()
