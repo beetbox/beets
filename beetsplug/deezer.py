@@ -102,7 +102,7 @@ class DeezerPlugin(BeetsPlugin):
         medium_totals = collections.defaultdict(int)
         for i, track_data in enumerate(tracks_data):
             track = self._get_track(track_data)
-            track.index = i + 1
+            track.index = i
             medium_totals[track.medium] += 1
             tracks.append(track)
         for track in tracks:
