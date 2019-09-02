@@ -1,5 +1,21 @@
 # -*- coding: utf-8 -*-
+# This file is part of beets.
+# Copyright 2019, Rahul Ahuja.
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
 
+"""Adds Spotify release and track search support to the autotagger, along with
+Spotify playlist construction.
+"""
 from __future__ import division, absolute_import, print_function
 
 import re
@@ -262,11 +278,11 @@ class SpotifyPlugin(BeetsPlugin):
             requests.get, self.album_url + track_data['album']['id']
         )
         medium_total = 0
-        for i, track_data in enumerate(album_data['tracks']['items']):
+        for i, track_data in enumerate(album_data['tracks']['items'], start=1):
             if track_data['disc_number'] == track.medium:
                 medium_total += 1
                 if track_data['id'] == track.track_id:
-                    track.index = i + 1
+                    track.index = i
         track.medium_total = medium_total
         return track
 
