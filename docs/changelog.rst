@@ -67,8 +67,8 @@ New features:
   attribute during imports, allowing for more refined album level searches.
   :bug:`3350` :bug:`1693`
 * :doc:`/plugins/deezer`:
-   * Added Deezer plugin as an import metadata provider: you can match tracks
-     and albums using the Deezer database.
+   * Added Deezer plugin as an import metadata provider: you can now match tracks
+     and albums using the `Deezer`_ database.
      Thanks to :user:`rhlahuja`.
 
 Fixes:
@@ -147,6 +147,7 @@ For packagers:
 .. _MediaFile: https://github.com/beetbox/mediafile
 .. _Confuse: https://github.com/beetbox/confuse
 .. _works: https://musicbrainz.org/doc/Work
+.. _Deezer: https://www.deezer.com
 
 
 1.4.9 (May 30, 2019)
