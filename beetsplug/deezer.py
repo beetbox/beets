@@ -55,8 +55,8 @@ class DeezerPlugin(BeetsPlugin):
     def _get_deezer_id(self, url_type, id_):
         """Parse a Deezer ID from its URL if necessary.
 
-        :param url_type: Type of Deezer URL. Either 'album', 'artist', 'playlist',
-            or 'track'.
+        :param url_type: Type of Deezer URL. Either 'album', 'artist',
+            'playlist', or 'track'.
         :type url_type: str
         :param id_: Deezer ID or URL.
         :type id_: str
@@ -199,9 +199,9 @@ class DeezerPlugin(BeetsPlugin):
         """Returns an artist string (all artists) and an artist_id (the main
         artist) for a list of Deezer artist object dicts.
 
-        :param artists: Iterable of ``contributors`` or ``artist`` returned by the
-            Deezer Album (https://developers.deezer.com/api/album) or Deezer Track
-            (https://developers.deezer.com/api/track) APIs.
+        :param artists: Iterable of ``contributors`` or ``artist`` returned
+            by the Deezer Album (https://developers.deezer.com/api/album) or
+            Deezer Track (https://developers.deezer.com/api/track) APIs.
         :type artists: list[dict]
         :return: Normalized artist string
         :rtype: str
@@ -291,7 +291,8 @@ class DeezerPlugin(BeetsPlugin):
     @staticmethod
     def _construct_search_query(filters=None, keywords=''):
         """Construct a query string with the specified filters and keywords to
-        be provided to the Deezer Search API (https://developers.deezer.com/api/search).
+        be provided to the Deezer Search API
+        (https://developers.deezer.com/api/search).
 
         :param filters: (Optional) Field filters to apply.
         :type filters: dict
@@ -313,9 +314,9 @@ class DeezerPlugin(BeetsPlugin):
         """Query the Deezer Search API for the specified ``keywords``, applying
         the provided ``filters``.
 
-        :param query_type: The Deezer Search API method to use. Valid types are:
-            'album', 'artist', 'history', 'playlist', 'podcast', 'radio', 'track',
-            'user', and 'track'.
+        :param query_type: The Deezer Search API method to use. Valid types
+            are: 'album', 'artist', 'history', 'playlist', 'podcast',
+            'radio', 'track', 'user', and 'track'.
         :type query_type: str
         :param filters: (Optional) Field filters to apply.
         :type filters: dict
