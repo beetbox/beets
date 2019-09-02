@@ -66,6 +66,10 @@ New features:
 * The 'data_source' field is now also applied as an album-level flexible
   attribute during imports, allowing for more refined album level searches.
   :bug:`3350` :bug:`1693`
+* :doc:`/plugins/deezer`:
+   * Added Deezer plugin as an import metadata provider: you can match tracks
+     and albums using the Deezer database.
+     Thanks to :user:`rhlahuja`.
 
 Fixes:
 
