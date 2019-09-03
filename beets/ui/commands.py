@@ -481,7 +481,6 @@ def _summary_judgment(rec):
     queried. May also print to the console if a summary judgment is
     made.
     """
-    print(rec)
     if config['import']['quiet']:
         if rec == Recommendation.strong:
             return importer.action.APPLY
