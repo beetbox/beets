@@ -97,6 +97,9 @@ Fixes:
 * Fixed a bug that caused the UI to display incorrect track numbers for tracks
   with index 0 when the ``per_disc_numbering`` option was set.
   :bug:`3346`
+* ``none_rec_action`` does not import automatically when ``timid`` is enabled.
+  Thanks to :user:`RollingStar`.
+  :bug:`3242`
 
 For plugin developers:
 
