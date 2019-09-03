@@ -481,6 +481,7 @@ def _summary_judgment(rec):
     queried. May also print to the console if a summary judgment is
     made.
     """
+    print(rec)
     if config['import']['quiet']:
         if rec == Recommendation.strong:
             return importer.action.APPLY
@@ -496,6 +497,9 @@ def _summary_judgment(rec):
             'asis': importer.action.ASIS,
             'ask': None,
         })
+        # prompt the user if timid is enabled
+        if config['import']['timid'] and action == importer.action.ASIS:
+            return None
 
     else:
         return None
