@@ -1,0 +1,13 @@
+{
+  "undef": true,
+  "unused": true,
+  "browser": true,
+  "globals": {
+    "$": true,
+    "_": true,
+    "Backbone": true,
+    "Marionette": true,
+    "Howl": true,
+    "console": true
+  }
+}
