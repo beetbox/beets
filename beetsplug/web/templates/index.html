@@ -1,98 +1,316 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta charset='utf-8'>
         <title>beets</title>
 
-        <link rel="stylesheet"
-        href="{{ url_for('static', filename='beets.css') }}" type="text/css">
-
-        <script src="{{ url_for('static', filename='jquery.js') }}"></script>
-        <script src="{{ url_for('static', filename='underscore.js') }}">
-        </script>
-        <script src="{{ url_for('static', filename='backbone.js') }}"></script>
-        <script src="{{ url_for('static', filename='beets.js') }}"></script>
+        <link rel="icon" type="image/png" href="/static/img/favico.png">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" type="text/css">
+        <link rel="stylesheet" href="{{ url_for('static', filename='fa/css/all.css') }}" type="text/css">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/beets.css') }}" type="text/css">
     </head>
     <body>
-        <div id="header">
-            <h1>beets</h1>
-            <div id="player">
-                <audio></audio>
+      <div id='app'></div>
 
-                <button class="disabled">&#9654;</button>
-                <button class="play">&#9654;</button>
-                <button class="pause" style="letter-spacing: 1px;">&#10073;&#10073;</button>
+      <script id='tpl-app-view' type='text/template'>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top flex-md-nowrap p-0">
+            <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">
+              <img alt="Beets" width=30 height=30 src='/static/img/logo.png'/>
+              Beets
+            </a>
+              <span class="w-100 bg-light p-0" id='nowPlaying'></span>
+        </nav>
+        <div class='container-fluid'>
+          <div class='row'>
+            <nav id="sidebar" class="col-md-2 d-none d-md-block bg-light sidebar"></nav>
+            <main id='main' role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
+            </main>
+          </div>
+        </div>
+      </script>
 
-                <span class="times">
-                    <span class="currentTime">
-                    </span>
-                </span>
+      <script id='tpl-item-view' type='text/template'>
+        <div class="row">
+          <div class="col">
+            <%= track %>. <%= title %> <small>(<%= artist %>)</small>
+          </div>
+          <div class="col">
+            <div class="btn-group" role="group">
+              <button class="btn btn-sm btn-secondary play-button">
+                <i class="fa fa-play"></i>
+                Play
+              </button>
+              <button class="btn btn-sm btn-secondary add-button">
+                <i class="fa fa-plus"></i>
+                Queue
+              </button>
+              <button class="btn btn-sm btn-secondary info-button">
+                <i class="fa fa-info"></i>
+                Details
+              </button>
             </div>
+          </div>
         </div>
+      </script>
+      <script id='tpl-item-detail-view' type='text/template'>
+        <h3>Track Info</h3>
+        <dl class="row">
+            <dt class="col-sm-3">Artist</dt>
+            <dd class="col-sm-9"><%= artist %></dd>
 
-        <div id="entities">
-            <form id="queryForm">
-                <input type="search" id="query" placeholder="Query">
-            </form>
-            <ul id="results">
-            </ul>
-        </div>
+            <dt class="col-sm-3">Album</dt>
+            <dd class="col-sm-9"><a href="/#album/<%= album_id %>"><%= album %></a> (<%= year %>)</dd>
 
-        <div id="main-detail">
-        </div>
+            <dt class="col-sm-3">Title</dt>
+            <dd class="col-sm-9"><%= title %></dd>
 
-        <div id="extra-detail">
-        </div>
-
-        <!-- Templates. -->
-        <script type="text/template" id="item-entry-template">
-            <%= title %>
-            <span class="playing">&#9654;</span>
-        </script>
-        <script type="text/template" id="item-main-detail-template">
-            <span class="artist"><%= artist %></span>
-            <span class="album">
-                <span class="albumtitle"><%= album %></span>
-                <span class="year">(<%= year %>)</span>
-            </span>
-            <span class="title"><%= title %></span>
-
-            <button class="play">&#9654;</button>
-
-            
-        </script>
-        <script type="text/template" id="item-extra-detail-template">
-            <dl>
-                <dt>Track</dt>
-                <dd><%= track %>/<%= tracktotal %></dd>
-                <% if (disc) { %>
-                    <dt>Disc</dt>
-                    <dd><%= disc %>/<%= disctotal %></dd>
-                <% } %>
-                <dt>Length</dt>
-                <dd><%= timeFormat(length) %></dd>
-                <dt>Format</dt>
-                <dd><%= format %></dd>
-                <dt>Bitrate</dt>
-                <dd><%= Math.round(bitrate/1000) %> kbps</dd>
-                <% if (mb_trackid) { %>
-                    <dt>MusicBrainz entry</dt>
-                    <dd>
-                        <a target="_blank" href="http://musicbrainz.org/recording/<%= mb_trackid %>">view</a>
-                    </dd>
-                <% } %>
-                <dt>File</dt>
-                <dd>
-                    <a target="_blank" class="download" href="item/<%= id %>/file">download</a>
+            <dt class="col-sm-3">Track</dt>
+            <dd class="col-sm-9"><%= track %>/<%= tracktotal %></dd>
+            <% if (disc) { %>
+                <dt class="col-sm-3">Disc</dt>
+                <dd class="col-sm-9"><%= disc %>/<%= disctotal %></dd>
+            <% } %>
+            <dt class="col-sm-3">Length</dt>
+            <dd class="col-sm-9"><%= time %></dd>
+            <dt class="col-sm-3">Format</dt>
+            <dd class="col-sm-9"><%= format %></dd>
+            <dt class="col-sm-3">Bitrate</dt>
+            <dd class="col-sm-9"><%= Math.round(bitrate/1000) %> kbps</dd>
+            <% if (mb_trackid) { %>
+                <dt class="col-sm-3">MusicBrainz entry</dt>
+                <dd class="col-sm-9">
+                    <a target="_blank" href="https://musicbrainz.org/recording/<%= mb_trackid %>">view</a>
                 </dd>
-                <% if (lyrics) { %>
-                    <dt>Lyrics</dt>
-                    <dd class="lyrics"><%= lyrics %></dd>
-                <% } %>
-                <% if (comments) { %>
-                    <dt>Comments</dt>
-                    <dd><%= comments %></dd>
-                <% } %>
-            </dl>
-        </script>
+            <% } %>
+            <dt class="col-sm-3">File</dt>
+            <dd class="col-sm-9">
+                <a target="_blank" class="download" href="/item/<%= id %>/file">download</a>
+            </dd>
+            <% if (lyrics) { %>
+                <dt class="col-sm-3">Lyrics</dt>
+                <dd class="col-sm-9 lyrics"><%= lyrics %></dd>
+            <% } %>
+            <% if (comments) { %>
+                <dt class="col-sm-3">Comments</dt>
+                <dd class="col-sm-9 lyrics"><%= comments %></dd>
+            <% } %>
+        </dl>
+      </script>
+      <script id='tpl-item-list-view' type='text/template'>
+        <h3>Tracks</h3>
+        <ol class="list-group js-widgets"></ol>
+      </script>
+
+      <script id='tpl-search-view' type='text/template'>
+        <h2>Search</h2>
+        <form class="form-inline">
+          <div class="input-group mb-2 mr-sm-2">
+            <input type="text" class="form-control" id="query" placeholder="Enter query" />
+          </div>
+          <button type="submit" class="btn btn-primary mb-2">
+            <i class="fa fa-search"></i>&nbsp;
+            Search
+          </button>
+        </form>
+      </script>
+      <script id='tpl-sidebar-view' type='text/template'>
+        <ul class="nav flex-column">
+          <li class="nav-item">
+            <a class="nav-link active search-link" href="#search">
+              <i class="fa fa-search"></i>&nbsp;
+              Search
+            </a>
+          </li>
+          <li class="nav-item ">
+            <a class="nav-link queue-link" href="#queue">
+              <i class="fa fa-music"></i>
+              Queue
+              <span class="badge badge-primary"><%= queue_size %></span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link albums-link" href="#albums">
+              <i class="fa fa-compact-disc"></i>
+              Albums
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link stats-link" href="#stats">
+              <i class="fa fa-digital-tachograph"></i>
+              Stats
+            </a>
+          </li>
+        </ul>
+        <div id='savedplaylists'></div>
+      </script>
+      <script id='tpl-savedplaylist-view' type='text/template'>
+        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+          <span>Saved Playlists</span>
+          <a class="d-flex align-items-center text-muted" href="#">
+            <span data-feather="plus-circle"></span>
+          </a>
+        </h6>
+        <ul class="nav flex-column mb-2">
+          <li class="nav-item">
+            <a class="nav-link" href="#">
+              <span data-feather="file-text"></span>
+              Playlist 1
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">
+              <span data-feather="file-text"></span>
+              Playlist 2
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">
+              <span data-feather="file-text"></span>
+              Playlist 3
+            </a>
+          </li>
+        </ul>
+      </script>
+      <script id='tpl-album-list-view' type='text/template'>
+        <h2>Albums</h2>
+        <ol class="js-widgets list-group"></ol>
+      </script>
+      <script id='tpl-album-view' type='text/template'>
+        <div class="row">
+          <div class="col">
+            <i class="fa fa-compact-disc"></i>
+            <%= album %><br><small><%= albumartist %> (<%= year %>)</small>
+          </div>
+          <div class="col">
+            <div class="btn-group" role="group" aria-label="Album Control Buttons">
+              <a href="/#album/<%= id %>" class="info-button btn btn-sm btn-secondary">
+                <i class="fa fa-info"></i>
+                Details
+              </a>
+              <button class="add-button btn btn-sm btn-secondary">
+                <i class="fa fa-plus"></i>
+                Queue
+              </button>
+            </div>
+          </div>
+        </div>
+      </script>
+      <script id='tpl-album-detail-view' type='text/template'>
+        <h2>Album Detail</h2>
+        <dl class="row">
+          <dt class="col-sm-3">Album</dt>
+          <dd class="col-sm-9"><%= album %></dd>
+
+          <dt class="col-sm-3">Album Artist</dt>
+          <dd class="col-sm-9"><%= albumartist %></dd>
+
+          <dt class="col-sm-3">Genre</dt>
+          <dd class="col-sm-9"><%= genre %></dd>
+
+          <dt class="col-sm-3">Year</dt>
+          <dd class="col-sm-9"><%= year %></dd>
+
+          <dt class="col-sm-3">Label</dt>
+          <dd class="col-sm-9"><%= label %></dd>
+
+          <dt class="col-sm-3">Language</dt>
+          <dd class="col-sm-9"><%= language %></dd>
+        </dl>
+        <div id="tracks-region"></div>
+      </script>
+      <script id='tpl-search-item-view' type='text/template'>
+        <div class="row">
+          <div class="col">
+            <%= track %>. <%= artist %> - <%= title %><br><small><%= album %> (<%= year %>)</small>
+          </div>
+          <div class="col">
+            <div class="btn-group" role="group">
+              <button class="btn btn-sm btn-secondary play-button">
+                <i class="fa fa-play"></i>
+                Play
+              </button>
+              <button class="btn btn-sm btn-secondary add-button">
+                <i class="fa fa-plus"></i>
+                Queue
+              </button>
+              <button class="btn btn-sm btn-secondary info-button">
+                <i class="fa fa-info"></i>
+                Details
+              </button>
+            </div>
+          </div>
+        </div>
+      </script>
+      <script id="tpl-nowplaying-timing-view" type='text/template'>
+        <%= currentTime %>/<%= time %>
+      </script>
+      <script id='tpl-nowplaying-view' type='text/template'>
+        <div class="btn-group" role="group">
+          <button class="btn btn-sm btn-secondary stop-icon">
+            <i class="fa fa-stop"></i> Stop
+          </button>
+          <button class="btn btn-sm btn-secondary play-icon active">
+            <i class="fa fa-play"></i> Play
+          </button>
+          <button class="btn btn-sm btn-secondary pause-icon">
+            <i class="fa fa-pause"></i> Pause
+          </button>
+          <button class="btn btn-sm btn-secondary forward-icon">
+            <i class="fa fa-forward"></i> Forward
+          </button>
+          <button class="btn btn-sm btn-secondary info-icon">
+            <i class="fa fa-info"></i> Details
+          </button>
+        </div>
+        <span class='time-area typewriter'></span>
+        <%= title %> <small>(<%= artist %>)</small>
+      </script>
+      <script id='tpl-queue-list-view' type='text/template'>
+        <h2>Queue <i class="fa fa-play play-icon"></i></h2>
+
+        <ol class="js-widgets"></ol>
+      </script>
+      <script id='tpl-queue-empty-view' type='text/template'>
+        <h3>Oops. Empty Queue</h3>
+        <p>Add some tracks by clicking the plus icon from the results of a search</p>
+
+
+      </script>
+      <script id='tpl-queue-item-view' type='text/template'>
+        <div class="row">
+          <div class="col">
+            <%= title %> <small>(<%= artist %>)</small>
+          </div>
+          <div class="col">
+            <div class="btn-group" role="group">
+              <button class="btn btn-sm btn-secondary play-button">
+                <i class="fa fa-play"></i>
+                Play
+              </button>
+              <button class="btn btn-sm btn-secondary info-button">
+                <i class="fa fa-info"></i>
+                Details
+              </button>
+            </div>
+          </div>
+        </div>
+      </script>
+      <script id='tpl-stats-view' type='text/template'>
+        <h2>Stats</h2>
+        <dl>
+          <dt>Albums</dt>
+          <dd><%= albums %></dd>
+          <dt>Tracks</dt>
+          <dd><%= items %></td>
+        </dl>
+      </script>
+
+      <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+      <script src="{{ url_for('static', filename='js/underscore-min.js') }}"></script>
+      <script src="{{ url_for('static', filename='js/backbone-min.js') }}"></script>
+      <script src="{{ url_for('static', filename='js/backbone.marionette.min.js') }}"></script>
+      <script src="{{ url_for('static', filename='js/howler.min.js') }}"></script>
+      <script type="module" src="{{ url_for('static', filename='js/beets.js') }}"></script>
+
     </body>
 </html>
