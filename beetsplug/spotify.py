@@ -116,7 +116,9 @@ class SpotifyPlugin(APIAutotaggerPlugin):
         self.access_token = response.json()['access_token']
 
         # Save the token for later use.
-        self._log.debug(u'Spotify access token: {}', self.access_token)
+        self._log.debug(
+            u'{} access token: {}', self.data_source, self.access_token
+        )
         with open(self.tokenfile, 'w') as f:
             json.dump({'access_token': self.access_token}, f)
 
@@ -142,7 +144,8 @@ class SpotifyPlugin(APIAutotaggerPlugin):
         if response.status_code != 200:
             if u'token expired' in response.text:
                 self._log.debug(
-                    'Spotify access token has expired. Reauthenticating.'
+                    '{} access token has expired. Reauthenticating.',
+                    self.data_source,
                 )
                 self._authenticate()
                 return self._handle_response(request_type, url, params=params)
@@ -336,8 +339,8 @@ class SpotifyPlugin(APIAutotaggerPlugin):
         )
         self._log.debug(
             u"Found {} results from {} for '{}'",
-            self.data_source,
             len(response_data),
+            self.data_source,
             query,
         )
         return response_data
@@ -350,21 +353,23 @@ class SpotifyPlugin(APIAutotaggerPlugin):
                 self._output_match_results(results)
 
         spotify_cmd = ui.Subcommand(
-            'spotify', help=u'build a Spotify playlist'
+            'spotify', help=u'build a {} playlist'.format(self.data_source)
         )
         spotify_cmd.parser.add_option(
             u'-m',
             u'--mode',
             action='store',
-            help=u'"open" to open Spotify with playlist, '
-            u'"list" to print (default)',
+            help=u'"open" to open {} with playlist, '
+            u'"list" to print (default)'.format(self.data_source),
         )
         spotify_cmd.parser.add_option(
             u'-f',
             u'--show-failures',
             action='store_true',
             dest='show_failures',
-            help=u'list tracks that did not match a Spotify ID',
+            help=u'list tracks that did not match a {} ID'.format(
+                self.data_source
+            ),
         )
         spotify_cmd.func = queries
         return [spotify_cmd]
@@ -404,7 +409,8 @@ class SpotifyPlugin(APIAutotaggerPlugin):
 
         if not items:
             self._log.debug(
-                u'Your beets query returned no items, skipping Spotify.'
+                u'Your beets query returned no items, skipping {}.',
+                self.data_source,
             )
             return
 
@@ -456,7 +462,8 @@ class SpotifyPlugin(APIAutotaggerPlugin):
                 or self.config['tiebreak'].get() == 'first'
             ):
                 self._log.debug(
-                    u'Spotify track(s) found, count: {}',
+                    u'{} track(s) found, count: {}',
+                    self.data_source,
                     len(response_data_tracks),
                 )
                 chosen_result = response_data_tracks[0]
@@ -475,16 +482,19 @@ class SpotifyPlugin(APIAutotaggerPlugin):
         if failure_count > 0:
             if self.config['show_failures'].get():
                 self._log.info(
-                    u'{} track(s) did not match a Spotify ID:', failure_count
+                    u'{} track(s) did not match a {} ID:',
+                    failure_count,
+                    self.data_source,
                 )
                 for track in failures:
                     self._log.info(u'track: {}', track)
                 self._log.info(u'')
             else:
                 self._log.warning(
-                    u'{} track(s) did not match a Spotify ID;\n'
+                    u'{} track(s) did not match a {} ID:\n'
                     u'use --show-failures to display',
                     failure_count,
+                    self.data_source,
                 )
 
         return results
@@ -500,11 +510,17 @@ class SpotifyPlugin(APIAutotaggerPlugin):
         if results:
             spotify_ids = [track_data['id'] for track_data in results]
             if self.config['mode'].get() == 'open':
-                self._log.info(u'Attempting to open Spotify with playlist')
+                self._log.info(
+                    u'Attempting to open {} with playlist'.format(
+                        self.data_source
+                    )
+                )
                 spotify_url = self.playlist_partial + ",".join(spotify_ids)
                 webbrowser.open(spotify_url)
             else:
                 for spotify_id in spotify_ids:
                     print(self.open_track_url + spotify_id)
         else:
-            self._log.warning(u'No Spotify tracks found from beets query')
+            self._log.warning(
+                u'No {} tracks found from beets query'.format(self.data_source)
+            )
