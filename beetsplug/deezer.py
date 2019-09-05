@@ -222,8 +222,8 @@ class DeezerPlugin(APIAutotaggerPlugin):
         response_data = response.json().get('data', [])
         self._log.debug(
             u"Found {} results from {} for '{}'",
-            self.data_source,
             len(response_data),
+            self.data_source,
             query,
         )
         return response_data
