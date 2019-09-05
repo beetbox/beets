@@ -35,6 +35,8 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo
 
 
 class SpotifyPlugin(APIAutotaggerPlugin):
+    data_source = 'Spotify'
+
     # Base URLs for the Spotify API
     # Documentation: https://developer.spotify.com/web-api
     oauth_token_url = 'https://accounts.spotify.com/api/token'
@@ -42,8 +44,6 @@ class SpotifyPlugin(APIAutotaggerPlugin):
     search_url = 'https://api.spotify.com/v1/search'
     album_url = 'https://api.spotify.com/v1/albums/'
     track_url = 'https://api.spotify.com/v1/tracks/'
-    playlist_partial = 'spotify:trackset:Playlist:'
-    data_source = 'Spotify'
 
     # Spotify IDs consist of 22 alphanumeric characters
     # (zero-left-padded base62 representation of randomly generated UUID4)
@@ -515,7 +515,9 @@ class SpotifyPlugin(APIAutotaggerPlugin):
                         self.data_source
                     )
                 )
-                spotify_url = self.playlist_partial + ",".join(spotify_ids)
+                spotify_url = 'spotify:trackset:Playlist:' + ','.join(
+                    spotify_ids
+                )
                 webbrowser.open(spotify_url)
             else:
                 for spotify_id in spotify_ids:
