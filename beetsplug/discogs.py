@@ -294,7 +294,9 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.warning(u"Release does not contain the required fields")
             return None
 
-        artist, artist_id = APIAutotaggerPlugin.get_artist([a.data for a in result.artists])
+        artist, artist_id = APIAutotaggerPlugin.get_artist(
+            [a.data for a in result.artists]
+        )
         album = re.sub(r' +', ' ', result.title)
         album_id = result.data['id']
         # Use `.data` to access the tracklist directly instead of the
@@ -533,7 +535,9 @@ class DiscogsPlugin(BeetsPlugin):
         title = track['title']
         track_id = None
         medium, medium_index, _ = self.get_track_index(track['position'])
-        artist, artist_id = APIAutotaggerPlugin.get_artist(track.get('artists', []))
+        artist, artist_id = APIAutotaggerPlugin.get_artist(
+            track.get('artists', [])
+        )
         length = self.get_track_length(track['duration'])
         return TrackInfo(title, track_id, artist=artist, artist_id=artist_id,
                          length=length, index=index,

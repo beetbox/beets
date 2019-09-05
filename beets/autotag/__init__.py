@@ -278,7 +278,8 @@ class APIAutotaggerPlugin(BeetsPlugin):
         :type artists: list[dict]
         :param id_key: Key corresponding to ``artist_id`` value.
         :type id_key: str
-        :param name_key: Keys corresponding to values to concatenate for ``artist``.
+        :param name_key: Keys corresponding to values to concatenate
+            for ``artist``.
         :type name_key: str
         :return: Normalized artist string.
         :rtype: str

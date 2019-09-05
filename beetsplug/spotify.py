@@ -306,8 +306,8 @@ class SpotifyPlugin(APIAutotaggerPlugin):
         """Query the Spotify Search API for the specified ``keywords``, applying
         the provided ``filters``.
 
-        :param query_type: Item type to search across. Valid types are: 'album',
-            'artist', 'playlist', and 'track'.
+        :param query_type: Item type to search across. Valid types are:
+            'album', 'artist', 'playlist', and 'track'.
         :type query_type: str
         :param filters: (Optional) Field filters to apply.
         :type filters: dict
