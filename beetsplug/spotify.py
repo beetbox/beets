@@ -48,7 +48,7 @@ class SpotifyPlugin(APIAutotaggerPlugin):
     # Spotify IDs consist of 22 alphanumeric characters
     # (zero-left-padded base62 representation of randomly generated UUID4)
     id_regex = {
-        'pattern': r'(^|open\.spotify\.com/{url_type}/)([0-9A-Za-z]{{22}})',
+        'pattern': r'(^|open\.spotify\.com/{}/)([0-9A-Za-z]{{22}})',
         'match_group': 2,
     }
 
