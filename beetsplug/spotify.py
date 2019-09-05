@@ -432,16 +432,15 @@ class SpotifyPlugin(APIAutotaggerPlugin):
 
             # Query the Web API for each track, look for the items' JSON data
             query_filters = {'artist': artist, 'album': album}
-            response_data = self._search_api(
+            response_data_tracks = self._search_api(
                 query_type='track', keywords=keywords, filters=query_filters
             )
-            if response_data is None:
+            if not response_data_tracks:
                 query = self._construct_search_query(
                     keywords=keywords, filters=query_filters
                 )
                 failures.append(query)
                 continue
-            response_data_tracks = response_data['tracks']['items']
 
             # Apply market filter if requested
             region_filter = self.config['region_filter'].get()
