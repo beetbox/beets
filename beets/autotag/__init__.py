@@ -212,22 +212,12 @@ def apply_metadata(album_info, mapping):
             item[field] = value
 
 
-def album_distance(config, data_source, album_info):
+def get_distance(config, data_source, info):
     """Returns the ``data_source`` weight and the maximum source weight
-    for albums.
+    for albums or individual tracks.
     """
     dist = Distance()
-    if album_info.data_source == data_source:
-        dist.add('source', config['source_weight'].as_number())
-    return dist
-
-
-def track_distance(config, data_source, track_info):
-    """Returns the ``data_source`` weight and the maximum source weight
-    for individual tracks.
-    """
-    dist = Distance()
-    if track_info.data_source == data_source:
+    if info.data_source == data_source:
         dist.add('source', config['source_weight'].as_number())
     return dist
 
@@ -356,15 +346,11 @@ class APIAutotaggerPlugin(BeetsPlugin):
         return [self.track_for_id(track_data=track) for track in tracks]
 
     def album_distance(self, items, album_info, mapping):
-        return album_distance(
-            data_source=self.data_source,
-            album_info=album_info,
-            config=self.config,
+        return get_distance(
+            data_source=self.data_source, info=album_info, config=self.config
         )
 
     def track_distance(self, item, track_info):
-        return track_distance(
-            data_source=self.data_source,
-            track_info=track_info,
-            config=self.config,
+        return get_distance(
+            data_source=self.data_source, info=track_info, config=self.config
         )

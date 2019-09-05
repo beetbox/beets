@@ -20,7 +20,7 @@ from __future__ import division, absolute_import, print_function
 
 import beets.ui
 from beets import config
-from beets.autotag import APIAutotaggerPlugin, album_distance
+from beets.autotag import APIAutotaggerPlugin, get_distance
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.plugins import BeetsPlugin
 import confuse
@@ -160,9 +160,18 @@ class DiscogsPlugin(BeetsPlugin):
     def album_distance(self, items, album_info, mapping):
         """Returns the album distance.
         """
-        return album_distance(
+        return get_distance(
             data_source='Discogs',
-            album_info=album_info,
+            info=album_info,
+            config=self.config
+        )
+
+    def track_distance(self, item, track_info):
+        """Returns the track distance.
+        """
+        return get_distance(
+            data_source='Discogs',
+            info=track_info,
             config=self.config
         )
 
