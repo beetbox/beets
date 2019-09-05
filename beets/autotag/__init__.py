@@ -299,9 +299,7 @@ class APIAutotaggerPlugin(BeetsPlugin):
         self._log.debug(
             u"Searching {} for {} '{}'", self.data_source, url_type, id_
         )
-        match = re.search(
-            self.id_regex['pattern'].format(url_type=url_type), str(id_)
-        )
+        match = re.search(self.id_regex['pattern'].format(url_type), str(id_))
         id_ = match.group(self.id_regex['match_group'])
         return id_ if id_ else None
 

@@ -36,7 +36,7 @@ class DeezerPlugin(APIAutotaggerPlugin):
     track_url = 'https://api.deezer.com/track/'
     data_source = 'Deezer'
     id_regex = {
-        'pattern': r'(^|deezer\.com/([a-z]*/)?{url_type}/)([0-9]*)',
+        'pattern': r'(^|deezer\.com/([a-z]*/)?{}/)([0-9]*)',
         'match_group': 3,
     }
 
