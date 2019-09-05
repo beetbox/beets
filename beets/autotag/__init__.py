@@ -18,11 +18,21 @@
 
 from __future__ import division, absolute_import, print_function
 
+import re
+from abc import abstractmethod, abstractproperty
+
 from beets import logging
 from beets import config
+from beets.plugins import BeetsPlugin
 
 # Parts of external interface.
-from .hooks import AlbumInfo, TrackInfo, AlbumMatch, TrackMatch  # noqa
+from .hooks import (
+    AlbumInfo,
+    TrackInfo,
+    AlbumMatch,
+    TrackMatch,
+    Distance,
+)  # noqa
 from .match import tag_item, tag_album, Proposal  # noqa
 from .match import Recommendation  # noqa
 
@@ -31,6 +41,7 @@ log = logging.getLogger('beets')
 
 
 # Additional utilities for the main interface.
+
 
 def apply_item_metadata(item, track_info):
     """Set an item's metadata from its matched TrackInfo object.
@@ -72,14 +83,15 @@ def apply_metadata(album_info, mapping):
     for item, track_info in mapping.items():
         # Artist or artist credit.
         if config['artist_credit']:
-            item.artist = (track_info.artist_credit or
-                           track_info.artist or
-                           album_info.artist_credit or
-                           album_info.artist)
-            item.albumartist = (album_info.artist_credit or
-                                album_info.artist)
+            item.artist = (
+                track_info.artist_credit
+                or track_info.artist
+                or album_info.artist_credit
+                or album_info.artist
+            )
+            item.albumartist = album_info.artist_credit or album_info.artist
         else:
-            item.artist = (track_info.artist or album_info.artist)
+            item.artist = track_info.artist or album_info.artist
             item.albumartist = album_info.artist
 
         # Album.
@@ -87,8 +99,9 @@ def apply_metadata(album_info, mapping):
 
         # Artist sort and credit names.
         item.artist_sort = track_info.artist_sort or album_info.artist_sort
-        item.artist_credit = (track_info.artist_credit or
-                              album_info.artist_credit)
+        item.artist_credit = (
+            track_info.artist_credit or album_info.artist_credit
+        )
         item.albumartist_sort = album_info.artist_sort
         item.albumartist_credit = album_info.artist_credit
 
@@ -179,7 +192,7 @@ def apply_metadata(album_info, mapping):
                 'work',
                 'mb_workid',
                 'work_disambig',
-            )
+            ),
         }
 
         # Don't overwrite fields with empty values unless the
@@ -197,3 +210,160 @@ def apply_metadata(album_info, mapping):
             if value is None and not clobber:
                 continue
             item[field] = value
+
+
+def album_distance(config, data_source, album_info):
+    """Returns the ``data_source`` weight and the maximum source weight
+    for albums.
+    """
+    dist = Distance()
+    if album_info.data_source == data_source:
+        dist.add('source', config['source_weight'].as_number())
+    return dist
+
+
+def track_distance(config, data_source, track_info):
+    """Returns the ``data_source`` weight and the maximum source weight
+    for individual tracks.
+    """
+    dist = Distance()
+    if track_info.data_source == data_source:
+        dist.add('source', config['source_weight'].as_number())
+    return dist
+
+
+class APIAutotaggerPlugin(BeetsPlugin):
+    def __init__(self):
+        super(APIAutotaggerPlugin, self).__init__()
+        self.config.add({'source_weight': 0.5})
+
+    @abstractproperty
+    def id_regex(self):
+        raise NotImplementedError
+
+    @abstractproperty
+    def data_source(self):
+        raise NotImplementedError
+
+    @abstractproperty
+    def search_url(self):
+        raise NotImplementedError
+
+    @abstractproperty
+    def album_url(self):
+        raise NotImplementedError
+
+    @abstractproperty
+    def track_url(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def _search_api(self, query_type, filters, keywords=''):
+        raise NotImplementedError
+
+    @abstractmethod
+    def album_for_id(self, album_id):
+        raise NotImplementedError
+
+    @abstractmethod
+    def track_for_id(self, track_id=None, track_data=None):
+        raise NotImplementedError
+
+    @staticmethod
+    def get_artist(artists, id_key='id', name_key='name'):
+        """Returns an artist string (all artists) and an artist_id (the main
+        artist) for a list of artist object dicts.
+
+        :param artists: Iterable of artist dicts returned by API.
+        :type artists: list[dict]
+        :param id_key: Key corresponding to ``artist_id`` value.
+        :type id_key: str
+        :param name_key: Keys corresponding to values to concatenate for ``artist``.
+        :type name_key: str
+        :return: Normalized artist string.
+        :rtype: str
+        """
+        artist_id = None
+        artist_names = []
+        for artist in artists:
+            if not artist_id:
+                artist_id = artist[id_key]
+            name = artist[name_key]
+            # Move articles to the front.
+            name = re.sub(r'^(.*?), (a|an|the)$', r'\2 \1', name, flags=re.I)
+            artist_names.append(name)
+        artist = ', '.join(artist_names).replace(' ,', ',') or None
+        return artist, artist_id
+
+    def _get_id(self, url_type, id_):
+        """Parse an ID from its URL if necessary.
+
+        :param url_type: Type of URL. Either 'album' or 'track'.
+        :type url_type: str
+        :param id_: Album/track ID or URL.
+        :type id_: str
+        :return: Album/track ID.
+        :rtype: str
+        """
+        self._log.debug(
+            u"Searching {} for {} '{}'", self.data_source, url_type, id_
+        )
+        match = re.search(
+            self.id_regex['pattern'].format(url_type=url_type), str(id_)
+        )
+        id_ = match.group(self.id_regex['match_group'])
+        return id_ if id_ else None
+
+    def candidates(self, items, artist, album, va_likely):
+        """Returns a list of AlbumInfo objects for Search API results
+        matching an ``album`` and ``artist`` (if not various).
+
+        :param items: List of items comprised by an album to be matched.
+        :type items: list[beets.library.Item]
+        :param artist: The artist of the album to be matched.
+        :type artist: str
+        :param album: The name of the album to be matched.
+        :type album: str
+        :param va_likely: True if the album to be matched likely has
+            Various Artists.
+        :type va_likely: bool
+        :return: Candidate AlbumInfo objects.
+        :rtype: list[beets.autotag.hooks.AlbumInfo]
+        """
+        query_filters = {'album': album}
+        if not va_likely:
+            query_filters['artist'] = artist
+        albums = self._search_api(query_type='album', filters=query_filters)
+        return [self.album_for_id(album_id=album['id']) for album in albums]
+
+    def item_candidates(self, item, artist, title):
+        """Returns a list of TrackInfo objects for Search API results
+        matching ``title`` and ``artist``.
+
+        :param item: Singleton item to be matched.
+        :type item: beets.library.Item
+        :param artist: The artist of the track to be matched.
+        :type artist: str
+        :param title: The title of the track to be matched.
+        :type title: str
+        :return: Candidate TrackInfo objects.
+        :rtype: list[beets.autotag.hooks.TrackInfo]
+        """
+        tracks = self._search_api(
+            query_type='track', keywords=title, filters={'artist': artist}
+        )
+        return [self.track_for_id(track_data=track) for track in tracks]
+
+    def album_distance(self, items, album_info, mapping):
+        return album_distance(
+            data_source=self.data_source,
+            album_info=album_info,
+            config=self.config,
+        )
+
+    def track_distance(self, item, track_info):
+        return track_distance(
+            data_source=self.data_source,
+            track_info=track_info,
+            config=self.config,
+        )

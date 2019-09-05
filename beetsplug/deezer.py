@@ -17,7 +17,6 @@
 """
 from __future__ import absolute_import, print_function
 
-import re
 import collections
 
 import six
@@ -25,37 +24,24 @@ import unidecode
 import requests
 
 from beets import ui
-from beets.plugins import BeetsPlugin
-from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance
+from beets.autotag import APIAutotaggerPlugin
+from beets.autotag.hooks import AlbumInfo, TrackInfo
 
 
-class DeezerPlugin(BeetsPlugin):
+class DeezerPlugin(APIAutotaggerPlugin):
     # Base URLs for the Deezer API
     # Documentation: https://developers.deezer.com/api/
     search_url = 'https://api.deezer.com/search/'
     album_url = 'https://api.deezer.com/album/'
     track_url = 'https://api.deezer.com/track/'
+    data_source = 'Deezer'
+    id_regex = {
+        'pattern': r'(^|deezer\.com/([a-z]*/)?{url_type}/)([0-9]*)',
+        'match_group': 3,
+    }
 
     def __init__(self):
         super(DeezerPlugin, self).__init__()
-        self.config.add({'source_weight': 0.5})
-
-    def _get_deezer_id(self, url_type, id_):
-        """Parse a Deezer ID from its URL if necessary.
-
-        :param url_type: Type of Deezer URL. Either 'album', 'artist',
-            'playlist', or 'track'.
-        :type url_type: str
-        :param id_: Deezer ID or URL.
-        :type id_: str
-        :return: Deezer ID.
-        :rtype: str
-        """
-        id_regex = r'(^|deezer\.com/([a-z]*/)?{}/)([0-9]*)'
-        self._log.debug(u'Searching for {} {}', url_type, id_)
-        match = re.search(id_regex.format(url_type), str(id_))
-        deezer_id = match.group(3)
-        return deezer_id if deezer_id else None
 
     def album_for_id(self, album_id):
         """Fetch an album by its Deezer ID or URL and return an
@@ -66,12 +52,12 @@ class DeezerPlugin(BeetsPlugin):
         :return: AlbumInfo object for album.
         :rtype: beets.autotag.hooks.AlbumInfo or None
         """
-        deezer_id = self._get_deezer_id('album', album_id)
+        deezer_id = self._get_id('album', album_id)
         if deezer_id is None:
             return None
 
         album_data = requests.get(self.album_url + deezer_id).json()
-        artist, artist_id = self._get_artist(album_data['contributors'])
+        artist, artist_id = self.get_artist(album_data['contributors'])
 
         release_date = album_data['release_date']
         date_parts = [int(part) for part in release_date.split('-')]
@@ -89,7 +75,7 @@ class DeezerPlugin(BeetsPlugin):
         else:
             raise ui.UserError(
                 u"Invalid `release_date` returned "
-                u"by Deezer API: '{}'".format(release_date)
+                u"by {} API: '{}'".format(self.data_source, release_date)
             )
 
         tracks_data = requests.get(
@@ -109,7 +95,7 @@ class DeezerPlugin(BeetsPlugin):
             album=album_data['title'],
             album_id=deezer_id,
             artist=artist,
-            artist_credit=self._get_artist([album_data['artist']])[0],
+            artist_credit=self.get_artist([album_data['artist']])[0],
             artist_id=artist_id,
             tracks=tracks,
             albumtype=album_data['record_type'],
@@ -120,7 +106,7 @@ class DeezerPlugin(BeetsPlugin):
             day=day,
             label=album_data['label'],
             mediums=max(medium_totals.keys()),
-            data_source='Deezer',
+            data_source=self.data_source,
             data_url=album_data['link'],
         )
 
@@ -132,7 +118,7 @@ class DeezerPlugin(BeetsPlugin):
         :return: TrackInfo object for track
         :rtype: beets.autotag.hooks.TrackInfo
         """
-        artist, artist_id = self._get_artist(
+        artist, artist_id = self.get_artist(
             track_data.get('contributors', [track_data['artist']])
         )
         return TrackInfo(
@@ -144,7 +130,7 @@ class DeezerPlugin(BeetsPlugin):
             index=track_data['track_position'],
             medium=track_data['disk_number'],
             medium_index=track_data['track_position'],
-            data_source='Deezer',
+            data_source=self.data_source,
             data_url=track_data['link'],
         )
 
@@ -162,7 +148,7 @@ class DeezerPlugin(BeetsPlugin):
         :rtype: beets.autotag.hooks.TrackInfo or None
         """
         if track_data is None:
-            deezer_id = self._get_deezer_id('track', track_id)
+            deezer_id = self._get_id('track', track_id)
             if deezer_id is None:
                 return None
             track_data = requests.get(self.track_url + deezer_id).json()
@@ -176,106 +162,12 @@ class DeezerPlugin(BeetsPlugin):
         ).json()['data']
         medium_total = 0
         for i, track_data in enumerate(album_tracks_data, start=1):
-            if track_data['disc_number'] == track.medium:
+            if track_data['disk_number'] == track.medium:
                 medium_total += 1
                 if track_data['id'] == track.track_id:
                     track.index = i
         track.medium_total = medium_total
         return track
-
-    @staticmethod
-    def _get_artist(artists):
-        """Returns an artist string (all artists) and an artist_id (the main
-        artist) for a list of Deezer artist object dicts.
-
-        :param artists: Iterable of ``contributors`` or ``artist`` returned
-            by the Deezer Album (https://developers.deezer.com/api/album) or
-            Deezer Track (https://developers.deezer.com/api/track) APIs.
-        :type artists: list[dict]
-        :return: Normalized artist string
-        :rtype: str
-        """
-        artist_id = None
-        artist_names = []
-        for artist in artists:
-            if not artist_id:
-                artist_id = artist['id']
-            name = artist['name']
-            # Move articles to the front.
-            name = re.sub(r'^(.*?), (a|an|the)$', r'\2 \1', name, flags=re.I)
-            artist_names.append(name)
-        artist = ', '.join(artist_names).replace(' ,', ',') or None
-        return artist, artist_id
-
-    def album_distance(self, items, album_info, mapping):
-        """Returns the Deezer source weight and the maximum source weight
-        for albums.
-        """
-        dist = Distance()
-        if album_info.data_source == 'Deezer':
-            dist.add('source', self.config['source_weight'].as_number())
-        return dist
-
-    def track_distance(self, item, track_info):
-        """Returns the Deezer source weight and the maximum source weight
-        for individual tracks.
-        """
-        dist = Distance()
-        if track_info.data_source == 'Deezer':
-            dist.add('source', self.config['source_weight'].as_number())
-        return dist
-
-    def candidates(self, items, artist, album, va_likely):
-        """Returns a list of AlbumInfo objects for Deezer Search API results
-        matching an ``album`` and ``artist`` (if not various).
-
-        :param items: List of items comprised by an album to be matched.
-        :type items: list[beets.library.Item]
-        :param artist: The artist of the album to be matched.
-        :type artist: str
-        :param album: The name of the album to be matched.
-        :type album: str
-        :param va_likely: True if the album to be matched likely has
-            Various Artists.
-        :type va_likely: bool
-        :return: Candidate AlbumInfo objects.
-        :rtype: list[beets.autotag.hooks.AlbumInfo]
-        """
-        query_filters = {'album': album}
-        if not va_likely:
-            query_filters['artist'] = artist
-        response_data = self._search_deezer(
-            query_type='album', filters=query_filters
-        )
-        if response_data is None:
-            return []
-        return [
-            self.album_for_id(album_id=album_data['id'])
-            for album_data in response_data['data']
-        ]
-
-    def item_candidates(self, item, artist, title):
-        """Returns a list of TrackInfo objects for Deezer Search API results
-        matching ``title`` and ``artist``.
-
-        :param item: Singleton item to be matched.
-        :type item: beets.library.Item
-        :param artist: The artist of the track to be matched.
-        :type artist: str
-        :param title: The title of the track to be matched.
-        :type title: str
-        :return: Candidate TrackInfo objects.
-        :rtype: list[beets.autotag.hooks.TrackInfo]
-        """
-        response_data = self._search_deezer(
-            query_type='track', keywords=title, filters={'artist': artist}
-        )
-        if response_data is None:
-            return []
-        return [
-            self.track_for_id(track_data=track_data)
-            for track_data in response_data['data']
-        ]
 
     @staticmethod
     def _construct_search_query(filters=None, keywords=''):
@@ -299,7 +191,7 @@ class DeezerPlugin(BeetsPlugin):
             query = query.decode('utf8')
         return unidecode.unidecode(query)
 
-    def _search_deezer(self, query_type, filters=None, keywords=''):
+    def _search_api(self, query_type, filters=None, keywords=''):
         """Query the Deezer Search API for the specified ``keywords``, applying
         the provided ``filters``.
 
@@ -320,12 +212,18 @@ class DeezerPlugin(BeetsPlugin):
         )
         if not query:
             return None
-        self._log.debug(u"Searching Deezer for '{}'".format(query))
-        response_data = requests.get(
-            self.search_url + query_type, params={'q': query}
-        ).json()
-        num_results = len(response_data['data'])
         self._log.debug(
-            u"Found {} results from Deezer for '{}'", num_results, query
+            u"Searching {} for '{}'".format(self.data_source, query)
         )
-        return response_data if num_results > 0 else None
+        response = requests.get(
+            self.search_url + query_type, params={'q': query}
+        )
+        response.raise_for_status()
+        response_data = response.json().get('data', [])
+        self._log.debug(
+            u"Found {} results from {} for '{}'",
+            self.data_source,
+            len(response_data),
+            query,
+        )
+        return response_data

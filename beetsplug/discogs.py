@@ -20,7 +20,8 @@ from __future__ import division, absolute_import, print_function
 
 import beets.ui
 from beets import config
-from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance
+from beets.autotag import APIAutotaggerPlugin, album_distance
+from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.plugins import BeetsPlugin
 import confuse
 from discogs_client import Release, Master, Client
@@ -159,10 +160,11 @@ class DiscogsPlugin(BeetsPlugin):
     def album_distance(self, items, album_info, mapping):
         """Returns the album distance.
         """
-        dist = Distance()
-        if album_info.data_source == 'Discogs':
-            dist.add('source', self.config['source_weight'].as_number())
-        return dist
+        return album_distance(
+            data_source='Discogs',
+            album_info=album_info,
+            config=self.config
+        )
 
     def candidates(self, items, artist, album, va_likely):
         """Returns a list of AlbumInfo objects for discogs search results
@@ -292,7 +294,7 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.warning(u"Release does not contain the required fields")
             return None
 
-        artist, artist_id = self.get_artist([a.data for a in result.artists])
+        artist, artist_id = APIAutotaggerPlugin.get_artist([a.data for a in result.artists])
         album = re.sub(r' +', ' ', result.title)
         album_id = result.data['id']
         # Use `.data` to access the tracklist directly instead of the
@@ -367,26 +369,6 @@ class DiscogsPlugin(BeetsPlugin):
             return uri.split("/")[-1]
         else:
             return None
-
-    def get_artist(self, artists):
-        """Returns an artist string (all artists) and an artist_id (the main
-        artist) for a list of discogs album or track artists.
-        """
-        artist_id = None
-        bits = []
-        for i, artist in enumerate(artists):
-            if not artist_id:
-                artist_id = artist['id']
-            name = artist['name']
-            # Strip disambiguation number.
-            name = re.sub(r' \(\d+\)$', '', name)
-            # Move articles to the front.
-            name = re.sub(r'(?i)^(.*?), (a|an|the)$', r'\2 \1', name)
-            bits.append(name)
-            if artist['join'] and i < len(artists) - 1:
-                bits.append(artist['join'])
-        artist = ' '.join(bits).replace(' ,', ',') or None
-        return artist, artist_id
 
     def get_tracks(self, tracklist):
         """Returns a list of TrackInfo objects for a discogs tracklist.
@@ -551,7 +533,7 @@ class DiscogsPlugin(BeetsPlugin):
         title = track['title']
         track_id = None
         medium, medium_index, _ = self.get_track_index(track['position'])
-        artist, artist_id = self.get_artist(track.get('artists', []))
+        artist, artist_id = APIAutotaggerPlugin.get_artist(track.get('artists', []))
         length = self.get_track_length(track['duration'])
         return TrackInfo(title, track_id, artist=artist, artist_id=artist_id,
                          length=length, index=index,
