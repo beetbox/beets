@@ -29,12 +29,13 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo
 
 
 class DeezerPlugin(APIAutotaggerPlugin):
+    data_source = 'Deezer'
+
     # Base URLs for the Deezer API
     # Documentation: https://developers.deezer.com/api/
     search_url = 'https://api.deezer.com/search/'
     album_url = 'https://api.deezer.com/album/'
     track_url = 'https://api.deezer.com/track/'
-    data_source = 'Deezer'
     id_regex = {
         'pattern': r'(^|deezer\.com/([a-z]*/)?{}/)([0-9]*)',
         'match_group': 3,
