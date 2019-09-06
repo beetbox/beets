@@ -32,9 +32,10 @@ import confuse
 from beets import ui
 from beets.autotag import APIAutotaggerPlugin
 from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.plugins import BeetsPlugin
 
 
-class SpotifyPlugin(APIAutotaggerPlugin):
+class SpotifyPlugin(APIAutotaggerPlugin, BeetsPlugin):
     data_source = 'Spotify'
 
     # Base URLs for the Spotify API

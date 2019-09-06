@@ -19,7 +19,7 @@
 from __future__ import division, absolute_import, print_function
 
 import re
-from abc import abstractmethod, abstractproperty
+from abc import ABC, abstractmethod, abstractproperty
 
 from beets import logging
 from beets import config
@@ -222,7 +222,7 @@ def get_distance(config, data_source, info):
     return dist
 
 
-class APIAutotaggerPlugin(BeetsPlugin):
+class APIAutotaggerPlugin(ABC):
     def __init__(self):
         super(APIAutotaggerPlugin, self).__init__()
         self.config.add({'source_weight': 0.5})
