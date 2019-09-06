@@ -152,7 +152,9 @@ class SpotifyPlugin(APIAutotaggerPlugin, BeetsPlugin):
                 return self._handle_response(request_type, url, params=params)
             else:
                 raise ui.UserError(
-                    u'{} API error:\n{}', self.data_source, response.text
+                    u'{} API error:\n{}\nURL:\n{}\nparams:\n{}'.format(
+                        self.data_source, response.text, url, params
+                    )
                 )
         return response.json()
 
