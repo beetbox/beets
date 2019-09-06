@@ -19,11 +19,12 @@
 from __future__ import division, absolute_import, print_function
 
 import re
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod, abstractproperty
+
+import six
 
 from beets import logging
 from beets import config
-from beets.plugins import BeetsPlugin
 
 # Parts of external interface.
 from .hooks import (
@@ -222,7 +223,8 @@ def get_distance(config, data_source, info):
     return dist
 
 
-class APIAutotaggerPlugin(ABC):
+@six.with_metaclass(ABCMeta)
+class APIAutotaggerPlugin(object):
     def __init__(self):
         super(APIAutotaggerPlugin, self).__init__()
         self.config.add({'source_weight': 0.5})
