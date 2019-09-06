@@ -19,7 +19,7 @@
 from __future__ import division, absolute_import, print_function
 
 import re
-from abc import ABCMeta, abstractmethod, abstractproperty
+import abc
 
 import six
 
@@ -223,41 +223,41 @@ def get_distance(config, data_source, info):
     return dist
 
 
-@six.with_metaclass(ABCMeta)
+@six.add_metaclass(abc.ABCMeta)
 class APIAutotaggerPlugin(object):
     def __init__(self):
         super(APIAutotaggerPlugin, self).__init__()
         self.config.add({'source_weight': 0.5})
 
-    @abstractproperty
+    @abc.abstractproperty
     def id_regex(self):
         raise NotImplementedError
 
-    @abstractproperty
+    @abc.abstractproperty
     def data_source(self):
         raise NotImplementedError
 
-    @abstractproperty
+    @abc.abstractproperty
     def search_url(self):
         raise NotImplementedError
 
-    @abstractproperty
+    @abc.abstractproperty
     def album_url(self):
         raise NotImplementedError
 
-    @abstractproperty
+    @abc.abstractproperty
     def track_url(self):
         raise NotImplementedError
 
-    @abstractmethod
+    @abc.abstractmethod
     def _search_api(self, query_type, filters, keywords=''):
         raise NotImplementedError
 
-    @abstractmethod
+    @abc.abstractmethod
     def album_for_id(self, album_id):
         raise NotImplementedError
 
-    @abstractmethod
+    @abc.abstractmethod
     def track_for_id(self, track_id=None, track_data=None):
         raise NotImplementedError
 
