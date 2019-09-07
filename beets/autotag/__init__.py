@@ -302,8 +302,11 @@ class APIAutotaggerPlugin(object):
             u"Searching {} for {} '{}'", self.data_source, url_type, id_
         )
         match = re.search(self.id_regex['pattern'].format(url_type), str(id_))
-        id_ = match.group(self.id_regex['match_group'])
-        return id_ if id_ else None
+        if match:
+            id_ = match.group(self.id_regex['match_group'])
+            if id_:
+                return id_
+        return None
 
     def candidates(self, items, artist, album, va_likely):
         """Returns a list of AlbumInfo objects for Search API results
