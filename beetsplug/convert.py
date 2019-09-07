@@ -90,17 +90,20 @@ def get_format(fmt=None):
     return (command.encode('utf-8'), extension.encode('utf-8'))
 
 
-def should_transcode(item, fmt):
+def should_transcode(self, item, fmt):
     """Determine whether the item should be transcoded as part of
     conversion (i.e., its bitrate is high or it has the wrong format).
     """
     no_convert_queries = config['convert']['no_convert'].as_str_seq()
-    if config['convert']['never_convert_lossy_files']:
+    
+    keys = config['convert'].keys()
+    if 'never_convert_lossy_files' in keys:
         convert_lossy = False
         self._log.debug(u'Deprecated option "never_convert_lossy_files" is set.')
         if config['convert']['convert_lossy'] != convert_lossy:
             self._log.error(u'Opposite values in "convert_lossy" and "never_convert_lossy_files"')
-            return
+            # User can convert to lossy format after correcting the config.
+            return False
     else:
         convert_lossy = config['convert']['convert_lossy']
 
@@ -285,11 +288,11 @@ class ConvertPlugin(BeetsPlugin):
             if keep_new:
                 original = dest
                 converted = item.path
-                if should_transcode(item, fmt):
+                if should_transcode(self, item, fmt):
                     converted = replace_ext(converted, ext)
             else:
                 original = item.path
-                if should_transcode(item, fmt):
+                if should_transcode(self, item, fmt):
                     dest = replace_ext(dest, ext)
                 converted = dest
 
@@ -315,7 +318,7 @@ class ConvertPlugin(BeetsPlugin):
                                    util.displayable_path(original))
                     util.move(item.path, original)
 
-            if should_transcode(item, fmt):
+            if should_transcode(self, item, fmt):
                 linked = False
                 try:
                     self.encode(command, original, converted, pretend)
@@ -520,7 +523,7 @@ class ConvertPlugin(BeetsPlugin):
         library.
         """
         fmt = self.config['format'].as_str().lower()
-        if should_transcode(item, fmt):
+        if should_transcode(self, item, fmt):
             command, ext = get_format()
 
             # Create a temporary file for the conversion.
