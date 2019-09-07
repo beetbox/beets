@@ -96,10 +96,8 @@ def should_transcode(item, fmt):
     """
     no_convert_queries = config['convert']['no_convert'].as_str_seq()
     if config['convert']['never_convert_lossy_files']:
+        convert_lossy = False
         self._log.debug(u'Deprecated option "never_convert_lossy_files" is set.')
-        # undo the double-negative in the old config format
-        if config['convert']['never_convert_lossy_files']:
-            convert_lossy = False
         if config['convert']['convert_lossy'] != convert_lossy:
             self._log.error(u'Opposite values in "convert_lossy" and "never_convert_lossy_files"')
             return
@@ -111,7 +109,7 @@ def should_transcode(item, fmt):
             query, _ = parse_query_string(query_string, Item)
             if query.match(item):
                 return False
-    if convert_lossy and not (item.format.lower() in LOSSLESS_FORMATS):
+    if not convert_lossy and not (item.format.lower() in LOSSLESS_FORMATS):
         return False
     maxbr = config['convert']['max_bitrate'].get(int)
     return fmt.lower() != item.format.lower() or \
