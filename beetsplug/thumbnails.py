@@ -224,7 +224,7 @@ class PathlibURI(URIGetter):
     name = "Python Pathlib"
 
     def uri(self, path):
-        return PurePosixPath(path).as_uri()
+        return PurePosixPath(util.py3_path(path)).as_uri()
 
 
 def copy_c_string(c_string):
