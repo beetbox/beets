@@ -477,10 +477,11 @@ def summarize_items(items, singleton):
 def _summary_judgment(rec):
     """Determines whether a decision should be made without even asking
     the user. This occurs in quiet mode and when an action is chosen for
-    NONE recommendations. Return an action or None if the user should be
-    queried. May also print to the console if a summary judgment is
-    made.
+    NONE recommendations. Return None if the user should be queried.
+    Otherwise, returns an action. May also print to the console if a
+    summary judgment is made.
     """
+
     if config['import']['quiet']:
         if rec == Recommendation.strong:
             return importer.action.APPLY
@@ -489,17 +490,14 @@ def _summary_judgment(rec):
                 'skip': importer.action.SKIP,
                 'asis': importer.action.ASIS,
             })
-
+    elif config['import']['timid']:
+        return None
     elif rec == Recommendation.none:
         action = config['import']['none_rec_action'].as_choice({
             'skip': importer.action.SKIP,
             'asis': importer.action.ASIS,
             'ask': None,
         })
-        # prompt the user if timid is enabled
-        if config['import']['timid'] and action == importer.action.ASIS:
-            return None
-
     else:
         return None
 
