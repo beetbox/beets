@@ -39,7 +39,7 @@ class DeezerPlugin(APIAutotaggerPlugin, BeetsPlugin):
     track_url = 'https://api.deezer.com/track/'
 
     id_regex = {
-        'pattern': r'(^|deezer\.com/)([a-z]*/)?({}/)([0-9]*)',
+        'pattern': r'(^|deezer\.com/)?([a-z]*/)?({}/)?([0-9]*)',
         'match_group': 4,
     }
 
