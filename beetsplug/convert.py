@@ -95,13 +95,23 @@ def should_transcode(item, fmt):
     conversion (i.e., its bitrate is high or it has the wrong format).
     """
     no_convert_queries = config['convert']['no_convert'].as_str_seq()
+    if config['convert']['never_convert_lossy_files']:
+        self._log.debug(u'Deprecated option "never_convert_lossy_files" is set.')
+        # undo the double-negative in the old config format
+        if config['convert']['never_convert_lossy_files']:
+            convert_lossy = False
+        if config['convert']['convert_lossy'] != convert_lossy:
+            self._log.error(u'Opposite values in "convert_lossy" and "never_convert_lossy_files"')
+            return
+    else:
+        convert_lossy = config['convert']['convert_lossy']
+
     if no_convert_queries:
         for query_string in no_convert_queries:
             query, _ = parse_query_string(query_string, Item)
             if query.match(item):
                 return False
-    if config['convert']['never_convert_lossy_files'] and \
-            not (item.format.lower() in LOSSLESS_FORMATS):
+    if convert_lossy and not (item.format.lower() in LOSSLESS_FORMATS):
         return False
     maxbr = config['convert']['max_bitrate'].get(int)
     return fmt.lower() != item.format.lower() or \
@@ -145,7 +155,7 @@ class ConvertPlugin(BeetsPlugin):
             u'embed': True,
             u'paths': {},
             u'no_convert': u'',
-            u'never_convert_lossy_files': False,
+            u'convert_lossy': True,
             u'copy_album_art': False,
             u'album_art_maxwidth': 0,
         })
