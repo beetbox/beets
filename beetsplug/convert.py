@@ -95,9 +95,10 @@ def should_transcode(self, item, fmt):
     conversion (i.e., its bitrate is high or it has the wrong format).
     """
     no_convert_queries = config['convert']['no_convert'].as_str_seq()
-    
-    keys = config['convert'].keys()
-    if 'never_convert_lossy_files' in keys:
+    self._log.debug("asdf")
+    convert_lossy = config['convert']['never_convert_lossy_files'].as_str()
+
+    if convert_lossy:
         convert_lossy = False
         self._log.debug(u'Deprecated option "never_convert_lossy_files" is set.')
         if config['convert']['convert_lossy'] != convert_lossy:
@@ -156,6 +157,8 @@ class ConvertPlugin(BeetsPlugin):
             u'embed': True,
             u'paths': {},
             u'no_convert': u'',
+            # deprecated
+            u'never_convert_lossy_files': False,
             u'convert_lossy': True,
             u'copy_album_art': False,
             u'album_art_maxwidth': 0,
