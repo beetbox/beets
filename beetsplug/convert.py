@@ -95,24 +95,22 @@ def should_transcode(self, item, fmt):
     conversion (i.e., its bitrate is high or it has the wrong format).
     """
     no_convert_queries = config['convert']['no_convert'].as_str_seq()
-    self._log.debug("asdf")
-    convert_lossy = config['convert']['never_convert_lossy_files'].as_str()
-
-    if convert_lossy:
-        convert_lossy = False
-        self._log.debug(u'Deprecated option "never_convert_lossy_files" is set.')
-        if config['convert']['convert_lossy'] != convert_lossy:
-            self._log.error(u'Opposite values in "convert_lossy" and "never_convert_lossy_files"')
-            # User can convert to lossy format after correcting the config.
-            return False
-    else:
-        convert_lossy = config['convert']['convert_lossy']
-
     if no_convert_queries:
         for query_string in no_convert_queries:
             query, _ = parse_query_string(query_string, Item)
             if query.match(item):
                 return False
+
+    try:
+        convert_lossy = not config['convert']['never_convert_lossy_files']
+        self._log.debug(u'Deprecated option "never_convert_lossy_files" is set.')
+    except:
+        convert_lossy = config['convert']['convert_lossy']
+    if str(convert_lossy) != str(config['convert']['convert_lossy']):
+        self._log.error(u'Opposite values in "convert_lossy" and "never_convert_lossy_files"')
+        # User can convert to lossy format after correcting the config.
+        # This is more reversible than the alternative.
+        return False
     if not convert_lossy and not (item.format.lower() in LOSSLESS_FORMATS):
         return False
     maxbr = config['convert']['max_bitrate'].get(int)
@@ -157,8 +155,6 @@ class ConvertPlugin(BeetsPlugin):
             u'embed': True,
             u'paths': {},
             u'no_convert': u'',
-            # deprecated
-            u'never_convert_lossy_files': False,
             u'convert_lossy': True,
             u'copy_album_art': False,
             u'album_art_maxwidth': 0,
