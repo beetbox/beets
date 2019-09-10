@@ -27,7 +27,7 @@ from functools import wraps
 
 import beets
 from beets import logging
-from beets.autotag.hooks import get_distance
+from beets.autotag import get_distance
 import mediafile
 import six
 
