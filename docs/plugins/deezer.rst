@@ -8,12 +8,6 @@ The ``deezer`` plugin provides metadata matches for the importer using the
 .. _Album: https://developers.deezer.com/api/album
 .. _Track: https://developers.deezer.com/api/track
 
-Why Use This Plugin?
---------------------
-
-* You're a Beets user.
-* You want to autotag music with metadata from the Deezer API.
-
 Basic Usage
 -----------
 First, enable the ``deezer`` plugin (see :ref:`using-plugins`).
@@ -28,7 +22,7 @@ Configuration
 -------------
 Put these options in config.yaml under the ``deezer:`` section:
 
-- **source_weight**: Penalty applied to Spotify matches during import. Set to
+- **source_weight**: Penalty applied to Deezer matches during import. Set to
   0.0 to disable.
   Default: ``0.5``.
 

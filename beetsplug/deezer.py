@@ -24,12 +24,10 @@ import unidecode
 import requests
 
 from beets import ui
-from beets.autotag import APIAutotaggerPlugin
-from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.plugins import BeetsPlugin
+from beets.plugins import MetadataSourcePlugin, BeetsPlugin
 
 
-class DeezerPlugin(APIAutotaggerPlugin, BeetsPlugin):
+class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
     data_source = 'Deezer'
 
     # Base URLs for the Deezer API
@@ -224,7 +222,7 @@ class DeezerPlugin(APIAutotaggerPlugin, BeetsPlugin):
         response.raise_for_status()
         response_data = response.json().get('data', [])
         self._log.debug(
-            u"Found {} results from {} for '{}'",
+            u"Found {} result(s) from {} for '{}'",
             len(response_data),
             self.data_source,
             query,
