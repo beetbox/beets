@@ -140,6 +140,13 @@
               Stats
             </a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link artists-link" href="#artists">
+              <i class="fa fa-user"></i>
+              Artists
+            </a>
+          </li>
+
         </ul>
         <div id='savedplaylists'></div>
       </script>
@@ -273,8 +280,6 @@
       <script id='tpl-queue-empty-view' type='text/template'>
         <h3>Oops. Empty Queue</h3>
         <p>Add some tracks by clicking the plus icon from the results of a search</p>
-
-
       </script>
       <script id='tpl-queue-item-view' type='text/template'>
         <div class="row">
@@ -303,6 +308,13 @@
           <dt>Tracks</dt>
           <dd><%= items %></td>
         </dl>
+      </script>
+      <script id="tpl-artist-view" type="text/template">
+        <%= name %>
+      </script>
+      <script id='tpl-artist-list-view' type='text/template'>
+        <h2>Artists <i class="fa fa-user"></i></h2>
+        <ol class="js-widgets"></ol>
       </script>
 
       <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
