@@ -39,6 +39,7 @@
             urlRoot: SETTINGS.API + "/album/",
             model: Item
         }),
+        Artist = Backbone.Model.extend({}),
         Stats = Backbone.Model.extend({
             url: SETTINGS.API + "/stats"
         }),
@@ -59,6 +60,19 @@
                 return data.albums;
             }
         }),
+        Artists = Backbone.Collection.extend({
+            url: SETTINGS.API + "/artist/",
+            model: Artist,
+            comparator: 'name',
+            parse: function (data) {
+                var r = _.map(data.artist_names, function (n) {
+                    return {
+                        name: n
+                    };
+                });
+                return r;
+            }
+        }),
         Queue = Backbone.Collection.extend({
             model: Album
         }),
@@ -69,6 +83,8 @@
             "album/listview": _.template($("#tpl-album-list-view").html()),
             "album/detailview": _.template($("#tpl-album-detail-view").html()),
             "app/view": _.template($("#tpl-app-view").html()),
+            "artist/view": _.template($("#tpl-artist-view").html()),
+            "artist/listview": _.template($("#tpl-artist-list-view").html()),
             "item/view": _.template($("#tpl-item-view").html()),
             "item/detailview": _.template($("#tpl-item-detail-view").html()),
             "item/listview": _.template($("#tpl-item-list-view").html()),
@@ -115,8 +131,11 @@
                 "click .nav-link.stats-link": function () {
                     this.$(".nav-link.active").removeClass("active");
                     this.$(".nav-link.stats-link").addClass("active");
-                }
-
+                },
+                "click .nav-link.artists-link": function () {
+                    this.$(".nav-link.active").removeClass("active");
+                    this.$(".nav-link.artists-link").addClass("active");
+                },
             },
             regions: {
                 "savedplaylists": "#savedplaylists"
@@ -326,6 +345,16 @@
             },
 
         }),
+        ArtistListChildView = Marionette.View.extend({
+            tagName: "li",
+            className: "list-group-item",
+            template: JST["artist/view"]
+        }),
+        ArtistListView = Marionette.CollectionView.extend({
+            template: JST["artist/listview"],
+            childViewContainer: ".js-widgets",
+            childView: ArtistListChildView
+        }),
         AppView = Marionette.View.extend({
             template: JST["app/view"],
             className: "container-fluid m0 p0",
@@ -342,6 +371,7 @@
                 this.listenTo(Backbone, "show:track", this.showTrackView);
                 this.listenTo(Backbone, "show:album", this.showAlbumDetailView);
                 this.listenTo(Backbone, "player:play", this.showNowPlayingView);
+                this.listenTo(Backbone, "show:artists", this.showArtistListView);
             },
             onRender: function () {
                 this.showChildView("sidebar", new SidebarView());
@@ -405,6 +435,16 @@
                         }));
                     }
                 });
+            },
+            showArtistListView: function () {
+                var self = this;
+                App.artists.fetch({
+                    success: function () {
+                        self.showChildView("mainview", new ArtistListView({
+                            collection: App.artists
+                        }))
+                    }
+                })
             }
         }),
     // Routers
@@ -417,6 +457,7 @@
                 "album/:id": "doAlbum",
                 "track/:id": "doTrack",
                 "stats": "doStats",
+                "artists": "doArtists",
             },
             default: function () {
                 this.navigate("search", {
@@ -440,7 +481,10 @@
             },
             doAlbum: function (id) {
                 Backbone.trigger("show:album", id);
-            }
+            },
+            doArtists: function () {
+                Backbone.trigger("show:artists");
+            },
         }),
     // App Container
         App = {
@@ -455,6 +499,8 @@
             albums: new Albums(),
 
             stats: new Stats(),
+
+            artists: new Artists(),
 
             appView: new AppView({
                 el: "#app"
