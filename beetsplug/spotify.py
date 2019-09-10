@@ -30,12 +30,11 @@ import requests
 import confuse
 
 from beets import ui
-from beets.autotag import APIAutotaggerPlugin
 from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.plugins import BeetsPlugin
+from beets.plugins import MetadataSourcePlugin, BeetsPlugin
 
 
-class SpotifyPlugin(APIAutotaggerPlugin, BeetsPlugin):
+class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
     data_source = 'Spotify'
 
     # Base URLs for the Spotify API
@@ -341,7 +340,7 @@ class SpotifyPlugin(APIAutotaggerPlugin, BeetsPlugin):
             .get('items', [])
         )
         self._log.debug(
-            u"Found {} results from {} for '{}'",
+            u"Found {} result(s) from {} for '{}'",
             len(response_data),
             self.data_source,
             query,
