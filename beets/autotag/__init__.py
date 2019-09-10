@@ -22,7 +22,13 @@ from beets import logging
 from beets import config
 
 # Parts of external interface.
-from .hooks import AlbumInfo, TrackInfo, AlbumMatch, TrackMatch  # noqa
+from .hooks import (
+    AlbumInfo,
+    TrackInfo,
+    AlbumMatch,
+    TrackMatch,
+    Distance,
+)  # noqa
 from .match import tag_item, tag_album, Proposal  # noqa
 from .match import Recommendation  # noqa
 
@@ -197,3 +203,13 @@ def apply_metadata(album_info, mapping):
             if value is None and not clobber:
                 continue
             item[field] = value
+
+
+def get_distance(config, data_source, info):
+    """Returns the ``data_source`` weight and the maximum source weight
+    for albums or individual tracks.
+    """
+    dist = Distance()
+    if info.data_source == data_source:
+        dist.add('source', config['source_weight'].as_number())
+    return dist

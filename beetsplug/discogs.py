@@ -20,7 +20,7 @@ from __future__ import division, absolute_import, print_function
 
 import beets.ui
 from beets import config
-from beets.autotag.hooks import AlbumInfo, TrackInfo, get_distance
+from beets.autotag import AlbumInfo, TrackInfo, get_distance
 from beets.plugins import MetadataSourcePlugin, BeetsPlugin
 import confuse
 from discogs_client import Release, Master, Client
