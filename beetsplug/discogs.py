@@ -20,9 +20,8 @@ from __future__ import division, absolute_import, print_function
 
 import beets.ui
 from beets import config
-from beets.autotag import APIAutotaggerPlugin, get_distance
 from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.plugins import BeetsPlugin
+from beets.plugins import MetadataSourcePlugin, BeetsPlugin, get_distance
 import confuse
 from discogs_client import Release, Master, Client
 from discogs_client.exceptions import DiscogsAPIError
@@ -303,7 +302,7 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.warning(u"Release does not contain the required fields")
             return None
 
-        artist, artist_id = APIAutotaggerPlugin.get_artist(
+        artist, artist_id = MetadataSourcePlugin.get_artist(
             [a.data for a in result.artists]
         )
         album = re.sub(r' +', ' ', result.title)
@@ -544,7 +543,7 @@ class DiscogsPlugin(BeetsPlugin):
         title = track['title']
         track_id = None
         medium, medium_index, _ = self.get_track_index(track['position'])
-        artist, artist_id = APIAutotaggerPlugin.get_artist(
+        artist, artist_id = MetadataSourcePlugin.get_artist(
             track.get('artists', [])
         )
         length = self.get_track_length(track['duration'])
