@@ -652,3 +652,13 @@ def item_candidates(item, artist, title):
     # Plugin candidates.
     for candidate in plugins.item_candidates(item, artist, title):
         yield candidate
+
+
+def get_distance(config, data_source, info):
+    """Returns the ``data_source`` weight and the maximum source weight
+    for albums or individual tracks.
+    """
+    dist = Distance()
+    if info.data_source == data_source:
+        dist.add('source', config['source_weight'].as_number())
+    return dist
