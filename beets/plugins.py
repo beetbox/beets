@@ -27,7 +27,7 @@ from functools import wraps
 
 import beets
 from beets import logging
-from beets.autotag import get_distance
+import beets.autotag
 import mediafile
 import six
 
@@ -707,11 +707,11 @@ class MetadataSourcePlugin(object):
         return [self.track_for_id(track_data=track) for track in tracks]
 
     def album_distance(self, items, album_info, mapping):
-        return get_distance(
+        return beets.autotag.get_distance(
             data_source=self.data_source, info=album_info, config=self.config
         )
 
     def track_distance(self, item, track_info):
-        return get_distance(
+        return beets.autotag.get_distance(
             data_source=self.data_source, info=track_info, config=self.config
         )
