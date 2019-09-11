@@ -22,13 +22,13 @@ from beets import logging
 from beets import config
 
 # Parts of external interface.
-from .hooks import (
+from .hooks import (  # noqa
     AlbumInfo,
     TrackInfo,
     AlbumMatch,
     TrackMatch,
     Distance,
-)  # noqa
+)
 from .match import tag_item, tag_album, Proposal  # noqa
 from .match import Recommendation  # noqa
 
