@@ -15,7 +15,7 @@
 
 """Adds Deezer release and track search support to the autotagger
 """
-from __future__ import absolute_import, print_function
+from __future__ import absolute_import, print_function, division
 
 import collections
 

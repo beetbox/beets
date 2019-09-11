@@ -686,7 +686,7 @@ class MetadataSourcePlugin(object):
         if not va_likely:
             query_filters['artist'] = artist
         albums = self._search_api(query_type='album', filters=query_filters)
-        return [self.album_for_id(album_id=album['id']) for album in albums]
+        return [self.album_for_id(album_id=a['id']) for a in albums]
 
     def item_candidates(self, item, artist, title):
         """Returns a list of TrackInfo objects for Search API results
