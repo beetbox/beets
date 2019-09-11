@@ -24,6 +24,7 @@ import unidecode
 import requests
 
 from beets import ui
+from beets.autotag import AlbumInfo, TrackInfo
 from beets.plugins import MetadataSourcePlugin, BeetsPlugin
 
 
