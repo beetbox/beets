@@ -27,7 +27,6 @@ from functools import wraps
 
 import beets
 from beets import logging
-import beets.autotag
 import mediafile
 import six
 
@@ -581,6 +580,16 @@ def notify_info_yielded(event):
     return decorator
 
 
+def get_distance(config, data_source, info):
+    """Returns the ``data_source`` weight and the maximum source weight
+    for albums or individual tracks.
+    """
+    dist = beets.autotag.Distance()
+    if info.data_source == data_source:
+        dist.add('source', config['source_weight'].as_number())
+    return dist
+
+
 @six.add_metaclass(abc.ABCMeta)
 class MetadataSourcePlugin(object):
     def __init__(self):
@@ -707,11 +716,11 @@ class MetadataSourcePlugin(object):
         return [self.track_for_id(track_data=track) for track in tracks]
 
     def album_distance(self, items, album_info, mapping):
-        return beets.autotag.get_distance(
+        return get_distance(
             data_source=self.data_source, info=album_info, config=self.config
         )
 
     def track_distance(self, item, track_info):
-        return beets.autotag.get_distance(
+        return get_distance(
             data_source=self.data_source, info=track_info, config=self.config
         )
