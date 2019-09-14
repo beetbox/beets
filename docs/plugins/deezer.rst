@@ -10,6 +10,7 @@ The ``deezer`` plugin provides metadata matches for the importer using the
 
 Basic Usage
 -----------
+
 First, enable the ``deezer`` plugin (see :ref:`using-plugins`).
 
 You can enter the URL for an album or song on Deezer at the ``enter Id``
@@ -20,6 +21,7 @@ prompt during import::
 
 Configuration
 -------------
+
 Put these options in config.yaml under the ``deezer:`` section:
 
 - **source_weight**: Penalty applied to Deezer matches during import. Set to
