@@ -69,6 +69,7 @@ New features:
 * :doc:`/plugins/deezer`: Added Deezer plugin as an import metadata provider:
   you can now match tracks and albums using the `Deezer`_ database.
   Thanks to :user:`rhlahuja`.
+  :bug:`3355`
 
 Fixes:
 
@@ -134,6 +135,7 @@ For plugin developers:
   simplify development of plugins which query album, track, and search
   APIs to provide metadata matches for the importer. Refer to the Spotify and
   Deezer plugins for examples of using this template class.
+  :bug:`3355`
 
 For packagers:
 
