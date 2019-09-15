@@ -442,9 +442,9 @@
                     success: function () {
                         self.showChildView("mainview", new ArtistListView({
                             collection: App.artists
-                        }))
+                        }));
                     }
-                })
+                });
             }
         }),
     // Routers
