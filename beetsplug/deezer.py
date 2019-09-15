@@ -38,7 +38,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
     track_url = 'https://api.deezer.com/track/'
 
     id_regex = {
-        'pattern': r'(^|deezer\.com/)(\w+/)?({}/)?(\d+)',
+        'pattern': r'(^|deezer\.com/)([a-z]*/)?({}/)?(\d+)',
         'match_group': 4,
     }
 
