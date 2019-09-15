@@ -18,17 +18,18 @@
                 this.prepForDisplay();
             },
 
-            formatTime: function (secs) {
-                if (secs === undefined || isNaN(secs)) {
-                    return "0:00";
+            // Format times as minutes and seconds.
+            formatTime: function(secs) {
+                if (secs == undefined || isNaN(secs)) {
+                    return '0:00';
                 }
                 secs = Math.round(secs);
-                secs = secs % 60;
+                var mins = '' + Math.floor(secs / 60);
+                secs = '' + (secs % 60);
                 if (secs.length < 2) {
-                    secs = "0" + secs;
+                    secs = '0' + secs;
                 }
-                return Math.floor(secs / 60) + ":" + secs;
-
+                return mins + ':' + secs;
             },
 
             prepForDisplay: function () {
