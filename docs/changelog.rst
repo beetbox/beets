@@ -66,6 +66,10 @@ New features:
 * The 'data_source' field is now also applied as an album-level flexible
   attribute during imports, allowing for more refined album level searches.
   :bug:`3350` :bug:`1693`
+* :doc:`/plugins/deezer`: Added Deezer plugin as an import metadata provider:
+  you can now match tracks and albums using the `Deezer`_ database.
+  Thanks to :user:`rhlahuja`.
+  :bug:`3355`
 
 Fixes:
 
@@ -127,6 +131,11 @@ For plugin developers:
   longer separate R128 backend instances. Instead the targetlevel is passed to
   ``compute_album_gain`` and ``compute_track_gain``.
   :bug:`3065`
+* The ``beets.plugins.MetadataSourcePlugin`` base class has been added to
+  simplify development of plugins which query album, track, and search
+  APIs to provide metadata matches for the importer. Refer to the Spotify and
+  Deezer plugins for examples of using this template class.
+  :bug:`3355`
 
 For packagers:
 
@@ -146,6 +155,7 @@ For packagers:
 .. _MediaFile: https://github.com/beetbox/mediafile
 .. _Confuse: https://github.com/beetbox/confuse
 .. _works: https://musicbrainz.org/doc/Work
+.. _Deezer: https://www.deezer.com
 
 
 1.4.9 (May 30, 2019)
