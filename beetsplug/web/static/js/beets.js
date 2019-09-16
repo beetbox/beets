@@ -38,7 +38,11 @@
         }),
         Album = Backbone.Model.extend({
             urlRoot: SETTINGS.API + "/album/",
-            model: Item
+            model: Item,
+            getItems: function () {
+                this.url = "/album/" + this.model.get("id") + "?expand=1";
+                this.fetch();
+            }
         }),
         Artist = Backbone.Model.extend({}),
         Stats = Backbone.Model.extend({
@@ -232,6 +236,21 @@
             tagName: "li",
             className: "list-group-item",
             template: JST["album/view"],
+            events: {
+                "click .add-button": "doQueue"
+            },
+            doQueue: function () {
+                this.model.url = "/album/" + this.model.get("id") + "?expand=1";
+                this.model.fetch({
+                    success: function (data) {
+                        var items = data.attributes.items;
+                        _.each(items, function (item) {
+                            var i = new Item( item );
+                            App.queue.push(i);
+                        });
+                    }
+                });
+            }
         }),
         AlbumListView = Marionette.CollectionView.extend({
             template: JST["album/listview"],
