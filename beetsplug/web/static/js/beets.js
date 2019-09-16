@@ -1,3 +1,4 @@
+/* globals _,$,Backbone,Marionette,Howl */
 (function () {
     "use strict";
 
