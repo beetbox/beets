@@ -255,6 +255,16 @@ class BeatportTrack(BeatportObject):
             self.url = "https://beatport.com/track/{0}/{1}" \
                 .format(data['slug'], data['id'])
         self.track_number = data.get('trackNumber')
+        if 'bpm' in data:
+            self.bpm = data['bpm']
+        if 'key' in data:
+            self.musical_key = six.text_type(data['key'].get('shortName'))
+
+        # Use 'subgenre' and if not present, 'genre' as a fallback.
+        if 'subGenres' in data:
+            self.genre = six.text_type(data['subGenres'][0].get('name'))
+            if not self.genre and 'genres' in data:
+                self.genre = six.text_type(data['genres'][0].get('name'))
 
 
 class BeatportPlugin(BeetsPlugin):
@@ -433,7 +443,8 @@ class BeatportPlugin(BeetsPlugin):
                          artist=artist, artist_id=artist_id,
                          length=length, index=track.track_number,
                          medium_index=track.track_number,
-                         data_source=u'Beatport', data_url=track.url)
+                         data_source=u'Beatport', data_url=track.url,
+                         bpm=track.bpm, musical_key=track.musical_key)
 
     def _get_artist(self, artists):
         """Returns an artist string (all artists) and an artist_id (the main
