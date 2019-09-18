@@ -70,6 +70,9 @@ New features:
   you can now match tracks and albums using the `Deezer`_ database.
   Thanks to :user:`rhlahuja`.
   :bug:`3355`
+* :doc:`/plugins/beatport`: The plugin now gets the musical key, BPM and the
+  genre for each track.
+  :bug:`2080`
 
 Fixes:
 
@@ -136,6 +139,8 @@ For plugin developers:
   APIs to provide metadata matches for the importer. Refer to the Spotify and
   Deezer plugins for examples of using this template class.
   :bug:`3355`
+* The autotag hooks have been modified such that they now take 'bpm',
+  'musical_key' and a per-track based 'genre' as attributes.
 
 For packagers:
 
