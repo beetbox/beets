@@ -24,8 +24,8 @@ to authorize with Beatport by visiting the site in a browser. On the site
 you will be asked to enter your username and password to authorize beets
 to query the Beatport API. You will then be displayed with a single line of
 text that you should paste as a whole into your terminal. This will store the
-authentication data (under ``~/.config/beatport_token.json``) for subsequent
-runs and you will not be required to repeat the above steps.
+authentication data for subsequentruns and you will not be required to repeat
+the above steps.
 
 Matches from Beatport should now show up alongside matches
 from MusicBrainz and other sources.
