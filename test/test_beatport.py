@@ -558,6 +558,70 @@ class BeatportTest(_common.TestCase, TestHelper):
             self.assertEqual(track.genre, test_track.genre)
 
 
+class BeatportResponseEmptyTest(_common.TestCase, TestHelper):
+    def _make_tracks_response(self):
+        results = [{
+            "id": 7817567,
+            "name": "Mirage a Trois",
+            "genres": [{
+              "id": 9,
+              "name": "Breaks",
+              "slug": "breaks",
+              "type": "genre"
+            }],
+            "subGenres": [{
+              "id": 209,
+              "name": "Glitch Hop",
+              "slug": "glitch-hop",
+              "type": "subgenre"
+            }],
+        }]
+        return results
+
+    def setUp(self):
+        self.setup_beets()
+        self.load_plugins('beatport')
+        self.lib = library.Library(':memory:')
+
+        # Set up 'tracks'.
+        self.response_tracks = self._make_tracks_response()
+        self.tracks = [beatport.BeatportTrack(t) for t in self.response_tracks]
+
+        # Make alias to be congruent with class `BeatportTest`.
+        self.test_tracks = self.response_tracks
+
+    def tearDown(self):
+        self.unload_plugins()
+        self.teardown_beets()
+
+    def test_response_tracks_empty(self):
+        response_tracks = []
+        tracks = [beatport.BeatportTrack(t) for t in response_tracks]
+        self.assertEqual(tracks, [])
+
+    def test_sub_genre_empty_fallback(self):
+        """No 'sub_genre' is provided. Test if fallback to 'genre' works.
+        """
+        self.response_tracks[0]['subGenres'] = []
+        tracks = [beatport.BeatportTrack(t) for t in self.response_tracks]
+
+        self.test_tracks[0]['subGenres'] = []
+
+        self.assertEqual(tracks[0].genre,
+                         self.test_tracks[0]['genres'][0]['name'])
+
+    def test_genre_empty(self):
+        """No 'genre' is provided. Test if 'sub_genre' is applied.
+        """
+        self.response_tracks[0]['genres'] = []
+        tracks = [beatport.BeatportTrack(t) for t in self.response_tracks]
+
+        self.test_tracks[0]['genres'] = []
+
+        self.assertEqual(tracks[0].genre,
+                         self.test_tracks[0]['subGenres'][0]['name'])
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
