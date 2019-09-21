@@ -425,7 +425,6 @@ class BeatportTest(_common.TestCase, TestHelper):
 
         # Set up 'test_album'.
         self.test_album = self.mk_test_album()
-        # print(self.test_album.keys())
 
         # Set up 'test_tracks'
         self.test_tracks = self.test_album.items()
