@@ -150,9 +150,11 @@ class BeatportClient(object):
         :rtype:                 :py:class:`BeatportRelease`
         """
         response = self._get('/catalog/3/releases', id=beatport_id)
-        release = BeatportRelease(response[0])
-        release.tracks = self.get_release_tracks(beatport_id)
-        return release
+        if response:
+            release = BeatportRelease(response[0])
+            release.tracks = self.get_release_tracks(beatport_id)
+            return release
+        return None
 
     def get_release_tracks(self, beatport_id):
         """ Get all tracks for a given release.
@@ -261,10 +263,10 @@ class BeatportTrack(BeatportObject):
             self.musical_key = six.text_type(data['key'].get('shortName'))
 
         # Use 'subgenre' and if not present, 'genre' as a fallback.
-        if 'subGenres' in data:
+        if 'subGenres' in data and data['subGenres']:
             self.genre = six.text_type(data['subGenres'][0].get('name'))
-            if not self.genre and 'genres' in data:
-                self.genre = six.text_type(data['genres'][0].get('name'))
+        elif 'genres' in data and data['genres']:
+            self.genre = six.text_type(data['genres'][0].get('name'))
 
 
 class BeatportPlugin(BeetsPlugin):
@@ -375,27 +377,33 @@ class BeatportPlugin(BeetsPlugin):
 
     def album_for_id(self, release_id):
         """Fetches a release by its Beatport ID and returns an AlbumInfo object
-        or None if the release is not found.
+        or None if the query is not a valid ID or release is not found.
         """
         self._log.debug(u'Searching for release {0}', release_id)
         match = re.search(r'(^|beatport\.com/release/.+/)(\d+)$', release_id)
         if not match:
+            self._log.debug(u'Not a valid Beatport release ID.')
             return None
         release = self.client.get_release(match.group(2))
-        album = self._get_album_info(release)
-        return album
+        if release is not None:
+            album = self._get_album_info(release)
+            return album
+        return None
 
     def track_for_id(self, track_id):
         """Fetches a track by its Beatport ID and returns a TrackInfo object
-        or None if the track is not found.
+        or None if the track is not a valid Beatport ID or track is not found.
         """
         self._log.debug(u'Searching for track {0}', track_id)
         match = re.search(r'(^|beatport\.com/track/.+/)(\d+)$', track_id)
         if not match:
+            self._log.debug(u'Not a valid Beatport track ID.')
             return None
         bp_track = self.client.get_track(match.group(2))
-        track = self._get_track_info(bp_track)
-        return track
+        if bp_track is not None:
+            track = self._get_track_info(bp_track)
+            return track
+        return None
 
     def _get_releases(self, query):
         """Returns a list of AlbumInfo objects for a beatport search query.
