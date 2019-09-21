@@ -31,7 +31,7 @@ class BeatportTest(_common.TestCase, TestHelper):
     def _make_release_response(self):
         """Returns a dict that mimics a response from the beatport API.
 
-        The results were retrived from:
+        The results were retrieved from:
         https://oauth-api.beatport.com/catalog/3/releases?id=1742984
         The list of elements on the returned dict is incomplete, including just
         those required for the tests on this class.
@@ -72,7 +72,7 @@ class BeatportTest(_common.TestCase, TestHelper):
     def _make_tracks_response(self):
         """Return a list that mimics a response from the beatport API.
 
-        The results were retrived from:
+        The results were retrieved from:
         https://oauth-api.beatport.com/catalog/3/tracks?releaseId=1742984
         The list of elements on the returned list is incomplete, including just
         those required for the tests on this class.
