@@ -385,9 +385,8 @@ class BeatportPlugin(BeetsPlugin):
             self._log.debug(u'Not a valid Beatport release ID.')
             return None
         release = self.client.get_release(match.group(2))
-        if release is not None:
-            album = self._get_album_info(release)
-            return album
+        if release:
+            return self._get_album_info(release)
         return None
 
     def track_for_id(self, track_id):
@@ -401,8 +400,7 @@ class BeatportPlugin(BeetsPlugin):
             return None
         bp_track = self.client.get_track(match.group(2))
         if bp_track is not None:
-            track = self._get_track_info(bp_track)
-            return track
+            return self._get_track_info(bp_track)
         return None
 
     def _get_releases(self, query):
