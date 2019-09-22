@@ -31,7 +31,7 @@ class BeatportTest(_common.TestCase, TestHelper):
     def _make_release_response(self):
         """Returns a dict that mimics a response from the beatport API.
 
-        The results were retrived from:
+        The results were retrieved from:
         https://oauth-api.beatport.com/catalog/3/releases?id=1742984
         The list of elements on the returned dict is incomplete, including just
         those required for the tests on this class.
@@ -72,7 +72,7 @@ class BeatportTest(_common.TestCase, TestHelper):
     def _make_tracks_response(self):
         """Return a list that mimics a response from the beatport API.
 
-        The results were retrived from:
+        The results were retrieved from:
         https://oauth-api.beatport.com/catalog/3/tracks?releaseId=1742984
         The list of elements on the returned list is incomplete, including just
         those required for the tests on this class.
@@ -425,7 +425,6 @@ class BeatportTest(_common.TestCase, TestHelper):
 
         # Set up 'test_album'.
         self.test_album = self.mk_test_album()
-        # print(self.test_album.keys())
 
         # Set up 'test_tracks'
         self.test_tracks = self.test_album.items()
@@ -557,6 +556,70 @@ class BeatportTest(_common.TestCase, TestHelper):
     def test_genre_applied(self):
         for track, test_track in zip(self.tracks, self.test_tracks):
             self.assertEqual(track.genre, test_track.genre)
+
+
+class BeatportResponseEmptyTest(_common.TestCase, TestHelper):
+    def _make_tracks_response(self):
+        results = [{
+            "id": 7817567,
+            "name": "Mirage a Trois",
+            "genres": [{
+              "id": 9,
+              "name": "Breaks",
+              "slug": "breaks",
+              "type": "genre"
+            }],
+            "subGenres": [{
+              "id": 209,
+              "name": "Glitch Hop",
+              "slug": "glitch-hop",
+              "type": "subgenre"
+            }],
+        }]
+        return results
+
+    def setUp(self):
+        self.setup_beets()
+        self.load_plugins('beatport')
+        self.lib = library.Library(':memory:')
+
+        # Set up 'tracks'.
+        self.response_tracks = self._make_tracks_response()
+        self.tracks = [beatport.BeatportTrack(t) for t in self.response_tracks]
+
+        # Make alias to be congruent with class `BeatportTest`.
+        self.test_tracks = self.response_tracks
+
+    def tearDown(self):
+        self.unload_plugins()
+        self.teardown_beets()
+
+    def test_response_tracks_empty(self):
+        response_tracks = []
+        tracks = [beatport.BeatportTrack(t) for t in response_tracks]
+        self.assertEqual(tracks, [])
+
+    def test_sub_genre_empty_fallback(self):
+        """No 'sub_genre' is provided. Test if fallback to 'genre' works.
+        """
+        self.response_tracks[0]['subGenres'] = []
+        tracks = [beatport.BeatportTrack(t) for t in self.response_tracks]
+
+        self.test_tracks[0]['subGenres'] = []
+
+        self.assertEqual(tracks[0].genre,
+                         self.test_tracks[0]['genres'][0]['name'])
+
+    def test_genre_empty(self):
+        """No 'genre' is provided. Test if 'sub_genre' is applied.
+        """
+        self.response_tracks[0]['genres'] = []
+        tracks = [beatport.BeatportTrack(t) for t in self.response_tracks]
+
+        self.test_tracks[0]['genres'] = []
+
+        self.assertEqual(tracks[0].genre,
+                         self.test_tracks[0]['subGenres'][0]['name'])
 
 
 def suite():

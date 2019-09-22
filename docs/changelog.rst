@@ -107,6 +107,8 @@ Fixes:
 * ``none_rec_action`` does not import automatically when ``timid`` is enabled.
   Thanks to :user:`RollingStar`.
   :bug:`3242`
+* Fix a bug that caused a crash when tagging items with the beatport plugin.
+  :bug:`3374`
 
 For plugin developers:
 
