@@ -73,6 +73,8 @@ New features:
 * :doc:`/plugins/beatport`: The plugin now gets the musical key, BPM and the
   genre for each track.
   :bug:`2080`
+* :doc:`/plugins/beatport`: Fix default assignment of the musical key.
+  :bug:`3377`
 
 Fixes:
 
