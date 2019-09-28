@@ -257,8 +257,7 @@ class BeatportTrack(BeatportObject):
             self.url = "https://beatport.com/track/{0}/{1}" \
                 .format(data['slug'], data['id'])
         self.track_number = data.get('trackNumber')
-        if 'bpm' in data:
-            self.bpm = data['bpm']
+        self.bpm = data.get('bpm')
         self.musical_key = six.text_type(
             (data.get('key') or {}).get('shortName')
         )
