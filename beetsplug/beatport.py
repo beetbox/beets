@@ -259,7 +259,9 @@ class BeatportTrack(BeatportObject):
         self.track_number = data.get('trackNumber')
         if 'bpm' in data:
             self.bpm = data['bpm']
-        self.musical_key = six.text_type(data.get('key', {}).get('shortName'))
+        self.musical_key = six.text_type(
+            (data.get('key') or {}).get('shortName')
+        )
 
         # Use 'subgenre' and if not present, 'genre' as a fallback.
         if data.get('subGenres'):
