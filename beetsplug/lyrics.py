@@ -404,6 +404,24 @@ class Genius(Backend):
             return self.lyrics_from_song_api_path(song_api_path)
 
 
+class Azlyrics(Backend):
+    URL_PATTERN = "https://www.azlyrics.com/lyrics/%s/%s.html"
+
+    def build_url(self, artist, title):
+        a = self._encode(artist.lower().replace(' ', ''))
+        t = self._encode(title.lower().replace(' ', ''))
+        return self.URL_PATTERN % (a, t)
+
+    def fetch(self, artist, title):
+        url = self.build_url(artist, title)
+        html = self.fetch_url(url)
+        if not html:
+            return
+        lyrics = extract_text_between(html, "<!-- Usage of azlyrics.com content by any third-party lyrics provider is prohibited by our licensing agreement. Sorry about that. -->", "</div")
+        lyrics = BREAK_RE.sub('\n', lyrics)
+        return lyrics
+
+        
 class LyricsWiki(SymbolsReplaced):
     """Fetch lyrics from LyricsWiki."""
 
@@ -619,12 +637,13 @@ class Google(Backend):
 
 
 class LyricsPlugin(plugins.BeetsPlugin):
-    SOURCES = ['google', 'lyricwiki', 'musixmatch', 'genius']
+    SOURCES = ['google', 'lyricwiki', 'musixmatch', 'genius', 'azlyrics']
     SOURCE_BACKENDS = {
         'google': Google,
         'lyricwiki': LyricsWiki,
         'musixmatch': MusiXmatch,
         'genius': Genius,
+        'azlyrics': Azlyrics,
     }
 
     def __init__(self):
