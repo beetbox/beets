@@ -3,11 +3,12 @@ Lyrics Plugin
 
 The ``lyrics`` plugin fetches and stores song lyrics from databases on the Web.
 Namely, the current version of the plugin uses `Lyric Wiki`_,
-`Musixmatch`_, `Genius.com`_, and, optionally, the Google custom search API.
+`Musixmatch`_, `Genius.com`_, `Azlyrics.com` and, optionally, the Google custom search API.
 
 .. _Lyric Wiki: https://lyrics.wikia.com/
 .. _Musixmatch: https://www.musixmatch.com/
 .. _Genius.com: https://genius.com/
+.. _Azlyrics.com: https://azlyrics.com/
 
 
 Fetch Lyrics During Import
@@ -59,7 +60,7 @@ configuration file. The available options are:
   sources known to be scrapeable.
 - **sources**: List of sources to search for lyrics. An asterisk ``*`` expands
   to all available sources.
-  Default: ``google lyricwiki musixmatch genius``, i.e., all the
+  Default: ``google lyricwiki musixmatch genius azlyrics``, i.e., all the
   available sources. The ``google`` source will be automatically
   deactivated if no ``google_API_key`` is setup.
   Both it and the ``genius`` source will only be enabled if BeautifulSoup is
