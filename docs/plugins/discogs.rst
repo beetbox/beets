@@ -43,6 +43,11 @@ documentation), login to `Discogs`_, and visit the
 token`` button, and place the generated token in your configuration, as the
 ``user_token`` config option in the ``discogs`` section.
 
+Configuration
+-------------
+
+This plugin can be configured like other metadata source plugins as described in :ref:`metadata-source-plugin-configuration`.
+
 Troubleshooting
 ---------------
 
