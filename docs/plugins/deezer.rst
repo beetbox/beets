@@ -22,13 +22,4 @@ prompt during import::
 Configuration
 -------------
 
-Put these options in config.yaml under the ``deezer:`` section:
-
-- **source_weight**: Penalty applied to Deezer matches during import. Set to
-  0.0 to disable.
-  Default: ``0.5``.
-
-Here's an example::
-
-    deezer:
-        source_weight: 0.7
+This plugin can be configured like other metadata source plugins as described in :ref:`metadata-source-plugin-configuration`.

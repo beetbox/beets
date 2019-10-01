@@ -46,9 +46,7 @@ token`` button, and place the generated token in your configuration, as the
 Configuration
 -------------
 
-- **source_weight**: Penalty applied to Discogs matches during import. Set to
-  0.0 to disable.
-  Default: ``0.5``.
+This plugin can be configured like other metadata source plugins as described in :ref:`metadata-source-plugin-configuration`.
 
 Troubleshooting
 ---------------
