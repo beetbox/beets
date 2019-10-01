@@ -43,6 +43,13 @@ documentation), login to `Discogs`_, and visit the
 token`` button, and place the generated token in your configuration, as the
 ``user_token`` config option in the ``discogs`` section.
 
+Configuration
+-------------
+
+- **source_weight**: Penalty applied to Discogs matches during import. Set to
+  0.0 to disable.
+  Default: ``0.5``.
+
 Troubleshooting
 ---------------
 
