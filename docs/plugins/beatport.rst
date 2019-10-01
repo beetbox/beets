@@ -36,6 +36,11 @@ also search for an id like so:
 
     beet import path/to/music/library --search-id id
 
+Configuration
+-------------
+
+This plugin can be configured like other metadata source plugins as described in :ref:`metadata-source-plugin-configuration`.
+
 .. _requests: https://docs.python-requests.org/en/latest/
 .. _requests_oauthlib: https://github.com/requests/requests-oauthlib
 .. _Beatport: https://beetport.com
