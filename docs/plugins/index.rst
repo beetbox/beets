@@ -35,6 +35,27 @@ like this::
 
     pip install beets[fetchart,lyrics,lastgenre]
 
+.. _metadata-source-plugin-configuration:
+
+Using Metadata Source Plugins
+-----------------------------
+
+Some plugins provide sources for metadata in addition to MusicBrainz. These
+plugins share the following configuration option:
+
+- **source_weight**: Penalty applied to matches during import. Set to 0.0 to
+  disable.
+  Default: ``0.5``.
+
+For example, to equally consider matches from Discogs and MusicBrainz add the
+following to your configuration::
+
+    plugins: discogs
+
+    discogs:
+       source_weight: 0.0
+
+
 .. toctree::
    :hidden:
 
