@@ -28,8 +28,8 @@ from requests_oauthlib.oauth1_session import (TokenRequestDenied, TokenMissing,
 
 import beets
 import beets.ui
-from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance
-from beets.plugins import BeetsPlugin, MetadataSourcePlugin
+from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.plugins import BeetsPlugin, MetadataSourcePlugin, get_distance
 import confuse
 
 
@@ -336,22 +336,24 @@ class BeatportPlugin(BeetsPlugin):
         return self.config['tokenfile'].get(confuse.Filename(in_app_dir=True))
 
     def album_distance(self, items, album_info, mapping):
-        """Returns the beatport source weight and the maximum source weight
+        """Returns the Beatport source weight and the maximum source weight
         for albums.
         """
-        dist = Distance()
-        if album_info.data_source == self.data_source:
-            dist.add('source', self.config['source_weight'].as_number())
-        return dist
+        return get_distance(
+            data_source=self.data_source,
+            info=album_info,
+            config=self.config
+        )
 
     def track_distance(self, item, track_info):
-        """Returns the beatport source weight and the maximum source weight
+        """Returns the Beatport source weight and the maximum source weight
         for individual tracks.
         """
-        dist = Distance()
-        if track_info.data_source == self.data_source:
-            dist.add('source', self.config['source_weight'].as_number())
-        return dist
+        return get_distance(
+            data_source=self.data_source,
+            info=track_info,
+            config=self.config
+        )
 
     def candidates(self, items, artist, release, va_likely):
         """Returns a list of AlbumInfo objects for beatport search results
