@@ -141,8 +141,8 @@ class BPSyncPlugin(BeetsPlugin):
                 continue
 
             # Get the Beatport album information.
-            album_info = self.beatport_plugin.album_for_id(album.mb_albumid)
-            if not album_info:
+            albuminfo = self.beatport_plugin.album_for_id(album.mb_albumid)
+            if not albuminfo:
                 self._log.info(
                     u'Release ID {} not found for album {}',
                     album.mb_albumid,
@@ -151,19 +151,19 @@ class BPSyncPlugin(BeetsPlugin):
                 continue
 
             beatport_trackid_to_trackinfo = {
-                track.track_id: track for track in album_info.tracks
+                track.track_id: track for track in albuminfo.tracks
             }
             library_trackid_to_item = {
                 int(item.mb_trackid): item for item in items
             }
             item_to_trackinfo = {
-                library_trackid_to_item[track_id]: track_info
-                for track_id, track_info in beatport_trackid_to_trackinfo.items()
+                item: beatport_trackid_to_trackinfo[track_id]
+                for track_id, item in library_trackid_to_item.items()
             }
 
             self._log.info(u'applying changes to {}', album)
             with lib.transaction():
-                autotag.apply_metadata(album_info, item_to_trackinfo)
+                autotag.apply_metadata(albuminfo, item_to_trackinfo)
                 changed = False
                 # Find any changed item to apply Beatport changes to album.
                 any_changed_item = items[0]
