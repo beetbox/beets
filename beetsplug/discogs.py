@@ -302,7 +302,7 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.warning(u"Release does not contain the required fields")
             return None
 
-        artist, artist_id = MetadataSourcePlugin.get_artist(
+        artist, artist_id = self.get_artist(
             [a.data for a in result.artists]
         )
         album = re.sub(r' +', ' ', result.title)
@@ -543,7 +543,7 @@ class DiscogsPlugin(BeetsPlugin):
         title = track['title']
         track_id = None
         medium, medium_index, _ = self.get_track_index(track['position'])
-        artist, artist_id = MetadataSourcePlugin.get_artist(
+        artist, artist_id = self.get_artist(
             track.get('artists', [])
         )
         length = self.get_track_length(track['duration'])
@@ -589,3 +589,19 @@ class DiscogsPlugin(BeetsPlugin):
         except ValueError:
             return None
         return length.tm_min * 60 + length.tm_sec
+
+    @staticmethod
+    def get_artist(artists, id_key='id', name_key='name'):
+        artist_id = None
+        artist_names = []
+        for artist in artists:
+            if not artist_id:
+                artist_id = artist[id_key]
+            name = artist[name_key]
+            # Strip disambiguation number
+            name = re.sub(r' \(\d+\)$', '', name)
+            # Move articles to the front.
+            name = re.sub(r'^(.*?), (a|an|the)$', r'\2 \1', name, flags=re.I)
+            artist_names.append(name)
+        artist = ', '.join(artist_names).replace(' ,', ',') or None
+        return artist, artist_id
