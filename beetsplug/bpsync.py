@@ -176,8 +176,7 @@ class BPSyncPlugin(BeetsPlugin):
                             lib, item, move, pretend, write
                         )
 
-                if not changed or pretend:
-                    # No change to any item.
+                if pretend or not changed:
                     continue
 
                 # Update album structure to reflect an item in it.
