@@ -142,6 +142,7 @@ Metadata
 * :doc:`absubmit`: Analyse audio with the `streaming_extractor_music`_ program and submit the metadata to the AcousticBrainz server
 * :doc:`acousticbrainz`: Fetch various AcousticBrainz metadata
 * :doc:`bpm`: Measure tempo using keystrokes.
+* :doc:`bpsync`: Fetch updated metadata from Beatport.
 * :doc:`edit`: Edit metadata from a text editor.
 * :doc:`embedart`: Embed album art images into files' metadata.
 * :doc:`fetchart`: Fetch album cover art from various sources.
@@ -154,7 +155,7 @@ Metadata
 * :doc:`lastgenre`: Fetch genres based on Last.fm tags.
 * :doc:`lastimport`: Collect play counts from Last.fm.
 * :doc:`lyrics`: Automatically fetch song lyrics.
-* :doc:`mbsync`: Fetch updated metadata from MusicBrainz
+* :doc:`mbsync`: Fetch updated metadata from MusicBrainz.
 * :doc:`metasync`: Fetch metadata from local or remote sources
 * :doc:`mpdstats`: Connect to `MPD`_ and update the beets library with play
   statistics (last_played, play_count, skip_count, rating).
