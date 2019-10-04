@@ -27,19 +27,6 @@ import re
 MBID_REGEX = r"(\d|\w){8}-(\d|\w){4}-(\d|\w){4}-(\d|\w){4}-(\d|\w){12}"
 
 
-def apply_item_changes(lib, item, move, pretend, write):
-    """Store, move and write the item according to the arguments.
-    """
-    if not pretend:
-        # Move the item if it's in the library.
-        if move and lib.directory in util.ancestry(item.path):
-            item.move(with_album=False)
-
-        if write:
-            item.try_write()
-        item.store()
-
-
 class MBSyncPlugin(BeetsPlugin):
     def __init__(self):
         super(MBSyncPlugin, self).__init__()
@@ -103,7 +90,7 @@ class MBSyncPlugin(BeetsPlugin):
             # Apply.
             with lib.transaction():
                 autotag.apply_item_metadata(item, track_info)
-                apply_item_changes(lib, item, move, pretend, write)
+                library.apply_item_changes(lib, item, move, pretend, write)
 
     def albums(self, lib, query, move, pretend, write):
         """Retrieve and apply info from the autotagger for albums matched by
@@ -175,7 +162,7 @@ class MBSyncPlugin(BeetsPlugin):
                     changed |= item_changed
                     if item_changed:
                         any_changed_item = item
-                        apply_item_changes(lib, item, move, pretend, write)
+                        library.apply_item_changes(lib, item, move, pretend, write)
 
                 if not changed:
                     # No change to any item.
