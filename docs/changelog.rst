@@ -78,7 +78,7 @@ New features:
 * :doc:`/plugins/bpsync`: Add `bpsync` plugin to sync metadata changes
   from the Beatport database.
 * :doc:`/plugins/beatport`: Fix assignment of `genre` and rename `musical_key`
-    to `initial_key`.
+  to `initial_key`.
   :bug:`3387`
 
 Fixes:
