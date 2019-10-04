@@ -65,6 +65,7 @@ following to your configuration::
    beatport
    bpd
    bpm
+   bpsync
    bucket
    chroma
    convert
