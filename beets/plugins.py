@@ -726,4 +726,3 @@ class MetadataSourcePlugin(object):
         return get_distance(
             data_source=self.data_source, info=track_info, config=self.config
         )
-
