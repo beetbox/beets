@@ -461,7 +461,9 @@ class BeatportPlugin(BeetsPlugin):
         """Returns an artist string (all artists) and an artist_id (the main
         artist) for a list of Beatport release or track artists.
         """
-        return MetadataSourcePlugin.get_artist(artists=artists, id_key=0, name_key=1)
+        return MetadataSourcePlugin.get_artist(
+            artists=artists, id_key=0, name_key=1
+        )
 
     def _get_tracks(self, query):
         """Returns a list of TrackInfo objects for a Beatport query.

@@ -162,7 +162,9 @@ class MBSyncPlugin(BeetsPlugin):
                     changed |= item_changed
                     if item_changed:
                         any_changed_item = item
-                        library.apply_item_changes(lib, item, move, pretend, write)
+                        library.apply_item_changes(
+                            lib, item, move, pretend, write
+                        )
 
                 if not changed:
                     # No change to any item.
