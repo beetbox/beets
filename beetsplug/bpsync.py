@@ -100,10 +100,10 @@ class BPSyncPlugin(BeetsPlugin):
                 library.apply_item_changes(lib, item, move, pretend, write)
 
     @staticmethod
-    def is_beatport_track(track):
+    def is_beatport_track(item):
         return (
-            track.get('data_source') == BeatportPlugin.data_source
-            and track.mb_trackid.isnumeric()
+            item.get('data_source') == BeatportPlugin.data_source
+            and item.mb_trackid.isnumeric()
         )
 
     def get_album_tracks(self, album):
@@ -117,17 +117,17 @@ class BPSyncPlugin(BeetsPlugin):
                 album,
             )
             return False
-        tracks = list(album.items())
+        items = list(album.items())
         if album.get('data_source') == self.beatport_plugin.data_source:
-            return tracks
-        if not all(self.is_beatport_track(track) for track in tracks):
+            return items
+        if not all(self.is_beatport_track(item) for item in items):
             self._log.info(
                 u'Skipping non-{} release: {}',
                 self.beatport_plugin.data_source,
                 album,
             )
             return False
-        return tracks
+        return items
 
     def albums(self, lib, query, move, pretend, write):
         """Retrieve and apply info from the autotagger for albums matched by
@@ -150,20 +150,20 @@ class BPSyncPlugin(BeetsPlugin):
                 )
                 continue
 
-            beatport_track_id_to_info = {
+            beatport_trackid_to_trackinfo = {
                 track.track_id: track for track in album_info.tracks
             }
-            library_track_id_to_item = {
+            library_trackid_to_item = {
                 int(item.mb_trackid): item for item in items
             }
-            item_to_info_mapping = {
-                library_track_id_to_item[track_id]: track_info
-                for track_id, track_info in beatport_track_id_to_info.items()
+            item_to_trackinfo = {
+                library_trackid_to_item[track_id]: track_info
+                for track_id, track_info in beatport_trackid_to_trackinfo.items()
             }
 
             self._log.info(u'applying changes to {}', album)
             with lib.transaction():
-                autotag.apply_metadata(album_info, item_to_info_mapping)
+                autotag.apply_metadata(album_info, item_to_trackinfo)
                 changed = False
                 # Find any changed item to apply Beatport changes to album.
                 any_changed_item = items[0]
