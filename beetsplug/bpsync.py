@@ -13,7 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Update library's tags using MusicBrainz.
+"""Update library's tags using Beatport.
 """
 from __future__ import division, absolute_import, print_function
 
@@ -176,17 +176,16 @@ class BPSyncPlugin(BeetsPlugin):
                             lib, item, move, pretend, write
                         )
 
-                if not changed:
+                if not changed or pretend:
                     # No change to any item.
                     continue
 
-                if not pretend:
-                    # Update album structure to reflect an item in it.
-                    for key in library.Album.item_keys:
-                        album[key] = any_changed_item[key]
-                    album.store()
+                # Update album structure to reflect an item in it.
+                for key in library.Album.item_keys:
+                    album[key] = any_changed_item[key]
+                album.store()
 
-                    # Move album art (and any inconsistent items).
-                    if move and lib.directory in util.ancestry(items[0].path):
-                        self._log.debug(u'moving album {}', album)
-                        album.move()
+                # Move album art (and any inconsistent items).
+                if move and lib.directory in util.ancestry(items[0].path):
+                    self._log.debug(u'moving album {}', album)
+                    album.move()

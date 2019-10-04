@@ -26,7 +26,7 @@ from functools import wraps
 
 
 import beets
-from beets import library, logging, ui, util
+from beets import logging
 import mediafile
 import six
 
