@@ -1653,6 +1653,7 @@ def apply_item_changes(lib, item, move, pretend, write):
     """
     if pretend:
         return
+
     # Move the item if it's in the library.
     if move and lib.directory in util.ancestry(item.path):
         item.move(with_album=False)

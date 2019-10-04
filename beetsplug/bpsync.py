@@ -94,9 +94,9 @@ class BPSyncPlugin(BeetsPlugin):
                 continue
 
             # Apply.
-            track_info = self.beatport_plugin.track_for_id(item.mb_trackid)
+            trackinfo = self.beatport_plugin.track_for_id(item.mb_trackid)
             with lib.transaction():
-                autotag.apply_item_metadata(item, track_info)
+                autotag.apply_item_metadata(item, trackinfo)
                 library.apply_item_changes(lib, item, move, pretend, write)
 
     @staticmethod
