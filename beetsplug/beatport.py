@@ -29,7 +29,7 @@ from requests_oauthlib.oauth1_session import (TokenRequestDenied, TokenMissing,
 import beets
 import beets.ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance
-from beets.plugins import BeetsPlugin
+from beets.plugins import BeetsPlugin, MetadataSourcePlugin
 import confuse
 
 
@@ -228,6 +228,7 @@ class BeatportRelease(BeatportObject):
         if 'slug' in data:
             self.url = "https://beatport.com/release/{0}/{1}".format(
                 data['slug'], data['id'])
+        self.genre = data.get('genre')
 
 
 @six.python_2_unicode_compatible
@@ -258,7 +259,7 @@ class BeatportTrack(BeatportObject):
                 .format(data['slug'], data['id'])
         self.track_number = data.get('trackNumber')
         self.bpm = data.get('bpm')
-        self.musical_key = six.text_type(
+        self.initial_key = six.text_type(
             (data.get('key') or {}).get('shortName')
         )
 
@@ -270,6 +271,8 @@ class BeatportTrack(BeatportObject):
 
 
 class BeatportPlugin(BeetsPlugin):
+    data_source = 'Beatport'
+
     def __init__(self):
         super(BeatportPlugin, self).__init__()
         self.config.add({
@@ -337,7 +340,7 @@ class BeatportPlugin(BeetsPlugin):
         for albums.
         """
         dist = Distance()
-        if album_info.data_source == 'Beatport':
+        if album_info.data_source == self.data_source:
             dist.add('source', self.config['source_weight'].as_number())
         return dist
 
@@ -346,7 +349,7 @@ class BeatportPlugin(BeetsPlugin):
         for individual tracks.
         """
         dist = Distance()
-        if track_info.data_source == 'Beatport':
+        if track_info.data_source == self.data_source:
             dist.add('source', self.config['source_weight'].as_number())
         return dist
 
@@ -435,7 +438,8 @@ class BeatportPlugin(BeetsPlugin):
                          day=release.release_date.day,
                          label=release.label_name,
                          catalognum=release.catalog_number, media=u'Digital',
-                         data_source=u'Beatport', data_url=release.url)
+                         data_source=self.data_source, data_url=release.url,
+                         genre=release.genre)
 
     def _get_track_info(self, track):
         """Returns a TrackInfo object for a Beatport Track object.
@@ -449,26 +453,15 @@ class BeatportPlugin(BeetsPlugin):
                          artist=artist, artist_id=artist_id,
                          length=length, index=track.track_number,
                          medium_index=track.track_number,
-                         data_source=u'Beatport', data_url=track.url,
-                         bpm=track.bpm, musical_key=track.musical_key)
+                         data_source=self.data_source, data_url=track.url,
+                         bpm=track.bpm, initial_key=track.initial_key,
+                         genre=track.genre)
 
     def _get_artist(self, artists):
         """Returns an artist string (all artists) and an artist_id (the main
         artist) for a list of Beatport release or track artists.
         """
-        artist_id = None
-        bits = []
-        for artist in artists:
-            if not artist_id:
-                artist_id = artist[0]
-            name = artist[1]
-            # Strip disambiguation number.
-            name = re.sub(r' \(\d+\)$', '', name)
-            # Move articles to the front.
-            name = re.sub(r'^(.*?), (a|an|the)$', r'\2 \1', name, flags=re.I)
-            bits.append(name)
-        artist = ', '.join(bits).replace(' ,', ',') or None
-        return artist, artist_id
+        return MetadataSourcePlugin.get_artist(artists=artists, id_key=0, name_key=1)
 
     def _get_tracks(self, query):
         """Returns a list of TrackInfo objects for a Beatport query.

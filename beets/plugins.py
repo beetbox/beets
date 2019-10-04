@@ -26,7 +26,7 @@ from functools import wraps
 
 
 import beets
-from beets import logging
+from beets import library, logging, ui, util
 import mediafile
 import six
 
@@ -635,11 +635,11 @@ class MetadataSourcePlugin(object):
 
         :param artists: Iterable of artist dicts returned by API.
         :type artists: list[dict]
-        :param id_key: Key corresponding to ``artist_id`` value.
-        :type id_key: str
-        :param name_key: Keys corresponding to values to concatenate
+        :param id_key: Key or index corresponding to ``artist_id`` value.
+        :type id_key: str or int
+        :param name_key: Key or index corresponding to values to concatenate
             for ``artist``.
-        :type name_key: str
+        :type name_key: str or int
         :return: Normalized artist string.
         :rtype: str
         """
@@ -649,6 +649,8 @@ class MetadataSourcePlugin(object):
             if not artist_id:
                 artist_id = artist[id_key]
             name = artist[name_key]
+            # Strip disambiguation number.
+            name = re.sub(r' \(\d+\)$', '', name)
             # Move articles to the front.
             name = re.sub(r'^(.*?), (a|an|the)$', r'\2 \1', name, flags=re.I)
             artist_names.append(name)
@@ -724,3 +726,4 @@ class MetadataSourcePlugin(object):
         return get_distance(
             data_source=self.data_source, info=track_info, config=self.config
         )
+

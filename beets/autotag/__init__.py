@@ -186,7 +186,7 @@ def apply_metadata(album_info, mapping):
                 'mb_workid',
                 'work_disambig',
                 'bpm',
-                'musical_key',
+                'initial_key',
                 'genre'
             )
         }
