@@ -671,10 +671,11 @@ class MetadataSourcePlugin(object):
         :param artists: Iterable of artist dicts or lists returned by API.
         :type artists: list[dict] or list[list]
         :param id_key: Key or index corresponding to the value of ``id`` for
-            the main/first artist.
+            the main/first artist. Defaults to 'id'.
         :type id_key: str or int
         :param name_key: Key or index corresponding to values of names
             to concatenate for the artist string (containing all artists).
+            Defaults to 'name'.
         :type name_key: str or int
         :return: Normalized artist string.
         :rtype: str
