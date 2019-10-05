@@ -206,7 +206,7 @@ class BeetsPlugin(object):
 
         ``descriptor`` must be an instance of ``mediafile.MediaField``.
         """
-        # Defer impor to prevent circular dependency
+        # Defer import to prevent circular dependency
         from beets import library
         mediafile.MediaFile.add_field(name, descriptor)
         library.Item._media_fields.add(name)
@@ -590,6 +590,36 @@ def get_distance(config, data_source, info):
     return dist
 
 
+def apply_item_changes(lib, item, move, pretend, write):
+    """Store, move, and write the item according to the arguments.
+
+    :param lib: beets library.
+    :type lib: beets.library.Library
+    :param item: Item whose changes to apply.
+    :type item: beets.library.Item
+    :param move: Move the item if it's in the library.
+    :type move: bool
+    :param pretend: Return without moving, writing, or storing the item's
+        metadata.
+    :type pretend: bool
+    :param write: Write the item's metadata to its media file.
+    :type write: bool
+    """
+    if pretend:
+        return
+
+    from beets import util
+
+    # Move the item if it's in the library.
+    if move and lib.directory in util.ancestry(item.path):
+        item.move(with_album=False)
+
+    if write:
+        item.try_write()
+
+    item.store()
+
+
 @six.add_metaclass(abc.ABCMeta)
 class MetadataSourcePlugin(object):
     def __init__(self):
@@ -633,12 +663,18 @@ class MetadataSourcePlugin(object):
         """Returns an artist string (all artists) and an artist_id (the main
         artist) for a list of artist object dicts.
 
-        :param artists: Iterable of artist dicts returned by API.
-        :type artists: list[dict]
-        :param id_key: Key or index corresponding to ``artist_id`` value.
+        For each artist, this function moves articles (such as 'a', 'an',
+        and 'the') to the front and strips trailing disambiguation numbers. It
+        returns a tuple of containing the space-separated string of all
+        normalized artists and the ``id`` of the main artist.
+
+        :param artists: Iterable of artist dicts or lists returned by API.
+        :type artists: list[dict] or list[list]
+        :param id_key: Key or index corresponding to ``artist_id``
+            value (the main artist).
         :type id_key: str or int
         :param name_key: Key or index corresponding to values to concatenate
-            for ``artist``.
+            for the artist string (all artists)
         :type name_key: str or int
         :return: Normalized artist string.
         :rtype: str

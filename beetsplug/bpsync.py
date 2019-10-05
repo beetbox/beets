@@ -17,7 +17,7 @@
 """
 from __future__ import division, absolute_import, print_function
 
-from beets.plugins import BeetsPlugin
+from beets.plugins import BeetsPlugin, apply_item_changes
 from beets import autotag, library, ui, util
 
 from .beatport import BeatportPlugin
@@ -97,7 +97,7 @@ class BPSyncPlugin(BeetsPlugin):
             trackinfo = self.beatport_plugin.track_for_id(item.mb_trackid)
             with lib.transaction():
                 autotag.apply_item_metadata(item, trackinfo)
-                library.apply_item_changes(lib, item, move, pretend, write)
+                apply_item_changes(lib, item, move, pretend, write)
 
     @staticmethod
     def is_beatport_track(item):
@@ -172,9 +172,7 @@ class BPSyncPlugin(BeetsPlugin):
                     changed |= item_changed
                     if item_changed:
                         any_changed_item = item
-                        library.apply_item_changes(
-                            lib, item, move, pretend, write
-                        )
+                        apply_item_changes(lib, item, move, pretend, write)
 
                 if pretend or not changed:
                     continue
