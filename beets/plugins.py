@@ -666,15 +666,15 @@ class MetadataSourcePlugin(object):
         For each artist, this function moves articles (such as 'a', 'an',
         and 'the') to the front and strips trailing disambiguation numbers. It
         returns a tuple of containing the space-separated string of all
-        normalized artists and the ``id`` of the main artist.
+        normalized artists and the ``id`` of the main/first artist.
 
         :param artists: Iterable of artist dicts or lists returned by API.
         :type artists: list[dict] or list[list]
-        :param id_key: Key or index corresponding to ``artist_id``
-            value (the main artist).
+        :param id_key: Key or index corresponding to the value of ``id`` for
+            the main/first artist.
         :type id_key: str or int
-        :param name_key: Key or index corresponding to values to concatenate
-            for the artist string (all artists)
+        :param name_key: Key or index corresponding to values of names
+            to concatenate for the artist string (containing all artists).
         :type name_key: str or int
         :return: Normalized artist string.
         :rtype: str
