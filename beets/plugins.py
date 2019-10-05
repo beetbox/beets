@@ -665,7 +665,7 @@ class MetadataSourcePlugin(object):
 
         For each artist, this function moves articles (such as 'a', 'an',
         and 'the') to the front and strips trailing disambiguation numbers. It
-        returns a tuple of containing the space-separated string of all
+        returns a tuple of containing the comma-separated string of all
         normalized artists and the ``id`` of the main/first artist.
 
         :param artists: Iterable of artist dicts or lists returned by API.
