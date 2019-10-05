@@ -2,13 +2,13 @@ BPSync Plugin
 =============
 
 This plugin provides the ``bpsync`` command, which lets you fetch metadata
-from Beatport for albums and tracks that already have Beatport IDs. This
-is useful for updating tags as they are fixed in the Beatport database, or
-when you change your mind about some config options that change how tags are
-written to files. If you have a music library that is already nicely tagged by
-a program that also uses Beatport, this can speed up the initial import if you
-just import "as-is" and then use ``bpsync`` to get up-to-date tags that are written
-to the files according to your beets configuration.
+from Beatport for albums and tracks that already have Beatport IDs.
+This plugins works similarly to :doc:`/plugins/mbsync`.
+
+If you have purchased music from Beatport, this can speed
+up the initial import if you just import "as-is" and then use ``bpsync`` to
+get up-to-date tags that are written to the files according to your beets
+configuration.
 
 
 Usage
@@ -32,6 +32,3 @@ The command has a few command-line options:
 * If you have the ``import.write`` configuration option enabled, then this
   plugin will write new metadata to files' tags. To disable this, use the
   ``-W`` (``--nowrite``) option.
-* To customize the output of unrecognized items, use the ``-f``
-  (``--format``) option. The default output is ``format_item`` or
-  ``format_album`` for items and albums, respectively.

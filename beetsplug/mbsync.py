@@ -17,7 +17,7 @@
 """
 from __future__ import division, absolute_import, print_function
 
-from beets.plugins import BeetsPlugin
+from beets.plugins import BeetsPlugin, apply_item_changes
 from beets import autotag, library, ui, util
 from beets.autotag import hooks
 from collections import defaultdict
@@ -90,7 +90,7 @@ class MBSyncPlugin(BeetsPlugin):
             # Apply.
             with lib.transaction():
                 autotag.apply_item_metadata(item, track_info)
-                library.apply_item_changes(lib, item, move, pretend, write)
+                apply_item_changes(lib, item, move, pretend, write)
 
     def albums(self, lib, query, move, pretend, write):
         """Retrieve and apply info from the autotagger for albums matched by
@@ -162,9 +162,7 @@ class MBSyncPlugin(BeetsPlugin):
                     changed |= item_changed
                     if item_changed:
                         any_changed_item = item
-                        library.apply_item_changes(
-                            lib, item, move, pretend, write
-                        )
+                        apply_item_changes(lib, item, move, pretend, write)
 
                 if not changed:
                     # No change to any item.

@@ -1648,20 +1648,6 @@ class DefaultTemplateFunctions(object):
             return falseval
 
 
-def apply_item_changes(lib, item, move, pretend, write):
-    """Store, move and write the item according to the arguments.
-    """
-    if pretend:
-        return
-
-    # Move the item if it's in the library.
-    if move and lib.directory in util.ancestry(item.path):
-        item.move(with_album=False)
-
-    if write:
-        item.try_write()
-    item.store()
-
 # Get the name of tmpl_* functions in the above class.
 DefaultTemplateFunctions._func_names = \
     [s for s in dir(DefaultTemplateFunctions)
