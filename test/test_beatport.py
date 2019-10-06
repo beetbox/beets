@@ -482,12 +482,12 @@ class BeatportTest(_common.TestCase, TestHelper):
         items[4].bpm = 123
         items[5].bpm = 123
 
-        items[0].musical_key = 'Gmin'
-        items[1].musical_key = 'Gmaj'
-        items[2].musical_key = 'Fmaj'
-        items[3].musical_key = 'Amin'
-        items[4].musical_key = 'E&#9837;maj'
-        items[5].musical_key = 'Amaj'
+        items[0].initial_key = 'Gmin'
+        items[1].initial_key = 'Gmaj'
+        items[2].initial_key = 'Fmaj'
+        items[3].initial_key = 'Amin'
+        items[4].initial_key = 'E&#9837;maj'
+        items[5].initial_key = 'Amaj'
 
         for item in items:
             self.lib.add(item)
@@ -549,9 +549,9 @@ class BeatportTest(_common.TestCase, TestHelper):
         for track, test_track in zip(self.tracks, self.test_tracks):
             self.assertEqual(track.bpm, test_track.bpm)
 
-    def test_musical_key_applied(self):
+    def test_initial_key_applied(self):
         for track, test_track in zip(self.tracks, self.test_tracks):
-            self.assertEqual(track.musical_key, test_track.musical_key)
+            self.assertEqual(track.initial_key, test_track.initial_key)
 
     def test_genre_applied(self):
         for track, test_track in zip(self.tracks, self.test_tracks):
