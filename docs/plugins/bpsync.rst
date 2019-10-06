@@ -3,9 +3,9 @@ BPSync Plugin
 
 This plugin provides the ``bpsync`` command, which lets you fetch metadata
 from Beatport for albums and tracks that already have Beatport IDs.
-This plugins works similarly to :doc:`/plugins/mbsync`.
+This plugin works similarly to :doc:`/plugins/mbsync`.
 
-If you have purchased music from Beatport, this can speed
+If you have downloaded music from Beatport, this can speed
 up the initial import if you just import "as-is" and then use ``bpsync`` to
 get up-to-date tags that are written to the files according to your beets
 configuration.
