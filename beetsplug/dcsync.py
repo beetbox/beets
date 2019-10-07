@@ -17,13 +17,11 @@
 """
 from __future__ import division, absolute_import, print_function
 
-from beets.plugins import SyncMetadataSourcePlugin
+from beets.plugins import SyncMetadataSourcePlugin, BeetsPlugin
 
 from .discogs import DiscogsPlugin
 
 
-class DCSyncPlugin(SyncMetadataSourcePlugin):
+class DCSyncPlugin(SyncMetadataSourcePlugin, BeetsPlugin):
     def __init__(self):
-        super(DCSyncPlugin, self).__init__(
-            command_name='dcsync', metadata_source_class=DiscogsPlugin
-        )
+        super(DCSyncPlugin, self).__init__('dcsync', DiscogsPlugin)

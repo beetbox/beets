@@ -17,13 +17,11 @@
 """
 from __future__ import division, absolute_import, print_function
 
-from beets.plugins import SyncMetadataSourcePlugin
+from beets.plugins import SyncMetadataSourcePlugin, BeetsPlugin
 
 from .beatport import BeatportPlugin
 
 
-class BPSyncPlugin(SyncMetadataSourcePlugin):
+class BPSyncPlugin(SyncMetadataSourcePlugin, BeetsPlugin):
     def __init__(self):
-        super(BPSyncPlugin, self).__init__(
-            command_name='bpsync', metadata_source_class=BeatportPlugin
-        )
+        super(BPSyncPlugin, self).__init__('bpsync', BeatportPlugin)

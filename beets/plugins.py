@@ -863,13 +863,9 @@ class SyncMetadataSourcePlugin(BeetsPlugin):
             self.metadata_source_plugin.id_regex['pattern'].format('track'),
             item.mb_trackid,
         )
-        if match:
-            id_ = match.group(
-                self.metadata_source_plugin.id_regex['match_group']
-            )
-            if id_:
-                return True
-        return False
+        return match and match.group(
+            self.metadata_source_plugin.id_regex['match_group']
+        )
 
     def get_album_tracks(self, album):
         if not album.mb_albumid:
