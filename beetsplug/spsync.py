@@ -25,5 +25,5 @@ from .spotify import SpotifyPlugin
 class SPSyncPlugin(SyncMetadataSourcePlugin):
     def __init__(self):
         super(SPSyncPlugin, self).__init__(
-            command_name='bpsync', metadata_source_plugin=SpotifyPlugin
+            command_name='bpsync', metadata_source_class=SpotifyPlugin
         )

@@ -25,5 +25,5 @@ from .discogs import DiscogsPlugin
 class DCSyncPlugin(SyncMetadataSourcePlugin):
     def __init__(self):
         super(DCSyncPlugin, self).__init__(
-            command_name='dcsync', metadata_source_plugin=DiscogsPlugin
+            command_name='dcsync', metadata_source_class=DiscogsPlugin
         )

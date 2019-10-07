@@ -25,5 +25,5 @@ from .deezer import DeezerPlugin
 class DZSyncPlugin(SyncMetadataSourcePlugin):
     def __init__(self):
         super(DZSyncPlugin, self).__init__(
-            command_name='bpsync', metadata_source_plugin=DeezerPlugin
+            command_name='bpsync', metadata_source_class=DeezerPlugin
         )

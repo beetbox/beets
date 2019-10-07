@@ -25,5 +25,5 @@ from .beatport import BeatportPlugin
 class BPSyncPlugin(SyncMetadataSourcePlugin):
     def __init__(self):
         super(BPSyncPlugin, self).__init__(
-            command_name='bpsync', metadata_source_plugin=BeatportPlugin
+            command_name='bpsync', metadata_source_class=BeatportPlugin
         )
