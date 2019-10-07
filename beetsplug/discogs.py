@@ -48,6 +48,10 @@ CONNECTION_ERRORS = (ConnectionError, socket.error, http_client.HTTPException,
 
 
 class DiscogsPlugin(BeetsPlugin):
+    id_regex = {
+        'pattern': r'(^|\[*r|discogs\.com/.+/release/)(\d+)($|\])',
+        'match_group': 2,
+    }
 
     def __init__(self):
         super(DiscogsPlugin, self).__init__()
@@ -210,11 +214,12 @@ class DiscogsPlugin(BeetsPlugin):
         # of an input string as to avoid confusion with other metadata plugins.
         # An optional bracket can follow the integer, as this is how discogs
         # displays the release ID on its webpage.
-        match = re.search(r'(^|\[*r|discogs\.com/.+/release/)(\d+)($|\])',
-                          album_id)
+        match = re.search(self.id_regex['pattern'], album_id)
         if not match:
             return None
-        result = Release(self.discogs_client, {'id': int(match.group(2))})
+        result = Release(
+            self.discogs_client, {'id': int(self.id_regex['match_group'])}
+        )
         # Try to obtain title to verify that we indeed have a valid Release
         try:
             getattr(result, 'title')

@@ -13,17 +13,17 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Update library's tags using Beatport.
+"""Update library's tags using Spotify.
 """
 from __future__ import division, absolute_import, print_function
 
 from beets.plugins import SyncMetadataSourcePlugin
 
-from .beatport import BeatportPlugin
+from .spotify import SpotifyPlugin
 
 
-class BPSyncPlugin(SyncMetadataSourcePlugin):
+class SPSyncPlugin(SyncMetadataSourcePlugin):
     def __init__(self):
-        super(BPSyncPlugin, self).__init__(
-            command_name='bpsync', metadata_source_plugin=BeatportPlugin
+        super(SPSyncPlugin, self).__init__(
+            command_name='bpsync', metadata_source_plugin=SpotifyPlugin
         )

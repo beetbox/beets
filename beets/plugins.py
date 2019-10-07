@@ -764,3 +764,194 @@ class MetadataSourcePlugin(object):
         return get_distance(
             data_source=self.data_source, info=track_info, config=self.config
         )
+
+
+class SyncMetadataSourcePlugin(BeetsPlugin):
+    def __init__(self, command_name, metadata_source_class):
+        super(BeetsPlugin, self).__init__()
+        self.command_name = command_name
+        self.metadata_source_plugin = metadata_source_class()
+        self.metadata_source_plugin.setup()
+
+    def commands(self):
+        from beets import ui
+
+        cmd = ui.Subcommand(
+            self.command_name,
+            help=u'update metadata from {}'.format(
+                self.metadata_source_plugin.data_source
+            ),
+        )
+        cmd.parser.add_option(
+            u'-p',
+            u'--pretend',
+            action='store_true',
+            help=u'show all changes but do nothing',
+        )
+        cmd.parser.add_option(
+            u'-m',
+            u'--move',
+            action='store_true',
+            dest='move',
+            help=u"move files in the library directory",
+        )
+        cmd.parser.add_option(
+            u'-M',
+            u'--nomove',
+            action='store_false',
+            dest='move',
+            help=u"don't move files in library",
+        )
+        cmd.parser.add_option(
+            u'-W',
+            u'--nowrite',
+            action='store_false',
+            default=None,
+            dest='write',
+            help=u"don't write updated metadata to files",
+        )
+        cmd.parser.add_format_option()
+        cmd.func = self.func
+        return [cmd]
+
+    def func(self, lib, opts, args):
+        """Command handler for the bpsync function.
+        """
+        from beets import ui
+
+        move = ui.should_move(opts.move)
+        pretend = opts.pretend
+        write = ui.should_write(opts.write)
+        query = ui.decargs(args)
+
+        self.singletons(lib, query, move, pretend, write)
+        self.albums(lib, query, move, pretend, write)
+
+    def singletons(self, lib, query, move, pretend, write):
+        """Retrieve and apply info from the autotagger for items matched by
+        query.
+        """
+        from beets.autotag import apply_item_metadata
+
+        for item in lib.items(query + [u'singleton:true']):
+            if not item.mb_trackid:
+                self._log.info(
+                    u'Skipping singleton with no mb_trackid: {}', item
+                )
+                continue
+
+            if not self.is_metadata_source_track(item):
+                self._log.info(
+                    u'Skipping non-{} singleton: {}',
+                    self.metadata_source_plugin.data_source,
+                    item,
+                )
+                continue
+
+            # Apply.
+            trackinfo = self.metadata_source_plugin.track_for_id(
+                item.mb_trackid
+            )
+            with lib.transaction():
+                apply_item_metadata(item, trackinfo)
+                apply_item_changes(lib, item, move, pretend, write)
+
+    def is_metadata_source_track(self, item):
+        if item.get('data_source') != self.metadata_source_plugin.data_source:
+            return False
+        match = re.search(
+            self.metadata_source_plugin.id_regex['pattern'].format('track'),
+            item.mb_trackid,
+        )
+        if match:
+            id_ = match.group(
+                self.metadata_source_plugin.id_regex['match_group']
+            )
+            if id_:
+                return True
+        return False
+
+    def get_album_tracks(self, album):
+        if not album.mb_albumid:
+            self._log.info(u'Skipping album with no mb_albumid: {}', album)
+            return False
+        if not album.mb_albumid.isnumeric():
+            self._log.info(
+                u'Skipping album with invalid {} ID: {}',
+                self.metadata_source_plugin.data_source,
+                album,
+            )
+            return False
+        items = list(album.items())
+        if album.get('data_source') == self.metadata_source_plugin.data_source:
+            return items
+        if not all(self.is_metadata_source_track(item) for item in items):
+            self._log.info(
+                u'Skipping non-{} release: {}',
+                self.metadata_source_plugin.data_source,
+                album,
+            )
+            return False
+        return items
+
+    def albums(self, lib, query, move, pretend, write):
+        """Retrieve and apply info from the autotagger for albums matched by
+        query and their items.
+        """
+        from beets import autotag, library, ui, util
+
+        # Process matching albums.
+        for album in lib.albums(query):
+            # Do we have a valid metadata source album?
+            items = self.get_album_tracks(album)
+            if not items:
+                continue
+
+            # Get the metadata source album information.
+            albuminfo = self.metadata_source_plugin.album_for_id(
+                album.mb_albumid
+            )
+            if not albuminfo:
+                self._log.info(
+                    u'Release ID {} not found for album {}',
+                    album.mb_albumid,
+                    album,
+                )
+                continue
+
+            metadata_source_trackid_to_trackinfo = {
+                track.track_id: track for track in albuminfo.tracks
+            }
+            library_trackid_to_item = {
+                int(item.mb_trackid): item for item in items
+            }
+            item_to_trackinfo = {
+                item: metadata_source_trackid_to_trackinfo[track_id]
+                for track_id, item in library_trackid_to_item.items()
+            }
+
+            self._log.info(u'applying changes to {}', album)
+            with lib.transaction():
+                autotag.apply_metadata(albuminfo, item_to_trackinfo)
+                changed = False
+                # Find any changed item to apply Beatport changes to album.
+                any_changed_item = items[0]
+                for item in items:
+                    item_changed = ui.show_model_changes(item)
+                    changed |= item_changed
+                    if item_changed:
+                        any_changed_item = item
+                        apply_item_changes(lib, item, move, pretend, write)
+
+                if pretend or not changed:
+                    continue
+
+                # Update album structure to reflect an item in it.
+                for key in library.Album.item_keys:
+                    album[key] = any_changed_item[key]
+                album.store()
+
+                # Move album art (and any inconsistent items).
+                if move and lib.directory in util.ancestry(items[0].path):
+                    self._log.debug(u'moving album {}', album)
+                    album.move()

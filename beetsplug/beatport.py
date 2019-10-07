@@ -273,6 +273,11 @@ class BeatportTrack(BeatportObject):
 class BeatportPlugin(BeetsPlugin):
     data_source = 'Beatport'
 
+    id_regex = {
+        'pattern': r'(^|beatport\.com/release/.+/)(\d+)$',
+        'match_group': 2,
+    }
+
     def __init__(self):
         super(BeatportPlugin, self).__init__()
         self.config.add({
@@ -385,11 +390,11 @@ class BeatportPlugin(BeetsPlugin):
         or None if the query is not a valid ID or release is not found.
         """
         self._log.debug(u'Searching for release {0}', release_id)
-        match = re.search(r'(^|beatport\.com/release/.+/)(\d+)$', release_id)
+        match = re.search(self.id_regex['pattern'], release_id)
         if not match:
             self._log.debug(u'Not a valid Beatport release ID.')
             return None
-        release = self.client.get_release(match.group(2))
+        release = self.client.get_release(match.group(self.id_regex['match_group']))
         if release:
             return self._get_album_info(release)
         return None
