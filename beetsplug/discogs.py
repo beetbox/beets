@@ -48,6 +48,8 @@ CONNECTION_ERRORS = (ConnectionError, socket.error, http_client.HTTPException,
 
 
 class DiscogsPlugin(BeetsPlugin):
+    data_source = 'Discogs'
+
     id_regex = {
         'pattern': r'(^|\[*r|discogs\.com/.+/release/)(\d+)($|\])',
         'match_group': 2,
@@ -164,7 +166,7 @@ class DiscogsPlugin(BeetsPlugin):
         """Returns the album distance.
         """
         return get_distance(
-            data_source='Discogs',
+            data_source=self.data_source,
             info=album_info,
             config=self.config
         )
@@ -173,7 +175,7 @@ class DiscogsPlugin(BeetsPlugin):
         """Returns the track distance.
         """
         return get_distance(
-            data_source='Discogs',
+            data_source=self.data_source,
             info=track_info,
             config=self.config
         )
@@ -368,7 +370,7 @@ class DiscogsPlugin(BeetsPlugin):
                          albumstatus=None, media=media,
                          albumdisambig=None, artist_credit=None,
                          original_year=original_year, original_month=None,
-                         original_day=None, data_source='Discogs',
+                         original_day=None, data_source=self.data_source,
                          data_url=data_url,
                          discogs_albumid=discogs_albumid)
 
