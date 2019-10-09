@@ -538,7 +538,7 @@ class ConvertPlugin(BeetsPlugin):
             item.write()
             item.read()  # Load new audio information data.
             item.store()
-            
+
             # If we would normally move files, let's delete the source
             if config['import']['move']:
                 util.remove(syspath(source_path), False)
