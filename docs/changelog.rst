@@ -80,6 +80,8 @@ New features:
 * :doc:`/plugins/beatport`: Fix assignment of `genre` and rename `musical_key`
   to `initial_key`.
   :bug:`3387`
+* Plugins can be disabled by setting the `BEETS_DISABLED_PLUGINS`
+  environment variable to a comma seperated list of plugins.
 
 Fixes:
 

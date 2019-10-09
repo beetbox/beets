@@ -18,6 +18,7 @@
 from __future__ import division, absolute_import, print_function
 
 import traceback
+import os
 import re
 import inspect
 import abc
@@ -268,7 +269,12 @@ def load_plugins(names=()):
     package in sys.path; the module indicated should contain the
     BeetsPlugin subclasses desired.
     """
+    disabled_plugins = os.environ.get('BEETS_DISABLED_PLUGINS', '').split(',')
     for name in names:
+        if name in disabled_plugins:
+            log.debug(u'Skipping disabled plugin {0}', name)
+            continue
+
         modname = '{0}.{1}'.format(PLUGIN_NAMESPACE, name)
         try:
             try:
