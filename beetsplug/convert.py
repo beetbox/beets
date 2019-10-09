@@ -30,6 +30,7 @@ from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
 from confuse import ConfigTypeError
 from beets import art
+from beets.util import syspath
 from beets.util.artresizer import ArtResizer
 from beets.library import parse_query_string
 from beets.library import Item
@@ -532,10 +533,15 @@ class ConvertPlugin(BeetsPlugin):
 
             # Change the newly-imported database entry to point to the
             # converted file.
+            source_path = item.path
             item.path = dest
             item.write()
             item.read()  # Load new audio information data.
             item.store()
+            
+            # If we would normally move files, let's delete the source
+            if config['import']['move']:
+                util.remove(syspath(source_path), False)
 
     def _cleanup(self, task, session):
         for path in task.old_paths:
