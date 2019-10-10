@@ -542,6 +542,12 @@ class ImportTask(BaseImportTask):
 
         autotag.apply_metadata(self.match.info, self.match.mapping)
 
+    def duplicate_items(self, lib):
+        duplicate_items = []
+        for album in self.find_duplicates(lib):
+            duplicate_items += album.items()
+        return duplicate_items
+
     def duplicate_albums(self, lib):
         duplicate_albums = []
         for album in self.find_duplicates(lib):
