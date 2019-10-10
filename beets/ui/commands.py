@@ -1185,13 +1185,13 @@ def update_items(lib, query, album, move, pretend, fields):
 
 
 def update_func(lib, opts, args):
-    # Verify that the library folder exists. (disk isn't unmounted, for example)
+    # Verify that the library folder exists to prevent accidental wipes.
     if not os.path.exists(lib.directory):
         ui.print_("Library path is unavailable or does not exist.")
         if not ui.input_yn("Are you sure you want to continue (y/n)?", True):
             return
     update_items(lib, decargs(args), opts.album, ui.should_move(opts.move),
-            opts.pretend, opts.fields)
+                 opts.pretend, opts.fields)
 
 
 update_cmd = ui.Subcommand(
