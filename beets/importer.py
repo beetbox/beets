@@ -542,23 +542,18 @@ class ImportTask(BaseImportTask):
 
         autotag.apply_metadata(self.match.info, self.match.mapping)
 
-    def duplicate_items(self, lib):
-        duplicate_items = []
+    def duplicate_albums(self, lib):
+        duplicate_albums = []
         for album in self.find_duplicates(lib):
-            duplicate_items += album.items()
-        return duplicate_items
+            duplicate_albums.append(album)
+        return duplicate_albums
 
     def remove_duplicates(self, lib):
-        duplicate_items = self.duplicate_items(lib)
-        log.debug(u'removing {0} old duplicated items', len(duplicate_items))
-        for item in duplicate_items:
-            item.remove()
-            if lib.directory in util.ancestry(item.path):
-                log.debug(u'deleting duplicate {0}',
-                          util.displayable_path(item.path))
-                util.remove(item.path)
-                util.prune_dirs(os.path.dirname(item.path),
-                                lib.directory)
+        duplicate_albums = self.duplicate_albums(lib)
+        log.debug(u'removing {0} old duplicated albums', len(duplicate_albums))
+        for album in duplicate_albums:
+            print(album)
+            album.remove(delete=True)
 
     def set_fields(self):
         """Sets the fields given at CLI or configuration to the specified
