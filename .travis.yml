@@ -43,7 +43,6 @@ addons:
             - bash-completion
             - gir1.2-gst-plugins-base-1.0
             - gir1.2-gstreamer-1.0
-            - libgles2
             - gstreamer1.0-plugins-good
             - gstreamer1.0-plugins-bad
             - imagemagick
