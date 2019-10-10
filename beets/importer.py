@@ -552,7 +552,6 @@ class ImportTask(BaseImportTask):
         duplicate_albums = self.duplicate_albums(lib)
         log.debug(u'removing {0} old duplicated albums', len(duplicate_albums))
         for album in duplicate_albums:
-            print(album)
             album.remove(delete=True)
 
     def set_fields(self):
