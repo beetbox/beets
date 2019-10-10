@@ -570,7 +570,7 @@ class FfmpegBackend(Backend):
         value = line.split(b":", 1)
         if len(value) < 2:
             raise ReplayGainError(
-                u"ffmpeg ouput: expected key value pair, found {0}"
+                u"ffmpeg output: expected key value pair, found {0}"
                 .format(line)
                 )
         value = value[1].lstrip()
