@@ -2,9 +2,11 @@ Export Plugin
 =============
 
 The ``export`` plugin lets you get data from the items and export the content
-as `JSON`_.
+as `JSON`_, `CSV`_, or `XML`_.
 
 .. _JSON: https://www.json.org
+.. _CSV: https://fileinfo.com/extension/csv
+.. _XML: https://fileinfo.com/extension/xml
 
 Enable the ``export`` plugin (see :ref:`using-plugins` for help). Then, type ``beet export`` followed by a :doc:`query </reference/query>` to get the data from
 your library. For example, run this::
@@ -36,11 +38,13 @@ The ``export`` command has these command-line options:
 
 * ``--append``: Appends the data to the file instead of writing.
 
+* ``--format`` or ``-f``: Specifies the format of the exported data. If not informed, JSON will be used.
+
 Configuration
 -------------
 
 To configure the plugin, make a ``export:`` section in your configuration
-file. Under the ``json`` key, these options are available:
+file. Under the ``json``, ``csv``, and ``xml`` keys, these options are available:
 
 - **ensure_ascii**: Escape non-ASCII characters with ``\uXXXX`` entities.
 
@@ -62,4 +66,16 @@ The default options look like this::
                 ensure_ascii: False
                 indent: 4
                 separators: [',' , ': ']
+                sort_keys: true
+        csv:
+            formatting:
+                ensure_ascii: False
+                indent: 0
+                separators: [',']
+                sort_keys: true
+        xml:
+            formatting:
+                ensure_ascii: False
+                indent: 4
+                separators: ['>']
                 sort_keys: true
