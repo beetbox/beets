@@ -68,16 +68,14 @@ The default options look like this::
                 ensure_ascii: False
                 indent: 4
                 separators: [',' , ': ']
-                sort_keys: true
+                sort_keys: True
         csv:
             formatting:
-                ensure_ascii: False
-                indent: 0
-                separators: [',']
-                sort_keys: true
+                delimiter: ','
+                dialect: 'excel'
         xml:
             formatting:
-                ensure_ascii: False
-                indent: 4
-                separators: ['>']
-                sort_keys: true
+                encoding: 'unicode',
+                xml_declaration: True,
+                method: 'xml'
+                short_empty_elements: True

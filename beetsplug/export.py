@@ -46,7 +46,7 @@ class ExportPlugin(BeetsPlugin):
         self.config.add({
             'default_format': 'json',
             'json': {
-                # json module formatting options
+                # JSON module formatting options.
                 'formatting': {
                     'ensure_ascii': False,
                     'indent': 4,
@@ -55,20 +55,19 @@ class ExportPlugin(BeetsPlugin):
                 }
             },
             'csv': {
-                # csv module formatting options
+                # CSV module formatting options.
                 'formatting': {
-                    'delimiter': ',', # column seperator
-                    'dialect': 'excel', # the name of the dialect to use
-                    'quotechar': '|'
+                    'delimiter': ',', # The delimiter used to seperate columns.
+                    'dialect': 'excel' # The type of dialect to use when formating the file output.
                 }
             },
             'xml': {
-                # xml module formatting options
+                # XML module formatting options.
                 'formatting': {
-                    'encoding': 'unicode', # the output encoding
-                    'xml_declaration':'True', # controls if an XML declaration should be added to the file
-                    'method': 'xml', # either "xml", "html" or "text" (default is "xml")
-                    'short_empty_elements': 'True' # controls the formatting of elements that contain no content.
+                    'encoding': 'unicode', # The output encoding.
+                    'xml_declaration':True, # Controls if an XML declaration should be added to the file.
+                    'method': 'xml', # Can be either "xml", "html" or "text" (default is "xml").
+                    'short_empty_elements': True # Controls the formatting of elements that contain no content.
                 }
             }
             # TODO: Use something like the edit plugin
@@ -123,6 +122,7 @@ class ExportPlugin(BeetsPlugin):
         included_keys = []
         for keys in opts.included_keys:
             included_keys.extend(keys.split(','))
+
         key_filter = make_key_filter(included_keys)
 
         for data_emitter in data_collector(lib, ui.decargs(args)):
@@ -144,7 +144,7 @@ class ExportFormat(object):
         self.path = file_path
         self.mode = file_mode
         self.encoding = encoding
-        # out_stream is assigned sys.stdout (terminal output) or the file stream for the path specified
+        # Assigned sys.stdout (terminal output) or the file stream for the path specified.
         self.out_stream = codecs.open(self.path, self.mode, self.encoding) if self.path else sys.stdout
 
     @classmethod
@@ -175,11 +175,9 @@ class CSVFormat(ExportFormat):
     """Saves in a csv file"""
     def __init__(self, file_path, file_mode=u'w', encoding=u'utf-8'):
         super(CSVFormat, self).__init__(file_path, file_mode, encoding)
-        self.header = []
 
     def export(self, data, **kwargs):
-        if data and len(data) > 0:
-            self.header = list(data[0].keys())
+        header = list(data[0].keys()) if data else []
         writer = csv.DictWriter(self.out_stream, fieldnames=self.header, **kwargs)
         writer.writeheader()
         writer.writerows(data)
@@ -191,23 +189,21 @@ class XMLFormat(ExportFormat):
         super(XMLFormat, self).__init__(file_path, file_mode, encoding)
 
     def export(self, data, **kwargs):
-        # create the file structure
+        # Creates the XML file structure.
         library = ET.Element('library')
         tracks_key = ET.SubElement(library, 'key')
         tracks_key.text = "Tracks"
         tracks_dict = ET.SubElement(library, 'dict')
-        if data and type(data) is list \
-        and len(data) > 0 and type(data[0]) is dict:
-            index = 1
-            for item in data:
+        if data and isinstance(data[0], dict):
+            for index, item in enumerate(data):
                 track_key = ET.SubElement(tracks_dict, 'key')
                 track_key.text = str(index)
                 track_dict = ET.SubElement(tracks_dict, 'dict')
                 track_details = ET.SubElement(track_dict, 'Track ID')
                 track_details.text = str(index)
-                index += 1
                 for key, value in item.items():
                     track_details = ET.SubElement(track_dict, key)
                     track_details.text = value
+
         tree = ET.ElementTree(library)
         tree.write(self.out_stream, **kwargs)
