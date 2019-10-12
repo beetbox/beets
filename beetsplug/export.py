@@ -42,9 +42,6 @@ class ExportPlugin(BeetsPlugin):
 
     def __init__(self):
         super(ExportPlugin, self).__init__()
-        # Used when testing export plugin
-        self.run_results = None
-        self.export_format = None
 
         self.config.add({
             'default_format': 'json',
@@ -60,19 +57,18 @@ class ExportPlugin(BeetsPlugin):
             'csv': {
                 # csv module formatting options
                 'formatting': {
-                    'ensure_ascii': False,
-                    'indent': 0,
-                    'separators': (','),
-                    'sort_keys': True
+                    'delimiter': ',', # column seperator
+                    'dialect': 'excel', # the name of the dialect to use
+                    'quotechar': '|'
                 }
             },
             'xml': {
                 # xml module formatting options
                 'formatting': {
-                    'ensure_ascii': False,
-                    'indent': 4,
-                    'separators': ('>'),
-                    'sort_keys': True
+                    'encoding': 'unicode', # the output encoding
+                    'xml_declaration':'True', # controls if an XML declaration should be added to the file
+                    'method': 'xml', # either "xml", "html" or "text" (default is "xml")
+                    'short_empty_elements': 'True' # controls the formatting of elements that contain no content.
                 }
             }
             # TODO: Use something like the edit plugin
@@ -103,17 +99,17 @@ class ExportPlugin(BeetsPlugin):
         )
         cmd.parser.add_option(
             u'-f', u'--format', default='json',
-            help=u'specify the format of the exported data. Your options are json (deafult), csv, and xml'
+            help=u"the output format: json (default), csv, or xml"
         )
         return [cmd]
 
     def run(self, lib, opts, args):
         file_path = opts.output
         file_mode = 'a' if opts.append else 'w'
-        file_format = opts.format
+        file_format = opts.format if opts.format else self.config['default_format'].get(str)
         format_options = self.config[file_format]['formatting'].get(dict)
 
-        self.export_format = ExportFormat.factory(
+        export_format = ExportFormat.factory(
             file_type=file_format, 
             **{
                 'file_path': file_path,
@@ -135,11 +131,11 @@ class ExportPlugin(BeetsPlugin):
             except (mediafile.UnreadableFileError, IOError) as ex:
                 self._log.error(u'cannot read file: {0}', ex)
                 continue
+
             data = key_filter(data)
             items += [data]
 
-        self.run_results = items
-        self.export_format.export(self.run_results, **format_options)
+        export_format.export(items, **format_options)
 
 
 class ExportFormat(object):
@@ -148,8 +144,8 @@ class ExportFormat(object):
         self.path = file_path
         self.mode = file_mode
         self.encoding = encoding
-        # Used for testing
-        self.results = None
+        # out_stream is assigned sys.stdout (terminal output) or the file stream for the path specified
+        self.out_stream = codecs.open(self.path, self.mode, self.encoding) if self.path else sys.stdout
 
     @classmethod
     def factory(cls, file_type, **kwargs):
@@ -170,16 +166,9 @@ class JsonFormat(ExportFormat):
     """Saves in a json file"""
     def __init__(self, file_path, file_mode=u'w', encoding=u'utf-8'):
         super(JsonFormat, self).__init__(file_path, file_mode, encoding)
-        self.export = self.export_to_file if self.path else self.export_to_terminal
 
-    def export_to_terminal(self, data, **kwargs):
-        r = json.dump(data, sys.stdout, cls=ExportEncoder, **kwargs)
-        self.results = str(r)
-
-    def export_to_file(self, data, **kwargs):
-        with codecs.open(self.path, self.mode, self.encoding) as f:
-            r = json.dump(data, f, cls=ExportEncoder, **kwargs)
-            self.results = str(r)
+    def export(self, data, **kwargs):
+        json.dump(data, self.out_stream, cls=ExportEncoder, **kwargs)
 
 
 class CSVFormat(ExportFormat):
@@ -189,26 +178,11 @@ class CSVFormat(ExportFormat):
         self.header = []
 
     def export(self, data, **kwargs):
-        if data and type(data) is list and len(data) > 0:
+        if data and len(data) > 0:
             self.header = list(data[0].keys())
-        if self.path:
-            self.export_to_file(data, **kwargs)
-        else:
-            self.export_to_terminal(data, **kwargs)
-
-    def export_to_terminal(self, data, **kwargs):
-        writer = csv.DictWriter(sys.stdout, fieldnames=self.header)
+        writer = csv.DictWriter(self.out_stream, fieldnames=self.header, **kwargs)
         writer.writeheader()
         writer.writerows(data)
-        self.results = str(writer)
-
-
-    def export_to_file(self, data, **kwargs):
-        with codecs.open(self.path, self.mode, self.encoding) as f:
-            writer = csv.DictWriter(f, fieldnames=self.header)
-            writer.writeheader()
-            writer.writerows(data)
-            self.results = str(writer)
 
 
 class XMLFormat(ExportFormat):
@@ -235,18 +209,5 @@ class XMLFormat(ExportFormat):
                 for key, value in item.items():
                     track_details = ET.SubElement(track_dict, key)
                     track_details.text = value
-        data = str(ET.tostring(library, encoding=self.encoding))
-        #data = ET.dump(library)
-        if self.path:
-            self.export_to_file(data, **kwargs)
-        else:
-            self.export_to_terminal(data, **kwargs)
-    
-    def export_to_terminal(self, data, **kwargs):
-        print(data)
-        self.results = str(data)
-
-    def export_to_file(self, data, **kwargs):
-        with codecs.open(self.path, self.mode, self.encoding) as f:
-            f.write(data)
-            self.results = str(data)
+        tree = ET.ElementTree(library)
+        tree.write(self.out_stream, **kwargs)
