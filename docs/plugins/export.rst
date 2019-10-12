@@ -40,11 +40,7 @@ The ``export`` command has these command-line options:
 * ``--append``: Appends the data to the file instead of writing.
 
 * ``--format`` or ``-f``: Specifies the format the data will be exported as. If not informed, JSON will be used by default.
-  For example::
-
-      $ beet export -f csv beatles
-      $ beet export -f json beatles
-      $ beet export -f xml beatles
+The format options include csv, json and xml.
 
 Configuration
 -------------
