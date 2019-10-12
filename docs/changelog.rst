@@ -116,6 +116,11 @@ Fixes:
   :bug:`3242`
 * Fix a bug that caused a crash when tagging items with the beatport plugin.
   :bug:`3374`
+* ``beet update`` will now confirm that the user still wants to update if
+  their library folder cannot be found, preventing the user from accidentally
+  wiping out their beets database.
+  Thanks to :user:`logan-arens`.
+  :bug:`1934`
 
 For plugin developers:
 
