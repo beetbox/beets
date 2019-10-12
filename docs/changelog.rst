@@ -116,6 +116,10 @@ Fixes:
   :bug:`3242`
 * Fix a bug that caused a crash when tagging items with the beatport plugin.
   :bug:`3374`
+* :doc:`/plugins/convert`: If ``move`` is enabled, then the source files will
+  be deleted after importing.
+  Thanks to :user:`logan-arens`.
+  :bug:`2947`
 
 For plugin developers:
 
