@@ -19,10 +19,7 @@
 from __future__ import division, absolute_import, print_function
 
 import unittest
-from test import helper
 from test.helper import TestHelper
-#from beetsplug.export import ExportPlugin, ExportFormat, JSONFormat, CSVFormat, XMLFormat
-#from collections import namedtuple
 
 
 class ExportPluginTest(unittest.TestCase, TestHelper):
@@ -41,11 +38,11 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
         item1.track = "ttrack"
         item1.write()
         item1.store()
-
-        out = self.run_with_output('export', '-f json -i "track,album" tartist')
+        options = '-f json -i "track,album" ' + item1.artist
+        out = self.run_with_output('export', options)
         self.assertIn('"track": "' + item1.track + '"', out)
         self.assertIn('"album": "' + item1.album + '"', out)
-    
+
     def test_csv_output(self):
         item1, item2 = self.add_item_fixtures(count=2)
         item1.album = 'talbum'
@@ -53,10 +50,10 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
         item1.track = "ttrack"
         item1.write()
         item1.store()
-
-        out = self.run_with_output('export', '-f json -i "track,album" tartist')
+        options = '-f csv -i "track,album" ' + item1.artist
+        out = self.run_with_output('export', options)
         self.assertIn(item1.track + ',' + item1.album,  out)
-    
+
     def test_xml_output(self):
         item1, item2 = self.add_item_fixtures(count=2)
         item1.album = 'talbum'
@@ -64,31 +61,10 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
         item1.track = "ttrack"
         item1.write()
         item1.store()
-
-        out = self.run_with_output('export', '-f json -i "track,album" tartist')
+        options = '-f xml -i "track,album" ' + item1.artist
+        out = self.run_with_output('export', options)
         self.assertIn("<title>" + item1.track + "</title>", out)
         self.assertIn("<album>" + item1.album + "</album>", out)
-
-    """
-    def setUp(self):
-        Opts = namedtuple('Opts', 'output append included_keys library format')
-        self.args = None
-        self._export = ExportPlugin()
-        included_keys = ['title,artist,album']
-        self.opts = Opts(None, False, included_keys, True, "json")
-        self.export_format_classes = {"json": ExportFormat, "csv": CSVFormat, "xml": XMLFormat}
-
-    def test_run(self, _format="json"):
-        self.opts.format = _format
-        self._export.run(lib=self.lib, opts=self.opts, args=self.args)
-        # 1.) Test that the ExportFormat Factory class method invoked the correct class 
-        self.assertEqual(type(self._export.export_format), self.export_format_classes[_format])
-        # 2.) Test that the cmd parser options specified were processed in correctly
-        self.assertEqual(self._export.export_format.path, self.opts.output)
-        mode = 'a' if self.opts.append else 'w'
-        self.assertEqual(self._export.export_format.mode, mode)
-    """
-
 
 
 def suite():

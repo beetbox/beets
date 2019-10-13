@@ -57,17 +57,23 @@ class ExportPlugin(BeetsPlugin):
             'csv': {
                 # CSV module formatting options.
                 'formatting': {
-                    'delimiter': ',', # The delimiter used to seperate columns.
-                    'dialect': 'excel' # The type of dialect to use when formating the file output.
+                    # The delimiter used to seperate columns.
+                    'delimiter': ',',
+                    # The dialect to use when formating the file output.
+                    'dialect': 'excel'
                 }
             },
             'xml': {
                 # XML module formatting options.
                 'formatting': {
-                    'encoding': 'unicode', # The output encoding.
-                    'xml_declaration':True, # Controls if an XML declaration should be added to the file.
-                    'method': 'xml', # Can be either "xml", "html" or "text" (default is "xml").
-                    'short_empty_elements': True # Controls the formatting of elements that contain no content.
+                    # The output encoding.
+                    'encoding': 'unicode',
+                    # Controls if XML declaration should be added to the file.
+                    'xml_declaration': True,
+                    # Can be either "xml", "html" or "text" (default is "xml").
+                    'method': 'xml',
+                    # Controls formatting of elements that contain no content.
+                    'short_empty_elements': True
                 }
             }
             # TODO: Use something like the edit plugin
@@ -105,11 +111,12 @@ class ExportPlugin(BeetsPlugin):
     def run(self, lib, opts, args):
         file_path = opts.output
         file_mode = 'a' if opts.append else 'w'
-        file_format = opts.format if opts.format else self.config['default_format'].get(str)
+        file_format = opts.format if opts.format else \
+            self.config['default_format'].get(str)
         format_options = self.config[file_format]['formatting'].get(dict)
 
         export_format = ExportFormat.factory(
-            file_type=file_format, 
+            file_type=file_format,
             **{
                 'file_path': file_path,
                 'file_mode': file_mode
@@ -144,8 +151,12 @@ class ExportFormat(object):
         self.path = file_path
         self.mode = file_mode
         self.encoding = encoding
-        # Assigned sys.stdout (terminal output) or the file stream for the path specified.
-        self.out_stream = codecs.open(self.path, self.mode, self.encoding) if self.path else sys.stdout
+        """ self.out_stream =
+                sys.stdout if path doesn't exit
+                codecs.open(..) else
+        """
+        self.out_stream = codecs.open(self.path, self.mode, self.encoding) \
+            if self.path else sys.stdout
 
     @classmethod
     def factory(cls, file_type, **kwargs):
@@ -178,7 +189,7 @@ class CSVFormat(ExportFormat):
 
     def export(self, data, **kwargs):
         header = list(data[0].keys()) if data else []
-        writer = csv.DictWriter(self.out_stream, fieldnames=self.header, **kwargs)
+        writer = csv.DictWriter(self.out_stream, fieldnames=header, **kwargs)
         writer.writeheader()
         writer.writerows(data)
 
