@@ -56,6 +56,18 @@ file. Under the ``json``, ``csv``, and ``xml`` keys, these options are available
 
 - **sort_keys**: Sorts the keys in JSON dictionaries.
 
+- **delimiter**: Used as the separating character between fields. The default value is a comma (,).
+
+- **dialect**: A dialect, in the context of reading and writing CSVs, is a construct that allows you to create, store, and re-use various formatting parameters for your data.
+
+- **encoding**: Use encoding="unicode" to generate a Unicode string (otherwise, a bytestring is generated).
+
+- **xml_declaration**: Controls if an XML declaration should be added to the file. Use False for never, True for always, None for only if not US-ASCII or UTF-8 or Unicode (default is None).
+
+- **method**: Can be either "xml", "html" or "text" (default is "xml")
+
+- **short_empty_elements**: Controls the formatting of elements that contain no content. If True (the default), they are emitted as a single self-closed tag, otherwise they are emitted as a pair of start/end tags.
+
 These options match the options from the `Python json module`_.
 
 .. _Python json module: https://docs.python.org/2/library/json.html#basic-usage
@@ -71,34 +83,11 @@ The default options look like this::
                 sort_keys: True
         csv:
             formatting:
-                /*
-                    Used as the separating character between fields. The default value is a comma (,).
-                */
                 delimiter: ','
-                /* 
-                    A dialect, in the context of reading and writing CSVs, 
-                    is a construct that allows you to create, store, 
-                    and re-use various formatting parameters for your data.
-                */
                 dialect: 'excel' 
         xml:
             formatting:
-                /*
-                     Use encoding="unicode" to generate a Unicode string (otherwise, a bytestring is generated).
-                */
-                encoding: 'unicode',
-                /*
-                    Controls if an XML declaration should be added to the file. 
-                    Use False for never, True for always, None for only if not US-ASCII or UTF-8 or Unicode (default is None).
-                */
-                xml_declaration: True,
-                /*
-                    Can be either "xml", "html" or "text" (default is "xml")
-                */
+                encoding: 'unicode'
+                xml_declaration: True
                 method: 'xml'
-                /*
-                    Controls the formatting of elements that contain no content. 
-                    If True (the default), they are emitted as a single self-closed tag, 
-                    otherwise they are emitted as a pair of start/end tags.
-                */
                 short_empty_elements: True
