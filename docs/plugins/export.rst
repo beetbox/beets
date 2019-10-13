@@ -71,11 +71,34 @@ The default options look like this::
                 sort_keys: True
         csv:
             formatting:
+                /*
+                    Used as the separating character between fields. The default value is a comma (,).
+                */
                 delimiter: ','
-                dialect: 'excel'
+                /* 
+                    A dialect, in the context of reading and writing CSVs, 
+                    is a construct that allows you to create, store, 
+                    and re-use various formatting parameters for your data.
+                */
+                dialect: 'excel' 
         xml:
             formatting:
+                /*
+                     Use encoding="unicode" to generate a Unicode string (otherwise, a bytestring is generated).
+                */
                 encoding: 'unicode',
+                /*
+                    Controls if an XML declaration should be added to the file. 
+                    Use False for never, True for always, None for only if not US-ASCII or UTF-8 or Unicode (default is None).
+                */
                 xml_declaration: True,
+                /*
+                    Can be either "xml", "html" or "text" (default is "xml")
+                */
                 method: 'xml'
+                /*
+                    Controls the formatting of elements that contain no content. 
+                    If True (the default), they are emitted as a single self-closed tag, 
+                    otherwise they are emitted as a pair of start/end tags.
+                */
                 short_empty_elements: True
