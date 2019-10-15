@@ -1,5 +1,5 @@
 Unimported Plugin
-===========
+=================
 
 The ``unimported`` plugin allows to list all files in the library folder which are not listed in the beets library database.
 
