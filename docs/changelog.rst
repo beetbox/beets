@@ -6,6 +6,10 @@ Changelog
 
 New features:
 
+* :doc:`/plugins/export`: Added new ``-f`` (``--format``) flag; 
+  which allows for the ability to export in json, csv and xml.
+  Thanks to :user:`austinmm`.
+  :bug:`3402`
 * We now fetch information about `works`_ from MusicBrainz.
   MusicBrainz matches provide the fields ``work`` (the title), ``mb_workid``
   (the MBID), and ``work_disambig`` (the disambiguation string).
