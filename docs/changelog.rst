@@ -6,6 +6,7 @@ Changelog
 
 New features:
 
+* :doc:`/plugins/unimported`: lets you find untracked files in your library directory.
 * We now fetch information about `works`_ from MusicBrainz.
   MusicBrainz matches provide the fields ``work`` (the title), ``mb_workid``
   (the MBID), and ``work_disambig`` (the disambiguation string).
