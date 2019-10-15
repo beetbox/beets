@@ -66,10 +66,6 @@ class ExportPlugin(BeetsPlugin):
             'xml': {
                 # XML module formatting options.
                 'formatting': {
-                    # The output encoding.
-                    'encoding': 'unicode',
-                    # Controls if XML declaration should be added to the file.
-                    # 'xml_declaration': True,
                     # Can be either "xml", "html" or "text" (default is "xml").
                     'method': 'xml'
                 }
@@ -109,8 +105,7 @@ class ExportPlugin(BeetsPlugin):
     def run(self, lib, opts, args):
         file_path = opts.output
         file_mode = 'a' if opts.append else 'w'
-        file_format = opts.format if opts.format else \
-            self.config['default_format'].get(str)
+        file_format = opts.format or self.config['default_format'].get(str)
         format_options = self.config[file_format]['formatting'].get(dict)
 
         export_format = ExportFormat.factory(
@@ -149,10 +144,7 @@ class ExportFormat(object):
         self.path = file_path
         self.mode = file_mode
         self.encoding = encoding
-        """ self.out_stream =
-                sys.stdout if path doesn't exit
-                codecs.open(..) else
-        """
+        # creates a file object to write/append or sets to stdout
         self.out_stream = codecs.open(self.path, self.mode, self.encoding) \
             if self.path else sys.stdout
 
@@ -200,24 +192,17 @@ class XMLFormat(ExportFormat):
     def export(self, data, **kwargs):
         # Creates the XML file structure.
         library = ET.Element(u'library')
-        tracks_key = ET.SubElement(library, u'key')
-        tracks_key.text = u'tracks'
-        tracks_dict = ET.SubElement(library, u'dict')
+        tracks = ET.SubElement(library, u'tracks')
         if data and isinstance(data[0], dict):
             for index, item in enumerate(data):
-                track_key = ET.SubElement(tracks_dict, u'key')
-                track_key.text = str(index)
-                track_dict = ET.SubElement(tracks_dict, u'dict')
-                track_details = ET.SubElement(track_dict, u'Track ID')
-                track_details.text = str(index)
+                track = ET.SubElement(tracks, u'track')
                 for key, value in item.items():
-                    track_details = ET.SubElement(track_dict, key)
+                    track_details = ET.SubElement(track, key)
                     track_details.text = value
-
-        # tree = ET.ElementTree(element=library)
+        # Depending on the version of python the encoding needs to change
         try:
-            data = ET.tostring(library, **kwargs)
+            data = ET.tostring(library, encoding='unicode', **kwargs)
         except LookupError:
-            data = ET.tostring(library, encoding='utf-8', method='xml')
+            data = ET.tostring(library, encoding='utf-8', **kwargs)
 
         self.out_stream.write(data)
