@@ -16,10 +16,13 @@
 """A Web interface to beets."""
 from __future__ import division, absolute_import, print_function
 
+from beets.util import syspath, displayable_path
+
 from beets.plugins import BeetsPlugin
-from beets import ui
+from beets import ui, config, logging, plugins
 from beets import util
 import beets.library
+from beets.library import Library
 import flask
 from flask import g
 from werkzeug.routing import BaseConverter, PathConverter
@@ -28,8 +31,9 @@ from unidecode import unidecode
 import json
 import base64
 
-
 # Utilities.
+from beetsplug.web.Importer import WebImporter
+
 
 def _rep(obj, expand=False):
     """Get a flat -- i.e., JSON-ish -- representation of a beets Item or
@@ -255,6 +259,28 @@ def item_query(queries):
     return g.lib.items(queries)
 
 
+@app.route('/import')
+def start_import():
+    path = '/home/hagbard/music'
+    lib = Library(':memory:')
+    # Open the log.
+    if config['import']['log'].get() is not None:
+        logpath = syspath(config['import']['log'].as_filename())
+        try:
+            loghandler = logging.FileHandler(logpath)
+        except IOError:
+            raise ui.UserError(u"could not open log file for writing: "
+                               u"{0}".format(displayable_path(logpath)))
+    else:
+        loghandler = None
+    session = WebImporter(lib, loghandler, [path], None)
+    session.run()
+
+    # Emit event.
+    plugins.send('import', lib=lib, paths=[path])
+    return "bla"
+
+
 @app.route('/item/path/<everything:path>')
 def item_at_path(path):
     query = beets.library.PathQuery('path', path.encode('utf-8'))
@@ -426,6 +452,7 @@ class ReverseProxied(object):
 
     :param app: the WSGI application
     '''
+
     def __init__(self, app):
         self.app = app
 

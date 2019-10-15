@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 import os
 
 from beets.plugins import BeetsPlugin
@@ -16,12 +20,17 @@ class Unimported(BeetsPlugin):
 
     def commands(self):
         def print_unimported(lib, opts, args):
-            in_library = set((os.path.join(r, file) for r, d, f in os.walk(lib.directory) for file in f if
-                              not any([file.endswith(extension.encode()) for extension in self.config['ignore_extensions'].get()])))
+            in_library = set(
+                (os.path.join(r, file) for r, d, f in os.walk(lib.directory)
+                 for file in f if not any(
+                    [file.endswith(extension.encode()) for extension in
+                     self.config['ignore_extensions'].get()])))
             test = set((x.path for x in lib.items()))
             for f in in_library - test:
                 print(f.decode('utf-8'))
 
-        unimported = Subcommand('unimported', help='list files in library which have not been imported')
+        unimported = Subcommand(
+            'unimported',
+            help='list files in library which have not been imported')
         unimported.func = print_unimported
         return [unimported]

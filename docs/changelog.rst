@@ -11,6 +11,7 @@ New features:
   (the MBID), and ``work_disambig`` (the disambiguation string).
   Thanks to :user:`dosoe`.
   :bug:`2580` :bug:`3272`
+* :doc:`/plugins/unimported`: Added `unimported` plugin.
 * :doc:`/plugins/convert`: Added new ``-l`` (``--link``) flag and ``link``
   option as well as the ``-H`` (``--hardlink``) flag and ``hardlink``
   option which symlinks or hardlinks files that do not need to
