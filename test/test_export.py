@@ -21,12 +21,9 @@ from __future__ import division, absolute_import, print_function
 import unittest
 from test.helper import TestHelper
 import re
-import beets
-import beets.plugins
 
 
 class ExportPluginTest(unittest.TestCase, TestHelper):
-    
     def setUp(self):
         self.setup_beets()
         self.load_plugins('export')
@@ -61,7 +58,7 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
             artist=item1.artist
         )
         for key, val in self.test_values.items():
-            self.check_assertIn(
+            self.check_assertin(
                 actual=actual,
                 str_format='"{0}":"{1}"',
                 key=key,
@@ -75,7 +72,7 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
             artist=item1.artist
         )
         for key, val in self.test_values.items():
-            self.check_assertIn(
+            self.check_assertin(
                 actual=actual,
                 str_format='{0}{1}',
                 key='',
@@ -89,14 +86,14 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
             artist=item1.artist
         )
         for key, val in self.test_values.items():
-            self.check_assertIn(
+            self.check_assertin(
                 actual=actual,
                 str_format='<{0}>{1}</{0}>',
                 key=key,
                 val=val
             )
 
-    def check_assertIn(self, actual, str_format, key, val):
+    def check_assertin(self, actual, str_format, key, val):
         expected = str_format.format(key, val)
         self.assertIn(
             expected,
