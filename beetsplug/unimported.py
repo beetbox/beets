@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function
 import os
 
-from beets import util, config
+from beets import util
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 
