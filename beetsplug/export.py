@@ -67,13 +67,11 @@ class ExportPlugin(BeetsPlugin):
                 # XML module formatting options.
                 'formatting': {
                     # The output encoding.
-                    'encoding': 'unicode',
+                    'encoding': 'utf-8',
                     # Controls if XML declaration should be added to the file.
                     'xml_declaration': True,
                     # Can be either "xml", "html" or "text" (default is "xml").
-                    'method': 'xml',
-                    # Controls formatting of elements that contain no content.
-                    'short_empty_elements': True
+                    'method': 'xml'
                 }
             }
             # TODO: Use something like the edit plugin
