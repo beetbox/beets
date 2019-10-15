@@ -69,13 +69,6 @@ These options match the options from the `Python csv module`_.
 
 .. _Python csv module: https://docs.python.org/3/library/csv.html#csv-fmt-params
 
-- **XML Formatting**
-    - **method**: Can be either "xml", "html" or "text" (default is "xml")
-
-These options match the options from the `Python xml module`_.
-
-.. _Python xml module: https://docs.python.org/3/library/xml.etree.elementtree.html#xml.etree.ElementTree.tostring
-
 The default options look like this::
 
     export:
@@ -88,7 +81,4 @@ The default options look like this::
         csv:
             formatting:
                 delimiter: ','
-                dialect: 'excel' 
-        xml:
-            formatting:
-                method: 'xml'
+                dialect: 'excel'
