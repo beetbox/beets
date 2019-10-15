@@ -19,7 +19,7 @@ absolute path::
     $ beet ls playlist:/path/to/someplaylist.m3u
 
 The plugin also supports referencing playlists by name. The playlist is then
-seached in the playlist_dir and the ".m3u" extension is appended to the
+searched in the playlist_dir and the ".m3u" extension is appended to the
 name::
 
     $ beet ls playlist:anotherplaylist
