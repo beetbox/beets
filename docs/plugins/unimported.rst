@@ -1,7 +1,7 @@
 Unimported Plugin
 =================
 
-The ``unimported`` plugin allows to list all files in the library folder which are not listed in the beets library database.
+The ``unimported`` plugin allows to list all files in the library folder which are not listed in the beets library database, including art files.
 
 Command Line Usage
 ------------------
@@ -14,5 +14,4 @@ exclude file extensions using the configuration file::
     unimported:
         ignore_extensions: jpg png
 
-The default configuration moves all English articles to the end of the string,
-but you can override these defaults to make more complex changes.
+The default configuration list all unimported files, ignoring no extensions.
