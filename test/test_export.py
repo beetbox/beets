@@ -37,14 +37,14 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
         self.teardown_beets()
 
     def execute_command(self, format_type, artist):
-        query = ','.format(list(self.test_values.keys()))
-        actual = self.run_with_output(
+        query = ','.join(self.test_values.keys())
+        out = self.run_with_output(
             'export',
             '-f', format_type,
             '-i', query,
             artist
         )
-        return re.sub("\\s+", '', actual)
+        return out
 
     def create_item(self):
         item, = self.add_item_fixtures()
@@ -57,11 +57,9 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
 
     def test_json_output(self):
         item1 = self.create_item()
-        out = self.run_with_output(
-            'export',
-            '-f', 'json',
-            '-i', 'album,title',
-            item1.artist
+        out = self.execute_command(
+            format_type='json',
+            artist=item1.artist
         )
         json_data = json.loads(out)[0]
         for key, val in self.test_values.items():
@@ -70,11 +68,9 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
 
     def test_csv_output(self):
         item1 = self.create_item()
-        out = self.run_with_output(
-            'export',
-            '-f', 'csv',
-            '-i', 'album,title',
-            item1.artist
+        out = self.execute_command(
+            format_type='csv',
+            artist=item1.artist
         )
         csv_list = re.split('\r', re.sub('\n', '', out))
         head = re.split(',', csv_list[0])
@@ -85,11 +81,9 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
 
     def test_xml_output(self):
         item1 = self.create_item()
-        out = self.run_with_output(
-            'export',
-            '-f', 'xml',
-            '-i', 'album,title',
-            item1.artist
+        out = self.execute_command(
+            format_type='xml',
+            artist=item1.artist
         )
         library = ET.fromstring(out)
         self.assertIsInstance(library, Element)
@@ -100,60 +94,9 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
                 self.assertTrue(tag in self.test_values, msg=tag)
                 self.assertEqual(self.test_values[tag], txt, msg=txt)
 
-    def check_assertin(self, actual, str_format, key, val):
-        expected = str_format.format(key, val)
-        self.assertIn(
-            expected,
-            actual
-        )
-
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')
-
-"""
-    def test_csv_output(self):
-        item1 = self.create_item()
-        actual = self.execute_command(
-            format_type='csv',
-            artist=item1.artist
-        )
-        for key, val in self.test_values.items():
-            self.check_assertin(
-                actual=actual,
-                str_format='{0}{1}',
-                key='',
-                val=val
-            )
-
-    def test_xml_output(self):
-        item1 = self.create_item()
-        actual = self.execute_command(
-            format_type='xml',
-            artist=item1.artist
-        )
-        for key, val in self.test_values.items():
-            self.check_assertin(
-                actual=actual,
-                str_format='<{0}>{1}</{0}>',
-                key=key,
-                val=val
-            )
-
-    def test_json_output(self):
-        item1 = self.create_item()
-        actual = self.execute_command(
-            format_type='json',
-            artist=item1.artist
-        )
-        for key, val in self.test_values.items():
-            self.check_assertin(
-                actual=actual,
-                str_format='"{0}":"{1}"',
-                key=key,
-                val=val
-            )
-"""
