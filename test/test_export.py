@@ -21,12 +21,16 @@ from __future__ import division, absolute_import, print_function
 import unittest
 from test.helper import TestHelper
 import re
+import beets
+import beets.plugins
 
 
 class ExportPluginTest(unittest.TestCase, TestHelper):
+    
     def setUp(self):
         self.setup_beets()
         self.load_plugins('export')
+        self.test_values = {'title': 'xtitle', 'album': 'xalbum'}
 
     def tearDown(self):
         self.unload_plugins()
@@ -44,8 +48,8 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
     def create_item(self):
         item, = self.add_item_fixtures()
         item.artist = 'xartist'
-        item.title = 'xtitle'
-        item.album = 'xalbum'
+        item.title = self.test_values['title']
+        item.album = self.test_values['album']
         item.write()
         item.store()
         return item
@@ -56,12 +60,13 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
             format_type='json',
             artist=item1.artist
         )
-        expected = u'[{"album":"%s","title":"%s"}]'\
-            % (item1.album, item1.title)
-        self.assertIn(
-            expected,
-            actual
-        )
+        for key, val in self.test_values.items():
+            self.check_assertIn(
+                actual=actual,
+                str_format='"{0}":"{1}"',
+                key=key,
+                val=val
+            )
 
     def test_csv_output(self):
         item1 = self.create_item()
@@ -69,12 +74,13 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
             format_type='csv',
             artist=item1.artist
         )
-        expected = u'album,title%s,%s'\
-            % (item1.album, item1.title)
-        self.assertIn(
-            expected,
-            actual
-        )
+        for key, val in self.test_values.items():
+            self.check_assertIn(
+                actual=actual,
+                str_format='{0}{1}',
+                key='',
+                val=val
+            )
 
     def test_xml_output(self):
         item1 = self.create_item()
@@ -82,8 +88,16 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
             format_type='xml',
             artist=item1.artist
         )
-        expected = u'<album>%s</album><title>%s</title>'\
-            % (item1.album, item1.title)
+        for key, val in self.test_values.items():
+            self.check_assertIn(
+                actual=actual,
+                str_format='<{0}>{1}</{0}>',
+                key=key,
+                val=val
+            )
+
+    def check_assertIn(self, actual, str_format, key, val):
+        expected = str_format.format(key, val)
         self.assertIn(
             expected,
             actual
