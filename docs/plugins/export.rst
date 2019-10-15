@@ -56,21 +56,25 @@ file. Under the ``json``, ``csv``, and ``xml`` keys, these options are available
 
     - **sort_keys**: Sorts the keys in JSON dictionaries.
 
-- **CSV Formatting**
-    - **delimiter**: Used as the separating character between fields. The default value is a comma (,).
-
-    - **dialect**: A dialect, in the context of reading and writing CSVs, is a construct that allows you to create, store, and re-use various formatting parameters for your data.
-
-- **XML Formatting**
-    - **encoding**: Use encoding="unicode" to generate a Unicode string (otherwise, a bytestring is generated).
-
-    - **xml_declaration**: Controls if an XML declaration should be added to the file. Use False for never, True for always, None for only if not US-ASCII or UTF-8 or Unicode (default is None).
-
-    - **method**: Can be either "xml", "html" or "text" (default is "xml")
-
 These options match the options from the `Python json module`_.
 
 .. _Python json module: https://docs.python.org/2/library/json.html#basic-usage
+
+- **CSV Formatting**
+    - **delimiter**: Used as the separating character between fields. The default value is a comma (,).
+
+    - **dialect**: A dialect is a construct that allows you to create, store, and re-use various formatting parameters for your data.
+
+These options match the options from the `Python csv module`_.
+
+.. _Python csv module: https://docs.python.org/3/library/csv.html#csv-fmt-params
+
+- **XML Formatting**
+    - **method**: Can be either "xml", "html" or "text" (default is "xml")
+
+These options match the options from the `Python xml module`_.
+
+.. _Python xml module: https://docs.python.org/3/library/xml.etree.elementtree.html#xml.etree.ElementTree.tostring
 
 The default options look like this::
 
@@ -87,6 +91,4 @@ The default options look like this::
                 dialect: 'excel' 
         xml:
             formatting:
-                encoding: 'unicode'
-                xml_declaration: True
                 method: 'xml'
