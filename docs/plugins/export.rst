@@ -69,8 +69,6 @@ file. Under the ``json``, ``csv``, and ``xml`` keys, these options are available
 
     - **method**: Can be either "xml", "html" or "text" (default is "xml")
 
-    - **short_empty_elements**: Controls the formatting of elements that contain no content. If True (the default), they are emitted as a single self-closed tag, otherwise they are emitted as a pair of start/end tags.
-
 These options match the options from the `Python json module`_.
 
 .. _Python json module: https://docs.python.org/2/library/json.html#basic-usage
@@ -93,4 +91,3 @@ The default options look like this::
                 encoding: 'unicode'
                 xml_declaration: True
                 method: 'xml'
-                short_empty_elements: True
