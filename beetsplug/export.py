@@ -67,9 +67,9 @@ class ExportPlugin(BeetsPlugin):
                 # XML module formatting options.
                 'formatting': {
                     # The output encoding.
-                    'encoding': 'utf-8',
+                    'encoding': 'unicode',
                     # Controls if XML declaration should be added to the file.
-                    'xml_declaration': True,
+                    # 'xml_declaration': True,
                     # Can be either "xml", "html" or "text" (default is "xml").
                     'method': 'xml'
                 }
@@ -199,20 +199,25 @@ class XMLFormat(ExportFormat):
 
     def export(self, data, **kwargs):
         # Creates the XML file structure.
-        library = ET.Element('library')
-        tracks_key = ET.SubElement(library, 'key')
-        tracks_key.text = "Tracks"
-        tracks_dict = ET.SubElement(library, 'dict')
+        library = ET.Element(u'library')
+        tracks_key = ET.SubElement(library, u'key')
+        tracks_key.text = u'tracks'
+        tracks_dict = ET.SubElement(library, u'dict')
         if data and isinstance(data[0], dict):
             for index, item in enumerate(data):
-                track_key = ET.SubElement(tracks_dict, 'key')
+                track_key = ET.SubElement(tracks_dict, u'key')
                 track_key.text = str(index)
-                track_dict = ET.SubElement(tracks_dict, 'dict')
-                track_details = ET.SubElement(track_dict, 'Track ID')
+                track_dict = ET.SubElement(tracks_dict, u'dict')
+                track_details = ET.SubElement(track_dict, u'Track ID')
                 track_details.text = str(index)
                 for key, value in item.items():
                     track_details = ET.SubElement(track_dict, key)
                     track_details.text = value
 
-        tree = ET.ElementTree(library)
-        tree.write(self.out_stream, **kwargs)
+        # tree = ET.ElementTree(element=library)
+        try:
+            data = ET.tostring(library, **kwargs)
+        except LookupError:
+            data = ET.tostring(library, encoding='utf-8', method='xml')
+
+        self.out_stream.write(data)
