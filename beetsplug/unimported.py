@@ -2,7 +2,7 @@
 from __future__ import absolute_import, division, print_function
 import os
 
-from beets import util
+from beets import util, config
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 
@@ -26,7 +26,8 @@ class Unimported(BeetsPlugin):
                     [file.endswith(extension.encode()) for extension in
                      exts_to_ignore])))
             in_library = set(x.path for x in lib.items())
-            for f in in_folder - in_library:
+            art_files = set(x.artpath for x in lib.albums())
+            for f in in_folder - in_library - art_files:
                 print(util.displayable_path(f))
 
         unimported = Subcommand(
