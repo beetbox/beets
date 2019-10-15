@@ -10,6 +10,7 @@ New features:
   which allows for the ability to export in json, csv and xml.
   Thanks to :user:`austinmm`.
   :bug:`3402`
+* :doc:`/plugins/unimported`: lets you find untracked files in your library directory.
 * We now fetch information about `works`_ from MusicBrainz.
   MusicBrainz matches provide the fields ``work`` (the title), ``mb_workid``
   (the MBID), and ``work_disambig`` (the disambiguation string).
@@ -74,6 +75,16 @@ New features:
   you can now match tracks and albums using the `Deezer`_ database.
   Thanks to :user:`rhlahuja`.
   :bug:`3355`
+* :doc:`/plugins/beatport`: The plugin now gets the musical key, BPM and the
+  genre for each track.
+  :bug:`2080`
+* :doc:`/plugins/beatport`: Fix default assignment of the musical key.
+  :bug:`3377`
+* :doc:`/plugins/bpsync`: Add `bpsync` plugin to sync metadata changes
+  from the Beatport database.
+* :doc:`/plugins/beatport`: Fix assignment of `genre` and rename `musical_key`
+  to `initial_key`.
+  :bug:`3387`
 
 Fixes:
 
@@ -108,6 +119,13 @@ Fixes:
 * ``none_rec_action`` does not import automatically when ``timid`` is enabled.
   Thanks to :user:`RollingStar`.
   :bug:`3242`
+* Fix a bug that caused a crash when tagging items with the beatport plugin.
+  :bug:`3374`
+* ``beet update`` will now confirm that the user still wants to update if
+  their library folder cannot be found, preventing the user from accidentally
+  wiping out their beets database.
+  Thanks to :user:`logan-arens`.
+  :bug:`1934`
 
 For plugin developers:
 
@@ -140,6 +158,8 @@ For plugin developers:
   APIs to provide metadata matches for the importer. Refer to the Spotify and
   Deezer plugins for examples of using this template class.
   :bug:`3355`
+* The autotag hooks have been modified such that they now take 'bpm',
+  'musical_key' and a per-track based 'genre' as attributes.
 
 For packagers:
 
