@@ -119,6 +119,7 @@ following to your configuration::
    the
    thumbnails
    types
+   unimported
    web
    zero
 
