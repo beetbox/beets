@@ -63,7 +63,7 @@ These options match the options from the `Python json module`_.
 - **CSV Formatting**
     - **delimiter**: Used as the separating character between fields. The default value is a comma (,).
 
-    - **dialect**: A dialect is a construct that allows you to create, store, and re-use various formatting parameters for your data.
+    - **dialect**: The kind of CSV file to produce. The default is `excel`.
 
 These options match the options from the `Python csv module`_.
 
@@ -77,8 +77,8 @@ The default options look like this::
                 ensure_ascii: False
                 indent: 4
                 separators: [',' , ': ']
-                sort_keys: True
+                sort_keys: true
         csv:
             formatting:
                 delimiter: ','
-                dialect: 'excel'
+                dialect: excel
