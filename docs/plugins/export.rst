@@ -45,28 +45,24 @@ Configuration
 -------------
 
 To configure the plugin, make a ``export:`` section in your configuration
-file. Under the ``json``, ``csv``, and ``xml`` keys, these options are available:
+file.
+For JSON export, these options are available under the ``json`` key:
 
-- **JSON Formatting**
-    - **ensure_ascii**: Escape non-ASCII characters with ``\uXXXX`` entities.
+- **ensure_ascii**: Escape non-ASCII characters with ``\uXXXX`` entities.
+- **indent**: The number of spaces for indentation.
+- **separators**: A ``[item_separator, dict_separator]`` tuple.
+- **sort_keys**: Sorts the keys in JSON dictionaries.
 
-    - **indent**: The number of spaces for indentation.
+Those options match the options from the `Python json module`_.
+Similarly, these options are available for the CSV format under the ``csv``
+key:
 
-    - **separators**: A ``[item_separator, dict_separator]`` tuple.
-
-    - **sort_keys**: Sorts the keys in JSON dictionaries.
-
-These options match the options from the `Python json module`_.
-
-.. _Python json module: https://docs.python.org/2/library/json.html#basic-usage
-
-- **CSV Formatting**
-    - **delimiter**: Used as the separating character between fields. The default value is a comma (,).
-
-    - **dialect**: The kind of CSV file to produce. The default is `excel`.
+- **delimiter**: Used as the separating character between fields. The default value is a comma (,).
+- **dialect**: The kind of CSV file to produce. The default is `excel`.
 
 These options match the options from the `Python csv module`_.
 
+.. _Python json module: https://docs.python.org/2/library/json.html#basic-usage
 .. _Python csv module: https://docs.python.org/3/library/csv.html#csv-fmt-params
 
 The default options look like this::
@@ -74,7 +70,7 @@ The default options look like this::
     export:
         json:
             formatting:
-                ensure_ascii: False
+                ensure_ascii: false
                 indent: 4
                 separators: [',' , ': ']
                 sort_keys: true
