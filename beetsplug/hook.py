@@ -105,7 +105,10 @@ class HookPlugin(BeetsPlugin):
                             u' '.join(command_pieces), event)
 
             try:
-                subprocess.Popen(command_pieces).wait()
+                subprocess.check_call(command_pieces)
+            except subprocess.CalledProcessError as exc:
+                self._log.error(u'hook for {0} exited with status {1}',
+                                event, exc.returncode)
             except OSError as exc:
                 self._log.error(u'hook for {0} failed: {1}', event, exc)
 
