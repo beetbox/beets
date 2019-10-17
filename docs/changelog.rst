@@ -85,6 +85,8 @@ New features:
 * :doc:`/plugins/beatport`: Fix assignment of `genre` and rename `musical_key`
   to `initial_key`.
   :bug:`3387`
+* :doc:`/plugins/hook` now treats non-zero exit codes as errors.
+  :bug:`3409`
 
 Fixes:
 
