@@ -23,7 +23,6 @@ import unicodedata
 import time
 import re
 import six
-import string
 
 from beets import logging
 from mediafile import MediaFile, UnreadableFileError
@@ -130,17 +129,17 @@ class DateType(types.Float):
         return time.strftime(beets.config['time_format'].as_str(),
                              time.localtime(value or 0))
 
-    def parse(self, string):
+    def parse(self, s):
         try:
             # Try a formatted date string.
             return time.mktime(
-                time.strptime(string,
+                time.strptime(s,
                               beets.config['time_format'].as_str())
             )
         except ValueError:
             # Fall back to a plain timestamp number.
             try:
-                return float(string)
+                return float(s)
             except ValueError:
                 return self.null
 
@@ -1483,7 +1482,8 @@ class DefaultTemplateFunctions(object):
         return s.upper()
 
     # Regular expressions used by tmpl_title
-    SMALL = 'a|an|and|as|at|but|by|en|for|if|in|of|on|or|the|to|v\\.?|via|vs\\.?'  # noqa: E501
+    SMALL = 'a|an|and|as|at|but|by|en|for|' \
+        'if|in|of|on|or|the|to|v\\.?|via|vs\\.?'
     PUNCT = r"""!"“#$%&'‘()*+,\-–‒—―./:;?@[\\\]_`{|}~"""
     SMALL_WORDS = re.compile(r'^(%s)$' % SMALL, re.I)
     INLINE_PERIOD = re.compile(r'[a-z][.][a-z]', re.I)
