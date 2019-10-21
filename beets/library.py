@@ -1482,10 +1482,91 @@ class DefaultTemplateFunctions(object):
         """Covert a string to upper case."""
         return s.upper()
 
+    # Regular expressions used by tmpl_title
+    SMALL = 'a|an|and|as|at|but|by|en|for|if|in|of|on|or|the|to|v\\.?|via|vs\\.?'  # noqa: E501
+    PUNCT = r"""!"“#$%&'‘()*+,\-–‒—―./:;?@[\\\]_`{|}~"""
+    SMALL_WORDS = re.compile(r'^(%s)$' % SMALL, re.I)
+    INLINE_PERIOD = re.compile(r'[a-z][.][a-z]', re.I)
+    UC_ELSEWHERE = re.compile(r'[%s]*?[a-zA-Z]+[A-Z]+?' % PUNCT)
+    UC_INITIALS = re.compile(r'^(?:[A-Z]{1}\.{1}|[A-Z]{1}\.{1}[A-Z]{1})+$')
+    CAPFIRST = re.compile(r"^[%s]*?[A-Za-z]" % PUNCT)
+    SMALL_FIRST = re.compile(r'^([%s]*)(%s)\b' % (PUNCT, SMALL), re.I)
+    SMALL_LAST = re.compile(r'\b(%s)[%s]?$' % (SMALL, PUNCT), re.I)
+    SUBPHRASE = re.compile(r'([:.;?!\-–‒—―][ ])(%s)' % SMALL)
+    APOS_SECOND = re.compile(r"^[dol]{1}['‘]{1}[a-z]+(?:['s]{2})?$", re.I)
+
     @staticmethod
     def tmpl_title(s):
         """Convert a string to title case."""
-        return string.capwords(s)
+        all_caps = s.upper() == s
+        words = re.split('[\t ]', s)
+        processed = []
+        for word in words:
+            # Preserve initials
+            if all_caps and DefaultTemplateFunctions.UC_INITIALS.match(word):
+                processed.append(word)
+                continue
+
+            # Properly capitalize the first letter in contractions like "don't"
+            if DefaultTemplateFunctions.APOS_SECOND.match(word):
+                if len(word[0]) == 1 and word[0] not in 'aeiouAEIOU':
+                    word = "%s%s%s%s" % (
+                        word[0].lower(), word[1],
+                        word[2].upper(), word[3:])
+                else:
+                    word = "%s%s%s%s" % (
+                        word[0].upper(), word[1],
+                        word[2].upper(), word[3:])
+                processed.append(word)
+                continue
+
+            # Preserve initials
+            inline_period = DefaultTemplateFunctions.INLINE_PERIOD.search(word)
+            uc_elsewhere = DefaultTemplateFunctions.UC_ELSEWHERE.match(word)
+            if inline_period or (not all_caps and uc_elsewhere):
+                processed.append(word)
+                continue
+
+            # Make all small words are lowercase
+            if DefaultTemplateFunctions.SMALL_WORDS.match(word):
+                processed.append(word.lower())
+                continue
+
+            # Split the word further by a slash and process each word
+            if '/' in word and '//' not in word:
+                slashed = map(
+                    lambda w: DefaultTemplateFunctions.tmpl_title(w),
+                    word.split('/'))
+                processed.append('/'.join(slashed))
+                continue
+
+            # Split the word further by a hyphen and process each word
+            if '-' in word:
+                slashed = map(
+                    lambda w: DefaultTemplateFunctions.tmpl_title(w),
+                    word.split('-'))
+                processed.append('-'.join(slashed))
+                continue
+
+            if all_caps:
+                word = word.lower()
+
+            # Capitalize the first letter
+            processed.append(DefaultTemplateFunctions.CAPFIRST.sub(
+                lambda m: m.group(0).upper(), word))
+
+        if len(processed) > 0:
+            processed[0] = DefaultTemplateFunctions.SMALL_FIRST.sub(
+                lambda m: '%s%s' % (m.group(1), m.group(2).capitalize()),
+                processed[0])
+            processed[-1] = DefaultTemplateFunctions.SMALL_LAST.sub(
+                lambda m: m.group(0).capitalize(),
+                processed[-1])
+
+        result = ' '.join(processed)
+        result = DefaultTemplateFunctions.SUBPHRASE.sub(
+            lambda m: '%s%s' % (m.group(1), m.group(2).capitalize()), result)
+        return result
 
     @staticmethod
     def tmpl_left(s, chars):
