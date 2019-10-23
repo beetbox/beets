@@ -585,36 +585,36 @@ class DestinationFunctionTest(_common.TestCase, PathFormattingMixin):
         self._assert_dest(b'/base/THE TITLE')
 
     def test_title_case_variable(self):
-        self._setf(u'%title{$title}')
-        self._assert_dest(b'/base/The Title')
+        self._setf(u'%title{title}')
+        self._assert_dest(b'/base/Title')
 
     def test_title_case_variable_aphostrophe(self):
         self._setf(u'%title{I can\'t}')
         self._assert_dest(b'/base/I Can\'t')
 
     def test_title_case_variable_after_single_quote(self):
-        self._setf(u"%title{'$title'}")
-        self._assert_dest(b"/base/'The Title'")
+        self._setf(u"%title{'title'}")
+        self._assert_dest(b"/base/'Title'")
 
     def test_title_case_variable_after_slash(self):
-        self._setf(u'%title{$title/$artist}')
-        self._assert_dest(b'/base/The Title/The Artist')
+        self._setf(u'%title{first/second}')
+        self._assert_dest(b'/base/First/Second')
 
     def test_title_case_variable_after_parenthesis(self):
-        self._setf(u'%title{($title)}')
-        self._assert_dest(b'/base/(The Title)')
+        self._setf(u'%title{(title)}')
+        self._assert_dest(b'/base/(Title)')
 
     def test_title_case_variable_after_bracket(self):
-        self._setf(u'%title{[$title]}')
-        self._assert_dest(b'/base/[The Title]')
+        self._setf(u'%title{[title]}')
+        self._assert_dest(b'/base/[Title]')
 
     def test_title_case_variable_hythen_separator(self):
-        self._setf(u'%title{$title-$artist}')
-        self._assert_dest(b'/base/The Title-The Artist')
+        self._setf(u'%title{first-second}')
+        self._assert_dest(b'/base/First-Second')
 
     def test_title_case_variable_single_slash_separator(self):
-        self._setf(u'%title{$title/$artist}')
-        self._assert_dest(b'/base/The Title/The Artist')
+        self._setf(u'%title{first/second}')
+        self._assert_dest(b'/base/First/Second')
 
     def test_title_case_variable_small_words(self):
         self._setf(u'%title{first and second}')
@@ -623,6 +623,10 @@ class DestinationFunctionTest(_common.TestCase, PathFormattingMixin):
     def test_title_case_variable_all_caps(self):
         self._setf(u'%title{THE TITLE}')
         self._assert_dest(b'/base/The Title')
+
+    def test_title_case_variable_multi_words(self):
+        self._setf(u'%title{a longer title}')
+        self._assert_dest(b'/base/A Longer Title')
 
     def test_asciify_variable(self):
         self._setf(u'%asciify{ab\xa2\xbdd}')

@@ -93,6 +93,7 @@ setup(
         'pyyaml',
         'mediafile>=0.2.0',
         'confuse>=1.0.0',
+        'titlecase',
     ] + [
         # Avoid a version of munkres incompatible with Python 3.
         'munkres~=1.0.0' if sys.version_info < (3, 5, 0) else
@@ -118,7 +119,8 @@ setup(
         'responses',
         'pyxdg',
         'python-mpd2',
-        'discogs-client'
+        'discogs-client',
+        'titlecase',
     ] + (
         # Tests for the thumbnails plugin need pathlib on Python 2 too.
         ['pathlib'] if (sys.version_info < (3, 4, 0)) else []
