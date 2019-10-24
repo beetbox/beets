@@ -170,6 +170,8 @@ def apply_metadata(album_info, mapping):
                 'style',
                 'genre',
                 'discogs_albumid',
+                'discogs_artistid',
+                'discogs_labelid',
                 'albumstatus',
                 'albumdisambig',
                 'releasegroupdisambig',
