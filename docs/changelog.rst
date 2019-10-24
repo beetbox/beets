@@ -6,6 +6,9 @@ Changelog
 
 New features:
 
+* :doc:`plugins/discogs` now adds two extra fields: `discogs_labelid` and 
+  `discogs_artistid`
+  :bug: `3413`
 * :doc:`/plugins/export`: Added new ``-f`` (``--format``) flag; 
   which allows for the ability to export in json, csv and xml.
   Thanks to :user:`austinmm`.
