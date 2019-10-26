@@ -84,7 +84,8 @@ class AlbumInfo(object):
                  releasegroupdisambig=None, artist_credit=None,
                  original_year=None, original_month=None,
                  original_day=None, data_source=None, data_url=None,
-                 discogs_albumid=None):
+                 discogs_albumid=None, discogs_labelid=None,
+                 discogs_artistid=None):
         self.album = album
         self.album_id = album_id
         self.artist = artist
@@ -117,6 +118,8 @@ class AlbumInfo(object):
         self.data_source = data_source
         self.data_url = data_url
         self.discogs_albumid = discogs_albumid
+        self.discogs_labelid = discogs_labelid
+        self.discogs_artistid = discogs_artistid
 
     # Work around a bug in python-musicbrainz-ngs that causes some
     # strings to be bytes rather than Unicode.
@@ -129,7 +132,8 @@ class AlbumInfo(object):
                     'catalognum', 'script', 'language', 'country', 'style',
                     'genre', 'albumstatus', 'albumdisambig',
                     'releasegroupdisambig', 'artist_credit',
-                    'media', 'discogs_albumid']:
+                    'media', 'discogs_albumid', 'discogs_labelid',
+                    'discogs_artistid']:
             value = getattr(self, fld)
             if isinstance(value, bytes):
                 setattr(self, fld, value.decode(codec, 'ignore'))
