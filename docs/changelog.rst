@@ -73,6 +73,9 @@ New features:
 
 Fixes:
 
+* Fixed a bug where letters were not being capitalized after punctuation
+  characters when using the %title title case function.
+  :bug:`3298`
 * :doc:`/plugins/inline`: In function-style field definitions that refer to
   flexible attributes, values could stick around from one function invocation
   to the next. This meant that, when displaying a list of objects, later
