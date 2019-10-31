@@ -410,7 +410,8 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
             raise KeyError(key)
 
     def __getitem__(self, key):
-        """Get the value for a key. Certain unset values are remapped.
+        """Get the value for a key. `artist` and `albumartist`
+		are fallback values for each other when unmapped.
         """
         value = self._get(key)
 
@@ -418,8 +419,10 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
         # This is helpful in path formats when the album artist is unset
         # on as-is imports.
         if key == 'artist' and not value:
+            log.debug('No artist, using album artist {0}'.format(value))
             return self._get('albumartist')
         elif key == 'albumartist' and not value:
+            log.debug('No albumartist, using artist {0}'.format(value))
             return self._get('artist')
         else:
             return value
