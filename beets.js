@@ -1,7 +1,7 @@
 var INTERVAL_INITIAL = 7000;
 var INTERVAL_SUBSEQUENT = 5000;
 var BEETS_IS = [
-    'the media library management system for obsessive-compulsive music geeks',
+    'the media library management system for obsessive music geeks',
     'an infinitely flexible automatic metadata corrector and file renamer',
     'the best command-line tool for viewing, querying, and renaming your music collection',
     'an album art downloader, lyrics fetcher, and genre identifier',
