@@ -31,7 +31,7 @@ configuration option.
 Configuration
 -------------
 
-To configure the plugin, make a ``smartplaylist:`` section in your
+To configure the plugin, make a ``playlist:`` section in your
 configuration file. In addition to the ``playlists`` described above, the
 other configuration options are:
 
