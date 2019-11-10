@@ -6,6 +6,7 @@ Changelog
 
 New features:
 
+* :doc:`/plugins/subsonicplaylist`: import playlist from a subsonic server.
 * :doc:`plugins/discogs` now adds two extra fields: `discogs_labelid` and 
   `discogs_artistid`
   :bug: `3413`

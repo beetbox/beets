@@ -115,6 +115,7 @@ following to your configuration::
    smartplaylist
    sonosupdate
    spotify
+   subsonicplaylist
    subsonicupdate
    the
    thumbnails
