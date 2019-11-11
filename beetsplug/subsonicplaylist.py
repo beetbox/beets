@@ -22,7 +22,7 @@ import random
 import string
 import requests
 from beets.util import normpath, bytestring_path, mkdirall, syspath, \
-    path_as_posix, sanitize_path
+    path_as_posix
 
 from beets.ui import Subcommand
 
