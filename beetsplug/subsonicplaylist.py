@@ -34,6 +34,7 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
         super(SubsonicPlaylistPlugin, self).__init__()
         self.config.add(
             {
+                'delete': False,
                 'playlist_ids': [],
                 'playlist_names': [],
                 'username': '',
@@ -70,6 +71,7 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
 
     def commands(self):
         def build_playlist(lib, opts, args):
+            self._parse_opts(opts)
             ids = self.config['playlist_ids'].as_str_seq()
             if len(self.config['playlist_names'].as_str_seq()) > 0:
                 playlists = ET.fromstring(self.send('getPlaylists').text)[
@@ -91,13 +93,34 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
                     if track not in playlist_dict:
                         playlist_dict[track] = ';'
                     playlist_dict[track] += name + ';'
+            # delete old tags
+            if self.config['delete']:
+                for item in lib.items('subsonic_playlist:";"'):
+                    item.update({'subsonic_playlist': ''})
+                    with lib.transaction():
+                        item.try_sync(write=True, move=False)
+
             self.update_tags(playlist_dict, lib)
 
         subsonicplaylist_cmds = Subcommand(
             'subsonicplaylist', help=u'import a subsonic playlist'
         )
+        subsonicplaylist_cmds.parser.add_option(
+            u'-d',
+            u'--delete',
+            action='store_true',
+            help=u'delete tag from items not in any playlist anymore',
+        )
         subsonicplaylist_cmds.func = build_playlist
         return [subsonicplaylist_cmds]
+
+    def _parse_opts(self, opts):
+
+        if opts.delete:
+            self.config['delete'].set(True)
+
+        self.opts = opts
+        return True
 
     def generate_token(self):
         salt = ''.join(random.choices(string.ascii_lowercase + string.digits))
