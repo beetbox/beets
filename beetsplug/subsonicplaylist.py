@@ -15,14 +15,11 @@
 
 from __future__ import absolute_import, division, print_function
 
-import os
 from hashlib import md5
 import xml.etree.ElementTree as ET
 import random
 import string
 import requests
-from beets.util import normpath, bytestring_path, mkdirall, syspath, \
-    path_as_posix
 
 from beets.ui import Subcommand
 
@@ -37,9 +34,6 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
         super(SubsonicPlaylistPlugin, self).__init__()
         self.config.add(
             {
-                'relative_to': None,
-                'playlist_dir': '.',
-                'forward_slash': False,
                 'playlist_ids': [],
                 'playlist_names': [],
                 'username': '',
@@ -48,62 +42,56 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
         )
         self.config['password'].redact = True
 
-    def create_playlist(self, xml, lib):
-        relative_to = self.config['relative_to'].get()
-        if relative_to:
-            relative_to = normpath(relative_to)
+    def update_tags(self, playlist_dict, lib):
+        for query, playlist_tag in playlist_dict.items():
+            query = 'artist:"{}" album:"{}" title:"{}"'.format(*query)
+            items = lib.items(query)
+            if len(items) <= 0:
+                self._log.warn(u"{} | track not found ({})", playlist_tag,
+                               query)
+                continue
+            for item in items:
+                item.update({'subsonic_playlist': playlist_tag})
+                with lib.transaction():
+                    item.try_sync(write=True, move=False)
 
+    def get_playlist(self, playlist_id):
+        xml = self.send('getPlaylist', '&id={}'.format(playlist_id)).text
         playlist = ET.fromstring(xml)[0]
         if playlist.attrib.get('code', '200') != '200':
             alt_error = 'error getting playlist, but no error message found'
             self._log.warn(playlist.attrib.get('message', alt_error))
             return
-        name = '{}.m3u'.format()
+
+        name = playlist.attrib.get('name', 'undefined')
         tracks = [(t.attrib['artist'], t.attrib['album'], t.attrib['title'])
                   for t in playlist]
-        track_paths = []
-        for t in tracks:
-            query = 'artist:"{}" album:"{}" title:"{}"'.format(*t)
-            items = lib.items(query)
-            if len(items) > 0:
-                item_path = items[0].path
-                if relative_to:
-                    item_path = os.path.relpath(items[0].path, relative_to)
-                track_paths.append(item_path)
-            else:
-                self._log.warn(u"{} | track not found ({})", name, query)
-        # write playlist
-        playlist_dir = self.config['playlist_dir'].as_filename()
-        playlist_dir = bytestring_path(playlist_dir)
-        m3u_path = normpath(os.path.join(playlist_dir, bytestring_path(name)))
-        mkdirall(m3u_path)
-        with open(syspath(m3u_path), 'wb') as f:
-            for path in track_paths:
-                if self.config['forward_slash'].get():
-                    path = path_as_posix(path)
-                f.write(path + b'\n')
-
-    def get_playlist_by_id(self, playlist_id, lib):
-        xml = self.send('getPlaylist', '&id={}'.format(playlist_id)).text
-        self.create_playlist(xml, lib)
+        return name, tracks
 
     def commands(self):
         def build_playlist(lib, opts, args):
-
-            if len(self.config['playlist_ids'].as_str_seq()) > 0:
-                for playlist_id in self.config['playlist_ids'].as_str_seq():
-                    self.get_playlist_by_id(playlist_id, lib)
+            ids = self.config['playlist_ids'].as_str_seq()
             if len(self.config['playlist_names'].as_str_seq()) > 0:
-                playlists = ET.fromstring(self.send('getPlaylists').text)[0]
+                playlists = ET.fromstring(self.send('getPlaylists').text)[
+                    0]
                 if playlists.attrib.get('code', '200') != '200':
                     alt_error = 'error getting playlists,' \
                                 ' but no erro message found'
-                    self._log.warn(playlists.attrib.get('message', alt_error))
+                    self._log.warn(
+                        playlists.attrib.get('message', alt_error))
                     return
                 for name in self.config['playlist_names'].as_str_seq():
                     for playlist in playlists:
                         if name == playlist.attrib['name']:
-                            self.get_playlist_by_id(playlist.attrib['id'], lib)
+                            ids.append(playlist.attrib['id'])
+            playlist_dict = dict()
+            for playlist_id in ids:
+                name, tracks = self.get_playlist(playlist_id)
+                for track in tracks:
+                    if track not in playlist_dict:
+                        playlist_dict[track] = ';'
+                    playlist_dict[track] += name + ';'
+            self.update_tags(playlist_dict, lib)
 
         subsonicplaylist_cmds = Subcommand(
             'subsonicplaylist', help=u'import a subsonic playlist'
