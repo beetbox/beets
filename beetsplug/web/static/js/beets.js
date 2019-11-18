@@ -4,7 +4,7 @@
 
     // Constants
     var SETTINGS = {
-        API: "http://127.0.0.1:8337",
+        API: window.location.origin,
         ENABLE_PLAYLISTS: 0
     },
     // Models
