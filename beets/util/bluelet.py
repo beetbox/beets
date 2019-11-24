@@ -146,6 +146,59 @@ def _event_select(events):
     waitable_to_event = {}
     rlist, wlist, xlist = [], [], []
     earliest_wakeup = None
+    earliest_wakeup, rlist, wlist, xlist = gatherWaitableandWakeupTime(earliest_wakeup, events, rlist,
+                                                                       waitable_to_event, wlist, xlist)
+
+    # If we have a any sleeping threads, determine how long to sleep.
+    timeout = sleepingThreadsleepTimer(earliest_wakeup)
+
+    # Perform select() if we have any waitables.
+    rready, wready, xready = performSelect(rlist, timeout, wlist, xlist)
+
+    # Gather ready events corresponding to the ready waitables.
+    ready_events = set()
+    gatherReadyEvents(ready_events, rready, waitable_to_event, wready, xready)
+
+    # Gather any finished sleeps.
+    gatheredFinishedSleep(events, ready_events)
+
+    return ready_events
+
+
+def gatheredFinishedSleep(events, ready_events):
+    for event in events:
+        if isinstance(event, SleepEvent) and event.time_left() == 0.0:
+            ready_events.add(event)
+
+
+def gatherReadyEvents(ready_events, rready, waitable_to_event, wready, xready):
+    for ready in rready:
+        ready_events.add(waitable_to_event[('r', ready)])
+    for ready in wready:
+        ready_events.add(waitable_to_event[('w', ready)])
+    for ready in xready:
+        ready_events.add(waitable_to_event[('x', ready)])
+
+
+def performSelect(rlist, timeout, wlist, xlist):
+    if rlist or wlist or xlist:
+        rready, wready, xready = select.select(rlist, wlist, xlist, timeout)
+    else:
+        rready, wready, xready = (), (), ()
+        if timeout:
+            time.sleep(timeout)
+    return rready, wready, xready
+
+
+def sleepingThreadsleepTimer(earliest_wakeup):
+    if earliest_wakeup:
+        timeout = max(earliest_wakeup - time.time(), 0.0)
+    else:
+        timeout = None
+    return timeout
+
+
+def gatherWaitableandWakeupTime(earliest_wakeup, events, rlist, waitable_to_event, wlist, xlist):
     for event in events:
         if isinstance(event, SleepEvent):
             if not earliest_wakeup:
@@ -163,36 +216,7 @@ def _event_select(events):
                 waitable_to_event[('w', waitable)] = event
             for waitable in x:
                 waitable_to_event[('x', waitable)] = event
-
-    # If we have a any sleeping threads, determine how long to sleep.
-    if earliest_wakeup:
-        timeout = max(earliest_wakeup - time.time(), 0.0)
-    else:
-        timeout = None
-
-    # Perform select() if we have any waitables.
-    if rlist or wlist or xlist:
-        rready, wready, xready = select.select(rlist, wlist, xlist, timeout)
-    else:
-        rready, wready, xready = (), (), ()
-        if timeout:
-            time.sleep(timeout)
-
-    # Gather ready events corresponding to the ready waitables.
-    ready_events = set()
-    for ready in rready:
-        ready_events.add(waitable_to_event[('r', ready)])
-    for ready in wready:
-        ready_events.add(waitable_to_event[('w', ready)])
-    for ready in xready:
-        ready_events.add(waitable_to_event[('x', ready)])
-
-    # Gather any finished sleeps.
-    for event in events:
-        if isinstance(event, SleepEvent) and event.time_left() == 0.0:
-            ready_events.add(event)
-
-    return ready_events
+    return earliest_wakeup, rlist, wlist, xlist
 
 
 class ThreadException(Exception):
@@ -243,15 +267,21 @@ def run(root_coro):
         del threads[coro]
 
         # Resume delegator.
-        if coro in delegators:
-            threads[delegators[coro]] = ValueEvent(return_value)
-            del delegators[coro]
+        resumeDelegator(coro, return_value)
 
         # Resume joiners.
+        resumeJoiner(coro)
+
+    def resumeJoiner(coro):
         if coro in joiners:
             for parent in joiners[coro]:
                 threads[parent] = ValueEvent(None)
             del joiners[coro]
+
+    def resumeDelegator(coro, return_value):
+        if coro in delegators:
+            threads[delegators[coro]] = ValueEvent(return_value)
+            del delegators[coro]
 
     def advance_thread(coro, value, is_exc=False):
         """After an event is fired, run a given coroutine associated with
@@ -285,14 +315,17 @@ def run(root_coro):
         """
         # Collect all coroutines in the delegation stack.
         coros = [coro]
-        while isinstance(threads[coro], Delegated):
-            coro = threads[coro].child
-            coros.append(coro)
+        collectCoro(coro, coros)
 
         # Complete each coroutine from the top to the bottom of the
         # stack.
         for coro in reversed(coros):
             complete_thread(coro, None)
+
+    def collectCoro(coro, coros):
+        while isinstance(threads[coro], Delegated):
+            coro = threads[coro].child
+            coros.append(coro)
 
     # Continue advancing threads until root thread exits.
     exit_te = None
@@ -300,62 +333,11 @@ def run(root_coro):
         try:
             # Look for events that can be run immediately. Continue
             # running immediate events until nothing is ready.
-            while True:
-                have_ready = False
-                for coro, event in list(threads.items()):
-                    if isinstance(event, SpawnEvent):
-                        threads[event.spawned] = ValueEvent(None)  # Spawn.
-                        advance_thread(coro, None)
-                        have_ready = True
-                    elif isinstance(event, ValueEvent):
-                        advance_thread(coro, event.value)
-                        have_ready = True
-                    elif isinstance(event, ExceptionEvent):
-                        advance_thread(coro, event.exc_info, True)
-                        have_ready = True
-                    elif isinstance(event, DelegationEvent):
-                        threads[coro] = Delegated(event.spawned)  # Suspend.
-                        threads[event.spawned] = ValueEvent(None)  # Spawn.
-                        delegators[event.spawned] = coro
-                        have_ready = True
-                    elif isinstance(event, ReturnEvent):
-                        # Thread is done.
-                        complete_thread(coro, event.value)
-                        have_ready = True
-                    elif isinstance(event, JoinEvent):
-                        threads[coro] = SUSPENDED  # Suspend.
-                        joiners[event.child].append(coro)
-                        have_ready = True
-                    elif isinstance(event, KillEvent):
-                        threads[coro] = ValueEvent(None)
-                        kill_thread(event.child)
-                        have_ready = True
-
-                # Only start the select when nothing else is ready.
-                if not have_ready:
-                    break
+            advancedThroughThread(advance_thread, complete_thread, delegators, joiners, kill_thread, threads)
 
             # Wait and fire.
             event2coro = dict((v, k) for k, v in threads.items())
-            for event in _event_select(threads.values()):
-                # Run the IO operation, but catch socket errors.
-                try:
-                    value = event.fire()
-                except socket.error as exc:
-                    if isinstance(exc.args, tuple) and \
-                            exc.args[0] == errno.EPIPE:
-                        # Broken pipe. Remote host disconnected.
-                        pass
-                    elif isinstance(exc.args, tuple) and \
-                            exc.args[0] == errno.ECONNRESET:
-                        # Connection was reset by peer.
-                        pass
-                    else:
-                        traceback.print_exc()
-                    # Abort the coroutine.
-                    threads[event2coro[event]] = ReturnEvent(None)
-                else:
-                    advance_thread(event2coro[event], value)
+            waitAndFire(advance_thread, event2coro, threads)
 
         except ThreadException as te:
             # Exception raised from inside a thread.
@@ -382,6 +364,65 @@ def run(root_coro):
     # If we're exiting with an exception, raise it in the client.
     if exit_te:
         exit_te.reraise()
+
+
+def advancedThroughThread(advance_thread, complete_thread, delegators, joiners, kill_thread, threads):
+    while True:
+        have_ready = False
+        for coro, event in list(threads.items()):
+            if isinstance(event, SpawnEvent):
+                threads[event.spawned] = ValueEvent(None)  # Spawn.
+                advance_thread(coro, None)
+                have_ready = True
+            elif isinstance(event, ValueEvent):
+                advance_thread(coro, event.value)
+                have_ready = True
+            elif isinstance(event, ExceptionEvent):
+                advance_thread(coro, event.exc_info, True)
+                have_ready = True
+            elif isinstance(event, DelegationEvent):
+                threads[coro] = Delegated(event.spawned)  # Suspend.
+                threads[event.spawned] = ValueEvent(None)  # Spawn.
+                delegators[event.spawned] = coro
+                have_ready = True
+            elif isinstance(event, ReturnEvent):
+                # Thread is done.
+                complete_thread(coro, event.value)
+                have_ready = True
+            elif isinstance(event, JoinEvent):
+                threads[coro] = SUSPENDED  # Suspend.
+                joiners[event.child].append(coro)
+                have_ready = True
+            elif isinstance(event, KillEvent):
+                threads[coro] = ValueEvent(None)
+                kill_thread(event.child)
+                have_ready = True
+
+        # Only start the select when nothing else is ready.
+        if not have_ready:
+            break
+
+
+def waitAndFire(advance_thread, event2coro, threads):
+    for event in _event_select(threads.values()):
+        # Run the IO operation, but catch socket errors.
+        try:
+            value = event.fire()
+        except socket.error as exc:
+            if isinstance(exc.args, tuple) and \
+                    exc.args[0] == errno.EPIPE:
+                # Broken pipe. Remote host disconnected.
+                pass
+            elif isinstance(exc.args, tuple) and \
+                    exc.args[0] == errno.ECONNRESET:
+                # Connection was reset by peer.
+                pass
+            else:
+                traceback.print_exc()
+            # Abort the coroutine.
+            threads[event2coro[event]] = ReturnEvent(None)
+        else:
+            advance_thread(event2coro[event], value)
 
 
 # Sockets and their associated events.
