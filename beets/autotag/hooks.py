@@ -279,15 +279,11 @@ def string_dist(str1, str2):
     # example, "the something" should be considered equal to
     # "something, the".
     for word in SD_END_WORDS:
-        if str1.endswith(', %s' % word):
-            str1 = '%s %s' % (word, str1[:-len(word) - 2])
-        if str2.endswith(', %s' % word):
-            str2 = '%s %s' % (word, str2[:-len(word) - 2])
+        str1, str2 = strEndwith(str1, str2, word)
 
     # Perform a couple of basic normalizing substitutions.
     for pat, repl in SD_REPLACE:
-        str1 = re.sub(pat, repl, str1)
-        str2 = re.sub(pat, repl, str2)
+        str1, str2 = normalizingstr(pat, repl, str1, str2)
 
     # Change the weight for certain string portions matched by a set
     # of regular expressions. We gradually change the strings and build
@@ -297,13 +293,13 @@ def string_dist(str1, str2):
     penalty = 0.0
     for pat, weight in SD_PATTERNS:
         # Get strings that drop the pattern.
-        case_str1 = re.sub(pat, '', str1)
-        case_str2 = re.sub(pat, '', str2)
+        case_str1, case_str2=normalizingstr(pat, repl, str1, str2)
 
         if case_str1 != str1 or case_str2 != str2:
             # If the pattern was present (i.e., it is deleted in the
             # the current case), recalculate the distances for the
             # modified strings.
+
             case_dist = _string_dist_basic(case_str1, case_str2)
             case_delta = max(0.0, base_dist - case_dist)
             if case_delta == 0.0:
@@ -318,6 +314,20 @@ def string_dist(str1, str2):
             penalty += weight * case_delta
 
     return base_dist + penalty
+
+
+def normalizingstr(pat, repl, str1, str2):
+    str1 = re.sub(pat, repl, str1)
+    str2 = re.sub(pat, repl, str2)
+    return str1, str2
+
+
+def strEndwith(str1, str2, word):
+    if str1.endswith(', %s' % word):
+        str1 = '%s %s' % (word, str1[:-len(word) - 2])
+    if str2.endswith(', %s' % word):
+        str2 = '%s %s' % (word, str2[:-len(word) - 2])
+    return str1, str2
 
 
 class LazyClassProperty(object):
