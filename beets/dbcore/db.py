@@ -422,38 +422,7 @@ class Model(object):
 
     # Act like a dictionary.
 
-    def update(self, values):
-        """Assign all values in the given dict.
-        """
-        for key, value in values.items():
-            self[key] = value
 
-    def items(self):
-        """Iterate over (key, value) pairs that this object contains.
-        Computed fields are not included.
-        """
-        for key in self:
-            yield key, self[key]
-
-    def get(self, key, default=None):
-        """Get the value for a given key or `default` if it does not
-        exist.
-        """
-        if key in self:
-            return self[key]
-        else:
-            return default
-
-    def __contains__(self, key):
-        """Determine whether `key` is an attribute on this object.
-        """
-        return key in self.keys(True)
-
-    def __iter__(self):
-        """Iterate over the available field names (excluding computed
-        fields).
-        """
-        return iter(self.keys())
 
     # Convenient attribute access.
 
