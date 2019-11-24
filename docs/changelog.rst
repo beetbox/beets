@@ -131,6 +131,7 @@ Fixes:
   wiping out their beets database.
   Thanks to :user:`logan-arens`.
   :bug:`1934`
+* :doc:`/plugins/bpd`: Fix the transition to next track when in consume mode.
 
 For plugin developers:
 
