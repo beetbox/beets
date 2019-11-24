@@ -210,69 +210,7 @@ def penalty_string(distance, limit=None):
         return ui.colorize('text_warning', u'(%s)' % ', '.join(penalties))
 
 
-def show_change(cur_artist, cur_album, match):
-    """Print out a representation of the changes that will be made if an
-    album's tags are changed according to `match`, which must be an AlbumMatch
-    object.
-    """
-    def show_album(artist, album):
-        if artist:
-            album_description = u'    %s - %s' % (artist, album)
-        elif album:
-            album_description = u'    %s' % album
-        else:
-            album_description = u'    (unknown album)'
-        print_(album_description)
-
-    def format_index(track_info):
-        """Return a string representing the track index of the given
-        TrackInfo or Item object.
-        """
-        if isinstance(track_info, hooks.TrackInfo):
-            index = track_info.index
-            medium_index = track_info.medium_index
-            medium = track_info.medium
-            mediums = match.info.mediums
-        else:
-            index = medium_index = track_info.track
-            medium = track_info.disc
-            mediums = track_info.disctotal
-        if config['per_disc_numbering']:
-            if mediums and mediums > 1:
-                return u'{0}-{1}'.format(medium, medium_index)
-            else:
-                return six.text_type(medium_index if medium_index is not None
-                                     else index)
-        else:
-            return six.text_type(index)
-
-    # Identify the album in question.
-    if cur_artist != match.info.artist or \
-            (cur_album != match.info.album and
-             match.info.album != VARIOUS_ARTISTS):
-        artist_l, artist_r = cur_artist or '', match.info.artist
-        album_l,  album_r = cur_album or '', match.info.album
-        if artist_r == VARIOUS_ARTISTS:
-            # Hide artists for VA releases.
-            artist_l, artist_r = u'', u''
-
-        if config['artist_credit']:
-            artist_r = match.info.artist_credit
-
-        artist_l, artist_r = ui.colordiff(artist_l, artist_r)
-        album_l, album_r = ui.colordiff(album_l, album_r)
-
-        print_(u"Correcting tags from:")
-        show_album(artist_l, album_l)
-        print_(u"To:")
-        show_album(artist_r, album_r)
-    else:
-        print_(u"Tagging:\n    {0.artist} - {0.album}".format(match.info))
-
-    # Data URL.
-    if match.info.data_url:
-        print_(u'URL:\n    %s' % match.info.data_url)
-
+def display_info_line(match, dist_string):
     # Info line.
     info = []
     # Similarity.
@@ -287,10 +225,142 @@ def show_change(cur_artist, cur_album, match):
         info.append(ui.colorize('text_highlight_minor', u'(%s)' % disambig))
     print_(' '.join(info))
 
+
+def display_data_url(data_url):
+    print_(u'URL:\n    %s' % data_url)
+
+
+def display_tagging(val1, val2):
+    print_(u"Tagging:\n %s - %s" % (val1, val2))
+
+
+def format_index(track_info, match_info):
+    """Return a string representing the track index of the given
+    TrackInfo or Item object.
+    """
+    if isinstance(track_info, hooks.TrackInfo):
+        index = track_info.index
+        medium_index = track_info.medium_index
+        medium = track_info.medium
+        mediums = match_info.mediums
+    else:
+        index = medium_index = track_info.track
+        medium = track_info.disc
+        mediums = track_info.disctotal
+    if config['per_disc_numbering']:
+        if mediums and mediums > 1:
+            return u'{0}-{1}'.format(medium, medium_index)
+        else:
+            return six.text_type(
+                medium_index
+                if medium_index is not None
+                else index
+            )
+    else:
+        return six.text_type(index)
+
+
+def show_album(artist, album):
+    if artist:
+        album_description = u'    %s - %s' % (artist, album)
+    elif album:
+        album_description = u'    %s' % album
+    else:
+        album_description = u'    (unknown album)'
+    print_(album_description)
+
+
+def show_change(cur_artist, cur_album, match):
+    """Print out a representation of the changes that will be made if an
+    album's tags are changed according to `match`, which must be an AlbumMatch
+    object.
+    """
+    # Identify the album in question.
+    if cur_artist != match.info.artist or \
+            (cur_album != match.info.album and
+             match.info.album != VARIOUS_ARTISTS):
+        identify_album(cur_artist, cur_album, match)
+    else:
+        display_tagging(match.info.artist, match.info.album)
+
+    # Data URL.
+    if match.info.data_url:
+        display_data_url(match.info.data_url)
+
+    display_info_line(match, dist_string)
+
     # Tracks.
     pairs = list(match.mapping.items())
     pairs.sort(key=lambda item_and_track_info: item_and_track_info[1].index)
 
+    lines = get_track_info(pairs, match)
+    # Print each track in two columns, or across two lines.
+    col_width = (ui.term_width() - len(''.join([' * ', ' -> ']))) // 2
+    if lines:
+        max_width = max(w for _, _, w in lines)
+        for lhs, rhs, lhs_width in lines:
+            if not rhs:
+                print_(lhs)
+            elif max_width > col_width:
+                print_(u'%s ->\n   %s' % (lhs, rhs))
+            else:
+                pad = max_width - lhs_width
+                print_(u'%s%s -> %s' % (lhs, ' ' * pad, rhs))
+
+    # Missing and unmatched tracks.
+    if match.extra_tracks:
+        print_(u'Missing tracks ({0}/{1} - {2:.1%}):'.format(
+               len(match.extra_tracks),
+               len(match.info.tracks),
+               len(match.extra_tracks) / len(match.info.tracks)
+               ))
+
+    display_extra_info(match.extra_tracks, match.info)
+
+    if match.extra_items:
+        print_(u'Unmatched tracks ({0}):'.format(len(match.extra_items)))
+
+    display_extra_info(match.extra_items, match.info)
+
+
+def get_pad_width(extra_info):
+    return max(len(info.title) for info in extra_info)
+
+
+def display_extra_info(extra_info, match_info):
+    pad_width = get_pad_width(extra_info)
+    for info in extra_info:
+        line = u' ! {0: <{width}} (#{1: >2})'.format(info.title,
+                                                     format_index(
+                                                        info,
+                                                        match_info
+                                                        ),
+                                                     width=pad_width)
+        if info.length:
+            line += u' (%s)' % ui.human_seconds_short(info.length)
+        print_(ui.colorize('text_warning', line))
+
+
+def identify_album(cur_artist, cur_album, match):
+    artist_l, artist_r = cur_artist or '', match.info.artist
+    album_l,  album_r = cur_album or '', match.info.album
+    if artist_r == VARIOUS_ARTISTS:
+        # Hide artists for VA releases.
+        artist_l, artist_r = u'', u''
+
+    if config['artist_credit']:
+        artist_r = match.info.artist_credit
+
+    artist_l, artist_r = ui.colordiff(artist_l, artist_r)
+    album_l, album_r = ui.colordiff(album_l, album_r)
+
+    print_(u"Correcting tags from:")
+    show_album(artist_l, album_l)
+    print_(u"To:")
+    show_album(artist_r, album_r)
+
+
+def get_track_info(pairs, match):
     # Build up LHS and RHS for track difference display. The `lines` list
     # contains ``(lhs, rhs, width)`` tuples where `width` is the length (in
     # characters) of the uncolorized LHS.
@@ -326,7 +396,8 @@ def show_change(cur_artist, cur_album, match):
         lhs_width = len(cur_title)
 
         # Track number change.
-        cur_track, new_track = format_index(item), format_index(track_info)
+        cur_track, new_track = format_index(item, match.info), \
+            format_index(track_info, match.info)
         if cur_track != new_track:
             if item.track in (track_info.index, track_info.medium_index):
                 color = 'text_highlight_minor'
@@ -358,45 +429,7 @@ def show_change(cur_artist, cur_album, match):
         elif config['import']['detail']:
             lines.append((u' * %s' % lhs, '', lhs_width))
 
-    # Print each track in two columns, or across two lines.
-    col_width = (ui.term_width() - len(''.join([' * ', ' -> ']))) // 2
-    if lines:
-        max_width = max(w for _, _, w in lines)
-        for lhs, rhs, lhs_width in lines:
-            if not rhs:
-                print_(lhs)
-            elif max_width > col_width:
-                print_(u'%s ->\n   %s' % (lhs, rhs))
-            else:
-                pad = max_width - lhs_width
-                print_(u'%s%s -> %s' % (lhs, ' ' * pad, rhs))
-
-    # Missing and unmatched tracks.
-    if match.extra_tracks:
-        print_(u'Missing tracks ({0}/{1} - {2:.1%}):'.format(
-               len(match.extra_tracks),
-               len(match.info.tracks),
-               len(match.extra_tracks) / len(match.info.tracks)
-               ))
-        pad_width = max(len(track_info.title) for track_info in
-                        match.extra_tracks)
-    for track_info in match.extra_tracks:
-        line = u' ! {0: <{width}} (#{1: >2})'.format(track_info.title,
-                                                     format_index(track_info),
-                                                     width=pad_width)
-        if track_info.length:
-            line += u' (%s)' % ui.human_seconds_short(track_info.length)
-        print_(ui.colorize('text_warning', line))
-    if match.extra_items:
-        print_(u'Unmatched tracks ({0}):'.format(len(match.extra_items)))
-        pad_width = max(len(item.title) for item in match.extra_items)
-    for item in match.extra_items:
-        line = u' ! {0: <{width}} (#{1: >2})'.format(item.title,
-                                                     format_index(item),
-                                                     width=pad_width)
-        if item.length:
-            line += u' (%s)' % ui.human_seconds_short(item.length)
-        print_(ui.colorize('text_warning', line))
+    return lines
 
 
 def show_item_change(item, match):
@@ -416,25 +449,13 @@ def show_item_change(item, match):
         print_(u"    %s - %s" % (new_artist, new_title))
 
     else:
-        print_(u"Tagging track: %s - %s" % (cur_artist, cur_title))
+        display_tagging(cur_artist, cur_title)
 
     # Data URL.
     if match.info.data_url:
-        print_(u'URL:\n    %s' % match.info.data_url)
+        display_data_url(match.info.data_url)
 
-    # Info line.
-    info = []
-    # Similarity.
-    info.append(u'(Similarity: %s)' % dist_string(match.distance))
-    # Penalties.
-    penalties = penalty_string(match.distance)
-    if penalties:
-        info.append(penalties)
-    # Disambiguation.
-    disambig = disambig_string(match.info)
-    if disambig:
-        info.append(ui.colorize('text_highlight_minor', u'(%s)' % disambig))
-    print_(' '.join(info))
+    display_info_line(match, dist_string)
 
 
 def summarize_items(items, singleton):
