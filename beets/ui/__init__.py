@@ -247,35 +247,13 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
     first = True
     for option in options:
         # Is a letter already capitalized?
-        for letter in option:
-            if letter.isalpha() and letter.upper() == letter:
-                found_letter = letter
-                break
-        else:
-            # Infer a letter.
-            for letter in option:
-                if not letter.isalpha():
-                    continue  # Don't use punctuation.
-                if letter not in letters:
-                    found_letter = letter
-                    break
-            else:
-                raise ValueError(u'no unambiguous lettering found')
+        found_letter = isLetterCaptilized(letters, option)
 
         letters[found_letter.lower()] = option
         index = option.index(found_letter)
 
         # Mark the option's shortcut letter for display.
-        if not require and (
-            (default is None and not numrange and first) or
-            (isinstance(default, six.string_types) and
-             found_letter.lower() == default.lower())):
-            # The first option is the default; mark it.
-            show_letter = '[%s]' % found_letter.upper()
-            is_default = True
-        else:
-            show_letter = found_letter.upper()
-            is_default = False
+        is_default, show_letter = optionsShortcut(default, first, found_letter, numrange, require)
 
         # Colorize the letter shortcut.
         show_letter = colorize('action_default' if is_default else 'action',
@@ -290,63 +268,15 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
         first = False
 
     # The default is just the first option if unspecified.
-    if require:
-        default = None
-    elif default is None:
-        if numrange:
-            default = numrange[0]
-        else:
-            default = display_letters[0].lower()
+    default = defaultOption(default, display_letters, numrange, require)
 
     # Make a prompt if one is not provided.
     if not prompt:
-        prompt_parts = []
-        prompt_part_lengths = []
-        if numrange:
-            if isinstance(default, int):
-                default_name = six.text_type(default)
-                default_name = colorize('action_default', default_name)
-                tmpl = '# selection (default %s)'
-                prompt_parts.append(tmpl % default_name)
-                prompt_part_lengths.append(len(tmpl % six.text_type(default)))
-            else:
-                prompt_parts.append('# selection')
-                prompt_part_lengths.append(len(prompt_parts[-1]))
-        prompt_parts += capitalized
-        prompt_part_lengths += [len(s) for s in options]
-
-        # Wrap the query text.
-        prompt = ''
-        line_length = 0
-        for i, (part, length) in enumerate(zip(prompt_parts,
-                                               prompt_part_lengths)):
-            # Add punctuation.
-            if i == len(prompt_parts) - 1:
-                part += '?'
-            else:
-                part += ','
-            length += 1
-
-            # Choose either the current line or the beginning of the next.
-            if line_length + length + 1 > max_width:
-                prompt += '\n'
-                line_length = 0
-
-            if line_length != 0:
-                # Not the beginning of the line; need a space.
-                part = ' ' + part
-                length += 1
-
-            prompt += part
-            line_length += length
+        prompt = makePrompt(capitalized, default, max_width, numrange, options, prompt)
 
     # Make a fallback prompt too. This is displayed if the user enters
     # something that is not recognized.
-    if not fallback_prompt:
-        fallback_prompt = u'Enter one of '
-        if numrange:
-            fallback_prompt += u'%i-%i, ' % numrange
-        fallback_prompt += ', '.join(display_letters) + ':'
+    fallback_prompt = fallbackQuote(display_letters, fallback_prompt, numrange)
 
     resp = input_(prompt)
     while True:
@@ -377,6 +307,113 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
 
         # Prompt for new input.
         resp = input_(fallback_prompt)
+
+
+def makePrompt(capitalized, default, max_width, numrange, options, prompt):
+    prompt_parts = []
+    prompt_part_lengths = []
+    if numrange:
+        prompt_parts_and_lengths(default, prompt_part_lengths, prompt_parts)
+    prompt_parts += capitalized
+    prompt_part_lengths += [len(s) for s in options]
+    # Wrap the query text.
+    prompt = ''
+    line_length = 0
+    for i, (part, length) in enumerate(zip(prompt_parts,
+                                           prompt_part_lengths)):
+        # Add punctuation.
+        length, part = add_punctuation(i, length, part, prompt_parts)
+
+        # Choose either the current line or the beginning of the next.
+        length, line_length, part, prompt = set_line_length(length, line_length, max_width, part, prompt)
+
+        prompt += part
+        line_length += length
+    return prompt
+
+
+def isLetterCaptilized(letters, option):
+    for letter in option:
+        if letter.isalpha() and letter.upper() == letter:
+            found_letter = letter
+            break
+    else:
+        # Infer a letter.
+        for letter in option:
+            if not letter.isalpha():
+                continue  # Don't use punctuation.
+            if letter not in letters:
+                found_letter = letter
+                break
+        else:
+            raise ValueError(u'no unambiguous lettering found')
+    return found_letter
+
+
+def fallbackQuote(display_letters, fallback_prompt, numrange):
+    if not fallback_prompt:
+        fallback_prompt = u'Enter one of '
+        if numrange:
+            fallback_prompt += u'%i-%i, ' % numrange
+        fallback_prompt += ', '.join(display_letters) + ':'
+    return fallback_prompt
+
+
+def set_line_length(length, line_length, max_width, part, prompt):
+    if line_length + length + 1 > max_width:
+        prompt += '\n'
+        line_length = 0
+    if line_length != 0:
+        # Not the beginning of the line; need a space.
+        part = ' ' + part
+        length += 1
+    return length, line_length, part, prompt
+
+
+def add_punctuation(i, length, part, prompt_parts):
+    if i == len(prompt_parts) - 1:
+        part += '?'
+    else:
+        part += ','
+    length += 1
+    return length, part
+
+
+def prompt_parts_and_lengths(default, prompt_part_lengths, prompt_parts):
+    if isinstance(default, int):
+        default_name = six.text_type(default)
+        default_name = colorize('action_default', default_name)
+        tmpl = '# selection (default %s)'
+        prompt_parts.append(tmpl % default_name)
+        prompt_part_lengths.append(len(tmpl % six.text_type(default)))
+    else:
+        prompt_parts.append('# selection')
+        prompt_part_lengths.append(len(prompt_parts[-1]))
+
+
+def defaultOption(default, display_letters, numrange, require):
+    if require:
+        default = None
+    elif default is None:
+        if numrange:
+            default = numrange[0]
+        else:
+            default = display_letters[0].lower()
+    return default
+
+
+def optionsShortcut(default, first, found_letter, numrange, require):
+    if not require and (
+            (default is None and not numrange and first) or
+            (isinstance(default, six.string_types) and
+             found_letter.lower() == default.lower())):
+        # The first option is the default; mark it.
+        show_letter = '[%s]' % found_letter.upper()
+        is_default = True
+    else:
+        show_letter = found_letter.upper()
+        is_default = False
+    return is_default, show_letter
 
 
 def input_yn(prompt, require=False):
