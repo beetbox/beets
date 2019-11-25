@@ -132,6 +132,8 @@ Fixes:
   Thanks to :user:`logan-arens`.
   :bug:`1934`
 * :doc:`/plugins/bpd`: Fix the transition to next track when in consume mode.
+  Thanks to :user:`aereaux`.
+  :bug:`3437`
 
 For plugin developers:
 
