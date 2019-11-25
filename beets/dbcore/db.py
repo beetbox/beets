@@ -91,7 +91,50 @@ class FormattedMapping(Mapping):
         return value
 
 
-class LazyConvertDict(object):
+class BaseDict(object):
+    """Base dictionary object.
+    """
+    def update(self, values):
+        """Assign all values in the given dict.
+        """
+        for key, value in values.items():
+            self[key] = value
+
+    def keys(self):
+        """Return all keys that this object contains. Computed
+        fields are not included.
+        """
+        pass
+
+    def items(self):
+        """Iterate over (key, value) pairs that this object contains.
+        Computed fields are not included.
+        """
+        for key in self:
+            yield key, self[key]
+
+    def get(self, key, default=None):
+        """Get the value for a given key or `default` if it does not
+        exist.
+        """
+        if key in self:
+            return self[key]
+        else:
+            return default
+
+    def __contains__(self, key):
+        """Determine whether `key` is an attribute on this object.
+        """
+        return key in self.keys()
+
+    def __iter__(self):
+        """Iterate over the available field names (excluding computed
+        fields).
+        """
+        return iter(self.keys())
+
+
+class LazyConvertDict(BaseDict):
     """Lazily convert types for attributes fetched from the database
     """
 
@@ -149,45 +192,10 @@ class LazyConvertDict(object):
         new._converted = self._converted.copy()
         return new
 
-    # Act like a dictionary.
-
-    def update(self, values):
-        """Assign all values in the given dict.
-        """
-        for key, value in values.items():
-            self[key] = value
-
-    def items(self):
-        """Iterate over (key, value) pairs that this object contains.
-        Computed fields are not included.
-        """
-        for key in self:
-            yield key, self[key]
-
-    def get(self, key, default=None):
-        """Get the value for a given key or `default` if it does not
-        exist.
-        """
-        if key in self:
-            return self[key]
-        else:
-            return default
-
-    def __contains__(self, key):
-        """Determine whether `key` is an attribute on this object.
-        """
-        return key in self.keys()
-
-    def __iter__(self):
-        """Iterate over the available field names (excluding computed
-        fields).
-        """
-        return iter(self.keys())
-
 
 # Abstract base for model classes.
 
-class Model(object):
+class Model(BaseDict):
     """An abstract object representing an object in the database. Model
     objects act like dictionaries (i.e., the allow subscript access like
     ``obj['field']``). The same field set is available via attribute
@@ -422,38 +430,10 @@ class Model(object):
 
     # Act like a dictionary.
 
-    def update(self, values):
-        """Assign all values in the given dict.
-        """
-        for key, value in values.items():
-            self[key] = value
-
-    def items(self):
-        """Iterate over (key, value) pairs that this object contains.
-        Computed fields are not included.
-        """
-        for key in self:
-            yield key, self[key]
-
-    def get(self, key, default=None):
-        """Get the value for a given key or `default` if it does not
-        exist.
-        """
-        if key in self:
-            return self[key]
-        else:
-            return default
-
     def __contains__(self, key):
         """Determine whether `key` is an attribute on this object.
         """
         return key in self.keys(True)
-
-    def __iter__(self):
-        """Iterate over the available field names (excluding computed
-        fields).
-        """
-        return iter(self.keys())
 
     # Convenient attribute access.
 
