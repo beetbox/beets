@@ -639,6 +639,8 @@ class BaseServer(object):
             self.playlist.pop(old_index)
             if self.current_index > old_index:
                 self.current_index -= 1
+            self.playlist_version += 1
+            self._send_event("playlist")
         if self.current_index >= len(self.playlist):
             # Fallen off the end. Move to stopped state or loop.
             if self.repeat:
