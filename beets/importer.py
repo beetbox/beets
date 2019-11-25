@@ -560,7 +560,7 @@ class ImportTask(BaseImportTask):
                 util.prune_dirs(os.path.dirname(item.path),
                                 lib.directory)
 
-    def set_fields(self):
+    def set_fields_from_config(self, dest):
         """Sets the fields given at CLI or configuration to the specified
         values.
         """
@@ -570,8 +570,14 @@ class ImportTask(BaseImportTask):
                       displayable_path(self.paths),
                       field,
                       value)
-            self.album[field] = value
-        self.album.store()
+            dest[field] = value
+        dest.store()
+
+    def set_fields(self):
+        """Sets the album fields given at CLI or configuration to the specified
+        values.
+        """
+        self.set_fields_from_config(self.album)
 
     def finalize(self, session):
         """Save progress, clean up files, and emit plugin event.
@@ -935,17 +941,10 @@ class SingletonImportTask(ImportTask):
         self.item.load()
 
     def set_fields(self):
-        """Sets the fields given at CLI or configuration to the specified
+        """Sets the item fields given at CLI or configuration to the specified
         values.
         """
-        for field, view in config['import']['set_fields'].items():
-            value = view.get()
-            log.debug(u'Set field {1}={2} for {0}',
-                      displayable_path(self.paths),
-                      field,
-                      value)
-            self.item[field] = value
-        self.item.store()
+        self.set_fields_from_config(self.item)
 
 
 # FIXME The inheritance relationships are inverted. This is why there
