@@ -267,15 +267,13 @@ def _set_date_str(info, date_str, original=False):
                 setattr(info, key, date_num)
 
 
-def album_info(release):
-    """Takes a MusicBrainz release result dictionary and returns a beets
-    AlbumInfo object containing the interesting data about that release.
-    """
-    # Get artist name using join phrases.
-    artist_name, artist_sort_name, artist_credit_name = \
-        _flatten_artist_credit(release['artist-credit'])
+def get_track_infos(release):
+    """Takes a MusicBrainz release result dictionary and returns a list
+    of beets TrackInfos corresponding to each medium in the release.
 
-    # Basic info.
+    :param release: Release result dictionary.
+    :return: List of TrackInfo instances.
+    """
     track_infos = []
     index = 0
     for medium in release['medium-list']:
@@ -295,7 +293,6 @@ def album_info(release):
             all_tracks.insert(0, medium['pregap'])
 
         for track in all_tracks:
-
             if ('title' in track['recording'] and
                     track['recording']['title'] in SKIPPED_TRACKS):
                 continue
@@ -329,9 +326,48 @@ def album_info(release):
                 ti.artist_id = track['artist-credit'][0]['artist']['id']
             if track.get('length'):
                 ti.length = int(track['length']) / (1000.0)
-
             track_infos.append(ti)
+    return track_infos
 
+
+def get_release_types(release):
+    """Takes a MusicBrainz release result dictionary and finds
+    its release type.
+
+    :param release: Release result dictionary.
+    :return: Tuple containing real, primary, and secondary types.
+    """
+    # Get the "classic" Release type. This data comes from a legacy API
+    # feature before MusicBrainz supported multiple release types.
+    real_type = None
+    primary_type = None
+    secondary_types = []
+    if 'type' in release['release-group']:
+        real_type = release['release-group']['type'].lower()
+
+    # Log the new-style "primary" and "secondary" release types.
+    # Eventually, we'd like to actually store this data, but we just log
+    # it for now to help understand the differences.
+    if 'primary-type' in release['release-group']:
+        primary_type = release['release-group']['primary-type'].lower()
+
+    if 'secondary-type-list' in release['release-group']:
+        if release['release-group']['secondary-type-list']:
+            for s in release['release-group']['secondary-type-list']:
+                secondary_types.append(s.lower())
+    return (real_type, primary_type, secondary_types)
+
+
+def album_info(release):
+    """Takes a MusicBrainz release result dictionary and returns a beets
+    AlbumInfo object containing the interesting data about that release.
+    """
+    # Get artist name using join phrases.
+    artist_name, artist_sort_name, artist_credit_name = \
+        _flatten_artist_credit(release['artist-credit'])
+
+    # Basic info.
+    track_infos = get_track_infos(release)
     info = beets.autotag.hooks.AlbumInfo(
         release['title'],
         release['id'],
@@ -358,25 +394,13 @@ def album_info(release):
     if release.get('disambiguation'):
         info.albumdisambig = release.get('disambiguation')
 
-    # Get the "classic" Release type. This data comes from a legacy API
-    # feature before MusicBrainz supported multiple release types.
-    if 'type' in release['release-group']:
-        reltype = release['release-group']['type']
-        if reltype:
-            info.albumtype = reltype.lower()
-
-    # Log the new-style "primary" and "secondary" release types.
-    # Eventually, we'd like to actually store this data, but we just log
-    # it for now to help understand the differences.
-    if 'primary-type' in release['release-group']:
-        rel_primarytype = release['release-group']['primary-type']
-        if rel_primarytype:
-            log.debug('primary MB release type: ' + rel_primarytype.lower())
-    if 'secondary-type-list' in release['release-group']:
-        if release['release-group']['secondary-type-list']:
-            log.debug('secondary MB release type(s): ' + ', '.join(
-                [secondarytype.lower() for secondarytype in
-                    release['release-group']['secondary-type-list']]))
+    classic, primary, secondary = get_release_types(release)
+    if classic:
+        info.albumtype = classic
+    if primary:
+        log.debug('primary MB release type: ' + primary)
+    if secondary:
+        log.debug('secondary MB release type(s): ' + ', '.join(secondary))
 
     # Release events.
     info.country, release_date = _preferred_release_event(release)
