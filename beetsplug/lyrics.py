@@ -395,7 +395,7 @@ class Genius(Backend):
 
         song_info = None
         for hit in json["response"]["hits"]:
-            if hit["result"]["primary_artist"]["name"] == artist:
+            if hit["result"]["primary_artist"]["name"].strip(u'\u200b').lower() == artist.lower():
                 song_info = hit
                 break
 
