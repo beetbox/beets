@@ -31,5 +31,3 @@ Configuration
 The available options under the ``subsonic:`` section are:
 
 - **url**: The Subsonic server resource. Default: ``http://localhost:4040``
-
-Example: ``https://mydomain.com:443/subsonic``
