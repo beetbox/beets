@@ -402,6 +402,8 @@ class Genius(Backend):
         if song_info:
             song_api_path = song_info["result"]["api_path"]
             return self.lyrics_from_song_api_path(song_api_path)
+        else:
+            self._log.debug(u'Genius did not return a matching artist entry')
 
 
 class LyricsWiki(SymbolsReplaced):
