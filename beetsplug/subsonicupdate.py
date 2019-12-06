@@ -37,51 +37,42 @@ from beets.plugins import BeetsPlugin
 __author__ = 'https://github.com/maffo999'
 
 
-def build_payload():
-    """ To avoid sending plaintext passwords, authentication will be
-    performed via username, a token, and a 6 random
-    letters/numbers sequence.
-    The token is the concatenation of your password and the 6 random
-    letters/numbers (the salt) which is hashed with MD5.
-    """
+def create_token():
+    """ Creates salt and token from given password.
 
-    user = config['subsonic']['user'].as_str()
+    :return: The generated salt and hashed token
+    """
     password = config['subsonic']['pass'].as_str()
 
     # Pick the random sequence and salt the password
     r = string.ascii_letters + string.digits
-    salt = "".join([random.choice(r) for n in range(6)])
-    t = password + salt
-    token = hashlib.md5()
-    token.update(t.encode('utf-8'))
+    salt = "".join([random.choice(r) for _ in range(6)])
+    salted_password = password + salt
+    token = hashlib.md5().update(salted_password.encode('utf-8')).hexdigest()
 
     # Put together the payload of the request to the server and the URL
-    return {
-        'u': user,
-        't': token.hexdigest(),
-        's': salt,
-        'v': '1.15.0',  # Subsonic 6.1 and newer.
-        'c': 'beets'
-    }
+    return salt, token
 
 
-def formal_url():
-    """ Formats URL to send request to Subsonic
-    DEPRECATED schema, host, port, contextpath; use ${url}
+def format_url():
+    """ Get the Subsonic URL to trigger a scan. Uses either the url
+    config option or the deprecated host, port, and context_path config
+    options together.
+
+    :return: Endpoint for updating Subsonic
     """
-
-    host = config['subsonic']['host'].as_str()
-    port = config['subsonic']['port'].get(int)
-
-    context_path = config['subsonic']['contextpath'].as_str()
-    if context_path == '/':
-        context_path = ''
 
     url = config['subsonic']['url'].as_str()
     if url and url.endsWith('/'):
         url = url[:-1]
 
+    # @deprecated("Use url config option instead")
     if not url:
+        host = config['subsonic']['host'].as_str()
+        port = config['subsonic']['port'].get(int)
+        context_path = config['subsonic']['contextpath'].as_str()
+        if context_path == '/':
+            context_path = ''
         url = "http://{}:{}{}".format(host, port, context_path)
 
     return url + '/rest/startScan'
@@ -105,8 +96,17 @@ class SubsonicUpdate(BeetsPlugin):
         self.register_listener('import', self.start_scan)
 
     def start_scan(self):
-        url = formal_url()
-        payload = build_payload()
+        user = config['subsonic']['user'].as_str()
+        url = format_url()
+        salt, token = create_token()
+
+        payload = {
+            'u': user,
+            't': token,
+            's': salt,
+            'v': '1.15.0',  # Subsonic 6.1 and newer.
+            'c': 'beets'
+        }
 
         response = requests.post(url, params=payload)
 
@@ -117,4 +117,4 @@ class SubsonicUpdate(BeetsPlugin):
         else:
             self._log.error(
                 u'Generic error, please try again later [Status Code: {}]'
-                    .format(response.status_code))
+                .format(response.status_code))

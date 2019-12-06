@@ -13,17 +13,11 @@ You can do that using a ``subsonic:`` section in your ``config.yaml``,
 which looks like this::
 
     subsonic:
-        url: https://mydomain.com:443/subsonic
+        url: https://example.com:443/subsonic
         user: username
         pass: password
 
-    # DEPRECATED
-    subsonic:
-        host: X.X.X.X
-        port: 4040
-        user: username
-        pass: password
-        contextpath: /subsonic
+\* NOTE: The pass config option can either be clear text or hex-encoded with a "enc:" prefix.
 
 With that all in place, beets will send a Rest API to your Subsonic
 server every time you import new music.
@@ -39,13 +33,3 @@ The available options under the ``subsonic:`` section are:
 - **url**: The Subsonic server resource. Default: ``http://localhost:4040``
 
 Example: ``https://mydomain.com:443/subsonic``
-
-\* Note: context path is optional
-
-DEPRECATED:
-
-- **host**: The Subsonic server name/IP. Default: ``localhost``
-- **port**: The Subsonic server port. Default: ``4040``
-- **user**: The Subsonic user. Default: ``admin``
-- **pass**: The Subsonic user password. Default: ``admin``
-- **contextpath**: The Subsonic context path. Default: ``/``
