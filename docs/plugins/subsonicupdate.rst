@@ -13,6 +13,12 @@ You can do that using a ``subsonic:`` section in your ``config.yaml``,
 which looks like this::
 
     subsonic:
+        url: https://mydomain.com:443/subsonic
+        user: username
+        pass: password
+
+    # DEPRECATED
+    subsonic:
         host: X.X.X.X
         port: 4040
         user: username
@@ -29,6 +35,14 @@ Configuration
 -------------
 
 The available options under the ``subsonic:`` section are:
+
+- **url**: The Subsonic server resource. Default: ``http://localhost:4040``
+
+Example: ``https://mydomain.com:443/subsonic``
+
+\* Note: context path is optional
+
+DEPRECATED:
 
 - **host**: The Subsonic server name/IP. Default: ``localhost``
 - **port**: The Subsonic server port. Default: ``4040``
