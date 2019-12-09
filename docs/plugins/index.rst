@@ -198,12 +198,15 @@ Interoperability
 * :doc:`sonosupdate`: Automatically notifies `Sonos`_ whenever the beets library
   changes.
 * :doc:`thumbnails`: Get thumbnails with the cover art on your album folders.
+* :doc:`subsonicupdate`: Automatically notifies `Subsonic`_ whenever the beets
+  library changes.
 
 
 .. _Emby: https://emby.media
 .. _Plex: https://plex.tv
 .. _Kodi: https://kodi.tv
 .. _Sonos: https://sonos.com
+.. _Subsonic: http://www.subsonic.org/
 
 Miscellaneous
 -------------
