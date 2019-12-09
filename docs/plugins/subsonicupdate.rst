@@ -17,8 +17,6 @@ which looks like this::
         user: username
         pass: password
 
-\* NOTE: The pass config option can either be clear text or hex-encoded with a "enc:" prefix.
-
 With that all in place, beets will send a Rest API to your Subsonic
 server every time you import new music.
 Due to a current limitation of the API, all libraries visible to that user will be scanned.
@@ -31,3 +29,7 @@ Configuration
 The available options under the ``subsonic:`` section are:
 
 - **url**: The Subsonic server resource. Default: ``http://localhost:4040``
+- **user**: The Subsonic user. Default: ``admin``
+- **pass**: The Subsonic user password. Default: ``admin``
+
+\* NOTE: The pass config option can either be clear text or hex-encoded with a "enc:" prefix.

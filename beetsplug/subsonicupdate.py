@@ -38,7 +38,7 @@ __author__ = 'https://github.com/maffo999'
 
 
 def create_token():
-    """ Creates salt and token from given password.
+    """Creates salt and token from given password.
 
     :return: The generated salt and hashed token
     """
@@ -55,7 +55,7 @@ def create_token():
 
 
 def format_url():
-    """ Get the Subsonic URL to trigger a scan. Uses either the url
+    """Get the Subsonic URL to trigger a scan. Uses either the url
     config option or the deprecated host, port, and context_path config
     options together.
 
@@ -89,7 +89,7 @@ class SubsonicUpdate(BeetsPlugin):
             'user': 'admin',
             'pass': 'admin',
             'contextpath': '/',
-            'url': 'http://localhost:4040'
+            'url': 'http://localhost:4040',
         })
 
         config['subsonic']['pass'].redact = True
