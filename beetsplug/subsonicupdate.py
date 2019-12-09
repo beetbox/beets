@@ -38,7 +38,7 @@ __author__ = 'https://github.com/maffo999'
 
 
 def create_token():
-    """Creates salt and token from given password.
+    """Create salt and token from given password.
 
     :return: The generated salt and hashed token
     """

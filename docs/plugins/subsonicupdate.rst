@@ -30,6 +30,5 @@ The available options under the ``subsonic:`` section are:
 
 - **url**: The Subsonic server resource. Default: ``http://localhost:4040``
 - **user**: The Subsonic user. Default: ``admin``
-- **pass**: The Subsonic user password. Default: ``admin``
-
-\* NOTE: The pass config option can either be clear text or hex-encoded with a "enc:" prefix.
+- **pass**: The Subsonic user password. (This may either be a clear-text
+  password or hex-encoded with the prefix ``enc:``.) Default: ``admin``
