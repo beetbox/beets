@@ -25,14 +25,57 @@ a "subsonic" section like the following:
 """
 from __future__ import division, absolute_import, print_function
 
-from beets.plugins import BeetsPlugin
-from beets import config
-import requests
-import string
 import hashlib
 import random
+import string
+
+import requests
+
+from beets import config
+from beets.plugins import BeetsPlugin
 
 __author__ = 'https://github.com/maffo999'
+
+
+def create_token():
+    """Creates salt and token from given password.
+
+    :return: The generated salt and hashed token
+    """
+    password = config['subsonic']['pass'].as_str()
+
+    # Pick the random sequence and salt the password
+    r = string.ascii_letters + string.digits
+    salt = "".join([random.choice(r) for _ in range(6)])
+    salted_password = password + salt
+    token = hashlib.md5().update(salted_password.encode('utf-8')).hexdigest()
+
+    # Put together the payload of the request to the server and the URL
+    return salt, token
+
+
+def format_url():
+    """Get the Subsonic URL to trigger a scan. Uses either the url
+    config option or the deprecated host, port, and context_path config
+    options together.
+
+    :return: Endpoint for updating Subsonic
+    """
+
+    url = config['subsonic']['url'].as_str()
+    if url and url.endsWith('/'):
+        url = url[:-1]
+
+    # @deprecated("Use url config option instead")
+    if not url:
+        host = config['subsonic']['host'].as_str()
+        port = config['subsonic']['port'].get(int)
+        context_path = config['subsonic']['contextpath'].as_str()
+        if context_path == '/':
+            context_path = ''
+        url = "http://{}:{}{}".format(host, port, context_path)
+
+    return url + '/rest/startScan'
 
 
 class SubsonicUpdate(BeetsPlugin):
@@ -46,42 +89,32 @@ class SubsonicUpdate(BeetsPlugin):
             'user': 'admin',
             'pass': 'admin',
             'contextpath': '/',
+            'url': 'http://localhost:4040',
         })
+
         config['subsonic']['pass'].redact = True
-        self.register_listener('import', self.loaded)
+        self.register_listener('import', self.start_scan)
 
-    def loaded(self):
-        host = config['subsonic']['host'].as_str()
-        port = config['subsonic']['port'].get(int)
+    def start_scan(self):
         user = config['subsonic']['user'].as_str()
-        passw = config['subsonic']['pass'].as_str()
-        contextpath = config['subsonic']['contextpath'].as_str()
+        url = format_url()
+        salt, token = create_token()
 
-        # To avoid sending plaintext passwords, authentication will be
-        # performed via username, a token, and a 6 random
-        # letters/numbers sequence.
-        # The token is the concatenation of your password and the 6 random
-        # letters/numbers (the salt) which is hashed with MD5.
-
-        # Pick the random sequence and salt the password
-        r = string.ascii_letters + string.digits
-        salt = "".join([random.choice(r) for n in range(6)])
-        t = passw + salt
-        token = hashlib.md5()
-        token.update(t.encode('utf-8'))
-
-        # Put together the payload of the request to the server and the URL
         payload = {
             'u': user,
-            't': token.hexdigest(),
+            't': token,
             's': salt,
             'v': '1.15.0',  # Subsonic 6.1 and newer.
             'c': 'beets'
         }
-        if contextpath == '/':
-            contextpath = ''
-        url = "http://{}:{}{}/rest/startScan".format(host, port, contextpath)
+
         response = requests.post(url, params=payload)
 
-        if response.status_code != 200:
-            self._log.error(u'Generic error, please try again later.')
+        if response.status_code == 403:
+            self._log.error(u'Server authentication failed')
+        elif response.status_code == 200:
+            self._log.debug(u'Updating Subsonic')
+        else:
+            self._log.error(
+                u'Generic error, please try again later [Status Code: {}]'
+                .format(response.status_code))
