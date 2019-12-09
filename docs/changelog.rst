@@ -90,6 +90,12 @@ New features:
   :bug:`3387`
 * :doc:`/plugins/hook` now treats non-zero exit codes as errors.
   :bug:`3409`
+* :doc:`/plugins/subsonicupdate`: A new ``url`` configuration replaces the
+  older (and now deprecated) separate ``host``, ``port``, and ``contextpath``
+  config options. As a consequence, the plugin can now talk to Subsonic over
+  HTTPS.
+  Thanks to :user:`jef`.
+  :bug:`3449`
 
 Fixes:
 
