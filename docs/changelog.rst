@@ -189,6 +189,7 @@ For packagers:
 * We attempted to fix an unreliable test, so a patch to `skip <https://sources.debian.org/src/beets/1.4.7-2/debian/patches/skip-broken-test/>`_
   or `repair <https://build.opensuse.org/package/view_file/openSUSE:Factory/beets/fix_test_command_line_option_relative_to_working_dir.diff?expand=1>`_
   the test may no longer be necessary.
+* This version drops support for Python 3.4.
 
 .. _MediaFile: https://github.com/beetbox/mediafile
 .. _Confuse: https://github.com/beetbox/confuse
