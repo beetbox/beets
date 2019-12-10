@@ -13,10 +13,10 @@ matrix:
           env: {TOX_ENV: py27-cov, COVERAGE: 1}
         - python: 2.7.13
           env: {TOX_ENV: py27-test}
-        - python: 3.4
-          env: {TOX_ENV: py34-test}
-        - python: 3.4_with_system_site_packages
-          env: {TOX_ENV: py34-test}
+        # - python: 3.4
+        #   env: {TOX_ENV: py34-test}
+        # - python: 3.4_with_system_site_packages
+        #   env: {TOX_ENV: py34-test}
         - python: 3.5
           env: {TOX_ENV: py35-test}
         - python: 3.6
@@ -24,9 +24,9 @@ matrix:
         - python: 3.7
           env: {TOX_ENV: py37-test}
           dist: xenial
-        # - python: 3.8-dev
-        #   env: {TOX_ENV: py38-test}
-        #   dist: xenial
+        - python: 3.8
+          env: {TOX_ENV: py38-test}
+          dist: xenial
         # - python: pypy
         #   - env: {TOX_ENV: pypy-test}
         - python: 3.6
