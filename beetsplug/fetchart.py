@@ -164,12 +164,16 @@ def _logged_get(log, *args, **kwargs):
         message = 'getting URL'
 
     req = requests.Request('GET', *args, **req_kwargs)
+
     with requests.Session() as s:
         s.headers = {'User-Agent': 'beets'}
         prepped = s.prepare_request(req)
+        settings = s.merge_environment_settings(
+        	prepped.url, {}, None, None, None
+        )
+        send_kwargs.update(settings)
         log.debug('{}: {}', message, prepped.url)
         return s.send(prepped, **send_kwargs)
-
 
 class RequestMixin(object):
     """Adds a Requests wrapper to the class that uses the logger, which
