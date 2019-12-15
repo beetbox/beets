@@ -152,7 +152,7 @@ class ThumbnailsPlugin(BeetsPlugin):
                 self._log.debug(u"{1}x{1} thumbnail for {0} exists and is "
                                 u"recent enough", album, size)
                 return False
-        resized = ArtResizer.shared.resize(size, album.artpath,
+        resized = ArtResizer.shared.resize(size, 75, album.artpath,
                                            util.syspath(target))
         self.add_tags(album, util.syspath(resized))
         shutil.move(resized, target)

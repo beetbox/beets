@@ -50,7 +50,7 @@ def get_art(log, item):
     return mf.art
 
 
-def embed_item(log, item, imagepath, maxwidth=None, itempath=None,
+def embed_item(log, item, imagepath, maxwidth=None, quality=75, itempath=None,
                compare_threshold=0, ifempty=False, as_album=False,
                id3v23=None):
     """Embed an image into the item's media file.
@@ -64,7 +64,7 @@ def embed_item(log, item, imagepath, maxwidth=None, itempath=None,
         log.info(u'media file already contained art')
         return
     if maxwidth and not as_album:
-        imagepath = resize_image(log, imagepath, maxwidth)
+        imagepath = resize_image(log, imagepath, maxwidth, quality)
 
     # Get the `Image` object from the file.
     try:
@@ -84,7 +84,7 @@ def embed_item(log, item, imagepath, maxwidth=None, itempath=None,
     item.try_write(path=itempath, tags={'images': [image]}, id3v23=id3v23)
 
 
-def embed_album(log, album, maxwidth=None, quiet=False,
+def embed_album(log, album, maxwidth=None, quality=75, quiet=False,
                 compare_threshold=0, ifempty=False):
     """Embed album art into all of the album's items.
     """
@@ -97,20 +97,20 @@ def embed_album(log, album, maxwidth=None, quiet=False,
                  displayable_path(imagepath), album)
         return
     if maxwidth:
-        imagepath = resize_image(log, imagepath, maxwidth)
+        imagepath = resize_image(log, imagepath, maxwidth, quality)
 
     log.info(u'Embedding album art into {0}', album)
 
     for item in album.items():
-        embed_item(log, item, imagepath, maxwidth, None,
+        embed_item(log, item, imagepath, maxwidth, quality, None,
                    compare_threshold, ifempty, as_album=True)
 
 
-def resize_image(log, imagepath, maxwidth):
+def resize_image(log, imagepath, maxwidth, quality):
     """Returns path to an image resized to maxwidth.
     """
     log.debug(u'Resizing album art to {0} pixels wide', maxwidth)
-    imagepath = ArtResizer.shared.resize(maxwidth, syspath(imagepath))
+    imagepath = ArtResizer.shared.resize(maxwidth, quality, syspath(imagepath))
     return imagepath
 
 

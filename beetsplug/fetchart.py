@@ -135,7 +135,7 @@ class Candidate(object):
 
     def resize(self, plugin):
         if plugin.maxwidth and self.check == self.CANDIDATE_DOWNSCALE:
-            self.path = ArtResizer.shared.resize(plugin.maxwidth, self.path)
+            self.path = ArtResizer.shared.resize(plugin.maxwidth, 75, self.path)
 
 
 def _logged_get(log, *args, **kwargs):
