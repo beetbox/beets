@@ -71,7 +71,7 @@ box. To extract `rar` files, install the `rarfile`_ package and the
 
 Optional command flags:
 
-* By default, the command copies files your the library directory and
+* By default, the command copies files to your library directory and
   updates the ID3 tags on your music. In order to move the files, instead of
   copying, use the ``-m`` (move) option. If you'd like to leave your music
   files untouched, try the ``-C`` (don't copy) and ``-W`` (don't write tags)
