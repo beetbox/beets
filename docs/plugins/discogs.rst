@@ -67,7 +67,7 @@ would result in track names like::
     Messiah, Part II: No.22: Chorus- Behold The Lamb Of God
     Athalia, Act I, Scene I: Sinfonia
 
-whereas with ``index_track`` disabled you'd get::
+whereas with ``index_tracks`` disabled you'd get::
 
     No.1: Sinfony
     No.22: Chorus- Behold The Lamb Of God
