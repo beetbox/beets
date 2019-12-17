@@ -52,7 +52,7 @@ There is one additional option in the ``discogs:`` section, ``index_tracks``.
 Index tracks (see the `Discogs guidelines
 <https://support.discogs.com/hc/en-us/articles/360005055373-Database-Guidelines-12-Tracklisting#12.13>`_),
 along with headers, mark divisions between distinct works on the same release
-or within works. When ``index_tracks`` is enabled,::
+or within works. When ``index_tracks`` is enabled::
 
     discogs:
         index_tracks: yes
