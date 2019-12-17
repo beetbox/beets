@@ -398,14 +398,23 @@ class DiscogsPlugin(BeetsPlugin):
         tracks = []
         index_tracks = {}
         index = 0
+        divisions, next_divisions = [], []
         for track in clean_tracklist:
             # Only real tracks have `position`. Otherwise, it's an index track.
             if track['position']:
                 index += 1
+                if next_divisions:
+                    divisions += next_divisions
+                    next_divisions.clear()
                 track_info = self.get_track_info(track, index)
                 track_info.track_alt = track['position']
                 tracks.append(track_info)
             else:
+                next_divisions.append(track['title'])
+                try:
+                    divisions.pop()
+                except IndexError:
+                    pass
                 index_tracks[index + 1] = track['title']
 
         # Fix up medium and medium_index for each track. Discogs position is
