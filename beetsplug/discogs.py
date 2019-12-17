@@ -405,7 +405,8 @@ class DiscogsPlugin(BeetsPlugin):
             if track['position']:
                 index += 1
                 if next_divisions:
-                    # End of a block of index tracks: update the current divisions.
+                    # End of a block of index tracks: update the current
+                    # divisions.
                     divisions += next_divisions
                     del next_divisions[:]
                 track_info = self.get_track_info(track, index, divisions)
@@ -413,8 +414,8 @@ class DiscogsPlugin(BeetsPlugin):
                 tracks.append(track_info)
             else:
                 next_divisions.append(track['title'])
-                # We expect new levels of division at the beginning of the tracklist
-                # (and possibly elsewhere).
+                # We expect new levels of division at the beginning of the
+                # tracklist (and possibly elsewhere).
                 try:
                     divisions.pop()
                 except IndexError:
