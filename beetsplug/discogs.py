@@ -407,7 +407,7 @@ class DiscogsPlugin(BeetsPlugin):
                 if next_divisions:
                     # End of a block of index tracks: update the current divisions.
                     divisions += next_divisions
-                    next_divisions.clear()
+                    del next_divisions[:]
                 track_info = self.get_track_info(track, index, divisions)
                 track_info.track_alt = track['position']
                 tracks.append(track_info)
