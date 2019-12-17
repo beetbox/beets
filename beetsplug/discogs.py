@@ -406,7 +406,7 @@ class DiscogsPlugin(BeetsPlugin):
                 if next_divisions:
                     divisions += next_divisions
                     next_divisions.clear()
-                track_info = self.get_track_info(track, index)
+                track_info = self.get_track_info(track, index, divisions)
                 track_info.track_alt = track['position']
                 tracks.append(track_info)
             else:
@@ -549,10 +549,13 @@ class DiscogsPlugin(BeetsPlugin):
 
         return tracklist
 
-    def get_track_info(self, track, index):
+    def get_track_info(self, track, index, divisions):
         """Returns a TrackInfo object for a discogs track.
         """
         title = track['title']
+        if self.config['index_tracks']:
+            prefix = ', '.join(divisions)
+            title = ': '.join(prefix, title)
         track_id = None
         medium, medium_index, _ = self.get_track_index(track['position'])
         artist, artist_id = MetadataSourcePlugin.get_artist(
