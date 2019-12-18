@@ -58,7 +58,7 @@ class DiscogsPlugin(BeetsPlugin):
             'source_weight': 0.5,
             'user_token': '',
             'separator': u', ',
-            'index_tracks': False
+            'index_tracks': False,
         })
         self.config['apikey'].redact = True
         self.config['apisecret'].redact = True
