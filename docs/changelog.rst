@@ -96,6 +96,11 @@ New features:
   HTTPS.
   Thanks to :user:`jef`.
   :bug:`3449`
+* :doc:`/plugins/discogs`: The new ``index_tracks`` option enables
+  incorporation of work names and intra-work divisions into imported track
+  titles.
+  Thanks to :user:`cole-miller`.
+  :bug:`3459`
 
 Fixes:
 
