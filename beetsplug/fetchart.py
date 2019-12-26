@@ -470,14 +470,6 @@ class ITunesStore(RemoteArtSource):
     NAME = u"iTunes Store"
     API_URL = u'https://itunes.apple.com/search'
 
-    def __init__(self, *args, **kwargs):
-        super(ITunesStore, self).__init__(*args, **kwargs)
-        high_resolution = self._config['high_resolution'].get()
-        if high_resolution:
-            self.image_suffix = '100000x100000-999'
-        else:
-            self.image_suffix = '1200x1200bb'
-
     def get(self, album, plugin, paths):
         """Return art URL from iTunes Store given an album title.
         """
@@ -513,13 +505,18 @@ class ITunesStore(RemoteArtSource):
                             payload['term'])
             return
 
+        if self._config['high_resolution'].get():
+            image_suffix = '100000x100000-999'
+        else:
+            image_suffix = '1200x1200bb'
+
         for c in candidates:
             try:
                 if (c['artistName'] == album.albumartist
                         and c['collectionName'] == album.album):
                     art_url = c['artworkUrl100']
                     art_url = art_url.replace('100x100bb',
-                                              self.image_suffix)
+                                              image_suffix)
                     yield self._candidate(url=art_url,
                                           match=Candidate.MATCH_EXACT)
             except KeyError as e:
@@ -530,7 +527,7 @@ class ITunesStore(RemoteArtSource):
         try:
             fallback_art_url = candidates[0]['artworkUrl100']
             fallback_art_url = fallback_art_url.replace('100x100bb',
-                                                        self.image_suffix)
+                                                        image_suffix)
             yield self._candidate(url=fallback_art_url,
                                   match=Candidate.MATCH_FALLBACK)
         except KeyError as e:
@@ -813,7 +810,6 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         self.cover_names = list(map(util.bytestring_path, cover_names))
         self.cautious = self.config['cautious'].get(bool)
         self.store_source = self.config['store_source'].get(bool)
-        self.high_resolution = self.config['high_resolution'].get(bool)
 
         self.src_removed = (config['import']['delete'].get(bool) or
                             config['import']['move'].get(bool))
