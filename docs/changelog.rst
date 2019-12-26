@@ -6,7 +6,11 @@ Changelog
 
 New features:
 
-* :doc:`plugins/discogs` now adds two extra fields: `discogs_labelid` and 
+* :doc:`plugins/fetchart`: Added new ``high_resolution`` config option to
+  allow downloading of higher resolution iTunes artwork (at the expense of
+  file size)
+  :bug: `3391`
+* :doc:`plugins/discogs` now adds two extra fields: `discogs_labelid` and
   `discogs_artistid`
   :bug: `3413`
 * :doc:`/plugins/export`: Added new ``-f`` (``--format``) flag; 
