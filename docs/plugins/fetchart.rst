@@ -68,7 +68,7 @@ file. The available options are:
   flexible tag named ``art_source``. See below for the rationale behind this.
   Default: ``no``.
 - **high_resolution**: If enabled, fetchart retrieves artwork in the highest
-  resolution it can find (Warning: image files can sometimes reach >20MB)
+  resolution it can find (warning: image files can sometimes reach >20MB).
   Default: ``no``.
 
 Note: ``maxwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
