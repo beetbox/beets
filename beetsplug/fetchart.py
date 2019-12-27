@@ -505,12 +505,18 @@ class ITunesStore(RemoteArtSource):
                             payload['term'])
             return
 
+        if self._config['high_resolution'].get():
+            image_suffix = '100000x100000-999'
+        else:
+            image_suffix = '1200x1200bb'
+
         for c in candidates:
             try:
                 if (c['artistName'] == album.albumartist
                         and c['collectionName'] == album.album):
                     art_url = c['artworkUrl100']
-                    art_url = art_url.replace('100x100', '1200x1200')
+                    art_url = art_url.replace('100x100bb',
+                                              image_suffix)
                     yield self._candidate(url=art_url,
                                           match=Candidate.MATCH_EXACT)
             except KeyError as e:
@@ -520,7 +526,8 @@ class ITunesStore(RemoteArtSource):
 
         try:
             fallback_art_url = candidates[0]['artworkUrl100']
-            fallback_art_url = fallback_art_url.replace('100x100', '1200x1200')
+            fallback_art_url = fallback_art_url.replace('100x100bb',
+                                                        image_suffix)
             yield self._candidate(url=fallback_art_url,
                                   match=Candidate.MATCH_FALLBACK)
         except KeyError as e:
@@ -774,6 +781,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'google_engine': u'001442825323518660753:hrh5ch1gjzm',
             'fanarttv_key': None,
             'store_source': False,
+            'high_resolution': False,
         })
         self.config['google_key'].redact = True
         self.config['fanarttv_key'].redact = True
