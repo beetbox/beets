@@ -6,6 +6,8 @@ Changelog
 
 New features:
 
+* :doc:`plugins/keyfinder`: Added support for `keyfinder-cli`_
+  Thanks to :user:`BrainDamage`.
 * :doc:`plugins/fetchart`: Added a new ``high_resolution`` config option to
   allow downloading of higher resolution iTunes artwork (at the expense of
   file size).
@@ -204,6 +206,7 @@ For packagers:
 .. _Confuse: https://github.com/beetbox/confuse
 .. _works: https://musicbrainz.org/doc/Work
 .. _Deezer: https://www.deezer.com
+.. _keyfinder-cli: https://github.com/EvanPurkhiser/keyfinder-cli
 
 
 1.4.9 (May 30, 2019)
