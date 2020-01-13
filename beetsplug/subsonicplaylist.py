@@ -20,6 +20,7 @@ import xml.etree.ElementTree as ET
 import random
 import string
 import requests
+from beets import plugins
 
 from beets.ui import Subcommand
 
@@ -101,6 +102,8 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
                         item.try_sync(write=True, move=False)
 
             self.update_tags(playlist_dict, lib)
+            ## notify plugins
+            plugins.send('database_change', lib=lib, model=self)
 
         subsonicplaylist_cmds = Subcommand(
             'subsonicplaylist', help=u'import a subsonic playlist'
