@@ -1,3 +1,20 @@
+# -*- coding: utf-8 -*-
+# This file is part of beets.
+# Copyright 2016, David Hamp-Gonsalves
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+
+"""Send the results of a query to the configured music player as a playlist.
+"""
 import requests
 
 from beets import config, ui
@@ -42,27 +59,34 @@ class RemotePlugin(PlayPlugin):
 
     def _remote_command(self, lib, opts, args):
         server_url = config['play']['servers'][opts.server].get(str)
+        query = ' '.join(ui.decargs(args))
 
         if opts.album:
             item_type = 'remote album'
-            album_response = requests.get(server_url + '/album/query/' + ' '.join(ui.decargs(args))).json()
+            url = server_url + '/album/query/' + query
+            album_response = requests.get(url).json()
 
             if not album_response['results']:
                 ui.print_(ui.colorize('text_warning',
                                       u'No {0} to play.'.format(item_type)))
                 return
 
-            item_response = requests.get(server_url + '/item/query/' + 'album_id:' + str(album_response['results'][0]['id'])).json()
+            album_id = str(album_response['results'][0]['id'])
+            url = server_url + '/item/query/' + 'album_id:' + album_id
+            item_response = requests.get(url).json()
         else:
             item_type = 'remote track'
             if args:
-                item_response = requests.get(server_url + '/item/query/' + ' '.join(ui.decargs(args))).json()
+                url = server_url + '/item/query/' + query
             else:
-                item_response = requests.get(server_url + '/item/' + ' '.join(ui.decargs(args))).json()
+                url = server_url + '/item/' + query
+            item_response = requests.get(url).json()
 
-        selection = []
-        for result in item_response.get('results', []) or item_response.get('items', []):
-            selection.append(server_url + '/item/' + str(result['id']) + '/file')
+        selection = [
+            server_url + '/item/' + str(result['id']) + '/file'
+            for result in
+            item_response.get('results') or item_response.get('items') or []
+        ]
 
         if not selection:
             ui.print_(ui.colorize('text_warning',
