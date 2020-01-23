@@ -79,7 +79,7 @@ class AutotagStub(object):
         autotag.mb.album_for_id = self.mb_album_for_id
         autotag.mb.track_for_id = self.mb_track_for_id
 
-    def match_album(self, albumartist, album, tracks):
+    def match_album(self, albumartist, album, tracks, extra_tags):
         if self.matching == self.IDENT:
             yield self._make_album_match(albumartist, album, tracks)
 
