@@ -22,6 +22,7 @@ import math
 import sys
 import warnings
 import enum
+import re
 import xml.parsers.expat
 from six.moves import zip
 
@@ -134,6 +135,11 @@ class Bs1770gainBackend(Backend):
         -23: "ebu",
         -18: "replaygain",
     }
+
+    version = re.search(
+        'bs1770gain ([0-9]+.[0-9]+.[0-9]+), ',
+        call(['bs1770gain', '--version']).stdout.decode('utf-8')
+    ).group(1)
 
     def __init__(self, config, log):
         super(Bs1770gainBackend, self).__init__(config, log)
@@ -252,6 +258,8 @@ class Bs1770gainBackend(Backend):
         cmd = [self.command]
         cmd += ["--" + method]
         cmd += ['--xml', '-p']
+        if self.version >= '0.6.0':
+            cmd += ['--unit=ebu']  # set units to LU
 
         # Workaround for Windows: the underlying tool fails on paths
         # with the \\?\ prefix, so we don't use it here. This
@@ -286,6 +294,7 @@ class Bs1770gainBackend(Backend):
         album_gain = {}  # mutable variable so it can be set from handlers
         parser = xml.parsers.expat.ParserCreate(encoding='utf-8')
         state = {'file': None, 'gain': None, 'peak': None}
+        album_state = {'gain': None, 'peak': None}
 
         def start_element_handler(name, attrs):
             if name == u'track':
@@ -294,9 +303,13 @@ class Bs1770gainBackend(Backend):
                     raise ReplayGainError(
                         u'duplicate filename in bs1770gain output')
             elif name == u'integrated':
-                state['gain'] = float(attrs[u'lu'])
+                if 'lu' in attrs:
+                    state['gain'] = float(attrs[u'lu'])
             elif name == u'sample-peak':
-                state['peak'] = float(attrs[u'factor'])
+                if 'factor' in attrs:
+                    state['peak'] = float(attrs[u'factor'])
+                elif 'amplitude' in attrs:
+                    state['peak'] = float(attrs[u'amplitude'])
 
         def end_element_handler(name):
             if name == u'track':
@@ -312,10 +325,25 @@ class Bs1770gainBackend(Backend):
                                           'the output of bs1770gain')
                 album_gain["album"] = Gain(state['gain'], state['peak'])
                 state['gain'] = state['peak'] = None
+            elif len(per_file_gain) == len(path_list):
+                if state['gain'] is not None:
+                    album_state['gain'] = state['gain']
+                if state['peak'] is not None:
+                    album_state['peak'] = state['peak']
+                if album_state['gain'] is not None \
+                        and album_state['peak'] is not None:
+                    album_gain["album"] = Gain(
+                        album_state['gain'], album_state['peak'])
+                state['gain'] = state['peak'] = None
+
         parser.StartElementHandler = start_element_handler
         parser.EndElementHandler = end_element_handler
 
         try:
+            if type(text) == bytes:
+                text = text.decode('utf-8')
+            while '\x08' in text:
+                text = re.sub('[^\x08]\x08', '', text)
             parser.Parse(text, True)
         except xml.parsers.expat.ExpatError:
             raise ReplayGainError(
