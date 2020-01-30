@@ -249,12 +249,15 @@ class Bs1770gainBackend(Backend):
         if self.__method != "":
             # backward compatibility to `method` option
             method = self.__method
+            gain_adjustment = target_level \
+                - [k for k, v in self.methods.items() if v == method][0]
         elif target_level in self.methods:
             method = self.methods[target_level]
             gain_adjustment = 0
         else:
-            method = self.methods[-23]
-            gain_adjustment = target_level - lufs_to_db(-23)
+            lufs_target = -23
+            method = self.methods[lufs_target]
+            gain_adjustment = target_level - lufs_target
 
         # Construct shell command.
         cmd = [self.command]
