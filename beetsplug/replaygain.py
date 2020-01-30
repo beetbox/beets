@@ -136,11 +136,6 @@ class Bs1770gainBackend(Backend):
         -18: "replaygain",
     }
 
-    version = re.search(
-        'bs1770gain ([0-9]+.[0-9]+.[0-9]+), ',
-        call(['bs1770gain', '--version']).stdout.decode('utf-8')
-    ).group(1)
-
     def __init__(self, config, log):
         super(Bs1770gainBackend, self).__init__(config, log)
         config.add({
@@ -155,6 +150,13 @@ class Bs1770gainBackend(Backend):
         try:
             call([cmd, "--help"])
             self.command = cmd
+            try:
+                self.version = re.search(
+                    '([0-9]+.[0-9]+.[0-9]+), ',
+                    call([cmd, '--version']).stdout.decode('utf-8')
+                ).group(1)
+            except AttributeError:
+                self.version = '0.0.0'
         except OSError:
             raise FatalReplayGainError(
                 u'Is bs1770gain installed?'
