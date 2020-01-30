@@ -1204,6 +1204,8 @@ class ReplayGainPlugin(BeetsPlugin):
 
         # On-import analysis.
         if self.config['auto']:
+            self.register_listener('import_begin', self.import_begin)
+            self.register_listener('import', self.import_end)
             self.import_stages = [self.imported]
 
         # Formats to use R128.
@@ -1441,6 +1443,16 @@ class ReplayGainPlugin(BeetsPlugin):
         if self.has_pool():
             self.pool.close()
             self.pool.join()
+
+    def import_begin(self, session):
+        """Handle `import_begin` event -> open pool
+        """
+        self.open_pool(self.config['threads'].get(int))
+
+    def import_end(self, paths):
+        """Handle `import` event -> close pool
+        """
+        self.close_pool()
 
     def imported(self, session, task):
         """Add replay gain info to items or albums of ``task``.
