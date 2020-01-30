@@ -40,7 +40,7 @@ if any(has_program(cmd, ['-v']) for cmd in ['mp3gain', 'aacgain']):
 else:
     GAIN_PROG_AVAILABLE = False
 
-if has_program('bs1770gain', ['--replaygain']):
+if has_program('bs1770gain'):
     LOUDNESS_PROG_AVAILABLE = True
 else:
     LOUDNESS_PROG_AVAILABLE = False
@@ -252,7 +252,7 @@ class ReplayGainLdnsCliMalformedTest(TestHelper, unittest.TestCase):
     @patch('beetsplug.replaygain.call')
     def test_malformed_output(self, call_patch):
         # Return malformed XML (the ampersand should be &amp;)
-        call_patch.return_value = CommandOutput(stdout="""
+        call_patch.return_value = CommandOutput(stdout=b"""
             <album>
                 <track total="1" number="1" file="&">
                     <integrated lufs="0" lu="0" />

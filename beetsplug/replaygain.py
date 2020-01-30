@@ -25,6 +25,7 @@ import enum
 import re
 import xml.parsers.expat
 from six.moves import zip
+from packaging import version
 
 from beets import ui
 from beets.plugins import BeetsPlugin
@@ -148,19 +149,18 @@ class Bs1770gainBackend(Backend):
 
         cmd = 'bs1770gain'
         try:
-            call([cmd, "--help"])
+            version_out = call([cmd, '--version'])
             self.command = cmd
-            try:
-                self.version = re.search(
-                    '([0-9]+.[0-9]+.[0-9]+), ',
-                    call([cmd, '--version']).stdout.decode('utf-8')
-                ).group(1)
-            except AttributeError:
-                self.version = '0.0.0'
+            self.version = re.search(
+                '([0-9]+.[0-9]+.[0-9]+), ',
+                version_out.stdout.decode('utf-8')
+            ).group(1)
         except OSError:
             raise FatalReplayGainError(
                 u'Is bs1770gain installed?'
             )
+        except AttributeError:
+            self.version = '0.0.0'
         if not self.command:
             raise FatalReplayGainError(
                 u'no replaygain command found: install bs1770gain'
@@ -263,7 +263,7 @@ class Bs1770gainBackend(Backend):
         cmd = [self.command]
         cmd += ["--" + method]
         cmd += ['--xml', '-p']
-        if self.version >= '0.6.0':
+        if version.parse(self.version) >= version.parse('0.6.0'):
             cmd += ['--unit=ebu']  # set units to LU
 
         # Workaround for Windows: the underlying tool fails on paths
@@ -345,10 +345,21 @@ class Bs1770gainBackend(Backend):
         parser.EndElementHandler = end_element_handler
 
         try:
-            if type(text) == bytes:
-                text = text.decode('utf-8')
-            while '\x08' in text:
-                text = re.sub('[^\x08]\x08', '', text)
+            # Sometimes, the XML out put of `bs1770gain` gets spliced with
+            #   some progress percentages: b'9%\x08\x0810%\x08\x08'
+            #   that are supposed to be canceled out by appending
+            #   a b'\x08' backspace characters for every character,
+            #
+            # For some reason, these backspace characters don't get
+            #   resolved, resulting in mangled XML.
+
+            # While there are backspace characters in the output
+            while b'\x08' in text:
+                text = re.sub(b'[^\x08]\x08|^\x08', b'', text)
+                # Replace every occurence of a non-backspace character
+                # followed by a backspace character or a backspace character
+                # at the beginning of the string by an empty byte string b''
+
             parser.Parse(text, True)
         except xml.parsers.expat.ExpatError:
             raise ReplayGainError(
