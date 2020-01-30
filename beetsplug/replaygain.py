@@ -1458,7 +1458,7 @@ class ReplayGainPlugin(BeetsPlugin):
         cmd = ui.Subcommand('replaygain', help=u'analyze for ReplayGain')
         cmd.parser.add_album_option()
         cmd.parser.add_option(
-            "-t", "--threads", dest="threads",
+            "-t", "--threads", dest="threads", type=int,
             help=u'change the number of threads, \
             defaults to maximum available processors'
         )
@@ -1480,9 +1480,10 @@ class ReplayGainPlugin(BeetsPlugin):
         """
         write = ui.should_write(opts.write)
         force = opts.force
-        threads = opts.threads or self.config['threads'].get(int)
 
-        self.open_pool(threads)
+        if opts.threads != 0:
+            threads = opts.threads or self.config['threads'].get(int)
+            self.open_pool(threads)
 
         if opts.album:
             for album in lib.albums(ui.decargs(args)):
