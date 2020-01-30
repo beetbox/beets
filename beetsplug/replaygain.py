@@ -1339,18 +1339,13 @@ class ReplayGainPlugin(BeetsPlugin):
                         u"ReplayGain backend failed "
                         u"for some tracks in album {0}".format(album)
                     )
-                try:
-                    for item, track_gain in zip(items,
-                                                album_gain.track_gains):
-                        store_track_gain(item, track_gain)
-                        store_album_gain(item, album_gain.album_gain)
-                        if write:
-                            item.try_write()
-                        self._log.debug(u'done analyzing {0}', item)
-                except ReplayGainError as e:
-                    self._log.info(u"ReplayGain error: {0}", e)
-                except FatalReplayGainError as e:
-                    raise ui.UserError(u"Fatal ReplayGain error: {0}".format(e))
+                for item, track_gain in zip(items,
+                                            album_gain.track_gains):
+                    store_track_gain(item, track_gain)
+                    store_album_gain(item, album_gain.album_gain)
+                    if write:
+                        item.try_write()
+                    self._log.debug(u'done analyzing {0}', item)
 
             try:
                 self._apply(
@@ -1383,21 +1378,16 @@ class ReplayGainPlugin(BeetsPlugin):
         store_track_gain, store_album_gain, target_level, peak = tag_vals
 
         def _store_track(track_gains):
-            try:
-                if len(track_gains) != 1:
-                    raise ReplayGainError(
-                        u"ReplayGain backend failed for track {0}".format(
-                            item)
-                    )
+            if len(track_gains) != 1:
+                raise ReplayGainError(
+                    u"ReplayGain backend failed for track {0}".format(
+                        item)
+                )
 
-                store_track_gain(item, track_gains[0])
-                if write:
-                    item.try_write()
-                self._log.debug(u'done analyzing {0}', item)
-            except ReplayGainError as e:
-                self._log.info(u"ReplayGain error: {0}", e)
-            except FatalReplayGainError as e:
-                raise ui.UserError(u"Fatal ReplayGain error: {0}".format(e))
+            store_track_gain(item, track_gains[0])
+            if write:
+                item.try_write()
+            self._log.debug(u'done analyzing {0}', item)
 
         try:
             self._apply(
@@ -1409,7 +1399,6 @@ class ReplayGainPlugin(BeetsPlugin):
                 },
                 callback=_store_track
             )
-
         except ReplayGainError as e:
             self._log.info(u"ReplayGain error: {0}", e)
         except FatalReplayGainError as e:
@@ -1463,6 +1452,24 @@ class ReplayGainPlugin(BeetsPlugin):
     def commands(self):
         """Return the "replaygain" ui subcommand.
         """
+        def func(lib, opts, args):
+            write = ui.should_write(opts.write)
+            force = opts.force
+
+            # Bypass self.open_pool() if called with  `--threads 0`
+            if opts.threads != 0:
+                threads = opts.threads or self.config['threads'].get(int)
+                self.open_pool(threads)
+
+            if opts.album:
+                for album in lib.albums(ui.decargs(args)):
+                    self.handle_album(album, write, force)
+            else:
+                for item in lib.items(ui.decargs(args)):
+                    self.handle_track(item, write, force)
+
+            self.close_pool()
+
         cmd = ui.Subcommand('replaygain', help=u'analyze for ReplayGain')
         cmd.parser.add_album_option()
         cmd.parser.add_option(
@@ -1480,24 +1487,5 @@ class ReplayGainPlugin(BeetsPlugin):
         cmd.parser.add_option(
             "-W", "--nowrite", dest="write", action="store_false",
             help=u"don't write metadata (opposite of -w)")
-        cmd.func = self.replaygain_func
+        cmd.func = func
         return [cmd]
-
-    def replaygain_func(self, lib, opts, args):
-        """Handle `replaygain` ui subcommand
-        """
-        write = ui.should_write(opts.write)
-        force = opts.force
-
-        if opts.threads != 0:
-            threads = opts.threads or self.config['threads'].get(int)
-            self.open_pool(threads)
-
-        if opts.album:
-            for album in lib.albums(ui.decargs(args)):
-                self.handle_album(album, write, force)
-        else:
-            for item in lib.items(ui.decargs(args)):
-                self.handle_track(item, write, force)
-
-        self.close_pool()
