@@ -40,7 +40,7 @@ if any(has_program(cmd, ['-v']) for cmd in ['mp3gain', 'aacgain']):
 else:
     GAIN_PROG_AVAILABLE = False
 
-if has_program('bs1770gain'):
+if has_program('bs1770gain', ['--replaygain']):
     LOUDNESS_PROG_AVAILABLE = True
 else:
     LOUDNESS_PROG_AVAILABLE = False
@@ -58,6 +58,7 @@ def reset_replaygain(item):
 
 
 class ReplayGainCliTestBase(TestHelper):
+
     def setUp(self):
         self.setup_beets()
         self.config['replaygain']['backend'] = self.backend
