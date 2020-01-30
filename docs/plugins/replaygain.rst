@@ -13,11 +13,15 @@ Installation
 This plugin can use one of many backends to compute the ReplayGain values:
 GStreamer, mp3gain (and its cousin, aacgain), Python Audio Tools or ffmpeg.
 ffmpeg and mp3gain can be easier to install. mp3gain supports less audio formats
-then the other backend.
+than the other backend.
 
 Once installed, this plugin analyzes all files during the import process. This
 can be a slow process; to instead analyze after the fact, disable automatic
 analysis and use the ``beet replaygain`` command (see below).
+
+To speed up analysis with some of the avalaible backends, this plugin processes
+tracks or albums (when using the ``-a`` option) in parallel. By default,
+a single thread is used per logical core of your CPU.
 
 GStreamer
 `````````
@@ -34,6 +38,8 @@ the GStreamer backend by adding this to your configuration file::
 
     replaygain:
         backend: gstreamer
+
+The GStreamer backend does not support parallel analysis.
 
 mp3gain and aacgain
 ```````````````````
@@ -73,6 +79,8 @@ On OS X, most of the dependencies can be installed with `Homebrew`_::
 
     brew install mpg123 mp3gain vorbisgain faad2 libvorbis
 
+The Python Audio Tools backend does not support parallel analysis.
+
 .. _Python Audio Tools: http://audiotools.sourceforge.net
 
 ffmpeg
@@ -92,6 +100,9 @@ configuration file. The available options are:
 
 - **auto**: Enable ReplayGain analysis during import.
   Default: ``yes``.
+- **threads**: The number of parallel threads to run the analysis in. Overridden
+  by ``--threads`` at the command line.
+  Default: # of logical CPU cores
 - **backend**: The analysis backend; either ``gstreamer``, ``command``, ``audiotools``
   or ``ffmpeg``.
   Default: ``command``.
@@ -143,8 +154,15 @@ whether ReplayGain tags are written into the music files, or stored in the
 beets database only (the default is to use :ref:`the importer's configuration
 <config-import-write>`).
 
+To execute with a different number of threads, call ``beet replaygain --threads N``::
+
+    $ beet replaygain --threads N [-Waf] [QUERY]
+
+with N any integer. To disable parallelism, use ``--threads 0``.
+
 ReplayGain analysis is not fast, so you may want to disable it during import.
 Use the ``auto`` config option to control this::
 
     replaygain:
         auto: no
+
