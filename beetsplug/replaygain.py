@@ -28,7 +28,7 @@ from six.moves import zip
 from beets import ui
 from beets.plugins import BeetsPlugin
 from beets.util import (syspath, command_output, bytestring_path,
-                        displayable_path, py3_path)
+                        displayable_path, py3_path, cpu_count)
 
 
 # Utilities.
@@ -1170,6 +1170,7 @@ class ReplayGainPlugin(BeetsPlugin):
             'overwrite': False,
             'auto': True,
             'backend': u'command',
+            'threads': cpu_count(),
             'per_disc': False,
             'peak': 'true',
             'targetlevel': 89,
@@ -1430,32 +1431,12 @@ class ReplayGainPlugin(BeetsPlugin):
     def commands(self):
         """Return the "replaygain" ui subcommand.
         """
-        def func(lib, opts, args):
-            write = ui.should_write(opts.write)
-            force = opts.force
-            jobs = opts.jobs
-
-            if self.backend_instance.do_parallel and jobs > 0:
-                from multiprocessing.pool import ThreadPool
-                self.pool = ThreadPool(jobs)
-
-            if opts.album:
-                for album in lib.albums(ui.decargs(args)):
-                    self.handle_album(album, write, force)
-            else:
-                for item in lib.items(ui.decargs(args)):
-                    self.handle_track(item, write, force)
-
-            if hasattr(self, 'pool'):
-                self.pool.close()
-                self.pool.join()
-                self.pool.terminate()
-
         cmd = ui.Subcommand('replaygain', help=u'analyze for ReplayGain')
         cmd.parser.add_album_option()
         cmd.parser.add_option(
-            "-j", "--jobs", dest="jobs", type=int, default=0,
-            help=u"worker pool size"
+            "-t", "--threads", dest="threads",
+            help=u'change the number of threads, \
+            defaults to maximum available processors'
         )
         cmd.parser.add_option(
             "-f", "--force", dest="force", action="store_true", default=False,
@@ -1467,5 +1448,28 @@ class ReplayGainPlugin(BeetsPlugin):
         cmd.parser.add_option(
             "-W", "--nowrite", dest="write", action="store_false",
             help=u"don't write metadata (opposite of -w)")
-        cmd.func = func
+        cmd.func = self.replaygain_func
         return [cmd]
+    
+    def replaygain_func(self, lib, opts, args):
+        """Handle `replaygain` ui subcommand
+        """
+        write = ui.should_write(opts.write)
+        force = opts.force
+        threads = opts.threads or self.config['threads'].get(int)
+
+        if self.backend_instance.do_parallel:
+            from multiprocessing.pool import ThreadPool
+            self.pool = ThreadPool(threads)
+
+        if opts.album:
+            for album in lib.albums(ui.decargs(args)):
+                self.handle_album(album, write, force)
+        else:
+            for item in lib.items(ui.decargs(args)):
+                self.handle_track(item, write, force)
+
+        if hasattr(self, 'pool'):
+            self.pool.close()
+            self.pool.join()
+            self.pool.terminate()
