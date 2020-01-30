@@ -151,7 +151,9 @@ class ReplayGainCliTestBase(TestHelper):
         self.assertEqual(max(gains), min(gains))
 
         self.assertNotEqual(max(gains), 0.0)
-        self.assertNotEqual(max(peaks), 0.0)
+        if not self.backend == "bs1770gain":
+            # Actually produces peaks == 0.0 ~ self.add_album_fixture
+            self.assertNotEqual(max(peaks), 0.0)
 
     def test_cli_writes_only_r128_tags(self):
         if self.backend == "command":
