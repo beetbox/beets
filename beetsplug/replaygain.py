@@ -22,6 +22,7 @@ import math
 import sys
 import warnings
 import enum
+from multiprocessing.pool import ThreadPool
 import xml.parsers.expat
 from six.moves import zip
 
@@ -1320,7 +1321,7 @@ class ReplayGainPlugin(BeetsPlugin):
         else:
             discs[1] = album.items()
 
-        if hasattr(self, 'pool'):
+        if self.has_pool():
             for discnumber, items in discs.items():
                 def _store_album(album_gain):
                     if len(album_gain.track_gains) != len(items):
@@ -1398,7 +1399,7 @@ class ReplayGainPlugin(BeetsPlugin):
             self._log.debug(u'done analyzing {0}', item)
 
         try:
-            if hasattr(self, 'pool'):
+            if self.has_pool():
                 self.pool.apply_async(
                     self.backend_instance.compute_track_gain, args=(),
                     kwds={
@@ -1419,6 +1420,27 @@ class ReplayGainPlugin(BeetsPlugin):
         except FatalReplayGainError as e:
             raise ui.UserError(
                 u"Fatal replay gain error: {0}".format(e))
+
+    def has_pool(self):
+        """Check whether a `ThreadPool` is running instance in `self.pool`
+        """
+        if hasattr(self, 'pool'):
+            if isinstance(self.pool, ThreadPool) and self.pool._state == 'RUN':
+                return True
+        return False
+
+    def open_pool(self, threads):
+        """Open a `ThreadPool` instance in `self.pool`
+        """
+        if not self.has_pool() and self.backend_instance.do_parallel:
+            self.pool = ThreadPool(threads)
+
+    def close_pool(self):
+        """Close the `ThreadPool` instance in `self.pool` (if there is one)
+        """
+        if self.has_pool():
+            self.pool.close()
+            self.pool.join()
 
     def imported(self, session, task):
         """Add replay gain info to items or albums of ``task``.
@@ -1450,7 +1472,7 @@ class ReplayGainPlugin(BeetsPlugin):
             help=u"don't write metadata (opposite of -w)")
         cmd.func = self.replaygain_func
         return [cmd]
-    
+
     def replaygain_func(self, lib, opts, args):
         """Handle `replaygain` ui subcommand
         """
@@ -1458,9 +1480,7 @@ class ReplayGainPlugin(BeetsPlugin):
         force = opts.force
         threads = opts.threads or self.config['threads'].get(int)
 
-        if self.backend_instance.do_parallel:
-            from multiprocessing.pool import ThreadPool
-            self.pool = ThreadPool(threads)
+        self.open_pool(threads)
 
         if opts.album:
             for album in lib.albums(ui.decargs(args)):
@@ -1469,7 +1489,4 @@ class ReplayGainPlugin(BeetsPlugin):
             for item in lib.items(ui.decargs(args)):
                 self.handle_track(item, write, force)
 
-        if hasattr(self, 'pool'):
-            self.pool.close()
-            self.pool.join()
-            self.pool.terminate()
+        self.close_pool()
