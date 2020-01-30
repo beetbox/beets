@@ -1334,13 +1334,12 @@ class ReplayGainPlugin(BeetsPlugin):
 
         for discnumber, items in discs.items():
             def _store_album(album_gain):
+                if len(album_gain.track_gains) != len(items):
+                    raise ReplayGainError(
+                        u"ReplayGain backend failed "
+                        u"for some tracks in album {0}".format(album)
+                    )
                 try:
-                    if len(album_gain.track_gains) != len(items):
-                        raise ReplayGainError(
-                            u"ReplayGain backend failed "
-                            u"for some tracks in album {0}".format(album)
-                        )
-
                     for item, track_gain in zip(items,
                                                 album_gain.track_gains):
                         store_track_gain(item, track_gain)
@@ -1351,18 +1350,23 @@ class ReplayGainPlugin(BeetsPlugin):
                 except ReplayGainError as e:
                     self._log.info(u"ReplayGain error: {0}", e)
                 except FatalReplayGainError as e:
-                    raise ui.UserError(
-                        u"Fatal replay gain error: {0}".format(e))
+                    raise ui.UserError(u"Fatal ReplayGain error: {0}".format(e))
 
-            self._apply(
-                self.backend_instance.compute_album_gain, args=(),
-                kwds={
-                    "items": [i for i in items],
-                    "target_level": target_level,
-                    "peak": peak
-                },
-                callback=_store_album
-            )
+            try:
+                self._apply(
+                    self.backend_instance.compute_album_gain, args=(),
+                    kwds={
+                        "items": [i for i in items],
+                        "target_level": target_level,
+                        "peak": peak
+                    },
+                    callback=_store_album
+                )
+            except ReplayGainError as e:
+                self._log.info(u"ReplayGain error: {0}", e)
+            except FatalReplayGainError as e:
+                raise ui.UserError(
+                    u"Fatal replay gain error: {0}".format(e))
 
     def handle_track(self, item, write, force=False):
         """Compute track replay gain and store it in the item.
@@ -1379,16 +1383,21 @@ class ReplayGainPlugin(BeetsPlugin):
         store_track_gain, store_album_gain, target_level, peak = tag_vals
 
         def _store_track(track_gains):
-            if len(track_gains) != 1:
-                raise ReplayGainError(
-                    u"ReplayGain backend failed for track {0}".format(
-                        item)
-                )
+            try:
+                if len(track_gains) != 1:
+                    raise ReplayGainError(
+                        u"ReplayGain backend failed for track {0}".format(
+                            item)
+                    )
 
-            store_track_gain(item, track_gains[0])
-            if write:
-                item.try_write()
-            self._log.debug(u'done analyzing {0}', item)
+                store_track_gain(item, track_gains[0])
+                if write:
+                    item.try_write()
+                self._log.debug(u'done analyzing {0}', item)
+            except ReplayGainError as e:
+                self._log.info(u"ReplayGain error: {0}", e)
+            except FatalReplayGainError as e:
+                raise ui.UserError(u"Fatal ReplayGain error: {0}".format(e))
 
         try:
             self._apply(
@@ -1404,8 +1413,7 @@ class ReplayGainPlugin(BeetsPlugin):
         except ReplayGainError as e:
             self._log.info(u"ReplayGain error: {0}", e)
         except FatalReplayGainError as e:
-            raise ui.UserError(
-                u"Fatal replay gain error: {0}".format(e))
+            raise ui.UserError(u"Fatal replay gain error: {0}".format(e))
 
     def _has_pool(self):
         """Check whether a `ThreadPool` is running instance in `self.pool`
