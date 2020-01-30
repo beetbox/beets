@@ -25,7 +25,6 @@ import enum
 import re
 import xml.parsers.expat
 from six.moves import zip
-from packaging import version
 
 from beets import ui
 from beets.plugins import BeetsPlugin
@@ -66,6 +65,11 @@ def call(args, **kwargs):
         # filenames can fail to encode on that platform. See:
         # https://github.com/google-code-export/beets/issues/499
         raise ReplayGainError(u"argument encoding failed")
+
+
+def after_version(version_a, version_b):
+    return tuple(int(s) for s in version_a.split('.')) \
+            >= tuple(int(s) for s in version_b.split('.'))
 
 
 def db_to_lufs(db):
@@ -263,7 +267,7 @@ class Bs1770gainBackend(Backend):
         cmd = [self.command]
         cmd += ["--" + method]
         cmd += ['--xml', '-p']
-        if version.parse(self.version) >= version.parse('0.6.0'):
+        if after_version(self.version, '0.6.0'):
             cmd += ['--unit=ebu']  # set units to LU
 
         # Workaround for Windows: the underlying tool fails on paths
