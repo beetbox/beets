@@ -1332,9 +1332,9 @@ class ReplayGainPlugin(BeetsPlugin):
         else:
             discs[1] = album.items()
 
-        if self.has_pool():
-            for discnumber, items in discs.items():
-                def _store_album(album_gain):
+        for discnumber, items in discs.items():
+            def _store_album(album_gain):
+                try:
                     if len(album_gain.track_gains) != len(items):
                         raise ReplayGainError(
                             u"ReplayGain backend failed "
@@ -1348,40 +1348,21 @@ class ReplayGainPlugin(BeetsPlugin):
                         if write:
                             item.try_write()
                         self._log.debug(u'done analyzing {0}', item)
-
-                self.pool.apply_async(
-                    self.backend_instance.compute_album_gain, args=(),
-                    kwds={
-                        "items": [i for i in items],
-                        "target_level": target_level,
-                        "peak": peak
-                    },
-                    callback=_store_album
-                )
-        else:
-            for discnumber, items in discs.items():
-                try:
-                    album_gain = self.backend_instance.compute_album_gain(
-                        items, target_level, peak
-                    )
-
-                    if len(album_gain.track_gains) != len(items):
-                        raise ReplayGainError(
-                            u"ReplayGain backend failed "
-                            u"for some tracks in album {0}".format(album)
-                        )
-
-                    for item, track_gain in zip(items,
-                                                album_gain.track_gains):
-                        store_track_gain(item, track_gain)
-                        store_album_gain(item, album_gain.album_gain)
-                        if write:
-                            item.try_write()
                 except ReplayGainError as e:
                     self._log.info(u"ReplayGain error: {0}", e)
                 except FatalReplayGainError as e:
                     raise ui.UserError(
                         u"Fatal replay gain error: {0}".format(e))
+
+            self._apply(
+                self.backend_instance.compute_album_gain, args=(),
+                kwds={
+                    "items": [i for i in items],
+                    "target_level": target_level,
+                    "peak": peak
+                },
+                callback=_store_album
+            )
 
     def handle_track(self, item, write, force=False):
         """Compute track replay gain and store it in the item.
@@ -1410,29 +1391,23 @@ class ReplayGainPlugin(BeetsPlugin):
             self._log.debug(u'done analyzing {0}', item)
 
         try:
-            if self.has_pool():
-                self.pool.apply_async(
-                    self.backend_instance.compute_track_gain, args=(),
-                    kwds={
-                        "items": [item],
-                        "target_level": target_level,
-                        "peak": peak,
-                    },
-                    callback=_store_track
-                )
-            else:
-                _store_track(
-                    self.backend_instance.compute_track_gain(
-                        [item], target_level, peak
-                    )
-                )
+            self._apply(
+                self.backend_instance.compute_track_gain, args=(),
+                kwds={
+                    "items": [item],
+                    "target_level": target_level,
+                    "peak": peak,
+                },
+                callback=_store_track
+            )
+
         except ReplayGainError as e:
             self._log.info(u"ReplayGain error: {0}", e)
         except FatalReplayGainError as e:
             raise ui.UserError(
                 u"Fatal replay gain error: {0}".format(e))
 
-    def has_pool(self):
+    def _has_pool(self):
         """Check whether a `ThreadPool` is running instance in `self.pool`
         """
         if hasattr(self, 'pool'):
@@ -1443,13 +1418,19 @@ class ReplayGainPlugin(BeetsPlugin):
     def open_pool(self, threads):
         """Open a `ThreadPool` instance in `self.pool`
         """
-        if not self.has_pool() and self.backend_instance.do_parallel:
+        if not self._has_pool() and self.backend_instance.do_parallel:
             self.pool = ThreadPool(threads)
+
+    def _apply(self, func, args, kwds, callback):
+        if self._has_pool():
+            self.pool.apply_async(func, args, kwds, callback)
+        else:
+            callback(func(*args, **kwds))
 
     def close_pool(self):
         """Close the `ThreadPool` instance in `self.pool` (if there is one)
         """
-        if self.has_pool():
+        if self._has_pool():
             self.pool.close()
             self.pool.join()
 
