@@ -325,19 +325,9 @@ class Bs1770gainBackend(Backend):
         try:
             parser.Parse(text, True)
         except xml.parsers.expat.ExpatError:
-            # ReplayGainLdnsCliMalformedTest.test_malformed_output
-            #   fails in Python 3.8 when executed in worker thread
-            #   the test scans log for msg but the exception is not logged,
-            #   so we inject it explicitly in order to pass
-
-            # todo: should log worker ALL thread exceptions without
-            #  having to call `self._log' explicitly for every single one
-
-            msg = u'The bs1770gain tool produced malformed XML. ' \
-                  u'Using version >=0.4.10 may solve this problem.'
-            if sys.version >= '3.8':
-                self._log.info(msg)
-            raise ReplayGainError(msg)
+            raise ReplayGainError(
+                u'The bs1770gain tool produced malformed XML. '
+                u'Using version >=0.4.10 may solve this problem.')
 
         if len(per_file_gain) != len(path_list):
             raise ReplayGainError(
