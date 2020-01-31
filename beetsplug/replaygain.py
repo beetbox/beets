@@ -22,9 +22,11 @@ import math
 import sys
 import warnings
 import enum
-from multiprocessing.pool import ThreadPool
+from multiprocessing.pool import ThreadPool, RUN
+from threading import Thread, Event
 import xml.parsers.expat
-from six.moves import zip
+from six.moves import zip, queue
+import six
 
 from beets import ui
 from beets.plugins import BeetsPlugin
@@ -1153,6 +1155,33 @@ class AudioToolsBackend(Backend):
         )
 
 
+class ExceptionWatcher(Thread):
+    """Monitors a queue for exceptions asynchronously.
+        Once an exception occurs, raise it and execute a callback.
+    """
+
+    def __init__(self, queue, callback):
+        self._queue = queue
+        self._callback = callback
+        self._stopevent = Event()
+        Thread.__init__(self)
+
+    def run(self):
+        while not self._stopevent.is_set():
+            try:
+                exc = self._queue.get_nowait()
+                self._callback()
+                six.reraise(exc[0], exc[1], exc[2])
+            except queue.Empty:
+                # No exceptions yet, loop back to check
+                #  whether `_stopevent` is set
+                pass
+
+    def join(self, timeout=None):
+        self._stopevent.set()
+        Thread.join(self, timeout)
+
+
 # Main plugin logic.
 
 class ReplayGainPlugin(BeetsPlugin):
@@ -1190,13 +1219,15 @@ class ReplayGainPlugin(BeetsPlugin):
 
         self.overwrite = self.config['overwrite'].get(bool)
         self.per_disc = self.config['per_disc'].get(bool)
-        backend_name = self.config['backend'].as_str()
 
-        if backend_name not in self.backends:
+        # Remember which backend is used for CLI feedback
+        self.backend_name = self.config['backend'].as_str()
+
+        if self.backend_name not in self.backends:
             raise ui.UserError(
                 u"Selected ReplayGain backend {0} is not supported. "
                 u"Please select one of: {1}".format(
-                    backend_name,
+                    self.backend_name,
                     u', '.join(self.backends.keys())
                 )
             )
@@ -1221,7 +1252,7 @@ class ReplayGainPlugin(BeetsPlugin):
         self.r128_whitelist = self.config['r128'].as_str_seq()
 
         try:
-            self.backend_instance = self.backends[backend_name](
+            self.backend_instance = self.backends[self.backend_name](
                 self.config, self._log
             )
         except (ReplayGainError, FatalReplayGainError) as e:
@@ -1334,10 +1365,15 @@ class ReplayGainPlugin(BeetsPlugin):
 
         for discnumber, items in discs.items():
             def _store_album(album_gain):
-                if len(album_gain.track_gains) != len(items):
+                if not album_gain or not album_gain.album_gain \
+                        or len(album_gain.track_gains) != len(items):
+                    # In some cases, backends fail to produce a valid
+                    # `album_gain` without throwing FatalReplayGainError
+                    #  => raise non-fatal exception & continue
                     raise ReplayGainError(
-                        u"ReplayGain backend failed "
-                        u"for some tracks in album {0}".format(album)
+                        u"ReplayGain backend `{}` failed "
+                        u"for some tracks in album {}"
+                        .format(self.backend_name, album)
                     )
                 for item, track_gain in zip(items,
                                             album_gain.track_gains):
@@ -1378,10 +1414,13 @@ class ReplayGainPlugin(BeetsPlugin):
         store_track_gain, store_album_gain, target_level, peak = tag_vals
 
         def _store_track(track_gains):
-            if len(track_gains) != 1:
+            if not track_gains or len(track_gains) != 1:
+                # In some cases, backends fail to produce a valid
+                # `track_gains` without throwing FatalReplayGainError
+                #  => raise non-fatal exception & continue
                 raise ReplayGainError(
-                    u"ReplayGain backend failed for track {0}".format(
-                        item)
+                    u"ReplayGain backend `{}` failed for track {}"
+                    .format(self.backend_name, item)
                 )
 
             store_track_gain(item, track_gains[0])
@@ -1408,7 +1447,7 @@ class ReplayGainPlugin(BeetsPlugin):
         """Check whether a `ThreadPool` is running instance in `self.pool`
         """
         if hasattr(self, 'pool'):
-            if isinstance(self.pool, ThreadPool) and self.pool._state == 'RUN':
+            if isinstance(self.pool, ThreadPool) and self.pool._state == RUN:
                 return True
         return False
 
@@ -1417,12 +1456,44 @@ class ReplayGainPlugin(BeetsPlugin):
         """
         if not self._has_pool() and self.backend_instance.do_parallel:
             self.pool = ThreadPool(threads)
+            self.exc_queue = queue.Queue()
+
+            self.exc_watcher = ExceptionWatcher(
+                self.exc_queue,      # threads push exceptions here
+                self.terminate_pool  # abort once an exception occurs
+            )
+            self.exc_watcher.start()
 
     def _apply(self, func, args, kwds, callback):
         if self._has_pool():
+            def catch_exc(func, exc_queue, log):
+                """Wrapper to catch raised exceptions in threads
+                """
+                def wfunc(*args, **kwargs):
+                    try:
+                        return func(*args, **kwargs)
+                    except ReplayGainError as e:
+                        log.info(e.args[0])  # log non-fatal exceptions
+                    except Exception:
+                        exc_queue.put(sys.exc_info())
+                return wfunc
+
+            # Wrap function and callback to catch exceptions
+            func = catch_exc(func, self.exc_queue, self._log)
+            callback = catch_exc(callback, self.exc_queue, self._log)
+
             self.pool.apply_async(func, args, kwds, callback)
         else:
             callback(func(*args, **kwds))
+
+    def terminate_pool(self):
+        """Terminate the `ThreadPool` instance in `self.pool`
+            (e.g. stop execution in case of exception)
+        """
+        if self._has_pool():
+            self.pool.terminate()
+            self.pool.join()
+            self.exc_watcher.join()
 
     def close_pool(self):
         """Close the `ThreadPool` instance in `self.pool` (if there is one)
@@ -1430,6 +1501,7 @@ class ReplayGainPlugin(BeetsPlugin):
         if self._has_pool():
             self.pool.close()
             self.pool.join()
+            self.exc_watcher.join()
 
     def import_begin(self, session):
         """Handle `import_begin` event -> open pool
@@ -1462,10 +1534,20 @@ class ReplayGainPlugin(BeetsPlugin):
                 self.open_pool(threads)
 
             if opts.album:
-                for album in lib.albums(ui.decargs(args)):
+                albums = lib.albums(ui.decargs(args))
+                self._log.info(
+                    "Analyzing {} albums ~ {} backend..."
+                    .format(len(albums), self.backend_name)
+                )
+                for album in albums:
                     self.handle_album(album, write, force)
             else:
-                for item in lib.items(ui.decargs(args)):
+                items = lib.items(ui.decargs(args))
+                self._log.info(
+                    "Analyzing {} tracks ~ {} backend..."
+                    .format(len(items), self.backend_name)
+                )
+                for item in items:
                     self.handle_track(item, write, force)
 
             self.close_pool()
