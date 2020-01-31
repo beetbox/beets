@@ -268,7 +268,8 @@ class Bs1770gainBackend(Backend):
         cmd += ["--" + method]
         cmd += ['--xml', '-p']
         if after_version(self.version, '0.6.0'):
-            cmd += ['--unit=ebu']  # set units to LU
+            cmd += ['--unit=ebu']            # set units to LU
+            cmd += ['--suppress-progress']   # don't print % to XML output
 
         # Workaround for Windows: the underlying tool fails on paths
         # with the \\?\ prefix, so we don't use it here. This
@@ -349,21 +350,6 @@ class Bs1770gainBackend(Backend):
         parser.EndElementHandler = end_element_handler
 
         try:
-            # Sometimes, the XML out put of `bs1770gain` gets spliced with
-            #   some progress percentages: b'9%\x08\x0810%\x08\x08'
-            #   that are supposed to be canceled out by appending
-            #   a b'\x08' backspace characters for every character,
-            #
-            # For some reason, these backspace characters don't get
-            #   resolved, resulting in mangled XML.
-
-            # While there are backspace characters in the output
-            while b'\x08' in text:
-                text = re.sub(b'[^\x08]\x08|^\x08', b'', text)
-                # Replace every occurence of a non-backspace character
-                # followed by a backspace character or a backspace character
-                # at the beginning of the string by an empty byte string b''
-
             parser.Parse(text, True)
         except xml.parsers.expat.ExpatError:
             raise ReplayGainError(
