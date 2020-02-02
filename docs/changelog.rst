@@ -134,6 +134,8 @@ Fixes:
 * :doc:`/plugins/bpd`: Fix the transition to next track when in consume mode.
   Thanks to :user:`aereaux`.
   :bug:`3437`
+* :doc:`/plugins/lyrics`: Fix a corner-case with Genius lowercase artist names
+  :bug:`3446`
 
 For plugin developers:
 

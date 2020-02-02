@@ -395,15 +395,19 @@ class Genius(Backend):
 
         song_info = None
         for hit in json["response"]["hits"]:
-            if hit["result"]["primary_artist"]["name"].strip(u'\u200b').lower() == artist.lower():
+            # Genius uses zero-width characters to denote lowercase artist names
+            hit_artist = hit["result"]["primary_artist"]["name"].strip(u'\u200b').lower()
+
+            if hit_artist == artist.lower():
                 song_info = hit
                 break
 
         if song_info:
+            self._log.debug(u'fetched: {0}', song_info["result"]["url"])
             song_api_path = song_info["result"]["api_path"]
             return self.lyrics_from_song_api_path(song_api_path)
         else:
-            self._log.debug(u'Genius did not return a matching artist entry')
+            self._log.debug(u'genius: no matching artist')
 
 
 class LyricsWiki(SymbolsReplaced):
