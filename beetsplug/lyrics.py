@@ -395,8 +395,10 @@ class Genius(Backend):
 
         song_info = None
         for hit in json["response"]["hits"]:
-            # Genius uses zero-width characters to denote lowercase artist names
-            hit_artist = hit["result"]["primary_artist"]["name"].strip(u'\u200b').lower()
+            # Genius uses zero-width characters to denote lowercase
+            # artist names.
+            hit_artist = hit["result"]["primary_artist"]["name"]. \
+                strip(u'\u200b').lower()
 
             if hit_artist == artist.lower():
                 song_info = hit
