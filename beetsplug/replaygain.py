@@ -24,6 +24,7 @@ import warnings
 import enum
 from multiprocessing.pool import ThreadPool, RUN
 from threading import Thread, Event
+import signal
 import xml.parsers.expat
 from six.moves import zip, queue
 import six
@@ -1448,6 +1449,8 @@ class ReplayGainPlugin(BeetsPlugin):
             self.pool = ThreadPool(threads)
             self.exc_queue = queue.Queue()
 
+            signal.signal(signal.SIGINT, self._interrupt)
+
             self.exc_watcher = ExceptionWatcher(
                 self.exc_queue,      # threads push exceptions here
                 self.terminate_pool  # abort once an exception occurs
@@ -1480,10 +1483,21 @@ class ReplayGainPlugin(BeetsPlugin):
         """Terminate the `ThreadPool` instance in `self.pool`
             (e.g. stop execution in case of exception)
         """
-        if self._has_pool():
+        # Don't call self._as_pool() here,
+        # self.pool._state may not be == RUN
+        if hasattr(self, 'pool') and isinstance(self.pool, ThreadPool):
             self.pool.terminate()
             self.pool.join()
             self.exc_watcher.join()
+
+    def _interrupt(self, signal, frame):
+        try:
+            self._log.info('interrupted')
+            self.terminate_pool()
+            exit(0)
+        except SystemExit:
+            # Silence raised SystemExit ~ exit(0)
+            pass
 
     def close_pool(self):
         """Close the `ThreadPool` instance in `self.pool` (if there is one)
@@ -1515,32 +1529,36 @@ class ReplayGainPlugin(BeetsPlugin):
         """Return the "replaygain" ui subcommand.
         """
         def func(lib, opts, args):
-            write = ui.should_write(opts.write)
-            force = opts.force
+            try:
+                write = ui.should_write(opts.write)
+                force = opts.force
 
-            # Bypass self.open_pool() if called with  `--threads 0`
-            if opts.threads != 0:
-                threads = opts.threads or self.config['threads'].get(int)
-                self.open_pool(threads)
+                # Bypass self.open_pool() if called with  `--threads 0`
+                if opts.threads != 0:
+                    threads = opts.threads or self.config['threads'].get(int)
+                    self.open_pool(threads)
 
-            if opts.album:
-                albums = lib.albums(ui.decargs(args))
-                self._log.info(
-                    "Analyzing {} albums ~ {} backend..."
-                    .format(len(albums), self.backend_name)
-                )
-                for album in albums:
-                    self.handle_album(album, write, force)
-            else:
-                items = lib.items(ui.decargs(args))
-                self._log.info(
-                    "Analyzing {} tracks ~ {} backend..."
-                    .format(len(items), self.backend_name)
-                )
-                for item in items:
-                    self.handle_track(item, write, force)
+                if opts.album:
+                    albums = lib.albums(ui.decargs(args))
+                    self._log.info(
+                        "Analyzing {} albums ~ {} backend..."
+                        .format(len(albums), self.backend_name)
+                    )
+                    for album in albums:
+                        self.handle_album(album, write, force)
+                else:
+                    items = lib.items(ui.decargs(args))
+                    self._log.info(
+                        "Analyzing {} tracks ~ {} backend..."
+                        .format(len(items), self.backend_name)
+                    )
+                    for item in items:
+                        self.handle_track(item, write, force)
 
-            self.close_pool()
+                self.close_pool()
+            except (SystemExit, KeyboardInterrupt):
+                # Silence interrupt exceptions
+                pass
 
         cmd = ui.Subcommand('replaygain', help=u'analyze for ReplayGain')
         cmd.parser.add_album_option()
