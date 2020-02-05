@@ -107,6 +107,9 @@ New features:
   titles.
   Thanks to :user:`cole-miller`.
   :bug:`3459`
+* :doc:`/plugins/replaygain` now does its analysis in parallel when using
+  the ``command``, ``ffmpeg`` or ``bs1770gain`` backends.
+  :bug:`3478`
 
 Fixes:
 
