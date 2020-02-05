@@ -164,6 +164,9 @@ class Bs1770gainBackend(Backend):
                 u'Is bs1770gain installed?'
             )
         except AttributeError:
+            # Raised by ReplayGainLdnsCliMalformedTest.test_malformed_output
+            #  in test_replaygain.py; bs1770gain backend runs even though
+            #  the bs1770gain command is not found test.helper.has_program
             self.version = '0.0.0'
         if not self.command:
             raise FatalReplayGainError(
