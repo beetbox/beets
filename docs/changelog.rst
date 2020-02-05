@@ -153,6 +153,8 @@ Fixes:
   :bug:`3437`
 * :doc:`/plugins/lyrics`: Fix a corner-case with Genius lowercase artist names
   :bug:`3446`
+* :doc:`/plugins/replaygain`: Support ``bs1770gain`` v0.6.0 and up
+  :bug:`3480`
 
 For plugin developers:
 
