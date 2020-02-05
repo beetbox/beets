@@ -230,7 +230,9 @@ class ReplayGainLdnsCliMalformedTest(TestHelper, unittest.TestCase):
 
         # Patch call to return nothing, bypassing the bs1770gain installation
         # check.
-        call_patch.return_value = CommandOutput(stdout=b"", stderr=b"")
+        call_patch.return_value = CommandOutput(
+            stdout=b'bs1770gain 0.0.0, ', stderr=b''
+        )
         try:
             self.load_plugins('replaygain')
         except Exception:
