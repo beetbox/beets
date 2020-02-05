@@ -156,18 +156,13 @@ class Bs1770gainBackend(Backend):
             version_out = call([cmd, '--version'])
             self.command = cmd
             self.version = re.search(
-                '([0-9]+.[0-9]+.[0-9]+), ',
+                'bs1770gain ([0-9]+.[0-9]+.[0-9]+), ',
                 version_out.stdout.decode('utf-8')
             ).group(1)
         except OSError:
             raise FatalReplayGainError(
                 u'Is bs1770gain installed?'
             )
-        except AttributeError:
-            # Raised by ReplayGainLdnsCliMalformedTest.test_malformed_output
-            #  in test_replaygain.py; bs1770gain backend runs even though
-            #  the bs1770gain command is not found test.helper.has_program
-            self.version = '0.0.0'
         if not self.command:
             raise FatalReplayGainError(
                 u'no replaygain command found: install bs1770gain'
