@@ -151,6 +151,8 @@ Fixes:
 * :doc:`/plugins/bpd`: Fix the transition to next track when in consume mode.
   Thanks to :user:`aereaux`.
   :bug:`3437`
+* :doc:`/plugins/replaygain`: Support ``bs1770gain`` v0.6.0 and up
+  :bug:`3480`
 
 For plugin developers:
 
