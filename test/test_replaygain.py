@@ -58,6 +58,7 @@ def reset_replaygain(item):
 
 
 class ReplayGainCliTestBase(TestHelper):
+
     def setUp(self):
         self.setup_beets()
         self.config['replaygain']['backend'] = self.backend
@@ -150,7 +151,9 @@ class ReplayGainCliTestBase(TestHelper):
         self.assertEqual(max(gains), min(gains))
 
         self.assertNotEqual(max(gains), 0.0)
-        self.assertNotEqual(max(peaks), 0.0)
+        if not self.backend == "bs1770gain":
+            # Actually produces peaks == 0.0 ~ self.add_album_fixture
+            self.assertNotEqual(max(peaks), 0.0)
 
     def test_cli_writes_only_r128_tags(self):
         if self.backend == "command":
@@ -227,7 +230,9 @@ class ReplayGainLdnsCliMalformedTest(TestHelper, unittest.TestCase):
 
         # Patch call to return nothing, bypassing the bs1770gain installation
         # check.
-        call_patch.return_value = CommandOutput(stdout=b"", stderr=b"")
+        call_patch.return_value = CommandOutput(
+            stdout=b'bs1770gain 0.0.0, ', stderr=b''
+        )
         try:
             self.load_plugins('replaygain')
         except Exception:
@@ -249,7 +254,7 @@ class ReplayGainLdnsCliMalformedTest(TestHelper, unittest.TestCase):
     @patch('beetsplug.replaygain.call')
     def test_malformed_output(self, call_patch):
         # Return malformed XML (the ampersand should be &amp;)
-        call_patch.return_value = CommandOutput(stdout="""
+        call_patch.return_value = CommandOutput(stdout=b"""
             <album>
                 <track total="1" number="1" file="&">
                     <integrated lufs="0" lu="0" />
