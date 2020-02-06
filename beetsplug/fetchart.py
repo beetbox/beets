@@ -175,6 +175,7 @@ def _logged_get(log, *args, **kwargs):
         log.debug('{}: {}', message, prepped.url)
         return s.send(prepped, **send_kwargs)
 
+
 class RequestMixin(object):
     """Adds a Requests wrapper to the class that uses the logger, which
     must be named `self._log`.
