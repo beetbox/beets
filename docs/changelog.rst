@@ -110,6 +110,9 @@ New features:
 
 Fixes:
 
+* :doc:`/plugins/fetchart`: Fixed a bug that caused fetchart to not take 
+  environment variables such as proxy servers into account when making requests
+  :bug:`3450`
 * :doc:`/plugins/inline`: In function-style field definitions that refer to
   flexible attributes, values could stick around from one function invocation
   to the next. This meant that, when displaying a list of objects, later
