@@ -169,7 +169,7 @@ class IdListConverter(BaseConverter):
         return ids
 
     def to_url(self, value):
-        return ','.join(value)
+        return ','.join(str(v) for v in value)
 
 
 class QueryConverter(PathConverter):
