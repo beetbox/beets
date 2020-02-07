@@ -169,7 +169,7 @@ def _logged_get(log, *args, **kwargs):
         s.headers = {'User-Agent': 'beets'}
         prepped = s.prepare_request(req)
         settings = s.merge_environment_settings(
-        	prepped.url, {}, None, None, None
+            prepped.url, {}, None, None, None
         )
         send_kwargs.update(settings)
         log.debug('{}: {}', message, prepped.url)
