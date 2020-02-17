@@ -158,6 +158,8 @@ Fixes:
   :bug:`3446`
 * :doc:`/plugins/replaygain`: Support ``bs1770gain`` v0.6.0 and up
   :bug:`3480`
+* :doc:`/plugins/parentwork`: Don't save tracks when nothing has changed.
+  :bug:`3492`
 
 For plugin developers:
 
