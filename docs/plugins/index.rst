@@ -299,7 +299,7 @@ Here are a few of the plugins written by the beets community:
 
 * `beets-mosaic`_ generates a montage of a mosiac from cover art.
 
-* `beets-bpmanalyser`_ analyses songs and calculates tempo(bpm).
+* `beets-bpmanalyser`_ analyses songs and calculates their tempo (BPM).
 
 .. _beets-barcode: https://github.com/8h2a/beets-barcode
 .. _beets-check: https://github.com/geigerzaehler/beets-check
