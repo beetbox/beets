@@ -89,10 +89,11 @@ class ParentWorkPlugin(BeetsPlugin):
             write = ui.should_write()
 
             for item in lib.items(ui.decargs(args)):
-                self.find_work(item, force_parent)
-                item.store()
-                if write:
-                    item.try_write()
+                changed = self.find_work(item, force_parent)
+                if changed:
+                    item.store()
+                    if write:
+                        item.try_write()
         command = ui.Subcommand(
             'parentwork',
             help=u'fetche parent works, composers and dates')
@@ -198,7 +199,7 @@ add one at https://musicbrainz.org/recording/{}', item, item.mb_trackid)
 
         if work_date:
             item['work_date'] = work_date
-        ui.show_model_changes(
+        return ui.show_model_changes(
             item, fields=['parentwork', 'parentwork_disambig',
                           'mb_parentworkid', 'parent_composer',
                           'parent_composer_sort', 'work_date'])
