@@ -154,7 +154,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
                                any_order=True)
 
         resize = mock_artresizer.shared.resize
-        resize.assert_called_once_with(12345, 75, path_to_art, md5_file)
+        resize.assert_called_once_with(12345, path_to_art, md5_file)
         plugin.add_tags.assert_called_once_with(album, resize.return_value)
         mock_shutils.move.assert_called_once_with(resize.return_value,
                                                   md5_file)
