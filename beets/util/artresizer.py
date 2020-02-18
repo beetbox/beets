@@ -59,7 +59,7 @@ def temp_file_for(path):
         return util.bytestring_path(f.name)
 
 
-def pil_resize(maxwidth, quality, path_in, path_out=None):
+def pil_resize(maxwidth, path_in, path_out=None, quality=0):
     """Resize using Python Imaging Library (PIL).  Return the output path
     of resized image.
     """
@@ -80,7 +80,7 @@ def pil_resize(maxwidth, quality, path_in, path_out=None):
         return path_in
 
 
-def im_resize(maxwidth, quality, path_in, path_out=None):
+def im_resize(maxwidth, path_in, path_out=None, quality=0):
     """Resize using ImageMagick.
 
     Use the ``magick`` program or ``convert`` on older versions. Return
@@ -93,11 +93,15 @@ def im_resize(maxwidth, quality, path_in, path_out=None):
     # "-resize WIDTHx>" shrinks images with the width larger
     # than the given width while maintaining the aspect ratio
     # with regards to the height.
-    cmd = ArtResizer.shared.im_convert_cmd + \
-        [util.syspath(path_in, prefix=False),
-            '-resize', '{0}x>'.format(maxwidth),
-            '-quality', '{0}x'.format(quality),
-            util.syspath(path_out, prefix=False)]
+    cmd = ArtResizer.shared.im_convert_cmd + [
+        util.syspath(path_in, prefix=False),
+        '-resize', '{0}x>'.format(maxwidth),
+    ]
+
+    if quality > 0:
+        cmd += ['-quality', '{0}'.format(quality)]
+
+    cmd.append(util.syspath(path_out, prefix=False))
 
     try:
         util.command_output(cmd)
@@ -191,14 +195,14 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
                 self.im_convert_cmd = ['magick']
                 self.im_identify_cmd = ['magick', 'identify']
 
-    def resize(self, maxwidth, quality, path_in, path_out=None):
+    def resize(self, maxwidth, path_in, path_out=None, quality=0):
         """Manipulate an image file according to the method, returning a
         new path. For PIL or IMAGEMAGIC methods, resizes the image to a
         temporary file. For WEBPROXY, returns `path_in` unmodified.
         """
         if self.local:
             func = BACKEND_FUNCS[self.method[0]]
-            return func(maxwidth, quality, path_in, path_out)
+            return func(maxwidth, path_in, path_out, quality=quality)
         else:
             return path_in
 

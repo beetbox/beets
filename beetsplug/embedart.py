@@ -60,7 +60,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             'compare_threshold': 0,
             'ifempty': False,
             'remove_art_file': False,
-            'quality': 95,
+            'quality': 0,
         })
 
         if self.config['maxwidth'].get(int) and not ArtResizer.shared.local:
@@ -107,7 +107,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
                 for item in items:
                     art.embed_item(self._log, item, imagepath, maxwidth,
-                                   quality, None, compare_threshold, ifempty)
+                                   None, compare_threshold, ifempty,
+                                   quality=quality)
             else:
                 albums = lib.albums(decargs(args))
 
@@ -116,8 +117,9 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     return
 
                 for album in albums:
-                    art.embed_album(self._log, album, maxwidth, quality,
-                                    False, compare_threshold, ifempty)
+                    art.embed_album(self._log, album, maxwidth,
+                                    False, compare_threshold, ifempty,
+                                    quality=quality)
                     self.remove_artfile(album)
 
         embed_cmd.func = embed_func

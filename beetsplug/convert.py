@@ -422,7 +422,7 @@ class ConvertPlugin(BeetsPlugin):
                            util.displayable_path(album.artpath),
                            util.displayable_path(dest))
             if not pretend:
-                ArtResizer.shared.resize(maxwidth, 75, album.artpath, dest)
+                ArtResizer.shared.resize(maxwidth, album.artpath, dest)
         else:
             if pretend:
                 msg = 'ln' if hardlink else ('ln -s' if link else 'cp')
