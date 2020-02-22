@@ -40,14 +40,19 @@ else:
 log = logging.getLogger('beets')
 
 
-def resize_url(url, maxwidth):
+def resize_url(url, maxwidth, quality=0):
     """Return a proxied image URL that resizes the original image to
     maxwidth (preserving aspect ratio).
     """
-    return '{0}?{1}'.format(PROXY_URL, urlencode({
+    params = {
         'url': url.replace('http://', ''),
         'w': maxwidth,
-    }))
+    }
+
+    if quality > 0:
+        params['q'] = quality
+
+    return '{0}?{1}'.format(PROXY_URL, urlencode(params))
 
 
 def temp_file_for(path):
@@ -215,7 +220,7 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
         if self.local:
             return url
         else:
-            return resize_url(url, maxwidth)
+            return resize_url(url, maxwidth, quality)
 
     @property
     def local(self):
