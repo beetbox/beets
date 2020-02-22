@@ -212,7 +212,7 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
         else:
             return path_in
 
-    def proxy_url(self, maxwidth, url):
+    def proxy_url(self, maxwidth, url, quality=0):
         """Modifies an image URL according the method, returning a new
         URL. For WEBPROXY, a URL on the proxy server is returned.
         Otherwise, the URL is returned unmodified.
