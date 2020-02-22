@@ -58,6 +58,11 @@ file. The available options are:
   the aspect ratio is preserved. See also :ref:`image-resizing` for further
   caveats about image resizing.
   Default: 0 (disabled).
+- **quality**: The quality level to use when encoding the image file when
+  downscaling to ``maxwidth``. The default behaviour depends on the method used
+  to scale the images. ImageMagick tries to estimate the input image quality and
+  uses 92 if it cannot be determined. Pillow defaults to 75.
+  Default: 0 (disabled)
 - **remove_art_file**: Automatically remove the album art file for the album
   after it has been embedded. This option is best used alongside the
   :doc:`FetchArt </plugins/fetchart>` plugin to download art with the purpose of
