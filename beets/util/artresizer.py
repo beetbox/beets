@@ -198,7 +198,8 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
     def resize(self, maxwidth, path_in, path_out=None, quality=0):
         """Manipulate an image file according to the method, returning a
         new path. For PIL or IMAGEMAGIC methods, resizes the image to a
-        temporary file. For WEBPROXY, returns `path_in` unmodified.
+        temporary file and encodes with the specified quality level.
+        For WEBPROXY, returns `path_in` unmodified.
         """
         if self.local:
             func = BACKEND_FUNCS[self.method[0]]
