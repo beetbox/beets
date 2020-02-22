@@ -110,7 +110,7 @@ def resize_image(log, imagepath, maxwidth, quality):
     """Returns path to an image resized to maxwidth and encoded with the
     specified quality level.
     """
-    log.debug(u'Resizing album art to {0} pixels wide and encoding at quality
+    log.debug(u'Resizing album art to {0} pixels wide and encoding at quality \
               level {1}', maxwidth, quality)
     imagepath = ArtResizer.shared.resize(maxwidth, syspath(imagepath),
                                          quality=quality)
