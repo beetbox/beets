@@ -107,9 +107,11 @@ def embed_album(log, album, maxwidth=None, quiet=False, compare_threshold=0,
 
 
 def resize_image(log, imagepath, maxwidth, quality):
-    """Returns path to an image resized to maxwidth.
+    """Returns path to an image resized to maxwidth and encoded with the
+    specified quality level.
     """
-    log.debug(u'Resizing album art to {0} pixels wide', maxwidth)
+    log.debug(u'Resizing album art to {0} pixels wide and encoding at quality
+              level {1}', maxwidth, quality)
     imagepath = ArtResizer.shared.resize(maxwidth, syspath(imagepath),
                                          quality=quality)
     return imagepath
