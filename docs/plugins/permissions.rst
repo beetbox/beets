@@ -14,8 +14,12 @@ To configure the plugin, make an ``permissions:`` section in your configuration
 file. The ``file`` config value therein uses **octal modes** to specify the
 desired permissions. The default flags for files are octal 644 and 755 for directories.
 
+The permissions can be set either before or after the tags are written, where
+``before_write`` defaults to doing so before.
+
 Here's an example::
 
     permissions:
         file: 644
         dir: 755
+        before_write: True
