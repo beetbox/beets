@@ -36,7 +36,8 @@ class IncludeLazyConfig(confuse.LazyConfig):
                 if os.path.isfile(filename):
                     self.set_file(filename)
                 else:
-                    raise FileNotFoundError("Warning! Configuration file({0}) does not exist!".format(filename))
+                    raise FileNotFoundError(
+                        "Warning! Configuration file({0}) does not exist!".format(filename))
         except confuse.NotFoundError:
             pass
 
