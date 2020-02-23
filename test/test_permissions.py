@@ -23,7 +23,8 @@ class PermissionsPluginTest(unittest.TestCase, TestHelper):
 
         self.config['permissions'] = {
             'file': '777',
-            'dir': '777'}
+            'dir': '777',
+            'before_write': False}
 
     def tearDown(self):
         self.teardown_beets()
