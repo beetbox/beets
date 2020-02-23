@@ -118,7 +118,8 @@ setup(
         'responses',
         'pyxdg',
         'python-mpd2',
-        'discogs-client'
+        'discogs-client',
+        'requests_oauthlib'
     ] + (
         # Tests for the thumbnails plugin need pathlib on Python 2 too.
         ['pathlib'] if (sys.version_info < (3, 4, 0)) else []
