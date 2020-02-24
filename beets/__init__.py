@@ -16,6 +16,7 @@
 from __future__ import division, absolute_import, print_function
 
 import confuse
+from sys import stderr
 
 __version__ = u'1.5.0'
 __author__ = u'Adrian Sampson <adrian@radbox.org>'
@@ -34,7 +35,8 @@ class IncludeLazyConfig(confuse.LazyConfig):
         except confuse.NotFoundError:
             pass
         except confuse.ConfigReadError as err:
-            print("Warning! Missing configuration file! {}".format(err.reason))
+            stderr.write("Configuration 'import' failed: {}"
+                         .format(err.reason))
             pass
 
 
