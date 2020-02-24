@@ -32,14 +32,14 @@ import subprocess
 ARGS_MARKER = '$args'
 
 
-def play(command_str, selection, paths, open_args, log, item_type='track',
+def play(command_str, paths, open_args, log, item_type='track',
          keep_open=False):
     """Play items in paths with command_str and optional arguments. If
     keep_open, return to beets, otherwise exit once command runs.
     """
     # Print number of tracks or albums to be played, log command to be run.
-    item_type += 's' if len(selection) > 1 else ''
-    ui.print_(u'Playing {0} {1}.'.format(len(selection), item_type))
+    item_type += 's' if len(paths) > 1 else ''
+    ui.print_(u'Playing {0} {1}.'.format(len(paths), item_type))
     log.debug(u'executing command: {} {!r}', command_str, open_args)
 
     try:
@@ -66,6 +66,9 @@ class PlayPlugin(BeetsPlugin):
             'raw': False,
             'warning_threshold': 100,
             'bom': False,
+            'servers': {
+                'local': 'http://127.0.0.1:8337'
+            }
         })
 
         self.register_listener('before_choose_candidate',
@@ -87,13 +90,15 @@ class PlayPlugin(BeetsPlugin):
             action="store_true",
             help=u'skip the warning threshold',
         )
+        play_command.parser.add_option(
+            u'-s', u'--server',
+            action='store',
+            help=u'label of remote server to query instead of local library',
+        )
         play_command.func = self._play_command
         return [play_command]
 
-    def _play_command(self, lib, opts, args):
-        """The CLI command function for `beet play`. Create a list of paths
-        from query, determine if tracks or albums are to be played.
-        """
+    def _get_local_paths(self, lib, opts, args):
         use_folders = config['play']['use_folders'].get(bool)
         relative_to = config['play']['relative_to'].get()
         if relative_to:
@@ -111,18 +116,81 @@ class PlayPlugin(BeetsPlugin):
                 else:
                     paths.extend(item.path
                                  for item in sort.sort(album.items()))
-            item_type = 'album'
 
         # Perform item query and add tracks to playlist.
         else:
             selection = lib.items(ui.decargs(args))
             paths = [item.path for item in selection]
-            item_type = 'track'
 
         if relative_to:
             paths = [relpath(path, relative_to) for path in paths]
 
-        if not selection:
+        return paths
+
+    def _get_remote_paths(self, opts, args):
+        try:
+            import requests
+        except ImportError:
+            ui.print_(ui.colorize('text_warning',
+                                  u'requests library must be installed to query remote servers'))
+            return
+
+        server_url = config['play']['servers'][opts.server].get(str)
+        if not server_url:
+            ui.print_(ui.colorize('text_warning',
+                                  u'Can\'t find URL for server labeled {0}'.format(opts.server)))
+            return
+
+        query = ' '.join(ui.decargs(args))
+
+        if opts.album:
+            url = server_url + '/album/query/' + query
+            album_response = self._query_remote_server(url)
+
+            if not album_response['results']:
+                return []
+
+            album_id = str(album_response['results'][0]['id'])
+            url = server_url + '/item/query/' + 'album_id:' + album_id
+            item_response = self._query_remote_server(url)
+        else:
+            if args:
+                url = server_url + '/item/query/' + query
+            else:
+                url = server_url + '/item/' + query
+            item_response = self._query_remote_server(url)
+
+        selection = [
+            server_url + '/item/' + str(result['id']) + '/file'
+            for result in
+            item_response.get('results') or item_response.get('items') or []
+        ]
+        return [link.encode() for link in selection]
+
+    def _query_remote_server(self, url):
+        self._log.debug('Querying URL {0}'.format(url))
+        response = requests.get(url).json()
+        self._log.debug('Response: {0}'.format(response))
+        return response
+
+    def _play_command(self, lib, opts, args):
+        """The CLI command function for `beet play`. Create a list of paths
+        from query, determine if tracks or albums are to be played.
+        """
+        if opts.server:
+            if opts.album:
+                item_type = 'remote album'
+            else:
+                item_type = 'remote track'
+            paths = self._get_remote_paths(opts, args)
+        else:
+            if opts.album:
+                item_type = 'album'
+            else:
+                item_type = 'track'
+            paths = self._get_local_paths(lib, opts, args)
+
+        if not paths:
             ui.print_(ui.colorize('text_warning',
                                   u'No {0} to play.'.format(item_type)))
             return
@@ -132,10 +200,8 @@ class PlayPlugin(BeetsPlugin):
 
         # Check if the selection exceeds configured threshold. If True,
         # cancel, otherwise proceed with play command.
-        if opts.yes or not self._exceeds_threshold(
-                selection, command_str, open_args, item_type):
-            play(command_str, selection, paths, open_args, self._log,
-                 item_type)
+        if opts.yes or not self._exceeds_threshold(paths, item_type):
+            play(command_str, paths, open_args, self._log, item_type)
 
     def _command_str(self, args=None):
         """Create a command string from the config command and optional args.
@@ -161,8 +227,7 @@ class PlayPlugin(BeetsPlugin):
         else:
             return [self._create_tmp_playlist(paths)]
 
-    def _exceeds_threshold(self, selection, command_str, open_args,
-                           item_type='track'):
+    def _exceeds_threshold(self, selection, item_type='track'):
         """Prompt user whether to abort if playlist exceeds threshold. If
         True, cancel playback. If False, execute play command.
         """

@@ -1,8 +1,9 @@
 Play Plugin
 ===========
 
-The ``play`` plugin allows you to pass the results of a query to a music
-player in the form of an m3u playlist or paths on the command line.
+The ``play`` plugin allows you to query local beets library or remote ``beet web`` instance
+and pass the results to a music player of your choice in the form of a temporary m3u playlist
+or paths on the command line.
 
 Command Line Usage
 ------------------
@@ -13,9 +14,9 @@ a query. The command will create a temporary m3u file and open it using an
 appropriate application. You can query albums instead of tracks using the
 ``-a`` option.
 
-By default, the playlist is opened using the ``open`` command on OS X,
-``xdg-open`` on other Unixes, and ``start`` on Windows. To configure the
-command, you can use a ``play:`` section in your configuration file::
+By default, the playlist is opened using the ``open`` command on macOS,
+``xdg-open`` on Linux and other UNIX-like operating systems, and ``start`` on Windows.
+To configure the command, you can use a ``play:`` section in your configuration file::
 
     play:
         command: /Applications/VLC.app/Contents/MacOS/VLC
@@ -28,6 +29,17 @@ would on the command-line)::
 
 While playing you'll be able to interact with the player if it is a
 command-line oriented, and you'll get its output in real time.
+
+To query remote ``beet web`` instance instead of local library you need to add server URL
+to config file like this::
+
+    play:
+        servers:
+            home_nas: http://192.168.1.64:8337
+
+Then you can query this server the same way as local library::
+
+    $ beet play -s home_nas -a God Hates Us All
 
 Interactive Usage
 -----------------
@@ -65,6 +77,9 @@ configuration file. The available options are:
 - **bom**: Set whether or not a UTF-8 Byte Order Mark should be emitted into
   the m3u file. If you're using foobar2000 or Winamp, this is needed.
   Default: ``no``.
+- **servers**: Mapping of labels and URLs or remote ``beet web`` plugin instances
+  to query using ``-s`` option.
+  Default: ``local: http://127.0.0.1:8337``.
 
 Optional Arguments
 ------------------
@@ -101,6 +116,9 @@ playlist.
 The ``--yes`` (or ``-y``) flag to the ``play`` command will skip the warning
 message if you choose to play more items than the **warning_threshold** 
 value usually allows.
+
+The ``--server`` (or ``-s``) argument followed with server label allows you to
+query configured remote ``beet web`` plugin instance instead of local library.
 
 Note on the Leakage of the Generated Playlists
 ----------------------------------------------
