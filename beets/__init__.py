@@ -33,12 +33,11 @@ class IncludeLazyConfig(confuse.LazyConfig):
         try:
             for view in self['include']:
                 filename = view.as_filename()
-                if os.path.isfile(filename):
-                    self.set_file(filename)
-                else:
-                    raise FileNotFoundError("Warning! Configuration file({0}) "
-                                            "does not exist!".format(filename))
+                self.set_file(filename)
         except confuse.NotFoundError:
+            pass
+        except confuse.ConfigReadError as err:
+            print("Warning! Missing configuration file! {}".format(err.reason))
             pass
 
 
