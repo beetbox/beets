@@ -299,6 +299,10 @@ Here are a few of the plugins written by the beets community:
 
 * `beets-mosaic`_ generates a montage of a mosiac from cover art.
 
+* `beets-bpmanalyser`_ analyses songs and calculates their tempo (BPM).
+
+* `beets-goingrunning`_ copies songs to external device to go with your running session.
+
 .. _beets-barcode: https://github.com/8h2a/beets-barcode
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
@@ -321,3 +325,5 @@ Here are a few of the plugins written by the beets community:
 .. _beets-ydl: https://github.com/vmassuchetto/beets-ydl
 .. _beet-summarize: https://github.com/steven-murray/beet-summarize
 .. _beets-mosaic: https://github.com/SusannaMaria/beets-mosaic
+.. _beets-bpmanalyser: https://github.com/adamjakab/BeetsPluginBpmAnalyser
+.. _beets-goingrunning: https://pypi.org/project/beets-goingrunning/

@@ -6,7 +6,13 @@ Changelog
 
 New features:
 
-* :doc:`plugins/discogs` now adds two extra fields: `discogs_labelid` and 
+* :doc:`plugins/keyfinder`: Added support for `keyfinder-cli`_
+  Thanks to :user:`BrainDamage`.
+* :doc:`plugins/fetchart`: Added a new ``high_resolution`` config option to
+  allow downloading of higher resolution iTunes artwork (at the expense of
+  file size).
+  :bug: `3391`
+* :doc:`plugins/discogs` now adds two extra fields: `discogs_labelid` and
   `discogs_artistid`
   :bug: `3413`
 * :doc:`/plugins/export`: Added new ``-f`` (``--format``) flag; 
@@ -104,6 +110,9 @@ New features:
 
 Fixes:
 
+* :doc:`/plugins/fetchart`: Fixed a bug that caused fetchart to not take 
+  environment variables such as proxy servers into account when making requests
+  :bug:`3450`
 * :doc:`/plugins/inline`: In function-style field definitions that refer to
   flexible attributes, values could stick around from one function invocation
   to the next. This meant that, when displaying a list of objects, later
@@ -145,6 +154,12 @@ Fixes:
 * :doc:`/plugins/bpd`: Fix the transition to next track when in consume mode.
   Thanks to :user:`aereaux`.
   :bug:`3437`
+* :doc:`/plugins/lyrics`: Fix a corner-case with Genius lowercase artist names
+  :bug:`3446`
+* :doc:`/plugins/replaygain`: Support ``bs1770gain`` v0.6.0 and up
+  :bug:`3480`
+* :doc:`/plugins/parentwork`: Don't save tracks when nothing has changed.
+  :bug:`3492`
 
 For plugin developers:
 
@@ -200,6 +215,7 @@ For packagers:
 .. _Confuse: https://github.com/beetbox/confuse
 .. _works: https://musicbrainz.org/doc/Work
 .. _Deezer: https://www.deezer.com
+.. _keyfinder-cli: https://github.com/EvanPurkhiser/keyfinder-cli
 
 
 1.4.9 (May 30, 2019)
