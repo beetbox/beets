@@ -162,6 +162,7 @@ Fixes:
   :bug:`3492`
 * Added a warning when configuration files defined in the `include` directive
   of the configuration file fail to be imported.
+  :bug:`3498`
 
 For plugin developers:
 
