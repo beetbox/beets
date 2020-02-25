@@ -160,6 +160,8 @@ Fixes:
   :bug:`3480`
 * :doc:`/plugins/parentwork`: Don't save tracks when nothing has changed.
   :bug:`3492`
+* Added a warning when configuration files defined in the `include` directive
+  of the configuration file fail to be imported.
 
 For plugin developers:
 
