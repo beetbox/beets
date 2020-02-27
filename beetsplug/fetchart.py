@@ -135,7 +135,8 @@ class Candidate(object):
 
     def resize(self, plugin):
         if plugin.maxwidth and self.check == self.CANDIDATE_DOWNSCALE:
-            self.path = ArtResizer.shared.resize(plugin.maxwidth, self.path)
+            self.path = ArtResizer.shared.resize(plugin.maxwidth, self.path,
+                                                 quality=plugin.quality)
 
 
 def _logged_get(log, *args, **kwargs):
@@ -777,6 +778,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'auto': True,
             'minwidth': 0,
             'maxwidth': 0,
+            'quality': 0,
             'enforce_ratio': False,
             'cautious': False,
             'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
@@ -793,6 +795,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
         self.minwidth = self.config['minwidth'].get(int)
         self.maxwidth = self.config['maxwidth'].get(int)
+        self.quality = self.config['quality'].get(int)
 
         # allow both pixel and percentage-based margin specifications
         self.enforce_ratio = self.config['enforce_ratio'].get(
@@ -922,9 +925,10 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
     def art_for_album(self, album, paths, local_only=False):
         """Given an Album object, returns a path to downloaded art for the
         album (or None if no art is found). If `maxwidth`, then images are
-        resized to this maximum pixel size. If `local_only`, then only local
-        image files from the filesystem are returned; no network requests
-        are made.
+        resized to this maximum pixel size. If `quality` then resized images
+        are saved at the specified quality level. If `local_only`, then only
+        local image files from the filesystem are returned; no network
+        requests are made.
         """
         out = None
 

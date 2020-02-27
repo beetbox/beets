@@ -42,6 +42,11 @@ file. The available options are:
 - **maxwidth**: A maximum image width to downscale fetched images if they are
   too big. The resize operation reduces image width to at most ``maxwidth``
   pixels. The height is recomputed so that the aspect ratio is preserved.
+- **quality**: The quality level to use when encoding the image file when
+  downscaling to ``maxwidth``. Can be a number from 1-100 or 0 to disable.
+  Higher numbers result in better image quality while lower numbers will result
+  in smaller files. 65-75 is a good starting point.
+  Default: 0 (disabled)
 - **enforce_ratio**: Only images with a width:height ratio of 1:1 are
   considered as valid album art candidates if set to ``yes``.
   It is also possible to specify a certain deviation to the exact ratio to
