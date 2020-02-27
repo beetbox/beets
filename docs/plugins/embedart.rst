@@ -58,13 +58,12 @@ file. The available options are:
   the aspect ratio is preserved. See also :ref:`image-resizing` for further
   caveats about image resizing.
   Default: 0 (disabled).
-- **quality**: The quality level to use when encoding the image file when
-  downscaling to ``maxwidth``. Can be a number from 1-100 or 0 to disable.
-  Higher numbers result in better image quality while lower numbers will result
-  in smaller files. 65-75 is a good starting point. The default behaviour
-  depends on the method used to scale the images. ImageMagick tries to estimate
-  the input image quality and uses 92 if it cannot be determined. Pillow
-  defaults to 75.
+- **quality**: The JPEG quality level to use when compressing images (when
+  ``maxwidth`` is set). This should be either a number from 1 to 100 or 0 to
+  use the default quality. 65–75 is usually a good starting point. The default
+  behavior depends on the imaging tool used for scaling: ImageMagick tries to
+  estimate the input image quality and uses 92 if it cannot be determined, and
+  PIL defaults to 75.
   Default: 0 (disabled)
 - **remove_art_file**: Automatically remove the album art file for the album
   after it has been embedded. This option is best used alongside the

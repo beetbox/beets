@@ -6,7 +6,7 @@ Changelog
 
 New features:
 
-* :doc:`plugins/fetchart`: and :doc:`plugins/embedart`: Added a new ``quality``
+* :doc:`plugins/fetchart` and :doc:`plugins/embedart`: Added a new ``quality``
   option that controls the quality of the image output when the image is
   resized.
 * :doc:`plugins/keyfinder`: Added support for `keyfinder-cli`_
