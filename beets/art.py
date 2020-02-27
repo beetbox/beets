@@ -51,8 +51,8 @@ def get_art(log, item):
 
 
 def embed_item(log, item, imagepath, maxwidth=None, itempath=None,
-               compare_threshold=0, ifempty=False, as_album=False,
-               id3v23=None):
+               compare_threshold=0, ifempty=False, as_album=False, id3v23=None,
+               quality=0):
     """Embed an image into the item's media file.
     """
     # Conditions and filters.
@@ -64,7 +64,7 @@ def embed_item(log, item, imagepath, maxwidth=None, itempath=None,
         log.info(u'media file already contained art')
         return
     if maxwidth and not as_album:
-        imagepath = resize_image(log, imagepath, maxwidth)
+        imagepath = resize_image(log, imagepath, maxwidth, quality)
 
     # Get the `Image` object from the file.
     try:
@@ -84,8 +84,8 @@ def embed_item(log, item, imagepath, maxwidth=None, itempath=None,
     item.try_write(path=itempath, tags={'images': [image]}, id3v23=id3v23)
 
 
-def embed_album(log, album, maxwidth=None, quiet=False,
-                compare_threshold=0, ifempty=False):
+def embed_album(log, album, maxwidth=None, quiet=False, compare_threshold=0,
+                ifempty=False, quality=0):
     """Embed album art into all of the album's items.
     """
     imagepath = album.artpath
@@ -97,20 +97,23 @@ def embed_album(log, album, maxwidth=None, quiet=False,
                  displayable_path(imagepath), album)
         return
     if maxwidth:
-        imagepath = resize_image(log, imagepath, maxwidth)
+        imagepath = resize_image(log, imagepath, maxwidth, quality)
 
     log.info(u'Embedding album art into {0}', album)
 
     for item in album.items():
-        embed_item(log, item, imagepath, maxwidth, None,
-                   compare_threshold, ifempty, as_album=True)
+        embed_item(log, item, imagepath, maxwidth, None, compare_threshold,
+                   ifempty, as_album=True, quality=quality)
 
 
-def resize_image(log, imagepath, maxwidth):
-    """Returns path to an image resized to maxwidth.
+def resize_image(log, imagepath, maxwidth, quality):
+    """Returns path to an image resized to maxwidth and encoded with the
+    specified quality level.
     """
-    log.debug(u'Resizing album art to {0} pixels wide', maxwidth)
-    imagepath = ArtResizer.shared.resize(maxwidth, syspath(imagepath))
+    log.debug(u'Resizing album art to {0} pixels wide and encoding at quality \
+              level {1}', maxwidth, quality)
+    imagepath = ArtResizer.shared.resize(maxwidth, syspath(imagepath),
+                                         quality=quality)
     return imagepath
 
 
