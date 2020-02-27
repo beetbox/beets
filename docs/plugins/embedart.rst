@@ -59,9 +59,12 @@ file. The available options are:
   caveats about image resizing.
   Default: 0 (disabled).
 - **quality**: The quality level to use when encoding the image file when
-  downscaling to ``maxwidth``. The default behaviour depends on the method used
-  to scale the images. ImageMagick tries to estimate the input image quality and
-  uses 92 if it cannot be determined. Pillow defaults to 75.
+  downscaling to ``maxwidth``. Can be a number from 1-100 or 0 to disable.
+  Higher numbers result in better image quality while lower numbers will result
+  in smaller files. 65-75 is a good starting point. The default behaviour
+  depends on the method used to scale the images. ImageMagick tries to estimate
+  the input image quality and uses 92 if it cannot be determined. Pillow
+  defaults to 75.
   Default: 0 (disabled)
 - **remove_art_file**: Automatically remove the album art file for the album
   after it has been embedded. This option is best used alongside the
