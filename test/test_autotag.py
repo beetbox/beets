@@ -21,6 +21,8 @@ import re
 import copy
 import unittest
 
+from beets.dbcore.types import Integer, PaddedInt
+
 from test import _common
 from beets import autotag
 from beets.autotag import match
@@ -91,7 +93,10 @@ class PluralityTest(_common.TestCase):
                  for i in range(5)]
         likelies, _ = match.current_metadata(items)
         for f in fields:
-            self.assertEqual(likelies[f], '%s_1' % f)
+            if type(items[0]._fields[f]) in (Integer, PaddedInt):
+                self.assertEqual(likelies[f], 0)
+            else:
+                self.assertEqual(likelies[f], '%s_1' % f)
 
 
 def _make_item(title, track, artist=u'some artist'):
