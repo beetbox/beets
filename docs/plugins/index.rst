@@ -78,6 +78,7 @@ following to your configuration::
    export
    fetchart
    filefilter
+   fish
    freedesktop
    fromfilename
    ftintitle
@@ -184,6 +185,7 @@ Interoperability
 
 * :doc:`badfiles`: Check audio file integrity.
 * :doc:`embyupdate`: Automatically notifies `Emby`_ whenever the beets library changes.
+* :doc:`fish`: Adds `Fish shell`_ tab autocompletion to ``beet`` commands.
 * :doc:`importfeeds`: Keep track of imported files via ``.m3u`` playlist file(s) or symlinks.
 * :doc:`ipfs`: Import libraries from friends and get albums from them via ipfs.
 * :doc:`kodiupdate`: Automatically notifies `Kodi`_ whenever the beets library
@@ -203,6 +205,7 @@ Interoperability
 
 
 .. _Emby: https://emby.media
+.. _Fish shell: https://fishshell.com/
 .. _Plex: https://plex.tv
 .. _Kodi: https://kodi.tv
 .. _Sonos: https://sonos.com
