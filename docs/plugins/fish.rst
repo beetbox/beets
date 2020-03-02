@@ -1,43 +1,52 @@
-Fish plugins
-============
-
-The ``fish`` plugin adds a ``beet fish`` command that will create a fish
-autocompletion file ``beet.fish`` in ``~/.config/fish/completions``
-This makes `fish`_ - a different shell - autocomplete commands for beet.
-
-.. _fish: http://fishshell.com/
-
-Configuring
+Fish Plugin
 ===========
 
-This will only make sense if you have the `fish`_  shell installed.
-Enable the ``fish`` plugin (see :ref:`using-plugins`).
-If you install or disable plugins, run ``beet fish`` again. It takes the values
-from the plugins you have enabled.
+The ``fish`` plugin adds a ``beet fish`` command that creates a `Fish shell`_
+tab-completion file named ``beet.fish`` in ``~/.config/fish/completions``.
+This enables tab-completion of ``beet`` commands for the `Fish shell`_.
 
-Using
-=====
+.. _Fish shell: https://fishshell.com/
 
-Type ``beet fish``. Hit ``enter`` and will see the file ``beet.fish`` appear
-in ``.config/fish/completions`` in your home folder.
+Configuration
+-------------
 
-For a  not-fish user: After you type ``beet`` in your fish-prompt and ``TAB``
-you will get the autosuggestions for all your plugins/commands and
-typing ``-`` will get you all the options available to you.
-If you type ``beet ls`` and you ``TAB`` you will get a list of all the album/item
-fields that beet offers. Start typing ``genr`` ``TAB`` and fish completes
-``genre:`` ... ready to type on...
+Enable the ``fish`` plugin (see :ref:`using-plugins`) on a system running the
+`Fish shell`_.
+
+Usage
+-----
+
+Type ``beet fish`` to generate the ``beet.fish`` completions file at:
+``~/.config/fish/completions/``. If you later install or disable plugins, run
+``beet fish`` again to update the completions based on the enabled plugins.
+
+For users not accustomed to tab completion… After you type ``beet`` followed by
+a space in your shell prompt and then the ``TAB`` key, you should see a list of
+the beets commands (and their abbreviated versions) that can be invoked in your
+current environment. Similarly, typing ``beet -<TAB>`` will show you all the
+option flags available to you, which also applies to subcommands such as
+``beet import -<TAB>``. If you type ``beet ls`` followed by a space and then the
+and the ``TAB`` key, you will see a list of all the album/track fields that can
+be used in beets queries. For example, typing ``beet ls ge<TAB>`` will complete
+to ``genre:`` and leave you ready to type the rest of your query.
 
 Options
-=======
+-------
 
-The default is that you get autocompletion for all the album/item fields.
-You can disable that with ``beet fish -f`` In that case you only get all
-the plugins/commands/options. Everything else you type in yourself.
-If you want completion for a specific album/item field, you can get that like
-this ``beet fish -e genre`` or ``beet fish -e genre -e albumartist`` .
-Then when you type at your fish-prompt ``beet list genre:`` and you ``TAB``
-you will get a list of all your genres to choose from.
-REMEMBER : we get all the values of these fields and put them in the completion
-file. It is not meant to be a replacement of your database. In other words :
-speed and size matters.
+In addition to beets commands, plugin commands, and option flags, the generated
+completions also include by default all the album/track fields. If you only want
+the former and do not want the album/track fields included in the generated
+completions, use ``beet fish -f`` to only generate completions for beets/plugin
+commands and option flags.
+
+If you want generated completions to also contain album/track field *values* for
+the items in your library, you can use the ``-e`` or ``--extravalues`` option.
+For example: ``beet fish -e genre`` or ``beet fish -e genre -e albumartist``
+In the latter case, subsequently typing ``beet list genre: <TAB>`` will display
+a list of all the genres in your library and ``beet list albumartist: <TAB>``
+will show a list of the album artists in your library. Keep in mind that all of
+these values will be put into the generated completions file, so use this option
+with care when specified fields contain a large number of values. Libraries with,
+for example, very large numbers of genres/artists may result in higher memory
+utilization, completion latency, et cetera. This option is not meant to replace
+database queries altogether.
