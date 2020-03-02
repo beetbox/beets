@@ -110,7 +110,7 @@ class FishPlugin(BeetsPlugin):
         # Collect commands, their aliases, and their help text
         cmd_names_help = []
         for cmd in beetcmds:
-            names = ["\?" if alias == "?" else alias for alias in cmd.aliases]
+            names = [alias for alias in cmd.aliases]
             names.append(cmd.name)
             for name in names:
                 cmd_names_help.append((name, cmd.help))
@@ -229,7 +229,7 @@ def get_all_commands(beetcmds):
     # Formatting for Fish to complete command options
     word = ""
     for cmd in beetcmds:
-        names = ["\?" if alias == "?" else alias for alias in cmd.aliases]
+        names = [alias for alias in cmd.aliases]
         names.append(cmd.name)
         for name in names:
             word += "\n"
