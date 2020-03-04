@@ -6,6 +6,7 @@ Changelog
 
 New features:
 
+* A new :doc:`/plugins/fish` adds `Fish shell`_ tab autocompletion to beets
 * :doc:`plugins/fetchart` and :doc:`plugins/embedart`: Added a new ``quality``
   option that controls the quality of the image output when the image is
   resized.
@@ -217,6 +218,7 @@ For packagers:
   the test may no longer be necessary.
 * This version drops support for Python 3.4.
 
+.. _Fish shell: https://fishshell.com/
 .. _MediaFile: https://github.com/beetbox/mediafile
 .. _Confuse: https://github.com/beetbox/confuse
 .. _works: https://musicbrainz.org/doc/Work
