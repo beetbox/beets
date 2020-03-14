@@ -21,8 +21,6 @@ import re
 import copy
 import unittest
 
-from beets.dbcore.types import Integer, PaddedInt
-
 from test import _common
 from beets import autotag
 from beets.autotag import match
