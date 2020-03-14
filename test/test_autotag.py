@@ -93,7 +93,7 @@ class PluralityTest(_common.TestCase):
                  for i in range(5)]
         likelies, _ = match.current_metadata(items)
         for f in fields:
-            if type(items[0]._fields[f]) in (Integer, PaddedInt):
+            if isinstance(likelies[f], int):
                 self.assertEqual(likelies[f], 0)
             else:
                 self.assertEqual(likelies[f], '%s_1' % f)
