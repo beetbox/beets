@@ -458,11 +458,12 @@ def copy(path, dest, replace=False):
     if samefile(path, dest):
         return
     path = syspath(path)
+    original_dest = dest
     dest = syspath(dest)
     if not replace and os.path.exists(dest):
         raise FilesystemError(u'file exists', 'copy', (path, dest))
+    mkdirall(original_dest)
     try:
-        mkdirall(dest)
         shutil.copyfile(path, dest)
     except (OSError, IOError) as exc:
         raise FilesystemError(exc, 'copy', (path, dest),
@@ -480,13 +481,14 @@ def move(path, dest, replace=False):
     if samefile(path, dest):
         return
     path = syspath(path)
+    original_dest = dest
     dest = syspath(dest)
     if os.path.exists(dest) and not replace:
         raise FilesystemError(u'file exists', 'rename', (path, dest))
 
     # First, try renaming the file.
+    mkdirall(original_dest)
     try:
-        mkdirall(dest)
         os.rename(path, dest)
     except OSError:
         # Otherwise, copy and delete the original.
