@@ -789,7 +789,7 @@ class NoneQueryTest(unittest.TestCase, TestHelper):
 
     def test_query_repr(self):
         fld = u'rg_track_gain'
-        if sys.version_info <= (2, 7):
+        if sys.version_info <= (3, 0):
             self.assertEquals("NoneQuery('u{}', True)".format(fld),
                               str(NoneQuery(fld)))
             self.assertEquals("NoneQuery('u{}', True)".format(fld),
