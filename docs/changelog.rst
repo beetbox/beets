@@ -168,8 +168,9 @@ Fixes:
   of the configuration file fail to be imported.
   :bug:`3498`
 * Added the normalize method to the dbcore.types.INTEGER class which now
-  properly returns integer values.
-  :bug:`762` and :bug:`3507`
+  properly returns integer values, which should avoid problems where fields
+  like ``bpm`` would sometimes store non-integer values.
+  :bug:`762` :bug:`3507` :bug:`3508`
 
 For plugin developers:
 
