@@ -156,10 +156,9 @@ class NoneQuery(FieldQuery):
     def col_clause(self):
         return self.field + " IS NULL", ()
 
-    @classmethod
-    def match(cls, item):
+    def match(self, item):
         try:
-            return item[cls.field] is None
+            return item.get(self.field) is None
         except KeyError:
             return True
 
