@@ -158,7 +158,8 @@ class NoneQuery(FieldQuery):
         return self.field + " IS NULL", ()
 
     def match(self, item):
-        return self.value_match(self.pattern, item.get(self.field, default=None))
+        return self.value_match(self.pattern,
+                                item.get(self.field, default=None))
 
     def value_match(self, pattern, value):
         return value is pattern
