@@ -167,6 +167,9 @@ Fixes:
 * Added a warning when configuration files defined in the `include` directive
   of the configuration file fail to be imported.
   :bug:`3498`
+* Automatically creates destination directories as needed when copying/moving files,   
+  so including directories as part of eg art_filename no longer lead to errors.
+  Thanks to :user:`DurvalMenezes`
 
 For plugin developers:
 
