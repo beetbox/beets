@@ -162,6 +162,10 @@ class NoneQuery(FieldQuery):
         except KeyError:
             return True
 
+    @classmethod
+    def value_match(cls, pattern, value):
+        return pattern == value
+
     def __repr__(self):
         return "{0.__class__.__name__}({0.field!r}, {0.fast})".format(self)
 
