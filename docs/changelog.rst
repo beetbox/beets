@@ -167,6 +167,9 @@ Fixes:
 * Added a warning when configuration files defined in the `include` directive
   of the configuration file fail to be imported.
   :bug:`3498`
+* Added the normalize method to the dbcore.types.INTEGER class which now
+  properly returns integer values.
+  :bug:`762` and :bug:`3507`
 
 For plugin developers:
 
