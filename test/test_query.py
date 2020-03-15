@@ -788,10 +788,12 @@ class NoneQueryTest(unittest.TestCase, TestHelper):
         self.assertInResult(item, matched)
 
     def test_query_repr(self):
-        fld = u'rg_track_gain'
-        self.assertEquals("NoneQuery('{}', True)".format(str(fld)), str(NoneQuery(fld)))
-        self.assertEquals("NoneQuery('{}', True)".format(str(fld)), str(NoneQuery(fld, fast=True)))
-        self.assertEquals("NoneQuery('{}', False)".format(str(fld)), str(NoneQuery(fld, fast=False)))
+        self.assertEquals("NoneQuery('rg_track_gain', True)",
+                          str(NoneQuery(u'rg_track_gain')))
+        self.assertEquals("NoneQuery('rg_track_gain', True)",
+                          str(NoneQuery(u'rg_track_gain', fast=True)))
+        self.assertEquals("NoneQuery('rg_track_gain', False)",
+                          str(NoneQuery(u'rg_track_gain', fast=False)))
 
 
 class NotQueryMatchTest(_common.TestCase):
