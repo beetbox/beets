@@ -157,10 +157,7 @@ class NoneQuery(FieldQuery):
         return self.field + " IS NULL", ()
 
     def match(self, item):
-        try:
-            return item.get(self.field) is None
-        except KeyError:
-            return True
+        return item.get(self.field, default=None) is None
 
     @classmethod
     def value_match(cls, pattern, value):
