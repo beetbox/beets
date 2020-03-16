@@ -459,10 +459,10 @@ def copy(path, dest, replace=False):
         return
     if not replace and os.path.exists(syspath(dest)):
         raise FilesystemError(u'file exists', 'copy', (path, dest))
-    
-    #Create all subdirs in path to destination, if they don't already exist
+
+    # Create all subdirs in path to destination, if they don't already exist
     mkdirall(dest)
-    
+
     try:
         shutil.copyfile(syspath(path), syspath(dest))
     except (OSError, IOError) as exc:
@@ -483,9 +483,9 @@ def move(path, dest, replace=False):
     if not replace and os.path.exists(syspath(dest)):
         raise FilesystemError(u'file exists', 'rename', (path, dest))
 
-    #Create all subdirs in path to destination, if they don't already exist
+    # Create all subdirs in path to destination, if they don't already exist
     mkdirall(dest)
-    
+
     # First, try renaming the file.
     try:
         os.rename(syspath(path), syspath(dest))
