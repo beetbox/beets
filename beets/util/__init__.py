@@ -457,14 +457,14 @@ def copy(path, dest, replace=False):
     """
     if samefile(path, dest):
         return
-    path = syspath(path)
-    original_dest = dest
-    dest = syspath(dest)
-    if not replace and os.path.exists(dest):
+    if not replace and os.path.exists(syspath(dest)):
         raise FilesystemError(u'file exists', 'copy', (path, dest))
-    mkdirall(original_dest)
+    
+    #Create all subdirs in path to destination, if they don't already exist
+    mkdirall(dest)
+    
     try:
-        shutil.copyfile(path, dest)
+        shutil.copyfile(syspath(path), syspath(dest))
     except (OSError, IOError) as exc:
         raise FilesystemError(exc, 'copy', (path, dest),
                               traceback.format_exc())
@@ -480,21 +480,20 @@ def move(path, dest, replace=False):
     """
     if samefile(path, dest):
         return
-    path = syspath(path)
-    original_dest = dest
-    dest = syspath(dest)
-    if os.path.exists(dest) and not replace:
+    if not replace and os.path.exists(syspath(dest)):
         raise FilesystemError(u'file exists', 'rename', (path, dest))
 
+    #Create all subdirs in path to destination, if they don't already exist
+    mkdirall(dest)
+    
     # First, try renaming the file.
-    mkdirall(original_dest)
     try:
-        os.rename(path, dest)
+        os.rename(syspath(path), syspath(dest))
     except OSError:
         # Otherwise, copy and delete the original.
         try:
-            shutil.copyfile(path, dest)
-            os.remove(path)
+            shutil.copyfile(syspath(path), syspath(dest))
+            os.remove(syspath(path))
         except (OSError, IOError) as exc:
             raise FilesystemError(exc, 'move', (path, dest),
                                   traceback.format_exc())
