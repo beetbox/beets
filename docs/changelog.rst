@@ -167,8 +167,7 @@ Fixes:
 * Added a warning when configuration files defined in the `include` directive
   of the configuration file fail to be imported.
   :bug:`3498`
-* Automatically creates destination directories as needed when copying/moving files,   
-  so including directories as part of eg art_filename no longer lead to errors.
+* Enhanced code legibility/consistency in `beets/__init__.py`
   Thanks to :user:`DurvalMenezes`.
   :bug:`3514`
 * Added the normalize method to the dbcore.types.INTEGER class which now
