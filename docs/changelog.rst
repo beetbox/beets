@@ -169,7 +169,8 @@ Fixes:
   :bug:`3498`
 * Automatically creates destination directories as needed when copying/moving files,   
   so including directories as part of eg art_filename no longer lead to errors.
-  Thanks to :user:`DurvalMenezes`
+  Thanks to :user:`DurvalMenezes`.
+  :bug:`3514`
 * Added the normalize method to the dbcore.types.INTEGER class which now
   properly returns integer values, which should avoid problems where fields
   like ``bpm`` would sometimes store non-integer values.
