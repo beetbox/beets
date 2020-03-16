@@ -171,6 +171,9 @@ Fixes:
   properly returns integer values, which should avoid problems where fields
   like ``bpm`` would sometimes store non-integer values.
   :bug:`762` :bug:`3507` :bug:`3508`
+* Removed ``@classmethod`` decorator from dbcore.query.NoneQuery.match method
+  failing with AttributeError when called. It is now an instance method.
+  :bug:`3516` :bug:`3517`
 
 For plugin developers:
 
