@@ -167,7 +167,7 @@ Fixes:
 * Added a warning when configuration files defined in the `include` directive
   of the configuration file fail to be imported.
   :bug:`3498`
-* Enhanced code legibility/consistency in `beets/__init__.py`
+* Enhanced code legibility/consistency in `util/__init__.py`
   Thanks to :user:`DurvalMenezes`.
   :bug:`3514`
 * Added the normalize method to the dbcore.types.INTEGER class which now
