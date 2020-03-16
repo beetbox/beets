@@ -152,17 +152,12 @@ class NoneQuery(FieldQuery):
 
     def __init__(self, field, fast=True):
         super(NoneQuery, self).__init__(field, None, fast)
-        self.pattern = None
 
     def col_clause(self):
         return self.field + " IS NULL", ()
 
     def match(self, item):
-        return self.value_match(self.pattern,
-                                item.get(self.field, default=None))
-
-    def value_match(self, pattern, value):
-        return value is pattern
+        return item.get(self.field, default=None) is None
 
     def __repr__(self):
         return "{0.__class__.__name__}({0.field!r}, {0.fast})".format(self)

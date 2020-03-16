@@ -787,23 +787,6 @@ class NoneQueryTest(unittest.TestCase, TestHelper):
         matched = self.lib.items(NoneQuery(u'rg_track_gain', fast=False))
         self.assertInResult(item, matched)
 
-    def test_query_repr(self):
-        fld = u'rg_track_gain'
-        if sys.version_info <= (3, 0):
-            self.assertEquals("NoneQuery(u'{}', True)".format(fld),
-                              str(NoneQuery(fld)))
-            self.assertEquals("NoneQuery(u'{}', True)".format(fld),
-                              str(NoneQuery(fld, fast=True)))
-            self.assertEquals("NoneQuery(u'{}', False)".format(fld),
-                              str(NoneQuery(fld, fast=False)))
-        else:
-            self.assertEquals("NoneQuery('{}', True)".format(fld),
-                              str(NoneQuery(fld)))
-            self.assertEquals("NoneQuery('{}', True)".format(fld),
-                              str(NoneQuery(fld, fast=True)))
-            self.assertEquals("NoneQuery('{}', False)".format(fld),
-                              str(NoneQuery(fld, fast=False)))
-
 
 class NotQueryMatchTest(_common.TestCase):
     """Test `query.NotQuery` matching against a single item, using the same
