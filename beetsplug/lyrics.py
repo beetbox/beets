@@ -436,6 +436,50 @@ class LyricsWiki(SymbolsReplaced):
                 return lyrics
 
 
+class Tekstowo(Backend):
+    # Fetch lyrics from Tekstowo.pl.
+
+    BASE_URL = 'http://www.tekstowo.pl'
+    URL_PATTERN = BASE_URL + '/wyszukaj.html?search-title=%s&search-artist=%s'
+
+    def fetch(self, artist, title):
+        url = self.build_url(title, artist)
+        search_results = self.fetch_url(url)
+        song_page_url = self.parse_search_results(search_results)
+
+        if not song_page_url:
+            return None
+
+        song_page_html = self.fetch_url(song_page_url)
+        return self.extract_lyrics(song_page_html)
+
+    def parse_search_results(self, html):
+        if not HAS_BEAUTIFUL_SOUP:
+            return None
+
+        html = _scrape_strip_cruft(html)
+        html = _scrape_merge_paragraphs(html)
+
+        try:
+            html = BeautifulSoup(html, "html.parser")
+        except HTMLParseError:
+            return None
+
+        href = html.find("div", class_="content").find_all("div", class_="box-przeboje")[0].find('a').get('href')
+        return self.BASE_URL + href
+
+    def extract_lyrics(self, html):
+        html = _scrape_strip_cruft(html)
+        html = _scrape_merge_paragraphs(html)
+
+        try:
+            html = BeautifulSoup(html, "html.parser")
+        except HTMLParseError:
+            return None
+
+        return html.find("div", class_="song-text").get_text()
+
+
 def remove_credits(text):
     """Remove first/last line of text if it contains the word 'lyrics'
     eg 'Lyrics by songsdatabase.com'
@@ -627,12 +671,13 @@ class Google(Backend):
 
 
 class LyricsPlugin(plugins.BeetsPlugin):
-    SOURCES = ['google', 'lyricwiki', 'musixmatch', 'genius']
+    SOURCES = ['google', 'lyricwiki', 'musixmatch', 'genius', 'tekstowo']
     SOURCE_BACKENDS = {
         'google': Google,
         'lyricwiki': LyricsWiki,
         'musixmatch': MusiXmatch,
         'genius': Genius,
+        'tekstowo': Tekstowo,
     }
 
     def __init__(self):
@@ -692,6 +737,13 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 u'installed, so the source is disabled.'
             )
             sources.remove('genius')
+
+        if 'tekstowo' in sources and not HAS_BEAUTIFUL_SOUP:
+            self._log.debug(
+                u'The Tekstowo.pl backend requires BeautifulSoup, which is not '
+                u'installed, so the source is disabled.'
+            )
+            sources.remove('tekstowo')
 
         self.config['bing_lang_from'] = [
             x.lower() for x in self.config['bing_lang_from'].as_str_seq()]
