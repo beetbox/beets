@@ -251,6 +251,8 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
         dict(artist=u'Santana', title=u'Black magic woman',
              backend=lyrics.MusiXmatch),
         dict(DEFAULT_SONG, backend=lyrics.Genius),
+        dict(artist=u'Boy In Space', title=u'u n eye',
+             backend=lyrics.Tekstowo),
     ]
 
     GOOGLE_SOURCES = [
