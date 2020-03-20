@@ -465,7 +465,13 @@ class Tekstowo(Backend):
         except HTMLParseError:
             return None
 
-        href = html.find("div", class_="content").find_all("div", class_="box-przeboje")[0].find('a').get('href')
+        song_row = html.find("div", class_="content"). \
+            find_all("div", class_="box-przeboje")[0]
+
+        if not song_row:
+            return  None
+
+        href = song_row.find('a').get('href')
         return self.BASE_URL + href
 
     def extract_lyrics(self, html):
@@ -672,6 +678,7 @@ class Google(Backend):
 
 class LyricsPlugin(plugins.BeetsPlugin):
     SOURCES = ['google', 'lyricwiki', 'musixmatch', 'genius', 'tekstowo']
+    SOURCES_USING_BEAUTIFUL_SOUP = ['google', 'genius', 'tekstowo']
     SOURCE_BACKENDS = {
         'google': Google,
         'lyricwiki': LyricsWiki,
@@ -716,6 +723,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
         sources = plugins.sanitize_choices(
             self.config['sources'].as_str_seq(), available_sources)
 
+        if not HAS_BEAUTIFUL_SOUP:
+            sources = self.sanitize_beautiful_soup_sources(sources)
+
         if 'google' in sources:
             if not self.config['google_API_key'].get():
                 # We log a *debug* message here because the default
@@ -725,25 +735,6 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 self._log.debug(u'Disabling google source: '
                                 u'no API key configured.')
                 sources.remove('google')
-            elif not HAS_BEAUTIFUL_SOUP:
-                self._log.warning(u'To use the google lyrics source, you must '
-                                  u'install the beautifulsoup4 module. See '
-                                  u'the documentation for further details.')
-                sources.remove('google')
-
-        if 'genius' in sources and not HAS_BEAUTIFUL_SOUP:
-            self._log.debug(
-                u'The Genius backend requires BeautifulSoup, which is not '
-                u'installed, so the source is disabled.'
-            )
-            sources.remove('genius')
-
-        if 'tekstowo' in sources and not HAS_BEAUTIFUL_SOUP:
-            self._log.debug(
-                u'The Tekstowo.pl backend requires BeautifulSoup, which is not '
-                u'installed, so the source is disabled.'
-            )
-            sources.remove('tekstowo')
 
         self.config['bing_lang_from'] = [
             x.lower() for x in self.config['bing_lang_from'].as_str_seq()]
@@ -756,6 +747,17 @@ class LyricsPlugin(plugins.BeetsPlugin):
 
         self.backends = [self.SOURCE_BACKENDS[source](self.config, self._log)
                          for source in sources]
+
+    def sanitize_beautiful_soup_sources(self, sources):
+        for source in self.SOURCES_USING_BEAUTIFUL_SOUP:
+            if source in sources:
+                self._log.warning(u'To use the %s lyrics source, you must '
+                              u'install the beautifulsoup4 module. See '
+                              u'the documentation for further details.'
+                              % source)
+                sources.remove(source)
+
+        return sources
 
     def get_bing_access_token(self):
         params = {

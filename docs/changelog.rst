@@ -19,7 +19,7 @@ New features:
 * :doc:`plugins/discogs` now adds two extra fields: `discogs_labelid` and
   `discogs_artistid`
   :bug: `3413`
-* :doc:`/plugins/export`: Added new ``-f`` (``--format``) flag; 
+* :doc:`/plugins/export`: Added new ``-f`` (``--format``) flag;
   which allows for the ability to export in json, csv and xml.
   Thanks to :user:`austinmm`.
   :bug:`3402`
@@ -114,7 +114,7 @@ New features:
 
 Fixes:
 
-* :doc:`/plugins/fetchart`: Fixed a bug that caused fetchart to not take 
+* :doc:`/plugins/fetchart`: Fixed a bug that caused fetchart to not take
   environment variables such as proxy servers into account when making requests
   :bug:`3450`
 * :doc:`/plugins/inline`: In function-style field definitions that refer to
@@ -174,6 +174,8 @@ Fixes:
 * Removed ``@classmethod`` decorator from dbcore.query.NoneQuery.match method
   failing with AttributeError when called. It is now an instance method.
   :bug:`3516` :bug:`3517`
+* :doc:`/plugins/lyrics`: Added Tekstowo.pl lyrics provider
+  :bug:`3344`
 
 For plugin developers:
 
