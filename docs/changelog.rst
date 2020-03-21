@@ -6,6 +6,8 @@ Changelog
 
 New features:
 
+* A new :ref:`extra_tags` configuration option allows more tagged metadata
+  to be included in MusicBrainz queries.
 * A new :doc:`/plugins/fish` adds `Fish shell`_ tab autocompletion to beets
 * :doc:`plugins/fetchart` and :doc:`plugins/embedart`: Added a new ``quality``
   option that controls the quality of the image output when the image is

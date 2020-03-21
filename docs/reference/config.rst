@@ -701,6 +701,26 @@ MusicBrainz server.
 
 Default: ``5``.
 
+.. _extra_tags:
+
+extra_tags
+~~~~~~~~~~
+
+By default, beets will use only the artist, album, and track count to query
+MusicBrainz. Additional tags to be queried can be supplied with the
+``extra_tags`` setting. For example::
+
+    musicbrainz:
+        extra_tags: [year, catalognum, country, media, label]
+
+This setting should improve the autotagger results if the metadata with the
+given tags match the metadata returned by MusicBrainz.
+
+Note that the only tags supported by this setting are the ones listed in the
+above example.
+
+Default: ``[]``
+
 .. _match-config:
 
 Autotagger Matching Options
