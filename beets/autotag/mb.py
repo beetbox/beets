@@ -38,6 +38,14 @@ else:
 
 SKIPPED_TRACKS = ['[data track]']
 
+FIELDS_TO_MB_KEYS = {
+    'catalognum': 'catno',
+    'country': 'country',
+    'label': 'label',
+    'media': 'format',
+    'year': 'date',
+}
+
 musicbrainzngs.set_useragent('beets', beets.__version__,
                              'https://beets.io/')
 
@@ -411,13 +419,13 @@ def album_info(release):
     return info
 
 
-def match_album(artist, album, tracks=None):
+def match_album(artist, album, tracks=None, extra_tags=None):
     """Searches for a single album ("release" in MusicBrainz parlance)
     and returns an iterator over AlbumInfo objects. May raise a
     MusicBrainzAPIError.
 
     The query consists of an artist name, an album name, and,
-    optionally, a number of tracks on the album.
+    optionally, a number of tracks on the album and any other extra tags.
     """
     # Build search criteria.
     criteria = {'release': album.lower().strip()}
@@ -428,6 +436,16 @@ def match_album(artist, album, tracks=None):
         criteria['arid'] = VARIOUS_ARTISTS_ID
     if tracks is not None:
         criteria['tracks'] = six.text_type(tracks)
+
+    # Additional search cues from existing metadata.
+    if extra_tags:
+        for tag in extra_tags:
+            key = FIELDS_TO_MB_KEYS[tag]
+            value = six.text_type(extra_tags.get(tag, '')).lower().strip()
+            if key == 'catno':
+                value = value.replace(u' ', '')
+            if value:
+                criteria[key] = value
 
     # Abort if we have no search terms.
     if not any(criteria.values()):
