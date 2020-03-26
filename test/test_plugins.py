@@ -137,10 +137,10 @@ class ItemTypeConflictTest(unittest.TestCase, TestHelper):
 
     def test_mismatch(self):
         class EventListenerPlugin(plugins.BeetsPlugin):
-            item_types = {'duplicate': types.INTEGER}
+            item_types = {'duplicate': types.Integer()}
 
         class AdventListenerPlugin(plugins.BeetsPlugin):
-            item_types = {'duplicate': types.FLOAT}
+            item_types = {'duplicate': types.Float()}
 
         self.event_listener_plugin = EventListenerPlugin
         self.advent_listener_plugin = AdventListenerPlugin
@@ -152,10 +152,10 @@ class ItemTypeConflictTest(unittest.TestCase, TestHelper):
 
     def test_match(self):
         class EventListenerPlugin(plugins.BeetsPlugin):
-            item_types = {'duplicate': types.INTEGER}
+            item_types = {'duplicate': types.Integer()}
 
         class AdventListenerPlugin(plugins.BeetsPlugin):
-            item_types = {'duplicate': types.INTEGER}
+            item_types = {'duplicate': types.Integer()}
 
         self.event_listener_plugin = EventListenerPlugin
         self.advent_listener_plugin = AdventListenerPlugin

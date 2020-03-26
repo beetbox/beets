@@ -117,6 +117,14 @@ class Type(object):
         """
         return model_value
 
+    def __eq__(self, other):
+        """Allow to compare type instances by their full namespaced name
+        """
+        def get_ns(o):
+            return "{m}.{n}".format(m=o.__class__.__module__,
+                                    n=o.__class__.__name__)
+        return get_ns(self) == get_ns(other)
+
 
 # Reusable types.
 
