@@ -469,7 +469,7 @@ class Tekstowo(Backend):
             find_all("div", class_="box-przeboje")[0]
 
         if not song_row:
-            return  None
+            return None
 
         href = song_row.find('a').get('href')
         return self.BASE_URL + href
@@ -752,9 +752,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
         for source in self.BS_SOURCES:
             if source in sources:
                 self._log.warning(u'To use the %s lyrics source, you must '
-                              u'install the beautifulsoup4 module. See '
-                              u'the documentation for further details.'
-                              % source)
+                                  u'install the beautifulsoup4 module. See '
+                                  u'the documentation for further details.'
+                                  % source)
                 sources.remove(source)
 
         return sources
