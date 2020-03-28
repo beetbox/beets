@@ -678,7 +678,7 @@ class Google(Backend):
 
 class LyricsPlugin(plugins.BeetsPlugin):
     SOURCES = ['google', 'lyricwiki', 'musixmatch', 'genius', 'tekstowo']
-    SOURCES_USING_BEAUTIFUL_SOUP = ['google', 'genius', 'tekstowo']
+    BS_SOURCES = ['google', 'genius', 'tekstowo']
     SOURCE_BACKENDS = {
         'google': Google,
         'lyricwiki': LyricsWiki,
@@ -724,7 +724,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
             self.config['sources'].as_str_seq(), available_sources)
 
         if not HAS_BEAUTIFUL_SOUP:
-            sources = self.sanitize_beautiful_soup_sources(sources)
+            sources = self.sanitize_bs_sources(sources)
 
         if 'google' in sources:
             if not self.config['google_API_key'].get():
@@ -748,8 +748,8 @@ class LyricsPlugin(plugins.BeetsPlugin):
         self.backends = [self.SOURCE_BACKENDS[source](self.config, self._log)
                          for source in sources]
 
-    def sanitize_beautiful_soup_sources(self, sources):
-        for source in self.SOURCES_USING_BEAUTIFUL_SOUP:
+    def sanitize_bs_sources(self, sources):
+        for source in self.BS_SOURCES:
             if source in sources:
                 self._log.warning(u'To use the %s lyrics source, you must '
                               u'install the beautifulsoup4 module. See '
