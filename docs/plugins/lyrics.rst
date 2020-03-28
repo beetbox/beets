@@ -129,11 +129,6 @@ few suggestions.
 Activate Google Custom Search
 ------------------------------
 
-Using the Google backend requires `BeautifulSoup`_, which you can install
-using `pip`_ by typing::
-
-    pip install beautifulsoup4
-
 You also need to `register for a Google API key`_. Set the ``google_API_key``
 configuration option to your key.
 Then add ``google`` to the list of sources in your configuration (or use
@@ -156,25 +151,15 @@ After that, the lyrics plugin will fall back on other declared data sources.
 .. _pip: https://pip.pypa.io
 .. _BeautifulSoup: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
 
-Activate Genius Lyrics
-----------------------
+Installing BeautifulSoup for Google, Genius, or Tekstowo.pl Backends
+--------------------------------------------------------------------
 
-Like the Google backend, the Genius backend requires the `BeautifulSoup`_
-library. Install it by typing::
-
-    pip install beautifulsoup4
-
-The backend is enabled by default.
-
-Activate Tekstowo.pl Lyrics
-----------------------
-
-Like the Google backend, the Tekstowo.pl backend requires the `BeautifulSoup`_
-library. Install it by typing::
+Using the Google, Genius, or Tekstowo.pl backends requires `BeautifulSoup`_,
+which you can install using `pip`_ by typing::
 
     pip install beautifulsoup4
 
-The backend is enabled by default.
+These backends are enabled by default.
 
 .. _lyrics-translation:
 
