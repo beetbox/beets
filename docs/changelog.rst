@@ -113,6 +113,8 @@ New features:
   titles.
   Thanks to :user:`cole-miller`.
   :bug:`3459`
+* :doc:`/plugins/fetchart`: Album art can now be fetched from `last.fm`_.
+  :bug:`3530`
 
 Fixes:
 
@@ -233,6 +235,7 @@ For packagers:
 .. _works: https://musicbrainz.org/doc/Work
 .. _Deezer: https://www.deezer.com
 .. _keyfinder-cli: https://github.com/EvanPurkhiser/keyfinder-cli
+.. _last.fm: https://last.fm
 
 
 1.4.9 (May 30, 2019)
