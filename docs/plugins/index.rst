@@ -314,6 +314,9 @@ Here are a few of the plugins written by the beets community:
 
 * `beets-bpmanalyser`_ analyses songs and calculates their tempo (BPM).
 
+* `beets-originquery`_ augments MusicBrainz queries with locally-sourced data
+  to improve autotagger results.
+
 .. _beets-barcode: https://github.com/8h2a/beets-barcode
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
@@ -342,3 +345,4 @@ Here are a few of the plugins written by the beets community:
 .. _beets-autofix: https://github.com/adamjakab/BeetsPluginAutofix
 .. _beets-describe: https://github.com/adamjakab/BeetsPluginDescribe
 .. _beets-bpmanalyser: https://github.com/adamjakab/BeetsPluginBpmAnalyser
+.. _beets-originquery: https://github.com/x1ppy/beets-originquery
