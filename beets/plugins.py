@@ -715,7 +715,7 @@ class MetadataSourcePlugin(object):
                 return id_
         return None
 
-    def candidates(self, items, artist, album, va_likely):
+    def candidates(self, items, artist, album, va_likely, extra_tags=None):
         """Returns a list of AlbumInfo objects for Search API results
         matching an ``album`` and ``artist`` (if not various).
 
