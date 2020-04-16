@@ -24,7 +24,7 @@ import sys
 import unittest
 
 from mock import patch
-import _common
+from test import _common
 
 from beets import logging
 from beets.library import Item
@@ -214,7 +214,9 @@ class MockFetchUrl(object):
             content = f.read()
         return content
 
+
 class GeniusMockGet(object):
+
     def __init__(self, pathval='fetched_path'):
         self.pathval = pathval
         self.fetched = None
@@ -225,7 +227,8 @@ class GeniusMockGet(object):
         if headers:
             response = Response()
             response.status_code = 200
-            response._content = b'{"meta":{"status":200},"response":{"song":{"path":"/lyrics/sample"}}}'
+            response._content = b'{"meta":{"status":200},\
+                                "response":{"song":{"path":"/lyrics/sample"}}}'
             return response
         # for the second requests.get() return the genius page
         else:
@@ -237,6 +240,7 @@ class GeniusMockGet(object):
             response = Response()
             type(response).text = PropertyMock(return_value=content)
             return response
+
 
 def is_lyrics_content_ok(title, text):
     """Compare lyrics text to expected lyrics for given title."""
@@ -432,9 +436,11 @@ class LyricsGeniusBaseTest(unittest.TestCase):
 
 
 class LyricsGeniusScrapTest(LyricsGeniusBaseTest):
+
     """Checks that Genius backend works as intended.
     """
     import requests
+
     def setUp(self):
         """Set up configuration"""
         LyricsGeniusBaseTest.setUp(self)
@@ -443,12 +449,13 @@ class LyricsGeniusScrapTest(LyricsGeniusBaseTest):
     @patch.object(requests, 'get', GeniusMockGet())
     def test_no_lyrics_div(self):
         """Ensure that `lyrics_from_song_api_path` doesn't crash when the html
-        for a Genius page contain <div class = "_lyrics">...</div>
+        for a Genius page contain <div class="lyrics"></div>
         """
         # https://github.com/beetbox/beets/issues/3535
         # expected return value None
         try:
-            self.assertEqual(genius.lyrics_from_song_api_path('/no_lyric_page'), None)
+            self.assertEqual(genius.lyrics_from_song_api_path('/nolyric'),
+                             None)
         except AttributeError:
             # if AttributeError we aren't doing a null check
             self.assertTrue(False)
