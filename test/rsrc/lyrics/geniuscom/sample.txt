@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html class="snarly apple_music_player--enabled bagon_song_page--enabled song_stories_public_launch--enabled react_forums--disabled" xmlns="http://www.w3.org/1999/xhtml" xmlns:fb="http://www.facebook.com/2008/fbml" lang="en" xml:lang="en">
+  <head>
+    <base target='_top' href="//genius.com/">
+
+    <script type="text/javascript">
+//<![CDATA[
+
+  var _sf_startpt=(new Date()).getTime();
+  if (window.performance && performance.mark) {
+    window.performance.mark('parse_start');
+  }
+
+//]]>
+</script>
+
+<title>SAMPLE – SONG Lyrics | Genius Lyrics</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta content='width=device-width,initial-scale=1' name='viewport'>
+
+  <meta name="apple-itunes-app" content="app-id=709482991">
+
+<link href="https://assets.genius.com/images/apple-touch-icon.png?1586878950" rel="apple-touch-icon" />
+
+
+  
+
+  <link href="https://assets.genius.com/images/apple-touch-icon.png?1586878950" rel="apple-touch-icon" />
+
+  
+
+  <!-- Mobile IE allows us to activate ClearType technology for smoothing fonts for easy reading -->
+  <meta http-equiv="cleartype" content="on">
+
+
+
+
+<META name="y_key" content="f63347d284f184b0">
+
+<meta property="og:site_name" content="Genius"/>
+<meta property="fb:app_id" content="265539304824" />
+<meta property="fb:pages" content="308252472676410" />
+
+<link title="Genius" type="application/opensearchdescription+xml" rel="search" href="https://genius.com/opensearch.xml">
+
+<script>
+!function(){if('PerformanceLongTaskTiming' in window){var g=window.__tti={e:[]};
+g.o=new PerformanceObserver(function(l){g.e=g.e.concat(l.getEntries())});
+g.o.observe({entryTypes:['longtask']})}}();
+</script>
+
+<script async src="https://www.youtube.com/iframe_api"></script>
+<script defer src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+
+<script>
+  window['Genius.cmp'] = window['Genius.cmp'] || [];
+</script>
+
+    <meta content="https://genius.com/SAMPLE-SONG-lyrics" property="og:url" />
+  
+
+  
+    <meta content="music.song" property="og:type" />
+  
+
+  
+    <meta content="SAMPLE – SONG" property="og:title" />
+  
+
+  
+    <meta content="The fifth track on SAMPLE’s debut album, ALBUM is the most reminiscent of her previous ep’s with a pop-disco sound.
+
+She reflects about her insecurities on not maturing as quickly as" property="og:description" />
+  
+
+  
+    <meta content="http://images.genius.com/be7f8888b02ec8de90b71e6590692665.1000x1000x1.jpg" property="og:image" />
+  
+
+
+
+
+
+  <meta content="https://genius.com/SAMPLE-SONG-lyrics" property="twitter:url" />
+
+  <meta content="music.song" property="twitter:type" />
+
+  <meta content="SAMPLE – SONG" property="twitter:title" />
+
+  <meta content="The fifth track on SAMPLE’s debut album, ALBUM is the most reminiscent of her previous ep’s with a pop-disco sound.
+
+She reflects about her insecurities on not maturing as quickly as" property="twitter:description" />
+
+  <meta content="http://images.genius.com/be7f8888b02ec8de90b71e6590692665.1000x1000x1.jpg" property="twitter:image" />
+
+  <meta content="@Genius" property="twitter:site" />
+
+  <meta content="summary_large_image" property="twitter:card" />
+
+
+  <meta content="Genius" property="twitter:app:name:iphone" />
+  <meta content="709482991" property="twitter:app:id:iphone" />
+  <meta content="genius://songs/3113595" property="twitter:app:url:iphone" />
+
+<meta name="description" content="SONG Lyrics: Fearin&#39; not growin&#39; up / Keepin&#39; me up at night / Am I doin&#39; enough? / Feel like I&#39;m wastin&#39; time / Promise to get a little / Better as I get older / And you&#39;re so patient / And" />
+  <link href="ios-app://709482991/genius/songs/3113595" rel="alternate" />
+  <meta content="/songs/3113595" name="newrelic-resource-path" />
+  <link href="https://genius.com/SAMPLE-SONG-lyrics" rel="canonical" />
+  
+    <link href="https://genius.com/amp/SAMPLE-SONG-lyrics" rel="amphtml" />
+  
+
+
+
+  <script type="text/javascript">
+  var _qevents = _qevents || [];
+  (function() {
+    var elem = document.createElement('script');
+    elem.src = (document.location.protocol == 'https:' ? 'https://secure' : 'http://edge') + '.quantserve.com/quant.js';
+    elem.async = true;
+    elem.type = 'text/javascript';
+    var scpt = document.getElementsByTagName('script')[0];
+    scpt.parentNode.insertBefore(elem, scpt);
+  })();
+</script>
+
+
+
+<script type="text/javascript">
+  window.ga = window.ga || function() {
+    (window.ga.q = window.ga.q || []).push(arguments);
+  };
+
+  
+    (function(g, e, n, i, u, s) {
+      g['GoogleAnalyticsObject'] = 'ga';
+      g.ga.l = Date.now();
+      u = e.createElement(n);
+      s = e.getElementsByTagName(n)[0];
+      u.async = true;
+      u.src = i;
+      s.parentNode.insertBefore(u, s);
+    })(window, document, 'script', 'https://www.google-analytics.com/analytics.js');
+
+    ga('create', "UA-10346621-1", 'auto', {'useAmpClientId': true});
+    ga('set', 'dimension1', "false");
+    ga('set', 'dimension2', "songs#show");
+    ga('set', 'dimension3', "r-b");
+    ga('set', 'dimension4', "true");
+    ga('set', 'dimension5', 'false');
+    ga('set', 'dimension6', "none");
+    ga('send', 'pageview');
+  
+</script>
+
+
+
+
+    
+      <meta content="{&quot;chartbeat&quot;:{&quot;authors&quot;:&quot;SAMPLE&quot;,&quot;sections&quot;:&quot;songs,tag:r-b&quot;,&quot;title&quot;:&quot;SAMPLE – SONG Lyrics | Genius Lyrics&quot;},&quot;controller_and_action&quot;:&quot;songs#show&quot;,&quot;dmp_data_layer&quot;:{&quot;page&quot;:{&quot;type&quot;:&quot;song&quot;,&quot;artists&quot;:[&quot;SAMPLE&quot;],&quot;artist_ids&quot;:[&quot;[41579]&quot;],&quot;albums&quot;:[&quot;ALBUM&quot;],&quot;album_ids&quot;:[&quot;[325258]&quot;],&quot;genres&quot;:[&quot;R&amp;B Genius&quot;],&quot;genre_ids&quot;:[&quot;[352]&quot;],&quot;in_top_10&quot;:false,&quot;artist_in_top_10&quot;:false,&quot;album_in_top_10&quot;:false,&quot;new_release&quot;:false,&quot;release_month&quot;:&quot;201706&quot;,&quot;release_year&quot;:2017,&quot;release_decade&quot;:2010}},&quot;header_bid_placements&quot;:[[&quot;desktop_song_leaderboard&quot;,&quot;desktop_song_leaderboard&quot;],[&quot;desktop_song_sidebar_top&quot;,&quot;desktop_song_sidebar_top&quot;],[&quot;desktop_song_medium1&quot;,&quot;desktop_song_medium1&quot;]],&quot;initial_ad_units&quot;:[&quot;desktop_song_about_leaderboard&quot;,&quot;desktop_song_about_sidebar&quot;,&quot;desktop_song_comments_leaderboard&quot;,&quot;desktop_song_comments_sidebar&quot;,&quot;desktop_song_inread&quot;,&quot;desktop_song_inread2&quot;,&quot;desktop_song_inread3&quot;,&quot;desktop_song_lyrics_inread&quot;,&quot;desktop_song_lyrics_inread2&quot;,&quot;desktop_song_lyrics_inread3&quot;,&quot;desktop_song_leaderboard&quot;,&quot;desktop_song_combined_leaderboard&quot;,&quot;desktop_song_lyrics_sidebar&quot;,&quot;desktop_song_lyrics_sidebar2&quot;,&quot;desktop_song_lyrics_sidebar3&quot;,&quot;desktop_song_lyrics_sidebar4&quot;,&quot;desktop_song_lyrics_footer&quot;,&quot;desktop_song_marquee&quot;,&quot;desktop_song_medium1&quot;,&quot;desktop_song_sidebar_top&quot;],&quot;page_type&quot;:&quot;song&quot;,&quot;path&quot;:&quot;/SAMPLE-SONG-lyrics&quot;,&quot;probably_spam&quot;:false,&quot;title&quot;:&quot;SAMPLE – SONG Lyrics | Genius Lyrics&quot;,&quot;tracking_data&quot;:[{&quot;key&quot;:&quot;Song ID&quot;,&quot;value&quot;:3113595},{&quot;key&quot;:&quot;Title&quot;,&quot;value&quot;:&quot;SONG&quot;},{&quot;key&quot;:&quot;Primary Artist&quot;,&quot;value&quot;:&quot;SAMPLE&quot;},{&quot;key&quot;:&quot;Primary Artist ID&quot;,&quot;value&quot;:41579},{&quot;key&quot;:&quot;Primary Album&quot;,&quot;value&quot;:&quot;ALBUM&quot;},{&quot;key&quot;:&quot;Primary Album ID&quot;,&quot;value&quot;:325258},{&quot;key&quot;:&quot;Tag&quot;,&quot;value&quot;:&quot;r-b&quot;},{&quot;key&quot;:&quot;Primary Tag&quot;,&quot;value&quot;:&quot;r-b&quot;},{&quot;key&quot;:&quot;Primary Tag ID&quot;,&quot;value&quot;:352},{&quot;key&quot;:&quot;Music?&quot;,&quot;value&quot;:true},{&quot;key&quot;:&quot;Annotatable Type&quot;,&quot;value&quot;:&quot;Song&quot;},{&quot;key&quot;:&quot;Annotatable ID&quot;,&quot;value&quot;:3113595},{&quot;key&quot;:&quot;featured_video&quot;,&quot;value&quot;:false},{&quot;key&quot;:&quot;cohort_ids&quot;,&quot;value&quot;:[]},{&quot;key&quot;:&quot;has_verified_callout&quot;,&quot;value&quot;:false},{&quot;key&quot;:&quot;has_featured_annotation&quot;,&quot;value&quot;:true},{&quot;key&quot;:&quot;created_at&quot;,&quot;value&quot;:&quot;2017-06-05T22:53:23Z&quot;},{&quot;key&quot;:&quot;created_month&quot;,&quot;value&quot;:&quot;2017-06-01&quot;},{&quot;key&quot;:&quot;created_year&quot;,&quot;value&quot;:2017},{&quot;key&quot;:&quot;song_tier&quot;,&quot;value&quot;:&quot;D&quot;},{&quot;key&quot;:&quot;Has Recirculated Articles&quot;,&quot;value&quot;:false},{&quot;key&quot;:&quot;Lyrics Language&quot;,&quot;value&quot;:&quot;en&quot;},{&quot;key&quot;:&quot;Has Song Story&quot;,&quot;value&quot;:false},{&quot;key&quot;:&quot;Song Story ID&quot;,&quot;value&quot;:null},{&quot;key&quot;:&quot;Has Apple Match&quot;,&quot;value&quot;:true},{&quot;key&quot;:&quot;Release Date&quot;,&quot;value&quot;:&quot;2017-06-09&quot;},{&quot;key&quot;:&quot;NRM Tier&quot;,&quot;value&quot;:null},{&quot;key&quot;:&quot;NRM Target Date&quot;,&quot;value&quot;:null},{&quot;key&quot;:&quot;Has Description&quot;,&quot;value&quot;:true},{&quot;key&quot;:&quot;Has Youtube URL&quot;,&quot;value&quot;:true},{&quot;key&quot;:&quot;Has Translation Q&amp;A&quot;,&quot;value&quot;:false},{&quot;key&quot;:&quot;Comment Count&quot;,&quot;value&quot;:17}],&quot;answered_pending_question_count&quot;:0,&quot;dfp_kv&quot;:[{&quot;name&quot;:&quot;song_id&quot;,&quot;values&quot;:[&quot;3113595&quot;]},{&quot;name&quot;:&quot;song_title&quot;,&quot;values&quot;:[&quot;SONG&quot;]},{&quot;name&quot;:&quot;artist_id&quot;,&quot;values&quot;:[&quot;41579&quot;]},{&quot;name&quot;:&quot;artist_name&quot;,&quot;values&quot;:[&quot;SAMPLE&quot;]},{&quot;name&quot;:&quot;is_explicit&quot;,&quot;values&quot;:[&quot;false&quot;]},{&quot;name&quot;:&quot;pageviews&quot;,&quot;values&quot;:[&quot;273786&quot;]},{&quot;name&quot;:&quot;primary_tag_id&quot;,&quot;values&quot;:[&quot;352&quot;]},{&quot;name&quot;:&quot;primary_tag&quot;,&quot;values&quot;:[&quot;rb&quot;]},{&quot;name&quot;:&quot;tag_id&quot;,&quot;values&quot;:[&quot;352&quot;]},{&quot;name&quot;:&quot;song_tier&quot;,&quot;values&quot;:[&quot;D&quot;]},{&quot;name&quot;:&quot;topic&quot;,&quot;values&quot;:[]},{&quot;name&quot;:&quot;has_song_story&quot;,&quot;values&quot;:[&quot;false&quot;]},{&quot;name&quot;:&quot;in_top_10&quot;,&quot;values&quot;:[&quot;false&quot;]},{&quot;name&quot;:&quot;artist_in_top_10&quot;,&quot;values&quot;:[&quot;false&quot;]},{&quot;name&quot;:&quot;album_in_top_10&quot;,&quot;values&quot;:[&quot;false&quot;]},{&quot;name&quot;:&quot;new_release&quot;,&quot;values&quot;:[&quot;false&quot;]},{&quot;name&quot;:&quot;release_month&quot;,&quot;values&quot;:[&quot;201706&quot;]},{&quot;name&quot;:&quot;release_year&quot;,&quot;values&quot;:[&quot;2017&quot;]},{&quot;name&quot;:&quot;release_decade&quot;,&quot;values&quot;:[&quot;2010&quot;]},{&quot;name&quot;:&quot;in_top_10_rap&quot;,&quot;values&quot;:[&quot;false&quot;]},{&quot;name&quot;:&quot;in_top_10_rock&quot;,&quot;values&quot;:[&quot;false&quot;]},{&quot;name&quot;:&quot;in_top_10_country&quot;,&quot;values&quot;:[&quot;false&quot;]},{&quot;name&quot;:&quot;in_top_10_r_and_b&quot;,&quot;values&quot;:[&quot;false&quot;]},{&quot;name&quot;:&quot;in_top_10_pop&quot;,&quot;values&quot;:[&quot;false&quot;]},{&quot;name&quot;:&quot;template&quot;,&quot;values&quot;:[&quot;song&quot;]},{&quot;name&quot;:&quot;environment&quot;,&quot;values&quot;:[&quot;production&quot;]},{&quot;name&quot;:&quot;platform&quot;,&quot;values&quot;:[&quot;web&quot;]},{&quot;name&quot;:&quot;ad_page_type&quot;,&quot;values&quot;:[&quot;song&quot;]}],&quot;pending_question_count&quot;:0,&quot;show_edit_form&quot;:false,&quot;show_featured_question&quot;:false,&quot;spotify_referral&quot;:false,&quot;annotation_previews&quot;:[],&quot;default_questions&quot;:[],&quot;featured_question&quot;:null,&quot;lyrics_data&quot;:{&quot;client_timestamps&quot;:{&quot;lyrics_updated_at&quot;:1541240067,&quot;updated_by_human_at&quot;:1541240067},&quot;body&quot;:{&quot;html&quot;:&quot;&lt;p&gt;[Verse 1]&lt;br&gt;\nFearin&#39; not growin&#39; up&lt;br&gt;\nKeepin&#39; me up at night&lt;br&gt;\nAm I doin&#39; enough?&lt;br&gt;\nFeel like I&#39;m wastin&#39; time&lt;br&gt;\n&lt;br&gt;\n[Pre-Chorus]&lt;br&gt;\nPromise to get a little&lt;br&gt;\nBetter as I get older&lt;br&gt;\nAnd you&#39;re so patient&lt;br&gt;\nAnd sick of waitin&#39;&lt;br&gt;\nPromise to do better&lt;br&gt;\nShoulda coulda&lt;br&gt;\nProlly wanna let me go&lt;br&gt;\nBut you can&#39;t, oh&lt;br&gt;\nRight now I feel it pourin&#39;&lt;br&gt;\nI need a little bit&lt;br&gt;\nJust a little bit&lt;br&gt;\nJust a little bit&lt;br&gt;\nRight now I feel it pourin&#39;&lt;br&gt;\nI need a little bit&lt;br&gt;\nJust a little bit&lt;br&gt;\nJust a little bit&lt;br&gt;\n&lt;br&gt;\n[Chorus]&lt;br&gt;\n&lt;a href=\&quot;/SAMPLE-SONG-lyrics#note-12197355\&quot; data-id=\&quot;12197355\&quot; class=\&quot;referent\&quot; ng-click=\&quot;open()\&quot; ng-class=\&quot;{\n          &#39;referent--linked_to_preview&#39;: song_ALBUM.referent_has_preview(fragment_id),\n          &#39;referent--linked_to_preview_active&#39;: song_ALBUM.highlight_preview_referent(fragment_element_id),\n          &#39;referent--purple_indicator&#39;: song_ALBUM.show_preview_referent_indicator(fragment_element_id)\n        }\&quot; prevent-default-click=\&quot;\&quot; annotation-fragment=\&quot;12197355\&quot; on-hover-with-no-digest=\&quot;set_current_hover_and_digest(hover ? fragment_id : undefined)\&quot; classification=\&quot;accepted\&quot; image=\&quot;false\&quot; pending-editorial-actions-count=\&quot;0\&quot;&gt;Please don&#39;t take it, don&#39;t take it personal&lt;br&gt;\nLike I know you usually do&lt;br&gt;\nPlease don&#39;t take it, don&#39;t take it personal&lt;br&gt;\nLike I know you usually do&lt;br&gt;\nPlease, please&lt;br&gt;\nDon&#39;t take it personal&lt;br&gt;\nDon&#39;t take it personal&lt;br&gt;\nDarling, like I know you will, ooh&lt;/a&gt;&lt;br&gt;\n&lt;br&gt;\n[Verse 2]&lt;br&gt;\nForget to call your mama on the weekend&lt;br&gt;\nYou should put yourself in time out&lt;br&gt;\n(Shame, shame on you)&lt;br&gt;\nBut lately you&#39;ve been feelin&#39; so good&lt;br&gt;\nI forget my future, never pull out&lt;br&gt;\n(Shame, shame on me)&lt;br&gt;\nBaby the money&#39;ll make it easier for me&lt;br&gt;\nTo run and hide out somewhere&lt;br&gt;\n&lt;a href=\&quot;/SAMPLE-SONG-lyrics#note-12129759\&quot; data-id=\&quot;12129759\&quot; class=\&quot;referent\&quot; ng-click=\&quot;open()\&quot; ng-class=\&quot;{\n          &#39;referent--linked_to_preview&#39;: song_ALBUM.referent_has_preview(fragment_id),\n          &#39;referent--linked_to_preview_active&#39;: song_ALBUM.highlight_preview_referent(fragment_element_id),\n          &#39;referent--purple_indicator&#39;: song_ALBUM.show_preview_referent_indicator(fragment_element_id)\n        }\&quot; prevent-default-click=\&quot;\&quot; annotation-fragment=\&quot;12129759\&quot; on-hover-with-no-digest=\&quot;set_current_hover_and_digest(hover ? fragment_id : undefined)\&quot; classification=\&quot;accepted\&quot; image=\&quot;false\&quot; pending-editorial-actions-count=\&quot;0\&quot;&gt;(So far away)&lt;br&gt;\nHoppin&#39; through poppy fields&lt;br&gt;\nDodgin&#39; evil witches&lt;br&gt;\nThese houses keep droppin&#39; everywhere&lt;/a&gt;&lt;br&gt;\n&lt;br&gt;\n[Pre-Chorus]&lt;br&gt;\nPromise to get a little&lt;br&gt;\nBetter as I get older&lt;br&gt;\nAnd you&#39;re so patient&lt;br&gt;\nAnd sick of waitin&#39;&lt;br&gt;\nPromise to do better&lt;br&gt;\nShoulda coulda&lt;br&gt;\nProlly wanna let me go&lt;br&gt;\nBut you can&#39;t, oh&lt;br&gt;\nRight now I feel it pourin&#39;&lt;br&gt;\nI need a little bit&lt;br&gt;\nJust a little bit&lt;br&gt;\nJust a little bit&lt;br&gt;\nRight now it&#39;s really pourin&#39;&lt;br&gt;\nI need a little bit&lt;br&gt;\nJust a little bit&lt;br&gt;\nJust a little bit&lt;br&gt;\n&lt;br&gt;\n[Chorus]&lt;br&gt;\n&lt;a href=\&quot;/SAMPLE-SONG-lyrics#note-12197355\&quot; data-id=\&quot;12197355\&quot; class=\&quot;referent\&quot; ng-click=\&quot;open()\&quot; ng-class=\&quot;{\n          &#39;referent--linked_to_preview&#39;: song_ALBUM.referent_has_preview(fragment_id),\n          &#39;referent--linked_to_preview_active&#39;: song_ALBUM.highlight_preview_referent(fragment_element_id),\n          &#39;referent--purple_indicator&#39;: song_ALBUM.show_preview_referent_indicator(fragment_element_id)\n        }\&quot; prevent-default-click=\&quot;\&quot; annotation-fragment=\&quot;12197355\&quot; on-hover-with-no-digest=\&quot;set_current_hover_and_digest(hover ? fragment_id : undefined)\&quot; classification=\&quot;accepted\&quot; image=\&quot;false\&quot; pending-editorial-actions-count=\&quot;0\&quot;&gt;Please don&#39;t take it, don&#39;t take it personal&lt;br&gt;\nLike I know you usually do&lt;br&gt;\nPlease don&#39;t take it, take it personal&lt;/a&gt;&lt;br&gt;\n&lt;br&gt;\n[Outro]&lt;br&gt;\nLike winters fall on us, heavy&lt;br&gt;\nTake it off me, all it off&lt;br&gt;\nWinter, I can&#39;t stand this&lt;br&gt;\nSnow is falling all on me&lt;/p&gt;\n\n&quot;}},&quot;next_track&quot;:{&quot;number&quot;:6,&quot;song&quot;:{&quot;_type&quot;:&quot;song&quot;,&quot;annotation_count&quot;:5,&quot;api_path&quot;:&quot;/songs/3113598&quot;,&quot;full_title&quot;:&quot;The Weekend by SAMPLE&quot;,&quot;header_image_thumbnail_url&quot;:&quot;https://images.genius.com/24c1fa32099bbf3f8b4c06232730624e.300x300x1.jpg&quot;,&quot;header_image_url&quot;:&quot;https://images.genius.com/24c1fa32099bbf3f8b4c06232730624e.600x600x1.jpg&quot;,&quot;id&quot;:3113598,&quot;instrumental&quot;:false,&quot;lyrics_owner_id&quot;:104344,&quot;lyrics_state&quot;:&quot;complete&quot;,&quot;lyrics_updated_at&quot;:1577063099,&quot;path&quot;:&quot;/SAMPLE-the-weekend-lyrics&quot;,&quot;pyongs_count&quot;:76,&quot;song_art_image_thumbnail_url&quot;:&quot;https://images.genius.com/24c1fa32099bbf3f8b4c06232730624e.300x300x1.jpg&quot;,&quot;song_art_image_url&quot;:&quot;https://images.genius.com/24c1fa32099bbf3f8b4c06232730624e.600x600x1.jpg&quot;,&quot;stats&quot;:{&quot;unreviewed_annotations&quot;:0,&quot;concurrents&quot;:2,&quot;hot&quot;:false,&quot;pageviews&quot;:2283364},&quot;title&quot;:&quot;The Weekend&quot;,&quot;title_with_featured&quot;:&quot;The Weekend&quot;,&quot;updated_by_human_at&quot;:1577063099,&quot;url&quot;:&quot;https://genius.com/SAMPLE-the-weekend-lyrics&quot;,&quot;primary_artist&quot;:{&quot;_type&quot;:&quot;artist&quot;,&quot;api_path&quot;:&quot;/artists/41579&quot;,&quot;header_image_url&quot;:&quot;https://images.genius.com/bebfa73bff3ce553704e7c7e3c58b12f.1000x508x1.jpg&quot;,&quot;id&quot;:41579,&quot;image_url&quot;:&quot;https://images.genius.com/d72d06a449b2ad3e48a84387e9c8dd4d.421x421x1.jpg&quot;,&quot;index_character&quot;:&quot;s&quot;,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:true,&quot;name&quot;:&quot;SAMPLE&quot;,&quot;slug&quot;:&quot;SAMPLE&quot;,&quot;url&quot;:&quot;https://genius.com/artists/SAMPLE&quot;,&quot;iq&quot;:4058}}},&quot;pinned_questions&quot;:[{&quot;_type&quot;:&quot;question&quot;,&quot;body&quot;:&quot;What have the artists said about this song&quot;,&quot;contributors_count&quot;:3,&quot;created_at&quot;:1506219620,&quot;default_key&quot;:null,&quot;has_voters&quot;:false,&quot;id&quot;:113181,&quot;pin_order&quot;:65536.0,&quot;state&quot;:&quot;pinned&quot;,&quot;url&quot;:&quot;https://genius.com/SAMPLE-SONG-lyrics/questions/113181&quot;,&quot;votes_total&quot;:0,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[],&quot;excluded_permissions&quot;:[&quot;vote&quot;,&quot;add_answer&quot;,&quot;update_answer_source&quot;,&quot;edit&quot;,&quot;archive&quot;,&quot;pin&quot;,&quot;unpin&quot;,&quot;move&quot;,&quot;add_verified_answer&quot;],&quot;iq_by_action&quot;:{},&quot;interactions&quot;:{&quot;vote&quot;:null}},&quot;answer&quot;:{&quot;_type&quot;:&quot;answer&quot;,&quot;body&quot;:{&quot;html&quot;:&quot;&lt;p&gt;SAMPLE &lt;a href=\&quot;https://mobile.twitter.com/SAMPLE/status/919847764946595840\&quot; rel=\&quot;noopener nofollow\&quot;&gt;tweeted&lt;/a&gt;:&lt;/p&gt;\n\n&lt;blockquote&gt;&lt;p&gt;Iss called SONG cus I ain’t have no friends in high school so I went to Miami w my mama for SONG instead . Lol&lt;/p&gt;&lt;/blockquote&gt;&quot;,&quot;markdown&quot;:&quot;SAMPLE [tweeted](https://mobile.twitter.com/SAMPLE/status/919847764946595840):\n\n&gt;Iss called SONG cus I ain&#39;t have no friends in high school so I went to Miami w my mama for SONG instead . Lol&quot;},&quot;created_at&quot;:1516497451,&quot;editorial_state&quot;:&quot;normal&quot;,&quot;has_voters&quot;:true,&quot;id&quot;:85595,&quot;votes_total&quot;:4,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[],&quot;excluded_permissions&quot;:[&quot;vote&quot;,&quot;edit&quot;,&quot;destroy&quot;],&quot;interactions&quot;:{&quot;vote&quot;:null}},&quot;answer_source&quot;:null,&quot;authors&quot;:[{&quot;_type&quot;:&quot;user_attribution&quot;,&quot;attribution&quot;:0.923076923076923,&quot;pinned_role&quot;:null,&quot;user&quot;:{&quot;_type&quot;:&quot;user&quot;,&quot;about_me_summary&quot;:&quot;i just want them dead presidents.&quot;,&quot;api_path&quot;:&quot;/users/179147&quot;,&quot;avatar&quot;:{&quot;tiny&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/tiny/8ddbbe14d7e9908debb66b696c165aad&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:16,&quot;height&quot;:16}},&quot;thumb&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/thumb/8ddbbe14d7e9908debb66b696c165aad&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:32,&quot;height&quot;:32}},&quot;small&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/small/8ddbbe14d7e9908debb66b696c165aad&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:100,&quot;height&quot;:100}},&quot;medium&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/medium/8ddbbe14d7e9908debb66b696c165aad&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:300,&quot;height&quot;:400}}},&quot;header_image_url&quot;:&quot;https://s3.amazonaws.com/filepicker-images-rapgenius/yyvi8uia8cc&quot;,&quot;human_readable_role_for_display&quot;:&quot;Contributor&quot;,&quot;id&quot;:179147,&quot;iq&quot;:1874,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:false,&quot;login&quot;:&quot;staIIi&quot;,&quot;name&quot;:&quot;staIIi&quot;,&quot;role_for_display&quot;:&quot;contributor&quot;,&quot;url&quot;:&quot;https://genius.com/staIIi&quot;,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[],&quot;excluded_permissions&quot;:[&quot;follow&quot;],&quot;interactions&quot;:{&quot;following&quot;:false}}}},{&quot;_type&quot;:&quot;user_attribution&quot;,&quot;attribution&quot;:0.07692307692307693,&quot;pinned_role&quot;:null,&quot;user&quot;:{&quot;_type&quot;:&quot;user&quot;,&quot;about_me_summary&quot;:&quot;May your fits be the only thing that’s sick 😷😷😷\n\n\n\nMTL → TOR → HFX → we’re back to TOR??\n\n\n\n\n[Un]official one-person Tronno/Scartown cleanup committee. Tag me in your Toronto-related lyrics for editing + verification (Drake, Weeknd, PND, dvsn, etc)\n\n\n\nHit me up if:\n\n\nYou’re new to Genius and have any questions or concerns\nYou’re interested in editorship\nYou’re an indie/alternative/non-mainstream artist looking to get your lyrics on Genius\nYou want to collaborate or pitch an article idea to me. I’m always looking for things to write about!\n\n\n\nGo have a good day.\n\n\n\nFirst article published! Lana Del Rey’s Long Path to Independence: 29 August 2019\n\n20,000 IQ: 4 October 2018\n25,000 IQ: 13 October 2018\n30,000 IQ: 1 November 2018\n50,000 IQ: September 2019 ish\n\n#6 on Country: 5 October 2018\n\nMentioned in “Hot Tates”: 8 October 2018\n\nguerdht made editor: 10 September 2018\nmiasmxle made editor: 7 October 2018\nnicole13 made editor: 8 November 2018\nBASTILLEpilot made editor: 28 October 2019&quot;,&quot;api_path&quot;:&quot;/users/5091936&quot;,&quot;avatar&quot;:{&quot;tiny&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/tiny/0b419a3b7ee0841fcc2b632ada793a8b&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:16,&quot;height&quot;:16}},&quot;thumb&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/thumb/0b419a3b7ee0841fcc2b632ada793a8b&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:32,&quot;height&quot;:32}},&quot;small&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/small/0b419a3b7ee0841fcc2b632ada793a8b&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:100,&quot;height&quot;:100}},&quot;medium&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/medium/0b419a3b7ee0841fcc2b632ada793a8b&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:300,&quot;height&quot;:400}}},&quot;header_image_url&quot;:&quot;https://s3.amazonaws.com/filepicker-images-rapgenius/fd3dfxuztp&quot;,&quot;human_readable_role_for_display&quot;:&quot;Editor&quot;,&quot;id&quot;:5091936,&quot;iq&quot;:59580,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:false,&quot;login&quot;:&quot;AudreyXuan&quot;,&quot;name&quot;:&quot;AudreyXuan&quot;,&quot;role_for_display&quot;:&quot;editor&quot;,&quot;url&quot;:&quot;https://genius.com/AudreyXuan&quot;,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[],&quot;excluded_permissions&quot;:[&quot;follow&quot;],&quot;interactions&quot;:{&quot;following&quot;:false}}}}]},&quot;author&quot;:{&quot;_type&quot;:&quot;user&quot;,&quot;about_me_summary&quot;:&quot;&quot;,&quot;api_path&quot;:&quot;/users/4489247&quot;,&quot;avatar&quot;:{&quot;tiny&quot;:{&quot;url&quot;:&quot;https://s3.amazonaws.com/filepicker-images-rapgenius/pzm9pmoqe6&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:16,&quot;height&quot;:16}},&quot;thumb&quot;:{&quot;url&quot;:&quot;https://s3.amazonaws.com/filepicker-images-rapgenius/pzm9pmoqe6&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:32,&quot;height&quot;:32}},&quot;small&quot;:{&quot;url&quot;:&quot;https://s3.amazonaws.com/filepicker-images-rapgenius/pzm9pmoqe6&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:100,&quot;height&quot;:100}},&quot;medium&quot;:{&quot;url&quot;:&quot;https://s3.amazonaws.com/filepicker-images-rapgenius/pzm9pmoqe6&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:300,&quot;height&quot;:400}}},&quot;header_image_url&quot;:&quot;https://s3.amazonaws.com/filepicker-images-rapgenius/fd8qy1ly49j&quot;,&quot;human_readable_role_for_display&quot;:&quot;Contributor&quot;,&quot;id&quot;:4489247,&quot;iq&quot;:1805,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:false,&quot;login&quot;:&quot;Wrl6199&quot;,&quot;name&quot;:&quot;Wrl6199&quot;,&quot;role_for_display&quot;:&quot;contributor&quot;,&quot;url&quot;:&quot;https://genius.com/Wrl6199&quot;,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[],&quot;excluded_permissions&quot;:[&quot;follow&quot;],&quot;interactions&quot;:{&quot;following&quot;:false}}}}],&quot;preloaded_referents&quot;:[{&quot;_type&quot;:&quot;referent&quot;,&quot;annotator_id&quot;:1446710,&quot;annotator_login&quot;:&quot;ayyjahzeel&quot;,&quot;api_path&quot;:&quot;/referents/12197355&quot;,&quot;classification&quot;:&quot;accepted&quot;,&quot;fragment&quot;:&quot;Please don’t take it, don’t take it personal\n Like I know you usually do\n Please don’t take it, don’t take it personal\n Like I know you usually do\n Please, please\n Don’t take it personal\n Don’t take it personal\n Darling, like I know you will, ooh&quot;,&quot;id&quot;:12197355,&quot;ios_app_url&quot;:&quot;genius://referents/12197355&quot;,&quot;is_description&quot;:false,&quot;is_image&quot;:false,&quot;path&quot;:&quot;/12197355/SAMPLE-SONG/Please-dont-take-it-dont-take-it-personal-like-i-know-you-usually-do-please-dont-take-it-dont-take-it-personal-like-i-know-you-usually-do-please-please-dont-take-it-personal-dont-take-it-personal-darling-like-i-know-you-will-ooh&quot;,&quot;range&quot;:{&quot;content&quot;:&quot;Please don&#39;t take it, don&#39;t take it personal\n Like I know you usually do\n Please don&#39;t take it, don&#39;t take it personal\n Like I know you usually do\n Please, please\n Don&#39;t take it personal\n Don&#39;t take it personal\n Darling, like I know you will, ooh&quot;},&quot;song_id&quot;:3113595,&quot;url&quot;:&quot;https://genius.com/12197355/SAMPLE-SONG/Please-dont-take-it-dont-take-it-personal-like-i-know-you-usually-do-please-dont-take-it-dont-take-it-personal-like-i-know-you-usually-do-please-please-dont-take-it-personal-dont-take-it-personal-darling-like-i-know-you-will-ooh&quot;,&quot;verified_annotator_ids&quot;:[],&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[],&quot;excluded_permissions&quot;:[&quot;add_pinned_annotation_to&quot;,&quot;add_community_annotation_to&quot;],&quot;relationships&quot;:{}},&quot;tracking_paths&quot;:{&quot;aggregate&quot;:&quot;/12197355/SAMPLE-SONG/Please-dont-take-it-dont-take-it-personal-like-i-know-you-usually-do-please-dont-take-it-dont-take-it-personal-like-i-know-you-usually-do-please-please-dont-take-it-personal-dont-take-it-personal-darling-like-i-know-you-will-ooh&quot;,&quot;concurrent&quot;:&quot;/SAMPLE-SONG-lyrics&quot;},&quot;twitter_share_message&quot;:&quot;“This chorus hearkens back to earlier on the album, on “Love Galore” where SAMPLE sings:\n\nDon’t take…” —@Genius&quot;,&quot;annotatable&quot;:{&quot;_type&quot;:&quot;song&quot;,&quot;api_path&quot;:&quot;/songs/3113595&quot;,&quot;client_timestamps&quot;:{&quot;updated_by_human_at&quot;:1541240067,&quot;lyrics_updated_at&quot;:1541240067},&quot;context&quot;:&quot;SAMPLE&quot;,&quot;id&quot;:3113595,&quot;image_url&quot;:&quot;https://images.genius.com/be7f8888b02ec8de90b71e6590692665.1000x1000x1.jpg&quot;,&quot;link_title&quot;:&quot;SONG by SAMPLE&quot;,&quot;title&quot;:&quot;SONG&quot;,&quot;type&quot;:&quot;Song&quot;,&quot;url&quot;:&quot;https://genius.com/SAMPLE-SONG-lyrics&quot;},&quot;annotations&quot;:[{&quot;_type&quot;:&quot;annotation&quot;,&quot;api_path&quot;:&quot;/annotations/12197355&quot;,&quot;being_created&quot;:false,&quot;body&quot;:{&quot;html&quot;:&quot;&lt;p&gt;This chorus hearkens back to earlier on the album, on &lt;a href=\&quot;https://genius.com/SAMPLE-love-galore-lyrics\&quot; rel=\&quot;noopener\&quot; data-api_path=\&quot;/songs/2920194\&quot;&gt;“Love Galore”&lt;/a&gt; where SAMPLE sings:&lt;/p&gt;\n\n&lt;blockquote&gt;&lt;p&gt;Don’t take it personal&lt;br&gt;\nPersonally, I’m surprised you called me after the things I said&lt;/p&gt;&lt;/blockquote&gt;&quot;,&quot;plain&quot;:&quot;This chorus hearkens back to earlier on the album, on “Love Galore” where SAMPLE sings:\n\nDon’t take it personal\nPersonally, I’m surprised you called me after the things I said&quot;,&quot;markdown&quot;:&quot;This chorus hearkens back to earlier on the album, on [\&quot;Love Galore\&quot;](https://genius.com/SAMPLE-love-galore-lyrics) where SAMPLE sings:\n&gt;Don&#39;t take it personal\nPersonally, I&#39;m surprised you called me after the things I said&quot;},&quot;comment_count&quot;:0,&quot;community&quot;:true,&quot;created_at&quot;:1498022962,&quot;custom_preview&quot;:null,&quot;deleted&quot;:false,&quot;embed_content&quot;:&quot;&lt;blockquote class=&#39;rg_standalone_container&#39; data-src=&#39;//genius.com/annotations/12197355/standalone_embed&#39;&gt;&lt;a href=&#39;https://genius.com/12197355/SAMPLE-SONG/Please-dont-take-it-dont-take-it-personal-like-i-know-you-usually-do-please-dont-take-it-dont-take-it-personal-like-i-know-you-usually-do-please-please-dont-take-it-personal-dont-take-it-personal-darling-like-i-know-you-will-ooh&#39;&gt;Please don&amp;#39;t take it, don&amp;#39;t take it personal&amp;lt;br&amp;gt; Like I know you usually do&amp;lt;br&amp;gt; Please don&amp;#39;t take it, don&amp;#39;t take it personal&amp;lt;br&amp;gt; Like I know you usually do&amp;lt;br&amp;gt; Please, please&amp;lt;br&amp;gt; Don&amp;#39;t take it personal&amp;lt;br&amp;gt; Don&amp;#39;t take it personal&amp;lt;br&amp;gt; Darling, like I know you will, ooh&lt;/a&gt;&lt;br&gt;&lt;a href=&#39;https://genius.com/SAMPLE-SONG-lyrics&#39;&gt;&amp;#8213; SAMPLE – SONG&lt;/a&gt;&lt;/blockquote&gt;&lt;script async crossorigin src=&#39;//genius.com/annotations/load_standalone_embeds.js&#39;&gt;&lt;/script&gt;&quot;,&quot;has_voters&quot;:true,&quot;id&quot;:12197355,&quot;needs_exegesis&quot;:false,&quot;pinned&quot;:false,&quot;proposed_edit_count&quot;:0,&quot;pyongs_count&quot;:null,&quot;referent_id&quot;:12197355,&quot;share_url&quot;:&quot;https://genius.com/12197355&quot;,&quot;source&quot;:null,&quot;state&quot;:&quot;accepted&quot;,&quot;twitter_share_message&quot;:&quot;“This chorus hearkens back to earlier on the album, on “Love Galore” where SAMPLE sings:\n\nDon’t take it pers…” —@Genius&quot;,&quot;url&quot;:&quot;https://genius.com/12197355/SAMPLE-SONG/Please-dont-take-it-dont-take-it-personal-like-i-know-you-usually-do-please-dont-take-it-dont-take-it-personal-like-i-know-you-usually-do-please-please-dont-take-it-personal-dont-take-it-personal-darling-like-i-know-you-will-ooh&quot;,&quot;verified&quot;:false,&quot;votes_total&quot;:62,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[&quot;create_comment&quot;],&quot;excluded_permissions&quot;:[&quot;vote&quot;,&quot;edit&quot;,&quot;cosign&quot;,&quot;uncosign&quot;,&quot;destroy&quot;,&quot;accept&quot;,&quot;reject&quot;,&quot;see_unreviewed&quot;,&quot;clear_votes&quot;,&quot;propose_edit_to&quot;,&quot;pin_to_profile&quot;,&quot;unpin_from_profile&quot;,&quot;update_source&quot;,&quot;edit_custom_preview&quot;],&quot;interactions&quot;:{&quot;cosign&quot;:false,&quot;pyong&quot;:false,&quot;vote&quot;:null},&quot;iq_by_action&quot;:{}},&quot;accepted_by&quot;:{&quot;_type&quot;:&quot;user&quot;,&quot;about_me_summary&quot;:&quot;We may never have the same knowledge again!&quot;,&quot;api_path&quot;:&quot;/users/3061369&quot;,&quot;avatar&quot;:{&quot;tiny&quot;:{&quot;url&quot;:&quot;https://images.rapgenius.com/avatars/tiny/d093a372d5ed2d5253d868b6f44119c6&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:16,&quot;height&quot;:16}},&quot;thumb&quot;:{&quot;url&quot;:&quot;https://images.rapgenius.com/avatars/thumb/d093a372d5ed2d5253d868b6f44119c6&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:32,&quot;height&quot;:32}},&quot;small&quot;:{&quot;url&quot;:&quot;https://images.rapgenius.com/avatars/small/d093a372d5ed2d5253d868b6f44119c6&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:100,&quot;height&quot;:100}},&quot;medium&quot;:{&quot;url&quot;:&quot;https://images.rapgenius.com/avatars/medium/d093a372d5ed2d5253d868b6f44119c6&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:300,&quot;height&quot;:400}}},&quot;header_image_url&quot;:&quot;https://images.rapgenius.com/avatars/medium/d093a372d5ed2d5253d868b6f44119c6&quot;,&quot;human_readable_role_for_display&quot;:&quot;Editor&quot;,&quot;id&quot;:3061369,&quot;iq&quot;:5619,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:false,&quot;login&quot;:&quot;obliscence&quot;,&quot;name&quot;:&quot;obliscence&quot;,&quot;role_for_display&quot;:&quot;editor&quot;,&quot;url&quot;:&quot;https://genius.com/obliscence&quot;,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[],&quot;excluded_permissions&quot;:[&quot;follow&quot;],&quot;interactions&quot;:{&quot;following&quot;:false}}},&quot;authors&quot;:[{&quot;_type&quot;:&quot;user_attribution&quot;,&quot;attribution&quot;:0.6,&quot;pinned_role&quot;:null,&quot;user&quot;:{&quot;_type&quot;:&quot;user&quot;,&quot;about_me_summary&quot;:&quot;Click here for help understanding my username\n\n2019 Genius Intern&quot;,&quot;api_path&quot;:&quot;/users/4472469&quot;,&quot;avatar&quot;:{&quot;tiny&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/tiny/d430c0ae79acf5586e80a7207e8de3dd&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:16,&quot;height&quot;:16}},&quot;thumb&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/thumb/d430c0ae79acf5586e80a7207e8de3dd&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:32,&quot;height&quot;:32}},&quot;small&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/small/d430c0ae79acf5586e80a7207e8de3dd&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:100,&quot;height&quot;:100}},&quot;medium&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/medium/d430c0ae79acf5586e80a7207e8de3dd&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:300,&quot;height&quot;:400}}},&quot;header_image_url&quot;:&quot;https://images.genius.com/966af8b489b529d8406d5ec5c72e537d.432x550x1.jpg&quot;,&quot;human_readable_role_for_display&quot;:&quot;Moderator&quot;,&quot;id&quot;:4472469,&quot;iq&quot;:45680,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:false,&quot;login&quot;:&quot;DemetriusAKAMasterSplintersNephew&quot;,&quot;name&quot;:&quot;Jake Wernick&quot;,&quot;role_for_display&quot;:&quot;moderator&quot;,&quot;url&quot;:&quot;https://genius.com/DemetriusAKAMasterSplintersNephew&quot;,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[],&quot;excluded_permissions&quot;:[&quot;follow&quot;],&quot;interactions&quot;:{&quot;following&quot;:false}}}},{&quot;_type&quot;:&quot;user_attribution&quot;,&quot;attribution&quot;:0.2333333333333333,&quot;pinned_role&quot;:null,&quot;user&quot;:{&quot;_type&quot;:&quot;user&quot;,&quot;about_me_summary&quot;:&quot;Music Fanatic (occasional Zealot)&quot;,&quot;api_path&quot;:&quot;/users/3409147&quot;,&quot;avatar&quot;:{&quot;tiny&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/tiny/93d8bb7265364dffedebfbd22c0f8e96&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:16,&quot;height&quot;:16}},&quot;thumb&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/thumb/93d8bb7265364dffedebfbd22c0f8e96&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:32,&quot;height&quot;:32}},&quot;small&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/small/93d8bb7265364dffedebfbd22c0f8e96&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:100,&quot;height&quot;:100}},&quot;medium&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/medium/93d8bb7265364dffedebfbd22c0f8e96&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:300,&quot;height&quot;:400}}},&quot;header_image_url&quot;:&quot;https://images.genius.com/avatars/medium/93d8bb7265364dffedebfbd22c0f8e96&quot;,&quot;human_readable_role_for_display&quot;:&quot;Editor&quot;,&quot;id&quot;:3409147,&quot;iq&quot;:46265,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:false,&quot;login&quot;:&quot;AndyBelt&quot;,&quot;name&quot;:&quot;AndyBelt&quot;,&quot;role_for_display&quot;:&quot;editor&quot;,&quot;url&quot;:&quot;https://genius.com/AndyBelt&quot;,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[],&quot;excluded_permissions&quot;:[&quot;follow&quot;],&quot;interactions&quot;:{&quot;following&quot;:false}}}},{&quot;_type&quot;:&quot;user_attribution&quot;,&quot;attribution&quot;:0.16666666666666669,&quot;pinned_role&quot;:null,&quot;user&quot;:{&quot;_type&quot;:&quot;user&quot;,&quot;about_me_summary&quot;:&quot;&quot;,&quot;api_path&quot;:&quot;/users/1446710&quot;,&quot;avatar&quot;:{&quot;tiny&quot;:{&quot;url&quot;:&quot;https://s3.amazonaws.com/filepicker-images-rapgenius/l6e4rovskgh&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:16,&quot;height&quot;:16}},&quot;thumb&quot;:{&quot;url&quot;:&quot;https://s3.amazonaws.com/filepicker-images-rapgenius/l6e4rovskgh&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:32,&quot;height&quot;:32}},&quot;small&quot;:{&quot;url&quot;:&quot;https://s3.amazonaws.com/filepicker-images-rapgenius/l6e4rovskgh&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:100,&quot;height&quot;:100}},&quot;medium&quot;:{&quot;url&quot;:&quot;https://s3.amazonaws.com/filepicker-images-rapgenius/l6e4rovskgh&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:300,&quot;height&quot;:400}}},&quot;header_image_url&quot;:&quot;https://s3.amazonaws.com/filepicker-images-rapgenius/yar46qxjup&quot;,&quot;human_readable_role_for_display&quot;:&quot;Contributor&quot;,&quot;id&quot;:1446710,&quot;iq&quot;:1114,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:false,&quot;login&quot;:&quot;ayyjahzeel&quot;,&quot;name&quot;:&quot;ayyjahzeel&quot;,&quot;role_for_display&quot;:&quot;contributor&quot;,&quot;url&quot;:&quot;https://genius.com/ayyjahzeel&quot;,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[],&quot;excluded_permissions&quot;:[&quot;follow&quot;],&quot;interactions&quot;:{&quot;following&quot;:false}}}}],&quot;cosigned_by&quot;:[],&quot;created_by&quot;:{&quot;_type&quot;:&quot;user&quot;,&quot;about_me_summary&quot;:&quot;&quot;,&quot;api_path&quot;:&quot;/users/1446710&quot;,&quot;avatar&quot;:{&quot;tiny&quot;:{&quot;url&quot;:&quot;https://s3.amazonaws.com/filepicker-images-rapgenius/l6e4rovskgh&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:16,&quot;height&quot;:16}},&quot;thumb&quot;:{&quot;url&quot;:&quot;https://s3.amazonaws.com/filepicker-images-rapgenius/l6e4rovskgh&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:32,&quot;height&quot;:32}},&quot;small&quot;:{&quot;url&quot;:&quot;https://s3.amazonaws.com/filepicker-images-rapgenius/l6e4rovskgh&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:100,&quot;height&quot;:100}},&quot;medium&quot;:{&quot;url&quot;:&quot;https://s3.amazonaws.com/filepicker-images-rapgenius/l6e4rovskgh&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:300,&quot;height&quot;:400}}},&quot;header_image_url&quot;:&quot;https://s3.amazonaws.com/filepicker-images-rapgenius/yar46qxjup&quot;,&quot;human_readable_role_for_display&quot;:&quot;Contributor&quot;,&quot;id&quot;:1446710,&quot;iq&quot;:1114,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:false,&quot;login&quot;:&quot;ayyjahzeel&quot;,&quot;name&quot;:&quot;ayyjahzeel&quot;,&quot;role_for_display&quot;:&quot;contributor&quot;,&quot;url&quot;:&quot;https://genius.com/ayyjahzeel&quot;,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[],&quot;excluded_permissions&quot;:[&quot;follow&quot;],&quot;interactions&quot;:{&quot;following&quot;:false}}},&quot;rejection_comment&quot;:null,&quot;top_comment&quot;:null,&quot;verified_by&quot;:null}]}],&quot;primary_album_tracks&quot;:[{&quot;_type&quot;:&quot;album_appearance&quot;,&quot;number&quot;:1,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[&quot;view_song&quot;],&quot;excluded_permissions&quot;:[]},&quot;song&quot;:{&quot;_type&quot;:&quot;song&quot;,&quot;api_path&quot;:&quot;/songs/2884343&quot;,&quot;id&quot;:2884343,&quot;lyrics_state&quot;:&quot;complete&quot;,&quot;path&quot;:&quot;/SAMPLE-supermodel-lyrics&quot;,&quot;title&quot;:&quot;Supermodel&quot;,&quot;url&quot;:&quot;https://genius.com/SAMPLE-supermodel-lyrics&quot;}},{&quot;_type&quot;:&quot;album_appearance&quot;,&quot;number&quot;:2,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[&quot;view_song&quot;],&quot;excluded_permissions&quot;:[]},&quot;song&quot;:{&quot;_type&quot;:&quot;song&quot;,&quot;api_path&quot;:&quot;/songs/2920194&quot;,&quot;id&quot;:2920194,&quot;lyrics_state&quot;:&quot;complete&quot;,&quot;path&quot;:&quot;/SAMPLE-love-galore-lyrics&quot;,&quot;title&quot;:&quot;Love Galore&quot;,&quot;url&quot;:&quot;https://genius.com/SAMPLE-love-galore-lyrics&quot;}},{&quot;_type&quot;:&quot;album_appearance&quot;,&quot;number&quot;:3,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[&quot;view_song&quot;],&quot;excluded_permissions&quot;:[]},&quot;song&quot;:{&quot;_type&quot;:&quot;song&quot;,&quot;api_path&quot;:&quot;/songs/2482057&quot;,&quot;id&quot;:2482057,&quot;lyrics_state&quot;:&quot;complete&quot;,&quot;path&quot;:&quot;/SAMPLE-doves-in-the-wind-lyrics&quot;,&quot;title&quot;:&quot;Doves in the Wind&quot;,&quot;url&quot;:&quot;https://genius.com/SAMPLE-doves-in-the-wind-lyrics&quot;}},{&quot;_type&quot;:&quot;album_appearance&quot;,&quot;number&quot;:4,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[&quot;view_song&quot;],&quot;excluded_permissions&quot;:[]},&quot;song&quot;:{&quot;_type&quot;:&quot;song&quot;,&quot;api_path&quot;:&quot;/songs/2411721&quot;,&quot;id&quot;:2411721,&quot;lyrics_state&quot;:&quot;complete&quot;,&quot;path&quot;:&quot;/SAMPLE-drew-barrymore-lyrics&quot;,&quot;title&quot;:&quot;Drew Barrymore&quot;,&quot;url&quot;:&quot;https://genius.com/SAMPLE-drew-barrymore-lyrics&quot;}},{&quot;_type&quot;:&quot;album_appearance&quot;,&quot;number&quot;:5,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[&quot;view_song&quot;],&quot;excluded_permissions&quot;:[]},&quot;song&quot;:{&quot;_type&quot;:&quot;song&quot;,&quot;api_path&quot;:&quot;/songs/3113595&quot;,&quot;id&quot;:3113595,&quot;lyrics_state&quot;:&quot;complete&quot;,&quot;path&quot;:&quot;/SAMPLE-SONG-lyrics&quot;,&quot;title&quot;:&quot;SONG&quot;,&quot;url&quot;:&quot;https://genius.com/SAMPLE-SONG-lyrics&quot;}},{&quot;_type&quot;:&quot;album_appearance&quot;,&quot;number&quot;:6,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[&quot;view_song&quot;],&quot;excluded_permissions&quot;:[]},&quot;song&quot;:{&quot;_type&quot;:&quot;song&quot;,&quot;api_path&quot;:&quot;/songs/3113598&quot;,&quot;id&quot;:3113598,&quot;lyrics_state&quot;:&quot;complete&quot;,&quot;path&quot;:&quot;/SAMPLE-the-weekend-lyrics&quot;,&quot;title&quot;:&quot;The Weekend&quot;,&quot;url&quot;:&quot;https://genius.com/SAMPLE-the-weekend-lyrics&quot;}},{&quot;_type&quot;:&quot;album_appearance&quot;,&quot;number&quot;:7,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[&quot;view_song&quot;],&quot;excluded_permissions&quot;:[]},&quot;song&quot;:{&quot;_type&quot;:&quot;song&quot;,&quot;api_path&quot;:&quot;/songs/2478959&quot;,&quot;id&quot;:2478959,&quot;lyrics_state&quot;:&quot;complete&quot;,&quot;path&quot;:&quot;/SAMPLE-go-gina-lyrics&quot;,&quot;title&quot;:&quot;Go Gina&quot;,&quot;url&quot;:&quot;https://genius.com/SAMPLE-go-gina-lyrics&quot;}},{&quot;_type&quot;:&quot;album_appearance&quot;,&quot;number&quot;:8,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[&quot;view_song&quot;],&quot;excluded_permissions&quot;:[]},&quot;song&quot;:{&quot;_type&quot;:&quot;song&quot;,&quot;api_path&quot;:&quot;/songs/3113602&quot;,&quot;id&quot;:3113602,&quot;lyrics_state&quot;:&quot;complete&quot;,&quot;path&quot;:&quot;/SAMPLE-garden-say-it-like-dat-lyrics&quot;,&quot;title&quot;:&quot;Garden (Say It Like Dat)&quot;,&quot;url&quot;:&quot;https://genius.com/SAMPLE-garden-say-it-like-dat-lyrics&quot;}},{&quot;_type&quot;:&quot;album_appearance&quot;,&quot;number&quot;:9,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[&quot;view_song&quot;],&quot;excluded_permissions&quot;:[]},&quot;song&quot;:{&quot;_type&quot;:&quot;song&quot;,&quot;api_path&quot;:&quot;/songs/2489949&quot;,&quot;id&quot;:2489949,&quot;lyrics_state&quot;:&quot;complete&quot;,&quot;path&quot;:&quot;/SAMPLE-broken-clocks-lyrics&quot;,&quot;title&quot;:&quot;Broken Clocks&quot;,&quot;url&quot;:&quot;https://genius.com/SAMPLE-broken-clocks-lyrics&quot;}},{&quot;_type&quot;:&quot;album_appearance&quot;,&quot;number&quot;:10,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[&quot;view_song&quot;],&quot;excluded_permissions&quot;:[]},&quot;song&quot;:{&quot;_type&quot;:&quot;song&quot;,&quot;api_path&quot;:&quot;/songs/3113605&quot;,&quot;id&quot;:3113605,&quot;lyrics_state&quot;:&quot;complete&quot;,&quot;path&quot;:&quot;/SAMPLE-anything-lyrics&quot;,&quot;title&quot;:&quot;Anything&quot;,&quot;url&quot;:&quot;https://genius.com/SAMPLE-anything-lyrics&quot;}},{&quot;_type&quot;:&quot;album_appearance&quot;,&quot;number&quot;:11,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[&quot;view_song&quot;],&quot;excluded_permissions&quot;:[]},&quot;song&quot;:{&quot;_type&quot;:&quot;song&quot;,&quot;api_path&quot;:&quot;/songs/2411769&quot;,&quot;id&quot;:2411769,&quot;lyrics_state&quot;:&quot;complete&quot;,&quot;path&quot;:&quot;/SAMPLE-wavy-interlude-lyrics&quot;,&quot;title&quot;:&quot;Wavy (Interlude)&quot;,&quot;url&quot;:&quot;https://genius.com/SAMPLE-wavy-interlude-lyrics&quot;}},{&quot;_type&quot;:&quot;album_appearance&quot;,&quot;number&quot;:12,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[&quot;view_song&quot;],&quot;excluded_permissions&quot;:[]},&quot;song&quot;:{&quot;_type&quot;:&quot;song&quot;,&quot;api_path&quot;:&quot;/songs/3113608&quot;,&quot;id&quot;:3113608,&quot;lyrics_state&quot;:&quot;complete&quot;,&quot;path&quot;:&quot;/SAMPLE-normal-girl-lyrics&quot;,&quot;title&quot;:&quot;Normal Girl&quot;,&quot;url&quot;:&quot;https://genius.com/SAMPLE-normal-girl-lyrics&quot;}},{&quot;_type&quot;:&quot;album_appearance&quot;,&quot;number&quot;:13,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[&quot;view_song&quot;],&quot;excluded_permissions&quot;:[]},&quot;song&quot;:{&quot;_type&quot;:&quot;song&quot;,&quot;api_path&quot;:&quot;/songs/2489495&quot;,&quot;id&quot;:2489495,&quot;lyrics_state&quot;:&quot;complete&quot;,&quot;path&quot;:&quot;/SAMPLE-pretty-little-birds-lyrics&quot;,&quot;title&quot;:&quot;Pretty Little Birds&quot;,&quot;url&quot;:&quot;https://genius.com/SAMPLE-pretty-little-birds-lyrics&quot;}},{&quot;_type&quot;:&quot;album_appearance&quot;,&quot;number&quot;:14,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[&quot;view_song&quot;],&quot;excluded_permissions&quot;:[]},&quot;song&quot;:{&quot;_type&quot;:&quot;song&quot;,&quot;api_path&quot;:&quot;/songs/2978610&quot;,&quot;id&quot;:2978610,&quot;lyrics_state&quot;:&quot;complete&quot;,&quot;path&quot;:&quot;/SAMPLE-20-something-lyrics&quot;,&quot;title&quot;:&quot;20 Something&quot;,&quot;url&quot;:&quot;https://genius.com/SAMPLE-20-something-lyrics&quot;}},{&quot;_type&quot;:&quot;album_appearance&quot;,&quot;number&quot;:null,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[&quot;view_song&quot;],&quot;excluded_permissions&quot;:[]},&quot;song&quot;:{&quot;_type&quot;:&quot;song&quot;,&quot;api_path&quot;:&quot;/songs/3099757&quot;,&quot;id&quot;:3099757,&quot;lyrics_state&quot;:&quot;complete&quot;,&quot;path&quot;:&quot;/Rza-a-word-from-rza-album-trailer-lyrics&quot;,&quot;title&quot;:&quot;A Word From RZA [Album Trailer]&quot;,&quot;url&quot;:&quot;https://genius.com/Rza-a-word-from-rza-album-trailer-lyrics&quot;}}],&quot;recirculated_content&quot;:[],&quot;song&quot;:{&quot;_type&quot;:&quot;song&quot;,&quot;annotation_count&quot;:3,&quot;api_path&quot;:&quot;/songs/3113595&quot;,&quot;apple_music_id&quot;:&quot;1239977717&quot;,&quot;apple_music_player_url&quot;:&quot;https://genius.com/songs/3113595/apple_music_player&quot;,&quot;comment_count&quot;:17,&quot;custom_header_image_url&quot;:null,&quot;custom_song_art_image_url&quot;:null,&quot;description&quot;:{&quot;html&quot;:&quot;&lt;p&gt;The fifth track on SAMPLE’s debut album, &lt;a href=\&quot;https://genius.com/albums/SAMPLE/ALBUM\&quot; rel=\&quot;noopener\&quot; data-api_path=\&quot;/albums/325258\&quot;&gt;ALBUM&lt;/a&gt; is the most reminiscent of her previous ep’s with a pop-disco sound.&lt;/p&gt;\n\n&lt;p&gt;She reflects about her insecurities on not maturing as quickly as her partner is. &lt;a href=\&quot;https://en.wikipedia.org/wiki/SONG\&quot; rel=\&quot;noopener nofollow\&quot;&gt;SONG season&lt;/a&gt; is usually the last big event before graduation for a high schooler, and SAMPLE is too busy living in the moment that she forgets she has her future to look forward to.&lt;/p&gt;\n\n&lt;p&gt;&lt;img src=\&quot;https://images.genius.com/294424c2a77f9fcec68e887e20f23e80.1000x544x1.jpg\&quot; alt=\&quot;\&quot; width=\&quot;1000\&quot; height=\&quot;544\&quot; data-animated=\&quot;false\&quot;&gt;&lt;/p&gt;\n\n&lt;p&gt;This is also around the age when friends are growing apart and have decided where and what they’re doing with their lives, and a lot are trying to hold on to the people they’ve known, even though they’re growing up differently. The person SAMPLE is talking to in the song seems to take everything, even change, to heart.&lt;/p&gt;&quot;,&quot;markdown&quot;:&quot;The fifth track on SAMPLE&#39;s debut album, [ALBUM](https://genius.com/albums/SAMPLE/ALBUM) is the most reminiscent of her previous ep&#39;s with a pop-disco sound.\n\nShe reflects about her insecurities on not maturing as quickly as her partner is. [SONG season](https://en.wikipedia.org/wiki/SONG) is usually the last big event before graduation for a high schooler, and SAMPLE is too busy living in the moment that she forgets she has her future to look forward to. \nhttp://images.genius.com/294424c2a77f9fcec68e887e20f23e80.1000x544x1.jpg\nThis is also around the age when friends are growing apart and have decided where and what they&#39;re doing with their lives, and a lot are trying to hold on to the people they&#39;ve known, even though they&#39;re growing up differently. The person SAMPLE is talking to in the song seems to take everything, even change, to heart.&quot;},&quot;description_preview&quot;:&quot;The fifth track on SAMPLE’s debut album, ALBUM is the most reminiscent of her previous ep’s with a pop-disco sound.\n\nShe reflects about her insecurities on not maturing as quickly as her partner is. SONG season is usually the last big event before graduation for a high schooler, and SAMPLE is too busy living in the moment that she forgets she has her future to look forward to.\n\n\n\nThis is also around the age when friends are growing apart and have decided where and what they’re doing with their lives, and a lot are trying to hold on to the people they’ve known, even though they’re growing up differently. The person SAMPLE is talking to in the song seems to take everything, even change, to heart.&quot;,&quot;embed_content&quot;:&quot;&lt;div id=&#39;rg_embed_link_3113595&#39; class=&#39;rg_embed_link&#39; data-song-id=&#39;3113595&#39;&gt;Read &lt;a href=&#39;https://genius.com/SAMPLE-SONG-lyrics&#39;&gt;“SONG” by SAMPLE&lt;/a&gt; on Genius&lt;/div&gt; &lt;script crossorigin src=&#39;//genius.com/songs/3113595/embed.js&#39;&gt;&lt;/script&gt;&quot;,&quot;featured_video&quot;:false,&quot;full_title&quot;:&quot;SONG by SAMPLE&quot;,&quot;header_image_thumbnail_url&quot;:&quot;https://images.genius.com/be7f8888b02ec8de90b71e6590692665.300x300x1.jpg&quot;,&quot;header_image_url&quot;:&quot;https://images.genius.com/be7f8888b02ec8de90b71e6590692665.1000x1000x1.jpg&quot;,&quot;hidden&quot;:false,&quot;id&quot;:3113595,&quot;instrumental&quot;:false,&quot;is_music&quot;:true,&quot;lyrics_owner_id&quot;:104344,&quot;lyrics_placeholder_reason&quot;:null,&quot;lyrics_state&quot;:&quot;complete&quot;,&quot;lyrics_updated_at&quot;:1541240067,&quot;path&quot;:&quot;/SAMPLE-SONG-lyrics&quot;,&quot;pending_lyrics_edits_count&quot;:12,&quot;published&quot;:true,&quot;pusher_channel&quot;:&quot;song-3113595&quot;,&quot;pyongs_count&quot;:22,&quot;recording_location&quot;:&quot;TDE Red Room, Carson, California&quot;,&quot;release_date&quot;:&quot;2017-06-09&quot;,&quot;release_date_components&quot;:{&quot;year&quot;:2017,&quot;month&quot;:6,&quot;day&quot;:9},&quot;release_date_for_display&quot;:&quot;June 9, 2017&quot;,&quot;share_url&quot;:&quot;https://genius.com/SAMPLE-SONG-lyrics&quot;,&quot;song_art_image_thumbnail_url&quot;:&quot;https://images.genius.com/be7f8888b02ec8de90b71e6590692665.300x300x1.jpg&quot;,&quot;song_art_image_url&quot;:&quot;https://images.genius.com/be7f8888b02ec8de90b71e6590692665.1000x1000x1.jpg&quot;,&quot;soundcloud_url&quot;:null,&quot;spotify_uuid&quot;:null,&quot;stats&quot;:{&quot;accepted_annotations&quot;:2,&quot;contributors&quot;:51,&quot;iq_earners&quot;:51,&quot;transcribers&quot;:3,&quot;unreviewed_annotations&quot;:0,&quot;verified_annotations&quot;:0,&quot;concurrents&quot;:2,&quot;hot&quot;:false,&quot;pageviews&quot;:273786},&quot;title&quot;:&quot;SONG&quot;,&quot;title_with_featured&quot;:&quot;SONG&quot;,&quot;tracking_data&quot;:[{&quot;key&quot;:&quot;Song ID&quot;,&quot;value&quot;:3113595},{&quot;key&quot;:&quot;Title&quot;,&quot;value&quot;:&quot;SONG&quot;},{&quot;key&quot;:&quot;Primary Artist&quot;,&quot;value&quot;:&quot;SAMPLE&quot;},{&quot;key&quot;:&quot;Primary Artist ID&quot;,&quot;value&quot;:41579},{&quot;key&quot;:&quot;Primary Album&quot;,&quot;value&quot;:&quot;ALBUM&quot;},{&quot;key&quot;:&quot;Primary Album ID&quot;,&quot;value&quot;:325258},{&quot;key&quot;:&quot;Tag&quot;,&quot;value&quot;:&quot;r-b&quot;},{&quot;key&quot;:&quot;Primary Tag&quot;,&quot;value&quot;:&quot;r-b&quot;},{&quot;key&quot;:&quot;Primary Tag ID&quot;,&quot;value&quot;:352},{&quot;key&quot;:&quot;Music?&quot;,&quot;value&quot;:true},{&quot;key&quot;:&quot;Annotatable Type&quot;,&quot;value&quot;:&quot;Song&quot;},{&quot;key&quot;:&quot;Annotatable ID&quot;,&quot;value&quot;:3113595},{&quot;key&quot;:&quot;featured_video&quot;,&quot;value&quot;:false},{&quot;key&quot;:&quot;cohort_ids&quot;,&quot;value&quot;:[]},{&quot;key&quot;:&quot;has_verified_callout&quot;,&quot;value&quot;:false},{&quot;key&quot;:&quot;has_featured_annotation&quot;,&quot;value&quot;:true},{&quot;key&quot;:&quot;created_at&quot;,&quot;value&quot;:&quot;2017-06-05T22:53:23Z&quot;},{&quot;key&quot;:&quot;created_month&quot;,&quot;value&quot;:&quot;2017-06-01&quot;},{&quot;key&quot;:&quot;created_year&quot;,&quot;value&quot;:2017},{&quot;key&quot;:&quot;song_tier&quot;,&quot;value&quot;:&quot;D&quot;},{&quot;key&quot;:&quot;Has Recirculated Articles&quot;,&quot;value&quot;:false},{&quot;key&quot;:&quot;Lyrics Language&quot;,&quot;value&quot;:&quot;en&quot;},{&quot;key&quot;:&quot;Has Song Story&quot;,&quot;value&quot;:false},{&quot;key&quot;:&quot;Song Story ID&quot;,&quot;value&quot;:null},{&quot;key&quot;:&quot;Has Apple Match&quot;,&quot;value&quot;:true},{&quot;key&quot;:&quot;Release Date&quot;,&quot;value&quot;:&quot;2017-06-09&quot;},{&quot;key&quot;:&quot;NRM Tier&quot;,&quot;value&quot;:null},{&quot;key&quot;:&quot;NRM Target Date&quot;,&quot;value&quot;:null},{&quot;key&quot;:&quot;Has Description&quot;,&quot;value&quot;:true},{&quot;key&quot;:&quot;Has Youtube URL&quot;,&quot;value&quot;:true},{&quot;key&quot;:&quot;Has Translation Q&amp;A&quot;,&quot;value&quot;:false},{&quot;key&quot;:&quot;Comment Count&quot;,&quot;value&quot;:17}],&quot;tracking_paths&quot;:{&quot;aggregate&quot;:&quot;/SAMPLE-SONG-lyrics&quot;,&quot;concurrent&quot;:&quot;/SAMPLE-SONG-lyrics&quot;},&quot;twitter_share_message&quot;:&quot;SAMPLE – SONG @SAMPLE https://genius.com/SAMPLE-SONG-lyrics&quot;,&quot;twitter_share_message_without_url&quot;:&quot;SAMPLE – SONG @SAMPLE&quot;,&quot;updated_by_human_at&quot;:1541240067,&quot;url&quot;:&quot;https://genius.com/SAMPLE-SONG-lyrics&quot;,&quot;viewable_by_roles&quot;:[],&quot;vttp_id&quot;:null,&quot;youtube_start&quot;:null,&quot;youtube_url&quot;:&quot;http://www.youtube.com/watch?v=CAgzfcWAlTo&quot;,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[&quot;see_pageviews&quot;,&quot;view_apple_music_player&quot;,&quot;create_comment&quot;,&quot;view_song_story_gallery&quot;],&quot;excluded_permissions&quot;:[&quot;follow&quot;,&quot;award_transcription_iq&quot;,&quot;remove_transcription_iq&quot;,&quot;pyong&quot;,&quot;edit_lyrics&quot;,&quot;view_annotation_engagement_data&quot;,&quot;publish&quot;,&quot;unpublish&quot;,&quot;edit_spotify_details&quot;,&quot;hide&quot;,&quot;unhide&quot;,&quot;toggle_featured_video&quot;,&quot;add_pinned_annotation_to&quot;,&quot;add_community_annotation_to&quot;,&quot;destroy&quot;,&quot;mark_as_not_spam&quot;,&quot;edit_spotify_annotations_for&quot;,&quot;verify_lyrics&quot;,&quot;unverify_lyrics&quot;,&quot;edit_anything&quot;,&quot;edit_any_media&quot;,&quot;edit&quot;,&quot;rename&quot;,&quot;edit_tags&quot;,&quot;watch_fact_track&quot;,&quot;reindex&quot;,&quot;view_lyrics_synchronization&quot;,&quot;enable_media&quot;,&quot;disable_media&quot;,&quot;edit_lyrics_or_annotation_brackets&quot;,&quot;see_editorial_indicators&quot;,&quot;view_attribution_visualization&quot;,&quot;edit_annotation_brackets&quot;,&quot;preview_lyrics_for_export&quot;,&quot;hide_apple_player&quot;,&quot;unhide_apple_player&quot;,&quot;trigger_apple_match&quot;,&quot;mark_lyrics_evaluation_as_approved&quot;,&quot;mark_lyrics_evaluation_as_staff_approved&quot;,&quot;mark_lyrics_evaluation_as_unapproved&quot;,&quot;mark_lyrics_evaluation_as_un_staff_approved&quot;,&quot;view_transcriber_media_player&quot;,&quot;override_apple_match&quot;,&quot;edit_youtube_url&quot;,&quot;edit_soundcloud_url&quot;,&quot;edit_spotify_uuid&quot;,&quot;edit_vevo_url&quot;,&quot;moderate_annotations&quot;,&quot;create_annotation&quot;,&quot;see_short_id&quot;,&quot;manage_chart_item&quot;,&quot;create_tag&quot;,&quot;propose_lyrics_edit&quot;,&quot;moderate_lyrics_edit_proposals&quot;,&quot;preview_react_song_page&quot;],&quot;interactions&quot;:{&quot;pyong&quot;:false,&quot;following&quot;:false},&quot;relationships&quot;:{},&quot;iq_by_action&quot;:{}},&quot;album&quot;:{&quot;_type&quot;:&quot;album&quot;,&quot;api_path&quot;:&quot;/albums/325258&quot;,&quot;cover_art_thumbnail_url&quot;:&quot;https://images.genius.com/be7f8888b02ec8de90b71e6590692665.300x300x1.jpg&quot;,&quot;cover_art_url&quot;:&quot;https://images.genius.com/be7f8888b02ec8de90b71e6590692665.1000x1000x1.jpg&quot;,&quot;full_title&quot;:&quot;ALBUM by SAMPLE&quot;,&quot;id&quot;:325258,&quot;name&quot;:&quot;ALBUM&quot;,&quot;name_with_artist&quot;:&quot;ALBUM (artist: SAMPLE)&quot;,&quot;release_date_components&quot;:{&quot;year&quot;:2017,&quot;month&quot;:6,&quot;day&quot;:9},&quot;url&quot;:&quot;https://genius.com/albums/SAMPLE/ALBUM&quot;,&quot;artist&quot;:{&quot;_type&quot;:&quot;artist&quot;,&quot;api_path&quot;:&quot;/artists/41579&quot;,&quot;header_image_url&quot;:&quot;https://images.genius.com/bebfa73bff3ce553704e7c7e3c58b12f.1000x508x1.jpg&quot;,&quot;id&quot;:41579,&quot;image_url&quot;:&quot;https://images.genius.com/d72d06a449b2ad3e48a84387e9c8dd4d.421x421x1.jpg&quot;,&quot;index_character&quot;:&quot;s&quot;,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:true,&quot;name&quot;:&quot;SAMPLE&quot;,&quot;slug&quot;:&quot;SAMPLE&quot;,&quot;url&quot;:&quot;https://genius.com/artists/SAMPLE&quot;,&quot;iq&quot;:4058}},&quot;albums&quot;:[{&quot;_type&quot;:&quot;album&quot;,&quot;api_path&quot;:&quot;/albums/325258&quot;,&quot;cover_art_thumbnail_url&quot;:&quot;https://images.genius.com/be7f8888b02ec8de90b71e6590692665.300x300x1.jpg&quot;,&quot;cover_art_url&quot;:&quot;https://images.genius.com/be7f8888b02ec8de90b71e6590692665.1000x1000x1.jpg&quot;,&quot;full_title&quot;:&quot;ALBUM by SAMPLE&quot;,&quot;id&quot;:325258,&quot;name&quot;:&quot;ALBUM&quot;,&quot;name_with_artist&quot;:&quot;ALBUM (artist: SAMPLE)&quot;,&quot;release_date_components&quot;:{&quot;year&quot;:2017,&quot;month&quot;:6,&quot;day&quot;:9},&quot;url&quot;:&quot;https://genius.com/albums/SAMPLE/ALBUM&quot;,&quot;artist&quot;:{&quot;_type&quot;:&quot;artist&quot;,&quot;api_path&quot;:&quot;/artists/41579&quot;,&quot;header_image_url&quot;:&quot;https://images.genius.com/bebfa73bff3ce553704e7c7e3c58b12f.1000x508x1.jpg&quot;,&quot;id&quot;:41579,&quot;image_url&quot;:&quot;https://images.genius.com/d72d06a449b2ad3e48a84387e9c8dd4d.421x421x1.jpg&quot;,&quot;index_character&quot;:&quot;s&quot;,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:true,&quot;name&quot;:&quot;SAMPLE&quot;,&quot;slug&quot;:&quot;SAMPLE&quot;,&quot;url&quot;:&quot;https://genius.com/artists/SAMPLE&quot;,&quot;iq&quot;:4058}}],&quot;custom_performances&quot;:[{&quot;label&quot;:&quot;Released by&quot;,&quot;artists&quot;:[{&quot;_type&quot;:&quot;artist&quot;,&quot;api_path&quot;:&quot;/artists/154526&quot;,&quot;header_image_url&quot;:&quot;https://images.genius.com/3d00beb981cd41e43d21afe219988a68.600x600x1.jpg&quot;,&quot;id&quot;:154526,&quot;image_url&quot;:&quot;https://images.genius.com/046fa426b49ab40f1bc84df6b6bf74ee.400x400x1.jpg&quot;,&quot;index_character&quot;:&quot;r&quot;,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:false,&quot;name&quot;:&quot;RCA Records&quot;,&quot;slug&quot;:&quot;Rca-records&quot;,&quot;url&quot;:&quot;https://genius.com/artists/Rca-records&quot;},{&quot;_type&quot;:&quot;artist&quot;,&quot;api_path&quot;:&quot;/artists/1108010&quot;,&quot;header_image_url&quot;:&quot;https://images.genius.com/b6d0cd73308dc9c8c514b5c11081f1a5.500x333x1.jpg&quot;,&quot;id&quot;:1108010,&quot;image_url&quot;:&quot;https://images.genius.com/8d7bc7b0d6188a564b2b0cc553fbe199.899x899x1.jpg&quot;,&quot;index_character&quot;:&quot;t&quot;,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:false,&quot;name&quot;:&quot;Top Dawg Entertainment&quot;,&quot;slug&quot;:&quot;Top-dawg-entertainment&quot;,&quot;url&quot;:&quot;https://genius.com/artists/Top-dawg-entertainment&quot;}]},{&quot;label&quot;:&quot;Mixing&quot;,&quot;artists&quot;:[{&quot;_type&quot;:&quot;artist&quot;,&quot;api_path&quot;:&quot;/artists/640014&quot;,&quot;header_image_url&quot;:&quot;https://images.genius.com/6bf42f8958d4e9916db1fd12381b36a4.620x400x1.jpg&quot;,&quot;id&quot;:640014,&quot;image_url&quot;:&quot;https://images.genius.com/6bf42f8958d4e9916db1fd12381b36a4.620x400x1.jpg&quot;,&quot;index_character&quot;:&quot;m&quot;,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:false,&quot;name&quot;:&quot;Mixed by Ali&quot;,&quot;slug&quot;:&quot;Mixed-by-ali&quot;,&quot;url&quot;:&quot;https://genius.com/artists/Mixed-by-ali&quot;}]}],&quot;description_annotation&quot;:{&quot;_type&quot;:&quot;referent&quot;,&quot;annotator_id&quot;:213070,&quot;annotator_login&quot;:&quot;Spaced88&quot;,&quot;api_path&quot;:&quot;/referents/12130282&quot;,&quot;classification&quot;:&quot;accepted&quot;,&quot;fragment&quot;:&quot;SONG&quot;,&quot;id&quot;:12130282,&quot;ios_app_url&quot;:&quot;genius://referents/12130282&quot;,&quot;is_description&quot;:true,&quot;is_image&quot;:false,&quot;path&quot;:&quot;/12130282/SAMPLE-SONG/SONG&quot;,&quot;range&quot;:{&quot;content&quot;:&quot;SONG&quot;},&quot;song_id&quot;:3113595,&quot;url&quot;:&quot;https://genius.com/12130282/SAMPLE-SONG/SONG&quot;,&quot;verified_annotator_ids&quot;:[],&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[],&quot;excluded_permissions&quot;:[&quot;add_pinned_annotation_to&quot;,&quot;add_community_annotation_to&quot;],&quot;relationships&quot;:{}},&quot;tracking_paths&quot;:{&quot;aggregate&quot;:&quot;/12130282/SAMPLE-SONG/SONG&quot;,&quot;concurrent&quot;:&quot;/SAMPLE-SONG-lyrics&quot;},&quot;twitter_share_message&quot;:&quot;“The fifth track on SAMPLE’s debut album, ALBUM is the most reminiscent of her previous ep’s with a p…” —@Genius&quot;,&quot;annotatable&quot;:{&quot;_type&quot;:&quot;song&quot;,&quot;api_path&quot;:&quot;/songs/3113595&quot;,&quot;client_timestamps&quot;:{&quot;updated_by_human_at&quot;:1541240067,&quot;lyrics_updated_at&quot;:1541240067},&quot;context&quot;:&quot;SAMPLE&quot;,&quot;id&quot;:3113595,&quot;image_url&quot;:&quot;https://images.genius.com/be7f8888b02ec8de90b71e6590692665.1000x1000x1.jpg&quot;,&quot;link_title&quot;:&quot;SONG by SAMPLE&quot;,&quot;title&quot;:&quot;SONG&quot;,&quot;type&quot;:&quot;Song&quot;,&quot;url&quot;:&quot;https://genius.com/SAMPLE-SONG-lyrics&quot;},&quot;annotations&quot;:[{&quot;_type&quot;:&quot;annotation&quot;,&quot;api_path&quot;:&quot;/annotations/12130282&quot;,&quot;being_created&quot;:false,&quot;body&quot;:{&quot;html&quot;:&quot;&lt;p&gt;The fifth track on SAMPLE’s debut album, &lt;a href=\&quot;https://genius.com/albums/SAMPLE/ALBUM\&quot; rel=\&quot;noopener\&quot; data-api_path=\&quot;/albums/325258\&quot;&gt;ALBUM&lt;/a&gt; is the most reminiscent of her previous ep’s with a pop-disco sound.&lt;/p&gt;\n\n&lt;p&gt;She reflects about her insecurities on not maturing as quickly as her partner is. &lt;a href=\&quot;https://en.wikipedia.org/wiki/SONG\&quot; rel=\&quot;noopener nofollow\&quot;&gt;SONG season&lt;/a&gt; is usually the last big event before graduation for a high schooler, and SAMPLE is too busy living in the moment that she forgets she has her future to look forward to.&lt;/p&gt;\n\n&lt;p&gt;&lt;img src=\&quot;https://images.genius.com/294424c2a77f9fcec68e887e20f23e80.1000x544x1.jpg\&quot; alt=\&quot;\&quot; width=\&quot;1000\&quot; height=\&quot;544\&quot; data-animated=\&quot;false\&quot;&gt;&lt;/p&gt;\n\n&lt;p&gt;This is also around the age when friends are growing apart and have decided where and what they’re doing with their lives, and a lot are trying to hold on to the people they’ve known, even though they’re growing up differently. The person SAMPLE is talking to in the song seems to take everything, even change, to heart.&lt;/p&gt;&quot;,&quot;markdown&quot;:&quot;The fifth track on SAMPLE&#39;s debut album, [ALBUM](https://genius.com/albums/SAMPLE/ALBUM) is the most reminiscent of her previous ep&#39;s with a pop-disco sound.\n\nShe reflects about her insecurities on not maturing as quickly as her partner is. [SONG season](https://en.wikipedia.org/wiki/SONG) is usually the last big event before graduation for a high schooler, and SAMPLE is too busy living in the moment that she forgets she has her future to look forward to. \nhttp://images.genius.com/294424c2a77f9fcec68e887e20f23e80.1000x544x1.jpg\nThis is also around the age when friends are growing apart and have decided where and what they&#39;re doing with their lives, and a lot are trying to hold on to the people they&#39;ve known, even though they&#39;re growing up differently. The person SAMPLE is talking to in the song seems to take everything, even change, to heart.&quot;},&quot;comment_count&quot;:1,&quot;community&quot;:true,&quot;created_at&quot;:1496992615,&quot;custom_preview&quot;:null,&quot;deleted&quot;:false,&quot;embed_content&quot;:&quot;&lt;blockquote class=&#39;rg_standalone_container&#39; data-src=&#39;//genius.com/annotations/12130282/standalone_embed&#39;&gt;&lt;a href=&#39;https://genius.com/12130282/SAMPLE-SONG/SONG&#39;&gt;SONG&lt;/a&gt;&lt;br&gt;&lt;a href=&#39;https://genius.com/SAMPLE-SONG-lyrics&#39;&gt;&amp;#8213; SAMPLE – SONG&lt;/a&gt;&lt;/blockquote&gt;&lt;script async crossorigin src=&#39;//genius.com/annotations/load_standalone_embeds.js&#39;&gt;&lt;/script&gt;&quot;,&quot;has_voters&quot;:true,&quot;id&quot;:12130282,&quot;needs_exegesis&quot;:false,&quot;pinned&quot;:false,&quot;proposed_edit_count&quot;:0,&quot;pyongs_count&quot;:3,&quot;referent_id&quot;:12130282,&quot;share_url&quot;:&quot;https://genius.com/12130282&quot;,&quot;source&quot;:null,&quot;state&quot;:&quot;accepted&quot;,&quot;twitter_share_message&quot;:&quot;“The fifth track on SAMPLE’s debut album, ALBUM is the most reminiscent of her previous ep’s with a pop-disco…” —@Genius&quot;,&quot;url&quot;:&quot;https://genius.com/12130282/SAMPLE-SONG/SONG&quot;,&quot;verified&quot;:false,&quot;votes_total&quot;:137,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[&quot;create_comment&quot;],&quot;excluded_permissions&quot;:[&quot;vote&quot;,&quot;edit&quot;,&quot;cosign&quot;,&quot;uncosign&quot;,&quot;destroy&quot;,&quot;accept&quot;,&quot;reject&quot;,&quot;see_unreviewed&quot;,&quot;clear_votes&quot;,&quot;propose_edit_to&quot;,&quot;pin_to_profile&quot;,&quot;unpin_from_profile&quot;,&quot;update_source&quot;,&quot;edit_custom_preview&quot;],&quot;interactions&quot;:{&quot;cosign&quot;:false,&quot;pyong&quot;:false,&quot;vote&quot;:null},&quot;iq_by_action&quot;:{}},&quot;accepted_by&quot;:{&quot;_type&quot;:&quot;user&quot;,&quot;about_me_summary&quot;:&quot;May your fits be the only thing that’s sick 😷😷😷\n\n\n\nMTL → TOR → HFX → we’re back to TOR??\n\n\n\n\n[Un]official one-person Tronno/Scartown cleanup committee. Tag me in your Toronto-related lyrics for editing + verification (Drake, Weeknd, PND, dvsn, etc)\n\n\n\nHit me up if:\n\n\nYou’re new to Genius and have any questions or concerns\nYou’re interested in editorship\nYou’re an indie/alternative/non-mainstream artist looking to get your lyrics on Genius\nYou want to collaborate or pitch an article idea to me. I’m always looking for things to write about!\n\n\n\nGo have a good day.\n\n\n\nFirst article published! Lana Del Rey’s Long Path to Independence: 29 August 2019\n\n20,000 IQ: 4 October 2018\n25,000 IQ: 13 October 2018\n30,000 IQ: 1 November 2018\n50,000 IQ: September 2019 ish\n\n#6 on Country: 5 October 2018\n\nMentioned in “Hot Tates”: 8 October 2018\n\nguerdht made editor: 10 September 2018\nmiasmxle made editor: 7 October 2018\nnicole13 made editor: 8 November 2018\nBASTILLEpilot made editor: 28 October 2019&quot;,&quot;api_path&quot;:&quot;/users/5091936&quot;,&quot;avatar&quot;:{&quot;tiny&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/tiny/0b419a3b7ee0841fcc2b632ada793a8b&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:16,&quot;height&quot;:16}},&quot;thumb&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/thumb/0b419a3b7ee0841fcc2b632ada793a8b&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:32,&quot;height&quot;:32}},&quot;small&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/small/0b419a3b7ee0841fcc2b632ada793a8b&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:100,&quot;height&quot;:100}},&quot;medium&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/medium/0b419a3b7ee0841fcc2b632ada793a8b&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:300,&quot;height&quot;:400}}},&quot;header_image_url&quot;:&quot;https://s3.amazonaws.com/filepicker-images-rapgenius/fd3dfxuztp&quot;,&quot;human_readable_role_for_display&quot;:&quot;Editor&quot;,&quot;id&quot;:5091936,&quot;iq&quot;:59580,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:false,&quot;login&quot;:&quot;AudreyXuan&quot;,&quot;name&quot;:&quot;AudreyXuan&quot;,&quot;role_for_display&quot;:&quot;editor&quot;,&quot;url&quot;:&quot;https://genius.com/AudreyXuan&quot;,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[],&quot;excluded_permissions&quot;:[&quot;follow&quot;],&quot;interactions&quot;:{&quot;following&quot;:false}}},&quot;authors&quot;:[{&quot;_type&quot;:&quot;user_attribution&quot;,&quot;attribution&quot;:0.9807692307692308,&quot;pinned_role&quot;:null,&quot;user&quot;:{&quot;_type&quot;:&quot;user&quot;,&quot;about_me_summary&quot;:&quot;.&quot;,&quot;api_path&quot;:&quot;/users/213070&quot;,&quot;avatar&quot;:{&quot;tiny&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/tiny/c9e0e85dd6be03be7b1fcbf92d1234e1&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:16,&quot;height&quot;:16}},&quot;thumb&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/thumb/c9e0e85dd6be03be7b1fcbf92d1234e1&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:32,&quot;height&quot;:32}},&quot;small&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/small/c9e0e85dd6be03be7b1fcbf92d1234e1&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:100,&quot;height&quot;:100}},&quot;medium&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/medium/c9e0e85dd6be03be7b1fcbf92d1234e1&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:300,&quot;height&quot;:400}}},&quot;header_image_url&quot;:&quot;https://images.genius.com/avatars/medium/c9e0e85dd6be03be7b1fcbf92d1234e1&quot;,&quot;human_readable_role_for_display&quot;:&quot;Contributor&quot;,&quot;id&quot;:213070,&quot;iq&quot;:75729,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:false,&quot;login&quot;:&quot;Spaced88&quot;,&quot;name&quot;:&quot;Spaced88&quot;,&quot;role_for_display&quot;:&quot;contributor&quot;,&quot;url&quot;:&quot;https://genius.com/Spaced88&quot;,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[],&quot;excluded_permissions&quot;:[&quot;follow&quot;],&quot;interactions&quot;:{&quot;following&quot;:false}}}},{&quot;_type&quot;:&quot;user_attribution&quot;,&quot;attribution&quot;:0.019230769230769232,&quot;pinned_role&quot;:null,&quot;user&quot;:{&quot;_type&quot;:&quot;user&quot;,&quot;about_me_summary&quot;:&quot;May your fits be the only thing that’s sick 😷😷😷\n\n\n\nMTL → TOR → HFX → we’re back to TOR??\n\n\n\n\n[Un]official one-person Tronno/Scartown cleanup committee. Tag me in your Toronto-related lyrics for editing + verification (Drake, Weeknd, PND, dvsn, etc)\n\n\n\nHit me up if:\n\n\nYou’re new to Genius and have any questions or concerns\nYou’re interested in editorship\nYou’re an indie/alternative/non-mainstream artist looking to get your lyrics on Genius\nYou want to collaborate or pitch an article idea to me. I’m always looking for things to write about!\n\n\n\nGo have a good day.\n\n\n\nFirst article published! Lana Del Rey’s Long Path to Independence: 29 August 2019\n\n20,000 IQ: 4 October 2018\n25,000 IQ: 13 October 2018\n30,000 IQ: 1 November 2018\n50,000 IQ: September 2019 ish\n\n#6 on Country: 5 October 2018\n\nMentioned in “Hot Tates”: 8 October 2018\n\nguerdht made editor: 10 September 2018\nmiasmxle made editor: 7 October 2018\nnicole13 made editor: 8 November 2018\nBASTILLEpilot made editor: 28 October 2019&quot;,&quot;api_path&quot;:&quot;/users/5091936&quot;,&quot;avatar&quot;:{&quot;tiny&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/tiny/0b419a3b7ee0841fcc2b632ada793a8b&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:16,&quot;height&quot;:16}},&quot;thumb&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/thumb/0b419a3b7ee0841fcc2b632ada793a8b&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:32,&quot;height&quot;:32}},&quot;small&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/small/0b419a3b7ee0841fcc2b632ada793a8b&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:100,&quot;height&quot;:100}},&quot;medium&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/medium/0b419a3b7ee0841fcc2b632ada793a8b&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:300,&quot;height&quot;:400}}},&quot;header_image_url&quot;:&quot;https://s3.amazonaws.com/filepicker-images-rapgenius/fd3dfxuztp&quot;,&quot;human_readable_role_for_display&quot;:&quot;Editor&quot;,&quot;id&quot;:5091936,&quot;iq&quot;:59580,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:false,&quot;login&quot;:&quot;AudreyXuan&quot;,&quot;name&quot;:&quot;AudreyXuan&quot;,&quot;role_for_display&quot;:&quot;editor&quot;,&quot;url&quot;:&quot;https://genius.com/AudreyXuan&quot;,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[],&quot;excluded_permissions&quot;:[&quot;follow&quot;],&quot;interactions&quot;:{&quot;following&quot;:false}}}}],&quot;cosigned_by&quot;:[],&quot;created_by&quot;:{&quot;_type&quot;:&quot;user&quot;,&quot;about_me_summary&quot;:&quot;.&quot;,&quot;api_path&quot;:&quot;/users/213070&quot;,&quot;avatar&quot;:{&quot;tiny&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/tiny/c9e0e85dd6be03be7b1fcbf92d1234e1&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:16,&quot;height&quot;:16}},&quot;thumb&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/thumb/c9e0e85dd6be03be7b1fcbf92d1234e1&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:32,&quot;height&quot;:32}},&quot;small&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/small/c9e0e85dd6be03be7b1fcbf92d1234e1&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:100,&quot;height&quot;:100}},&quot;medium&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/medium/c9e0e85dd6be03be7b1fcbf92d1234e1&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:300,&quot;height&quot;:400}}},&quot;header_image_url&quot;:&quot;https://images.genius.com/avatars/medium/c9e0e85dd6be03be7b1fcbf92d1234e1&quot;,&quot;human_readable_role_for_display&quot;:&quot;Contributor&quot;,&quot;id&quot;:213070,&quot;iq&quot;:75729,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:false,&quot;login&quot;:&quot;Spaced88&quot;,&quot;name&quot;:&quot;Spaced88&quot;,&quot;role_for_display&quot;:&quot;contributor&quot;,&quot;url&quot;:&quot;https://genius.com/Spaced88&quot;,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[],&quot;excluded_permissions&quot;:[&quot;follow&quot;],&quot;interactions&quot;:{&quot;following&quot;:false}}},&quot;rejection_comment&quot;:null,&quot;top_comment&quot;:{&quot;_type&quot;:&quot;comment&quot;,&quot;api_path&quot;:&quot;/comments/5752988&quot;,&quot;body&quot;:{&quot;html&quot;:&quot;&lt;p&gt;Could it be possible that “SONG” is also an abbreviation of the word Promise because in pre chorus she’s SONGising her significant other multiple things such as getting better as time goes on and SONGising to do better&lt;/p&gt;&quot;,&quot;markdown&quot;:&quot;Could it be possible that “SONG” is also an abbreviation of the word Promise because in pre chorus she’s SONGising her significant other multiple things such as getting better as time goes on and SONGising to do better&quot;},&quot;created_at&quot;:1520825167,&quot;has_voters&quot;:true,&quot;id&quot;:5752988,&quot;pinned_role&quot;:null,&quot;votes_total&quot;:21,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[],&quot;excluded_permissions&quot;:[&quot;vote&quot;,&quot;accept&quot;,&quot;reject&quot;,&quot;mark_spam&quot;,&quot;integrate&quot;,&quot;archive&quot;,&quot;destroy&quot;],&quot;interactions&quot;:{&quot;vote&quot;:null}},&quot;anonymous_author&quot;:null,&quot;author&quot;:{&quot;_type&quot;:&quot;user&quot;,&quot;about_me_summary&quot;:&quot;&quot;,&quot;api_path&quot;:&quot;/users/3578074&quot;,&quot;avatar&quot;:{&quot;tiny&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/tiny/26800f2be4cfe0a526019ad79ef9a29f&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:16,&quot;height&quot;:16}},&quot;thumb&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/thumb/26800f2be4cfe0a526019ad79ef9a29f&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:32,&quot;height&quot;:32}},&quot;small&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/small/26800f2be4cfe0a526019ad79ef9a29f&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:100,&quot;height&quot;:100}},&quot;medium&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/medium/26800f2be4cfe0a526019ad79ef9a29f&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:300,&quot;height&quot;:400}}},&quot;header_image_url&quot;:&quot;https://images.genius.com/avatars/medium/26800f2be4cfe0a526019ad79ef9a29f&quot;,&quot;human_readable_role_for_display&quot;:null,&quot;id&quot;:3578074,&quot;iq&quot;:183,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:false,&quot;login&quot;:&quot;Jaenumba10&quot;,&quot;name&quot;:&quot;Jaenumba10&quot;,&quot;role_for_display&quot;:null,&quot;url&quot;:&quot;https://genius.com/Jaenumba10&quot;,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[],&quot;excluded_permissions&quot;:[&quot;follow&quot;],&quot;interactions&quot;:{&quot;following&quot;:false}}},&quot;reason&quot;:null},&quot;verified_by&quot;:null}]},&quot;featured_artists&quot;:[],&quot;lyrics_marked_complete_by&quot;:null,&quot;media&quot;:[{&quot;provider&quot;:&quot;youtube&quot;,&quot;start&quot;:0,&quot;type&quot;:&quot;video&quot;,&quot;url&quot;:&quot;http://www.youtube.com/watch?v=CAgzfcWAlTo&quot;}],&quot;primary_artist&quot;:{&quot;_type&quot;:&quot;artist&quot;,&quot;api_path&quot;:&quot;/artists/41579&quot;,&quot;header_image_url&quot;:&quot;https://images.genius.com/bebfa73bff3ce553704e7c7e3c58b12f.1000x508x1.jpg&quot;,&quot;id&quot;:41579,&quot;image_url&quot;:&quot;https://images.genius.com/d72d06a449b2ad3e48a84387e9c8dd4d.421x421x1.jpg&quot;,&quot;index_character&quot;:&quot;s&quot;,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:true,&quot;name&quot;:&quot;SAMPLE&quot;,&quot;slug&quot;:&quot;SAMPLE&quot;,&quot;url&quot;:&quot;https://genius.com/artists/SAMPLE&quot;,&quot;iq&quot;:4058},&quot;primary_tag&quot;:{&quot;_type&quot;:&quot;tag&quot;,&quot;id&quot;:352,&quot;name&quot;:&quot;R&amp;B&quot;,&quot;primary&quot;:true,&quot;url&quot;:&quot;https://genius.com/tags/r-b&quot;},&quot;producer_artists&quot;:[{&quot;_type&quot;:&quot;artist&quot;,&quot;api_path&quot;:&quot;/artists/182843&quot;,&quot;header_image_url&quot;:&quot;https://images.genius.com/d95cc233422fea062585b5ff7cd93caf.400x400x1.jpg&quot;,&quot;id&quot;:182843,&quot;image_url&quot;:&quot;https://images.genius.com/d95cc233422fea062585b5ff7cd93caf.400x400x1.jpg&quot;,&quot;index_character&quot;:&quot;c&quot;,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:false,&quot;name&quot;:&quot;Carter Lang&quot;,&quot;slug&quot;:&quot;Carter-lang&quot;,&quot;url&quot;:&quot;https://genius.com/artists/Carter-lang&quot;},{&quot;_type&quot;:&quot;artist&quot;,&quot;api_path&quot;:&quot;/artists/48098&quot;,&quot;header_image_url&quot;:&quot;https://images.genius.com/d0293304508f04a8d892622a80d9216a.645x363x1.jpg&quot;,&quot;id&quot;:48098,&quot;image_url&quot;:&quot;https://images.genius.com/3a4543d3a6d1110b9bf5096e5a7ca59b.553x553x1.jpg&quot;,&quot;index_character&quot;:&quot;a&quot;,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:false,&quot;name&quot;:&quot;The Antydote&quot;,&quot;slug&quot;:&quot;The-antydote&quot;,&quot;url&quot;:&quot;https://genius.com/artists/The-antydote&quot;}],&quot;song_relationships&quot;:[{&quot;_type&quot;:&quot;song_relationship&quot;,&quot;relationship_type&quot;:&quot;samples&quot;,&quot;type&quot;:&quot;samples&quot;,&quot;songs&quot;:[]},{&quot;_type&quot;:&quot;song_relationship&quot;,&quot;relationship_type&quot;:&quot;sampled_in&quot;,&quot;type&quot;:&quot;sampled_in&quot;,&quot;songs&quot;:[]},{&quot;_type&quot;:&quot;song_relationship&quot;,&quot;relationship_type&quot;:&quot;interpolates&quot;,&quot;type&quot;:&quot;interpolates&quot;,&quot;songs&quot;:[]},{&quot;_type&quot;:&quot;song_relationship&quot;,&quot;relationship_type&quot;:&quot;interpolated_by&quot;,&quot;type&quot;:&quot;interpolated_by&quot;,&quot;songs&quot;:[{&quot;_type&quot;:&quot;song&quot;,&quot;annotation_count&quot;:0,&quot;api_path&quot;:&quot;/songs/5349999&quot;,&quot;full_title&quot;:&quot;Wicked Games (StarFox Remix) by The Weeknd&quot;,&quot;header_image_thumbnail_url&quot;:&quot;https://images.genius.com/c9397ef6d1dc537ba73d7bb57a78b0e0.300x300x1.jpg&quot;,&quot;header_image_url&quot;:&quot;https://images.genius.com/c9397ef6d1dc537ba73d7bb57a78b0e0.1000x1000x1.jpg&quot;,&quot;id&quot;:5349999,&quot;instrumental&quot;:false,&quot;lyrics_owner_id&quot;:8367342,&quot;lyrics_state&quot;:&quot;complete&quot;,&quot;lyrics_updated_at&quot;:1584153955,&quot;path&quot;:&quot;/The-weeknd-wicked-games-starfox-remix-lyrics&quot;,&quot;pyongs_count&quot;:null,&quot;song_art_image_thumbnail_url&quot;:&quot;https://images.genius.com/c9397ef6d1dc537ba73d7bb57a78b0e0.300x300x1.jpg&quot;,&quot;song_art_image_url&quot;:&quot;https://images.genius.com/c9397ef6d1dc537ba73d7bb57a78b0e0.1000x1000x1.jpg&quot;,&quot;stats&quot;:{&quot;unreviewed_annotations&quot;:0,&quot;hot&quot;:false},&quot;title&quot;:&quot;Wicked Games (StarFox Remix)&quot;,&quot;title_with_featured&quot;:&quot;Wicked Games (StarFox Remix)&quot;,&quot;updated_by_human_at&quot;:1584734011,&quot;url&quot;:&quot;https://genius.com/The-weeknd-wicked-games-starfox-remix-lyrics&quot;,&quot;primary_artist&quot;:{&quot;_type&quot;:&quot;artist&quot;,&quot;api_path&quot;:&quot;/artists/2358&quot;,&quot;header_image_url&quot;:&quot;https://images.genius.com/9ad71da04a3c0a078aa1745a1e8bf25c.500x167x1.png&quot;,&quot;id&quot;:2358,&quot;image_url&quot;:&quot;https://images.genius.com/6dddd0ef3b7f04df34e6bf95ca70975e.683x683x1.jpg&quot;,&quot;index_character&quot;:&quot;w&quot;,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:true,&quot;name&quot;:&quot;The Weeknd&quot;,&quot;slug&quot;:&quot;The-weeknd&quot;,&quot;url&quot;:&quot;https://genius.com/artists/The-weeknd&quot;,&quot;iq&quot;:6083}}]},{&quot;_type&quot;:&quot;song_relationship&quot;,&quot;relationship_type&quot;:&quot;cover_of&quot;,&quot;type&quot;:&quot;cover_of&quot;,&quot;songs&quot;:[]},{&quot;_type&quot;:&quot;song_relationship&quot;,&quot;relationship_type&quot;:&quot;covered_by&quot;,&quot;type&quot;:&quot;covered_by&quot;,&quot;songs&quot;:[]},{&quot;_type&quot;:&quot;song_relationship&quot;,&quot;relationship_type&quot;:&quot;remix_of&quot;,&quot;type&quot;:&quot;remix_of&quot;,&quot;songs&quot;:[]},{&quot;_type&quot;:&quot;song_relationship&quot;,&quot;relationship_type&quot;:&quot;remixed_by&quot;,&quot;type&quot;:&quot;remixed_by&quot;,&quot;songs&quot;:[]},{&quot;_type&quot;:&quot;song_relationship&quot;,&quot;relationship_type&quot;:&quot;live_version_of&quot;,&quot;type&quot;:&quot;live_version_of&quot;,&quot;songs&quot;:[]},{&quot;_type&quot;:&quot;song_relationship&quot;,&quot;relationship_type&quot;:&quot;performed_live_as&quot;,&quot;type&quot;:&quot;performed_live_as&quot;,&quot;songs&quot;:[]}],&quot;tags&quot;:[{&quot;_type&quot;:&quot;tag&quot;,&quot;id&quot;:352,&quot;name&quot;:&quot;R&amp;B&quot;,&quot;primary&quot;:true,&quot;url&quot;:&quot;https://genius.com/tags/r-b&quot;}],&quot;top_scholar&quot;:{&quot;_type&quot;:&quot;user_attribution&quot;,&quot;attribution_value&quot;:352.0,&quot;pinned_role&quot;:null,&quot;user&quot;:{&quot;_type&quot;:&quot;user&quot;,&quot;about_me_summary&quot;:&quot;.&quot;,&quot;api_path&quot;:&quot;/users/213070&quot;,&quot;avatar&quot;:{&quot;tiny&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/tiny/c9e0e85dd6be03be7b1fcbf92d1234e1&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:16,&quot;height&quot;:16}},&quot;thumb&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/thumb/c9e0e85dd6be03be7b1fcbf92d1234e1&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:32,&quot;height&quot;:32}},&quot;small&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/small/c9e0e85dd6be03be7b1fcbf92d1234e1&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:100,&quot;height&quot;:100}},&quot;medium&quot;:{&quot;url&quot;:&quot;https://images.genius.com/avatars/medium/c9e0e85dd6be03be7b1fcbf92d1234e1&quot;,&quot;bounding_box&quot;:{&quot;width&quot;:300,&quot;height&quot;:400}}},&quot;header_image_url&quot;:&quot;https://images.genius.com/avatars/medium/c9e0e85dd6be03be7b1fcbf92d1234e1&quot;,&quot;human_readable_role_for_display&quot;:&quot;Contributor&quot;,&quot;id&quot;:213070,&quot;iq&quot;:75729,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:false,&quot;login&quot;:&quot;Spaced88&quot;,&quot;name&quot;:&quot;Spaced88&quot;,&quot;role_for_display&quot;:&quot;contributor&quot;,&quot;url&quot;:&quot;https://genius.com/Spaced88&quot;,&quot;current_user_metadata&quot;:{&quot;permissions&quot;:[],&quot;excluded_permissions&quot;:[&quot;follow&quot;],&quot;interactions&quot;:{&quot;following&quot;:false}}}},&quot;verified_annotations_by&quot;:[],&quot;verified_contributors&quot;:[],&quot;verified_lyrics_by&quot;:[],&quot;writer_artists&quot;:[{&quot;_type&quot;:&quot;artist&quot;,&quot;api_path&quot;:&quot;/artists/48098&quot;,&quot;header_image_url&quot;:&quot;https://images.genius.com/d0293304508f04a8d892622a80d9216a.645x363x1.jpg&quot;,&quot;id&quot;:48098,&quot;image_url&quot;:&quot;https://images.genius.com/3a4543d3a6d1110b9bf5096e5a7ca59b.553x553x1.jpg&quot;,&quot;index_character&quot;:&quot;a&quot;,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:false,&quot;name&quot;:&quot;The Antydote&quot;,&quot;slug&quot;:&quot;The-antydote&quot;,&quot;url&quot;:&quot;https://genius.com/artists/The-antydote&quot;},{&quot;_type&quot;:&quot;artist&quot;,&quot;api_path&quot;:&quot;/artists/182843&quot;,&quot;header_image_url&quot;:&quot;https://images.genius.com/d95cc233422fea062585b5ff7cd93caf.400x400x1.jpg&quot;,&quot;id&quot;:182843,&quot;image_url&quot;:&quot;https://images.genius.com/d95cc233422fea062585b5ff7cd93caf.400x400x1.jpg&quot;,&quot;index_character&quot;:&quot;c&quot;,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:false,&quot;name&quot;:&quot;Carter Lang&quot;,&quot;slug&quot;:&quot;Carter-lang&quot;,&quot;url&quot;:&quot;https://genius.com/artists/Carter-lang&quot;},{&quot;_type&quot;:&quot;artist&quot;,&quot;api_path&quot;:&quot;/artists/41579&quot;,&quot;header_image_url&quot;:&quot;https://images.genius.com/bebfa73bff3ce553704e7c7e3c58b12f.1000x508x1.jpg&quot;,&quot;id&quot;:41579,&quot;image_url&quot;:&quot;https://images.genius.com/d72d06a449b2ad3e48a84387e9c8dd4d.421x421x1.jpg&quot;,&quot;index_character&quot;:&quot;s&quot;,&quot;is_meme_verified&quot;:false,&quot;is_verified&quot;:true,&quot;name&quot;:&quot;SAMPLE&quot;,&quot;slug&quot;:&quot;SAMPLE&quot;,&quot;url&quot;:&quot;https://genius.com/artists/SAMPLE&quot;,&quot;iq&quot;:4058}]}}" itemprop="page_data"></meta>
+    
+  </head>
+
+  <body class="act-show cont-songs snarly" >
+    <preload ng-non-bindable=""><preload-content data-preload_data="{&quot;iq_by_event_type&quot;:{&quot;accepted_a_lyrics_edit&quot;:3.0,&quot;annotation_downvote_by_contrib&quot;:-1.0,&quot;annotation_downvote_by_default&quot;:-1.0,&quot;annotation_downvote_by_editor&quot;:-1.0,&quot;annotation_downvote_by_high_iq_user&quot;:-1.0,&quot;annotation_downvote_by_moderator&quot;:-1.0,&quot;annotation_upvote_by_contrib&quot;:4.0,&quot;annotation_upvote_by_default&quot;:2.0,&quot;annotation_upvote_by_editor&quot;:6.0,&quot;annotation_upvote_by_high_iq_user&quot;:4.0,&quot;annotation_upvote_by_moderator&quot;:10.0,&quot;answer_downvote_by_contrib&quot;:-1.0,&quot;answer_downvote_by_default&quot;:-1.0,&quot;answer_downvote_by_editor&quot;:-1.0,&quot;answer_downvote_by_high_iq_user&quot;:-1.0,&quot;answer_downvote_by_moderator&quot;:-1.0,&quot;answered_a_question&quot;:5.0,&quot;answered_a_question_meme&quot;:25.0,&quot;answered_a_question_verified&quot;:10.0,&quot;answer_upvote_by_contrib&quot;:4.0,&quot;answer_upvote_by_default&quot;:2.0,&quot;answer_upvote_by_editor&quot;:6.0,&quot;answer_upvote_by_high_iq_user&quot;:4.0,&quot;answer_upvote_by_moderator&quot;:10.0,&quot;archived_a_question&quot;:1.0,&quot;article_downvote&quot;:-1.0,&quot;article_upvote&quot;:1.0,&quot;asked_a_question&quot;:1.0,&quot;auto_accepted_explanation&quot;:15.0,&quot;comment_downvote&quot;:-0.5,&quot;comment_upvote&quot;:0.5,&quot;created_a_lyrics_edit&quot;:2.0,&quot;created_a_real_song&quot;:40.0,&quot;created_a_song&quot;:5.0,&quot;forum_post_downvote&quot;:-0.5,&quot;forum_post_upvote&quot;:0.5,&quot;historical_you_published_a_song&quot;:60.0,&quot;metadata_update_or_addition&quot;:2.0,&quot;pending_explanation&quot;:5.0,&quot;pinned_a_question_not_your_own&quot;:2.0,&quot;question_downvote&quot;:-2.0,&quot;question_upvote&quot;:2.0,&quot;rejected_a_lyrics_edit&quot;:2.0,&quot;song_metadata_update_or_addition&quot;:2.0,&quot;song_pageviews_1000&quot;:25.0,&quot;song_pageviews_10000&quot;:50.0,&quot;song_pageviews_100000&quot;:125.0,&quot;song_pageviews_1000000&quot;:500.0,&quot;song_pageviews_2500&quot;:30.0,&quot;song_pageviews_25000&quot;:75.0,&quot;song_pageviews_250000&quot;:150.0,&quot;song_pageviews_2500000&quot;:1000.0,&quot;song_pageviews_500&quot;:20.0,&quot;song_pageviews_5000&quot;:35.0,&quot;song_pageviews_50000&quot;:100.0,&quot;song_pageviews_500000&quot;:200.0,&quot;song_pageviews_5000000&quot;:2000.0,&quot;suggestion_downvote_by_contrib&quot;:-1.0,&quot;suggestion_downvote_by_default&quot;:-0.5,&quot;suggestion_downvote_by_editor&quot;:-1.0,&quot;suggestion_downvote_by_high_iq_user&quot;:-1.0,&quot;suggestion_downvote_by_moderator&quot;:-1.0,&quot;suggestion_upvote_by_contrib&quot;:2.0,&quot;suggestion_upvote_by_default&quot;:1.0,&quot;suggestion_upvote_by_editor&quot;:3.0,&quot;suggestion_upvote_by_high_iq_user&quot;:2.0,&quot;suggestion_upvote_by_moderator&quot;:4.0,&quot;verified_explanation_by_meme&quot;:100.0,&quot;verified_explanation_by_non_meme&quot;:15.0,&quot;verified_lyrics_by_meme_featured&quot;:50.0,&quot;verified_lyrics_by_meme_primary&quot;:75.0,&quot;verified_lyrics_by_meme_writer&quot;:75.0,&quot;verified_lyrics_by_non_meme_featured&quot;:10.0,&quot;verified_lyrics_by_non_meme_primary&quot;:15.0,&quot;verified_lyrics_by_non_meme_writer&quot;:15.0,&quot;you_accepted_a_comment&quot;:6.0,&quot;you_accepted_an_annotation&quot;:10.0,&quot;you_added_a_photo&quot;:100.0,&quot;you_archived_a_comment&quot;:2.0,&quot;you_deleted_an_annotation&quot;:5.0,&quot;you_incorporated_an_annotation&quot;:5.0,&quot;you_integrated_a_comment&quot;:2.0,&quot;you_linked_an_identity&quot;:100.0,&quot;you_merged_an_annotation_edit&quot;:4.0,&quot;you_published_a_song&quot;:5.0,&quot;your_annotation_accepted&quot;:10.0,&quot;your_annotation_edit_merged&quot;:5.0,&quot;your_annotation_edit_rejected&quot;:-0.5,&quot;your_annotation_incorporated&quot;:15.0,&quot;your_annotation_rejected&quot;:0.0,&quot;your_annotation_was_cosigned_by_community_verified&quot;:2.0,&quot;your_annotation_was_cosigned_by_meme&quot;:50.0,&quot;your_annotation_was_cosigned_by_verified_verified&quot;:20.0,&quot;your_answer_cleared&quot;:-5.0,&quot;your_answer_pinned&quot;:5.0,&quot;your_comment_accepted&quot;:2.0,&quot;your_comment_archived&quot;:0.0,&quot;your_comment_integrated&quot;:2.0,&quot;your_comment_rejected&quot;:-0.5,&quot;you_rejected_a_comment&quot;:2.0,&quot;you_rejected_an_annotation&quot;:2.0,&quot;you_rejected_an_annotation_edit&quot;:2.0,&quot;your_lyrics_edit_accepted&quot;:3.0,&quot;your_lyrics_edit_rejected&quot;:-2.0,&quot;your_question_answered&quot;:4.0,&quot;your_question_archived&quot;:-1.0,&quot;your_question_pinned&quot;:5.0}}"></preload-content></preload>
+
+    	
+  <marquee-ad name="desktop_song_marquee"></marquee-ad>	
+
+
+    
+    
+
+<div class="header" ng-controller="HeaderALBUM as header_ALBUM" click-outside="close_mobile_subnav_menu()">
+  <global-message ng-if="header_ALBUM.cloudflare_error" ng-cloak>
+    {{:: 'cloud_flare_always_on_short_message' | i18n }}
+    <br>Check <a href="https://twitter.com/genius" target="_blank">@genius</a> for updates. We'll have things fixed soon.
+  </global-message>
+  <div class="header-primary active">
+    <div class="header-expand_nav_menu" ng-click="toggle_mobile_subnav_menu()"><div class="header-expand_nav_menu-contents"></div></div>
+
+    
+      <div class="logo_container">
+        <a href="https://genius.com/" class="logo_link">GENIUS</a>
+      </div>
+    
+
+    <header-actions></header-actions>
+  </div>
+
+  
+    
+<search-form search-style="header"></search-form>
+
+  
+
+  <ul class="header-nav_menu" ng-class="{'header-nav_menu--visible': mobile_subnav_menu_open}">
+  <div ng-cloak>
+    <header-menu-item class="header-nav_menu--hide_when_expand_menu_is_not_available" name="Home" url="https://genius.com/"></header-menu-item>
+    <header-menu-item name="Featured" url="https://genius.com/#featured-stories"></header-menu-item>
+    <header-menu-item name="Charts" url="https://genius.com/#top-songs"></header-menu-item>
+    <header-menu-item name="Videos" url="https://genius.com/#videos"></header-menu-item>
+    <header-menu-item name="Community" url="https://genius.com/#community"></header-menu-item>
+    
+    
+      <span class="nav_menu-item nav_menu-item--separator">|</span>
+      <header-menu-item name="Shop" url="https://shop.genius.com/"></header-menu-item>
+    
+    <span class="nav_menu-item nav_menu-item--separator">|</span>
+    <li class="nav_menu-item">
+  <a href="https://www.facebook.com/geniusdotcom/" class="nav_menu-link nav_menu-link--facebook" target="_blank">
+    <svg src="facebook.svg" class="inline_icon"></svg>
+    <span class="nav_menu-link-social_text">Facebook</span>
+  </a>
+</li>
+<li class="nav_menu-item">
+  <a href="https://twitter.com/Genius" class="nav_menu-link" target="_blank">
+    <svg src="twitter.svg" class="inline_icon"></svg>
+    <span class="nav_menu-link-social_text">Twitter</span>
+  </a>
+</li>
+<li class="nav_menu-item">
+  <a href="https://www.instagram.com/genius/" class="nav_menu-link" target="_blank">
+    <svg src="instagram.svg" class="inline_icon"></svg>
+    <span class="nav_menu-link-social_text">Instagram</span>
+  </a>
+</li>
+<li class="nav_menu-item">
+  <a href="https://www.youtube.com/genius" class="nav_menu-link nav_menu-link--no_right_padding" target="_blank">
+    <svg src="youtube.svg" class="inline_icon nav_menu-link-youtube_icon"></svg>
+    <span class="nav_menu-link-social_text">Youtube</span>
+  </a>
+</li>
+
+  </div>
+</ul>
+
+
+  
+</div>
+
+
+    <div class="global_messages">
+      
+
+      <flash-messages></flash-messages>
+    </div>
+
+    
+
+
+
+
+
+
+      <script type="application/ld+json">
+        {"@context":"http://schema.org","@type":"MusicRecording","byArtist":{"@context":"http://schema.org","@type":"MusicGroup","name":"SAMPLE","url":"https://genius.com/artists/SAMPLE","description":"SAMPLE (pronounced /ˈsɪzə/) was born on November 8, 1990 in St. Louis, Missouri as Solána Imani Rowe. Soon after, her family relocated to Maplewood, New Jersey where she would grow up","image":"https://images.genius.com/d72d06a449b2ad3e48a84387e9c8dd4d.421x421x1.jpg"},"image":"https://images.genius.com/be7f8888b02ec8de90b71e6590692665.1000x1000x1.jpg","inAlbum":[{"@context":"http://schema.org","@type":"MusicAlbum","byArtist":{"@context":"http://schema.org","@type":"MusicGroup","name":"SAMPLE","url":"https://genius.com/artists/SAMPLE","description":"SAMPLE (pronounced /ˈsɪzə/) was born on November 8, 1990 in St. Louis, Missouri as Solána Imani Rowe. Soon after, her family relocated to Maplewood, New Jersey where she would grow up","image":"https://images.genius.com/d72d06a449b2ad3e48a84387e9c8dd4d.421x421x1.jpg"},"image":"https://images.genius.com/be7f8888b02ec8de90b71e6590692665.1000x1000x1.jpg","name":"ALBUM","url":"https://genius.com/albums/SAMPLE/ALBUM","datePublished":"2017-06-09","numTracks":15}],"name":"SONG","url":"https://genius.com/SAMPLE-SONG-lyrics","datePublished":"2017-06-09"}
+      </script>
+    
+
+
+
+
+<routable-page>
+  <ng-non-bindable>
+    <div class="leaderboard_ad_container">
+  
+</div>
+
+<div class="header_with_cover_art">
+  <div class="header_with_cover_art-inner column_layout">
+    <div class="column_layout-column_span column_layout-column_span--primary">
+      <div class="header_with_cover_art-cover_art ">
+        <div class="cover_art">
+          <img alt="Https%3a%2f%2fimages" class="cover_art-image" src="#" srcset="#" />
+        </div>
+      </div>
+
+      <div class="header_with_cover_art-primary_info_container">
+        <div class="header_with_cover_art-primary_info">
+          
+          <h1
+            class="header_with_cover_art-primary_info-title "
+          >SONG</h1>
+          <h2>
+            <a
+              href="https://genius.com/artists/SAMPLE"
+              class="header_with_cover_art-primary_info-primary_artist"
+            >SAMPLE</a>
+          </h2>
+          
+  <h3>
+    
+
+  </h3>
+  <h3>
+  
+  <div class="metadata_unit ">
+    <span class="metadata_unit-label">Produced by</span>
+
+    <span class="metadata_unit-info">
+      <a href="https://genius.com/artists/Carter-lang">Carter Lang</a> & <a href="https://genius.com/artists/The-antydote">The Antydote</a>
+    </span>
+  </div>
+
+
+  </h3>
+  <h3>
+    
+  <div class="metadata_unit ">
+    <span class="metadata_unit-label">Album</span>
+    <span class="metadata_unit-info"><a href="https://genius.com/albums/SAMPLE/ALBUM">ALBUM</a></span>
+  </div>
+
+
+  </h3>
+
+        </div>
+      </div>
+    </div>
+    <div class="column_layout-column_span column_layout-column_span--secondary u-top_margin">
+    </div>
+  </div>
+</div>
+
+
+<div class="song_body column_layout" initial-content-for="song_body">
+  <div class="column_layout-column_span column_layout-column_span--primary">
+    <div class="song_body-lyrics">
+      
+        <h2 class="text_label text_label--gray text_label--x_small_text_size u-top_margin">SONG Lyrics</h2>
+      
+      <div initial-content-for="lyrics">
+        <div class="totally-not-the-lyrics-div">
+          
+            <!--sse-->
+            <p>[Verse 1]<br>
+Fearin' not growin' up<br>
+Keepin' me up at night<br>
+Am I doin' enough?<br>
+Feel like I'm wastin' time<br>
+<br>
+[Pre-Chorus]<br>
+Promise to get a little<br>
+Better as I get older<br>
+And you're so patient<br>
+And sick of waitin'<br>
+Promise to do better<br>
+Shoulda coulda<br>
+Prolly wanna let me go<br>
+But you can't, oh<br>
+Right now I feel it pourin'<br>
+I need a little bit<br>
+Just a little bit<br>
+Just a little bit<br>
+Right now I feel it pourin'<br>
+I need a little bit<br>
+Just a little bit<br>
+Just a little bit<br>
+<br>
+[Chorus]<br>
+<a href="/SAMPLE-SONG-lyrics#note-12197355" data-id="12197355" class="referent" ng-click="open()" ng-class="{
+          'referent--linked_to_preview': song_ALBUM.referent_has_preview(fragment_id),
+          'referent--linked_to_preview_active': song_ALBUM.highlight_preview_referent(fragment_element_id),
+          'referent--purple_indicator': song_ALBUM.show_preview_referent_indicator(fragment_element_id)
+        }" prevent-default-click="" annotation-fragment="12197355" on-hover-with-no-digest="set_current_hover_and_digest(hover ? fragment_id : undefined)" classification="accepted" image="false" pending-editorial-actions-count="0">Please don't take it, don't take it personal<br>
+Like I know you usually do<br>
+Please don't take it, don't take it personal<br>
+Like I know you usually do<br>
+Please, please<br>
+Don't take it personal<br>
+Don't take it personal<br>
+Darling, like I know you will, ooh</a><br>
+<br>
+[Verse 2]<br>
+Forget to call your mama on the weekend<br>
+You should put yourself in time out<br>
+(Shame, shame on you)<br>
+But lately you've been feelin' so good<br>
+I forget my future, never pull out<br>
+(Shame, shame on me)<br>
+Baby the money'll make it easier for me<br>
+To run and hide out somewhere<br>
+<a href="/SAMPLE-SONG-lyrics#note-12129759" data-id="12129759" class="referent" ng-click="open()" ng-class="{
+          'referent--linked_to_preview': song_ALBUM.referent_has_preview(fragment_id),
+          'referent--linked_to_preview_active': song_ALBUM.highlight_preview_referent(fragment_element_id),
+          'referent--purple_indicator': song_ALBUM.show_preview_referent_indicator(fragment_element_id)
+        }" prevent-default-click="" annotation-fragment="12129759" on-hover-with-no-digest="set_current_hover_and_digest(hover ? fragment_id : undefined)" classification="accepted" image="false" pending-editorial-actions-count="0">(So far away)<br>
+Hoppin' through poppy fields<br>
+Dodgin' evil witches<br>
+These houses keep droppin' everywhere</a><br>
+<br>
+[Pre-Chorus]<br>
+Promise to get a little<br>
+Better as I get older<br>
+And you're so patient<br>
+And sick of waitin'<br>
+Promise to do better<br>
+Shoulda coulda<br>
+Prolly wanna let me go<br>
+But you can't, oh<br>
+Right now I feel it pourin'<br>
+I need a little bit<br>
+Just a little bit<br>
+Just a little bit<br>
+Right now it's really pourin'<br>
+I need a little bit<br>
+Just a little bit<br>
+Just a little bit<br>
+<br>
+[Chorus]<br>
+<a href="/SAMPLE-SONG-lyrics#note-12197355" data-id="12197355" class="referent" ng-click="open()" ng-class="{
+          'referent--linked_to_preview': song_ALBUM.referent_has_preview(fragment_id),
+          'referent--linked_to_preview_active': song_ALBUM.highlight_preview_referent(fragment_element_id),
+          'referent--purple_indicator': song_ALBUM.show_preview_referent_indicator(fragment_element_id)
+        }" prevent-default-click="" annotation-fragment="12197355" on-hover-with-no-digest="set_current_hover_and_digest(hover ? fragment_id : undefined)" classification="accepted" image="false" pending-editorial-actions-count="0">Please don't take it, don't take it personal<br>
+Like I know you usually do<br>
+Please don't take it, take it personal</a><br>
+<br>
+[Outro]<br>
+Like winters fall on us, heavy<br>
+Take it off me, all it off<br>
+Winter, I can't stand this<br>
+Snow is falling all on me</p>
+
+
+            <!--/sse-->
+          
+        </div>
+      </div>
+
+      <div initial-content-for="recirculated_content">
+        
+          <div class="u-xx_large_vertical_margins">
+            <div class="text_label text_label--gray">More on Genius</div>
+            
+          </div>
+        
+      </div>
+    </div>
+  </div>
+
+  <div class="column_layout-column_span column_layout-column_span--secondary u-top_margin column_layout-flex_column">
+    <div class="column_layout-column_span-initial_content">
+      
+        <div class="dfp_unit u-x_large_bottom_margin dfp_unit--in_read">
+  <div
+    style="
+      width: 300px;
+      height: 250px;
+    "
+  ></div>
+</div>
+
+      
+
+      <div class="annotation_label">
+        
+          <h3 class="u-inline">
+            About “SONG”
+          </h3>
+        
+        
+      </div>
+      <div class="rich_text_formatting">
+        <p>The fifth track on SAMPLE’s debut album, <a href="https://genius.com/albums/SAMPLE/ALBUM" rel="noopener" data-api_path="/albums/325258">ALBUM</a> is the most reminiscent of her previous ep’s with a pop-disco sound.</p>
+
+<p>She reflects about her insecurities on not maturing as quickly as her partner is. <a href="https://en.wikipedia.org/wiki/SONG" rel="noopener nofollow">SONG season</a> is usually the last big event before graduation for a high schooler, and SAMPLE is too busy living in the moment that she forgets she has her future to look forward to.</p>
+
+<p><img src="#" alt="" width="1000" height="544" data-animated="false"></p>
+
+<p>This is also around the age when friends are growing apart and have decided where and what they’re doing with their lives, and a lot are trying to hold on to the people they’ve known, even though they’re growing up differently. The person SAMPLE is talking to in the song seems to take everything, even change, to heart.</p>
+      </div>
+      <div class="song_metadata u-xx_large_bottom_margin"></div>
+    </div>
+
+    <div class="column_layout-column_span-initial_content">
+      <div initial-content-for="question_list">
+  <ul>
+    
+      <li  class="question question--bottom_border ">
+  <div class="u-bottom_margin">
+    <h3 class="annotation_label">What have the artists said about this song</h3>
+  </div>
+  
+  <div class="rich_text_formatting rich_text_formatting--no_vertical_margins">
+    <p>SAMPLE <a href="https://mobile.twitter.com/SAMPLE/status/919847764946595840" rel="noopener nofollow">tweeted</a>:</p>
+
+<blockquote><p>Iss called SONG cus I ain’t have no friends in high school so I went to Miami w my mama for SONG instead . Lol</p></blockquote>
+  </div>
+
+
+</li>
+
+    
+    
+  </ul>
+</div>
+
+
+      <div initial-content-for="track_info">
+        <div class="u-xx_large_vertical_margins show_tiny_edit_button_on_hover">
+          <h3 class="text_label u-x_small_bottom_margin">"SONG" Track Info</h3>
+
+          
+  <div class="metadata_unit metadata_unit--table_row">
+    <span class="metadata_unit-label">Written By</span>
+
+    <span class="metadata_unit-info">
+      <a href="https://genius.com/artists/The-antydote">The Antydote</a>, <a href="https://genius.com/artists/Carter-lang">Carter Lang</a> & <a href="https://genius.com/artists/SAMPLE">SAMPLE</a>
+    </span>
+  </div>
+
+
+
+          
+            
+  <div class="metadata_unit metadata_unit--table_row">
+    <span class="metadata_unit-label">Released by</span>
+
+    <span class="metadata_unit-info">
+      <a href="https://genius.com/artists/Rca-records">RCA Records</a> & <a href="https://genius.com/artists/Top-dawg-entertainment">Top Dawg Entertainment</a>
+    </span>
+  </div>
+
+
+          
+            
+  <div class="metadata_unit metadata_unit--table_row">
+    <span class="metadata_unit-label">Mixing</span>
+
+    <span class="metadata_unit-info">
+      <a href="https://genius.com/artists/Mixed-by-ali">Mixed by Ali</a>
+    </span>
+  </div>
+
+
+          
+
+          
+  <div class="metadata_unit metadata_unit--table_row">
+    <span class="metadata_unit-label">Recorded At</span>
+    <span class="metadata_unit-info metadata_unit-info--text_only">TDE Red Room, Carson, California</span>
+  </div>
+
+
+          
+  <div class="metadata_unit metadata_unit--table_row">
+    <span class="metadata_unit-label">Release Date</span>
+    <span class="metadata_unit-info metadata_unit-info--text_only">June 9, 2017</span>
+  </div>
+
+
+          
+  
+  
+  
+
+  
+  
+  
+
+  
+  
+  
+
+  
+  
+  
+    <div class="metadata_unit metadata_unit--table_row">
+      <span class="metadata_unit-label">Interpolated By</span>
+      <span class="metadata_unit-info">
+        
+        <div class="u-x_small_bottom_margin">
+          <a href="https://genius.com/The-weeknd-wicked-games-starfox-remix-lyrics">Wicked Games (StarFox Remix) by The Weeknd</a>
+        </div>
+        
+      </span>
+    </div>
+  
+
+  
+  
+  
+
+  
+  
+  
+
+  
+  
+  
+
+  
+  
+  
+
+  
+  
+  
+
+  
+  
+  
+
+
+        </div>
+      </div>
+
+      
+        <div initial-content-for="album">
+          <div class="u-xx_large_vertical_margins">
+            <div class="song_album u-bottom_margin">
+  <a href="https://genius.com/albums/SAMPLE/ALBUM" class="song_album-album_art" title="ALBUM">
+    <img alt="Https%3a%2f%2fimages" src="#" srcset="#" />
+  </a>
+  <div class="song_album-info">
+    <a href="https://genius.com/albums/SAMPLE/ALBUM" title="ALBUM" class="song_album-info-title">
+      ALBUM
+      
+    </a>
+    <a href="https://genius.com/artists/SAMPLE" class="song_album-info-artist" title="ALBUM">SAMPLE</a>
+  </div>
+</div>
+
+            <div class="track_listing track_listing--columns">
+  
+    <div>
+      <div class="track_listing-track ">
+        
+          <span class="track_listing-track_number">1.&nbsp;&nbsp;</span>
+        
+        
+          <a href="#" title="#">
+            #
+            
+            
+          </a>
+        
+      </div>
+    </div>
+  
+    <div>
+      <div class="track_listing-track ">
+        
+          <span class="track_listing-track_number">2.&nbsp;&nbsp;</span>
+        
+        
+          <a href="#" title="#">
+            #
+            
+            
+          </a>
+        
+      </div>
+    </div>
+  
+    <div>
+      <div class="track_listing-track ">
+        
+          <span class="track_listing-track_number">3.&nbsp;&nbsp;</span>
+        
+        
+          <a href="#" title="#">
+            #
+            
+            
+          </a>
+        
+      </div>
+    </div>
+  
+    <div>
+      <div class="track_listing-track ">
+        
+          <span class="track_listing-track_number">4.&nbsp;&nbsp;</span>
+        
+        
+          <a href="#" title="#">
+            #
+            
+            
+          </a>
+        
+      </div>
+    </div>
+  
+    <div>
+      <div class="track_listing-track track_listing-track--current">
+        
+          <span class="track_listing-track_number">5.&nbsp;&nbsp;</span>
+        
+        
+          <span>
+            SONG
+            
+            
+          </span>
+        
+      </div>
+    </div>
+  
+    <div>
+      <div class="track_listing-track ">
+        
+          <span class="track_listing-track_number">6.&nbsp;&nbsp;</span>
+        
+        
+          <a href="#" title="#">
+            #
+            
+            
+          </a>
+        
+      </div>
+    </div>
+  
+    <div>
+      <div class="track_listing-track ">
+        
+          <span class="track_listing-track_number">7.&nbsp;&nbsp;</span>
+        
+        
+          <a href="#" title="#">
+            #
+            
+            
+          </a>
+        
+      </div>
+    </div>
+  
+    <div>
+      <div class="track_listing-track ">
+        
+          <span class="track_listing-track_number">8.&nbsp;&nbsp;</span>
+        
+        
+          <a href="#" title="#">
+            #
+            
+            
+          </a>
+        
+      </div>
+    </div>
+  
+    <div>
+      <div class="track_listing-track ">
+        
+          <span class="track_listing-track_number">9.&nbsp;&nbsp;</span>
+        
+        
+          <a href="#" title="#">
+            #
+            
+            
+          </a>
+        
+      </div>
+    </div>
+  
+    <div>
+      <div class="track_listing-track ">
+        
+          <span class="track_listing-track_number">10.&nbsp;&nbsp;</span>
+        
+        
+          <a href="#" title="#">
+            #
+            
+            
+          </a>
+        
+      </div>
+    </div>
+  
+    <div>
+      <div class="track_listing-track ">
+        
+          <span class="track_listing-track_number">11.&nbsp;&nbsp;</span>
+        
+        
+          <a href="#" title="#">
+            #
+            
+            
+          </a>
+        
+      </div>
+    </div>
+  
+    <div>
+      <div class="track_listing-track ">
+        
+          <span class="track_listing-track_number">12.&nbsp;&nbsp;</span>
+        
+        
+          <a href="#" title="#">
+            #
+            
+            
+          </a>
+        
+      </div>
+    </div>
+  
+    <div>
+      <div class="track_listing-track ">
+        
+          <span class="track_listing-track_number">13.&nbsp;&nbsp;</span>
+        
+        
+          <a href="#" title="#">
+            #
+            
+            
+          </a>
+        
+      </div>
+    </div>
+  
+    <div>
+      <div class="track_listing-track ">
+        
+          <span class="track_listing-track_number">14.&nbsp;&nbsp;</span>
+        
+        
+          <a href="#" title="#">
+            #
+            
+            
+          </a>
+        
+      </div>
+    </div>
+  
+    <div>
+      <div class="track_listing-track ">
+        
+        
+          <a href="#Rza-a-word-from-rza-album-trailer-lyrics" title="A Word From RZA [Album Trailer]">
+            A Word From RZA [Album Trailer]
+            
+            
+          </a>
+        
+      </div>
+    </div>
+  
+</div>
+
+          </div>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+<ul class="breadcrumbs">
+  
+    
+      <li class="breadcrumb " itemscope itemtype="http://data-vocabulary.org/Breadcrumb">
+        <a href="https://genius.com/" itemprop="url">
+          <span itemprop="title">Home</span>
+        </a>
+      </li>
+    
+      <li class="breadcrumb " itemscope itemtype="http://data-vocabulary.org/Breadcrumb">
+        <a href="https://genius.com/artists-index/s" itemprop="url">
+          <span itemprop="title">S</span>
+        </a>
+      </li>
+    
+      <li class="breadcrumb " itemscope itemtype="http://data-vocabulary.org/Breadcrumb">
+        <a href="https://genius.com/artists/SAMPLE" itemprop="url">
+          <span itemprop="title">SAMPLE</span>
+        </a>
+      </li>
+    
+      <li class="breadcrumb breadcrumb-current_page" itemscope itemtype="http://data-vocabulary.org/Breadcrumb">
+        <a href="https://genius.com/SAMPLE-SONG-lyrics" itemprop="url">
+          <span itemprop="title">SONG Lyrics</span>
+        </a>
+      </li>
+    
+  
+</ul>
+
+
+
+
+  </ng-non-bindable>
+</routable-page>
+
+    <div class="page_footer page_footer--padding-for-sticky-player">
+  <div class="footer">
+    <div>
+      <a href="/about">About Genius</a>
+      <a href="/contributor_guidelines">Contributor Guidelines</a>
+      <a href="/press" target="_blank">Press</a>
+      
+      
+        <a href="mailto:inquiry@genius.com">Advertise</a>
+      
+      <a href="https://eventspace.genius.com/">Event Space</a>
+    </div>
+
+    <div>
+      <a href="/static/privacy_policy" rel="nofollow" target="_blank">Privacy Policy</a>
+      
+      
+      <a href="/static/licensing" rel="nofollow" target="_blank">Licensing</a>
+      <a href="/jobs">Jobs</a>
+      <a href="/developers">Developers</a>
+      <a href="/static/terms" rel="nofollow" target="_blank">Terms of Use</a>
+      <a href="/static/copyright" rel="nofollow" target="_blank">Copyright Policy</a>
+      <a href="/feedback/new" rel="nofollow">Contact us</a>
+      
+        <a href="/static/ccpa" rel="nofollow" target="_blank">Do Not Sell My Personal Information</a>
+      
+      
+  <a href="/login" class="facebox" rel="nofollow">Sign in</a>
+
+
+      
+    </div>
+
+    <div>
+      <span class="footer-copyright">&copy; 2020 Genius Media Group Inc.</span>
+    </div>
+  </div>
+
+  <div class="footer footer--secondary">
+  <a href="/verified-artists" class="footer-artist_links_label">Verified Artists</a>
+
+  <span class="footer-artist_links_label">All Artists:</span>
+  <ul class="characters_index_list">
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/a" class="character_index_list-link">A</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/b" class="character_index_list-link">B</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/c" class="character_index_list-link">C</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/d" class="character_index_list-link">D</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/e" class="character_index_list-link">E</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/f" class="character_index_list-link">F</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/g" class="character_index_list-link">G</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/h" class="character_index_list-link">H</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/i" class="character_index_list-link">I</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/j" class="character_index_list-link">J</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/k" class="character_index_list-link">K</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/l" class="character_index_list-link">L</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/m" class="character_index_list-link">M</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/n" class="character_index_list-link">N</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/o" class="character_index_list-link">O</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/p" class="character_index_list-link">P</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/q" class="character_index_list-link">Q</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/r" class="character_index_list-link">R</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/s" class="character_index_list-link">S</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/t" class="character_index_list-link">T</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/u" class="character_index_list-link">U</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/v" class="character_index_list-link">V</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/w" class="character_index_list-link">W</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/x" class="character_index_list-link">X</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/y" class="character_index_list-link">Y</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/z" class="character_index_list-link">Z</a>
+    </li>
+  
+    <li class="character_index_list-element">
+      <a href="https://genius.com/artists-index/0" class="character_index_list-link">#</a>
+    </li>
+  
+</ul>
+
+</div>
+
+</div>
+
+    
+  <img
+  src="#"
+  width="0"
+  height="0"
+  style="display: block;"
+>
+
+  <script type="text/javascript">_qevents.push({ qacct: "p-f3CPQ6vHckedE"});</script>
+<noscript>
+  <div style="display: none;">
+    <img src="#" height="1" width="1" alt="Quantcast"/>
+  </div>
+</noscript>
+
+  
+
+<script type="text/javascript">
+
+  var _sf_async_config={};
+
+  _sf_async_config.uid = 3877;
+  _sf_async_config.domain = 'genius.com';
+  _sf_async_config.title = 'SAMPLE – SONG Lyrics | Genius Lyrics';
+  _sf_async_config.sections = 'songs,tag:r-b';
+  _sf_async_config.authors = 'SAMPLE';
+
+  var _cbq = window._cbq || [];
+
+  (function(){
+    function loadChartbeat() {
+      window._sf_endpt=(new Date()).getTime();
+      var e = document.createElement('script');
+      e.setAttribute('language', 'javascript');
+      e.setAttribute('type', 'text/javascript');
+      e.setAttribute('src', '#');
+      document.body.appendChild(e);
+    }
+    var oldonload = window.onload;
+    window.onload = (typeof window.onload != 'function') ?
+       loadChartbeat : function() { oldonload(); loadChartbeat(); };
+  })();
+</script>
+
+  <!-- Begin comScore Tag -->
+<script>
+  var _comscore = _comscore || [];
+  _comscore.push({ c1: "2", c2: "17151659" });
+  (function() {
+    var s = document.createElement("script"), el = document.getElementsByTagName("script")[0]; s.async = true;
+    s.src = (document.location.protocol == "https:" ? "https://sb" : "http://b") + ".scorecardresearch.com/beacon.js";
+    el.parentNode.insertBefore(s, el);
+  })();
+</script>
+<noscript>
+  <img src="#" />
+</noscript>
+<!-- End comScore Tag -->
+<noscript><img height="1" width="1" style="display:none"
+  src="#"
+/></noscript>
+    
+  </body>
+</html>
+
