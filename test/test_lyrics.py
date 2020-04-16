@@ -24,7 +24,7 @@ import sys
 import unittest
 
 from mock import patch
-from test import _common
+import _common
 
 from beets import logging
 from beets.library import Item
@@ -39,6 +39,7 @@ from mock import MagicMock
 log = logging.getLogger('beets.test_lyrics')
 raw_backend = lyrics.Backend({}, log)
 google = lyrics.Google(MagicMock(), log)
+genius = lyrics.Genius(MagicMock(), log)
 
 
 class LyricsPluginTest(unittest.TestCase):
@@ -213,6 +214,29 @@ class MockFetchUrl(object):
             content = f.read()
         return content
 
+class GeniusMockGet(object):
+    def __init__(self, pathval='fetched_path'):
+        self.pathval = pathval
+        self.fetched = None
+
+    def __call__(self, url, headers=False):
+        from requests.models import Response
+        # for the first requests.get() return a path
+        if headers:
+            response = Response()
+            response.status_code = 200
+            response._content = b'{"meta":{"status":200},"response":{"song":{"path":"/lyrics/sample"}}}'
+            return response
+        # for the second requests.get() return the genius page
+        else:
+            from mock import PropertyMock
+            self.fetched = url
+            fn = url_to_filename(url)
+            with open(fn, 'r') as f:
+                content = f.read()
+            response = Response()
+            type(response).text = PropertyMock(return_value=content)
+            return response
 
 def is_lyrics_content_ok(title, text):
     """Compare lyrics text to expected lyrics for given title."""
@@ -393,6 +417,41 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest):
         url_title = u'foo'
 
         google.is_page_candidate(url, url_title, s['title'], u'Sunn O)))')
+
+
+class LyricsGeniusBaseTest(unittest.TestCase):
+
+    def setUp(self):
+        """Set up configuration."""
+        try:
+            __import__('bs4')
+        except ImportError:
+            self.skipTest('Beautiful Soup 4 not available')
+        if sys.version_info[:3] < (2, 7, 3):
+            self.skipTest("Python's built-in HTML parser is not good enough")
+
+
+class LyricsGeniusScrapTest(LyricsGeniusBaseTest):
+    """Checks that Genius backend works as intended.
+    """
+    import requests
+    def setUp(self):
+        """Set up configuration"""
+        LyricsGeniusBaseTest.setUp(self)
+        self.plugin = lyrics.LyricsPlugin()
+
+    @patch.object(requests, 'get', GeniusMockGet())
+    def test_no_lyrics_div(self):
+        """Ensure that `lyrics_from_song_api_path` doesn't crash when the html
+        for a Genius page contain <div class = "_lyrics">...</div>
+        """
+        # https://github.com/beetbox/beets/issues/3535
+        # expected return value None
+        try:
+            self.assertEqual(genius.lyrics_from_song_api_path('/no_lyric_page'), None)
+        except AttributeError:
+            # if AttributeError we aren't doing a null check
+            self.assertTrue(False)
 
 
 class SlugTests(unittest.TestCase):
