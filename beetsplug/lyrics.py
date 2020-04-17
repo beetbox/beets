@@ -374,15 +374,12 @@ class Genius(Backend):
         # At least Genius is nice and has a tag called 'lyrics'!
         # Updated css where the lyrics are based in HTML.
         lyrics_div = html.find("div", class_="lyrics")
-
-        # nullcheck
         if lyrics_div is None:
             self._log.debug(u'Genius lyrics for {0} not found',
                             page_url)
             return None
-        lyrics = lyrics_div.get_text()
 
-        return lyrics
+        return lyrics_div.get_text()
 
     def fetch(self, artist, title):
         search_url = self.base_url + "/search"
