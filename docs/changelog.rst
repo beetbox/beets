@@ -178,6 +178,8 @@ Fixes:
 * Removed ``@classmethod`` decorator from dbcore.query.NoneQuery.match method
   failing with AttributeError when called. It is now an instance method.
   :bug:`3516` :bug:`3517`
+* :doc:`/plugins/lyrics`: Tolerate missing lyrics div in Genius scraper
+  :bug:`3535`
 
 For plugin developers:
 
