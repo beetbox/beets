@@ -453,12 +453,8 @@ class LyricsGeniusScrapTest(LyricsGeniusBaseTest):
         """
         # https://github.com/beetbox/beets/issues/3535
         # expected return value None
-        try:
-            self.assertEqual(genius.lyrics_from_song_api_path('/nolyric'),
-                             None)
-        except AttributeError:
-            # if AttributeError we aren't doing a null check
-            self.assertTrue(False)
+        self.assertEqual(genius.lyrics_from_song_api_path('/nolyric'),
+                         None)
 
 
 class SlugTests(unittest.TestCase):
