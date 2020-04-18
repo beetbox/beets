@@ -200,12 +200,13 @@ def search_pairs(item):
                 alternatives.append(match.group(1))
         return alternatives
 
-    title, artist = item.title, item.artist
+    title, artist, artist_sort = item.title, item.artist, item.artist_sort
 
     patterns = [
         # Remove any featuring artists from the artists name
         r"(.*?) {0}".format(plugins.feat_tokens())]
     artists = generate_alternatives(artist, patterns)
+    artists.append(artist_sort)
 
     patterns = [
         # Remove a parenthesized suffix from a title string. Common
