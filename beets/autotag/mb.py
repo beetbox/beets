@@ -65,15 +65,16 @@ class MusicBrainzAPIError(util.HumanReadableException):
             self._reasonstr(), self.verb, repr(self.query)
         )
 
+
 log = logging.getLogger('beets')
 
 RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'labels', 'artist-credits', 'aliases',
                     'recording-level-rels', 'work-rels',
                     'work-level-rels', 'artist-rels']
-TRACK_INCLUDES = ['artists', 'aliases']
+TRACK_INCLUDES = ['artists', 'aliases', 'artist-rels']
 if 'work-level-rels' in musicbrainzngs.VALID_INCLUDES['recording']:
-    TRACK_INCLUDES += ['work-level-rels', 'artist-rels']
+    TRACK_INCLUDES += ['work-level-rels']
 
 
 def track_url(trackid):
@@ -243,13 +244,26 @@ def track_info(recording, index=None, medium=None, medium_index=None,
         info.composer_sort = u', '.join(composer_sort)
 
     arranger = []
+    performer = []
     for artist_relation in recording.get('artist-relation-list', ()):
         if 'type' in artist_relation:
             type = artist_relation['type']
             if type == 'arranger':
                 arranger.append(artist_relation['artist']['name'])
+            elif type in ['performer', 'instrument', 'vocal',
+                          'performing orchestra', 'conductor', 'chorus master',
+                          'concertmaster']:
+                if 'attribute-list' in artist_relation:
+                    attr = u', '.join(artist_relation['attribute-list'])
+                else:
+                    attr = type
+                performer.append(artist_relation['artist']['name'] + '(' +
+                                 attr + ')')
     if arranger:
         info.arranger = u', '.join(arranger)
+
+    if performer:
+        info.performer = u', '.join(performer)
 
     info.decode()
     return info
