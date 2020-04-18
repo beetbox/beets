@@ -186,6 +186,7 @@ def apply_metadata(album_info, mapping):
                 'composer',
                 'composer_sort',
                 'arranger',
+                'performer',
                 'work',
                 'mb_workid',
                 'work_disambig',
