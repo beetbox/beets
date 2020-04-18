@@ -168,6 +168,7 @@ class TrackInfo(object):
     - ``composer``: individual track composer name
     - ``composer_sort``: individual track composer sort name
     - ``arranger`: individual track arranger name
+    - ``performer`: individual track performers and instruments
     - ``track_alt``: alternative track number (tape, vinyl, etc.)
     - ``work`: individual track work title
     - ``mb_workid`: individual track work id
@@ -182,9 +183,9 @@ class TrackInfo(object):
                  medium_index=None, medium_total=None, artist_sort=None,
                  disctitle=None, artist_credit=None, data_source=None,
                  data_url=None, media=None, lyricist=None, composer=None,
-                 composer_sort=None, arranger=None, track_alt=None,
-                 work=None, mb_workid=None, work_disambig=None, bpm=None,
-                 initial_key=None, genre=None):
+                 composer_sort=None, arranger=None, performer=None,
+                 track_alt=None, work=None, mb_workid=None, work_disambig=None,
+                 bpm=None, initial_key=None, genre=None):
         self.title = title
         self.track_id = track_id
         self.release_track_id = release_track_id
@@ -205,6 +206,7 @@ class TrackInfo(object):
         self.composer = composer
         self.composer_sort = composer_sort
         self.arranger = arranger
+        self.performer = performer
         self.track_alt = track_alt
         self.work = work
         self.mb_workid = mb_workid

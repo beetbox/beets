@@ -257,7 +257,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
                     attr = u', '.join(artist_relation['attribute-list'])
                 else:
                     attr = type
-                performer.append(artist_relation['artist']['name'] + '(' +
+                performer.append(artist_relation['artist']['name'] + ' (' +
                                  attr + ')')
     if arranger:
         info.arranger = u', '.join(arranger)

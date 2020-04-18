@@ -115,6 +115,8 @@ New features:
   :bug:`3459`
 * :doc:`/plugins/fetchart`: Album art can now be fetched from `last.fm`_.
   :bug:`3530`
+* A new tag ``performer`` has been added. 
+  Thanks to :user:`dosoe`.
 
 Fixes:
 

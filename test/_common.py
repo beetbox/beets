@@ -69,6 +69,7 @@ def item(lib=None):
         lyricist=u'the lyricist',
         composer=u'the composer',
         arranger=u'the arranger',
+        performer=u'the performer',
         grouping=u'the grouping',
         work=u'the work title',
         mb_workid=u'the work musicbrainz id',

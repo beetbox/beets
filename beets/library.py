@@ -459,6 +459,7 @@ class Item(LibModel):
         'mb_workid':            types.STRING,
         'work_disambig':        types.STRING,
         'arranger':             types.STRING,
+        'performer':            types.STRING,
         'grouping':             types.STRING,
         'year':                 types.PaddedInt(4),
         'month':                types.PaddedInt(2),
