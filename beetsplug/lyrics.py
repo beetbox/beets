@@ -206,7 +206,10 @@ def search_pairs(item):
         # Remove any featuring artists from the artists name
         r"(.*?) {0}".format(plugins.feat_tokens())]
     artists = generate_alternatives(artist, patterns)
-    artists.append(artist_sort)
+    # Use the artist_sort as fallback only if it differs from artist to avoid
+    # repeated remote requests with the same search terms
+    if artist != artist_sort:
+        artists.append(artist_sort)
 
     patterns = [
         # Remove a parenthesized suffix from a title string. Common
