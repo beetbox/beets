@@ -181,6 +181,10 @@ Fixes:
 * :doc:`/plugins/lyrics`: Tolerate missing lyrics div in Genius scraper.
   Thanks to :user:`thejli21`.
   :bug:`3535` :bug:`3554`
+* :doc:`/plugins/lyrics`: Use the artist sort name to search for lyrics, which
+  can help find matches when the artist name has special characters.
+  Thanks to :user:`hashhar`.
+  :bug:`3340` :bug:`3558`
 
 For plugin developers:
 
