@@ -187,6 +187,9 @@ def search_pairs(item):
     In addition to the artist and title obtained from the `item` the
     method tries to strip extra information like paranthesized suffixes
     and featured artists from the strings and add them as candidates.
+    The artist sort name is added as a fallback candidate to help in
+    cases where artist name includes special characters or is in a
+    non-latin script.
     The method also tries to split multiple titles separated with `/`.
     """
     def generate_alternatives(string, patterns):

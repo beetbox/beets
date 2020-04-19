@@ -95,6 +95,27 @@ class LyricsPluginTest(unittest.TestCase):
         self.assertEqual(('Alice and Bob', ['song']),
                          list(lyrics.search_pairs(item))[0])
 
+    def test_search_artist_sort(self):
+        item = Item(artist='CHVRCHΞS', title='song', artist_sort='CHVRCHES')
+        self.assertIn(('CHVRCHΞS', ['song']),
+                      lyrics.search_pairs(item))
+        self.assertIn(('CHVRCHES', ['song']),
+                      lyrics.search_pairs(item))
+
+        # Make sure that the original artist name is still the first entry
+        self.assertEqual(('CHVRCHΞS', ['song']),
+                         list(lyrics.search_pairs(item))[0])
+
+        item = Item(artist='横山克', title='song', artist_sort='Masaru Yokoyama')
+        self.assertIn(('横山克', ['song']),
+                      lyrics.search_pairs(item))
+        self.assertIn(('Masaru Yokoyama', ['song']),
+                      lyrics.search_pairs(item))
+
+        # Make sure that the original artist name is still the first entry
+        self.assertEqual(('横山克', ['song']),
+                         list(lyrics.search_pairs(item))[0])
+
     def test_search_pairs_multi_titles(self):
         item = Item(title='1 / 2', artist='A')
         self.assertIn(('A', ['1 / 2']), lyrics.search_pairs(item))
