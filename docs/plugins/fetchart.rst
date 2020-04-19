@@ -126,8 +126,9 @@ art::
 
     $ beet fetchart [-q] [query]
 
-By default the command will display all results, the ``-q`` or ``--quiet``
-switch will only display results for album arts that are still missing.
+By default the command will display all albums matching the ``query``. When the
+``-q`` or ``--quiet`` switch is given, only albums for which artwork has been
+fetched, or for which artwork could not be found will be printed.
 
 .. _image-resizing:
 
