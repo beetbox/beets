@@ -75,25 +75,27 @@ class BeetTweet(BeetsPlugin):
         if album.artpath:
             self._log.info(u"Uploading album art for {0}", album)
             if not pretend:
-                with open(album.artpath, "rb") as imgfile:
-                    imgdata = imgfile.read()
-                img = self.t_upload.media.upload(media=imgdata)
-                # ToDo check uploaded correctly
-                return img["media_id_string"]
+                if os.stat(album.artpath).st_size > 5e6:
+                    self._log.info(u"Album Art too large for upload (5MB)")
+                    return None
+                else:
+                    with open(album.artpath, "rb") as imgfile:
+                        imgdata = imgfile.read()
+                    img = self.t_upload.media.upload(media=imgdata)
+                    # ToDo check uploaded correctly
+                    return img["media_id_string"]
             else:
                 return None
         else:
-            message = ui.colorize("text_error", u"No art found")
-            self._log.info(u"{0} for {1}", message, album)
+            self._log.info(u"Album Art Not Found")
             return None
 
     def _send_tweet(self, album, pretend):
         """Command to construct and send a tweet for a single album."""
         status = album.evaluate_template(self.config["template"].get(), True)
         img_id = self._upload_album_art(album, pretend)
-
-        self._log.info(u"Tweeting: {0}", status)
-        if not pretend:
+        if not pretend and img_id:
+            self._log.info(u"Tweeting: {0}", status)
             self.t.statuses.update(status=status, media_ids=img_id)
 
     def tweet(self, lib, albums, pretend):
