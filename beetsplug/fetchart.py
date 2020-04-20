@@ -979,7 +979,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         cmd.parser.add_option(
             u'-q', u'--quiet', dest='quiet',
             action='store_true', default=False,
-            help=u'shows only quiet art'
+            help=u'quiet mode: do not output albums that already have artwork'
         )
 
         def func(lib, opts, args):
