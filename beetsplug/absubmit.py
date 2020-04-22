@@ -164,8 +164,13 @@ only files which would be processed'
                     item=item, error=e
                 )
                 return None
+            decoded = bytearray()
             with open(filename, 'r') as tmp_file:
-                analysis = json.load(tmp_file)
+                byte = tmp_file.read(1)
+                while byte:
+                    decoded.extend(bytes(byte, 'utf-8'))
+                    byte = tmp_file.read(1)
+                analysis = json.loads(decoded)
             # Add the hash to the output.
             analysis['metadata']['version']['essentia_build_sha'] = \
                 self.extractor_sha

@@ -101,6 +101,14 @@ class MapDataToSchemeTest(unittest.TestCase):
         }
         self.assertEqual(mapping, expected)
 
+    def test_invalid_characters(self):
+        ab = AcousticPlugin()
+        data = {'key 1': "['?\x32\x96 233474']", 'key 2': '\xb9\x42'}
+        scheme = {'key 1': 'attribute 1', 'key 2': 'attribute 2'}
+        mapping = set(ab._map_data_to_scheme(data, scheme))
+        self.assertEqual(mapping, {('attribute 1', "['?\x32\x96 233474']"),
+                                   ('attribute 2', '\xb9\x42')})
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

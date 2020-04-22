@@ -118,6 +118,9 @@ New features:
 
 Fixes:
 
+* :doc:`/plugins/absubmit`: Strings with characters that make a json
+  object invalid will no longer affect json.loads because they are parsed and
+  decoded to UTF-8.
 * :doc:`/plugins/fetchart`: Fixed a bug that caused fetchart to not take 
   environment variables such as proxy servers into account when making requests
   :bug:`3450`
