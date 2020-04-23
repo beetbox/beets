@@ -185,6 +185,12 @@ Fixes:
   can help find matches when the artist name has special characters.
   Thanks to :user:`hashhar`.
   :bug:`3340` :bug:`3558`
+* :doc:`/plugins/replaygain`: Trying to calculate volume gain for an album
+  consisting of some formats using ``ReplayGain`` and some using ``R128``
+  will no longer crash; instead it is skipped and and a message is logged.
+  The log message has also been rewritten for to improve clarity.
+  Thanks to :user:`autrimpo`.
+  :bug:`3533`
 
 For plugin developers:
 
