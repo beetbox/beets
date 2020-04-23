@@ -1326,7 +1326,7 @@ class ReplayGainPlugin(BeetsPlugin):
 
         if (any([self.should_use_r128(item) for item in album.items()]) and not
                 all(([self.should_use_r128(item) for item in album.items()]))):
-            self._log.info(
+            self._log.error(
                 u"Cannot calculate gain for album {0} (incompatible formats)",
                 album)
             return
