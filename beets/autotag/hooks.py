@@ -39,49 +39,53 @@ except AttributeError:
 
 
 # Classes used to represent candidate options.
-class Map(dict): 
-     """ 
-     Example: 
-     m = Map({'first_name': 'Eduardo'}, last_name='Pool', age=24, sports=['Soccer']) 
-     """ 
-     def __init__(self, *args, **kwargs): 
-         super(Map, self).__init__(*args, **kwargs) 
-         for arg in args: 
-             if isinstance(arg, dict): 
-                 for k, v in arg.iteritems(): 
-                     self[k] = v 
-  
-         if kwargs: 
-             for k, v in kwargs.iteritems(): 
-                 self[k] = v 
-  
-     def __getattr__(self, attr): 
-         return self.get(attr) 
-  
-     def __setattr__(self, key, value): 
-         self.__setitem__(key, value) 
-  
-     def __setitem__(self, key, value): 
-         super(Map, self).__setitem__(key, value) 
-         self.__dict__.update({key: value}) 
-  
-     def __delattr__(self, item): 
-         self.__delitem__(item) 
-  
-     def __delitem__(self, key): 
-         super(Map, self).__delitem__(key) 
-         del self.__dict__[key] 
-          
-     def __getstate__(self): 
-         return self.__dict__ 
-          
-     def __setstate__(self,state): 
-         for key in state: 
-             self.__setattr__(key,state[key]) 
-     def __hash__(self): 
-         return hash(tuple(sorted(self.items()))) 
+class Map(dict):
+    """
+    Example:
+    m = Map({'first_name': 'Eduardo'}, last_name='Pool', age=24,
+    sports=['Soccer'])
+    """
+    def __init__(self, *args, **kwargs):
+        super(Map, self).__init__(*args, **kwargs)
+        for arg in args:
+            if isinstance(arg, dict):
+                for k, v in arg.iteritems():
+                    self[k] = v
 
-        
+        if kwargs:
+            for k, v in kwargs.iteritems():
+                self[k] = v
+
+    def __getattr__(self, attr):
+        if attr in self:
+            return self.get(attr)
+        else:
+            raise AttributeError
+
+    def __setattr__(self, key, value):
+        self.__setitem__(key, value)
+
+    def __setitem__(self, key, value):
+        super(Map, self).__setitem__(key, value)
+        self.__dict__.update({key: value})
+
+    def __delattr__(self, item):
+        self.__delitem__(item)
+
+    def __delitem__(self, key):
+        super(Map, self).__delitem__(key)
+        del self.__dict__[key]
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __setstate__(self, state):
+        for key in state:
+            self.__setattr__(key, state[key])
+
+    def __hash__(self):
+        return hash(tuple(sorted(self.items())))
+
 
 class AlbumInfo(Map):
     """Describes a canonical release that may be used to match a release
@@ -103,7 +107,7 @@ class AlbumInfo(Map):
         self.artist_id = artist_id
         self.tracks = tracks
         for arg in kwargs:
-            self.__setattr__(arg,kwargs[arg]) 
+            self.__setattr__(arg, kwargs[arg]) 
 
     # Work around a bug in python-musicbrainz-ngs that causes some
     # strings to be bytes rather than Unicode.
@@ -138,11 +142,11 @@ class TrackInfo(Map):
     may be None. The indices ``index``, ``medium``, and ``medium_index``
     are all 1-based.
     """
-    def __init__(self, title, track_id,**kwargs):
+    def __init__(self, title, track_id, **kwargs):
         self.title = title
         self.track_id = track_id
         for arg in kwargs:
-            self.__setattr__(arg,kwargs[arg]) 
+            self.__setattr__(arg, kwargs[arg]) 
 
     # As above, work around a bug in python-musicbrainz-ngs.
     def decode(self, codec='utf-8'):
