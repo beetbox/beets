@@ -193,8 +193,8 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     the number of tracks on the medium. Each number is a 1-based index.
     """
     info = beets.autotag.hooks.TrackInfo(
-        recording['title'],
-        recording['id'],
+        title=recording['title'],
+        track_id=recording['id'],
         index=index,
         medium=medium,
         medium_index=medium_index,
@@ -341,11 +341,11 @@ def album_info(release):
             track_infos.append(ti)
 
     info = beets.autotag.hooks.AlbumInfo(
-        release['title'],
-        release['id'],
-        artist_name,
-        release['artist-credit'][0]['artist']['id'],
-        track_infos,
+        album=release['title'],
+        album_id=release['id'],
+        artist=artist_name,
+        artist_id=release['artist-credit'][0]['artist']['id'],
+        tracks=track_infos,
         mediums=len(release['medium-list']),
         artist_sort=artist_sort_name,
         artist_credit=artist_credit_name,
