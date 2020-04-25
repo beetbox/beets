@@ -41,9 +41,7 @@ log = logging.getLogger('beets')
 def apply_item_metadata(item, track_info):
     """Set an item's metadata from its matched TrackInfo object.
     """
-    print('zer' in track_info)
     for attr in track_info:
-        print(attr in track_info)
         item.__setattr__(attr, getattr(track_info, attr))
 
     # At the moment, the other metadata is left intact (including album
