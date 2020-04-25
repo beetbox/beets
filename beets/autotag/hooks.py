@@ -100,14 +100,9 @@ class AlbumInfo(Map):
     ``mediums`` along with the fields up through ``tracks`` are required.
     The others are optional and may be None.
     """
-    def __init__(self, album, album_id, artist, artist_id, tracks, **kwargs):
-        self.album = album
-        self.album_id = album_id
-        self.artist = artist
-        self.artist_id = artist_id
-        self.tracks = tracks
+    def __init__(self, **kwargs):
         for arg in kwargs:
-            self.__setattr__(arg, kwargs[arg]) 
+            self.__setattr__(arg, kwargs[arg])
 
     # Work around a bug in python-musicbrainz-ngs that causes some
     # strings to be bytes rather than Unicode.
@@ -116,19 +111,11 @@ class AlbumInfo(Map):
         """Ensure that all string attributes on this object, and the
         constituent `TrackInfo` objects, are decoded to Unicode.
         """
-        for fld in ['album', 'artist', 'albumtype', 'label', 'artist_sort',
-                    'catalognum', 'script', 'language', 'country', 'style',
-                    'genre', 'albumstatus', 'albumdisambig',
-                    'releasegroupdisambig', 'artist_credit',
-                    'media', 'discogs_albumid', 'discogs_labelid',
-                    'discogs_artistid']:
+        for fld in self:
             value = getattr(self, fld)
-            if isinstance(value, bytes):
-                setattr(self, fld, value.decode(codec, 'ignore'))
-
-        if self.tracks:
-            for track in self.tracks:
-                track.decode(codec)
+            if type(value) == str:
+                if isinstance(value, bytes):
+                    setattr(self, fld, value.decode(codec, 'ignore'))
 
 
 class TrackInfo(Map):
@@ -142,22 +129,20 @@ class TrackInfo(Map):
     may be None. The indices ``index``, ``medium``, and ``medium_index``
     are all 1-based.
     """
-    def __init__(self, title, track_id, **kwargs):
-        self.title = title
-        self.track_id = track_id
+    def __init__(self, **kwargs):
         for arg in kwargs:
-            self.__setattr__(arg, kwargs[arg]) 
+            self.__setattr__(arg, kwargs[arg])
 
     # As above, work around a bug in python-musicbrainz-ngs.
     def decode(self, codec='utf-8'):
         """Ensure that all string attributes on this object are decoded
         to Unicode.
         """
-        for fld in ['title', 'artist', 'medium', 'artist_sort', 'disctitle',
-                    'artist_credit', 'media']:
+        for fld in self:
             value = getattr(self, fld)
-            if isinstance(value, bytes):
-                setattr(self, fld, value.decode(codec, 'ignore'))
+            if type(value) == str:
+                if isinstance(value, bytes):
+                    setattr(self, fld, value.decode(codec, 'ignore'))
 
 
 # Candidate distance scoring.
