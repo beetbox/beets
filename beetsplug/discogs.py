@@ -356,7 +356,8 @@ class DiscogsPlugin(BeetsPlugin):
         # a master release, otherwise fetch the master release.
         original_year = self.get_master_year(master_id) if master_id else year
 
-        return AlbumInfo(album, album_id, artist, artist_id, tracks, asin=None,
+        return AlbumInfo(album=album, album_id=album_id, artist=artist,
+                         artist_id=artist_id, tracks=tracks, asin=None,
                          albumtype=albumtype, va=va, year=year, month=None,
                          day=None, label=label, mediums=len(set(mediums)),
                          artist_sort=None, releasegroup_id=master_id,
@@ -567,8 +568,8 @@ class DiscogsPlugin(BeetsPlugin):
             track.get('artists', [])
         )
         length = self.get_track_length(track['duration'])
-        return TrackInfo(title, track_id, artist=artist, artist_id=artist_id,
-                         length=length, index=index,
+        return TrackInfo(title=title, track_id=track_id, artist=artist,
+                         artist_id=artist_id, length=length, index=index,
                          medium=medium, medium_index=medium_index,
                          artist_sort=None, disctitle=None, artist_credit=None)
 

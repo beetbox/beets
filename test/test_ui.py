@@ -1051,8 +1051,10 @@ class ShowChangeTest(_common.TestCase):
         self.items[0].track = 1
         self.items[0].path = b'/path/to/file.mp3'
         self.info = autotag.AlbumInfo(
-            u'the album', u'album id', u'the artist', u'artist id', [
-                autotag.TrackInfo(u'the title', u'track id', index=1)
+            album=u'the album', album_id=u'album id', artist=u'the artist',
+            artist_id=u'artist id', tracks=[
+                autotag.TrackInfo(title=u'the title', track_id=u'track id',
+                                  index=1)
             ]
         )
 
