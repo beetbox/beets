@@ -45,13 +45,8 @@ class Map(dict):
     m = Map({'first_name': 'Eduardo'}, last_name='Pool', age=24,
     sports=['Soccer'])
     """
-    def __init__(self, *args, **kwargs):
-        super(Map, self).__init__(*args, **kwargs)
-        for arg in args:
-            if isinstance(arg, dict):
-                for k, v in arg.iteritems():
-                    self[k] = v
-
+    def __init__(self, **kwargs):
+        super(Map, self).__init__(**kwargs)
         if kwargs:
             for k, v in kwargs.iteritems():
                 self[k] = v
@@ -76,15 +71,8 @@ class Map(dict):
         super(Map, self).__delitem__(key)
         del self.__dict__[key]
 
-    def __getstate__(self):
-        return self.__dict__
-
-    def __setstate__(self, state):
-        for key in state:
-            self.__setattr__(key, state[key])
-
     def __hash__(self):
-        return hash(tuple(sorted(self.items())))
+        return self.id
 
 
 class AlbumInfo(Map):
