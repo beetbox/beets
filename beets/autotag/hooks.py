@@ -101,7 +101,7 @@ class AlbumInfo(Map):
     The others are optional and may be None.
     """
     def __init__(self, album=None, album_id=None, artist=None, artist_id=None,
-                 tracks, asin=None, albumtype=None, va=False, year=None,
+                 tracks=None, asin=None, albumtype=None, va=False, year=None,
                  month=None, day=None, label=None, mediums=None,
                  artist_sort=None, releasegroup_id=None, catalognum=None,
                  script=None, language=None, country=None, style=None,
