@@ -18,7 +18,6 @@
 from __future__ import division, absolute_import, print_function
 
 import re
-import copy
 import unittest
 
 from test import _common

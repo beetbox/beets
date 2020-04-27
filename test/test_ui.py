@@ -22,7 +22,6 @@ import shutil
 import re
 import subprocess
 import platform
-from copy import deepcopy
 import six
 import unittest
 
