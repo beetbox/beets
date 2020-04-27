@@ -1035,35 +1035,28 @@ class ApplyCompilationTest(_common.TestCase, ApplyTestUtil):
     def test_va_flag_sets_comp(self):
         # make a deepcopy of self.info
         trackinfo = []
+        trackinfo = []
         trackinfo.append(TrackInfo(
             title=u'oneNew',
             track_id=u'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
-            medium=1,
-            medium_index=1,
-            medium_total=1,
+            artist=u'artistOneNew',
+            artist_id=u'a05686fc-9db2-4c23-b99e-77f5db3e5282',
             index=1,
-            artist_credit='trackArtistCredit',
-            artist_sort='trackArtistSort',
         ))
         trackinfo.append(TrackInfo(
             title=u'twoNew',
             track_id=u'40130ed1-a27c-42fd-a328-1ebefb6caef4',
-            medium=2,
-            medium_index=1,
+            artist=u'artistTwoNew',
+            artist_id=u'80b3cf5e-18fe-4c59-98c7-e5bb87210710',
             index=2,
-            medium_total=1,
         ))
         va_info = AlbumInfo(
             tracks=trackinfo,
-            artist=u'artistNew',
+            artist=u'variousNew',
             album=u'albumNew',
-            album_id='7edb51cb-77d6-4416-a23c-3a8c2994a2c7',
-            artist_id='a6623d39-2d8e-4f70-8242-0a9553b91e50',
-            artist_credit=u'albumArtistCredit',
-            artist_sort=u'albumArtistSort',
-            albumtype=u'album',
-            va=False,
-            mediums=2,
+            album_id='3b69ea40-39b8-487f-8818-04b6eff8c21a',
+            artist_id='89ad4ac3-39f7-470e-963a-56509c546377',
+            albumtype=u'compilation',
         )
         va_info.va = True
         self._apply(info=va_info)
