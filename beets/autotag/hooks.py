@@ -72,7 +72,7 @@ class Map(dict):
         del self.__dict__[key]
 
     def __hash__(self):
-        return self.id
+        return id(self)
 
 
 class AlbumInfo(Map):
