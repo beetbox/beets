@@ -165,6 +165,10 @@ class AlbumInfo(Map):
             if isinstance(value, bytes):
                 setattr(self, fld, value.decode(codec, 'ignore'))
 
+        if 'tracks' in self:
+            for track in self.tracks:
+                track.decode(codec)
+
 
 class TrackInfo(Map):
     """Describes a canonical track present on a release. Appears as part
