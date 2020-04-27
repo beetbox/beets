@@ -162,7 +162,7 @@ class AlbumInfo(Map):
                     'media', 'discogs_albumid', 'discogs_labelid',
                     'discogs_artistid']:
             value = getattr(self, fld)
-            if type(value) == str:
+            if isinstance(value, bytes):
                 if isinstance(value, bytes):
                     setattr(self, fld, value.decode(codec, 'ignore'))
 
@@ -225,7 +225,7 @@ class TrackInfo(Map):
         for fld in ['title', 'artist', 'medium', 'artist_sort', 'disctitle',
                     'artist_credit', 'media']:
             value = getattr(self, fld)
-            if type(value) == str:
+            if isinstance(value, bytes):
                 if isinstance(value, bytes):
                     setattr(self, fld, value.decode(codec, 'ignore'))
 
