@@ -753,13 +753,75 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self.assertEqual(self.items[1].albumtype, 'album')
 
     def test_album_artist_overrides_empty_track_artist(self):
-        my_info = copy.deepcopy(self.info)
+        # make a deepcopy of self.info
+        trackinfo = []
+        trackinfo.append(TrackInfo(
+            title=u'oneNew',
+            track_id=u'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
+            medium=1,
+            medium_index=1,
+            medium_total=1,
+            index=1,
+            artist_credit='trackArtistCredit',
+            artist_sort='trackArtistSort',
+        ))
+        trackinfo.append(TrackInfo(
+            title=u'twoNew',
+            track_id=u'40130ed1-a27c-42fd-a328-1ebefb6caef4',
+            medium=2,
+            medium_index=1,
+            index=2,
+            medium_total=1,
+        ))
+        my_info = AlbumInfo(
+            tracks=trackinfo,
+            artist=u'artistNew',
+            album=u'albumNew',
+            album_id='7edb51cb-77d6-4416-a23c-3a8c2994a2c7',
+            artist_id='a6623d39-2d8e-4f70-8242-0a9553b91e50',
+            artist_credit=u'albumArtistCredit',
+            artist_sort=u'albumArtistSort',
+            albumtype=u'album',
+            va=False,
+            mediums=2,
+        )
         self._apply(info=my_info)
         self.assertEqual(self.items[0].artist, 'artistNew')
         self.assertEqual(self.items[1].artist, 'artistNew')
 
     def test_album_artist_overridden_by_nonempty_track_artist(self):
-        my_info = copy.deepcopy(self.info)
+        # make a deepcopy of self.info
+        trackinfo = []
+        trackinfo.append(TrackInfo(
+            title=u'oneNew',
+            track_id=u'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
+            medium=1,
+            medium_index=1,
+            medium_total=1,
+            index=1,
+            artist_credit='trackArtistCredit',
+            artist_sort='trackArtistSort',
+        ))
+        trackinfo.append(TrackInfo(
+            title=u'twoNew',
+            track_id=u'40130ed1-a27c-42fd-a328-1ebefb6caef4',
+            medium=2,
+            medium_index=1,
+            index=2,
+            medium_total=1,
+        ))
+        my_info = AlbumInfo(
+            tracks=trackinfo,
+            artist=u'artistNew',
+            album=u'albumNew',
+            album_id='7edb51cb-77d6-4416-a23c-3a8c2994a2c7',
+            artist_id='a6623d39-2d8e-4f70-8242-0a9553b91e50',
+            artist_credit=u'albumArtistCredit',
+            artist_sort=u'albumArtistSort',
+            albumtype=u'album',
+            va=False,
+            mediums=2,
+        )
         my_info.tracks[0].artist = 'artist1!'
         my_info.tracks[1].artist = 'artist2!'
         self._apply(info=my_info)
@@ -781,7 +843,38 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self.assertEqual(self.items[1].artist_sort, 'albumArtistSort')
 
     def test_full_date_applied(self):
-        my_info = copy.deepcopy(self.info)
+        # make a deepcopy of self.info
+        trackinfo = []
+        trackinfo.append(TrackInfo(
+            title=u'oneNew',
+            track_id=u'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
+            medium=1,
+            medium_index=1,
+            medium_total=1,
+            index=1,
+            artist_credit='trackArtistCredit',
+            artist_sort='trackArtistSort',
+        ))
+        trackinfo.append(TrackInfo(
+            title=u'twoNew',
+            track_id=u'40130ed1-a27c-42fd-a328-1ebefb6caef4',
+            medium=2,
+            medium_index=1,
+            index=2,
+            medium_total=1,
+        ))
+        my_info = AlbumInfo(
+            tracks=trackinfo,
+            artist=u'artistNew',
+            album=u'albumNew',
+            album_id='7edb51cb-77d6-4416-a23c-3a8c2994a2c7',
+            artist_id='a6623d39-2d8e-4f70-8242-0a9553b91e50',
+            artist_credit=u'albumArtistCredit',
+            artist_sort=u'albumArtistSort',
+            albumtype=u'album',
+            va=False,
+            mediums=2,
+        )
         my_info.year = 2013
         my_info.month = 12
         my_info.day = 18
@@ -796,7 +889,38 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self.items.append(Item(year=1, month=2, day=3))
         self.items.append(Item(year=4, month=5, day=6))
 
-        my_info = copy.deepcopy(self.info)
+        # make a deepcopy of self.info
+        trackinfo = []
+        trackinfo.append(TrackInfo(
+            title=u'oneNew',
+            track_id=u'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
+            medium=1,
+            medium_index=1,
+            medium_total=1,
+            index=1,
+            artist_credit='trackArtistCredit',
+            artist_sort='trackArtistSort',
+        ))
+        trackinfo.append(TrackInfo(
+            title=u'twoNew',
+            track_id=u'40130ed1-a27c-42fd-a328-1ebefb6caef4',
+            medium=2,
+            medium_index=1,
+            index=2,
+            medium_total=1,
+        ))
+        my_info = AlbumInfo(
+            tracks=trackinfo,
+            artist=u'artistNew',
+            album=u'albumNew',
+            album_id='7edb51cb-77d6-4416-a23c-3a8c2994a2c7',
+            artist_id='a6623d39-2d8e-4f70-8242-0a9553b91e50',
+            artist_credit=u'albumArtistCredit',
+            artist_sort=u'albumArtistSort',
+            albumtype=u'album',
+            va=False,
+            mediums=2,
+        )
         my_info.year = 2013
         self._apply(info=my_info)
 
@@ -816,7 +940,38 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self.assertEqual(self.items[0].day, 3)
 
     def test_data_source_applied(self):
-        my_info = copy.deepcopy(self.info)
+        # make a deepcopy of self.info
+        trackinfo = []
+        trackinfo.append(TrackInfo(
+            title=u'oneNew',
+            track_id=u'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
+            medium=1,
+            medium_index=1,
+            medium_total=1,
+            index=1,
+            artist_credit='trackArtistCredit',
+            artist_sort='trackArtistSort',
+        ))
+        trackinfo.append(TrackInfo(
+            title=u'twoNew',
+            track_id=u'40130ed1-a27c-42fd-a328-1ebefb6caef4',
+            medium=2,
+            medium_index=1,
+            index=2,
+            medium_total=1,
+        ))
+        my_info = AlbumInfo(
+            tracks=trackinfo,
+            artist=u'artistNew',
+            album=u'albumNew',
+            album_id='7edb51cb-77d6-4416-a23c-3a8c2994a2c7',
+            artist_id='a6623d39-2d8e-4f70-8242-0a9553b91e50',
+            artist_credit=u'albumArtistCredit',
+            artist_sort=u'albumArtistSort',
+            albumtype=u'album',
+            va=False,
+            mediums=2,
+        )
         my_info.data_source = 'MusicBrainz'
         self._apply(info=my_info)
 
@@ -827,6 +982,7 @@ class ApplyCompilationTest(_common.TestCase, ApplyTestUtil):
     def setUp(self):
         super(ApplyCompilationTest, self).setUp()
 
+        # make a deepcopy of self.info
         self.items = []
         self.items.append(Item({}))
         self.items.append(Item({}))
@@ -878,7 +1034,38 @@ class ApplyCompilationTest(_common.TestCase, ApplyTestUtil):
         self.assertFalse(self.items[1].comp)
 
     def test_va_flag_sets_comp(self):
-        va_info = copy.deepcopy(self.info)
+        # make a deepcopy of self.info
+        trackinfo = []
+        trackinfo.append(TrackInfo(
+            title=u'oneNew',
+            track_id=u'dfa939ec-118c-4d0f-84a0-60f3d1e6522c',
+            medium=1,
+            medium_index=1,
+            medium_total=1,
+            index=1,
+            artist_credit='trackArtistCredit',
+            artist_sort='trackArtistSort',
+        ))
+        trackinfo.append(TrackInfo(
+            title=u'twoNew',
+            track_id=u'40130ed1-a27c-42fd-a328-1ebefb6caef4',
+            medium=2,
+            medium_index=1,
+            index=2,
+            medium_total=1,
+        ))
+        va_info = AlbumInfo(
+            tracks=trackinfo,
+            artist=u'artistNew',
+            album=u'albumNew',
+            album_id='7edb51cb-77d6-4416-a23c-3a8c2994a2c7',
+            artist_id='a6623d39-2d8e-4f70-8242-0a9553b91e50',
+            artist_credit=u'albumArtistCredit',
+            artist_sort=u'albumArtistSort',
+            albumtype=u'album',
+            va=False,
+            mediums=2,
+        )
         va_info.va = True
         self._apply(info=va_info)
         self.assertTrue(self.items[0].comp)

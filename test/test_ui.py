@@ -1138,7 +1138,12 @@ class SummarizeItemsTest(_common.TestCase):
         summary = commands.summarize_items([self.item], False)
         self.assertEqual(summary, u"1 items, F, 4kbps, 10:54, 987.0 B")
 
-        i2 = deepcopy(self.item)
+        # make a copy of self.item
+        i2 = library.Item()
+        i2.bitrate = 4321
+        i2.length = 10 * 60 + 54
+        i2.format = "F"
+
         summary = commands.summarize_items([self.item, i2], False)
         self.assertEqual(summary, u"2 items, F, 4kbps, 21:48, 1.9 KiB")
 
