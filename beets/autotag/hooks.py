@@ -45,11 +45,6 @@ class Map(dict):
     m = Map({'first_name': 'Eduardo'}, last_name='Pool', age=24,
     sports=['Soccer'])
     """
-    def __init__(self, **kwargs):
-        super(Map, self).__init__(**kwargs)
-        if kwargs:
-            for k, v in kwargs.iteritems():
-                self[k] = v
 
     def __getattr__(self, attr):
         if attr in self:
