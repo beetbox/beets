@@ -60,13 +60,6 @@ class Map(dict):
     def __setattr__(self, key, value):
         self.__setitem__(key, value)
 
-    def __delattr__(self, item):
-        self.__delitem__(item)
-
-    def __delitem__(self, key):
-        super(Map, self).__delitem__(key)
-        del self.__dict__[key]
-
     def __hash__(self):
         return id(self)
 
