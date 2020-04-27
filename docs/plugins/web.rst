@@ -210,7 +210,14 @@ If the server runs UNIX, you'll need to include an extra leading slash:
 ``GET /item/query/querystring``
 +++++++++++++++++++++++++++++++
 
-Returns a list of tracks matching the query. The *querystring* must be a valid query as described in :doc:`/reference/query`. ::
+Returns a list of tracks matching the query. The *querystring* must be a
+valid query as described in :doc:`/reference/query`. Path elements are
+joined as query keywords. For example, ``/item/query/foo/bar`` will be
+converted to the query ``foo,bar``. As this conflicts with using a slash
+character as a path seperator in path queries, a backlash character
+should be used in these queries instead. This character is converted to
+the path seperator actually used by the operating system before the
+query is performed. ::
 
     {
       "results": [
