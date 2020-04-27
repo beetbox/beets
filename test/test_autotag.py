@@ -106,9 +106,12 @@ def _make_item(title, track, artist=u'some artist'):
 
 def _make_trackinfo():
     return [
-        TrackInfo(title=u'one', track_id=None, artist=u'some artist', length=1, index=1),
-        TrackInfo(title=u'two', track_id=None, artist=u'some artist', length=1, index=2),
-        TrackInfo(title=u'three', track_id=None, artist=u'some artist', length=1, index=3),
+        TrackInfo(title=u'one', track_id=None, artist=u'some artist',
+                  length=1, index=1),
+        TrackInfo(title=u'two', track_id=None, artist=u'some artist',
+                  length=1, index=2),
+        TrackInfo(title=u'three', track_id=None, artist=u'some artist',
+                  length=1, index=3),
     ]
 
 
