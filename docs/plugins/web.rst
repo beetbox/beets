@@ -211,13 +211,7 @@ If the server runs UNIX, you'll need to include an extra leading slash:
 +++++++++++++++++++++++++++++++
 
 Returns a list of tracks matching the query. The *querystring* must be a
-valid query as described in :doc:`/reference/query`. Path elements are
-joined as query keywords. For example, ``/item/query/foo/bar`` will be
-converted to the query ``foo,bar``. As this conflicts with using a slash
-character as a path seperator in path queries, a backlash character
-should be used in these queries instead. This character is converted to
-the path seperator actually used by the operating system before the
-query is performed. ::
+valid query as described in :doc:`/reference/query`. ::
 
     {
       "results": [
@@ -225,6 +219,11 @@ query is performed. ::
         { "id" : 12, "title": "Another Song" }
       ]
     }
+
+Path elements are joined as parts of a query. For example,
+``/item/query/foo/bar`` will be converted to the query ``foo,bar``.
+To specify literal path separators in a query, use a backslash instead of a
+slash.
 
 
 ``GET /item/6/file``
