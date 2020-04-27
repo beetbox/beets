@@ -163,8 +163,7 @@ class AlbumInfo(Map):
                     'discogs_artistid']:
             value = getattr(self, fld)
             if isinstance(value, bytes):
-                if isinstance(value, bytes):
-                    setattr(self, fld, value.decode(codec, 'ignore'))
+                setattr(self, fld, value.decode(codec, 'ignore'))
 
 
 class TrackInfo(Map):
@@ -226,8 +225,7 @@ class TrackInfo(Map):
                     'artist_credit', 'media']:
             value = getattr(self, fld)
             if isinstance(value, bytes):
-                if isinstance(value, bytes):
-                    setattr(self, fld, value.decode(codec, 'ignore'))
+                setattr(self, fld, value.decode(codec, 'ignore'))
 
 
 # Candidate distance scoring.
