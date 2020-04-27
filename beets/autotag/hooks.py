@@ -155,7 +155,12 @@ class AlbumInfo(Map):
         """Ensure that all string attributes on this object, and the
         constituent `TrackInfo` objects, are decoded to Unicode.
         """
-        for fld in self:
+        for fld in ['album', 'artist', 'albumtype', 'label', 'artist_sort',
+                    'catalognum', 'script', 'language', 'country', 'style',
+                    'genre', 'albumstatus', 'albumdisambig',
+                    'releasegroupdisambig', 'artist_credit',
+                    'media', 'discogs_albumid', 'discogs_labelid',
+                    'discogs_artistid']:
             value = getattr(self, fld)
             if type(value) == str:
                 if isinstance(value, bytes):
@@ -218,7 +223,8 @@ class TrackInfo(Map):
         """Ensure that all string attributes on this object are decoded
         to Unicode.
         """
-        for fld in self:
+        for fld in ['title', 'artist', 'medium', 'artist_sort', 'disctitle',
+                    'artist_credit', 'media']:
             value = getattr(self, fld)
             if type(value) == str:
                 if isinstance(value, bytes):
