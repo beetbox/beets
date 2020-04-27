@@ -100,7 +100,51 @@ class AlbumInfo(Map):
     ``mediums`` along with the fields up through ``tracks`` are required.
     The others are optional and may be None.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, album=None, album_id=None, artist=None, artist_id=None,
+                 tracks, asin=None, albumtype=None, va=False, year=None,
+                 month=None, day=None, label=None, mediums=None,
+                 artist_sort=None, releasegroup_id=None, catalognum=None,
+                 script=None, language=None, country=None, style=None,
+                 genre=None, albumstatus=None, media=None, albumdisambig=None,
+                 releasegroupdisambig=None, artist_credit=None,
+                 original_year=None, original_month=None,
+                 original_day=None, data_source=None, data_url=None,
+                 discogs_albumid=None, discogs_labelid=None,
+                 discogs_artistid=None, **kwargs):
+        self.album = album
+        self.album_id = album_id
+        self.artist = artist
+        self.artist_id = artist_id
+        self.tracks = tracks
+        self.asin = asin
+        self.albumtype = albumtype
+        self.va = va
+        self.year = year
+        self.month = month
+        self.day = day
+        self.label = label
+        self.mediums = mediums
+        self.artist_sort = artist_sort
+        self.releasegroup_id = releasegroup_id
+        self.catalognum = catalognum
+        self.script = script
+        self.language = language
+        self.country = country
+        self.style = style
+        self.genre = genre
+        self.albumstatus = albumstatus
+        self.media = media
+        self.albumdisambig = albumdisambig
+        self.releasegroupdisambig = releasegroupdisambig
+        self.artist_credit = artist_credit
+        self.original_year = original_year
+        self.original_month = original_month
+        self.original_day = original_day
+        self.data_source = data_source
+        self.data_url = data_url
+        self.discogs_albumid = discogs_albumid
+        self.discogs_labelid = discogs_labelid
+        self.discogs_artistid = discogs_artistid
         for arg in kwargs:
             self.__setattr__(arg, kwargs[arg])
 
@@ -129,7 +173,43 @@ class TrackInfo(Map):
     may be None. The indices ``index``, ``medium``, and ``medium_index``
     are all 1-based.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, title=None, track_id=None, release_track_id=None,
+                 artist=None, artist_id=None, length=None, index=None,
+                 medium=None, medium_index=None, medium_total=None,
+                 artist_sort=None, disctitle=None, artist_credit=None,
+                 data_source=None, data_url=None, media=None, lyricist=None,
+                 composer=None, composer_sort=None, arranger=None,
+                 performer=None, track_alt=None, work=None, mb_workid=None,
+                 work_disambig=None, bpm=None, initial_key=None, genre=None,
+                 **kwargs):
+        self.title = title
+        self.track_id = track_id
+        self.release_track_id = release_track_id
+        self.artist = artist
+        self.artist_id = artist_id
+        self.length = length
+        self.index = index
+        self.media = media
+        self.medium = medium
+        self.medium_index = medium_index
+        self.medium_total = medium_total
+        self.artist_sort = artist_sort
+        self.disctitle = disctitle
+        self.artist_credit = artist_credit
+        self.data_source = data_source
+        self.data_url = data_url
+        self.lyricist = lyricist
+        self.composer = composer
+        self.composer_sort = composer_sort
+        self.arranger = arranger
+        self.performer = performer
+        self.track_alt = track_alt
+        self.work = work
+        self.mb_workid = mb_workid
+        self.work_disambig = work_disambig
+        self.bpm = bpm
+        self.initial_key = initial_key
+        self.genre = genre
         for arg in kwargs:
             self.__setattr__(arg, kwargs[arg])
 
