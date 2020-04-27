@@ -184,7 +184,7 @@ class TrackInfo(Map):
                  artist_sort=None, disctitle=None, artist_credit=None,
                  data_source=None, data_url=None, media=None, lyricist=None,
                  composer=None, composer_sort=None, arranger=None,
-                 performer=None, track_alt=None, work=None, mb_workid=None,
+                 track_alt=None, work=None, mb_workid=None,
                  work_disambig=None, bpm=None, initial_key=None, genre=None,
                  **kwargs):
         self.title = title
@@ -207,7 +207,6 @@ class TrackInfo(Map):
         self.composer = composer
         self.composer_sort = composer_sort
         self.arranger = arranger
-        self.performer = performer
         self.track_alt = track_alt
         self.work = work
         self.mb_workid = mb_workid

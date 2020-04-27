@@ -60,8 +60,6 @@ def apply_item_metadata(item, track_info):
         item.composer_sort = track_info.composer_sort
     if track_info.arranger is not None:
         item.arranger = track_info.arranger
-    if track_info.performer is not None:
-        item.performer = track_info.performer
     if track_info.work is not None:
         item.work = track_info.work
     if track_info.mb_workid is not None:
@@ -186,7 +184,6 @@ def apply_metadata(album_info, mapping):
                 'composer',
                 'composer_sort',
                 'arranger',
-                'performer',
                 'work',
                 'mb_workid',
                 'work_disambig',
