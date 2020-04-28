@@ -753,32 +753,14 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
 
     def test_album_artist_overrides_empty_track_artist(self):
         # make a deepcopy of self.info
-        trackinfo = []
-        track = TrackInfo()
-        track.update(self.info.tracks[0])
-        trackinfo.append(track)
-        track = TrackInfo()
-        track.update(self.info.tracks[1])
-        trackinfo.append(track)
-        my_info = AlbumInfo()
-        my_info.update(self.info)
-        my_info.tracks = trackinfo
+        my_info = self.info.dup_albuminfo()
         self._apply(info=my_info)
         self.assertEqual(self.items[0].artist, 'artistNew')
         self.assertEqual(self.items[1].artist, 'artistNew')
 
     def test_album_artist_overridden_by_nonempty_track_artist(self):
         # make a deepcopy of self.info
-        trackinfo = []
-        track = TrackInfo()
-        track.update(self.info.tracks[0])
-        trackinfo.append(track)
-        track = TrackInfo()
-        track.update(self.info.tracks[1])
-        trackinfo.append(track)
-        my_info = AlbumInfo()
-        my_info.update(self.info)
-        my_info.tracks = trackinfo
+        my_info = self.info.dup_albuminfo()
         my_info.tracks[0].artist = 'artist1!'
         my_info.tracks[1].artist = 'artist2!'
         self._apply(info=my_info)
@@ -801,16 +783,7 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
 
     def test_full_date_applied(self):
         # make a deepcopy of self.info
-        trackinfo = []
-        track = TrackInfo()
-        track.update(self.info.tracks[0])
-        trackinfo.append(track)
-        track = TrackInfo()
-        track.update(self.info.tracks[1])
-        trackinfo.append(track)
-        my_info = AlbumInfo()
-        my_info.update(self.info)
-        my_info.tracks = trackinfo
+        my_info = self.info.dup_albuminfo()
         my_info.year = 2013
         my_info.month = 12
         my_info.day = 18
@@ -826,16 +799,7 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self.items.append(Item(year=4, month=5, day=6))
 
         # make a deepcopy of self.info
-        trackinfo = []
-        track = TrackInfo()
-        track.update(self.info.tracks[0])
-        trackinfo.append(track)
-        track = TrackInfo()
-        track.update(self.info.tracks[1])
-        trackinfo.append(track)
-        my_info = AlbumInfo()
-        my_info.update(self.info)
-        my_info.tracks = trackinfo
+        my_info = self.info.dup_albuminfo()
         my_info.year = 2013
         self._apply(info=my_info)
 
@@ -856,16 +820,7 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
 
     def test_data_source_applied(self):
         # make a deepcopy of self.info
-        trackinfo = []
-        track = TrackInfo()
-        track.update(self.info.tracks[0])
-        trackinfo.append(track)
-        track = TrackInfo()
-        track.update(self.info.tracks[1])
-        trackinfo.append(track)
-        my_info = AlbumInfo()
-        my_info.update(self.info)
-        my_info.tracks = trackinfo
+        my_info = self.info.dup_albuminfo()
         my_info.data_source = 'MusicBrainz'
         self._apply(info=my_info)
 
@@ -928,16 +883,7 @@ class ApplyCompilationTest(_common.TestCase, ApplyTestUtil):
 
     def test_va_flag_sets_comp(self):
         # make a deepcopy of self.info
-        trackinfo = []
-        track = TrackInfo()
-        track.update(self.info.tracks[0])
-        trackinfo.append(track)
-        track = TrackInfo()
-        track.update(self.info.tracks[1])
-        trackinfo.append(track)
-        va_info = AlbumInfo()
-        va_info.update(self.info)
-        va_info.tracks = trackinfo
+        va_info = self.info.dup_albuminfo()
         va_info.va = True
         self._apply(info=va_info)
         self.assertTrue(self.items[0].comp)

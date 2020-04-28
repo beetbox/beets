@@ -148,6 +148,16 @@ class AlbumInfo(AttrDict):
             for track in self.tracks:
                 track.decode(codec)
 
+    def dup_albuminfo(self):
+        dupe = AlbumInfo()
+        dupe.update(self)
+        if 'tracks' in self:
+            tracks = []
+            for track in self.tracks:
+                tracks.append(track.dup_trackinfo())
+            dupe.tracks = tracks
+        return dupe
+
 
 class TrackInfo(AttrDict):
     """Describes a canonical track present on a release. Appears as part
@@ -208,6 +218,10 @@ class TrackInfo(AttrDict):
             value = getattr(self, fld)
             if isinstance(value, bytes):
                 setattr(self, fld, value.decode(codec, 'ignore'))
+
+    def dup_trackinfo(self):
+        dupe = TrackInfo()
+        dupe.update(self)
 
 
 # Candidate distance scoring.
