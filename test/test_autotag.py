@@ -754,9 +754,14 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
     def test_album_artist_overrides_empty_track_artist(self):
         # make a deepcopy of self.info
         trackinfo = []
-        trackinfo.append(TrackInfo(self.info.tracks[0]))
-        trackinfo.append(TrackInfo(self.info.tracks[1]))
-        my_info = AlbumInfo(self.info)
+        track = TrackInfo()
+        track.update(self.info.tracks[0])
+        trackinfo.append(track)
+        track = TrackInfo()
+        track.update(self.info.tracks[1])
+        trackinfo.append(track)
+        my_info = AlbumInfo()
+        my_info.update(self.info)
         my_info.tracks = trackinfo
         self._apply(info=my_info)
         self.assertEqual(self.items[0].artist, 'artistNew')
@@ -765,9 +770,14 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
     def test_album_artist_overridden_by_nonempty_track_artist(self):
         # make a deepcopy of self.info
         trackinfo = []
-        trackinfo.append(TrackInfo(self.info.tracks[0]))
-        trackinfo.append(TrackInfo(self.info.tracks[1]))
-        my_info = AlbumInfo(self.info)
+        track = TrackInfo()
+        track.update(self.info.tracks[0])
+        trackinfo.append(track)
+        track = TrackInfo()
+        track.update(self.info.tracks[1])
+        trackinfo.append(track)
+        my_info = AlbumInfo()
+        my_info.update(self.info)
         my_info.tracks = trackinfo
         my_info.tracks[0].artist = 'artist1!'
         my_info.tracks[1].artist = 'artist2!'
@@ -792,9 +802,14 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
     def test_full_date_applied(self):
         # make a deepcopy of self.info
         trackinfo = []
-        trackinfo.append(TrackInfo(self.info.tracks[0]))
-        trackinfo.append(TrackInfo(self.info.tracks[1]))
-        my_info = AlbumInfo(self.info)
+        track = TrackInfo()
+        track.update(self.info.tracks[0])
+        trackinfo.append(track)
+        track = TrackInfo()
+        track.update(self.info.tracks[1])
+        trackinfo.append(track)
+        my_info = AlbumInfo()
+        my_info.update(self.info)
         my_info.tracks = trackinfo
         my_info.year = 2013
         my_info.month = 12
@@ -812,9 +827,14 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
 
         # make a deepcopy of self.info
         trackinfo = []
-        trackinfo.append(TrackInfo(self.info.tracks[0]))
-        trackinfo.append(TrackInfo(self.info.tracks[1]))
-        my_info = AlbumInfo(self.info)
+        track = TrackInfo()
+        track.update(self.info.tracks[0])
+        trackinfo.append(track)
+        track = TrackInfo()
+        track.update(self.info.tracks[1])
+        trackinfo.append(track)
+        my_info = AlbumInfo()
+        my_info.update(self.info)
         my_info.tracks = trackinfo
         my_info.year = 2013
         self._apply(info=my_info)
@@ -837,9 +857,14 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
     def test_data_source_applied(self):
         # make a deepcopy of self.info
         trackinfo = []
-        trackinfo.append(TrackInfo(self.info.tracks[0]))
-        trackinfo.append(TrackInfo(self.info.tracks[1]))
-        my_info = AlbumInfo(self.info)
+        track = TrackInfo()
+        track.update(self.info.tracks[0])
+        trackinfo.append(track)
+        track = TrackInfo()
+        track.update(self.info.tracks[1])
+        trackinfo.append(track)
+        my_info = AlbumInfo()
+        my_info.update(self.info)
         my_info.tracks = trackinfo
         my_info.data_source = 'MusicBrainz'
         self._apply(info=my_info)
@@ -904,9 +929,14 @@ class ApplyCompilationTest(_common.TestCase, ApplyTestUtil):
     def test_va_flag_sets_comp(self):
         # make a deepcopy of self.info
         trackinfo = []
-        trackinfo.append(TrackInfo(self.info.tracks[0]))
-        trackinfo.append(TrackInfo(self.info.tracks[1]))
-        va_info = AlbumInfo(self.info)
+        track = TrackInfo()
+        track.update(self.info.tracks[0])
+        trackinfo.append(track)
+        track = TrackInfo()
+        track.update(self.info.tracks[1])
+        trackinfo.append(track)
+        va_info = AlbumInfo()
+        va_info.update(self.info)
         va_info.tracks = trackinfo
         va_info.va = True
         self._apply(info=va_info)
