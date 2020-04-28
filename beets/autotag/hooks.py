@@ -42,13 +42,13 @@ except AttributeError:
 class AttrDict(dict):
     """
     Dictionary with flexible attributes
-    to get an tag value: 
+    to get an tag value:
         value = info.tag
     or  value = info[tag]
     or  value = info.get(tag)
     or  value = getattr(info, tag)
     all raise AttributeError when info doesn't have tag
-    to set a tag value: 
+    to set a tag value:
         info.tag = value
     or  info[tag] = value
     or  setattr(info, tag, value)
