@@ -39,11 +39,19 @@ except AttributeError:
 
 
 # Classes used to represent candidate options.
-class Map(dict):
+class AttrDict(dict):
     """
-    Example:
-    m = Map({'first_name': 'Eduardo'}, last_name='Pool', age=24,
-    sports=['Soccer'])
+    Dictionary with flexible attributes
+    to get an tag value: 
+        value = info.tag
+    or  value = info[tag]
+    or  value = info.get(tag)
+    or  value = getattr(info, tag)
+    all raise AttributeError when info doesn't have tag
+    to set a tag value: 
+        info.tag = value
+    or  info[tag] = value
+    or  setattr(info, tag, value)
     """
 
     def __getattr__(self, attr):
@@ -59,7 +67,7 @@ class Map(dict):
         return id(self)
 
 
-class AlbumInfo(Map):
+class AlbumInfo(AttrDict):
     """Describes a canonical release that may be used to match a release
     in the library. Consists of these data members:
 
@@ -117,8 +125,7 @@ class AlbumInfo(Map):
         self.discogs_albumid = discogs_albumid
         self.discogs_labelid = discogs_labelid
         self.discogs_artistid = discogs_artistid
-        for arg in kwargs:
-            self.__setattr__(arg, kwargs[arg])
+        self.update(kwargs)
 
     # Work around a bug in python-musicbrainz-ngs that causes some
     # strings to be bytes rather than Unicode.
@@ -142,7 +149,7 @@ class AlbumInfo(Map):
                 track.decode(codec)
 
 
-class TrackInfo(Map):
+class TrackInfo(AttrDict):
     """Describes a canonical track present on a release. Appears as part
     of an AlbumInfo's ``tracks`` list. Consists of these data members:
 
@@ -189,8 +196,7 @@ class TrackInfo(Map):
         self.bpm = bpm
         self.initial_key = initial_key
         self.genre = genre
-        for arg in kwargs:
-            self.__setattr__(arg, kwargs[arg])
+        self.update(kwargs)
 
     # As above, work around a bug in python-musicbrainz-ngs.
     def decode(self, codec='utf-8'):
