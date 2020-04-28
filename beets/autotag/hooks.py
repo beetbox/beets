@@ -222,6 +222,7 @@ class TrackInfo(AttrDict):
     def dup_trackinfo(self):
         dupe = TrackInfo()
         dupe.update(self)
+        return dupe
 
 
 # Candidate distance scoring.
