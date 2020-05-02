@@ -1586,7 +1586,8 @@ class DefaultTemplateFunctions(object):
         subqueries = []
         for key in keys:
             value = album.get(key, '')
-            subqueries.append(dbcore.MatchQuery(key, value))
+            subqueries.append(dbcore.MatchQuery(key, value,
+                                                key in album.item_keys))
         albums = self.lib.albums(dbcore.AndQuery(subqueries))
 
         # If there's only one album to matching these details, then do
