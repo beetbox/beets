@@ -24,9 +24,7 @@ from urllib.parse import urlencode
 import requests
 from beets.dbcore.query import SubstringQuery
 
-from beets.dbcore import AndQuery, Query, MatchQuery
-
-from beets import plugins
+from beets.dbcore import AndQuery
 
 from beets.ui import Subcommand
 
