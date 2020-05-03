@@ -34,6 +34,7 @@ from beets.util import hidden
 import six
 from unidecode import unidecode
 from enum import Enum
+from tempfile import NamedTemporaryFile
 
 
 MAX_FILENAME_LENGTH = 200
@@ -543,6 +544,16 @@ def hardlink(path, dest, replace=False):
         else:
             raise FilesystemError(exc, 'link', (path, dest),
                                   traceback.format_exc())
+
+
+def tmp_path_for(path=''):
+    """Returns a path to a named temporary file with the same file extension as
+    ``path``.  If ``path`` is not provided, a named temporary file with no
+    extension is returned.
+    """
+    ext = os.path.splitext(path)[1]
+    with NamedTemporaryFile(suffix=py3_path(ext), delete=False) as f:
+        return bytestring_path(f.name)
 
 
 def unique_path(path):

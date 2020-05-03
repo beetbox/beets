@@ -19,9 +19,7 @@ public resizing proxy if neither is available.
 from __future__ import division, absolute_import, print_function
 
 import subprocess
-import os
 import re
-from tempfile import NamedTemporaryFile
 from six.moves.urllib.parse import urlencode
 from beets import logging
 from beets import util
@@ -55,20 +53,11 @@ def resize_url(url, maxwidth, quality=0):
     return '{0}?{1}'.format(PROXY_URL, urlencode(params))
 
 
-def temp_file_for(path):
-    """Return an unused filename with the same extension as the
-    specified path.
-    """
-    ext = os.path.splitext(path)[1]
-    with NamedTemporaryFile(suffix=util.py3_path(ext), delete=False) as f:
-        return util.bytestring_path(f.name)
-
-
 def pil_resize(maxwidth, path_in, path_out=None, quality=0):
     """Resize using Python Imaging Library (PIL).  Return the output path
     of resized image.
     """
-    path_out = path_out or temp_file_for(path_in)
+    path_out = path_out or util.tmp_path_for(path_in)
     from PIL import Image
     log.debug(u'artresizer: PIL resizing {0} to {1}',
               util.displayable_path(path_in), util.displayable_path(path_out))
@@ -91,7 +80,7 @@ def im_resize(maxwidth, path_in, path_out=None, quality=0):
     Use the ``magick`` program or ``convert`` on older versions. Return
     the output path of resized image.
     """
-    path_out = path_out or temp_file_for(path_in)
+    path_out = path_out or util.tmp_path_for(path_in)
     log.debug(u'artresizer: ImageMagick resizing {0} to {1}',
               util.displayable_path(path_in), util.displayable_path(path_out))
 
