@@ -24,7 +24,7 @@ class CuePlugin(BeetsPlugin):
 
         # self.register_listener('import_task_start', self.look_for_cues)
 
-    def candidates(self, items, artist, album, va_likely):
+    def candidates(self, items, artist, album, va_likely, extra_tags=None):
         import pdb
         pdb.set_trace()
 

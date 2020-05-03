@@ -172,7 +172,7 @@ class BeetsPlugin(object):
         """
         return beets.autotag.hooks.Distance()
 
-    def candidates(self, items, artist, album, va_likely):
+    def candidates(self, items, artist, album, va_likely, extra_tags=None):
         """Should return a sequence of AlbumInfo objects that match the
         album whose items are provided.
         """
@@ -379,11 +379,12 @@ def album_distance(items, album_info, mapping):
     return dist
 
 
-def candidates(items, artist, album, va_likely):
+def candidates(items, artist, album, va_likely, extra_tags=None):
     """Gets MusicBrainz candidates for an album from each plugin.
     """
     for plugin in find_plugins():
-        for candidate in plugin.candidates(items, artist, album, va_likely):
+        for candidate in plugin.candidates(items, artist, album, va_likely,
+                                           extra_tags):
             yield candidate
 
 
@@ -714,7 +715,7 @@ class MetadataSourcePlugin(object):
                 return id_
         return None
 
-    def candidates(self, items, artist, album, va_likely):
+    def candidates(self, items, artist, album, va_likely, extra_tags=None):
         """Returns a list of AlbumInfo objects for Search API results
         matching an ``album`` and ``artist`` (if not various).
 

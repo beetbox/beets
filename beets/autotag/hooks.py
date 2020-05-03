@@ -614,17 +614,21 @@ def tracks_for_id(track_id):
 
 
 @plugins.notify_info_yielded(u'albuminfo_received')
-def album_candidates(items, artist, album, va_likely):
+def album_candidates(items, artist, album, va_likely, extra_tags):
     """Search for album matches. ``items`` is a list of Item objects
     that make up the album. ``artist`` and ``album`` are the respective
     names (strings), which may be derived from the item list or may be
     entered by the user. ``va_likely`` is a boolean indicating whether
-    the album is likely to be a "various artists" release.
+    the album is likely to be a "various artists" release. ``extra_tags``
+    is an optional dictionary of additional tags used to further
+    constrain the search.
     """
+
     # Base candidates if we have album and artist to match.
     if artist and album:
         try:
-            for candidate in mb.match_album(artist, album, len(items)):
+            for candidate in mb.match_album(artist, album, len(items),
+                                            extra_tags):
                 yield candidate
         except mb.MusicBrainzAPIError as exc:
             exc.log(log)
@@ -632,13 +636,15 @@ def album_candidates(items, artist, album, va_likely):
     # Also add VA matches from MusicBrainz where appropriate.
     if va_likely and album:
         try:
-            for candidate in mb.match_album(None, album, len(items)):
+            for candidate in mb.match_album(None, album, len(items),
+                                            extra_tags):
                 yield candidate
         except mb.MusicBrainzAPIError as exc:
             exc.log(log)
 
     # Candidates from plugins.
-    for candidate in plugins.candidates(items, artist, album, va_likely):
+    for candidate in plugins.candidates(items, artist, album, va_likely,
+                                        extra_tags):
         yield candidate
 
 

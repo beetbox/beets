@@ -57,7 +57,8 @@ class DiscogsPlugin(BeetsPlugin):
             'tokenfile': 'discogs_token.json',
             'source_weight': 0.5,
             'user_token': '',
-            'separator': u', '
+            'separator': u', ',
+            'index_tracks': False,
         })
         self.config['apikey'].redact = True
         self.config['apisecret'].redact = True
@@ -174,7 +175,7 @@ class DiscogsPlugin(BeetsPlugin):
             config=self.config
         )
 
-    def candidates(self, items, artist, album, va_likely):
+    def candidates(self, items, artist, album, va_likely, extra_tags=None):
         """Returns a list of AlbumInfo objects for discogs search results
         matching an album and artist (if not various).
         """
@@ -397,14 +398,28 @@ class DiscogsPlugin(BeetsPlugin):
         tracks = []
         index_tracks = {}
         index = 0
+        # Distinct works and intra-work divisions, as defined by index tracks.
+        divisions, next_divisions = [], []
         for track in clean_tracklist:
             # Only real tracks have `position`. Otherwise, it's an index track.
             if track['position']:
                 index += 1
-                track_info = self.get_track_info(track, index)
+                if next_divisions:
+                    # End of a block of index tracks: update the current
+                    # divisions.
+                    divisions += next_divisions
+                    del next_divisions[:]
+                track_info = self.get_track_info(track, index, divisions)
                 track_info.track_alt = track['position']
                 tracks.append(track_info)
             else:
+                next_divisions.append(track['title'])
+                # We expect new levels of division at the beginning of the
+                # tracklist (and possibly elsewhere).
+                try:
+                    divisions.pop()
+                except IndexError:
+                    pass
                 index_tracks[index + 1] = track['title']
 
         # Fix up medium and medium_index for each track. Discogs position is
@@ -539,10 +554,13 @@ class DiscogsPlugin(BeetsPlugin):
 
         return tracklist
 
-    def get_track_info(self, track, index):
+    def get_track_info(self, track, index, divisions):
         """Returns a TrackInfo object for a discogs track.
         """
         title = track['title']
+        if self.config['index_tracks']:
+            prefix = ', '.join(divisions)
+            title = ': '.join([prefix, title])
         track_id = None
         medium, medium_index, _ = self.get_track_index(track['position'])
         artist, artist_id = MetadataSourcePlugin.get_artist(

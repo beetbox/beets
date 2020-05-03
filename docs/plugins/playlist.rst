@@ -13,7 +13,7 @@ Then configure your playlists like this::
         playlist_dir: ~/.mpd/playlists
         forward_slash: no
 
-It is possible to query the library based on a playlist by speicifying its
+It is possible to query the library based on a playlist by specifying its
 absolute path::
 
     $ beet ls playlist:/path/to/someplaylist.m3u

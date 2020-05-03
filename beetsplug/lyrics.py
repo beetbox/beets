@@ -187,6 +187,9 @@ def search_pairs(item):
     In addition to the artist and title obtained from the `item` the
     method tries to strip extra information like paranthesized suffixes
     and featured artists from the strings and add them as candidates.
+    The artist sort name is added as a fallback candidate to help in
+    cases where artist name includes special characters or is in a
+    non-latin script.
     The method also tries to split multiple titles separated with `/`.
     """
     def generate_alternatives(string, patterns):
@@ -200,12 +203,16 @@ def search_pairs(item):
                 alternatives.append(match.group(1))
         return alternatives
 
-    title, artist = item.title, item.artist
+    title, artist, artist_sort = item.title, item.artist, item.artist_sort
 
     patterns = [
         # Remove any featuring artists from the artists name
         r"(.*?) {0}".format(plugins.feat_tokens())]
     artists = generate_alternatives(artist, patterns)
+    # Use the artist_sort as fallback only if it differs from artist to avoid
+    # repeated remote requests with the same search terms
+    if artist != artist_sort:
+        artists.append(artist_sort)
 
     patterns = [
         # Remove a parenthesized suffix from a title string. Common
@@ -373,9 +380,13 @@ class Genius(Backend):
 
         # At least Genius is nice and has a tag called 'lyrics'!
         # Updated css where the lyrics are based in HTML.
-        lyrics = html.find("div", class_="lyrics").get_text()
+        lyrics_div = html.find("div", class_="lyrics")
+        if lyrics_div is None:
+            self._log.debug(u'Genius lyrics for {0} not found',
+                            page_url)
+            return None
 
-        return lyrics
+        return lyrics_div.get_text()
 
     def fetch(self, artist, title):
         search_url = self.base_url + "/search"
@@ -395,13 +406,21 @@ class Genius(Backend):
 
         song_info = None
         for hit in json["response"]["hits"]:
-            if hit["result"]["primary_artist"]["name"] == artist:
+            # Genius uses zero-width characters to denote lowercase
+            # artist names.
+            hit_artist = hit["result"]["primary_artist"]["name"]. \
+                strip(u'\u200b').lower()
+
+            if hit_artist == artist.lower():
                 song_info = hit
                 break
 
         if song_info:
+            self._log.debug(u'fetched: {0}', song_info["result"]["url"])
             song_api_path = song_info["result"]["api_path"]
             return self.lyrics_from_song_api_path(song_api_path)
+        else:
+            self._log.debug(u'genius: no matching artist')
 
 
 class LyricsWiki(SymbolsReplaced):

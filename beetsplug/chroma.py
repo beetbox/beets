@@ -191,7 +191,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         dist.add_expr('track_id', info.track_id not in recording_ids)
         return dist
 
-    def candidates(self, items, artist, album, va_likely):
+    def candidates(self, items, artist, album, va_likely, extra_tags=None):
         albums = []
         for relid in prefix(_all_releases(items), MAX_RELEASES):
             album = hooks.album_for_mbid(relid)

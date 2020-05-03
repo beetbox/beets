@@ -53,6 +53,7 @@ class ModelFixture1(dbcore.Model):
     _fields = {
         'id': dbcore.types.PRIMARY_ID,
         'field_one': dbcore.types.INTEGER,
+        'field_two': dbcore.types.STRING,
     }
     _types = {
         'some_float_field': dbcore.types.FLOAT,
@@ -355,7 +356,7 @@ class ModelTest(unittest.TestCase):
     def test_items(self):
         model = ModelFixture1(self.db)
         model.id = 5
-        self.assertEqual({('id', 5), ('field_one', 0)},
+        self.assertEqual({('id', 5), ('field_one', 0), ('field_two', '')},
                          set(model.items()))
 
     def test_delete_internal_field(self):
@@ -370,10 +371,28 @@ class ModelTest(unittest.TestCase):
 
 
 class FormatTest(unittest.TestCase):
-    def test_format_fixed_field(self):
+    def test_format_fixed_field_integer(self):
         model = ModelFixture1()
-        model.field_one = u'caf\xe9'
+        model.field_one = 155
         value = model.formatted().get('field_one')
+        self.assertEqual(value, u'155')
+
+    def test_format_fixed_field_integer_normalized(self):
+        """The normalize method of the Integer class rounds floats
+        """
+        model = ModelFixture1()
+        model.field_one = 142.432
+        value = model.formatted().get('field_one')
+        self.assertEqual(value, u'142')
+
+        model.field_one = 142.863
+        value = model.formatted().get('field_one')
+        self.assertEqual(value, u'143')
+
+    def test_format_fixed_field_string(self):
+        model = ModelFixture1()
+        model.field_two = u'caf\xe9'
+        value = model.formatted().get('field_two')
         self.assertEqual(value, u'caf\xe9')
 
     def test_format_flex_field(self):

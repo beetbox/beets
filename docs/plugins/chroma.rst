@@ -96,7 +96,9 @@ Usage
 
 Once you have all the dependencies sorted out, enable the ``chroma`` plugin in
 your configuration (see :ref:`using-plugins`) to benefit from fingerprinting
-the next time you run ``beet import``.
+the next time you run ``beet import``. (The plugin doesn't produce any obvious
+output by default. If you want to confirm that it's enabled, you can try
+running in verbose mode once with ``beet -v import``.)
 
 You can also use the ``beet fingerprint`` command to generate fingerprints for
 items already in your library. (Provide a query to fingerprint a subset of your
