@@ -19,7 +19,13 @@ from hashlib import md5
 import xml.etree.ElementTree as ET
 import random
 import string
+from urllib.parse import urlencode
+
 import requests
+from beets.dbcore.query import SubstringQuery
+
+from beets.dbcore import AndQuery, Query, MatchQuery
+
 from beets import plugins
 
 from beets.ui import Subcommand
@@ -46,19 +52,21 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
 
     def update_tags(self, playlist_dict, lib):
         for query, playlist_tag in playlist_dict.items():
-            query = 'artist:"{}" album:"{}" title:"{}"'.format(*query)
+            query = AndQuery([SubstringQuery("artist", query[0]),
+                              SubstringQuery("album", query[1]),
+                              SubstringQuery("title", query[2])])
             items = lib.items(query)
-            if len(items) <= 0:
+            if not items:
                 self._log.warn(u"{} | track not found ({})", playlist_tag,
                                query)
                 continue
             for item in items:
-                item.update({'subsonic_playlist': playlist_tag})
+                item.subsonic_playlist = playlist_tag
                 with lib.transaction():
                     item.try_sync(write=True, move=False)
 
     def get_playlist(self, playlist_id):
-        xml = self.send('getPlaylist', '&id={}'.format(playlist_id)).text
+        xml = self.send('getPlaylist', {'id': playlist_id}).text
         playlist = ET.fromstring(xml)[0]
         if playlist.attrib.get('code', '200') != '200':
             alt_error = 'error getting playlist, but no error message found'
@@ -72,7 +80,7 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
 
     def commands(self):
         def build_playlist(lib, opts, args):
-            self._parse_opts(opts)
+            self.config.set_args(opts)
             ids = self.config['playlist_ids'].as_str_seq()
             if len(self.config['playlist_names'].as_str_seq()) > 0:
                 playlists = ET.fromstring(self.send('getPlaylists').text)[
@@ -102,8 +110,6 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
                         item.try_sync(write=True, move=False)
 
             self.update_tags(playlist_dict, lib)
-            ## notify plugins
-            plugins.send('database_change', lib=lib, model=self)
 
         subsonicplaylist_cmds = Subcommand(
             'subsonicplaylist', help=u'import a subsonic playlist'
@@ -117,24 +123,18 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
         subsonicplaylist_cmds.func = build_playlist
         return [subsonicplaylist_cmds]
 
-    def _parse_opts(self, opts):
-
-        if opts.delete:
-            self.config['delete'].set(True)
-
-        self.opts = opts
-        return True
-
     def generate_token(self):
         salt = ''.join(random.choices(string.ascii_lowercase + string.digits))
         return md5(
             (self.config['password'].get() + salt).encode()).hexdigest(), salt
 
-    def send(self, endpoint, params=''):
+    def send(self, endpoint, params=None):
+        if params is None:
+            params = dict()
         url = '{}/rest/{}?u={}&t={}&s={}&v=1.12.0&c=beets'.format(
             self.config['base_url'].get(),
             endpoint,
             self.config['username'],
             *self.generate_token())
-        resp = requests.get(url + params)
+        resp = requests.get(url + urlencode(params))
         return resp
