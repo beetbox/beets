@@ -23,11 +23,11 @@ flag. This resets all `subsonic_playlist` tag before importing playlists.
 Options to be defined in your config with their default value::
 
     subsonicplaylist:
-        'base_url': "https://your.subsonic.server"
-        'delete': False,
-        'playlist_ids': [],
-        'playlist_names': [],
-        'username': '',
-        'password': ''
+        base_url: "https://your.subsonic.server"
+        delete: no
+        playlist_ids: []
+        playlist_names: []
+        username: ''
+        password: ''
 
 Parameters `base_url`, `username` and `password` must be defined!
