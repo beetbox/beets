@@ -206,7 +206,7 @@ def extract(log, item, outpath=None):
 
     # Append suffix to outpath / create tmp file with suffix
     if outpath is not None:
-        outpath = bytestring_path(outpath + '.' + ext)
+        outpath = bytestring_path(outpath) + bytestring_path('.' + ext)
     else:
         outpath = tmp_path_for('_.' + ext)
 

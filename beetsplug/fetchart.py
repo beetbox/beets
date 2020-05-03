@@ -233,14 +233,14 @@ class LocalArtSource(ArtSource):
 
 
 class EmbeddedArtSource(ArtSource):
-  IS_LOCAL = True
-  LOC_STR = u'embedded'
+    IS_LOCAL = True
+    LOC_STR = u'embedded'
 
-  def fetch_image(self, candidate, plugin):
-      # extract best album art from candidate.item
-      tmp_path = art.extract(self._log, item=candidate.item)
-      if tmp_path:
-          candidate.path = tmp_path
+    def fetch_image(self, candidate, plugin):
+        # extract best album art from candidate.item
+        tmp_path = art.extract(self._log, item=candidate.item)
+        if tmp_path:
+            candidate.path = tmp_path
 
 
 class RemoteArtSource(ArtSource):
@@ -478,11 +478,11 @@ class FanartTV(RemoteArtSource):
 
         matches = []
         # can there be more than one releasegroupid per response?
-        for mbid, art in data.get(u'albums', dict()).items():
+        for mbid, art_ in data.get(u'albums', dict()).items():
             # there might be more art referenced, e.g. cdart, and an albumcover
             # might not be present, even if the request was successful
-            if album.mb_releasegroupid == mbid and u'albumcover' in art:
-                matches.extend(art[u'albumcover'])
+            if album.mb_releasegroupid == mbid and u'albumcover' in art_:
+                matches.extend(art_[u'albumcover'])
             # can this actually occur?
             else:
                 self._log.debug(u'fanart.tv: unexpected mb_releasegroupid in '

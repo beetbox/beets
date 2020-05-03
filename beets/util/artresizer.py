@@ -19,9 +19,7 @@ public resizing proxy if neither is available.
 from __future__ import division, absolute_import, print_function
 
 import subprocess
-import os
 import re
-from tempfile import NamedTemporaryFile
 from six.moves.urllib.parse import urlencode
 from beets import logging
 from beets import util
