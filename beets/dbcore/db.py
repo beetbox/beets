@@ -189,7 +189,7 @@ class LazyConvertDict(object):
 
 class Model(object):
     """An abstract object representing an object in the database. Model
-    objects act like dictionaries (i.e., the allow subscript access like
+    objects act like dictionaries (i.e., they allow subscript access like
     ``obj['field']``). The same field set is available via attribute
     access as a shortcut (i.e., ``obj.field``). Three kinds of attributes are
     available:

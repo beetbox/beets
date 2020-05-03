@@ -78,6 +78,7 @@ following to your configuration::
    export
    fetchart
    filefilter
+   fish
    freedesktop
    fromfilename
    ftintitle
@@ -185,6 +186,7 @@ Interoperability
 
 * :doc:`badfiles`: Check audio file integrity.
 * :doc:`embyupdate`: Automatically notifies `Emby`_ whenever the beets library changes.
+* :doc:`fish`: Adds `Fish shell`_ tab autocompletion to ``beet`` commands.
 * :doc:`importfeeds`: Keep track of imported files via ``.m3u`` playlist file(s) or symlinks.
 * :doc:`ipfs`: Import libraries from friends and get albums from them via ipfs.
 * :doc:`kodiupdate`: Automatically notifies `Kodi`_ whenever the beets library
@@ -199,12 +201,16 @@ Interoperability
 * :doc:`sonosupdate`: Automatically notifies `Sonos`_ whenever the beets library
   changes.
 * :doc:`thumbnails`: Get thumbnails with the cover art on your album folders.
+* :doc:`subsonicupdate`: Automatically notifies `Subsonic`_ whenever the beets
+  library changes.
 
 
 .. _Emby: https://emby.media
+.. _Fish shell: https://fishshell.com/
 .. _Plex: https://plex.tv
 .. _Kodi: https://kodi.tv
 .. _Sonos: https://sonos.com
+.. _Subsonic: http://www.subsonic.org/
 
 Miscellaneous
 -------------
@@ -295,7 +301,22 @@ Here are a few of the plugins written by the beets community:
 * `beet-summarize`_ can compute lots of counts and statistics about your music
   library.
 
-* `beets-mosaic`_ generates a montage of a mosiac from cover art.
+* `beets-mosaic`_ generates a montage of a mosaic from cover art.
+
+* `beets-goingrunning`_ generates playlists to go with your running sessions.
+
+* `beets-xtractor`_ extracts low- and high-level musical information from your songs.
+
+* `beets-yearfixer`_ attempts to fix all missing ``original_year`` and ``year`` fields.
+
+* `beets-autofix`_ automates repetitive tasks to keep your library in order.
+
+* `beets-describe`_ gives you the full picture of a single attribute of your library items.
+
+* `beets-bpmanalyser`_ analyses songs and calculates their tempo (BPM).
+
+* `beets-originquery`_ augments MusicBrainz queries with locally-sourced data
+  to improve autotagger results.
 
 .. _beets-barcode: https://github.com/8h2a/beets-barcode
 .. _beets-check: https://github.com/geigerzaehler/beets-check
@@ -319,3 +340,10 @@ Here are a few of the plugins written by the beets community:
 .. _beets-ydl: https://github.com/vmassuchetto/beets-ydl
 .. _beet-summarize: https://github.com/steven-murray/beet-summarize
 .. _beets-mosaic: https://github.com/SusannaMaria/beets-mosaic
+.. _beets-goingrunning: https://pypi.org/project/beets-goingrunning
+.. _beets-xtractor: https://github.com/adamjakab/BeetsPluginXtractor
+.. _beets-yearfixer: https://github.com/adamjakab/BeetsPluginYearFixer
+.. _beets-autofix: https://github.com/adamjakab/BeetsPluginAutofix
+.. _beets-describe: https://github.com/adamjakab/BeetsPluginDescribe
+.. _beets-bpmanalyser: https://github.com/adamjakab/BeetsPluginBpmAnalyser
+.. _beets-originquery: https://github.com/x1ppy/beets-originquery

@@ -118,7 +118,8 @@ setup(
         'responses',
         'pyxdg',
         'python-mpd2',
-        'discogs-client'
+        'discogs-client',
+        'requests_oauthlib'
     ] + (
         # Tests for the thumbnails plugin need pathlib on Python 2 too.
         ['pathlib'] if (sys.version_info < (3, 4, 0)) else []
@@ -172,7 +173,6 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
