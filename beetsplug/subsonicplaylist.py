@@ -51,18 +51,18 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
         self.config['password'].redact = True
 
     def update_tags(self, playlist_dict, lib):
-        for query, playlist_tag in playlist_dict.items():
-            query = AndQuery([SubstringQuery("artist", query[0]),
-                              SubstringQuery("album", query[1]),
-                              SubstringQuery("title", query[2])])
-            items = lib.items(query)
-            if not items:
-                self._log.warn(u"{} | track not found ({})", playlist_tag,
-                               query)
-                continue
-            for item in items:
-                item.subsonic_playlist = playlist_tag
-                with lib.transaction():
+        with lib.transaction():
+            for query, playlist_tag in playlist_dict.items():
+                query = AndQuery([SubstringQuery("artist", query[0]),
+                                  SubstringQuery("album", query[1]),
+                                  SubstringQuery("title", query[2])])
+                items = lib.items(query)
+                if not items:
+                    self._log.warn(u"{} | track not found ({})", playlist_tag,
+                                   query)
+                    continue
+                for item in items:
+                    item.subsonic_playlist = playlist_tag
                     item.try_sync(write=True, move=False)
 
     def get_playlist(self, playlist_id):
