@@ -30,6 +30,7 @@ from beets import importer
 from beets import ui
 from beets import util
 from beets import config
+from beets import art
 from mediafile import image_mime_type
 from beets.util.artresizer import ArtResizer
 from beets.util import sorted_walk
@@ -55,9 +56,10 @@ class Candidate(object):
     MATCH_EXACT = 0
     MATCH_FALLBACK = 1
 
-    def __init__(self, log, path=None, url=None, source=u'',
+    def __init__(self, log, item=None, path=None, url=None, source=u'',
                  match=None, size=None):
         self._log = log
+        self.item = item
         self.path = path
         self.url = url
         self.source = source
@@ -211,7 +213,11 @@ class ArtSource(RequestMixin):
         raise NotImplementedError()
 
     def cleanup_tmp(self, candidate):
-        raise NotImplementedError()
+        if candidate.path:
+            try:
+                util.remove(path=candidate.path)
+            except util.FilesystemError as exc:
+                self._log.warning(u'error cleaning up tmp art: {}', exc)
 
 
 class LocalArtSource(ArtSource):
@@ -224,6 +230,17 @@ class LocalArtSource(ArtSource):
     def cleanup_tmp(self, candidate):
         # local art source does not create tmp files
         pass
+
+
+class EmbeddedArtSource(ArtSource):
+  IS_LOCAL = True
+  LOC_STR = u'embedded'
+
+  def fetch_image(self, candidate, plugin):
+      # extract best album art from candidate.item
+      tmp_path = art.extract(self._log, item=candidate.item)
+      if tmp_path:
+          candidate.path = tmp_path
 
 
 class RemoteArtSource(ArtSource):
@@ -297,13 +314,6 @@ class RemoteArtSource(ArtSource):
             # https://github.com/shazow/urllib3/issues/556
             self._log.debug(u'error fetching art: {}', exc)
             return
-
-    def cleanup_tmp(self, candidate):
-        if candidate.path:
-            try:
-                util.remove(path=candidate.path)
-            except util.FilesystemError as exc:
-                self._log.warning(u'error cleaning up tmp art: {}', exc)
 
 
 class CoverArtArchive(RemoteArtSource):
@@ -757,6 +767,14 @@ class FileSystem(LocalArtSource):
                                       match=Candidate.MATCH_FALLBACK)
 
 
+class Embedded(EmbeddedArtSource):
+    NAME = u"Embedded"
+
+    def get(self, album, plugin, paths):
+        for item in album.items():
+            yield self._candidate(item=item, match=Candidate.MATCH_EXACT)
+
+
 class LastFM(RemoteArtSource):
     NAME = u"Last.fm"
 
@@ -820,12 +838,13 @@ class LastFM(RemoteArtSource):
 
 # Try each source in turn.
 
-SOURCES_ALL = [u'filesystem',
+SOURCES_ALL = [u'filesystem', u'embedded',
                u'coverart', u'itunes', u'amazon', u'albumart',
                u'wikipedia', u'google', u'fanarttv', u'lastfm']
 
 ART_SOURCES = {
     u'filesystem': FileSystem,
+    u'embedded': Embedded,
     u'coverart': CoverArtArchive,
     u'itunes': ITunesStore,
     u'albumart': AlbumArtOrg,
