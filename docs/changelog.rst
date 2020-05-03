@@ -7,7 +7,6 @@ Changelog
 New features:
 
 * :doc:`/plugins/subsonicplaylist`: import playlist from a subsonic server.
-* :doc:`plugins/discogs` now adds two extra fields: `discogs_labelid` and 
 * A new :ref:`extra_tags` configuration option allows more tagged metadata
   to be included in MusicBrainz queries.
 * A new :doc:`/plugins/fish` adds `Fish shell`_ tab autocompletion to beets
