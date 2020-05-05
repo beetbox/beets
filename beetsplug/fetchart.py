@@ -210,6 +210,9 @@ class ArtSource(RequestMixin):
     def fetch_image(self, candidate, plugin):
         raise NotImplementedError()
 
+    def cleanup(self, candidate):
+        pass
+
 
 class LocalArtSource(ArtSource):
     IS_LOCAL = True
@@ -290,6 +293,13 @@ class RemoteArtSource(ArtSource):
             # https://github.com/shazow/urllib3/issues/556
             self._log.debug(u'error fetching art: {}', exc)
             return
+
+    def cleanup(self, candidate):
+        if candidate.path:
+            try:
+                util.remove(path=candidate.path)
+            except util.FilesystemError as exc:
+                self._log.debug(u'error cleaning up tmp art: {}', exc)
 
 
 class CoverArtArchive(RemoteArtSource):
@@ -1017,6 +1027,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                             u'using {0.LOC_STR} image {1}'.format(
                                 source, util.displayable_path(out.path)))
                         break
+                    # Remove temporary files for invalid candidates.
+                    source.cleanup(candidate)
                 if out:
                     break
 
