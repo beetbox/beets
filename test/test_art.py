@@ -156,6 +156,50 @@ class FSArtTest(UseThePlugin):
         self.assertEqual(candidates, paths)
 
 
+class EmbeddedArtTest(UseThePlugin):
+    def setUp(self):
+        super(EmbeddedArtTest, self).setUp()
+        self.dpath = os.path.join(self.temp_dir, b'arttest')
+        self.source = fetchart.Embedded(logger, self.plugin.config)
+        self.settings = Settings()
+        image_path = os.path.join(_common.RSRC, b'image.flac')
+        empty_path = os.path.join(_common.RSRC, b'empty.flac')
+        self.image_item = image_item = _common.Bag(path=image_path)
+        self.empty_item = empty_item = _common.Bag(path=empty_path)
+        self.image_album = _common.Bag(items=lambda: [image_item])
+        self.empty_album = _common.Bag(items=lambda: [empty_item])
+        self.many_album = _common.Bag(items=lambda: [empty_item, image_item])
+
+    def test_candidate(self):
+        album = self.image_album
+        candidates = list(self.source.get(album, self.settings, []))
+        self.assertListEqual([c.item for c in candidates], album.items())
+
+    def test_all_candidates(self):
+        album = self.many_album
+        candidates = list(self.source.get(album, self.settings, []))
+        self.assertListEqual([c.item for c in candidates], album.items())
+
+    def test_fetch_candidate(self):
+        album = self.image_album
+        candidate = next(self.source.get(album, self.settings, []))
+        self.source.fetch_image(candidate, self.settings)
+        # Assert that an image was extracted from image_file.
+        self.assertTrue(candidate.path)
+        # Assert the extracted image has the correct file extension.
+        self.assertEqual(os.path.splitext(candidate.path)[1], b'.png')
+        # Assert the extracted image is the correct size.
+        self.assertEqual(os.stat(candidate.path).st_size, 155)
+        # Remove the extracted image.
+        util.remove(candidate.path)
+
+    def test_fetch_empty_candidate(self):
+        album = self.empty_album
+        candidate = next(self.source.get(album, self.settings, []))
+        self.source.fetch_image(candidate, self.settings)
+        self.assertIsNone(candidate.path)
+
+
 class CombinedTest(FetchImageHelper, UseThePlugin):
     ASIN = 'xxxx'
     MBID = 'releaseid'

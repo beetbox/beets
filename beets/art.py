@@ -24,7 +24,7 @@ import platform
 from tempfile import NamedTemporaryFile
 import os
 
-from beets.util import displayable_path, syspath, bytestring_path, tmp_path_for
+from beets.util import displayable_path, syspath, bytestring_path, tmp_file_for
 from beets.util.artresizer import ArtResizer
 import mediafile
 
@@ -121,7 +121,7 @@ def check_art_similarity(log, item, imagepath, compare_threshold):
     """A boolean indicating if an image is similar to embedded item art.
     """
     with NamedTemporaryFile(delete=True) as f:
-        art = extract(log, item=item, outpath=f.name)
+        art = extract(log, f.name, item)
 
         if art:
             is_windows = platform.system() == "Windows"
@@ -189,8 +189,9 @@ def check_art_similarity(log, item, imagepath, compare_threshold):
     return True
 
 
-def extract(log, item, outpath=None):
-    """Extract art from item into outpath, or into a tmp file if unset.
+def extract(log, outpath, item):
+    """Extract art from item into outpath with an appropriate file extension,
+    or into a tmp file if outpath is unset.
     """
     art = get_art(log, item)
     if not art:
@@ -208,7 +209,7 @@ def extract(log, item, outpath=None):
     if outpath:
         outpath = bytestring_path(outpath) + bytestring_path('.' + ext)
     else:
-        outpath = tmp_path_for('_.' + ext)
+        outpath = tmp_file_for('_.' + ext)
 
     log.info(u'Extracting album art from: {0} to: {1}',
              item, displayable_path(outpath))
@@ -219,7 +220,7 @@ def extract(log, item, outpath=None):
 
 def extract_first(log, outpath, items):
     for item in items:
-        real_path = extract(log, item=item, outpath=outpath)
+        real_path = extract(log, outpath, item)
         if real_path:
             return real_path
 

@@ -221,17 +221,6 @@ class LocalArtSource(ArtSource):
         pass
 
 
-class EmbeddedArtSource(ArtSource):
-    IS_LOCAL = True
-    LOC_STR = u'embedded'
-
-    def fetch_image(self, candidate, plugin):
-        # extract best album art from candidate.item
-        tmp_path = art.extract(self._log, item=candidate.item)
-        if tmp_path:
-            candidate.path = tmp_path
-
-
 class RemoteArtSource(ArtSource):
     IS_LOCAL = False
     LOC_STR = u'remote'
@@ -467,11 +456,11 @@ class FanartTV(RemoteArtSource):
 
         matches = []
         # can there be more than one releasegroupid per response?
-        for mbid, art_ in data.get(u'albums', dict()).items():
+        for mbid, art in data.get(u'albums', dict()).items():   # noqa: F402
             # there might be more art referenced, e.g. cdart, and an albumcover
             # might not be present, even if the request was successful
-            if album.mb_releasegroupid == mbid and u'albumcover' in art_:
-                matches.extend(art_[u'albumcover'])
+            if album.mb_releasegroupid == mbid and u'albumcover' in art:
+                matches.extend(art[u'albumcover'])
             # can this actually occur?
             else:
                 self._log.debug(u'fanart.tv: unexpected mb_releasegroupid in '
@@ -756,10 +745,21 @@ class FileSystem(LocalArtSource):
                                       match=Candidate.MATCH_FALLBACK)
 
 
-class Embedded(EmbeddedArtSource):
+class Embedded(ArtSource):
+    IS_LOCAL = True
+    LOC_STR = u'embedded'
     NAME = u"Embedded"
 
+    def fetch_image(self, candidate, plugin):
+        """Extract album art from tags embedded in candidate's item.
+        """
+        tmp_path = art.extract(self._log, outpath=None, item=candidate.item)
+        if tmp_path:
+            candidate.path = tmp_path
+
     def get(self, album, plugin, paths):
+        """Yield each item in album as an embedded art candidate.
+        """
         for item in album.items():
             yield self._candidate(item=item, match=Candidate.MATCH_EXACT)
 

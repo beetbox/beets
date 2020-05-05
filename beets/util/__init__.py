@@ -546,7 +546,7 @@ def hardlink(path, dest, replace=False):
                                   traceback.format_exc())
 
 
-def tmp_path_for(path=''):
+def tmp_file_for(path=''):
     """Returns a path to a named temporary file with the same file extension as
     ``path``.  If ``path`` is not provided, a named temporary file with no
     extension is returned.
