@@ -198,14 +198,15 @@ def extract(log, outpath, item):
         log.info(u'No album art present in {0}, skipping.', item)
         return
 
-    # Discover image file extension
+    # Discover the image's file extension.
     ext = mediafile.image_extension(art)
     if not ext:
         log.warning(u'Unknown image type in {0}.',
                     displayable_path(item.path))
         return
 
-    # Append extension to outpath / create tmp file with extension
+    # Append the extension to destination path, creating a temporary file
+    # if no destination is specified.
     if outpath:
         outpath = bytestring_path(outpath) + bytestring_path('.' + ext)
     else:
