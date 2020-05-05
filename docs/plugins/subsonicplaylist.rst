@@ -40,4 +40,4 @@ Here's an example configuration with all the available options and their default
         username: ''
         password: ''
 
-Parameters `base_url`, `username` and `password` must be defined!
+The `base_url`, `username`, and `password` options are required.
