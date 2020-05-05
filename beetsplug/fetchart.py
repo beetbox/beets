@@ -210,8 +210,8 @@ class ArtSource(RequestMixin):
     def fetch_image(self, candidate, plugin):
         raise NotImplementedError()
 
-    def cleanup_tmp(self, candidate):
-        raise NotImplementedError()
+    def cleanup(self, candidate):
+        pass
 
 
 class LocalArtSource(ArtSource):
@@ -219,10 +219,6 @@ class LocalArtSource(ArtSource):
     LOC_STR = u'local'
 
     def fetch_image(self, candidate, plugin):
-        pass
-
-    def cleanup_tmp(self, candidate):
-        # local art source does not create tmp files
         pass
 
 
@@ -298,7 +294,7 @@ class RemoteArtSource(ArtSource):
             self._log.debug(u'error fetching art: {}', exc)
             return
 
-    def cleanup_tmp(self, candidate):
+    def cleanup(self, candidate):
         if candidate.path:
             try:
                 util.remove(path=candidate.path)
@@ -1031,8 +1027,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                             u'using {0.LOC_STR} image {1}'.format(
                                 source, util.displayable_path(out.path)))
                         break
-                    # else: remove tmp images created by this invalid candidate
-                    source.cleanup_tmp(candidate)
+                    # Remove temporary files for invalid candidates.
+                    source.cleanup(candidate)
                 if out:
                     break
 
