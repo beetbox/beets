@@ -15,22 +15,42 @@
 
 from __future__ import absolute_import, division, print_function
 
-from hashlib import md5
-import xml.etree.ElementTree as ET
 import random
 import string
+import xml.etree.ElementTree as ET
+from hashlib import md5
 from urllib.parse import urlencode
 
 import requests
-from beets.dbcore.query import SubstringQuery
 
 from beets.dbcore import AndQuery
-
+from beets.dbcore.query import SubstringQuery
+from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 
-from beets.plugins import BeetsPlugin
-
 __author__ = 'https://github.com/MrNuggelz'
+
+
+def filter_to_be_removed(items, keys):
+    if len(items) > len(keys):
+        dont_remove = []
+        for artist, album, title in keys:
+            for item in items:
+                if artist == item['artist'] and \
+                        album == item['album'] and \
+                        title == item['title']:
+                    dont_remove.append(item)
+        return [item for item in items if item not in dont_remove]
+    else:
+        def to_be_removed(item):
+            for artist, album, title in keys:
+                if artist == item['artist'] and\
+                           album == item['album'] and\
+                           title == item['title']:
+                    return False
+            return True
+
+        return [item for item in items if to_be_removed(item)]
 
 
 class SubsonicPlaylistPlugin(BeetsPlugin):
@@ -80,12 +100,12 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
         def build_playlist(lib, opts, args):
             self.config.set_args(opts)
             ids = self.config['playlist_ids'].as_str_seq()
-            if len(self.config['playlist_names'].as_str_seq()) > 0:
+            if self.config['playlist_names'].as_str_seq():
                 playlists = ET.fromstring(self.send('getPlaylists').text)[
                     0]
                 if playlists.attrib.get('code', '200') != '200':
                     alt_error = 'error getting playlists,' \
-                                ' but no erro message found'
+                                ' but no error message found'
                     self._log.warn(
                         playlists.attrib.get('message', alt_error))
                     return
@@ -93,17 +113,17 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
                     for playlist in playlists:
                         if name == playlist.attrib['name']:
                             ids.append(playlist.attrib['id'])
-            playlist_dict = dict()
-            for playlist_id in ids:
-                name, tracks = self.get_playlist(playlist_id)
-                for track in tracks:
-                    if track not in playlist_dict:
-                        playlist_dict[track] = ';'
-                    playlist_dict[track] += name + ';'
+
+            playlist_dict = self.get_playlists(ids)
+
             # delete old tags
             if self.config['delete']:
-                for item in lib.items('subsonic_playlist:";"'):
-                    item.update({'subsonic_playlist': ''})
+                existing = list(lib.items('subsonic_playlist:";"'))
+                to_be_removed = filter_to_be_removed(
+                    existing,
+                    playlist_dict.keys())
+                for item in to_be_removed:
+                    item['subsonic_playlist'] = ''
                     with lib.transaction():
                         item.try_sync(write=True, move=False)
 
@@ -129,10 +149,21 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
     def send(self, endpoint, params=None):
         if params is None:
             params = dict()
-        url = '{}/rest/{}?u={}&t={}&s={}&v=1.12.0&c=beets'.format(
-            self.config['base_url'].get(),
-            endpoint,
-            self.config['username'],
-            *self.generate_token())
-        resp = requests.get(url + urlencode(params))
+        a, b = self.generate_token()
+        params['u'] = self.config['username']
+        params['t'] = a
+        params['s'] = b
+        params['v'] = '1.12.0'
+        params['c'] = 'beets'
+        resp = requests.get('{}/rest/{}?{}'.format(self.config['base_url'].get(),endpoint,urlencode(params)))
         return resp
+
+    def get_playlists(self, ids):
+        output = dict()
+        for playlist_id in ids:
+            name, tracks = self.get_playlist(playlist_id)
+            for track in tracks:
+                if track not in output:
+                    output[track] = ';'
+                output[track] += name + ';'
+        return output
