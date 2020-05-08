@@ -350,9 +350,7 @@ class AlbumDistanceTest(_common.TestCase):
             artist=u'some artist',
             album=u'some album',
             tracks=_make_trackinfo(),
-            va=False,
-            album_id=None,
-            artist_id=None,
+            va=False
         )
         self.assertEqual(self._dist(items, info), 0)
 
@@ -364,9 +362,7 @@ class AlbumDistanceTest(_common.TestCase):
             artist=u'some artist',
             album=u'some album',
             tracks=_make_trackinfo(),
-            va=False,
-            album_id=None,
-            artist_id=None,
+            va=False
         )
         dist = self._dist(items, info)
         self.assertNotEqual(dist, 0)
@@ -382,9 +378,7 @@ class AlbumDistanceTest(_common.TestCase):
             artist=u'someone else',
             album=u'some album',
             tracks=_make_trackinfo(),
-            va=False,
-            album_id=None,
-            artist_id=None,
+            va=False
         )
         self.assertNotEqual(self._dist(items, info), 0)
 
@@ -397,9 +391,7 @@ class AlbumDistanceTest(_common.TestCase):
             artist=u'should be ignored',
             album=u'some album',
             tracks=_make_trackinfo(),
-            va=True,
-            album_id=None,
-            artist_id=None,
+            va=True
         )
         self.assertEqual(self._dist(items, info), 0)
 
@@ -413,9 +405,7 @@ class AlbumDistanceTest(_common.TestCase):
             artist=u'should be ignored',
             album=u'some album',
             tracks=_make_trackinfo(),
-            va=True,
-            album_id=None,
-            artist_id=None,
+            va=True
         )
         info.tracks[0].artist = None
         info.tracks[1].artist = None
@@ -431,9 +421,7 @@ class AlbumDistanceTest(_common.TestCase):
             artist=u'some artist',
             album=u'some album',
             tracks=_make_trackinfo(),
-            va=True,
-            album_id=None,
-            artist_id=None,
+            va=True
         )
         self.assertNotEqual(self._dist(items, info), 0)
 
@@ -446,9 +434,7 @@ class AlbumDistanceTest(_common.TestCase):
             artist=u'some artist',
             album=u'some album',
             tracks=_make_trackinfo(),
-            va=False,
-            album_id=None,
-            artist_id=None,
+            va=False
         )
         dist = self._dist(items, info)
         self.assertTrue(0 < dist < 0.2)
@@ -462,9 +448,7 @@ class AlbumDistanceTest(_common.TestCase):
             artist=u'some artist',
             album=u'some album',
             tracks=_make_trackinfo(),
-            va=False,
-            album_id=None,
-            artist_id=None,
+            va=False
         )
         info.tracks[0].medium_index = 1
         info.tracks[1].medium_index = 2
@@ -481,9 +465,7 @@ class AlbumDistanceTest(_common.TestCase):
             artist=u'some artist',
             album=u'some album',
             tracks=_make_trackinfo(),
-            va=False,
-            album_id=None,
-            artist_id=None,
+            va=False
         )
         info.tracks[0].medium_index = 1
         info.tracks[1].medium_index = 2
@@ -505,9 +487,9 @@ class AssignmentTest(unittest.TestCase):
         items.append(self.item(u'three', 2))
         items.append(self.item(u'two', 3))
         trackinfo = []
-        trackinfo.append(TrackInfo(title=u'one', track_id=None))
-        trackinfo.append(TrackInfo(title=u'two', track_id=None))
-        trackinfo.append(TrackInfo(title=u'three', track_id=None))
+        trackinfo.append(TrackInfo(title=u'one'))
+        trackinfo.append(TrackInfo(title=u'two'))
+        trackinfo.append(TrackInfo(title=u'three'))
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
         self.assertEqual(extra_items, [])
@@ -524,9 +506,9 @@ class AssignmentTest(unittest.TestCase):
         items.append(self.item(u'three', 1))
         items.append(self.item(u'two', 1))
         trackinfo = []
-        trackinfo.append(TrackInfo(title=u'one', track_id=None))
-        trackinfo.append(TrackInfo(title=u'two', track_id=None))
-        trackinfo.append(TrackInfo(title=u'three', track_id=None))
+        trackinfo.append(TrackInfo(title=u'one'))
+        trackinfo.append(TrackInfo(title=u'two'))
+        trackinfo.append(TrackInfo(title=u'three'))
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
         self.assertEqual(extra_items, [])
@@ -542,9 +524,9 @@ class AssignmentTest(unittest.TestCase):
         items.append(self.item(u'one', 1))
         items.append(self.item(u'three', 3))
         trackinfo = []
-        trackinfo.append(TrackInfo(title=u'one', track_id=None))
-        trackinfo.append(TrackInfo(title=u'two', track_id=None))
-        trackinfo.append(TrackInfo(title=u'three', track_id=None))
+        trackinfo.append(TrackInfo(title=u'one'))
+        trackinfo.append(TrackInfo(title=u'two'))
+        trackinfo.append(TrackInfo(title=u'three'))
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
         self.assertEqual(extra_items, [])
@@ -560,8 +542,8 @@ class AssignmentTest(unittest.TestCase):
         items.append(self.item(u'two', 2))
         items.append(self.item(u'three', 3))
         trackinfo = []
-        trackinfo.append(TrackInfo(title=u'one', track_id=None))
-        trackinfo.append(TrackInfo(title=u'three', track_id=None))
+        trackinfo.append(TrackInfo(title=u'one'))
+        trackinfo.append(TrackInfo(title=u'three'))
         mapping, extra_items, extra_tracks = \
             match.assign_items(items, trackinfo)
         self.assertEqual(extra_items, [items[1]])
@@ -597,7 +579,7 @@ class AssignmentTest(unittest.TestCase):
         items.append(item(12, 186.45916150485752))
 
         def info(index, title, length):
-            return TrackInfo(title=title, track_id=None, length=length,
+            return TrackInfo(title=title, length=length,
                              index=index)
         trackinfo = []
         trackinfo.append(info(1, u'Alone', 238.893))
@@ -752,15 +734,13 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self.assertEqual(self.items[1].albumtype, 'album')
 
     def test_album_artist_overrides_empty_track_artist(self):
-        # make a deepcopy of self.info
-        my_info = self.info.dup_albuminfo()
+        my_info = self.info.copy()
         self._apply(info=my_info)
         self.assertEqual(self.items[0].artist, 'artistNew')
         self.assertEqual(self.items[1].artist, 'artistNew')
 
     def test_album_artist_overridden_by_nonempty_track_artist(self):
-        # make a deepcopy of self.info
-        my_info = self.info.dup_albuminfo()
+        my_info = self.info.copy()
         my_info.tracks[0].artist = 'artist1!'
         my_info.tracks[1].artist = 'artist2!'
         self._apply(info=my_info)
@@ -782,8 +762,7 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self.assertEqual(self.items[1].artist_sort, 'albumArtistSort')
 
     def test_full_date_applied(self):
-        # make a deepcopy of self.info
-        my_info = self.info.dup_albuminfo()
+        my_info = self.info.copy()
         my_info.year = 2013
         my_info.month = 12
         my_info.day = 18
@@ -798,8 +777,7 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self.items.append(Item(year=1, month=2, day=3))
         self.items.append(Item(year=4, month=5, day=6))
 
-        # make a deepcopy of self.info
-        my_info = self.info.dup_albuminfo()
+        my_info = self.info.copy()
         my_info.year = 2013
         self._apply(info=my_info)
 
@@ -819,8 +797,7 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self.assertEqual(self.items[0].day, 3)
 
     def test_data_source_applied(self):
-        # make a deepcopy of self.info
-        my_info = self.info.dup_albuminfo()
+        my_info = self.info.copy()
         my_info.data_source = 'MusicBrainz'
         self._apply(info=my_info)
 
@@ -882,8 +859,7 @@ class ApplyCompilationTest(_common.TestCase, ApplyTestUtil):
         self.assertFalse(self.items[1].comp)
 
     def test_va_flag_sets_comp(self):
-        # make a deepcopy of self.info
-        va_info = self.info.dup_albuminfo()
+        va_info = self.info.copy()
         va_info.va = True
         self._apply(info=va_info)
         self.assertTrue(self.items[0].comp)

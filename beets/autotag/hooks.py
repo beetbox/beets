@@ -80,9 +80,9 @@ class AlbumInfo(AttrDict):
     ``mediums`` along with the fields up through ``tracks`` are required.
     The others are optional and may be None.
     """
-    def __init__(self, album=None, album_id=None, artist=None, artist_id=None,
-                 tracks=None, asin=None, albumtype=None, va=False, year=None,
-                 month=None, day=None, label=None, mediums=None,
+    def __init__(self, tracks, album=None, album_id=None, artist=None,
+                 artist_id=None, asin=None, albumtype=None, va=False,
+                 year=None, month=None, day=None, label=None, mediums=None,
                  artist_sort=None, releasegroup_id=None, catalognum=None,
                  script=None, language=None, country=None, style=None,
                  genre=None, albumstatus=None, media=None, albumdisambig=None,
@@ -144,18 +144,13 @@ class AlbumInfo(AttrDict):
             if isinstance(value, bytes):
                 setattr(self, fld, value.decode(codec, 'ignore'))
 
-        if 'tracks' in self:
-            for track in self.tracks:
-                track.decode(codec)
+        for track in self.tracks:
+            track.decode(codec)
 
-    def dup_albuminfo(self):
-        dupe = AlbumInfo()
+    def copy(self):
+        dupe = AlbumInfo([])
         dupe.update(self)
-        if 'tracks' in self:
-            tracks = []
-            for track in self.tracks:
-                tracks.append(track.dup_trackinfo())
-            dupe.tracks = tracks
+        dupe.tracks = [track.copy() for track in self.tracks]
         return dupe
 
 
@@ -219,7 +214,7 @@ class TrackInfo(AttrDict):
             if isinstance(value, bytes):
                 setattr(self, fld, value.decode(codec, 'ignore'))
 
-    def dup_trackinfo(self):
+    def copy(self):
         dupe = TrackInfo()
         dupe.update(self)
         return dupe
