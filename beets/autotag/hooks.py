@@ -39,8 +39,25 @@ except AttributeError:
 
 
 # Classes used to represent candidate options.
+class AttrDict(dict):
+    """A dictionary that supports attribute ("dot") access, so `d.field`
+    is equivalent to `d['field']`.
+    """
 
-class AlbumInfo(object):
+    def __getattr__(self, attr):
+        if attr in self:
+            return self.get(attr)
+        else:
+            raise AttributeError
+
+    def __setattr__(self, key, value):
+        self.__setitem__(key, value)
+
+    def __hash__(self):
+        return id(self)
+
+
+class AlbumInfo(AttrDict):
     """Describes a canonical release that may be used to match a release
     in the library. Consists of these data members:
 
@@ -49,43 +66,21 @@ class AlbumInfo(object):
     - ``artist``: name of the release's primary artist
     - ``artist_id``
     - ``tracks``: list of TrackInfo objects making up the release
-    - ``asin``: Amazon ASIN
-    - ``albumtype``: string describing the kind of release
-    - ``va``: boolean: whether the release has "various artists"
-    - ``year``: release year
-    - ``month``: release month
-    - ``day``: release day
-    - ``label``: music label responsible for the release
-    - ``mediums``: the number of discs in this release
-    - ``artist_sort``: name of the release's artist for sorting
-    - ``releasegroup_id``: MBID for the album's release group
-    - ``catalognum``: the label's catalog number for the release
-    - ``script``: character set used for metadata
-    - ``language``: human language of the metadata
-    - ``country``: the release country
-    - ``albumstatus``: MusicBrainz release status (Official, etc.)
-    - ``media``: delivery mechanism (Vinyl, etc.)
-    - ``albumdisambig``: MusicBrainz release disambiguation comment
-    - ``releasegroupdisambig``: MusicBrainz release group
-            disambiguation comment.
-    - ``artist_credit``: Release-specific artist name
-    - ``data_source``: The original data source (MusicBrainz, Discogs, etc.)
-    - ``data_url``: The data source release URL.
 
     ``mediums`` along with the fields up through ``tracks`` are required.
     The others are optional and may be None.
     """
-    def __init__(self, album, album_id, artist, artist_id, tracks, asin=None,
-                 albumtype=None, va=False, year=None, month=None, day=None,
-                 label=None, mediums=None, artist_sort=None,
-                 releasegroup_id=None, catalognum=None, script=None,
-                 language=None, country=None, style=None, genre=None,
-                 albumstatus=None, media=None, albumdisambig=None,
+    def __init__(self, tracks, album=None, album_id=None, artist=None,
+                 artist_id=None, asin=None, albumtype=None, va=False,
+                 year=None, month=None, day=None, label=None, mediums=None,
+                 artist_sort=None, releasegroup_id=None, catalognum=None,
+                 script=None, language=None, country=None, style=None,
+                 genre=None, albumstatus=None, media=None, albumdisambig=None,
                  releasegroupdisambig=None, artist_credit=None,
                  original_year=None, original_month=None,
                  original_day=None, data_source=None, data_url=None,
                  discogs_albumid=None, discogs_labelid=None,
-                 discogs_artistid=None):
+                 discogs_artistid=None, **kwargs):
         self.album = album
         self.album_id = album_id
         self.artist = artist
@@ -120,6 +115,7 @@ class AlbumInfo(object):
         self.discogs_albumid = discogs_albumid
         self.discogs_labelid = discogs_labelid
         self.discogs_artistid = discogs_artistid
+        self.update(kwargs)
 
     # Work around a bug in python-musicbrainz-ngs that causes some
     # strings to be bytes rather than Unicode.
@@ -138,53 +134,36 @@ class AlbumInfo(object):
             if isinstance(value, bytes):
                 setattr(self, fld, value.decode(codec, 'ignore'))
 
-        if self.tracks:
-            for track in self.tracks:
-                track.decode(codec)
+        for track in self.tracks:
+            track.decode(codec)
+
+    def copy(self):
+        dupe = AlbumInfo([])
+        dupe.update(self)
+        dupe.tracks = [track.copy() for track in self.tracks]
+        return dupe
 
 
-class TrackInfo(object):
+class TrackInfo(AttrDict):
     """Describes a canonical track present on a release. Appears as part
     of an AlbumInfo's ``tracks`` list. Consists of these data members:
 
     - ``title``: name of the track
     - ``track_id``: MusicBrainz ID; UUID fragment only
-    - ``release_track_id``: MusicBrainz ID respective to a track on a
-            particular release; UUID fragment only
-    - ``artist``: individual track artist name
-    - ``artist_id``
-    - ``length``: float: duration of the track in seconds
-    - ``index``: position on the entire release
-    - ``media``: delivery mechanism (Vinyl, etc.)
-    - ``medium``: the disc number this track appears on in the album
-    - ``medium_index``: the track's position on the disc
-    - ``medium_total``: the number of tracks on the item's disc
-    - ``artist_sort``: name of the track artist for sorting
-    - ``disctitle``: name of the individual medium (subtitle)
-    - ``artist_credit``: Recording-specific artist name
-    - ``data_source``: The original data source (MusicBrainz, Discogs, etc.)
-    - ``data_url``: The data source release URL.
-    - ``lyricist``: individual track lyricist name
-    - ``composer``: individual track composer name
-    - ``composer_sort``: individual track composer sort name
-    - ``arranger`: individual track arranger name
-    - ``track_alt``: alternative track number (tape, vinyl, etc.)
-    - ``work`: individual track work title
-    - ``mb_workid`: individual track work id
-    - ``work_disambig`: individual track work diambiguation
 
     Only ``title`` and ``track_id`` are required. The rest of the fields
     may be None. The indices ``index``, ``medium``, and ``medium_index``
     are all 1-based.
     """
-    def __init__(self, title, track_id, release_track_id=None, artist=None,
-                 artist_id=None, length=None, index=None, medium=None,
-                 medium_index=None, medium_total=None, artist_sort=None,
-                 disctitle=None, artist_credit=None, data_source=None,
-                 data_url=None, media=None, lyricist=None, composer=None,
-                 composer_sort=None, arranger=None, track_alt=None,
-                 work=None, mb_workid=None, work_disambig=None, bpm=None,
-                 initial_key=None, genre=None):
+    def __init__(self, title=None, track_id=None, release_track_id=None,
+                 artist=None, artist_id=None, length=None, index=None,
+                 medium=None, medium_index=None, medium_total=None,
+                 artist_sort=None, disctitle=None, artist_credit=None,
+                 data_source=None, data_url=None, media=None, lyricist=None,
+                 composer=None, composer_sort=None, arranger=None,
+                 track_alt=None, work=None, mb_workid=None,
+                 work_disambig=None, bpm=None, initial_key=None, genre=None,
+                 **kwargs):
         self.title = title
         self.track_id = track_id
         self.release_track_id = release_track_id
@@ -212,6 +191,7 @@ class TrackInfo(object):
         self.bpm = bpm
         self.initial_key = initial_key
         self.genre = genre
+        self.update(kwargs)
 
     # As above, work around a bug in python-musicbrainz-ngs.
     def decode(self, codec='utf-8'):
@@ -223,6 +203,11 @@ class TrackInfo(object):
             value = getattr(self, fld)
             if isinstance(value, bytes):
                 setattr(self, fld, value.decode(codec, 'ignore'))
+
+    def copy(self):
+        dupe = TrackInfo()
+        dupe.update(self)
+        return dupe
 
 
 # Candidate distance scoring.
