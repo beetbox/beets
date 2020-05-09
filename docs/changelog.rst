@@ -115,6 +115,9 @@ New features:
   :bug:`3459`
 * :doc:`/plugins/fetchart`: Album art can now be fetched from `last.fm`_.
   :bug:`3530`
+* The classes ``AlbumInfo`` and ``TrackInfo`` now have flexible attributes,
+  allowing to solve :bug:`1547`. 
+  Thanks to :user:`dosoe`.
 
 Fixes:
 
