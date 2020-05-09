@@ -40,18 +40,8 @@ except AttributeError:
 
 # Classes used to represent candidate options.
 class AttrDict(dict):
-    """
-    Dictionary with flexible attributes
-    to get an tag value:
-        value = info.tag
-    or  value = info[tag]
-    or  value = info.get(tag)
-    or  value = getattr(info, tag)
-    all raise AttributeError when info doesn't have tag
-    to set a tag value:
-        info.tag = value
-    or  info[tag] = value
-    or  setattr(info, tag, value)
+    """A dictionary that supports attribute ("dot") access, so `d.field`
+    is equivalent to `d['field']`.
     """
 
     def __getattr__(self, attr):
