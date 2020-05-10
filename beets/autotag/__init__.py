@@ -59,7 +59,8 @@ def apply_item_metadata(item, track_info):
                    'artist_sort',
                    'artist',
                    'track_id',
-                   'data_url'
+                   'data_url',
+                   'length'
                    ]
 
     for field in track_info.keys():
@@ -191,7 +192,8 @@ def apply_metadata(album_info, mapping):
                 'artist',
                 'track_id',
                 'medium_total',
-                'data_url'
+                'data_url',
+                'length'
             )
         }
 
