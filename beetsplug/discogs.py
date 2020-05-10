@@ -356,17 +356,14 @@ class DiscogsPlugin(BeetsPlugin):
         # a master release, otherwise fetch the master release.
         original_year = self.get_master_year(master_id) if master_id else year
 
-        return AlbumInfo(album, album_id, artist, artist_id, tracks, asin=None,
-                         albumtype=albumtype, va=va, year=year, month=None,
-                         day=None, label=label, mediums=len(set(mediums)),
-                         artist_sort=None, releasegroup_id=master_id,
-                         catalognum=catalogno, script=None, language=None,
+        return AlbumInfo(album=album, album_id=album_id, artist=artist,
+                         artist_id=artist_id, tracks=tracks,
+                         albumtype=albumtype, va=va, year=year,
+                         label=label, mediums=len(set(mediums)),
+                         releasegroup_id=master_id, catalognum=catalogno,
                          country=country, style=style, genre=genre,
-                         albumstatus=None, media=media,
-                         albumdisambig=None, artist_credit=None,
-                         original_year=original_year, original_month=None,
-                         original_day=None, data_source='Discogs',
-                         data_url=data_url,
+                         media=media, original_year=original_year,
+                         data_source='Discogs', data_url=data_url,
                          discogs_albumid=discogs_albumid,
                          discogs_labelid=labelid, discogs_artistid=artist_id)
 
@@ -567,10 +564,9 @@ class DiscogsPlugin(BeetsPlugin):
             track.get('artists', [])
         )
         length = self.get_track_length(track['duration'])
-        return TrackInfo(title, track_id, artist=artist, artist_id=artist_id,
-                         length=length, index=index,
-                         medium=medium, medium_index=medium_index,
-                         artist_sort=None, disctitle=None, artist_credit=None)
+        return TrackInfo(title=title, track_id=track_id, artist=artist,
+                         artist_id=artist_id, length=length, index=index,
+                         medium=medium, medium_index=medium_index)
 
     def get_track_index(self, position):
         """Returns the medium, medium index and subtrack index for a discogs
