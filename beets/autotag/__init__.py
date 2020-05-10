@@ -171,6 +171,7 @@ def apply_metadata(album_info, mapping):
                 'day',
                 'artist',
                 'artist_credit',
+                'artist_sort'
             ),
             'track': (
                 'track_alt',
