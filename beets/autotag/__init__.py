@@ -157,52 +157,52 @@ def apply_metadata(album_info, mapping):
         # Track alt.
         item.track_alt = track_info.track_alt
 
-        # Miscellaneous/nullable metadata.
+        # Metadata that has already been set
         misc_fields = {
             'album': (
-                'albumtype',
-                'label',
-                'asin',
-                'catalognum',
-                'script',
-                'language',
-                'country',
-                'style',
-                'genre',
-                'discogs_albumid',
-                'discogs_artistid',
-                'discogs_labelid',
-                'albumstatus',
-                'albumdisambig',
-                'releasegroupdisambig',
-                'data_source',
+                'va',
+                'releasegroup_id',
+                'artist_id',
+                'album_id',
+                'mediums',
+                'tracks',
+                'year',
+                'month',
+                'day',
+                'artist',
+                'artist_credit',
             ),
             'track': (
-                'disctitle',
-                'lyricist',
-                'media',
-                'composer',
-                'composer_sort',
-                'arranger',
-                'work',
-                'mb_workid',
-                'work_disambig',
-                'bpm',
-                'initial_key',
-                'genre'
+                'track_alt',
+                'artist_id',
+                'release_track_id',
+                'medium',
+                'index',
+                'medium_index',
+                'title',
+                'artist_credit',
+                'artist_sort',
+                'artist',
+                'track_id',
+                'medium_total',
+                'data_url'
             )
         }
 
         # Don't overwrite fields with empty values unless the
         # field is explicitly allowed to be overwritten
-        for field in misc_fields['album']:
+        for field in album_info.keys():
+            if field in misc_fields['album']:
+                continue
             clobber = field in config['overwrite_null']['album'].as_str_seq()
             value = getattr(album_info, field)
             if value is None and not clobber:
                 continue
             item[field] = value
 
-        for field in misc_fields['track']:
+        for field in track_info.keys():
+            if field in misc_fields['track']:
+                continue
             clobber = field in config['overwrite_null']['track'].as_str_seq()
             value = getattr(track_info, field)
             if value is None and not clobber:
