@@ -52,20 +52,24 @@ def apply_item_metadata(item, track_info):
     if track_info.data_source:
         item.data_source = track_info.data_source
 
-    if track_info.lyricist is not None:
-        item.lyricist = track_info.lyricist
-    if track_info.composer is not None:
-        item.composer = track_info.composer
-    if track_info.composer_sort is not None:
-        item.composer_sort = track_info.composer_sort
-    if track_info.arranger is not None:
-        item.arranger = track_info.arranger
-    if track_info.work is not None:
-        item.work = track_info.work
-    if track_info.mb_workid is not None:
-        item.mb_workid = track_info.mb_workid
-    if track_info.work_disambig is not None:
-        item.work_disambig = track_info.work_disambig
+    misc_fields = ['artist_id',
+                   'release_track_id',
+                   'title',
+                   'artist_credit',
+                   'artist_sort',
+                   'artist',
+                   'track_id',
+                   'data_url'
+                   ]
+
+    for field in track_info.keys():
+        if field in misc_fields:
+            continue
+        clobber = field in config['overwrite_null']['track'].as_str_seq()
+        value = getattr(track_info, field)
+        if value is None and not clobber:
+            continue
+        item[field] = value
 
     # At the moment, the other metadata is left intact (including album
     # and track number). Perhaps these should be emptied?
