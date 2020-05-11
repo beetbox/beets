@@ -35,6 +35,41 @@ from .match import Recommendation  # noqa
 # Global logger.
 log = logging.getLogger('beets')
 
+# metadata that is already hardcoded
+MISC_FIELDS = {
+    'album': (
+        'va',
+        'releasegroup_id',
+        'artist_id',
+        'album_id',
+        'mediums',
+        'tracks',
+        'year',
+        'month',
+        'day',
+        'artist',
+        'artist_credit',
+        'artist_sort',
+        'data_url'
+    ),
+    'track': (
+        'track_alt',
+        'artist_id',
+        'release_track_id',
+        'medium',
+        'index',
+        'medium_index',
+        'title',
+        'artist_credit',
+        'artist_sort',
+        'artist',
+        'track_id',
+        'medium_total',
+        'data_url',
+        'length'
+    )
+}
+
 
 # Additional utilities for the main interface.
 
@@ -52,23 +87,11 @@ def apply_item_metadata(item, track_info):
     if track_info.data_source:
         item.data_source = track_info.data_source
 
-    misc_fields = ['artist_id',
-                   'release_track_id',
-                   'title',
-                   'artist_credit',
-                   'artist_sort',
-                   'artist',
-                   'track_id',
-                   'data_url',
-                   'length'
-                   ]
-
-    for field in track_info.keys():
-        if field in misc_fields:
+    for field, value in track_info.items():
+        # only overwrite fields that are not already hardcoded
+        if field in MISC_FIELDS['track']:
             continue
-        clobber = field in config['overwrite_null']['track'].as_str_seq()
-        value = getattr(track_info, field)
-        if value is None and not clobber:
+        if value is None:
             continue
         item[field] = value
 
@@ -162,54 +185,20 @@ def apply_metadata(album_info, mapping):
         # Track alt.
         item.track_alt = track_info.track_alt
 
-        # Metadata that has already been set
-        misc_fields = {
-            'album': (
-                'va',
-                'releasegroup_id',
-                'artist_id',
-                'album_id',
-                'mediums',
-                'tracks',
-                'year',
-                'month',
-                'day',
-                'artist',
-                'artist_credit',
-                'artist_sort',
-                'data_url'
-            ),
-            'track': (
-                'track_alt',
-                'artist_id',
-                'release_track_id',
-                'medium',
-                'index',
-                'medium_index',
-                'title',
-                'artist_credit',
-                'artist_sort',
-                'artist',
-                'track_id',
-                'medium_total',
-                'data_url',
-                'length'
-            )
-        }
-
         # Don't overwrite fields with empty values unless the
         # field is explicitly allowed to be overwritten
-        for field in album_info.keys():
-            if field in misc_fields['album']:
+        for field, value in album_info.items():
+            # only overwrite fields that are not already hardcoded
+            if field in MISC_FIELDS['album']:
                 continue
             clobber = field in config['overwrite_null']['album'].as_str_seq()
-            value = getattr(album_info, field)
             if value is None and not clobber:
                 continue
             item[field] = value
 
-        for field in track_info.keys():
-            if field in misc_fields['track']:
+        for field, value in track_info.items():
+            # only overwrite fields that are not already hardcoded
+            if field in MISC_FIELDS['track']:
                 continue
             clobber = field in config['overwrite_null']['track'].as_str_seq()
             value = getattr(track_info, field)
