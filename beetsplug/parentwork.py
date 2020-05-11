@@ -174,16 +174,16 @@ add one at https://musicbrainz.org/recording/{}', item, item.mb_trackid)
 
         hasparent = hasattr(item, 'parentwork')
         workfalse = True
-        if hasattr(item, 'mb_workid_current'):
+        if hasattr(item, 'parentwork_workid_current'):
             workfalse = item.mb_workid_current != item.mb_workid
-        if force or (not hasparent) or workfalse:
+        if force or not hasparent or workfalse:
             try:
                 work_info, work_date = find_parentwork_info(item.mb_workid)
             except musicbrainzngs.musicbrainz.WebServiceError as e:
                 self._log.debug("error fetching work: {}", e)
                 return
             parent_info = self.get_info(item, work_info)
-            parent_info['mb_workid_current'] = item.mb_workid
+            parent_info['parentwork_workid_current'] = item.mb_workid
             if 'parent_composer' in parent_info:
                 self._log.debug("Work fetched: {} - {}",
                                 parent_info['parentwork'],
@@ -207,4 +207,4 @@ add one at https://musicbrainz.org/recording/{}', item, item.mb_trackid)
             item, fields=['parentwork', 'parentwork_disambig',
                           'mb_parentworkid', 'parent_composer',
                           'parent_composer_sort', 'work_date',
-                          'mb_workid_current'])
+                          'parentwork_workid_current'])
