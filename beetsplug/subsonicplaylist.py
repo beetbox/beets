@@ -24,7 +24,7 @@ from urllib.parse import urlencode
 import requests
 
 from beets.dbcore import AndQuery
-from beets.dbcore.query import SubstringQuery
+from beets.dbcore.query import MatchQuery
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 
@@ -71,9 +71,9 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
     def update_tags(self, playlist_dict, lib):
         with lib.transaction():
             for query, playlist_tag in playlist_dict.items():
-                query = AndQuery([SubstringQuery("artist", query[0]),
-                                  SubstringQuery("album", query[1]),
-                                  SubstringQuery("title", query[2])])
+                query = AndQuery([MatchQuery("artist", query[0]),
+                                  MatchQuery("album", query[1]),
+                                  MatchQuery("title", query[2])])
                 items = lib.items(query)
                 if not items:
                     self._log.warn(u"{} | track not found ({})", playlist_tag,
