@@ -18,7 +18,7 @@ example, all the movements of a symphony. This plugin aims to solve this
 problem by also fetching the parent work, which would be the whole symphony in
 this example.
 
-This plugin adds five tags:
+This plugin adds six tags:
 
 - **parentwork**: The title of the parent work.
 - **mb_parentworkid**: The musicbrainz id of the parent work.
@@ -27,6 +27,9 @@ This plugin adds five tags:
 - **parent_composer_sort**: The sort name of the parent work composer.
 - **work_date**: The composition date of the work, or the first parent work
   that has a composition date. Format: yyyy-mm-dd.
+- **parentwork_workid_current**: The musicbrainz id of the work as it was when
+  the parentwork was retrieved. This tag exists only for internal bookkeeping,
+  to keep track of recordings whose work have changed. 
 
 To use the ``parentwork`` plugin, enable it in your configuration (see
 :ref:`using-plugins`).
