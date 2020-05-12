@@ -36,7 +36,7 @@ from .match import Recommendation  # noqa
 log = logging.getLogger('beets')
 
 # metadata that is already hardcoded
-MISC_FIELDS = {
+SPECIAL_FIELDS = {
     'album': (
         'va',
         'releasegroup_id',
@@ -84,12 +84,10 @@ def apply_item_metadata(item, track_info):
     item.mb_releasetrackid = track_info.release_track_id
     if track_info.artist_id:
         item.mb_artistid = track_info.artist_id
-    if track_info.data_source:
-        item.data_source = track_info.data_source
 
     for field, value in track_info.items():
         # only overwrite fields that are not already hardcoded
-        if field in MISC_FIELDS['track']:
+        if field in SPECIAL_FIELDS['track']:
             continue
         if value is None:
             continue
@@ -188,8 +186,7 @@ def apply_metadata(album_info, mapping):
         # Don't overwrite fields with empty values unless the
         # field is explicitly allowed to be overwritten
         for field, value in album_info.items():
-            # only overwrite fields that are not already hardcoded
-            if field in MISC_FIELDS['album']:
+            if field in SPECIAL_FIELDS['album']:
                 continue
             clobber = field in config['overwrite_null']['album'].as_str_seq()
             if value is None and not clobber:
@@ -197,8 +194,7 @@ def apply_metadata(album_info, mapping):
             item[field] = value
 
         for field, value in track_info.items():
-            # only overwrite fields that are not already hardcoded
-            if field in MISC_FIELDS['track']:
+            if field in SPECIAL_FIELDS['track']:
                 continue
             clobber = field in config['overwrite_null']['track'].as_str_seq()
             value = getattr(track_info, field)
