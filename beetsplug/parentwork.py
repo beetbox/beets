@@ -173,10 +173,10 @@ add one at https://musicbrainz.org/recording/{}', item, item.mb_trackid)
             return
 
         hasparent = hasattr(item, 'parentwork')
-        workfalse = True
+        work_changed = True
         if hasattr(item, 'parentwork_workid_current'):
-            workfalse = item.mb_workid_current != item.mb_workid
-        if force or not hasparent or workfalse:
+            work_changed = item.mb_workid_current != item.mb_workid
+        if force or not hasparent or work_changed:
             try:
                 work_info, work_date = find_parentwork_info(item.mb_workid)
             except musicbrainzngs.musicbrainz.WebServiceError as e:
