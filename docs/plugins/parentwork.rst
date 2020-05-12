@@ -18,6 +18,12 @@ example, all the movements of a symphony. This plugin aims to solve this
 problem by also fetching the parent work, which would be the whole symphony in
 this example.
 
+It uses the ``mb_workid`` tag to retrieve the *parent work* and stores the
+``mb_workid`` as ``parentwork_workid_current``. When one executes 
+``beet parentwork`` it checks if ``mb_workid`` has changed by comparing it
+with ``parentwork_workid_current``, if it has changed or if ``force`` is
+enabled it fetches the *parent work* again.
+
 This plugin adds six tags:
 
 - **parentwork**: The title of the parent work.
@@ -27,7 +33,7 @@ This plugin adds six tags:
 - **parent_composer_sort**: The sort name of the parent work composer.
 - **work_date**: The composition date of the work, or the first parent work
   that has a composition date. Format: yyyy-mm-dd.
-- **parentwork_workid_current**: The musicbrainz id of the work as it was when
+- **parentwork_workid_current**: The Musicbrainz id of the work as it was when
   the parentwork was retrieved. This tag exists only for internal bookkeeping,
   to keep track of recordings whose work have changed. 
 
@@ -41,7 +47,8 @@ To configure the plugin, make a ``parentwork:`` section in your
 configuration file. The available options are:
 
 - **force**: As a default, ``parentwork`` only fetches work info for
-  recordings that do not already have a ``parentwork`` tag. If ``force``
+  recordings that do not already have a ``parentwork`` tag or where 
+  ``mb_workid`` differs from ``parentwork_workid_current``. If ``force``
   is enabled, it fetches it for all recordings.
   Default: ``no``
 
