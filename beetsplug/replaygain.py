@@ -613,7 +613,7 @@ class FfmpegBackend(Backend):
             return float(value)
         except ValueError:
             raise ReplayGainError(
-                u"ffmpeg output: expected float value, found {1}"
+                u"ffmpeg output: expected float value, found {0}"
                 .format(value)
                 )
 
