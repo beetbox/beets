@@ -22,7 +22,6 @@ import shutil
 import re
 import subprocess
 import platform
-from copy import deepcopy
 import six
 import unittest
 
@@ -1051,8 +1050,10 @@ class ShowChangeTest(_common.TestCase):
         self.items[0].track = 1
         self.items[0].path = b'/path/to/file.mp3'
         self.info = autotag.AlbumInfo(
-            u'the album', u'album id', u'the artist', u'artist id', [
-                autotag.TrackInfo(u'the title', u'track id', index=1)
+            album=u'the album', album_id=u'album id', artist=u'the artist',
+            artist_id=u'artist id', tracks=[
+                autotag.TrackInfo(title=u'the title', track_id=u'track id',
+                                  index=1)
             ]
         )
 
@@ -1136,7 +1137,9 @@ class SummarizeItemsTest(_common.TestCase):
         summary = commands.summarize_items([self.item], False)
         self.assertEqual(summary, u"1 items, F, 4kbps, 10:54, 987.0 B")
 
-        i2 = deepcopy(self.item)
+        # make a copy of self.item
+        i2 = self.item.copy()
+
         summary = commands.summarize_items([self.item, i2], False)
         self.assertEqual(summary, u"2 items, F, 4kbps, 21:48, 1.9 KiB")
 
