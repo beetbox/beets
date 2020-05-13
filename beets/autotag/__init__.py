@@ -35,7 +35,7 @@ from .match import Recommendation  # noqa
 # Global logger.
 log = logging.getLogger('beets')
 
-# Metadata that is already hardcoded.
+# Metadata fields that are already hardcoded, or where the tag name changes.
 SPECIAL_FIELDS = {
     'album': (
         'va',
