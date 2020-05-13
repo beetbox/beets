@@ -53,5 +53,6 @@ class CuePlugin(BeetsPlugin):
             title = "dunno lol"
             track_id = "wtf"
             index = int(path.basename(t)[len("split-track"):-len(".wav")])
-            yield TrackInfo(title, track_id, index=index, artist=artist)
+            yield TrackInfo(title=title, track_id=track_id, index=index,
+                            artist=artist)
         # generate TrackInfo instances
