@@ -35,7 +35,7 @@ from .match import Recommendation  # noqa
 # Global logger.
 log = logging.getLogger('beets')
 
-# metadata that is already hardcoded
+# Metadata that is already hardcoded.
 SPECIAL_FIELDS = {
     'album': (
         'va',
@@ -86,7 +86,7 @@ def apply_item_metadata(item, track_info):
         item.mb_artistid = track_info.artist_id
 
     for field, value in track_info.items():
-        # only overwrite fields that are not already hardcoded
+        # We only overwrite fields that are not already hardcoded.
         if field in SPECIAL_FIELDS['track']:
             continue
         if value is None:
