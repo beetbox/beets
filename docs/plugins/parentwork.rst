@@ -35,7 +35,7 @@ This plugin adds six tags:
   that has a composition date. Format: yyyy-mm-dd.
 - **parentwork_workid_current**: The Musicbrainz id of the work as it was when
   the parentwork was retrieved. This tag exists only for internal bookkeeping,
-  to keep track of recordings whose work have changed. 
+  to keep track of recordings whose works have changed. 
 
 To use the ``parentwork`` plugin, enable it in your configuration (see
 :ref:`using-plugins`).
