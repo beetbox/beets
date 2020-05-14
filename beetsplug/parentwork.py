@@ -175,7 +175,7 @@ add one at https://musicbrainz.org/recording/{}', item, item.mb_trackid)
         hasparent = hasattr(item, 'parentwork')
         work_changed = True
         if hasattr(item, 'parentwork_workid_current'):
-            work_changed = item.mb_workid_current != item.mb_workid
+            work_changed = item.parentwork_workid_current != item.mb_workid
         if force or not hasparent or work_changed:
             try:
                 work_info, work_date = find_parentwork_info(item.mb_workid)
