@@ -250,7 +250,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
                 arranger.append(artist_relation['artist']['name'])
     if arranger:
         info.arranger = u', '.join(arranger)
-        
+
     artists = {}
     for artist_relation in recording.get('artist-relation-list', ()):
         if 'type' in artist_relation:
@@ -269,8 +269,8 @@ def track_info(recording, index=None, medium=None, medium_index=None,
             if 'attributes' in artist_relation:
                 for attribute in artist_relation['attributes']:
                     if 'credited-as' in attribute:
-                        role += ' ('+attribute['credited-as']+')'
-                        role_sort += ' ('+attribute['credited-as']+')'
+                        role += ' (' + attribute['credited-as'] + ')'
+                        role_sort += ' (' + attribute['credited-as'] + ')'
             if role in artists:
                 artists[role].append(artist_relation['artist']['name'])
                 artists[role_sort].append(
