@@ -71,7 +71,7 @@ RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'labels', 'artist-credits', 'aliases',
                     'recording-level-rels', 'work-rels',
                     'work-level-rels', 'artist-rels']
-TRACK_INCLUDES = ['artists', 'aliases']
+TRACK_INCLUDES = ['artists', 'aliases', 'artist_rels']
 if 'work-level-rels' in musicbrainzngs.VALID_INCLUDES['recording']:
     TRACK_INCLUDES += ['work-level-rels', 'artist-rels']
 
