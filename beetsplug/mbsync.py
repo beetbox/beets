@@ -87,6 +87,10 @@ class MBSyncPlugin(BeetsPlugin):
                                item_formatted)
                 continue
 
+            # Clean up obsolete flexible fields
+            for tag in item:
+                if tag[:3] == 'mb ' and tag not in track_info:
+                    del item[tag]
             # Apply.
             with lib.transaction():
                 autotag.apply_item_metadata(item, track_info)
@@ -153,6 +157,8 @@ class MBSyncPlugin(BeetsPlugin):
             # Apply.
             self._log.debug(u'applying changes to {}', album_formatted)
             with lib.transaction():
+                # TODO: For all items, delete all tags of the form 'mb ...'
+                # that are in the item but not in the corresponding track_info.
                 autotag.apply_metadata(album_info, mapping)
                 changed = False
                 # Find any changed item to apply MusicBrainz changes to album.

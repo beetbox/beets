@@ -250,6 +250,36 @@ def track_info(recording, index=None, medium=None, medium_index=None,
                 arranger.append(artist_relation['artist']['name'])
     if arranger:
         info.arranger = u', '.join(arranger)
+        
+    artists = {}
+    for artist_relation in recording.get('artist-relation-list', ()):
+        if 'type' in artist_relation:
+            role = 'mb '
+            role += artist_relation['type']
+            if role in ['balance', 'recording', 'sound']:
+                role += ' engineer'
+            if role == 'performing orchestra':
+                role = 'orchestra'
+            role_sort = role + ' sort'
+            if 'attribute-list' in artist_relation:
+                role += ' - '
+                role_sort += ' - '
+                role += ', '.join(artist_relation['attribute-list'])
+                role_sort += ', '.join(artist_relation['attribute-list'])
+            if 'attributes' in artist_relation:
+                for attribute in artist_relation['attributes']:
+                    if 'credited-as' in attribute:
+                        role += ' ('+attribute['credited-as']+')'
+                        role_sort += ' ('+attribute['credited-as']+')'
+            if role in artists:
+                artists[role].append(artist_relation['artist']['name'])
+                artists[role_sort].append(
+                        artist_relation['artist']['sort-name'])
+            else:
+                artists[role] = [artist_relation['artist']['name']]
+                artists[role_sort] = [artist_relation['artist']['sort-name']]
+    for key in artists:
+        info[key] = u'; '.join(artists[key])
 
     info.decode()
     return info
