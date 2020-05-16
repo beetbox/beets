@@ -383,8 +383,6 @@ class Genius(Backend):
             verse_div = html.find("div",
                                   class_=re.compile("Lyrics__Container"))
             if not verse_div:
-                with open('instrumental.html', 'w') as text_file:
-                        text_file.write(str(html))
                 if html.find("div",
                              class_=re.compile("LyricsPlaceholder__Message"),
                              string="This song is an instrumental"):

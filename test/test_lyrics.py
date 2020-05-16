@@ -474,7 +474,8 @@ class LyricsGeniusScrapeTest(LyricsGeniusBaseTest):
         """
         # https://github.com/beetbox/beets/issues/3535
         # expected return value None
-        self.assertEqual(genius.lyrics_from_song_page('https://genius.com/sample'),
+        song_url = 'https://genius.com/sample'
+        self.assertEqual(genius.lyrics_from_song_page(song_url),
                          None)
 
 
