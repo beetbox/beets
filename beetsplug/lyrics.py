@@ -373,13 +373,34 @@ class Genius(Backend):
         # Remove script tags that they put in the middle of the lyrics.
         [h.extract() for h in html('script')]
 
-        # At least Genius is nice and has a tag called 'lyrics'!
-        # Updated css where the lyrics are based in HTML.
+        # Most of the time, the page contains a div with class="lyrics" where
+        # all of the lyrics can be found already correctly formatted
+        # Sometimes, though, it packages the lyrics into separate divs, most
+        # likely for easier ad placement
         lyrics_div = html.find("div", class_="lyrics")
-        if lyrics_div is None:
-            self._log.debug(u'Genius lyrics for {0} not found',
-                            page_url)
-            return None
+        if not lyrics_div:
+            self._log.debug(u'Received unusual song page html')
+            verse_div = html.find("div",
+                                  class_=re.compile("Lyrics__Container"))
+            if not verse_div:
+                with open('instrumental.html', 'w') as text_file:
+                        text_file.write(str(html))
+                if html.find("div",
+                             class_=re.compile("LyricsPlaceholder__Message"),
+                             string="This song is an instrumental"):
+                    self._log.debug('Detected instrumental')
+                    return "[Instrumental]"
+                else:
+                    self._log.debug("Couldn't scrape page using known layouts")
+                    return None
+
+            lyrics_div = verse_div.parent
+            for br in lyrics_div.find_all("br"):
+                br.replace_with("\n")
+            ads = lyrics_div.find_all("div",
+                                      class_=re.compile("InreadAd__Container"))
+            for ad in ads:
+                ad.replace_with("\n")
 
         return lyrics_div.get_text()
 
