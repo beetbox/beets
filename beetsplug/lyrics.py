@@ -359,14 +359,9 @@ class Genius(Backend):
             'User-Agent': USER_AGENT,
         }
 
-    def lyrics_from_song_api_path(self, song_api_path):
-        song_url = self.base_url + song_api_path
-        response = requests.get(song_url, headers=self.headers)
-        json = response.json()
-        path = json["response"]["song"]["path"]
-
+    def lyrics_from_song_page(self, page_url):
         # Gotta go regular html scraping... come on Genius.
-        page_url = "https://genius.com" + path
+        self._log.debug(u'fetching lyrics from: {0}', page_url)
         try:
             page = requests.get(page_url)
         except requests.RequestException as exc:
@@ -404,7 +399,6 @@ class Genius(Backend):
             self._log.debug(u'Genius API request returned invalid JSON')
             return None
 
-        song_info = None
         for hit in json["response"]["hits"]:
             # Genius uses zero-width characters to denote lowercase
             # artist names.
@@ -412,15 +406,9 @@ class Genius(Backend):
                 strip(u'\u200b').lower()
 
             if hit_artist == artist.lower():
-                song_info = hit
-                break
+                return self.lyrics_from_song_page(hit["result"]["url"])
 
-        if song_info:
-            self._log.debug(u'fetched: {0}', song_info["result"]["url"])
-            song_api_path = song_info["result"]["api_path"]
-            return self.lyrics_from_song_api_path(song_api_path)
-        else:
-            self._log.debug(u'genius: no matching artist')
+        self._log.debug(u'genius: no matching artist')
 
 
 class LyricsWiki(SymbolsReplaced):
