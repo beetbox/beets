@@ -390,7 +390,7 @@ class Genius(Backend):
 
     def fetch(self, artist, title):
         search_url = self.base_url + "/search"
-        data = {'q': title}
+        data = {'q': title + " " + artist.lower()}
         try:
             response = requests.get(search_url, data=data,
                                     headers=self.headers)
