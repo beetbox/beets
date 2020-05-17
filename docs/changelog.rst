@@ -202,7 +202,9 @@ Fixes:
   The log message has also been rewritten for to improve clarity.
   Thanks to :user:`autrimpo`.
   :bug:`3533`
-* :doc:`/plugins/lyrics`: Reduce the failure rate of the Genius backend.
+* :doc:`/plugins/lyrics`: Adapt the Genius backend to changes in markup to
+  reduce the scraping failure rate.
+  :bug:`3535` :bug:`3594`
 
 For plugin developers:
 
