@@ -202,6 +202,7 @@ Fixes:
   The log message has also been rewritten for to improve clarity.
   Thanks to :user:`autrimpo`.
   :bug:`3533`
+* :doc:`/plugins/lyrics`: Reduce the failure rate of the Genius backend.
 
 For plugin developers:
 
