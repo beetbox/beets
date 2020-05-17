@@ -456,7 +456,7 @@ class LyricsGeniusBaseTest(unittest.TestCase):
             self.skipTest("Python's built-in HTML parser is not good enough")
 
 
-class LyricsGeniusScrapTest(LyricsGeniusBaseTest):
+class LyricsGeniusScrapeTest(LyricsGeniusBaseTest):
 
     """Checks that Genius backend works as intended.
     """
@@ -469,12 +469,13 @@ class LyricsGeniusScrapTest(LyricsGeniusBaseTest):
 
     @patch.object(requests, 'get', GeniusMockGet())
     def test_no_lyrics_div(self):
-        """Ensure that `lyrics_from_song_api_path` doesn't crash when the html
-        for a Genius page contain <div class="lyrics"></div>
+        """Ensure that `lyrics_from_song_page` doesn't crash when the html
+        for a Genius page doesn't contain <div class="lyrics"></div>
         """
         # https://github.com/beetbox/beets/issues/3535
         # expected return value None
-        self.assertEqual(genius.lyrics_from_song_api_path('/nolyric'),
+        song_url = 'https://genius.com/sample'
+        self.assertEqual(genius.lyrics_from_song_page(song_url),
                          None)
 
 
