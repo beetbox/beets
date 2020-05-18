@@ -17,11 +17,9 @@
 Your Beets configuration file should contain
 a "subsonic" section like the following:
     subsonic:
-        host: 192.168.x.y (Subsonic server IP)
-        port: 4040 (default)
-        user: <your username>
-        pass: <your password>
-        contextpath: /subsonic
+        url: https://mydomain.com:443/subsonic
+        user: username
+        pass: password
 """
 from __future__ import division, absolute_import, print_function
 
@@ -84,11 +82,8 @@ class SubsonicUpdate(BeetsPlugin):
 
         # Set default configuration values
         config['subsonic'].add({
-            'host': 'localhost',
-            'port': '4040',
             'user': 'admin',
             'pass': 'admin',
-            'contextpath': '/',
             'url': 'http://localhost:4040',
         })
 
