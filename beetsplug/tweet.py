@@ -127,7 +127,7 @@ class BeetTweet(BeetsPlugin):
 
     def _send_tweet(self, album, pretend):
         """Command to construct and send a tweet for a single album."""
-        status = album.evaluate_template(self.config["template"].get(), True)
+        status = album.evaluate_template(self.config["template"].get(), False)
         if self.config["upload_album_art"].get():
             # Try to upload album art:
             img_id = self._upload_album_art(album, pretend)
