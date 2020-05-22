@@ -61,7 +61,7 @@ def format_url():
     """
 
     url = config['subsonic']['url'].as_str()
-    if url and url.endsWith('/'):
+    if url and url.endswith('/'):
         url = url[:-1]
 
     # @deprecated("Use url config option instead")
