@@ -318,6 +318,10 @@ Here are a few of the plugins written by the beets community:
 * `beets-originquery`_ augments MusicBrainz queries with locally-sourced data
   to improve autotagger results.
 
+* `drop2beets`_ automatically imports singles as soon as they are dropped in a
+  folder (using Linux's ``inotify``). You can also set a sub-folders
+  hierarchy to set flexible attributes by the way.
+
 .. _beets-barcode: https://github.com/8h2a/beets-barcode
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
@@ -347,3 +351,4 @@ Here are a few of the plugins written by the beets community:
 .. _beets-describe: https://github.com/adamjakab/BeetsPluginDescribe
 .. _beets-bpmanalyser: https://github.com/adamjakab/BeetsPluginBpmAnalyser
 .. _beets-originquery: https://github.com/x1ppy/beets-originquery
+.. _drop2beets: https://github.com/martinkirch/drop2beets
