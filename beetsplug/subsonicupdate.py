@@ -35,47 +35,6 @@ from beets.plugins import BeetsPlugin
 __author__ = 'https://github.com/maffo999'
 
 
-def create_token():
-    """Create salt and token from given password.
-
-    :return: The generated salt and hashed token
-    """
-    password = config['subsonic']['pass'].as_str()
-
-    # Pick the random sequence and salt the password
-    r = string.ascii_letters + string.digits
-    salt = "".join([random.choice(r) for _ in range(6)])
-    salted_password = password + salt
-    token = hashlib.md5().update(salted_password.encode('utf-8')).hexdigest()
-
-    # Put together the payload of the request to the server and the URL
-    return salt, token
-
-
-def format_url():
-    """Get the Subsonic URL to trigger a scan. Uses either the url
-    config option or the deprecated host, port, and context_path config
-    options together.
-
-    :return: Endpoint for updating Subsonic
-    """
-
-    url = config['subsonic']['url'].as_str()
-    if url and url.endswith('/'):
-        url = url[:-1]
-
-    # @deprecated("Use url config option instead")
-    if not url:
-        host = config['subsonic']['host'].as_str()
-        port = config['subsonic']['port'].get(int)
-        context_path = config['subsonic']['contextpath'].as_str()
-        if context_path == '/':
-            context_path = ''
-        url = "http://{}:{}{}".format(host, port, context_path)
-
-    return url + '/rest/startScan'
-
-
 class SubsonicUpdate(BeetsPlugin):
     def __init__(self):
         super(SubsonicUpdate, self).__init__()
@@ -90,10 +49,51 @@ class SubsonicUpdate(BeetsPlugin):
         config['subsonic']['pass'].redact = True
         self.register_listener('import', self.start_scan)
 
+    @staticmethod
+    def __create_token():
+        """Create salt and token from given password.
+
+        :return: The generated salt and hashed token
+        """
+        password = config['subsonic']['pass'].as_str()
+
+        # Pick the random sequence and salt the password
+        r = string.ascii_letters + string.digits
+        salt = "".join([random.choice(r) for _ in range(6)])
+        salted_password = password + salt
+        token = hashlib.md5(salted_password.encode('utf-8')).hexdigest()
+
+        # Put together the payload of the request to the server and the URL
+        return salt, token
+
+    @staticmethod
+    def __format_url():
+        """Get the Subsonic URL to trigger a scan. Uses either the url
+        config option or the deprecated host, port, and context_path config
+        options together.
+
+        :return: Endpoint for updating Subsonic
+        """
+
+        url = config['subsonic']['url'].as_str()
+        if url and url.endswith('/'):
+            url = url[:-1]
+
+        # @deprecated("Use url config option instead")
+        if not url:
+            host = config['subsonic']['host'].as_str()
+            port = config['subsonic']['port'].get(int)
+            context_path = config['subsonic']['contextpath'].as_str()
+            if context_path == '/':
+                context_path = ''
+            url = "http://{}:{}{}".format(host, port, context_path)
+
+        return url + '/rest/startScan'
+
     def start_scan(self):
         user = config['subsonic']['user'].as_str()
-        url = format_url()
-        salt, token = create_token()
+        url = self.__format_url()
+        salt, token = self.__create_token()
 
         payload = {
             'u': user,
