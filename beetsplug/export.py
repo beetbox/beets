@@ -21,7 +21,7 @@ import sys
 import codecs
 import json
 import csv
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as et
 
 from datetime import datetime, date
 from beets.plugins import BeetsPlugin
@@ -188,18 +188,18 @@ class XMLFormat(ExportFormat):
 
     def export(self, data, **kwargs):
         # Creates the XML file structure.
-        library = ET.Element(u'library')
-        tracks = ET.SubElement(library, u'tracks')
+        library = et.Element(u'library')
+        tracks = et.SubElement(library, u'tracks')
         if data and isinstance(data[0], dict):
             for index, item in enumerate(data):
-                track = ET.SubElement(tracks, u'track')
+                track = et.SubElement(tracks, u'track')
                 for key, value in item.items():
-                    track_details = ET.SubElement(track, key)
+                    track_details = et.SubElement(track, key)
                     track_details.text = value
         # Depending on the version of python the encoding needs to change
         try:
-            data = ET.tostring(library, encoding='unicode', **kwargs)
+            data = et.tostring(library, encoding='unicode', **kwargs)
         except LookupError:
-            data = ET.tostring(library, encoding='utf-8', **kwargs)
+            data = et.tostring(library, encoding='utf-8', **kwargs)
 
         self.out_stream.write(data)

@@ -23,7 +23,7 @@ from test.helper import TestHelper
 import re  # used to test csv format
 import json
 from xml.etree.ElementTree import Element
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as et
 
 
 class ExportPluginTest(unittest.TestCase, TestHelper):
@@ -85,7 +85,7 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
             format_type='xml',
             artist=item1.artist
         )
-        library = ET.fromstring(out)
+        library = et.fromstring(out)
         self.assertIsInstance(library, Element)
         for track in library[0]:
             for details in track:

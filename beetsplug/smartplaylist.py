@@ -105,17 +105,17 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
             playlist_data = (playlist['name'],)
             try:
-                for key, Model in (('query', Item), ('album_query', Album)):
+                for key, model in (('query', Item), ('album_query', Album)):
                     qs = playlist.get(key)
                     if qs is None:
                         query_and_sort = None, None
                     elif isinstance(qs, six.string_types):
-                        query_and_sort = parse_query_string(qs, Model)
+                        query_and_sort = parse_query_string(qs, model)
                     elif len(qs) == 1:
-                        query_and_sort = parse_query_string(qs[0], Model)
+                        query_and_sort = parse_query_string(qs[0], model)
                     else:
                         # multiple queries and sorts
-                        queries, sorts = zip(*(parse_query_string(q, Model)
+                        queries, sorts = zip(*(parse_query_string(q, model)
                                                for q in qs))
                         query = OrQuery(queries)
                         final_sorts = []

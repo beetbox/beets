@@ -122,7 +122,7 @@ setup(
         'requests_oauthlib'
     ] + (
         # Tests for the thumbnails plugin need pathlib on Python 2 too.
-        ['pathlib'] if (sys.version_info < (3, 4, 0)) else []
+        ['pathlib2'] if (sys.version_info < (3, 4, 0)) else []
     ),
 
     # Plugin (optional) dependencies:
@@ -144,7 +144,7 @@ setup(
         'web': ['flask', 'flask-cors'],
         'import': ['rarfile'],
         'thumbnails': ['pyxdg', 'Pillow'] +
-        (['pathlib'] if (sys.version_info < (3, 4, 0)) else []),
+        (['pathlib2'] if (sys.version_info < (3, 4, 0)) else []),
         'metasync': ['dbus-python'],
         'sonosupdate': ['soco'],
         'scrub': ['mutagen>=1.33'],
