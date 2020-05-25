@@ -25,7 +25,7 @@ from hashlib import md5
 import os
 import shutil
 from itertools import chain
-from pathlib2 import PurePosixPath
+from pathlib import PurePosixPath
 import ctypes
 import ctypes.util
 
