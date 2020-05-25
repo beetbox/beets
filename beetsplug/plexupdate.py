@@ -12,7 +12,7 @@ Put something like the following in your config.yaml to configure:
 from __future__ import division, absolute_import, print_function
 
 import requests
-import xml.etree.ElementTree as et
+from xml.etree import ElementTree
 from six.moves.urllib.parse import urljoin, urlencode
 from beets import config
 from beets.plugins import BeetsPlugin
@@ -28,7 +28,7 @@ def get_music_section(host, port, token, library_name):
     r = requests.get(url)
 
     # Parse xml tree and extract music section key.
-    tree = et.fromstring(r.content)
+    tree = ElementTree.fromstring(r.content)
     for child in tree.findall('Directory'):
         if child.get('title') == library_name:
             return child.get('key')
