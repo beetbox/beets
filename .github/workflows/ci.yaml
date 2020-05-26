@@ -5,7 +5,7 @@ jobs:
     runs-on: ${{ matrix.platform }}
     strategy:
       matrix:
-        platform: [ windows-latest, ubuntu-latest ]
+        platform: [ ubuntu-latest ]
     env:
       PY_COLOR: 1
       NOSE_SHOW_SKIPPED: 1
@@ -39,7 +39,7 @@ jobs:
     runs-on: ${{ matrix.platform }}
     strategy:
       matrix:
-        platform: [ windows-latest, ubuntu-latest ]
+        platform: [ ubuntu-latest ]
         python-version: [ 5, 6, 7, 8 ]
     env:
       PY_COLOR: 1
