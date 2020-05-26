@@ -5,8 +5,9 @@ jobs:
     runs-on: ${{ matrix.platform }}
     strategy:
       matrix:
-        platform: [ ubuntu-latest ]
+        platform: [ windows-latest, ubuntu-latest ]
     env:
+      PY_COLOR: 1
       NOSE_SHOW_SKIPPED: 1
     steps:
       - uses: actions/checkout@v2
@@ -15,8 +16,16 @@ jobs:
         with:
           python-version: 2.7
       - uses: actions/cache@v1
+        if: startsWith(runner.os, 'Linux')
         with:
           path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - uses: actions/cache@v1
+        if: startsWith(runner.os, 'Windows')
+        with:
+          path: ~\AppData\Local\pip\Cache
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
@@ -25,16 +34,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install tox sphinx
       - name: Test with tox
-        run: |
-          tox -e py27-test
-          tox -e docs
+        run: tox -e py27-test
   test-3x:
     runs-on: ${{ matrix.platform }}
     strategy:
       matrix:
-        platform: [ ubuntu-latest ]
+        platform: [ windows-latest, ubuntu-latest ]
         python-version: [ 5, 6, 7, 8 ]
     env:
+      PY_COLOR: 1
       NOSE_SHOW_SKIPPED: 1
     steps:
       - uses: actions/checkout@v2
@@ -43,8 +51,16 @@ jobs:
         with:
           python-version: 3.${{ matrix.python-version }}
       - uses: actions/cache@v1
+        if: startsWith(runner.os, 'Linux')
         with:
           path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - uses: actions/cache@v1
+        if: startsWith(runner.os, 'Windows')
+        with:
+          path: ~\AppData\Local\pip\Cache
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
@@ -52,15 +68,15 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install tox sphinx
-      - name: Test with tox
+      - name: Test, coverage, and flake8 with tox
+        if: matrix.python-version == '8'
         run: |
-          if [[ ${{ matrix.python-version }} == '8' ]]; then
-              tox -e py3${{ matrix.python-version }}-test
-              tox -e py3${{ matrix.python-version }}-cov
-              tox -e py3${{ matrix.python-version }}-flake8
-          else
-              tox -e py3${{ matrix.python-version }}-test
-          fi
+          tox -e py3${{ matrix.python-version }}-test
+          tox -e py3${{ matrix.python-version }}-cov
+          tox -e py3${{ matrix.python-version }}-flake8
+      - name: Test with tox
+        if: matrix.python-version != '8'
+        run: tox -e py3${{ matrix.python-version }}-test
   docs:
     runs-on: ubuntu-latest
     steps:
