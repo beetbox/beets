@@ -124,6 +124,8 @@ New features:
   separators to support path queries.
   Thanks to :user:`nmeum`.
   :bug:`3567`
+* ``beet import`` now handles tar archives with bzip2 or gzip compression.
+  :bug:`3606`
 
 Fixes:
 
