@@ -1034,8 +1034,8 @@ class ArchiveImportTask(SentinelImportTask):
             cls._handlers = []
             from zipfile import is_zipfile, ZipFile
             cls._handlers.append((is_zipfile, ZipFile))
-            from tarfile import is_tarfile, TarFile
-            cls._handlers.append((is_tarfile, TarFile))
+            import tarfile
+            cls._handlers.append((tarfile.is_tarfile, tarfile.open))
             try:
                 from rarfile import is_rarfile, RarFile
             except ImportError:
