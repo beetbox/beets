@@ -53,6 +53,11 @@ body {
     text-align: center;
     margin: 0.25em 0;
 }
+#selectorButtons {
+  display: block;
+  text-align: center;
+  margin: 0.25em 0;
+}
 #query {
     width: 95%;
     font-size: 1em;
@@ -60,7 +65,7 @@ body {
 #entities ul {
     width: 17em;
 
-    position: fixed;
+    position: relative;
     top: 36px;
     left: 0;
     bottom: 0;

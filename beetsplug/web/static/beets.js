@@ -226,10 +226,21 @@ var AppView = Backbone.View.extend({
     el: $('body'),
     events: {
         'submit #queryForm': 'querySubmit',
+        'click #albumSearch': 'queryAlbum',
+        'click #artistSearch': 'queryArtist',
+        'click #allSearch': 'querySubmit',
     },
     querySubmit: function(ev) {
         ev.preventDefault();
         router.navigate('item/query/' + encodeURIComponent($('#query').val()), true);
+    },
+    queryAlbum: function(ev) {
+        ev.preventDefault();
+        router.navigate('item/query/album:' + encodeURIComponent($('#query').val()), true);
+    },
+    queryArtist: function(ev) {
+        ev.preventDefault();
+        router.navigate('item/query/artist:' + encodeURIComponent($('#query').val()), true);
     },
     initialize: function() {
         this.playingItem = null;
