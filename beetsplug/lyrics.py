@@ -782,7 +782,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
                         ui.print_(item.lyrics)
                     if opts.writerest:
                         self.appendrest(opts.writerest, item)
-            if opts.writerest and len(items) > 0:
+            if opts.writerest and items:
                 # flush last artist & write to ReST
                 self.writerest(opts.writerest)
                 ui.print_(u'ReST files generated. to build, use one of:')
@@ -830,7 +830,6 @@ class LyricsPlugin(plugins.BeetsPlugin):
                                 slug(self.artist) + u'.rst')
             with open(path, 'wb') as output:
                 output.write(self.rest.encode('utf-8'))
-
 
     def writerest_indexes(self, directory):
         """Write conf.py and index.rst files necessary for Sphinx
