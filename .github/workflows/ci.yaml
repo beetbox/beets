@@ -5,10 +5,11 @@ jobs:
     runs-on: ${{ matrix.platform }}
     strategy:
       matrix:
-        platform: [ ubuntu-latest ]
+        platform: [ windows-latest, ubuntu-latest ]
     env:
-      PY_COLOR: 1
       NOSE_SHOW_SKIPPED: 1
+      PY_COLOR: 1
+      PYTHONIOENCODING: utf-8
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python 2.7
@@ -39,11 +40,12 @@ jobs:
     runs-on: ${{ matrix.platform }}
     strategy:
       matrix:
-        platform: [ ubuntu-latest ]
+        platform: [ windows-latest, ubuntu-latest ]
         python-version: [ 5, 6, 7, 8 ]
     env:
-      PY_COLOR: 1
       NOSE_SHOW_SKIPPED: 1
+      PY_COLOR: 1
+      PYTHONIOENCODING: utf-8
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python 3.${{ matrix.python-version }}
