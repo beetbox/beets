@@ -207,6 +207,9 @@ Fixes:
 * :doc:`/plugins/lyrics`: Adapt the Genius backend to changes in markup to
   reduce the scraping failure rate.
   :bug:`3535` :bug:`3594`
+* :doc:`/plugins/lyrics`: Fix crash when writing ReST files for a query without
+  results or fetched lyrics
+  :bug:`2805`
 
 For plugin developers:
 
