@@ -11,7 +11,7 @@ jobs:
       NOSE_SHOW_SKIPPED: 1
     steps:
       - uses: actions/checkout@v2
-      - name: Set up python 2.7
+      - name: Set up Python 2.7
         uses: actions/setup-python@v2
         with:
           python-version: 2.7
@@ -46,7 +46,7 @@ jobs:
       NOSE_SHOW_SKIPPED: 1
     steps:
       - uses: actions/checkout@v2
-      - name: Set up python 3.${{ matrix.python-version }}
+      - name: Set up Python 3.${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
           python-version: 3.${{ matrix.python-version }}
@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python to build docs with sphinx
+      - name: Set up Python to build docs with Sphinx
         uses: actions/setup-python@v2
         with:
           python-version: 2.7
