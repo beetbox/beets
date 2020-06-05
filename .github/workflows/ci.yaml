@@ -74,6 +74,8 @@ jobs:
           tox -e py3${{ matrix.python-version }}-test
           tox -e py3${{ matrix.python-version }}-cov
           tox -e py3${{ matrix.python-version }}-flake8
+          pip install codecov || true
+          codecov || true
       - name: Test with tox
         if: matrix.python-version != '8'
         run: tox -e py3${{ matrix.python-version }}-test
