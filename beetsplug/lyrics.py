@@ -912,7 +912,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 return _scrape_strip_cruft(lyrics, True)
 
     def append_translation(self, text, to_lang):
-        import xml.etree.ElementTree as ET
+        from xml.etree import ElementTree
 
         if not self.bing_auth_token:
             self.bing_auth_token = self.get_bing_access_token()
@@ -930,7 +930,8 @@ class LyricsPlugin(plugins.BeetsPlugin):
                     self.bing_auth_token = None
                     return self.append_translation(text, to_lang)
                 return text
-            lines_translated = ET.fromstring(r.text.encode('utf-8')).text
+            lines_translated = ElementTree.fromstring(
+                r.text.encode('utf-8')).text
             # Use a translation mapping dict to build resulting lyrics
             translations = dict(zip(text_lines, lines_translated.split('|')))
             result = ''
