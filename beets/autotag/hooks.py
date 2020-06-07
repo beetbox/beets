@@ -563,12 +563,12 @@ def album_for_mbid(release_id, more_info=False):
         exc.log(log)
 
 
-def track_for_mbid(recording_id):
+def track_for_mbid(recording_id, more_info=False):
     """Get a TrackInfo object for a MusicBrainz recording ID. Return None
     if the ID is not found.
     """
     try:
-        track = mb.track_for_id(recording_id)
+        track = mb.track_for_id(recording_id, more_info=more_info)
         if track:
             plugins.send(u'trackinfo_received', info=track)
         return track

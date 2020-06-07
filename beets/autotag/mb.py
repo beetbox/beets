@@ -184,7 +184,7 @@ def _flatten_artist_credit(credit):
 
 
 def track_info(recording, index=None, medium=None, medium_index=None,
-               medium_total=None, more_data=False, by_rec=False):
+               medium_total=None, more_info=False, by_rec=False):
     """Translates a MusicBrainz recording result dictionary into a beets
     ``TrackInfo`` object. Three parameters are optional and are used
     only for tracks that appear on releases (non-singletons): ``index``,
@@ -572,7 +572,7 @@ def album_for_id(releaseid, more_info=False):
     return album_info(res['release'], more_info=more_info)
 
 
-def track_for_id(releaseid):
+def track_for_id(releaseid, more_info=False):
     """Fetches a track by its MusicBrainz ID. Returns a TrackInfo object
     or None if no track is found. May raise a MusicBrainzAPIError.
     """
@@ -588,4 +588,4 @@ def track_for_id(releaseid):
     except musicbrainzngs.MusicBrainzError as exc:
         raise MusicBrainzAPIError(exc, u'get recording by ID', trackid,
                                   traceback.format_exc())
-    return track_info(res['recording'])
+    return track_info(res['recording'], more_info=more_info)
