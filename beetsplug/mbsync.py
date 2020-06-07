@@ -48,9 +48,8 @@ class MBSyncPlugin(BeetsPlugin):
             default=None, dest='write',
             help=u"don't write updated metadata to files")
         cmd.parser.add_option(
-            u'-W', u'--nowrite', action='store_false',
-            default=None, dest='write',
-            help=u"don't write updated metadata to files")
+            u'-I', u'--more_info', action='store_true', default=None,
+            help=u"Fetch more data")
         cmd.parser.add_format_option()
         cmd.func = self.func
         return [cmd]
@@ -61,12 +60,13 @@ class MBSyncPlugin(BeetsPlugin):
         move = ui.should_move(opts.move)
         pretend = opts.pretend
         write = ui.should_write(opts.write)
+        more_info = opts.more_info
         query = ui.decargs(args)
 
-        self.singletons(lib, query, move, pretend, write)
-        self.albums(lib, query, move, pretend, write)
+        self.singletons(lib, query, move, pretend, write, more_info)
+        self.albums(lib, query, move, pretend, write, more_info)
 
-    def singletons(self, lib, query, move, pretend, write):
+    def singletons(self, lib, query, move, pretend, write, more_info):
         """Retrieve and apply info from the autotagger for items matched by
         query.
         """
@@ -84,7 +84,8 @@ class MBSyncPlugin(BeetsPlugin):
                 continue
 
             # Get the MusicBrainz recording info.
-            track_info = hooks.track_for_mbid(item.mb_trackid, more_info=True)
+            track_info = hooks.track_for_mbid(item.mb_trackid,
+                                              more_info=more_info)
             if not track_info:
                 self._log.info(u'Recording ID not found: {0} for track {0}',
                                item.mb_trackid,
@@ -100,7 +101,7 @@ class MBSyncPlugin(BeetsPlugin):
                 autotag.apply_item_metadata(item, track_info)
                 apply_item_changes(lib, item, move, pretend, write)
 
-    def albums(self, lib, query, move, pretend, write):
+    def albums(self, lib, query, move, pretend, write, more_info):
         """Retrieve and apply info from the autotagger for albums matched by
         query and their items.
         """
@@ -121,7 +122,8 @@ class MBSyncPlugin(BeetsPlugin):
                 continue
 
             # Get the MusicBrainz album information.
-            album_info = hooks.album_for_mbid(a.mb_albumid, more_info=True)
+            album_info = hooks.album_for_mbid(a.mb_albumid,
+                                              more_info=more_info)
             if not album_info:
                 self._log.info(u'Release ID {0} not found for album {1}',
                                a.mb_albumid,
