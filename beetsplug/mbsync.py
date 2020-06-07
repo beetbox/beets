@@ -89,7 +89,7 @@ class MBSyncPlugin(BeetsPlugin):
 
             # Clean up obsolete flexible fields
             for tag in item:
-                if tag[:3] == 'mb ' and tag not in track_info:
+                if tag[:6] == 'mbsync' and tag not in track_info:
                     del item[tag]
             # Apply.
             with lib.transaction():
@@ -117,7 +117,7 @@ class MBSyncPlugin(BeetsPlugin):
                 continue
 
             # Get the MusicBrainz album information.
-            album_info = hooks.album_for_mbid(a.mb_albumid)
+            album_info = hooks.album_for_mbid(a.mb_albumid, more_info=True)
             if not album_info:
                 self._log.info(u'Release ID {0} not found for album {1}',
                                a.mb_albumid,
@@ -138,6 +138,9 @@ class MBSyncPlugin(BeetsPlugin):
             # work for albums that have missing or extra tracks.
             mapping = {}
             for item in items:
+                for tag in item:
+                    if tag[:6] == 'mbsync' and tag not in track_info:
+                        del item[tag]
                 if item.mb_releasetrackid and \
                         item.mb_releasetrackid in releasetrack_index:
                     mapping[item] = releasetrack_index[item.mb_releasetrackid]

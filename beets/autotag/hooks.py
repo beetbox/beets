@@ -550,12 +550,12 @@ TrackMatch = namedtuple('TrackMatch', ['distance', 'info'])
 
 # Aggregation of sources.
 
-def album_for_mbid(release_id):
+def album_for_mbid(release_id, more_info=False):
     """Get an AlbumInfo object for a MusicBrainz release ID. Return None
     if the ID is not found.
     """
     try:
-        album = mb.album_for_id(release_id)
+        album = mb.album_for_id(release_id, more_info=more_info)
         if album:
             plugins.send(u'albuminfo_received', info=album)
         return album
