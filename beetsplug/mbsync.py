@@ -47,6 +47,10 @@ class MBSyncPlugin(BeetsPlugin):
             u'-W', u'--nowrite', action='store_false',
             default=None, dest='write',
             help=u"don't write updated metadata to files")
+        cmd.parser.add_option(
+            u'-W', u'--nowrite', action='store_false',
+            default=None, dest='write',
+            help=u"don't write updated metadata to files")
         cmd.parser.add_format_option()
         cmd.func = self.func
         return [cmd]
@@ -80,7 +84,7 @@ class MBSyncPlugin(BeetsPlugin):
                 continue
 
             # Get the MusicBrainz recording info.
-            track_info = hooks.track_for_mbid(item.mb_trackid)
+            track_info = hooks.track_for_mbid(item.mb_trackid, more_info=True)
             if not track_info:
                 self._log.info(u'Recording ID not found: {0} for track {0}',
                                item.mb_trackid,
