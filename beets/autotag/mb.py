@@ -268,7 +268,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
             if 'type' in artist_relation:
                 role = 'mbsync '
                 role += artist_relation['type']
-                if role in ['balance', 'recording', 'sound']:
+                if 'balance' in role or 'recording' in role or 'sound' in role:
                     role += ' engineer'
                 if role == 'performing orchestra':
                     role = 'orchestra'
