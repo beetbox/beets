@@ -262,7 +262,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     if arranger:
         info.arranger = u', '.join(arranger)
 
-    if more_data:
+    if more_info:
         artists = {}
         for artist_relation in recording.get('artist-relation-list', ()):
             if 'type' in artist_relation:
