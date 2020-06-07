@@ -576,9 +576,9 @@ def track_for_mbid(recording_id, more_info=False):
         exc.log(log)
 
 
-def albums_for_id(album_id):
+def albums_for_id(album_id, more_info=False):
     """Get a list of albums for an ID."""
-    a = album_for_mbid(album_id)
+    a = album_for_mbid(album_id, more_info=more_info)
     if a:
         yield a
     for a in plugins.album_for_id(album_id):
@@ -587,9 +587,9 @@ def albums_for_id(album_id):
             yield a
 
 
-def tracks_for_id(track_id):
+def tracks_for_id(track_id, more_info=False):
     """Get a list of tracks for an ID."""
-    t = track_for_mbid(track_id)
+    t = track_for_mbid(track_id, more_info=more_info)
     if t:
         yield t
     for t in plugins.track_for_id(track_id):
