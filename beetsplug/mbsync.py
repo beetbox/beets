@@ -93,12 +93,14 @@ class MBSyncPlugin(BeetsPlugin):
                 continue
 
             # Clean up obsolete flexible fields
-            for tag in item:
-                if tag[:6] == 'mbsync' and tag not in track_info:
-                    del item[tag]
+            if more_info:
+                for tag in item:
+                    if tag[:6] == 'mbsync' and tag not in track_info:
+                        del item[tag]
             # Apply.
             with lib.transaction():
                 autotag.apply_item_metadata(item, track_info)
+                ui.show_model_changes(item)
                 apply_item_changes(lib, item, move, pretend, write)
 
     def albums(self, lib, query, move, pretend, write, more_info):
@@ -144,9 +146,10 @@ class MBSyncPlugin(BeetsPlugin):
             # work for albums that have missing or extra tracks.
             mapping = {}
             for item in items:
-                for tag in item:
-                    if tag[:6] == 'mbsync' and tag not in track_info:
-                        del item[tag]
+                if more_info:
+                    for tag in item:
+                        if tag[:6] == 'mbsync' and tag not in track_info:
+                            del item[tag]
                 if item.mb_releasetrackid and \
                         item.mb_releasetrackid in releasetrack_index:
                     mapping[item] = releasetrack_index[item.mb_releasetrackid]

@@ -283,7 +283,8 @@ def track_info(recording, index=None, medium=None, medium_index=None,
                         if 'credited-as' in attribute:
                             role += ' (' + attribute['credited-as'] + ')'
                             role_sort += ' (' + attribute['credited-as'] + ')'
-                role.replace(" ", "_")
+                role = role.replace(" ", "_")
+                role_sort = role_sort.replace(' ','_')
                 if role in artists:
                     artists[role].append(artist_relation['artist']['name'])
                     artists[role_sort].append(
