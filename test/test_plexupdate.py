@@ -94,7 +94,7 @@ class PlexUpdateTest(unittest.TestCase, TestHelper):
             self.config['plex']['port'],
             self.config['plex']['token'],
             self.config['plex']['library_name'].get(),
-            self.config['plex']['use_secure'],
+            self.config['plex']['secure'],
             self.config['plex']['ignore_cert_errors']), '2')
 
     @responses.activate
@@ -107,7 +107,7 @@ class PlexUpdateTest(unittest.TestCase, TestHelper):
             self.config['plex']['port'],
             self.config['plex']['token'],
             'My Music Library',
-            self.config['plex']['use_secure'],
+            self.config['plex']['secure'],
             self.config['plex']['ignore_cert_errors']), '2')
 
     @responses.activate
@@ -122,7 +122,7 @@ class PlexUpdateTest(unittest.TestCase, TestHelper):
             self.config['plex']['port'],
             self.config['plex']['token'],
             self.config['plex']['library_name'].get(),
-            self.config['plex']['use_secure'],
+            self.config['plex']['secure'],
             self.config['plex']['ignore_cert_errors']).status_code, 200)
 
 
