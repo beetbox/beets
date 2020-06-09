@@ -41,7 +41,7 @@ The available options under the ``plex:`` section are:
   Default: Empty.
 - **library_name**: The name of the Plex library to update.
   Default: ``Music``
-- **use_secure**: Use secure connections to the Plex server.
+- **secure**: Use secure connections to the Plex server.
   Default: ``False``
 - **ignore_cert_errors**: Ignore TLS certificate errors when using secure connections.
   Default: ``False``

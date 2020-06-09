@@ -18,12 +18,12 @@ from beets import config
 from beets.plugins import BeetsPlugin
 
 
-def get_music_section(host, port, token, library_name, use_secure,
+def get_music_section(host, port, token, library_name, secure,
                       ignore_cert_errors):
     """Getting the section key for the music library in Plex.
     """
     api_endpoint = append_token('library/sections', token)
-    url = urljoin('{0}://{1}:{2}'.format(get_protocol(use_secure), host,
+    url = urljoin('{0}://{1}:{2}'.format(get_protocol(secure), host,
                   port), api_endpoint)
 
     # Sends request.
@@ -36,7 +36,7 @@ def get_music_section(host, port, token, library_name, use_secure,
             return child.get('key')
 
 
-def update_plex(host, port, token, library_name, use_secure,
+def update_plex(host, port, token, library_name, secure,
                 ignore_cert_errors):
     """Ignore certificate errors if configured to.
     """
@@ -47,10 +47,10 @@ def update_plex(host, port, token, library_name, use_secure,
     """
     # Getting section key and build url.
     section_key = get_music_section(host, port, token, library_name,
-                                    use_secure, ignore_cert_errors)
+                                    secure, ignore_cert_errors)
     api_endpoint = 'library/sections/{0}/refresh'.format(section_key)
     api_endpoint = append_token(api_endpoint, token)
-    url = urljoin('{0}://{1}:{2}'.format(get_protocol(use_secure), host,
+    url = urljoin('{0}://{1}:{2}'.format(get_protocol(secure), host,
                   port), api_endpoint)
 
     # Sends request and returns requests object.
@@ -66,8 +66,8 @@ def append_token(url, token):
     return url
 
 
-def get_protocol(use_secure):
-    if use_secure:
+def get_protocol(secure):
+    if secure:
         return 'https'
     else:
         return 'http'
@@ -83,7 +83,7 @@ class PlexUpdate(BeetsPlugin):
             u'port': 32400,
             u'token': u'',
             u'library_name': u'Music',
-            u'use_secure': False,
+            u'secure': False,
             u'ignore_cert_errors': False})
 
         config['plex']['token'].redact = True
@@ -105,7 +105,7 @@ class PlexUpdate(BeetsPlugin):
                 config['plex']['port'].get(),
                 config['plex']['token'].get(),
                 config['plex']['library_name'].get(),
-                config['plex']['use_secure'].get(bool),
+                config['plex']['secure'].get(bool),
                 config['plex']['ignore_cert_errors'].get(bool))
             self._log.info(u'... started.')
 
