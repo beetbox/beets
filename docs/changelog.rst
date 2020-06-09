@@ -213,6 +213,7 @@ Fixes:
 * :doc:`/plugins/lyrics`: Fix crash when writing ReST files for a query without
   results or fetched lyrics
   :bug:`2805`
+* Adapt to breaking changes in Python's ``ast`` module in 3.8
 
 For plugin developers:
 
