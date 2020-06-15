@@ -217,7 +217,14 @@ class MbSeriesPlugin(BeetsPlugin):
                 series_id = series.search(mb_query)
                 self.albums(lib, query, series_id, move, pretend, write)
             else:
-                self._log.info('update all')
+                series = set()
+                for album in lib.albums('-mb_seriesid::^$'):
+                    series.add(album.mb_seriesid)
+
+                self._log.info(f'updating {len(series)} series')
+                for item in series:
+                    self.albums(lib, f'mb_seriesid:{item}', item,
+                                move, pretend, write)
 
         cmd = ui.Subcommand('series', help=u'Fetch series from MusicBrainz')
         cmd.parser.add_option(
