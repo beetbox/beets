@@ -218,7 +218,7 @@ class MbSeriesPlugin(BeetsPlugin):
                 self.albums(lib, query, series_id, move, pretend, write)
             else:
                 series = set()
-                for album in lib.albums('-mb_seriesid::^$'):
+                for album in lib.albums('mb_seriesid::.'):
                     series.add(album.mb_seriesid)
 
                 self._log.info(f'updating {len(series)} series')
