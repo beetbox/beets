@@ -424,7 +424,8 @@ class Genius(Backend):
             if hit_artist.lower() == artist.lower():
                 return self.lyrics_from_song_page(hit["result"]["url"])
 
-        self._log.debug(u'genius: no matching artist')
+        self._log.debug(u'Genius failed to find a matching artist for \'{0}\'',
+                        artist)
 
     def _clean(self, artist):
         """Cleans genius-isms to help artist matching"""
