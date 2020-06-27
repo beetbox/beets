@@ -214,6 +214,9 @@ Fixes:
   results or fetched lyrics
   :bug:`2805`
 * Adapt to breaking changes in Python's ``ast`` module in 3.8
+* :doc:`/plugins/fetchart`: Fetch pre-resized thumbnails from Cover Art Archive
+  if the ``maxwidth`` option matches one of the sizes supported by the Cover
+  Art Archive API.
 
 For plugin developers:
 
