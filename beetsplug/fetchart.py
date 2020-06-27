@@ -317,26 +317,12 @@ class CoverArtArchive(RemoteArtSource):
         """Return the Cover Art Archive and Cover Art Archive release group URLs
         using album MusicBrainz release ID and release group ID.
         """
-
-        # Cover Art Archive API offers pre-resized thumbnails at several sizes.
-        # If the maxwidth config matches one of the already available sizes
-        # fetch it directly intead of fetching the full sized image and
-        # resizing it.
-        release_url = self.URL
-        group_url = self.GROUP_URL
-        valid_thumbnail_sizes = [250, 500, 1200]
-        if plugin.maxwidth in valid_thumbnail_sizes:
-            size_suffix = "-" + str(plugin.maxwidth)
-            release_url += size_suffix
-            group_url += size_suffix
-
         if 'release' in self.match_by and album.mb_albumid:
-            yield self._candidate(
-                url=release_url.format(mbid=album.mb_albumid),
-                                       match=Candidate.MATCH_EXACT)
+            yield self._candidate(url=self.URL.format(mbid=album.mb_albumid),
+                                  match=Candidate.MATCH_EXACT)
         if 'releasegroup' in self.match_by and album.mb_releasegroupid:
             yield self._candidate(
-                url=group_url.format(mbid=album.mb_releasegroupid),
+                url=self.GROUP_URL.format(mbid=album.mb_releasegroupid),
                 match=Candidate.MATCH_FALLBACK)
 
 
