@@ -17,6 +17,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+import itertools
 import os
 import re
 import six
@@ -485,18 +486,28 @@ class SlugTests(unittest.TestCase):
         # plain ascii passthrough
         text = u"test"
         self.assertEqual(lyrics.slug(text), 'test')
+
         # german unicode and capitals
         text = u"Mørdag"
         self.assertEqual(lyrics.slug(text), 'mordag')
+
         # more accents and quotes
         text = u"l'été c'est fait pour jouer"
         self.assertEqual(lyrics.slug(text), 'l-ete-c-est-fait-pour-jouer')
+
         # accents, parens and spaces
         text = u"\xe7afe au lait (boisson)"
         self.assertEqual(lyrics.slug(text), 'cafe-au-lait-boisson')
         text = u"Multiple  spaces -- and symbols! -- merged"
         self.assertEqual(lyrics.slug(text),
                          'multiple-spaces-and-symbols-merged')
+        text = u"\u200Bno-width-space"
+        self.assertEqual(lyrics.slug(text), 'no-width-space')
+
+        # variations of dashes should get standardized
+        dashes = [u'\u200D', u'\u2010']
+        for dash1, dash2 in itertools.combinations(dashes, 2):
+            self.assertEqual(lyrics.slug(dash1), lyrics.slug(dash2))
 
 
 def suite():
