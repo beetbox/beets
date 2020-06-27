@@ -419,23 +419,13 @@ class Genius(Backend):
             return None
 
         for hit in json["response"]["hits"]:
-            hit_artist = self._clean(hit["result"]["primary_artist"]["name"])
+            hit_artist = hit["result"]["primary_artist"]["name"]
 
-            if hit_artist.lower() == artist.lower():
+            if slug(hit_artist) == slug(artist):
                 return self.lyrics_from_song_page(hit["result"]["url"])
 
         self._log.debug(u'Genius failed to find a matching artist for \'{0}\'',
                         artist)
-
-    def _clean(self, artist):
-        """Cleans genius-isms to help artist matching"""
-        # Genius uses zero-width characters to denote lowercase artist names
-        artist = artist.strip(u'\u200b')
-
-        # Genius uses minus-hypen compared to beets hyphen
-        artist = artist.replace(u'\u002D', u'\u2010')
-
-        return artist
 
 
 class LyricsWiki(SymbolsReplaced):
