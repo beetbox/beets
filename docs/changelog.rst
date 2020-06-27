@@ -129,6 +129,9 @@ New features:
 * :doc:`/plugins/plexupdate`: Add option to use secure connection to Plex
   server, and to ignore certificate validation errors if necessary.
   :bug:`2871`
+* :doc:`/plugins/lyrics`: Improved searching Genius backend when artist
+  contained special characters.
+  :bug:`3634`
 
 Fixes:
 
