@@ -69,7 +69,7 @@ Please be aware that this list might be out of date, but [setup.py](https://gith
 
 ### Code contribution ideas
 * We maintain a set of [issues marked as "bite-sized"](https://github.com/beetbox/beets/labels/bitesize). These are issues that would serve as a good introduction to the codebase. Claim one and start exploring!
-* Our [test coverage](https://codecov.io/github/beetbox/beets) is somewhat low. You can help out by finding low-coverage modules on Coveralls and adding new tests.
+* Like testing? Our [test coverage](https://codecov.io/github/beetbox/beets) is somewhat low. You can help out by finding low-coverage modules or checking out other [testing-related issues](https://github.com/beetbox/beets/labels/testing).
 * There are several ways to improve the tests in general (see [Testing](https://github.com/beetbox/beets/wiki/Testing)) and some places to think about performance optimization (see [Optimization](https://github.com/beetbox/beets/wiki/Optimization)).
 * Not all of our code is up to our coding conventions. In particular, the [API documentation][apidocs] are currently quite sparse. You can help by adding to the docstrings in the code and to the documentation pages themselves.
 
