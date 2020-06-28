@@ -12,7 +12,7 @@ Hi there, thank you for reporting a bug! Please read our `how to create a good b
 The better the bug report, the quicker we can get to fixing it :rocket:
 
 ## Description
-
+(overview of the issue)
 
 ### Steps to reproduce:
 Running this command in verbose (`-vv`) mode:
@@ -21,7 +21,10 @@ $ beet -vv (... paste here ...)
 ```
 
 ### Expected Result
+(What did you expect to happen?)
 
+### Actual Result
+(if more explanation needed beyond command output)
 
 ## Setup
 
