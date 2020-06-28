@@ -26,7 +26,7 @@ $ beet -vv (... paste here ...)
 ### Actual Result
 (if more explanation needed beyond command output)
 
-## Setup
+### Setup
 
 * OS: 
 * Python version: 
