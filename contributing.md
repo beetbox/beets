@@ -22,7 +22,7 @@ Following these guidelines helps to communicate that you respect the time of the
   comparing beets' performance to other tools. You can help by compiling a
   library of freely-licensed music files (preferably with incorrect metadata)
   for testing and measurement.
-* Think you have a nice config or unique use-case for beets? We'd love to hear about it! Submit a post to our [our forums](https://discourse.beets.io/) for a chance to get featured in our blog or use-case page.
+* Think you have a nice config or unique use-case for beets? We'd love to hear about it! Submit a post to our [our forums](https://discourse.beets.io/) under the label 'recipe' for a chance to get featured in our [docs](https://beets.readthedocs.io/en/stable/guides/advanced.html).
 * Consider helping out in [our forums](https://discourse.beets.io/) by responding to support requests or driving some new discussions. 
 
 [docs]: http://beets.readthedocs.org/
