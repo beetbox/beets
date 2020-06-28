@@ -15,12 +15,12 @@ The better the bug report, the quicker we can get to fixing it :rocket:
 
 
 ### Steps to reproduce:
-1. 
+Running this command in verbose (`-vv`) mode:
+```sh
+$ beet -vv (... paste here ...)
+```
 
 ### Expected Result
-
-
-### Actual Result
 
 
 ## Setup
@@ -28,6 +28,7 @@ The better the bug report, the quicker we can get to fixing it :rocket:
 * OS: 
 * Python version: 
 * beets version: 
+* Turning off plugins made problem go away (yes/no):
 
 <details>
   <summary>Minimum reproducible config:</summary>
