@@ -88,9 +88,19 @@ The documentation has an [API documentation section](https://beets.readthedocs.i
 There are a few coding conventions we use in beets:
 
 * Whenever you access the library database, do so through the provided Library
-  methods or via a Transaction object. Never call `lib.conn.*` directly.
-  Transaction objects help control concurrent access to the database and assist
-  in debugging conflicting accesses.
+  methods or via a Transaction object. Never call `lib.conn.*` directly. 
+  For example, do this:
+  ```
+  with g.lib.transaction() as tx:
+        rows = tx.query('SELECT DISTINCT "{0}" FROM "{1}" ORDER BY "{2}"'
+                        .format(field, model._table, sort_field))
+  ```  
+  To fetch Item objects from the database, use lib.items(...) and supply a query as an argument. Resist the urge to write raw SQL for your query. If you must use lower-level    queries into the database, do this:
+  ```
+  with lib.transaction() as tx:
+      rows = tx.query('SELECT …')
+  ```
+  Transaction objects help control concurrent access to the database and assist in debugging conflicting accesses.
 * Always use the [future imports][] `print_function`, `division`, and
   `absolute_import`, but *not* `unicode_literals`. These help keep your code
   modern and will help in the eventual move to Python 3.
