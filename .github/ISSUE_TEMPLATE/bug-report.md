@@ -6,37 +6,33 @@ about: Report a problem with beets
 
 <!--
 Describe your problem, feature request, or discussion topic here.
-
-Please fill out this and the "Setup" section below and remember to include
-enough detail so that other people can reproduce the problem.
 -->
 
-### Problem
+Hi there, thank you for reporting a bug! Please read our `how to create a good bug report` wiki page to expedite the process of diagnosing the issue.
+The better the bug report, the quicker we can get to fixing it :rocket:
 
-Running this command in verbose (`-vv`) mode:
-
-```sh
-$ beet -vv (... paste here ...)
-```
-
-Led to this problem:
-
-```
-(paste here)
-```
-
-Here's a link to the music files that trigger the bug (if relevant):
+## Description
 
 
-### Setup
+### Steps to reproduce:
+1. 
+
+### Expected Result
+
+
+### Actual Result
+
+
+## Setup
 
 * OS: 
 * Python version: 
 * beets version: 
-* Turning off plugins made problem go away (yes/no): 
 
-My configuration (output of `beet config`) is:
-
+<details>
+  <summary>Minimum reproducible config:</summary>
+  
 ```yaml
-(paste here)
+(paste config here)
 ```
+</details>
