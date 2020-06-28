@@ -51,21 +51,6 @@ the parent directory where the source will be checked out and the `--user` optio
 such that the package will be installed to your home directory (compare with the output of
 `pip install --help`). 
 
-Alternatively, you can get the source via 
-[git at GitHub](http://github.com/beetbox/beets). The pip method above installs
-dependencies automatically, but if you do it manually, you can use pip to
-install these Python modules:  
-* `mutagen`
-* `munkres`
-* `unidecode`
-* `pyYAML`
-* `musicbrainzngs`
-* `confuse`
-* `mediafile`
-* `jellyfish`
-
-Please be aware that this list might be out of date, but [setup.py](https://github.com/beetbox/beets/blob/60bba370c0ecc58b4057d78867273e5936d22dee/setup.py#L89-L110) contains a list that is always up to date. With all the required modules in place, you can just type `./beet` in the source directory to run beets from there.
-
 
 ### Code contribution ideas
 * We maintain a set of [issues marked as "bite-sized"](https://github.com/beetbox/beets/labels/bitesize). These are issues that would serve as a good introduction to the codebase. Claim one and start exploring!
