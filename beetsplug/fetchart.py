@@ -140,7 +140,7 @@ class Candidate(object):
                                                  quality=plugin.quality)
 
 
-def _logged_get(log, *args, **kwargs):
+def _logged_request(log, *args, **kwargs):
     """Like `requests.get`, but logs the effective URL to the specified
     `log` at the `DEBUG` level.
 
@@ -165,7 +165,14 @@ def _logged_get(log, *args, **kwargs):
     else:
         message = 'getting URL'
 
-    req = requests.Request('GET', *args, **req_kwargs)
+    # Default method is GET, but another method can be provided through the
+    # `method` paremeter.
+    if 'method' in kwargs:
+        method = kwargs.pop('method')
+    else:
+        method = 'GET'
+
+    req = requests.Request(method, *args, **req_kwargs)
 
     with requests.Session() as s:
         s.headers = {'User-Agent': 'beets'}
@@ -186,9 +193,9 @@ class RequestMixin(object):
     def request(self, *args, **kwargs):
         """Like `requests.get`, but uses the logger `self._log`.
 
-        See also `_logged_get`.
+        See also `_logged_request`.
         """
-        return _logged_get(self._log, *args, **kwargs)
+        return _logged_request(self._log, *args, **kwargs)
 
 
 # ART SOURCES ################################################################
@@ -305,6 +312,7 @@ class RemoteArtSource(ArtSource):
 class CoverArtArchive(RemoteArtSource):
     NAME = u"Cover Art Archive"
     VALID_MATCHING_CRITERIA = ['release', 'releasegroup']
+    VALID_THUMBNAIL_SIZES = [250, 500, 1200]
 
     if util.SNI_SUPPORTED:
         URL = 'https://coverartarchive.org/release/{mbid}/front'
@@ -317,13 +325,37 @@ class CoverArtArchive(RemoteArtSource):
         """Return the Cover Art Archive and Cover Art Archive release group URLs
         using album MusicBrainz release ID and release group ID.
         """
+        candidate_url = ""
         if 'release' in self.match_by and album.mb_albumid:
-            yield self._candidate(url=self.URL.format(mbid=album.mb_albumid),
-                                  match=Candidate.MATCH_EXACT)
+            candidate_url = self.URL.format(mbid=album.mb_albumid)
+            match_type = Candidate.MATCH_EXACT
         if 'releasegroup' in self.match_by and album.mb_releasegroupid:
-            yield self._candidate(
-                url=self.GROUP_URL.format(mbid=album.mb_releasegroupid),
-                match=Candidate.MATCH_FALLBACK)
+            candidate_url = self.GROUP_URL.format(
+                            mbid=album.mb_releasegroupid)
+            match_type = Candidate.MATCH_FALLBACK
+
+        # Cover Art Archive API offers pre-resized thumbnails at several sizes.
+        # If the maxwidth config matches one of the already available sizes
+        # fetch it directly intead of fetching the full sized image and
+        # resizing it.
+        if plugin.maxwidth in self.VALID_THUMBNAIL_SIZES:
+            # Confirm that the thumbnail image exists, otherwise fall back to
+            # the default front image URL.
+            size_suffix = "-" + str(plugin.maxwidth)
+            candidate_thumbnail_url = candidate_url + size_suffix
+
+            with closing(self.request(candidate_thumbnail_url, method='HEAD',
+                         message=u'checking for thumbnail')) as resp:
+                try:
+                    resp.raise_for_status()
+                except requests.exceptions.HTTPError:
+                    self._log.debug(u'thumbnail not available')
+                else:
+                    self._log.debug(u'thumbnail available')
+                    candidate_url = candidate_thumbnail_url
+
+        if candidate_url:
+            yield self._candidate(url=candidate_url, match=match_type)
 
 
 class Amazon(RemoteArtSource):
