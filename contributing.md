@@ -72,7 +72,7 @@ Do you have a great bug fix, new feature, or documentation expansion you'd like 
 3. Add tests. If you've fixed a bug, write a test to ensure that you've actually fixed it. If there's a new feature or plugin, please contribute tests that show that your code does what it says.
 4. Add documentation. If you've added a new command flag, for example, find the appropriate page under `docs/` where it needs to be listed.
 5. Add a changelog entry to `docs/changelog.rst` near the top of the document.
-6. Run the tests and style checker. The easiest way to run the full battery of tests is to use [tox](https://tox.readthedocs.org/en/latest/). This will run the same set of tests that we run on Travis.
+6. Run the tests and style checker. The easiest way to run the full battery of tests is to use [tox](https://tox.readthedocs.org/en/latest/). This will run the same set of tests that we run on Travis. For more information on running tests, see our [Testing wiki page](https://github.com/beetbox/beets/wiki/Testing).
 7. Push to your fork and open a pull request! We'll be in touch soon.
 8. If you add commits to a pull request, please *add a comment* after you push them. (GitHub doesn't notify us when commits are added, so we need your comment so we get an email alert.)
 
