@@ -87,7 +87,7 @@ Check out the `Getting Started`_ guide for more information.
 .. _Getting Started: https://beets.readthedocs.org/page/guides/main.html
 .. _software repositories: https://repology.org/project/beets/versions
 
-Contributing
+Contribute
 ----------
 
 Thank you for considering contributing to ``beets``! Whether you're a programmer or not, you should be able to find all the info you need at `Contributing.md`_.
