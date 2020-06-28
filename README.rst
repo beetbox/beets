@@ -87,14 +87,12 @@ Check out the `Getting Started`_ guide for more information.
 .. _Getting Started: https://beets.readthedocs.org/page/guides/main.html
 .. _software repositories: https://repology.org/project/beets/versions
 
-Contribute
+Contributing
 ----------
 
-Check out the `Hacking`_ page on the wiki for tips on how to help out.
-You might also be interested in the `For Developers`_ section in the docs.
+Thank you for considering contributing to ``beets``! Whether you're a programmer or not, you should be able to find all the info you need at `Contributing.md`_.
 
-.. _Hacking: https://github.com/beetbox/beets/wiki/Hacking
-.. _For Developers: https://beets.readthedocs.io/en/stable/dev/
+.. _Contributing.md: https://github.com/beetbox/beets/blob/contributing.md/contributing.md
 
 Read More
 ---------
@@ -104,6 +102,17 @@ news and updates.
 
 .. _its Web site: https://beets.io/
 .. _@b33ts: https://twitter.com/b33ts/
+
+Contact
+-------
+* Encountered a bug you'd like to report or have an idea for a new feature? Check our our `issue tracker`_! If your issue or feature hasn't already been reported, please `open a new ticket`_ and we'll be in touch with you shortly.
+* Need help/support, would like to start a discussion, or would just like to introduce yourself to the team? Check out our `forums`_!
+* If you are a developer or a prospective developer looking for some guidance, we have a `gitter chat`_. Feel free to stop by anytime!
+
+.. _issue tracker: https://github.com/beetbox/beets/issues
+.. _open a new ticket: https://github.com/beetbox/beets/issues/new/choose
+.. _forums: https://discourse.beets.io/
+.. _gitter chat: https://gitter.im/beetbox/beets
 
 Authors
 -------
