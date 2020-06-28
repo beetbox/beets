@@ -359,16 +359,10 @@ class Genius(Backend):
             'User-Agent': USER_AGENT,
         }
 
-    def lyrics_from_song_page(self, page_url):
-        # Gotta go regular html scraping... come on Genius.
-        self._log.debug(u'fetching lyrics from: {0}', page_url)
-        try:
-            page = requests.get(page_url)
-        except requests.RequestException as exc:
-            self._log.debug(u'Genius page request for {0} failed: {1}',
-                            page_url, exc)
-            return None
-        html = BeautifulSoup(page.text, "html.parser")
+    def scrape_lyrics_from_song_page(self, html):
+        """Scrape lyrics from a given genius.com song url"""
+
+        html = BeautifulSoup(html, "html.parser")
 
         # Remove script tags that they put in the middle of the lyrics.
         [h.extract() for h in html('script')]
@@ -422,7 +416,8 @@ class Genius(Backend):
             hit_artist = hit["result"]["primary_artist"]["name"]
 
             if slug(hit_artist) == slug(artist):
-                return self.lyrics_from_song_page(hit["result"]["url"])
+                return self.scrape_lyrics_from_song_page(
+                    self.fetch_url(hit["result"]["url"]))
 
         self._log.debug(u'Genius failed to find a matching artist for \'{0}\'',
                         artist)
