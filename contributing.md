@@ -28,7 +28,8 @@ Following these guidelines helps to communicate that you respect the time of the
 [docs]: http://beets.readthedocs.org/
 
 ## Programming contributions
-As a programmer (even if you're just a beginner!), you have a ton of opportunities to get your feet wet with `beets`
+* As a programmer (even if you're just a beginner!), you have a ton of opportunities to get your feet wet with `beets`. 
+* For developing plugins, or hacking away at beets, there's some good information in the [for developers](https://beets.readthedocs.io/en/stable/dev/) section of the docs.
 
 ### Getting the Source
 
@@ -64,6 +65,7 @@ install these Python modules:
 * `jellyfish`
 
 Please be aware that this list might be out of date, but [setup.py](https://github.com/beetbox/beets/blob/60bba370c0ecc58b4057d78867273e5936d22dee/setup.py#L89-L110) contains a list that is always up to date. With all the required modules in place, you can just type `./beet` in the source directory to run beets from there.
+
 
 ### Code contribution ideas
 * We maintain a set of [issues marked as "bite-sized"](https://github.com/beetbox/beets/labels/bitesize). These are issues that would serve as a good introduction to the codebase. Claim one and start exploring!
