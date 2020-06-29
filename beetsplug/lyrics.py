@@ -359,8 +359,52 @@ class Genius(Backend):
             'User-Agent': USER_AGENT,
         }
 
-    def scrape_lyrics_from_song_page(self, html):
-        """Scrape lyrics from a given genius.com song url"""
+    def fetch(self, artist, title):
+        """Fetch lyrics from genius.com
+
+        Because genius doesn't allow accesssing lyrics via the api,
+        we first query the api for a url matching our artist & title,
+        then attempt to scrape that url for the lyrics.
+        """
+        json = self._search(artist, title)
+        if not json:
+            self._log.debug(u'Genius API request returned invalid JSON')
+            return None
+
+        # find a matching artist in the json
+        for hit in json["response"]["hits"]:
+            hit_artist = hit["result"]["primary_artist"]["name"]
+
+            if slug(hit_artist) == slug(artist):
+                return self._scrape_lyrics_from_html(
+                    self.fetch_url(hit["result"]["url"]))
+
+        self._log.debug(u'Genius failed to find a matching artist for \'{0}\'',
+                        artist)
+
+    def _search(self, artist, title):
+        """Searches the genius api for a given artist and title
+
+        https://docs.genius.com/#search-h2
+
+        :returns: json response
+        """
+        search_url = self.base_url + "/search"
+        data = {'q': title + " " + artist.lower()}
+        try:
+            response = requests.get(
+                search_url, data=data, headers=self.headers)
+        except requests.RequestException as exc:
+            self._log.debug(u'Genius API request failed: {0}', exc)
+            return None
+
+        try:
+            return response.json()
+        except ValueError:
+            return None
+
+    def _scrape_lyrics_from_html(self, html):
+        """Scrape lyrics from a given genius.com html"""
 
         html = BeautifulSoup(html, "html.parser")
 
@@ -395,32 +439,6 @@ class Genius(Backend):
                 ad.replace_with("\n")
 
         return lyrics_div.get_text()
-
-    def fetch(self, artist, title):
-        search_url = self.base_url + "/search"
-        data = {'q': title + " " + artist.lower()}
-        try:
-            response = requests.get(search_url, data=data,
-                                    headers=self.headers)
-        except requests.RequestException as exc:
-            self._log.debug(u'Genius API request failed: {0}', exc)
-            return None
-
-        try:
-            json = response.json()
-        except ValueError:
-            self._log.debug(u'Genius API request returned invalid JSON')
-            return None
-
-        for hit in json["response"]["hits"]:
-            hit_artist = hit["result"]["primary_artist"]["name"]
-
-            if slug(hit_artist) == slug(artist):
-                return self.scrape_lyrics_from_song_page(
-                    self.fetch_url(hit["result"]["url"]))
-
-        self._log.debug(u'Genius failed to find a matching artist for \'{0}\'',
-                        artist)
 
 
 class LyricsWiki(SymbolsReplaced):
