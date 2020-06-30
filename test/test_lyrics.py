@@ -23,18 +23,15 @@ import re
 import six
 import sys
 import unittest
+from unittest.mock import MagicMock, patch
 
-from mock import Mock, patch
-from test import _common
+import confuse
 
 from beets import logging
 from beets.library import Item
 from beets.util import bytestring_path
-import confuse
-
 from beetsplug import lyrics
-
-from mock import MagicMock
+from test import _common
 
 
 log = logging.getLogger('beets.test_lyrics')
