@@ -22,9 +22,7 @@ Beets works on `Python 2.7`_ and Python 3.4 or later.
   official package (`Debian details`_, `Ubuntu details`_), so try typing:
   ``apt-get install beets``. But the version in the repositories might lag
   behind, so make sure you read the right version of these docs. If you want
-  the latest version, you can get everything you need to install with pip
-  as described below by running:
-  ``apt-get install python-dev python-pip``
+  the latest version, you can use the `snap <snap_>`_.
 
 * On **Arch Linux**, `beets is in [community] <Arch community_>`_, so just run ``pacman -S
   beets``. (There's also a bleeding-edge `dev package <AUR_>`_ in the AUR, which will
@@ -48,6 +46,8 @@ Beets works on `Python 2.7`_ and Python 3.4 or later.
 
 * On **NixOS**, there's a `package <NixOS_>`_ you can install with ``nix-env -i beets``.
 
+* On **snap** enabled systems, there's a `snap <snap>_`_.
+
 .. _DNF package: https://apps.fedoraproject.org/packages/beets
 .. _SlackBuild: https://slackbuilds.org/repository/14.2/multimedia/beets/
 .. _FreeBSD: http://portsmon.freebsd.org/portoverview.py?category=audio&portname=beets
@@ -57,6 +57,7 @@ Beets works on `Python 2.7`_ and Python 3.4 or later.
 .. _OpenBSD: http://openports.se/audio/beets
 .. _Arch community: https://www.archlinux.org/packages/community/any/beets/
 .. _NixOS: https://github.com/NixOS/nixpkgs/tree/master/pkgs/tools/audio/beets
+.. _snap: https://snapcraft.io/beets
 
 If you have `pip`_, just say ``pip install beets`` (or ``pip install --user
 beets`` if you run into permissions problems).

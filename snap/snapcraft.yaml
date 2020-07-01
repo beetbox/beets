@@ -1,0 +1,35 @@
+name: beets
+base: core20
+summary: Beets is the media library management system for obsessive music geeks.
+description: |
+  The purpose of beets is to get your music collection right once and for all.
+  It catalogs your collection, automatically improving its metadata as it goes.
+  It then provides a bouquet of tools for manipulating and accessing your music.
+confinement: strict
+adopt-info: beets
+
+apps:
+  beet:
+    command: bin/beet
+    plugs:
+      - home
+      - removable-media
+      - network
+      - network-bind
+
+parts:
+  beets:
+    source: .
+    override-pull: |
+      snapcraftctl pull
+      version="$(git describe --always --tags| sed -e 's/^v//;s/-/+git/;y/-/./')"
+      [ -n "$(echo $version | grep "+git")" ] && grade=devel || grade=stable
+      snapcraftctl set-version "$version"
+      snapcraftctl set-grade "$grade"
+    plugin: python
+    python-packages:
+      - requests
+      - Pillow
+      - pylast
+      - pyxdg
+      - wheel
