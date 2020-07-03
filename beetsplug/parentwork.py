@@ -131,6 +131,8 @@ class ParentWorkPlugin(BeetsPlugin):
                 if artist['type'] == 'composer':
                     parent_composer.append(artist['artist']['name'])
                     parent_composer_sort.append(artist['artist']['sort-name'])
+                    if 'end' in artist.keys():
+                        parentwork_info["parentwork_date"] = artist['end']
 
             parentwork_info['parent_composer'] = u', '.join(parent_composer)
             parentwork_info['parent_composer_sort'] = u', '.join(
@@ -207,4 +209,4 @@ add one at https://musicbrainz.org/recording/{}', item, item.mb_trackid)
             item, fields=['parentwork', 'parentwork_disambig',
                           'mb_parentworkid', 'parent_composer',
                           'parent_composer_sort', 'work_date',
-                          'parentwork_workid_current'])
+                          'parentwork_workid_current', 'parentwork_date'])

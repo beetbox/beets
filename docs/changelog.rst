@@ -132,6 +132,10 @@ New features:
 * :doc:`/plugins/lyrics`: Improved searching Genius backend when artist
   contained special characters.
   :bug:`3634`
+* :doc:`/plugins/parentwork`: Also get the composition date of the parent work,
+  instead of just the child work.
+  Thanks to :user:`aereaux`.
+  :bug:`3650`
 
 Fixes:
 
