@@ -7,7 +7,6 @@
 
 # Project Specific patterns
 man
-test/rsrc/lyrics/*
 
 # The rest is from https://www.gitignore.io/api/python
 
