@@ -23,9 +23,9 @@ import re
 import six
 import sys
 import unittest
-from unittest.mock import MagicMock, patch
 
 import confuse
+from mock import MagicMock, patch
 
 from beets import logging
 from beets.library import Item
