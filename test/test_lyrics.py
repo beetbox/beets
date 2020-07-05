@@ -18,6 +18,7 @@
 from __future__ import absolute_import, division, print_function
 
 import itertools
+from io import open
 import os
 import re
 import six
