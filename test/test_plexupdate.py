@@ -93,7 +93,9 @@ class PlexUpdateTest(unittest.TestCase, TestHelper):
             self.config['plex']['host'],
             self.config['plex']['port'],
             self.config['plex']['token'],
-            self.config['plex']['library_name'].get()), '2')
+            self.config['plex']['library_name'].get(),
+            self.config['plex']['secure'],
+            self.config['plex']['ignore_cert_errors']), '2')
 
     @responses.activate
     def test_get_named_music_section(self):
@@ -104,7 +106,9 @@ class PlexUpdateTest(unittest.TestCase, TestHelper):
             self.config['plex']['host'],
             self.config['plex']['port'],
             self.config['plex']['token'],
-            'My Music Library'), '2')
+            'My Music Library',
+            self.config['plex']['secure'],
+            self.config['plex']['ignore_cert_errors']), '2')
 
     @responses.activate
     def test_update_plex(self):
@@ -117,7 +121,9 @@ class PlexUpdateTest(unittest.TestCase, TestHelper):
             self.config['plex']['host'],
             self.config['plex']['port'],
             self.config['plex']['token'],
-            self.config['plex']['library_name'].get()).status_code, 200)
+            self.config['plex']['library_name'].get(),
+            self.config['plex']['secure'],
+            self.config['plex']['ignore_cert_errors']).status_code, 200)
 
 
 def suite():

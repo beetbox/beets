@@ -6,6 +6,7 @@ Changelog
 
 New features:
 
+* :doc:`/plugins/lastgenre`: Added more heavy metal genres: https://en.wikipedia.org/wiki/Heavy_metal_genres to genres.txt and genres-tree.yaml
 * :doc:`/plugins/subsonicplaylist`: import playlist from a subsonic server.
 * A new :ref:`extra_tags` configuration option allows more tagged metadata
   to be included in MusicBrainz queries.
@@ -123,6 +124,14 @@ New features:
   separators to support path queries.
   Thanks to :user:`nmeum`.
   :bug:`3567`
+* ``beet import`` now handles tar archives with bzip2 or gzip compression.
+  :bug:`3606`
+* :doc:`/plugins/plexupdate`: Add option to use secure connection to Plex
+  server, and to ignore certificate validation errors if necessary.
+  :bug:`2871`
+* :doc:`/plugins/lyrics`: Improved searching Genius backend when artist
+  contained special characters.
+  :bug:`3634`
 
 Fixes:
 
@@ -201,6 +210,18 @@ Fixes:
   The log message has also been rewritten for to improve clarity.
   Thanks to :user:`autrimpo`.
   :bug:`3533`
+* :doc:`/plugins/lyrics`: Adapt the Genius backend to changes in markup to
+  reduce the scraping failure rate.
+  :bug:`3535` :bug:`3594`
+* :doc:`/plugins/lyrics`: Fix crash when writing ReST files for a query without
+  results or fetched lyrics
+  :bug:`2805`
+* Adapt to breaking changes in Python's ``ast`` module in 3.8
+* :doc:`/plugins/fetchart`: Attempt to fetch pre-resized thumbnails from Cover
+  Art Archive if the ``maxwidth`` option matches one of the sizes supported by
+  the Cover Art Archive API.
+  Thanks to :user:`trolley`.
+  :bug:`3637`
 
 For plugin developers:
 

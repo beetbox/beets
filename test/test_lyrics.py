@@ -17,6 +17,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+import itertools
 import os
 import re
 import six
@@ -456,7 +457,7 @@ class LyricsGeniusBaseTest(unittest.TestCase):
             self.skipTest("Python's built-in HTML parser is not good enough")
 
 
-class LyricsGeniusScrapTest(LyricsGeniusBaseTest):
+class LyricsGeniusScrapeTest(LyricsGeniusBaseTest):
 
     """Checks that Genius backend works as intended.
     """
@@ -469,12 +470,13 @@ class LyricsGeniusScrapTest(LyricsGeniusBaseTest):
 
     @patch.object(requests, 'get', GeniusMockGet())
     def test_no_lyrics_div(self):
-        """Ensure that `lyrics_from_song_api_path` doesn't crash when the html
-        for a Genius page contain <div class="lyrics"></div>
+        """Ensure that `lyrics_from_song_page` doesn't crash when the html
+        for a Genius page doesn't contain <div class="lyrics"></div>
         """
         # https://github.com/beetbox/beets/issues/3535
         # expected return value None
-        self.assertEqual(genius.lyrics_from_song_api_path('/nolyric'),
+        song_url = 'https://genius.com/sample'
+        self.assertEqual(genius.lyrics_from_song_page(song_url),
                          None)
 
 
@@ -484,18 +486,28 @@ class SlugTests(unittest.TestCase):
         # plain ascii passthrough
         text = u"test"
         self.assertEqual(lyrics.slug(text), 'test')
+
         # german unicode and capitals
         text = u"Mørdag"
         self.assertEqual(lyrics.slug(text), 'mordag')
+
         # more accents and quotes
         text = u"l'été c'est fait pour jouer"
         self.assertEqual(lyrics.slug(text), 'l-ete-c-est-fait-pour-jouer')
+
         # accents, parens and spaces
         text = u"\xe7afe au lait (boisson)"
         self.assertEqual(lyrics.slug(text), 'cafe-au-lait-boisson')
         text = u"Multiple  spaces -- and symbols! -- merged"
         self.assertEqual(lyrics.slug(text),
                          'multiple-spaces-and-symbols-merged')
+        text = u"\u200Bno-width-space"
+        self.assertEqual(lyrics.slug(text), 'no-width-space')
+
+        # variations of dashes should get standardized
+        dashes = [u'\u200D', u'\u2010']
+        for dash1, dash2 in itertools.combinations(dashes, 2):
+            self.assertEqual(lyrics.slug(dash1), lyrics.slug(dash2))
 
 
 def suite():

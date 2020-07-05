@@ -359,14 +359,9 @@ class Genius(Backend):
             'User-Agent': USER_AGENT,
         }
 
-    def lyrics_from_song_api_path(self, song_api_path):
-        song_url = self.base_url + song_api_path
-        response = requests.get(song_url, headers=self.headers)
-        json = response.json()
-        path = json["response"]["song"]["path"]
-
+    def lyrics_from_song_page(self, page_url):
         # Gotta go regular html scraping... come on Genius.
-        page_url = "https://genius.com" + path
+        self._log.debug(u'fetching lyrics from: {0}', page_url)
         try:
             page = requests.get(page_url)
         except requests.RequestException as exc:
@@ -378,19 +373,38 @@ class Genius(Backend):
         # Remove script tags that they put in the middle of the lyrics.
         [h.extract() for h in html('script')]
 
-        # At least Genius is nice and has a tag called 'lyrics'!
-        # Updated css where the lyrics are based in HTML.
+        # Most of the time, the page contains a div with class="lyrics" where
+        # all of the lyrics can be found already correctly formatted
+        # Sometimes, though, it packages the lyrics into separate divs, most
+        # likely for easier ad placement
         lyrics_div = html.find("div", class_="lyrics")
-        if lyrics_div is None:
-            self._log.debug(u'Genius lyrics for {0} not found',
-                            page_url)
-            return None
+        if not lyrics_div:
+            self._log.debug(u'Received unusual song page html')
+            verse_div = html.find("div",
+                                  class_=re.compile("Lyrics__Container"))
+            if not verse_div:
+                if html.find("div",
+                             class_=re.compile("LyricsPlaceholder__Message"),
+                             string="This song is an instrumental"):
+                    self._log.debug('Detected instrumental')
+                    return "[Instrumental]"
+                else:
+                    self._log.debug("Couldn't scrape page using known layouts")
+                    return None
+
+            lyrics_div = verse_div.parent
+            for br in lyrics_div.find_all("br"):
+                br.replace_with("\n")
+            ads = lyrics_div.find_all("div",
+                                      class_=re.compile("InreadAd__Container"))
+            for ad in ads:
+                ad.replace_with("\n")
 
         return lyrics_div.get_text()
 
     def fetch(self, artist, title):
         search_url = self.base_url + "/search"
-        data = {'q': title}
+        data = {'q': title + " " + artist.lower()}
         try:
             response = requests.get(search_url, data=data,
                                     headers=self.headers)
@@ -404,23 +418,14 @@ class Genius(Backend):
             self._log.debug(u'Genius API request returned invalid JSON')
             return None
 
-        song_info = None
         for hit in json["response"]["hits"]:
-            # Genius uses zero-width characters to denote lowercase
-            # artist names.
-            hit_artist = hit["result"]["primary_artist"]["name"]. \
-                strip(u'\u200b').lower()
+            hit_artist = hit["result"]["primary_artist"]["name"]
 
-            if hit_artist == artist.lower():
-                song_info = hit
-                break
+            if slug(hit_artist) == slug(artist):
+                return self.lyrics_from_song_page(hit["result"]["url"])
 
-        if song_info:
-            self._log.debug(u'fetched: {0}', song_info["result"]["url"])
-            song_api_path = song_info["result"]["api_path"]
-            return self.lyrics_from_song_api_path(song_api_path)
-        else:
-            self._log.debug(u'genius: no matching artist')
+        self._log.debug(u'Genius failed to find a matching artist for \'{0}\'',
+                        artist)
 
 
 class LyricsWiki(SymbolsReplaced):
@@ -763,7 +768,8 @@ class LyricsPlugin(plugins.BeetsPlugin):
             write = ui.should_write()
             if opts.writerest:
                 self.writerest_indexes(opts.writerest)
-            for item in lib.items(ui.decargs(args)):
+            items = lib.items(ui.decargs(args))
+            for item in items:
                 if not opts.local_only and not self.config['local']:
                     self.fetch_item_lyrics(
                         lib, item, write,
@@ -773,10 +779,10 @@ class LyricsPlugin(plugins.BeetsPlugin):
                     if opts.printlyr:
                         ui.print_(item.lyrics)
                     if opts.writerest:
-                        self.writerest(opts.writerest, item)
-            if opts.writerest:
-                # flush last artist
-                self.writerest(opts.writerest, None)
+                        self.appendrest(opts.writerest, item)
+            if opts.writerest and items:
+                # flush last artist & write to ReST
+                self.writerest(opts.writerest)
                 ui.print_(u'ReST files generated. to build, use one of:')
                 ui.print_(u'  sphinx-build -b html %s _build/html'
                           % opts.writerest)
@@ -788,26 +794,21 @@ class LyricsPlugin(plugins.BeetsPlugin):
         cmd.func = func
         return [cmd]
 
-    def writerest(self, directory, item):
-        """Write the item to an ReST file
+    def appendrest(self, directory, item):
+        """Append the item to an ReST file
 
         This will keep state (in the `rest` variable) in order to avoid
         writing continuously to the same files.
         """
 
-        if item is None or slug(self.artist) != slug(item.albumartist):
-            if self.rest is not None:
-                path = os.path.join(directory, 'artists',
-                                    slug(self.artist) + u'.rst')
-                with open(path, 'wb') as output:
-                    output.write(self.rest.encode('utf-8'))
-                self.rest = None
-                if item is None:
-                    return
+        if slug(self.artist) != slug(item.albumartist):
+            # Write current file and start a new one ~ item.albumartist
+            self.writerest(directory)
             self.artist = item.albumartist.strip()
             self.rest = u"%s\n%s\n\n.. contents::\n   :local:\n\n" \
                         % (self.artist,
                            u'=' * len(self.artist))
+
         if self.album != item.album:
             tmpalbum = self.album = item.album.strip()
             if self.album == '':
@@ -818,6 +819,15 @@ class LyricsPlugin(plugins.BeetsPlugin):
         self.rest += u"%s\n%s\n\n%s\n\n" % (title_str,
                                             u'~' * len(title_str),
                                             block)
+
+    def writerest(self, directory):
+        """Write self.rest to a ReST file
+        """
+        if self.rest is not None and self.artist is not None:
+            path = os.path.join(directory, 'artists',
+                                slug(self.artist) + u'.rst')
+            with open(path, 'wb') as output:
+                output.write(self.rest.encode('utf-8'))
 
     def writerest_indexes(self, directory):
         """Write conf.py and index.rst files necessary for Sphinx
@@ -900,7 +910,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 return _scrape_strip_cruft(lyrics, True)
 
     def append_translation(self, text, to_lang):
-        import xml.etree.ElementTree as ET
+        from xml.etree import ElementTree
 
         if not self.bing_auth_token:
             self.bing_auth_token = self.get_bing_access_token()
@@ -918,7 +928,8 @@ class LyricsPlugin(plugins.BeetsPlugin):
                     self.bing_auth_token = None
                     return self.append_translation(text, to_lang)
                 return text
-            lines_translated = ET.fromstring(r.text.encode('utf-8')).text
+            lines_translated = ElementTree.fromstring(
+                r.text.encode('utf-8')).text
             # Use a translation mapping dict to build resulting lyrics
             translations = dict(zip(text_lines, lines_translated.split('|')))
             result = ''
