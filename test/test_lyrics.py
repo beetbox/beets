@@ -229,7 +229,7 @@ class MockFetchUrl(object):
     def __call__(self, url, filename=None):
         self.fetched = url
         fn = url_to_filename(url)
-        with open(fn, 'r') as f:
+        with open(fn, 'r', encoding="utf8") as f:
             content = f.read()
         return content
 
