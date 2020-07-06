@@ -269,8 +269,8 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
 
     DEFAULT_SOURCES = [
         dict(DEFAULT_SONG, backend=lyrics.LyricsWiki),
-        dict(artist=u'Santana', title=u'Black magic woman',
-             backend=lyrics.MusiXmatch),
+        # dict(artist=u'Santana', title=u'Black magic woman',
+        #      backend=lyrics.MusiXmatch),
         dict(DEFAULT_SONG, backend=lyrics.Genius),
     ]
 
@@ -284,9 +284,9 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
         dict(DEFAULT_SONG,
              url=u'http://www.chartlyrics.com',
              path=u'/_LsLsZ7P4EK-F-LD4dJgDQ/Lady+Madonna.aspx'),
-        dict(DEFAULT_SONG,
-             url=u'http://www.elyricsworld.com',
-             path=u'/lady_madonna_lyrics_beatles.html'),
+        # dict(DEFAULT_SONG,
+        #      url=u'http://www.elyricsworld.com',
+        #      path=u'/lady_madonna_lyrics_beatles.html'),
         dict(url=u'http://www.lacoccinelle.net',
              artist=u'Jacques Brel', title=u"Amsterdam",
              path=u'/paroles-officielles/275679.html'),
@@ -303,11 +303,11 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
         dict(url=u'http://www.lyricsontop.com',
              artist=u'Amy Winehouse', title=u"Jazz'n'blues",
              path=u'/amy-winehouse-songs/jazz-n-blues-lyrics.html'),
-        dict(DEFAULT_SONG,
-             url='http://www.metrolyrics.com/',
-             path='lady-madonna-lyrics-beatles.html'),
-        dict(url='http://www.musica.com/', path='letras.asp?letra=2738',
-             artist=u'Santana', title=u'Black magic woman'),
+        # dict(DEFAULT_SONG,
+        #      url='http://www.metrolyrics.com/',
+        #      path='lady-madonna-lyrics-beatles.html'),
+        # dict(url='http://www.musica.com/', path='letras.asp?letra=2738',
+        #      artist=u'Santana', title=u'Black magic woman'),
         dict(url=u'http://www.paroles.net/',
              artist=u'Lilly Wood & the prick', title=u"Hey it's ok",
              path=u'lilly-wood-the-prick/paroles-hey-it-s-ok'),
@@ -323,9 +323,9 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
         LyricsGoogleBaseTest.setUp(self)
         self.plugin = lyrics.LyricsPlugin()
 
-    @unittest.skipUnless(os.environ.get(
-        'BEETS_TEST_LYRICS_SOURCES', '0') == '1',
-        'lyrics sources testing not enabled')
+    @unittest.skipUnless(
+        os.environ.get('INTEGRATION_TEST', '0') == '1',
+        'integration testing not enabled')
     def test_backend_sources_ok(self):
         """Test default backends with songs known to exist in respective databases.
         """
@@ -337,9 +337,9 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
                 errors.append(s['backend'].__name__)
         self.assertFalse(errors)
 
-    @unittest.skipUnless(os.environ.get(
-        'BEETS_TEST_LYRICS_SOURCES', '0') == '1',
-        'lyrics sources testing not enabled')
+    @unittest.skipUnless(
+        os.environ.get('INTEGRATION_TEST', '0') == '1',
+        'integration testing not enabled')
     def test_google_sources_ok(self):
         """Test if lyrics present on websites registered in beets google custom
            search engine are correctly scraped.
