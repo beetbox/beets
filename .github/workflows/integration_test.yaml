@@ -10,7 +10,6 @@ jobs:
     env:
       NOSE_SHOW_SKIPPED: 1
       PY_COLOR: 1
-      INTEGRATION_TEST: 1
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python 3.8
@@ -29,4 +28,4 @@ jobs:
           pip install tox
       - name: Test with tox
         run: |
-          tox -e py38-test
+          tox -e int
