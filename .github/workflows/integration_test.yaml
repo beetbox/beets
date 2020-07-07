@@ -8,7 +8,6 @@ jobs:
     strategy:
       python-version: 3.8
     env:
-      NOSE_SHOW_SKIPPED: 1
       PY_COLOR: 1
     steps:
       - uses: actions/checkout@v2
