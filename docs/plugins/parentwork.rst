@@ -26,7 +26,7 @@ At any later run of ``beet parentwork`` it will check if the tags
 not the case, it means the work has changed and all the tags need to be
 fetched again.
 
-This plugin adds six tags:
+This plugin adds seven tags:
 
 - **parentwork**: The title of the parent work.
 - **mb_parentworkid**: The MusicBrainz id of the parent work.
@@ -38,6 +38,7 @@ This plugin adds six tags:
 - **parentwork_workid_current**: The MusicBrainz id of the work as it was when
   the parentwork was retrieved. This tag exists only for internal bookkeeping,
   to keep track of recordings whose works have changed. 
+- **parentwork_date**: The composition date of the parent work.
 
 To use the ``parentwork`` plugin, enable it in your configuration (see
 :ref:`using-plugins`).
