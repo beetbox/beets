@@ -40,9 +40,8 @@ jobs:
     strategy:
       matrix:
         platform: [ ubuntu-latest ]
-        python-version: [ 5, 6, 7, 8 ]
+        python-version: [ 4, 5, 6, 7, 8 ]
     env:
-      NOSE_SHOW_SKIPPED: 1
       PY_COLOR: 1
     steps:
       - uses: actions/checkout@v2
@@ -73,7 +72,7 @@ jobs:
         run: |
           tox -e py3${{ matrix.python-version }}-test
           tox -e py3${{ matrix.python-version }}-cov
-          tox -e py3${{ matrix.python-version }}-flake8
+          tox -e py3${{ matrix.python-version }}-lint
           pip install codecov || true
           codecov || true
       - name: Test with tox
