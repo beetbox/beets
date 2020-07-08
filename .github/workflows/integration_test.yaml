@@ -6,6 +6,9 @@ jobs:
   test integration:
     runs-on: ubuntu-latest
 
+    env:
+      PY_COLORS: 1
+
     steps:
       - uses: actions/checkout@v2
 

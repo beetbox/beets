@@ -7,6 +7,7 @@ jobs:
       matrix:
         platform: [ubuntu-latest]
         python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
+
     env:
       PY_COLORS: 1
 
@@ -42,6 +43,9 @@ jobs:
   test-docs:
     runs-on: ubuntu-latest
 
+    env:
+      PY_COLORS: 1
+
     steps:
       - uses: actions/checkout@v2
 
@@ -60,6 +64,9 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+
+    env:
+      PY_COLORS: 1
 
     steps:
       - uses: actions/checkout@v2
