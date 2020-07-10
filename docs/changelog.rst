@@ -226,6 +226,8 @@ Fixes:
   the Cover Art Archive API.
   Thanks to :user:`trolley`.
   :bug:`3637`
+* :doc: Fix opening config on Windows produces Errno 22
+  :bug: `2847`
 
 For plugin developers:
 
