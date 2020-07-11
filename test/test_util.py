@@ -51,7 +51,10 @@ class UtilTest(unittest.TestCase):
     def test_interactive_open(self, mock_open, mock_execlp):
         mock_open.return_value = u'tagada'
         util.interactive_open(['foo'], util.open_anything())
-        mock_execlp.assert_called_once_with(u'tagada', u'tagada', u'foo')
+        if platform.system() == 'Windows':
+            mock_execlp.assert_called_once_with(u'tagada')
+        else:
+            mock_execlp.assert_called_once_with(u'tagada', u'tagada', u'foo')
         mock_execlp.reset_mock()
 
         util.interactive_open(['foo'], u'bar')
