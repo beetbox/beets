@@ -419,13 +419,9 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
         # This is helpful in path formats when the album artist is unset
         # on as-is imports.
         if key == 'artist' and not value:
-            new_value = self._get('albumartist')
-            log.debug('No artist, using album artist {0}'.format(new_value))
-            return new_value
+            return self._get('albumartist')
         elif key == 'albumartist' and not value:
-            new_value = self._get('artist')
-            log.debug('No albumartist, using artist {0}'.format(new_value))
-            return new_value
+            return self._get('artist')
         else:
             return value
 
