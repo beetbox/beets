@@ -563,7 +563,7 @@ class Google(Backend):
 
         bad_triggers = ['lyrics', 'copyright', 'property', 'links']
         if artist:
-            bad_triggers_occ += [artist]
+            bad_triggers += [artist]
 
         for item in bad_triggers:
             bad_triggers_occ += [item] * len(re.findall(r'\W%s\W' % item,
