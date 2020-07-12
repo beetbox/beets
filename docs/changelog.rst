@@ -136,6 +136,9 @@ New features:
   instead of just the child work.
   Thanks to :user:`aereaux`.
   :bug:`3650`
+* :doc:`/plugins/lyrics`: Fix a bug in the heuristic for detecting valid
+  lyrics in the Google source of the lyrics plugin
+  :bug:`2969`
 
 Fixes:
 
