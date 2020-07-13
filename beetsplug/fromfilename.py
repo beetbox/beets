@@ -27,16 +27,17 @@ import six
 
 # Filename field extraction patterns.
 PATTERNS = [
-  # Useful patterns.
-  r'^(?P<artist>.+)[\-_](?P<title>.+)[\-_](?P<tag>.*)$',
-  r'^(?P<track>\d+)[\s.\-_]+(?P<artist>.+)[\-_](?P<title>.+)[\-_](?P<tag>.*)$',
-  r'^(?P<artist>.+)[\-_](?P<title>.+)$',
-  r'^(?P<track>\d+)[\s.\-_]+(?P<artist>.+)[\-_](?P<title>.+)$',
-  r'^(?P<title>.+)$',
-  r'^(?P<track>\d+)[\s.\-_]+(?P<title>.+)$',
-  r'^(?P<track>\d+)\s+(?P<title>.+)$',
-  r'^(?P<title>.+) by (?P<artist>.+)$',
-  r'^(?P<track>\d+).*$',
+    # Useful patterns.
+    r'^(?P<artist>.+)[\-_](?P<title>.+)[\-_](?P<tag>.*)$',
+    r'^(?P<track>\d+)[\s.\-_]+(?P<artist>.+)\
+                [\-_](?P<title>.+)[\-_](?P<tag>.*)$',
+    r'^(?P<artist>.+)[\-_](?P<title>.+)$',
+    r'^(?P<track>\d+)[\s.\-_]+(?P<artist>.+)[\-_](?P<title>.+)$',
+    r'^(?P<title>.+)$',
+    r'^(?P<track>\d+)[\s.\-_]+(?P<title>.+)$',
+    r'^(?P<track>\d+)\s+(?P<title>.+)$',
+    r'^(?P<title>.+) by (?P<artist>.+)$',
+    r'^(?P<track>\d+).*$',
 ]
 
 # Titles considered "empty" and in need of replacement.

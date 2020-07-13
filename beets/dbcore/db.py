@@ -1039,12 +1039,11 @@ class Database(object):
         flex_sql = ("""
             SELECT * FROM {0} WHERE entity_id IN
                 (SELECT id FROM {1} WHERE {2});
-            """.format(
-                model_cls._flex_table,
-                model_cls._table,
-                where or '1',
-            )
-        )
+            """.format(model_cls._flex_table,
+                       model_cls._table,
+                       where or '1',
+                       )
+                    )
 
         with self.transaction() as tx:
             rows = tx.query(sql, subvals)
