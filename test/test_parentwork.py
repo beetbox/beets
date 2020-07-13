@@ -20,6 +20,7 @@ from __future__ import division, absolute_import, print_function
 import os
 import unittest
 from test.helper import TestHelper
+import mock
 
 from beets.library import Item
 from beetsplug import parentwork
@@ -71,8 +72,8 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
         self.unload_plugins()
         self.teardown_beets()
 
-    @unittest.mock.patch('musicbrainzngs.get_work_by_id',
-                         side_effect=mock_workid_response)
+    @mock.patch('musicbrainzngs.get_work_by_id',
+                side_effect=mock_workid_response)
     @unittest.skipUnless(
         os.environ.get('INTEGRATION_TEST', '0') == '1',
         'integration testing not enabled')
