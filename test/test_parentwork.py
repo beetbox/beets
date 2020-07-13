@@ -20,7 +20,8 @@ from __future__ import division, absolute_import, print_function
 import os
 import unittest
 from test.helper import TestHelper
-import mock
+from mock import Mock
+import musicbrainzngs
 
 from beets.library import Item
 from beetsplug import parentwork
@@ -130,7 +131,7 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
                          parentwork.work_parent_id(mb_workid)[0])
 
 
-class ParentWorkTest_mock(unittest.TestCase, TestHelper):
+class ParentWorkMockTest(unittest.TestCase, TestHelper):
     def setUp(self):
         """Set up configuration"""
         self.setup_beets()
@@ -140,8 +141,7 @@ class ParentWorkTest_mock(unittest.TestCase, TestHelper):
         self.unload_plugins()
         self.teardown_beets()
 
-    @mock.patch('musicbrainzngs.get_work_by_id',
-                side_effect=mock_workid_response)
+    musicbrainzngs.get_work_by_id = Mock(side_effect=mock_workid_response)
     def test_normal_case(self):
         item = Item(path='/file',
                     mb_workid='1')
