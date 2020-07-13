@@ -156,17 +156,16 @@ class ParentWorkMockTest(unittest.TestCase, TestHelper):
         self.assertEqual(item['mb_parentworkid'], '3')
 
     def test_force(self):
-        self.config['parentwork']['force'] = True
         item = Item(path='/file', mb_workid='1', mb_parentworkid=u'XXX')
         item.add(self.lib)
 
-        self.run_command('parentwork')
+        self.run_command('parentwork -f')
 
         item.load()
         self.assertEqual(item['mb_parentworkid'], '3')
 
     def test_no_force(self):
-        self.config['parentwork']['force'] = True
+        self.config['parentwork']['force'] = False
         item = Item(path='/file', mb_workid='1', mb_parentworkid=u'XXX')
         item.add(self.lib)
 
