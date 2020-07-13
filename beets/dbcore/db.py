@@ -952,8 +952,8 @@ class Database(object):
     def load_extension(self, path):
         """Load an SQLite extension into all open connections."""
         if not self.supports_extensions:
-            raise ValueError(
-                    'this sqlite3 installation does not support extensions')
+            raise ValueError('this sqlite3 installation does not '
+                             'support extensions')
 
         self._extensions.append(path)
 

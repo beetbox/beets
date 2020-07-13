@@ -69,7 +69,7 @@ def call(args, **kwargs):
 
 def after_version(version_a, version_b):
     return tuple(int(s) for s in version_a.split('.')) \
-            >= tuple(int(s) for s in version_b.split('.'))
+        >= tuple(int(s) for s in version_b.split('.'))
 
 
 def db_to_lufs(db):

@@ -136,7 +136,7 @@ class ParentWorkPlugin(BeetsPlugin):
 
             parentwork_info['parent_composer'] = u', '.join(parent_composer)
             parentwork_info['parent_composer_sort'] = u', '.join(
-                    parent_composer_sort)
+                parent_composer_sort)
 
         if not composer_exists:
             self._log.debug(
@@ -150,7 +150,7 @@ class ParentWorkPlugin(BeetsPlugin):
 
         if 'disambiguation' in work_info['work']:
             parentwork_info['parentwork_disambig'] = work_info[
-                    'work']['disambiguation']
+                'work']['disambiguation']
 
         else:
             parentwork_info['parentwork_disambig'] = None

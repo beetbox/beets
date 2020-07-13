@@ -235,8 +235,8 @@ class BaseServer(object):
 
         def start():
             yield bluelet.spawn(
-                    bluelet.server(self.ctrl_host, self.ctrl_port,
-                                   ControlConnection.handler(self)))
+                bluelet.server(self.ctrl_host, self.ctrl_port,
+                               ControlConnection.handler(self)))
             yield bluelet.server(self.host, self.port,
                                  MPDConnection.handler(self))
         bluelet.run(start())

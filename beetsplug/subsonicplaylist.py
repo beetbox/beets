@@ -45,8 +45,8 @@ def filter_to_be_removed(items, keys):
         def to_be_removed(item):
             for artist, album, title in keys:
                 if artist == item['artist'] and\
-                           album == item['album'] and\
-                           title == item['title']:
+                        album == item['album'] and\
+                        title == item['title']:
                     return False
             return True
 
