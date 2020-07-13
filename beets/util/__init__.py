@@ -771,10 +771,11 @@ def cpu_count():
     elif sys.platform == 'darwin':
         try:
             num = int(command_output([
-                '/usr/sbin/sysctl',
-                '-n',
-                'hw.ncpu',
-                ]).stdout)
+                                     '/usr/sbin/sysctl',
+                                     '-n',
+                                     'hw.ncpu',
+                                     ]).stdout
+                      )
         except (ValueError, OSError, subprocess.CalledProcessError):
             num = 0
     else:

@@ -476,7 +476,7 @@ class FfmpegBackend(Backend):
         self._log.debug(
             u"{0}: gain {1} LU, peak {2}"
             .format(items, album_gain, album_peak)
-            )
+        )
 
         return AlbumGain(Gain(album_gain, album_peak), track_gains)
 
@@ -590,7 +590,7 @@ class FfmpegBackend(Backend):
         raise ReplayGainError(
             u"ffmpeg output: missing {0} after line {1}"
             .format(repr(search), start_line)
-            )
+        )
 
     def _parse_float(self, line):
         """Extract a float from a key value pair in `line`.
@@ -604,7 +604,7 @@ class FfmpegBackend(Backend):
             raise ReplayGainError(
                 u"ffmpeg output: expected key value pair, found {0}"
                 .format(line)
-                )
+            )
         value = value[1].lstrip()
         # strip unit
         value = value.split(b" ", 1)[0]
@@ -615,7 +615,7 @@ class FfmpegBackend(Backend):
             raise ReplayGainError(
                 u"ffmpeg output: expected float value, found {0}"
                 .format(value)
-                )
+            )
 
 
 # mpgain/aacgain CLI tool backend.
