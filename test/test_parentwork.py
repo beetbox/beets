@@ -24,7 +24,6 @@ import mock
 
 from beets.library import Item
 from beetsplug import parentwork
-import musicbrainzngs
 
 work = {'work': {'id': '1',
                  'work-relation-list': [{'type': 'parts',
