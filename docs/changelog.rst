@@ -148,6 +148,8 @@ New features:
   Thanks to :user:`logan-arens`.
   :bug:`2947`
 * Added flac-specific reporting of samplerate and bitrate when importing duplicates.
+* ``beet remove`` now also allows interactive selection of items from the query
+  similar to ``beet modify``
 
 Fixes:
 
