@@ -230,10 +230,21 @@ remove
 Remove music from your library.
 
 This command uses the same :doc:`query <query>` syntax as the ``list`` command.
-You'll be shown a list of the files that will be removed and asked to confirm.
-By default, this just removes entries from the library database; it doesn't
-touch the files on disk. To actually delete the files, use ``beet remove -d``.
-If you do not want to be prompted to remove the files, use ``beet remove -f``.
+By default, it just removes entries from the library database; it doesn't
+touch the files on disk. To actually delete the files, use the ``-d`` flag.
+When the ``-a`` flag is given, the command operates on albums instead of
+individual tracks.
+
+When you run the ``remove`` command, it prints a list of all
+affected items in the library and asks for your permission before removing
+them. You can then choose to abort (type `n`), confirm (`y`), or interactively
+choose some of the items (`s`). In the latter case, the command will prompt you
+for every matching item or album and invite you to type `y` to remove the
+item/album, `n` to keep it or `q` to exit and only remove the items/albums
+selected up to this point.
+This option lets you choose precisely which tracks/albums to remove without
+spending too much time to carefully craft a query.
+If you do not want to be prompted at all, use the ``-f`` option.
 
 .. _modify-cmd:
 

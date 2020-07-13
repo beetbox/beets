@@ -1232,31 +1232,53 @@ def remove_items(lib, query, album, delete, force):
     """
     # Get the matching items.
     items, albums = _do_query(lib, query, album)
+    objs = albums if album else items
 
     # Confirm file removal if not forcing removal.
     if not force:
         # Prepare confirmation with user.
-        print_()
+        album_str = u" in {} album{}".format(
+                 len(albums), u's' if len(albums) > 1 else u''
+            ) if album else ""
+
         if delete:
             fmt = u'$path - $title'
-            prompt = u'Really DELETE %i file%s (y/n)?' % \
-                     (len(items), 's' if len(items) > 1 else '')
+            prompt = u'Really DELETE'
+            prompt_all = u'Really DELETE {} file{}{}'.format(
+                 len(items), u's' if len(items) > 1 else u'', album_str
+            )
         else:
             fmt = u''
-            prompt = u'Really remove %i item%s from the library (y/n)?' % \
-                     (len(items), 's' if len(items) > 1 else '')
+            prompt = u'Really remove from the library?'
+            prompt_all = u'Really remove {} item{}{} from the library?'.format(
+                 len(items), u's' if len(items) > 1 else u'', album_str
+            )
+
+        # Helpers for printing affected items
+        def fmt_track(t):
+            ui.print_(format(t, fmt))
+
+        def fmt_album(a):
+            ui.print_()
+            for i in a.items():
+                fmt_track(i)
+
+        fmt_obj = fmt_album if album else fmt_track
 
         # Show all the items.
-        for item in items:
-            ui.print_(format(item, fmt))
+        for o in objs:
+            fmt_obj(o)
 
         # Confirm with user.
-        if not ui.input_yn(prompt, True):
-            return
+        objs = ui.input_select_objects(prompt, objs, fmt_obj,
+                                       prompt_all=prompt_all)
+
+    if not objs:
+        return
 
     # Remove (and possibly delete) items.
     with lib.transaction():
-        for obj in (albums if album else items):
+        for obj in objs:
             obj.remove(delete)
 
 

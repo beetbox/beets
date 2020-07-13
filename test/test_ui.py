@@ -111,7 +111,7 @@ class ListTest(unittest.TestCase):
         self.assertNotIn(u'the album', stdout.getvalue())
 
 
-class RemoveTest(_common.TestCase):
+class RemoveTest(_common.TestCase, TestHelper):
     def setUp(self):
         super(RemoveTest, self).setUp()
 
@@ -122,8 +122,8 @@ class RemoveTest(_common.TestCase):
 
         # Copy a file into the library.
         self.lib = library.Library(':memory:', self.libdir)
-        item_path = os.path.join(_common.RSRC, b'full.mp3')
-        self.i = library.Item.from_path(item_path)
+        self.item_path = os.path.join(_common.RSRC, b'full.mp3')
+        self.i = library.Item.from_path(self.item_path)
         self.lib.add(self.i)
         self.i.move(operation=MoveOperation.COPY)
 
@@ -152,6 +152,39 @@ class RemoveTest(_common.TestCase):
         items = self.lib.items()
         self.assertEqual(len(list(items)), 0)
         self.assertFalse(os.path.exists(self.i.path))
+
+    def test_remove_items_select_with_delete(self):
+        i2 = library.Item.from_path(self.item_path)
+        self.lib.add(i2)
+        i2.move(operation=MoveOperation.COPY)
+
+        for s in ('s', 'y', 'n'):
+            self.io.addinput(s)
+        commands.remove_items(self.lib, u'', False, True, False)
+        items = self.lib.items()
+        self.assertEqual(len(list(items)), 1)
+        # FIXME: is the order of the items as queried by the remove command
+        # really deterministic?
+        self.assertFalse(os.path.exists(syspath(self.i.path)))
+        self.assertTrue(os.path.exists(syspath(i2.path)))
+
+    def test_remove_albums_select_with_delete(self):
+        a1 = self.add_album_fixture()
+        a2 = self.add_album_fixture()
+        path1 = a1.items()[0].path
+        path2 = a2.items()[0].path
+        items = self.lib.items()
+        self.assertEqual(len(list(items)), 3)
+
+        for s in ('s', 'y', 'n'):
+            self.io.addinput(s)
+        commands.remove_items(self.lib, u'', True, True, False)
+        items = self.lib.items()
+        self.assertEqual(len(list(items)), 2)  # incl. the item from setUp()
+        # FIXME: is the order of the items as queried by the remove command
+        # really deterministic?
+        self.assertFalse(os.path.exists(syspath(path1)))
+        self.assertTrue(os.path.exists(syspath(path2)))
 
 
 class ModifyTest(unittest.TestCase, TestHelper):

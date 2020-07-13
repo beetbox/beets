@@ -389,17 +389,19 @@ def input_yn(prompt, require=False):
     return sel == u'y'
 
 
-def input_select_objects(prompt, objs, rep):
+def input_select_objects(prompt, objs, rep, prompt_all=None):
     """Prompt to user to choose all, none, or some of the given objects.
     Return the list of selected objects.
 
     `prompt` is the prompt string to use for each question (it should be
-    phrased as an imperative verb). `rep` is a function to call on each
-    object to print it out when confirming objects individually.
+    phrased as an imperative verb). If `prompt_all` is given, it is used
+    instead of `prompt` for the first (yes(/no/select) question.
+    `rep` is a function to call on each object to print it out when confirming
+    objects individually.
     """
     choice = input_options(
         (u'y', u'n', u's'), False,
-        u'%s? (Yes/no/select)' % prompt)
+        u'%s? (Yes/no/select)' % (prompt_all or prompt))
     print()  # Blank line.
 
     if choice == u'y':  # Yes.
