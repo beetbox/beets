@@ -112,6 +112,7 @@ def fields_func(lib, opts, args):
         print_(u"Album flexible attributes:")
         _print_keys(tx.query(unique_fields % library.Album._flex_table))
 
+
 fields_cmd = ui.Subcommand(
     'fields',
     help=u'show fields available for queries and format strings'
@@ -1684,6 +1685,7 @@ def config_edit():
             message += u". Please set the EDITOR environment variable"
         raise ui.UserError(message)
 
+
 config_cmd = ui.Subcommand(u'config',
                            help=u'show or edit the user configuration')
 config_cmd.parser.add_option(
@@ -1715,6 +1717,7 @@ def print_completion(*args):
     if not any(map(os.path.isfile, BASH_COMPLETION_PATHS)):
         log.warning(u'Warning: Unable to find the bash-completion package. '
                     u'Command line completion might not work.')
+
 
 BASH_COMPLETION_PATHS = map(syspath, [
     u'/etc/bash_completion',

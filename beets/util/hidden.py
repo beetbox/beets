@@ -83,4 +83,5 @@ def is_hidden(path):
     else:
         return _is_hidden_dot(path)
 
+
 __all__ = ['is_hidden']

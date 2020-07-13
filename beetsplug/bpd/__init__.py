@@ -130,6 +130,7 @@ def make_bpd_error(s_code, s_message):
             pass
     return NewBPDError
 
+
 ArgumentTypeError = make_bpd_error(ERROR_ARG, u'invalid type for argument')
 ArgumentIndexError = make_bpd_error(ERROR_ARG, u'argument out of range')
 ArgumentNotFoundError = make_bpd_error(ERROR_NO_EXIST, u'argument not found')

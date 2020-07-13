@@ -469,6 +469,7 @@ class Pipeline(object):
             for msg in msgs:
                 yield msg
 
+
 # Smoke test.
 if __name__ == '__main__':
     import time

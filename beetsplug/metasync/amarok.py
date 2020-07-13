@@ -35,6 +35,7 @@ def import_dbus():
     except ImportError:
         return None
 
+
 dbus = import_dbus()
 
 

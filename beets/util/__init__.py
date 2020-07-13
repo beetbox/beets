@@ -567,6 +567,7 @@ def unique_path(path):
         if not os.path.exists(new_path):
             return new_path
 
+
 # Note: The Windows "reserved characters" are, of course, allowed on
 # Unix. They are forbidden here because they cause problems on Samba
 # shares, which are sufficiently common as to cause frequent problems.

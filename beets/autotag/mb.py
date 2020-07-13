@@ -65,6 +65,7 @@ class MusicBrainzAPIError(util.HumanReadableException):
             self._reasonstr(), self.verb, repr(self.query)
         )
 
+
 log = logging.getLogger('beets')
 
 RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',

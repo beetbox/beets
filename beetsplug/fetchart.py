@@ -833,6 +833,7 @@ class LastFM(RemoteArtSource):
                             .format(response.text))
             return
 
+
 # Try each source in turn.
 
 SOURCES_ALL = [u'filesystem',
