@@ -3,7 +3,7 @@ on:
   schedule:
     - cron: '0 0 * * SUN'  # run every Sunday at midnight
 jobs:
-  test integration:
+  test_integration:
     runs-on: ubuntu-latest
 
     env:
