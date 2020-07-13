@@ -71,51 +71,6 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
         self.unload_plugins()
         self.teardown_beets()
 
-    @mock.patch('musicbrainzngs.get_work_by_id',
-                side_effect=mock_workid_response)
-    def test_normal_case(self):
-        item = Item(path='/file',
-                    mb_workid='1')
-        item.add(self.lib)
-
-        self.run_command('parentwork')
-
-        item.load()
-        self.assertEqual(item['mb_parentworkid'],
-                         '3')
-
-    def test_force(self):
-        self.config['parentwork']['force'] = True
-        item = Item(path='/file',
-                    mb_workid='1',
-                    mb_parentworkid=u'XXX')
-        item.add(self.lib)
-
-        self.run_command('parentwork')
-
-        item.load()
-        self.assertEqual(item['mb_parentworkid'],
-                         '3')
-
-    def test_no_force(self):
-        self.config['parentwork']['force'] = True
-        item = Item(path='/file', mb_workid='1', mb_parentworkid=u'XXX')
-        item.add(self.lib)
-
-        self.run_command('parentwork')
-
-        item.load()
-        self.assertEqual(item['mb_parentworkid'], '3')
-
-    # test different cases, still with Matthew Passion Ouverture or Mozart
-    # requiem
-
-    def test_direct_parent_work(self):
-        self.assertEqual('2',
-                         parentwork.direct_parent_id('1')[0])
-        self.assertEqual('3',
-                         parentwork.work_parent_id('1')[0])
-
     # test how it works with real musicbrainz data
     @unittest.skipUnless(
         os.environ.get('INTEGRATION_TEST', '0') == '1',
@@ -173,6 +128,51 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
                          parentwork.direct_parent_id(mb_workid)[0])
         self.assertEqual(u'45afb3b2-18ac-4187-bc72-beb1b1c194ba',
                          parentwork.work_parent_id(mb_workid)[0])
+
+    @mock.patch('musicbrainzngs.get_work_by_id',
+                side_effect=mock_workid_response)
+    def test_normal_case(self):
+        item = Item(path='/file',
+                    mb_workid='1')
+        item.add(self.lib)
+
+        self.run_command('parentwork')
+
+        item.load()
+        self.assertEqual(item['mb_parentworkid'],
+                         '3')
+
+    def test_force(self):
+        self.config['parentwork']['force'] = True
+        item = Item(path='/file',
+                    mb_workid='1',
+                    mb_parentworkid=u'XXX')
+        item.add(self.lib)
+
+        self.run_command('parentwork')
+
+        item.load()
+        self.assertEqual(item['mb_parentworkid'],
+                         '3')
+
+    def test_no_force(self):
+        self.config['parentwork']['force'] = True
+        item = Item(path='/file', mb_workid='1', mb_parentworkid=u'XXX')
+        item.add(self.lib)
+
+        self.run_command('parentwork')
+
+        item.load()
+        self.assertEqual(item['mb_parentworkid'], '3')
+
+    # test different cases, still with Matthew Passion Ouverture or Mozart
+    # requiem
+
+    def test_direct_parent_work(self):
+        self.assertEqual('2',
+                         parentwork.direct_parent_id('1')[0])
+        self.assertEqual('3',
+                         parentwork.work_parent_id('1')[0])
 
 
 def suite():
