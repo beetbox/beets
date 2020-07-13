@@ -27,6 +27,7 @@ from beets.library import Item
 from beetsplug import parentwork
 
 work = {'work': {'id': '1',
+                 'title': 'work',
                  'work-relation-list': [{'type': 'parts',
                                          'direction': 'backward',
                                          'work': {'id': '2'}}],
@@ -36,6 +37,7 @@ work = {'work': {'id': '1',
                                                       'sort-name':
                                                       'composer, random'}}]}}
 dp_work = {'work': {'id': '2',
+                    'title': 'directparentwork',
                     'work-relation-list': [{'type': 'parts',
                                             'direction': 'backward',
                                             'work': {'id': '3'}}],
@@ -46,6 +48,7 @@ dp_work = {'work': {'id': '2',
                                                          'composer, random'
                                                          }}]}}
 p_work = {'work': {'id': '3',
+                   'title': 'parentwork',
                    'artist-relation-list': [{'type': 'composer',
                                              'artist': {'name':
                                                         'random composer',
