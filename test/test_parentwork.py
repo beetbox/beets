@@ -81,7 +81,9 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
         'integration testing not enabled')
     def test_normal_case_real(self):
         item = Item(path='/file',
-                    mb_workid=u'e27bda6e-531e-36d3-9cd7-b8ebc18e8c53')
+                    mb_workid=u'e27bda6e-531e-36d3-9cd7-b8ebc18e8c53',
+                    parentwork_workid_current=u'e27bda6e-531e-36d3-9cd7-\
+                    b8ebc18e8c53')
         item.add(self.lib)
 
         self.run_command('parentwork')
@@ -97,7 +99,9 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
         self.config['parentwork']['force'] = True
         item = Item(path='/file',
                     mb_workid=u'e27bda6e-531e-36d3-9cd7-b8ebc18e8c53',
-                    mb_parentworkid=u'XXX')
+                    mb_parentworkid=u'XXX',
+                    parentwork_workid_current=u'e27bda6e-531e-36d3-9cd7-\
+                    b8ebc18e8c53')
         item.add(self.lib)
 
         self.run_command('parentwork')
@@ -112,7 +116,9 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
     def test_no_force_real(self):
         self.config['parentwork']['force'] = False
         item = Item(path='/file', mb_workid=u'e27bda6e-531e-36d3-9cd7-\
-                    b8ebc18e8c53', mb_parentworkid=u'XXX')
+                    b8ebc18e8c53', mb_parentworkid=u'XXX',
+                    parentwork_workid_current=u'e27bda6e-531e-36d3-9cd7-\
+                    b8ebc18e8c53')
         item.add(self.lib)
 
         self.run_command('parentwork')
@@ -147,7 +153,7 @@ class ParentWorkMockTest(unittest.TestCase, TestHelper):
     musicbrainzngs.get_work_by_id = Mock(side_effect=mock_workid_response)
 
     def test_normal_case(self):
-        item = Item(path='/file', mb_workid='1')
+        item = Item(path='/file', mb_workid='1', parentwork_workid_current='1')
         item.add(self.lib)
 
         self.run_command('parentwork')
@@ -156,17 +162,20 @@ class ParentWorkMockTest(unittest.TestCase, TestHelper):
         self.assertEqual(item['mb_parentworkid'], '3')
 
     def test_force(self):
-        item = Item(path='/file', mb_workid='1', mb_parentworkid=u'XXX')
+        self.config['parentwork']['force'] = True
+        item = Item(path='/file', mb_workid='1', mb_parentworkid=u'XXX',
+                    parentwork_workid_current='1')
         item.add(self.lib)
 
-        self.run_command('parentwork -f')
+        self.run_command('parentwork')
 
         item.load()
         self.assertEqual(item['mb_parentworkid'], '3')
 
     def test_no_force(self):
         self.config['parentwork']['force'] = False
-        item = Item(path='/file', mb_workid='1', mb_parentworkid=u'XXX')
+        item = Item(path='/file', mb_workid='1', mb_parentworkid=u'XXX',
+                    parentwork_workid_current='1')
         item.add(self.lib)
 
         self.run_command('parentwork')
