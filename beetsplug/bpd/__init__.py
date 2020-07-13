@@ -758,8 +758,8 @@ class Connection(object):
         if isinstance(lines, six.string_types):
             lines = [lines]
         out = NEWLINE.join(lines) + NEWLINE
-        for l in out.split(NEWLINE)[:-1]:
-            self.debug(l, kind='>')
+        for lsend in out.split(NEWLINE)[:-1]:
+            self.debug(lsend, kind='>')
         if isinstance(out, six.text_type):
             out = out.encode('utf-8')
         return self.sock.sendall(out)
@@ -842,8 +842,8 @@ class MPDConnection(Connection):
                 self.disconnect()  # Client sent a blank line.
                 break
             line = line.decode('utf8')  # MPD protocol uses UTF-8.
-            for l in line.split(NEWLINE):
-                self.debug(l, kind='<')
+            for lrun in line.split(NEWLINE):
+                self.debug(lrun, kind='<')
 
             if self.idle_subscriptions:
                 # The connection is in idle mode.
@@ -911,8 +911,8 @@ class ControlConnection(Connection):
             if not line:
                 break  # Client sent a blank line.
             line = line.decode('utf8')  # Protocol uses UTF-8.
-            for l in line.split(NEWLINE):
-                self.debug(l, kind='<')
+            for lrun in line.split(NEWLINE):
+                self.debug(lrun, kind='<')
             command = Command(line)
             try:
                 func = command.delegate('ctrl_', self)

@@ -831,7 +831,8 @@ class ImportTask(BaseImportTask):
                           dup_item.id, displayable_path(item.path))
                 dup_item.remove()
         log.debug(u'{0} of {1} items replaced',
-                  sum(bool(l) for l in self.replaced_items.values()),
+                  sum(bool(l_rm_replaced) for l_rm_replaced in
+                      self.replaced_items.values()),
                   len(self.imported_items()))
 
     def choose_match(self, session):
