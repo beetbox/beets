@@ -21,7 +21,6 @@ import os
 import unittest
 from test.helper import TestHelper
 import mock
-import musicbrainzngs
 
 from beets.library import Item
 from beetsplug import parentwork
@@ -175,10 +174,7 @@ class ParentWorkTest_mock(unittest.TestCase, TestHelper):
         self.run_command('parentwork')
 
         item.load()
-        self.assertEqual(item['mb_parentworkid'], '3')
-
-    # test different cases, still with Matthew Passion Ouverture or Mozart
-    # requiem
+        self.assertEqual(item['mb_parentworkid'], u'XXX')
 
     def test_direct_parent_work(self):
         self.assertEqual('2',
