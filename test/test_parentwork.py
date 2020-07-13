@@ -142,6 +142,7 @@ class ParentWorkMockTest(unittest.TestCase, TestHelper):
         self.teardown_beets()
 
     musicbrainzngs.get_work_by_id = Mock(side_effect=mock_workid_response)
+
     def test_normal_case(self):
         item = Item(path='/file',
                     mb_workid='1')
