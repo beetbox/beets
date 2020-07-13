@@ -53,7 +53,7 @@ p_work = {'work': {'id': '3',
                                                         'composer, random'}}]}}
 
 
-def mock_workid_response(mbid):
+def mock_workid_response(mbid, includes):
     if mbid == '1':
         return work
     elif mbid == '2':
@@ -107,7 +107,7 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
         os.environ.get('INTEGRATION_TEST', '0') == '1',
         'integration testing not enabled')
     def test_no_force_real(self):
-        self.config['parentwork']['force'] = True
+        self.config['parentwork']['force'] = False
         item = Item(path='/file', mb_workid=u'e27bda6e-531e-36d3-9cd7-\
                     b8ebc18e8c53', mb_parentworkid=u'XXX')
         item.add(self.lib)
@@ -168,7 +168,7 @@ class ParentWorkMockTest(unittest.TestCase, TestHelper):
                          '3')
 
     def test_no_force(self):
-        self.config['parentwork']['force'] = True
+        self.config['parentwork']['force'] = False
         item = Item(path='/file', mb_workid='1', mb_parentworkid=u'XXX')
         item.add(self.lib)
 
