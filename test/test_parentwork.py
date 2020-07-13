@@ -21,6 +21,7 @@ import os
 import unittest
 from test.helper import TestHelper
 import mock
+import musicbrainzngs
 
 from beets.library import Item
 from beetsplug import parentwork
@@ -59,6 +60,8 @@ def mock_workid_response(mbid):
         return dp_work
     elif mbid == '3':
         return p_work
+    else:
+        return musicbrainzngs.get_work_by_id(mbid)
 
 
 class ParentWorkTest(unittest.TestCase, TestHelper):
