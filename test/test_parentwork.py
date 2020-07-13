@@ -60,8 +60,6 @@ def mock_workid_response(mbid):
         return dp_work
     elif mbid == '3':
         return p_work
-    else:
-        return musicbrainzngs.get_work_by_id(mbid)
 
 
 class ParentWorkTest(unittest.TestCase, TestHelper):
@@ -131,6 +129,17 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
                          parentwork.direct_parent_id(mb_workid)[0])
         self.assertEqual(u'45afb3b2-18ac-4187-bc72-beb1b1c194ba',
                          parentwork.work_parent_id(mb_workid)[0])
+
+
+class ParentWorkTest_mock(unittest.TestCase, TestHelper):
+    def setUp(self):
+        """Set up configuration"""
+        self.setup_beets()
+        self.load_plugins('parentwork')
+
+    def tearDown(self):
+        self.unload_plugins()
+        self.teardown_beets()
 
     @mock.patch('musicbrainzngs.get_work_by_id',
                 side_effect=mock_workid_response)
