@@ -28,7 +28,7 @@ from beetsplug import parentwork
 
 work = {'work': {'id': '1',
                  'work-relation-list': [{'type': 'parts',
-                                         'direction': 'backwards',
+                                         'direction': 'backward',
                                          'work': {'id': '2'}}],
                  'artist-relation-list': [{'type': 'composer',
                                            'artist': {'name':
@@ -37,7 +37,7 @@ work = {'work': {'id': '1',
                                                       'composer, random'}}]}}
 dp_work = {'work': {'id': '2',
                     'work-relation-list': [{'type': 'parts',
-                                            'direction': 'backwards',
+                                            'direction': 'backward',
                                             'work': {'id': '3'}}],
                     'artist-relation-list': [{'type': 'composer',
                                               'artist': {'name':
