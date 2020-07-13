@@ -101,7 +101,7 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
                     mb_workid=u'e27bda6e-531e-36d3-9cd7-b8ebc18e8c53',
                     mb_parentworkid=u'XXX',
                     parentwork_workid_current=u'e27bda6e-531e-36d3-9cd7-\
-                    b8ebc18e8c53')
+                    b8ebc18e8c53', parentwork='whatever')
         item.add(self.lib)
 
         self.run_command('parentwork')
@@ -118,7 +118,7 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
         item = Item(path='/file', mb_workid=u'e27bda6e-531e-36d3-9cd7-\
                     b8ebc18e8c53', mb_parentworkid=u'XXX',
                     parentwork_workid_current=u'e27bda6e-531e-36d3-9cd7-\
-                    b8ebc18e8c53')
+                    b8ebc18e8c53', parentwork='whatever')
         item.add(self.lib)
 
         self.run_command('parentwork')
@@ -164,7 +164,7 @@ class ParentWorkMockTest(unittest.TestCase, TestHelper):
     def test_force(self):
         self.config['parentwork']['force'] = True
         item = Item(path='/file', mb_workid='1', mb_parentworkid=u'XXX',
-                    parentwork_workid_current='1', mb_parentwork='parentwork')
+                    parentwork_workid_current='1', parentwork='parentwork')
         item.add(self.lib)
 
         self.run_command('parentwork')
@@ -175,7 +175,7 @@ class ParentWorkMockTest(unittest.TestCase, TestHelper):
     def test_no_force(self):
         self.config['parentwork']['force'] = False
         item = Item(path='/file', mb_workid='1', mb_parentworkid=u'XXX',
-                    parentwork_workid_current='1', mb_parentwork='parentwork')
+                    parentwork_workid_current='1', parentwork='parentwork')
         item.add(self.lib)
 
         self.run_command('parentwork')
