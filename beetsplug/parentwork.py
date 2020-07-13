@@ -96,7 +96,7 @@ class ParentWorkPlugin(BeetsPlugin):
                         item.try_write()
         command = ui.Subcommand(
             'parentwork',
-            help=u'fetche parent works, composers and dates')
+            help=u'fetch parent works, composers and dates')
 
         command.parser.add_option(
             u'-f', u'--force', dest='force',
