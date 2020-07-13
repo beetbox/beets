@@ -147,31 +147,26 @@ class ParentWorkMockTest(unittest.TestCase, TestHelper):
     musicbrainzngs.get_work_by_id = Mock(side_effect=mock_workid_response)
 
     def test_normal_case(self):
-        item = Item(path='/file',
-                    mb_workid='1')
+        item = Item(path='/file', mb_workid='1')
         item.add(self.lib)
 
         self.run_command('parentwork')
 
         item.load()
-        self.assertEqual(item['mb_parentworkid'],
-                         '3')
+        self.assertEqual(item['mb_parentworkid'], '3')
 
     def test_force(self):
         self.config['parentwork']['force'] = True
-        item = Item(path='/file',
-                    mb_workid='1',
-                    mb_parentworkid=u'XXX')
+        item = Item(path='/file', mb_workid='1', mb_parentworkid=u'XXX')
         item.add(self.lib)
 
         self.run_command('parentwork')
 
         item.load()
-        self.assertEqual(item['mb_parentworkid'],
-                         '3')
+        self.assertEqual(item['mb_parentworkid'], '3')
 
     def test_no_force(self):
-        self.config['parentwork']['force'] = False
+        self.config['parentwork']['force'] = True
         item = Item(path='/file', mb_workid='1', mb_parentworkid=u'XXX')
         item.add(self.lib)
 
@@ -181,10 +176,8 @@ class ParentWorkMockTest(unittest.TestCase, TestHelper):
         self.assertEqual(item['mb_parentworkid'], u'XXX')
 
     def test_direct_parent_work(self):
-        self.assertEqual('2',
-                         parentwork.direct_parent_id('1')[0])
-        self.assertEqual('3',
-                         parentwork.work_parent_id('1')[0])
+        self.assertEqual('2', parentwork.direct_parent_id('1')[0])
+        self.assertEqual('3', parentwork.work_parent_id('1')[0])
 
 
 def suite():
