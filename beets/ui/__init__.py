@@ -189,8 +189,8 @@ def should_move(move_opt=None):
     """
     return _bool_fallback(
         move_opt,
-        config['import']['move'].get(bool) or
-        config['import']['copy'].get(bool)
+        config['import']['move'].get(bool)
+        or config['import']['copy'].get(bool)
     )
 
 
@@ -266,10 +266,9 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
         index = option.index(found_letter)
 
         # Mark the option's shortcut letter for display.
-        if not require and (
-            (default is None and not numrange and first) or
-            (isinstance(default, six.string_types) and
-             found_letter.lower() == default.lower())):
+        if not require and ((default is None and not numrange and first)
+                            or (isinstance(default, six.string_types)
+                                and found_letter.lower() == default.lower())):
             # The first option is the default; mark it.
             show_letter = '[%s]' % found_letter.upper()
             is_default = True
@@ -819,6 +818,7 @@ class CommonOptionsParser(optparse.OptionParser, object):
 
     Each method is fully documented in the related method.
     """
+
     def __init__(self, *args, **kwargs):
         super(CommonOptionsParser, self).__init__(*args, **kwargs)
         self._album_flags = False
@@ -937,6 +937,7 @@ class Subcommand(object):
     """A subcommand of a root command-line application that may be
     invoked by a SubcommandOptionParser.
     """
+
     def __init__(self, name, parser=None, help='', aliases=(), hide=False):
         """Creates a new subcommand. name is the primary way to invoke
         the subcommand; aliases are alternate names. parser is an

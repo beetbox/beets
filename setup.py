@@ -152,8 +152,8 @@ setup(
         'plexupdate': ['requests'],
         'web': ['flask', 'flask-cors'],
         'import': ['rarfile'],
-        'thumbnails': ['pyxdg', 'Pillow'] +
-        (['pathlib'] if (sys.version_info < (3, 4, 0)) else []),
+        'thumbnails': ['pyxdg', 'Pillow']
+        + (['pathlib'] if (sys.version_info < (3, 4, 0)) else []),
         'metasync': ['dbus-python'],
         'sonosupdate': ['soco'],
         'scrub': ['mutagen>=1.33'],

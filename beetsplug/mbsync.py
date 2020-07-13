@@ -75,8 +75,8 @@ class MBSyncPlugin(BeetsPlugin):
 
             # Do we have a valid MusicBrainz track ID?
             if not re.match(MBID_REGEX, item.mb_trackid):
-                self._log.info(u'Skipping singleton with invalid mb_trackid:' +
-                               ' {0}', item_formatted)
+                self._log.info(u'Skipping singleton with invalid mb_trackid:'
+                               + ' {0}', item_formatted)
                 continue
 
             # Get the MusicBrainz recording info.
@@ -145,8 +145,8 @@ class MBSyncPlugin(BeetsPlugin):
                         # If there are multiple copies of a recording, they are
                         # disambiguated using their disc and track number.
                         for c in candidates:
-                            if (c.medium_index == item.track and
-                                    c.medium == item.disc):
+                            if (c.medium_index == item.track
+                                    and c.medium == item.disc):
                                 mapping[item] = c
                                 break
 

@@ -1248,8 +1248,8 @@ class ReplayGainPlugin(BeetsPlugin):
     def track_requires_gain(self, item):
         return self.overwrite or \
             (self.should_use_r128(item) and not item.r128_track_gain) or \
-            (not self.should_use_r128(item) and
-                (not item.rg_track_gain or not item.rg_track_peak))
+            (not self.should_use_r128(item)
+                and (not item.rg_track_gain or not item.rg_track_peak))
 
     def album_requires_gain(self, album):
         # Skip calculating gain only when *all* files don't need
@@ -1257,11 +1257,11 @@ class ReplayGainPlugin(BeetsPlugin):
         # needs recalculation, we still get an accurate album gain
         # value.
         return self.overwrite or \
-            any([self.should_use_r128(item) and
-                (not item.r128_track_gain or not item.r128_album_gain)
+            any([self.should_use_r128(item)
+                and (not item.r128_track_gain or not item.r128_album_gain)
                 for item in album.items()]) or \
-            any([not self.should_use_r128(item) and
-                (not item.rg_album_gain or not item.rg_album_peak)
+            any([not self.should_use_r128(item)
+                and (not item.rg_album_gain or not item.rg_album_peak)
                 for item in album.items()])
 
     def store_track_gain(self, item, track_gain):

@@ -978,8 +978,8 @@ def case_sensitive(path):
     # If an upper-case version of the path exists but a lower-case
     # version does not, then the filesystem must be case-sensitive.
     # (Otherwise, we have more work to do.)
-    if not (os.path.exists(syspath(path.lower())) and
-            os.path.exists(syspath(path.upper()))):
+    if not (os.path.exists(syspath(path.lower()))
+            and os.path.exists(syspath(path.upper()))):
         return True
 
     # Both versions of the path exist on the file system. Check whether

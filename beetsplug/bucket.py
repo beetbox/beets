@@ -175,8 +175,8 @@ def build_alpha_spans(alpha_spans_str, alpha_regexs):
                                    elem)
             spans.append(
                 re.compile(
-                    "^[" + ASCII_DIGITS[begin_index:end_index + 1] +
-                    ASCII_DIGITS[begin_index:end_index + 1].upper() + "]"
+                    "^[" + ASCII_DIGITS[begin_index:end_index + 1]
+                    + ASCII_DIGITS[begin_index:end_index + 1].upper() + "]"
                 )
             )
     return spans

@@ -210,8 +210,8 @@ def distance(items, album_info, mapping):
         elif album_info.original_year:
             # Prefer matchest closest to the release year.
             diff = abs(likelies['year'] - album_info.year)
-            diff_max = abs(datetime.date.today().year -
-                           album_info.original_year)
+            diff_max = abs(datetime.date.today().year
+                           - album_info.original_year)
             dist.add_ratio('year', diff, diff_max)
         else:
             # Full penalty when there is no original year.
@@ -454,9 +454,9 @@ def tag_album(items, search_artist=None, search_album=None,
             log.debug(u'Additional search terms: {0}', extra_tags)
 
         # Is this album likely to be a "various artist" release?
-        va_likely = ((not consensus['artist']) or
-                     (search_artist.lower() in VA_ARTISTS) or
-                     any(item.comp for item in items))
+        va_likely = ((not consensus['artist'])
+                     or (search_artist.lower() in VA_ARTISTS)
+                     or any(item.comp for item in items))
         log.debug(u'Album might be VA: {0}', va_likely)
 
         # Get the results from the data sources.

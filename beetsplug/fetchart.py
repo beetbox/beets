@@ -914,8 +914,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         self.cautious = self.config['cautious'].get(bool)
         self.store_source = self.config['store_source'].get(bool)
 
-        self.src_removed = (config['import']['delete'].get(bool) or
-                            config['import']['move'].get(bool))
+        self.src_removed = (config['import']['delete'].get(bool)
+                            or config['import']['move'].get(bool))
 
         if self.config['auto']:
             # Enable two import hooks when fetching is enabled.

@@ -442,9 +442,9 @@ class DiscogsPlugin(BeetsPlugin):
             # side_count is the number of mediums or medium sides (in the case
             # of two-sided mediums) that were seen before.
             medium_is_index = track.medium and not track.medium_index and (
-                len(track.medium) != 1 or
+                len(track.medium) != 1
                 # Not within standard incremental medium values (A, B, C, ...).
-                ord(track.medium) - 64 != side_count + 1
+                or ord(track.medium) - 64 != side_count + 1
             )
 
             if not medium_is_index and medium != track.medium:

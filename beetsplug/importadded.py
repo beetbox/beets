@@ -51,8 +51,8 @@ class ImportAddedPlugin(BeetsPlugin):
         return album.path in self.replaced_album_paths
 
     def record_if_inplace(self, task, session):
-        if not (session.config['copy'] or session.config['move'] or
-                session.config['link'] or session.config['hardlink']):
+        if not (session.config['copy'] or session.config['move']
+                or session.config['link'] or session.config['hardlink']):
             self._log.debug(u"In place import detected, recording mtimes from "
                             u"source paths")
             items = [task.item] \

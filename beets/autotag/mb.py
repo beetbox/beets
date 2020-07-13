@@ -305,13 +305,13 @@ def album_info(release):
 
         for track in all_tracks:
 
-            if ('title' in track['recording'] and
-                    track['recording']['title'] in SKIPPED_TRACKS):
+            if ('title' in track['recording']
+                    and track['recording']['title'] in SKIPPED_TRACKS):
                 continue
 
-            if ('video' in track['recording'] and
-                    track['recording']['video'] == 'true' and
-                    config['match']['ignore_video_tracks']):
+            if ('video' in track['recording']
+                    and track['recording']['video'] == 'true'
+                    and config['match']['ignore_video_tracks']):
                 continue
 
             # Basic information from the recording.

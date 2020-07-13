@@ -249,8 +249,8 @@ def show_change(cur_artist, cur_album, match):
 
     # Identify the album in question.
     if cur_artist != match.info.artist or \
-            (cur_album != match.info.album and
-             match.info.album != VARIOUS_ARTISTS):
+            (cur_album != match.info.album
+             and match.info.album != VARIOUS_ARTISTS):
         artist_l, artist_r = cur_artist or '', match.info.artist
         album_l,  album_r = cur_album or '', match.info.album
         if artist_r == VARIOUS_ARTISTS:
@@ -692,8 +692,8 @@ class TerminalImportSession(importer.ImportSession):
         """
         # Show what we're tagging.
         print_()
-        print_(displayable_path(task.paths, u'\n') +
-               u' ({0} items)'.format(len(task.items)))
+        print_(displayable_path(task.paths, u'\n')
+               + u' ({0} items)'.format(len(task.items)))
 
         # Take immediate action if appropriate.
         action = _summary_judgment(task.rec)
@@ -1792,8 +1792,8 @@ def completion_script(commands):
     # Fields
     yield u"  fields='%s'\n" % ' '.join(
         set(
-            list(library.Item._fields.keys()) +
-            list(library.Album._fields.keys())
+            list(library.Item._fields.keys())
+            + list(library.Album._fields.keys())
         )
     )
 

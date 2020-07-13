@@ -684,8 +684,8 @@ class ImportTask(BaseImportTask):
                 [i.albumartist or i.artist for i in self.items]
             )
             if freq == len(self.items) or \
-                (freq > 1 and
-                    float(freq) / len(self.items) >= SINGLE_ARTIST_THRESH):
+                (freq > 1
+                    and float(freq) / len(self.items) >= SINGLE_ARTIST_THRESH):
                 # Single-artist album.
                 changes['albumartist'] = plur_albumartist
                 changes['comp'] = False
@@ -771,8 +771,8 @@ class ImportTask(BaseImportTask):
             ))
             self.replaced_items[item] = dup_items
             for dup_item in dup_items:
-                if (not dup_item.album_id or
-                        dup_item.album_id in replaced_album_ids):
+                if (not dup_item.album_id
+                        or dup_item.album_id in replaced_album_ids):
                     continue
                 replaced_album = dup_item.get_album()
                 if replaced_album:
@@ -1220,8 +1220,8 @@ class ImportTaskFactory(object):
         """
         assert self.is_archive
 
-        if not (self.session.config['move'] or
-                self.session.config['copy']):
+        if not (self.session.config['move']
+                or self.session.config['copy']):
             log.warning(u"Archive importing requires either "
                         u"'copy' or 'move' to be enabled.")
             return
@@ -1621,8 +1621,8 @@ def albums_in_dir(path):
         # and move on to the next directory. If not, stop collapsing.
         if collapse_paths:
             if (is_subdir_of_any_in_list(root, collapse_paths)) or \
-                    (collapse_pat and
-                     collapse_pat.match(os.path.basename(root))):
+                    (collapse_pat
+                     and collapse_pat.match(os.path.basename(root))):
                 # Still collapsing.
                 collapse_paths.append(root)
                 collapse_items += items

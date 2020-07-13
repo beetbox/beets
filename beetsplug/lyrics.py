@@ -515,9 +515,9 @@ def scrape_lyrics_from_html(html):
 
     def is_text_notcode(text):
         length = len(text)
-        return (length > 20 and
-                text.count(' ') > length / 25 and
-                (text.find('{') == -1 or text.find(';') == -1))
+        return (length > 20
+                and text.count(' ') > length / 25
+                and (text.find('{') == -1 or text.find(';') == -1))
     html = _scrape_strip_cruft(html)
     html = _scrape_merge_paragraphs(html)
 

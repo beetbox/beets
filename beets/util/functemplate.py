@@ -394,8 +394,8 @@ class Parser(object):
                 break
 
             next_char = self.string[self.pos + 1]
-            if char == ESCAPE_CHAR and next_char in (self.escapable_chars +
-                                                     extra_special_chars):
+            if char == ESCAPE_CHAR and next_char in (self.escapable_chars
+                                                     + extra_special_chars):
                 # An escaped special character ($$, $}, etc.). Note that
                 # ${ is not an escape sequence: this is ambiguous with
                 # the start of a symbol and it's not necessary (just

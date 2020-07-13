@@ -104,12 +104,12 @@ def apply_metadata(album_info, mapping):
     for item, track_info in mapping.items():
         # Artist or artist credit.
         if config['artist_credit']:
-            item.artist = (track_info.artist_credit or
-                           track_info.artist or
-                           album_info.artist_credit or
-                           album_info.artist)
-            item.albumartist = (album_info.artist_credit or
-                                album_info.artist)
+            item.artist = (track_info.artist_credit
+                           or track_info.artist
+                           or album_info.artist_credit
+                           or album_info.artist)
+            item.albumartist = (album_info.artist_credit
+                                or album_info.artist)
         else:
             item.artist = (track_info.artist or album_info.artist)
             item.albumartist = album_info.artist
@@ -119,8 +119,8 @@ def apply_metadata(album_info, mapping):
 
         # Artist sort and credit names.
         item.artist_sort = track_info.artist_sort or album_info.artist_sort
-        item.artist_credit = (track_info.artist_credit or
-                              album_info.artist_credit)
+        item.artist_credit = (track_info.artist_credit
+                              or album_info.artist_credit)
         item.albumartist_sort = album_info.artist_sort
         item.albumartist_credit = album_info.artist_credit
 

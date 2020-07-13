@@ -153,8 +153,8 @@ class MPDStats(object):
         else:
             rolling = (rating + (1.0 - rating) / 2.0)
         stable = (play_count + 1.0) / (play_count + skip_count + 2.0)
-        return (self.rating_mix * stable +
-                (1.0 - self.rating_mix) * rolling)
+        return (self.rating_mix * stable
+                + (1.0 - self.rating_mix) * rolling)
 
     def get_item(self, path):
         """Return the beets item related to path.

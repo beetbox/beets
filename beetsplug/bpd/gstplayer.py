@@ -226,11 +226,11 @@ def get_decoders():
     and file extensions.
     """
     # We only care about audio decoder elements.
-    filt = (Gst.ELEMENT_FACTORY_TYPE_DEPAYLOADER |
-            Gst.ELEMENT_FACTORY_TYPE_DEMUXER |
-            Gst.ELEMENT_FACTORY_TYPE_PARSER |
-            Gst.ELEMENT_FACTORY_TYPE_DECODER |
-            Gst.ELEMENT_FACTORY_TYPE_MEDIA_AUDIO)
+    filt = (Gst.ELEMENT_FACTORY_TYPE_DEPAYLOADER
+            | Gst.ELEMENT_FACTORY_TYPE_DEMUXER
+            | Gst.ELEMENT_FACTORY_TYPE_PARSER
+            | Gst.ELEMENT_FACTORY_TYPE_DECODER
+            | Gst.ELEMENT_FACTORY_TYPE_MEDIA_AUDIO)
 
     decoders = {}
     mime_types = set()

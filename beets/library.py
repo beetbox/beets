@@ -96,9 +96,9 @@ class PathQuery(dbcore.FieldQuery):
         # Test both `sep` and `altsep` (i.e., both slash and backslash on
         # Windows).
         return (
-            (os.sep in query_part or
-             (os.altsep and os.altsep in query_part)) and
-            os.path.exists(syspath(normpath(query_part)))
+            (os.sep in query_part
+             or (os.altsep and os.altsep in query_part))
+            and os.path.exists(syspath(normpath(query_part)))
         )
 
     def match(self, item):

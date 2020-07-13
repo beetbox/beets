@@ -80,8 +80,8 @@ class FishPlugin(BeetsPlugin):
             '--extravalues',
             action='append',
             type='choice',
-            choices=library.Item.all_keys() +
-            library.Album.all_keys(),
+            choices=library.Item.all_keys()
+            + library.Album.all_keys(),
             help='include specified field *values* in completions')
         return [cmd]
 
@@ -102,8 +102,8 @@ class FishPlugin(BeetsPlugin):
         nobasicfields = opts.noFields  # Do not complete for album/track fields
         extravalues = opts.extravalues  # e.g., Also complete artists names
         beetcmds = sorted(
-            (commands.default_commands +
-             commands.plugins.commands()),
+            (commands.default_commands
+             + commands.plugins.commands()),
             key=attrgetter('name'))
         fields = sorted(set(
             library.Album.all_keys() + library.Item.all_keys()))
@@ -180,20 +180,19 @@ def get_set_of_values_for_field(lib, fields):
 def get_basic_beet_options():
     word = (
         BL_NEED2.format("-l format-item",
-                        "-f -d 'print with custom format'") +
-        BL_NEED2.format("-l format-album",
-                        "-f -d 'print with custom format'") +
-        BL_NEED2.format("-s  l  -l library",
-                        "-f -r -d 'library database file to use'") +
-        BL_NEED2.format("-s  d  -l directory",
-                        "-f -r -d 'destination music directory'") +
-        BL_NEED2.format("-s  v  -l verbose",
-                        "-f -d 'print debugging information'") +
-
-        BL_NEED2.format("-s  c  -l config",
-                        "-f -r -d 'path to configuration file'") +
-        BL_NEED2.format("-s  h  -l help",
-                        "-f -d 'print this help message and exit'"))
+                        "-f -d 'print with custom format'")
+        + BL_NEED2.format("-l format-album",
+                          "-f -d 'print with custom format'")
+        + BL_NEED2.format("-s  l  -l library",
+                          "-f -r -d 'library database file to use'")
+        + BL_NEED2.format("-s  d  -l directory",
+                          "-f -r -d 'destination music directory'")
+        + BL_NEED2.format("-s  v  -l verbose",
+                          "-f -d 'print debugging information'")
+        + BL_NEED2.format("-s  c  -l config",
+                          "-f -r -d 'path to configuration file'")
+        + BL_NEED2.format("-s  h  -l help",
+                          "-f -d 'print this help message and exit'"))
     return word
 
 
