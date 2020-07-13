@@ -164,7 +164,7 @@ class ParentWorkMockTest(unittest.TestCase, TestHelper):
     def test_force(self):
         self.config['parentwork']['force'] = True
         item = Item(path='/file', mb_workid='1', mb_parentworkid=u'XXX',
-                    parentwork_workid_current='1')
+                    parentwork_workid_current='1', mb_parentwork='parentwork')
         item.add(self.lib)
 
         self.run_command('parentwork')
@@ -175,7 +175,7 @@ class ParentWorkMockTest(unittest.TestCase, TestHelper):
     def test_no_force(self):
         self.config['parentwork']['force'] = False
         item = Item(path='/file', mb_workid='1', mb_parentworkid=u'XXX',
-                    parentwork_workid_current='1')
+                    parentwork_workid_current='1', mb_parentwork='parentwork')
         item.add(self.lib)
 
         self.run_command('parentwork')
