@@ -230,6 +230,8 @@ Fixes:
   Thanks to :user:`trolley`.
   :bug:`3637`
 * :doc:`/plugins/ipfs`: Fix Python 3 compatibility.
+  Thanks to :user:`musoke`.
+  :bug:`2554`
 
 For plugin developers:
 
