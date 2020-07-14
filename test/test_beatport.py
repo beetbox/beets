@@ -543,8 +543,8 @@ class BeatportTest(_common.TestCase, TestHelper):
         # Concatenate with 'id' to pass strict equality test.
         for track, test_track, id in zip(self.tracks, self.test_tracks, ids):
             self.assertEqual(
-                track.url, 'https://beatport.com/track/' +
-                test_track.url + '/' + six.text_type(id))
+                track.url, 'https://beatport.com/track/'
+                + test_track.url + '/' + six.text_type(id))
 
     def test_bpm_applied(self):
         for track, test_track in zip(self.tracks, self.test_tracks):

@@ -149,8 +149,8 @@ class MoveTest(_common.TestCase):
         s1 = os.stat(self.path)
         s2 = os.stat(self.dest)
         self.assertTrue(
-            (s1[stat.ST_INO], s1[stat.ST_DEV]) ==
-            (s2[stat.ST_INO], s2[stat.ST_DEV])
+            (s1[stat.ST_INO], s1[stat.ST_DEV])
+            == (s2[stat.ST_INO], s2[stat.ST_DEV])
         )
 
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")

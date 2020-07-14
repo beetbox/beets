@@ -72,8 +72,8 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         for m in self.media_files:
             if m.title.replace('Tag', 'Applied') == item.title:
                 return m
-        raise AssertionError(u"No MediaFile found for Item " +
-                             util.displayable_path(item.path))
+        raise AssertionError(u"No MediaFile found for Item "
+                             + util.displayable_path(item.path))
 
     def assertEqualTimes(self, first, second, msg=None):  # noqa
         """For comparing file modification times at a sufficient precision"""
@@ -127,8 +127,8 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
                                  for item in album.items())
         for item_path, added_after in items_added_after.items():
             self.assertEqualTimes(items_added_before[item_path], added_after,
-                                  u"reimport modified Item.added for " +
-                                  util.displayable_path(item_path))
+                                  u"reimport modified Item.added for "
+                                  + util.displayable_path(item_path))
 
     def test_import_singletons_with_added_dates(self):
         self.config['import']['singletons'] = True
@@ -165,8 +165,8 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
                                  for item in self.lib.items())
         for item_path, added_after in items_added_after.items():
             self.assertEqualTimes(items_added_before[item_path], added_after,
-                                  u"reimport modified Item.added for " +
-                                  util.displayable_path(item_path))
+                                  u"reimport modified Item.added for "
+                                  + util.displayable_path(item_path))
 
 
 def suite():

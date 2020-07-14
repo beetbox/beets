@@ -371,8 +371,8 @@ class NonAutotaggedImportTest(_common.TestCase, ImportHelper):
             s1 = os.stat(mediafile.path)
             s2 = os.stat(filename)
             self.assertTrue(
-                (s1[stat.ST_INO], s1[stat.ST_DEV]) ==
-                (s2[stat.ST_INO], s2[stat.ST_DEV])
+                (s1[stat.ST_INO], s1[stat.ST_DEV])
+                == (s2[stat.ST_INO], s2[stat.ST_DEV])
             )
 
 
