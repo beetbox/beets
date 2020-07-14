@@ -46,7 +46,7 @@ class RandomTest(unittest.TestCase, TestHelper):
     def _stats(self, data):
         mean = sum(data) / len(data)
         stdev = math.sqrt(
-                sum((p - mean) ** 2 for p in data) / (len(data) - 1))
+            sum((p - mean) ** 2 for p in data) / (len(data) - 1))
         quot, rem = divmod(len(data), 2)
         if rem:
             median = sorted(data)[quot]

@@ -94,43 +94,43 @@ class BeatportTest(_common.TestCase, TestHelper):
             "bpm": 90,
             "key": {
                     "standard": {
-                                 "letter": "G",
-                                 "sharp": False,
-                                 "flat": False,
-                                 "chord": "minor"
+                        "letter": "G",
+                        "sharp": False,
+                        "flat": False,
+                        "chord": "minor"
                     },
-                    "shortName": "Gmin"
+                "shortName": "Gmin"
             },
             "artists": [{
-                         "id": 326158,
-                         "name": "Supersillyus",
-                         "slug": "supersillyus",
-                         "type": "artist"
+                "id": 326158,
+                "name": "Supersillyus",
+                "slug": "supersillyus",
+                "type": "artist"
             }],
             "genres": [{
-                         "id": 9,
-                         "name": "Breaks",
-                         "slug": "breaks",
-                         "type": "genre"
+                "id": 9,
+                "name": "Breaks",
+                "slug": "breaks",
+                "type": "genre"
             }],
             "subGenres": [{
-                           "id": 209,
-                           "name": "Glitch Hop",
-                           "slug": "glitch-hop",
-                           "type": "subgenre"
+                "id": 209,
+                "name": "Glitch Hop",
+                "slug": "glitch-hop",
+                "type": "subgenre"
             }],
             "release": {
-                         "id": 1742984,
-                         "name": "Charade",
-                         "type": "release",
-                         "slug": "charade"
+                "id": 1742984,
+                "name": "Charade",
+                "type": "release",
+                "slug": "charade"
             },
             "label": {
-                      "id": 24539,
-                      "name": "Gravitas Recordings",
-                      "type": "label",
-                      "slug": "gravitas-recordings",
-                      "status": True
+                "id": 24539,
+                "name": "Gravitas Recordings",
+                "type": "label",
+                "slug": "gravitas-recordings",
+                "status": True
             }
         }, {
             "id": 7817568,
@@ -149,43 +149,43 @@ class BeatportTest(_common.TestCase, TestHelper):
             "bpm": 100,
             "key": {
                     "standard": {
-                                 "letter": "G",
-                                 "sharp": False,
-                                 "flat": False,
-                                 "chord": "major"
+                        "letter": "G",
+                        "sharp": False,
+                        "flat": False,
+                        "chord": "major"
                     },
-                    "shortName": "Gmaj"
+                "shortName": "Gmaj"
             },
             "artists": [{
-                         "id": 326158,
-                         "name": "Supersillyus",
-                         "slug": "supersillyus",
-                         "type": "artist"
+                "id": 326158,
+                "name": "Supersillyus",
+                "slug": "supersillyus",
+                "type": "artist"
             }],
             "genres": [{
-                        "id": 9,
-                        "name": "Breaks",
-                        "slug": "breaks",
-                        "type": "genre"
+                "id": 9,
+                "name": "Breaks",
+                "slug": "breaks",
+                "type": "genre"
             }],
             "subGenres": [{
-                           "id": 209,
-                           "name": "Glitch Hop",
-                           "slug": "glitch-hop",
-                           "type": "subgenre"
+                "id": 209,
+                "name": "Glitch Hop",
+                "slug": "glitch-hop",
+                "type": "subgenre"
             }],
             "release": {
-                        "id": 1742984,
-                        "name": "Charade",
-                        "type": "release",
-                        "slug": "charade"
+                "id": 1742984,
+                "name": "Charade",
+                "type": "release",
+                "slug": "charade"
             },
             "label": {
-                      "id": 24539,
-                      "name": "Gravitas Recordings",
-                      "type": "label",
-                      "slug": "gravitas-recordings",
-                      "status": True
+                "id": 24539,
+                "name": "Gravitas Recordings",
+                "type": "label",
+                "slug": "gravitas-recordings",
+                "status": True
             }
         }, {
             "id": 7817569,
@@ -204,43 +204,43 @@ class BeatportTest(_common.TestCase, TestHelper):
             "bpm": 141,
             "key": {
                     "standard": {
-                                 "letter": "F",
-                                 "sharp": False,
-                                 "flat": False,
-                                 "chord": "major"
+                        "letter": "F",
+                        "sharp": False,
+                        "flat": False,
+                        "chord": "major"
                     },
-                     "shortName": "Fmaj"
+                "shortName": "Fmaj"
             },
             "artists": [{
-                         "id": 326158,
-                         "name": "Supersillyus",
-                         "slug": "supersillyus",
-                         "type": "artist"
+                "id": 326158,
+                "name": "Supersillyus",
+                "slug": "supersillyus",
+                "type": "artist"
             }],
             "genres": [{
-                        "id": 9,
-                        "name": "Breaks",
-                        "slug": "breaks",
-                        "type": "genre"
+                "id": 9,
+                "name": "Breaks",
+                "slug": "breaks",
+                "type": "genre"
             }],
             "subGenres": [{
-                           "id": 209,
-                           "name": "Glitch Hop",
-                           "slug": "glitch-hop",
-                           "type": "subgenre"
+                "id": 209,
+                "name": "Glitch Hop",
+                "slug": "glitch-hop",
+                "type": "subgenre"
             }],
             "release": {
-                        "id": 1742984,
-                        "name": "Charade",
-                        "type": "release",
-                        "slug": "charade"
+                "id": 1742984,
+                "name": "Charade",
+                "type": "release",
+                "slug": "charade"
             },
             "label": {
-                      "id": 24539,
-                      "name": "Gravitas Recordings",
-                      "type": "label",
-                      "slug": "gravitas-recordings",
-                      "status": True
+                "id": 24539,
+                "name": "Gravitas Recordings",
+                "type": "label",
+                "slug": "gravitas-recordings",
+                "status": True
             }
         }, {
             "id": 7817570,
@@ -260,43 +260,43 @@ class BeatportTest(_common.TestCase, TestHelper):
             "bpm": 88,
             "key": {
                     "standard": {
-                                 "letter": "A",
-                                 "sharp": False,
-                                 "flat": False,
-                                 "chord": "minor"
+                        "letter": "A",
+                        "sharp": False,
+                        "flat": False,
+                        "chord": "minor"
                     },
-                    "shortName": "Amin"
+                "shortName": "Amin"
             },
             "artists": [{
-                         "id": 326158,
-                         "name": "Supersillyus",
-                         "slug": "supersillyus",
-                         "type": "artist"
+                "id": 326158,
+                "name": "Supersillyus",
+                "slug": "supersillyus",
+                "type": "artist"
             }],
             "genres": [{
-                        "id": 9,
-                        "name": "Breaks",
-                        "slug": "breaks",
-                        "type": "genre"
+                "id": 9,
+                "name": "Breaks",
+                "slug": "breaks",
+                "type": "genre"
             }],
             "subGenres": [{
-                           "id": 209,
-                           "name": "Glitch Hop",
-                           "slug": "glitch-hop",
-                           "type": "subgenre"
+                "id": 209,
+                "name": "Glitch Hop",
+                "slug": "glitch-hop",
+                "type": "subgenre"
             }],
             "release": {
-                        "id": 1742984,
-                        "name": "Charade",
-                        "type": "release",
-                        "slug": "charade"
+                "id": 1742984,
+                "name": "Charade",
+                "type": "release",
+                "slug": "charade"
             },
             "label": {
-                      "id": 24539,
-                      "name": "Gravitas Recordings",
-                      "type": "label",
-                      "slug": "gravitas-recordings",
-                      "status": True
+                "id": 24539,
+                "name": "Gravitas Recordings",
+                "type": "label",
+                "slug": "gravitas-recordings",
+                "status": True
             }
         }, {
             "id": 7817571,
@@ -315,43 +315,43 @@ class BeatportTest(_common.TestCase, TestHelper):
             "bpm": 123,
             "key": {
                     "standard": {
-                                 "letter": "E",
-                                 "sharp": False,
-                                 "flat": True,
-                                 "chord": "major"
+                        "letter": "E",
+                        "sharp": False,
+                        "flat": True,
+                        "chord": "major"
                     },
-                    "shortName": "E&#9837;maj"
+                "shortName": "E&#9837;maj"
             },
             "artists": [{
-                         "id": 326158,
-                         "name": "Supersillyus",
-                         "slug": "supersillyus",
-                         "type": "artist"
+                "id": 326158,
+                "name": "Supersillyus",
+                "slug": "supersillyus",
+                "type": "artist"
             }],
             "genres": [{
-                        "id": 9,
-                        "name": "Breaks",
-                        "slug": "breaks",
-                        "type": "genre"
+                "id": 9,
+                "name": "Breaks",
+                "slug": "breaks",
+                "type": "genre"
             }],
             "subGenres": [{
-                           "id": 209,
-                           "name": "Glitch Hop",
-                           "slug": "glitch-hop",
-                           "type": "subgenre"
+                "id": 209,
+                "name": "Glitch Hop",
+                "slug": "glitch-hop",
+                "type": "subgenre"
             }],
             "release": {
-                        "id": 1742984,
-                        "name": "Charade",
-                        "type": "release",
-                        "slug": "charade"
+                "id": 1742984,
+                "name": "Charade",
+                "type": "release",
+                "slug": "charade"
             },
             "label": {
-                      "id": 24539,
-                      "name": "Gravitas Recordings",
-                      "type": "label",
-                      "slug": "gravitas-recordings",
-                      "status": True
+                "id": 24539,
+                "name": "Gravitas Recordings",
+                "type": "label",
+                "slug": "gravitas-recordings",
+                "status": True
             }
         }, {
             "id": 7817572,
@@ -370,43 +370,43 @@ class BeatportTest(_common.TestCase, TestHelper):
             "bpm": 123,
             "key": {
                     "standard": {
-                                 "letter": "A",
-                                 "sharp": False,
-                                 "flat": False,
-                                 "chord": "major"
+                        "letter": "A",
+                        "sharp": False,
+                        "flat": False,
+                        "chord": "major"
                     },
-                    "shortName": "Amaj"
+                "shortName": "Amaj"
             },
             "artists": [{
-                         "id": 326158,
-                         "name": "Supersillyus",
-                         "slug": "supersillyus",
-                         "type": "artist"
+                "id": 326158,
+                "name": "Supersillyus",
+                "slug": "supersillyus",
+                "type": "artist"
             }],
             "genres": [{
-                        "id": 9,
-                        "name": "Breaks",
-                        "slug": "breaks",
-                        "type": "genre"
+                "id": 9,
+                "name": "Breaks",
+                "slug": "breaks",
+                "type": "genre"
             }],
             "subGenres": [{
-                           "id": 209,
-                           "name": "Glitch Hop",
-                           "slug": "glitch-hop",
-                           "type": "subgenre"
+                "id": 209,
+                "name": "Glitch Hop",
+                "slug": "glitch-hop",
+                "type": "subgenre"
             }],
             "release": {
-                        "id": 1742984,
-                        "name": "Charade",
-                        "type": "release",
-                        "slug": "charade"
+                "id": 1742984,
+                "name": "Charade",
+                "type": "release",
+                "slug": "charade"
             },
             "label": {
-                      "id": 24539,
-                      "name": "Gravitas Recordings",
-                      "type": "label",
-                      "slug": "gravitas-recordings",
-                      "status": True
+                "id": 24539,
+                "name": "Gravitas Recordings",
+                "type": "label",
+                "slug": "gravitas-recordings",
+                "status": True
             }
         }]
         return results
@@ -565,16 +565,16 @@ class BeatportResponseEmptyTest(_common.TestCase, TestHelper):
             "id": 7817567,
             "name": "Mirage a Trois",
             "genres": [{
-                        "id": 9,
-                        "name": "Breaks",
-                        "slug": "breaks",
-                        "type": "genre"
+                "id": 9,
+                "name": "Breaks",
+                "slug": "breaks",
+                "type": "genre"
             }],
             "subGenres": [{
-                           "id": 209,
-                           "name": "Glitch Hop",
-                           "slug": "glitch-hop",
-                           "type": "subgenre"
+                "id": 209,
+                "name": "Glitch Hop",
+                "slug": "glitch-hop",
+                "type": "subgenre"
             }],
         }]
         return results
