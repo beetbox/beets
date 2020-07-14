@@ -229,6 +229,7 @@ Fixes:
   the Cover Art Archive API.
   Thanks to :user:`trolley`.
   :bug:`3637`
+* :doc:`/plugins/ipfs`: Fix Python 3 compatibility.
 
 For plugin developers:
 
