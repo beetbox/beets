@@ -476,17 +476,17 @@ class GeniusFetchTest(GeniusBaseTest):
                             "result": {
                                 "primary_artist": {
                                     "name": u"\u200Bblackbear",
-                                    },
+                                },
                                 "url": "blackbear_url"
-                                }
+                            }
                         },
                         {
                             "result": {
                                 "primary_artist": {
                                     "name": u"El\u002Dp"
-                                    },
+                                },
                                 "url": "El-p_url"
-                                }
+                            }
                         }
                     ]
                 }

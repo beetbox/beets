@@ -507,8 +507,8 @@ class BPDQueryTest(BPDTestHelper):
 
 class BPDPlaybackTest(BPDTestHelper):
     test_implements_playback = implements({
-            'random',
-            })
+        'random',
+    })
 
     def test_cmd_consume(self):
         with self.run_bpd() as client:
@@ -786,7 +786,7 @@ class BPDQueueTest(BPDTestHelper):
             'playlistsearch', 'plchanges',
             'plchangesposid', 'prio', 'prioid', 'rangeid', 'shuffle',
             'swap', 'swapid', 'addtagid', 'cleartagid',
-            }, expectedFailure=True)
+    }, expectedFailure=True)
 
     METADATA = {'Pos', 'Time', 'Id', 'file', 'duration'}
 
@@ -892,7 +892,7 @@ class BPDDatabaseTest(BPDTestHelper):
             'albumart', 'find', 'findadd', 'listall',
             'listallinfo', 'listfiles', 'readcomments',
             'searchadd', 'searchaddpl', 'update', 'rescan',
-            }, expectedFailure=True)
+    }, expectedFailure=True)
 
     def test_cmd_search(self):
         with self.run_bpd() as client:
@@ -942,13 +942,13 @@ class BPDDatabaseTest(BPDTestHelper):
 class BPDMountsTest(BPDTestHelper):
     test_implements_mounts = implements({
             'mount', 'unmount', 'listmounts', 'listneighbors',
-            }, expectedFailure=True)
+    }, expectedFailure=True)
 
 
 class BPDStickerTest(BPDTestHelper):
     test_implements_stickers = implements({
             'sticker',
-            }, expectedFailure=True)
+    }, expectedFailure=True)
 
 
 class BPDConnectionTest(BPDTestHelper):
@@ -1008,13 +1008,13 @@ class BPDConnectionTest(BPDTestHelper):
 class BPDPartitionTest(BPDTestHelper):
     test_implements_partitions = implements({
             'partition', 'listpartitions', 'newpartition',
-            }, expectedFailure=True)
+    }, expectedFailure=True)
 
 
 class BPDDeviceTest(BPDTestHelper):
     test_implements_devices = implements({
             'disableoutput', 'enableoutput', 'toggleoutput', 'outputs',
-            }, expectedFailure=True)
+    }, expectedFailure=True)
 
 
 class BPDReflectionTest(BPDTestHelper):
@@ -1035,7 +1035,7 @@ class BPDPeersTest(BPDTestHelper):
     test_implements_peers = implements({
             'subscribe', 'unsubscribe', 'channels', 'readmessages',
             'sendmessage',
-            }, expectedFailure=True)
+    }, expectedFailure=True)
 
 
 def suite():
