@@ -243,6 +243,7 @@ def is_lyrics_content_ok(title, text):
     words = set(x.strip(".?, ") for x in text.lower().split())
     return keywords <= words
 
+
 LYRICS_ROOT_DIR = os.path.join(_common.RSRC, b'lyrics')
 yaml_path = os.path.join(_common.RSRC, b'lyricstext.yaml')
 LYRICS_TEXTS = confuse.load_yaml(yaml_path)
@@ -547,6 +548,7 @@ class SlugTests(unittest.TestCase):
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')

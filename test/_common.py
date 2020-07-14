@@ -100,6 +100,7 @@ def item(lib=None):
         lib.add(i)
     return i
 
+
 _album_ident = 0
 
 

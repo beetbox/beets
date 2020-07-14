@@ -42,6 +42,8 @@ gstplayer = imp.new_module("beetsplug.bpd.gstplayer")
 def _gstplayer_play(*_):  # noqa: 42
     bpd.gstplayer._GstPlayer.playing = True
     return mock.DEFAULT
+
+
 gstplayer._GstPlayer = mock.MagicMock(
     spec_set=[
         "time", "volume", "playing", "run", "play_file", "pause", "stop",
@@ -1040,6 +1042,7 @@ class BPDPeersTest(BPDTestHelper):
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')

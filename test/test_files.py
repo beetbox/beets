@@ -654,5 +654,6 @@ class MkDirAllTest(_common.TestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
+
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')
