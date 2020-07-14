@@ -96,10 +96,10 @@ class FieldsTest(_common.LibTestCase):
     def tearDown(self):
         self.io.restore()
 
-    def remove_keys(self, lRm, text):
+    def remove_keys(self, lrm, text):
         for i in text:
             try:
-                lRm.remove(i)
+                lrm.remove(i)
             except ValueError:
                 pass
 

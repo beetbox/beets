@@ -39,14 +39,14 @@ class LoggingTest(TestCase):
         self.assertNotEqual(l1, l6)
 
     def test_str_format_logging(self):
-        lTestStrLoggibg = blog.getLogger("baz123")
+        lteststrlogging = blog.getLogger("baz123")
         stream = StringIO()
         handler = log.StreamHandler(stream)
 
-        lTestStrLoggibg.addHandler(handler)
-        lTestStrLoggibg.propagate = False
+        lteststrlogging.addHandler(handler)
+        lteststrlogging.propagate = False
 
-        lTestStrLoggibg.warning(u"foo {0} {bar}", "oof", bar=u"baz")
+        lteststrlogging.warning(u"foo {0} {bar}", "oof", bar=u"baz")
         handler.flush()
         self.assertTrue(stream.getvalue(), u"foo oof baz")
 
@@ -283,9 +283,9 @@ class ConcurrentEventsTest(TestCase, helper.TestHelper):
         with helper.capture_log() as logs:
             importer = self.create_importer()
             importer.run()
-        for lTestRootLogging in logs:
-            self.assertIn(u"import", lTestRootLogging)
-            self.assertIn(u"album", lTestRootLogging)
+        for ltestrootlogging in logs:
+            self.assertIn(u"import", ltestrootlogging)
+            self.assertIn(u"album", ltestrootlogging)
 
         blog.getLogger('beets').set_global_level(blog.DEBUG)
         with helper.capture_log() as logs:
