@@ -18,23 +18,21 @@
 from __future__ import absolute_import, division, print_function
 
 import itertools
+from io import open
 import os
 import re
 import six
 import sys
 import unittest
 
-from mock import patch
-from test import _common
+import confuse
+from mock import MagicMock, patch
 
 from beets import logging
 from beets.library import Item
 from beets.util import bytestring_path
-import confuse
-
 from beetsplug import lyrics
-
-from mock import MagicMock
+from test import _common
 
 
 log = logging.getLogger('beets.test_lyrics')
@@ -232,36 +230,9 @@ class MockFetchUrl(object):
     def __call__(self, url, filename=None):
         self.fetched = url
         fn = url_to_filename(url)
-        with open(fn, 'r') as f:
+        with open(fn, 'r', encoding="utf8") as f:
             content = f.read()
         return content
-
-
-class GeniusMockGet(object):
-
-    def __init__(self, pathval='fetched_path'):
-        self.pathval = pathval
-        self.fetched = None
-
-    def __call__(self, url, headers=False):
-        from requests.models import Response
-        # for the first requests.get() return a path
-        if headers:
-            response = Response()
-            response.status_code = 200
-            response._content = b'{"meta":{"status":200},\
-                                "response":{"song":{"path":"/lyrics/sample"}}}'
-            return response
-        # for the second requests.get() return the genius page
-        else:
-            from mock import PropertyMock
-            self.fetched = url
-            fn = url_to_filename(url)
-            with open(fn, 'r') as f:
-                content = f.read()
-            response = Response()
-            type(response).text = PropertyMock(return_value=content)
-            return response
 
 
 def is_lyrics_content_ok(title, text):
@@ -298,8 +269,8 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
 
     DEFAULT_SOURCES = [
         dict(DEFAULT_SONG, backend=lyrics.LyricsWiki),
-        dict(artist=u'Santana', title=u'Black magic woman',
-             backend=lyrics.MusiXmatch),
+        # dict(artist=u'Santana', title=u'Black magic woman',
+        #      backend=lyrics.MusiXmatch),
         dict(DEFAULT_SONG, backend=lyrics.Genius),
     ]
 
@@ -313,9 +284,9 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
         dict(DEFAULT_SONG,
              url=u'http://www.chartlyrics.com',
              path=u'/_LsLsZ7P4EK-F-LD4dJgDQ/Lady+Madonna.aspx'),
-        dict(DEFAULT_SONG,
-             url=u'http://www.elyricsworld.com',
-             path=u'/lady_madonna_lyrics_beatles.html'),
+        # dict(DEFAULT_SONG,
+        #      url=u'http://www.elyricsworld.com',
+        #      path=u'/lady_madonna_lyrics_beatles.html'),
         dict(url=u'http://www.lacoccinelle.net',
              artist=u'Jacques Brel', title=u"Amsterdam",
              path=u'/paroles-officielles/275679.html'),
@@ -332,11 +303,11 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
         dict(url=u'http://www.lyricsontop.com',
              artist=u'Amy Winehouse', title=u"Jazz'n'blues",
              path=u'/amy-winehouse-songs/jazz-n-blues-lyrics.html'),
-        dict(DEFAULT_SONG,
-             url='http://www.metrolyrics.com/',
-             path='lady-madonna-lyrics-beatles.html'),
-        dict(url='http://www.musica.com/', path='letras.asp?letra=2738',
-             artist=u'Santana', title=u'Black magic woman'),
+        # dict(DEFAULT_SONG,
+        #      url='http://www.metrolyrics.com/',
+        #      path='lady-madonna-lyrics-beatles.html'),
+        # dict(url='http://www.musica.com/', path='letras.asp?letra=2738',
+        #      artist=u'Santana', title=u'Black magic woman'),
         dict(url=u'http://www.paroles.net/',
              artist=u'Lilly Wood & the prick', title=u"Hey it's ok",
              path=u'lilly-wood-the-prick/paroles-hey-it-s-ok'),
@@ -352,9 +323,9 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
         LyricsGoogleBaseTest.setUp(self)
         self.plugin = lyrics.LyricsPlugin()
 
-    @unittest.skipUnless(os.environ.get(
-        'BEETS_TEST_LYRICS_SOURCES', '0') == '1',
-        'lyrics sources testing not enabled')
+    @unittest.skipUnless(
+        os.environ.get('INTEGRATION_TEST', '0') == '1',
+        'integration testing not enabled')
     def test_backend_sources_ok(self):
         """Test default backends with songs known to exist in respective databases.
         """
@@ -366,9 +337,9 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
                 errors.append(s['backend'].__name__)
         self.assertFalse(errors)
 
-    @unittest.skipUnless(os.environ.get(
-        'BEETS_TEST_LYRICS_SOURCES', '0') == '1',
-        'lyrics sources testing not enabled')
+    @unittest.skipUnless(
+        os.environ.get('INTEGRATION_TEST', '0') == '1',
+        'integration testing not enabled')
     def test_google_sources_ok(self):
         """Test if lyrics present on websites registered in beets google custom
            search engine are correctly scraped.
@@ -445,8 +416,9 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest):
         google.is_page_candidate(url, url_title, s['title'], u'Sunn O)))')
 
 
-class LyricsGeniusBaseTest(unittest.TestCase):
+# test Genius backend
 
+class GeniusBaseTest(unittest.TestCase):
     def setUp(self):
         """Set up configuration."""
         try:
@@ -457,28 +429,91 @@ class LyricsGeniusBaseTest(unittest.TestCase):
             self.skipTest("Python's built-in HTML parser is not good enough")
 
 
-class LyricsGeniusScrapeTest(LyricsGeniusBaseTest):
-
-    """Checks that Genius backend works as intended.
-    """
-    import requests
+class GeniusScrapeLyricsFromHtmlTest(GeniusBaseTest):
+    """tests Genius._scrape_lyrics_from_html()"""
 
     def setUp(self):
         """Set up configuration"""
-        LyricsGeniusBaseTest.setUp(self)
+        GeniusBaseTest.setUp(self)
         self.plugin = lyrics.LyricsPlugin()
 
-    @patch.object(requests, 'get', GeniusMockGet())
     def test_no_lyrics_div(self):
-        """Ensure that `lyrics_from_song_page` doesn't crash when the html
-        for a Genius page doesn't contain <div class="lyrics"></div>
+        """Ensure we don't crash when the scraping the html for a genius page
+        doesn't contain <div class="lyrics"></div>
         """
         # https://github.com/beetbox/beets/issues/3535
         # expected return value None
-        song_url = 'https://genius.com/sample'
-        self.assertEqual(genius.lyrics_from_song_page(song_url),
-                         None)
+        url = 'https://genius.com/sample'
+        mock = MockFetchUrl()
+        self.assertEqual(genius._scrape_lyrics_from_html(mock(url)), None)
 
+    def test_good_lyrics(self):
+        """Ensure we are able to scrape a page with lyrics"""
+        url = 'https://genius.com/Wu-tang-clan-cream-lyrics'
+        mock = MockFetchUrl()
+        self.assertIsNotNone(genius._scrape_lyrics_from_html(mock(url)))
+
+    # TODO: find an example of a lyrics page with multiple divs and test it
+
+
+class GeniusFetchTest(GeniusBaseTest):
+    """tests Genius.fetch()"""
+
+    def setUp(self):
+        """Set up configuration"""
+        GeniusBaseTest.setUp(self)
+        self.plugin = lyrics.LyricsPlugin()
+
+    @patch.object(lyrics.Genius, '_scrape_lyrics_from_html')
+    @patch.object(lyrics.Backend, 'fetch_url', return_value=True)
+    def test_json(self, mock_fetch_url, mock_scrape):
+        """Ensure we're finding artist matches"""
+        with patch.object(
+            lyrics.Genius, '_search', return_value={
+                "response": {
+                    "hits": [
+                        {
+                            "result": {
+                                "primary_artist": {
+                                    "name": u"\u200Bblackbear",
+                                    },
+                                "url": "blackbear_url"
+                                }
+                        },
+                        {
+                            "result": {
+                                "primary_artist": {
+                                    "name": u"El\u002Dp"
+                                    },
+                                "url": "El-p_url"
+                                }
+                        }
+                    ]
+                }
+            }
+        ) as mock_json:
+            # genius uses zero-width-spaces (\u200B) for lowercase
+            # artists so we make sure we can match those
+            self.assertIsNotNone(genius.fetch('blackbear', 'Idfc'))
+            mock_fetch_url.assert_called_once_with("blackbear_url")
+            mock_scrape.assert_called_once_with(True)
+
+            # genius uses the hypen minus (\u002D) as their dash
+            self.assertIsNotNone(genius.fetch('El-p', 'Idfc'))
+            mock_fetch_url.assert_called_with('El-p_url')
+            mock_scrape.assert_called_with(True)
+
+            # test no matching artist
+            self.assertIsNone(genius.fetch('doesntexist', 'none'))
+
+            # test invalid json
+            mock_json.return_value = None
+            self.assertIsNone(genius.fetch('blackbear', 'Idfc'))
+
+    # TODO: add integration test hitting real api
+
+
+# test utilties
 
 class SlugTests(unittest.TestCase):
 

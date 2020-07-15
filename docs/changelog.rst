@@ -132,6 +132,13 @@ New features:
 * :doc:`/plugins/lyrics`: Improved searching Genius backend when artist
   contained special characters.
   :bug:`3634`
+* :doc:`/plugins/parentwork`: Also get the composition date of the parent work,
+  instead of just the child work.
+  Thanks to :user:`aereaux`.
+  :bug:`3650`
+* :doc:`/plugins/lyrics`: Fix a bug in the heuristic for detecting valid
+  lyrics in the Google source of the lyrics plugin
+  :bug:`2969`
 
 Fixes:
 
@@ -222,6 +229,9 @@ Fixes:
   the Cover Art Archive API.
   Thanks to :user:`trolley`.
   :bug:`3637`
+* :doc:`/plugins/ipfs`: Fix Python 3 compatibility.
+  Thanks to :user:`musoke`.
+  :bug:`2554`
 
 For plugin developers:
 
