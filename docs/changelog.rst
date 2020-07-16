@@ -139,6 +139,9 @@ New features:
 * :doc:`/plugins/lyrics`: Fix a bug in the heuristic for detecting valid
   lyrics in the Google source of the lyrics plugin
   :bug:`2969`
+* :doc:`/plugins/thumbnails`: Fix a bug where pathlib expected a string instead
+  of bytes for a path.
+  :bug:`3360`
 
 Fixes:
 
