@@ -22,7 +22,7 @@ Following these guidelines helps to communicate that you respect the time of the
   comparing beets' performance to other tools. You can help by compiling a
   library of freely-licensed music files (preferably with incorrect metadata)
   for testing and measurement.
-* Think you have a nice config or unique use-case for beets? We'd love to hear about it! Submit a post to our [our forums](https://discourse.beets.io/) under the label 'recipe' for a chance to get featured in our [docs](https://beets.readthedocs.io/en/stable/guides/advanced.html).
+  * Think you have a nice config or cool use-case for beets? We'd love to hear about it! Submit a post to our [our forums](https://discourse.beets.io/) under the category 'Show and Tell' for a chance to get featured in our [docs](https://beets.readthedocs.io/en/stable/guides/advanced.html).
 * Consider helping out in [our forums](https://discourse.beets.io/) by responding to support requests or driving some new discussions. 
 
 [docs]: http://beets.readthedocs.org/
@@ -59,9 +59,9 @@ such that the package will be installed to your home directory (compare with the
 * Not all of our code is up to our coding conventions. In particular, the [API documentation](https://beets.readthedocs.io/en/stable/dev/api.html) are currently quite sparse. You can help by adding to the docstrings in the code and to the documentation pages themselves. `beets` follows [PEP-257](https://www.python.org/dev/peps/pep-0257/) for docstrings and in some places, we also sometimes use [ReST autodoc syntax for Sphinx](https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html) to, for example, refer to a class name.
 
 ## Your first contribution
-If this is your first time contributing to an open source project, welcome! If you are confused at all about how to contribute or what to contribute, take a look at [this great tutorial](http://makeapullrequest.com/), or stop by our [gitter chat room](https://gitter.im/beetbox/beets#) if you have any questions. 
+If this is your first time contributing to an open source project, welcome! If you are confused at all about how to contribute or what to contribute, take a look at [this great tutorial](http://makeapullrequest.com/), or stop by our [forums](https://discourse.beets.io/) if you have any questions. 
 
-We maintain a list of issues we feel are perfect for first-timers tagged "[good first issue](https://github.com/beetbox/beets/labels/good%20first%20issue)". These issues are perfect for anyone new to open source. In fact, we encourage only users who are new to open source to tackle these. Ideally, the goal for these issues is to get users comfortable with contributing to an open source project for the first time. Please, do not hesitate to ask any questions.
+We maintain a list of issues we reserved for those new to open source labeled "[first timers only](https://github.com/beetbox/beets/issues?q=is%3Aopen+is%3Aissue+label%3A%22first+timers+only%22)". Since the goal of these issues is to get users comfortable with contributing to an open source project, please do not hesitate to ask any questions.
 
 ## How to Submit Your Work
 
@@ -72,16 +72,16 @@ Do you have a great bug fix, new feature, or documentation expansion you'd like 
 3. Add tests. If you've fixed a bug, write a test to ensure that you've actually fixed it. If there's a new feature or plugin, please contribute tests that show that your code does what it says.
 4. Add documentation. If you've added a new command flag, for example, find the appropriate page under `docs/` where it needs to be listed.
 5. Add a changelog entry to `docs/changelog.rst` near the top of the document.
-6. Run the tests and style checker. The easiest way to run the full battery of tests is to use [tox](https://tox.readthedocs.org/en/latest/). This will run the same set of tests that we run on Travis. For more information on running tests, see our [Testing wiki page](https://github.com/beetbox/beets/wiki/Testing).
-7. Push to your fork and open a pull request! We'll be in touch soon.
-8. If you add commits to a pull request, please *add a comment* after you push them. (GitHub doesn't notify us when commits are added, so we need your comment so we get an email alert.)
+6. Run the tests and style checker. The easiest way to run the tests is to use [tox](https://tox.readthedocs.org/en/latest/). For more information on running tests, see our [Testing wiki page](https://github.com/beetbox/beets/wiki/Testing).
+7. Push to your fork and open a pull request! We'll be in touch shortly.
+8. If you add commits to a pull request, please add a comment or re-request a review after you push them since GitHub doesn't automatically notify us when commits are added.
 
 Remember, code contributions have four parts: the code, the tests, the documentation, and the changelog entry. Thank you for contributing!
 
 
 # The Code
 
-The documentation has an [API documentation section](https://beets.readthedocs.io/en/stable/dev/api.html) that serves as an introduction to beets' design.
+The documentation has an [API section](https://beets.readthedocs.io/en/stable/dev/api.html) that serves as an introduction to beets' design.
 
 ## Coding Conventions
 
@@ -118,7 +118,7 @@ There are a few coding conventions we use in beets:
 [str.format]: http://docs.python.org/library/stdtypes.html#str.format
 [modformat]: http://docs.python.org/library/stdtypes.html#string-formatting-operations
 
-We follow [PEP 8](http://www.python.org/dev/peps/pep-0008/) for style. The buildbot and `tox` will complain if you use tabs for indentation, for example.
+We follow [PEP 8](http://www.python.org/dev/peps/pep-0008/) for style. You can use `tox -e lint` to check your code for any style errors.
 
 ## Handling Paths
 
