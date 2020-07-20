@@ -38,7 +38,7 @@ from string import ascii_lowercase
 
 
 USER_AGENT = u'beets/{0} +https://beets.io/'.format(beets.__version__)
-API_KEY    = 'rAzVUQYRaoFjeBjyWuWZ'
+API_KEY = 'rAzVUQYRaoFjeBjyWuWZ'
 API_SECRET = 'plxtUTqoCzwxZpqdPysCwGuBSmZNdZVy'
 
 # Exceptions that discogs_client should really handle but does not.
