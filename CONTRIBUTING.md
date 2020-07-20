@@ -1,14 +1,15 @@
 # Thank you!
 
-First off, thank you for considering contributing to beets. It's people like you that continue to allow beets to succeed.
+First off, thank you for considering contributing to beets! It's people like you that make beets continue to succeed.
 
-Following these guidelines helps to communicate that you respect the time of the developers managing and developing this open source project. In return, they should reciprocate that respect in addressing your issue, assessing changes, and helping you finalize your pull requests.
+These guidelines describe how you can help most effectively. By following these guidelines, you can make life easier for the development team. By following them, you indicate your respect for the maintainers' time; in return, the maintainers can reciprocate by helping to address your issue, review changes, and finalize pull requests.
 
-# Types of contributions
+# Types of Contributions
 
-beets is an open source project and we love to receive contributions from our community — you! There are many ways to contribute, programmer or not.
+We love to get contributions from our community—you! There are many ways to contribute, whether you're a programmer or not.
 
-## Non-programming contribution ideas
+## Non-Programming
+
 * Promote beets! Help get the word out by telling your friends, writing a blog
   post, or discussing it on a forum you frequent.
 * Improve the [documentation][docs]. It's incredibly easy to contribute here:
@@ -16,25 +17,30 @@ beets is an open source project and we love to receive contributions from our co
   the upper-right. You can automatically send us a pull request for your
   changes.
 * GUI design. For the time being, beets is a command-line-only affair. But
-  that's mostly because I don't have any great ideas for what a good GUI
+  that's mostly because we don't have any great ideas for what a good GUI
   should look like. If you have those great ideas, please get in touch.
 * Benchmarks. We'd like to have a consistent way of measuring speed
   improvements in beets' tagger and other functionality as well as a way of
   comparing beets' performance to other tools. You can help by compiling a
   library of freely-licensed music files (preferably with incorrect metadata)
   for testing and measurement.
-  * Think you have a nice config or cool use-case for beets? We'd love to hear about it! Submit a post to our [our forums](https://discourse.beets.io/) under the category 'Show and Tell' for a chance to get featured in our [docs](https://beets.readthedocs.io/en/stable/guides/advanced.html).
-* Consider helping out in [our forums](https://discourse.beets.io/) by responding to support requests or driving some new discussions.
+* Think you have a nice config or cool use-case for beets? We'd love to hear about it! Submit a post to our [our forums][forum] under the "Show and Tell" category for a chance to get featured in [the docs][advanced].
+* Consider helping out in [our forums][forum] by responding to support requests or driving some new discussions.
 
 [docs]: http://beets.readthedocs.org/
+[forum]: https://discourse.beets.io/
+[advanced]: https://beets.readthedocs.io/en/stable/guides/advanced.html
 
-## Programming contributions
+## Programming
+
 * As a programmer (even if you're just a beginner!), you have a ton of opportunities to get your feet wet with beets.
-* For developing plugins, or hacking away at beets, there's some good information in the [for developers](https://beets.readthedocs.io/en/stable/dev/) section of the docs.
+* For developing plugins, or hacking away at beets, there's some good information in the ["For Developers" section of the docs][dev-docs].
+
+[dev-docs]: https://beets.readthedocs.io/en/stable/dev/
 
 ### Getting the Source
 
-The easiest way to get started with the latest beets source is to use [pip](http://pip.openplans.org/)  to install an "editable" package. This can be done with one command:
+The easiest way to get started with the latest beets source is to use [pip][] to install an "editable" package. This can be done with one command:
 
     $ pip install -e git+https://github.com/beetbox/beets.git#egg=beets
 
@@ -52,17 +58,20 @@ the parent directory where the source will be checked out and the `--user` optio
 such that the package will be installed to your home directory (compare with the output of
 `pip install --help`).
 
+[pip]: https://pip.pypa.io/
 
-### Code contribution ideas
+### Code Contribution Ideas
+
 * We maintain a set of [issues marked as "bite-sized"](https://github.com/beetbox/beets/labels/bitesize). These are issues that would serve as a good introduction to the codebase. Claim one and start exploring!
 * Like testing? Our [test coverage](https://codecov.io/github/beetbox/beets) is somewhat low. You can help out by finding low-coverage modules or checking out other [testing-related issues](https://github.com/beetbox/beets/labels/testing).
 * There are several ways to improve the tests in general (see [Testing](https://github.com/beetbox/beets/wiki/Testing)) and some places to think about performance optimization (see [Optimization](https://github.com/beetbox/beets/wiki/Optimization)).
 * Not all of our code is up to our coding conventions. In particular, the [API documentation](https://beets.readthedocs.io/en/stable/dev/api.html) are currently quite sparse. You can help by adding to the docstrings in the code and to the documentation pages themselves. beets follows [PEP-257](https://www.python.org/dev/peps/pep-0257/) for docstrings and in some places, we also sometimes use [ReST autodoc syntax for Sphinx](https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html) to, for example, refer to a class name.
 
-## Your first contribution
+## Your First Contribution
+
 If this is your first time contributing to an open source project, welcome! If you are confused at all about how to contribute or what to contribute, take a look at [this great tutorial](http://makeapullrequest.com/), or stop by our [forums](https://discourse.beets.io/) if you have any questions.
 
-We maintain a list of issues we reserved for those new to open source labeled "[first timers only](https://github.com/beetbox/beets/issues?q=is%3Aopen+is%3Aissue+label%3A%22first+timers+only%22)". Since the goal of these issues is to get users comfortable with contributing to an open source project, please do not hesitate to ask any questions.
+We maintain a list of issues we reserved for those new to open source labeled ["first timers only"](https://github.com/beetbox/beets/issues?q=is%3Aopen+is%3Aissue+label%3A%22first+timers+only%22). Since the goal of these issues is to get users comfortable with contributing to an open source project, please do not hesitate to ask any questions.
 
 ## How to Submit Your Work
 
@@ -112,7 +121,7 @@ There are a few coding conventions we use in beets:
     * Always log Unicode strings (e.g., `log.debug(u"hello world")`).
     * The loggers use [str.format][]-style logging instead of ``%``-style, so
       you can type `log.debug(u"{0}", obj)` to do your formatting.
- * exceptions must use `except A as B:` instead of `except A, B:`
+* Exception handlers must use `except A as B:` instead of `except A, B:`.
 
 [future imports]: http://docs.python.org/library/__future__.html
 [logging]: http://docs.python.org/library/logging.html
@@ -124,10 +133,9 @@ We follow [PEP 8](http://www.python.org/dev/peps/pep-0008/) for style. You can u
 ## Handling Paths
 
 A great deal of convention deals with the handling of **paths**. Paths are
-stored internally -- in the database, for instance -- as byte strings (not
-unicode objects). This is because POSIX operating systems' path names are only
-reliably usable as byte strings -- even if you request unicode paths, you might
-still get back bytes. On Windows, the strings are always encoded with UTF-8; on
+stored internally—in the database, for instance—as byte strings (i.e., `bytes` instead of `str` in Python 3). This is because POSIX operating systems' path names are only
+reliably usable as byte strings—operating systems typically recommend but do not require that filenames use a given encoding, so violations of any reported encoding are inevitable.
+On Windows, the strings are always encoded with UTF-8; on
 Unix, the encoding is controlled by the filesystem. Here are some guidelines to
 follow:
 
@@ -154,4 +162,4 @@ Personally, I work on beets with [vim](http://www.vim.org/). Here are some
 
 Consider installing [this alternative Python indentation
 plugin](https://github.com/mitsuhiko/vim-python-combined). I also like
-[Syntastic](https://github.com/scrooloose/syntastic) with its [flake8 checker](https://github.com/scrooloose/syntastic/wiki/Python%3A---flake8).
+[neomake](https://github.com/neomake/neomake) with its flake8 checker.
