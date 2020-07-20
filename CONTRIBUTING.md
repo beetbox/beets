@@ -24,12 +24,12 @@ beets is an open source project and we love to receive contributions from our co
   library of freely-licensed music files (preferably with incorrect metadata)
   for testing and measurement.
   * Think you have a nice config or cool use-case for beets? We'd love to hear about it! Submit a post to our [our forums](https://discourse.beets.io/) under the category 'Show and Tell' for a chance to get featured in our [docs](https://beets.readthedocs.io/en/stable/guides/advanced.html).
-* Consider helping out in [our forums](https://discourse.beets.io/) by responding to support requests or driving some new discussions. 
+* Consider helping out in [our forums](https://discourse.beets.io/) by responding to support requests or driving some new discussions.
 
 [docs]: http://beets.readthedocs.org/
 
 ## Programming contributions
-* As a programmer (even if you're just a beginner!), you have a ton of opportunities to get your feet wet with beets. 
+* As a programmer (even if you're just a beginner!), you have a ton of opportunities to get your feet wet with beets.
 * For developing plugins, or hacking away at beets, there's some good information in the [for developers](https://beets.readthedocs.io/en/stable/dev/) section of the docs.
 
 ### Getting the Source
@@ -50,7 +50,7 @@ the beets source in a `src/beets` directory and install the `beet` CLI script to
 a standard location on your system. You may want to use the `--src` option to specify
 the parent directory where the source will be checked out and the `--user` option
 such that the package will be installed to your home directory (compare with the output of
-`pip install --help`). 
+`pip install --help`).
 
 
 ### Code contribution ideas
@@ -60,7 +60,7 @@ such that the package will be installed to your home directory (compare with the
 * Not all of our code is up to our coding conventions. In particular, the [API documentation](https://beets.readthedocs.io/en/stable/dev/api.html) are currently quite sparse. You can help by adding to the docstrings in the code and to the documentation pages themselves. beets follows [PEP-257](https://www.python.org/dev/peps/pep-0257/) for docstrings and in some places, we also sometimes use [ReST autodoc syntax for Sphinx](https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html) to, for example, refer to a class name.
 
 ## Your first contribution
-If this is your first time contributing to an open source project, welcome! If you are confused at all about how to contribute or what to contribute, take a look at [this great tutorial](http://makeapullrequest.com/), or stop by our [forums](https://discourse.beets.io/) if you have any questions. 
+If this is your first time contributing to an open source project, welcome! If you are confused at all about how to contribute or what to contribute, take a look at [this great tutorial](http://makeapullrequest.com/), or stop by our [forums](https://discourse.beets.io/) if you have any questions.
 
 We maintain a list of issues we reserved for those new to open source labeled "[first timers only](https://github.com/beetbox/beets/issues?q=is%3Aopen+is%3Aissue+label%3A%22first+timers+only%22)". Since the goal of these issues is to get users comfortable with contributing to an open source project, please do not hesitate to ask any questions.
 
@@ -89,13 +89,13 @@ The documentation has an [API section](https://beets.readthedocs.io/en/stable/de
 There are a few coding conventions we use in beets:
 
 * Whenever you access the library database, do so through the provided Library
-  methods or via a Transaction object. Never call `lib.conn.*` directly. 
+  methods or via a Transaction object. Never call `lib.conn.*` directly.
   For example, do this:
   ```
   with g.lib.transaction() as tx:
         rows = tx.query('SELECT DISTINCT "{0}" FROM "{1}" ORDER BY "{2}"'
                         .format(field, model._table, sort_field))
-  ```  
+  ```
   To fetch Item objects from the database, use lib.items(...) and supply a query as an argument. Resist the urge to write raw SQL for your query. If you must use lower-level    queries into the database, do this:
   ```
   with lib.transaction() as tx:
