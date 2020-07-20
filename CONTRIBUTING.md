@@ -1,11 +1,12 @@
 # Thank you!
-First off, thank you for considering contributing to `beets`. It's people like you that continue to allow `beets` to succeed.
+
+First off, thank you for considering contributing to beets. It's people like you that continue to allow beets to succeed.
 
 Following these guidelines helps to communicate that you respect the time of the developers managing and developing this open source project. In return, they should reciprocate that respect in addressing your issue, assessing changes, and helping you finalize your pull requests.
 
 # Types of contributions
 
-`beets` is an open source project and we love to receive contributions from our community — you! There are many ways to contribute, programmer or not.
+beets is an open source project and we love to receive contributions from our community — you! There are many ways to contribute, programmer or not.
 
 ## Non-programming contribution ideas
 * Promote beets! Help get the word out by telling your friends, writing a blog
@@ -28,7 +29,7 @@ Following these guidelines helps to communicate that you respect the time of the
 [docs]: http://beets.readthedocs.org/
 
 ## Programming contributions
-* As a programmer (even if you're just a beginner!), you have a ton of opportunities to get your feet wet with `beets`. 
+* As a programmer (even if you're just a beginner!), you have a ton of opportunities to get your feet wet with beets. 
 * For developing plugins, or hacking away at beets, there's some good information in the [for developers](https://beets.readthedocs.io/en/stable/dev/) section of the docs.
 
 ### Getting the Source
@@ -56,7 +57,7 @@ such that the package will be installed to your home directory (compare with the
 * We maintain a set of [issues marked as "bite-sized"](https://github.com/beetbox/beets/labels/bitesize). These are issues that would serve as a good introduction to the codebase. Claim one and start exploring!
 * Like testing? Our [test coverage](https://codecov.io/github/beetbox/beets) is somewhat low. You can help out by finding low-coverage modules or checking out other [testing-related issues](https://github.com/beetbox/beets/labels/testing).
 * There are several ways to improve the tests in general (see [Testing](https://github.com/beetbox/beets/wiki/Testing)) and some places to think about performance optimization (see [Optimization](https://github.com/beetbox/beets/wiki/Optimization)).
-* Not all of our code is up to our coding conventions. In particular, the [API documentation](https://beets.readthedocs.io/en/stable/dev/api.html) are currently quite sparse. You can help by adding to the docstrings in the code and to the documentation pages themselves. `beets` follows [PEP-257](https://www.python.org/dev/peps/pep-0257/) for docstrings and in some places, we also sometimes use [ReST autodoc syntax for Sphinx](https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html) to, for example, refer to a class name.
+* Not all of our code is up to our coding conventions. In particular, the [API documentation](https://beets.readthedocs.io/en/stable/dev/api.html) are currently quite sparse. You can help by adding to the docstrings in the code and to the documentation pages themselves. beets follows [PEP-257](https://www.python.org/dev/peps/pep-0257/) for docstrings and in some places, we also sometimes use [ReST autodoc syntax for Sphinx](https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html) to, for example, refer to a class name.
 
 ## Your first contribution
 If this is your first time contributing to an open source project, welcome! If you are confused at all about how to contribute or what to contribute, take a look at [this great tutorial](http://makeapullrequest.com/), or stop by our [forums](https://discourse.beets.io/) if you have any questions. 
