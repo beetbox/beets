@@ -264,3 +264,95 @@ Consider installing `this alternative Python indentation
 plugin <https://github.com/mitsuhiko/vim-python-combined>`__. I also
 like `neomake <https://github.com/neomake/neomake>`__ with its flake8
 checker.
+
+Testing
+=======
+
+Running the Tests
+-----------------
+
+To run the tests for multiple Python versions, compile the docs, and
+check style, use `tox`_. Just type ``tox`` or use something like
+``tox -e py27`` to test a specific configuration. `detox`_ makes this go
+faster.
+
+You can disable a hand-selected set of "slow" tests by setting the
+environment variable SKIP_SLOW_TESTS before running them.
+
+Other ways to run the tests:
+
+-  ``python testall.py`` (ditto)
+-  ``python -m unittest discover -p 'test_*'`` (ditto)
+-  `pytest`_
+
+You can also see the latest test results on `Linux`_ and on `Windows`_.
+
+Test Dependencies
+^^^^^^^^^^^^^^^^^
+
+The tests have a few more dependencies than beets itself. (The
+additional dependencies consist of testing utilities and dependencies of
+non-default plugins exercised by the test suite.) The dependencies are
+listed under 'test' in ``extras_require`` in `setup.py`_.
+To install the test dependencies, run ``python -m pip install .[test]``.
+Or, just run a test suite with ``tox`` which will install them
+automatically.
+
+.. _setup.py: https://github.com/beetbox/beets/blob/master/setup.py#L99`
+
+Writing Tests
+-------------
+
+Writing tests is done by adding or modifying files in folder `test`_.
+Take a look at
+`https://github.com/beetbox/beets/blob/master/test/test_template.py#L224`_
+to get a basic view on how tests are written. Despite using ``pytest``
+as a test runner, we prefer to write tests using the standard
+`unittest`_ testing framework.
+
+Any tests that involve sending out network traffic e.g. an external API
+call, should be skipped normally and run under our weekly `integration
+test`_ suite. These tests can be useful in detecting external changes
+that would affect ``beets``. In order to do this, simply add the
+following snippet before the applicable test case:
+
+::
+
+       @unittest.skipUnless(
+           os.environ.get('INTEGRATION_TEST', '0') == '1',
+           'integration testing not enabled')
+
+If you do this, it is also advised to create a similar test that 'mocks'
+the network call and can be run under normal circumstances by our CI and
+others. See `unittest.mock`_ for more info.
+
+Basics
+^^^^^^
+
+-  Your file should contain a class derived from unittest.TestCase
+-  Each method in this class which name starts with the letters *test*
+   will be executed to test functionality
+-  Errors are raised with these methods:
+
+   -  ``self.assertEqual``
+   -  ``self.assertTrue``
+   -  ``self.assertFalse``
+   -  ``self.assertRaises``
+
+-  For detailed information see `Python unittest`_
+-  **AVOID** using the ``start()`` and ``stop()`` methods of
+   ``mock.patch``, as they require manual cleanup. Use the annotation or
+   context mana
+
+.. _tox: http://tox.readthedocs.org
+.. _detox: https://pypi.python.org/pypi/detox/
+.. _pytest: http://pytest.org
+.. _Linux: https://github.com/beetbox/beets/actions
+.. _Windows: https://ci.appveyor.com/project/beetbox/beets/
+.. _`https://github.com/beetbox/beets/blob/master/setup.py#L99`: https://github.com/beetbox/beets/blob/master/setup.py#L99
+.. _test: https://github.com/beetbox/beets/tree/master/test
+.. _`https://github.com/beetbox/beets/blob/master/test/test_template.py#L224`: https://github.com/beetbox/beets/blob/master/test/test_template.py#L224
+.. _unittest: https://docs.python.org/3.8/library/unittest.html
+.. _integration test: https://github.com/beetbox/beets/actions?query=workflow%3A%22integration+tests%22
+.. _unittest.mock: https://docs.python.org/3/library/unittest.mock.html
+.. _Python unittest: https://docs.python.org/2/library/unittest.html
