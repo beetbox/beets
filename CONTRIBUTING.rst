@@ -251,9 +251,7 @@ Editor Settings
 
 Personally, I work on beets with `vim <http://www.vim.org/>`__. Here are
 some ``.vimrc`` lines that might help with PEP 8-compliant Python
-coding:
-
-::
+coding::
 
     filetype indent on
     autocmd FileType python setlocal shiftwidth=4 tabstop=4 softtabstop=4 expandtab shiftround autoindent
@@ -329,11 +327,11 @@ test`_ suite. These tests can be useful in detecting external changes
 that would affect ``beets``. In order to do this, simply add the
 following snippet before the applicable test case:
 
-::
+.. code-block:: python
 
-       @unittest.skipUnless(
-           os.environ.get('INTEGRATION_TEST', '0') == '1',
-           'integration testing not enabled')
+    @unittest.skipUnless(
+        os.environ.get('INTEGRATION_TEST', '0') == '1',
+        'integration testing not enabled')
 
 If you do this, it is also advised to create a similar test that 'mocks'
 the network call and can be run under normal circumstances by our CI and
