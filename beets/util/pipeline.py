@@ -214,12 +214,15 @@ class PipelineAborted(Exception):
 
 class PipelineThread(Thread):
     """Abstract base class for pipeline-stage threads."""
-    def __init__(self, all_threads):
+    def __init__(self, coro, all_threads, in_queue=None, out_queue=None):
         super(PipelineThread, self).__init__()
+        self.coro = coro
         self.abort_lock = Lock()
         self.abort_flag = False
         self.all_threads = all_threads
         self.exc_info = None
+        self.in_queue = in_queue
+        self.out_queue = out_queue
 
     def abort(self):
         """Shut down the thread at the next chance possible.
@@ -228,9 +231,9 @@ class PipelineThread(Thread):
             self.abort_flag = True
 
             # Ensure that we are not blocking on a queue read or write.
-            if hasattr(self, 'in_queue'):
+            if self.in_queue is not None:
                 _invalidate_queue(self.in_queue, POISON)
-            if hasattr(self, 'out_queue'):
+            if self.out_queue is not None:
                 _invalidate_queue(self.out_queue, POISON)
 
     def abort_all(self, exc_info):
@@ -250,10 +253,8 @@ class FirstPipelineThread(PipelineThread):
     """The thread running the first stage in a parallel pipeline setup.
     The coroutine should just be a generator.
     """
-    def __init__(self, coro, out_queue, all_threads):
-        super(FirstPipelineThread, self).__init__(all_threads)
-        self.coro = coro
-        self.out_queue = out_queue
+    def __init__(self, *args, **kwargs):
+        super(FirstPipelineThread, self).__init__(*args, **kwargs)
         self.out_queue.acquire()
 
     def run(self):
@@ -285,11 +286,8 @@ class MiddlePipelineThread(PipelineThread):
     """A thread running any stage in the pipeline except the first or
     last.
     """
-    def __init__(self, coro, in_queue, out_queue, all_threads):
-        super(MiddlePipelineThread, self).__init__(all_threads)
-        self.coro = coro
-        self.in_queue = in_queue
-        self.out_queue = out_queue
+    def __init__(self, *args, **kwargs):
+        super(FirstPipelineThread, self).__init__(*args, **kwargs)
         self.out_queue.acquire()
 
     def run(self):
@@ -328,11 +326,6 @@ class LastPipelineThread(PipelineThread):
     """A thread running the last stage in a pipeline. The coroutine
     should yield nothing.
     """
-    def __init__(self, coro, in_queue, all_threads):
-        super(LastPipelineThread, self).__init__(all_threads)
-        self.coro = coro
-        self.in_queue = in_queue
-
     def run(self):
         # Prime the coroutine.
         next(self.coro)
@@ -394,19 +387,21 @@ class Pipeline(object):
 
         # Set up first stage.
         for coro in self.stages[0]:
-            threads.append(FirstPipelineThread(coro, queues[0], threads))
+            threads.append(FirstPipelineThread(
+                coro, threads, out_queue=queues[0],
+            ))
 
         # Middle stages.
         for i in range(1, queue_count):
             for coro in self.stages[i]:
                 threads.append(MiddlePipelineThread(
-                    coro, queues[i - 1], queues[i], threads
+                    coro, threads, in_queue=queues[i - 1], out_queue=queues[i]
                 ))
 
         # Last stage.
         for coro in self.stages[-1]:
             threads.append(
-                LastPipelineThread(coro, queues[-1], threads)
+                LastPipelineThread(coro, threads, in_queue=queues[-1])
             )
 
         # Start threads.
