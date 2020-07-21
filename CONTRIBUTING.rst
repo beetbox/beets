@@ -1,3 +1,10 @@
+############
+Contributing
+############
+
+.. contents::
+    :depth: 3
+
 Thank you!
 ==========
 
@@ -52,19 +59,19 @@ Programming
    docs <https://beets.readthedocs.io/en/stable/dev/>`__.
 
 Getting the Source
-~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^
 
 The easiest way to get started with the latest beets source is to use
 `pip <https://pip.pypa.io/>`__ to install an “editable” package. This
 can be done with one command:
 
-::
+.. code-block:: bash
 
     $ pip install -e git+https://github.com/beetbox/beets.git#egg=beets
 
 Or, equivalently:
 
-::
+.. code-block:: bash
 
     $ git clone https://github.com/beetbox/beets.git
     $ cd beets
@@ -80,7 +87,7 @@ package will be installed to your home directory (compare with the
 output of ``pip install --help``).
 
 Code Contribution Ideas
-~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^
 
 -  We maintain a set of `issues marked as
    “bite-sized” <https://github.com/beetbox/beets/labels/bitesize>`__.
@@ -107,7 +114,7 @@ Code Contribution Ideas
    to, for example, refer to a class name.
 
 Your First Contribution
------------------------
+=======================
 
 If this is your first time contributing to an open source project,
 welcome! If you are confused at all about how to contribute or what to
@@ -123,7 +130,7 @@ contributing to an open source project, please do not hesitate to ask
 any questions.
 
 How to Submit Your Work
------------------------
+=======================
 
 Do you have a great bug fix, new feature, or documentation expansion
 you’d like to contribute? Follow these steps to create a GitHub pull
@@ -160,15 +167,17 @@ section <https://beets.readthedocs.io/en/stable/dev/api.html>`__ that
 serves as an introduction to beets’ design.
 
 Coding Conventions
-------------------
+==================
 
+General
+-------
 There are a few coding conventions we use in beets:
 
 -  Whenever you access the library database, do so through the provided
    Library methods or via a Transaction object. Never call
    ``lib.conn.*`` directly. For example, do this:
 
-   ::
+   .. code-block:: python
 
        with g.lib.transaction() as tx:
              rows = tx.query('SELECT DISTINCT "{0}" FROM "{1}" ORDER BY "{2}"'
@@ -179,7 +188,7 @@ There are a few coding conventions we use in beets:
    query. If you must use lower-level queries into the database, do
    this:
 
-   ::
+   .. code-block:: python
 
        with lib.transaction() as tx:
            rows = tx.query('SELECT …')
@@ -206,6 +215,8 @@ There are a few coding conventions we use in beets:
 -  Exception handlers must use ``except A as B:`` instead of
    ``except A, B:``.
 
+Style
+-----
 We follow `PEP 8 <http://www.python.org/dev/peps/pep-0008/>`__ for
 style. You can use ``tox -e lint`` to check your code for any style
 errors.
@@ -238,7 +249,7 @@ guidelines to follow:
    with the ``logging`` module, feed it through this function.
 
 Editor Settings
----------------
+^^^^^^^^^^^^^^^
 
 Personally, I work on beets with `vim <http://www.vim.org/>`__. Here are
 some ``.vimrc`` lines that might help with PEP 8-compliant Python
