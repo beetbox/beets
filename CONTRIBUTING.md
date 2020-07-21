@@ -2,7 +2,7 @@
 
 First off, thank you for considering contributing to beets! It's people like you that make beets continue to succeed.
 
-These guidelines describe how you can help most effectively. By following these guidelines, you can make life easier for the development team. By following them, you indicate your respect for the maintainers' time; in return, the maintainers can reciprocate by helping to address your issue, review changes, and finalize pull requests.
+These guidelines describe how you can help most effectively. By following these guidelines, you can make life easier for the development team as it indicates you respect the maintainers' time; in return, the maintainers will reciprocate by helping to address your issue, review changes, and finalize pull requests.
 
 # Types of Contributions
 
