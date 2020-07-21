@@ -223,6 +223,7 @@ class PipelineThread(Thread):
         self.exc_info = None
         self.in_queue = in_queue
         self.out_queue = out_queue
+        self._startup()
 
     def abort(self):
         """Shut down the thread at the next chance possible.
@@ -248,37 +249,47 @@ class PipelineThread(Thread):
             if self.abort_flag:
                 raise PipelineAborted()
 
+    def run(self):
+        try:
+            while True:
+                self.check_abort()
+                self._run_once()
+        except StopIteration:
+            # Pipeline is shutting down normally.
+            self._shutdown()
+        except PipelineAborted:
+            pass
+        except BaseException:
+            self.abort_all(sys.exc_info())
+
+    def _startup(self):
+        pass
+
+    def _run_once(self):
+        raise NotImplementedError()
+
+    def _shutdown(self):
+        pass
+
 
 class FirstPipelineThread(PipelineThread):
     """The thread running the first stage in a parallel pipeline setup.
     The coroutine should just be a generator.
     """
-    def __init__(self, *args, **kwargs):
-        super(FirstPipelineThread, self).__init__(*args, **kwargs)
+    def _startup(self):
         self.out_queue.acquire()
 
-    def run(self):
-        try:
-            while True:
-                self.check_abort()
+    def _run_once(self):
+        # Get the value from the generator, StopIteration is intentionally
+        # propagated to the caller.
+        msg = next(self.coro)
 
-                # Get the value from the generator.
-                try:
-                    msg = next(self.coro)
-                except StopIteration:
-                    break
+        # Send messages to the next stage.
+        for msg in _allmsgs(msg):
+            self.check_abort()
+            self.out_queue.put(msg)
 
-                # Send messages to the next stage.
-                for msg in _allmsgs(msg):
-                    self.check_abort()
-                    self.out_queue.put(msg)
-        except PipelineAborted:
-            return
-        except BaseException:
-            self.abort_all(sys.exc_info())
-            return
-
-        # Generator finished; shut down the pipeline.
+    def _shutdown(self):
         self.out_queue.release()
 
 
@@ -286,39 +297,29 @@ class MiddlePipelineThread(PipelineThread):
     """A thread running any stage in the pipeline except the first or
     last.
     """
-    def __init__(self, *args, **kwargs):
-        super(FirstPipelineThread, self).__init__(*args, **kwargs)
+    def _startup(self):
         self.out_queue.acquire()
 
-    def run(self):
-        try:
-            # Prime the coroutine.
-            next(self.coro)
+        # Prime the coroutine.
+        next(self.coro)
 
-            while True:
-                self.check_abort()
+    def _run_once(self):
+        # Get the message from the previous stage.
+        msg = self.in_queue.get()
+        if msg is POISON:
+            raise StopIteration()
 
-                # Get the message from the previous stage.
-                msg = self.in_queue.get()
-                if msg is POISON:
-                    break
+        self.check_abort()
 
-                self.check_abort()
+        # Invoke the current stage.
+        out = self.coro.send(msg)
 
-                # Invoke the current stage.
-                out = self.coro.send(msg)
+        # Send messages to next stage.
+        for msg in _allmsgs(out):
+            self.check_abort()
+            self.out_queue.put(msg)
 
-                # Send messages to next stage.
-                for msg in _allmsgs(out):
-                    self.check_abort()
-                    self.out_queue.put(msg)
-        except PipelineAborted:
-            return
-        except BaseException:
-            self.abort_all(sys.exc_info())
-            return
-
-        # Pipeline is shutting down normally.
+    def _shutdown(self):
         self.out_queue.release()
 
 
@@ -326,28 +327,20 @@ class LastPipelineThread(PipelineThread):
     """A thread running the last stage in a pipeline. The coroutine
     should yield nothing.
     """
-    def run(self):
+    def _startup(self):
         # Prime the coroutine.
         next(self.coro)
 
-        try:
-            while True:
-                self.check_abort()
+    def _run_once(self):
+        # Get the message from the previous stage.
+        msg = self.in_queue.get()
+        if msg is POISON:
+            raise StopIteration()
 
-                # Get the message from the previous stage.
-                msg = self.in_queue.get()
-                if msg is POISON:
-                    break
+        self.check_abort()
 
-                self.check_abort()
-
-                # Send to consumer.
-                self.coro.send(msg)
-        except PipelineAborted:
-            return
-        except BaseException:
-            self.abort_all(sys.exc_info())
-            return
+        # Send to consumer.
+        self.coro.send(msg)
 
 
 class Pipeline(object):
