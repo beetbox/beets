@@ -249,6 +249,13 @@ class PipelineThread(Thread):
             if self.abort_flag:
                 raise PipelineAborted()
 
+    def fanout(self, messages):
+        """Send messages to the next stage.
+        """
+        for msg in _allmsgs(messages):
+            self.check_abort()
+            self.out_queue.put(msg)
+
     def run(self):
         try:
             while True:
@@ -283,11 +290,7 @@ class FirstPipelineThread(PipelineThread):
         # Get the value from the generator, StopIteration is intentionally
         # propagated to the caller.
         msg = next(self.coro)
-
-        # Send messages to the next stage.
-        for msg in _allmsgs(msg):
-            self.check_abort()
-            self.out_queue.put(msg)
+        self.fanout(msg)
 
     def _shutdown(self):
         self.out_queue.release()
@@ -313,11 +316,7 @@ class MiddlePipelineThread(PipelineThread):
 
         # Invoke the current stage.
         out = self.coro.send(msg)
-
-        # Send messages to next stage.
-        for msg in _allmsgs(out):
-            self.check_abort()
-            self.out_queue.put(msg)
+        self.fanout(out)
 
     def _shutdown(self):
         self.out_queue.release()
