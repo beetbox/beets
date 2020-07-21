@@ -115,8 +115,6 @@ Contact
 Authors
 -------
 
-Beets is by `Adrian Sampson`_ with a supporting cast of thousands. For help,
-please visit our `forum`_.
+Beets is by `Adrian Sampson`_ with a supporting cast of thousands.
 
-.. _forum: https://discourse.beets.io
 .. _Adrian Sampson: https://www.cs.cornell.edu/~asampson/
