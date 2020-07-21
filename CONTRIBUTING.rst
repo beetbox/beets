@@ -98,8 +98,7 @@ Code Contribution Ideas
    low. You can help out by finding low-coverage modules or checking out
    other `testing-related
    issues <https://github.com/beetbox/beets/labels/testing>`__.
--  There are several ways to improve the tests in general (see
-   `Testing <https://github.com/beetbox/beets/wiki/Testing>`__) and some
+-  There are several ways to improve the tests in general (see :ref:`testing` and some
    places to think about performance optimization (see
    `Optimization <https://github.com/beetbox/beets/wiki/Optimization>`__).
 -  Not all of our code is up to our coding conventions. In particular,
@@ -149,8 +148,7 @@ request and your code will ship in no time.
    document.
 6. Run the tests and style checker. The easiest way to run the tests is
    to use `tox <https://tox.readthedocs.org/en/latest/>`__. For more
-   information on running tests, see our `Testing wiki
-   page <https://github.com/beetbox/beets/wiki/Testing>`__.
+   information on running tests, see :ref:`testing`.
 7. Push to your fork and open a pull request! We’ll be in touch shortly.
 8. If you add commits to a pull request, please add a comment or
    re-request a review after you push them since GitHub doesn’t
@@ -265,6 +263,8 @@ plugin <https://github.com/mitsuhiko/vim-python-combined>`__. I also
 like `neomake <https://github.com/neomake/neomake>`__ with its flake8
 checker.
 
+.. _testing:
+
 Testing
 =======
 
@@ -286,6 +286,19 @@ Other ways to run the tests:
 -  `pytest`_
 
 You can also see the latest test results on `Linux`_ and on `Windows`_.
+
+Coverage
+^^^^^^^^
+
+``tox -e cov`` will add coverage info for tests: Coverage is pretty low
+still -- see the current status on `Codecov`_.
+
+Red Flags
+^^^^^^^^^
+
+The `pytest-random`_ plugin makes it easy to randomize the order of
+tests. ``py.test test --random`` will occasionally turn up failing tests
+that reveal ordering dependencies—which are bad news!
 
 Test Dependencies
 ^^^^^^^^^^^^^^^^^
@@ -342,8 +355,11 @@ Basics
 -  For detailed information see `Python unittest`_
 -  **AVOID** using the ``start()`` and ``stop()`` methods of
    ``mock.patch``, as they require manual cleanup. Use the annotation or
-   context mana
+   context manager forms instead.
 
+.. _Python unittest: https://docs.python.org/2/library/unittest.html
+.. _Codecov: https://codecov.io/github/beetbox/beets
+.. _pytest-random: https://github.com/klrmn/pytest-random
 .. _tox: http://tox.readthedocs.org
 .. _detox: https://pypi.python.org/pypi/detox/
 .. _pytest: http://pytest.org
