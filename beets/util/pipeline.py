@@ -208,6 +208,10 @@ def _allmsgs(obj):
         return [obj]
 
 
+class PipelineAborted(Exception):
+    pass
+
+
 class PipelineThread(Thread):
     """Abstract base class for pipeline-stage threads."""
     def __init__(self, all_threads):
@@ -236,6 +240,11 @@ class PipelineThread(Thread):
         for thread in self.all_threads:
             thread.abort()
 
+    def check_abort(self):
+        with self.abort_lock:
+            if self.abort_flag:
+                raise PipelineAborted()
+
 
 class FirstPipelineThread(PipelineThread):
     """The thread running the first stage in a parallel pipeline setup.
@@ -250,9 +259,7 @@ class FirstPipelineThread(PipelineThread):
     def run(self):
         try:
             while True:
-                with self.abort_lock:
-                    if self.abort_flag:
-                        return
+                self.check_abort()
 
                 # Get the value from the generator.
                 try:
@@ -262,11 +269,10 @@ class FirstPipelineThread(PipelineThread):
 
                 # Send messages to the next stage.
                 for msg in _allmsgs(msg):
-                    with self.abort_lock:
-                        if self.abort_flag:
-                            return
+                    self.check_abort()
                     self.out_queue.put(msg)
-
+        except PipelineAborted:
+            return
         except BaseException:
             self.abort_all(sys.exc_info())
             return
@@ -292,29 +298,24 @@ class MiddlePipelineThread(PipelineThread):
             next(self.coro)
 
             while True:
-                with self.abort_lock:
-                    if self.abort_flag:
-                        return
+                self.check_abort()
 
                 # Get the message from the previous stage.
                 msg = self.in_queue.get()
                 if msg is POISON:
                     break
 
-                with self.abort_lock:
-                    if self.abort_flag:
-                        return
+                self.check_abort()
 
                 # Invoke the current stage.
                 out = self.coro.send(msg)
 
                 # Send messages to next stage.
                 for msg in _allmsgs(out):
-                    with self.abort_lock:
-                        if self.abort_flag:
-                            return
+                    self.check_abort()
                     self.out_queue.put(msg)
-
+        except PipelineAborted:
+            return
         except BaseException:
             self.abort_all(sys.exc_info())
             return
@@ -338,22 +339,19 @@ class LastPipelineThread(PipelineThread):
 
         try:
             while True:
-                with self.abort_lock:
-                    if self.abort_flag:
-                        return
+                self.check_abort()
 
                 # Get the message from the previous stage.
                 msg = self.in_queue.get()
                 if msg is POISON:
                     break
 
-                with self.abort_lock:
-                    if self.abort_flag:
-                        return
+                self.check_abort()
 
                 # Send to consumer.
                 self.coro.send(msg)
-
+        except PipelineAborted:
+            return
         except BaseException:
             self.abort_all(sys.exc_info())
             return
