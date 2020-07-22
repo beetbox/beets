@@ -430,11 +430,11 @@ class DGATrackInfoTest(_common.TestCase):
         release = Bag(data=data,
                       title=data['title'],
                       artists=[Bag(data=d) for d in data['artists']])
-        
-        d = DiscogsPlugin();
+
+        d = DiscogsPlugin()
         album_info = d.get_album_info(release)
-        track_info = d.get_track_from_album_by_position(album_info, '1');
-        self.assertIsNotNone(track_info);
+        track_info = d.get_track_from_album_by_position(album_info, '1')
+        self.assertIsNotNone(track_info)
         self.assertEqual(track_info.title, 'SONG')
         self.assertEqual(track_info.artist, 'ARTIST NAME')
         self.assertEqual(track_info.artist_id, 321)
@@ -447,11 +447,11 @@ class DGATrackInfoTest(_common.TestCase):
         release = Bag(data=data,
                       title=data['title'],
                       artists=[Bag(data=d) for d in data['artists']])
-        
-        d = DiscogsPlugin();
+
+        d = DiscogsPlugin()
         album_info = d.get_album_info(release)
-        track_info = d.get_track_from_album_by_position(album_info, '2');
-        self.assertIsNone(track_info);
+        track_info = d.get_track_from_album_by_position(album_info, '2')
+        self.assertIsNone(track_info)
 
     def test_get_track_from_album_by_title_exact(self):
         data = {'id': 123,
@@ -461,14 +461,14 @@ class DGATrackInfoTest(_common.TestCase):
         release = Bag(data=data,
                       title=data['title'],
                       artists=[Bag(data=d) for d in data['artists']])
-        
-        d = DiscogsPlugin();
+
+        d = DiscogsPlugin()
         album_info = d.get_album_info(release)
-        track_info = d.get_track_from_album_by_position(album_info, '1');
+        track_info = d.get_track_from_album_by_position(album_info, '1')
         self.assertEqual(track_info.title, 'SONG')
         self.assertEqual(track_info.artist, 'ARTIST NAME')
         self.assertEqual(track_info.artist_id, 321)
-    
+
 
     def test_get_track_from_album_by_title_approx(self):
         data = {'id': 123,
@@ -482,27 +482,27 @@ class DGATrackInfoTest(_common.TestCase):
         release = Bag(data=data,
                       title=data['title'],
                       artists=[Bag(data=d) for d in data['artists']])
-        
-        d = DiscogsPlugin();
+
+        d = DiscogsPlugin()
         album_info = d.get_album_info(release)
-        track_list = d.get_tracks_from_album_by_title(album_info, 'SONG');
+        track_list = d.get_tracks_from_album_by_title(album_info, 'SONG')
 
-        self.assertEqual(len(track_list), 2);
+        self.assertEqual(len(track_list), 2)
 
-        song_A = None;
-        song_B = None;
+        song_a = None
+        song_b = None
         for track_info in track_list:
             if track_info.title == 'SONG A':
-                song_A = track_info;
+                song_a = track_info
             elif track_info.title == 'SONG B':
-                song_B = track_info;
-        
-        self.assertIsNotNone(song_A);
-        self.assertIsNotNone(song_B);
-        self.assertEqual(song_A.artist, 'ARTIST NAME')
-        self.assertEqual(song_A.artist_id, 321)
-        self.assertEqual(song_B.artist, 'ARTIST NAME')
-        self.assertEqual(song_B.artist_id, 321)
+                song_b = track_info
+
+        self.assertIsNotNone(song_a)
+        self.assertIsNotNone(song_b)
+        self.assertEqual(song_a.artist, 'ARTIST NAME')
+        self.assertEqual(song_a.artist_id, 321)
+        self.assertEqual(song_b.artist, 'ARTIST NAME')
+        self.assertEqual(song_b.artist_id, 321)
 
     def test_get_track_from_album_by_title_missing(self):
         data = {'id': 123,
@@ -513,10 +513,10 @@ class DGATrackInfoTest(_common.TestCase):
                       title=data['title'],
                       artists=[Bag(data=d) for d in data['artists']])
 
-        d = DiscogsPlugin();
+        d = DiscogsPlugin()
         album_info = d.get_album_info(release)
-        track_list = d.get_tracks_from_album_by_title(album_info, 'ZZZZZZZZ', 0.0);
-        self.assertEqual(len(track_list), 0);
+        track_list = d.get_tracks_from_album_by_title(album_info, 'ZZZZZZZZ', 0.0)
+        self.assertEqual(len(track_list), 0)
 
 
 def suite():
