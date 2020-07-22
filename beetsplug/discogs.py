@@ -20,7 +20,7 @@ from __future__ import division, absolute_import, print_function
 
 import beets.ui
 from beets import config
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag.hooks import AlbumInfo, TrackInfo, TrackAlbumTuple, string_dist
 from beets.plugins import MetadataSourcePlugin, BeetsPlugin, get_distance
 import confuse
 from discogs_client import Release, Master, Client
@@ -174,6 +174,122 @@ class DiscogsPlugin(BeetsPlugin):
             info=track_info,
             config=self.config
         )
+
+    def item_candidates(self, item, artist, album):
+        """Returns a list of TrackMatch objects for discogs search results
+        matching an album and artist (if not various).
+        """
+
+        if not self.discogs_client:
+            return
+
+        query = '%s %s' % (artist, album)
+
+        try:
+            # get albums matching query
+            album_result = self.get_albums(query)
+            # among matching albums, check if any song titles match
+            candidates = []
+            for album_info in album_result:
+                self._log.debug(u'searching within album {0}', album_info.album);
+                track_result = self.get_track_from_album_by_title(album_info, item['title'])
+                if track_result:
+                    candidates.append(track_result)
+
+            return candidates;
+        except DiscogsAPIError as e:
+            self._log.debug(u'API Error: {0} (query: {1})', e, query)
+            if e.status_code == 401:
+                self.reset_auth()
+                return self.item_candidates(item, artist, album)
+            else:
+                return []
+        except CONNECTION_ERRORS:
+            self._log.debug(u'Connection error in album search', exc_info=True)
+            return []
+
+        return [];
+
+    def track_for_id(self, track_id):
+        """
+        Fetches a track by its Discogs ID and position. For
+        example, `track_id=5240807/B2` specifies position `B2`
+        of Discogs release `5240807`.
+
+        Returns a TrackAlbumTuple(track_info, album_info),
+            or None if the album is not found.
+        """
+        if not self.discogs_client:
+            return
+
+        # Discogs-IDs are simple integers. We only look for those at the end
+        # of an input string as to avoid confusion with other metadata plugins.
+        # An optional bracket can follow the integer, as this is how discogs
+        # displays the release ID on its webpage.
+        id_regex = r'(^|\[*r|discogs\.com/.+/release/)(\d+)/([\d\w]+)$'
+        match = re.search(id_regex, track_id)
+        if not match: return None
+        release_id = int(match.group(2))
+        track_position = match.group(3)
+        self._log.debug(u'Searching for release {0}, position {1}',
+            release_id, track_position)
+
+        # use discogs_client to search for a release
+        try:
+            release = self.discogs_client.release(release_id)
+        except DiscogsAPIError as e:
+            # misc errors
+            if e.status_code != 404:
+                self._log.debug(u'API Error: {0} (query: {1})', e,
+                                release.data['resource_url'])
+            # 401 unauthorized -- try again!
+            if e.status_code == 401:
+                self.reset_auth()
+                return self.track_for_id(track_id)
+            return None
+        except CONNECTION_ERRORS:
+            self._log.debug(u'Connection error in album lookup', exc_info=True)
+            return None
+
+        # extract album info
+        album_info = self.get_album_info(release);
+
+        # attempt to extract track from album
+        return self.get_track_from_album_by_position(album_info, position)
+
+    def get_track_from_album_by_position(self, album_info, position):
+        """
+        Discogs tracks normally have a 'position', like A1 or B5.
+        Returns a track from the given release with the specified position string.
+        """
+        compare_func = lambda track_info: (getattr(track_info, 'track_alt', None) == position)
+        return self.get_track_from_album(album_info, compare_func)
+
+    def get_track_from_album_by_title(self, album_info, title, dist_threshold=0.3):
+        def compare_func(track_info):
+            track_title = getattr(track_info, "title", None)
+            dist = string_dist(track_title, title)
+            return (track_title and dist < dist_threshold)
+        return self.get_track_from_album(album_info, compare_func)
+
+    def get_track_from_album(self, album_info, compare_func):
+            """
+            Return the first track of the release where `compare_func` returns true.
+            """
+            if not album_info: return None
+
+            for track_info in album_info.tracks:
+                # check for matching position
+                if not compare_func(track_info): continue;
+
+                # attach artist info if not provided
+                if not track_info['artist']:
+                    track_info['artist'] = album_info.artist
+                    track_info['artist_id'] = album_info.artist_id
+
+                return TrackAlbumTuple(track_info, album_info)
+
+            return None;
 
     def candidates(self, items, artist, album, va_likely, extra_tags=None):
         """Returns a list of AlbumInfo objects for discogs search results
