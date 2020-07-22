@@ -568,7 +568,7 @@ def reflink(path, dest, replace=False, fallback=False):
 
     try:
         pyreflink.reflink(path, dest)
-    except (NotImplementedError, pyreflink.ReflinkImpossibleError) as exc:
+    except (NotImplementedError, pyreflink.ReflinkImpossibleError):
         if fallback:
             copy(path, dest, replace)
         else:
