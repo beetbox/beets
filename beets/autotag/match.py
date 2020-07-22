@@ -493,10 +493,10 @@ def tag_item(item, search_artist=None, search_title=None,
     if trackids:
         for trackid in trackids:
             log.debug(u'Searching for track ID: {0}', trackid)
-            for track_info in hooks.tracks_for_id(trackid):
+            for track_info,album_info in hooks.tracks_for_id(trackid):
                 dist = track_distance(item, track_info, incl_artist=True)
                 candidates[track_info.track_id] = \
-                    hooks.TrackMatch(dist, track_info)
+                    hooks.TrackMatch(dist, track_info, album_info)
                 # If this is a good match, then don't keep searching.
                 rec = _recommendation(_sort_candidates(candidates.values()))
                 if rec == Recommendation.strong and \

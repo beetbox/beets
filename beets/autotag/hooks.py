@@ -545,7 +545,8 @@ class Distance(object):
 AlbumMatch = namedtuple('AlbumMatch', ['distance', 'info', 'mapping',
                                        'extra_items', 'extra_tracks'])
 
-TrackMatch = namedtuple('TrackMatch', ['distance', 'info'])
+TrackMatch = namedtuple('TrackMatch', ['distance', 'info', 'album_info'], defaults=[None,None,None])
+TrackAlbumTuple = namedtuple('TrackAlbumTuple', ['track_info', 'album_info'], defaults=[None,None])
 
 
 # Aggregation of sources.
@@ -588,14 +589,21 @@ def albums_for_id(album_id):
 
 
 def tracks_for_id(track_id):
-    """Get a list of tracks for an ID."""
+    """
+    Get a list of tracks for an ID.
+    Returns a list like [track_info, album_info]
+    """
     t = track_for_mbid(track_id)
     if t:
-        yield t
+        yield TrackAlbumTuple(t,None)
     for t in plugins.track_for_id(track_id):
-        if t:
+        if not t: continue;
+        # allow (track_info, album_info) tuples
+        if isinstance(t, TrackAlbumTuple):
+            yield t;
+        else:
             plugins.send(u'trackinfo_received', info=t)
-            yield t
+            yield TrackAlbumTuple(t, None)
 
 
 @plugins.notify_info_yielded(u'albuminfo_received')
