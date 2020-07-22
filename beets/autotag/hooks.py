@@ -598,11 +598,11 @@ def tracks_for_id(track_id):
         yield TrackAlbumTuple(t,None)
     for t in plugins.track_for_id(track_id):
         if not t: continue;
+        plugins.send(u'trackinfo_received', info=t)
         # allow (track_info, album_info) tuples
         if isinstance(t, TrackAlbumTuple):
             yield t;
         else:
-            plugins.send(u'trackinfo_received', info=t)
             yield TrackAlbumTuple(t, None)
 
 
