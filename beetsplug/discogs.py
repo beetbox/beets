@@ -255,7 +255,7 @@ class DiscogsPlugin(BeetsPlugin):
         album_info = self.get_album_info(release);
 
         # attempt to extract track from album
-        return self.get_track_from_album_by_position(album_info, position)
+        return self.get_track_from_album_by_position(album_info, track_position)
 
     def get_track_from_album_by_position(self, album_info, position):
         """
