@@ -90,9 +90,9 @@ Check out the `Getting Started`_ guide for more information.
 Contribute
 ----------
 
-Thank you for considering contributing to ``beets``! Whether you're a programmer or not, you should be able to find all the info you need at `CONTRIBUTING.md`_.
+Thank you for considering contributing to ``beets``! Whether you're a programmer or not, you should be able to find all the info you need at `CONTRIBUTING.rst`_.
 
-.. _CONTRIBUTING.md: https://github.com/beetbox/beets/blob/master/CONTRIBUTING.md
+.. _CONTRIBUTING.rst: https://github.com/beetbox/beets/blob/master/CONTRIBUTING.rst
 
 Read More
 ---------
