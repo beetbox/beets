@@ -664,7 +664,7 @@ def item_candidates(item, artist, title):
         # allow (track_info, album_info) tuples
         plugins.send(u'trackinfo_received', info=candidate)
         if isinstance(candidate, TrackAlbumTuple):
-            yield candidate;
+            yield candidate
         else:
 
             yield TrackAlbumTuple(candidate, None)
