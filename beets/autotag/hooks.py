@@ -727,7 +727,17 @@ def item_candidates(item: Item, artist: str, title: str) -> Iterable[Tuple]:
 
     # MusicBrainz candidates.
     if config["musicbrainz"]["enabled"] and artist and title:
-        yield from invoke_mb(mb.match_track, artist, title)
+        try:
+            for candidate in mb.match_track(artist, title):
+                yield TrackAlbumTuple(candidate, None)
+        except mb.MusicBrainzAPIError as exc:
+            exc.log(log)
 
     # Plugin candidates.
-    yield from plugins.item_candidates(item, artist, title)
+    for candidate in plugins.item_candidates(item, artist, title):
+        # Allow (track_info, album_info) tuples
+        plugins.send(u'trackinfo_received', info=candidate)
+        if isinstance(candidate, TrackAlbumTuple):
+            yield candidate
+        else:
+            yield TrackAlbumTuple(candidate, None)
