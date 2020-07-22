@@ -545,8 +545,11 @@ class Distance(object):
 AlbumMatch = namedtuple('AlbumMatch', ['distance', 'info', 'mapping',
                                        'extra_items', 'extra_tracks'])
 
-TrackMatch = namedtuple('TrackMatch', ['distance', 'info', 'album_info'], defaults=[None,None,None])
-TrackAlbumTuple = namedtuple('TrackAlbumTuple', ['track_info', 'album_info'], defaults=[None,None])
+TrackMatch = namedtuple('TrackMatch', ['distance', 'info', 'album_info'])
+TrackMatch.__new__.__defaults__ = (None, None, None);
+
+TrackAlbumTuple = namedtuple('TrackAlbumTuple', ['track_info', 'album_info'])
+TrackAlbumTuple.__new__.__defaults__ = (None, None);
 
 
 # Aggregation of sources.
