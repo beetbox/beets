@@ -23,6 +23,12 @@ New features:
 * :doc:`plugins/discogs` now adds two extra fields: `discogs_labelid` and
   `discogs_artistid`
   :bug: `3413`
+* :doc:`plugins/discogs` support for singleton import mode; support for Discogs
+  I search in singleton mode using syntax ``release_id/position``.  For example,
+  query `5240807/B2` corresponds to position B2 of release 5240807. :bug:`2544`
+* During singleton import mode, plugins can optionally return both ``TrackInfo``
+  and ``AlbumInfo``, using a ``TrackAlbumTuple``.  Useful for cases where album
+  info is found by a plugin (e.g. Discogs) during singleton lookup.
 * :doc:`/plugins/export`: Added new ``-f`` (``--format``) flag; 
   which allows for the ability to export in json, csv and xml.
   Thanks to :user:`austinmm`.
