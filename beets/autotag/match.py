@@ -517,9 +517,9 @@ def tag_item(item, search_artist=None, search_title=None,
     log.debug(u'Item search terms: {0} - {1}', search_artist, search_title)
 
     # Get and evaluate candidate metadata.
-    for track_info in hooks.item_candidates(item, search_artist, search_title):
+    for track_info,album_info in hooks.item_candidates(item, search_artist, search_title):
         dist = track_distance(item, track_info, incl_artist=True)
-        candidates[track_info.track_id] = hooks.TrackMatch(dist, track_info)
+        candidates[track_info.track_id] = hooks.TrackMatch(dist, track_info, album_info)
 
     # Sort by distance and return with recommendation.
     log.debug(u'Found {0} candidates.', len(candidates))

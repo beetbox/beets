@@ -641,7 +641,6 @@ def album_candidates(items, artist, album, va_likely, extra_tags):
         yield candidate
 
 
-@plugins.notify_info_yielded(u'trackinfo_received')
 def item_candidates(item, artist, title):
     """Search for item matches. ``item`` is the Item to be matched.
     ``artist`` and ``title`` are strings and either reflect the item or
@@ -652,10 +651,16 @@ def item_candidates(item, artist, title):
     if artist and title:
         try:
             for candidate in mb.match_track(artist, title):
-                yield candidate
+                yield TrackAlbumTuple(candidate, None);
         except mb.MusicBrainzAPIError as exc:
             exc.log(log)
 
     # Plugin candidates.
     for candidate in plugins.item_candidates(item, artist, title):
-        yield candidate
+        # allow (track_info, album_info) tuples
+        plugins.send(u'trackinfo_received', info=candidate)
+        if isinstance(candidate, TrackAlbumTuple):
+            yield candidate;
+        else:
+
+            yield TrackAlbumTuple(candidate, None)
