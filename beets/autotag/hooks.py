@@ -613,7 +613,10 @@ class Distance:
 AlbumMatch = namedtuple('AlbumMatch', ['distance', 'info', 'mapping',
                                        'extra_items', 'extra_tracks'])
 
-TrackMatch = namedtuple('TrackMatch', ['distance', 'info'])
+TrackMatch = namedtuple('TrackMatch', ['distance', 'info', 'album_info'],
+                        defaults=[None, None, None])
+TrackAlbumTuple = namedtuple('TrackAlbumTuple', ['track_info', 'album_info'],
+                             defaults=[None, None])
 
 
 # Aggregation of sources.
@@ -658,14 +661,21 @@ def albums_for_id(album_id: str) -> Iterable[AlbumInfo]:
 
 
 def tracks_for_id(track_id: str) -> Iterable[TrackInfo]:
-    """Get a list of tracks for an ID."""
+    """Get a list of tracks for an ID.
+    Returns a list like [track_info, album_info]
+    """
     t = track_for_mbid(track_id)
     if t:
-        yield t
+        yield TrackAlbumTuple(t, None)
     for t in plugins.track_for_id(track_id):
-        if t:
-            plugins.send('trackinfo_received', info=t)
+        if not t:
+            continue
+        plugins.send(u'trackinfo_received', info=t)
+        # Allow (track_info, album_info) tuples
+        if isinstance(t, TrackAlbumTuple):
             yield t
+        else:
+            yield TrackAlbumTuple(t, None)
 
 
 def invoke_mb(call_func: Callable, *args):

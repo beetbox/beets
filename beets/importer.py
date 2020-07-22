@@ -953,7 +953,17 @@ class SingletonImportTask(ImportTask):
         return [self.item]
 
     def apply_metadata(self):
-        autotag.apply_item_metadata(self.item, self.match.info)
+        if (self.match.album_info):
+            # Match optionally provides album info,
+            # in which case this is not a singleton!
+            self.item.album = self.match.album_info.album
+            self.item.album_id = self.match.album_info.album_id
+            # Apply track and album metadata
+            autotag.apply_metadata(
+                self.match.album_info, {self.item: self.match.info})
+        else:
+            # Apply track metadata only.
+            autotag.apply_item_metadata(self.item, self.match.info)
 
     def _emit_imported(self, lib):
         for item in self.imported_items():
