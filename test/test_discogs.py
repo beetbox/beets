@@ -358,6 +358,167 @@ class DGAlbumInfoTest(_common.TestCase):
         self.assertIn('Release does not contain the required fields', logs[0])
 
 
+class DGATrackInfoTest(_common.TestCase):
+    def _make_release(self, tracks=None):
+        """Returns a Bag that mimics a discogs_client.Release. The list
+        of elements on the returned Bag is incomplete, including just
+        those required for the tests on this class."""
+        data = {
+            'id': 'ALBUM ID',
+            'uri': 'https://www.discogs.com/release/release/13633721',
+            'title': 'ALBUM TITLE',
+            'year': '3001',
+            'artists': [{
+                'name': 'ARTIST NAME',
+                'id': 'ARTIST ID',
+                'join': ','
+            }],
+            'formats': [{
+                'descriptions': ['FORMAT DESC 1', 'FORMAT DESC 2'],
+                'name': 'FORMAT',
+                'qty': 1
+            }],
+            'styles': [
+                'STYLE1', 'STYLE2'
+            ],
+            'genres': [
+                'GENRE1', 'GENRE2'
+            ],
+            'labels': [{
+                'name': 'LABEL NAME',
+                'catno': 'CATALOG NUMBER',
+            }],
+            'tracklist': []
+        }
+
+        if tracks:
+            for recording in tracks:
+                data['tracklist'].append(recording)
+
+        return Bag(data=data,
+                   # Make some fields available as properties, as they are
+                   # accessed by DiscogsPlugin methods.
+                   title=data['title'],
+                   artists=[Bag(data=d) for d in data['artists']])
+
+    def _make_track(self, title, position='', duration='', type_=None):
+        track = {
+            'title': title,
+            'position': position,
+            'duration': duration
+        }
+        if type_ is not None:
+            # Test samples on discogs_client do not have a 'type_' field, but
+            # the API seems to return it. Values: 'track' for regular tracks,
+            # 'heading' for descriptive texts (ie. not real tracks - 12.13.2).
+            track['type_'] = type_
+
+        return track
+
+    def _make_release_from_positions(self, positions):
+        """Return a Bag that mimics a discogs_client.Release with a
+        tracklist where tracks have the specified `positions`."""
+        tracks = [self._make_track('TITLE%s' % i, position) for
+                  (i, position) in enumerate(positions, start=1)]
+        return self._make_release(tracks)
+
+    def test_get_track_from_album_by_position(self):
+        data = {'id': 123,
+                'tracklist': [self._make_track('SONG', '1', '01:01')],
+                'artists': [{'name': 'ARTIST NAME', 'id': 321, 'join': ''}],
+                'title': 'TITLE'}
+        release = Bag(data=data,
+                      title=data['title'],
+                      artists=[Bag(data=d) for d in data['artists']])
+        
+        d = DiscogsPlugin();
+        album_info = d.get_album_info(release)
+        track_info = d.get_track_from_album_by_position(album_info, '1');
+        self.assertIsNotNone(track_info);
+        self.assertEqual(track_info.title, 'SONG')
+        self.assertEqual(track_info.artist, 'ARTIST NAME')
+        self.assertEqual(track_info.artist_id, 321)
+
+    def test_get_track_from_album_by_position_missing(self):
+        data = {'id': 123,
+                'tracklist': [self._make_track('SONG', '1', '01:01')],
+                'artists': [{'name': 'ARTIST NAME', 'id': 321, 'join': ''}],
+                'title': 'TITLE'}
+        release = Bag(data=data,
+                      title=data['title'],
+                      artists=[Bag(data=d) for d in data['artists']])
+        
+        d = DiscogsPlugin();
+        album_info = d.get_album_info(release)
+        track_info = d.get_track_from_album_by_position(album_info, '2');
+        self.assertIsNone(track_info);
+
+    def test_get_track_from_album_by_title_exact(self):
+        data = {'id': 123,
+                'tracklist': [self._make_track('SONG', '1', '01:01')],
+                'artists': [{'name': 'ARTIST NAME', 'id': 321, 'join': ''}],
+                'title': 'TITLE'}
+        release = Bag(data=data,
+                      title=data['title'],
+                      artists=[Bag(data=d) for d in data['artists']])
+        
+        d = DiscogsPlugin();
+        album_info = d.get_album_info(release)
+        track_info = d.get_track_from_album_by_position(album_info, '1');
+        self.assertEqual(track_info.title, 'SONG')
+        self.assertEqual(track_info.artist, 'ARTIST NAME')
+        self.assertEqual(track_info.artist_id, 321)
+    
+
+    def test_get_track_from_album_by_title_approx(self):
+        data = {'id': 123,
+                'tracklist': [
+                    self._make_track('SONG A', '1', '01:01'),
+                    self._make_track('SONG B', '2', '02:02'),
+                    self._make_track('COMPLETELY DIFFERENT', '3', '03:03'),
+                ],
+                'artists': [{'name': 'ARTIST NAME', 'id': 321, 'join': ''}],
+                'title': 'TITLE'}
+        release = Bag(data=data,
+                      title=data['title'],
+                      artists=[Bag(data=d) for d in data['artists']])
+        
+        d = DiscogsPlugin();
+        album_info = d.get_album_info(release)
+        track_list = d.get_tracks_from_album_by_title(album_info, 'SONG');
+
+        self.assertEqual(len(track_list), 2);
+
+        song_A = None;
+        song_B = None;
+        for track_info in track_list:
+            if track_info.title == 'SONG A':
+                song_A = track_info;
+            elif track_info.title == 'SONG B':
+                song_B = track_info;
+        
+        self.assertIsNotNone(song_A);
+        self.assertIsNotNone(song_B);
+        self.assertEqual(song_A.artist, 'ARTIST NAME')
+        self.assertEqual(song_A.artist_id, 321)
+        self.assertEqual(song_B.artist, 'ARTIST NAME')
+        self.assertEqual(song_B.artist_id, 321)
+
+    def test_get_track_from_album_by_title_missing(self):
+        data = {'id': 123,
+                'tracklist': [self._make_track('SONG', '1', '01:01')],
+                'artists': [{'name': 'ARTIST NAME', 'id': 321, 'join': ''}],
+                'title': 'TITLE'}
+        release = Bag(data=data,
+                      title=data['title'],
+                      artists=[Bag(data=d) for d in data['artists']])
+
+        d = DiscogsPlugin();
+        album_info = d.get_album_info(release)
+        track_list = d.get_tracks_from_album_by_title(album_info, 'ZZZZZZZZ', 0.0);
+        self.assertEqual(len(track_list), 0);
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 

@@ -177,7 +177,7 @@ class DiscogsPlugin(BeetsPlugin):
 
     def item_candidates(self, item, artist, album):
         """Returns a list of TrackMatch objects for discogs search results
-        matching an album and artist (if not various).
+        matching an album, item.title, and artist.
         """
 
         if not self.discogs_client:
@@ -192,9 +192,9 @@ class DiscogsPlugin(BeetsPlugin):
             candidates = []
             for album_info in album_result:
                 self._log.debug(u'searching within album {0}', album_info.album);
-                track_result = self.get_track_from_album_by_title(album_info, item['title'])
-                if track_result:
-                    candidates.append(track_result)
+                track_list = self.get_track_from_album_by_title(album_info, item['title'])
+                if len(track_list) > 0:
+                    candidates += track_list;
 
             return candidates;
         except DiscogsAPIError as e:
@@ -255,7 +255,11 @@ class DiscogsPlugin(BeetsPlugin):
         album_info = self.get_album_info(release);
 
         # attempt to extract track from album
-        return self.get_track_from_album_by_position(album_info, track_position)
+        track_info = self.get_track_from_album_by_position(album_info, track_position);
+        if not track_info:
+            return None;
+        else:
+            return TrackAlbumTuple(track_info, album_info);
 
     def get_track_from_album_by_position(self, album_info, position):
         """
@@ -263,20 +267,34 @@ class DiscogsPlugin(BeetsPlugin):
         Returns a track from the given release with the specified position string.
         """
         compare_func = lambda track_info: (getattr(track_info, 'track_alt', None) == position)
-        return self.get_track_from_album(album_info, compare_func)
+        track_list = self.get_tracks_from_album(album_info, compare_func, first_only=True);
+        if len(track_list) == 0:
+            return None;
+        else:
+            return track_list[0];
 
-    def get_track_from_album_by_title(self, album_info, title, dist_threshold=0.3):
+
+    def get_tracks_from_album_by_title(self, album_info, title, dist_threshold=0.3):
+        """
+        Return a list of tracks in `album_info` whose titles have a string_dist
+        below the provided threshold when compared with the given `title`.
+        """
         def compare_func(track_info):
             track_title = getattr(track_info, "title", None)
             dist = string_dist(track_title, title)
             return (track_title and dist < dist_threshold)
-        return self.get_track_from_album(album_info, compare_func)
+        return self.get_tracks_from_album(album_info, compare_func, first_only=False)
 
-    def get_track_from_album(self, album_info, compare_func):
+    def get_tracks_from_album(self, album_info, compare_func, first_only=False):
             """
-            Return the first track of the release where `compare_func` returns true.
+            Return a list of tracks in the release where `compare_func` is True.
+                If `first_only=True`, only the first match is returned.
+                If no matches are found, returns an empty list.
             """
-            if not album_info: return None
+            if not album_info: 
+                return []
+            
+            result = []
 
             for track_info in album_info.tracks:
                 # check for matching position
@@ -287,9 +305,11 @@ class DiscogsPlugin(BeetsPlugin):
                     track_info['artist'] = album_info.artist
                     track_info['artist_id'] = album_info.artist_id
 
-                return TrackAlbumTuple(track_info, album_info)
+                result.append(track_info)
+                if first_only:
+                    break
 
-            return None;
+            return result
 
     def candidates(self, items, artist, album, va_likely, extra_tags=None):
         """Returns a list of AlbumInfo objects for discogs search results
