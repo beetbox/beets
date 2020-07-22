@@ -546,10 +546,10 @@ AlbumMatch = namedtuple('AlbumMatch', ['distance', 'info', 'mapping',
                                        'extra_items', 'extra_tracks'])
 
 TrackMatch = namedtuple('TrackMatch', ['distance', 'info', 'album_info'])
-TrackMatch.__new__.__defaults__ = (None, None, None);
+TrackMatch.__new__.__defaults__ = (None, None, None)
 
 TrackAlbumTuple = namedtuple('TrackAlbumTuple', ['track_info', 'album_info'])
-TrackAlbumTuple.__new__.__defaults__ = (None, None);
+TrackAlbumTuple.__new__.__defaults__ = (None, None)
 
 
 # Aggregation of sources.
@@ -598,13 +598,14 @@ def tracks_for_id(track_id):
     """
     t = track_for_mbid(track_id)
     if t:
-        yield TrackAlbumTuple(t,None)
+        yield TrackAlbumTuple(t, None)
     for t in plugins.track_for_id(track_id):
-        if not t: continue;
+        if not t:
+            continue
         plugins.send(u'trackinfo_received', info=t)
         # allow (track_info, album_info) tuples
         if isinstance(t, TrackAlbumTuple):
-            yield t;
+            yield t
         else:
             yield TrackAlbumTuple(t, None)
 
@@ -654,7 +655,7 @@ def item_candidates(item, artist, title):
     if artist and title:
         try:
             for candidate in mb.match_track(artist, title):
-                yield TrackAlbumTuple(candidate, None);
+                yield TrackAlbumTuple(candidate, None)
         except mb.MusicBrainzAPIError as exc:
             exc.log(log)
 
