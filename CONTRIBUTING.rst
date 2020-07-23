@@ -215,9 +215,13 @@ There are a few coding conventions we use in beets:
 
 Style
 -----
-We follow `PEP 8 <http://www.python.org/dev/peps/pep-0008/>`__ for
-style. You can use ``tox -e lint`` to check your code for any style
-errors.
+
+We follow `PEP 8`_ and `google's docstring format`_.
+
+You can use ``tox -e lint`` to check your code for any style errors.
+
+.. _PEP 8: https://www.python.org/dev/peps/pep-0008/
+.. _google's docstring format: https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings
 
 Handling Paths
 --------------
