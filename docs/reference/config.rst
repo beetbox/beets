@@ -489,7 +489,7 @@ reflink
 ~~~~~~~
 
 Either ``yes``, ``no``, or ``auto``, indicating whether to use copy-on-write
-file clones (a.k.a. "reflinks") instead of copying or moving files.
+`file clones`_ (a.k.a. "reflinks") instead of copying or moving files.
 The ``auto`` option uses reflinks when possible and falls back to plain
 copying when necessary.
 Defaults to ``no``.
@@ -501,7 +501,7 @@ documentation.
 The option is ignored if ``move`` is enabled (i.e., beets can move or
 copy files but it doesn't make sense to do both).
 
-.. _reflink clone: https://blogs.oracle.com/otn/save-disk-space-on-linux-by-cloning-files-on-btrfs-and-ocfs2
+.. _file clones: https://blogs.oracle.com/otn/save-disk-space-on-linux-by-cloning-files-on-btrfs-and-ocfs2
 .. _pyreflink: https://reflink.readthedocs.io/en/latest/
 
 resume
