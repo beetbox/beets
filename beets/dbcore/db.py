@@ -30,6 +30,7 @@ from beets.util import py3_path
 from beets.dbcore import types
 from .query import MatchQuery, NullSort, TrueQuery
 import six
+
 if six.PY2:
     from collections import Mapping
 else:
@@ -186,6 +187,7 @@ class LazyConvertDict(object):
 
 
 # Abstract base for model classes.
+
 
 class Model(object):
     """An abstract object representing an object in the database. Model
@@ -525,7 +527,7 @@ class Model(object):
                 tx.mutate(
                     'DELETE FROM {0} '
                     'WHERE entity_id=? AND key=?'.format(self._flex_table),
-                    (self.id, key)
+                    (self.id, key),
                 )
 
         self.clear_dirty()
@@ -547,12 +549,11 @@ class Model(object):
         self._check_db()
         with self._db.transaction() as tx:
             tx.mutate(
-                'DELETE FROM {0} WHERE id=?'.format(self._table),
-                (self.id,)
+                'DELETE FROM {0} WHERE id=?'.format(self._table), (self.id,)
             )
             tx.mutate(
                 'DELETE FROM {0} WHERE entity_id=?'.format(self._flex_table),
-                (self.id,)
+                (self.id,),
             )
 
     def add(self, db=None):
@@ -598,8 +599,9 @@ class Model(object):
         # Perform substitution.
         if isinstance(template, six.string_types):
             template = functemplate.template(template)
-        return template.substitute(self.formatted(for_path),
-                                   self._template_funcs())
+        return template.substitute(
+            self.formatted(for_path), self._template_funcs()
+        )
 
     # Parsing.
 
@@ -620,12 +622,15 @@ class Model(object):
 
 # Database controller and supporting interfaces.
 
+
 class Results(object):
     """An item query result set. Iterating over the collection lazily
     constructs LibModel objects that reflect database rows.
     """
-    def __init__(self, model_class, rows, db, flex_rows,
-                 query=None, sort=None):
+
+    def __init__(
+        self, model_class, rows, db, flex_rows, query=None, sort=None
+    ):
         """Create a result set that will construct objects of type
         `model_class`.
 
@@ -721,8 +726,7 @@ class Results(object):
         """ Create a Model object for the given row
         """
         cols = dict(row)
-        values = dict((k, v) for (k, v) in cols.items()
-                      if not k[:4] == 'flex')
+        values = dict((k, v) for (k, v) in cols.items() if not k[:4] == 'flex')
 
         # Construct the Python object
         obj = self.model_class._awaken(self.db, values, flex_values)
@@ -788,6 +792,7 @@ class Transaction(object):
     """A context manager for safe, concurrent access to the database.
     All SQL commands should be executed through a transaction.
     """
+
     def __init__(self, db):
         self.db = db
 
@@ -835,8 +840,10 @@ class Transaction(object):
             # In two specific cases, SQLite reports an error while accessing
             # the underlying database file. We surface these exceptions as
             # DBAccessError so the application can abort.
-            if e.args[0] in ("attempt to write a readonly database",
-                             "unable to open database file"):
+            if e.args[0] in (
+                "attempt to write a readonly database",
+                "unable to open database file",
+            ):
                 raise DBAccessError(e.args[0])
             else:
                 raise
@@ -910,9 +917,7 @@ class Database(object):
         # Make a new connection. The `sqlite3` module can't use
         # bytestring paths here on Python 3, so we need to
         # provide a `str` using `py3_path`.
-        conn = sqlite3.connect(
-            py3_path(self.path), timeout=self.timeout
-        )
+        conn = sqlite3.connect(py3_path(self.path), timeout=self.timeout)
 
         if self.supports_extensions:
             conn.enable_load_extension(True)
@@ -952,8 +957,9 @@ class Database(object):
     def load_extension(self, path):
         """Load an SQLite extension into all open connections."""
         if not self.supports_extensions:
-            raise ValueError('this sqlite3 installation does not '
-                             'support extensions')
+            raise ValueError(
+                'this sqlite3 installation does not ' 'support extensions'
+            )
 
         self._extensions.append(path)
 
@@ -982,8 +988,9 @@ class Database(object):
             columns = []
             for name, typ in fields.items():
                 columns.append('{0} {1}'.format(name, typ.sql))
-            setup_sql = 'CREATE TABLE {0} ({1});\n'.format(table,
-                                                           ', '.join(columns))
+            setup_sql = 'CREATE TABLE {0} ({1});\n'.format(
+                table, ', '.join(columns)
+            )
 
         else:
             # Table exists does not match the field set.
@@ -1003,7 +1010,8 @@ class Database(object):
         for the given entity (if they don't exist).
         """
         with self.transaction() as tx:
-            tx.script("""
+            tx.script(
+                """
                 CREATE TABLE IF NOT EXISTS {0} (
                     id INTEGER PRIMARY KEY,
                     entity_id INTEGER,
@@ -1012,7 +1020,10 @@ class Database(object):
                     UNIQUE(entity_id, key) ON CONFLICT REPLACE);
                 CREATE INDEX IF NOT EXISTS {0}_by_entity
                     ON {0} (entity_id);
-                """.format(flex_table))
+                """.format(
+                    flex_table
+                )
+            )
 
     # Querying.
 
@@ -1036,21 +1047,22 @@ class Database(object):
         # Fetch flexible attributes for items matching the main query.
         # Doing the per-item filtering in python is faster than issuing
         # one query per item to sqlite.
-        flex_sql = ("""
+        flex_sql = """
             SELECT * FROM {0} WHERE entity_id IN
                 (SELECT id FROM {1} WHERE {2});
-            """.format(model_cls._flex_table,
-                       model_cls._table,
-                       where or '1',
-                       )
-                    )
+            """.format(
+            model_cls._flex_table, model_cls._table, where or '1',
+        )
 
         with self.transaction() as tx:
             rows = tx.query(sql, subvals)
             flex_rows = tx.query(flex_sql, subvals)
 
         return Results(
-            model_cls, rows, self, flex_rows,
+            model_cls,
+            rows,
+            self,
+            flex_rows,
             None if where else query,  # Slow query component.
             sort if sort.is_slow() else None,  # Slow sort component.
         )
