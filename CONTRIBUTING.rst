@@ -247,7 +247,7 @@ guidelines to follow:
    with the ``logging`` module, feed it through this function.
 
 Editor Settings
-^^^^^^^^^^^^^^^
+---------------
 
 Personally, I work on beets with `vim <http://www.vim.org/>`__. Here are
 some ``.vimrc`` lines that might help with PEP 8-compliant Python
