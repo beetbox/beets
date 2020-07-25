@@ -84,10 +84,11 @@ class FormattedMapping(Mapping):
             value = value.decode('utf-8', 'ignore')
 
         if self.for_path:
-            if re.match(r'^\w:', value):
-                value = value.replace(':',
-                    beets.config['drive_sep_replace'].as_str())
             sep_repl = beets.config['path_sep_replace'].as_str()
+            sep_drive = beets.config['drive_sep_replace'].as_str()
+            if re.match(r'^\w:', value): 
+                value = value.replace(':', sep_drive)
+            
             for sep in (os.path.sep, os.path.altsep):
                 if sep:
                     value = value.replace(sep, sep_repl)
