@@ -285,6 +285,11 @@ Other ways to run the tests:
 
 You can also see the latest test results on `Linux`_ and on `Windows`_.
 
+Note, if you are on Windows and are seeing errors running tox, it may be related to `this issue`_,
+in which case you may have to install tox v3.8.3 e.g. ``python -m pip install tox=3.8.3``
+
+.. _this issue: https://github.com/tox-dev/tox/issues/1550
+
 Coverage
 ^^^^^^^^
 
