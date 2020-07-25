@@ -214,12 +214,12 @@ class PipelineAborted(Exception):
 
 class PipelineThread(Thread):
     """Abstract base class for pipeline-stage threads."""
-    def __init__(self, coro, all_threads, in_queue=None, out_queue=None):
+    def __init__(self, coro, pipeline, in_queue=None, out_queue=None):
         super(PipelineThread, self).__init__()
         self.coro = coro
         self.abort_lock = Lock()
         self.abort_flag = False
-        self.all_threads = all_threads
+        self.pipeline = pipeline
         self.exc_info = None
         self.in_queue = in_queue
         self.out_queue = out_queue
@@ -236,13 +236,6 @@ class PipelineThread(Thread):
                 _invalidate_queue(self.in_queue, POISON)
             if self.out_queue is not None:
                 _invalidate_queue(self.out_queue, POISON)
-
-    def abort_all(self, exc_info):
-        """Abort all other threads in the system for an exception.
-        """
-        self.exc_info = exc_info
-        for thread in self.all_threads:
-            thread.abort()
 
     def check_abort(self):
         with self.abort_lock:
@@ -267,7 +260,8 @@ class PipelineThread(Thread):
         except PipelineAborted:
             pass
         except BaseException:
-            self.abort_all(sys.exc_info())
+            self.exc_info = sys.exc_info()
+            self.pipeline.abort()
 
     def _startup(self):
         pass
@@ -368,6 +362,12 @@ class Pipeline(object):
         """
         list(self.pull())
 
+    def abort(self):
+        """Abort all threads in the system for an exception.
+        """
+        for thread in self.threads:
+            thread.abort()
+
     def run_parallel(self, queue_size=DEFAULT_QUEUE_SIZE):
         """Run the pipeline in parallel using one thread per stage. The
         messages between the stages are stored in queues of the given
@@ -375,41 +375,41 @@ class Pipeline(object):
         """
         queue_count = len(self.stages) - 1
         queues = [CountedQueue(queue_size) for i in range(queue_count)]
-        threads = []
+        self.threads = []
 
         # Set up first stage.
         for coro in self.stages[0]:
-            threads.append(FirstPipelineThread(
-                coro, threads, out_queue=queues[0],
+            self.threads.append(FirstPipelineThread(
+                coro, self, out_queue=queues[0],
             ))
 
         # Middle stages.
         for i in range(1, queue_count):
             for coro in self.stages[i]:
-                threads.append(MiddlePipelineThread(
-                    coro, threads, in_queue=queues[i - 1], out_queue=queues[i]
+                self.threads.append(MiddlePipelineThread(
+                    coro, self, in_queue=queues[i - 1], out_queue=queues[i]
                 ))
 
         # Last stage.
         for coro in self.stages[-1]:
-            threads.append(
-                LastPipelineThread(coro, threads, in_queue=queues[-1])
+            self.threads.append(
+                LastPipelineThread(coro, self, in_queue=queues[-1])
             )
 
         # Start threads.
-        for thread in threads:
+        for thread in self.threads:
             thread.start()
 
         # Wait for termination. The final thread lasts the longest.
         try:
             # Using a timeout allows us to receive KeyboardInterrupt
             # exceptions during the join().
-            while threads[-1].is_alive():
-                threads[-1].join(1)
+            while self.threads[-1].is_alive():
+                self.threads[-1].join(1)
 
         except BaseException:
             # Stop all the threads immediately.
-            for thread in threads:
+            for thread in self.threads:
                 thread.abort()
             raise
 
@@ -417,10 +417,10 @@ class Pipeline(object):
             # Make completely sure that all the threads have finished
             # before we return. They should already be either finished,
             # in normal operation, or aborted, in case of an exception.
-            for thread in threads[:-1]:
+            for thread in self.threads[:-1]:
                 thread.join()
 
-        for thread in threads:
+        for thread in self.threads:
             exc_info = thread.exc_info
             if exc_info:
                 # Make the exception appear as it was raised originally.
