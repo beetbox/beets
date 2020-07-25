@@ -102,6 +102,19 @@ class MoveTest(_common.TestCase):
         self.i.move()
         self.assertEqual(self.i.path, old_path)
 
+    def test_move_file_with_colon(self):
+        self.i.artist = u'C:DOS'
+        self.i.move()
+        self.assertRegex(self.i.path.decode(), r'C_DOS')
+
+    def test_move_file_with_colon_alt_separator(self):
+        old = beets.config['drive_sep_replace']
+        beets.config["drive_sep_replace"] = '0'
+        self.i.artist = u'C:DOS'
+        self.i.move()
+        self.assertRegex(self.i.path.decode(), r"C0DOS")
+        beets.config["drive_sep_replace"] = old
+
     def test_read_only_file_copied_writable(self):
         # Make the source file read-only.
         os.chmod(self.path, 0o444)
