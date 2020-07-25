@@ -139,6 +139,9 @@ New features:
 * :doc:`/plugins/lyrics`: Fix a bug in the heuristic for detecting valid
   lyrics in the Google source of the lyrics plugin
   :bug:`2969`
+* :doc:`/plugins/thumbnails`: Fix a bug where pathlib expected a string instead
+  of bytes for a path.
+  :bug:`3360`
 
 Fixes:
 
@@ -229,6 +232,9 @@ Fixes:
   the Cover Art Archive API.
   Thanks to :user:`trolley`.
   :bug:`3637`
+* :doc:`/plugins/ipfs`: Fix Python 3 compatibility.
+  Thanks to :user:`musoke`.
+  :bug:`2554`
 
 For plugin developers:
 

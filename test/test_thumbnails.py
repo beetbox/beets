@@ -284,6 +284,15 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
             u'file:///music/%EC%8B%B8%EC%9D%B4')
 
 
+class TestPathlibURI():
+    """Test PathlibURI class"""
+    def test_uri(self):
+        test_uri = PathlibURI()
+
+        # test it won't break if we pass it bytes for a path
+        test_uri.uri(b'/')
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
