@@ -11,7 +11,7 @@ To use the ``fetchart`` plugin, first enable it in your configuration (see
 
 The plugin uses `requests`_ to fetch album art from the Web.
 
-.. _requests: https://docs.python-requests.org/en/latest/
+.. _requests: https://requests.readthedocs.io/en/master/
 
 Fetching Album Art During Import
 --------------------------------
