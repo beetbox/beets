@@ -235,6 +235,9 @@ Fixes:
 * :doc:`/plugins/ipfs`: Fix Python 3 compatibility.
   Thanks to :user:`musoke`.
   :bug:`2554`
+* Fix a bug that caused metadata starting with something resembling a drive
+  letter to be incorrectly split into an extra directory after the colon.
+  :bug:`3685`
 
 For plugin developers:
 
