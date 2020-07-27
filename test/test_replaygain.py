@@ -23,6 +23,7 @@ from mock import patch
 from test.helper import TestHelper, capture_log, has_program
 
 from beets import config
+from beets.util import CommandOutput
 from mediafile import MediaFile
 from beetsplug.replaygain import (FatalGstreamerPluginReplayGainError,
                                   GStreamerBackend)
@@ -39,10 +40,12 @@ if any(has_program(cmd, ['-v']) for cmd in ['mp3gain', 'aacgain']):
 else:
     GAIN_PROG_AVAILABLE = False
 
-if has_program('bs1770gain', ['--replaygain']):
+if has_program('bs1770gain'):
     LOUDNESS_PROG_AVAILABLE = True
 else:
     LOUDNESS_PROG_AVAILABLE = False
+
+FFMPEG_AVAILABLE = has_program('ffmpeg', ['-version'])
 
 
 def reset_replaygain(item):
@@ -83,6 +86,16 @@ class ReplayGainCliTestBase(TestHelper):
     def tearDown(self):
         self.teardown_beets()
         self.unload_plugins()
+
+    def _reset_replaygain(self, item):
+        item['rg_track_peak'] = None
+        item['rg_track_gain'] = None
+        item['rg_album_peak'] = None
+        item['rg_album_gain'] = None
+        item['r128_track_gain'] = None
+        item['r128_album_gain'] = None
+        item.write()
+        item.store()
 
     def test_cli_saves_track_gain(self):
         for item in self.lib.items():
@@ -138,7 +151,48 @@ class ReplayGainCliTestBase(TestHelper):
         self.assertEqual(max(gains), min(gains))
 
         self.assertNotEqual(max(gains), 0.0)
-        self.assertNotEqual(max(peaks), 0.0)
+        if not self.backend == "bs1770gain":
+            # Actually produces peaks == 0.0 ~ self.add_album_fixture
+            self.assertNotEqual(max(peaks), 0.0)
+
+    def test_cli_writes_only_r128_tags(self):
+        if self.backend == "command":
+            # opus not supported by command backend
+            return
+
+        album = self.add_album_fixture(2, ext="opus")
+        for item in album.items():
+            self._reset_replaygain(item)
+
+        self.run_command(u'replaygain', u'-a')
+
+        for item in album.items():
+            mediafile = MediaFile(item.path)
+            # does not write REPLAYGAIN_* tags
+            self.assertIsNone(mediafile.rg_track_gain)
+            self.assertIsNone(mediafile.rg_album_gain)
+            # writes R128_* tags
+            self.assertIsNotNone(mediafile.r128_track_gain)
+            self.assertIsNotNone(mediafile.r128_album_gain)
+
+    def test_target_level_has_effect(self):
+        item = self.lib.items()[0]
+
+        def analyse(target_level):
+            self.config['replaygain']['targetlevel'] = target_level
+            self._reset_replaygain(item)
+            self.run_command(u'replaygain', '-f')
+            mediafile = MediaFile(item.path)
+            return mediafile.rg_track_gain
+
+        gain_relative_to_84 = analyse(84)
+        gain_relative_to_89 = analyse(89)
+
+        # check that second calculation did work
+        if gain_relative_to_84 is not None:
+            self.assertIsNotNone(gain_relative_to_89)
+
+        self.assertNotEqual(gain_relative_to_84, gain_relative_to_89)
 
 
 @unittest.skipIf(not GST_AVAILABLE, u'gstreamer cannot be found')
@@ -169,7 +223,6 @@ class ReplayGainLdnsCliTest(ReplayGainCliTestBase, unittest.TestCase):
 
 
 class ReplayGainLdnsCliMalformedTest(TestHelper, unittest.TestCase):
-
     @patch('beetsplug.replaygain.call')
     def setUp(self, call_patch):
         self.setup_beets()
@@ -177,23 +230,38 @@ class ReplayGainLdnsCliMalformedTest(TestHelper, unittest.TestCase):
 
         # Patch call to return nothing, bypassing the bs1770gain installation
         # check.
-        call_patch.return_value = None
-        self.load_plugins('replaygain')
+        call_patch.return_value = CommandOutput(
+            stdout=b'bs1770gain 0.0.0, ', stderr=b''
+        )
+        try:
+            self.load_plugins('replaygain')
+        except Exception:
+            import sys
+            exc_info = sys.exc_info()
+            try:
+                self.tearDown()
+            except Exception:
+                pass
+            six.reraise(exc_info[1], None, exc_info[2])
 
         for item in self.add_album_fixture(2).items():
             reset_replaygain(item)
 
+    def tearDown(self):
+        self.teardown_beets()
+        self.unload_plugins()
+
     @patch('beetsplug.replaygain.call')
     def test_malformed_output(self, call_patch):
         # Return malformed XML (the ampersand should be &amp;)
-        call_patch.return_value = """
+        call_patch.return_value = CommandOutput(stdout=b"""
             <album>
                 <track total="1" number="1" file="&">
                     <integrated lufs="0" lu="0" />
                     <sample-peak spfs="0" factor="0" />
                 </track>
             </album>
-        """
+        """, stderr="")
 
         with capture_log('beets.replaygain') as logs:
             self.run_command('replaygain')
@@ -203,6 +271,11 @@ class ReplayGainLdnsCliMalformedTest(TestHelper, unittest.TestCase):
                     'malformed XML' in line]
 
         self.assertEqual(len(matching), 2)
+
+
+@unittest.skipIf(not FFMPEG_AVAILABLE, u'ffmpeg cannot be found')
+class ReplayGainFfmpegTest(ReplayGainCliTestBase, unittest.TestCase):
+    backend = u'ffmpeg'
 
 
 def suite():

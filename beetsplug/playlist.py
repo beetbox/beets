@@ -18,6 +18,7 @@ import os
 import fnmatch
 import tempfile
 import beets
+from beets.util import path_as_posix
 
 
 class PlaylistQuery(beets.dbcore.Query):
@@ -70,7 +71,7 @@ class PlaylistQuery(beets.dbcore.Query):
         if not self.paths:
             # Playlist is empty
             return '0', ()
-        clause  = 'path IN ({0})'.format(', '.join('?' for path in self.paths))
+        clause = 'path IN ({0})'.format(', '.join('?' for path in self.paths))
         return clause, (beets.library.BLOB_TYPE(p) for p in self.paths)
 
     def match(self, item):
@@ -86,6 +87,7 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
             'auto': False,
             'playlist_dir': '.',
             'relative_to': 'library',
+            'forward_slash': False,
         })
 
         self.playlist_dir = self.config['playlist_dir'].as_filename()
@@ -160,6 +162,8 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
                     try:
                         new_path = self.changes[beets.util.normpath(lookup)]
                     except KeyError:
+                        if self.config['forward_slash']:
+                            line = path_as_posix(line)
                         tempfp.write(line)
                     else:
                         if new_path is None:
@@ -170,8 +174,10 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
                         changes += 1
                         if is_relative:
                             new_path = os.path.relpath(new_path, base_dir)
-
-                        tempfp.write(line.replace(original_path, new_path))
+                        line = line.replace(original_path, new_path)
+                        if self.config['forward_slash']:
+                            line = path_as_posix(line)
+                        tempfp.write(line)
 
         if changes or deletions:
             self._log.info(

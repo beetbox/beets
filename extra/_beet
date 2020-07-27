@@ -1,6 +1,6 @@
 #compdef beet
 
-# zsh completion for beets music library manager and MusicBrainz tagger: http://beets.radbox.org/
+# zsh completion for beets music library manager and MusicBrainz tagger: https://beets.io/
 
 # Default values for BEETS_LIBRARY & BEETS_CONFIG needed for the cache checking function.
 # They will be updated under the assumption that the config file is in the same directory as the library.
@@ -34,7 +34,7 @@ _beet_check_cache () {
 # useful: argument to _regex_arguments for matching any word
 local matchany=/$'[^\0]##\0'/
 # arguments to _regex_arguments for completing files and directories
-local -a files dirs 
+local -a files dirs
 files=("$matchany" ':file:file:_files')
 dirs=("$matchany" ':dir:directory:_dirs')
 
@@ -73,7 +73,7 @@ if ! _retrieve_cache beetscmds || _cache_invalid beetscmds; then
     # create completion function for queries
     _regex_arguments _beet_query "$matchany" \# \( "$matchquery" ":query:query string:$queryelem" \) \#
     local "beets_query"="$(which _beet_query)"
-    # arguments for _regex_arguments for completing lists of queries and modifications 
+    # arguments for _regex_arguments for completing lists of queries and modifications
     beets_query_args=( \( "$matchquery" ":query:query string:{_beet_query}" \) \# )
     beets_modify_args=( \( "$matchmodify" ":modify:modify string:$modifyelem" \) \# )
     # now build arguments for _beet and _beet_help completion functions
@@ -82,7 +82,7 @@ if ! _retrieve_cache beetscmds || _cache_invalid beetscmds; then
 	subcmd="${i[(w)1]}"
 	# remove first word and parenthesised alias, replace : with -, [ with (, ] with ), and remove single quotes
 	cmddesc="${${${${${i[(w)2,-1]##\(*\) #}//:/-}//\[/(}//\]/)}//\'/}"
-	# update arguments needed for creating _beet 
+	# update arguments needed for creating _beet
 	beets_regex_words_subcmds+=(/"${subcmd}"$'\0'/ ":subcmds:subcommands:((${subcmd}:${cmddesc// /\ }))")
 	beets_regex_words_subcmds+=(\( "${matchany}" ":option:option:{_beet_subcmd ${subcmd}}" \) \# \|)
 	# update arguments needed for creating _beet_help
@@ -137,7 +137,7 @@ _beet_subcmd_options() {
                 fi
                 ;;
             (LOG)
-		local -a files 
+		local -a files
 		files=("$matchany" ':file:file:_files')
 		regex_words+=("$opt:$optdesc:\$files")
                 ;;
@@ -180,7 +180,7 @@ _beet_subcmd() {
     if [[ ! $(type _beet_${subcmd} | grep function) =~ function ]]; then
 	if ! _retrieve_cache "beets${subcmd}" || _cache_invalid "beets${subcmd}"; then
 	    local matchany=/$'[^\0]##\0'/
-	    local -a files 
+	    local -a files
 	    files=("$matchany" ':file:file:_files')
 	    # get arguments for completing subcommand options
 	    _beet_subcmd_options "$subcmd"
@@ -197,7 +197,7 @@ _beet_subcmd() {
 		(fields|migrate|version|config)
 		    _regex_arguments _beet_${subcmd} "${matchany}" /"${subcmd}"$'\0'/ "${options[@]}"
 		    ;;
-		(help) 
+		(help)
 		    _regex_words subcmds "subcommands" "${beets_regex_words_help[@]}"
 		    _regex_arguments _beet_help "${matchany}" /$'help\0'/ "${options[@]}" "${reply[@]}"
 		    ;;
@@ -232,6 +232,6 @@ zstyle ":completion:${curcontext}:" tag-order '! options'
 # Execute the completion function
 _beet "$@"
 
-# Local Variables: 
+# Local Variables:
 # mode:shell-script
 # End:

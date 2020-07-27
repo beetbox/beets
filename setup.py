@@ -60,7 +60,7 @@ setup(
     description='music tagger and library organizer',
     author='Adrian Sampson',
     author_email='adrian@radbox.org',
-    url='http://beets.io/',
+    url='https://beets.io/',
     license='MIT',
     platforms='ALL',
     long_description=_read('README.rst'),
@@ -91,7 +91,7 @@ setup(
         'unidecode',
         'musicbrainzngs>=0.4',
         'pyyaml',
-        'mediafile>=0.1.0',
+        'mediafile>=0.2.0',
         'confuse>=1.0.0',
     ] + [
         # Avoid a version of munkres incompatible with Python 3.
@@ -109,23 +109,33 @@ setup(
         ['colorama'] if (sys.platform == 'win32') else []
     ),
 
-    tests_require=[
-        'beautifulsoup4',
-        'flask',
-        'mock',
-        'pylast',
-        'rarfile',
-        'responses',
-        'pyxdg',
-        'python-mpd2',
-        'discogs-client'
-    ] + (
-        # Tests for the thumbnails plugin need pathlib on Python 2 too.
-        ['pathlib'] if (sys.version_info < (3, 4, 0)) else []
-    ),
-
-    # Plugin (optional) dependencies:
     extras_require={
+        'test': [
+            'beautifulsoup4',
+            'coverage',
+            'discogs-client',
+            'flask',
+            'mock',
+            'pylast',
+            'pytest',
+            'python-mpd2',
+            'pyxdg',
+            'rarfile',
+            'responses>=0.3.0',
+            'requests_oauthlib',
+        ] + (
+            # Tests for the thumbnails plugin need pathlib on Python 2 too.
+            ['pathlib'] if (sys.version_info < (3, 4, 0)) else []
+            ),
+        'lint': [
+            'flake8',
+            'flake8-blind-except',
+            'flake8-coding',
+            'flake8-future-import',
+            'pep8-naming',
+        ],
+
+        # Plugin (optional) dependencies:
         'absubmit': ['requests'],
         'fetchart': ['requests', 'Pillow'],
         'embedart': ['Pillow'],
@@ -156,7 +166,7 @@ setup(
     #   badfiles: mp3val and flac
     #   bpd: python-gi and GStreamer 1.0+
     #   embedart: ImageMagick
-    #   absubmit: extractor binary from http://acousticbrainz.org/download
+    #   absubmit: extractor binary from https://acousticbrainz.org/download
     #   keyfinder: KeyFinder
     #   replaygain: python-gi and GStreamer 1.0+ or mp3gain/aacgain
     #               or Python Audio Tools
@@ -172,7 +182,6 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',

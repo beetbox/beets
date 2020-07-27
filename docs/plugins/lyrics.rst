@@ -5,9 +5,9 @@ The ``lyrics`` plugin fetches and stores song lyrics from databases on the Web.
 Namely, the current version of the plugin uses `Lyric Wiki`_,
 `Musixmatch`_, `Genius.com`_, and, optionally, the Google custom search API.
 
-.. _Lyric Wiki: http://lyrics.wikia.com/
+.. _Lyric Wiki: https://lyrics.wikia.com/
 .. _Musixmatch: https://www.musixmatch.com/
-.. _Genius.com: http://genius.com/
+.. _Genius.com: https://genius.com/
 
 
 Fetch Lyrics During Import
@@ -26,7 +26,7 @@ already have them. The lyrics will be stored in the beets database. If the
 ``import.write`` config option is on, then the lyrics will also be written to
 the files' tags.
 
-.. _requests: http://docs.python-requests.org/en/latest/
+.. _requests: https://docs.python-requests.org/en/latest/
 
 
 Configuration
@@ -105,11 +105,11 @@ A minimal ``conf.py`` and ``index.rst`` files are created the first time the
 command is run. They are not overwritten on subsequent runs, so you can safely
 modify these files to customize the output.
 
-.. _Sphinx: http://www.sphinx-doc.org/
+.. _Sphinx: https://www.sphinx-doc.org/
 .. _reStructuredText: http://docutils.sourceforge.net/rst.html
 
 Sphinx supports various `builders
-<http://www.sphinx-doc.org/en/stable/builders.html>`_, but here are a
+<https://www.sphinx-doc.org/en/stable/builders.html>`_, but here are a
 few suggestions.
 
  * Build an HTML version::
@@ -148,13 +148,13 @@ Optionally, you can `define a custom search engine`_. Get your search engine's
 token and use it for your ``google_engine_ID`` configuration option. By
 default, beets use a list of sources known to be scrapeable.
 
-.. _define a custom search engine: http://www.google.com/cse/all
+.. _define a custom search engine: https://www.google.com/cse/all
 
 Note that the Google custom search API is limited to 100 queries per day.
 After that, the lyrics plugin will fall back on other declared data sources.
 
-.. _pip: http://www.pip-installer.org/
-.. _BeautifulSoup: http://www.crummy.com/software/BeautifulSoup/bs4/doc/
+.. _pip: https://pip.pypa.io
+.. _BeautifulSoup: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
 
 Activate Genius Lyrics
 ----------------------

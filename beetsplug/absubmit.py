@@ -32,6 +32,9 @@ from beets import plugins
 from beets import util
 from beets import ui
 
+# We use this field to check whether AcousticBrainz info is present.
+PROBE_FIELD = 'mood_acoustic'
+
 
 class ABSubmitError(Exception):
     """Raised when failing to analyse file with extractor."""
@@ -43,7 +46,7 @@ def call(args):
     Raise a AnalysisABSubmitError on failure.
     """
     try:
-        return util.command_output(args)
+        return util.command_output(args).stdout
     except subprocess.CalledProcessError as e:
         raise ABSubmitError(
             u'{0} exited with status {1}'.format(args[0], e.returncode)
@@ -55,7 +58,11 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
     def __init__(self):
         super(AcousticBrainzSubmitPlugin, self).__init__()
 
-        self.config.add({'extractor': u''})
+        self.config.add({
+            'extractor': u'',
+            'force': False,
+            'pretend': False
+        })
 
         self.extractor = self.config['extractor'].as_str()
         if self.extractor:
@@ -73,8 +80,8 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                 call([self.extractor])
             except OSError:
                 raise ui.UserError(
-                    u'No extractor command found: please install the '
-                    u'extractor binary from http://acousticbrainz.org/download'
+                    u'No extractor command found: please install the extractor'
+                    u' binary from https://acousticbrainz.org/download'
                 )
             except ABSubmitError:
                 # Extractor found, will exit with an error if not called with
@@ -98,12 +105,24 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             'absubmit',
             help=u'calculate and submit AcousticBrainz analysis'
         )
+        cmd.parser.add_option(
+            u'-f', u'--force', dest='force_refetch',
+            action='store_true', default=False,
+            help=u're-download data when already present'
+        )
+        cmd.parser.add_option(
+            u'-p', u'--pretend', dest='pretend_fetch',
+            action='store_true', default=False,
+            help=u'pretend to perform action, but show \
+only files which would be processed'
+        )
         cmd.func = self.command
         return [cmd]
 
     def command(self, lib, opts, args):
         # Get items from arguments
         items = lib.items(ui.decargs(args))
+        self.opts = opts
         util.par_map(self.analyze_submit, items)
 
     def analyze_submit(self, item):
@@ -113,10 +132,20 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
 
     def _get_analysis(self, item):
         mbid = item['mb_trackid']
-        # If file has no mbid skip it.
+
+        # Avoid re-analyzing files that already have AB data.
+        if not self.opts.force_refetch and not self.config['force']:
+            if item.get(PROBE_FIELD):
+                return None
+
+        # If file has no MBID, skip it.
         if not mbid:
             self._log.info(u'Not analysing {}, missing '
                            u'musicbrainz track id.', item)
+            return None
+
+        if self.opts.pretend_fetch or self.config['pretend']:
+            self._log.info(u'pretend action - extract item: {}', item)
             return None
 
         # Temporary file to save extractor output to, extractor only works
@@ -135,7 +164,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                     item=item, error=e
                 )
                 return None
-            with open(filename, 'rb') as tmp_file:
+            with open(filename, 'r') as tmp_file:
                 analysis = json.load(tmp_file)
             # Add the hash to the output.
             analysis['metadata']['version']['essentia_build_sha'] = \

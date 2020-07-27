@@ -19,7 +19,7 @@ This plugin allows the user to print track information in a format that is
 parseable by the MusicBrainz track parser [1]. Programmatic submitting is not
 implemented by MusicBrainz yet.
 
-[1] http://wiki.musicbrainz.org/History:How_To_Parse_Track_Listings
+[1] https://wiki.musicbrainz.org/History:How_To_Parse_Track_Listings
 """
 
 from __future__ import division, absolute_import, print_function

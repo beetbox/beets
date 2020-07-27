@@ -97,7 +97,7 @@ class Type(object):
         For fixed fields the type of `value` is determined by the column
         type affinity given in the `sql` property and the SQL to Python
         mapping of the database adapter. For more information see:
-        http://www.sqlite.org/datatype3.html
+        https://www.sqlite.org/datatype3.html
         https://docs.python.org/2/library/sqlite3.html#sqlite-and-python-types
 
         Flexible fields have the type affinity `TEXT`. This means the
@@ -130,6 +130,14 @@ class Integer(Type):
     sql = u'INTEGER'
     query = query.NumericQuery
     model_type = int
+
+    def normalize(self, value):
+        try:
+            return self.model_type(round(float(value)))
+        except ValueError:
+            return self.null
+        except TypeError:
+            return self.null
 
 
 class PaddedInt(Integer):

@@ -31,8 +31,8 @@ Here's an example::
 
     $ beet spotify "In The Lonely Hour"
     Processing 14 tracks...
-    http://open.spotify.com/track/19w0OHr8SiZzRhjpnjctJ4
-    http://open.spotify.com/track/3PRLM4FzhplXfySa4B7bxS
+    https://open.spotify.com/track/19w0OHr8SiZzRhjpnjctJ4
+    https://open.spotify.com/track/3PRLM4FzhplXfySa4B7bxS
     [...]
 
 Command-line options include:
@@ -51,6 +51,9 @@ prompt during import::
 
 Configuration
 -------------
+
+This plugin can be configured like other metadata source plugins as described in :ref:`metadata-source-plugin-configuration`. In addition, the following
+configuration options are provided.
 
 The default options should work as-is, but there are some options you can put
 in config.yaml under the ``spotify:`` section:
@@ -79,9 +82,6 @@ in config.yaml under the ``spotify:`` section:
   track/album/artist fields before sending them to Spotify.  Can be useful for
   changing certain abbreviations, like ft. -> feat.  See the examples below.
   Default: None.
-- **source_weight**: Penalty applied to Spotify matches during import. Set to
-  0.0 to disable.
-  Default: ``0.5``.
 
 Here's an example::
 

@@ -15,9 +15,8 @@
 
 from __future__ import division, absolute_import, print_function
 
-import os
-
 import confuse
+from sys import stderr
 
 __version__ = u'1.5.0'
 __author__ = u'Adrian Sampson <adrian@radbox.org>'
@@ -32,11 +31,12 @@ class IncludeLazyConfig(confuse.LazyConfig):
 
         try:
             for view in self['include']:
-                filename = view.as_filename()
-                if os.path.isfile(filename):
-                    self.set_file(filename)
+                self.set_file(view.as_filename())
         except confuse.NotFoundError:
             pass
+        except confuse.ConfigReadError as err:
+            stderr.write("configuration `import` failed: {}"
+                         .format(err.reason))
 
 
 config = IncludeLazyConfig('beets', __name__)

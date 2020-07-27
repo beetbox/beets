@@ -1,18 +1,20 @@
-.. image:: http://img.shields.io/pypi/v/beets.svg
+.. image:: https://img.shields.io/pypi/v/beets.svg
     :target: https://pypi.python.org/pypi/beets
 
-.. image:: http://img.shields.io/codecov/c/github/beetbox/beets.svg
+.. image:: https://img.shields.io/codecov/c/github/beetbox/beets.svg
     :target: https://codecov.io/github/beetbox/beets
 
-.. image:: https://travis-ci.org/beetbox/beets.svg?branch=master
-    :target: https://travis-ci.org/beetbox/beets
+.. image:: https://github.com/beetbox/beets/workflows/ci/badge.svg?branch=master
+    :target: https://github.com/beetbox/beets/actions
+
+.. image:: https://repology.org/badge/tiny-repos/beets.svg
+    :target: https://repology.org/project/beets/versions
 
 
 beets
 =====
 
-Beets is the media library management system for obsessive-compulsive music
-geeks.
+Beets is the media library management system for obsessive music geeks.
 
 The purpose of beets is to get your music collection right once and for all.
 It catalogs your collection, automatically improving its metadata as it goes.
@@ -51,46 +53,46 @@ imagine for your music collection. Via `plugins`_, beets becomes a panacea:
 If beets doesn't do what you want yet, `writing your own plugin`_ is
 shockingly simple if you know a little Python.
 
-.. _plugins: http://beets.readthedocs.org/page/plugins/
-.. _MPD: http://www.musicpd.org/
-.. _MusicBrainz music collection: http://musicbrainz.org/doc/Collections/
+.. _plugins: https://beets.readthedocs.org/page/plugins/
+.. _MPD: https://www.musicpd.org/
+.. _MusicBrainz music collection: https://musicbrainz.org/doc/Collections/
 .. _writing your own plugin:
-    http://beets.readthedocs.org/page/dev/plugins.html
+    https://beets.readthedocs.org/page/dev/plugins.html
 .. _HTML5 Audio:
     http://www.w3.org/TR/html-markup/audio.html
 .. _albums that are missing tracks:
-    http://beets.readthedocs.org/page/plugins/missing.html
+    https://beets.readthedocs.org/page/plugins/missing.html
 .. _duplicate tracks and albums:
-    http://beets.readthedocs.org/page/plugins/duplicates.html
+    https://beets.readthedocs.org/page/plugins/duplicates.html
 .. _Transcode audio:
-    http://beets.readthedocs.org/page/plugins/convert.html
-.. _Discogs: http://www.discogs.com/
+    https://beets.readthedocs.org/page/plugins/convert.html
+.. _Discogs: https://www.discogs.com/
 .. _acoustic fingerprints:
-    http://beets.readthedocs.org/page/plugins/chroma.html
-.. _ReplayGain: http://beets.readthedocs.org/page/plugins/replaygain.html
-.. _tempos: http://beets.readthedocs.org/page/plugins/acousticbrainz.html
-.. _genres: http://beets.readthedocs.org/page/plugins/lastgenre.html
-.. _album art: http://beets.readthedocs.org/page/plugins/fetchart.html
-.. _lyrics: http://beets.readthedocs.org/page/plugins/lyrics.html
-.. _MusicBrainz: http://musicbrainz.org/
+    https://beets.readthedocs.org/page/plugins/chroma.html
+.. _ReplayGain: https://beets.readthedocs.org/page/plugins/replaygain.html
+.. _tempos: https://beets.readthedocs.org/page/plugins/acousticbrainz.html
+.. _genres: https://beets.readthedocs.org/page/plugins/lastgenre.html
+.. _album art: https://beets.readthedocs.org/page/plugins/fetchart.html
+.. _lyrics: https://beets.readthedocs.org/page/plugins/lyrics.html
+.. _MusicBrainz: https://musicbrainz.org/
 .. _Beatport: https://www.beatport.com
 
 Install
 -------
 
-You can install beets by typing ``pip install beets``. Then check out the
-`Getting Started`_ guide.
+You can install beets by typing ``pip install beets``.
+Beets has also been packaged in the `software repositories`_ of several distributions.
+Check out the `Getting Started`_ guide for more information.
 
-.. _Getting Started: http://beets.readthedocs.org/page/guides/main.html
+.. _Getting Started: https://beets.readthedocs.org/page/guides/main.html
+.. _software repositories: https://repology.org/project/beets/versions
 
 Contribute
 ----------
 
-Check out the `Hacking`_ page on the wiki for tips on how to help out.
-You might also be interested in the `For Developers`_ section in the docs.
+Thank you for considering contributing to ``beets``! Whether you're a programmer or not, you should be able to find all the info you need at `CONTRIBUTING.rst`_.
 
-.. _Hacking: https://github.com/beetbox/beets/wiki/Hacking
-.. _For Developers: http://docs.beets.io/page/dev/
+.. _CONTRIBUTING.rst: https://github.com/beetbox/beets/blob/master/CONTRIBUTING.rst
 
 Read More
 ---------
@@ -98,14 +100,21 @@ Read More
 Learn more about beets at `its Web site`_. Follow `@b33ts`_ on Twitter for
 news and updates.
 
-.. _its Web site: http://beets.io/
-.. _@b33ts: http://twitter.com/b33ts/
+.. _its Web site: https://beets.io/
+.. _@b33ts: https://twitter.com/b33ts/
+
+Contact
+-------
+* Encountered a bug you'd like to report or have an idea for a new feature? Check out our `issue tracker`_! If your issue or feature hasn't already been reported, please `open a new ticket`_ and we'll be in touch with you shortly. If you'd like to vote on a feature/bug, simply give a :+1: on issues you'd like to see prioritized over others.
+* Need help/support, would like to start a discussion, or would just like to introduce yourself to the team? Check out our `forums`_!
+
+.. _issue tracker: https://github.com/beetbox/beets/issues
+.. _open a new ticket: https://github.com/beetbox/beets/issues/new/choose
+.. _forums: https://discourse.beets.io/
 
 Authors
 -------
 
-Beets is by `Adrian Sampson`_ with a supporting cast of thousands. For help,
-please visit our `forum`_.
+Beets is by `Adrian Sampson`_ with a supporting cast of thousands.
 
-.. _forum: https://discourse.beets.io
-.. _Adrian Sampson: http://www.cs.cornell.edu/~asampson/
+.. _Adrian Sampson: https://www.cs.cornell.edu/~asampson/

@@ -4,16 +4,16 @@ ReplayGain Plugin
 This plugin adds support for `ReplayGain`_, a technique for normalizing audio
 playback levels.
 
-.. _ReplayGain: http://wiki.hydrogenaudio.org/index.php?title=ReplayGain
+.. _ReplayGain: https://wiki.hydrogenaudio.org/index.php?title=ReplayGain
 
 
 Installation
 ------------
 
-This plugin can use one of three backends to compute the ReplayGain values:
-GStreamer, mp3gain (and its cousin, aacgain), Python Audio Tools. mp3gain
-can be easier to install but GStreamer and Audio Tools support more audio
-formats.
+This plugin can use one of many backends to compute the ReplayGain values:
+GStreamer, mp3gain (and its cousin, aacgain), Python Audio Tools or ffmpeg.
+ffmpeg and mp3gain can be easier to install. mp3gain supports less audio formats
+then the other backend.
 
 Once installed, this plugin analyzes all files during the import process. This
 can be a slow process; to instead analyze after the fact, disable automatic
@@ -27,7 +27,7 @@ install GStreamer and plugins for compatibility with your audio files.
 You will need at least GStreamer 1.0 and `PyGObject 3.x`_ (a.k.a. ``python-gi``).
 
 .. _PyGObject 3.x: https://pygobject.readthedocs.io/en/latest/
-.. _GStreamer: http://gstreamer.freedesktop.org/
+.. _GStreamer: https://gstreamer.freedesktop.org/
 
 Then, enable the ``replaygain`` plugin (see :ref:`using-plugins`) and specify
 the GStreamer backend by adding this to your configuration file::
@@ -47,8 +47,8 @@ command-line tool or the `aacgain`_ fork thereof. Here are some hints:
 * On Windows, download and install the original `mp3gain`_.
 
 .. _mp3gain: http://mp3gain.sourceforge.net/download.php
-.. _aacgain: http://aacgain.altosdesign.com
-.. _Homebrew: http://mxcl.github.com/homebrew/
+.. _aacgain: https://aacgain.altosdesign.com
+.. _Homebrew: https://brew.sh
 
 Then, enable the plugin (see :ref:`using-plugins`) and specify the "command"
 backend in your configuration file::
@@ -75,6 +75,15 @@ On OS X, most of the dependencies can be installed with `Homebrew`_::
 
 .. _Python Audio Tools: http://audiotools.sourceforge.net
 
+ffmpeg
+``````
+
+This backend uses ffmpeg to calculate EBU R128 gain values.
+To use it, install the `ffmpeg`_ command-line tool and select the
+``ffmpeg`` backend in your config file.
+
+.. _ffmpeg: https://ffmpeg.org
+
 Configuration
 -------------
 
@@ -83,16 +92,24 @@ configuration file. The available options are:
 
 - **auto**: Enable ReplayGain analysis during import.
   Default: ``yes``.
-- **backend**: The analysis backend; either ``gstreamer``, ``command``, or ``audiotools``.
+- **backend**: The analysis backend; either ``gstreamer``, ``command``, ``audiotools``
+  or ``ffmpeg``.
   Default: ``command``.
 - **overwrite**: Re-analyze files that already have ReplayGain tags.
   Default: ``no``.
-- **targetlevel**: A number of decibels for the target loudness level.
-  Default: 89.
+- **targetlevel**: A number of decibels for the target loudness level for files
+  using ``REPLAYGAIN_`` tags.
+  Default: ``89``.
+- **r128_targetlevel**: The target loudness level in decibels (i.e.
+  ``<loudness in LUFS> + 107``) for files using ``R128_`` tags.
+  Default: 84 (Use ``83`` for ATSC A/85, ``84`` for EBU R128 or ``89`` for
+  ReplayGain 2.0.)
 - **r128**: A space separated list of formats that will use ``R128_`` tags with
   integer values instead of the common ``REPLAYGAIN_`` tags with floating point
   values. Requires the "ffmpeg" backend.
   Default: ``Opus``.
+- **per_disc**: Calculate album ReplayGain on disc level instead of album level.
+  Default: ``no``
 
 These options only work with the "command" backend:
 
@@ -103,6 +120,11 @@ These options only work with the "command" backend:
 - **noclip**: Reduce the amount of ReplayGain adjustment to whatever amount
   would keep clipping from occurring.
   Default: ``yes``.
+
+This option only works with the "ffmpeg" backend:
+
+- **peak**: Either ``true`` (the default) or ``sample``. ``true`` is
+  more accurate but slower.
 
 Manual Analysis
 ---------------

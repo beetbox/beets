@@ -74,6 +74,9 @@ ABSCHEME = {
                 'sad': 'mood_sad'
             }
         },
+        'moods_mirex': {
+            'value': 'moods_mirex'
+        },
         'ismir04_rhythm': {
             'value': 'rhythm'
         },
@@ -81,6 +84,9 @@ ABSCHEME = {
             'all': {
                 'tonal': 'tonal'
             }
+        },
+        'timbre': {
+            'value': 'timbre'
         },
         'voice_instrumental': {
             'value': 'voice_instrumental'
@@ -124,7 +130,9 @@ class AcousticPlugin(plugins.BeetsPlugin):
         'mood_party': types.Float(6),
         'mood_relaxed': types.Float(6),
         'mood_sad': types.Float(6),
+        'moods_mirex': types.STRING,
         'rhythm': types.Float(6),
+        'timbre': types.STRING,
         'tonal': types.Float(6),
         'voice_instrumental': types.STRING,
     }

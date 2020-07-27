@@ -5,7 +5,7 @@ The ``mbsubmit`` plugin provides an extra prompt choice during an import
 session that prints the tracks of the current album in a format that is
 parseable by MusicBrainz's `track parser`_.
 
-.. _track parser: http://wiki.musicbrainz.org/History:How_To_Parse_Track_Listings
+.. _track parser: https://wiki.musicbrainz.org/History:How_To_Parse_Track_Listings
 
 Usage
 -----
@@ -15,7 +15,7 @@ and select the ``Print tracks`` choice which is by default displayed when no
 strong recommendations are found for the album::
 
     No matching release found for 3 tracks.
-    For help, see: http://beets.readthedocs.org/en/latest/faq.html#nomatch
+    For help, see: https://beets.readthedocs.org/en/latest/faq.html#nomatch
     [U]se as-is, as Tracks, Group albums, Skip, Enter search, enter Id, aBort,
     Print tracks? p
     01. An Obscure Track - An Obscure Artist (3:37)
@@ -23,7 +23,7 @@ strong recommendations are found for the album::
     03. The Third Track - Another Obscure Artist (3:02)
 
     No matching release found for 3 tracks.
-    For help, see: http://beets.readthedocs.org/en/latest/faq.html#nomatch
+    For help, see: https://beets.readthedocs.org/en/latest/faq.html#nomatch
     [U]se as-is, as Tracks, Group albums, Skip, Enter search, enter Id, aBort,
     Print tracks?
 

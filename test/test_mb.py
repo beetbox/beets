@@ -459,7 +459,7 @@ class ParseIDTest(_common.TestCase):
 
     def test_parse_id_url_finds_id(self):
         id_string = "28e32c71-1450-463e-92bf-e0a46446fc11"
-        id_url = "http://musicbrainz.org/entity/%s" % id_string
+        id_url = "https://musicbrainz.org/entity/%s" % id_string
         out = mb._parse_id(id_url)
         self.assertEqual(out, id_string)
 

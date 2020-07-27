@@ -93,7 +93,7 @@ everything by the Long Winters for listening on the go.
 The plugin has many more dials you can fiddle with to get your conversions how
 you like them. Check out :doc:`its documentation </plugins/convert>`.
 
-.. _ffmpeg: http://www.ffmpeg.org
+.. _ffmpeg: https://www.ffmpeg.org
 
 
 Store any data you like
@@ -127,7 +127,7 @@ And, unlike :ref:`built-in fields <itemfields>`, such fields can be removed::
 Read more than you ever wanted to know about the *flexible attributes*
 feature `on the beets blog`_.
 
-.. _on the beets blog: http://beets.io/blog/flexattr.html
+.. _on the beets blog: https://beets.io/blog/flexattr.html
 
 
 Choose a path style manually for some music

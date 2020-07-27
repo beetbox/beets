@@ -6,7 +6,7 @@ library into beets' database. You can later create :doc:`smart playlists
 </plugins/smartplaylist>` by querying ``play_count`` and do other fun stuff
 with this field.
 
-.. _Last.fm: http://last.fm
+.. _Last.fm: https://last.fm
 
 Installation
 ------------
@@ -23,7 +23,7 @@ Next, add your Last.fm username to your beets configuration file::
     lastfm:
         user: beetsfanatic
 
-.. _pip: http://www.pip-installer.org/
+.. _pip: https://pip.pypa.io
 .. _pylast: https://github.com/pylast/pylast
 
 Importing Play Counts

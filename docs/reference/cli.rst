@@ -71,7 +71,7 @@ box. To extract `rar` files, install the `rarfile`_ package and the
 
 Optional command flags:
 
-* By default, the command copies files your the library directory and
+* By default, the command copies files to your library directory and
   updates the ID3 tags on your music. In order to move the files, instead of
   copying, use the ``-m`` (move) option. If you'd like to leave your music
   files untouched, try the ``-C`` (don't copy) and ``-W`` (don't write tags)
@@ -212,12 +212,12 @@ The ``-p`` option makes beets print out filenames of matched items, which might
 be useful for piping into other Unix commands (such as `xargs`_). Similarly, the
 ``-f`` option lets you specify a specific format with which to print every album
 or track. This uses the same template syntax as beets' :doc:`path formats
-<pathformat>`. For example, the command ``beet ls -af '$album: $tracktotal'
+<pathformat>`. For example, the command ``beet ls -af '$album: $albumtotal'
 beatles`` prints out the number of tracks on each Beatles album. In Unix shells,
 remember to enclose the template argument in single quotes to avoid environment
 variable expansion.
 
-.. _xargs: http://en.wikipedia.org/wiki/Xargs
+.. _xargs: https://en.wikipedia.org/wiki/Xargs
 
 .. _remove-cmd:
 
@@ -453,7 +453,7 @@ available via your package manager. On OS X, you can install it via Homebrew
 with ``brew install bash-completion``; Homebrew will give you instructions for
 sourcing the script.
 
-.. _bash-completion: http://bash-completion.alioth.debian.org/
+.. _bash-completion: https://github.com/scop/bash-completion
 .. _bash: https://www.gnu.org/software/bash/
 
 The completion script suggests names of subcommands and (after typing
@@ -498,6 +498,6 @@ defines some bash-specific functions to make this work without errors::
     See Also
     --------
 
-    ``http://beets.readthedocs.org/``
+    ``https://beets.readthedocs.org/``
 
     :manpage:`beetsconfig(5)`

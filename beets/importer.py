@@ -754,6 +754,8 @@ class ImportTask(BaseImportTask):
             self.record_replaced(lib)
             self.remove_replaced(lib)
             self.album = lib.add_album(self.imported_items())
+            if 'data_source' in self.imported_items()[0]:
+                self.album.data_source = self.imported_items()[0].data_source
             self.reimport_metadata(lib)
 
     def record_replaced(self, lib):
@@ -1032,8 +1034,8 @@ class ArchiveImportTask(SentinelImportTask):
             cls._handlers = []
             from zipfile import is_zipfile, ZipFile
             cls._handlers.append((is_zipfile, ZipFile))
-            from tarfile import is_tarfile, TarFile
-            cls._handlers.append((is_tarfile, TarFile))
+            import tarfile
+            cls._handlers.append((tarfile.is_tarfile, tarfile.open))
             try:
                 from rarfile import is_rarfile, RarFile
             except ImportError:
