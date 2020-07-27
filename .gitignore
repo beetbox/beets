@@ -7,7 +7,6 @@
 
 # Project Specific patterns
 man
-test/rsrc/lyrics/*
 
 # The rest is from https://www.gitignore.io/api/python
 
@@ -54,7 +53,6 @@ htmlcov/
 .coverage
 .coverage.*
 .cache
-nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
@@ -77,6 +75,7 @@ target/
 
 # virtualenv
 venv/
+.venv/
 ENV/
 
 # Spyder project settings

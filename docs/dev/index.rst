@@ -7,9 +7,11 @@ in hacking beets itself or creating plugins for it.
 See also the documentation for `MediaFile`_, the library used by beets to read
 and write metadata tags in media files.
 
-.. _MediaFile: http://mediafile.readthedocs.io/
+.. _MediaFile: https://mediafile.readthedocs.io/
 
 .. toctree::
 
     plugins
-    api
+    library
+    importer
+    cli

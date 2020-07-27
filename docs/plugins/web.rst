@@ -19,13 +19,13 @@ The Web interface depends on `Flask`_. To get it, just run ``pip install
 flask``. Then enable the ``web`` plugin in your configuration (see
 :ref:`using-plugins`).
 
-.. _Flask: http://flask.pocoo.org/
+.. _Flask: https://flask.pocoo.org/
 
 If you need CORS (it's disabled by default---see :ref:`web-cors`, below), then
 you also need `flask-cors`_. Just type ``pip install flask-cors``.
 
 .. _flask-cors: https://github.com/CoryDolphin/flask-cors
-.. _CORS: http://en.wikipedia.org/wiki/Cross-origin_resource_sharing
+.. _CORS: https://en.wikipedia.org/wiki/Cross-origin_resource_sharing
 
 
 Run the Server
@@ -78,8 +78,8 @@ The Web backend is built using a simple REST+JSON API with the excellent
 `Flask`_ library. The frontend is a single-page application written with
 `Backbone.js`_. This allows future non-Web clients to use the same backend API.
 
-.. _Flask: http://flask.pocoo.org/
-.. _Backbone.js: http://backbonejs.org
+.. _Flask: https://flask.pocoo.org/
+.. _Backbone.js: https://backbonejs.org
 
 Eventually, to make the Web player really viable, we should use a Flash fallback
 for unsupported formats/browsers. There are a number of options for this:
@@ -88,9 +88,9 @@ for unsupported formats/browsers. There are a number of options for this:
 * `html5media`_
 * `MediaElement.js`_
 
-.. _audio.js: http://kolber.github.com/audiojs/
-.. _html5media: http://html5media.info/
-.. _MediaElement.js: http://mediaelementjs.com/
+.. _audio.js: https://kolber.github.io/audiojs/
+.. _html5media: https://html5media.info/
+.. _MediaElement.js: https://mediaelementjs.com/
 
 .. _web-cors:
 
@@ -210,7 +210,8 @@ If the server runs UNIX, you'll need to include an extra leading slash:
 ``GET /item/query/querystring``
 +++++++++++++++++++++++++++++++
 
-Returns a list of tracks matching the query. The *querystring* must be a valid query as described in :doc:`/reference/query`. ::
+Returns a list of tracks matching the query. The *querystring* must be a
+valid query as described in :doc:`/reference/query`. ::
 
     {
       "results": [
@@ -218,6 +219,11 @@ Returns a list of tracks matching the query. The *querystring* must be a valid q
         { "id" : 12, "title": "Another Song" }
       ]
     }
+
+Path elements are joined as parts of a query. For example,
+``/item/query/foo/bar`` will be converted to the query ``foo,bar``.
+To specify literal path separators in a query, use a backslash instead of a
+slash.
 
 
 ``GET /item/6/file``

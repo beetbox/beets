@@ -35,6 +35,27 @@ like this::
 
     pip install beets[fetchart,lyrics,lastgenre]
 
+.. _metadata-source-plugin-configuration:
+
+Using Metadata Source Plugins
+-----------------------------
+
+Some plugins provide sources for metadata in addition to MusicBrainz. These
+plugins share the following configuration option:
+
+- **source_weight**: Penalty applied to matches during import. Set to 0.0 to
+  disable.
+  Default: ``0.5``.
+
+For example, to equally consider matches from Discogs and MusicBrainz add the
+following to your configuration::
+
+    plugins: discogs
+
+    discogs:
+       source_weight: 0.0
+
+
 .. toctree::
    :hidden:
 
@@ -44,9 +65,11 @@ like this::
    beatport
    bpd
    bpm
+   bpsync
    bucket
    chroma
    convert
+   deezer
    discogs
    duplicates
    edit
@@ -55,6 +78,7 @@ like this::
    export
    fetchart
    filefilter
+   fish
    freedesktop
    fromfilename
    ftintitle
@@ -80,6 +104,7 @@ like this::
    missing
    mpdstats
    mpdupdate
+   parentwork
    permissions
    play
    playlist
@@ -91,10 +116,12 @@ like this::
    smartplaylist
    sonosupdate
    spotify
+   subsonicplaylist
    subsonicupdate
    the
    thumbnails
    types
+   unimported
    web
    zero
 
@@ -104,10 +131,14 @@ Autotagger Extensions
 * :doc:`chroma`: Use acoustic fingerprinting to identify audio files with
   missing or incorrect metadata.
 * :doc:`discogs`: Search for releases in the `Discogs`_ database.
+* :doc:`spotify`: Search for releases in the `Spotify`_ database.
+* :doc:`deezer`: Search for releases in the `Deezer`_ database.
 * :doc:`fromfilename`: Guess metadata for untagged tracks from their
   filenames.
 
-.. _Discogs: http://www.discogs.com/
+.. _Discogs: https://www.discogs.com/
+.. _Spotify: https://www.spotify.com
+.. _Deezer: https://www.deezer.com/
 
 Metadata
 --------
@@ -115,6 +146,7 @@ Metadata
 * :doc:`absubmit`: Analyse audio with the `streaming_extractor_music`_ program and submit the metadata to the AcousticBrainz server
 * :doc:`acousticbrainz`: Fetch various AcousticBrainz metadata
 * :doc:`bpm`: Measure tempo using keystrokes.
+* :doc:`bpsync`: Fetch updated metadata from Beatport.
 * :doc:`edit`: Edit metadata from a text editor.
 * :doc:`embedart`: Embed album art images into files' metadata.
 * :doc:`fetchart`: Fetch album cover art from various sources.
@@ -127,16 +159,17 @@ Metadata
 * :doc:`lastgenre`: Fetch genres based on Last.fm tags.
 * :doc:`lastimport`: Collect play counts from Last.fm.
 * :doc:`lyrics`: Automatically fetch song lyrics.
-* :doc:`mbsync`: Fetch updated metadata from MusicBrainz
+* :doc:`mbsync`: Fetch updated metadata from MusicBrainz.
 * :doc:`metasync`: Fetch metadata from local or remote sources
 * :doc:`mpdstats`: Connect to `MPD`_ and update the beets library with play
   statistics (last_played, play_count, skip_count, rating).
+* :doc:`parentwork`: Fetch work titles and works they are part of. 
 * :doc:`replaygain`: Calculate volume normalization for players that support it.
 * :doc:`scrub`: Clean extraneous metadata from music files.
 * :doc:`zero`: Nullify fields by pattern or unconditionally.
 
 .. _KeyFinder: http://www.ibrahimshaath.co.uk/keyfinder/
-.. _streaming_extractor_music: http://acousticbrainz.org/download
+.. _streaming_extractor_music: https://acousticbrainz.org/download
 
 Path Formats
 ------------
@@ -153,6 +186,7 @@ Interoperability
 
 * :doc:`badfiles`: Check audio file integrity.
 * :doc:`embyupdate`: Automatically notifies `Emby`_ whenever the beets library changes.
+* :doc:`fish`: Adds `Fish shell`_ tab autocompletion to ``beet`` commands.
 * :doc:`importfeeds`: Keep track of imported files via ``.m3u`` playlist file(s) or symlinks.
 * :doc:`ipfs`: Import libraries from friends and get albums from them via ipfs.
 * :doc:`kodiupdate`: Automatically notifies `Kodi`_ whenever the beets library
@@ -167,12 +201,16 @@ Interoperability
 * :doc:`sonosupdate`: Automatically notifies `Sonos`_ whenever the beets library
   changes.
 * :doc:`thumbnails`: Get thumbnails with the cover art on your album folders.
+* :doc:`subsonicupdate`: Automatically notifies `Subsonic`_ whenever the beets
+  library changes.
 
 
-.. _Emby: http://emby.media
-.. _Plex: http://plex.tv
-.. _Kodi: http://kodi.tv
-.. _Sonos: http://sonos.com
+.. _Emby: https://emby.media
+.. _Fish shell: https://fishshell.com/
+.. _Plex: https://plex.tv
+.. _Kodi: https://kodi.tv
+.. _Sonos: https://sonos.com
+.. _Subsonic: http://www.subsonic.org/
 
 Miscellaneous
 -------------
@@ -194,14 +232,14 @@ Miscellaneous
 * :doc:`mbcollection`: Maintain your MusicBrainz collection list.
 * :doc:`mbsubmit`: Print an album's tracks in a MusicBrainz-friendly format.
 * :doc:`missing`: List missing tracks.
-* `mstream`_: A music streaming server + webapp that can be used alongside beets. 
+* `mstream`_: A music streaming server + webapp that can be used alongside beets.
 * :doc:`random`: Randomly choose albums and tracks from your library.
 * :doc:`spotify`: Create Spotify playlists from the Beets library.
 * :doc:`types`: Declare types for flexible attributes.
 * :doc:`web`: An experimental Web-based GUI for beets.
 
-.. _MPD: http://www.musicpd.org/
-.. _MPD clients: http://mpd.wikia.com/wiki/Clients
+.. _MPD: https://www.musicpd.org/
+.. _MPD clients: https://mpd.wikia.com/wiki/Clients
 .. _mstream: https://github.com/IrosTheBeggar/mStream
 
 .. _other-plugins:
@@ -263,6 +301,27 @@ Here are a few of the plugins written by the beets community:
 * `beet-summarize`_ can compute lots of counts and statistics about your music
   library.
 
+* `beets-mosaic`_ generates a montage of a mosaic from cover art.
+
+* `beets-goingrunning`_ generates playlists to go with your running sessions.
+
+* `beets-xtractor`_ extracts low- and high-level musical information from your songs.
+
+* `beets-yearfixer`_ attempts to fix all missing ``original_year`` and ``year`` fields.
+
+* `beets-autofix`_ automates repetitive tasks to keep your library in order.
+
+* `beets-describe`_ gives you the full picture of a single attribute of your library items.
+
+* `beets-bpmanalyser`_ analyses songs and calculates their tempo (BPM).
+
+* `beets-originquery`_ augments MusicBrainz queries with locally-sourced data
+  to improve autotagger results.
+
+* `drop2beets`_ automatically imports singles as soon as they are dropped in a
+  folder (using Linux's ``inotify``). You can also set a sub-folders
+  hierarchy to set flexible attributes by the way.
+
 .. _beets-barcode: https://github.com/8h2a/beets-barcode
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
@@ -284,3 +343,12 @@ Here are a few of the plugins written by the beets community:
 .. _beets-popularity: https://github.com/abba23/beets-popularity
 .. _beets-ydl: https://github.com/vmassuchetto/beets-ydl
 .. _beet-summarize: https://github.com/steven-murray/beet-summarize
+.. _beets-mosaic: https://github.com/SusannaMaria/beets-mosaic
+.. _beets-goingrunning: https://pypi.org/project/beets-goingrunning
+.. _beets-xtractor: https://github.com/adamjakab/BeetsPluginXtractor
+.. _beets-yearfixer: https://github.com/adamjakab/BeetsPluginYearFixer
+.. _beets-autofix: https://github.com/adamjakab/BeetsPluginAutofix
+.. _beets-describe: https://github.com/adamjakab/BeetsPluginDescribe
+.. _beets-bpmanalyser: https://github.com/adamjakab/BeetsPluginBpmAnalyser
+.. _beets-originquery: https://github.com/x1ppy/beets-originquery
+.. _drop2beets: https://github.com/martinkirch/drop2beets

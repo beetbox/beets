@@ -241,7 +241,8 @@ def show_change(cur_artist, cur_album, match):
             if mediums and mediums > 1:
                 return u'{0}-{1}'.format(medium, medium_index)
             else:
-                return six.text_type(medium_index or index)
+                return six.text_type(medium_index if medium_index is not None
+                                     else index)
         else:
             return six.text_type(index)
 
@@ -476,10 +477,11 @@ def summarize_items(items, singleton):
 def _summary_judgment(rec):
     """Determines whether a decision should be made without even asking
     the user. This occurs in quiet mode and when an action is chosen for
-    NONE recommendations. Return an action or None if the user should be
-    queried. May also print to the console if a summary judgment is
-    made.
+    NONE recommendations. Return None if the user should be queried.
+    Otherwise, returns an action. May also print to the console if a
+    summary judgment is made.
     """
+
     if config['import']['quiet']:
         if rec == Recommendation.strong:
             return importer.action.APPLY
@@ -488,14 +490,14 @@ def _summary_judgment(rec):
                 'skip': importer.action.SKIP,
                 'asis': importer.action.ASIS,
             })
-
+    elif config['import']['timid']:
+        return None
     elif rec == Recommendation.none:
         action = config['import']['none_rec_action'].as_choice({
             'skip': importer.action.SKIP,
             'asis': importer.action.ASIS,
             'ask': None,
         })
-
     else:
         return None
 
@@ -542,7 +544,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             print_(u"No matching release found for {0} tracks."
                    .format(itemcount))
             print_(u'For help, see: '
-                   u'http://beets.readthedocs.org/en/latest/faq.html#nomatch')
+                   u'https://beets.readthedocs.org/en/latest/faq.html#nomatch')
         sel = ui.input_options(choice_opts)
         if sel in choice_actions:
             return choice_actions[sel]
@@ -1183,6 +1185,12 @@ def update_items(lib, query, album, move, pretend, fields):
 
 
 def update_func(lib, opts, args):
+    # Verify that the library folder exists to prevent accidental wipes.
+    if not os.path.isdir(lib.directory):
+        ui.print_("Library path is unavailable or does not exist.")
+        ui.print_(lib.directory)
+        if not ui.input_yn("Are you sure you want to continue (y/n)?", True):
+            return
     update_items(lib, decargs(args), opts.album, ui.should_move(opts.move),
                  opts.pretend, opts.fields)
 

@@ -8,8 +8,8 @@ information at all (or have completely incorrect data).  This plugin uses an
 open-source fingerprinting technology called `Chromaprint`_ and its associated
 Web service, called `Acoustid`_.
 
-.. _Chromaprint: http://acoustid.org/chromaprint
-.. _acoustid: http://acoustid.org/
+.. _Chromaprint: https://acoustid.org/chromaprint
+.. _acoustid: https://acoustid.org/
 
 Turning on fingerprinting can increase the accuracy of the
 autotagger---especially on files with very poor metadata---but it comes at a
@@ -31,7 +31,7 @@ First, install pyacoustid itself. You can do this using `pip`_, like so::
 
     $ pip install pyacoustid
 
-.. _pip: http://www.pip-installer.org/
+.. _pip: https://pip.pypa.io
 
 Then, you will need to install `Chromaprint`_, either as a dynamic library or
 in the form of a command-line tool (``fpcalc``).
@@ -45,7 +45,7 @@ The simplest way to get up and running, especially on Windows, is to
 means something like ``C:\\Program Files``. On OS X or Linux, put the
 executable somewhere like ``/usr/local/bin``.
 
-.. _download: http://acoustid.org/chromaprint
+.. _download: https://acoustid.org/chromaprint
 
 Installing the Library
 ''''''''''''''''''''''
@@ -56,7 +56,7 @@ site has links to packages for major Linux distributions. If you use
 `Homebrew`_ on Mac OS X, you can install the library with ``brew install
 chromaprint``.
 
-.. _Homebrew: http://mxcl.github.com/homebrew/
+.. _Homebrew: https://brew.sh/
 
 You will also need a mechanism for decoding audio files supported by the
 `audioread`_ library:
@@ -78,12 +78,12 @@ You will also need a mechanism for decoding audio files supported by the
 * On Windows, builds are provided by `GStreamer`_
 
 .. _audioread: https://github.com/beetbox/audioread
-.. _pyacoustid: http://github.com/beetbox/pyacoustid
-.. _FFmpeg: http://ffmpeg.org/
-.. _MAD: http://spacepants.org/src/pymad/
-.. _pymad: http://www.underbit.com/products/mad/
-.. _Core Audio: http://developer.apple.com/technologies/mac/audio-and-video.html
-.. _Gstreamer: http://gstreamer.freedesktop.org/
+.. _pyacoustid: https://github.com/beetbox/pyacoustid
+.. _FFmpeg: https://ffmpeg.org/
+.. _MAD: https://spacepants.org/src/pymad/
+.. _pymad: https://www.underbit.com/products/mad/
+.. _Core Audio: https://developer.apple.com/technologies/mac/audio-and-video.html
+.. _Gstreamer: https://gstreamer.freedesktop.org/
 .. _PyGObject: https://wiki.gnome.org/Projects/PyGObject
 
 To decode audio formats (MP3, FLAC, etc.) with GStreamer, you'll need the
@@ -96,7 +96,9 @@ Usage
 
 Once you have all the dependencies sorted out, enable the ``chroma`` plugin in
 your configuration (see :ref:`using-plugins`) to benefit from fingerprinting
-the next time you run ``beet import``.
+the next time you run ``beet import``. (The plugin doesn't produce any obvious
+output by default. If you want to confirm that it's enabled, you can try
+running in verbose mode once with ``beet -v import``.)
 
 You can also use the ``beet fingerprint`` command to generate fingerprints for
 items already in your library. (Provide a query to fingerprint a subset of your
@@ -132,4 +134,4 @@ Then, run ``beet submit``. (You can also provide a query to submit a subset of
 your library.) The command will use stored fingerprints if they're available;
 otherwise it will fingerprint each file before submitting it.
 
-.. _get an API key: http://acoustid.org/api-key
+.. _get an API key: https://acoustid.org/api-key

@@ -160,7 +160,7 @@ class ThumbnailsPlugin(BeetsPlugin):
 
     def thumbnail_file_name(self, path):
         """Compute the thumbnail file name
-        See http://standards.freedesktop.org/thumbnail-spec/latest/x227.html
+        See https://standards.freedesktop.org/thumbnail-spec/latest/x227.html
         """
         uri = self.get_uri(path)
         hash = md5(uri.encode('utf-8')).hexdigest()
@@ -168,7 +168,7 @@ class ThumbnailsPlugin(BeetsPlugin):
 
     def add_tags(self, album, image_path):
         """Write required metadata to the thumbnail
-        See http://standards.freedesktop.org/thumbnail-spec/latest/x142.html
+        See https://standards.freedesktop.org/thumbnail-spec/latest/x142.html
         """
         mtime = os.stat(album.artpath).st_mtime
         metadata = {"Thumb::URI": self.get_uri(album.artpath),
@@ -224,7 +224,7 @@ class PathlibURI(URIGetter):
     name = "Python Pathlib"
 
     def uri(self, path):
-        return PurePosixPath(path).as_uri()
+        return PurePosixPath(util.py3_path(path)).as_uri()
 
 
 def copy_c_string(c_string):

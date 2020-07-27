@@ -24,7 +24,7 @@ import re
 import shutil
 import fnmatch
 import functools
-from collections import Counter
+from collections import Counter, namedtuple
 from multiprocessing.pool import ThreadPool
 import traceback
 import subprocess
@@ -223,6 +223,13 @@ def sorted_walk(path, ignore=(), ignore_hidden=False, logger=None):
             yield res
 
 
+def path_as_posix(path):
+    """Return the string representation of the path with forward (/)
+    slashes.
+    """
+    return path.replace(b'\\', b'/')
+
+
 def mkdirall(path):
     """Make all the enclosing directories of path (like mkdir -p on the
     parent).
@@ -412,7 +419,7 @@ def syspath(path, prefix=True):
             path = path.decode(encoding, 'replace')
 
     # Add the magic prefix if it isn't already there.
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
     if prefix and not path.startswith(WINDOWS_MAGIC_PREFIX):
         if path.startswith(u'\\\\'):
             # UNC path. Final path should look like \\?\UNC\...
@@ -563,7 +570,7 @@ def unique_path(path):
 # Note: The Windows "reserved characters" are, of course, allowed on
 # Unix. They are forbidden here because they cause problems on Samba
 # shares, which are sufficiently common as to cause frequent problems.
-# http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
+# https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
 CHAR_REPLACE = [
     (re.compile(r'[\\/]'), u'_'),  # / and \ -- forbidden everywhere.
     (re.compile(r'^\.'), u'_'),  # Leading dot (hidden files on Unix).
@@ -763,7 +770,11 @@ def cpu_count():
             num = 0
     elif sys.platform == 'darwin':
         try:
-            num = int(command_output(['/usr/sbin/sysctl', '-n', 'hw.ncpu']))
+            num = int(command_output([
+                '/usr/sbin/sysctl',
+                '-n',
+                'hw.ncpu',
+                ]).stdout)
         except (ValueError, OSError, subprocess.CalledProcessError):
             num = 0
     else:
@@ -794,8 +805,15 @@ def convert_command_args(args):
     return [convert(a) for a in args]
 
 
+# stdout and stderr as bytes
+CommandOutput = namedtuple("CommandOutput", ("stdout", "stderr"))
+
+
 def command_output(cmd, shell=False):
     """Runs the command and returns its output after it has exited.
+
+    Returns a CommandOutput. The attributes ``stdout`` and ``stderr`` contain
+    byte strings of the respective output streams.
 
     ``cmd`` is a list of arguments starting with the command names. The
     arguments are bytes on Unix and strings on Windows.
@@ -831,7 +849,7 @@ def command_output(cmd, shell=False):
             cmd=' '.join(cmd),
             output=stdout + stderr,
         )
-    return stdout
+    return CommandOutput(stdout, stderr)
 
 
 def max_filename_length(path, limit=MAX_FILENAME_LENGTH):

@@ -413,7 +413,8 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
             raise KeyError(key)
 
     def __getitem__(self, key):
-        """Get the value for a key. Certain unset values are remapped.
+        """Get the value for a key. `artist` and `albumartist`
+        are fallback values for each other when not set.
         """
         value = self._get(key)
 
@@ -451,6 +452,10 @@ class Item(LibModel):
         'albumartist_sort':     types.STRING,
         'albumartist_credit':   types.STRING,
         'genre':                types.STRING,
+        'style':                types.STRING,
+        'discogs_albumid':      types.INTEGER,
+        'discogs_artistid':     types.INTEGER,
+        'discogs_labelid':      types.INTEGER,
         'lyricist':             types.STRING,
         'composer':             types.STRING,
         'composer_sort':        types.STRING,
@@ -989,6 +994,10 @@ class Album(LibModel):
         'albumartist_credit':   types.STRING,
         'album':                types.STRING,
         'genre':                types.STRING,
+        'style':                types.STRING,
+        'discogs_albumid':      types.INTEGER,
+        'discogs_artistid':     types.INTEGER,
+        'discogs_labelid':      types.INTEGER,
         'year':                 types.PaddedInt(4),
         'month':                types.PaddedInt(2),
         'day':                  types.PaddedInt(2),
@@ -1034,6 +1043,10 @@ class Album(LibModel):
         'albumartist_credit',
         'album',
         'genre',
+        'style',
+        'discogs_albumid',
+        'discogs_artistid',
+        'discogs_labelid',
         'year',
         'month',
         'day',
@@ -1172,7 +1185,7 @@ class Album(LibModel):
         """
         item = self.items().get()
         if not item:
-            raise ValueError(u'empty album')
+            raise ValueError(u'empty album for album id %d' % self.id)
         return os.path.dirname(item.path)
 
     def _albumtotal(self):
