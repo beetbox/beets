@@ -483,9 +483,8 @@ class DiscogsPlugin(BeetsPlugin):
                 and not track.medium_index
                 and (
                     len(track.medium) != 1
-                    or
                     # Not within standard incremental medium values (A, B, C, ...).
-                    ord(track.medium) - 64 != side_count + 1
+                    or ord(track.medium) - 64 != side_count + 1
                 )
             )
 

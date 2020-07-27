@@ -270,8 +270,8 @@ class BeatportTest(_common.TestCase, TestHelper):
                 "name": "A List of Instructions for When I'm Human",
                 "trackNumber": 4,
                 "mixName": "Original Mix",
-                "title": "A List of Instructions for When I'm Human (Original Mix)",
-                "slug": "a-list-of-instructions-for-when-im-human-original-mix",
+                "title": "A List of Instructions for When I'm Human (Original Mix)",  # noqa: E501
+                "slug": "a-list-of-instructions-for-when-im-human-original-mix",  # noqa: E501
                 "releaseDate": "2016-04-11",
                 "publishDate": "2016-04-11",
                 "currentStatus": "General Content",

@@ -1020,9 +1020,9 @@ class EnumTest(_common.TestCase):
     """
 
     def test_ordered_enum(self):
-        OrderedEnumClass = match.OrderedEnum(
+        OrderedEnumClass = match.OrderedEnum(  # noqa: N806
             "OrderedEnumTest", ["a", "b", "c"]
-        )  # noqa
+        )
         self.assertLess(OrderedEnumClass.a, OrderedEnumClass.b)
         self.assertLess(OrderedEnumClass.a, OrderedEnumClass.c)
         self.assertLess(OrderedEnumClass.b, OrderedEnumClass.c)

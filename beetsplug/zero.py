@@ -70,9 +70,8 @@ class ZeroPlugin(BeetsPlugin):
             for field in MediaFile.fields():
                 if (
                     field not in self.config["keep_fields"].as_str_seq()
-                    and
                     # These fields should always be preserved.
-                    field not in ("id", "path", "album_id")
+                    and field not in ("id", "path", "album_id")
                 ):
                     self._set_pattern(field)
 

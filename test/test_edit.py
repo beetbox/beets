@@ -74,8 +74,8 @@ class ModifyFileMocker(object):
 class EditMixin(object):
     """Helper containing some common functionality used for the Edit tests."""
 
-    def assertItemFieldsModified(
-        self, library_items, items, fields=[], allowed=["path"]  # noqa
+    def assertItemFieldsModified(  # noqa: N802
+        self, library_items, items, fields=[], allowed=["path"]
     ):
         """Assert that items in the library (`lib_items`) have different values
         on the specified `fields` (and *only* on those fields), compared to
@@ -137,11 +137,11 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
         self.teardown_beets()
         self.unload_plugins()
 
-    def assertCounts(
+    def assertCounts(  # noqa: N802
         self,
         mock_write,
         album_count=ALBUM_COUNT,
-        track_count=TRACK_COUNT,  # noqa
+        track_count=TRACK_COUNT,
         write_call_count=TRACK_COUNT,
         title_starts_with="",
     ):
