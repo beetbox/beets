@@ -693,9 +693,7 @@ class ImportTest(_common.TestCase, ImportHelper):
         self.assertEqual(self.lib.items().get(), None)
 
     def test_skip_non_album_dirs(self):
-        self.assertTrue(os.path.isdir(syspath(
-            os.path.join(self.import_dir, b'the_album'),
-        )))
+        self.assertIsDir(os.path.join(self.import_dir, b'the_album'))
         self.touch(b'cruft', dir=self.import_dir)
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()

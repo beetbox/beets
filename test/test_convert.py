@@ -25,7 +25,7 @@ from test.helper import control_stdin, capture_log
 
 from mediafile import MediaFile
 from beets import util
-from beets.util import bytestring_path, displayable_path, syspath
+from beets.util import bytestring_path, displayable_path
 
 
 def shell_quote(text):
@@ -53,9 +53,7 @@ class TestHelper(helper.TestHelper):
         """
         display_tag = tag
         tag = tag.encode('utf-8')
-        self.assertTrue(os.path.isfile(syspath(path)),
-                        '{} is not a file'.format(
-                            displayable_path(path)))
+        self.assertIsFile(path)
         with open(path, 'rb') as f:
             f.seek(-len(display_tag), os.SEEK_END)
             self.assertEqual(f.read(), tag,
@@ -70,9 +68,7 @@ class TestHelper(helper.TestHelper):
         """
         display_tag = tag
         tag = tag.encode('utf-8')
-        self.assertTrue(os.path.isfile(syspath(path)),
-                        '{} is not a file'.format(
-                            displayable_path(path)))
+        self.assertIsFile(path)
         with open(path, 'rb') as f:
             f.seek(-len(tag), os.SEEK_END)
             self.assertNotEqual(f.read(), tag,
@@ -83,7 +79,7 @@ class TestHelper(helper.TestHelper):
 
 
 @_common.slow_test()
-class ImportConvertTest(unittest.TestCase, TestHelper):
+class ImportConvertTest(_common.TestCase, TestHelper):
 
     def setUp(self):
         self.setup_beets(disk=True)  # Converter is threaded
@@ -116,7 +112,7 @@ class ImportConvertTest(unittest.TestCase, TestHelper):
 
         item = self.lib.items().get()
         self.assertIsNotNone(item)
-        self.assertTrue(os.path.isfile(syspath(item.path)))
+        self.assertIsFile(item.path)
 
     def test_delete_originals(self):
         self.config['convert']['delete_originals'] = True
@@ -148,7 +144,7 @@ class ConvertCommand:
 
 
 @_common.slow_test()
-class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
+class ConvertCliTest(_common.TestCase, TestHelper, ConvertCommand):
 
     def setUp(self):
         self.setup_beets(disk=True)  # Converter is threaded
@@ -191,7 +187,7 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
         with control_stdin('n'):
             self.run_convert()
         converted = os.path.join(self.convert_dest, b'converted.mp3')
-        self.assertFalse(os.path.isfile(syspath(converted)))
+        self.assertNotExists(converted)
 
     def test_convert_keep_new(self):
         self.assertEqual(os.path.splitext(self.item.path)[1], b'.ogg')
@@ -232,7 +228,7 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
     def test_pretend(self):
         self.run_convert('--pretend')
         converted = os.path.join(self.convert_dest, b'converted.mp3')
-        self.assertFalse(os.path.exists(syspath(converted)))
+        self.assertNotExists(converted)
 
     def test_empty_query(self):
         with capture_log('beets.convert') as logs:
@@ -241,7 +237,7 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
 
 
 @_common.slow_test()
-class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper,
+class NeverConvertLossyFilesTest(_common.TestCase, TestHelper,
                                  ConvertCommand):
     """Test the effect of the `never_convert_lossy_files` option.
     """
