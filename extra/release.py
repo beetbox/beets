@@ -3,6 +3,10 @@
 
 """A utility script for automating the beets release process.
 """
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import print_function
+
 import click
 import os
 import re
