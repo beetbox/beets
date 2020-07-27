@@ -27,142 +27,91 @@ from beets.dbcore import types
 ACOUSTIC_BASE = "https://acousticbrainz.org/"
 LEVELS = ["/low-level", "/high-level"]
 ABSCHEME = {
-    'highlevel': {
-        'danceability': {
-            'all': {
-                'danceable': 'danceable'
-            }
-        },
-        'gender': {
-            'value': 'gender'
-        },
-        'genre_rosamerica': {
-            'value': 'genre_rosamerica'
-        },
-        'mood_acoustic': {
-            'all': {
-                'acoustic': 'mood_acoustic'
-            }
-        },
-        'mood_aggressive': {
-            'all': {
-                'aggressive': 'mood_aggressive'
-            }
-        },
-        'mood_electronic': {
-            'all': {
-                'electronic': 'mood_electronic'
-            }
-        },
-        'mood_happy': {
-            'all': {
-                'happy': 'mood_happy'
-            }
-        },
-        'mood_party': {
-            'all': {
-                'party': 'mood_party'
-            }
-        },
-        'mood_relaxed': {
-            'all': {
-                'relaxed': 'mood_relaxed'
-            }
-        },
-        'mood_sad': {
-            'all': {
-                'sad': 'mood_sad'
-            }
-        },
-        'moods_mirex': {
-            'value': 'moods_mirex'
-        },
-        'ismir04_rhythm': {
-            'value': 'rhythm'
-        },
-        'tonal_atonal': {
-            'all': {
-                'tonal': 'tonal'
-            }
-        },
-        'timbre': {
-            'value': 'timbre'
-        },
-        'voice_instrumental': {
-            'value': 'voice_instrumental'
-        },
+    "highlevel": {
+        "danceability": {"all": {"danceable": "danceable"}},
+        "gender": {"value": "gender"},
+        "genre_rosamerica": {"value": "genre_rosamerica"},
+        "mood_acoustic": {"all": {"acoustic": "mood_acoustic"}},
+        "mood_aggressive": {"all": {"aggressive": "mood_aggressive"}},
+        "mood_electronic": {"all": {"electronic": "mood_electronic"}},
+        "mood_happy": {"all": {"happy": "mood_happy"}},
+        "mood_party": {"all": {"party": "mood_party"}},
+        "mood_relaxed": {"all": {"relaxed": "mood_relaxed"}},
+        "mood_sad": {"all": {"sad": "mood_sad"}},
+        "moods_mirex": {"value": "moods_mirex"},
+        "ismir04_rhythm": {"value": "rhythm"},
+        "tonal_atonal": {"all": {"tonal": "tonal"}},
+        "timbre": {"value": "timbre"},
+        "voice_instrumental": {"value": "voice_instrumental"},
     },
-    'lowlevel': {
-        'average_loudness': 'average_loudness'
+    "lowlevel": {"average_loudness": "average_loudness"},
+    "rhythm": {"bpm": "bpm"},
+    "tonal": {
+        "chords_changes_rate": "chords_changes_rate",
+        "chords_key": "chords_key",
+        "chords_number_rate": "chords_number_rate",
+        "chords_scale": "chords_scale",
+        "key_key": ("initial_key", 0),
+        "key_scale": ("initial_key", 1),
+        "key_strength": "key_strength",
     },
-    'rhythm': {
-        'bpm': 'bpm'
-    },
-    'tonal': {
-        'chords_changes_rate': 'chords_changes_rate',
-        'chords_key': 'chords_key',
-        'chords_number_rate': 'chords_number_rate',
-        'chords_scale': 'chords_scale',
-        'key_key': ('initial_key', 0),
-        'key_scale': ('initial_key', 1),
-        'key_strength': 'key_strength'
-
-    }
 }
 
 
 class AcousticPlugin(plugins.BeetsPlugin):
     item_types = {
-        'average_loudness': types.Float(6),
-        'chords_changes_rate': types.Float(6),
-        'chords_key': types.STRING,
-        'chords_number_rate': types.Float(6),
-        'chords_scale': types.STRING,
-        'danceable': types.Float(6),
-        'gender': types.STRING,
-        'genre_rosamerica': types.STRING,
-        'initial_key': types.STRING,
-        'key_strength': types.Float(6),
-        'mood_acoustic': types.Float(6),
-        'mood_aggressive': types.Float(6),
-        'mood_electronic': types.Float(6),
-        'mood_happy': types.Float(6),
-        'mood_party': types.Float(6),
-        'mood_relaxed': types.Float(6),
-        'mood_sad': types.Float(6),
-        'moods_mirex': types.STRING,
-        'rhythm': types.Float(6),
-        'timbre': types.STRING,
-        'tonal': types.Float(6),
-        'voice_instrumental': types.STRING,
+        "average_loudness": types.Float(6),
+        "chords_changes_rate": types.Float(6),
+        "chords_key": types.STRING,
+        "chords_number_rate": types.Float(6),
+        "chords_scale": types.STRING,
+        "danceable": types.Float(6),
+        "gender": types.STRING,
+        "genre_rosamerica": types.STRING,
+        "initial_key": types.STRING,
+        "key_strength": types.Float(6),
+        "mood_acoustic": types.Float(6),
+        "mood_aggressive": types.Float(6),
+        "mood_electronic": types.Float(6),
+        "mood_happy": types.Float(6),
+        "mood_party": types.Float(6),
+        "mood_relaxed": types.Float(6),
+        "mood_sad": types.Float(6),
+        "moods_mirex": types.STRING,
+        "rhythm": types.Float(6),
+        "timbre": types.STRING,
+        "tonal": types.Float(6),
+        "voice_instrumental": types.STRING,
     }
 
     def __init__(self):
         super(AcousticPlugin, self).__init__()
 
-        self.config.add({
-            'auto': True,
-            'force': False,
-            'tags': []
-        })
+        self.config.add({"auto": True, "force": False, "tags": []})
 
-        if self.config['auto']:
-            self.register_listener('import_task_files',
-                                   self.import_task_files)
+        if self.config["auto"]:
+            self.register_listener("import_task_files", self.import_task_files)
 
     def commands(self):
-        cmd = ui.Subcommand('acousticbrainz',
-                            help=u"fetch metadata from AcousticBrainz")
+        cmd = ui.Subcommand(
+            "acousticbrainz", help=u"fetch metadata from AcousticBrainz"
+        )
         cmd.parser.add_option(
-            u'-f', u'--force', dest='force_refetch',
-            action='store_true', default=False,
-            help=u're-download data when already present'
+            u"-f",
+            u"--force",
+            dest="force_refetch",
+            action="store_true",
+            default=False,
+            help=u"re-download data when already present",
         )
 
         def func(lib, opts, args):
             items = lib.items(ui.decargs(args))
-            self._fetch_info(items, ui.should_write(),
-                             opts.force_refetch or self.config['force'])
+            self._fetch_info(
+                items,
+                ui.should_write(),
+                opts.force_refetch or self.config["force"],
+            )
 
         cmd.func = func
         return [cmd]
@@ -175,22 +124,22 @@ class AcousticPlugin(plugins.BeetsPlugin):
     def _get_data(self, mbid):
         data = {}
         for url in _generate_urls(mbid):
-            self._log.debug(u'fetching URL: {}', url)
+            self._log.debug(u"fetching URL: {}", url)
 
             try:
                 res = requests.get(url)
             except requests.RequestException as exc:
-                self._log.info(u'request error: {}', exc)
+                self._log.info(u"request error: {}", exc)
                 return {}
 
             if res.status_code == 404:
-                self._log.info(u'recording ID {} not found', mbid)
+                self._log.info(u"recording ID {} not found", mbid)
                 return {}
 
             try:
                 data.update(res.json())
             except ValueError:
-                self._log.debug(u'Invalid Response: {}', res.text)
+                self._log.debug(u"Invalid Response: {}", res.text)
                 return {}
 
         return data
@@ -198,38 +147,39 @@ class AcousticPlugin(plugins.BeetsPlugin):
     def _fetch_info(self, items, write, force):
         """Fetch additional information from AcousticBrainz for the `item`s.
         """
-        tags = self.config['tags'].as_str_seq()
+        tags = self.config["tags"].as_str_seq()
         for item in items:
             # If we're not forcing re-downloading for all tracks, check
             # whether the data is already present. We use one
             # representative field name to check for previously fetched
             # data.
             if not force:
-                mood_str = item.get('mood_acoustic', u'')
+                mood_str = item.get("mood_acoustic", u"")
                 if mood_str:
-                    self._log.info(u'data already present for: {}', item)
+                    self._log.info(u"data already present for: {}", item)
                     continue
 
             # We can only fetch data for tracks with MBIDs.
             if not item.mb_trackid:
                 continue
 
-            self._log.info(u'getting data for: {}', item)
+            self._log.info(u"getting data for: {}", item)
             data = self._get_data(item.mb_trackid)
             if data:
                 for attr, val in self._map_data_to_scheme(data, ABSCHEME):
                     if not tags or attr in tags:
-                        self._log.debug(u'attribute {} of {} set to {}',
-                                        attr,
-                                        item,
-                                        val)
+                        self._log.debug(
+                            u"attribute {} of {} set to {}", attr, item, val
+                        )
                         setattr(item, attr, val)
                     else:
-                        self._log.debug(u'skipping attribute {} of {}'
-                                        u' (value {}) due to config',
-                                        attr,
-                                        item,
-                                        val)
+                        self._log.debug(
+                            u"skipping attribute {} of {}"
+                            u" (value {}) due to config",
+                            attr,
+                            item,
+                            val,
+                        )
                 item.store()
                 if write:
                     item.try_write()
@@ -288,15 +238,13 @@ class AcousticPlugin(plugins.BeetsPlugin):
 
         # The recursive traversal.
         composites = defaultdict(list)
-        for attr, val in self._data_to_scheme_child(data,
-                                                    scheme,
-                                                    composites):
+        for attr, val in self._data_to_scheme_child(data, scheme, composites):
             yield attr, val
 
         # When composites has been populated, yield the composite attributes
         # by joining their parts.
         for composite_attr, value_parts in composites.items():
-            yield composite_attr, ' '.join(value_parts)
+            yield composite_attr, " ".join(value_parts)
 
     def _data_to_scheme_child(self, subdata, subscheme, composites):
         """The recursive business logic of :meth:`_map_data_to_scheme`:
@@ -311,24 +259,30 @@ class AcousticPlugin(plugins.BeetsPlugin):
         for k, v in subscheme.items():
             if k in subdata:
                 if type(v) == dict:
-                    for attr, val in self._data_to_scheme_child(subdata[k],
-                                                                v,
-                                                                composites):
+                    for attr, val in self._data_to_scheme_child(
+                        subdata[k], v, composites
+                    ):
                         yield attr, val
                 elif type(v) == tuple:
                     composite_attribute, part_number = v
                     attribute_parts = composites[composite_attribute]
                     # Parts are not guaranteed to be inserted in order
                     while len(attribute_parts) <= part_number:
-                        attribute_parts.append('')
+                        attribute_parts.append("")
                     attribute_parts[part_number] = subdata[k]
                 else:
                     yield v, subdata[k]
             else:
-                self._log.warning(u'Acousticbrainz did not provide info'
-                                  u'about {}', k)
-                self._log.debug(u'Data {} could not be mapped to scheme {} '
-                                u'because key {} was not found', subdata, v, k)
+                self._log.warning(
+                    u"Acousticbrainz did not provide info" u"about {}", k
+                )
+                self._log.debug(
+                    u"Data {} could not be mapped to scheme {} "
+                    u"because key {} was not found",
+                    subdata,
+                    v,
+                    k,
+                )
 
 
 def _generate_urls(mbid):

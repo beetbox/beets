@@ -33,16 +33,16 @@ class QueryTest(_common.TestCase):
     def setUp(self):
         super(QueryTest, self).setUp()
 
-        self.libdir = os.path.join(self.temp_dir, b'testlibdir')
+        self.libdir = os.path.join(self.temp_dir, b"testlibdir")
         os.mkdir(self.libdir)
 
         # Add a file to the library but don't copy it in yet.
-        self.lib = library.Library(':memory:', self.libdir)
+        self.lib = library.Library(":memory:", self.libdir)
 
         # Alternate destination directory.
-        self.otherdir = os.path.join(self.temp_dir, b'testotherdir')
+        self.otherdir = os.path.join(self.temp_dir, b"testotherdir")
 
-    def add_item(self, filename=b'srcfile', templatefile=b'full.mp3'):
+    def add_item(self, filename=b"srcfile", templatefile=b"full.mp3"):
         itempath = os.path.join(self.libdir, filename)
         shutil.copy(os.path.join(_common.RSRC, templatefile), itempath)
         item = library.Item.from_path(itempath)
@@ -53,10 +53,10 @@ class QueryTest(_common.TestCase):
         album = self.lib.add_album(items)
         return album
 
-    def check_do_query(self, num_items, num_albums,
-                       q=(), album=False, also_items=True):
-        items, albums = commands._do_query(
-            self.lib, q, album, also_items)
+    def check_do_query(
+        self, num_items, num_albums, q=(), album=False, also_items=True
+    ):
+        items, albums = commands._do_query(self.lib, q, album, also_items)
         self.assertEqual(len(items), num_items)
         self.assertEqual(len(albums), num_albums)
 
@@ -119,5 +119,6 @@ class FieldsTest(_common.LibTestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")

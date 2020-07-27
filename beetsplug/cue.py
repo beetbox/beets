@@ -17,15 +17,15 @@ class CuePlugin(BeetsPlugin):
     def __init__(self):
         super(CuePlugin, self).__init__()
         # this does not seem supported by shnsplit
-        self.config.add({
-            'keep_before': .1,
-            'keep_after': .9,
-        })
+        self.config.add(
+            {"keep_before": 0.1, "keep_after": 0.9,}
+        )
 
         # self.register_listener('import_task_start', self.look_for_cues)
 
     def candidates(self, items, artist, album, va_likely, extra_tags=None):
         import pdb
+
         pdb.set_trace()
 
     def item_candidates(self, item, artist, album):
@@ -34,17 +34,19 @@ class CuePlugin(BeetsPlugin):
         if not cues:
             return
         if len(cues) > 1:
-            self._log.info(u"Found multiple cue files doing nothing: {0}",
-                           list(map(displayable_path, cues)))
+            self._log.info(
+                u"Found multiple cue files doing nothing: {0}",
+                list(map(displayable_path, cues)),
+            )
 
         cue_file = cues[0]
         self._log.info("Found {} for {}", displayable_path(cue_file), item)
 
         try:
             # careful: will ask for input in case of conflicts
-            command_output(['shnsplit', '-f', cue_file, item.path])
+            command_output(["shnsplit", "-f", cue_file, item.path])
         except (subprocess.CalledProcessError, OSError):
-            self._log.exception(u'shnsplit execution failed')
+            self._log.exception(u"shnsplit execution failed")
             return
 
         tracks = glob(path.join(dir, "*.wav"))
@@ -52,7 +54,8 @@ class CuePlugin(BeetsPlugin):
         for t in tracks:
             title = "dunno lol"
             track_id = "wtf"
-            index = int(path.basename(t)[len("split-track"):-len(".wav")])
-            yield TrackInfo(title=title, track_id=track_id, index=index,
-                            artist=artist)
+            index = int(path.basename(t)[len("split-track") : -len(".wav")])
+            yield TrackInfo(
+                title=title, track_id=track_id, index=index, artist=artist
+            )
         # generate TrackInfo instances

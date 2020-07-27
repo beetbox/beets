@@ -45,9 +45,7 @@ class SubsonicPluginTest(_common.TestCase, TestHelper):
     @responses.activate
     def test_start_scan(self):
         responses.add(
-            responses.POST,
-            'http://localhost:4040/rest/startScan',
-            status=200
+            responses.POST, "http://localhost:4040/rest/startScan", status=200
         )
 
         self.subsonicupdate.start_scan()
@@ -58,8 +56,8 @@ class SubsonicPluginTest(_common.TestCase, TestHelper):
 
         responses.add(
             responses.POST,
-            'http://localhost:4040/contextPath/rest/startScan',
-            status=200
+            "http://localhost:4040/contextPath/rest/startScan",
+            status=200,
         )
 
         self.subsonicupdate.start_scan()
@@ -69,9 +67,7 @@ class SubsonicPluginTest(_common.TestCase, TestHelper):
         config["subsonic"]["url"] = "http://localhost:4040/"
 
         responses.add(
-            responses.POST,
-            'http://localhost:4040/rest/startScan',
-            status=200
+            responses.POST, "http://localhost:4040/rest/startScan", status=200
         )
 
         self.subsonicupdate.start_scan()
@@ -81,9 +77,7 @@ class SubsonicPluginTest(_common.TestCase, TestHelper):
         config["subsonic"]["url"] = "http://localhost/airsonic"
 
         responses.add(
-            responses.POST,
-            'http://localhost:4040/rest/startScan',
-            status=200
+            responses.POST, "http://localhost:4040/rest/startScan", status=200
         )
 
         with self.assertRaises(requests.exceptions.ConnectionError):
@@ -94,9 +88,7 @@ class SubsonicPluginTest(_common.TestCase, TestHelper):
         config["subsonic"]["url"] = "localhost:4040/airsonic"
 
         responses.add(
-            responses.POST,
-            'http://localhost:4040/rest/startScan',
-            status=200
+            responses.POST, "http://localhost:4040/rest/startScan", status=200
         )
 
         with self.assertRaises(requests.exceptions.InvalidSchema):
@@ -107,5 +99,5 @@ def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")

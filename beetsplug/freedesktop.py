@@ -26,12 +26,17 @@ class FreedesktopPlugin(BeetsPlugin):
     def commands(self):
         deprecated = ui.Subcommand(
             "freedesktop",
-            help=u"Print a message to redirect to thumbnails --dolphin")
+            help=u"Print a message to redirect to thumbnails --dolphin",
+        )
         deprecated.func = self.deprecation_message
         return [deprecated]
 
     def deprecation_message(self, lib, opts, args):
-        ui.print_(u"This plugin is deprecated. Its functionality is "
-                  u"superseded by the 'thumbnails' plugin")
-        ui.print_(u"'thumbnails --dolphin' replaces freedesktop. See doc & "
-                  u"changelog for more information")
+        ui.print_(
+            u"This plugin is deprecated. Its functionality is "
+            u"superseded by the 'thumbnails' plugin"
+        )
+        ui.print_(
+            u"'thumbnails --dolphin' replaces freedesktop. See doc & "
+            u"changelog for more information"
+        )

@@ -36,14 +36,15 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
     def tearDown(self):
         self.teardown_beets()
 
-    def _setup_config(self, whitelist=False, canonical=False, count=1,
-                      prefer_specific=False):
-        config['lastgenre']['canonical'] = canonical
-        config['lastgenre']['count'] = count
-        config['lastgenre']['prefer_specific'] = prefer_specific
+    def _setup_config(
+        self, whitelist=False, canonical=False, count=1, prefer_specific=False
+    ):
+        config["lastgenre"]["canonical"] = canonical
+        config["lastgenre"]["count"] = count
+        config["lastgenre"]["prefer_specific"] = prefer_specific
         if isinstance(whitelist, (bool, six.string_types)):
             # Filename, default, or disabled.
-            config['lastgenre']['whitelist'] = whitelist
+            config["lastgenre"]["whitelist"] = whitelist
         self.plugin.setup()
         if not isinstance(whitelist, (bool, six.string_types)):
             # Explicit list of genres.
@@ -53,90 +54,94 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
         """Fetch genres with whitelist and c14n deactivated
         """
         self._setup_config()
-        self.assertEqual(self.plugin._resolve_genres(['delta blues']),
-                         u'Delta Blues')
+        self.assertEqual(
+            self.plugin._resolve_genres(["delta blues"]), u"Delta Blues"
+        )
 
     def test_c14n_only(self):
         """Default c14n tree funnels up to most common genre except for *wrong*
         genres that stay unchanged.
         """
         self._setup_config(canonical=True, count=99)
-        self.assertEqual(self.plugin._resolve_genres(['delta blues']),
-                         u'Blues')
-        self.assertEqual(self.plugin._resolve_genres(['iota blues']),
-                         u'Iota Blues')
+        self.assertEqual(
+            self.plugin._resolve_genres(["delta blues"]), u"Blues"
+        )
+        self.assertEqual(
+            self.plugin._resolve_genres(["iota blues"]), u"Iota Blues"
+        )
 
     def test_whitelist_only(self):
         """Default whitelist rejects *wrong* (non existing) genres.
         """
         self._setup_config(whitelist=True)
-        self.assertEqual(self.plugin._resolve_genres(['iota blues']),
-                         u'')
+        self.assertEqual(self.plugin._resolve_genres(["iota blues"]), u"")
 
     def test_whitelist_c14n(self):
         """Default whitelist and c14n both activated result in all parents
         genres being selected (from specific to common).
         """
         self._setup_config(canonical=True, whitelist=True, count=99)
-        self.assertEqual(self.plugin._resolve_genres(['delta blues']),
-                         u'Delta Blues, Blues')
+        self.assertEqual(
+            self.plugin._resolve_genres(["delta blues"]), u"Delta Blues, Blues"
+        )
 
     def test_whitelist_custom(self):
         """Keep only genres that are in the whitelist.
         """
-        self._setup_config(whitelist=set(['blues', 'rock', 'jazz']),
-                           count=2)
-        self.assertEqual(self.plugin._resolve_genres(['pop', 'blues']),
-                         u'Blues')
+        self._setup_config(whitelist=set(["blues", "rock", "jazz"]), count=2)
+        self.assertEqual(
+            self.plugin._resolve_genres(["pop", "blues"]), u"Blues"
+        )
 
-        self._setup_config(canonical='', whitelist=set(['rock']))
-        self.assertEqual(self.plugin._resolve_genres(['delta blues']),
-                         u'')
+        self._setup_config(canonical="", whitelist=set(["rock"]))
+        self.assertEqual(self.plugin._resolve_genres(["delta blues"]), u"")
 
     def test_count(self):
         """Keep the n first genres, as we expect them to be sorted from more to
         less popular.
         """
-        self._setup_config(whitelist=set(['blues', 'rock', 'jazz']),
-                           count=2)
-        self.assertEqual(self.plugin._resolve_genres(
-                         ['jazz', 'pop', 'rock', 'blues']),
-                         u'Jazz, Rock')
+        self._setup_config(whitelist=set(["blues", "rock", "jazz"]), count=2)
+        self.assertEqual(
+            self.plugin._resolve_genres(["jazz", "pop", "rock", "blues"]),
+            u"Jazz, Rock",
+        )
 
     def test_count_c14n(self):
         """Keep the n first genres, after having applied c14n when necessary
         """
-        self._setup_config(whitelist=set(['blues', 'rock', 'jazz']),
-                           canonical=True,
-                           count=2)
+        self._setup_config(
+            whitelist=set(["blues", "rock", "jazz"]), canonical=True, count=2
+        )
         # thanks to c14n, 'blues' superseeds 'country blues' and takes the
         # second slot
-        self.assertEqual(self.plugin._resolve_genres(
-                         ['jazz', 'pop', 'country blues', 'rock']),
-                         u'Jazz, Blues')
+        self.assertEqual(
+            self.plugin._resolve_genres(
+                ["jazz", "pop", "country blues", "rock"]
+            ),
+            u"Jazz, Blues",
+        )
 
     def test_c14n_whitelist(self):
         """Genres first pass through c14n and are then filtered
         """
-        self._setup_config(canonical=True, whitelist=set(['rock']))
-        self.assertEqual(self.plugin._resolve_genres(['delta blues']),
-                         u'')
+        self._setup_config(canonical=True, whitelist=set(["rock"]))
+        self.assertEqual(self.plugin._resolve_genres(["delta blues"]), u"")
 
     def test_empty_string_enables_canonical(self):
         """For backwards compatibility, setting the `canonical` option
         to the empty string enables it using the default tree.
         """
-        self._setup_config(canonical='', count=99)
-        self.assertEqual(self.plugin._resolve_genres(['delta blues']),
-                         u'Blues')
+        self._setup_config(canonical="", count=99)
+        self.assertEqual(
+            self.plugin._resolve_genres(["delta blues"]), u"Blues"
+        )
 
     def test_empty_string_enables_whitelist(self):
         """Again for backwards compatibility, setting the `whitelist`
         option to the empty string enables the default set of genres.
         """
-        self._setup_config(whitelist='')
-        self.assertEqual(self.plugin._resolve_genres(['iota blues']),
-                         u'')
+        self._setup_config(whitelist="")
+        self.assertEqual(self.plugin._resolve_genres(["iota blues"]), u"")
 
     def test_prefer_specific_loads_tree(self):
         """When prefer_specific is enabled but canonical is not the
@@ -149,16 +154,18 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
         """Prefer_specific works without canonical.
         """
         self._setup_config(prefer_specific=True, canonical=False, count=4)
-        self.assertEqual(self.plugin._resolve_genres(
-                         ['math rock', 'post-rock']),
-                         u'Post-Rock, Math Rock')
+        self.assertEqual(
+            self.plugin._resolve_genres(["math rock", "post-rock"]),
+            u"Post-Rock, Math Rock",
+        )
 
     def test_no_duplicate(self):
         """Remove duplicated genres.
         """
         self._setup_config(count=99)
-        self.assertEqual(self.plugin._resolve_genres(['blues', 'blues']),
-                         u'Blues')
+        self.assertEqual(
+            self.plugin._resolve_genres(["blues", "blues"]), u"Blues"
+        )
 
     def test_tags_for(self):
         class MockPylastElem(object):
@@ -172,29 +179,29 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
             def get_top_tags(self):
                 tag1 = Mock()
                 tag1.weight = 90
-                tag1.item = MockPylastElem(u'Pop')
+                tag1.item = MockPylastElem(u"Pop")
                 tag2 = Mock()
                 tag2.weight = 40
-                tag2.item = MockPylastElem(u'Rap')
+                tag2.item = MockPylastElem(u"Rap")
                 return [tag1, tag2]
 
         plugin = lastgenre.LastGenrePlugin()
         res = plugin._tags_for(MockPylastObj())
-        self.assertEqual(res, [u'pop', u'rap'])
+        self.assertEqual(res, [u"pop", u"rap"])
         res = plugin._tags_for(MockPylastObj(), min_weight=50)
-        self.assertEqual(res, [u'pop'])
+        self.assertEqual(res, [u"pop"])
 
     def test_get_genre(self):
-        mock_genres = {'track': u'1', 'album': u'2', 'artist': u'3'}
+        mock_genres = {"track": u"1", "album": u"2", "artist": u"3"}
 
         def mock_fetch_track_genre(self, obj=None):
-            return mock_genres['track']
+            return mock_genres["track"]
 
         def mock_fetch_album_genre(self, obj):
-            return mock_genres['album']
+            return mock_genres["album"]
 
         def mock_fetch_artist_genre(self, obj):
-            return mock_genres['artist']
+            return mock_genres["artist"]
 
         lastgenre.LastGenrePlugin.fetch_track_genre = mock_fetch_track_genre
         lastgenre.LastGenrePlugin.fetch_album_genre = mock_fetch_album_genre
@@ -202,49 +209,52 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
 
         self._setup_config(whitelist=False)
         item = _common.item()
-        item.genre = mock_genres['track']
+        item.genre = mock_genres["track"]
 
-        config['lastgenre'] = {'force': False}
+        config["lastgenre"] = {"force": False}
         res = self.plugin._get_genre(item)
-        self.assertEqual(res, (item.genre, u'keep'))
+        self.assertEqual(res, (item.genre, u"keep"))
 
-        config['lastgenre'] = {'force': True, 'source': u'track'}
+        config["lastgenre"] = {"force": True, "source": u"track"}
         res = self.plugin._get_genre(item)
-        self.assertEqual(res, (mock_genres['track'], u'track'))
+        self.assertEqual(res, (mock_genres["track"], u"track"))
 
-        config['lastgenre'] = {'source': u'album'}
+        config["lastgenre"] = {"source": u"album"}
         res = self.plugin._get_genre(item)
-        self.assertEqual(res, (mock_genres['album'], u'album'))
+        self.assertEqual(res, (mock_genres["album"], u"album"))
 
-        config['lastgenre'] = {'source': u'artist'}
+        config["lastgenre"] = {"source": u"artist"}
         res = self.plugin._get_genre(item)
-        self.assertEqual(res, (mock_genres['artist'], u'artist'))
+        self.assertEqual(res, (mock_genres["artist"], u"artist"))
 
-        mock_genres['artist'] = None
+        mock_genres["artist"] = None
         res = self.plugin._get_genre(item)
-        self.assertEqual(res, (item.genre, u'original'))
+        self.assertEqual(res, (item.genre, u"original"))
 
-        config['lastgenre'] = {'fallback': u'rap'}
+        config["lastgenre"] = {"fallback": u"rap"}
         item.genre = None
         res = self.plugin._get_genre(item)
-        self.assertEqual(res, (config['lastgenre']['fallback'].get(),
-                         u'fallback'))
+        self.assertEqual(
+            res, (config["lastgenre"]["fallback"].get(), u"fallback")
+        )
 
     def test_sort_by_depth(self):
         self._setup_config(canonical=True)
         # Normal case.
-        tags = ('electronic', 'ambient', 'post-rock', 'downtempo')
+        tags = ("electronic", "ambient", "post-rock", "downtempo")
         res = self.plugin._sort_by_depth(tags)
         self.assertEqual(
-            res, ['post-rock', 'downtempo', 'ambient', 'electronic'])
+            res, ["post-rock", "downtempo", "ambient", "electronic"]
+        )
         # Non-canonical tag ('chillout') present.
-        tags = ('electronic', 'ambient', 'chillout')
+        tags = ("electronic", "ambient", "chillout")
         res = self.plugin._sort_by_depth(tags)
-        self.assertEqual(res, ['ambient', 'electronic'])
+        self.assertEqual(res, ["ambient", "electronic"])
 
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")

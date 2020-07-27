@@ -27,13 +27,14 @@ if not six.PY2:
 
 # Abstract base.
 
+
 class Type(object):
     """An object encapsulating the type of a model field. Includes
     information about how to store, query, format, and parse a given
     field.
     """
 
-    sql = u'TEXT'
+    sql = u"TEXT"
     """The SQLite column type for the value.
     """
 
@@ -63,9 +64,9 @@ class Type(object):
             value = self.null
         # `self.null` might be `None`
         if value is None:
-            value = u''
+            value = u""
         if isinstance(value, bytes):
-            value = value.decode('utf-8', 'ignore')
+            value = value.decode("utf-8", "ignore")
 
         return six.text_type(value)
 
@@ -105,7 +106,7 @@ class Type(object):
         and the method must handle these in addition.
         """
         if isinstance(sql_value, buffer):
-            sql_value = bytes(sql_value).decode('utf-8', 'ignore')
+            sql_value = bytes(sql_value).decode("utf-8", "ignore")
         if isinstance(sql_value, six.text_type):
             return self.parse(sql_value)
         else:
@@ -120,6 +121,7 @@ class Type(object):
 
 # Reusable types.
 
+
 class Default(Type):
     null = None
 
@@ -127,7 +129,8 @@ class Default(Type):
 class Integer(Type):
     """A basic integer type.
     """
-    sql = u'INTEGER'
+
+    sql = u"INTEGER"
     query = query.NumericQuery
     model_type = int
 
@@ -144,16 +147,18 @@ class PaddedInt(Integer):
     """An integer field that is formatted with a given number of digits,
     padded with zeroes.
     """
+
     def __init__(self, digits):
         self.digits = digits
 
     def format(self, value):
-        return u'{0:0{1}d}'.format(value or 0, self.digits)
+        return u"{0:0{1}d}".format(value or 0, self.digits)
 
 
 class NullPaddedInt(PaddedInt):
     """Same as `PaddedInt`, but does not normalize `None` to `0.0`.
     """
+
     null = None
 
 
@@ -161,30 +166,33 @@ class ScaledInt(Integer):
     """An integer whose formatting operation scales the number by a
     constant and adds a suffix. Good for units with large magnitudes.
     """
-    def __init__(self, unit, suffix=u''):
+
+    def __init__(self, unit, suffix=u""):
         self.unit = unit
         self.suffix = suffix
 
     def format(self, value):
-        return u'{0}{1}'.format((value or 0) // self.unit, self.suffix)
+        return u"{0}{1}".format((value or 0) // self.unit, self.suffix)
 
 
 class Id(Integer):
     """An integer used as the row id or a foreign key in a SQLite table.
     This type is nullable: None values are not translated to zero.
     """
+
     null = None
 
     def __init__(self, primary=True):
         if primary:
-            self.sql = u'INTEGER PRIMARY KEY'
+            self.sql = u"INTEGER PRIMARY KEY"
 
 
 class Float(Type):
     """A basic floating-point type. The `digits` parameter specifies how
     many decimal places to use in the human-readable representation.
     """
-    sql = u'REAL'
+
+    sql = u"REAL"
     query = query.NumericQuery
     model_type = float
 
@@ -192,26 +200,29 @@ class Float(Type):
         self.digits = digits
 
     def format(self, value):
-        return u'{0:.{1}f}'.format(value or 0, self.digits)
+        return u"{0:.{1}f}".format(value or 0, self.digits)
 
 
 class NullFloat(Float):
     """Same as `Float`, but does not normalize `None` to `0.0`.
     """
+
     null = None
 
 
 class String(Type):
     """A Unicode string type.
     """
-    sql = u'TEXT'
+
+    sql = u"TEXT"
     query = query.SubstringQuery
 
 
 class Boolean(Type):
     """A boolean type.
     """
-    sql = u'INTEGER'
+
+    sql = u"INTEGER"
     query = query.BooleanQuery
     model_type = bool
 

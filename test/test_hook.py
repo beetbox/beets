@@ -44,47 +44,47 @@ class HookTest(_common.TestCase, TestHelper):
         self.teardown_beets()
 
     def _add_hook(self, event, command):
-        hook = {
-            'event': event,
-            'command': command
-        }
+        hook = {"event": event, "command": command}
 
-        hooks = config['hook']['hooks'].get(list) if 'hook' in config else []
+        hooks = config["hook"]["hooks"].get(list) if "hook" in config else []
         hooks.append(hook)
 
-        config['hook']['hooks'] = hooks
+        config["hook"]["hooks"] = hooks
 
     def test_hook_empty_command(self):
-        self._add_hook('test_event', '')
+        self._add_hook("test_event", "")
 
-        self.load_plugins('hook')
+        self.load_plugins("hook")
 
-        with capture_log('beets.hook') as logs:
-            plugins.send('test_event')
+        with capture_log("beets.hook") as logs:
+            plugins.send("test_event")
 
         self.assertIn('hook: invalid command ""', logs)
 
     def test_hook_non_zero_exit(self):
-        self._add_hook('test_event', 'sh -c "exit 1"')
+        self._add_hook("test_event", 'sh -c "exit 1"')
 
-        self.load_plugins('hook')
+        self.load_plugins("hook")
 
-        with capture_log('beets.hook') as logs:
-            plugins.send('test_event')
+        with capture_log("beets.hook") as logs:
+            plugins.send("test_event")
 
-        self.assertIn('hook: hook for test_event exited with status 1', logs)
+        self.assertIn("hook: hook for test_event exited with status 1", logs)
 
     def test_hook_non_existent_command(self):
-        self._add_hook('test_event', 'non-existent-command')
+        self._add_hook("test_event", "non-existent-command")
 
-        self.load_plugins('hook')
+        self.load_plugins("hook")
 
-        with capture_log('beets.hook') as logs:
-            plugins.send('test_event')
+        with capture_log("beets.hook") as logs:
+            plugins.send("test_event")
 
-        self.assertTrue(any(
-            message.startswith("hook: hook for test_event failed: ")
-            for message in logs))
+        self.assertTrue(
+            any(
+                message.startswith("hook: hook for test_event failed: ")
+                for message in logs
+            )
+        )
 
     def test_hook_no_arguments(self):
         temporary_paths = [
@@ -92,13 +92,15 @@ class HookTest(_common.TestCase, TestHelper):
         ]
 
         for index, path in enumerate(temporary_paths):
-            self._add_hook('test_no_argument_event_{0}'.format(index),
-                           'touch "{0}"'.format(path))
+            self._add_hook(
+                "test_no_argument_event_{0}".format(index),
+                'touch "{0}"'.format(path),
+            )
 
-        self.load_plugins('hook')
+        self.load_plugins("hook")
 
         for index in range(len(temporary_paths)):
-            plugins.send('test_no_argument_event_{0}'.format(index))
+            plugins.send("test_no_argument_event_{0}".format(index))
 
         for path in temporary_paths:
             self.assertTrue(os.path.isfile(path))
@@ -106,14 +108,17 @@ class HookTest(_common.TestCase, TestHelper):
 
     def test_hook_event_substitution(self):
         temporary_directory = tempfile._get_default_tempdir()
-        event_names = ['test_event_event_{0}'.format(i) for i in
-                       range(self.TEST_HOOK_COUNT)]
+        event_names = [
+            "test_event_event_{0}".format(i)
+            for i in range(self.TEST_HOOK_COUNT)
+        ]
 
         for event in event_names:
-            self._add_hook(event,
-                           'touch "{0}/{{event}}"'.format(temporary_directory))
+            self._add_hook(
+                event, 'touch "{0}/{{event}}"'.format(temporary_directory)
+            )
 
-        self.load_plugins('hook')
+        self.load_plugins("hook")
 
         for event in event_names:
             plugins.send(event)
@@ -130,13 +135,14 @@ class HookTest(_common.TestCase, TestHelper):
         ]
 
         for index, path in enumerate(temporary_paths):
-            self._add_hook('test_argument_event_{0}'.format(index),
-                           'touch "{path}"')
+            self._add_hook(
+                "test_argument_event_{0}".format(index), 'touch "{path}"'
+            )
 
-        self.load_plugins('hook')
+        self.load_plugins("hook")
 
         for index, path in enumerate(temporary_paths):
-            plugins.send('test_argument_event_{0}'.format(index), path=path)
+            plugins.send("test_argument_event_{0}".format(index), path=path)
 
         for path in temporary_paths:
             self.assertTrue(os.path.isfile(path))
@@ -144,18 +150,19 @@ class HookTest(_common.TestCase, TestHelper):
 
     def test_hook_bytes_interpolation(self):
         temporary_paths = [
-            get_temporary_path().encode('utf-8')
+            get_temporary_path().encode("utf-8")
             for i in range(self.TEST_HOOK_COUNT)
         ]
 
         for index, path in enumerate(temporary_paths):
-            self._add_hook('test_bytes_event_{0}'.format(index),
-                           'touch "{path}"')
+            self._add_hook(
+                "test_bytes_event_{0}".format(index), 'touch "{path}"'
+            )
 
-        self.load_plugins('hook')
+        self.load_plugins("hook")
 
         for index, path in enumerate(temporary_paths):
-            plugins.send('test_bytes_event_{0}'.format(index), path=path)
+            plugins.send("test_bytes_event_{0}".format(index), path=path)
 
         for path in temporary_paths:
             self.assertTrue(os.path.isfile(path))
@@ -165,5 +172,6 @@ class HookTest(_common.TestCase, TestHelper):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")

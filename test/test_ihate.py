@@ -11,14 +11,12 @@ from beetsplug.ihate import IHatePlugin
 
 
 class IHatePluginTest(unittest.TestCase):
-
     def test_hate(self):
 
         match_pattern = {}
         test_item = Item(
-            genre=u'TestGenre',
-            album=u'TestAlbum',
-            artist=u'TestArtist')
+            genre=u"TestGenre", album=u"TestAlbum", artist=u"TestArtist"
+        )
         task = importer.SingletonImportTask(None, test_item)
 
         # Empty query should let it pass.
@@ -37,18 +35,23 @@ class IHatePluginTest(unittest.TestCase):
         self.assertFalse(IHatePlugin.do_i_hate_this(task, match_pattern))
 
         # Both queries are blocked by AND clause with unmatched condition.
-        match_pattern = [u"album:notthis genre:testgenre",
-                         u"artist:testartist album:notthis"]
+        match_pattern = [
+            u"album:notthis genre:testgenre",
+            u"artist:testartist album:notthis",
+        ]
         self.assertFalse(IHatePlugin.do_i_hate_this(task, match_pattern))
 
         # Only one query should fire.
-        match_pattern = [u"album:testalbum genre:testgenre",
-                         u"artist:testartist album:notthis"]
+        match_pattern = [
+            u"album:testalbum genre:testgenre",
+            u"artist:testartist album:notthis",
+        ]
         self.assertTrue(IHatePlugin.do_i_hate_this(task, match_pattern))
 
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")

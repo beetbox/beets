@@ -31,7 +31,7 @@ def _length(obj, album):
         return obj.length
 
 
-def _equal_chance_permutation(objs, field='albumartist', random_gen=None):
+def _equal_chance_permutation(objs, field="albumartist", random_gen=None):
     """Generate (lazily) a permutation of the objects where every group
     with equal values for `field` have an equal chance of appearing in
     any given position.
@@ -88,8 +88,9 @@ def _take_time(iter, secs, album):
     return out
 
 
-def random_objs(objs, album, number=1, time=None, equal_chance=False,
-                random_gen=None):
+def random_objs(
+    objs, album, number=1, time=None, equal_chance=False, random_gen=None
+):
     """Get a random subset of the provided `objs`.
 
     If `number` is provided, produce that many matches. Otherwise, if

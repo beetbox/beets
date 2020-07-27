@@ -21,7 +21,7 @@ from __future__ import division, absolute_import, print_function
 from collections import namedtuple
 from beets import util
 
-Node = namedtuple('Node', ['files', 'dirs'])
+Node = namedtuple("Node", ["files", "dirs"])
 
 
 def _insert(node, path, itemid):

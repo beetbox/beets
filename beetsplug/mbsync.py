@@ -32,21 +32,35 @@ class MBSyncPlugin(BeetsPlugin):
         super(MBSyncPlugin, self).__init__()
 
     def commands(self):
-        cmd = ui.Subcommand('mbsync',
-                            help=u'update metadata from musicbrainz')
+        cmd = ui.Subcommand("mbsync", help=u"update metadata from musicbrainz")
         cmd.parser.add_option(
-            u'-p', u'--pretend', action='store_true',
-            help=u'show all changes but do nothing')
+            u"-p",
+            u"--pretend",
+            action="store_true",
+            help=u"show all changes but do nothing",
+        )
         cmd.parser.add_option(
-            u'-m', u'--move', action='store_true', dest='move',
-            help=u"move files in the library directory")
+            u"-m",
+            u"--move",
+            action="store_true",
+            dest="move",
+            help=u"move files in the library directory",
+        )
         cmd.parser.add_option(
-            u'-M', u'--nomove', action='store_false', dest='move',
-            help=u"don't move files in library")
+            u"-M",
+            u"--nomove",
+            action="store_false",
+            dest="move",
+            help=u"don't move files in library",
+        )
         cmd.parser.add_option(
-            u'-W', u'--nowrite', action='store_false',
-            default=None, dest='write',
-            help=u"don't write updated metadata to files")
+            u"-W",
+            u"--nowrite",
+            action="store_false",
+            default=None,
+            dest="write",
+            help=u"don't write updated metadata to files",
+        )
         cmd.parser.add_format_option()
         cmd.func = self.func
         return [cmd]
@@ -66,25 +80,31 @@ class MBSyncPlugin(BeetsPlugin):
         """Retrieve and apply info from the autotagger for items matched by
         query.
         """
-        for item in lib.items(query + [u'singleton:true']):
+        for item in lib.items(query + [u"singleton:true"]):
             item_formatted = format(item)
             if not item.mb_trackid:
-                self._log.info(u'Skipping singleton with no mb_trackid: {0}',
-                               item_formatted)
+                self._log.info(
+                    u"Skipping singleton with no mb_trackid: {0}",
+                    item_formatted,
+                )
                 continue
 
             # Do we have a valid MusicBrainz track ID?
             if not re.match(MBID_REGEX, item.mb_trackid):
-                self._log.info(u'Skipping singleton with invalid mb_trackid:' +
-                               ' {0}', item_formatted)
+                self._log.info(
+                    u"Skipping singleton with invalid mb_trackid:" + " {0}",
+                    item_formatted,
+                )
                 continue
 
             # Get the MusicBrainz recording info.
             track_info = hooks.track_for_mbid(item.mb_trackid)
             if not track_info:
-                self._log.info(u'Recording ID not found: {0} for track {0}',
-                               item.mb_trackid,
-                               item_formatted)
+                self._log.info(
+                    u"Recording ID not found: {0} for track {0}",
+                    item.mb_trackid,
+                    item_formatted,
+                )
                 continue
 
             # Apply.
@@ -100,24 +120,29 @@ class MBSyncPlugin(BeetsPlugin):
         for a in lib.albums(query):
             album_formatted = format(a)
             if not a.mb_albumid:
-                self._log.info(u'Skipping album with no mb_albumid: {0}',
-                               album_formatted)
+                self._log.info(
+                    u"Skipping album with no mb_albumid: {0}", album_formatted
+                )
                 continue
 
             items = list(a.items())
 
             # Do we have a valid MusicBrainz album ID?
             if not re.match(MBID_REGEX, a.mb_albumid):
-                self._log.info(u'Skipping album with invalid mb_albumid: {0}',
-                               album_formatted)
+                self._log.info(
+                    u"Skipping album with invalid mb_albumid: {0}",
+                    album_formatted,
+                )
                 continue
 
             # Get the MusicBrainz album information.
             album_info = hooks.album_for_mbid(a.mb_albumid)
             if not album_info:
-                self._log.info(u'Release ID {0} not found for album {1}',
-                               a.mb_albumid,
-                               album_formatted)
+                self._log.info(
+                    u"Release ID {0} not found for album {1}",
+                    a.mb_albumid,
+                    album_formatted,
+                )
                 continue
 
             # Map release track and recording MBIDs to their information.
@@ -134,8 +159,10 @@ class MBSyncPlugin(BeetsPlugin):
             # work for albums that have missing or extra tracks.
             mapping = {}
             for item in items:
-                if item.mb_releasetrackid and \
-                        item.mb_releasetrackid in releasetrack_index:
+                if (
+                    item.mb_releasetrackid
+                    and item.mb_releasetrackid in releasetrack_index
+                ):
                     mapping[item] = releasetrack_index[item.mb_releasetrackid]
                 else:
                     candidates = track_index[item.mb_trackid]
@@ -145,13 +172,15 @@ class MBSyncPlugin(BeetsPlugin):
                         # If there are multiple copies of a recording, they are
                         # disambiguated using their disc and track number.
                         for c in candidates:
-                            if (c.medium_index == item.track and
-                                    c.medium == item.disc):
+                            if (
+                                c.medium_index == item.track
+                                and c.medium == item.disc
+                            ):
                                 mapping[item] = c
                                 break
 
             # Apply.
-            self._log.debug(u'applying changes to {}', album_formatted)
+            self._log.debug(u"applying changes to {}", album_formatted)
             with lib.transaction():
                 autotag.apply_metadata(album_info, mapping)
                 changed = False
@@ -176,5 +205,5 @@ class MBSyncPlugin(BeetsPlugin):
 
                     # Move album art (and any inconsistent items).
                     if move and lib.directory in util.ancestry(items[0].path):
-                        self._log.debug(u'moving album {0}', album_formatted)
+                        self._log.debug(u"moving album {0}", album_formatted)
                         a.move()

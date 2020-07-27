@@ -58,7 +58,7 @@ def find_feat_part(artist, albumartist):
     # If the last element of the split (the right-hand side of the
     # album artist) is nonempty, then it probably contains the
     # featured artist.
-    elif albumartist_split[1] != '':
+    elif albumartist_split[1] != "":
         # Extract the featured artist from the right-hand side.
         _, feat_part = split_on_feat(albumartist_split[1])
         return feat_part
@@ -77,29 +77,30 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
     def __init__(self):
         super(FtInTitlePlugin, self).__init__()
 
-        self.config.add({
-            'auto': True,
-            'drop': False,
-            'format': u'feat. {0}',
-        })
+        self.config.add(
+            {"auto": True, "drop": False, "format": u"feat. {0}",}
+        )
 
         self._command = ui.Subcommand(
-            'ftintitle',
-            help=u'move featured artists to the title field')
+            "ftintitle", help=u"move featured artists to the title field"
+        )
 
         self._command.parser.add_option(
-            u'-d', u'--drop', dest='drop',
-            action='store_true', default=None,
-            help=u'drop featuring from artists and ignore title update')
+            u"-d",
+            u"--drop",
+            dest="drop",
+            action="store_true",
+            default=None,
+            help=u"drop featuring from artists and ignore title update",
+        )
 
-        if self.config['auto']:
+        if self.config["auto"]:
             self.import_stages = [self.imported]
 
     def commands(self):
-
         def func(lib, opts, args):
             self.config.set_args(opts)
-            drop_feat = self.config['drop'].get(bool)
+            drop_feat = self.config["drop"].get(bool)
             write = ui.should_write()
 
             for item in lib.items(ui.decargs(args)):
@@ -114,7 +115,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
     def imported(self, session, task):
         """Import hook for moving featuring artist automatically.
         """
-        drop_feat = self.config['drop'].get(bool)
+        drop_feat = self.config["drop"].get(bool)
 
         for item in task.imported_items():
             self.ft_in_title(item, drop_feat)
@@ -127,7 +128,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         remove it from the artist field.
         """
         # In all cases, update the artist fields.
-        self._log.info(u'artist: {0} -> {1}', item.artist, item.albumartist)
+        self._log.info(u"artist: {0} -> {1}", item.artist, item.albumartist)
         item.artist = item.albumartist
         if item.artist_sort:
             # Just strip the featured artist from the sort name.
@@ -136,10 +137,10 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         # Only update the title if it does not already contain a featured
         # artist and if we do not drop featuring information.
         if not drop_feat and not contains_feat(item.title):
-            feat_format = self.config['format'].as_str()
+            feat_format = self.config["format"].as_str()
             new_format = feat_format.format(feat_part)
             new_title = u"{0} {1}".format(item.title, new_format)
-            self._log.info(u'title: {0} -> {1}', item.title, new_title)
+            self._log.info(u"title: {0} -> {1}", item.title, new_title)
             item.title = new_title
 
     def ft_in_title(self, item, drop_feat):
@@ -154,7 +155,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         # that case, we attempt to move the featured artist to the title.
         _, featured = split_on_feat(artist)
         if featured and albumartist != artist and albumartist:
-            self._log.info('{}', displayable_path(item.path))
+            self._log.info("{}", displayable_path(item.path))
 
             feat_part = None
 
@@ -165,4 +166,4 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             if feat_part:
                 self.update_metadata(item, feat_part, drop_feat)
             else:
-                self._log.info(u'no featuring artists found')
+                self._log.info(u"no featuring artists found")

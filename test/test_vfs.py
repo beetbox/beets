@@ -25,25 +25,31 @@ from beets import vfs
 class VFSTest(_common.TestCase):
     def setUp(self):
         super(VFSTest, self).setUp()
-        self.lib = library.Library(':memory:', path_formats=[
-            (u'default', u'albums/$album/$title'),
-            (u'singleton:true', u'tracks/$artist/$title'),
-        ])
+        self.lib = library.Library(
+            ":memory:",
+            path_formats=[
+                (u"default", u"albums/$album/$title"),
+                (u"singleton:true", u"tracks/$artist/$title"),
+            ],
+        )
         self.lib.add(_common.item())
         self.lib.add_album([_common.item()])
         self.tree = vfs.libtree(self.lib)
 
     def test_singleton_item(self):
-        self.assertEqual(self.tree.dirs['tracks'].dirs['the artist'].
-                         files['the title'], 1)
+        self.assertEqual(
+            self.tree.dirs["tracks"].dirs["the artist"].files["the title"], 1
+        )
 
     def test_album_item(self):
-        self.assertEqual(self.tree.dirs['albums'].dirs['the album'].
-                         files['the title'], 2)
+        self.assertEqual(
+            self.tree.dirs["albums"].dirs["the album"].files["the title"], 2
+        )
 
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")

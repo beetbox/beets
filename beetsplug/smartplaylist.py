@@ -20,8 +20,14 @@ from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets import ui
-from beets.util import (mkdirall, normpath, sanitize_path, syspath,
-                        bytestring_path, path_as_posix)
+from beets.util import (
+    mkdirall,
+    normpath,
+    sanitize_path,
+    syspath,
+    bytestring_path,
+    path_as_posix,
+)
 from beets.library import Item, Album, parse_query_string
 from beets.dbcore import OrQuery
 from beets.dbcore.query import MultipleSort, ParsingError
@@ -30,28 +36,29 @@ import six
 
 
 class SmartPlaylistPlugin(BeetsPlugin):
-
     def __init__(self):
         super(SmartPlaylistPlugin, self).__init__()
-        self.config.add({
-            'relative_to': None,
-            'playlist_dir': u'.',
-            'auto': True,
-            'playlists': [],
-            'forward_slash': False,
-        })
+        self.config.add(
+            {
+                "relative_to": None,
+                "playlist_dir": u".",
+                "auto": True,
+                "playlists": [],
+                "forward_slash": False,
+            }
+        )
 
         self._matched_playlists = None
         self._unmatched_playlists = None
 
-        if self.config['auto']:
-            self.register_listener('database_change', self.db_change)
+        if self.config["auto"]:
+            self.register_listener("database_change", self.db_change)
 
     def commands(self):
         spl_update = ui.Subcommand(
-            'splupdate',
-            help=u'update the smart playlists. Playlist names may be '
-            u'passed as arguments.'
+            "splupdate",
+            help=u"update the smart playlists. Playlist names may be "
+            u"passed as arguments.",
         )
         spl_update.func = self.update_cmd
         return [spl_update]
@@ -64,13 +71,16 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 if not a.endswith(".m3u"):
                     args.add("{0}.m3u".format(a))
 
-            playlists = set((name, q, a_q)
-                            for name, q, a_q in self._unmatched_playlists
-                            if name in args)
+            playlists = set(
+                (name, q, a_q)
+                for name, q, a_q in self._unmatched_playlists
+                if name in args
+            )
             if not playlists:
                 raise ui.UserError(
-                    u'No playlist matching any of {0} found'.format(
-                        [name for name, _, _ in self._unmatched_playlists])
+                    u"No playlist matching any of {0} found".format(
+                        [name for name, _, _ in self._unmatched_playlists]
+                    )
                 )
 
             self._matched_playlists = playlists
@@ -98,15 +108,17 @@ class SmartPlaylistPlugin(BeetsPlugin):
         self._unmatched_playlists = set()
         self._matched_playlists = set()
 
-        for playlist in self.config['playlists'].get(list):
-            if 'name' not in playlist:
+        for playlist in self.config["playlists"].get(list):
+            if "name" not in playlist:
                 self._log.warning(u"playlist configuration is missing name")
                 continue
 
-            playlist_data = (playlist['name'],)
+            playlist_data = (playlist["name"],)
             try:
-                for key, model_cls in (('query', Item),
-                                       ('album_query', Album)):
+                for key, model_cls in (
+                    ("query", Item),
+                    ("album_query", Album),
+                ):
                     qs = playlist.get(key)
                     if qs is None:
                         query_and_sort = None, None
@@ -116,8 +128,9 @@ class SmartPlaylistPlugin(BeetsPlugin):
                         query_and_sort = parse_query_string(qs[0], model_cls)
                     else:
                         # multiple queries and sorts
-                        queries, sorts = zip(*(parse_query_string(q, model_cls)
-                                               for q in qs))
+                        queries, sorts = zip(
+                            *(parse_query_string(q, model_cls) for q in qs)
+                        )
                         query = OrQuery(queries)
                         final_sorts = []
                         for s in sorts:
@@ -129,7 +142,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
                         if not final_sorts:
                             sort = None
                         elif len(final_sorts) == 1:
-                            sort, = final_sorts
+                            (sort,) = final_sorts
                         else:
                             sort = MultipleSort(final_sorts)
                         query_and_sort = query, sort
@@ -137,8 +150,9 @@ class SmartPlaylistPlugin(BeetsPlugin):
                     playlist_data += (query_and_sort,)
 
             except ParsingError as exc:
-                self._log.warning(u"invalid query in playlist {}: {}",
-                                  playlist['name'], exc)
+                self._log.warning(
+                    u"invalid query in playlist {}: {}", playlist["name"], exc
+                )
                 continue
 
             self._unmatched_playlists.add(playlist_data)
@@ -158,19 +172,21 @@ class SmartPlaylistPlugin(BeetsPlugin):
             n, (q, _), (a_q, _) = playlist
             if self.matches(model, q, a_q):
                 self._log.debug(
-                    u"{0} will be updated because of {1}", n, model)
+                    u"{0} will be updated because of {1}", n, model
+                )
                 self._matched_playlists.add(playlist)
-                self.register_listener('cli_exit', self.update_playlists)
+                self.register_listener("cli_exit", self.update_playlists)
 
         self._unmatched_playlists -= self._matched_playlists
 
     def update_playlists(self, lib):
-        self._log.info(u"Updating {0} smart playlists...",
-                       len(self._matched_playlists))
+        self._log.info(
+            u"Updating {0} smart playlists...", len(self._matched_playlists)
+        )
 
-        playlist_dir = self.config['playlist_dir'].as_filename()
+        playlist_dir = self.config["playlist_dir"].as_filename()
         playlist_dir = bytestring_path(playlist_dir)
-        relative_to = self.config['relative_to'].get()
+        relative_to = self.config["relative_to"].get()
         if relative_to:
             relative_to = normpath(relative_to)
 
@@ -203,13 +219,14 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
         # Write all of the accumulated track lists to files.
         for m3u in m3us:
-            m3u_path = normpath(os.path.join(playlist_dir,
-                                bytestring_path(m3u)))
+            m3u_path = normpath(
+                os.path.join(playlist_dir, bytestring_path(m3u))
+            )
             mkdirall(m3u_path)
-            with open(syspath(m3u_path), 'wb') as f:
+            with open(syspath(m3u_path), "wb") as f:
                 for path in m3us[m3u]:
-                    if self.config['forward_slash'].get():
+                    if self.config["forward_slash"].get():
                         path = path_as_posix(path)
-                    f.write(path + b'\n')
+                    f.write(path + b"\n")
 
         self._log.info(u"{0} playlists updated", len(self._matched_playlists))

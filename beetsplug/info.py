@@ -45,16 +45,17 @@ def tag_data(lib, args):
 def tag_data_emitter(path):
     def emitter():
         fields = list(mediafile.MediaFile.readable_fields())
-        fields.remove('images')
+        fields.remove("images")
         mf = mediafile.MediaFile(syspath(path))
         tags = {}
         for field in fields:
             tags[field] = getattr(mf, field)
-        tags['art'] = mf.art is not None
+        tags["art"] = mf.art is not None
         # create a temporary Item to take advantage of __format__
         item = Item.from_path(syspath(path))
 
         return tags, item
+
     return emitter
 
 
@@ -68,6 +69,7 @@ def library_data_emitter(item):
         data = dict(item.formatted())
 
         return data, item
+
     return emitter
 
 
@@ -76,7 +78,7 @@ def update_summary(summary, tags):
         if key not in summary:
             summary[key] = value
         elif summary[key] != value:
-            summary[key] = '[various]'
+            summary[key] = "[various]"
     return summary
 
 
@@ -97,7 +99,7 @@ def print_data(data, item=None, fmt=None):
     formatted = {}
     for key, value in data.items():
         if isinstance(value, list):
-            formatted[key] = u'; '.join(value)
+            formatted[key] = u"; ".join(value)
         if value is not None:
             formatted[key] = value
 
@@ -105,7 +107,7 @@ def print_data(data, item=None, fmt=None):
         return
 
     maxwidth = max(len(key) for key in formatted)
-    lineformat = u'{{0:>{0}}}: {{1}}'.format(maxwidth)
+    lineformat = u"{{0:>{0}}}: {{1}}".format(maxwidth)
 
     if path:
         ui.print_(displayable_path(path))
@@ -113,7 +115,7 @@ def print_data(data, item=None, fmt=None):
     for field in sorted(formatted):
         value = formatted[field]
         if isinstance(value, list):
-            value = u'; '.join(value)
+            value = u"; ".join(value)
         ui.print_(lineformat.format(field, value))
 
 
@@ -128,7 +130,7 @@ def print_data_keys(data, item=None):
     if len(formatted) == 0:
         return
 
-    line_format = u'{0}{{0}}'.format(u' ' * 4)
+    line_format = u"{0}{{0}}".format(u" " * 4)
     if path:
         ui.print_(displayable_path(path))
 
@@ -137,28 +139,36 @@ def print_data_keys(data, item=None):
 
 
 class InfoPlugin(BeetsPlugin):
-
     def commands(self):
-        cmd = ui.Subcommand('info', help=u'show file metadata')
+        cmd = ui.Subcommand("info", help=u"show file metadata")
         cmd.func = self.run
         cmd.parser.add_option(
-            u'-l', u'--library', action='store_true',
-            help=u'show library fields instead of tags',
+            u"-l",
+            u"--library",
+            action="store_true",
+            help=u"show library fields instead of tags",
         )
         cmd.parser.add_option(
-            u'-s', u'--summarize', action='store_true',
-            help=u'summarize the tags of all files',
+            u"-s",
+            u"--summarize",
+            action="store_true",
+            help=u"summarize the tags of all files",
         )
         cmd.parser.add_option(
-            u'-i', u'--include-keys', default=[],
-            action='append', dest='included_keys',
-            help=u'comma separated list of keys to show',
+            u"-i",
+            u"--include-keys",
+            default=[],
+            action="append",
+            dest="included_keys",
+            help=u"comma separated list of keys to show",
         )
         cmd.parser.add_option(
-            u'-k', u'--keys-only', action='store_true',
-            help=u'show only the keys',
+            u"-k",
+            u"--keys-only",
+            action="store_true",
+            help=u"show only the keys",
         )
-        cmd.parser.add_format_option(target='item')
+        cmd.parser.add_format_option(target="item")
         return [cmd]
 
     def run(self, lib, opts, args):
@@ -182,9 +192,9 @@ class InfoPlugin(BeetsPlugin):
 
         included_keys = []
         for keys in opts.included_keys:
-            included_keys.extend(keys.split(','))
+            included_keys.extend(keys.split(","))
         # Drop path even if user provides it multiple times
-        included_keys = [k for k in included_keys if k != 'path']
+        included_keys = [k for k in included_keys if k != "path"]
         key_filter = make_key_filter(included_keys)
 
         first = True
@@ -193,7 +203,7 @@ class InfoPlugin(BeetsPlugin):
             try:
                 data, item = data_emitter()
             except (mediafile.UnreadableFileError, IOError) as ex:
-                self._log.error(u'cannot read file: {0}', ex)
+                self._log.error(u"cannot read file: {0}", ex)
                 continue
 
             data = key_filter(data)
@@ -223,16 +233,17 @@ def make_key_filter(include):
     # By default, if no field inclusions are specified, include
     # everything but `path`.
     if not include:
+
         def filter_(data):
-            return {k: v for k, v in data.items()
-                    if k != 'path'}
+            return {k: v for k, v in data.items() if k != "path"}
+
         return filter_
 
     matchers = []
     for key in include:
         key = re.escape(key)
-        key = key.replace(r'\*', '.*')
-        matchers.append(re.compile(key + '$'))
+        key = key.replace(r"\*", ".*")
+        matchers.append(re.compile(key + "$"))
 
     def filter_(data):
         filtered = dict()

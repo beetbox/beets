@@ -39,15 +39,13 @@ def update_kodi(host, port, user, password):
     """Content-Type: application/json is mandatory
     according to the kodi jsonrpc documentation"""
 
-    headers = {'Content-Type': 'application/json'}
+    headers = {"Content-Type": "application/json"}
 
     # Create the payload. Id seems to be mandatory.
-    payload = {'jsonrpc': '2.0', 'method': 'AudioLibrary.Scan', 'id': 1}
+    payload = {"jsonrpc": "2.0", "method": "AudioLibrary.Scan", "id": 1}
     r = requests.post(
-        url,
-        auth=(user, password),
-        json=payload,
-        headers=headers)
+        url, auth=(user, password), json=payload, headers=headers
+    )
 
     return r
 
@@ -57,42 +55,46 @@ class KodiUpdate(BeetsPlugin):
         super(KodiUpdate, self).__init__()
 
         # Adding defaults.
-        config['kodi'].add({
-            u'host': u'localhost',
-            u'port': 8080,
-            u'user': u'kodi',
-            u'pwd': u'kodi'})
+        config["kodi"].add(
+            {
+                u"host": u"localhost",
+                u"port": 8080,
+                u"user": u"kodi",
+                u"pwd": u"kodi",
+            }
+        )
 
-        config['kodi']['pwd'].redact = True
-        self.register_listener('database_change', self.listen_for_db_change)
+        config["kodi"]["pwd"].redact = True
+        self.register_listener("database_change", self.listen_for_db_change)
 
     def listen_for_db_change(self, lib, model):
         """Listens for beets db change and register the update"""
-        self.register_listener('cli_exit', self.update)
+        self.register_listener("cli_exit", self.update)
 
     def update(self, lib):
         """When the client exists try to send refresh request to Kodi server.
         """
-        self._log.info(u'Requesting a Kodi library update...')
+        self._log.info(u"Requesting a Kodi library update...")
 
         # Try to send update request.
         try:
             r = update_kodi(
-                config['kodi']['host'].get(),
-                config['kodi']['port'].get(),
-                config['kodi']['user'].get(),
-                config['kodi']['pwd'].get())
+                config["kodi"]["host"].get(),
+                config["kodi"]["port"].get(),
+                config["kodi"]["user"].get(),
+                config["kodi"]["pwd"].get(),
+            )
             r.raise_for_status()
 
         except requests.exceptions.RequestException as e:
-            self._log.warning(u'Kodi update failed: {0}',
-                              six.text_type(e))
+            self._log.warning(u"Kodi update failed: {0}", six.text_type(e))
             return
 
         json = r.json()
-        if json.get('result') != 'OK':
-            self._log.warning(u'Kodi update failed: JSON response was {0!r}',
-                              json)
+        if json.get("result") != "OK":
+            self._log.warning(
+                u"Kodi update failed: JSON response was {0!r}", json
+            )
             return
 
-        self._log.info(u'Kodi update triggered')
+        self._log.info(u"Kodi update triggered")

@@ -33,23 +33,35 @@ def random_func(lib, opts, args):
         objs = list(lib.items(query))
 
     # Print a random subset.
-    objs = random_objs(objs, opts.album, opts.number, opts.time,
-                       opts.equal_chance)
+    objs = random_objs(
+        objs, opts.album, opts.number, opts.time, opts.equal_chance
+    )
     for obj in objs:
         print_(format(obj))
 
 
-random_cmd = Subcommand('random',
-                        help=u'choose a random track or album')
+random_cmd = Subcommand("random", help=u"choose a random track or album")
 random_cmd.parser.add_option(
-    u'-n', u'--number', action='store', type="int",
-    help=u'number of objects to choose', default=1)
+    u"-n",
+    u"--number",
+    action="store",
+    type="int",
+    help=u"number of objects to choose",
+    default=1,
+)
 random_cmd.parser.add_option(
-    u'-e', u'--equal-chance', action='store_true',
-    help=u'each artist has the same chance')
+    u"-e",
+    u"--equal-chance",
+    action="store_true",
+    help=u"each artist has the same chance",
+)
 random_cmd.parser.add_option(
-    u'-t', u'--time', action='store', type="float",
-    help=u'total length in minutes of objects to choose')
+    u"-t",
+    u"--time",
+    action="store",
+    type="float",
+    help=u"total length in minutes of objects to choose",
+)
 random_cmd.parser.add_all_common_options()
 random_cmd.func = random_func
 

@@ -29,7 +29,8 @@ from six.moves import urllib
 from beets import ui
 
 import gi
-gi.require_version('Gst', '1.0')
+
+gi.require_version("Gst", "1.0")
 from gi.repository import GLib, Gst  # noqa: E402
 
 
@@ -131,8 +132,8 @@ class GstPlayer(object):
         """
         self.player.set_state(Gst.State.NULL)
         if isinstance(path, six.text_type):
-            path = path.encode('utf-8')
-        uri = 'file://' + urllib.parse.quote(path)
+            path = path.encode("utf-8")
+        uri = "file://" + urllib.parse.quote(path)
         self.player.set_property("uri", uri)
         self.player.set_state(Gst.State.PLAYING)
         self.playing = True
@@ -226,11 +227,13 @@ def get_decoders():
     and file extensions.
     """
     # We only care about audio decoder elements.
-    filt = (Gst.ELEMENT_FACTORY_TYPE_DEPAYLOADER |
-            Gst.ELEMENT_FACTORY_TYPE_DEMUXER |
-            Gst.ELEMENT_FACTORY_TYPE_PARSER |
-            Gst.ELEMENT_FACTORY_TYPE_DECODER |
-            Gst.ELEMENT_FACTORY_TYPE_MEDIA_AUDIO)
+    filt = (
+        Gst.ELEMENT_FACTORY_TYPE_DEPAYLOADER
+        | Gst.ELEMENT_FACTORY_TYPE_DEMUXER
+        | Gst.ELEMENT_FACTORY_TYPE_PARSER
+        | Gst.ELEMENT_FACTORY_TYPE_DECODER
+        | Gst.ELEMENT_FACTORY_TYPE_MEDIA_AUDIO
+    )
 
     decoders = {}
     mime_types = set()
@@ -242,7 +245,7 @@ def get_decoders():
                 for i in range(caps.get_size()):
                     struct = caps.get_structure(i)
                     mime = struct.get_name()
-                    if mime == 'unknown/unknown':
+                    if mime == "unknown/unknown":
                         continue
                     mimes.add(mime)
                     mime_types.add(mime)
@@ -298,10 +301,9 @@ def play_complicated(paths):
         time.sleep(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # A very simple command-line player. Just give it names of audio
     # files on the command line; these are all played in sequence.
-    paths = [os.path.abspath(os.path.expanduser(p))
-             for p in sys.argv[1:]]
+    paths = [os.path.abspath(os.path.expanduser(p)) for p in sys.argv[1:]]
     # play_simple(paths)
     play_complicated(paths)

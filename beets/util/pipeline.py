@@ -39,8 +39,8 @@ from threading import Thread, Lock
 import sys
 import six
 
-BUBBLE = '__PIPELINE_BUBBLE__'
-POISON = '__PIPELINE_POISON__'
+BUBBLE = "__PIPELINE_BUBBLE__"
+POISON = "__PIPELINE_POISON__"
 
 DEFAULT_QUEUE_SIZE = 16
 
@@ -51,6 +51,7 @@ def _invalidate_queue(q, val=None, sync=True):
     which defaults to None. `sync` controls whether a lock is
     required (because it's not reentrant!).
     """
+
     def _qsize(len=len):
         return 1
 
@@ -91,6 +92,7 @@ class CountedQueue(queue.Queue):
     still feeding into it. The queue is poisoned when all threads are
     finished with the queue.
     """
+
     def __init__(self, maxsize=0):
         queue.Queue.__init__(self, maxsize)
         self.nthreads = 0
@@ -139,6 +141,7 @@ class MultiMessage(object):
     """A message yielded by a pipeline stage encapsulating multiple
     values to be sent to the next stage.
     """
+
     def __init__(self, messages):
         self.messages = messages
 
@@ -169,6 +172,7 @@ def stage(func):
         while True:
             task = yield task
             task = func(*(args + (task,)))
+
     return coro
 
 
@@ -192,6 +196,7 @@ def mutator_stage(func):
         while True:
             task = yield task
             func(*(args + (task,)))
+
     return coro
 
 
@@ -210,6 +215,7 @@ def _allmsgs(obj):
 
 class PipelineThread(Thread):
     """Abstract base class for pipeline-stage threads."""
+
     def __init__(self, all_threads):
         super(PipelineThread, self).__init__()
         self.abort_lock = Lock()
@@ -224,9 +230,9 @@ class PipelineThread(Thread):
             self.abort_flag = True
 
             # Ensure that we are not blocking on a queue read or write.
-            if hasattr(self, 'in_queue'):
+            if hasattr(self, "in_queue"):
                 _invalidate_queue(self.in_queue, POISON)
-            if hasattr(self, 'out_queue'):
+            if hasattr(self, "out_queue"):
                 _invalidate_queue(self.out_queue, POISON)
 
     def abort_all(self, exc_info):
@@ -241,6 +247,7 @@ class FirstPipelineThread(PipelineThread):
     """The thread running the first stage in a parallel pipeline setup.
     The coroutine should just be a generator.
     """
+
     def __init__(self, coro, out_queue, all_threads):
         super(FirstPipelineThread, self).__init__(all_threads)
         self.coro = coro
@@ -282,6 +289,7 @@ class MiddlePipelineThread(PipelineThread):
     """A thread running any stage in the pipeline except the first or
     last.
     """
+
     def __init__(self, coro, in_queue, out_queue, all_threads):
         super(MiddlePipelineThread, self).__init__(all_threads)
         self.coro = coro
@@ -330,6 +338,7 @@ class LastPipelineThread(PipelineThread):
     """A thread running the last stage in a pipeline. The coroutine
     should yield nothing.
     """
+
     def __init__(self, coro, in_queue, all_threads):
         super(LastPipelineThread, self).__init__(all_threads)
         self.coro = coro
@@ -367,12 +376,13 @@ class Pipeline(object):
     is a coroutine that receives messages from the previous stage and
     yields messages to be sent to the next stage.
     """
+
     def __init__(self, stages):
         """Makes a new pipeline from a list of coroutines. There must
         be at least two stages.
         """
         if len(stages) < 2:
-            raise ValueError(u'pipeline must have at least two stages')
+            raise ValueError(u"pipeline must have at least two stages")
         self.stages = []
         for stage in stages:
             if isinstance(stage, (list, tuple)):
@@ -404,15 +414,15 @@ class Pipeline(object):
         # Middle stages.
         for i in range(1, queue_count):
             for coro in self.stages[i]:
-                threads.append(MiddlePipelineThread(
-                    coro, queues[i - 1], queues[i], threads
-                ))
+                threads.append(
+                    MiddlePipelineThread(
+                        coro, queues[i - 1], queues[i], threads
+                    )
+                )
 
         # Last stage.
         for coro in self.stages[-1]:
-            threads.append(
-                LastPipelineThread(coro, queues[-1], threads)
-            )
+            threads.append(LastPipelineThread(coro, queues[-1], threads))
 
         # Start threads.
         for thread in threads:
@@ -469,22 +479,23 @@ class Pipeline(object):
             for msg in msgs:
                 yield msg
 
+
 # Smoke test.
-if __name__ == '__main__':
+if __name__ == "__main__":
     import time
 
     # Test a normally-terminating pipeline both in sequence and
     # in parallel.
     def produce():
         for i in range(5):
-            print(u'generating %i' % i)
+            print(u"generating %i" % i)
             time.sleep(1)
             yield i
 
     def work():
         num = yield
         while True:
-            print(u'processing %i' % num)
+            print(u"processing %i" % num)
             time.sleep(2)
             num = yield num * 2
 
@@ -492,7 +503,7 @@ if __name__ == '__main__':
         while True:
             num = yield
             time.sleep(1)
-            print(u'received %i' % num)
+            print(u"received %i" % num)
 
     ts_start = time.time()
     Pipeline([produce(), work(), consume()]).run_sequential()
@@ -501,22 +512,22 @@ if __name__ == '__main__':
     ts_par = time.time()
     Pipeline([produce(), (work(), work()), consume()]).run_parallel()
     ts_end = time.time()
-    print(u'Sequential time:', ts_seq - ts_start)
-    print(u'Parallel time:', ts_par - ts_seq)
-    print(u'Multiply-parallel time:', ts_end - ts_par)
+    print(u"Sequential time:", ts_seq - ts_start)
+    print(u"Parallel time:", ts_par - ts_seq)
+    print(u"Multiply-parallel time:", ts_end - ts_par)
     print()
 
     # Test a pipeline that raises an exception.
     def exc_produce():
         for i in range(10):
-            print(u'generating %i' % i)
+            print(u"generating %i" % i)
             time.sleep(1)
             yield i
 
     def exc_work():
         num = yield
         while True:
-            print(u'processing %i' % num)
+            print(u"processing %i" % num)
             time.sleep(3)
             if num == 3:
                 raise Exception()
@@ -525,6 +536,6 @@ if __name__ == '__main__':
     def exc_consume():
         while True:
             num = yield
-            print(u'received %i' % num)
+            print(u"received %i" % num)
 
     Pipeline([exc_produce(), exc_work(), exc_consume()]).run_parallel(1)

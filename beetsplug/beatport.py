@@ -23,8 +23,11 @@ import six
 from datetime import datetime, timedelta
 
 from requests_oauthlib import OAuth1Session
-from requests_oauthlib.oauth1_session import (TokenRequestDenied, TokenMissing,
-                                              VerifierMissing)
+from requests_oauthlib.oauth1_session import (
+    TokenRequestDenied,
+    TokenMissing,
+    VerifierMissing,
+)
 
 import beets
 import beets.ui
@@ -34,7 +37,7 @@ import confuse
 
 
 AUTH_ERRORS = (TokenRequestDenied, TokenMissing, VerifierMissing)
-USER_AGENT = u'beets/{0} +https://beets.io/'.format(beets.__version__)
+USER_AGENT = u"beets/{0} +https://beets.io/".format(beets.__version__)
 
 
 class BeatportAPIError(Exception):
@@ -43,21 +46,22 @@ class BeatportAPIError(Exception):
 
 class BeatportObject(object):
     def __init__(self, data):
-        self.beatport_id = data['id']
-        self.name = six.text_type(data['name'])
-        if 'releaseDate' in data:
-            self.release_date = datetime.strptime(data['releaseDate'],
-                                                  '%Y-%m-%d')
-        if 'artists' in data:
-            self.artists = [(x['id'], six.text_type(x['name']))
-                            for x in data['artists']]
-        if 'genres' in data:
-            self.genres = [six.text_type(x['name'])
-                           for x in data['genres']]
+        self.beatport_id = data["id"]
+        self.name = six.text_type(data["name"])
+        if "releaseDate" in data:
+            self.release_date = datetime.strptime(
+                data["releaseDate"], "%Y-%m-%d"
+            )
+        if "artists" in data:
+            self.artists = [
+                (x["id"], six.text_type(x["name"])) for x in data["artists"]
+            ]
+        if "genres" in data:
+            self.genres = [six.text_type(x["name"]) for x in data["genres"]]
 
 
 class BeatportClient(object):
-    _api_base = 'https://oauth-api.beatport.com'
+    _api_base = "https://oauth-api.beatport.com"
 
     def __init__(self, c_key, c_secret, auth_key=None, auth_secret=None):
         """ Initiate the client with OAuth information.
@@ -72,11 +76,13 @@ class BeatportClient(object):
         :param auth_secret: OAuth1 resource owner secret
         """
         self.api = OAuth1Session(
-            client_key=c_key, client_secret=c_secret,
+            client_key=c_key,
+            client_secret=c_secret,
             resource_owner_key=auth_key,
             resource_owner_secret=auth_secret,
-            callback_uri='oob')
-        self.api.headers = {'User-Agent': USER_AGENT}
+            callback_uri="oob",
+        )
+        self.api.headers = {"User-Agent": USER_AGENT}
 
     def get_authorize_url(self):
         """ Generate the URL for the user to authorize the application.
@@ -94,9 +100,11 @@ class BeatportClient(object):
         :rtype:     unicode
         """
         self.api.fetch_request_token(
-            self._make_url('/identity/1/oauth/request-token'))
+            self._make_url("/identity/1/oauth/request-token")
+        )
         return self.api.authorization_url(
-            self._make_url('/identity/1/oauth/authorize'))
+            self._make_url("/identity/1/oauth/authorize")
+        )
 
     def get_access_token(self, auth_data):
         """ Obtain the final access token and secret for the API.
@@ -109,12 +117,14 @@ class BeatportClient(object):
         :rtype:             (unicode, unicode) tuple
         """
         self.api.parse_authorization_response(
-            "https://beets.io/auth?" + auth_data)
+            "https://beets.io/auth?" + auth_data
+        )
         access_data = self.api.fetch_access_token(
-            self._make_url('/identity/1/oauth/access-token'))
-        return access_data['oauth_token'], access_data['oauth_token_secret']
+            self._make_url("/identity/1/oauth/access-token")
+        )
+        return access_data["oauth_token"], access_data["oauth_token_secret"]
 
-    def search(self, query, release_type='release', details=True):
+    def search(self, query, release_type="release", details=True):
         """ Perform a search of the Beatport catalogue.
 
         :param query:           Query string
@@ -129,17 +139,20 @@ class BeatportClient(object):
                                 py:class:`BeatportRelease` or
                                 :py:class:`BeatportTrack`
         """
-        response = self._get('catalog/3/search',
-                             query=query, perPage=5,
-                             facets=['fieldType:{0}'.format(release_type)])
+        response = self._get(
+            "catalog/3/search",
+            query=query,
+            perPage=5,
+            facets=["fieldType:{0}".format(release_type)],
+        )
         for item in response:
-            if release_type == 'release':
+            if release_type == "release":
                 if details:
-                    release = self.get_release(item['id'])
+                    release = self.get_release(item["id"])
                 else:
                     release = BeatportRelease(item)
                 yield release
-            elif release_type == 'track':
+            elif release_type == "track":
                 yield BeatportTrack(item)
 
     def get_release(self, beatport_id):
@@ -149,7 +162,7 @@ class BeatportClient(object):
         :returns:               The matching release
         :rtype:                 :py:class:`BeatportRelease`
         """
-        response = self._get('/catalog/3/releases', id=beatport_id)
+        response = self._get("/catalog/3/releases", id=beatport_id)
         if response:
             release = BeatportRelease(response[0])
             release.tracks = self.get_release_tracks(beatport_id)
@@ -163,8 +176,9 @@ class BeatportClient(object):
         :returns:               Tracks in the matching release
         :rtype:                 list of :py:class:`BeatportTrack`
         """
-        response = self._get('/catalog/3/tracks', releaseId=beatport_id,
-                             perPage=100)
+        response = self._get(
+            "/catalog/3/tracks", releaseId=beatport_id, perPage=100
+        )
         return [BeatportTrack(t) for t in response]
 
     def get_track(self, beatport_id):
@@ -174,13 +188,13 @@ class BeatportClient(object):
         :returns:               The matching track
         :rtype:                 :py:class:`BeatportTrack`
         """
-        response = self._get('/catalog/3/tracks', id=beatport_id)
+        response = self._get("/catalog/3/tracks", id=beatport_id)
         return BeatportTrack(response[0])
 
     def _make_url(self, endpoint):
         """ Get complete URL for a given API endpoint. """
-        if not endpoint.startswith('/'):
-            endpoint = '/' + endpoint
+        if not endpoint.startswith("/"):
+            endpoint = "/" + endpoint
         return self._api_base + endpoint
 
     def _get(self, endpoint, **kwargs):
@@ -192,13 +206,16 @@ class BeatportClient(object):
         try:
             response = self.api.get(self._make_url(endpoint), params=kwargs)
         except Exception as e:
-            raise BeatportAPIError("Error connecting to Beatport API: {}"
-                                   .format(e))
+            raise BeatportAPIError(
+                "Error connecting to Beatport API: {}".format(e)
+            )
         if not response:
             raise BeatportAPIError(
-                "Error {0.status_code} for '{0.request.path_url}"
-                .format(response))
-        return response.json()['results']
+                "Error {0.status_code} for '{0.request.path_url}".format(
+                    response
+                )
+            )
+        return response.json()["results"]
 
 
 @six.python_2_unicode_compatible
@@ -209,86 +226,89 @@ class BeatportRelease(BeatportObject):
         else:
             artist_str = "Various Artists"
         return u"<BeatportRelease: {0} - {1} ({2})>".format(
-            artist_str,
-            self.name,
-            self.catalog_number,
+            artist_str, self.name, self.catalog_number,
         )
 
     def __repr__(self):
-        return six.text_type(self).encode('utf-8')
+        return six.text_type(self).encode("utf-8")
 
     def __init__(self, data):
         BeatportObject.__init__(self, data)
-        if 'catalogNumber' in data:
-            self.catalog_number = data['catalogNumber']
-        if 'label' in data:
-            self.label_name = data['label']['name']
-        if 'category' in data:
-            self.category = data['category']
-        if 'slug' in data:
+        if "catalogNumber" in data:
+            self.catalog_number = data["catalogNumber"]
+        if "label" in data:
+            self.label_name = data["label"]["name"]
+        if "category" in data:
+            self.category = data["category"]
+        if "slug" in data:
             self.url = "https://beatport.com/release/{0}/{1}".format(
-                data['slug'], data['id'])
-        self.genre = data.get('genre')
+                data["slug"], data["id"]
+            )
+        self.genre = data.get("genre")
 
 
 @six.python_2_unicode_compatible
 class BeatportTrack(BeatportObject):
     def __str__(self):
         artist_str = ", ".join(x[1] for x in self.artists)
-        return (u"<BeatportTrack: {0} - {1} ({2})>"
-                .format(artist_str, self.name, self.mix_name))
+        return u"<BeatportTrack: {0} - {1} ({2})>".format(
+            artist_str, self.name, self.mix_name
+        )
 
     def __repr__(self):
-        return six.text_type(self).encode('utf-8')
+        return six.text_type(self).encode("utf-8")
 
     def __init__(self, data):
         BeatportObject.__init__(self, data)
-        if 'title' in data:
-            self.title = six.text_type(data['title'])
-        if 'mixName' in data:
-            self.mix_name = six.text_type(data['mixName'])
-        self.length = timedelta(milliseconds=data.get('lengthMs', 0) or 0)
+        if "title" in data:
+            self.title = six.text_type(data["title"])
+        if "mixName" in data:
+            self.mix_name = six.text_type(data["mixName"])
+        self.length = timedelta(milliseconds=data.get("lengthMs", 0) or 0)
         if not self.length:
             try:
-                min, sec = data.get('length', '0:0').split(':')
+                min, sec = data.get("length", "0:0").split(":")
                 self.length = timedelta(minutes=int(min), seconds=int(sec))
             except ValueError:
                 pass
-        if 'slug' in data:
-            self.url = "https://beatport.com/track/{0}/{1}" \
-                .format(data['slug'], data['id'])
-        self.track_number = data.get('trackNumber')
-        self.bpm = data.get('bpm')
+        if "slug" in data:
+            self.url = "https://beatport.com/track/{0}/{1}".format(
+                data["slug"], data["id"]
+            )
+        self.track_number = data.get("trackNumber")
+        self.bpm = data.get("bpm")
         self.initial_key = six.text_type(
-            (data.get('key') or {}).get('shortName')
+            (data.get("key") or {}).get("shortName")
         )
 
         # Use 'subgenre' and if not present, 'genre' as a fallback.
-        if data.get('subGenres'):
-            self.genre = six.text_type(data['subGenres'][0].get('name'))
-        elif data.get('genres'):
-            self.genre = six.text_type(data['genres'][0].get('name'))
+        if data.get("subGenres"):
+            self.genre = six.text_type(data["subGenres"][0].get("name"))
+        elif data.get("genres"):
+            self.genre = six.text_type(data["genres"][0].get("name"))
 
 
 class BeatportPlugin(BeetsPlugin):
-    data_source = 'Beatport'
+    data_source = "Beatport"
 
     def __init__(self):
         super(BeatportPlugin, self).__init__()
-        self.config.add({
-            'apikey': '57713c3906af6f5def151b33601389176b37b429',
-            'apisecret': 'b3fe08c93c80aefd749fe871a16cd2bb32e2b954',
-            'tokenfile': 'beatport_token.json',
-            'source_weight': 0.5,
-        })
-        self.config['apikey'].redact = True
-        self.config['apisecret'].redact = True
+        self.config.add(
+            {
+                "apikey": "57713c3906af6f5def151b33601389176b37b429",
+                "apisecret": "b3fe08c93c80aefd749fe871a16cd2bb32e2b954",
+                "tokenfile": "beatport_token.json",
+                "source_weight": 0.5,
+            }
+        )
+        self.config["apikey"].redact = True
+        self.config["apisecret"].redact = True
         self.client = None
-        self.register_listener('import_begin', self.setup)
+        self.register_listener("import_begin", self.setup)
 
     def setup(self, session=None):
-        c_key = self.config['apikey'].as_str()
-        c_secret = self.config['apisecret'].as_str()
+        c_key = self.config["apikey"].as_str()
+        c_secret = self.config["apisecret"].as_str()
 
         # Get the OAuth token from a file or log in.
         try:
@@ -298,8 +318,8 @@ class BeatportPlugin(BeetsPlugin):
             # No token yet. Generate one.
             token, secret = self.authenticate(c_key, c_secret)
         else:
-            token = tokendata['token']
-            secret = tokendata['secret']
+            token = tokendata["token"]
+            secret = tokendata["secret"]
 
         self.client = BeatportClient(c_key, c_secret, token, secret)
 
@@ -309,8 +329,8 @@ class BeatportPlugin(BeetsPlugin):
         try:
             url = auth_client.get_authorize_url()
         except AUTH_ERRORS as e:
-            self._log.debug(u'authentication error: {0}', e)
-            raise beets.ui.UserError(u'communication with Beatport failed')
+            self._log.debug(u"authentication error: {0}", e)
+            raise beets.ui.UserError(u"communication with Beatport failed")
 
         beets.ui.print_(u"To authenticate with Beatport, visit:")
         beets.ui.print_(url)
@@ -320,29 +340,27 @@ class BeatportPlugin(BeetsPlugin):
         try:
             token, secret = auth_client.get_access_token(data)
         except AUTH_ERRORS as e:
-            self._log.debug(u'authentication error: {0}', e)
-            raise beets.ui.UserError(u'Beatport token request failed')
+            self._log.debug(u"authentication error: {0}", e)
+            raise beets.ui.UserError(u"Beatport token request failed")
 
         # Save the token for later use.
-        self._log.debug(u'Beatport token {0}, secret {1}', token, secret)
-        with open(self._tokenfile(), 'w') as f:
-            json.dump({'token': token, 'secret': secret}, f)
+        self._log.debug(u"Beatport token {0}, secret {1}", token, secret)
+        with open(self._tokenfile(), "w") as f:
+            json.dump({"token": token, "secret": secret}, f)
 
         return token, secret
 
     def _tokenfile(self):
         """Get the path to the JSON file for storing the OAuth token.
         """
-        return self.config['tokenfile'].get(confuse.Filename(in_app_dir=True))
+        return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
     def album_distance(self, items, album_info, mapping):
         """Returns the Beatport source weight and the maximum source weight
         for albums.
         """
         return get_distance(
-            data_source=self.data_source,
-            info=album_info,
-            config=self.config
+            data_source=self.data_source, info=album_info, config=self.config
         )
 
     def track_distance(self, item, track_info):
@@ -350,9 +368,7 @@ class BeatportPlugin(BeetsPlugin):
         for individual tracks.
         """
         return get_distance(
-            data_source=self.data_source,
-            info=track_info,
-            config=self.config
+            data_source=self.data_source, info=track_info, config=self.config
         )
 
     def candidates(self, items, artist, release, va_likely, extra_tags=None):
@@ -362,32 +378,32 @@ class BeatportPlugin(BeetsPlugin):
         if va_likely:
             query = release
         else:
-            query = '%s %s' % (artist, release)
+            query = "%s %s" % (artist, release)
         try:
             return self._get_releases(query)
         except BeatportAPIError as e:
-            self._log.debug(u'API Error: {0} (query: {1})', e, query)
+            self._log.debug(u"API Error: {0} (query: {1})", e, query)
             return []
 
     def item_candidates(self, item, artist, title):
         """Returns a list of TrackInfo objects for beatport search results
         matching title and artist.
         """
-        query = '%s %s' % (artist, title)
+        query = "%s %s" % (artist, title)
         try:
             return self._get_tracks(query)
         except BeatportAPIError as e:
-            self._log.debug(u'API Error: {0} (query: {1})', e, query)
+            self._log.debug(u"API Error: {0} (query: {1})", e, query)
             return []
 
     def album_for_id(self, release_id):
         """Fetches a release by its Beatport ID and returns an AlbumInfo object
         or None if the query is not a valid ID or release is not found.
         """
-        self._log.debug(u'Searching for release {0}', release_id)
-        match = re.search(r'(^|beatport\.com/release/.+/)(\d+)$', release_id)
+        self._log.debug(u"Searching for release {0}", release_id)
+        match = re.search(r"(^|beatport\.com/release/.+/)(\d+)$", release_id)
         if not match:
-            self._log.debug(u'Not a valid Beatport release ID.')
+            self._log.debug(u"Not a valid Beatport release ID.")
             return None
         release = self.client.get_release(match.group(2))
         if release:
@@ -398,10 +414,10 @@ class BeatportPlugin(BeetsPlugin):
         """Fetches a track by its Beatport ID and returns a TrackInfo object
         or None if the track is not a valid Beatport ID or track is not found.
         """
-        self._log.debug(u'Searching for track {0}', track_id)
-        match = re.search(r'(^|beatport\.com/track/.+/)(\d+)$', track_id)
+        self._log.debug(u"Searching for track {0}", track_id)
+        match = re.search(r"(^|beatport\.com/track/.+/)(\d+)$", track_id)
         if not match:
-            self._log.debug(u'Not a valid Beatport track ID.')
+            self._log.debug(u"Not a valid Beatport track ID.")
             return None
         bp_track = self.client.get_track(match.group(2))
         if bp_track is not None:
@@ -415,12 +431,11 @@ class BeatportPlugin(BeetsPlugin):
         # cause a query to return no results, even if they match the artist or
         # album title. Use `re.UNICODE` flag to avoid stripping non-english
         # word characters.
-        query = re.sub(r'\W+', ' ', query, flags=re.UNICODE)
+        query = re.sub(r"\W+", " ", query, flags=re.UNICODE)
         # Strip medium information from query, Things like "CD1" and "disk 1"
         # can also negate an otherwise positive result.
-        query = re.sub(r'\b(CD|disc)\s*\d+', '', query, flags=re.I)
-        albums = [self._get_album_info(x)
-                  for x in self.client.search(query)]
+        query = re.sub(r"\b(CD|disc)\s*\d+", "", query, flags=re.I)
+        albums = [self._get_album_info(x) for x in self.client.search(query)]
         return albums
 
     def _get_album_info(self, release):
@@ -432,16 +447,24 @@ class BeatportPlugin(BeetsPlugin):
             artist = u"Various Artists"
         tracks = [self._get_track_info(x) for x in release.tracks]
 
-        return AlbumInfo(album=release.name, album_id=release.beatport_id,
-                         artist=artist, artist_id=artist_id, tracks=tracks,
-                         albumtype=release.category, va=va,
-                         year=release.release_date.year,
-                         month=release.release_date.month,
-                         day=release.release_date.day,
-                         label=release.label_name,
-                         catalognum=release.catalog_number, media=u'Digital',
-                         data_source=self.data_source, data_url=release.url,
-                         genre=release.genre)
+        return AlbumInfo(
+            album=release.name,
+            album_id=release.beatport_id,
+            artist=artist,
+            artist_id=artist_id,
+            tracks=tracks,
+            albumtype=release.category,
+            va=va,
+            year=release.release_date.year,
+            month=release.release_date.month,
+            day=release.release_date.day,
+            label=release.label_name,
+            catalognum=release.catalog_number,
+            media=u"Digital",
+            data_source=self.data_source,
+            data_url=release.url,
+            genre=release.genre,
+        )
 
     def _get_track_info(self, track):
         """Returns a TrackInfo object for a Beatport Track object.
@@ -451,13 +474,20 @@ class BeatportPlugin(BeetsPlugin):
             title += u" ({0})".format(track.mix_name)
         artist, artist_id = self._get_artist(track.artists)
         length = track.length.total_seconds()
-        return TrackInfo(title=title, track_id=track.beatport_id,
-                         artist=artist, artist_id=artist_id,
-                         length=length, index=track.track_number,
-                         medium_index=track.track_number,
-                         data_source=self.data_source, data_url=track.url,
-                         bpm=track.bpm, initial_key=track.initial_key,
-                         genre=track.genre)
+        return TrackInfo(
+            title=title,
+            track_id=track.beatport_id,
+            artist=artist,
+            artist_id=artist_id,
+            length=length,
+            index=track.track_number,
+            medium_index=track.track_number,
+            data_source=self.data_source,
+            data_url=track.url,
+            bpm=track.bpm,
+            initial_key=track.initial_key,
+            genre=track.genre,
+        )
 
     def _get_artist(self, artists):
         """Returns an artist string (all artists) and an artist_id (the main
@@ -470,6 +500,6 @@ class BeatportPlugin(BeetsPlugin):
     def _get_tracks(self, query):
         """Returns a list of TrackInfo objects for a Beatport query.
         """
-        bp_tracks = self.client.search(query, release_type='track')
+        bp_tracks = self.client.search(query, release_type="track")
         tracks = [self._get_track_info(x) for x in bp_tracks]
         return tracks

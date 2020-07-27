@@ -27,12 +27,11 @@ from test import _common
 from test.helper import TestHelper
 
 
-@patch('beets.util.command_output', Mock())
+@patch("beets.util.command_output", Mock())
 class IPFSPluginTest(unittest.TestCase, TestHelper):
-
     def setUp(self):
         self.setup_beets()
-        self.load_plugins('ipfs')
+        self.load_plugins("ipfs")
         self.lib = library.Library(":memory:")
 
     def tearDown(self):
@@ -53,8 +52,9 @@ class IPFSPluginTest(unittest.TestCase, TestHelper):
                     ipfs_item = os.path.basename(want_item.path).decode(
                         _fsencoding(),
                     )
-                    want_path = '/ipfs/{0}/{1}'.format(test_album.ipfs,
-                                                       ipfs_item)
+                    want_path = "/ipfs/{0}/{1}".format(
+                        test_album.ipfs, ipfs_item
+                    )
                     want_path = bytestring_path(want_path)
                     self.assertEqual(check_item.path, want_path)
                     self.assertEqual(check_item.ipfs, want_item.ipfs)
@@ -66,22 +66,22 @@ class IPFSPluginTest(unittest.TestCase, TestHelper):
 
     def mk_test_album(self):
         items = [_common.item() for _ in range(3)]
-        items[0].title = 'foo bar'
-        items[0].artist = '1one'
-        items[0].album = 'baz'
+        items[0].title = "foo bar"
+        items[0].artist = "1one"
+        items[0].album = "baz"
         items[0].year = 2001
         items[0].comp = True
-        items[1].title = 'baz qux'
-        items[1].artist = '2two'
-        items[1].album = 'baz'
+        items[1].title = "baz qux"
+        items[1].artist = "2two"
+        items[1].album = "baz"
         items[1].year = 2002
         items[1].comp = True
-        items[2].title = 'beets 4 eva'
-        items[2].artist = '3three'
-        items[2].album = 'foo'
+        items[2].title = "beets 4 eva"
+        items[2].artist = "3three"
+        items[2].album = "foo"
         items[2].year = 2003
         items[2].comp = False
-        items[2].ipfs = 'QmfM9ic5LJj7V6ecozFx1MkSoaaiq3PXfhJoFvyqzpLXSk'
+        items[2].ipfs = "QmfM9ic5LJj7V6ecozFx1MkSoaaiq3PXfhJoFvyqzpLXSk"
 
         for item in items:
             self.lib.add(item)
@@ -96,5 +96,6 @@ class IPFSPluginTest(unittest.TestCase, TestHelper):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")

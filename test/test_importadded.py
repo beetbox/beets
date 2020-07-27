@@ -50,13 +50,14 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
     def setUp(self):
         preserve_plugin_listeners()
         self.setup_beets()
-        self.load_plugins('importadded')
+        self.load_plugins("importadded")
         self._create_import_dir(2)
         # Different mtimes on the files to be imported in order to test the
         # plugin
         modify_mtimes((mfile.path for mfile in self.media_files))
-        self.min_mtime = min(os.path.getmtime(mfile.path)
-                             for mfile in self.media_files)
+        self.min_mtime = min(
+            os.path.getmtime(mfile.path) for mfile in self.media_files
+        )
         self.matcher = AutotagStub().install()
         self.matcher.macthin = AutotagStub.GOOD
         self._setup_import_session()
@@ -70,10 +71,11 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
     def find_media_file(self, item):
         """Find the pre-import MediaFile for an Item"""
         for m in self.media_files:
-            if m.title.replace('Tag', 'Applied') == item.title:
+            if m.title.replace("Tag", "Applied") == item.title:
                 return m
-        raise AssertionError(u"No MediaFile found for Item " +
-                             util.displayable_path(item.path))
+        raise AssertionError(
+            u"No MediaFile found for Item " + util.displayable_path(item.path)
+        )
 
     def assertEqualTimes(self, first, second, msg=None):  # noqa
         """For comparing file modification times at a sufficient precision"""
@@ -90,14 +92,14 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         self.assertAlbumImport()
 
     def test_import_album_inplace_with_added_dates(self):
-        self.config['import']['copy'] = False
-        self.config['import']['move'] = False
-        self.config['import']['link'] = False
-        self.config['import']['hardlink'] = False
+        self.config["import"]["copy"] = False
+        self.config["import"]["move"] = False
+        self.config["import"]["link"] = False
+        self.config["import"]["hardlink"] = False
         self.assertAlbumImport()
 
     def test_import_album_with_preserved_mtimes(self):
-        self.config['importadded']['preserve_mtimes'] = True
+        self.config["importadded"]["preserve_mtimes"] = True
         self.importer.run()
         album = self.lib.albums().get()
         self.assertEqual(album.added, self.min_mtime)
@@ -105,16 +107,16 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
             self.assertEqualTimes(item.added, self.min_mtime)
             mediafile_mtime = os.path.getmtime(self.find_media_file(item).path)
             self.assertEqualTimes(item.mtime, mediafile_mtime)
-            self.assertEqualTimes(os.path.getmtime(item.path),
-                                  mediafile_mtime)
+            self.assertEqualTimes(os.path.getmtime(item.path), mediafile_mtime)
 
     def test_reimported_album_skipped(self):
         # Import and record the original added dates
         self.importer.run()
         album = self.lib.albums().get()
         album_added_before = album.added
-        items_added_before = dict((item.path, item.added)
-                                  for item in album.items())
+        items_added_before = dict(
+            (item.path, item.added) for item in album.items()
+        )
         # Newer Item path mtimes as if Beets had modified them
         modify_mtimes(items_added_before.keys(), offset=10000)
         # Reimport
@@ -123,37 +125,41 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         # Verify the reimported items
         album = self.lib.albums().get()
         self.assertEqualTimes(album.added, album_added_before)
-        items_added_after = dict((item.path, item.added)
-                                 for item in album.items())
+        items_added_after = dict(
+            (item.path, item.added) for item in album.items()
+        )
         for item_path, added_after in items_added_after.items():
-            self.assertEqualTimes(items_added_before[item_path], added_after,
-                                  u"reimport modified Item.added for " +
-                                  util.displayable_path(item_path))
+            self.assertEqualTimes(
+                items_added_before[item_path],
+                added_after,
+                u"reimport modified Item.added for "
+                + util.displayable_path(item_path),
+            )
 
     def test_import_singletons_with_added_dates(self):
-        self.config['import']['singletons'] = True
+        self.config["import"]["singletons"] = True
         self.importer.run()
         for item in self.lib.items():
             mfile = self.find_media_file(item)
             self.assertEqualTimes(item.added, os.path.getmtime(mfile.path))
 
     def test_import_singletons_with_preserved_mtimes(self):
-        self.config['import']['singletons'] = True
-        self.config['importadded']['preserve_mtimes'] = True
+        self.config["import"]["singletons"] = True
+        self.config["importadded"]["preserve_mtimes"] = True
         self.importer.run()
         for item in self.lib.items():
             mediafile_mtime = os.path.getmtime(self.find_media_file(item).path)
             self.assertEqualTimes(item.added, mediafile_mtime)
             self.assertEqualTimes(item.mtime, mediafile_mtime)
-            self.assertEqualTimes(os.path.getmtime(item.path),
-                                  mediafile_mtime)
+            self.assertEqualTimes(os.path.getmtime(item.path), mediafile_mtime)
 
     def test_reimported_singletons_skipped(self):
-        self.config['import']['singletons'] = True
+        self.config["import"]["singletons"] = True
         # Import and record the original added dates
         self.importer.run()
-        items_added_before = dict((item.path, item.added)
-                                  for item in self.lib.items())
+        items_added_before = dict(
+            (item.path, item.added) for item in self.lib.items()
+        )
         # Newer Item path mtimes as if Beets had modified them
         modify_mtimes(items_added_before.keys(), offset=10000)
         # Reimport
@@ -161,16 +167,21 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         self._setup_import_session(import_dir=import_dir, singletons=True)
         self.importer.run()
         # Verify the reimported items
-        items_added_after = dict((item.path, item.added)
-                                 for item in self.lib.items())
+        items_added_after = dict(
+            (item.path, item.added) for item in self.lib.items()
+        )
         for item_path, added_after in items_added_after.items():
-            self.assertEqualTimes(items_added_before[item_path], added_after,
-                                  u"reimport modified Item.added for " +
-                                  util.displayable_path(item_path))
+            self.assertEqualTimes(
+                items_added_before[item_path],
+                added_after,
+                u"reimport modified Item.added for "
+                + util.displayable_path(item_path),
+            )
 
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")

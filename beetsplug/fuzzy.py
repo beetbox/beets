@@ -31,18 +31,17 @@ class FuzzyQuery(StringFieldQuery):
         if pattern.islower():
             val = val.lower()
         query_matcher = difflib.SequenceMatcher(None, pattern, val)
-        threshold = config['fuzzy']['threshold'].as_number()
+        threshold = config["fuzzy"]["threshold"].as_number()
         return query_matcher.quick_ratio() >= threshold
 
 
 class FuzzyPlugin(BeetsPlugin):
     def __init__(self):
         super(FuzzyPlugin, self).__init__()
-        self.config.add({
-            'prefix': '~',
-            'threshold': 0.7,
-        })
+        self.config.add(
+            {"prefix": "~", "threshold": 0.7,}
+        )
 
     def queries(self):
-        prefix = self.config['prefix'].as_str()
+        prefix = self.config["prefix"].as_str()
         return {prefix: FuzzyQuery}

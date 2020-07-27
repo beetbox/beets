@@ -36,7 +36,7 @@ def safe_open_w(path):
     """Open "path" for writing, creating any parent directories as needed.
     """
     mkdir_p(os.path.dirname(path))
-    return open(path, 'w')
+    return open(path, "w")
 
 
 def main(argv=None):
@@ -44,15 +44,16 @@ def main(argv=None):
     """
     if argv is None:
         argv = sys.argv
-    print(u'Fetching samples from:')
+    print(u"Fetching samples from:")
     for s in test_lyrics.GOOGLE_SOURCES + test_lyrics.DEFAULT_SOURCES:
-        print(s['url'])
-        url = s['url'] + s['path']
+        print(s["url"])
+        url = s["url"] + s["path"]
         fn = test_lyrics.url_to_filename(url)
         if not os.path.isfile(fn):
             html = requests.get(url, verify=False).text
             with safe_open_w(fn) as f:
-                f.write(html.encode('utf-8'))
+                f.write(html.encode("utf-8"))
+
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -37,27 +37,29 @@ import sys
 import six
 import functools
 
-SYMBOL_DELIM = u'$'
-FUNC_DELIM = u'%'
-GROUP_OPEN = u'{'
-GROUP_CLOSE = u'}'
-ARG_SEP = u','
-ESCAPE_CHAR = u'$'
+SYMBOL_DELIM = u"$"
+FUNC_DELIM = u"%"
+GROUP_OPEN = u"{"
+GROUP_CLOSE = u"}"
+ARG_SEP = u","
+ESCAPE_CHAR = u"$"
 
-VARIABLE_PREFIX = '__var_'
-FUNCTION_PREFIX = '__func_'
+VARIABLE_PREFIX = "__var_"
+FUNCTION_PREFIX = "__func_"
 
 
 class Environment(object):
     """Contains the values and functions to be substituted into a
     template.
     """
+
     def __init__(self, values, functions):
         self.values = values
         self.functions = functions
 
 
 # Code generation helpers.
+
 
 def ex_lvalue(name):
     """A variable load expression."""
@@ -75,14 +77,14 @@ def ex_literal(val):
     """
     if sys.version_info[:2] < (3, 4):
         if val is None:
-            return ast.Name('None', ast.Load())
+            return ast.Name("None", ast.Load())
         elif isinstance(val, six.integer_types):
             return ast.Num(val)
         elif isinstance(val, bool):
             return ast.Name(bytes(val), ast.Load())
         elif isinstance(val, six.string_types):
             return ast.Str(val)
-        raise TypeError(u'no literal for {0}'.format(type(val)))
+        raise TypeError(u"no literal for {0}".format(type(val)))
     elif sys.version_info[:2] < (3, 6):
         if val in [None, True, False]:
             return ast.NameConstant(val)
@@ -90,7 +92,7 @@ def ex_literal(val):
             return ast.Num(val)
         elif isinstance(val, six.string_types):
             return ast.Str(val)
-        raise TypeError(u'no literal for {0}'.format(type(val)))
+        raise TypeError(u"no literal for {0}".format(type(val)))
     else:
         return ast.Constant(val)
 
@@ -123,13 +125,13 @@ def ex_call(func, args):
         return ast.Call(func, args, [])
 
 
-def compile_func(arg_names, statements, name='_the_func', debug=False):
+def compile_func(arg_names, statements, name="_the_func", debug=False):
     """Compile a list of statements as the body of a function and return
     the resulting Python function. If `debug`, then print out the
     bytecode of the compiled function.
     """
     if six.PY2:
-        name = name.encode('utf-8')
+        name = name.encode("utf-8")
         args = ast.arguments(
             args=[ast.Name(n, ast.Param()) for n in arg_names],
             vararg=None,
@@ -138,20 +140,17 @@ def compile_func(arg_names, statements, name='_the_func', debug=False):
         )
     else:
         args_fields = {
-            'args': [ast.arg(arg=n, annotation=None) for n in arg_names],
-            'kwonlyargs': [],
-            'kw_defaults': [],
-            'defaults': [ex_literal(None) for _ in arg_names],
+            "args": [ast.arg(arg=n, annotation=None) for n in arg_names],
+            "kwonlyargs": [],
+            "kw_defaults": [],
+            "defaults": [ex_literal(None) for _ in arg_names],
         }
-        if 'posonlyargs' in ast.arguments._fields:  # Added in Python 3.8.
-            args_fields['posonlyargs'] = []
+        if "posonlyargs" in ast.arguments._fields:  # Added in Python 3.8.
+            args_fields["posonlyargs"] = []
         args = ast.arguments(**args_fields)
 
     func_def = ast.FunctionDef(
-        name=name,
-        args=args,
-        body=statements,
-        decorator_list=[],
+        name=name, args=args, body=statements, decorator_list=[],
     )
 
     # The ast.Module signature changed in 3.8 to accept a list of types to
@@ -163,7 +162,7 @@ def compile_func(arg_names, statements, name='_the_func', debug=False):
 
     ast.fix_missing_locations(mod)
 
-    prog = compile(mod, '<generated>', 'exec')
+    prog = compile(mod, "<generated>", "exec")
 
     # Debug: show bytecode.
     if debug:
@@ -179,14 +178,16 @@ def compile_func(arg_names, statements, name='_the_func', debug=False):
 
 # AST nodes for the template language.
 
+
 class Symbol(object):
     """A variable-substitution symbol in a template."""
+
     def __init__(self, ident, original):
         self.ident = ident
         self.original = original
 
     def __repr__(self):
-        return u'Symbol(%s)' % repr(self.ident)
+        return u"Symbol(%s)" % repr(self.ident)
 
     def evaluate(self, env):
         """Evaluate the symbol in the environment, returning a Unicode
@@ -202,7 +203,7 @@ class Symbol(object):
     def translate(self):
         """Compile the variable lookup."""
         if six.PY2:
-            ident = self.ident.encode('utf-8')
+            ident = self.ident.encode("utf-8")
         else:
             ident = self.ident
         expr = ex_rvalue(VARIABLE_PREFIX + ident)
@@ -211,14 +212,18 @@ class Symbol(object):
 
 class Call(object):
     """A function call in a template."""
+
     def __init__(self, ident, args, original):
         self.ident = ident
         self.args = args
         self.original = original
 
     def __repr__(self):
-        return u'Call(%s, %s, %s)' % (repr(self.ident), repr(self.args),
-                                      repr(self.original))
+        return u"Call(%s, %s, %s)" % (
+            repr(self.ident),
+            repr(self.args),
+            repr(self.original),
+        )
 
     def evaluate(self, env):
         """Evaluate the function call in the environment, returning a
@@ -231,7 +236,7 @@ class Call(object):
             except Exception as exc:
                 # Function raised exception! Maybe inlining the name of
                 # the exception will help debug.
-                return u'<%s>' % six.text_type(exc)
+                return u"<%s>" % six.text_type(exc)
             return six.text_type(out)
         else:
             return self.original
@@ -240,7 +245,7 @@ class Call(object):
         """Compile the function call."""
         varnames = set()
         if six.PY2:
-            ident = self.ident.encode('utf-8')
+            ident = self.ident.encode("utf-8")
         else:
             ident = self.ident
         funcnames = set([ident])
@@ -253,21 +258,22 @@ class Call(object):
 
             # Create a subexpression that joins the result components of
             # the arguments.
-            arg_exprs.append(ex_call(
-                ast.Attribute(ex_literal(u''), 'join', ast.Load()),
-                [ex_call(
-                    'map',
+            arg_exprs.append(
+                ex_call(
+                    ast.Attribute(ex_literal(u""), "join", ast.Load()),
                     [
-                        ex_rvalue(six.text_type.__name__),
-                        ast.List(subexprs, ast.Load()),
-                    ]
-                )],
-            ))
+                        ex_call(
+                            "map",
+                            [
+                                ex_rvalue(six.text_type.__name__),
+                                ast.List(subexprs, ast.Load()),
+                            ],
+                        )
+                    ],
+                )
+            )
 
-        subexpr_call = ex_call(
-            FUNCTION_PREFIX + ident,
-            arg_exprs
-        )
+        subexpr_call = ex_call(FUNCTION_PREFIX + ident, arg_exprs)
         return [subexpr_call], varnames, funcnames
 
 
@@ -275,11 +281,12 @@ class Expression(object):
     """Top-level template construct: contains a list of text blobs,
     Symbols, and Calls.
     """
+
     def __init__(self, parts):
         self.parts = parts
 
     def __repr__(self):
-        return u'Expression(%s)' % (repr(self.parts))
+        return u"Expression(%s)" % (repr(self.parts))
 
     def evaluate(self, env):
         """Evaluate the entire expression in the environment, returning
@@ -291,7 +298,7 @@ class Expression(object):
                 out.append(part)
             else:
                 out.append(part.evaluate(env))
-        return u''.join(map(six.text_type, out))
+        return u"".join(map(six.text_type, out))
 
     def translate(self):
         """Compile the expression to a list of Python AST expressions, a
@@ -313,6 +320,7 @@ class Expression(object):
 
 # Parser.
 
+
 class ParseError(Exception):
     pass
 
@@ -330,6 +338,7 @@ class Parser(object):
     replaced with a real, accepted parsing technique (PEG, parser
     generator, etc.).
     """
+
     def __init__(self, string, in_argument=False):
         """ Create a new parser.
         :param in_arguments: boolean that indicates the parser is to be
@@ -342,10 +351,16 @@ class Parser(object):
         self.parts = []
 
     # Common parsing resources.
-    special_chars = (SYMBOL_DELIM, FUNC_DELIM, GROUP_OPEN, GROUP_CLOSE,
-                     ESCAPE_CHAR)
-    special_char_re = re.compile(r'[%s]|\Z' %
-                                 u''.join(re.escape(c) for c in special_chars))
+    special_chars = (
+        SYMBOL_DELIM,
+        FUNC_DELIM,
+        GROUP_OPEN,
+        GROUP_CLOSE,
+        ESCAPE_CHAR,
+    )
+    special_char_re = re.compile(
+        r"[%s]|\Z" % u"".join(re.escape(c) for c in special_chars)
+    )
     escapable_chars = (SYMBOL_DELIM, FUNC_DELIM, GROUP_CLOSE, ARG_SEP)
     terminator_chars = (GROUP_CLOSE,)
 
@@ -362,9 +377,10 @@ class Parser(object):
         if self.in_argument:
             extra_special_chars = (ARG_SEP,)
             special_char_re = re.compile(
-                r'[%s]|\Z' % u''.join(
-                    re.escape(c) for c in
-                    self.special_chars + extra_special_chars
+                r"[%s]|\Z"
+                % u"".join(
+                    re.escape(c)
+                    for c in self.special_chars + extra_special_chars
                 )
             )
 
@@ -377,10 +393,10 @@ class Parser(object):
                 # A non-special character. Skip to the next special
                 # character, treating the interstice as literal text.
                 next_pos = (
-                    special_char_re.search(
-                        self.string[self.pos:]).start() + self.pos
+                    special_char_re.search(self.string[self.pos :]).start()
+                    + self.pos
                 )
-                text_parts.append(self.string[self.pos:next_pos])
+                text_parts.append(self.string[self.pos : next_pos])
                 self.pos = next_pos
                 continue
 
@@ -394,8 +410,9 @@ class Parser(object):
                 break
 
             next_char = self.string[self.pos + 1]
-            if char == ESCAPE_CHAR and next_char in (self.escapable_chars +
-                                                     extra_special_chars):
+            if char == ESCAPE_CHAR and next_char in (
+                self.escapable_chars + extra_special_chars
+            ):
                 # An escaped special character ($$, $}, etc.). Note that
                 # ${ is not an escape sequence: this is ambiguous with
                 # the start of a symbol and it's not necessary (just
@@ -406,7 +423,7 @@ class Parser(object):
 
             # Shift all characters collected so far into a single string.
             if text_parts:
-                self.parts.append(u''.join(text_parts))
+                self.parts.append(u"".join(text_parts))
                 text_parts = []
 
             if char == SYMBOL_DELIM:
@@ -428,7 +445,7 @@ class Parser(object):
 
         # If any parsed characters remain, shift them into a string.
         if text_parts:
-            self.parts.append(u''.join(text_parts))
+            self.parts.append(u"".join(text_parts))
 
     def parse_symbol(self):
         """Parse a variable reference (like ``$foo`` or ``${foo}``)
@@ -455,21 +472,23 @@ class Parser(object):
             closer = self.string.find(GROUP_CLOSE, self.pos)
             if closer == -1 or closer == self.pos:
                 # No closing brace found or identifier is empty.
-                self.parts.append(self.string[start_pos:self.pos])
+                self.parts.append(self.string[start_pos : self.pos])
             else:
                 # Closer found.
-                ident = self.string[self.pos:closer]
+                ident = self.string[self.pos : closer]
                 self.pos = closer + 1
-                self.parts.append(Symbol(ident,
-                                         self.string[start_pos:self.pos]))
+                self.parts.append(
+                    Symbol(ident, self.string[start_pos : self.pos])
+                )
 
         else:
             # A bare-word symbol.
             ident = self._parse_ident()
             if ident:
                 # Found a real symbol.
-                self.parts.append(Symbol(ident,
-                                         self.string[start_pos:self.pos]))
+                self.parts.append(
+                    Symbol(ident, self.string[start_pos : self.pos])
+                )
             else:
                 # A standalone $.
                 self.parts.append(SYMBOL_DELIM)
@@ -493,25 +512,27 @@ class Parser(object):
 
         if self.pos >= len(self.string):
             # Identifier terminates string.
-            self.parts.append(self.string[start_pos:self.pos])
+            self.parts.append(self.string[start_pos : self.pos])
             return
 
         if self.string[self.pos] != GROUP_OPEN:
             # Argument list not opened.
-            self.parts.append(self.string[start_pos:self.pos])
+            self.parts.append(self.string[start_pos : self.pos])
             return
 
         # Skip past opening brace and try to parse an argument list.
         self.pos += 1
         args = self.parse_argument_list()
-        if self.pos >= len(self.string) or \
-           self.string[self.pos] != GROUP_CLOSE:
+        if (
+            self.pos >= len(self.string)
+            or self.string[self.pos] != GROUP_CLOSE
+        ):
             # Arguments unclosed.
-            self.parts.append(self.string[start_pos:self.pos])
+            self.parts.append(self.string[start_pos : self.pos])
             return
 
         self.pos += 1  # Move past closing brace.
-        self.parts.append(Call(ident, args, self.string[start_pos:self.pos]))
+        self.parts.append(Call(ident, args, self.string[start_pos : self.pos]))
 
     def parse_argument_list(self):
         """Parse a list of arguments starting at ``pos``, returning a
@@ -523,15 +544,17 @@ class Parser(object):
         expressions = []
 
         while self.pos < len(self.string):
-            subparser = Parser(self.string[self.pos:], in_argument=True)
+            subparser = Parser(self.string[self.pos :], in_argument=True)
             subparser.parse_expression()
 
             # Extract and advance past the parsed expression.
             expressions.append(Expression(subparser.parts))
             self.pos += subparser.pos
 
-            if self.pos >= len(self.string) or \
-               self.string[self.pos] == GROUP_CLOSE:
+            if (
+                self.pos >= len(self.string)
+                or self.string[self.pos] == GROUP_CLOSE
+            ):
                 # Argument list terminated by EOF or closing brace.
                 break
 
@@ -546,8 +569,8 @@ class Parser(object):
         """Parse an identifier and return it (possibly an empty string).
         Updates ``pos``.
         """
-        remainder = self.string[self.pos:]
-        ident = re.match(r'\w*', remainder).group(0)
+        remainder = self.string[self.pos :]
+        ident = re.match(r"\w*", remainder).group(0)
         self.pos += len(ident)
         return ident
 
@@ -560,7 +583,7 @@ def _parse(template):
     parser.parse_expression()
 
     parts = parser.parts
-    remainder = parser.string[parser.pos:]
+    remainder = parser.string[parser.pos :]
     if remainder:
         parts.append(remainder)
     return Expression(parts)
@@ -570,7 +593,7 @@ def cached(func):
     """Like the `functools.lru_cache` decorator, but works (as a no-op)
     on Python < 3.2.
     """
-    if hasattr(functools, 'lru_cache'):
+    if hasattr(functools, "lru_cache"):
         return functools.lru_cache(maxsize=128)(func)
     else:
         # Do nothing when lru_cache is not available.
@@ -586,6 +609,7 @@ def template(fmt):
 class Template(object):
     """A string template, including text, Symbols, and Calls.
     """
+
     def __init__(self, template):
         self.expr = _parse(template)
         self.original = template
@@ -623,8 +647,7 @@ class Template(object):
             argnames.append(FUNCTION_PREFIX + funcname)
 
         func = compile_func(
-            argnames,
-            [ast.Return(ast.List(expressions, ast.Load()))],
+            argnames, [ast.Return(ast.List(expressions, ast.Load()))],
         )
 
         def wrapper_func(values={}, functions={}):
@@ -634,24 +657,29 @@ class Template(object):
             for funcname in funcnames:
                 args[FUNCTION_PREFIX + funcname] = functions[funcname]
             parts = func(**args)
-            return u''.join(parts)
+            return u"".join(parts)
 
         return wrapper_func
 
 
 # Performance tests.
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import timeit
-    _tmpl = Template(u'foo $bar %baz{foozle $bar barzle} $bar')
-    _vars = {'bar': 'qux'}
-    _funcs = {'baz': six.text_type.upper}
-    interp_time = timeit.timeit('_tmpl.interpret(_vars, _funcs)',
-                                'from __main__ import _tmpl, _vars, _funcs',
-                                number=10000)
+
+    _tmpl = Template(u"foo $bar %baz{foozle $bar barzle} $bar")
+    _vars = {"bar": "qux"}
+    _funcs = {"baz": six.text_type.upper}
+    interp_time = timeit.timeit(
+        "_tmpl.interpret(_vars, _funcs)",
+        "from __main__ import _tmpl, _vars, _funcs",
+        number=10000,
+    )
     print(interp_time)
-    comp_time = timeit.timeit('_tmpl.substitute(_vars, _funcs)',
-                              'from __main__ import _tmpl, _vars, _funcs',
-                              number=10000)
+    comp_time = timeit.timeit(
+        "_tmpl.substitute(_vars, _funcs)",
+        "from __main__ import _tmpl, _vars, _funcs",
+        number=10000,
+    )
     print(comp_time)
-    print(u'Speedup:', interp_time / comp_time)
+    print(u"Speedup:", interp_time / comp_time)

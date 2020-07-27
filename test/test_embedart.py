@@ -32,7 +32,6 @@ from beets import art
 
 
 def require_artresizer_compare(test):
-
     def wrapper(*args, **kwargs):
         if not ArtResizer.shared.can_compare:
             raise unittest.SkipTest("compare not available")
@@ -45,21 +44,21 @@ def require_artresizer_compare(test):
 
 class EmbedartCliTest(_common.TestCase, TestHelper):
 
-    small_artpath = os.path.join(_common.RSRC, b'image-2x3.jpg')
-    abbey_artpath = os.path.join(_common.RSRC, b'abbey.jpg')
-    abbey_similarpath = os.path.join(_common.RSRC, b'abbey-similar.jpg')
-    abbey_differentpath = os.path.join(_common.RSRC, b'abbey-different.jpg')
+    small_artpath = os.path.join(_common.RSRC, b"image-2x3.jpg")
+    abbey_artpath = os.path.join(_common.RSRC, b"abbey.jpg")
+    abbey_similarpath = os.path.join(_common.RSRC, b"abbey-similar.jpg")
+    abbey_differentpath = os.path.join(_common.RSRC, b"abbey-different.jpg")
 
     def setUp(self):
         super(EmbedartCliTest, self).setUp()
         self.io.install()
         self.setup_beets()  # Converter is threaded
-        self.load_plugins('embedart')
+        self.load_plugins("embedart")
 
     def _setup_data(self, artpath=None):
         if not artpath:
             artpath = self.small_artpath
-        with open(syspath(artpath), 'rb') as f:
+        with open(syspath(artpath), "rb") as f:
             self.image_data = f.read()
 
     def tearDown(self):
@@ -70,8 +69,8 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         self._setup_data()
         album = self.add_album_fixture()
         item = album.items()[0]
-        self.io.addinput('y')
-        self.run_command('embedart', '-f', self.small_artpath)
+        self.io.addinput("y")
+        self.run_command("embedart", "-f", self.small_artpath)
         mediafile = MediaFile(syspath(item.path))
         self.assertEqual(mediafile.images[0].data, self.image_data)
 
@@ -79,8 +78,8 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         self._setup_data()
         album = self.add_album_fixture()
         item = album.items()[0]
-        self.io.addinput('n')
-        self.run_command('embedart', '-f', self.small_artpath)
+        self.io.addinput("n")
+        self.run_command("embedart", "-f", self.small_artpath)
         mediafile = MediaFile(syspath(item.path))
         # make sure that images array is empty (nothing embedded)
         self.assertEqual(len(mediafile.images), 0)
@@ -89,7 +88,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         self._setup_data()
         album = self.add_album_fixture()
         item = album.items()[0]
-        self.run_command('embedart', '-y', '-f', self.small_artpath)
+        self.run_command("embedart", "-y", "-f", self.small_artpath)
         mediafile = MediaFile(syspath(item.path))
         self.assertEqual(mediafile.images[0].data, self.image_data)
 
@@ -99,7 +98,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         item = album.items()[0]
         album.artpath = self.small_artpath
         album.store()
-        self.run_command('embedart', '-y')
+        self.run_command("embedart", "-y")
         mediafile = MediaFile(syspath(item.path))
         self.assertEqual(mediafile.images[0].data, self.image_data)
 
@@ -107,7 +106,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         self._setup_data()
         album = self.add_album_fixture()
 
-        logging.getLogger('beets.embedart').setLevel(logging.DEBUG)
+        logging.getLogger("beets.embedart").setLevel(logging.DEBUG)
 
         handle, tmp_path = tempfile.mkstemp()
         os.write(handle, self.image_data)
@@ -116,29 +115,29 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         album.artpath = tmp_path
         album.store()
 
-        config['embedart']['remove_art_file'] = True
-        self.run_command('embedart', '-y')
+        config["embedart"]["remove_art_file"] = True
+        self.run_command("embedart", "-y")
 
         if os.path.isfile(tmp_path):
             os.remove(tmp_path)
-            self.fail(u'Artwork file {0} was not deleted'.format(tmp_path))
+            self.fail(u"Artwork file {0} was not deleted".format(tmp_path))
 
     def test_art_file_missing(self):
         self.add_album_fixture()
-        logging.getLogger('beets.embedart').setLevel(logging.DEBUG)
+        logging.getLogger("beets.embedart").setLevel(logging.DEBUG)
         with self.assertRaises(ui.UserError):
-            self.run_command('embedart', '-y', '-f', '/doesnotexist')
+            self.run_command("embedart", "-y", "-f", "/doesnotexist")
 
     def test_embed_non_image_file(self):
         album = self.add_album_fixture()
-        logging.getLogger('beets.embedart').setLevel(logging.DEBUG)
+        logging.getLogger("beets.embedart").setLevel(logging.DEBUG)
 
         handle, tmp_path = tempfile.mkstemp()
-        os.write(handle, b'I am not an image.')
+        os.write(handle, b"I am not an image.")
         os.close(handle)
 
         try:
-            self.run_command('embedart', '-y', '-f', tmp_path)
+            self.run_command("embedart", "-y", "-f", tmp_path)
         finally:
             os.remove(tmp_path)
 
@@ -150,59 +149,67 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         self._setup_data(self.abbey_artpath)
         album = self.add_album_fixture()
         item = album.items()[0]
-        self.run_command('embedart', '-y', '-f', self.abbey_artpath)
-        config['embedart']['compare_threshold'] = 20
-        self.run_command('embedart', '-y', '-f', self.abbey_differentpath)
+        self.run_command("embedart", "-y", "-f", self.abbey_artpath)
+        config["embedart"]["compare_threshold"] = 20
+        self.run_command("embedart", "-y", "-f", self.abbey_differentpath)
         mediafile = MediaFile(syspath(item.path))
 
-        self.assertEqual(mediafile.images[0].data, self.image_data,
-                         u'Image written is not {0}'.format(
-                         displayable_path(self.abbey_artpath)))
+        self.assertEqual(
+            mediafile.images[0].data,
+            self.image_data,
+            u"Image written is not {0}".format(
+                displayable_path(self.abbey_artpath)
+            ),
+        )
 
     @require_artresizer_compare
     def test_accept_similar_art(self):
         self._setup_data(self.abbey_similarpath)
         album = self.add_album_fixture()
         item = album.items()[0]
-        self.run_command('embedart', '-y', '-f', self.abbey_artpath)
-        config['embedart']['compare_threshold'] = 20
-        self.run_command('embedart', '-y', '-f', self.abbey_similarpath)
+        self.run_command("embedart", "-y", "-f", self.abbey_artpath)
+        config["embedart"]["compare_threshold"] = 20
+        self.run_command("embedart", "-y", "-f", self.abbey_similarpath)
         mediafile = MediaFile(syspath(item.path))
 
-        self.assertEqual(mediafile.images[0].data, self.image_data,
-                         u'Image written is not {0}'.format(
-                         displayable_path(self.abbey_similarpath)))
+        self.assertEqual(
+            mediafile.images[0].data,
+            self.image_data,
+            u"Image written is not {0}".format(
+                displayable_path(self.abbey_similarpath)
+            ),
+        )
 
     def test_non_ascii_album_path(self):
-        resource_path = os.path.join(_common.RSRC, b'image.mp3')
+        resource_path = os.path.join(_common.RSRC, b"image.mp3")
         album = self.add_album_fixture()
         trackpath = album.items()[0].path
         albumpath = album.path
         shutil.copy(syspath(resource_path), syspath(trackpath))
 
-        self.run_command('extractart', '-n', 'extracted')
+        self.run_command("extractart", "-n", "extracted")
 
-        self.assertExists(os.path.join(albumpath, b'extracted.png'))
+        self.assertExists(os.path.join(albumpath, b"extracted.png"))
 
     def test_extracted_extension(self):
-        resource_path = os.path.join(_common.RSRC, b'image-jpeg.mp3')
+        resource_path = os.path.join(_common.RSRC, b"image-jpeg.mp3")
         album = self.add_album_fixture()
         trackpath = album.items()[0].path
         albumpath = album.path
         shutil.copy(syspath(resource_path), syspath(trackpath))
 
-        self.run_command('extractart', '-n', 'extracted')
+        self.run_command("extractart", "-n", "extracted")
 
-        self.assertExists(os.path.join(albumpath, b'extracted.jpg'))
+        self.assertExists(os.path.join(albumpath, b"extracted.jpg"))
 
     def test_clear_art_with_yes_input(self):
         self._setup_data()
         album = self.add_album_fixture()
         item = album.items()[0]
-        self.io.addinput('y')
-        self.run_command('embedart', '-f', self.small_artpath)
-        self.io.addinput('y')
-        self.run_command('clearart')
+        self.io.addinput("y")
+        self.run_command("embedart", "-f", self.small_artpath)
+        self.io.addinput("y")
+        self.run_command("clearart")
         mediafile = MediaFile(syspath(item.path))
         self.assertEqual(len(mediafile.images), 0)
 
@@ -210,24 +217,25 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         self._setup_data()
         album = self.add_album_fixture()
         item = album.items()[0]
-        self.io.addinput('y')
-        self.run_command('embedart', '-f', self.small_artpath)
-        self.io.addinput('n')
-        self.run_command('clearart')
+        self.io.addinput("y")
+        self.run_command("embedart", "-f", self.small_artpath)
+        self.io.addinput("n")
+        self.run_command("clearart")
         mediafile = MediaFile(syspath(item.path))
         self.assertEqual(mediafile.images[0].data, self.image_data)
 
 
-@patch('beets.art.subprocess')
-@patch('beets.art.extract')
+@patch("beets.art.subprocess")
+@patch("beets.art.extract")
 class ArtSimilarityTest(unittest.TestCase):
     def setUp(self):
         self.item = _common.item()
-        self.log = logging.getLogger('beets.embedart')
+        self.log = logging.getLogger("beets.embedart")
 
     def _similarity(self, threshold):
-        return art.check_art_similarity(self.log, self.item, b'path',
-                                        threshold)
+        return art.check_art_similarity(
+            self.log, self.item, b"path", threshold
+        )
 
     def _popen(self, status=0, stdout="", stderr=""):
         """Create a mock `Popen` object."""
@@ -235,9 +243,16 @@ class ArtSimilarityTest(unittest.TestCase):
         popen.communicate.return_value = stdout, stderr
         return popen
 
-    def _mock_popens(self, mock_extract, mock_subprocess, compare_status=0,
-                     compare_stdout="", compare_stderr="", convert_status=0):
-        mock_extract.return_value = b'extracted_path'
+    def _mock_popens(
+        self,
+        mock_extract,
+        mock_subprocess,
+        compare_status=0,
+        compare_stdout="",
+        compare_stderr="",
+        convert_status=0,
+    ):
+        mock_extract.return_value = b"extracted_path"
         mock_subprocess.Popen.side_effect = [
             # The `convert` call.
             self._popen(convert_status),
@@ -269,8 +284,9 @@ class ArtSimilarityTest(unittest.TestCase):
         self._mock_popens(mock_extract, mock_subprocess, 0, "foo", "bar")
         self.assertIsNone(self._similarity(20))
 
-    def test_compare_parsing_error_and_failure(self, mock_extract,
-                                               mock_subprocess):
+    def test_compare_parsing_error_and_failure(
+        self, mock_extract, mock_subprocess
+    ):
         self._mock_popens(mock_extract, mock_subprocess, 1, "foo", "bar")
         self.assertIsNone(self._similarity(20))
 
@@ -282,5 +298,6 @@ class ArtSimilarityTest(unittest.TestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")

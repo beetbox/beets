@@ -27,14 +27,14 @@ from beets import util
 class MPDStatsTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.setup_beets()
-        self.load_plugins('mpdstats')
+        self.load_plugins("mpdstats")
 
     def tearDown(self):
         self.teardown_beets()
         self.unload_plugins()
 
     def test_update_rating(self):
-        item = Item(title=u'title', path='', id=1)
+        item = Item(title=u"title", path="", id=1)
         item.add(self.lib)
 
         log = Mock()
@@ -44,30 +44,39 @@ class MPDStatsTest(unittest.TestCase, TestHelper):
         self.assertFalse(mpdstats.update_rating(None, True))
 
     def test_get_item(self):
-        item_path = util.normpath('/foo/bar.flac')
-        item = Item(title=u'title', path=item_path, id=1)
+        item_path = util.normpath("/foo/bar.flac")
+        item = Item(title=u"title", path=item_path, id=1)
         item.add(self.lib)
 
         log = Mock()
         mpdstats = MPDStats(self.lib, log)
 
         self.assertEqual(str(mpdstats.get_item(item_path)), str(item))
-        self.assertIsNone(mpdstats.get_item('/some/non-existing/path'))
-        self.assertIn(u'item not found:', log.info.call_args[0][0])
+        self.assertIsNone(mpdstats.get_item("/some/non-existing/path"))
+        self.assertIn(u"item not found:", log.info.call_args[0][0])
 
-    FAKE_UNKNOWN_STATE = 'some-unknown-one'
-    STATUSES = [{'state': FAKE_UNKNOWN_STATE},
-                {'state': u'pause'},
-                {'state': u'play', 'songid': 1, 'time': u'0:1'},
-                {'state': u'stop'}]
+    FAKE_UNKNOWN_STATE = "some-unknown-one"
+    STATUSES = [
+        {"state": FAKE_UNKNOWN_STATE},
+        {"state": u"pause"},
+        {"state": u"play", "songid": 1, "time": u"0:1"},
+        {"state": u"stop"},
+    ]
     EVENTS = [["player"]] * (len(STATUSES) - 1) + [KeyboardInterrupt]
-    item_path = util.normpath('/foo/bar.flac')
+    item_path = util.normpath("/foo/bar.flac")
 
-    @patch("beetsplug.mpdstats.MPDClientWrapper", return_value=Mock(**{
-        "events.side_effect": EVENTS, "status.side_effect": STATUSES,
-        "currentsong.return_value": item_path}))
+    @patch(
+        "beetsplug.mpdstats.MPDClientWrapper",
+        return_value=Mock(
+            **{
+                "events.side_effect": EVENTS,
+                "status.side_effect": STATUSES,
+                "currentsong.return_value": item_path,
+            }
+        ),
+    )
     def test_run_mpdstats(self, mpd_mock):
-        item = Item(title=u'title', path=self.item_path, id=1)
+        item = Item(title=u"title", path=self.item_path, id=1)
         item.add(self.lib)
 
         log = Mock()
@@ -76,14 +85,15 @@ class MPDStatsTest(unittest.TestCase, TestHelper):
         except KeyboardInterrupt:
             pass
 
-        log.debug.assert_has_calls(
-            [call(u'unhandled status "{0}"', ANY)])
+        log.debug.assert_has_calls([call(u'unhandled status "{0}"', ANY)])
         log.info.assert_has_calls(
-            [call(u'pause'), call(u'playing {0}', ANY), call(u'stop')])
+            [call(u"pause"), call(u"playing {0}", ANY), call(u"stop")]
+        )
 
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")

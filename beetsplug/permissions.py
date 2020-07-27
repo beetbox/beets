@@ -40,11 +40,10 @@ def assert_permissions(path, permission, log):
     """
     if not check_permissions(util.syspath(path), permission):
         log.warning(
-            u'could not set permissions on {}',
-            util.displayable_path(path),
+            u"could not set permissions on {}", util.displayable_path(path),
         )
         log.debug(
-            u'set permissions to {}, but permissions are now {}',
+            u"set permissions to {}, but permissions are now {}",
             permission,
             os.stat(util.syspath(path)).st_mode & 0o777,
         )
@@ -53,9 +52,9 @@ def assert_permissions(path, permission, log):
 def dirs_in_library(library, item):
     """Creates a list of ancestor directories in the beets library path.
     """
-    return [ancestor
-            for ancestor in ancestry(item)
-            if ancestor.startswith(library)][1:]
+    return [
+        ancestor for ancestor in ancestry(item) if ancestor.startswith(library)
+    ][1:]
 
 
 class Permissions(BeetsPlugin):
@@ -63,13 +62,12 @@ class Permissions(BeetsPlugin):
         super(Permissions, self).__init__()
 
         # Adding defaults.
-        self.config.add({
-            u'file': '644',
-            u'dir': '755',
-        })
+        self.config.add(
+            {u"file": "644", u"dir": "755",}
+        )
 
-        self.register_listener('item_imported', self.fix)
-        self.register_listener('album_imported', self.fix)
+        self.register_listener("item_imported", self.fix)
+        self.register_listener("album_imported", self.fix)
 
     def fix(self, lib, item=None, album=None):
         """Fix the permissions for an imported Item or Album.
@@ -78,8 +76,8 @@ class Permissions(BeetsPlugin):
         # string (in YAML quotes) or, for convenience, as an integer so the
         # quotes can be omitted. In the latter case, we need to reinterpret the
         # integer as octal, not decimal.
-        file_perm = config['permissions']['file'].get()
-        dir_perm = config['permissions']['dir'].get()
+        file_perm = config["permissions"]["file"].get()
+        dir_perm = config["permissions"]["dir"].get()
         file_perm = convert_perm(file_perm)
         dir_perm = convert_perm(dir_perm)
 
@@ -97,8 +95,7 @@ class Permissions(BeetsPlugin):
         for path in file_chmod_queue:
             # Changing permissions on the destination file.
             self._log.debug(
-                u'setting file permissions on {}',
-                util.displayable_path(path),
+                u"setting file permissions on {}", util.displayable_path(path),
             )
             os.chmod(util.syspath(path), file_perm)
 
@@ -106,15 +103,13 @@ class Permissions(BeetsPlugin):
             assert_permissions(path, file_perm, self._log)
 
             # Adding directories to the directory chmod queue.
-            dir_chmod_queue.update(
-                dirs_in_library(lib.directory,
-                                path))
+            dir_chmod_queue.update(dirs_in_library(lib.directory, path))
 
         # Change permissions for the directories.
         for path in dir_chmod_queue:
             # Chaning permissions on the destination directory.
             self._log.debug(
-                u'setting directory permissions on {}',
+                u"setting directory permissions on {}",
                 util.displayable_path(path),
             )
             os.chmod(util.syspath(path), dir_perm)

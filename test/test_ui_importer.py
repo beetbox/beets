@@ -31,9 +31,8 @@ import six
 
 
 class TerminalImportSessionFixture(TerminalImportSession):
-
     def __init__(self, *args, **kwargs):
-        self.io = kwargs.pop('io')
+        self.io = kwargs.pop("io")
         super(TerminalImportSessionFixture, self).__init__(*args, **kwargs)
         self._choices = []
 
@@ -60,95 +59,113 @@ class TerminalImportSessionFixture(TerminalImportSession):
             choice = self.default_choice
 
         if choice == importer.action.APPLY:
-            self.io.addinput(u'A')
+            self.io.addinput(u"A")
         elif choice == importer.action.ASIS:
-            self.io.addinput(u'U')
+            self.io.addinput(u"U")
         elif choice == importer.action.ALBUMS:
-            self.io.addinput(u'G')
+            self.io.addinput(u"G")
         elif choice == importer.action.TRACKS:
-            self.io.addinput(u'T')
+            self.io.addinput(u"T")
         elif choice == importer.action.SKIP:
-            self.io.addinput(u'S')
+            self.io.addinput(u"S")
         elif isinstance(choice, int):
-            self.io.addinput(u'M')
+            self.io.addinput(u"M")
             self.io.addinput(six.text_type(choice))
             self._add_choice_input()
         else:
-            raise Exception(u'Unknown choice %s' % choice)
+            raise Exception(u"Unknown choice %s" % choice)
 
 
 class TerminalImportSessionSetup(object):
     """Overwrites test_importer.ImportHelper to provide a terminal importer
     """
 
-    def _setup_import_session(self, import_dir=None, delete=False,
-                              threaded=False, copy=True, singletons=False,
-                              move=False, autotag=True):
-        config['import']['copy'] = copy
-        config['import']['delete'] = delete
-        config['import']['timid'] = True
-        config['threaded'] = False
-        config['import']['singletons'] = singletons
-        config['import']['move'] = move
-        config['import']['autotag'] = autotag
-        config['import']['resume'] = False
+    def _setup_import_session(
+        self,
+        import_dir=None,
+        delete=False,
+        threaded=False,
+        copy=True,
+        singletons=False,
+        move=False,
+        autotag=True,
+    ):
+        config["import"]["copy"] = copy
+        config["import"]["delete"] = delete
+        config["import"]["timid"] = True
+        config["threaded"] = False
+        config["import"]["singletons"] = singletons
+        config["import"]["move"] = move
+        config["import"]["autotag"] = autotag
+        config["import"]["resume"] = False
 
-        if not hasattr(self, 'io'):
+        if not hasattr(self, "io"):
             self.io = DummyIO()
         self.io.install()
         self.importer = TerminalImportSessionFixture(
-            self.lib, loghandler=None, query=None, io=self.io,
+            self.lib,
+            loghandler=None,
+            query=None,
+            io=self.io,
             paths=[import_dir or self.import_dir],
         )
 
 
-class NonAutotaggedImportTest(TerminalImportSessionSetup,
-                              test_importer.NonAutotaggedImportTest):
+class NonAutotaggedImportTest(
+    TerminalImportSessionSetup, test_importer.NonAutotaggedImportTest
+):
     pass
 
 
-class ImportTest(TerminalImportSessionSetup,
-                 test_importer.ImportTest):
+class ImportTest(TerminalImportSessionSetup, test_importer.ImportTest):
     pass
 
 
-class ImportSingletonTest(TerminalImportSessionSetup,
-                          test_importer.ImportSingletonTest):
+class ImportSingletonTest(
+    TerminalImportSessionSetup, test_importer.ImportSingletonTest
+):
     pass
 
 
-class ImportTracksTest(TerminalImportSessionSetup,
-                       test_importer.ImportTracksTest):
+class ImportTracksTest(
+    TerminalImportSessionSetup, test_importer.ImportTracksTest
+):
     pass
 
 
-class ImportCompilationTest(TerminalImportSessionSetup,
-                            test_importer.ImportCompilationTest):
+class ImportCompilationTest(
+    TerminalImportSessionSetup, test_importer.ImportCompilationTest
+):
     pass
 
 
-class ImportExistingTest(TerminalImportSessionSetup,
-                         test_importer.ImportExistingTest):
+class ImportExistingTest(
+    TerminalImportSessionSetup, test_importer.ImportExistingTest
+):
     pass
 
 
-class ChooseCandidateTest(TerminalImportSessionSetup,
-                          test_importer.ChooseCandidateTest):
+class ChooseCandidateTest(
+    TerminalImportSessionSetup, test_importer.ChooseCandidateTest
+):
     pass
 
 
-class GroupAlbumsImportTest(TerminalImportSessionSetup,
-                            test_importer.GroupAlbumsImportTest):
+class GroupAlbumsImportTest(
+    TerminalImportSessionSetup, test_importer.GroupAlbumsImportTest
+):
     pass
 
 
-class GlobalGroupAlbumsImportTest(TerminalImportSessionSetup,
-                                  test_importer.GlobalGroupAlbumsImportTest):
+class GlobalGroupAlbumsImportTest(
+    TerminalImportSessionSetup, test_importer.GlobalGroupAlbumsImportTest
+):
     pass
 
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")
