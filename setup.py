@@ -136,12 +136,14 @@ setup(
             else []
         ),
         "lint": [
+            "black",
             "flake8",
             "flake8-blind-except",
             "flake8-coding",
             "flake8-docstrings",
             "flake8-future-import",
             "pep8-naming",
+            "pre-commit",
         ],
         # Plugin (optional) dependencies:
         "absubmit": ["requests"],
