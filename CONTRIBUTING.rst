@@ -322,9 +322,8 @@ Writing Tests
 Writing tests is done by adding or modifying files in folder `test`_.
 Take a look at
 `https://github.com/beetbox/beets/blob/master/test/test_template.py#L224`_
-to get a basic view on how tests are written. Despite using ``pytest``
-as a test runner, we prefer to write tests using the standard
-`unittest`_ testing framework.
+to get a basic view on how tests are written. We currently allow writing
+tests with either `unittest`_ or `pytest`_.
 
 Any tests that involve sending out network traffic e.g. an external API
 call, should be skipped normally and run under our weekly `integration
@@ -342,20 +341,6 @@ If you do this, it is also advised to create a similar test that 'mocks'
 the network call and can be run under normal circumstances by our CI and
 others. See `unittest.mock`_ for more info.
 
-Basics
-^^^^^^
-
--  Your file should contain a class derived from unittest.TestCase
--  Each method in this class which name starts with the letters *test*
-   will be executed to test functionality
--  Errors are raised with these methods:
-
-   -  ``self.assertEqual``
-   -  ``self.assertTrue``
-   -  ``self.assertFalse``
-   -  ``self.assertRaises``
-
--  For detailed information see `Python unittest`_
 -  **AVOID** using the ``start()`` and ``stop()`` methods of
    ``mock.patch``, as they require manual cleanup. Use the annotation or
    context manager forms instead.
