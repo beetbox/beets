@@ -6,9 +6,6 @@ skip_commits:
     message: /\[appveyor skip\]/
 
 environment:
-    # Undocumented feature of nose-show-skipped.
-    NOSE_SHOW_SKIPPED: 1
-
     matrix:
         - PYTHON: C:\Python27
           TOX_ENV: py27-test

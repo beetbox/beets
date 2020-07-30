@@ -2,7 +2,6 @@
 omit =
     */pyshared/*
     */python?.?/*
-    */site-packages/nose/*
     */test/*
 exclude_lines =
     assert False

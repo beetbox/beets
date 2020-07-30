@@ -35,8 +35,8 @@ configuration file. There is one option available:
 - **auto**: Automatically amend your MusicBrainz collection whenever you
   import a new album.
   Default: ``no``.
-- **collection**: Which MusicBrainz collection to update.
+- **collection**: The MBID of which MusicBrainz collection to update.
   Default: ``None``.
 - **remove**: Remove albums from collections which are no longer
   present in the beets database.
-  Default: ``None``.
+  Default: ``no``.

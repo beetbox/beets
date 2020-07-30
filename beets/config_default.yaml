@@ -44,6 +44,7 @@ replace:
     '^\s+': ''
     '^-': _
 path_sep_replace: _
+drive_sep_replace: _
 asciify_paths: false
 art_filename: cover
 max_filename_length: 0
@@ -103,6 +104,7 @@ musicbrainz:
     ratelimit: 1
     ratelimit_interval: 1.0
     searchlimit: 5
+    extra_tags: []
 
 match:
     strong_rec_thresh: 0.04

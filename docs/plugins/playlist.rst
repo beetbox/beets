@@ -13,13 +13,13 @@ Then configure your playlists like this::
         playlist_dir: ~/.mpd/playlists
         forward_slash: no
 
-It is possible to query the library based on a playlist by speicifying its
+It is possible to query the library based on a playlist by specifying its
 absolute path::
 
     $ beet ls playlist:/path/to/someplaylist.m3u
 
 The plugin also supports referencing playlists by name. The playlist is then
-seached in the playlist_dir and the ".m3u" extension is appended to the
+searched in the playlist_dir and the ".m3u" extension is appended to the
 name::
 
     $ beet ls playlist:anotherplaylist
@@ -31,7 +31,7 @@ configuration option.
 Configuration
 -------------
 
-To configure the plugin, make a ``smartplaylist:`` section in your
+To configure the plugin, make a ``playlist:`` section in your
 configuration file. In addition to the ``playlists`` described above, the
 other configuration options are:
 

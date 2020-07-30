@@ -89,10 +89,11 @@ class ParentWorkPlugin(BeetsPlugin):
             write = ui.should_write()
 
             for item in lib.items(ui.decargs(args)):
-                self.find_work(item, force_parent)
-                item.store()
-                if write:
-                    item.try_write()
+                changed = self.find_work(item, force_parent)
+                if changed:
+                    item.store()
+                    if write:
+                        item.try_write()
         command = ui.Subcommand(
             'parentwork',
             help=u'fetche parent works, composers and dates')
@@ -130,6 +131,8 @@ class ParentWorkPlugin(BeetsPlugin):
                 if artist['type'] == 'composer':
                     parent_composer.append(artist['artist']['name'])
                     parent_composer_sort.append(artist['artist']['sort-name'])
+                    if 'end' in artist.keys():
+                        parentwork_info["parentwork_date"] = artist['end']
 
             parentwork_info['parent_composer'] = u', '.join(parent_composer)
             parentwork_info['parent_composer_sort'] = u', '.join(
@@ -172,13 +175,17 @@ add one at https://musicbrainz.org/recording/{}', item, item.mb_trackid)
             return
 
         hasparent = hasattr(item, 'parentwork')
-        if force or not hasparent:
+        work_changed = True
+        if hasattr(item, 'parentwork_workid_current'):
+            work_changed = item.parentwork_workid_current != item.mb_workid
+        if force or not hasparent or work_changed:
             try:
                 work_info, work_date = find_parentwork_info(item.mb_workid)
             except musicbrainzngs.musicbrainz.WebServiceError as e:
                 self._log.debug("error fetching work: {}", e)
                 return
             parent_info = self.get_info(item, work_info)
+            parent_info['parentwork_workid_current'] = item.mb_workid
             if 'parent_composer' in parent_info:
                 self._log.debug("Work fetched: {} - {}",
                                 parent_info['parentwork'],
@@ -198,7 +205,8 @@ add one at https://musicbrainz.org/recording/{}', item, item.mb_trackid)
 
         if work_date:
             item['work_date'] = work_date
-        ui.show_model_changes(
+        return ui.show_model_changes(
             item, fields=['parentwork', 'parentwork_disambig',
                           'mb_parentworkid', 'parent_composer',
-                          'parent_composer_sort', 'work_date'])
+                          'parent_composer_sort', 'work_date',
+                          'parentwork_workid_current', 'parentwork_date'])

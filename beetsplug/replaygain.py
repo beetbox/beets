@@ -22,6 +22,7 @@ import math
 import sys
 import warnings
 import enum
+import re
 import xml.parsers.expat
 from six.moves import zip
 
@@ -64,6 +65,11 @@ def call(args, **kwargs):
         # filenames can fail to encode on that platform. See:
         # https://github.com/google-code-export/beets/issues/499
         raise ReplayGainError(u"argument encoding failed")
+
+
+def after_version(version_a, version_b):
+    return tuple(int(s) for s in version_a.split('.')) \
+            >= tuple(int(s) for s in version_b.split('.'))
 
 
 def db_to_lufs(db):
@@ -147,8 +153,12 @@ class Bs1770gainBackend(Backend):
 
         cmd = 'bs1770gain'
         try:
-            call([cmd, "--help"])
+            version_out = call([cmd, '--version'])
             self.command = cmd
+            self.version = re.search(
+                'bs1770gain ([0-9]+.[0-9]+.[0-9]+), ',
+                version_out.stdout.decode('utf-8')
+            ).group(1)
         except OSError:
             raise FatalReplayGainError(
                 u'Is bs1770gain installed?'
@@ -241,17 +251,23 @@ class Bs1770gainBackend(Backend):
         if self.__method != "":
             # backward compatibility to `method` option
             method = self.__method
+            gain_adjustment = target_level \
+                - [k for k, v in self.methods.items() if v == method][0]
         elif target_level in self.methods:
             method = self.methods[target_level]
             gain_adjustment = 0
         else:
-            method = self.methods[-23]
-            gain_adjustment = target_level - lufs_to_db(-23)
+            lufs_target = -23
+            method = self.methods[lufs_target]
+            gain_adjustment = target_level - lufs_target
 
         # Construct shell command.
         cmd = [self.command]
         cmd += ["--" + method]
         cmd += ['--xml', '-p']
+        if after_version(self.version, '0.6.0'):
+            cmd += ['--unit=ebu']            # set units to LU
+            cmd += ['--suppress-progress']   # don't print % to XML output
 
         # Workaround for Windows: the underlying tool fails on paths
         # with the \\?\ prefix, so we don't use it here. This
@@ -286,6 +302,7 @@ class Bs1770gainBackend(Backend):
         album_gain = {}  # mutable variable so it can be set from handlers
         parser = xml.parsers.expat.ParserCreate(encoding='utf-8')
         state = {'file': None, 'gain': None, 'peak': None}
+        album_state = {'gain': None, 'peak': None}
 
         def start_element_handler(name, attrs):
             if name == u'track':
@@ -294,9 +311,13 @@ class Bs1770gainBackend(Backend):
                     raise ReplayGainError(
                         u'duplicate filename in bs1770gain output')
             elif name == u'integrated':
-                state['gain'] = float(attrs[u'lu'])
+                if 'lu' in attrs:
+                    state['gain'] = float(attrs[u'lu'])
             elif name == u'sample-peak':
-                state['peak'] = float(attrs[u'factor'])
+                if 'factor' in attrs:
+                    state['peak'] = float(attrs[u'factor'])
+                elif 'amplitude' in attrs:
+                    state['peak'] = float(attrs[u'amplitude'])
 
         def end_element_handler(name):
             if name == u'track':
@@ -312,6 +333,17 @@ class Bs1770gainBackend(Backend):
                                           'the output of bs1770gain')
                 album_gain["album"] = Gain(state['gain'], state['peak'])
                 state['gain'] = state['peak'] = None
+            elif len(per_file_gain) == len(path_list):
+                if state['gain'] is not None:
+                    album_state['gain'] = state['gain']
+                if state['peak'] is not None:
+                    album_state['peak'] = state['peak']
+                if album_state['gain'] is not None \
+                        and album_state['peak'] is not None:
+                    album_gain["album"] = Gain(
+                        album_state['gain'], album_state['peak'])
+                state['gain'] = state['peak'] = None
+
         parser.StartElementHandler = start_element_handler
         parser.EndElementHandler = end_element_handler
 
@@ -570,7 +602,7 @@ class FfmpegBackend(Backend):
         value = line.split(b":", 1)
         if len(value) < 2:
             raise ReplayGainError(
-                u"ffmpeg ouput: expected key value pair, found {0}"
+                u"ffmpeg output: expected key value pair, found {0}"
                 .format(line)
                 )
         value = value[1].lstrip()
@@ -581,7 +613,7 @@ class FfmpegBackend(Backend):
             return float(value)
         except ValueError:
             raise ReplayGainError(
-                u"ffmpeg output: expected float value, found {1}"
+                u"ffmpeg output: expected float value, found {0}"
                 .format(value)
                 )
 
@@ -1294,10 +1326,10 @@ class ReplayGainPlugin(BeetsPlugin):
 
         if (any([self.should_use_r128(item) for item in album.items()]) and not
                 all(([self.should_use_r128(item) for item in album.items()]))):
-            raise ReplayGainError(
-                u"Mix of ReplayGain and EBU R128 detected"
-                u" for some tracks in album {0}".format(album)
-            )
+            self._log.error(
+                u"Cannot calculate gain for album {0} (incompatible formats)",
+                album)
+            return
 
         tag_vals = self.tag_specific_values(album.items())
         store_track_gain, store_album_gain, target_level, peak = tag_vals

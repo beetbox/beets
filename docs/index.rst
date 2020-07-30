@@ -2,7 +2,7 @@ beets: the music geek's media organizer
 =======================================
 
 Welcome to the documentation for `beets`_, the media library management system
-for obsessive-compulsive music geeks.
+for obsessive music geeks.
 
 If you're new to beets, begin with the :doc:`guides/main` guide. That guide
 walks you through installing beets, setting it up how you like it, and starting
@@ -32,6 +32,7 @@ Contents
    reference/index
    plugins/index
    faq
+   contributing
    dev/index
 
 .. toctree::

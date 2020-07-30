@@ -38,7 +38,7 @@ from string import ascii_lowercase
 
 
 USER_AGENT = u'beets/{0} +https://beets.io/'.format(beets.__version__)
-API_KEY    = 'rAzVUQYRaoFjeBjyWuWZ'
+API_KEY = 'rAzVUQYRaoFjeBjyWuWZ'
 API_SECRET = 'plxtUTqoCzwxZpqdPysCwGuBSmZNdZVy'
 
 # Exceptions that discogs_client should really handle but does not.
@@ -57,7 +57,8 @@ class DiscogsPlugin(BeetsPlugin):
             'tokenfile': 'discogs_token.json',
             'source_weight': 0.5,
             'user_token': '',
-            'separator': u', '
+            'separator': u', ',
+            'index_tracks': False,
         })
         self.config['apikey'].redact = True
         self.config['apisecret'].redact = True
@@ -174,7 +175,7 @@ class DiscogsPlugin(BeetsPlugin):
             config=self.config
         )
 
-    def candidates(self, items, artist, album, va_likely):
+    def candidates(self, items, artist, album, va_likely, extra_tags=None):
         """Returns a list of AlbumInfo objects for discogs search results
         matching an album and artist (if not various).
         """
@@ -325,7 +326,7 @@ class DiscogsPlugin(BeetsPlugin):
 
         # Extract information for the optional AlbumInfo fields that are
         # contained on nested discogs fields.
-        albumtype = media = label = catalogno = None
+        albumtype = media = label = catalogno = labelid = None
         if result.data.get('formats'):
             albumtype = ', '.join(
                 result.data['formats'][0].get('descriptions', [])) or None
@@ -333,6 +334,7 @@ class DiscogsPlugin(BeetsPlugin):
         if result.data.get('labels'):
             label = result.data['labels'][0].get('name')
             catalogno = result.data['labels'][0].get('catno')
+            labelid = result.data['labels'][0].get('id')
 
         # Additional cleanups (various artists name, catalog number, media).
         if va:
@@ -354,18 +356,16 @@ class DiscogsPlugin(BeetsPlugin):
         # a master release, otherwise fetch the master release.
         original_year = self.get_master_year(master_id) if master_id else year
 
-        return AlbumInfo(album, album_id, artist, artist_id, tracks, asin=None,
-                         albumtype=albumtype, va=va, year=year, month=None,
-                         day=None, label=label, mediums=len(set(mediums)),
-                         artist_sort=None, releasegroup_id=master_id,
-                         catalognum=catalogno, script=None, language=None,
+        return AlbumInfo(album=album, album_id=album_id, artist=artist,
+                         artist_id=artist_id, tracks=tracks,
+                         albumtype=albumtype, va=va, year=year,
+                         label=label, mediums=len(set(mediums)),
+                         releasegroup_id=master_id, catalognum=catalogno,
                          country=country, style=style, genre=genre,
-                         albumstatus=None, media=media,
-                         albumdisambig=None, artist_credit=None,
-                         original_year=original_year, original_month=None,
-                         original_day=None, data_source='Discogs',
-                         data_url=data_url,
-                         discogs_albumid=discogs_albumid)
+                         media=media, original_year=original_year,
+                         data_source='Discogs', data_url=data_url,
+                         discogs_albumid=discogs_albumid,
+                         discogs_labelid=labelid, discogs_artistid=artist_id)
 
     def format(self, classification):
         if classification:
@@ -395,14 +395,28 @@ class DiscogsPlugin(BeetsPlugin):
         tracks = []
         index_tracks = {}
         index = 0
+        # Distinct works and intra-work divisions, as defined by index tracks.
+        divisions, next_divisions = [], []
         for track in clean_tracklist:
             # Only real tracks have `position`. Otherwise, it's an index track.
             if track['position']:
                 index += 1
-                track_info = self.get_track_info(track, index)
+                if next_divisions:
+                    # End of a block of index tracks: update the current
+                    # divisions.
+                    divisions += next_divisions
+                    del next_divisions[:]
+                track_info = self.get_track_info(track, index, divisions)
                 track_info.track_alt = track['position']
                 tracks.append(track_info)
             else:
+                next_divisions.append(track['title'])
+                # We expect new levels of division at the beginning of the
+                # tracklist (and possibly elsewhere).
+                try:
+                    divisions.pop()
+                except IndexError:
+                    pass
                 index_tracks[index + 1] = track['title']
 
         # Fix up medium and medium_index for each track. Discogs position is
@@ -537,20 +551,22 @@ class DiscogsPlugin(BeetsPlugin):
 
         return tracklist
 
-    def get_track_info(self, track, index):
+    def get_track_info(self, track, index, divisions):
         """Returns a TrackInfo object for a discogs track.
         """
         title = track['title']
+        if self.config['index_tracks']:
+            prefix = ', '.join(divisions)
+            title = ': '.join([prefix, title])
         track_id = None
         medium, medium_index, _ = self.get_track_index(track['position'])
         artist, artist_id = MetadataSourcePlugin.get_artist(
             track.get('artists', [])
         )
         length = self.get_track_length(track['duration'])
-        return TrackInfo(title, track_id, artist=artist, artist_id=artist_id,
-                         length=length, index=index,
-                         medium=medium, medium_index=medium_index,
-                         artist_sort=None, disctitle=None, artist_credit=None)
+        return TrackInfo(title=title, track_id=track_id, artist=artist,
+                         artist_id=artist_id, length=length, index=index,
+                         medium=medium, medium_index=medium_index)
 
     def get_track_index(self, position):
         """Returns the medium, medium index and subtrack index for a discogs

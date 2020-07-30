@@ -109,23 +109,34 @@ setup(
         ['colorama'] if (sys.platform == 'win32') else []
     ),
 
-    tests_require=[
-        'beautifulsoup4',
-        'flask',
-        'mock',
-        'pylast',
-        'rarfile',
-        'responses',
-        'pyxdg',
-        'python-mpd2',
-        'discogs-client'
-    ] + (
-        # Tests for the thumbnails plugin need pathlib on Python 2 too.
-        ['pathlib'] if (sys.version_info < (3, 4, 0)) else []
-    ),
-
-    # Plugin (optional) dependencies:
     extras_require={
+        'test': [
+            'beautifulsoup4',
+            'coverage',
+            'discogs-client',
+            'flask',
+            'mock',
+            'pylast',
+            'pytest',
+            'python-mpd2',
+            'pyxdg',
+            'rarfile',
+            'responses>=0.3.0',
+            'requests_oauthlib',
+        ] + (
+            # Tests for the thumbnails plugin need pathlib on Python 2 too.
+            ['pathlib'] if (sys.version_info < (3, 4, 0)) else []
+            ),
+        'lint': [
+            'flake8',
+            'flake8-blind-except',
+            'flake8-coding',
+            'flake8-docstrings',
+            'flake8-future-import',
+            'pep8-naming',
+        ],
+
+        # Plugin (optional) dependencies:
         'absubmit': ['requests'],
         'fetchart': ['requests', 'Pillow'],
         'embedart': ['Pillow'],
@@ -172,7 +183,6 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',

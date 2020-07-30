@@ -11,7 +11,7 @@ To use the ``fetchart`` plugin, first enable it in your configuration (see
 
 The plugin uses `requests`_ to fetch album art from the Web.
 
-.. _requests: https://docs.python-requests.org/en/latest/
+.. _requests: https://requests.readthedocs.io/en/master/
 
 Fetching Album Art During Import
 --------------------------------
@@ -42,6 +42,13 @@ file. The available options are:
 - **maxwidth**: A maximum image width to downscale fetched images if they are
   too big. The resize operation reduces image width to at most ``maxwidth``
   pixels. The height is recomputed so that the aspect ratio is preserved.
+- **quality**: The JPEG quality level to use when compressing images (when
+  ``maxwidth`` is set). This should be either a number from 1 to 100 or 0 to
+  use the default quality. 65–75 is usually a good starting point. The default
+  behavior depends on the imaging tool used for scaling: ImageMagick tries to
+  estimate the input image quality and uses 92 if it cannot be determined, and
+  PIL defaults to 75.
+  Default: 0 (disabled)
 - **enforce_ratio**: Only images with a width:height ratio of 1:1 are
   considered as valid album art candidates if set to ``yes``.
   It is also possible to specify a certain deviation to the exact ratio to
@@ -51,9 +58,9 @@ file. The available options are:
 - **sources**: List of sources to search for images. An asterisk `*` expands
   to all available sources.
   Default: ``filesystem coverart itunes amazon albumart``, i.e., everything but
-  ``wikipedia``, ``google`` and ``fanarttv``. Enable those sources for more
-  matches at the cost of some speed. They are searched in the given order,
-  thus in the default config, no remote (Web) art source are queried if
+  ``wikipedia``, ``google``, ``fanarttv`` and ``lastfm``. Enable those sources
+  for more matches at the cost of some speed. They are searched in the given
+  order, thus in the default config, no remote (Web) art source are queried if
   local art is found in the filesystem. To use a local image as fallback,
   move it to the end of the list. For even more fine-grained control over
   the search order, see the section on :ref:`album-art-sources` below.
@@ -64,8 +71,13 @@ file. The available options are:
   Default: The `beets custom search engine`_, which searches the entire web.
 - **fanarttv_key**: The personal API key for requesting art from
   fanart.tv. See below.
+- **lastfm_key**: The personal API key for requesting art from Last.fm. See
+  below.
 - **store_source**: If enabled, fetchart stores the artwork's source in a
   flexible tag named ``art_source``. See below for the rationale behind this.
+  Default: ``no``.
+- **high_resolution**: If enabled, fetchart retrieves artwork in the highest
+  resolution it can find (warning: image files can sometimes reach >20MB).
   Default: ``no``.
 
 Note: ``maxwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
@@ -114,8 +126,9 @@ art::
 
     $ beet fetchart [-q] [query]
 
-By default the command will display all results, the ``-q`` or ``--quiet``
-switch will only display results for album arts that are still missing.
+By default the command will display all albums matching the ``query``. When the
+``-q`` or ``--quiet`` switch is given, only albums for which artwork has been
+fetched, or for which artwork could not be found will be printed.
 
 .. _image-resizing:
 
@@ -210,6 +223,15 @@ More detailed information can be found `on their blog`_. Specifically, the
 personal key will give you earlier access to new art.
 
 .. _on their blog: https://fanart.tv/2015/01/personal-api-keys/
+
+Last.fm
+'''''''
+
+To use the Last.fm backend, you need to `register for a Last.fm API key`_. Set
+the ``lastfm_key`` configuration option to your API key, then add ``lastfm`` to
+the list of sources in your configutation.
+
+.. _register for a Last.fm API key: https://www.last.fm/api/account/create
 
 Storing the Artwork's Source
 ----------------------------

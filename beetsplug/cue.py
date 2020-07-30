@@ -24,7 +24,7 @@ class CuePlugin(BeetsPlugin):
 
         # self.register_listener('import_task_start', self.look_for_cues)
 
-    def candidates(self, items, artist, album, va_likely):
+    def candidates(self, items, artist, album, va_likely, extra_tags=None):
         import pdb
         pdb.set_trace()
 
@@ -53,5 +53,6 @@ class CuePlugin(BeetsPlugin):
             title = "dunno lol"
             track_id = "wtf"
             index = int(path.basename(t)[len("split-track"):-len(".wav")])
-            yield TrackInfo(title, track_id, index=index, artist=artist)
+            yield TrackInfo(title=title, track_id=track_id, index=index,
+                            artist=artist)
         # generate TrackInfo instances
