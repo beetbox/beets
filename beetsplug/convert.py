@@ -149,6 +149,7 @@ class ConvertPlugin(BeetsPlugin):
             u'never_convert_lossy_files': False,
             u'copy_album_art': False,
             u'album_art_maxwidth': 0,
+            u'delete_originals': False,
         })
         self.early_import_stages = [self.auto_convert]
 
@@ -539,8 +540,7 @@ class ConvertPlugin(BeetsPlugin):
             item.read()  # Load new audio information data.
             item.store()
 
-            # If we would normally move files, let's delete the source.
-            if config['import']['move']:
+            if self.config['delete_originals']:
                 util.remove(syspath(source_path), False)
 
     def _cleanup(self, task, session):
