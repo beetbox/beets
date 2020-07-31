@@ -689,7 +689,7 @@ to one request per second.
 .. _your own MusicBrainz database: https://musicbrainz.org/doc/MusicBrainz_Server/Setup
 .. _main server: https://musicbrainz.org/
 .. _limited: https://musicbrainz.org/doc/XML_Web_Service/Rate_Limiting
-.. _Building search indexes: https://musicbrainz.org/doc/MusicBrainz_Server/Setup#Building_search_indexes
+.. _Building search indexes: https://musicbrainz.org/doc/Development/Search_server_setup
 
 .. _searchlimit:
 

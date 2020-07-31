@@ -26,7 +26,7 @@ already have them. The lyrics will be stored in the beets database. If the
 ``import.write`` config option is on, then the lyrics will also be written to
 the files' tags.
 
-.. _requests: https://docs.python-requests.org/en/latest/
+.. _requests: https://requests.readthedocs.io/en/master/
 
 
 Configuration
@@ -180,8 +180,7 @@ You also need to register for a Microsoft Azure Marketplace free account and
 to the `Microsoft Translator API`_. Follow the four steps process, specifically
 at step 3 enter ``beets`` as *Client ID* and copy/paste the generated
 *Client secret* into your ``bing_client_secret`` configuration, alongside
-``bing_lang_to`` target `language code`_.
+``bing_lang_to`` target `language code`.
 
 .. _langdetect: https://pypi.python.org/pypi/langdetect
-.. _Microsoft Translator API: https://www.microsoft.com/en-us/translator/getstarted.aspx
-.. _language code: https://msdn.microsoft.com/en-us/library/hh456380.aspx
+.. _Microsoft Translator API: https://docs.microsoft.com/en-us/azure/cognitive-services/translator/translator-how-to-signup

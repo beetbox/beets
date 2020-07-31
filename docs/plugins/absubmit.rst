@@ -62,6 +62,6 @@ file. The available options are:
 .. _streaming_extractor_music: https://acousticbrainz.org/download
 .. _FAQ: https://acousticbrainz.org/faq
 .. _pip: https://pip.pypa.io
-.. _requests: https://docs.python-requests.org/en/master/
+.. _requests: https://requests.readthedocs.io/en/master/
 .. _github: https://github.com/MTG/essentia
 .. _AcousticBrainz: https://acousticbrainz.org

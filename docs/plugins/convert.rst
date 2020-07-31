@@ -189,7 +189,7 @@ can use the :doc:`/plugins/replaygain` to do this analysis. See the LAME
 `documentation`_ and the `HydrogenAudio wiki`_ for other LAME configuration
 options and a thorough discussion of MP3 encoding.
 
-.. _documentation: http://lame.sourceforge.net/using.php
+.. _documentation: https://lame.sourceforge.io/index.php
 .. _HydrogenAudio wiki: https://wiki.hydrogenaud.io/index.php?title=LAME
 .. _gapless: https://wiki.hydrogenaud.io/index.php?title=Gapless_playback
-.. _LAME: https://lame.sourceforge.net/
+.. _LAME: https://lame.sourceforge.io/index.php
