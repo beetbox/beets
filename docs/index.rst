@@ -33,6 +33,7 @@ Contents
    plugins/index
    faq
    contributing
+   team_members
    dev/index
 
 .. toctree::
