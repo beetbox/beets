@@ -12,15 +12,14 @@ Then you can get a more detailed look at beets' features in the
 :doc:`/reference/cli/` and :doc:`/reference/config` references. You might also
 be interested in exploring the :doc:`plugins </plugins/index>`.
 
-If you still need help, your can drop by the ``#beets`` IRC channel on
-Freenode, drop by `the discussion board`_, send email to `the mailing list`_,
-or `file a bug`_ in the issue tracker. Please let us know where you think this
-documentation can be improved.
+If you still need help, you can see `how to best contact the team in the README`_
+Also, please let us know where you think this documentation can be improved.
 
 .. _beets: https://beets.io/
 .. _the mailing list: https://groups.google.com/group/beets-users
 .. _file a bug: https://github.com/beetbox/beets/issues
 .. _the discussion board: https://discourse.beets.io
+.. _how to best contact the team in the README: https://github.com/beetbox/beets#contact
 
 Contents
 --------
