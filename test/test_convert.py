@@ -15,6 +15,7 @@
 
 from __future__ import division, absolute_import, print_function
 
+import fnmatch
 import sys
 import re
 import os.path
@@ -120,6 +121,15 @@ class ImportConvertTest(unittest.TestCase, TestHelper):
         item = self.lib.items().get()
         self.assertIsNotNone(item)
         self.assertTrue(os.path.isfile(item.path))
+
+    def test_delete_originals(self):
+        self.config['convert']['delete_originals'] = True
+        self.importer.run()
+        for path in self.importer.paths:
+            for root, dirnames, filenames in os.walk(path):
+                self.assertTrue(len(fnmatch.filter(filenames, '*.mp3')) == 0,
+                                u'Non-empty import directory {0}'
+                                .format(util.displayable_path(path)))
 
 
 class ConvertCommand(object):

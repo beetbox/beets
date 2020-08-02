@@ -30,7 +30,6 @@ from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
 from confuse import ConfigTypeError
 from beets import art
-from beets.util import syspath
 from beets.util.artresizer import ArtResizer
 from beets.library import parse_query_string
 from beets.library import Item
@@ -541,7 +540,8 @@ class ConvertPlugin(BeetsPlugin):
             item.store()
 
             if self.config['delete_originals']:
-                util.remove(syspath(source_path), False)
+                self._log.info(u'Removing original file {0}', source_path)
+                util.remove(source_path, False)
 
     def _cleanup(self, task, session):
         for path in task.old_paths:
