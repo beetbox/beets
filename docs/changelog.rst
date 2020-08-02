@@ -145,6 +145,9 @@ New features:
 
 Fixes:
 
+* :doc:`/plugins/the`: Fixed incorrect regex for 'the' that matched any
+  3-letter combination of the letters t, h, e.
+  :bug:`3701`
 * :doc:`/plugins/fetchart`: Fixed a bug that caused fetchart to not take
   environment variables such as proxy servers into account when making requests
   :bug:`3450`

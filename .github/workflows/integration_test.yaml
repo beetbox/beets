@@ -1,5 +1,6 @@
 name: integration tests
 on:
+  workflow_dispatch:
   schedule:
     - cron: '0 0 * * SUN'  # run every Sunday at midnight
 jobs:
@@ -29,3 +30,20 @@ jobs:
       - name: Check external links in docs
         run: |
           tox -e links
+
+      - name: Notify on failure
+        if: ${{ failure() }}
+        env:
+          ZULIP_BOT_CREDENTIALS: ${{ secrets.ZULIP_BOT_CREDENTIALS }}
+        run: |
+          if [ -z "${ZULIP_BOT_CREDENTIALS}" ]; then
+            echo "Skipping notify, ZULIP_BOT_CREDENTIALS is unset"
+            exit 0
+          fi
+
+          curl -X POST https://beets.zulipchat.com/api/v1/messages \
+            -u "${ZULIP_BOT_CREDENTIALS}" \
+            -d "type=stream" \
+            -d "to=github" \
+            -d "subject=${GITHUB_WORKFLOW} - $(date -u +%Y-%m-%d)" \
+            -d "content=[${GITHUB_WORKFLOW}#${GITHUB_RUN_NUMBER}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}) failed."
