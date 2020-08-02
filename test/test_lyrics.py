@@ -330,7 +330,12 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
         """Test default backends with songs known to exist in respective databases.
         """
         errors = []
-        for s in self.DEFAULT_SOURCES:
+        # GitHub actions seems to be on a Cloudflare blacklist, so we can't
+        # contact genius.
+        sources = [s for s in self.DEFAULT_SOURCES if
+                   s['backend'] != lyrics.Genius or
+                   os.environ.get('GITHUB_ACTIONS') != 'true']
+        for s in sources:
             res = s['backend'](self.plugin.config, self.plugin._log).fetch(
                 s['artist'], s['title'])
             if not is_lyrics_content_ok(s['title'], res):
