@@ -22,7 +22,7 @@ install:
     # TODO: remove --allow-empty-checksums when unrar offers a proper checksum
     - appveyor-retry cinst unrar -y --allow-empty-checksums
     - 'appveyor-retry %PYTHON%/python.exe pip install --upgrade pip'
-    - 'appveyor-retry %PYTHON%/Scripts/pip.exe install --upgrade "tox<=3.8.1"'
+    - 'appveyor-retry %PYTHON%/Scripts/pip.exe install "tox<=3.8.1"'
     - "appveyor-retry %PYTHON%/Scripts/tox.exe -e %TOX_ENV% --notest"
 
 test_script:
