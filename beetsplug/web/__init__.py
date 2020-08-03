@@ -21,6 +21,7 @@ from beets import ui
 from beets import util
 import beets.library
 import flask
+from flask import Flask
 from flask import g
 from werkzeug.routing import BaseConverter, PathConverter
 import os
@@ -190,7 +191,7 @@ class EverythingConverter(PathConverter):
 
 # Flask setup.
 
-app = flask.Flask(__name__)
+app = Flask(__name__)
 app.url_map.converters['idlist'] = IdListConverter
 app.url_map.converters['query'] = QueryConverter
 app.url_map.converters['everything'] = EverythingConverter
