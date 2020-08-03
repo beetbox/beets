@@ -1,0 +1,161 @@
+[tool.poetry]
+name = 'beets'
+version = '1.5.0'
+description = 'music tagger and library organizer'
+license = 'MIT'
+authors = ['Adrian Sampson <adrian@radbox.org>']
+readme = 'README.rst'
+homepage = 'https://beets.io/'
+repository = 'https://github.com/beetbox/beets'
+documentation = 'https://beets.readthedocs.io/en/stable/'
+classifiers = [
+    'Topic :: Multimedia :: Sound/Audio',
+    'Topic :: Multimedia :: Sound/Audio :: Players :: MP3',
+    'License :: OSI Approved :: MIT License',
+    'Environment :: Console',
+    'Environment :: Web Environment',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 2',
+    'Programming Language :: Python :: 2.7',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.5',
+    'Programming Language :: Python :: 3.6',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: Implementation :: CPython',
+]
+
+[tool.poetry.scripts]
+beet = 'beet.ui:main'
+
+[tool.poetry.dependencies]
+python = '~2.7 || ^3.4'
+six = '^1.9'
+unidecode = '^1'
+musicbrainzngs = '>0.4.0'
+pyyaml = '^5'
+mediafile = '^0.2'
+confuse = '^1'
+munkres = [
+    { version = '~1.0', python = '<3.5' },
+    { version = '^1.1.2', python = '3.5' },
+    { version = '^1', python = '>3.5' },
+]
+enum34 = [
+    { version = '^1.0.4', python = '<3.4' },
+]
+jellyfish = [
+    { version = '0.6.0', python = '<3.4' },
+    { version = '^0', python = '^3.5' },
+]
+colorama = [
+    { version = '^0', platform = 'win32' },
+]
+
+# optional plugin dependencies
+beautifulsoup4 = { version = '^4', optional = true }
+dbus-python = { version = '^1', optional = true }
+discogs-client = { version = '^2.2.1', optional = true }
+Flask = { version = '^1', optional = true }
+Flask-cors = { version = '^3', optional = true }
+gmusicapi = { version = '^12', optional = true }
+langdetect = { version = '^1', optional = true }
+mutagen = { version = '^1.33', optional = true }
+Pillow = [
+    { version = '^7', python = '^3.5', optional = true },
+    { version = '^6', python = '2.7', optional = true },
+    { version = '^5', python = '3.4', optional = true },
+]
+requests = { version = '^2', optional = true }
+requests-oauthlib = { version = '^0.6.1', optional = true }
+pathlib = [
+    { version = '^1', python = '<3.4', optional = true }
+]
+pyacoustid = { version = '^1', optional = true }
+PyGObject = { version = '^3', optional = true }
+pylast = [
+    { version = '^3', python = '^3.5', optional = true },
+    { version = '^2', python = '<3.5', optional = true },
+]
+python-mpd2 = { version = '^0.4.2', optional = true }
+pyxdg = { version = '^0', optional = true }
+rarfile = [
+    { version = '<3.2', python = '2.7', optional = true },
+    { version = '<5', python = '^3.6', optional = true },
+]
+soco = { version = '^0', optional = true }
+
+# docs dependencies
+sphinx = [
+    { version = '^3', python='^3.5', optional = true },
+    { version = '^1', python='<3.5', optional = true },
+]
+
+# dev (test & lint) dependencies
+coverage = [
+    { version = '^5', python = '2.7', optional = true },
+    { version = '^5', python = '^3.5', optional = true },
+    { version = '^4', python = '3.4', optional = true },
+]
+flake8 = { version = '^3', optional = true }
+flake8-blind-except = { version = '^0', optional = true }
+flake8-coding = { version = '^1', optional = true }
+flake8-docstrings = { version = '^1', optional = true }
+mock = [
+    { version = '^4', python = '^3.6', optional = true },
+    { version = '^3', python = '<3.6', optional = true },
+]
+pep8-naming = { version = '^0', optional = true }
+pytest = [
+    { version = '^6', python = '^3.5', optional = true },
+    { version = '^4', python = '<3.5', optional = true },
+]
+pytest-mock = [
+    { version = '^3', python = '^3.5', optional = true },
+    { version = '^2', python = '<3.5', optional = true },
+]
+responses = { version = '^0.10.15', optional = true }
+
+[tool.poetry.extras]
+# plugin extras
+absubmit = ['requests']
+beatport = ['requests-oauthlib']
+bpd = ['PyGObject']
+chroma = ['pyacoustid']
+discogs = ['discogs-client']
+embedart = ['Pillow']
+embyupdate = ['requests']
+fetchart = ['Pillow', 'requests']
+gmusic = ['gmusicapi']
+import = ['rarfile']
+kodiupdate = ['requests']
+lastgenre = ['pylast']
+lastimport = ['pylast']
+lyrics = ['beautifulsoup4', 'langdetect', 'requests']
+metasync = ['dbus-python']
+mpdstats = ['python-mpd2']
+plexupdate = ['requests']
+replaygain = ['PyGObject']
+scrub = ['mutagen']
+sonosupdate = ['soco']
+thumbnails = ['pathlib', 'pyxdg', 'Pillow']
+web = ['Flask', 'Flask-cors']
+
+dev = [
+    'coverage',
+    'flake8',
+    'flake8-blind-except',
+    'flake8-coding',
+    'flake8-docstrings',
+    'mock',
+    'pep8-naming',
+    'pytest',
+    'pytest-mock',
+    'responses',
+]
+
+docs = ['sphinx']
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
