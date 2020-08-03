@@ -59,6 +59,9 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install tox sphinx
 
+      - name: Add problem matcher
+        run: echo "::add-matcher::.github/sphinx-problem-matcher.json"
+
       - name: Build and check docs using tox
         run: tox -e docs
 
