@@ -18,6 +18,7 @@ Configuration
 -------------
 
 As a bare minimum, this plugin requires configuration for `OAuth authorisation`_ to access your Twitter account::
+
     tweet:
           api_key: YOUR_TWITTER_API_KEY
           api_secret_key: YOUR_TWITTER_API_SECRET_KEY
@@ -36,9 +37,11 @@ Usage
 -------------
 
 To tweet information about an album use::
+  
   $ beet tweet [query]
 
 For example::
+
   $ beet tweet yves tumor
   tweet: About to Tweet: Yves Tumor - Safe in the Hands of Love (2018)
   tweet: Does this look correct?
