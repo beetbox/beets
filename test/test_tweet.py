@@ -13,6 +13,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+"""Tests for the tweet plugin, including image resizing based on filesize."""
+
 from __future__ import division, absolute_import, print_function
 
 
@@ -28,28 +30,29 @@ from beetsplug.tweet import TweetPlugin
 
 
 class TweetTest(_common.TestCase, TestHelper):
+    """Unittest test case for tweet plugin inheriting from beets helpers."""
+
     IMG_225x225 = os.path.join(_common.RSRC, b"abbey.jpg")
     IMG_225x225_SIZE = os.stat(IMG_225x225).st_size
     LOWER_MAX_FILESIZE = 5e3
-    # IMG_348x348 = os.path.join(_common.RSRC, b'abbey-different.jpg')
-    # IMG_500x490 = os.path.join(_common.RSRC, b'abbey-similar.jpg')
 
     def setUp(self):
+        """Called before each test, loading TweetPlugin."""
         self.setup_beets()
         self.config["tweet"]["api_key"] = "ApIkey0"
         self.config["tweet"]["api_secret_key"] = "ApISecretkey0"
         self.config["tweet"]["access_token"] = "aCesst0ken"
         self.config["tweet"]["access_token_secret"] = "aCesst0kenSecret"
         self.load_plugins("tweet")
-        # Patch import of Twitter library
         self.plugin = TweetPlugin()
 
     def tearDown(self):
+        """Called after each test, unloading all plugins."""
         self.unload_plugins()
         self.teardown_beets()
 
     def _test_img_resize(self, resize_func):
-        """Wrapper function to """
+        """Wrapper function to test resizing based on file size."""
         # Check "lower maximum filesize" is truly lower than original filesize
         self.assertLess(self.LOWER_MAX_FILESIZE, self.IMG_225x225_SIZE)
 
@@ -79,7 +82,6 @@ class TweetTest(_common.TestCase, TestHelper):
 
     def test_resize_not_called(self):
         """Check resize function is only called when required."""
-
         with patch.object(ArtResizer.shared, "resize") as mock_resize:
             a = self.add_album()
             a["artpath"] = self.IMG_225x225
@@ -92,6 +94,7 @@ class TweetTest(_common.TestCase, TestHelper):
             self.assertFalse(mock_resize.called)
 
     def test_status_creation(self):
+        """Check the mechanics of filling templates from album metadata."""
         self.config["tweet"]["upload_album_art"] = False
         self.config["tweet"]["cautious"] = False
         a = self.add_album(
@@ -106,6 +109,7 @@ class TweetTest(_common.TestCase, TestHelper):
 
 
 def suite():
+    """Run this suite of tests."""
     return unittest.TestLoader().loadTestsFromName(__name__)
 
 

@@ -79,7 +79,7 @@ setup(
         "beetsplug.lastgenre",
         "beetsplug.metasync",
     ],
-    entry_points={"console_scripts": ["beet = beets.ui:main",],},
+    entry_points={"console_scripts": ["beet = beets.ui:main", ], },
     install_requires=[
         "six>=1.9",
         "unidecode",
@@ -153,7 +153,7 @@ setup(
             if (sys.version_info < (3, 4, 0))
             else []
         )
-        + ["rarfile<4" if sys.version_info < (3, 6, 0) else "rarfile",],
+        + ["rarfile<4" if sys.version_info < (3, 6, 0) else "rarfile", ],
         "lint": [
             "flake8",
             "flake8-blind-except",

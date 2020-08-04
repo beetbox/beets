@@ -32,6 +32,10 @@ class TweetPlugin(BeetsPlugin):
     """A Plugin to post info from the library to a Twitter account."""
 
     def __init__(self):
+        """Initialize BeetsPlugin.
+
+        Construct Twitter & OAuth Objects and populate default config.
+        """
         super(TweetPlugin, self).__init__()
         # Set all API keys to redacted
         self.config["api_key"].redact = True
@@ -53,9 +57,10 @@ class TweetPlugin(BeetsPlugin):
         self.t_upload = Twitter(domain="upload.twitter.com", auth=self.auth)
 
     def commands(self):
+        """Add the `tweet` command to the UI."""
         cmd = ui.Subcommand(
             "tweet",
-            help=u"Tweet the artist, album and coverart from the library.",
+            help=u"Tweet the result of an album query from the library.",
         )
 
         def func(lib, opts, args):
