@@ -89,3 +89,6 @@ ENV/
 /.pydevproject
 /.settings
 .vscode
+
+# poetry
+poetry.lock
