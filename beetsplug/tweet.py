@@ -18,7 +18,27 @@ Tweet the Album, Artist and Coverart of an album in the library.
 
 Relies on:
 twitter : https://pypi.org/project/twitter/
-fetchart : [Beets Plugin] for the .artpath field, if album art upload is desired (default=True).
+fetchart : [Beets Plugin] for the .artpath field
+
+Configuration:
+    tweet:
+            # Login details for your Twitter account
+            api_key: YOUR_TWITTER_API_KEY
+            api_secret_key: YOUR_TWITTER_API_SECRET_KEY
+            access_token: YOUR_TWITTER_ACCESS_TOKEN
+            access_token_secret: YOUR_TWITTER_ACCESS_TOKEN_SECRET
+
+            # Default behaviours
+
+            # The template for each tweet
+            template: $albumartist - $album ($year)
+
+            # Whether to upload album art
+            upload_album_art: True
+
+            # Ask for confirmation before tweeting?
+            cautious: True
+
 """
 from beets.plugins import BeetsPlugin
 from beets import ui
@@ -47,115 +67,85 @@ class BeetTweet(BeetsPlugin):
         # Template for tweets using beets names (if unspecified in config file)
         self.config.add({"template": "$albumartist - $album ($year)"})
         self.config.add({"upload_album_art": True})
+        self.config.add({"cautious": True})
         self.t = Twitter(auth=self.auth)
         self.t_upload = Twitter(domain="upload.twitter.com", auth=self.auth)
 
     def commands(self):
         cmd = ui.Subcommand(
-            "tweet", help=u"Tweet the artist, album and coverart from the library."
-        )
-
-        cmd.parser.add_option(
-            u"-p",
-            u"--pretend",
-            dest="pretend",
-            action="store_true",
-            default=False,
-            help=u"pretend to tweet",
+            "tweet",
+            help=u"Tweet the artist, album and coverart from the library.",
         )
 
         def func(lib, opts, args):
-            self.tweet(lib, lib.albums(ui.decargs(args)), opts.pretend)
+            self.tweet(lib, lib.albums(ui.decargs(args)))
 
         cmd.func = func
         return [cmd]
 
-    def _album_art_resizer(self, album, quality=70, attempts=3):
-        """
-        Resize album art to be below 5MB for upload to Twitter.
-        Ideally would use ImageMagick option of jpeg:extent=5MB,
-        however to preserve compatibility with PIL, ArtResizer is used.
-        We attempt 75% resolution, jpeg quality = 70%, up to 3 times.
-        """
-        imgdata = None
-        orig_dim = ArtResizer.shared.get_size(album.artpath)
-        dim_0 = orig_dim[0]
-        for i in range(attempts):
-
-            dim_0 = round(dim_0 * 0.75)
-            smaller_path = ArtResizer.shared.resize(
-                dim_0, album.artpath, quality=quality
-            )
-            smaller_size = os.stat(smaller_path).st_size
-            self._log.debug(
-                u"Resize attempt {0}, Output Size: {1}MB ",
-                i,
-                round(smaller_size / 1e6, 2),
-            )
-            if smaller_size < 5e6:
-                with open(smaller_path, "rb") as imgfile:
-                    imgdata = imgfile.read()
-                return imgdata
-        if smaller_size > 5e6:
-            self._log.info(u"Failed to resize Album Art after {0} attempts.", attempts)
-            return None
-        return imgdata
-
-    def _upload_album_art(self, album, pretend):
-        """Upload album art to Twitter if available, resizing to be below 5MB limit"""
+    def _get_album_art_data(self, album):
+        """Upload album art to Twitter if available,
+        resizing to be below 5MB limit"""
         if album.artpath:
-            self._log.info(u"Uploading album art for {0}", album)
+            self._log.debug(u"Getting album art for {0}", album)
             imgdata = None
             if os.stat(album.artpath).st_size > 5e6:
-                self._log.info(u"Album Art too large for upload (5MB) - Resizing")
-                if not pretend:
-                    imgdata = self._album_art_resizer(album)
-            elif not pretend:
-                with open(album.artpath, "rb") as imgfile:
-                    imgdata = imgfile.read()
-
-            if imgdata:
-                img = self.t_upload.media.upload(media=imgdata)
-                # ToDo check uploaded correctly
-                return img["media_id_string"]
+                self._log.debug(
+                    u"Album Art too large for upload (5MB) - Resizing"
+                )
+                orig_dim = ArtResizer.shared.get_size(album.artpath)
+                art_path = ArtResizer.shared.resize(
+                    orig_dim[0], album.artpath, max_filesize=5e6
+                )
             else:
-                return None
+                art_path = album.artpath
+
+            with open(art_path, "rb") as imgfile:
+                imgdata = imgfile.read()
+
+            return imgdata
 
         else:
             self._log.info(u"Album Art Not Found")
             return None
 
-    def _send_tweet(self, album, pretend):
+    def _twitter_upload(self, filled_template, imagedata=None):
+        """Upload album art (if given) and final tweet to twitter"""
+        if imagedata:
+            img_id = self.t_upload.media.upload(media=imagedata)[
+                "media_id_string"
+            ]
+            self.t.statuses.update(status=filled_template, media_ids=img_id)
+        else:
+            self.t.statuses.update(status=filled_template)
+
+    def _send_tweet(self, album):
         """Command to construct and send a tweet for a single album."""
         status = album.evaluate_template(self.config["template"].get(), False)
+        imagedata = None
         if self.config["upload_album_art"].get():
-            # Try to upload album art:
-            img_id = self._upload_album_art(album, pretend)
-
-            if img_id and not pretend:
-                self._log.info(u"Tweeting: {0}", status)
-                self.t.statuses.update(status=status, media_ids=img_id)
-            elif not img_id and not pretend:
+            imagedata = self._get_album_art_data(album)
+            if not imagedata:
                 self._log.info(u"Error with Album Art Upload")
-            elif pretend:
-                # Pretend case will produce a failed img_id, thus cannot check for errors
-                self._log.info(
-                    u"Tweeting: {0} [If no errors in album art upload] ", status
-                )
+                return
 
-        elif not pretend:
-            # Real case but with no album art
-            self._log.info(u"Tweeting: {0}", status)
-            self.t.statuses.update(status=status)
+        self._log.info(u"About to Tweet: {0}", status)
+        # If "cautious" flag set in config, ask before tweeting
+        if self.config["cautious"].get():
+            self._log.info(u"Does this look correct?")
+            sel = ui.input_options((u"yes", u"no"))
+            if sel == u"y":
+                self._twitter_upload(status, imagedata)
+                return
+            else:
+                return
         else:
-            # Pretend case
-            self._log.info(u"Tweeting: {0}", status)
+            self._twitter_upload(status, imagedata)
+            return
 
-    def tweet(self, lib, albums, pretend):
+    def tweet(self, lib, albums):
         """Tweet information about the specified album."""
-        if pretend:
-            self._log.info(u"Pretend Mode - no requests made to Twitter")
         for album in albums:
-            self._send_tweet(album, pretend)
+            self._send_tweet(album)
 
         return
