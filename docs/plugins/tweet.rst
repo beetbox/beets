@@ -27,7 +27,7 @@ As a bare minimum, this plugin requires configuration for `OAuth authorisation`_
 Additionally, you can configure the plugin's behaviour:
 
 - **template**: The template used for each tweet, accepting any of the
-  beets library identifiers. Default: ``$albumartist - $album ($year)``.
+  beets library identifiers. Default: ``"$albumartist - $album ($year)"``.
 - **upload_album_art**: Whether the album art of the query should be
   uploaded to Twitter and attached to the tweet. Default: ``yes``.
 - **cautious**: Ask for confirmation before tweeting. Default: ``yes``.

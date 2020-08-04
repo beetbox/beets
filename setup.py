@@ -115,6 +115,7 @@ setup(
         else []
     ),
     extras_require={
+<<<<<<< HEAD
         'test': [
             'beautifulsoup4',
             'coverage',
@@ -129,6 +130,24 @@ setup(
             'requests_oauthlib',
             'reflink',
         ] + (
+=======
+        "test": [
+            "beautifulsoup4",
+            "coverage",
+            "discogs-client",
+            "flask",
+            "mock",
+            "pylast",
+            "pytest",
+            "python-mpd2",
+            "pyxdg",
+            "responses>=0.3.0",
+            "requests_oauthlib",
+            "twitter",
+            "Pillow",
+        ]
+        + (
+>>>>>>> f53bcb50 (Added explicit tests for PIL & Imagemagick Methods)
             # Tests for the thumbnails plugin need pathlib on Python 2 too.
             ["pathlib"]
             if (sys.version_info < (3, 4, 0))

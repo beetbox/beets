@@ -98,6 +98,7 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
             for i in range(3):
                 # 3 attempts is an abitrary choice
                 filesize = os.stat(path_out).st_size
+                log.debug(u"PIL Pass {0} : Output size: {1}B", i, filesize)
                 if filesize <= max_filesize:
                     return path_out
                 # Calculate percentage decrease required. This is approximate,
@@ -105,13 +106,15 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
                 frac_diff = 1 - ((filesize - max_filesize) / max_filesize)
                 assert frac_diff < 1
                 lower_qual = lower_qual * frac_diff
+                # Restrict quality dropping below 10
+                if lower_qual < 10:
+                    lower_qual = 10
                 # Use optimize flag to improve filesize decrease
                 im.save(
                     util.py3_path(path_out), quality=lower_qual, optimize=True
                 )
-            raise IOError(
-                "PIL Failed to resize file to below {0}B".format(max_filesize)
-            )
+            log.error(u"PIL Failed to resize file to below {0}B", max_filesize)
+            raise IOError
 
         else:
             return path_out

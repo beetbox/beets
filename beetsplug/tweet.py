@@ -17,26 +17,7 @@
 
 Relies on:
 twitter : https://pypi.org/project/twitter/
-fetchart : [Beets Plugin] for the .artpath field
-
-Configuration:
-    tweet:
-            # Login details for your Twitter account
-            api_key: YOUR_TWITTER_API_KEY
-            api_secret_key: YOUR_TWITTER_API_SECRET_KEY
-            access_token: YOUR_TWITTER_ACCESS_TOKEN
-            access_token_secret: YOUR_TWITTER_ACCESS_TOKEN_SECRET
-
-            # Default behaviours
-
-            # The template for each tweet
-            template: $albumartist - $album ($year)
-
-            # Whether to upload album art
-            upload_album_art: True
-
-            # Ask for confirmation before tweeting?
-            cautious: True
+fetchart : [Beets Plugin] to populate the .artpath field
 
 """
 from __future__ import division, absolute_import, print_function
@@ -47,11 +28,11 @@ from twitter import OAuth, Twitter
 import os
 
 
-class BeetTweet(BeetsPlugin):
+class TweetPlugin(BeetsPlugin):
     """A Plugin to post info from the library to a Twitter account."""
 
     def __init__(self):
-        super(BeetTweet, self).__init__()
+        super(TweetPlugin, self).__init__()
         # Set all API keys to redacted
         self.config["api_key"].redact = True
         self.config["api_secret_key"].redact = True
@@ -119,7 +100,7 @@ class BeetTweet(BeetsPlugin):
             self.t.statuses.update(status=filled_template)
 
     def _send_tweet(self, album):
-        """Command to construct and send a tweet for a single album."""
+        """Function to construct and send a tweet for a single album."""
         status = album.evaluate_template(self.config["template"].get(), False)
         imagedata = None
         if self.config["upload_album_art"].get():
@@ -146,5 +127,4 @@ class BeetTweet(BeetsPlugin):
         """Tweet information about the specified album."""
         for album in albums:
             self._send_tweet(album)
-
         return
