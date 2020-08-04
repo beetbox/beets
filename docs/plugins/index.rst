@@ -121,6 +121,7 @@ following to your configuration::
    the
    thumbnails
    types
+   tweet
    unimported
    web
    zero
@@ -163,7 +164,7 @@ Metadata
 * :doc:`metasync`: Fetch metadata from local or remote sources
 * :doc:`mpdstats`: Connect to `MPD`_ and update the beets library with play
   statistics (last_played, play_count, skip_count, rating).
-* :doc:`parentwork`: Fetch work titles and works they are part of. 
+* :doc:`parentwork`: Fetch work titles and works they are part of.
 * :doc:`replaygain`: Calculate volume normalization for players that support it.
 * :doc:`scrub`: Clean extraneous metadata from music files.
 * :doc:`zero`: Nullify fields by pattern or unconditionally.
@@ -235,6 +236,7 @@ Miscellaneous
 * `mstream`_: A music streaming server + webapp that can be used alongside beets.
 * :doc:`random`: Randomly choose albums and tracks from your library.
 * :doc:`spotify`: Create Spotify playlists from the Beets library.
+* :doc:`tweet`: Tweet the output of an album query.
 * :doc:`types`: Declare types for flexible attributes.
 * :doc:`web`: An experimental Web-based GUI for beets.
 
