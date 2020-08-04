@@ -13,8 +13,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""
-Tweet the Album, Artist and Coverart of an album in the library.
+"""Tweet the Album, Artist and Coverart of an album in the library.
 
 Relies on:
 twitter : https://pypi.org/project/twitter/
@@ -40,6 +39,7 @@ Configuration:
             cautious: True
 
 """
+from __future__ import division, absolute_import, print_function
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets.util.artresizer import ArtResizer
@@ -48,7 +48,7 @@ import os
 
 
 class BeetTweet(BeetsPlugin):
-    """A Plugin to post info from the library to a Twitter account"""
+    """A Plugin to post info from the library to a Twitter account."""
 
     def __init__(self):
         super(BeetTweet, self).__init__()
@@ -84,8 +84,7 @@ class BeetTweet(BeetsPlugin):
         return [cmd]
 
     def _get_album_art_data(self, album):
-        """Upload album art to Twitter if available,
-        resizing to be below 5MB limit"""
+        """Upload album art to Twitter if available, resizing if needed."""
         if album.artpath:
             self._log.debug(u"Getting album art for {0}", album)
             imgdata = None
@@ -110,7 +109,7 @@ class BeetTweet(BeetsPlugin):
             return None
 
     def _twitter_upload(self, filled_template, imagedata=None):
-        """Upload album art (if given) and final tweet to twitter"""
+        """Upload album art (if given) and final tweet to Twitter."""
         if imagedata:
             img_id = self.t_upload.media.upload(media=imagedata)[
                 "media_id_string"
