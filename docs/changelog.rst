@@ -142,6 +142,10 @@ New features:
 * :doc:`/plugins/thumbnails`: Fix a bug where pathlib expected a string instead
   of bytes for a path.
   :bug:`3360`
+* :doc:`/plugins/convert`: If ``delete_originals`` is enabled, then the source files will
+  be deleted after importing.
+  Thanks to :user:`logan-arens`.
+  :bug:`2947`
 
 Fixes:
 
