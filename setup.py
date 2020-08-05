@@ -79,7 +79,7 @@ setup(
         "beetsplug.lastgenre",
         "beetsplug.metasync",
     ],
-    entry_points={"console_scripts": ["beet = beets.ui:main", ], },
+    entry_points={"console_scripts": ["beet = beets.ui:main",],},
     install_requires=[
         "six>=1.9",
         "unidecode",
@@ -115,7 +115,6 @@ setup(
         else []
     ),
     extras_require={
-<<<<<<< HEAD
         'test': [
             'beautifulsoup4',
             'coverage',
@@ -130,30 +129,12 @@ setup(
             'requests_oauthlib',
             'reflink',
         ] + (
-=======
-        "test": [
-            "beautifulsoup4",
-            "coverage",
-            "discogs-client",
-            "flask",
-            "mock",
-            "pylast",
-            "pytest",
-            "python-mpd2",
-            "pyxdg",
-            "responses>=0.3.0",
-            "requests_oauthlib",
-            "twitter",
-            "Pillow",
-        ]
-        + (
->>>>>>> f53bcb50 (Added explicit tests for PIL & Imagemagick Methods)
             # Tests for the thumbnails plugin need pathlib on Python 2 too.
             ["pathlib"]
             if (sys.version_info < (3, 4, 0))
             else []
         )
-        + ["rarfile<4" if sys.version_info < (3, 6, 0) else "rarfile", ],
+        + ["rarfile<4" if sys.version_info < (3, 6, 0) else "rarfile",],
         "lint": [
             "flake8",
             "flake8-blind-except",
