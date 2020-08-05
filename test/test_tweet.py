@@ -24,7 +24,13 @@ from mock import patch
 
 from test import _common
 from test.helper import TestHelper
-from beets.util.artresizer import ArtResizer, pil_resize, im_resize
+from beets.util.artresizer import (
+    ArtResizer,
+    pil_resize,
+    im_resize,
+    get_im_version,
+    get_pil_version,
+)
 
 from beetsplug.tweet import TweetPlugin
 
@@ -74,11 +80,13 @@ class TweetTest(_common.TestCase, TestHelper):
 
     def test_pil_file_resize(self):
         """Test PIL resize function is lowering file size."""
-        self._test_img_resize(pil_resize)
+        if get_pil_version():
+            self._test_img_resize(pil_resize)
 
     def test_im_file_resize(self):
         """Test IM resize function is lowering file size."""
-        self._test_img_resize(im_resize)
+        if get_im_version():
+            self._test_img_resize(im_resize)
 
     def test_resize_not_called(self):
         """Check resize function is only called when required."""
