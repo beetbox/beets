@@ -6,7 +6,7 @@ jobs:
     strategy:
       matrix:
         platform: [ubuntu-latest]
-        python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
+        python-version: [2.7, 3.5, 3.6, 3.7, 3.8, 3.9-dev]
 
     env:
       PY_COLORS: 1
@@ -65,9 +65,6 @@ jobs:
   lint:
     runs-on: ubuntu-latest
 
-    env:
-      PY_COLORS: 1
-
     steps:
       - uses: actions/checkout@v2
 
@@ -80,6 +77,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install tox sphinx
+
+      - name: Add problem matcher
+        run: echo "::add-matcher::.github/flake8-problem-matcher.json"
 
       - name: Lint with flake8
         run: tox -e py-lint
