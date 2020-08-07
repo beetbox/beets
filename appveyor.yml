@@ -5,6 +5,14 @@ skip_commits:
     # add [appveyor skip] as an alias for [skip appveyor] (like [ci skip])
     message: /\[appveyor skip\]/
 
+artifacts:
+  - path: Beets-test.zip
+    name: Beets
+
+  - path: logs
+    name: test logs
+    type: zip
+
 environment:
     matrix:
         - PYTHON: C:\Python27
