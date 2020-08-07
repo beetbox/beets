@@ -6,11 +6,8 @@ skip_commits:
     message: /\[appveyor skip\]/
 
 artifacts:
-  - path: Beets-test.zip
-    name: Beets
-
-  - path: logs
-    name: test logs
+  - path: '**\*.log'
+    name: test-logs
     type: zip
 
 environment:
