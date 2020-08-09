@@ -117,9 +117,8 @@ class TweetPlugin(BeetsPlugin):
         self._log.info(u"About to Tweet: {0}", status)
         # If "cautious" flag set in config, ask before tweeting
         if self.config["cautious"].get():
-            self._log.info(u"Does this look correct?")
-            sel = ui.input_options((u"yes", u"no"))
-            if sel == u"y":
+            sel = ui.input_yn(u"Does this look correct?")
+            if sel:
                 self._twitter_upload(status, imagedata)
                 return
             else:
