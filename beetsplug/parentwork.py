@@ -129,6 +129,7 @@ class ParentWorkPlugin(BeetsPlugin):
         if 'artist-relation-list' in work_info['work']:
             for artist in work_info['work']['artist-relation-list']:
                 if artist['type'] == 'composer':
+                    composer_exists = True
                     parent_composer.append(artist['artist']['name'])
                     parent_composer_sort.append(artist['artist']['sort-name'])
                     if 'end' in artist.keys():
