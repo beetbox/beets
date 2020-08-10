@@ -108,8 +108,9 @@ class MPDClientWrapper(object):
         return self.get(command, retries=retries - 1)
 
     def currentsong(self):
-        """Return the path to the currently playing song.  Prefixes paths with the
-        music_directory, to get the absolute path.
+        """Return the path to the currently playing song, along with its
+        songid.  Prefixes paths with the music_directory, to get the absolute
+        path.
         """
         result = None
         entry = self.get('currentsong')
@@ -118,7 +119,7 @@ class MPDClientWrapper(object):
                 result = os.path.join(self.music_directory, entry['file'])
             else:
                 result = entry['file']
-        return result
+        return result, entry.get('id')
 
     def status(self):
         """Return the current status of the MPD.
@@ -240,7 +241,9 @@ class MPDStats(object):
     def on_stop(self, status):
         self._log.info(u'stop')
 
-        if self.now_playing:
+        # if the current song stays the same it means that we stopped on the
+        # current track and should not record a skip.
+        if self.now_playing and self.now_playing['id'] != status.get('songid'):
             self.handle_song_change(self.now_playing)
 
         self.now_playing = None
@@ -251,7 +254,7 @@ class MPDStats(object):
 
     def on_play(self, status):
 
-        path = self.mpd.currentsong()
+        path, songid = self.mpd.currentsong()
 
         if not path:
             return
@@ -286,6 +289,7 @@ class MPDStats(object):
             'started':    time.time(),
             'remaining':  remaining,
             'path':       path,
+            'id':         songid,
             'beets_item': self.get_item(path),
         }
 

@@ -245,6 +245,10 @@ Fixes:
 * Fix a bug that caused metadata starting with something resembling a drive
   letter to be incorrectly split into an extra directory after the colon.
   :bug:`3685`
+* :doc:`/plugins/mpdstats`: Don't record a skip when stopping MPD, as MPD keeps
+  the current track in the queue.
+  Thanks to :user:`aereaux`.
+  :bug:`3722`
 
 For plugin developers:
 
