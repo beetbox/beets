@@ -23,6 +23,7 @@ import traceback
 from six.moves.urllib.parse import urljoin
 
 from beets import logging
+from beets import plugins
 import beets.autotag.hooks
 import beets
 from beets import util
@@ -184,7 +185,7 @@ def _flatten_artist_credit(credit):
 
 
 def track_info(recording, index=None, medium=None, medium_index=None,
-               medium_total=None, more_info=False, by_rec=False):
+               medium_total=None):
     """Translates a MusicBrainz recording result dictionary into a beets
     ``TrackInfo`` object. Three parameters are optional and are used
     only for tracks that appear on releases (non-singletons): ``index``,
@@ -219,16 +220,6 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     composer = []
     composer_sort = []
 
-    if by_rec:
-        recording_info = musicbrainzngs.get_recording_by_id(
-                recording['id'], TRACK_INCLUDES)['recording']
-        if 'work-relation-list' not in recording_info.keys():
-            recording_info = []
-        else:
-            recording_info = recording_info['work-relation-list']
-    else:
-        recording_info = recording.get('work-relation-list', ())
-
     for work_relation in recording.get('work-relation-list', ()):
         if work_relation['type'] != 'performance':
             continue
@@ -262,40 +253,6 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     if arranger:
         info.arranger = u', '.join(arranger)
 
-    if more_info:
-        artists = {}
-        for artist_relation in recording.get('artist-relation-list', ()):
-            if 'type' in artist_relation:
-                role = 'mbsync '
-                role += artist_relation['type']
-                if 'balance' in role or 'recording' in role or 'sound' in role:
-                    role += ' engineer'
-                if 'performing orchestra' in role:
-                    role = 'mbsync orchestra'
-                role_sort = role + ' sort'
-                if 'attribute-list' in artist_relation:
-                    role += ' - '
-                    role_sort += ' - '
-                    role += ', '.join(artist_relation['attribute-list'])
-                    role_sort += ', '.join(artist_relation['attribute-list'])
-                if 'attributes' in artist_relation:
-                    for attribute in artist_relation['attributes']:
-                        if 'credited-as' in attribute:
-                            role += ' (' + attribute['credited-as'] + ')'
-                            role_sort += ' (' + attribute['credited-as'] + ')'
-                role = role.replace(" ", "_")
-                role_sort = role_sort.replace(' ', '_')
-                if role in artists:
-                    artists[role].append(artist_relation['artist']['name'])
-                    artists[role_sort].append(
-                            artist_relation['artist']['sort-name'])
-                else:
-                    artists[role] = [artist_relation['artist']['name']]
-                    artists[role_sort] = [artist_relation[
-                            'artist']['sort-name']]
-        for key in artists:
-            info[key] = u'; '.join(artists[key])
-
     info.decode()
     return info
 
@@ -320,17 +277,13 @@ def _set_date_str(info, date_str, original=False):
                 setattr(info, key, date_num)
 
 
-def album_info(release, more_info=False):
+def album_info(release):
     """Takes a MusicBrainz release result dictionary and returns a beets
     AlbumInfo object containing the interesting data about that release.
     """
     # Get artist name using join phrases.
     artist_name, artist_sort_name, artist_credit_name = \
         _flatten_artist_credit(release['artist-credit'])
-
-    ntracks = 0
-    for medium in release['medium-list']:
-        ntracks += len(medium['track-list'])
 
     # Basic info.
     track_infos = []
@@ -363,8 +316,6 @@ def album_info(release, more_info=False):
                 continue
 
             # Basic information from the recording.
-            by_rec = more_info and ntracks > 500
-
             index += 1
             ti = track_info(
                 track['recording'],
@@ -372,8 +323,6 @@ def album_info(release, more_info=False):
                 int(medium['position']),
                 int(track['position']),
                 track_count,
-                more_info=more_info,
-                by_rec=by_rec
             )
             ti.release_track_id = track['id']
             ti.disctitle = disctitle
@@ -551,7 +500,7 @@ def _parse_id(s):
         return match.group()
 
 
-def album_for_id(releaseid, more_info=False):
+def album_for_id(releaseid):
     """Fetches an album by its MusicBrainz ID and returns an AlbumInfo
     object or None if the album is not found. May raise a
     MusicBrainzAPIError.
@@ -564,16 +513,17 @@ def album_for_id(releaseid, more_info=False):
     try:
         res = musicbrainzngs.get_release_by_id(albumid,
                                                RELEASE_INCLUDES)
+        beets.plugins.send(u'albumdata_recieved', info=res['release'])
     except musicbrainzngs.ResponseError:
         log.debug(u'Album ID match failed.')
         return None
     except musicbrainzngs.MusicBrainzError as exc:
         raise MusicBrainzAPIError(exc, u'get release by ID', albumid,
                                   traceback.format_exc())
-    return album_info(res['release'], more_info=more_info)
+    return album_info(res['release'])
 
 
-def track_for_id(releaseid, more_info=False):
+def track_for_id(releaseid):
     """Fetches a track by its MusicBrainz ID. Returns a TrackInfo object
     or None if no track is found. May raise a MusicBrainzAPIError.
     """
@@ -583,10 +533,11 @@ def track_for_id(releaseid, more_info=False):
         return
     try:
         res = musicbrainzngs.get_recording_by_id(trackid, TRACK_INCLUDES)
+        beets.plugins.send(u'trackdata_recieved', info=res['recording'])
     except musicbrainzngs.ResponseError:
         log.debug(u'Track ID match failed.')
         return None
     except musicbrainzngs.MusicBrainzError as exc:
         raise MusicBrainzAPIError(exc, u'get recording by ID', trackid,
                                   traceback.format_exc())
-    return track_info(res['recording'], more_info=more_info)
+    return track_info(res['recording'])

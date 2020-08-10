@@ -550,12 +550,12 @@ TrackMatch = namedtuple('TrackMatch', ['distance', 'info'])
 
 # Aggregation of sources.
 
-def album_for_mbid(release_id, more_info=False):
+def album_for_mbid(release_id):
     """Get an AlbumInfo object for a MusicBrainz release ID. Return None
     if the ID is not found.
     """
     try:
-        album = mb.album_for_id(release_id, more_info=more_info)
+        album = mb.album_for_id(release_id)
         if album:
             plugins.send(u'albuminfo_received', info=album)
         return album
@@ -563,12 +563,12 @@ def album_for_mbid(release_id, more_info=False):
         exc.log(log)
 
 
-def track_for_mbid(recording_id, more_info=False):
+def track_for_mbid(recording_id):
     """Get a TrackInfo object for a MusicBrainz recording ID. Return None
     if the ID is not found.
     """
     try:
-        track = mb.track_for_id(recording_id, more_info=more_info)
+        track = mb.track_for_id(recording_id)
         if track:
             plugins.send(u'trackinfo_received', info=track)
         return track
@@ -576,9 +576,9 @@ def track_for_mbid(recording_id, more_info=False):
         exc.log(log)
 
 
-def albums_for_id(album_id, more_info=False):
+def albums_for_id(album_id):
     """Get a list of albums for an ID."""
-    a = album_for_mbid(album_id, more_info=more_info)
+    a = album_for_mbid(album_id)
     if a:
         yield a
     for a in plugins.album_for_id(album_id):
@@ -587,9 +587,9 @@ def albums_for_id(album_id, more_info=False):
             yield a
 
 
-def tracks_for_id(track_id, more_info=False):
+def tracks_for_id(track_id):
     """Get a list of tracks for an ID."""
-    t = track_for_mbid(track_id, more_info=more_info)
+    t = track_for_mbid(track_id)
     if t:
         yield t
     for t in plugins.track_for_id(track_id):
