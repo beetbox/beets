@@ -139,7 +139,7 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
         self.setup_beets()
         self.load_plugins('parentwork')
         self.patcher1 = patch('musicbrainzngs.get_work_by_id')
-        mock_workid_response = self.patcher1.start()
+        self.mock_workid_response = self.patcher1.start()
         #musicbrainzngs.get_work_by_id = Mock(side_effect=mock_workid_response)
 
     def tearDown(self):
