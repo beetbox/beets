@@ -19,7 +19,6 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import unittest
-from unittest.mock import patch
 from test.helper import TestHelper
 #from mock import Mock
 #import musicbrainzngs
@@ -138,7 +137,7 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
         """Set up configuration"""
         self.setup_beets()
         self.load_plugins('parentwork')
-        self.patcher1 = patch('musicbrainzngs.get_work_by_id')
+        self.patcher1 = unittest.mock.patch('musicbrainzngs.get_work_by_id')
         self.mock_workid_response = self.patcher1.start()
         #musicbrainzngs.get_work_by_id = Mock(side_effect=mock_workid_response)
 
