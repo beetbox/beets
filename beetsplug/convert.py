@@ -148,6 +148,7 @@ class ConvertPlugin(BeetsPlugin):
             u'never_convert_lossy_files': False,
             u'copy_album_art': False,
             u'album_art_maxwidth': 0,
+            u'delete_originals': False,
         })
         self.early_import_stages = [self.auto_convert]
 
@@ -532,10 +533,15 @@ class ConvertPlugin(BeetsPlugin):
 
             # Change the newly-imported database entry to point to the
             # converted file.
+            source_path = item.path
             item.path = dest
             item.write()
             item.read()  # Load new audio information data.
             item.store()
+
+            if self.config['delete_originals']:
+                self._log.info(u'Removing original file {0}', source_path)
+                util.remove(source_path, False)
 
     def _cleanup(self, task, session):
         for path in task.old_paths:

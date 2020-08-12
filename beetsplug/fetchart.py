@@ -21,6 +21,7 @@ from contextlib import closing
 import os
 import re
 from tempfile import NamedTemporaryFile
+from collections import OrderedDict
 
 import requests
 
@@ -135,7 +136,8 @@ class Candidate(object):
 
     def resize(self, plugin):
         if plugin.maxwidth and self.check == self.CANDIDATE_DOWNSCALE:
-            self.path = ArtResizer.shared.resize(plugin.maxwidth, self.path)
+            self.path = ArtResizer.shared.resize(plugin.maxwidth, self.path,
+                                                 quality=plugin.quality)
 
 
 def _logged_get(log, *args, **kwargs):
@@ -164,9 +166,14 @@ def _logged_get(log, *args, **kwargs):
         message = 'getting URL'
 
     req = requests.Request('GET', *args, **req_kwargs)
+
     with requests.Session() as s:
         s.headers = {'User-Agent': 'beets'}
         prepped = s.prepare_request(req)
+        settings = s.merge_environment_settings(
+            prepped.url, {}, None, None, None
+        )
+        send_kwargs.update(settings)
         log.debug('{}: {}', message, prepped.url)
         return s.send(prepped, **send_kwargs)
 
@@ -202,6 +209,9 @@ class ArtSource(RequestMixin):
 
     def fetch_image(self, candidate, plugin):
         raise NotImplementedError()
+
+    def cleanup(self, candidate):
+        pass
 
 
 class LocalArtSource(ArtSource):
@@ -284,10 +294,18 @@ class RemoteArtSource(ArtSource):
             self._log.debug(u'error fetching art: {}', exc)
             return
 
+    def cleanup(self, candidate):
+        if candidate.path:
+            try:
+                util.remove(path=candidate.path)
+            except util.FilesystemError as exc:
+                self._log.debug(u'error cleaning up tmp art: {}', exc)
+
 
 class CoverArtArchive(RemoteArtSource):
     NAME = u"Cover Art Archive"
     VALID_MATCHING_CRITERIA = ['release', 'releasegroup']
+    VALID_THUMBNAIL_SIZES = [250, 500, 1200]
 
     if util.SNI_SUPPORTED:
         URL = 'https://coverartarchive.org/release/{mbid}/front'
@@ -300,13 +318,31 @@ class CoverArtArchive(RemoteArtSource):
         """Return the Cover Art Archive and Cover Art Archive release group URLs
         using album MusicBrainz release ID and release group ID.
         """
+        release_url = self.URL.format(mbid=album.mb_albumid)
+        release_group_url = self.GROUP_URL.format(mbid=album.mb_releasegroupid)
+
+        # Cover Art Archive API offers pre-resized thumbnails at several sizes.
+        # If the maxwidth config matches one of the already available sizes
+        # fetch it directly intead of fetching the full sized image and
+        # resizing it.
+        size_suffix = None
+        if plugin.maxwidth in self.VALID_THUMBNAIL_SIZES:
+            size_suffix = "-" + str(plugin.maxwidth)
+
         if 'release' in self.match_by and album.mb_albumid:
-            yield self._candidate(url=self.URL.format(mbid=album.mb_albumid),
+            if size_suffix:
+                release_thumbnail_url = release_url + size_suffix
+                yield self._candidate(url=release_thumbnail_url,
+                                      match=Candidate.MATCH_EXACT)
+            yield self._candidate(url=release_url,
                                   match=Candidate.MATCH_EXACT)
         if 'releasegroup' in self.match_by and album.mb_releasegroupid:
-            yield self._candidate(
-                url=self.GROUP_URL.format(mbid=album.mb_releasegroupid),
-                match=Candidate.MATCH_FALLBACK)
+            if size_suffix:
+                release_group_thumbnail_url = release_group_url + size_suffix
+                yield self._candidate(url=release_group_thumbnail_url,
+                                      match=Candidate.MATCH_FALLBACK)
+            yield self._candidate(url=release_group_url,
+                                  match=Candidate.MATCH_FALLBACK)
 
 
 class Amazon(RemoteArtSource):
@@ -736,11 +772,72 @@ class FileSystem(LocalArtSource):
                                       match=Candidate.MATCH_FALLBACK)
 
 
+class LastFM(RemoteArtSource):
+    NAME = u"Last.fm"
+
+    # Sizes in priority order.
+    SIZES = OrderedDict([
+        ('mega', (300, 300)),
+        ('extralarge', (300, 300)),
+        ('large', (174, 174)),
+        ('medium', (64, 64)),
+        ('small', (34, 34)),
+    ])
+
+    if util.SNI_SUPPORTED:
+        API_URL = 'https://ws.audioscrobbler.com/2.0'
+    else:
+        API_URL = 'http://ws.audioscrobbler.com/2.0'
+
+    def __init__(self, *args, **kwargs):
+        super(LastFM, self).__init__(*args, **kwargs)
+        self.key = self._config['lastfm_key'].get(),
+
+    def get(self, album, plugin, paths):
+        if not album.mb_albumid:
+            return
+
+        try:
+            response = self.request(self.API_URL, params={
+                'method': 'album.getinfo',
+                'api_key': self.key,
+                'mbid': album.mb_albumid,
+                'format': 'json',
+            })
+        except requests.RequestException:
+            self._log.debug(u'lastfm: error receiving response')
+            return
+
+        try:
+            data = response.json()
+
+            if 'error' in data:
+                if data['error'] == 6:
+                    self._log.debug('lastfm: no results for {}',
+                                    album.mb_albumid)
+                else:
+                    self._log.error(
+                        'lastfm: failed to get album info: {} ({})',
+                        data['message'], data['error'])
+            else:
+                images = {image['size']: image['#text']
+                          for image in data['album']['image']}
+
+                # Provide candidates in order of size.
+                for size in self.SIZES.keys():
+                    if size in images:
+                        yield self._candidate(url=images[size],
+                                              size=self.SIZES[size])
+        except ValueError:
+            self._log.debug(u'lastfm: error loading response: {}'
+                            .format(response.text))
+            return
+
 # Try each source in turn.
 
 SOURCES_ALL = [u'filesystem',
                u'coverart', u'itunes', u'amazon', u'albumart',
-               u'wikipedia', u'google', u'fanarttv']
+               u'wikipedia', u'google', u'fanarttv', u'lastfm']
 
 ART_SOURCES = {
     u'filesystem': FileSystem,
@@ -751,6 +848,7 @@ ART_SOURCES = {
     u'wikipedia': Wikipedia,
     u'google': GoogleImages,
     u'fanarttv': FanartTV,
+    u'lastfm': LastFM,
 }
 SOURCE_NAMES = {v: k for k, v in ART_SOURCES.items()}
 
@@ -772,6 +870,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'auto': True,
             'minwidth': 0,
             'maxwidth': 0,
+            'quality': 0,
             'enforce_ratio': False,
             'cautious': False,
             'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
@@ -780,14 +879,17 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'google_key': None,
             'google_engine': u'001442825323518660753:hrh5ch1gjzm',
             'fanarttv_key': None,
+            'lastfm_key': None,
             'store_source': False,
             'high_resolution': False,
         })
         self.config['google_key'].redact = True
         self.config['fanarttv_key'].redact = True
+        self.config['lastfm_key'].redact = True
 
         self.minwidth = self.config['minwidth'].get(int)
         self.maxwidth = self.config['maxwidth'].get(int)
+        self.quality = self.config['quality'].get(int)
 
         # allow both pixel and percentage-based margin specifications
         self.enforce_ratio = self.config['enforce_ratio'].get(
@@ -823,6 +925,9 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         if not self.config['google_key'].get() and \
                 u'google' in available_sources:
             available_sources.remove(u'google')
+        if not self.config['lastfm_key'].get() and \
+                u'lastfm' in available_sources:
+            available_sources.remove(u'lastfm')
         available_sources = [(s, c)
                              for s in available_sources
                              for c in ART_SOURCES[s].VALID_MATCHING_CRITERIA]
@@ -903,7 +1008,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         cmd.parser.add_option(
             u'-q', u'--quiet', dest='quiet',
             action='store_true', default=False,
-            help=u'shows only quiet art'
+            help=u'quiet mode: do not output albums that already have artwork'
         )
 
         def func(lib, opts, args):
@@ -917,9 +1022,10 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
     def art_for_album(self, album, paths, local_only=False):
         """Given an Album object, returns a path to downloaded art for the
         album (or None if no art is found). If `maxwidth`, then images are
-        resized to this maximum pixel size. If `local_only`, then only local
-        image files from the filesystem are returned; no network requests
-        are made.
+        resized to this maximum pixel size. If `quality` then resized images
+        are saved at the specified quality level. If `local_only`, then only
+        local image files from the filesystem are returned; no network
+        requests are made.
         """
         out = None
 
@@ -940,6 +1046,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                             u'using {0.LOC_STR} image {1}'.format(
                                 source, util.displayable_path(out.path)))
                         break
+                    # Remove temporary files for invalid candidates.
+                    source.cleanup(candidate)
                 if out:
                     break
 

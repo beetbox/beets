@@ -151,6 +151,8 @@ class IPFSPlugin(BeetsPlugin):
     def ipfs_get(self, lib, query):
         query = query[0]
         # Check if query is a hash
+        # TODO: generalize to other hashes; probably use a multihash
+        # implementation
         if query.startswith("Qm") and len(query) == 46:
             self.ipfs_get_from_hash(lib, query)
         else:
@@ -197,7 +199,7 @@ class IPFSPlugin(BeetsPlugin):
         else:
             lib_name = _hash
         lib_root = os.path.dirname(lib.path)
-        remote_libs = lib_root + "/remotes"
+        remote_libs = os.path.join(lib_root, b"remotes")
         if not os.path.exists(remote_libs):
             try:
                 os.makedirs(remote_libs)
@@ -205,7 +207,7 @@ class IPFSPlugin(BeetsPlugin):
                 msg = "Could not create {0}. Error: {1}".format(remote_libs, e)
                 self._log.error(msg)
                 return False
-        path = remote_libs + "/" + lib_name + ".db"
+        path = os.path.join(remote_libs, lib_name.encode() + b".db")
         if not os.path.exists(path):
             cmd = "ipfs get {0} -o".format(_hash).split()
             cmd.append(path)
@@ -216,7 +218,7 @@ class IPFSPlugin(BeetsPlugin):
                 return False
 
         # add all albums from remotes into a combined library
-        jpath = remote_libs + "/joined.db"
+        jpath = os.path.join(remote_libs, b"joined.db")
         jlib = library.Library(jpath)
         nlib = library.Library(path)
         for album in nlib.albums():
@@ -244,7 +246,7 @@ class IPFSPlugin(BeetsPlugin):
             return
 
         for album in albums:
-            ui.print_(format(album, fmt), " : ", album.ipfs)
+            ui.print_(format(album, fmt), " : ", album.ipfs.decode())
 
     def query(self, lib, args):
         rlib = self.get_remote_lib(lib)
@@ -253,8 +255,8 @@ class IPFSPlugin(BeetsPlugin):
 
     def get_remote_lib(self, lib):
         lib_root = os.path.dirname(lib.path)
-        remote_libs = lib_root + "/remotes"
-        path = remote_libs + "/joined.db"
+        remote_libs = os.path.join(lib_root, b"remotes")
+        path = os.path.join(remote_libs, b"joined.db")
         if not os.path.isfile(path):
             raise IOError
         return library.Library(path)

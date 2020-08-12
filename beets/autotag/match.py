@@ -447,6 +447,12 @@ def tag_album(items, search_artist=None, search_album=None,
             search_artist, search_album = cur_artist, cur_album
         log.debug(u'Search terms: {0} - {1}', search_artist, search_album)
 
+        extra_tags = None
+        if config['musicbrainz']['extra_tags']:
+            tag_list = config['musicbrainz']['extra_tags'].get()
+            extra_tags = {k: v for (k, v) in likelies.items() if k in tag_list}
+            log.debug(u'Additional search terms: {0}', extra_tags)
+
         # Is this album likely to be a "various artist" release?
         va_likely = ((not consensus['artist']) or
                      (search_artist.lower() in VA_ARTISTS) or
@@ -457,7 +463,8 @@ def tag_album(items, search_artist=None, search_album=None,
         for matched_candidate in hooks.album_candidates(items,
                                                         search_artist,
                                                         search_album,
-                                                        va_likely):
+                                                        va_likely,
+                                                        extra_tags):
             _add_candidate(items, candidates, matched_candidate)
 
     log.debug(u'Evaluating {0} candidates.', len(candidates))
