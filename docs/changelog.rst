@@ -146,6 +146,9 @@ New features:
   be deleted after importing.
   Thanks to :user:`logan-arens`.
   :bug:`2947`
+* :doc:`/plugins/replaygain` now does its analysis in parallel when using
+  the ``command``, ``ffmpeg`` or ``bs1770gain`` backends.
+  :bug:`3478`
 
 Fixes:
 
