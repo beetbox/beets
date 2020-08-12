@@ -24,16 +24,18 @@ import warnings
 import enum
 import re
 import xml.parsers.expat
-from six.moves import zip
+from six.moves import zip, queue
+import six
 
 from multiprocessing.pool import ThreadPool, RUN
 from threading import Thread, Event
 import signal
+from sqlite3 import OperationalError
 
 from beets import ui
 from beets.plugins import BeetsPlugin
 from beets.util import (syspath, command_output, bytestring_path,
-                        displayable_path, py3_path)
+                        displayable_path, py3_path, cpu_count)
 
 
 # Utilities.
@@ -1307,30 +1309,39 @@ class ReplayGainPlugin(BeetsPlugin):
                 (not item.rg_album_gain or not item.rg_album_peak)
                 for item in album.items()])
 
+    def _store(self, item):
+        try:
+            item.store()
+        except OperationalError:
+            # test_replaygain.py :memory: library can fail with
+            #    `sqlite3.OperationalError: no such table: items`
+            # but the second attempt succeeds
+            item.store()
+
     def store_track_gain(self, item, track_gain):
         item.rg_track_gain = track_gain.gain
         item.rg_track_peak = track_gain.peak
-        item.store()
+        self._store(item)
         self._log.debug(u'applied track gain {0} LU, peak {1} of FS',
                         item.rg_track_gain, item.rg_track_peak)
 
     def store_album_gain(self, item, album_gain):
         item.rg_album_gain = album_gain.gain
         item.rg_album_peak = album_gain.peak
-        item.store()
+        self._store(item)
         self._log.debug(u'applied album gain {0} LU, peak {1} of FS',
                         item.rg_album_gain, item.rg_album_peak)
 
     def store_track_r128_gain(self, item, track_gain):
         item.r128_track_gain = track_gain.gain
-        item.store()
+        self._store(item)
 
         self._log.debug(u'applied r128 track gain {0} LU',
                         item.r128_track_gain)
 
     def store_album_r128_gain(self, item, album_gain):
         item.r128_album_gain = album_gain.gain
-        item.store()
+        self._store(item)
         self._log.debug(u'applied r128 album gain {0} LU',
                         item.r128_album_gain)
 
@@ -1520,7 +1531,7 @@ class ReplayGainPlugin(BeetsPlugin):
         if hasattr(self, 'pool') and isinstance(self.pool, ThreadPool):
             self.pool.terminate()
             self.pool.join()
-            self.exc_watcher.join()
+            # self.exc_watcher.join()
 
     def _interrupt(self, signal, frame):
         try:
