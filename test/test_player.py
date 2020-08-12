@@ -241,6 +241,8 @@ def implements(commands, expectedFailure=False):  # noqa: N803
 
 
 bluelet_listener = bluelet.Listener
+
+
 @mock.patch("beets.util.bluelet.Listener")
 def start_server(args, assigned_port, listener_patch):
     """Start the bpd server, writing the port to `assigned_port`.

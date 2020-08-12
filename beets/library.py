@@ -410,7 +410,8 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
             raise KeyError(key)
 
     def __getitem__(self, key):
-        """Get the value for a key. Certain unset values are remapped.
+        """Get the value for a key. `artist` and `albumartist`
+        are fallback values for each other when not set.
         """
         value = self._get(key)
 

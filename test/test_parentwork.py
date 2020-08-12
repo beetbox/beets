@@ -17,6 +17,7 @@
 
 from __future__ import division, absolute_import, print_function
 
+import os
 import unittest
 from test.helper import TestHelper
 
@@ -34,6 +35,9 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
         self.unload_plugins()
         self.teardown_beets()
 
+    @unittest.skipUnless(
+        os.environ.get('INTEGRATION_TEST', '0') == '1',
+        'integration testing not enabled')
     def test_normal_case(self):
         item = Item(path='/file',
                     mb_workid=u'e27bda6e-531e-36d3-9cd7-b8ebc18e8c53')
@@ -45,6 +49,9 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
         self.assertEqual(item['mb_parentworkid'],
                          u'32c8943f-1b27-3a23-8660-4567f4847c94')
 
+    @unittest.skipUnless(
+        os.environ.get('INTEGRATION_TEST', '0') == '1',
+        'integration testing not enabled')
     def test_force(self):
         self.config['parentwork']['force'] = True
         item = Item(path='/file',
@@ -58,6 +65,9 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
         self.assertEqual(item['mb_parentworkid'],
                          u'32c8943f-1b27-3a23-8660-4567f4847c94')
 
+    @unittest.skipUnless(
+        os.environ.get('INTEGRATION_TEST', '0') == '1',
+        'integration testing not enabled')
     def test_no_force(self):
         self.config['parentwork']['force'] = True
         item = Item(path='/file', mb_workid=u'e27bda6e-531e-36d3-9cd7-\
@@ -72,6 +82,9 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
     # test different cases, still with Matthew Passion Ouverture or Mozart
     # requiem
 
+    @unittest.skipUnless(
+        os.environ.get('INTEGRATION_TEST', '0') == '1',
+        'integration testing not enabled')
     def test_direct_parent_work(self):
         mb_workid = u'2e4a3668-458d-3b2a-8be2-0b08e0d8243a'
         self.assertEqual(u'f04b42df-7251-4d86-a5ee-67cfa49580d1',

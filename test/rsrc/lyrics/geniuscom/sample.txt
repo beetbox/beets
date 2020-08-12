@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html class="snarly apple_music_player--enabled bagon_song_page--enabled song_stories_public_launch--enabled react_forums--disabled" xmlns="http://www.w3.org/1999/xhtml" xmlns:fb="http://www.facebook.com/2008/fbml" lang="en" xml:lang="en">
+  <head>
+    <base target='_top' href="//g-example.com/">
+
+    <script type="text/javascript">
+    //<![CDATA[
+
+      var _sf_startpt=(new Date()).getTime();
+      if (window.performance && performance.mark) {
+        window.performance.mark('parse_start');
+      }
+
+    //]]>
+    </script>
+
+    <title>SAMPLE – SONG Lyrics | g-example Lyrics</title>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content='width=device-width,initial-scale=1' name='viewport'>
+
+    <meta property="og:site_name" content="g-example"/>
+
+    <link title="g-example" type="application/opensearchdescription+xml" rel="search" href="https://g-example.com/opensearch.xml">
+
+    <script async src="https://www.youtube.com/iframe_api"></script>
+    <script defer src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+
+      <meta content="https://g-example.com/SAMPLE-SONG-lyrics" property="og:url" />
+      
+      <link href="ios-app://#/g-example/songs/#" rel="alternate" />
+      <meta content="/songs/3113595" name="newrelic-resource-path" />
+      <link href="https://g-example.com/SAMPLE-SONG-lyrics" rel="canonical" />
+      <link href="https://g-example.com/amp/SAMPLE-SONG-lyrics" rel="amphtml" />
+      
+    <script type="text/javascript">
+      var _qevents = _qevents || [];
+      (function() {
+        var elem = document.createElement('script');
+        elem.src = (document.location.protocol == 'https:' ? 'https://secure' : 'http://edge') + '.quantserve.com/quant.js';
+        elem.async = true;
+        elem.type = 'text/javascript';
+        var scpt = document.getElementsByTagName('script')[0];
+        scpt.parentNode.insertBefore(elem, scpt);
+      })();
+    </script>
+
+    <script type="text/javascript">
+      window.ga = window.ga || function() {
+        (window.ga.q = window.ga.q || []).push(arguments);
+      };
+
+      
+        (function(g, e, n, i, u, s) {
+          g['GoogleAnalyticsObject'] = 'ga';
+          g.ga.l = Date.now();
+          u = e.createElement(n);
+          s = e.getElementsByTagName(n)[0];
+          u.async = true;
+          u.src = i;
+          s.parentNode.insertBefore(u, s);
+        })(window, document, 'script', 'https://www.google-analytics.com/analytics.js');
+
+        ga('create', "UA-10346621-1", 'auto', {'useAmpClientId': true});
+        ga('set', 'dimension1', "false");
+        ga('set', 'dimension2', "songs#show");
+        ga('set', 'dimension3', "r-b");
+        ga('set', 'dimension4', "true");
+        ga('set', 'dimension5', 'false');
+        ga('set', 'dimension6', "none");
+        ga('send', 'pageview');
+      
+    </script>
+  </head>
+
+  <body>    
+
+    <div class="header" ng-controller="HeaderALBUM as header_ALBUM" click-outside="close_mobile_subnav_menu()">
+      <div class="header-primary active">
+        <div class="header-expand_nav_menu" ng-click="toggle_mobile_subnav_menu()"><div class="header-expand_nav_menu-contents"></div></div>
+
+        
+          <div class="logo_container">
+            <a href="https://g-example.com/" class="logo_link">g-example</a>
+          </div>
+        
+
+        <header-actions></header-actions>
+
+      <search-form search-style="header"></search-form>
+      </div>
+    </div>
+
+    <routable-page>
+      <ng-non-bindable>
+
+        <div class="header_with_cover_art">
+          <div class="header_with_cover_art-inner column_layout">
+            <div class="column_layout-column_span column_layout-column_span--primary">
+              <div class="header_with_cover_art-cover_art ">
+                <div class="cover_art">
+                  <img alt="#" class="cover_art-image" src="#" srcset="#" />
+                </div>
+              </div>
+
+              <div class="header_with_cover_art-primary_info_container">
+                <div class="header_with_cover_art-primary_info">
+                  <h1 class="header_with_cover_art-primary_info-title ">SONG</h1>
+                  <h2>
+                    <a href="https://g-example.com/artists/SAMPLE" class="header_with_cover_art-primary_info-primary_artist">
+                      SAMPLE
+                    </a>
+                  </h2>
+                  <h3>
+                    <div class="metadata_unit ">
+                      <span class="metadata_unit-label">Produced by</span>
+                      <span class="metadata_unit-info">
+                        <a href="https://g-example.com/artists/Person1">Person 1</a> & <a href="https://g-example.com/artists/Person 2">Person 2</a>
+                      </span>
+                    </div>
+                  </h3>
+                  <h3>
+                    <div class="metadata_unit ">
+                      <span class="metadata_unit-label">Album</span>
+                      <span class="metadata_unit-info"><a href="https://g-example.com/albums/SAMPLE/ALBUM">ALBUM</a></span>
+                    </div>
+                  </h3>
+                  </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="song_body column_layout" initial-content-for="song_body">
+          <div class="column_layout-column_span column_layout-column_span--primary">
+            <div class="song_body-lyrics">
+                <h2 class="text_label text_label--gray text_label--x_small_text_size u-top_margin">SONG Lyrics</h2>
+              <div initial-content-for="lyrics">
+                <div class="totally-not-the-lyrics-div">
+                  !!!! MISSING LYRICS HERE !!!
+                </div>
+              </div>
+              <div initial-content-for="recirculated_content">
+                  <div class="u-xx_large_vertical_margins">
+                    <div class="text_label text_label--gray">More on g-example</div>
+                  </div>
+              </div>
+            </div>
+          </div>
+        </div>         
+        
+        <div class="metadata_unit metadata_unit--table_row">
+          <span class="metadata_unit-label">Released by</span>
+
+          <span class="metadata_unit-info">
+            <a href="https://g-example.com/artists/records">Records</a> & <a href="https://g-example.com/artists/Top">Top</a>
+          </span>
+        </div>
+        
+        <div class="metadata_unit metadata_unit--table_row">
+          <span class="metadata_unit-label">Mixing</span>
+          <span class="metadata_unit-info">
+            <a href="https://g-example.com/artists/Mixed-by-person">Mixed by Person</a>
+          </span>
+        </div>
+
+        <div class="metadata_unit metadata_unit--table_row">
+          <span class="metadata_unit-label">Recorded At</span>
+          <span class="metadata_unit-info metadata_unit-info--text_only">City, Place</span>
+        </div>
+
+        <div class="metadata_unit metadata_unit--table_row">
+          <span class="metadata_unit-label">Release Date</span>
+          <span class="metadata_unit-info metadata_unit-info--text_only">Feb 30, 1290</span>
+        </div>
+            
+        <div class="metadata_unit metadata_unit--table_row">
+          <span class="metadata_unit-label">Interpolated By</span>
+          <span class="metadata_unit-info">
+            
+            <div class="u-x_small_bottom_margin">
+              <a href="#"> # </a>
+            </div>
+            
+          </span>
+        </div>
+
+        <div initial-content-for="album">
+          <div class="u-xx_large_vertical_margins">
+            <div class="song_album u-bottom_margin">
+              <a href="https://g-example.com/albums/SAMPLE/ALBUM" class="song_album-album_art" title="ALBUM">
+                <img alt="#" src="#" srcset="#"/>
+              </a>
+            <div class="song_album-info">
+              <a href="https://g-example.com/albums/SAMPLE/ALBUM" title="ALBUM" class="song_album-info-title">
+                ALBUM
+              </a>
+              <a href="https://g-example.com/artists/SAMPLE" class="song_album-info-artist" title="ALBUM">SAMPLE</a>
+            </div>
+          </div>
+
+      </ng-non-bindable>
+    </routable-page>
+
+    <div class="page_footer page_footer--padding-for-sticky-player">
+      <div class="footer">
+        <div>
+          <a href="/about">About g-example</a>
+          <a href="/contributor_guidelines">Contributor Guidelines</a> 
+        </div>
+
+        <div>
+            <span>g-example</span>
+        </div>
+      </div>
+    </div>
+
+    <script type="text/javascript">_qevents.push({ qacct: "################"});</script>
+    <noscript>
+      <div style="display: none;">
+        <img src="#" height="1" width="1" alt="#"/>
+      </div>
+    </noscript>
+
+    <script type="text/javascript">
+      var _sf_async_config={};
+
+      _sf_async_config.uid = 3877;
+      _sf_async_config.domain = 'g-example.com';
+      _sf_async_config.title = 'SAMPLE – SONG Lyrics | g-example Lyrics';
+      _sf_async_config.sections = 'songs,tag:r-b';
+      _sf_async_config.authors = 'SAMPLE';
+
+      var _cbq = window._cbq || [];
+
+      (function(){
+        function loadChartbeat() {
+          window._sf_endpt=(new Date()).getTime();
+          var e = document.createElement('script');
+          e.setAttribute('language', 'javascript');
+          e.setAttribute('type', 'text/javascript');
+          e.setAttribute('src', '#');
+          document.body.appendChild(e);
+        }
+        var oldonload = window.onload;
+        window.onload = (typeof window.onload != 'function') ?
+          loadChartbeat : function() { oldonload(); loadChartbeat(); };
+      })();
+    </script>
+
+      <!-- Begin comScore Tag -->
+    <script>
+      var _comscore = _comscore || [];
+      _comscore.push({ c1: "2", c2: "17151659" });
+      (function() {
+        var s = document.createElement("script"), el = document.getElementsByTagName("script")[0]; s.async = true;
+        s.src = (document.location.protocol == "https:" ? "https://sb" : "http://b") + ".scorecardresearch.com/beacon.js";
+        el.parentNode.insertBefore(s, el);
+      })();
+    </script>
+    <noscript>
+      <img src="#"/>
+    </noscript>
+    <!-- End comScore Tag -->
+    <noscript>
+      <img height="1" width="1" style="display:none" src="#"/> 
+    </noscript>
+  </body>
+</html>

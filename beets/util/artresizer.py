@@ -40,14 +40,19 @@ else:
 log = logging.getLogger('beets')
 
 
-def resize_url(url, maxwidth):
+def resize_url(url, maxwidth, quality=0):
     """Return a proxied image URL that resizes the original image to
     maxwidth (preserving aspect ratio).
     """
-    return '{0}?{1}'.format(PROXY_URL, urlencode({
+    params = {
         'url': url.replace('http://', ''),
         'w': maxwidth,
-    }))
+    }
+
+    if quality > 0:
+        params['q'] = quality
+
+    return '{0}?{1}'.format(PROXY_URL, urlencode(params))
 
 
 def temp_file_for(path):
@@ -59,7 +64,7 @@ def temp_file_for(path):
         return util.bytestring_path(f.name)
 
 
-def pil_resize(maxwidth, path_in, path_out=None):
+def pil_resize(maxwidth, path_in, path_out=None, quality=0):
     """Resize using Python Imaging Library (PIL).  Return the output path
     of resized image.
     """
@@ -72,7 +77,7 @@ def pil_resize(maxwidth, path_in, path_out=None):
         im = Image.open(util.syspath(path_in))
         size = maxwidth, maxwidth
         im.thumbnail(size, Image.ANTIALIAS)
-        im.save(util.py3_path(path_out))
+        im.save(util.py3_path(path_out), quality=quality)
         return path_out
     except IOError:
         log.error(u"PIL cannot create thumbnail for '{0}'",
@@ -80,7 +85,7 @@ def pil_resize(maxwidth, path_in, path_out=None):
         return path_in
 
 
-def im_resize(maxwidth, path_in, path_out=None):
+def im_resize(maxwidth, path_in, path_out=None, quality=0):
     """Resize using ImageMagick.
 
     Use the ``magick`` program or ``convert`` on older versions. Return
@@ -93,10 +98,15 @@ def im_resize(maxwidth, path_in, path_out=None):
     # "-resize WIDTHx>" shrinks images with the width larger
     # than the given width while maintaining the aspect ratio
     # with regards to the height.
-    cmd = ArtResizer.shared.im_convert_cmd + \
-        [util.syspath(path_in, prefix=False),
-            '-resize', '{0}x>'.format(maxwidth),
-            util.syspath(path_out, prefix=False)]
+    cmd = ArtResizer.shared.im_convert_cmd + [
+        util.syspath(path_in, prefix=False),
+        '-resize', '{0}x>'.format(maxwidth),
+    ]
+
+    if quality > 0:
+        cmd += ['-quality', '{0}'.format(quality)]
+
+    cmd.append(util.syspath(path_out, prefix=False))
 
     try:
         util.command_output(cmd)
@@ -190,18 +200,19 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
                 self.im_convert_cmd = ['magick']
                 self.im_identify_cmd = ['magick', 'identify']
 
-    def resize(self, maxwidth, path_in, path_out=None):
+    def resize(self, maxwidth, path_in, path_out=None, quality=0):
         """Manipulate an image file according to the method, returning a
         new path. For PIL or IMAGEMAGIC methods, resizes the image to a
-        temporary file. For WEBPROXY, returns `path_in` unmodified.
+        temporary file and encodes with the specified quality level.
+        For WEBPROXY, returns `path_in` unmodified.
         """
         if self.local:
             func = BACKEND_FUNCS[self.method[0]]
-            return func(maxwidth, path_in, path_out)
+            return func(maxwidth, path_in, path_out, quality=quality)
         else:
             return path_in
 
-    def proxy_url(self, maxwidth, url):
+    def proxy_url(self, maxwidth, url, quality=0):
         """Modifies an image URL according the method, returning a new
         URL. For WEBPROXY, a URL on the proxy server is returned.
         Otherwise, the URL is returned unmodified.
@@ -209,7 +220,7 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
         if self.local:
             return url
         else:
-            return resize_url(url, maxwidth)
+            return resize_url(url, maxwidth, quality)
 
     @property
     def local(self):

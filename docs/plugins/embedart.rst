@@ -58,6 +58,13 @@ file. The available options are:
   the aspect ratio is preserved. See also :ref:`image-resizing` for further
   caveats about image resizing.
   Default: 0 (disabled).
+- **quality**: The JPEG quality level to use when compressing images (when
+  ``maxwidth`` is set). This should be either a number from 1 to 100 or 0 to
+  use the default quality. 65–75 is usually a good starting point. The default
+  behavior depends on the imaging tool used for scaling: ImageMagick tries to
+  estimate the input image quality and uses 92 if it cannot be determined, and
+  PIL defaults to 75.
+  Default: 0 (disabled)
 - **remove_art_file**: Automatically remove the album art file for the album
   after it has been embedded. This option is best used alongside the
   :doc:`FetchArt </plugins/fetchart>` plugin to download art with the purpose of
