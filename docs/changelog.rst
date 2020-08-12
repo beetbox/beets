@@ -6,6 +6,14 @@ Changelog
 
 New features:
 
+* :doc:`/plugins/lastgenre`: Added more heavy metal genres: https://en.wikipedia.org/wiki/Heavy_metal_genres to genres.txt and genres-tree.yaml
+* :doc:`/plugins/subsonicplaylist`: import playlist from a subsonic server.
+* A new :ref:`extra_tags` configuration option allows more tagged metadata
+  to be included in MusicBrainz queries.
+* A new :doc:`/plugins/fish` adds `Fish shell`_ tab autocompletion to beets
+* :doc:`plugins/fetchart` and :doc:`plugins/embedart`: Added a new ``quality``
+  option that controls the quality of the image output when the image is
+  resized.
 * :doc:`plugins/keyfinder`: Added support for `keyfinder-cli`_
   Thanks to :user:`BrainDamage`.
 * :doc:`plugins/fetchart`: Added a new ``high_resolution`` config option to
@@ -107,12 +115,48 @@ New features:
   titles.
   Thanks to :user:`cole-miller`.
   :bug:`3459`
-* :doc:`/plugins/replaygain` now does its analysis in parallel when using
-  the ``command``, ``ffmpeg`` or ``bs1770gain`` backends.
-  :bug:`3478`
+* :doc:`/plugins/fetchart`: Album art can now be fetched from `last.fm`_.
+  :bug:`3530`
+* The classes ``AlbumInfo`` and ``TrackInfo`` now have flexible attributes,
+  allowing to solve :bug:`1547`. 
+  Thanks to :user:`dosoe`.
+* :doc:`/plugins/web`: The query API now interprets backslashes as path
+  separators to support path queries.
+  Thanks to :user:`nmeum`.
+  :bug:`3567`
+* ``beet import`` now handles tar archives with bzip2 or gzip compression.
+  :bug:`3606`
+* :doc:`/plugins/plexupdate`: Add option to use secure connection to Plex
+  server, and to ignore certificate validation errors if necessary.
+  :bug:`2871`
+* :doc:`/plugins/lyrics`: Improved searching Genius backend when artist
+  contained special characters.
+  :bug:`3634`
+* :doc:`/plugins/parentwork`: Also get the composition date of the parent work,
+  instead of just the child work.
+  Thanks to :user:`aereaux`.
+  :bug:`3650`
+* :doc:`/plugins/lyrics`: Fix a bug in the heuristic for detecting valid
+  lyrics in the Google source of the lyrics plugin
+  :bug:`2969`
+* :doc:`/plugins/thumbnails`: Fix a bug where pathlib expected a string instead
+  of bytes for a path.
+  :bug:`3360`
+* :doc:`/plugins/convert`: If ``delete_originals`` is enabled, then the source files will
+  be deleted after importing.
+  Thanks to :user:`logan-arens`.
+  :bug:`2947`
 
 Fixes:
 
+* :doc:`/plugins/the`: Fixed incorrect regex for 'the' that matched any
+  3-letter combination of the letters t, h, e.
+  :bug:`3701`
+* :doc:`/plugins/fetchart`: Fixed a bug that caused fetchart to not take
+  environment variables such as proxy servers into account when making requests
+  :bug:`3450`
+* :doc:`/plugins/fetchart`: Temporary files for fetched album art that fail
+  validation are now removed
 * :doc:`/plugins/inline`: In function-style field definitions that refer to
   flexible attributes, values could stick around from one function invocation
   to the next. This meant that, when displaying a list of objects, later
@@ -154,6 +198,57 @@ Fixes:
 * :doc:`/plugins/bpd`: Fix the transition to next track when in consume mode.
   Thanks to :user:`aereaux`.
   :bug:`3437`
+* :doc:`/plugins/lyrics`: Fix a corner-case with Genius lowercase artist names
+  :bug:`3446`
+* :doc:`/plugins/replaygain`: Support ``bs1770gain`` v0.6.0 and up
+  :bug:`3480`
+* :doc:`/plugins/parentwork`: Don't save tracks when nothing has changed.
+  :bug:`3492`
+* Added a warning when configuration files defined in the `include` directive
+  of the configuration file fail to be imported.
+  :bug:`3498`
+* Added the normalize method to the dbcore.types.INTEGER class which now
+  properly returns integer values, which should avoid problems where fields
+  like ``bpm`` would sometimes store non-integer values.
+  :bug:`762` :bug:`3507` :bug:`3508`
+* Removed ``@classmethod`` decorator from dbcore.query.NoneQuery.match method
+  failing with AttributeError when called. It is now an instance method.
+  :bug:`3516` :bug:`3517`
+* :doc:`/plugins/lyrics`: Tolerate missing lyrics div in Genius scraper.
+  Thanks to :user:`thejli21`.
+  :bug:`3535` :bug:`3554`
+* :doc:`/plugins/lyrics`: Use the artist sort name to search for lyrics, which
+  can help find matches when the artist name has special characters.
+  Thanks to :user:`hashhar`.
+  :bug:`3340` :bug:`3558`
+* :doc:`/plugins/replaygain`: Trying to calculate volume gain for an album
+  consisting of some formats using ``ReplayGain`` and some using ``R128``
+  will no longer crash; instead it is skipped and and a message is logged.
+  The log message has also been rewritten for to improve clarity.
+  Thanks to :user:`autrimpo`.
+  :bug:`3533`
+* :doc:`/plugins/lyrics`: Adapt the Genius backend to changes in markup to
+  reduce the scraping failure rate.
+  :bug:`3535` :bug:`3594`
+* :doc:`/plugins/lyrics`: Fix crash when writing ReST files for a query without
+  results or fetched lyrics
+  :bug:`2805`
+* Adapt to breaking changes in Python's ``ast`` module in 3.8
+* :doc:`/plugins/fetchart`: Attempt to fetch pre-resized thumbnails from Cover
+  Art Archive if the ``maxwidth`` option matches one of the sizes supported by
+  the Cover Art Archive API.
+  Thanks to :user:`trolley`.
+  :bug:`3637`
+* :doc:`/plugins/ipfs`: Fix Python 3 compatibility.
+  Thanks to :user:`musoke`.
+  :bug:`2554`
+* Fix a bug that caused metadata starting with something resembling a drive
+  letter to be incorrectly split into an extra directory after the colon.
+  :bug:`3685`
+* :doc:`/plugins/mpdstats`: Don't record a skip when stopping MPD, as MPD keeps
+  the current track in the queue.
+  Thanks to :user:`aereaux`.
+  :bug:`3722`
 
 For plugin developers:
 
@@ -205,11 +300,13 @@ For packagers:
   the test may no longer be necessary.
 * This version drops support for Python 3.4.
 
+.. _Fish shell: https://fishshell.com/
 .. _MediaFile: https://github.com/beetbox/mediafile
 .. _Confuse: https://github.com/beetbox/confuse
 .. _works: https://musicbrainz.org/doc/Work
 .. _Deezer: https://www.deezer.com
 .. _keyfinder-cli: https://github.com/EvanPurkhiser/keyfinder-cli
+.. _last.fm: https://last.fm
 
 
 1.4.9 (May 30, 2019)

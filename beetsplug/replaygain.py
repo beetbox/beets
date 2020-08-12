@@ -22,17 +22,18 @@ import math
 import sys
 import warnings
 import enum
+import re
+import xml.parsers.expat
+from six.moves import zip
+
 from multiprocessing.pool import ThreadPool, RUN
 from threading import Thread, Event
 import signal
-import xml.parsers.expat
-from six.moves import zip, queue
-import six
 
 from beets import ui
 from beets.plugins import BeetsPlugin
 from beets.util import (syspath, command_output, bytestring_path,
-                        displayable_path, py3_path, cpu_count)
+                        displayable_path, py3_path)
 
 
 # Utilities.
