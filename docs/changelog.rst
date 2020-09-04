@@ -149,6 +149,8 @@ New features:
 
 Fixes:
 
+* :doc:`/plugins/subsonicupdate`: REST was using `POST` method rather `GET` method.
+  Also includes better exception handling, response parsing, and tests.
 * :doc:`/plugins/the`: Fixed incorrect regex for 'the' that matched any
   3-letter combination of the letters t, h, e.
   :bug:`3701`
