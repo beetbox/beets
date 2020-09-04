@@ -27,6 +27,10 @@ jobs:
         run: |
           tox -e int
 
+      - name: Check external links in docs
+        run: |
+          tox -e links
+
       - name: Notify on failure
         if: ${{ failure() }}
         env:

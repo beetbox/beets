@@ -19,8 +19,6 @@ The Web interface depends on `Flask`_. To get it, just run ``pip install
 flask``. Then enable the ``web`` plugin in your configuration (see
 :ref:`using-plugins`).
 
-.. _Flask: https://flask.pocoo.org/
-
 If you need CORS (it's disabled by default---see :ref:`web-cors`, below), then
 you also need `flask-cors`_. Just type ``pip install flask-cors``.
 
@@ -47,9 +45,7 @@ Usage
 -----
 
 Type queries into the little search box. Double-click a track to play it with
-`HTML5 Audio`_.
-
-.. _HTML5 Audio: http://www.w3.org/TR/html-markup/audio.html
+HTML5 Audio.
 
 Configuration
 -------------
@@ -78,7 +74,7 @@ The Web backend is built using a simple REST+JSON API with the excellent
 `Flask`_ library. The frontend is a single-page application written with
 `Backbone.js`_. This allows future non-Web clients to use the same backend API.
 
-.. _Flask: https://flask.pocoo.org/
+
 .. _Backbone.js: https://backbonejs.org
 
 Eventually, to make the Web player really viable, we should use a Flash fallback
@@ -90,7 +86,7 @@ for unsupported formats/browsers. There are a number of options for this:
 
 .. _audio.js: https://kolber.github.io/audiojs/
 .. _html5media: https://html5media.info/
-.. _MediaElement.js: https://mediaelementjs.com/
+.. _MediaElement.js: https://www.mediaelementjs.com/
 
 .. _web-cors:
 
@@ -262,3 +258,5 @@ Responds with the number of tracks and albums in the database. ::
       "items": 5,
       "albums": 3
     }
+
+.. _Flask: https://flask.palletsprojects.com/en/1.1.x/

@@ -18,7 +18,7 @@ To use the ``embyupdate`` plugin you need to install the `requests`_ library wit
 With that all in place, you'll see beets send the "update" command to your Emby server every time you change your beets library.
 
 .. _Emby: https://emby.media/
-.. _requests: https://docs.python-requests.org/en/latest/
+.. _requests: https://requests.readthedocs.io/en/master/
 
 Configuration
 -------------

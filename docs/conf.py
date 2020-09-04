@@ -28,6 +28,13 @@ extlinks = {
     'stdlib': ('https://docs.python.org/3/library/%s.html', ''),
 }
 
+linkcheck_ignore = [
+    r'https://github.com/beetbox/beets/issues/',
+    r'https://github.com/\w+$',  # ignore user pages
+    r'.*localhost.*',
+    r'https://www.musixmatch.com/',  # blocks requests
+]
+
 # Options for HTML output
 htmlhelp_basename = 'beetsdoc'
 
