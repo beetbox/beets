@@ -100,16 +100,24 @@ class SubsonicUpdate(BeetsPlugin):
             't': token,
             's': salt,
             'v': '1.15.0',  # Subsonic 6.1 and newer.
-            'c': 'beets'
+            'c': 'beets',
+            'f': 'json'
         }
 
-        response = requests.post(url, params=payload)
+        try:
+            response = requests.get(url, params=payload)
+            json = response.json()
 
-        if response.status_code == 403:
-            self._log.error(u'Server authentication failed')
-        elif response.status_code == 200:
-            self._log.debug(u'Updating Subsonic')
-        else:
-            self._log.error(
-                u'Generic error, please try again later [Status Code: {}]'
-                .format(response.status_code))
+            if response.status_code == 200 and \
+                    json['subsonic-response']['status'] == "ok":
+                count = json['subsonic-response']['scanStatus']['count']
+                self._log.info(
+                    u'Updating Subsonic; scanning {0} tracks'.format(count))
+            elif response.status_code == 200 and \
+                    json['subsonic-response']['status'] == "failed":
+                error_message = json['subsonic-response']['error']['message']
+                self._log.error(u'Error: {0}'.format(error_message))
+            else:
+                self._log.error(u'Error: {0}', json)
+        except Exception as error:
+            self._log.error(u'Error: {0}'.format(error))
