@@ -466,7 +466,8 @@ def summarize_items(items, singleton):
     if items:
         average_bitrate = sum([item.bitrate for item in items]) / len(items)
         if items[0].format == "FLAC":
-            sample_bits = u'{}kHz/{} bit'.format(items[0].samplerate, items[0].bitdepth)
+            sample_bits = u'{}kHz/{} bit'.format(
+                round(int(items[0].samplerate) / 1000, 1), items[0].bitdepth)
         total_duration = sum([item.length for item in items])
         total_filesize = sum([item.filesize for item in items])
         summary_parts.append(u'{0}kbps'.format(int(average_bitrate / 1000)))
