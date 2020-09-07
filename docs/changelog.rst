@@ -147,6 +147,7 @@ New features:
   be deleted after importing.
   Thanks to :user:`logan-arens`.
   :bug:`2947`
+* Added flac-specific reporting of samplerate and bitrate when importing duplicates.
 
 Fixes:
 
