@@ -468,6 +468,10 @@ def summarize_items(items, singleton):
         total_duration = sum([item.length for item in items])
         total_filesize = sum([item.filesize for item in items])
         summary_parts.append(u'{0}kbps'.format(int(average_bitrate / 1000)))
+        if items[0].format == "FLAC":
+            sample_bits = u'{}kHz/{} bit'.format(
+                round(int(items[0].samplerate) / 1000, 1), items[0].bitdepth)
+            summary_parts.append(sample_bits)
         summary_parts.append(ui.human_seconds_short(total_duration))
         summary_parts.append(ui.human_bytes(total_filesize))
 
