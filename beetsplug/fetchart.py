@@ -344,7 +344,6 @@ class CoverArtArchive(RemoteArtSource):
 
                     return item['image']
 
-
         release_url = self.URL.format(mbid=album.mb_albumid)
         release_group_url = self.GROUP_URL.format(mbid=album.mb_releasegroupid)
 
