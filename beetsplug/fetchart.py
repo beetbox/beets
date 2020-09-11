@@ -308,11 +308,11 @@ class CoverArtArchive(RemoteArtSource):
     VALID_THUMBNAIL_SIZES = [250, 500, 1200]
 
     if util.SNI_SUPPORTED:
-        URL = 'https://coverartarchive.org/release/{mbid}/front'
-        GROUP_URL = 'https://coverartarchive.org/release-group/{mbid}/front'
+        URL = 'https://coverartarchive.org/release/{mbid}'
+        GROUP_URL = 'https://coverartarchive.org/release-group/{mbid}'
     else:
-        URL = 'http://coverartarchive.org/release/{mbid}/front'
-        GROUP_URL = 'http://coverartarchive.org/release-group/{mbid}/front'
+        URL = 'http://coverartarchive.org/release/{mbid}'
+        GROUP_URL = 'http://coverartarchive.org/release-group/{mbid}'
 
     def get(self, album, plugin, paths):
         """Return the Cover Art Archive and Cover Art Archive release group URLs
@@ -329,20 +329,36 @@ class CoverArtArchive(RemoteArtSource):
         if plugin.maxwidth in self.VALID_THUMBNAIL_SIZES:
             size_suffix = "-" + str(plugin.maxwidth)
 
+        url = None
         if 'release' in self.match_by and album.mb_albumid:
-            if size_suffix:
-                release_thumbnail_url = release_url + size_suffix
-                yield self._candidate(url=release_thumbnail_url,
+            url = release_url
+        elif 'releasegroup' in self.match_by and album.mb_releasegroupid:
+            url = release_group_url
+
+        try:
+            response = self.request(url)
+        except requests.RequestException:
+            self._log.debug(u'{0}: error receiving response'.format(self.NAME))
+            return
+
+        try:
+            data = response.json()
+        except ValueError:
+            self._log.debug(u'google: error loading response: {}'
+                            .format(response.text))
+            return
+
+        if 'images' in data.keys():
+            for item in data['images']:
+                if not item['front']:
+                    continue
+
+                if size_suffix:
+                    thumbnail_url = item['images'][size_suffix]
+                    yield self._candidate(url=thumbnail_url,
+                                          match=Candidate.MATCH_EXACT)
+                yield self._candidate(url=item['image'],
                                       match=Candidate.MATCH_EXACT)
-            yield self._candidate(url=release_url,
-                                  match=Candidate.MATCH_EXACT)
-        if 'releasegroup' in self.match_by and album.mb_releasegroupid:
-            if size_suffix:
-                release_group_thumbnail_url = release_group_url + size_suffix
-                yield self._candidate(url=release_group_thumbnail_url,
-                                      match=Candidate.MATCH_FALLBACK)
-            yield self._candidate(url=release_group_url,
-                                  match=Candidate.MATCH_FALLBACK)
 
 
 class Amazon(RemoteArtSource):
