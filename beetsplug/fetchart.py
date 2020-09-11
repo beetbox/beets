@@ -318,6 +318,33 @@ class CoverArtArchive(RemoteArtSource):
         """Return the Cover Art Archive and Cover Art Archive release group URLs
         using album MusicBrainz release ID and release group ID.
         """
+
+        def get_image_url(url, size_suffix=None):
+            try:
+                response = self.request(url)
+            except requests.RequestException:
+                self._log.debug(u'{0}: error receiving response'
+                                .format(self.NAME))
+                return
+
+            try:
+                data = response.json()
+            except ValueError:
+                self._log.debug(u'{0}: error loading response: {1}'
+                                .format(self.NAME, response.text))
+                return
+
+            if 'images' in data.keys():
+                for item in data['images']:
+                    if not item['front']:
+                        continue
+
+                    if size_suffix:
+                        return item['thumbnails'][size_suffix]
+
+                    return item['image']
+
+
         release_url = self.URL.format(mbid=album.mb_albumid)
         release_group_url = self.GROUP_URL.format(mbid=album.mb_releasegroupid)
 
@@ -329,36 +356,13 @@ class CoverArtArchive(RemoteArtSource):
         if plugin.maxwidth in self.VALID_THUMBNAIL_SIZES:
             size_suffix = "-" + str(plugin.maxwidth)
 
-        url = None
         if 'release' in self.match_by and album.mb_albumid:
-            url = release_url
-        elif 'releasegroup' in self.match_by and album.mb_releasegroupid:
-            url = release_group_url
+            url = get_image_url(release_url, size_suffix)
+            yield self._candidate(url=url, match=Candidate.MATCH_EXACT)
 
-        try:
-            response = self.request(url)
-        except requests.RequestException:
-            self._log.debug(u'{0}: error receiving response'.format(self.NAME))
-            return
-
-        try:
-            data = response.json()
-        except ValueError:
-            self._log.debug(u'google: error loading response: {}'
-                            .format(response.text))
-            return
-
-        if 'images' in data.keys():
-            for item in data['images']:
-                if not item['front']:
-                    continue
-
-                if size_suffix:
-                    thumbnail_url = item['images'][size_suffix]
-                    yield self._candidate(url=thumbnail_url,
-                                          match=Candidate.MATCH_EXACT)
-                yield self._candidate(url=item['image'],
-                                      match=Candidate.MATCH_EXACT)
+        if 'releasegroup' in self.match_by and album.mb_releasegroupid:
+            url = get_image_url(release_group_url)
+            yield self._candidate(url=url, match=Candidate.MATCH_FALLBACK)
 
 
 class Amazon(RemoteArtSource):
