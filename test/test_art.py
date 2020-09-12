@@ -500,8 +500,11 @@ class CoverArtArchiveTest(UseThePlugin):
         self.mock_response(self.RELEASE_URL, self.RESPONSE_RELEASE)
         self.mock_response(self.GROUP_URL, self.RESPONSE_GROUP)
         candidate = next(self.source.get(album, self.settings, []))
+        self.assertIsNotNone(candidate)
         self.assertEqual(candidate.url,
                          'http://coverartarchive.org/release/rid/12345.gif')
+        self.assertEqual(len(responses.calls), 1)
+        self.assertEqual(responses.calls[0].request.url, self.RELEASE_URL)
 
 
 class FanartTVTest(UseThePlugin):
