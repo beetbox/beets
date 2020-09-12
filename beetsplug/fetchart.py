@@ -319,7 +319,7 @@ class CoverArtArchive(RemoteArtSource):
         using album MusicBrainz release ID and release group ID.
         """
 
-        def get_image_url(url, size_suffix=None):
+        def get_image_urls(url, size_suffix=None):
             try:
                 response = self.request(url)
             except requests.RequestException:
@@ -340,9 +340,9 @@ class CoverArtArchive(RemoteArtSource):
                         continue
 
                     if size_suffix:
-                        return item['thumbnails'][size_suffix]
-
-                    return item['image']
+                        yield item['thumbnails'][size_suffix]
+                    else:
+                        yield item['image']
 
         release_url = self.URL.format(mbid=album.mb_albumid)
         release_group_url = self.GROUP_URL.format(mbid=album.mb_releasegroupid)
@@ -356,12 +356,12 @@ class CoverArtArchive(RemoteArtSource):
             size_suffix = "-" + str(plugin.maxwidth)
 
         if 'release' in self.match_by and album.mb_albumid:
-            url = get_image_url(release_url, size_suffix)
-            yield self._candidate(url=url, match=Candidate.MATCH_EXACT)
+            for url in get_image_urls(release_url, size_suffix):
+                yield self._candidate(url=url, match=Candidate.MATCH_EXACT)
 
         if 'releasegroup' in self.match_by and album.mb_releasegroupid:
-            url = get_image_url(release_group_url)
-            yield self._candidate(url=url, match=Candidate.MATCH_FALLBACK)
+            for url in get_image_urls(release_group_url):
+                yield self._candidate(url=url, match=Candidate.MATCH_FALLBACK)
 
 
 class Amazon(RemoteArtSource):
