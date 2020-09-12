@@ -404,9 +404,9 @@ class GoogleImageTest(UseThePlugin):
 class CoverArtArchiveTest(UseThePlugin):
     MBID = 'rid'
     RELEASE_URL = 'coverartarchive.org/release/{0}' \
-              .format(MBID)
+                  .format(MBID)
     GROUP_URL = 'coverartarchive.org/release-group/{0}' \
-              .format(MBID)
+                .format(MBID)
     RESPONSE_RELEASE = """{
     "images": [
       {
@@ -487,7 +487,6 @@ class CoverArtArchiveTest(UseThePlugin):
             self.RELEASE_URL = "http://" + self.RELEASE_URL
             self.GROUP_URL = "http://" + self.GROUP_URL
 
-
     @responses.activate
     def run(self, *args, **kwargs):
         super(CoverArtArchiveTest, self).run(*args, **kwargs)
@@ -501,7 +500,8 @@ class CoverArtArchiveTest(UseThePlugin):
         self.mock_response(self.RELEASE_URL, self.RESPONSE_RELEASE)
         self.mock_response(self.GROUP_URL, self.RESPONSE_GROUP)
         candidate = next(self.source.get(album, self.settings, []))
-        self.assertEqual(candidate.url, 'http://coverartarchive.org/release/rid/12345.gif')
+        self.assertEqual(candidate.url,
+                         'http://coverartarchive.org/release/rid/12345.gif')
 
 
 class FanartTVTest(UseThePlugin):
