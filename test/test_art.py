@@ -163,8 +163,6 @@ class CombinedTest(FetchImageHelper, UseThePlugin):
                  .format(ASIN)
     AAO_URL = 'https://www.albumart.org/index_detail.php?asin={0}' \
               .format(ASIN)
-    CAA_URL = 'coverartarchive.org/release/{0}/front' \
-              .format(MBID)
 
     def setUp(self):
         super(CombinedTest, self).setUp()
@@ -209,19 +207,6 @@ class CombinedTest(FetchImageHelper, UseThePlugin):
         album = _common.Bag(asin=self.ASIN)
         self.plugin.art_for_album(album, [self.dpath])
         self.assertEqual(responses.calls[-1].request.url, self.AAO_URL)
-
-    def test_main_interface_uses_caa_when_mbid_available(self):
-        self.mock_response("http://" + self.CAA_URL)
-        self.mock_response("https://" + self.CAA_URL)
-        album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
-        candidate = self.plugin.art_for_album(album, None)
-        self.assertIsNotNone(candidate)
-        self.assertEqual(len(responses.calls), 1)
-        if util.SNI_SUPPORTED:
-            url = "https://" + self.CAA_URL
-        else:
-            url = "http://" + self.CAA_URL
-        self.assertEqual(responses.calls[0].request.url, url)
 
     def test_local_only_does_not_access_network(self):
         album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
@@ -414,6 +399,109 @@ class GoogleImageTest(UseThePlugin):
         self.mock_response(fetchart.GoogleImages.URL, json)
         with self.assertRaises(StopIteration):
             next(self.source.get(album, self.settings, []))
+
+
+class CoverArtArchiveTest(UseThePlugin):
+    MBID = 'rid'
+    RELEASE_URL = 'coverartarchive.org/release/{0}' \
+              .format(MBID)
+    GROUP_URL = 'coverartarchive.org/release-group/{0}' \
+              .format(MBID)
+    RESPONSE_RELEASE = """{
+    "images": [
+      {
+        "approved": false,
+        "back": false,
+        "comment": "GIF",
+        "edit": 12345,
+        "front": true,
+        "id": 12345,
+        "image": "http://coverartarchive.org/release/rid/12345.gif",
+        "thumbnails": {
+          "1200": "http://coverartarchive.org/release/rid/12345-1200.jpg",
+          "250": "http://coverartarchive.org/release/rid/12345-250.jpg",
+          "500": "http://coverartarchive.org/release/rid/12345-500.jpg",
+          "large": "http://coverartarchive.org/release/rid/12345-500.jpg",
+          "small": "http://coverartarchive.org/release/rid/12345-250.jpg"
+        },
+        "types": [
+          "Front"
+        ]
+      },
+      {
+        "approved": false,
+        "back": false,
+        "comment": "",
+        "edit": 12345,
+        "front": false,
+        "id": 12345,
+        "image": "http://coverartarchive.org/release/rid/12345.jpg",
+        "thumbnails": {
+          "1200": "http://coverartarchive.org/release/rid/12345-1200.jpg",
+          "250": "http://coverartarchive.org/release/rid/12345-250.jpg",
+          "500": "http://coverartarchive.org/release/rid/12345-500.jpg",
+          "large": "http://coverartarchive.org/release/rid/12345-500.jpg",
+          "small": "http://coverartarchive.org/release/rid/12345-250.jpg"
+        },
+        "types": [
+          "Front"
+        ]
+      }
+    ],
+    "release": "https://musicbrainz.org/release/releaseid"
+}"""
+    RESPONSE_GROUP = """{
+        "images": [
+          {
+            "approved": false,
+            "back": false,
+            "comment": "",
+            "edit": 12345,
+            "front": true,
+            "id": 12345,
+            "image": "http://coverartarchive.org/release/releaseid/12345.jpg",
+            "thumbnails": {
+              "1200": "http://coverartarchive.org/release/rgid/12345-1200.jpg",
+              "250": "http://coverartarchive.org/release/rgid/12345-250.jpg",
+              "500": "http://coverartarchive.org/release/rgid/12345-500.jpg",
+              "large": "http://coverartarchive.org/release/rgid/12345-500.jpg",
+              "small": "http://coverartarchive.org/release/rgid/12345-250.jpg"
+            },
+            "types": [
+              "Front"
+            ]
+          }
+        ],
+        "release": "https://musicbrainz.org/release/release-id"
+    }"""
+
+    def setUp(self):
+        super(CoverArtArchiveTest, self).setUp()
+        self.source = fetchart.CoverArtArchive(logger, self.plugin.config)
+        self.settings = Settings(maxwidth=0)
+
+        if util.SNI_SUPPORTED:
+            self.RELEASE_URL = "https://" + self.RELEASE_URL
+            self.GROUP_URL = "https://" + self.GROUP_URL
+        else:
+            self.RELEASE_URL = "http://" + self.RELEASE_URL
+            self.GROUP_URL = "http://" + self.GROUP_URL
+
+
+    @responses.activate
+    def run(self, *args, **kwargs):
+        super(CoverArtArchiveTest, self).run(*args, **kwargs)
+
+    def mock_response(self, url, json):
+        responses.add(responses.GET, url, body=json,
+                      content_type='application/json')
+
+    def test_caa_finds_image(self):
+        album = _common.Bag(mb_albumid=self.MBID, mb_releasegroupid=self.MBID)
+        self.mock_response(self.RELEASE_URL, self.RESPONSE_RELEASE)
+        self.mock_response(self.GROUP_URL, self.RESPONSE_GROUP)
+        candidate = next(self.source.get(album, self.settings, []))
+        self.assertEqual(candidate.url, 'http://coverartarchive.org/release/rid/12345.gif')
 
 
 class FanartTVTest(UseThePlugin):
