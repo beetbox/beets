@@ -148,6 +148,8 @@ New features:
   Thanks to :user:`logan-arens`.
   :bug:`2947`
 * Added flac-specific reporting of samplerate and bitrate when importing duplicates.
+* :doc:`/plugins/fetchart`: Cover Art Archive source now iterates over
+  all front images instead of blindly selecting the first one.
 
 Fixes:
 
