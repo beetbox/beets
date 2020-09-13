@@ -336,7 +336,7 @@ class CoverArtArchive(RemoteArtSource):
 
             if 'images' in data.keys():
                 for item in data['images']:
-                    if not item['front']:
+                    if 'Front' not in item['types']:
                         continue
 
                     if size_suffix:

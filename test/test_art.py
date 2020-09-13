@@ -402,11 +402,12 @@ class GoogleImageTest(UseThePlugin):
 
 
 class CoverArtArchiveTest(UseThePlugin):
-    MBID = 'rid'
+    MBID_RELASE = 'rid'
+    MBID_GROUP = 'rgid'
     RELEASE_URL = 'coverartarchive.org/release/{0}' \
-                  .format(MBID)
+                  .format(MBID_RELASE)
     GROUP_URL = 'coverartarchive.org/release-group/{0}' \
-                .format(MBID)
+                .format(MBID_GROUP)
     RESPONSE_RELEASE = """{
     "images": [
       {
@@ -496,7 +497,8 @@ class CoverArtArchiveTest(UseThePlugin):
                       content_type='application/json')
 
     def test_caa_finds_image(self):
-        album = _common.Bag(mb_albumid=self.MBID, mb_releasegroupid=self.MBID)
+        album = _common.Bag(mb_albumid=self.MBID_RELASE,
+                            mb_releasegroupid=self.MBID_GROUP)
         self.mock_response(self.RELEASE_URL, self.RESPONSE_RELEASE)
         self.mock_response(self.GROUP_URL, self.RESPONSE_GROUP)
         candidate = next(self.source.get(album, self.settings, []))
