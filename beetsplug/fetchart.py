@@ -334,8 +334,8 @@ class CoverArtArchive(RemoteArtSource):
                                 .format(self.NAME, response.text))
                 return
 
-            if 'images' in data.keys():
-                for item in data['images']:
+            for item in data.get('images', []):
+                try:
                     if 'Front' not in item['types']:
                         continue
 
@@ -343,6 +343,8 @@ class CoverArtArchive(RemoteArtSource):
                         yield item['thumbnails'][size_suffix]
                     else:
                         yield item['image']
+                except KeyError:
+                    pass
 
         release_url = self.URL.format(mbid=album.mb_albumid)
         release_group_url = self.GROUP_URL.format(mbid=album.mb_releasegroupid)
