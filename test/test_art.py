@@ -76,6 +76,96 @@ class FetchImageHelper(_common.TestCase):
                           file_type, b'').ljust(32, b'\x00'))
 
 
+class CAAHelper():
+    """Helper mixin for mocking requests to the Cover Art Archive."""
+    MBID_RELASE = 'rid'
+    MBID_GROUP = 'rgid'
+
+    RELEASE_URL = 'coverartarchive.org/release/{0}' \
+                  .format(MBID_RELASE)
+    GROUP_URL = 'coverartarchive.org/release-group/{0}' \
+                .format(MBID_GROUP)
+
+    if util.SNI_SUPPORTED:
+        RELEASE_URL = "https://" + RELEASE_URL
+        GROUP_URL = "https://" + GROUP_URL
+    else:
+        RELEASE_URL = "http://" + RELEASE_URL
+        GROUP_URL = "http://" + GROUP_URL
+
+    RESPONSE_RELEASE = """{
+    "images": [
+      {
+        "approved": false,
+        "back": false,
+        "comment": "GIF",
+        "edit": 12345,
+        "front": true,
+        "id": 12345,
+        "image": "http://coverartarchive.org/release/rid/12345.gif",
+        "thumbnails": {
+          "1200": "http://coverartarchive.org/release/rid/12345-1200.jpg",
+          "250": "http://coverartarchive.org/release/rid/12345-250.jpg",
+          "500": "http://coverartarchive.org/release/rid/12345-500.jpg",
+          "large": "http://coverartarchive.org/release/rid/12345-500.jpg",
+          "small": "http://coverartarchive.org/release/rid/12345-250.jpg"
+        },
+        "types": [
+          "Front"
+        ]
+      },
+      {
+        "approved": false,
+        "back": false,
+        "comment": "",
+        "edit": 12345,
+        "front": false,
+        "id": 12345,
+        "image": "http://coverartarchive.org/release/rid/12345.jpg",
+        "thumbnails": {
+          "1200": "http://coverartarchive.org/release/rid/12345-1200.jpg",
+          "250": "http://coverartarchive.org/release/rid/12345-250.jpg",
+          "500": "http://coverartarchive.org/release/rid/12345-500.jpg",
+          "large": "http://coverartarchive.org/release/rid/12345-500.jpg",
+          "small": "http://coverartarchive.org/release/rid/12345-250.jpg"
+        },
+        "types": [
+          "Front"
+        ]
+      }
+    ],
+    "release": "https://musicbrainz.org/release/releaseid"
+}"""
+    RESPONSE_GROUP = """{
+        "images": [
+          {
+            "approved": false,
+            "back": false,
+            "comment": "",
+            "edit": 12345,
+            "front": true,
+            "id": 12345,
+            "image": "http://coverartarchive.org/release/releaseid/12345.jpg",
+            "thumbnails": {
+              "1200": "http://coverartarchive.org/release/rgid/12345-1200.jpg",
+              "250": "http://coverartarchive.org/release/rgid/12345-250.jpg",
+              "500": "http://coverartarchive.org/release/rgid/12345-500.jpg",
+              "large": "http://coverartarchive.org/release/rgid/12345-500.jpg",
+              "small": "http://coverartarchive.org/release/rgid/12345-250.jpg"
+            },
+            "types": [
+              "Front"
+            ]
+          }
+        ],
+        "release": "https://musicbrainz.org/release/release-id"
+    }"""
+
+    def mock_caa_response(self, url, json):
+        responses.add(responses.GET, url, body=json,
+                      content_type='application/json')
+
+
 class FetchImageTest(FetchImageHelper, UseThePlugin):
     URL = 'http://example.com/test.jpg'
 
@@ -156,7 +246,7 @@ class FSArtTest(UseThePlugin):
         self.assertEqual(candidates, paths)
 
 
-class CombinedTest(FetchImageHelper, UseThePlugin):
+class CombinedTest(FetchImageHelper, UseThePlugin, CAAHelper):
     ASIN = 'xxxx'
     MBID = 'releaseid'
     AMAZON_URL = 'https://images.amazon.com/images/P/{0}.01.LZZZZZZZ.jpg' \
@@ -207,6 +297,21 @@ class CombinedTest(FetchImageHelper, UseThePlugin):
         album = _common.Bag(asin=self.ASIN)
         self.plugin.art_for_album(album, [self.dpath])
         self.assertEqual(responses.calls[-1].request.url, self.AAO_URL)
+
+    def test_main_interface_uses_caa_when_mbid_available(self):
+        self.mock_caa_response(self.RELEASE_URL, self.RESPONSE_RELEASE)
+        self.mock_caa_response(self.GROUP_URL, self.RESPONSE_GROUP)
+        self.mock_response('http://coverartarchive.org/release/rid/12345.gif',
+                           content_type='image/gif')
+        self.mock_response('http://coverartarchive.org/release/rid/12345.jpg',
+                           content_type='image/jpeg')
+        album = _common.Bag(mb_albumid=self.MBID_RELASE,
+                            mb_releasegroupid=self.MBID_GROUP,
+                            asin=self.ASIN)
+        candidate = self.plugin.art_for_album(album, None)
+        self.assertIsNotNone(candidate)
+        self.assertEqual(len(responses.calls), 3)
+        self.assertEqual(responses.calls[0].request.url, self.RELEASE_URL)
 
     def test_local_only_does_not_access_network(self):
         album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
@@ -401,106 +506,22 @@ class GoogleImageTest(UseThePlugin):
             next(self.source.get(album, self.settings, []))
 
 
-class CoverArtArchiveTest(UseThePlugin):
-    MBID_RELASE = 'rid'
-    MBID_GROUP = 'rgid'
-    RELEASE_URL = 'coverartarchive.org/release/{0}' \
-                  .format(MBID_RELASE)
-    GROUP_URL = 'coverartarchive.org/release-group/{0}' \
-                .format(MBID_GROUP)
-    RESPONSE_RELEASE = """{
-    "images": [
-      {
-        "approved": false,
-        "back": false,
-        "comment": "GIF",
-        "edit": 12345,
-        "front": true,
-        "id": 12345,
-        "image": "http://coverartarchive.org/release/rid/12345.gif",
-        "thumbnails": {
-          "1200": "http://coverartarchive.org/release/rid/12345-1200.jpg",
-          "250": "http://coverartarchive.org/release/rid/12345-250.jpg",
-          "500": "http://coverartarchive.org/release/rid/12345-500.jpg",
-          "large": "http://coverartarchive.org/release/rid/12345-500.jpg",
-          "small": "http://coverartarchive.org/release/rid/12345-250.jpg"
-        },
-        "types": [
-          "Front"
-        ]
-      },
-      {
-        "approved": false,
-        "back": false,
-        "comment": "",
-        "edit": 12345,
-        "front": false,
-        "id": 12345,
-        "image": "http://coverartarchive.org/release/rid/12345.jpg",
-        "thumbnails": {
-          "1200": "http://coverartarchive.org/release/rid/12345-1200.jpg",
-          "250": "http://coverartarchive.org/release/rid/12345-250.jpg",
-          "500": "http://coverartarchive.org/release/rid/12345-500.jpg",
-          "large": "http://coverartarchive.org/release/rid/12345-500.jpg",
-          "small": "http://coverartarchive.org/release/rid/12345-250.jpg"
-        },
-        "types": [
-          "Front"
-        ]
-      }
-    ],
-    "release": "https://musicbrainz.org/release/releaseid"
-}"""
-    RESPONSE_GROUP = """{
-        "images": [
-          {
-            "approved": false,
-            "back": false,
-            "comment": "",
-            "edit": 12345,
-            "front": true,
-            "id": 12345,
-            "image": "http://coverartarchive.org/release/releaseid/12345.jpg",
-            "thumbnails": {
-              "1200": "http://coverartarchive.org/release/rgid/12345-1200.jpg",
-              "250": "http://coverartarchive.org/release/rgid/12345-250.jpg",
-              "500": "http://coverartarchive.org/release/rgid/12345-500.jpg",
-              "large": "http://coverartarchive.org/release/rgid/12345-500.jpg",
-              "small": "http://coverartarchive.org/release/rgid/12345-250.jpg"
-            },
-            "types": [
-              "Front"
-            ]
-          }
-        ],
-        "release": "https://musicbrainz.org/release/release-id"
-    }"""
+class CoverArtArchiveTest(UseThePlugin, CAAHelper):
 
     def setUp(self):
         super(CoverArtArchiveTest, self).setUp()
         self.source = fetchart.CoverArtArchive(logger, self.plugin.config)
         self.settings = Settings(maxwidth=0)
 
-        if util.SNI_SUPPORTED:
-            self.RELEASE_URL = "https://" + self.RELEASE_URL
-            self.GROUP_URL = "https://" + self.GROUP_URL
-        else:
-            self.RELEASE_URL = "http://" + self.RELEASE_URL
-            self.GROUP_URL = "http://" + self.GROUP_URL
-
     @responses.activate
     def run(self, *args, **kwargs):
         super(CoverArtArchiveTest, self).run(*args, **kwargs)
 
-    def mock_response(self, url, json):
-        responses.add(responses.GET, url, body=json,
-                      content_type='application/json')
-
     def test_caa_finds_image(self):
         album = _common.Bag(mb_albumid=self.MBID_RELASE,
                             mb_releasegroupid=self.MBID_GROUP)
-        self.mock_response(self.RELEASE_URL, self.RESPONSE_RELEASE)
-        self.mock_response(self.GROUP_URL, self.RESPONSE_GROUP)
+        self.mock_caa_response(self.RELEASE_URL, self.RESPONSE_RELEASE)
+        self.mock_caa_response(self.GROUP_URL, self.RESPONSE_GROUP)
         candidate = next(self.source.get(album, self.settings, []))
         self.assertIsNotNone(candidate)
         self.assertEqual(candidate.url,
