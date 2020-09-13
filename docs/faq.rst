@@ -227,6 +227,20 @@ If you've already moved your music *outside* of beets, you have a few options:
 - Resort to manually modifying the SQLite database (not recommended).
 
 
+
+.. _disable-plugins:
+
+…disable plugins?
+-----------------
+
+Add a `#` to your :doc:`config.yaml </config>` on the line where your :doc:`/reference/plugins` are mentioned. For example::
+
+    # no plugins will be read if a # is at the start of the next line
+    # plugins: the, convert
+
+Remove the `#`, save the file, and run your `beet` command again to re-enable plugins.
+
+
 Why does beets…
 ===============
 
