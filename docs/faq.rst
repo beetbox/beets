@@ -233,7 +233,7 @@ If you've already moved your music *outside* of beets, you have a few options:
 …disable plugins?
 -----------------
 
-Add a `#` to your :doc:`config.yaml </reference/config>` on the line where your :doc:`/plugins` are mentioned. For example::
+Add a `#` to your :doc:`config.yaml </reference/config>` on the line where your :doc:`plugins </plugins/index>` are mentioned. For example::
 
     # no plugins will be read if a # is at the start of the next line
     # plugins: the, convert
