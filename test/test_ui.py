@@ -163,10 +163,14 @@ class RemoveTest(_common.TestCase, TestHelper):
         commands.remove_items(self.lib, u'', False, True, False)
         items = self.lib.items()
         self.assertEqual(len(list(items)), 1)
-        # FIXME: is the order of the items as queried by the remove command
-        # really deterministic?
-        self.assertFalse(os.path.exists(syspath(self.i.path)))
-        self.assertTrue(os.path.exists(syspath(i2.path)))
+        # There is probably no guarantee that the items are queried in any
+        # spcecific order, thus just ensure that exactly one was removed.
+        # To improve upon this, self.io would need to have the capability to
+        # generate input that depends on previous output.
+        num_existing = 0
+        num_existing += 1 if os.path.exists(syspath(self.i.path)) else 0
+        num_existing += 1 if os.path.exists(syspath(i2.path)) else 0
+        self.assertEqual(num_existing, 1)
 
     def test_remove_albums_select_with_delete(self):
         a1 = self.add_album_fixture()
@@ -181,10 +185,11 @@ class RemoveTest(_common.TestCase, TestHelper):
         commands.remove_items(self.lib, u'', True, True, False)
         items = self.lib.items()
         self.assertEqual(len(list(items)), 2)  # incl. the item from setUp()
-        # FIXME: is the order of the items as queried by the remove command
-        # really deterministic?
-        self.assertFalse(os.path.exists(syspath(path1)))
-        self.assertTrue(os.path.exists(syspath(path2)))
+        # See test_remove_items_select_with_delete()
+        num_existing = 0
+        num_existing += 1 if os.path.exists(syspath(path1)) else 0
+        num_existing += 1 if os.path.exists(syspath(path2)) else 0
+        self.assertEqual(num_existing, 1)
 
 
 class ModifyTest(unittest.TestCase, TestHelper):
