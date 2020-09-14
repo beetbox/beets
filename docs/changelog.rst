@@ -150,6 +150,8 @@ New features:
 * Added flac-specific reporting of samplerate and bitrate when importing duplicates.
 * :doc:`/plugins/fetchart`: Cover Art Archive source now iterates over
   all front images instead of blindly selecting the first one.
+* ``beet remove`` now also allows interactive selection of items from the query
+  similar to ``beet modify``
 
 Fixes:
 
