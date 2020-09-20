@@ -149,7 +149,7 @@ def resource(name, patchable=False):
     return make_responder
 
 
-def resource_query(name):
+def resource_query(name, patchable=False):
     """Decorates a function to handle RESTful HTTP queries for resources.
     """
     def make_responder(query_func):
@@ -162,6 +162,16 @@ def resource_query(name):
 
                 return flask.make_response(jsonify({'deleted': True}), 200)
 
+            elif get_method() == "PATCH" and patchable:
+                for entity in entities:
+                    entity.update(flask.request.get_json())
+                    entity.try_sync(True, False)  # write, don't move
+
+                return app.response_class(
+                    json_generator(entities, root=name),
+                    mimetype='application/json'
+                )
+
             elif get_method() == "GET":
                 return app.response_class(
                     json_generator(
@@ -170,6 +180,7 @@ def resource_query(name):
                     ),
                     mimetype='application/json'
                 )
+
             else:
                 return flask.abort(405)
 
@@ -300,8 +311,8 @@ def item_file(item_id):
     return response
 
 
-@app.route('/item/query/<query:queries>', methods=["GET", "DELETE"])
-@resource_query('items')
+@app.route('/item/query/<query:queries>', methods=["GET", "DELETE", "PATCH"])
+@resource_query('items', patchable=True)
 def item_query(queries):
     return g.lib.items(queries)
 
