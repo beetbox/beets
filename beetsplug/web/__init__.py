@@ -102,7 +102,7 @@ def get_method():
     return flask.request.method
 
 
-def resource(name):
+def resource(name, patchable=False):
     """Decorates a function to handle RESTful HTTP requests for a resource.
     """
     def make_responder(retriever):
@@ -111,16 +111,25 @@ def resource(name):
             entities = [entity for entity in entities if entity]
 
             if get_method() == "DELETE":
-                responder.__name__ = 'delete_{0}'.format(name)
-
                 for entity in entities:
                     entity.remove(delete=is_delete())
 
                 return flask.make_response(jsonify({'deleted': True}), 200)
 
-            elif get_method() == "GET":
-                responder.__name__ = 'get_{0}'.format(name)
+            elif get_method() == "PATCH" and patchable:
+                for entity in entities:
+                    entity.update(flask.request.get_json())
+                    entity.try_sync(True, False)  # write, don't move
 
+                if len(entities) == 1:
+                    return flask.jsonify(_rep(entities[0], expand=is_expand()))
+                elif entities:
+                    return app.response_class(
+                        json_generator(entities, root=name),
+                        mimetype='application/json'
+                    )
+
+            elif get_method() == "GET":
                 if len(entities) == 1:
                     return flask.jsonify(_rep(entities[0], expand=is_expand()))
                 elif entities:
@@ -134,6 +143,8 @@ def resource(name):
             else:
                 return flask.abort(405)
 
+        responder.__name__ = 'get_{0}'.format(name)
+
         return responder
     return make_responder
 
@@ -146,16 +157,12 @@ def resource_query(name):
             entities = query_func(queries)
 
             if get_method() == "DELETE":
-                responder.__name__ = 'delete_query_{0}'.format(name)
-
                 for entity in entities:
                     entity.remove(delete=is_delete())
 
                 return flask.make_response(jsonify({'deleted': True}), 200)
 
             elif get_method() == "GET":
-                responder.__name__ = 'query_{0}'.format(name)
-
                 return app.response_class(
                     json_generator(
                         entities,
@@ -166,7 +173,10 @@ def resource_query(name):
             else:
                 return flask.abort(405)
 
+        responder.__name__ = 'query_{0}'.format(name)
+
         return responder
+
     return make_responder
 
 
@@ -243,8 +253,8 @@ def before_request():
 
 # Items.
 
-@app.route('/item/<idlist:ids>', methods=["GET", "DELETE"])
-@resource('items')
+@app.route('/item/<idlist:ids>', methods=["GET", "DELETE", "PATCH"])
+@resource('items', patchable=True)
 def get_item(id):
     return g.lib.get_item(id)
 
