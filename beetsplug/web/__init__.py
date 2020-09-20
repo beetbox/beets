@@ -21,7 +21,7 @@ from beets import ui
 from beets import util
 import beets.library
 import flask
-from flask import g, make_response, jsonify
+from flask import g, jsonify
 from werkzeug.routing import BaseConverter, PathConverter
 import os
 from unidecode import unidecode
@@ -92,7 +92,9 @@ def is_expand():
 
 
 def is_delete():
-    """Returns whether the current delete request should remove the selected files."""
+    """Returns whether the current delete request should remove the selected
+    files.
+    """
 
     return flask.request.args.get('delete') is not None
 
@@ -344,6 +346,7 @@ def item_unique_field_values(key):
 @resource('albums')
 def get_album(id):
     return g.lib.get_album(id)
+
 
 @app.route('/album/')
 @app.route('/album/query/')
