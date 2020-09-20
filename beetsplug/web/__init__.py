@@ -21,7 +21,7 @@ from beets import ui
 from beets import util
 import beets.library
 import flask
-from flask import g
+from flask import g, make_response, jsonify
 from werkzeug.routing import BaseConverter, PathConverter
 import os
 from unidecode import unidecode
@@ -91,6 +91,17 @@ def is_expand():
     return flask.request.args.get('expand') is not None
 
 
+def is_delete():
+    """Returns whether the current delete request should remove the selected files."""
+
+    return flask.request.args.get('delete') is not None
+
+
+def get_method():
+    """Returns the HTTP method of the current request."""
+    return flask.request.method
+
+
 def resource(name):
     """Decorates a function to handle RESTful HTTP requests for a resource.
     """
@@ -99,16 +110,30 @@ def resource(name):
             entities = [retriever(id) for id in ids]
             entities = [entity for entity in entities if entity]
 
-            if len(entities) == 1:
-                return flask.jsonify(_rep(entities[0], expand=is_expand()))
-            elif entities:
-                return app.response_class(
-                    json_generator(entities, root=name),
-                    mimetype='application/json'
-                )
+            if get_method() == "DELETE":
+                responder.__name__ = 'delete_{0}'.format(name)
+
+                for entity in entities:
+                    entity.remove(delete=is_delete())
+
+                return flask.make_response(jsonify({'deleted': True}), 200)
+
+            elif get_method() == "GET":
+                responder.__name__ = 'get_{0}'.format(name)
+
+                if len(entities) == 1:
+                    return flask.jsonify(_rep(entities[0], expand=is_expand()))
+                elif entities:
+                    return app.response_class(
+                        json_generator(entities, root=name),
+                        mimetype='application/json'
+                    )
+                else:
+                    return flask.abort(404)
+
             else:
-                return flask.abort(404)
-        responder.__name__ = 'get_{0}'.format(name)
+                return flask.abort(405)
+
         return responder
     return make_responder
 
@@ -203,7 +228,7 @@ def before_request():
 
 # Items.
 
-@app.route('/item/<idlist:ids>')
+@app.route('/item/<idlist:ids>', methods=["GET", "DELETE"])
 @resource('items')
 def get_item(id):
     return g.lib.get_item(id)
@@ -279,11 +304,10 @@ def item_unique_field_values(key):
 
 # Albums.
 
-@app.route('/album/<idlist:ids>')
+@app.route('/album/<idlist:ids>', methods=["GET", "DELETE"])
 @resource('albums')
 def get_album(id):
     return g.lib.get_album(id)
-
 
 @app.route('/album/')
 @app.route('/album/query/')
