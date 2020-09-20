@@ -143,14 +143,29 @@ def resource_query(name):
     """
     def make_responder(query_func):
         def responder(queries):
-            return app.response_class(
-                json_generator(
-                    query_func(queries),
-                    root='results', expand=is_expand()
-                ),
-                mimetype='application/json'
-            )
-        responder.__name__ = 'query_{0}'.format(name)
+            entities = query_func(queries)
+
+            if get_method() == "DELETE":
+                responder.__name__ = 'delete_query_{0}'.format(name)
+
+                for entity in entities:
+                    entity.remove(delete=is_delete())
+
+                return flask.make_response(jsonify({'deleted': True}), 200)
+
+            elif get_method() == "GET":
+                responder.__name__ = 'query_{0}'.format(name)
+
+                return app.response_class(
+                    json_generator(
+                        entities,
+                        root='results', expand=is_expand()
+                    ),
+                    mimetype='application/json'
+                )
+            else:
+                return flask.abort(405)
+
         return responder
     return make_responder
 
@@ -275,7 +290,7 @@ def item_file(item_id):
     return response
 
 
-@app.route('/item/query/<query:queries>')
+@app.route('/item/query/<query:queries>', methods=["GET", "DELETE"])
 @resource_query('items')
 def item_query(queries):
     return g.lib.items(queries)
@@ -316,7 +331,7 @@ def all_albums():
     return g.lib.albums()
 
 
-@app.route('/album/query/<query:queries>')
+@app.route('/album/query/<query:queries>', methods=["GET", "DELETE"])
 @resource_query('albums')
 def album_query(queries):
     return g.lib.albums(queries)
