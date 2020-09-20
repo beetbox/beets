@@ -152,6 +152,7 @@ New features:
   all front images instead of blindly selecting the first one.
 * ``beet remove`` now also allows interactive selection of items from the query
   similar to ``beet modify``
+* :doc:`/plugins/web`: add DELETE and PATCH methods for modifying items
 
 Fixes:
 
