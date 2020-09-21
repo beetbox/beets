@@ -61,6 +61,7 @@ following to your configuration::
 
    absubmit
    acousticbrainz
+   aura
    badfiles
    beatport
    bpd
@@ -184,6 +185,7 @@ Path Formats
 Interoperability
 ----------------
 
+* :doc:`aura`: A server implementation of the `AURA`_ specification.
 * :doc:`badfiles`: Check audio file integrity.
 * :doc:`embyupdate`: Automatically notifies `Emby`_ whenever the beets library changes.
 * :doc:`fish`: Adds `Fish shell`_ tab autocompletion to ``beet`` commands.
@@ -205,6 +207,7 @@ Interoperability
   library changes.
 
 
+.. _AURA: https://auraspec.readthedocs.io
 .. _Emby: https://emby.media
 .. _Fish shell: https://fishshell.com/
 .. _Plex: https://plex.tv
