@@ -183,6 +183,25 @@ representation. ::
 If there is no item with that id responds with a *404* status
 code.
 
+``DELETE /item/6``
+++++++++++++++++++
+
+Removes the item with id *6* from the beets library. If the *?delete* query string is included,
+the matching file will be deleted from disk.
+
+``PATCH /item/6``
+++++++++++++++++++
+
+Updates the item with id *6* and write the changes to the music file. The body should be a JSON object
+containing the changes to the object.
+
+Returns the updated JSON representation. ::
+
+    {
+      "id": 6,
+      "title": "A Song",
+      ...
+    }
 
 ``GET /item/6,12,13``
 +++++++++++++++++++++
@@ -192,6 +211,8 @@ the response is the same as for `GET /item/`_. It is *not guaranteed* that the
 response includes all the items requested. If a track is not found it is silently
 dropped from the response.
 
+This endpoint also supports *DELETE* and *PATCH* methods as above, to operate on all
+items of the list.
 
 ``GET /item/path/...``
 ++++++++++++++++++++++
@@ -221,6 +242,8 @@ Path elements are joined as parts of a query. For example,
 To specify literal path separators in a query, use a backslash instead of a
 slash.
 
+This endpoint also supports *DELETE* and *PATCH* methods as above, to operate on all
+items returned by the query.
 
 ``GET /item/6/file``
 ++++++++++++++++++++
@@ -238,9 +261,15 @@ For albums, the following endpoints are provided:
 
 * ``GET /album/5``
 
+* ``DELETE /album/5``
+
 * ``GET /album/5,7``
 
+* ``DELETE /album/5,7``
+
 * ``GET /album/query/querystring``
+
+* ``DELETE /album/query/querystring``
 
 The interface and response format is similar to the item API, except replacing
 the encapsulation key ``"items"`` with ``"albums"`` when requesting ``/album/``
