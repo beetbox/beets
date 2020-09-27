@@ -14,8 +14,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""An AURA server using Flask.
-"""
+"""An AURA server using Flask."""
 
 from __future__ import division, absolute_import, print_function
 
@@ -811,7 +810,10 @@ def create_app():
 
 
 class AURAPlugin(BeetsPlugin):
+    """The BeetsPlugin subclass for the AURA server plugin."""
+
     def __init__(self):
+        """Add configuration options for the AURA plugin."""
         super(AURAPlugin, self).__init__()
         self.config.add(
             {
@@ -824,6 +826,8 @@ class AURAPlugin(BeetsPlugin):
         )
 
     def commands(self):
+        """Add subcommand used to run the AURA server."""
+
         def run_aura(lib, opts, args):
             """Run the application using Flask's built in-server."""
             app = create_app()
