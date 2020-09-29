@@ -283,6 +283,8 @@ Here are a few of the plugins written by the beets community:
 
 * `beets-follow`_ lets you check for new albums from artists you like.
 
+* `beets-ibroadcast`_ uploads tracks to the `iBroadcast`_ cloud service.
+
 * `beets-setlister`_ generate playlists from the setlists of a given artist.
 
 * `beets-noimport`_ adds and removes directories from the incremental import skip list.
@@ -336,6 +338,8 @@ Here are a few of the plugins written by the beets community:
 .. _beet-amazon: https://github.com/jmwatte/beet-amazon
 .. _beets-alternatives: https://github.com/geigerzaehler/beets-alternatives
 .. _beets-follow: https://github.com/nolsto/beets-follow
+.. _beets-ibroadcast: https://github.com/ctrueden/beets-ibroadcast
+.. _iBroadcast: https://ibroadcast.com/
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
 .. _beets-noimport: https://gitlab.com/tiago.dias/beets-noimport
 .. _whatlastgenre: https://github.com/YetAnotherNerd/whatlastgenre/tree/master/plugin/beets
