@@ -24,7 +24,7 @@ import re
 from beets.plugins import BeetsPlugin
 from beets import ui
 import mediafile
-from beets.library import Item
+from beets.library import Album, Item
 from beets.util import displayable_path, normpath, syspath
 
 
@@ -43,14 +43,15 @@ def tag_data(lib, args):
 
 
 def tag_data_emitter(path):
-    def emitter():
-        fields = list(mediafile.MediaFile.readable_fields())
-        fields.remove('images')
+    def emitter(included_keys):
         mf = mediafile.MediaFile(syspath(path))
         tags = {}
-        for field in fields:
-            tags[field] = getattr(mf, field)
-        tags['art'] = mf.art is not None
+        for field in included_keys:
+            value = getattr(mf, field)
+            if field == 'art':
+                tags['art'] = bool(value)
+            elif value:
+                tags[field] = value
         # create a temporary Item to take advantage of __format__
         item = Item.from_path(syspath(path))
 
@@ -64,11 +65,46 @@ def library_data(lib, args):
 
 
 def library_data_emitter(item):
-    def emitter():
-        data = dict(item.formatted())
+    def emitter(included_keys):
+        data = {}
+        for field in included_keys:
+            if field in item:
+                data[field] = item[field]
 
         return data, item
     return emitter
+
+
+def all_tag_fields():
+    fields = list(mediafile.MediaFile.readable_fields())
+    fields.remove('images')
+    return fields
+
+def all_library_fields():
+    return Item.all_keys() + Album.all_keys()
+
+
+def expand_key_list(keys, all_fields):
+    """Process '*' glob patterns in a list of library key names."""
+
+    # By default, if no field inclusions are specified, include everything.
+    if not keys:
+        return all_fields
+
+    matchers = []
+    for key in keys:
+        pattern = re.escape(key).replace(r'\*', '.*') + '$'
+        matchers.append(re.compile(pattern))
+        keys.remove(key)
+
+    def filter_(fields):
+        for field in fields:
+            if field in keys:
+                yield field
+            if any([m.match(field) for m in matchers]):
+                yield field
+
+    return list(filter_(all_fields))
 
 
 def update_summary(summary, tags):
@@ -180,23 +216,23 @@ class InfoPlugin(BeetsPlugin):
         else:
             data_collector = tag_data
 
+        all_fields = all_library_fields() if opts.library else all_tag_fields()
         included_keys = []
         for keys in opts.included_keys:
             included_keys.extend(keys.split(','))
+        included_keys = expand_key_list(included_keys, all_fields)
         # Drop path even if user provides it multiple times
         included_keys = [k for k in included_keys if k != 'path']
-        key_filter = make_key_filter(included_keys)
 
         first = True
         summary = {}
         for data_emitter in data_collector(lib, ui.decargs(args)):
             try:
-                data, item = data_emitter()
+                data, item = data_emitter(included_keys)
             except (mediafile.UnreadableFileError, IOError) as ex:
                 self._log.error(u'cannot read file: {0}', ex)
                 continue
 
-            data = key_filter(data)
             if opts.summarize:
                 update_summary(summary, data)
             else:
@@ -213,32 +249,3 @@ class InfoPlugin(BeetsPlugin):
             print_data(summary)
 
 
-def make_key_filter(include):
-    """Return a function that filters a dictionary.
-
-    The returned filter takes a dictionary and returns another
-    dictionary that only includes the key-value pairs where the key
-    glob-matches one of the keys in `include`.
-    """
-    # By default, if no field inclusions are specified, include
-    # everything but `path`.
-    if not include:
-        def filter_(data):
-            return {k: v for k, v in data.items()
-                    if k != 'path'}
-        return filter_
-
-    matchers = []
-    for key in include:
-        key = re.escape(key)
-        key = key.replace(r'\*', '.*')
-        matchers.append(re.compile(key + '$'))
-
-    def filter_(data):
-        filtered = dict()
-        for key, value in data.items():
-            if any([m.match(key) for m in matchers]):
-                filtered[key] = value
-        return filtered
-
-    return filter_

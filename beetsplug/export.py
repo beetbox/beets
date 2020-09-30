@@ -28,7 +28,8 @@ from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import util
 import mediafile
-from beetsplug.info import make_key_filter, library_data, tag_data
+from beetsplug.info import all_library_fields, all_tag_fields, expand_key_list
+from beetsplug.info import library_data, tag_data
 
 
 class ExportEncoder(json.JSONEncoder):
@@ -124,20 +125,18 @@ class ExportPlugin(BeetsPlugin):
         items = []
         data_collector = library_data if opts.library else tag_data
 
+        all_fields = all_library_fields() if opts.library else all_tag_fields()
         included_keys = []
         for keys in opts.included_keys:
             included_keys.extend(keys.split(','))
-
-        key_filter = make_key_filter(included_keys)
+        included_keys = expand_key_list(included_keys, all_fields)
 
         for data_emitter in data_collector(lib, ui.decargs(args)):
             try:
-                data, item = data_emitter()
+                data, item = data_emitter(included_keys)
             except (mediafile.UnreadableFileError, IOError) as ex:
                 self._log.error(u'cannot read file: {0}', ex)
                 continue
-
-            data = key_filter(data)
 
             for key, value in data.items():
                 if isinstance(value, bytes):
