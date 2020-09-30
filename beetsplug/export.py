@@ -43,16 +43,22 @@ class ExportPlugin(BeetsPlugin):
     def __init__(self):
         super(ExportPlugin, self).__init__()
 
+        json_formatting_options = {
+            'ensure_ascii': False,
+            'indent': 4,
+            'separators': (',', ': '),
+            'sort_keys': True
+        }
+
         self.config.add({
             'default_format': 'json',
             'json': {
                 # JSON module formatting options.
-                'formatting': {
-                    'ensure_ascii': False,
-                    'indent': 4,
-                    'separators': (',', ': '),
-                    'sort_keys': True
-                }
+                'formatting': json_formatting_options,
+            },
+            'jsonlines': {
+                # JSON Lines formatting options.
+                'formatting': json_formatting_options,
             },
             'csv': {
                 # CSV module formatting options.
@@ -95,7 +101,7 @@ class ExportPlugin(BeetsPlugin):
         )
         cmd.parser.add_option(
             u'-f', u'--format', default='json',
-            help=u"the output format: json (default), csv, or xml"
+            help=u"the output format: json (default), json-lines, csv, or xml"
         )
         return [cmd]
 
@@ -103,6 +109,7 @@ class ExportPlugin(BeetsPlugin):
         file_path = opts.output
         file_mode = 'a' if opts.append else 'w'
         file_format = opts.format or self.config['default_format'].get(str)
+        file_format_is_line_based = (file_format == 'jsonlines')
         format_options = self.config[file_format]['formatting'].get(dict)
 
         export_format = ExportFormat.factory(
@@ -130,9 +137,14 @@ class ExportPlugin(BeetsPlugin):
                 continue
 
             data = key_filter(data)
-            items += [data]
 
-        export_format.export(items, **format_options)
+            if file_format_is_line_based:
+                export_format.export(data, **format_options)
+            else:
+                items += [data]
+
+        if not file_format_is_line_based:
+            export_format.export(items, **format_options)
 
 
 class ExportFormat(object):
@@ -149,6 +161,8 @@ class ExportFormat(object):
     def factory(cls, file_type, **kwargs):
         if file_type == "json":
             return JsonFormat(**kwargs)
+        if file_type == "jsonlines":
+            return JsonFormat(newline_at_end=True, **kwargs)
         elif file_type == "csv":
             return CSVFormat(**kwargs)
         elif file_type == "xml":
@@ -162,11 +176,15 @@ class ExportFormat(object):
 
 class JsonFormat(ExportFormat):
     """Saves in a json file"""
-    def __init__(self, file_path, file_mode=u'w', encoding=u'utf-8'):
+    def __init__(self, file_path, file_mode=u'w', encoding=u'utf-8',
+                 newline_at_end=False):
         super(JsonFormat, self).__init__(file_path, file_mode, encoding)
+        self.newline_at_end = newline_at_end
 
     def export(self, data, **kwargs):
         json.dump(data, self.out_stream, cls=ExportEncoder, **kwargs)
+        if self.newline_at_end:
+            self.out_stream.write('\n')
 
 
 class CSVFormat(ExportFormat):
