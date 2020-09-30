@@ -26,6 +26,7 @@ from xml.etree import ElementTree
 from datetime import datetime, date
 from beets.plugins import BeetsPlugin
 from beets import ui
+from beets import util
 import mediafile
 from beetsplug.info import make_key_filter, library_data, tag_data
 
@@ -137,6 +138,10 @@ class ExportPlugin(BeetsPlugin):
                 continue
 
             data = key_filter(data)
+
+            for key, value in data.items():
+                if isinstance(value, bytes):
+                    data[key] = util.displayable_path(value)
 
             if file_format_is_line_based:
                 export_format.export(data, **format_options)
