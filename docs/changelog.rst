@@ -25,7 +25,7 @@ New features:
   `discogs_artistid`
   :bug: `3413`
 * :doc:`/plugins/export`: Added new ``-f`` (``--format``) flag; 
-  which allows for the ability to export in json, csv and xml.
+  which allows for the ability to export in json, jsonlines, csv and xml.
   Thanks to :user:`austinmm`.
   :bug:`3402`
 * :doc:`/plugins/unimported`: lets you find untracked files in your library directory.
