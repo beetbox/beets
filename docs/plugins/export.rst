@@ -39,14 +39,15 @@ The ``export`` command has these command-line options:
 
 * ``--append``: Appends the data to the file instead of writing.
 
-* ``--format`` or ``-f``: Specifies the format the data will be exported as. If not informed, JSON will be used by default. The format options include csv, json and xml.
+* ``--format`` or ``-f``: Specifies the format the data will be exported as. If not informed, JSON will be used by default. The format options include csv, json, `jsonlines <https://jsonlines.org/>`_ and xml.
 
 Configuration
 -------------
 
 To configure the plugin, make a ``export:`` section in your configuration
 file.
-For JSON export, these options are available under the ``json`` key:
+For JSON export, these options are available under the ``json`` and
+``jsonlines`` keys:
 
 - **ensure_ascii**: Escape non-ASCII characters with ``\uXXXX`` entities.
 - **indent**: The number of spaces for indentation.
