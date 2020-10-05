@@ -1114,7 +1114,7 @@ def _load_plugins(config):
 
     # Extend the `beetsplug` package to include the plugin paths.
     import beetsplug
-    beetsplug.__path__ = paths + beetsplug.__path__
+    beetsplug.__path__ = paths + list(beetsplug.__path__)
 
     # For backwards compatibility, also support plugin paths that
     # *contain* a `beetsplug` package.
