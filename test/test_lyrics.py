@@ -271,7 +271,9 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
         dict(DEFAULT_SONG, backend=lyrics.LyricsWiki),
         # dict(artist=u'Santana', title=u'Black magic woman',
         #      backend=lyrics.MusiXmatch),
-        dict(DEFAULT_SONG, backend=lyrics.Genius),
+        dict(DEFAULT_SONG, backend=lyrics.Genius,
+             # GitHub actions is on some form of Cloudflare blacklist.
+             skip=os.environ.get('GITHUB_ACTIONS') == 'true'),
     ]
 
     GOOGLE_SOURCES = [
@@ -280,7 +282,9 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
              path=u'/lyrics/view/the_beatles/lady_madonna'),
         dict(DEFAULT_SONG,
              url=u'http://www.azlyrics.com',
-             path=u'/lyrics/beatles/ladymadonna.html'),
+             path=u'/lyrics/beatles/ladymadonna.html',
+             # AZLyrics returns a 403 on GitHub actions.
+             skip=os.environ.get('GITHUB_ACTIONS') == 'true'),
         dict(DEFAULT_SONG,
              url=u'http://www.chartlyrics.com',
              path=u'/_LsLsZ7P4EK-F-LD4dJgDQ/Lady+Madonna.aspx'),
@@ -330,11 +334,8 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
         """Test default backends with songs known to exist in respective databases.
         """
         errors = []
-        # GitHub actions seems to be on a Cloudflare blacklist, so we can't
-        # contact genius.
-        sources = [s for s in self.DEFAULT_SOURCES if
-                   s['backend'] != lyrics.Genius or
-                   os.environ.get('GITHUB_ACTIONS') != 'true']
+        # Don't test any sources marked as skipped.
+        sources = [s for s in self.DEFAULT_SOURCES if not s.get("skip", False)]
         for s in sources:
             res = s['backend'](self.plugin.config, self.plugin._log).fetch(
                 s['artist'], s['title'])
@@ -349,7 +350,9 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
         """Test if lyrics present on websites registered in beets google custom
            search engine are correctly scraped.
         """
-        for s in self.GOOGLE_SOURCES:
+        # Don't test any sources marked as skipped.
+        sources = [s for s in self.GOOGLE_SOURCES if not s.get("skip", False)]
+        for s in sources:
             url = s['url'] + s['path']
             res = lyrics.scrape_lyrics_from_html(
                 raw_backend.fetch_url(url))
