@@ -55,7 +55,6 @@ except ImportError:
 
 from beets import plugins
 from beets import ui
-from beets import util
 import beets
 
 DIV_RE = re.compile(r'<(/?)div>?', re.I)
@@ -441,30 +440,6 @@ class Genius(Backend):
         return lyrics_div.get_text()
 
 
-class LyricsWiki(SymbolsReplaced):
-    """Fetch lyrics from LyricsWiki."""
-
-    if util.SNI_SUPPORTED:
-        URL_PATTERN = 'https://lyrics.wikia.com/%s:%s'
-    else:
-        URL_PATTERN = 'http://lyrics.wikia.com/%s:%s'
-
-    def fetch(self, artist, title):
-        url = self.build_url(artist, title)
-        html = self.fetch_url(url)
-        if not html:
-            return
-
-        # Get the HTML fragment inside the appropriate HTML element and then
-        # extract the text from it.
-        html_frag = extract_text_in(html, u"<div class='lyricbox'>")
-        if html_frag:
-            lyrics = _scrape_strip_cruft(html_frag, True)
-
-            if lyrics and 'Unfortunately, we are not licensed' not in lyrics:
-                return lyrics
-
-
 def remove_credits(text):
     """Remove first/last line of text if it contains the word 'lyrics'
     eg 'Lyrics by songsdatabase.com'
@@ -656,10 +631,9 @@ class Google(Backend):
 
 
 class LyricsPlugin(plugins.BeetsPlugin):
-    SOURCES = ['google', 'lyricwiki', 'musixmatch', 'genius']
+    SOURCES = ['google', 'musixmatch', 'genius']
     SOURCE_BACKENDS = {
         'google': Google,
-        'lyricwiki': LyricsWiki,
         'musixmatch': MusiXmatch,
         'genius': Genius,
     }

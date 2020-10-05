@@ -153,6 +153,7 @@ New features:
 * ``beet remove`` now also allows interactive selection of items from the query
   similar to ``beet modify``
 * :doc:`/plugins/web`: add DELETE and PATCH methods for modifying items
+* :doc:`/plugins/lyrics`: Removed LyricWiki source (shut down on 21/09/2020).
 
 Fixes:
 
