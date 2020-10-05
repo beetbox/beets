@@ -144,39 +144,6 @@ def extract_text_between(html, start_marker, end_marker):
     return html
 
 
-def extract_text_in(html, starttag):
-    """Extract the text from a <DIV> tag in the HTML starting with
-    ``starttag``. Returns None if parsing fails.
-    """
-    # Strip off the leading text before opening tag.
-    try:
-        _, html = html.split(starttag, 1)
-    except ValueError:
-        return
-
-    # Walk through balanced DIV tags.
-    level = 0
-    parts = []
-    pos = 0
-    for match in DIV_RE.finditer(html):
-        if match.group(1):  # Closing tag.
-            level -= 1
-            if level == 0:
-                pos = match.end()
-        else:  # Opening tag.
-            if level == 0:
-                parts.append(html[pos:match.start()])
-            level += 1
-
-        if level == -1:
-            parts.append(html[pos:match.start()])
-            break
-    else:
-        print(u'no closing tag found!')
-        return
-    return u''.join(parts)
-
-
 def search_pairs(item):
     """Yield a pairs of artists and titles to search for.
 
@@ -295,9 +262,9 @@ class Backend(object):
         raise NotImplementedError()
 
 
-class SymbolsReplaced(Backend):
+class MusiXmatch(Backend):
     REPLACEMENTS = {
-        r'\s+': '_',
+        r'\s+': '-',
         '<': 'Less_Than',
         '>': 'Greater_Than',
         '#': 'Number_',
@@ -305,20 +272,14 @@ class SymbolsReplaced(Backend):
         r'[\]\}]': ')',
     }
 
+    URL_PATTERN = 'https://www.musixmatch.com/lyrics/%s/%s'
+
     @classmethod
     def _encode(cls, s):
         for old, new in cls.REPLACEMENTS.items():
             s = re.sub(old, new, s)
 
-        return super(SymbolsReplaced, cls)._encode(s)
-
-
-class MusiXmatch(SymbolsReplaced):
-    REPLACEMENTS = dict(SymbolsReplaced.REPLACEMENTS, **{
-        r'\s+': '-'
-    })
-
-    URL_PATTERN = 'https://www.musixmatch.com/lyrics/%s/%s'
+        return super(MusiXmatch, cls)._encode(s)
 
     def fetch(self, artist, title):
         url = self.build_url(artist, title)
