@@ -268,7 +268,6 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
     DEFAULT_SONG = dict(artist=u'The Beatles', title=u'Lady Madonna')
 
     DEFAULT_SOURCES = [
-        dict(DEFAULT_SONG, backend=lyrics.LyricsWiki),
         # dict(artist=u'Santana', title=u'Black magic woman',
         #      backend=lyrics.MusiXmatch),
         dict(DEFAULT_SONG, backend=lyrics.Genius),
@@ -295,8 +294,6 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
         dict(DEFAULT_SONG,
              url='http://www.lyricsmania.com/',
              path='lady_madonna_lyrics_the_beatles.html'),
-        dict(DEFAULT_SONG, url=u'http://lyrics.wikia.com/',
-             path=u'The_Beatles:Lady_Madonna'),
         dict(DEFAULT_SONG,
              url=u'http://www.lyricsmode.com',
              path=u'/lyrics/b/beatles/lady_madonna.html'),
