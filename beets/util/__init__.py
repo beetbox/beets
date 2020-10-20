@@ -333,12 +333,7 @@ def arg_encoding():
     """Get the encoding for command-line arguments (and other OS
     locale-sensitive strings).
     """
-    try:
-        return locale.getdefaultlocale()[1] or 'utf-8'
-    except ValueError:
-        # Invalid locale environment variable setting. To avoid
-        # failing entirely for no good reason, assume UTF-8.
-        return 'utf-8'
+    return locale.getpreferredencoding()
 
 
 def _fsencoding():
