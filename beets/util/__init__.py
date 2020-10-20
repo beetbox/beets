@@ -826,7 +826,9 @@ def command_output(cmd, shell=False):
     This replaces `subprocess.check_output` which can have problems if lots of
     output is sent to stderr.
     """
-    cmd = convert_command_args(cmd)
+    # On Python 3, we now pass bytes directly to subprocess
+    if six.PY2:
+        cmd = convert_command_args(cmd)
 
     try:  # python >= 3.3
         devnull = subprocess.DEVNULL
@@ -843,6 +845,9 @@ def command_output(cmd, shell=False):
     )
     stdout, stderr = proc.communicate()
     if proc.returncode:
+        # convert bytes (CalledProcessError doesn't accept bytes)
+        if not six.PY2 and type(cmd[0]) == bytes:
+            cmd = [x.decode(arg_encoding()) for x in cmd]
         raise subprocess.CalledProcessError(
             returncode=proc.returncode,
             cmd=' '.join(cmd),
