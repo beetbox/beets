@@ -33,6 +33,7 @@ linkcheck_ignore = [
     r'https://github.com/[^/]+$',  # ignore user pages
     r'.*localhost.*',
     r'https://www.musixmatch.com/',  # blocks requests
+    r'https://genius.com/',  # blocks requests
 ]
 
 # Options for HTML output
