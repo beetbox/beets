@@ -209,7 +209,7 @@ class String(Type):
 
     def normalize(self, value):
         if value is None:
-            return self.model_type()
+            return self.null
         else:
             return self.model_type(value)
 
