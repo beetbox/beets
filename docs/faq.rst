@@ -137,13 +137,16 @@ it's helpful to run on the "bleeding edge". To run the latest source:
    ``pip uninstall beets``.
 2. Install from source. There are a few easy ways to do this:
 
-   -  Use ``pip`` to install the latest snapshot tarball: just type
-      ``pip install https://github.com/beetbox/beets/tarball/master``.
-   -  Grab the source using Git:
-      ``git clone https://github.com/beetbox/beets.git``. Then
-      ``cd beets`` and type ``python setup.py install``.
-   -  Use ``pip`` to install an "editable" version of beets based on an
-      automatic source checkout. For example, run
+   -  **Option 1** - Use ``pip`` to install the latest snapshot tarball: 
+       just type: ``pip install https://github.com/beetbox/beets/tarball/master``.
+   -  **Option 2** - Grab the source using Git:
+   
+      1. First clone the repository ``git clone https://github.com/beetbox/beets.git``.
+      2. Then enter the beets directory ``cd beets`` 
+      3. Finally install ``python setup.py install``.
+      
+   -  **Option 3** - Use ``pip`` to install an "editable" version of beets based on an
+      automatic source checkout. For example, run:
       ``pip install -e git+https://github.com/beetbox/beets#egg=beets``
       to clone beets and install it, allowing you to modify the source
       in-place to try out changes.
