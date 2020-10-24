@@ -1696,6 +1696,7 @@ def config_func(lib, opts, args):
         else:
             print("Empty configuration")
 
+
 def config_edit():
     """Open a program to edit the user configuration.
     An empty config file is created if no existing config file exists.
