@@ -807,7 +807,7 @@ class TerminalImportSession(importer.ImportSession):
             ))
 
             sel = ui.input_options(
-                (u'Skip new', u'Keep both', u'Remove old', u'Merge all')
+                (u'Skip new', u'Keep all', u'Remove old', u'Merge all')
             )
 
         if sel == u's':
