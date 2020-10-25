@@ -7,7 +7,7 @@ Changelog
 New features:
 
 * When config is printed with no available configuration a new message is printed.
-  :bug: `3779`
+  :bug:`3779`
 * :doc:`/plugins/chroma`: Update file metadata after generating fingerprints through the `submit` command.
 * :doc:`/plugins/lastgenre`: Added more heavy metal genres: https://en.wikipedia.org/wiki/Heavy_metal_genres to genres.txt and genres-tree.yaml
 * :doc:`/plugins/subsonicplaylist`: import playlist from a subsonic server.
@@ -22,10 +22,10 @@ New features:
 * :doc:`plugins/fetchart`: Added a new ``high_resolution`` config option to
   allow downloading of higher resolution iTunes artwork (at the expense of
   file size).
-  :bug: `3391`
+  :bug:`3391`
 * :doc:`plugins/discogs` now adds two extra fields: `discogs_labelid` and
   `discogs_artistid`
-  :bug: `3413`
+  :bug:`3413`
 * :doc:`/plugins/export`: Added new ``-f`` (``--format``) flag; 
   which allows for the ability to export in json, jsonlines, csv and xml.
   Thanks to :user:`austinmm`.
