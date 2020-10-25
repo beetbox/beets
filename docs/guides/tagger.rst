@@ -234,7 +234,7 @@ If beets finds an album or item in your library that seems to be the same as the
 one you're importing, you may see a prompt like this::
 
     This album is already in the library!
-    [S]kip new, Keep both, Remove old, Merge all?
+    [S]kip new, Keep all, Remove old, Merge all?
 
 Beets wants to keep you safe from duplicates, which can be a real pain, so you
 have four choices in this situation. You can skip importing the new music,
