@@ -7,6 +7,7 @@ Changelog
 New features:
 
 * When importing a duplicate album it ask if it should "Keep all" instead of "Keep both".
+  :bug:`3569`
 * :doc:`/plugins/chroma`: Update file metadata after generating fingerprints through the `submit` command.
 * :doc:`/plugins/lastgenre`: Added more heavy metal genres: https://en.wikipedia.org/wiki/Heavy_metal_genres to genres.txt and genres-tree.yaml
 * :doc:`/plugins/subsonicplaylist`: import playlist from a subsonic server.
