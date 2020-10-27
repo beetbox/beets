@@ -807,7 +807,7 @@ class TerminalImportSession(importer.ImportSession):
             ))
 
             sel = ui.input_options(
-                (u'Skip new', u'Keep both', u'Remove old', u'Merge all')
+                (u'Skip new', u'Keep all', u'Remove old', u'Merge all')
             )
 
         if sel == u's':
@@ -1691,7 +1691,10 @@ def config_func(lib, opts, args):
     # Dump configuration.
     else:
         config_out = config.dump(full=opts.defaults, redact=opts.redact)
-        print_(util.text_string(config_out))
+        if config_out.strip() != '{}':
+            print_(util.text_string(config_out))
+        else:
+            print("Empty configuration")
 
 
 def config_edit():
