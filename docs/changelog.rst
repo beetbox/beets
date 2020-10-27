@@ -266,6 +266,10 @@ Fixes:
   the current track in the queue.
   Thanks to :user:`aereaux`.
   :bug:`3722`
+* String-typed fields are now normalized to string values, avoiding an
+  occasional crash when using both the :doc:`/plugins/fetchart` and the
+  :doc:`/plugins/discogs` together.
+  :bug:`3773` :bug:`3774`
 
 For plugin developers:
 
