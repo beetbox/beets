@@ -417,8 +417,9 @@ def album_info(release):
         first_medium = release['medium-list'][0]
         info.media = first_medium.get('format')
 
-    if release.get('genre-list'):
-        info.genre = ';'.join(g['name'] for g in release['genre-list'])
+    genres = release.get('genre-list')
+    if genres:
+        info.genre = ';'.join(g['name'] for g in genres)
 
     info.decode()
     return info
