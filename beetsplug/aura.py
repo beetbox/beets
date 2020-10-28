@@ -896,6 +896,16 @@ def image_file(image_id):
 
 def create_app():
     """An application factory for use by a WSGI server."""
+    config["aura"].add(
+        {
+            "host": u"127.0.0.1",
+            "port": 8337,
+            "cors": [],
+            "cors_supports_credentials": False,
+            "page_limit": 500,
+        }
+    )
+
     app = Flask(__name__)
     # Register AURA blueprint view functions under a URL prefix
     app.register_blueprint(aura_bp, url_prefix="/aura")
@@ -935,15 +945,6 @@ class AURAPlugin(BeetsPlugin):
     def __init__(self):
         """Add configuration options for the AURA plugin."""
         super(AURAPlugin, self).__init__()
-        self.config.add(
-            {
-                "host": u"127.0.0.1",
-                "port": 8337,
-                "cors": [],
-                "cors_supports_credentials": False,
-                "page_limit": 500,
-            }
-        )
 
     def commands(self):
         """Add subcommand used to run the AURA server."""
