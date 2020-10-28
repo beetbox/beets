@@ -270,6 +270,8 @@ Fixes:
   occasional crash when using both the :doc:`/plugins/fetchart` and the
   :doc:`/plugins/discogs` together.
   :bug:`3773` :bug:`3774`
+* Fix a bug causing PIL to generate poor quality JPEGs when resizing artwork.
+  :bug:`3743`
 
 For plugin developers:
 
