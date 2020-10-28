@@ -159,6 +159,11 @@ New features:
 * :doc:`/plugins/web`: add DELETE and PATCH methods for modifying items
 * :doc:`/plugins/lyrics`: Removed LyricWiki source (shut down on 21/09/2020).
 * Added a ``--plugins`` (or ``-p``) flag to specify a list of plugins at startup.
+* Use musicbrainz genre tag api to get genre information.  This currently
+  depends on functionality that is currently unreleased in musicbrainzngs.
+  See https://github.com/alastair/python-musicbrainzngs/pull/247 and
+  https://github.com/alastair/python-musicbrainzngs/pull/266 .
+  Thanks to :user:`aereaux`.
 
 Fixes:
 
