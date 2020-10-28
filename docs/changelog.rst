@@ -266,6 +266,8 @@ Fixes:
   the current track in the queue.
   Thanks to :user:`aereaux`.
   :bug:`3722`
+* Fix a bug causing PIL to generate poor quality JPEGs when resizing artwork.
+  :bug:`3743`
 
 For plugin developers:
 
