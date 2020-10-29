@@ -356,15 +356,6 @@ Sets the albumartist for various-artist compilations. Defaults to ``'Various
 Artists'`` (the MusicBrainz standard). Affects other sources, such as
 :doc:`/plugins/discogs`, too.
 
-.. _use_mb_genres:
-
-use_mb_genres
-~~~~~~~~~~~~~
-
-Use MusicBrainz genre tags to populate the ``genre`` tag.  This will make it a
-semicolon-separated list of all the genres tagged for the release on
-MusicBrainz.
-
 UI Options
 ----------
 
@@ -728,6 +719,17 @@ Note that the only tags supported by this setting are the ones listed in the
 above example.
 
 Default: ``[]``
+
+.. _genres:
+
+genres
+~~~~~~
+
+Use MusicBrainz genre tags to populate the ``genre`` tag.  This will make it a
+semicolon-separated list of all the genres tagged for the release on
+MusicBrainz.
+
+Default: ``no``
 
 .. _match-config:
 
