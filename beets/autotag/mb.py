@@ -418,7 +418,7 @@ def album_info(release):
         info.media = first_medium.get('format')
 
     genres = release.get('genre-list')
-    if genres:
+    if config['musicbrainz']['genres'] and genres:
         info.genre = ';'.join(g['name'] for g in genres)
 
     info.decode()
