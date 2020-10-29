@@ -162,7 +162,7 @@ New features:
 * Use the musicbrainz genre tag api to get genre information.  This currently
   depends on functionality that is currently unreleased in musicbrainzngs.
   Once the functionality has been released, you can enable it with the
-  ``use_mb_genres`` option.  See
+  ``genres`` option inside the ``musicbrainz`` config.  See
   https://github.com/alastair/python-musicbrainzngs/pull/247 and
   https://github.com/alastair/python-musicbrainzngs/pull/266 .
   Thanks to :user:`aereaux`.
