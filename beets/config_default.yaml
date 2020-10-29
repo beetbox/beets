@@ -105,6 +105,7 @@ musicbrainz:
     ratelimit_interval: 1.0
     searchlimit: 5
     extra_tags: []
+    genres: no
 
 match:
     strong_rec_thresh: 0.04
