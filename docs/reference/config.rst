@@ -361,9 +361,9 @@ Artists'`` (the MusicBrainz standard). Affects other sources, such as
 use_mb_genres
 ~~~~~~~~~~~~~
 
-Use Musicbrainz genre tags to populate the ``genre`` tag.  This will make it a
+Use MusicBrainz genre tags to populate the ``genre`` tag.  This will make it a
 semicolon-separated list of all the genres tagged for the release on
-musicbrainz.
+MusicBrainz.
 
 UI Options
 ----------
