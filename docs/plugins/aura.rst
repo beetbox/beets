@@ -69,8 +69,8 @@ Configuration
 To configure the plugin, make an ``aura:`` section in your
 configuration file. The available options are:
 
-- **host**: The server hostname. Set this to 0.0.0.0 to bind to all interfaces.
-  Default: ``127.0.0.1``.
+- **host**: The server hostname. Set this to ``0.0.0.0`` to bind to all
+  interfaces. Default: ``127.0.0.1``.
 - **port**: The server port.
   Default: ``8337``.
 - **cors**: A YAML list of origins to allow CORS requests from (see
@@ -122,7 +122,7 @@ then you can! The ``beetsplug.aura`` module provides a WSGI callable called
 
 For example to run the AURA server using `gunicorn`_ use
 ``gunicorn 'beetsplug.aura:create_app()'``, or for `uWSGI`_ use
-``uwsgi --http :9090 --module 'beetsplug.aura:create_app()'``.
+``uwsgi --http :8337 --module 'beetsplug.aura:create_app()'``.
 Note that these commands just show how to use the AURA app and you would
 probably use something a bit different in a production environment. Read the
 relevant server's documentation to figure out what you need.
@@ -144,8 +144,8 @@ likely this would require changes in the code.
 
 Do not add a trailing slash (``/``) to the URL where the application is
 running, otherwise you will get a 404. For example with NGINX you should use
-``proxy_pass http://127.0.0.1:8000;`` rather than
-``proxy_pass http://127.0.0.1:8000/;``.
+``proxy_pass http://127.0.0.1:8337;`` rather than
+``proxy_pass http://127.0.0.1:8337/;``.
 
 .. _Flask proxy setups: https://flask.palletsprojects.com/en/1.1.x/deploying/wsgi-standalone/#proxy-setups
 
@@ -184,9 +184,9 @@ related images at the moment. This could be expanded to looking in the same
 directory for other images, and relating tracks to their album's image.
 
 There are likely to be some performance issues, especially with larger
-libraries. Pagination and inclusion (most notably of images) are probably two
-of the main offenders. On a related note, the program attempts to import Pillow
-every time it constructs an image resource object, which is not very good.
+libraries. Sorting, pagination and inclusion (most notably of images) are
+probably the main offenders. On a related note, the program attempts to import
+Pillow every time it constructs an image resource object, which is not good.
 
 The beets library is accessed using a so called private function (with a single
 leading underscore) ``beets.ui.__init__._open_library()``. This shouldn't cause
