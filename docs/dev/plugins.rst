@@ -301,7 +301,7 @@ To access this value, say ``self.config['foo'].get()`` at any point in your
 plugin's code. The `self.config` object is a *view* as defined by the `Confuse`_
 library.
 
-.. _Confuse: https://confuse.readthedocs.org/
+.. _Confuse: https://confuse.readthedocs.io/en/latest/
 
 If you want to access configuration values *outside* of your plugin's section,
 import the `config` object from the `beets` module. That is, just put ``from
@@ -379,7 +379,7 @@ access to file tags. If you have created a descriptor you can add it through
 your plugins ``add_media_field()`` method.
 
 .. automethod:: beets.plugins.BeetsPlugin.add_media_field
-.. _MediaFile: https://mediafile.readthedocs.io/
+.. _MediaFile: https://mediafile.readthedocs.io/en/latest/
 
 
 Here's an example plugin that provides a meaningless new field "foo"::

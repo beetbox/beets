@@ -28,7 +28,7 @@ Non-Programming
 
 -  Promote beets! Help get the word out by telling your friends, writing
    a blog post, or discussing it on a forum you frequent.
--  Improve the `documentation <http://beets.readthedocs.org/>`__. It’s
+-  Improve the `documentation`_. It’s
    incredibly easy to contribute here: just find a page you want to
    modify and hit the “Edit on GitHub” button in the upper-right. You
    can automatically send us a pull request for your changes.
@@ -62,7 +62,7 @@ Getting the Source
 ^^^^^^^^^^^^^^^^^^
 
 The easiest way to get started with the latest beets source is to use
-`pip <https://pip.pypa.io/>`__ to install an “editable” package. This
+`pip`_ to install an “editable” package. This
 can be done with one command:
 
 .. code-block:: bash
@@ -147,8 +147,7 @@ request and your code will ship in no time.
 5. Add a changelog entry to ``docs/changelog.rst`` near the top of the
    document.
 6. Run the tests and style checker. The easiest way to run the tests is
-   to use `tox <https://tox.readthedocs.org/en/latest/>`__. For more
-   information on running tests, see :ref:`testing`.
+   to use `tox`_. For more information on running tests, see :ref:`testing`.
 7. Push to your fork and open a pull request! We’ll be in touch shortly.
 8. If you add commits to a pull request, please add a comment or
    re-request a review after you push them since GitHub doesn’t
@@ -215,9 +214,13 @@ There are a few coding conventions we use in beets:
 
 Style
 -----
-We follow `PEP 8 <http://www.python.org/dev/peps/pep-0008/>`__ for
-style. You can use ``tox -e lint`` to check your code for any style
-errors.
+
+We follow `PEP 8`_ and `google's docstring format`_.
+
+You can use ``tox -e lint`` to check your code for any style errors.
+
+.. _PEP 8: https://www.python.org/dev/peps/pep-0008/
+.. _google's docstring format: https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings
 
 Handling Paths
 --------------
@@ -249,7 +252,7 @@ guidelines to follow:
 Editor Settings
 ---------------
 
-Personally, I work on beets with `vim <http://www.vim.org/>`__. Here are
+Personally, I work on beets with `vim`_. Here are
 some ``.vimrc`` lines that might help with PEP 8-compliant Python
 coding::
 
@@ -314,7 +317,7 @@ To install the test dependencies, run ``python -m pip install .[test]``.
 Or, just run a test suite with ``tox`` which will install them
 automatically.
 
-.. _setup.py: https://github.com/beetbox/beets/blob/master/setup.py#L99`
+.. _setup.py: https://github.com/beetbox/beets/blob/master/setup.py
 
 Writing Tests
 -------------
@@ -322,9 +325,8 @@ Writing Tests
 Writing tests is done by adding or modifying files in folder `test`_.
 Take a look at
 `https://github.com/beetbox/beets/blob/master/test/test_template.py#L224`_
-to get a basic view on how tests are written. Despite using ``pytest``
-as a test runner, we prefer to write tests using the standard
-`unittest`_ testing framework.
+to get a basic view on how tests are written. We currently allow writing
+tests with either `unittest`_ or `pytest`_.
 
 Any tests that involve sending out network traffic e.g. an external API
 call, should be skipped normally and run under our weekly `integration
@@ -342,20 +344,6 @@ If you do this, it is also advised to create a similar test that 'mocks'
 the network call and can be run under normal circumstances by our CI and
 others. See `unittest.mock`_ for more info.
 
-Basics
-^^^^^^
-
--  Your file should contain a class derived from unittest.TestCase
--  Each method in this class which name starts with the letters *test*
-   will be executed to test functionality
--  Errors are raised with these methods:
-
-   -  ``self.assertEqual``
-   -  ``self.assertTrue``
-   -  ``self.assertFalse``
-   -  ``self.assertRaises``
-
--  For detailed information see `Python unittest`_
 -  **AVOID** using the ``start()`` and ``stop()`` methods of
    ``mock.patch``, as they require manual cleanup. Use the annotation or
    context manager forms instead.
@@ -363,9 +351,9 @@ Basics
 .. _Python unittest: https://docs.python.org/2/library/unittest.html
 .. _Codecov: https://codecov.io/github/beetbox/beets
 .. _pytest-random: https://github.com/klrmn/pytest-random
-.. _tox: http://tox.readthedocs.org
-.. _detox: https://pypi.python.org/pypi/detox/
-.. _pytest: http://pytest.org
+.. _tox: https://tox.readthedocs.io/en/latest/
+.. _detox: https://pypi.org/project/detox/
+.. _pytest: https://docs.pytest.org/en/stable/
 .. _Linux: https://github.com/beetbox/beets/actions
 .. _Windows: https://ci.appveyor.com/project/beetbox/beets/
 .. _`https://github.com/beetbox/beets/blob/master/setup.py#L99`: https://github.com/beetbox/beets/blob/master/setup.py#L99
@@ -375,3 +363,6 @@ Basics
 .. _integration test: https://github.com/beetbox/beets/actions?query=workflow%3A%22integration+tests%22
 .. _unittest.mock: https://docs.python.org/3/library/unittest.mock.html
 .. _Python unittest: https://docs.python.org/2/library/unittest.html
+.. _documentation: https://beets.readthedocs.io/en/stable/
+.. _pip: https://pip.pypa.io/en/stable/
+.. _vim: https://www.vim.org/

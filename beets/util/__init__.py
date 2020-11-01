@@ -197,6 +197,10 @@ def sorted_walk(path, ignore=(), ignore_hidden=False, logger=None):
         skip = False
         for pat in ignore:
             if fnmatch.fnmatch(base, pat):
+                if logger:
+                    logger.debug(u'ignoring {0} due to ignore rule {1}'.format(
+                        base, pat
+                    ))
                 skip = True
                 break
         if skip:

@@ -356,7 +356,6 @@ Sets the albumartist for various-artist compilations. Defaults to ``'Various
 Artists'`` (the MusicBrainz standard). Affects other sources, such as
 :doc:`/plugins/discogs`, too.
 
-
 UI Options
 ----------
 
@@ -689,7 +688,7 @@ to one request per second.
 .. _your own MusicBrainz database: https://musicbrainz.org/doc/MusicBrainz_Server/Setup
 .. _main server: https://musicbrainz.org/
 .. _limited: https://musicbrainz.org/doc/XML_Web_Service/Rate_Limiting
-.. _Building search indexes: https://musicbrainz.org/doc/MusicBrainz_Server/Setup#Building_search_indexes
+.. _Building search indexes: https://musicbrainz.org/doc/Development/Search_server_setup
 
 .. _searchlimit:
 
@@ -720,6 +719,17 @@ Note that the only tags supported by this setting are the ones listed in the
 above example.
 
 Default: ``[]``
+
+.. _genres:
+
+genres
+~~~~~~
+
+Use MusicBrainz genre tags to populate the ``genre`` tag.  This will make it a
+semicolon-separated list of all the genres tagged for the release on
+MusicBrainz.
+
+Default: ``no``
 
 .. _match-config:
 

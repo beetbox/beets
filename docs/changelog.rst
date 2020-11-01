@@ -6,6 +6,11 @@ Changelog
 
 New features:
 
+* When config is printed with no available configuration a new message is printed.
+  :bug:`3779`
+* When importing a duplicate album it ask if it should "Keep all" instead of "Keep both".
+  :bug:`3569`
+* :doc:`/plugins/chroma`: Update file metadata after generating fingerprints through the `submit` command.
 * :doc:`/plugins/lastgenre`: Added more heavy metal genres: https://en.wikipedia.org/wiki/Heavy_metal_genres to genres.txt and genres-tree.yaml
 * :doc:`/plugins/subsonicplaylist`: import playlist from a subsonic server.
 * A new :ref:`extra_tags` configuration option allows more tagged metadata
@@ -19,12 +24,12 @@ New features:
 * :doc:`plugins/fetchart`: Added a new ``high_resolution`` config option to
   allow downloading of higher resolution iTunes artwork (at the expense of
   file size).
-  :bug: `3391`
+  :bug:`3391`
 * :doc:`plugins/discogs` now adds two extra fields: `discogs_labelid` and
   `discogs_artistid`
-  :bug: `3413`
+  :bug:`3413`
 * :doc:`/plugins/export`: Added new ``-f`` (``--format``) flag; 
-  which allows for the ability to export in json, csv and xml.
+  which allows for the ability to export in json, jsonlines, csv and xml.
   Thanks to :user:`austinmm`.
   :bug:`3402`
 * :doc:`/plugins/unimported`: lets you find untracked files in your library directory.
@@ -142,6 +147,25 @@ New features:
 * :doc:`/plugins/thumbnails`: Fix a bug where pathlib expected a string instead
   of bytes for a path.
   :bug:`3360`
+* :doc:`/plugins/convert`: If ``delete_originals`` is enabled, then the source files will
+  be deleted after importing.
+  Thanks to :user:`logan-arens`.
+  :bug:`2947`
+* Added flac-specific reporting of samplerate and bitrate when importing duplicates.
+* :doc:`/plugins/fetchart`: Cover Art Archive source now iterates over
+  all front images instead of blindly selecting the first one.
+* ``beet remove`` now also allows interactive selection of items from the query
+  similar to ``beet modify``
+* :doc:`/plugins/web`: add DELETE and PATCH methods for modifying items
+* :doc:`/plugins/lyrics`: Removed LyricWiki source (shut down on 21/09/2020).
+* Added a ``--plugins`` (or ``-p``) flag to specify a list of plugins at startup.
+* Use the musicbrainz genre tag api to get genre information.  This currently
+  depends on functionality that is currently unreleased in musicbrainzngs.
+  Once the functionality has been released, you can enable it with the
+  ``genres`` option inside the ``musicbrainz`` config.  See
+  https://github.com/alastair/python-musicbrainzngs/pull/247 and
+  https://github.com/alastair/python-musicbrainzngs/pull/266 .
+  Thanks to :user:`aereaux`.
 * Fields in queries now fall back to an item's album and check its fields too.
   Notably, this allows querying items by an album flex attribute, also in path
   configuration.
@@ -150,6 +174,11 @@ New features:
 
 Fixes:
 
+* :doc:`/plugins/subsonicupdate`: REST was using `POST` method rather `GET` method.
+  Also includes better exception handling, response parsing, and tests.
+* :doc:`/plugins/the`: Fixed incorrect regex for 'the' that matched any
+  3-letter combination of the letters t, h, e.
+  :bug:`3701`
 * :doc:`/plugins/fetchart`: Fixed a bug that caused fetchart to not take
   environment variables such as proxy servers into account when making requests
   :bug:`3450`
@@ -191,8 +220,10 @@ Fixes:
 * ``beet update`` will now confirm that the user still wants to update if
   their library folder cannot be found, preventing the user from accidentally
   wiping out their beets database.
-  Thanks to :user:`logan-arens`.
+  Thanks to user: `logan-arens`.
   :bug:`1934`
+* ``beet import`` now logs which files are ignored when in debug mode.
+  :bug:`3764`
 * :doc:`/plugins/bpd`: Fix the transition to next track when in consume mode.
   Thanks to :user:`aereaux`.
   :bug:`3437`
@@ -243,6 +274,16 @@ Fixes:
 * Fix a bug that caused metadata starting with something resembling a drive
   letter to be incorrectly split into an extra directory after the colon.
   :bug:`3685`
+* :doc:`/plugins/mpdstats`: Don't record a skip when stopping MPD, as MPD keeps
+  the current track in the queue.
+  Thanks to :user:`aereaux`.
+  :bug:`3722`
+* String-typed fields are now normalized to string values, avoiding an
+  occasional crash when using both the :doc:`/plugins/fetchart` and the
+  :doc:`/plugins/discogs` together.
+  :bug:`3773` :bug:`3774`
+* Fix a bug causing PIL to generate poor quality JPEGs when resizing artwork.
+  :bug:`3743`
 
 For plugin developers:
 
@@ -1270,7 +1311,7 @@ And there are a few bug fixes too:
 The last release, 1.3.19, also erroneously reported its version as "1.3.18"
 when you typed ``beet version``. This has been corrected.
 
-.. _six: https://pythonhosted.org/six/
+.. _six: https://pypi.org/project/six/
 
 
 1.3.19 (June 25, 2016)
@@ -2116,7 +2157,7 @@ As usual, there are loads of little fixes and improvements:
 * The :ref:`config-cmd` command can now use ``$EDITOR`` variables with
   arguments.
 
-.. _API changes: https://developer.echonest.com/forums/thread/3650
+.. _API changes: https://web.archive.org/web/20160814092627/https://developer.echonest.com/forums/thread/3650
 .. _Plex: https://plex.tv/
 .. _musixmatch: https://www.musixmatch.com/
 
@@ -2341,7 +2382,7 @@ The big new features are:
 * A new :ref:`asciify-paths` configuration option replaces all non-ASCII
   characters in paths.
 
-.. _Mutagen: https://bitbucket.org/lazka/mutagen
+.. _Mutagen: https://github.com/quodlibet/mutagen
 .. _Spotify: https://www.spotify.com/
 
 And the multitude of little improvements and fixes:
@@ -2596,7 +2637,7 @@ Fixes:
 * :doc:`/plugins/convert`: Display a useful error message when the FFmpeg
   executable can't be found.
 
-.. _requests: https://www.python-requests.org/
+.. _requests: https://requests.readthedocs.io/en/master/
 
 
 1.3.3 (February 26, 2014)
@@ -2777,7 +2818,7 @@ As usual, there are also innumerable little fixes and improvements:
   Bezman.
 
 
-.. _Acoustic Attributes: http://developer.echonest.com/acoustic-attributes.html
+.. _Acoustic Attributes: https://web.archive.org/web/20160701063109/http://developer.echonest.com/acoustic-attributes.html
 .. _MPD: https://www.musicpd.org/
 
 
@@ -3127,7 +3168,7 @@ will automatically migrate your configuration to the new system.
   header. Thanks to Uwe L. Korn.
 * :doc:`/plugins/lastgenre`: Fix an error when using genre canonicalization.
 
-.. _Tomahawk: https://tomahawk-player.org/
+.. _Tomahawk: https://github.com/tomahawk-player/tomahawk
 
 1.1b3 (March 16, 2013)
 ----------------------
@@ -3470,7 +3511,7 @@ begins today on features for version 1.1.
 * Changed plugin loading so that modules can be imported without
   unintentionally loading the plugins they contain.
 
-.. _The Echo Nest: http://the.echonest.com/
+.. _The Echo Nest: https://web.archive.org/web/20180329103558/http://the.echonest.com/
 .. _Tomahawk resolver: https://beets.io/blog/tomahawk-resolver.html
 .. _mp3gain: http://mp3gain.sourceforge.net/download.php
 .. _aacgain: https://aacgain.altosdesign.com
@@ -3908,7 +3949,7 @@ plugin.
 
 * The :doc:`/plugins/web` encapsulates a simple **Web-based GUI for beets**. The
   current iteration can browse the library and play music in browsers that
-  support `HTML5 Audio`_.
+  support HTML5 Audio.
 
 * When moving items that are part of an album, the album art implicitly moves
   too.
@@ -3924,8 +3965,6 @@ plugin.
 * Fix Unicode encoding of album artist, album type, and label.
 
 * Fix crash when "copying" an art file that's already in place.
-
-.. _HTML5 Audio: http://www.w3.org/TR/html-markup/audio.html
 
 1.0b9 (July 9, 2011)
 --------------------
