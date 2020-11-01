@@ -27,7 +27,7 @@ With that all in place, you'll see beets send the "update" command to your Kodi
 host every time you change your beets library.
 
 .. _Kodi: https://kodi.tv/
-.. _requests: https://docs.python-requests.org/en/latest/
+.. _requests: https://requests.readthedocs.io/en/master/
 
 Configuration
 -------------

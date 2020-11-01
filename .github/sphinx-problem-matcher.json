@@ -1,0 +1,18 @@
+{
+    "problemMatcher": [
+        {
+            "owner": "sphinx",
+            "pattern": [
+                {
+                    "regexp": "^Warning, treated as error:$"
+                },
+                {
+                    "regexp": "^(.*?):(\\d+):(.*)$",
+                    "file": 1,
+                    "line": 2,
+                    "message": 3
+                }
+            ]
+        }
+    ]
+}

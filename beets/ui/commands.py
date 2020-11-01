@@ -468,6 +468,10 @@ def summarize_items(items, singleton):
         total_duration = sum([item.length for item in items])
         total_filesize = sum([item.filesize for item in items])
         summary_parts.append(u'{0}kbps'.format(int(average_bitrate / 1000)))
+        if items[0].format == "FLAC":
+            sample_bits = u'{}kHz/{} bit'.format(
+                round(int(items[0].samplerate) / 1000, 1), items[0].bitdepth)
+            summary_parts.append(sample_bits)
         summary_parts.append(ui.human_seconds_short(total_duration))
         summary_parts.append(ui.human_bytes(total_filesize))
 
@@ -803,7 +807,7 @@ class TerminalImportSession(importer.ImportSession):
             ))
 
             sel = ui.input_options(
-                (u'Skip new', u'Keep both', u'Remove old', u'Merge all')
+                (u'Skip new', u'Keep all', u'Remove old', u'Merge all')
             )
 
         if sel == u's':
@@ -1228,31 +1232,53 @@ def remove_items(lib, query, album, delete, force):
     """
     # Get the matching items.
     items, albums = _do_query(lib, query, album)
+    objs = albums if album else items
 
     # Confirm file removal if not forcing removal.
     if not force:
         # Prepare confirmation with user.
-        print_()
+        album_str = u" in {} album{}".format(
+                 len(albums), u's' if len(albums) > 1 else u''
+            ) if album else ""
+
         if delete:
             fmt = u'$path - $title'
-            prompt = u'Really DELETE %i file%s (y/n)?' % \
-                     (len(items), 's' if len(items) > 1 else '')
+            prompt = u'Really DELETE'
+            prompt_all = u'Really DELETE {} file{}{}'.format(
+                 len(items), u's' if len(items) > 1 else u'', album_str
+            )
         else:
             fmt = u''
-            prompt = u'Really remove %i item%s from the library (y/n)?' % \
-                     (len(items), 's' if len(items) > 1 else '')
+            prompt = u'Really remove from the library?'
+            prompt_all = u'Really remove {} item{}{} from the library?'.format(
+                 len(items), u's' if len(items) > 1 else u'', album_str
+            )
+
+        # Helpers for printing affected items
+        def fmt_track(t):
+            ui.print_(format(t, fmt))
+
+        def fmt_album(a):
+            ui.print_()
+            for i in a.items():
+                fmt_track(i)
+
+        fmt_obj = fmt_album if album else fmt_track
 
         # Show all the items.
-        for item in items:
-            ui.print_(format(item, fmt))
+        for o in objs:
+            fmt_obj(o)
 
         # Confirm with user.
-        if not ui.input_yn(prompt, True):
-            return
+        objs = ui.input_select_objects(prompt, objs, fmt_obj,
+                                       prompt_all=prompt_all)
+
+    if not objs:
+        return
 
     # Remove (and possibly delete) items.
     with lib.transaction():
-        for obj in (albums if album else items):
+        for obj in objs:
             obj.remove(delete)
 
 
@@ -1665,7 +1691,10 @@ def config_func(lib, opts, args):
     # Dump configuration.
     else:
         config_out = config.dump(full=opts.defaults, redact=opts.redact)
-        print_(util.text_string(config_out))
+        if config_out.strip() != '{}':
+            print_(util.text_string(config_out))
+        else:
+            print("Empty configuration")
 
 
 def config_edit():

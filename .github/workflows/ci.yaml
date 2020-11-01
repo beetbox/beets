@@ -59,14 +59,14 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install tox sphinx
 
+      - name: Add problem matcher
+        run: echo "::add-matcher::.github/sphinx-problem-matcher.json"
+
       - name: Build and check docs using tox
         run: tox -e docs
 
   lint:
     runs-on: ubuntu-latest
-
-    env:
-      PY_COLORS: 1
 
     steps:
       - uses: actions/checkout@v2
@@ -80,6 +80,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install tox sphinx
+
+      - name: Add problem matcher
+        run: echo "::add-matcher::.github/flake8-problem-matcher.json"
 
       - name: Lint with flake8
         run: tox -e py-lint

@@ -31,5 +31,5 @@ configuration file. The available options are:
   `initial_key` value.
   Default: ``no``.
 
-.. _KeyFinder: https://www.ibrahimshaath.co.uk/keyfinder/
+.. _KeyFinder: http://www.ibrahimshaath.co.uk/keyfinder/
 .. _keyfinder-cli: https://github.com/EvanPurkhiser/keyfinder-cli/

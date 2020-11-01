@@ -279,7 +279,7 @@ def submit_items(log, userkey, items, chunksize=64):
         del data[:]
 
     for item in items:
-        fp = fingerprint_item(log, item)
+        fp = fingerprint_item(log, item, write=ui.should_write())
 
         # Construct a submission dictionary for this item.
         item_data = {

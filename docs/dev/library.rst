@@ -45,7 +45,7 @@ responsible for handling queries to retrieve stored objects.
 
     .. automethod:: transaction
 
-.. _SQLite: https://sqlite.org/
+.. _SQLite: https://sqlite.org/index.html
 .. _ORM: https://en.wikipedia.org/wiki/Object-relational_mapping
 
 
@@ -118,7 +118,7 @@ To make changes to either the database or the tags on a file, you
 update an item's fields (e.g., ``item.title = "Let It Be"``) and then call
 ``item.write()``.
 
-.. _MediaFile: https://mediafile.readthedocs.io/
+.. _MediaFile: https://mediafile.readthedocs.io/en/latest/
 
 Items also track their modification times (mtimes) to help detect when they
 become out of sync with on-disk metadata, mainly to speed up the
