@@ -56,10 +56,11 @@ class FormattedMapping(Mapping):
     are replaced.
     """
 
-    def __init__(self, model, for_path=False):
+    def __init__(self, model, for_path=False, compute_keys=True):
         self.for_path = for_path
         self.model = model
-        self.model_keys = model.keys(True)
+        if compute_keys:
+            self.model_keys = model.keys(True)
 
     def __getitem__(self, key):
         if key in self.model_keys:
