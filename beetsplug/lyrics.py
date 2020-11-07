@@ -424,6 +424,7 @@ def _scrape_strip_cruft(html, plain_text_out=False):
     html = re.sub(r' +', ' ', html)  # Whitespaces collapse.
     html = BREAK_RE.sub('\n', html)  # <br> eats up surrounding '\n'.
     html = re.sub(r'(?s)<(script).*?</\1>', '', html)  # Strip script tags.
+    html = re.sub(u'\u2005', " ", html) # replace Unicode Four-per-em space with regular space
 
     if plain_text_out:  # Strip remaining HTML tags
         html = COMMENT_RE.sub('', html)
