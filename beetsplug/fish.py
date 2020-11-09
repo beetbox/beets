@@ -201,6 +201,10 @@ def get_subcommands(cmd_name_and_help, nobasicfields, extravalues):
     # Formatting for Fish to complete our fields/values
     word = ""
     for cmdname, cmdhelp in cmd_name_and_help:
+        # Escape ? in fish
+        if cmdname == "?":
+            cmdname = "\\" + cmdname
+
         word += "\n" + "# ------ {} -------".format(
             "fieldsetups for  " + cmdname) + "\n"
         word += (
@@ -232,6 +236,10 @@ def get_all_commands(beetcmds):
         names = [alias for alias in cmd.aliases]
         names.append(cmd.name)
         for name in names:
+            # Escape ? in fish
+            if name == "?":
+                name = "\\" + name
+
             word += "\n"
             word += ("\n" * 2) + "# ====== {} =====".format(
                 "completions for  " + name) + "\n"
