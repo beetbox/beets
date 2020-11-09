@@ -132,6 +132,7 @@ class FishPlugin(BeetsPlugin):
         with open(completion_file_path, 'w') as fish_file:
             fish_file.write(totstring)
 
+
 def _escape(name):
     # Escape ? in fish
     if name == "?":
