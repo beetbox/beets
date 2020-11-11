@@ -169,6 +169,7 @@ New features:
 
 Fixes:
 
+* :doc:`/plugins/index`: Change beets-copyartifacts to maintained repo.
 * :doc:`/plugins/subsonicupdate`: REST was using `POST` method rather `GET` method.
   Also includes better exception handling, response parsing, and tests.
 * :doc:`/plugins/the`: Fixed incorrect regex for 'the' that matched any
