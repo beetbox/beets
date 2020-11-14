@@ -36,9 +36,9 @@ New features:
   :bug:`3391`
 * :doc:`plugins/discogs` now adds two extra fields: `discogs_labelid` and
   `discogs_artistid`
-  :bug: `3413`
-* :doc:`/plugins/export`: Added new ``-f`` (``--format``) flag;
-  which allows for the ability to export in json, csv and xml.
+  :bug:`3413`
+* :doc:`/plugins/export`: Added new ``-f`` (``--format``) flag; 
+  which allows for the ability to export in json, jsonlines, csv and xml.
   Thanks to :user:`austinmm`.
   :bug:`3402`
 * :doc:`/plugins/unimported`: lets you find untracked files in your library directory.
@@ -130,7 +130,7 @@ New features:
 * :doc:`/plugins/fetchart`: Album art can now be fetched from `last.fm`_.
   :bug:`3530`
 * The classes ``AlbumInfo`` and ``TrackInfo`` now have flexible attributes,
-  allowing to solve :bug:`1547`.
+  allowing to solve :bug:`1547`. 
   Thanks to :user:`dosoe`.
 * :doc:`/plugins/web`: The query API now interprets backslashes as path
   separators to support path queries.
