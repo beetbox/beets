@@ -121,7 +121,6 @@ following to your configuration::
    the
    thumbnails
    types
-   tweet
    unimported
    web
    zero
@@ -236,7 +235,6 @@ Miscellaneous
 * `mstream`_: A music streaming server + webapp that can be used alongside beets.
 * :doc:`random`: Randomly choose albums and tracks from your library.
 * :doc:`spotify`: Create Spotify playlists from the Beets library.
-* :doc:`tweet`: Tweet the output of an album query.
 * :doc:`types`: Declare types for flexible attributes.
 * :doc:`web`: An experimental Web-based GUI for beets.
 
