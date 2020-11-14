@@ -24,15 +24,15 @@ import os
 from test import _common
 from test.helper import TestHelper
 from beets.util.artresizer import (
-    ArtResizer,
     pil_resize,
     im_resize,
     get_im_version,
     get_pil_version,
 )
 
+
 class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
-    """Unittest test case for Art Resizer to a specific size, inheriting from beets helpers."""
+    """Unittest test case for Art Resizer to a specific filesize."""
 
     IMG_225x225 = os.path.join(_common.RSRC, b"abbey.jpg")
     IMG_225x225_SIZE = os.stat(IMG_225x225).st_size
