@@ -94,15 +94,14 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
                 lower_qual = 95
             for i in range(3):
                 # 3 attempts is an abitrary choice
-                filesize = os.stat(path_out).st_size
+                filesize = os.stat(util.syspath(path_out)).st_size
                 log.debug(u"PIL Pass {0} : Output size: {1}B", i, filesize)
                 if filesize <= max_filesize:
                     return path_out
                 # Calculate percentage decrease required. This is approximate,
                 # as quality may only loosely correlate with filesize.
                 frac_diff = 1 - ((filesize - max_filesize) / max_filesize)
-                assert frac_diff < 1
-                lower_qual = lower_qual * frac_diff
+                lower_qual = int(lower_qual * frac_diff)
                 # Restrict quality dropping below 10
                 if lower_qual < 10:
                     lower_qual = 10
@@ -111,19 +110,13 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
                     util.py3_path(path_out), quality=lower_qual, optimize=True
                 )
             log.error(u"PIL Failed to resize file to below {0}B", max_filesize)
-            raise IOError
+            return path_out
 
         else:
             return path_out
     except IOError:
         log.error(u"PIL cannot create thumbnail for '{0}'",
                   util.displayable_path(path_in))
-        return path_in
-    except AssertionError:
-        log.error(
-            u"Percentage filesize decrease calculated incorrectly for '{0}'",
-            util.displayable_path(path_in),
-        )
         return path_in
 
 

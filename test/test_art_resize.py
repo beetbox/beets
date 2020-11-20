@@ -23,6 +23,7 @@ import os
 
 from test import _common
 from test.helper import TestHelper
+from beets.util import syspath
 from beets.util.artresizer import (
     pil_resize,
     im_resize,
@@ -35,8 +36,7 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
     """Unittest test case for Art Resizer to a specific filesize."""
 
     IMG_225x225 = os.path.join(_common.RSRC, b"abbey.jpg")
-    IMG_225x225_SIZE = os.stat(IMG_225x225).st_size
-    LOWER_MAX_FILESIZE = 5e3
+    IMG_225x225_SIZE = os.stat(syspath(IMG_225x225)).st_size
 
     def setUp(self):
         """Called before each test, setting up beets."""
@@ -47,35 +47,46 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         self.teardown_beets()
 
     def _test_img_resize(self, resize_func):
-        """Wrapper function to test resizing based on file size."""
-        # Check "lower maximum filesize" is truly lower than original filesize
-        self.assertLess(self.LOWER_MAX_FILESIZE, self.IMG_225x225_SIZE)
-
-        # Shrink using given method, known dimension, max quality.
-        im = resize_func(
+        """Test resizing based on file size, given a resize_func."""
+        # Check quality setting unaffected by new parameter
+        im_unchanged = resize_func(
             225,
             self.IMG_225x225,
             quality=95,
-            max_filesize=self.LOWER_MAX_FILESIZE,
+            max_filesize=0,
         )
+        # Attempt a lower filesize
+        im_a = resize_func(
+            225,
+            self.IMG_225x225,
+            quality=95,
+            max_filesize=self.IMG_225x225_SIZE // 2,
+        )
+        # Attempt with lower initial quality
+        im_b = resize_func(
+            225,
+            self.IMG_225x225,
+            quality=75,
+            max_filesize=self.IMG_225x225_SIZE // 2,
+        )
+        # check valid paths returned
+        self.assertExists(im_unchanged)
+        self.assertExists(im_a)
+        self.assertExists(im_b)
 
-        # check valid path returned
-        self.assertTrue(os.path.exists(im))
-        new_file_size = os.stat(im).st_size
-        # check size has decreased
-        self.assertLess(new_file_size, self.IMG_225x225_SIZE)
-        # check size has decreased enough
-        self.assertLess(new_file_size, self.LOWER_MAX_FILESIZE)
+        # check size has decreased enough (unknown behaviour for quality-only setting)
+        self.assertLess(os.stat(syspath(im_a)).st_size, self.IMG_225x225_SIZE)
+        self.assertLess(os.stat(syspath(im_b)).st_size, self.IMG_225x225_SIZE)
 
+    @unittest.skipUnless(get_pil_version(), "PIL not available")
     def test_pil_file_resize(self):
         """Test PIL resize function is lowering file size."""
-        if get_pil_version():
-            self._test_img_resize(pil_resize)
+        self._test_img_resize(pil_resize)
 
+    @unittest.skipUnless(get_im_version(), "ImageMagick not available")
     def test_im_file_resize(self):
         """Test IM resize function is lowering file size."""
-        if get_im_version():
-            self._test_img_resize(im_resize)
+        self._test_img_resize(im_resize)
 
 
 def suite():

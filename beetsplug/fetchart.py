@@ -51,6 +51,8 @@ class Candidate(object):
     CANDIDATE_BAD = 0
     CANDIDATE_EXACT = 1
     CANDIDATE_DOWNSCALE = 2
+    CANDIDATE_DOWNSIZE = 3
+    CANDIDATE_DOWNSCALE_AND_DOWNSIZE = 4
 
     MATCH_EXACT = 0
     MATCH_FALLBACK = 1
@@ -64,19 +66,23 @@ class Candidate(object):
         self.check = None
         self.match = match
         self.size = size
-
+    
     def _validate(self, plugin):
         """Determine whether the candidate artwork is valid based on
         its dimensions (width and ratio).
 
         Return `CANDIDATE_BAD` if the file is unusable.
         Return `CANDIDATE_EXACT` if the file is usable as-is.
-        Return `CANDIDATE_DOWNSCALE` if the file must be resized.
+        Return `CANDIDATE_DOWNSCALE` if the file must be rescaled.
+        Return `CANDIDATE_DOWNSIZE` if the file must be resized.
+        Return `CANDIDATE_DOWNSCALE_AND_DOWNSIZE` if both resizing 
+        & rescaling are necessary.
         """
         if not self.path:
             return self.CANDIDATE_BAD
 
-        if not (plugin.enforce_ratio or plugin.minwidth or plugin.maxwidth):
+        if (not (plugin.enforce_ratio or plugin.minwidth or plugin.maxwidth 
+            or plugin.max_filesize)):
             return self.CANDIDATE_EXACT
 
         # get_size returns None if no local imaging backend is available
@@ -94,7 +100,7 @@ class Candidate(object):
         short_edge = min(self.size)
         long_edge = max(self.size)
 
-        # Check minimum size.
+        # Check minimum dimension.
         if plugin.minwidth and self.size[0] < plugin.minwidth:
             self._log.debug(u'image too small ({} < {})',
                             self.size[0], plugin.minwidth)
@@ -122,22 +128,49 @@ class Candidate(object):
                                 self.size[0], self.size[1])
                 return self.CANDIDATE_BAD
 
-        # Check maximum size.
+        # Check maximum dimension.
+        downscale = False
         if plugin.maxwidth and self.size[0] > plugin.maxwidth:
-            self._log.debug(u'image needs resizing ({} > {})',
+            self._log.debug(u'image needs rescaling ({} > {})',
                             self.size[0], plugin.maxwidth)
-            return self.CANDIDATE_DOWNSCALE
+            downscale = True
+            
+        # Check filesize.
+        filesize = os.stat(syspath(self.path)).st_size
+        downsize = False
+        if plugin.max_filesize and filesize > plugin.max_filesize:
+            self._log.debug(u'image needs resizing ({}B > {}B)',
+                            filesize, plugin.max_filesize)
+            downsize = True
 
-        return self.CANDIDATE_EXACT
+        if downscale and downsize:
+            return self.CANDIDATE_DOWNSCALE_AND_DOWNSIZE
+        elif downscale and not downsize:
+            return self.CANDIDATE_DOWNSCALE
+        elif downsize and not downscale:
+            return self.CANDIDATE_DOWNSIZE
+        else:
+            return self.CANDIDATE_EXACT
 
     def validate(self, plugin):
         self.check = self._validate(plugin)
         return self.check
 
     def resize(self, plugin):
-        if plugin.maxwidth and self.check == self.CANDIDATE_DOWNSCALE:
+        # checks for plugin.maxwidth & plugin.max_filesize have been performed above
+        if self.check == self.CANDIDATE_DOWNSCALE_AND_DOWNSIZE:
+            self.path = ArtResizer.shared.resize(plugin.maxwidth, self.path,
+                                                 quality=plugin.quality, 
+                                                 max_filesize=plugin.max_filesize)
+        elif self.check == self.CANDIDATE_DOWNSCALE:
             self.path = ArtResizer.shared.resize(plugin.maxwidth, self.path,
                                                  quality=plugin.quality)
+        elif self.check == self.CANDIDATE_DOWNSIZE:
+            # dimensions are correct, so maxwidth is set to maximum dimension
+            self.path = ArtResizer.shared.resize(max(self.size), self.path,
+                                                 quality=plugin.quality,
+                                                 max_filesize=plugin.max_filesize)
+            
 
 
 def _logged_get(log, *args, **kwargs):
@@ -892,6 +925,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'minwidth': 0,
             'maxwidth': 0,
             'quality': 0,
+            'max_filesize': 0,
             'enforce_ratio': False,
             'cautious': False,
             'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
@@ -910,6 +944,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
         self.minwidth = self.config['minwidth'].get(int)
         self.maxwidth = self.config['maxwidth'].get(int)
+        self.max_filesize = self.config['max_filesize'].get(int)
         self.quality = self.config['quality'].get(int)
 
         # allow both pixel and percentage-based margin specifications
