@@ -138,14 +138,13 @@ The plugin should work behind a reverse proxy without further configuration,
 however this has not been tested extensively. For details of what headers must
 be rewritten and a sample NGINX configuration see `Flask proxy setups`_.
 
-It may be possibly to run the application under a URL prefix (for example so
-you could have ``/foo/aura/server`` rather than ``/aura/server``), but it is
-likely this would require changes in the code.
+It is (reportedly) possible to run the application under a URL prefix (for
+example so you could have ``/foo/aura/server`` rather than ``/aura/server``),
+but you'll have to work it out for yourself :-)
 
-Do not add a trailing slash (``/``) to the URL where the application is
-running, otherwise you will get a 404. For example with NGINX you should use
-``proxy_pass http://127.0.0.1:8337;`` rather than
-``proxy_pass http://127.0.0.1:8337/;``.
+If using NGINX, do **not** add a trailing slash (``/``) to the URL where the
+application is running, otherwise you will get a 404. However if you are using
+Apache then you **should** add a trailing slash.
 
 .. _Flask proxy setups: https://flask.palletsprojects.com/en/1.1.x/deploying/wsgi-standalone/#proxy-setups
 
