@@ -756,11 +756,7 @@ class Item(LibModel):
             plugins.send("item_reflinked", item=self, source=self.path,
                          destination=dest)
         else:
-            plugins.send("before_item_moved", item=self, source=self.path,
-                         destination=dest)
-            util.move(self.path, dest)
-            plugins.send("item_moved", item=self, source=self.path,
-                         destination=dest)
+            assert False, 'unknown MoveOperation'
 
         # Either copying or moving succeeded, so update the stored path.
         self.path = dest
@@ -1106,7 +1102,7 @@ class Album(LibModel):
         elif operation == MoveOperation.REFLINK_AUTO:
             util.reflink(old_art, new_art, fallback=True)
         else:
-            util.move(old_art, new_art)
+            assert False, 'unknown MoveOperation'
         self.artpath = new_art
 
     def move(self, operation=MoveOperation.MOVE, basedir=None, store=True):
