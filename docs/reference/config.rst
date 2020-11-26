@@ -496,7 +496,8 @@ Defaults to ``no``.
 
 This kind of clone is only available on certain filesystems: for example,
 btrfs and APFS. For more details on filesystem support, see the `pyreflink`_
-documentation.
+documentation.  Note that you need to install ``pyreflink``, either through
+``python -m pip install beets[reflink]`` or ``python -m pip install reflink``.
 
 The option is ignored if ``move`` is enabled (i.e., beets can move or
 copy files but it doesn't make sense to do both).
