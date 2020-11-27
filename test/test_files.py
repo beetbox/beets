@@ -86,6 +86,24 @@ class MoveTest(_common.TestCase):
         self.i.move(operation=MoveOperation.COPY)
         self.assertExists(self.path)
 
+    def test_reflink_arrives(self):
+        self.i.move(operation=MoveOperation.REFLINK_AUTO)
+        self.assertExists(self.dest)
+
+    def test_reflink_does_not_depart(self):
+        self.i.move(operation=MoveOperation.REFLINK_AUTO)
+        self.assertExists(self.path)
+
+    @unittest.skipUnless(_common.HAVE_REFLINK, "need reflink")
+    def test_force_reflink_arrives(self):
+        self.i.move(operation=MoveOperation.REFLINK)
+        self.assertExists(self.dest)
+
+    @unittest.skipUnless(_common.HAVE_REFLINK, "need reflink")
+    def test_force_reflink_does_not_depart(self):
+        self.i.move(operation=MoveOperation.REFLINK)
+        self.assertExists(self.path)
+
     def test_move_changes_path(self):
         self.i.move()
         self.assertEqual(self.i.path, util.normpath(self.dest))
@@ -262,6 +280,17 @@ class AlbumFileTest(_common.TestCase):
         oldpath = self.i.path
         self.ai.album = u'newAlbumName'
         self.ai.move(operation=MoveOperation.COPY)
+        self.ai.store()
+        self.i.load()
+
+        self.assertTrue(os.path.exists(oldpath))
+        self.assertTrue(os.path.exists(self.i.path))
+
+    @unittest.skipUnless(_common.HAVE_REFLINK, "need reflink")
+    def test_albuminfo_move_reflinks_file(self):
+        oldpath = self.i.path
+        self.ai.album = u'newAlbumName'
+        self.ai.move(operation=MoveOperation.REFLINK)
         self.ai.store()
         self.i.load()
 
@@ -549,6 +578,12 @@ class SafeMoveCopyTest(_common.TestCase):
         self.assertExists(self.dest)
         self.assertExists(self.path)
 
+    @unittest.skipUnless(_common.HAVE_REFLINK, "need reflink")
+    def test_successful_reflink(self):
+        util.reflink(self.path, self.dest)
+        self.assertExists(self.dest)
+        self.assertExists(self.path)
+
     def test_unsuccessful_move(self):
         with self.assertRaises(util.FilesystemError):
             util.move(self.path, self.otherpath)
@@ -556,6 +591,11 @@ class SafeMoveCopyTest(_common.TestCase):
     def test_unsuccessful_copy(self):
         with self.assertRaises(util.FilesystemError):
             util.copy(self.path, self.otherpath)
+
+    @unittest.skipUnless(_common.HAVE_REFLINK, "need reflink")
+    def test_unsuccessful_reflink(self):
+        with self.assertRaises(util.FilesystemError):
+            util.reflink(self.path, self.otherpath)
 
     def test_self_move(self):
         util.move(self.path, self.path)
