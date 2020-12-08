@@ -76,6 +76,16 @@ class KeyFinderTest(unittest.TestCase, TestHelper):
         item.load()
         self.assertEqual(item['initial_key'], 'F')
 
+    def test_no_key(self, command_output):
+        item = Item(path='/file')
+        item.add(self.lib)
+
+        command_output.return_value = util.CommandOutput(b"", b"")
+        self.run_command('keyfinder')
+
+        item.load()
+        self.assertEqual(item['initial_key'], None)
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
