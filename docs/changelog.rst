@@ -282,6 +282,8 @@ Fixes:
   :bug:`3773` :bug:`3774`
 * Fix a bug causing PIL to generate poor quality JPEGs when resizing artwork.
   :bug:`3743`
+* :doc:`plugins/keyfinder`: Catch output from ``keyfinder-cli`` that is missing key.
+  :bug:`2242`
 
 For plugin developers:
 
