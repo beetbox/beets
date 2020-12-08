@@ -79,8 +79,8 @@ class KeyFinderPlugin(BeetsPlugin):
             try:
                 key_raw = output.rsplit(None, 1)[-1]
             except IndexError:
-                # Sometimes keyfinder-cli returns 0 but with no key, usually when
-                # the file is silent or corrupt, so we log and skip.
+                # Sometimes keyfinder-cli returns 0 but with no key, usually
+                # when the file is silent or corrupt, so we log and skip.
                 self._log.error(u'no key returned for path: {0}', item.path)
                 continue
 
