@@ -19,8 +19,6 @@ The Web interface depends on `Flask`_. To get it, just run ``pip install
 flask``. Then enable the ``web`` plugin in your configuration (see
 :ref:`using-plugins`).
 
-.. _Flask: https://flask.pocoo.org/
-
 If you need CORS (it's disabled by default---see :ref:`web-cors`, below), then
 you also need `flask-cors`_. Just type ``pip install flask-cors``.
 
@@ -47,9 +45,7 @@ Usage
 -----
 
 Type queries into the little search box. Double-click a track to play it with
-`HTML5 Audio`_.
-
-.. _HTML5 Audio: http://www.w3.org/TR/html-markup/audio.html
+HTML5 Audio.
 
 Configuration
 -------------
@@ -78,7 +74,7 @@ The Web backend is built using a simple REST+JSON API with the excellent
 `Flask`_ library. The frontend is a single-page application written with
 `Backbone.js`_. This allows future non-Web clients to use the same backend API.
 
-.. _Flask: https://flask.pocoo.org/
+
 .. _Backbone.js: https://backbonejs.org
 
 Eventually, to make the Web player really viable, we should use a Flash fallback
@@ -90,7 +86,7 @@ for unsupported formats/browsers. There are a number of options for this:
 
 .. _audio.js: https://kolber.github.io/audiojs/
 .. _html5media: https://html5media.info/
-.. _MediaElement.js: https://mediaelementjs.com/
+.. _MediaElement.js: https://www.mediaelementjs.com/
 
 .. _web-cors:
 
@@ -187,6 +183,25 @@ representation. ::
 If there is no item with that id responds with a *404* status
 code.
 
+``DELETE /item/6``
+++++++++++++++++++
+
+Removes the item with id *6* from the beets library. If the *?delete* query string is included,
+the matching file will be deleted from disk.
+
+``PATCH /item/6``
+++++++++++++++++++
+
+Updates the item with id *6* and write the changes to the music file. The body should be a JSON object
+containing the changes to the object.
+
+Returns the updated JSON representation. ::
+
+    {
+      "id": 6,
+      "title": "A Song",
+      ...
+    }
 
 ``GET /item/6,12,13``
 +++++++++++++++++++++
@@ -196,6 +211,8 @@ the response is the same as for `GET /item/`_. It is *not guaranteed* that the
 response includes all the items requested. If a track is not found it is silently
 dropped from the response.
 
+This endpoint also supports *DELETE* and *PATCH* methods as above, to operate on all
+items of the list.
 
 ``GET /item/path/...``
 ++++++++++++++++++++++
@@ -225,6 +242,8 @@ Path elements are joined as parts of a query. For example,
 To specify literal path separators in a query, use a backslash instead of a
 slash.
 
+This endpoint also supports *DELETE* and *PATCH* methods as above, to operate on all
+items returned by the query.
 
 ``GET /item/6/file``
 ++++++++++++++++++++
@@ -242,9 +261,15 @@ For albums, the following endpoints are provided:
 
 * ``GET /album/5``
 
+* ``DELETE /album/5``
+
 * ``GET /album/5,7``
 
+* ``DELETE /album/5,7``
+
 * ``GET /album/query/querystring``
+
+* ``DELETE /album/query/querystring``
 
 The interface and response format is similar to the item API, except replacing
 the encapsulation key ``"items"`` with ``"albums"`` when requesting ``/album/``
@@ -262,3 +287,5 @@ Responds with the number of tracks and albums in the database. ::
       "items": 5,
       "albums": 3
     }
+
+.. _Flask: https://flask.palletsprojects.com/en/1.1.x/

@@ -308,16 +308,44 @@ class CoverArtArchive(RemoteArtSource):
     VALID_THUMBNAIL_SIZES = [250, 500, 1200]
 
     if util.SNI_SUPPORTED:
-        URL = 'https://coverartarchive.org/release/{mbid}/front'
-        GROUP_URL = 'https://coverartarchive.org/release-group/{mbid}/front'
+        URL = 'https://coverartarchive.org/release/{mbid}'
+        GROUP_URL = 'https://coverartarchive.org/release-group/{mbid}'
     else:
-        URL = 'http://coverartarchive.org/release/{mbid}/front'
-        GROUP_URL = 'http://coverartarchive.org/release-group/{mbid}/front'
+        URL = 'http://coverartarchive.org/release/{mbid}'
+        GROUP_URL = 'http://coverartarchive.org/release-group/{mbid}'
 
     def get(self, album, plugin, paths):
         """Return the Cover Art Archive and Cover Art Archive release group URLs
         using album MusicBrainz release ID and release group ID.
         """
+
+        def get_image_urls(url, size_suffix=None):
+            try:
+                response = self.request(url)
+            except requests.RequestException:
+                self._log.debug(u'{0}: error receiving response'
+                                .format(self.NAME))
+                return
+
+            try:
+                data = response.json()
+            except ValueError:
+                self._log.debug(u'{0}: error loading response: {1}'
+                                .format(self.NAME, response.text))
+                return
+
+            for item in data.get('images', []):
+                try:
+                    if 'Front' not in item['types']:
+                        continue
+
+                    if size_suffix:
+                        yield item['thumbnails'][size_suffix]
+                    else:
+                        yield item['image']
+                except KeyError:
+                    pass
+
         release_url = self.URL.format(mbid=album.mb_albumid)
         release_group_url = self.GROUP_URL.format(mbid=album.mb_releasegroupid)
 
@@ -330,19 +358,12 @@ class CoverArtArchive(RemoteArtSource):
             size_suffix = "-" + str(plugin.maxwidth)
 
         if 'release' in self.match_by and album.mb_albumid:
-            if size_suffix:
-                release_thumbnail_url = release_url + size_suffix
-                yield self._candidate(url=release_thumbnail_url,
-                                      match=Candidate.MATCH_EXACT)
-            yield self._candidate(url=release_url,
-                                  match=Candidate.MATCH_EXACT)
+            for url in get_image_urls(release_url, size_suffix):
+                yield self._candidate(url=url, match=Candidate.MATCH_EXACT)
+
         if 'releasegroup' in self.match_by and album.mb_releasegroupid:
-            if size_suffix:
-                release_group_thumbnail_url = release_group_url + size_suffix
-                yield self._candidate(url=release_group_thumbnail_url,
-                                      match=Candidate.MATCH_FALLBACK)
-            yield self._candidate(url=release_group_url,
-                                  match=Candidate.MATCH_FALLBACK)
+            for url in get_image_urls(release_group_url):
+                yield self._candidate(url=url, match=Candidate.MATCH_FALLBACK)
 
 
 class Amazon(RemoteArtSource):
