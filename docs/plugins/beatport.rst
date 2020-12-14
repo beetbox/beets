@@ -41,6 +41,6 @@ Configuration
 
 This plugin can be configured like other metadata source plugins as described in :ref:`metadata-source-plugin-configuration`.
 
-.. _requests: https://docs.python-requests.org/en/latest/
+.. _requests: https://requests.readthedocs.io/en/master/
 .. _requests_oauthlib: https://github.com/requests/requests-oauthlib
-.. _Beatport: https://beetport.com
+.. _Beatport: https://www.beatport.com/

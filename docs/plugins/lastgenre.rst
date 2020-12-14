@@ -1,13 +1,10 @@
 LastGenre Plugin
 ================
 
-The MusicBrainz database `does not contain genre information`_. Therefore, when
-importing and autotagging music, beets does not assign a genre.  The
-``lastgenre`` plugin fetches *tags* from `Last.fm`_ and assigns them as genres
+
+The ``lastgenre`` plugin fetches *tags* from `Last.fm`_ and assigns them as genres
 to your albums and items.
 
-.. _does not contain genre information:
-    https://musicbrainz.org/doc/General_FAQ#Why_does_MusicBrainz_not_support_genre_information.3F
 .. _Last.fm: https://last.fm/
 
 Installation
@@ -72,7 +69,7 @@ nothing would ever be matched to a more generic node since all the specific
 subgenres are in the whitelist to begin with.
 
 
-.. _YAML: https://www.yaml.org/
+.. _YAML: https://yaml.org/
 .. _tree of nested genre names: https://raw.githubusercontent.com/beetbox/beets/master/beetsplug/lastgenre/genres-tree.yaml
 
 

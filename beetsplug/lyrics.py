@@ -55,7 +55,6 @@ except ImportError:
 
 from beets import plugins
 from beets import ui
-from beets import util
 import beets
 
 DIV_RE = re.compile(r'<(/?)div>?', re.I)
@@ -143,39 +142,6 @@ def extract_text_between(html, start_marker, end_marker):
     except ValueError:
         return u''
     return html
-
-
-def extract_text_in(html, starttag):
-    """Extract the text from a <DIV> tag in the HTML starting with
-    ``starttag``. Returns None if parsing fails.
-    """
-    # Strip off the leading text before opening tag.
-    try:
-        _, html = html.split(starttag, 1)
-    except ValueError:
-        return
-
-    # Walk through balanced DIV tags.
-    level = 0
-    parts = []
-    pos = 0
-    for match in DIV_RE.finditer(html):
-        if match.group(1):  # Closing tag.
-            level -= 1
-            if level == 0:
-                pos = match.end()
-        else:  # Opening tag.
-            if level == 0:
-                parts.append(html[pos:match.start()])
-            level += 1
-
-        if level == -1:
-            parts.append(html[pos:match.start()])
-            break
-    else:
-        print(u'no closing tag found!')
-        return
-    return u''.join(parts)
 
 
 def search_pairs(item):
@@ -296,9 +262,9 @@ class Backend(object):
         raise NotImplementedError()
 
 
-class SymbolsReplaced(Backend):
+class MusiXmatch(Backend):
     REPLACEMENTS = {
-        r'\s+': '_',
+        r'\s+': '-',
         '<': 'Less_Than',
         '>': 'Greater_Than',
         '#': 'Number_',
@@ -306,20 +272,14 @@ class SymbolsReplaced(Backend):
         r'[\]\}]': ')',
     }
 
+    URL_PATTERN = 'https://www.musixmatch.com/lyrics/%s/%s'
+
     @classmethod
     def _encode(cls, s):
         for old, new in cls.REPLACEMENTS.items():
             s = re.sub(old, new, s)
 
-        return super(SymbolsReplaced, cls)._encode(s)
-
-
-class MusiXmatch(SymbolsReplaced):
-    REPLACEMENTS = dict(SymbolsReplaced.REPLACEMENTS, **{
-        r'\s+': '-'
-    })
-
-    URL_PATTERN = 'https://www.musixmatch.com/lyrics/%s/%s'
+        return super(MusiXmatch, cls)._encode(s)
 
     def fetch(self, artist, title):
         url = self.build_url(artist, title)
@@ -441,30 +401,6 @@ class Genius(Backend):
         return lyrics_div.get_text()
 
 
-class LyricsWiki(SymbolsReplaced):
-    """Fetch lyrics from LyricsWiki."""
-
-    if util.SNI_SUPPORTED:
-        URL_PATTERN = 'https://lyrics.wikia.com/%s:%s'
-    else:
-        URL_PATTERN = 'http://lyrics.wikia.com/%s:%s'
-
-    def fetch(self, artist, title):
-        url = self.build_url(artist, title)
-        html = self.fetch_url(url)
-        if not html:
-            return
-
-        # Get the HTML fragment inside the appropriate HTML element and then
-        # extract the text from it.
-        html_frag = extract_text_in(html, u"<div class='lyricbox'>")
-        if html_frag:
-            lyrics = _scrape_strip_cruft(html_frag, True)
-
-            if lyrics and 'Unfortunately, we are not licensed' not in lyrics:
-                return lyrics
-
-
 def remove_credits(text):
     """Remove first/last line of text if it contains the word 'lyrics'
     eg 'Lyrics by songsdatabase.com'
@@ -488,6 +424,7 @@ def _scrape_strip_cruft(html, plain_text_out=False):
     html = re.sub(r' +', ' ', html)  # Whitespaces collapse.
     html = BREAK_RE.sub('\n', html)  # <br> eats up surrounding '\n'.
     html = re.sub(r'(?s)<(script).*?</\1>', '', html)  # Strip script tags.
+    html = re.sub(u'\u2005', " ", html)  # replace unicode with regular space
 
     if plain_text_out:  # Strip remaining HTML tags
         html = COMMENT_RE.sub('', html)
@@ -656,10 +593,9 @@ class Google(Backend):
 
 
 class LyricsPlugin(plugins.BeetsPlugin):
-    SOURCES = ['google', 'lyricwiki', 'musixmatch', 'genius']
+    SOURCES = ['google', 'musixmatch', 'genius']
     SOURCE_BACKENDS = {
         'google': Google,
-        'lyricwiki': LyricsWiki,
         'musixmatch': MusiXmatch,
         'genius': Genius,
     }

@@ -77,6 +77,11 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0):
         im = Image.open(util.syspath(path_in))
         size = maxwidth, maxwidth
         im.thumbnail(size, Image.ANTIALIAS)
+
+        if quality == 0:
+            # Use PIL's default quality.
+            quality = -1
+
         im.save(util.py3_path(path_out), quality=quality)
         return path_out
     except IOError:
