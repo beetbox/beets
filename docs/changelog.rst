@@ -169,6 +169,9 @@ New features:
   https://github.com/alastair/python-musicbrainzngs/pull/247 and
   https://github.com/alastair/python-musicbrainzngs/pull/266 .
   Thanks to :user:`aereaux`.
+* :doc:`/plugins/replaygain` now does its analysis in parallel when using
+  the ``command``, ``ffmpeg`` or ``bs1770gain`` backends.
+  :bug:`3478`
 
 Fixes:
 
