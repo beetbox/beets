@@ -30,7 +30,6 @@ import six
 from multiprocessing.pool import ThreadPool, RUN
 from threading import Thread, Event
 import signal
-from sqlite3 import OperationalError
 
 from beets import ui
 from beets.plugins import BeetsPlugin
@@ -1310,13 +1309,14 @@ class ReplayGainPlugin(BeetsPlugin):
                 for item in album.items()])
 
     def _store(self, item):
-        try:
-            item.store()
-        except OperationalError:
-            # test_replaygain.py :memory: library can fail with
-            #    `sqlite3.OperationalError: no such table: items`
-            # but the second attempt succeeds
-            item.store()
+        """Store an item to the database.
+             When testing, item.store() sometimes fails non-destructively with
+             sqlite.OperationalError.
+             This method is here to be patched to a retry-once helper function
+             in test_replaygain.py, so that it can still fail appropriately
+             outside of these tests.
+        """
+        item.store()
 
     def store_track_gain(self, item, track_gain):
         item.rg_track_gain = track_gain.gain
