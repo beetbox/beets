@@ -146,6 +146,8 @@ configuration file. The available options are:
 - **whitelist**: The filename of a custom genre list, ``yes`` to use
   the internal whitelist, or ``no`` to consider all genres valid.
   Default: ``yes``.
+- **title_case**: Convert the new tags to TitleCase before saving.
+  Default: ``yes``.
 
 Running Manually
 ----------------
