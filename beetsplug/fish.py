@@ -137,6 +137,7 @@ def _escape(name):
     # Escape ? in fish
     if name == "?":
         name = "\\" + name
+    return name
 
 
 def get_cmds_list(cmds_names):
