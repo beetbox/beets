@@ -6,6 +6,7 @@ Changelog
 
 New features:
 
+* Add ``title_case`` config option to lastgenre to make TitleCasing optional.
 * When config is printed with no available configuration a new message is printed.
   :bug:`3779`
 * When importing a duplicate album it ask if it should "Keep all" instead of "Keep both".
