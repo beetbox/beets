@@ -103,6 +103,12 @@ configuration file. The available options are:
 - **threads**: The number of parallel threads to run the analysis in. Overridden
   by ``--threads`` at the command line.
   Default: # of logical CPU cores
+- **parallel_on_import**: Whether to enable parallel analysis during import.
+  As of now this ReplayGain data is not written to files properly, so this option
+  is disabled by default.
+  If you wish to enable it, remember to run ``beet write`` after importing to
+  actually write to the imported files.
+  Default: ``no``
 - **backend**: The analysis backend; either ``gstreamer``, ``command``, ``audiotools``
   or ``ffmpeg``.
   Default: ``command``.
