@@ -289,7 +289,7 @@ Fixes:
 * :doc:`plugins/keyfinder`: Catch output from ``keyfinder-cli`` that is missing key.
   :bug:`2242`
 * :doc:`plugins/replaygain`: Disable parallel analysis on import by default.
-
+  :bug:`3819`
 
 For plugin developers:
 
