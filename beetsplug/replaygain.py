@@ -1553,7 +1553,8 @@ class ReplayGainPlugin(BeetsPlugin):
     def import_begin(self, session):
         """Handle `import_begin` event -> open pool
         """
-        self.open_pool(self.config['threads'].get(int))
+        if self.config['auto']:
+            self.open_pool(self.config['threads'].get(int))
 
     def import_end(self, paths):
         """Handle `import` event -> close pool
@@ -1563,10 +1564,19 @@ class ReplayGainPlugin(BeetsPlugin):
     def imported(self, session, task):
         """Add replay gain info to items or albums of ``task``.
         """
-        if task.is_album:
-            self.handle_album(task.album, False)
-        else:
-            self.handle_track(task.item, False)
+        if self.config['auto']:
+            if task.is_album:
+                self.handle_album(
+                    task.album,
+                    self.config['auto'].get(bool),
+                    self.config['overwrite'].get(bool)
+                )
+            else:
+                self.handle_track(
+                    task.item,
+                    self.config['auto'].get(bool),
+                    self.config['overwrite'].get(bool)
+                )
 
     def commands(self):
         """Return the "replaygain" ui subcommand.
