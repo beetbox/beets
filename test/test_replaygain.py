@@ -22,14 +22,11 @@ import six
 from mock import patch
 from test.helper import TestHelper, capture_log, has_program
 
-from sqlite3 import OperationalError
-
 from beets import config
 from beets.util import CommandOutput
 from mediafile import MediaFile
 from beetsplug.replaygain import (FatalGstreamerPluginReplayGainError,
-                                  GStreamerBackend,
-                                  ReplayGainPlugin)
+                                  GStreamerBackend)
 
 
 try:
@@ -63,26 +60,9 @@ def reset_replaygain(item):
     item.store()
 
 
-def _store_retry_once(self, item):
-    """Helper method to retry item.store() once in case
-    of a sqlite3.OperationalError exception.
-
-    :param self: `ReplayGainPlugin` instance
-    :param item: a library item to store
-    """
-    try:
-        item.store()
-    except OperationalError:
-        # test_replaygain.py :memory: library can fail with
-        #    `sqlite3.OperationalError: no such table: items`
-        # but the second attempt succeeds
-        item.store()
-
-
-@patch.object(ReplayGainPlugin, '_store', _store_retry_once)
 class ReplayGainCliTestBase(TestHelper):
     def setUp(self):
-        self.setup_beets()
+        self.setup_beets(disk=True)
         self.config['replaygain']['backend'] = self.backend
 
         try:
