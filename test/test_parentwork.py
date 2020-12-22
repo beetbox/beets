@@ -56,6 +56,7 @@ p_work = {'work': {'id': '3',
                                                         'sort-name':
                                                         'composer, random'}}]}}
 
+
 def mock_workid_response(mbid, includes):
     if mbid == '1':
         return work
@@ -63,8 +64,6 @@ def mock_workid_response(mbid, includes):
         return dp_work
     elif mbid == '3':
         return p_work
-
-
 
 
 class ParentWorkIntegrationTest(unittest.TestCase, TestHelper):
@@ -147,22 +146,11 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
         """Set up configuration"""
         self.setup_beets()
         self.load_plugins('parentwork')
-        #self.patcher1 = unittest.mock.patch('musicbrainzngs.get_work_by_id')
-        #self.mock_workid_response = self.patcher1.start()
         musicbrainzngs.get_work_by_id = Mock(side_effect=mock_workid_response)
 
     def tearDown(self):
         self.unload_plugins()
         self.teardown_beets()
-        #self.patcher1.stop()
-
-    #def mock_workid_response(self, mbid, includes):
-    #    if mbid == '1':
-    #        return work
-    #    elif mbid == '2':
-    #        return dp_work
-    #    elif mbid == '3':
-    #        return p_work
 
     def test_normal_case(self):
         item = Item(path='/file', mb_workid='1', parentwork_workid_current='1')
