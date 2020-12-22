@@ -1234,6 +1234,7 @@ class ReplayGainPlugin(BeetsPlugin):
             'auto': True,
             'backend': u'command',
             'threads': cpu_count(),
+            'parallel_on_import': False,
             'per_disc': False,
             'peak': 'true',
             'targetlevel': 89,
@@ -1553,8 +1554,12 @@ class ReplayGainPlugin(BeetsPlugin):
     def import_begin(self, session):
         """Handle `import_begin` event -> open pool
         """
-        if self.config['auto']:
-            self.open_pool(self.config['threads'].get(int))
+        threads = self.config['threads'].get(int)
+
+        if self.config['parallel_on_import'] \
+                and self.config['auto'] \
+                and threads:
+            self.open_pool(threads)
 
     def import_end(self, paths):
         """Handle `import` event -> close pool
