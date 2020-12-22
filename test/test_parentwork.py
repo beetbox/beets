@@ -20,8 +20,6 @@ from __future__ import division, absolute_import, print_function
 import os
 import unittest
 from test.helper import TestHelper
-from mock import Mock
-import musicbrainzngs
 from mock import patch
 
 from beets.library import Item
@@ -147,7 +145,6 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
         """Set up configuration"""
         self.setup_beets()
         self.load_plugins('parentwork')
-#        musicbrainzngs.get_work_by_id = Mock(side_effect=mock_workid_response)
         self.patcher = patch('musicbrainzngs.get_work_by_id',
                              side_effect=mock_workid_response)
         self.patcher.start()
