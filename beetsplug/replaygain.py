@@ -1556,7 +1556,9 @@ class ReplayGainPlugin(BeetsPlugin):
         """
         threads = self.config['threads'].get(int)
 
-        if self.config['parallel_on_import'] and threads:
+        if self.config['parallel_on_import'] \
+                and self.config['auto'] \
+                and threads:
             self.open_pool(threads)
 
     def import_end(self, paths):
