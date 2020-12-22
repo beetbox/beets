@@ -22,6 +22,7 @@ import unittest
 from test.helper import TestHelper
 from mock import Mock
 import musicbrainzngs
+from mock import patch
 
 from beets.library import Item
 from beetsplug import parentwork
@@ -147,10 +148,13 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
         self.setup_beets()
         self.load_plugins('parentwork')
         musicbrainzngs.get_work_by_id = Mock(side_effect=mock_workid_response)
+        self.patcher = patch('musicbrainzngs.get_work_by_id',
+                             side_effect=mock_workid_response)
 
     def tearDown(self):
         self.unload_plugins()
         self.teardown_beets()
+        self.patcher.stop()
 
     def test_normal_case(self):
         item = Item(path='/file', mb_workid='1', parentwork_workid_current='1')
