@@ -20,13 +20,8 @@ from beets.plugins import BeetsPlugin, apply_item_changes
 from beets import autotag, library, ui, util
 from beets.autotag import hooks
 from collections import defaultdict
-from beets import config
-import musicbrainzngs
 
 import re
-
-TRACK_INCLUDES = ['artist-rels']
-SKIPPED_TRACKS = ['[data track]']
 
 MBID_REGEX = r"(\d|\w){8}-(\d|\w){4}-(\d|\w){4}-(\d|\w){4}-(\d|\w){12}"
 
@@ -62,49 +57,15 @@ def track_performers(info):
                 artists[role] = [artist_relation['artist']['name']]
                 artists[role_sort] = [artist_relation[
                         'artist']['sort-name']]
+    for key in artists:
+        artists[key] = u', '.join(artists[key])
     return artists
 
 
 def album_performers(info):
-
-    track_infos = []
-
-    ntracks = 0
-    for medium in info['medium-list']:
-        ntracks += len(medium['track-list'])
-
-    for medium in info['medium-list']:
-        format = medium.get('format')
-
-        if format in config['match']['ignored_media'].as_str_seq():
-            continue
-
-        all_tracks = medium['track-list']
-        if ('data-track-list' in medium
-                and not config['match']['ignore_data_tracks']):
-            all_tracks += medium['data-track-list']
-
-        if 'pregap' in medium:
-            all_tracks.insert(0, medium['pregap'])
-
-        for track in all_tracks:
-
-            if ('title' in track['recording'] and
-                    track['recording']['title'] in SKIPPED_TRACKS):
-                continue
-
-            if ('video' in track['recording'] and
-                    track['recording']['video'] == 'true' and
-                    config['match']['ignore_video_tracks']):
-                continue
-
-            # Basic information from the recording.
-            if ntracks < 500:
-                track_infos.append(track_performers(track['recording']))
-            else:
-                res = musicbrainzngs.get_recording_by_id(
-                        track['recording']['id'], TRACK_INCLUDES)['recording']
-                track_infos.append(track_performers(res))
+    """ placeholder for more album-related performers
+    """
+    track_infos = {}
 
     return track_infos
 
@@ -112,6 +73,7 @@ def album_performers(info):
 class MBSyncPlugin(BeetsPlugin):
     def __init__(self):
         super(MBSyncPlugin, self).__init__()
+        self.register_listener('extracting_trackdata', track_performers)
 
     def commands(self):
         cmd = ui.Subcommand('mbsync',
@@ -166,26 +128,17 @@ class MBSyncPlugin(BeetsPlugin):
                 continue
 
             # Get the MusicBrainz recording info.
-            if more_info:
-                performer_info = self.register_listener('trackdata_recieved', track_performers)
             track_info = hooks.track_for_mbid(item.mb_trackid)
             if not track_info:
                 self._log.info(u'Recording ID not found: {0} for track {0}',
                                item.mb_trackid,
                                item_formatted)
                 continue
-            print(track_info['title'])
-            print(track_info['artist'])
-            print(performer_info)
             # Clean up obsolete flexible fields
             if more_info:
                 for tag in item:
                     if tag[:6] == 'mbsync' and tag not in track_info:
                         del item[tag]
-
-                for key in performer_info:
-                    track_info[key] = u'; '.join(performer_info[key])
-                track_info.decode()
             # Apply.
             with lib.transaction():
                 autotag.apply_item_metadata(item, track_info)
@@ -213,10 +166,7 @@ class MBSyncPlugin(BeetsPlugin):
                 continue
 
             # Get the MusicBrainz album information.
-            if more_info:
-                performer_info = self.register_listener('albumdata_recieved', album_performers)
-            album_info = hooks.album_for_mbid(a.mb_albumid,
-                                              more_info=more_info)
+            album_info = hooks.album_for_mbid(a.mb_albumid)
             if not album_info:
                 self._log.info(u'Release ID {0} not found for album {1}',
                                a.mb_albumid,
@@ -232,18 +182,13 @@ class MBSyncPlugin(BeetsPlugin):
                 track_info = album_info.tracks[i]
                 releasetrack_index[track_info.release_track_id] = track_info
                 track_index[track_info.track_id].append(track_info)
-                if more_info:
-                    track_performer_info = performer_info[i]
-                    for key in track_performer_info:
-                        track_info[key] = track_performer_info[key]
-            if more_info:
-                album_info.decode()
 
             # Construct a track mapping according to MBIDs (release track MBIDs
             # first, if available, and recording MBIDs otherwise). This should
             # work for albums that have missing or extra tracks.
             mapping = {}
             for item in items:
+                # Clean up obsolete flexible fields
                 if more_info:
                     for tag in item:
                         if tag[:6] == 'mbsync' and tag not in track_info:

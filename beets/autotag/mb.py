@@ -21,6 +21,7 @@ import musicbrainzngs
 import re
 import traceback
 from six.moves.urllib.parse import urljoin
+from itertools import chain
 
 from beets import logging
 from beets import plugins
@@ -253,6 +254,12 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     if arranger:
         info.arranger = u', '.join(arranger)
 
+    # supplementary tags provided by plugins
+    extra_trackdatas = plugins.send('extracting_trackdata', info=recording)
+    for extra_trackdata in extra_trackdatas:
+        for key in extra_trackdata:
+            info[key] = extra_trackdata[key]
+
     info.decode()
     return info
 
@@ -417,6 +424,15 @@ def album_info(release):
         first_medium = release['medium-list'][0]
         info.media = first_medium.get('format')
 
+    # supplementary tags provided by plugins
+    extra_albumdatas = list(chain(*plugins.send('extracting_albumdata',
+                                                info=release)))
+    print(extra_albumdatas)
+    for extra_albumdata in extra_albumdatas:
+        print(extra_albumdatas)
+        for key in extra_albumdata:
+            print(key)
+            info[key] = extra_albumdata[key]
     info.decode()
     return info
 
@@ -533,7 +549,6 @@ def track_for_id(releaseid):
         return
     try:
         res = musicbrainzngs.get_recording_by_id(trackid, TRACK_INCLUDES)
-        beets.plugins.send(u'trackdata_recieved', info=res['recording'])
     except musicbrainzngs.ResponseError:
         log.debug(u'Track ID match failed.')
         return None
