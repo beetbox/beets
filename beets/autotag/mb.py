@@ -21,7 +21,6 @@ import musicbrainzngs
 import re
 import traceback
 from six.moves.urllib.parse import urljoin
-from itertools import chain
 
 from beets import logging
 from beets import plugins
@@ -66,6 +65,7 @@ class MusicBrainzAPIError(util.HumanReadableException):
         return u'{0} in {1} with query {2}'.format(
             self._reasonstr(), self.verb, repr(self.query)
         )
+
 
 log = logging.getLogger('beets')
 
@@ -425,13 +425,9 @@ def album_info(release):
         info.media = first_medium.get('format')
 
     # supplementary tags provided by plugins
-    extra_albumdatas = list(chain(*plugins.send('extracting_albumdata',
-                                                info=release)))
-    print(extra_albumdatas)
+    extra_albumdatas = plugins.send('extracting_albumdata', info=release)
     for extra_albumdata in extra_albumdatas:
-        print(extra_albumdatas)
         for key in extra_albumdata:
-            print(key)
             info[key] = extra_albumdata[key]
     info.decode()
     return info
@@ -529,7 +525,6 @@ def album_for_id(releaseid):
     try:
         res = musicbrainzngs.get_release_by_id(albumid,
                                                RELEASE_INCLUDES)
-        beets.plugins.send(u'albumdata_recieved', info=res['release'])
     except musicbrainzngs.ResponseError:
         log.debug(u'Album ID match failed.')
         return None
