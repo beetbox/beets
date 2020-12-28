@@ -275,13 +275,15 @@ Here are a few of the plugins written by the beets community:
 
 * `beet-amazon`_ adds Amazon.com as a tagger data source.
 
-* `copyartifacts`_ helps bring non-music files along during import.
+* `beets-copyartifacts`_ helps bring non-music files along during import.
 
 * `beets-check`_ automatically checksums your files to detect corruption.
 
 * `beets-alternatives`_ manages external files.
 
 * `beets-follow`_ lets you check for new albums from artists you like.
+
+* `beets-ibroadcast`_ uploads tracks to the `iBroadcast`_ cloud service.
 
 * `beets-setlister`_ generate playlists from the setlists of a given artist.
 
@@ -318,9 +320,13 @@ Here are a few of the plugins written by the beets community:
 * `beets-originquery`_ augments MusicBrainz queries with locally-sourced data
   to improve autotagger results.
 
+* `drop2beets`_ automatically imports singles as soon as they are dropped in a
+  folder (using Linux's ``inotify``). You can also set a sub-folders
+  hierarchy to set flexible attributes by the way.
+
 .. _beets-barcode: https://github.com/8h2a/beets-barcode
 .. _beets-check: https://github.com/geigerzaehler/beets-check
-.. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
+.. _beets-copyartifacts: https://github.com/adammillerio/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
 .. _beets-artistcountry: https://github.com/agrausem/beets-artistcountry
 .. _beetFs: https://github.com/jbaiter/beetfs
@@ -332,6 +338,8 @@ Here are a few of the plugins written by the beets community:
 .. _beet-amazon: https://github.com/jmwatte/beet-amazon
 .. _beets-alternatives: https://github.com/geigerzaehler/beets-alternatives
 .. _beets-follow: https://github.com/nolsto/beets-follow
+.. _beets-ibroadcast: https://github.com/ctrueden/beets-ibroadcast
+.. _iBroadcast: https://ibroadcast.com/
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
 .. _beets-noimport: https://gitlab.com/tiago.dias/beets-noimport
 .. _whatlastgenre: https://github.com/YetAnotherNerd/whatlastgenre/tree/master/plugin/beets
@@ -347,3 +355,4 @@ Here are a few of the plugins written by the beets community:
 .. _beets-describe: https://github.com/adamjakab/BeetsPluginDescribe
 .. _beets-bpmanalyser: https://github.com/adamjakab/BeetsPluginBpmAnalyser
 .. _beets-originquery: https://github.com/x1ppy/beets-originquery
+.. _drop2beets: https://github.com/martinkirch/drop2beets

@@ -25,7 +25,7 @@ With that all in place, you'll see beets send the "update" command to your Plex
 server every time you change your beets library.
 
 .. _Plex: https://plex.tv/
-.. _requests: https://docs.python-requests.org/en/latest/
+.. _requests: https://requests.readthedocs.io/en/master/
 .. _documentation about tokens: https://support.plex.tv/hc/en-us/articles/204059436-Finding-your-account-token-X-Plex-Token
 
 Configuration
@@ -41,3 +41,7 @@ The available options under the ``plex:`` section are:
   Default: Empty.
 - **library_name**: The name of the Plex library to update.
   Default: ``Music``
+- **secure**: Use secure connections to the Plex server.
+  Default: ``False``
+- **ignore_cert_errors**: Ignore TLS certificate errors when using secure connections.
+  Default: ``False``

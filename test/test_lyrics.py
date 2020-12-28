@@ -17,23 +17,22 @@
 
 from __future__ import absolute_import, division, print_function
 
+import itertools
+from io import open
 import os
 import re
 import six
 import sys
 import unittest
 
-from mock import patch
-from test import _common
+import confuse
+from mock import MagicMock, patch
 
 from beets import logging
 from beets.library import Item
 from beets.util import bytestring_path
-import confuse
-
 from beetsplug import lyrics
-
-from mock import MagicMock
+from test import _common
 
 
 log = logging.getLogger('beets.test_lyrics')
@@ -49,71 +48,72 @@ class LyricsPluginTest(unittest.TestCase):
         lyrics.LyricsPlugin()
 
     def test_search_artist(self):
-        item = Item(artist='Alice ft. Bob', title='song')
-        self.assertIn(('Alice ft. Bob', ['song']),
+        item = Item(artist=u'Alice ft. Bob', title=u'song')
+        self.assertIn((u'Alice ft. Bob', [u'song']),
                       lyrics.search_pairs(item))
-        self.assertIn(('Alice', ['song']),
-                      lyrics.search_pairs(item))
-
-        item = Item(artist='Alice feat Bob', title='song')
-        self.assertIn(('Alice feat Bob', ['song']),
-                      lyrics.search_pairs(item))
-        self.assertIn(('Alice', ['song']),
+        self.assertIn((u'Alice', [u'song']),
                       lyrics.search_pairs(item))
 
-        item = Item(artist='Alice feat. Bob', title='song')
-        self.assertIn(('Alice feat. Bob', ['song']),
+        item = Item(artist=u'Alice feat Bob', title=u'song')
+        self.assertIn((u'Alice feat Bob', [u'song']),
                       lyrics.search_pairs(item))
-        self.assertIn(('Alice', ['song']),
+        self.assertIn((u'Alice', [u'song']),
                       lyrics.search_pairs(item))
 
-        item = Item(artist='Alice feats Bob', title='song')
-        self.assertIn(('Alice feats Bob', ['song']),
+        item = Item(artist=u'Alice feat. Bob', title=u'song')
+        self.assertIn((u'Alice feat. Bob', [u'song']),
                       lyrics.search_pairs(item))
-        self.assertNotIn(('Alice', ['song']),
+        self.assertIn((u'Alice', [u'song']),
+                      lyrics.search_pairs(item))
+
+        item = Item(artist=u'Alice feats Bob', title=u'song')
+        self.assertIn((u'Alice feats Bob', [u'song']),
+                      lyrics.search_pairs(item))
+        self.assertNotIn((u'Alice', [u'song']),
                          lyrics.search_pairs(item))
 
-        item = Item(artist='Alice featuring Bob', title='song')
-        self.assertIn(('Alice featuring Bob', ['song']),
+        item = Item(artist=u'Alice featuring Bob', title=u'song')
+        self.assertIn((u'Alice featuring Bob', [u'song']),
                       lyrics.search_pairs(item))
-        self.assertIn(('Alice', ['song']),
-                      lyrics.search_pairs(item))
-
-        item = Item(artist='Alice & Bob', title='song')
-        self.assertIn(('Alice & Bob', ['song']),
-                      lyrics.search_pairs(item))
-        self.assertIn(('Alice', ['song']),
+        self.assertIn((u'Alice', [u'song']),
                       lyrics.search_pairs(item))
 
-        item = Item(artist='Alice and Bob', title='song')
-        self.assertIn(('Alice and Bob', ['song']),
+        item = Item(artist=u'Alice & Bob', title=u'song')
+        self.assertIn((u'Alice & Bob', [u'song']),
                       lyrics.search_pairs(item))
-        self.assertIn(('Alice', ['song']),
+        self.assertIn((u'Alice', [u'song']),
                       lyrics.search_pairs(item))
 
-        item = Item(artist='Alice and Bob', title='song')
-        self.assertEqual(('Alice and Bob', ['song']),
+        item = Item(artist=u'Alice and Bob', title=u'song')
+        self.assertIn((u'Alice and Bob', [u'song']),
+                      lyrics.search_pairs(item))
+        self.assertIn((u'Alice', [u'song']),
+                      lyrics.search_pairs(item))
+
+        item = Item(artist=u'Alice and Bob', title=u'song')
+        self.assertEqual((u'Alice and Bob', [u'song']),
                          list(lyrics.search_pairs(item))[0])
 
     def test_search_artist_sort(self):
-        item = Item(artist='CHVRCHΞS', title='song', artist_sort='CHVRCHES')
-        self.assertIn(('CHVRCHΞS', ['song']),
+        item = Item(artist=u'CHVRCHΞS', title=u'song', artist_sort=u'CHVRCHES')
+        self.assertIn((u'CHVRCHΞS', [u'song']),
                       lyrics.search_pairs(item))
-        self.assertIn(('CHVRCHES', ['song']),
+        self.assertIn((u'CHVRCHES', [u'song']),
                       lyrics.search_pairs(item))
 
         # Make sure that the original artist name is still the first entry
-        self.assertEqual(('CHVRCHΞS', ['song']),
+        self.assertEqual((u'CHVRCHΞS', [u'song']),
                          list(lyrics.search_pairs(item))[0])
 
-        item = Item(artist='横山克', title='song', artist_sort='Masaru Yokoyama')
-        self.assertIn(('横山克', ['song']),
+        item = Item(artist=u'横山克', title=u'song',
+                    artist_sort=u'Masaru Yokoyama')
+        self.assertIn((u'横山克', [u'song']),
                       lyrics.search_pairs(item))
-        self.assertIn(('Masaru Yokoyama', ['song']),
+        self.assertIn((u'Masaru Yokoyama', [u'song']),
                       lyrics.search_pairs(item))
 
         # Make sure that the original artist name is still the first entry
-        self.assertEqual(('横山克', ['song']),
+        self.assertEqual((u'横山克', [u'song']),
                          list(lyrics.search_pairs(item))[0])
 
     def test_search_pairs_multi_titles(self):
@@ -231,36 +231,9 @@ class MockFetchUrl(object):
     def __call__(self, url, filename=None):
         self.fetched = url
         fn = url_to_filename(url)
-        with open(fn, 'r') as f:
+        with open(fn, 'r', encoding="utf8") as f:
             content = f.read()
         return content
-
-
-class GeniusMockGet(object):
-
-    def __init__(self, pathval='fetched_path'):
-        self.pathval = pathval
-        self.fetched = None
-
-    def __call__(self, url, headers=False):
-        from requests.models import Response
-        # for the first requests.get() return a path
-        if headers:
-            response = Response()
-            response.status_code = 200
-            response._content = b'{"meta":{"status":200},\
-                                "response":{"song":{"path":"/lyrics/sample"}}}'
-            return response
-        # for the second requests.get() return the genius page
-        else:
-            from mock import PropertyMock
-            self.fetched = url
-            fn = url_to_filename(url)
-            with open(fn, 'r') as f:
-                content = f.read()
-            response = Response()
-            type(response).text = PropertyMock(return_value=content)
-            return response
 
 
 def is_lyrics_content_ok(title, text):
@@ -296,10 +269,11 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
     DEFAULT_SONG = dict(artist=u'The Beatles', title=u'Lady Madonna')
 
     DEFAULT_SOURCES = [
-        dict(DEFAULT_SONG, backend=lyrics.LyricsWiki),
-        dict(artist=u'Santana', title=u'Black magic woman',
-             backend=lyrics.MusiXmatch),
-        dict(DEFAULT_SONG, backend=lyrics.Genius),
+        # dict(artist=u'Santana', title=u'Black magic woman',
+        #      backend=lyrics.MusiXmatch),
+        dict(DEFAULT_SONG, backend=lyrics.Genius,
+             # GitHub actions is on some form of Cloudflare blacklist.
+             skip=os.environ.get('GITHUB_ACTIONS') == 'true'),
     ]
 
     GOOGLE_SOURCES = [
@@ -308,13 +282,15 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
              path=u'/lyrics/view/the_beatles/lady_madonna'),
         dict(DEFAULT_SONG,
              url=u'http://www.azlyrics.com',
-             path=u'/lyrics/beatles/ladymadonna.html'),
+             path=u'/lyrics/beatles/ladymadonna.html',
+             # AZLyrics returns a 403 on GitHub actions.
+             skip=os.environ.get('GITHUB_ACTIONS') == 'true'),
         dict(DEFAULT_SONG,
              url=u'http://www.chartlyrics.com',
              path=u'/_LsLsZ7P4EK-F-LD4dJgDQ/Lady+Madonna.aspx'),
-        dict(DEFAULT_SONG,
-             url=u'http://www.elyricsworld.com',
-             path=u'/lady_madonna_lyrics_beatles.html'),
+        # dict(DEFAULT_SONG,
+        #      url=u'http://www.elyricsworld.com',
+        #      path=u'/lady_madonna_lyrics_beatles.html'),
         dict(url=u'http://www.lacoccinelle.net',
              artist=u'Jacques Brel', title=u"Amsterdam",
              path=u'/paroles-officielles/275679.html'),
@@ -323,19 +299,17 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
         dict(DEFAULT_SONG,
              url='http://www.lyricsmania.com/',
              path='lady_madonna_lyrics_the_beatles.html'),
-        dict(DEFAULT_SONG, url=u'http://lyrics.wikia.com/',
-             path=u'The_Beatles:Lady_Madonna'),
         dict(DEFAULT_SONG,
              url=u'http://www.lyricsmode.com',
              path=u'/lyrics/b/beatles/lady_madonna.html'),
         dict(url=u'http://www.lyricsontop.com',
              artist=u'Amy Winehouse', title=u"Jazz'n'blues",
              path=u'/amy-winehouse-songs/jazz-n-blues-lyrics.html'),
-        dict(DEFAULT_SONG,
-             url='http://www.metrolyrics.com/',
-             path='lady-madonna-lyrics-beatles.html'),
-        dict(url='http://www.musica.com/', path='letras.asp?letra=2738',
-             artist=u'Santana', title=u'Black magic woman'),
+        # dict(DEFAULT_SONG,
+        #      url='http://www.metrolyrics.com/',
+        #      path='lady-madonna-lyrics-beatles.html'),
+        # dict(url='http://www.musica.com/', path='letras.asp?letra=2738',
+        #      artist=u'Santana', title=u'Black magic woman'),
         dict(url=u'http://www.paroles.net/',
              artist=u'Lilly Wood & the prick', title=u"Hey it's ok",
              path=u'lilly-wood-the-prick/paroles-hey-it-s-ok'),
@@ -351,28 +325,32 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
         LyricsGoogleBaseTest.setUp(self)
         self.plugin = lyrics.LyricsPlugin()
 
-    @unittest.skipUnless(os.environ.get(
-        'BEETS_TEST_LYRICS_SOURCES', '0') == '1',
-        'lyrics sources testing not enabled')
+    @unittest.skipUnless(
+        os.environ.get('INTEGRATION_TEST', '0') == '1',
+        'integration testing not enabled')
     def test_backend_sources_ok(self):
         """Test default backends with songs known to exist in respective databases.
         """
         errors = []
-        for s in self.DEFAULT_SOURCES:
+        # Don't test any sources marked as skipped.
+        sources = [s for s in self.DEFAULT_SOURCES if not s.get("skip", False)]
+        for s in sources:
             res = s['backend'](self.plugin.config, self.plugin._log).fetch(
                 s['artist'], s['title'])
             if not is_lyrics_content_ok(s['title'], res):
                 errors.append(s['backend'].__name__)
         self.assertFalse(errors)
 
-    @unittest.skipUnless(os.environ.get(
-        'BEETS_TEST_LYRICS_SOURCES', '0') == '1',
-        'lyrics sources testing not enabled')
+    @unittest.skipUnless(
+        os.environ.get('INTEGRATION_TEST', '0') == '1',
+        'integration testing not enabled')
     def test_google_sources_ok(self):
         """Test if lyrics present on websites registered in beets google custom
            search engine are correctly scraped.
         """
-        for s in self.GOOGLE_SOURCES:
+        # Don't test any sources marked as skipped.
+        sources = [s for s in self.GOOGLE_SOURCES if not s.get("skip", False)]
+        for s in sources:
             url = s['url'] + s['path']
             res = lyrics.scrape_lyrics_from_html(
                 raw_backend.fetch_url(url))
@@ -444,8 +422,9 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest):
         google.is_page_candidate(url, url_title, s['title'], u'Sunn O)))')
 
 
-class LyricsGeniusBaseTest(unittest.TestCase):
+# test Genius backend
 
+class GeniusBaseTest(unittest.TestCase):
     def setUp(self):
         """Set up configuration."""
         try:
@@ -456,27 +435,91 @@ class LyricsGeniusBaseTest(unittest.TestCase):
             self.skipTest("Python's built-in HTML parser is not good enough")
 
 
-class LyricsGeniusScrapTest(LyricsGeniusBaseTest):
-
-    """Checks that Genius backend works as intended.
-    """
-    import requests
+class GeniusScrapeLyricsFromHtmlTest(GeniusBaseTest):
+    """tests Genius._scrape_lyrics_from_html()"""
 
     def setUp(self):
         """Set up configuration"""
-        LyricsGeniusBaseTest.setUp(self)
+        GeniusBaseTest.setUp(self)
         self.plugin = lyrics.LyricsPlugin()
 
-    @patch.object(requests, 'get', GeniusMockGet())
     def test_no_lyrics_div(self):
-        """Ensure that `lyrics_from_song_api_path` doesn't crash when the html
-        for a Genius page contain <div class="lyrics"></div>
+        """Ensure we don't crash when the scraping the html for a genius page
+        doesn't contain <div class="lyrics"></div>
         """
         # https://github.com/beetbox/beets/issues/3535
         # expected return value None
-        self.assertEqual(genius.lyrics_from_song_api_path('/nolyric'),
-                         None)
+        url = 'https://genius.com/sample'
+        mock = MockFetchUrl()
+        self.assertEqual(genius._scrape_lyrics_from_html(mock(url)), None)
 
+    def test_good_lyrics(self):
+        """Ensure we are able to scrape a page with lyrics"""
+        url = 'https://genius.com/Wu-tang-clan-cream-lyrics'
+        mock = MockFetchUrl()
+        self.assertIsNotNone(genius._scrape_lyrics_from_html(mock(url)))
+
+    # TODO: find an example of a lyrics page with multiple divs and test it
+
+
+class GeniusFetchTest(GeniusBaseTest):
+    """tests Genius.fetch()"""
+
+    def setUp(self):
+        """Set up configuration"""
+        GeniusBaseTest.setUp(self)
+        self.plugin = lyrics.LyricsPlugin()
+
+    @patch.object(lyrics.Genius, '_scrape_lyrics_from_html')
+    @patch.object(lyrics.Backend, 'fetch_url', return_value=True)
+    def test_json(self, mock_fetch_url, mock_scrape):
+        """Ensure we're finding artist matches"""
+        with patch.object(
+            lyrics.Genius, '_search', return_value={
+                "response": {
+                    "hits": [
+                        {
+                            "result": {
+                                "primary_artist": {
+                                    "name": u"\u200Bblackbear",
+                                    },
+                                "url": "blackbear_url"
+                                }
+                        },
+                        {
+                            "result": {
+                                "primary_artist": {
+                                    "name": u"El\u002Dp"
+                                    },
+                                "url": "El-p_url"
+                                }
+                        }
+                    ]
+                }
+            }
+        ) as mock_json:
+            # genius uses zero-width-spaces (\u200B) for lowercase
+            # artists so we make sure we can match those
+            self.assertIsNotNone(genius.fetch('blackbear', 'Idfc'))
+            mock_fetch_url.assert_called_once_with("blackbear_url")
+            mock_scrape.assert_called_once_with(True)
+
+            # genius uses the hypen minus (\u002D) as their dash
+            self.assertIsNotNone(genius.fetch('El-p', 'Idfc'))
+            mock_fetch_url.assert_called_with('El-p_url')
+            mock_scrape.assert_called_with(True)
+
+            # test no matching artist
+            self.assertIsNone(genius.fetch('doesntexist', 'none'))
+
+            # test invalid json
+            mock_json.return_value = None
+            self.assertIsNone(genius.fetch('blackbear', 'Idfc'))
+
+    # TODO: add integration test hitting real api
+
+
+# test utilties
 
 class SlugTests(unittest.TestCase):
 
@@ -484,18 +527,28 @@ class SlugTests(unittest.TestCase):
         # plain ascii passthrough
         text = u"test"
         self.assertEqual(lyrics.slug(text), 'test')
+
         # german unicode and capitals
         text = u"Mørdag"
         self.assertEqual(lyrics.slug(text), 'mordag')
+
         # more accents and quotes
         text = u"l'été c'est fait pour jouer"
         self.assertEqual(lyrics.slug(text), 'l-ete-c-est-fait-pour-jouer')
+
         # accents, parens and spaces
         text = u"\xe7afe au lait (boisson)"
         self.assertEqual(lyrics.slug(text), 'cafe-au-lait-boisson')
         text = u"Multiple  spaces -- and symbols! -- merged"
         self.assertEqual(lyrics.slug(text),
                          'multiple-spaces-and-symbols-merged')
+        text = u"\u200Bno-width-space"
+        self.assertEqual(lyrics.slug(text), 'no-width-space')
+
+        # variations of dashes should get standardized
+        dashes = [u'\u200D', u'\u2010']
+        for dash1, dash2 in itertools.combinations(dashes, 2):
+            self.assertEqual(lyrics.slug(dash1), lyrics.slug(dash2))
 
 
 def suite():

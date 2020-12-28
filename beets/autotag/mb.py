@@ -76,6 +76,8 @@ RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
 TRACK_INCLUDES = ['artists', 'aliases', 'artist-rels']
 if 'work-level-rels' in musicbrainzngs.VALID_INCLUDES['recording']:
     TRACK_INCLUDES += ['work-level-rels', 'artist-rels']
+if 'genres' in musicbrainzngs.VALID_INCLUDES['recording']:
+    RELEASE_INCLUDES += ['genres']
 
 
 def track_url(trackid):
@@ -424,11 +426,16 @@ def album_info(release):
         first_medium = release['medium-list'][0]
         info.media = first_medium.get('format')
 
+    genres = release.get('genre-list')
+    if config['musicbrainz']['genres'] and genres:
+        info.genre = ';'.join(g['name'] for g in genres)
+
     # supplementary tags provided by plugins
     extra_albumdatas = plugins.send('extracting_albumdata', info=release)
     for extra_albumdata in extra_albumdatas:
         for key in extra_albumdata:
             info[key] = extra_albumdata[key]
+
     info.decode()
     return info
 

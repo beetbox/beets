@@ -109,24 +109,36 @@ setup(
         ['colorama'] if (sys.platform == 'win32') else []
     ),
 
-    tests_require=[
-        'beautifulsoup4',
-        'flask',
-        'mock',
-        'pylast',
-        'rarfile',
-        'responses',
-        'pyxdg',
-        'python-mpd2',
-        'discogs-client',
-        'requests_oauthlib'
-    ] + (
-        # Tests for the thumbnails plugin need pathlib on Python 2 too.
-        ['pathlib'] if (sys.version_info < (3, 4, 0)) else []
-    ),
-
-    # Plugin (optional) dependencies:
     extras_require={
+        'test': [
+            'beautifulsoup4',
+            'coverage',
+            'discogs-client',
+            'flask',
+            'mock',
+            'pylast',
+            'pytest',
+            'python-mpd2',
+            'pyxdg',
+            'responses>=0.3.0',
+            'requests_oauthlib',
+            'reflink',
+        ] + (
+            # Tests for the thumbnails plugin need pathlib on Python 2 too.
+            ['pathlib'] if (sys.version_info < (3, 4, 0)) else []
+        ) + [
+            'rarfile<4' if sys.version_info < (3, 6, 0) else 'rarfile',
+        ],
+        'lint': [
+            'flake8',
+            'flake8-blind-except',
+            'flake8-coding',
+            'flake8-docstrings',
+            'flake8-future-import',
+            'pep8-naming',
+        ],
+
+        # Plugin (optional) dependencies:
         'absubmit': ['requests'],
         'fetchart': ['requests', 'Pillow'],
         'embedart': ['Pillow'],
@@ -142,7 +154,9 @@ setup(
         'mpdstats': ['python-mpd2>=0.4.2'],
         'plexupdate': ['requests'],
         'web': ['flask', 'flask-cors'],
-        'import': ['rarfile'],
+        'import': (
+            ['rarfile<4' if (sys.version_info < (3, 6, 0)) else 'rarfile']
+        ),
         'thumbnails': ['pyxdg', 'Pillow'] +
         (['pathlib'] if (sys.version_info < (3, 4, 0)) else []),
         'metasync': ['dbus-python'],
@@ -150,6 +164,7 @@ setup(
         'scrub': ['mutagen>=1.33'],
         'bpd': ['PyGObject'],
         'replaygain': ['PyGObject'],
+        'reflink': ['reflink'],
     },
     # Non-Python/non-PyPI plugin dependencies:
     #   chroma: chromaprint or fpcalc

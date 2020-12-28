@@ -17,7 +17,7 @@ from __future__ import absolute_import, division, print_function
 
 import random
 import string
-import xml.etree.ElementTree as ET
+from xml.etree import ElementTree
 from hashlib import md5
 from urllib.parse import urlencode
 
@@ -85,7 +85,7 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
 
     def get_playlist(self, playlist_id):
         xml = self.send('getPlaylist', {'id': playlist_id}).text
-        playlist = ET.fromstring(xml)[0]
+        playlist = ElementTree.fromstring(xml)[0]
         if playlist.attrib.get('code', '200') != '200':
             alt_error = 'error getting playlist, but no error message found'
             self._log.warn(playlist.attrib.get('message', alt_error))
@@ -101,8 +101,8 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
             self.config.set_args(opts)
             ids = self.config['playlist_ids'].as_str_seq()
             if self.config['playlist_names'].as_str_seq():
-                playlists = ET.fromstring(self.send('getPlaylists').text)[
-                    0]
+                playlists = ElementTree.fromstring(
+                    self.send('getPlaylists').text)[0]
                 if playlists.attrib.get('code', '200') != '200':
                     alt_error = 'error getting playlists,' \
                                 ' but no error message found'

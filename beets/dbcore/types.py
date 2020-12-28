@@ -207,6 +207,12 @@ class String(Type):
     sql = u'TEXT'
     query = query.SubstringQuery
 
+    def normalize(self, value):
+        if value is None:
+            return self.null
+        else:
+            return self.model_type(value)
+
 
 class Boolean(Type):
     """A boolean type.

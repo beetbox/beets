@@ -73,15 +73,26 @@ def ex_literal(val):
     """An int, float, long, bool, string, or None literal with the given
     value.
     """
-    if val is None:
-        return ast.Name('None', ast.Load())
-    elif isinstance(val, six.integer_types):
-        return ast.Num(val)
-    elif isinstance(val, bool):
-        return ast.Name(bytes(val), ast.Load())
-    elif isinstance(val, six.string_types):
-        return ast.Str(val)
-    raise TypeError(u'no literal for {0}'.format(type(val)))
+    if sys.version_info[:2] < (3, 4):
+        if val is None:
+            return ast.Name('None', ast.Load())
+        elif isinstance(val, six.integer_types):
+            return ast.Num(val)
+        elif isinstance(val, bool):
+            return ast.Name(bytes(val), ast.Load())
+        elif isinstance(val, six.string_types):
+            return ast.Str(val)
+        raise TypeError(u'no literal for {0}'.format(type(val)))
+    elif sys.version_info[:2] < (3, 6):
+        if val in [None, True, False]:
+            return ast.NameConstant(val)
+        elif isinstance(val, six.integer_types):
+            return ast.Num(val)
+        elif isinstance(val, six.string_types):
+            return ast.Str(val)
+        raise TypeError(u'no literal for {0}'.format(type(val)))
+    else:
+        return ast.Constant(val)
 
 
 def ex_varassign(name, expr):

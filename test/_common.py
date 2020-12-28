@@ -25,6 +25,8 @@ import six
 import unittest
 from contextlib import contextmanager
 
+import reflink
+
 
 # Mangle the search path to include the beets sources.
 sys.path.insert(0, '..')
@@ -44,7 +46,7 @@ beetsplug.__path__ = [os.path.abspath(
 RSRC = util.bytestring_path(os.path.join(os.path.dirname(__file__), 'rsrc'))
 PLUGINPATH = os.path.join(os.path.dirname(__file__), 'rsrc', 'beetsplug')
 
-# Propagate to root logger so nosetest can capture it
+# Propagate to root logger so the test runner can capture it
 log = logging.getLogger('beets')
 log.propagate = True
 log.setLevel(logging.DEBUG)
@@ -55,6 +57,7 @@ _item_ident = 0
 # OS feature test.
 HAVE_SYMLINK = sys.platform != 'win32'
 HAVE_HARDLINK = sys.platform != 'win32'
+HAVE_REFLINK = reflink.supported_at(tempfile.gettempdir())
 
 
 def item(lib=None):

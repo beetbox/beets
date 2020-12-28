@@ -28,6 +28,7 @@ from mediafile import MediaFile
 from beetsplug.replaygain import (FatalGstreamerPluginReplayGainError,
                                   GStreamerBackend)
 
+
 try:
     import gi
     gi.require_version('Gst', '1.0')
@@ -55,12 +56,13 @@ def reset_replaygain(item):
     item['rg_album_gain'] = None
     item.write()
     item.store()
+    item.store()
+    item.store()
 
 
 class ReplayGainCliTestBase(TestHelper):
-
     def setUp(self):
-        self.setup_beets()
+        self.setup_beets(disk=True)
         self.config['replaygain']['backend'] = self.backend
 
         try:

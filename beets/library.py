@@ -410,7 +410,8 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
             raise KeyError(key)
 
     def __getitem__(self, key):
-        """Get the value for a key. Certain unset values are remapped.
+        """Get the value for a key. `artist` and `albumartist`
+        are fallback values for each other when not set.
         """
         value = self._get(key)
 
@@ -746,6 +747,16 @@ class Item(LibModel):
             util.hardlink(self.path, dest)
             plugins.send("item_hardlinked", item=self, source=self.path,
                          destination=dest)
+        elif operation == MoveOperation.REFLINK:
+            util.reflink(self.path, dest, fallback=False)
+            plugins.send("item_reflinked", item=self, source=self.path,
+                         destination=dest)
+        elif operation == MoveOperation.REFLINK_AUTO:
+            util.reflink(self.path, dest, fallback=True)
+            plugins.send("item_reflinked", item=self, source=self.path,
+                         destination=dest)
+        else:
+            assert False, 'unknown MoveOperation'
 
         # Either copying or moving succeeded, so update the stored path.
         self.path = dest
@@ -1086,6 +1097,12 @@ class Album(LibModel):
             util.link(old_art, new_art)
         elif operation == MoveOperation.HARDLINK:
             util.hardlink(old_art, new_art)
+        elif operation == MoveOperation.REFLINK:
+            util.reflink(old_art, new_art, fallback=False)
+        elif operation == MoveOperation.REFLINK_AUTO:
+            util.reflink(old_art, new_art, fallback=True)
+        else:
+            assert False, 'unknown MoveOperation'
         self.artpath = new_art
 
     def move(self, operation=MoveOperation.MOVE, basedir=None, store=True):

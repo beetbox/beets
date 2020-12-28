@@ -21,7 +21,7 @@ import sys
 import codecs
 import json
 import csv
-import xml.etree.ElementTree as ET
+from xml.etree import ElementTree
 
 from datetime import datetime, date
 from beets.plugins import BeetsPlugin
@@ -50,6 +50,14 @@ class ExportPlugin(BeetsPlugin):
                 'formatting': {
                     'ensure_ascii': False,
                     'indent': 4,
+                    'separators': (',', ': '),
+                    'sort_keys': True
+                }
+            },
+            'jsonlines': {
+                # JSON Lines formatting options.
+                'formatting': {
+                    'ensure_ascii': False,
                     'separators': (',', ': '),
                     'sort_keys': True
                 }
@@ -95,7 +103,7 @@ class ExportPlugin(BeetsPlugin):
         )
         cmd.parser.add_option(
             u'-f', u'--format', default='json',
-            help=u"the output format: json (default), csv, or xml"
+            help=u"the output format: json (default), jsonlines, csv, or xml"
         )
         return [cmd]
 
@@ -103,6 +111,7 @@ class ExportPlugin(BeetsPlugin):
         file_path = opts.output
         file_mode = 'a' if opts.append else 'w'
         file_format = opts.format or self.config['default_format'].get(str)
+        file_format_is_line_based = (file_format == 'jsonlines')
         format_options = self.config[file_format]['formatting'].get(dict)
 
         export_format = ExportFormat.factory(
@@ -130,9 +139,14 @@ class ExportPlugin(BeetsPlugin):
                 continue
 
             data = key_filter(data)
-            items += [data]
 
-        export_format.export(items, **format_options)
+            if file_format_is_line_based:
+                export_format.export(data, **format_options)
+            else:
+                items += [data]
+
+        if not file_format_is_line_based:
+            export_format.export(items, **format_options)
 
 
 class ExportFormat(object):
@@ -147,7 +161,7 @@ class ExportFormat(object):
 
     @classmethod
     def factory(cls, file_type, **kwargs):
-        if file_type == "json":
+        if file_type in ["json", "jsonlines"]:
             return JsonFormat(**kwargs)
         elif file_type == "csv":
             return CSVFormat(**kwargs)
@@ -167,6 +181,7 @@ class JsonFormat(ExportFormat):
 
     def export(self, data, **kwargs):
         json.dump(data, self.out_stream, cls=ExportEncoder, **kwargs)
+        self.out_stream.write('\n')
 
 
 class CSVFormat(ExportFormat):
@@ -188,18 +203,18 @@ class XMLFormat(ExportFormat):
 
     def export(self, data, **kwargs):
         # Creates the XML file structure.
-        library = ET.Element(u'library')
-        tracks = ET.SubElement(library, u'tracks')
+        library = ElementTree.Element(u'library')
+        tracks = ElementTree.SubElement(library, u'tracks')
         if data and isinstance(data[0], dict):
             for index, item in enumerate(data):
-                track = ET.SubElement(tracks, u'track')
+                track = ElementTree.SubElement(tracks, u'track')
                 for key, value in item.items():
-                    track_details = ET.SubElement(track, key)
+                    track_details = ElementTree.SubElement(track, key)
                     track_details.text = value
         # Depending on the version of python the encoding needs to change
         try:
-            data = ET.tostring(library, encoding='unicode', **kwargs)
+            data = ElementTree.tostring(library, encoding='unicode', **kwargs)
         except LookupError:
-            data = ET.tostring(library, encoding='utf-8', **kwargs)
+            data = ElementTree.tostring(library, encoding='utf-8', **kwargs)
 
         self.out_stream.write(data)

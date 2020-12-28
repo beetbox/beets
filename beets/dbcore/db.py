@@ -19,6 +19,7 @@ from __future__ import division, absolute_import, print_function
 
 import time
 import os
+import re
 from collections import defaultdict
 import threading
 import sqlite3
@@ -84,6 +85,11 @@ class FormattedMapping(Mapping):
 
         if self.for_path:
             sep_repl = beets.config['path_sep_replace'].as_str()
+            sep_drive = beets.config['drive_sep_replace'].as_str()
+
+            if re.match(r'^\w:', value):
+                value = re.sub(r'(?<=^\w):', sep_drive, value)
+
             for sep in (os.path.sep, os.path.altsep):
                 if sep:
                     value = value.replace(sep, sep_repl)

@@ -80,8 +80,8 @@ You will also need a mechanism for decoding audio files supported by the
 .. _audioread: https://github.com/beetbox/audioread
 .. _pyacoustid: https://github.com/beetbox/pyacoustid
 .. _FFmpeg: https://ffmpeg.org/
-.. _MAD: https://spacepants.org/src/pymad/
-.. _pymad: https://www.underbit.com/products/mad/
+.. _pymad: https://spacepants.org/src/pymad/
+.. _MAD: https://www.underbit.com/products/mad/
 .. _Core Audio: https://developer.apple.com/technologies/mac/audio-and-video.html
 .. _Gstreamer: https://gstreamer.freedesktop.org/
 .. _PyGObject: https://wiki.gnome.org/Projects/PyGObject
