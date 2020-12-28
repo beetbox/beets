@@ -58,7 +58,7 @@ def track_performers(info):
                 artists[role_sort] = [artist_relation[
                         'artist']['sort-name']]
     for key in artists:
-        artists[key] = u', '.join(artists[key])
+        artists[key] = u'; '.join(artists[key])
     return artists
 
 
@@ -97,7 +97,7 @@ def album_performers(info):
                 artists[role_sort] = [artist_relation[
                         'artist']['sort-name']]
     for key in artists:
-        artists[key] = u', '.join(artists[key])
+        artists[key] = u'; '.join(artists[key])
 
     return artists
 
