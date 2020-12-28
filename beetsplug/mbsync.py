@@ -230,7 +230,6 @@ class MBSyncPlugin(BeetsPlugin):
             mapping = {}
             for item in items:
                 # Clean up obsolete flexible fields
-                
                 if performer_info:
                     for tag in item:
                         if tag[:6] == 'mbsync' and (tag not in track_info or
