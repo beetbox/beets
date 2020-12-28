@@ -105,8 +105,15 @@ def album_performers(info):
 class MBSyncPlugin(BeetsPlugin):
     def __init__(self):
         super(MBSyncPlugin, self).__init__()
-        self.register_listener('extracting_trackdata', track_performers)
-        self.register_listener('extracting_albumdata', album_performers)
+
+        self.config.add({
+            u'bin': u'mbsync',
+            u'performer_info': False,
+        })
+
+        if self.config['performer_info'].get(bool):
+            self.register_listener('extracting_trackdata', track_performers)
+            self.register_listener('extracting_albumdata', album_performers)
 
     def commands(self):
         cmd = ui.Subcommand('mbsync',
@@ -126,7 +133,8 @@ class MBSyncPlugin(BeetsPlugin):
             help=u"don't write updated metadata to files")
         cmd.parser.add_option(
             u'-P', u'--performer_info', action='store_true',
-            dest='performer_info', default=None,
+            dest='performer_info',
+            default=self.config['performer_info'].get(bool),
             help=u"Fetch performer info")
         cmd.parser.add_format_option()
         cmd.func = self.func
@@ -222,7 +230,7 @@ class MBSyncPlugin(BeetsPlugin):
             mapping = {}
             for item in items:
                 # Clean up obsolete flexible fields
-                print(performer_info)
+                
                 if performer_info:
                     for tag in item:
                         if tag[:6] == 'mbsync' and (tag not in track_info or
