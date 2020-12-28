@@ -224,7 +224,8 @@ class MBSyncPlugin(BeetsPlugin):
                 # Clean up obsolete flexible fields
                 if more_info:
                     for tag in item:
-                        if tag[:6] == 'mbsync' and tag not in track_info:
+                        if tag[:6] == 'mbsync' and (tag not in track_info or
+                                                    tag not in album_info):
                             del item[tag]
                 if item.mb_releasetrackid and \
                         item.mb_releasetrackid in releasetrack_index:
