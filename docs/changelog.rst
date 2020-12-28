@@ -174,7 +174,7 @@ New features:
   the ``command``, ``ffmpeg`` or ``bs1770gain`` backends.
   :bug:`3478`
 * The ``mbsync`` plugin now also fetches performers, if the ``performer_info``
-  option is enabled. Fixes :bug`1547`, thanks to :user:`dosoe`.
+  option is enabled. Fixes :bug:`1547`, thanks to :user:`dosoe`.
 
 Fixes:
 
