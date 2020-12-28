@@ -74,6 +74,7 @@ class MBSyncPlugin(BeetsPlugin):
     def __init__(self):
         super(MBSyncPlugin, self).__init__()
         self.register_listener('extracting_trackdata', track_performers)
+        self.register_listener('extracting_albumdata', album_performers)
 
     def commands(self):
         cmd = ui.Subcommand('mbsync',
