@@ -211,8 +211,7 @@ class MBSyncPlugin(BeetsPlugin):
             # maps to a list of TrackInfo objects.
             releasetrack_index = dict()
             track_index = defaultdict(list)
-            for i in range(len(album_info.tracks)):
-                track_info = album_info.tracks[i]
+            for track_info in album_info.tracks:
                 releasetrack_index[track_info.release_track_id] = track_info
                 track_index[track_info.track_id].append(track_info)
 
