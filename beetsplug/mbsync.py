@@ -74,7 +74,7 @@ def album_performers(info):
             if 'balance' in role or 'recording' in role or 'sound' in role:
                 role += ' engineer'
             if 'performing orchestra' in role:
-                role += ' orchestra'
+                role = 'mbsync album orchestra'
             role_sort = role + ' sort'
             if 'attribute-list' in artist_relation:
                 role += ' - '
