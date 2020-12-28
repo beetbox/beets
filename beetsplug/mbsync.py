@@ -125,7 +125,8 @@ class MBSyncPlugin(BeetsPlugin):
             default=None, dest='write',
             help=u"don't write updated metadata to files")
         cmd.parser.add_option(
-            u'-I', u'--performer_info', action='store_true', default=None,
+            u'-P', u'--performer_info', action='store_true',
+            dest='performer_info', default=None,
             help=u"Fetch performer info")
         cmd.parser.add_format_option()
         cmd.func = self.func
@@ -221,6 +222,7 @@ class MBSyncPlugin(BeetsPlugin):
             mapping = {}
             for item in items:
                 # Clean up obsolete flexible fields
+                print(performer_info)
                 if performer_info:
                     for tag in item:
                         if tag[:6] == 'mbsync' and (tag not in track_info or
