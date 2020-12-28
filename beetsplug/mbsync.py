@@ -125,8 +125,8 @@ class MBSyncPlugin(BeetsPlugin):
             default=None, dest='write',
             help=u"don't write updated metadata to files")
         cmd.parser.add_option(
-            u'-I', u'--more_info', action='store_true', default=None,
-            help=u"Fetch more data")
+            u'-I', u'--performer_info', action='store_true', default=None,
+            help=u"Fetch performer info")
         cmd.parser.add_format_option()
         cmd.func = self.func
         return [cmd]
@@ -137,13 +137,13 @@ class MBSyncPlugin(BeetsPlugin):
         move = ui.should_move(opts.move)
         pretend = opts.pretend
         write = ui.should_write(opts.write)
-        more_info = opts.more_info
+        performer_info = opts.performer_info
         query = ui.decargs(args)
 
-        self.singletons(lib, query, move, pretend, write, more_info)
-        self.albums(lib, query, move, pretend, write, more_info)
+        self.singletons(lib, query, move, pretend, write, performer_info)
+        self.albums(lib, query, move, pretend, write, performer_info)
 
-    def singletons(self, lib, query, move, pretend, write, more_info):
+    def singletons(self, lib, query, move, pretend, write, performer_info):
         """Retrieve and apply info from the autotagger for items matched by
         query.
         """
@@ -168,7 +168,7 @@ class MBSyncPlugin(BeetsPlugin):
                                item_formatted)
                 continue
             # Clean up obsolete flexible fields
-            if more_info:
+            if performer_info:
                 for tag in item:
                     if tag[:6] == 'mbsync' and tag not in track_info:
                         del item[tag]
@@ -178,7 +178,7 @@ class MBSyncPlugin(BeetsPlugin):
                 ui.show_model_changes(item)
                 apply_item_changes(lib, item, move, pretend, write)
 
-    def albums(self, lib, query, move, pretend, write, more_info):
+    def albums(self, lib, query, move, pretend, write, performer_info):
         """Retrieve and apply info from the autotagger for albums matched by
         query and their items.
         """
@@ -222,7 +222,7 @@ class MBSyncPlugin(BeetsPlugin):
             mapping = {}
             for item in items:
                 # Clean up obsolete flexible fields
-                if more_info:
+                if performer_info:
                     for tag in item:
                         if tag[:6] == 'mbsync' and (tag not in track_info or
                                                     tag not in album_info):
