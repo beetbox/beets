@@ -65,9 +65,41 @@ def track_performers(info):
 def album_performers(info):
     """ placeholder for more album-related performers
     """
-    track_infos = {}
 
-    return track_infos
+    artists = {}
+    for artist_relation in info.get('artist-relation-list', ()):
+        if 'type' in artist_relation:
+            role = 'mbsync album '
+            role += artist_relation['type']
+            if 'balance' in role or 'recording' in role or 'sound' in role:
+                role += ' engineer'
+            if 'performing orchestra' in role:
+                role += ' orchestra'
+            role_sort = role + ' sort'
+            if 'attribute-list' in artist_relation:
+                role += ' - '
+                role_sort += ' - '
+                role += ', '.join(artist_relation['attribute-list'])
+                role_sort += ', '.join(artist_relation['attribute-list'])
+            if 'attributes' in artist_relation:
+                for attribute in artist_relation['attributes']:
+                    if 'credited-as' in attribute:
+                        role += ' (' + attribute['credited-as'] + ')'
+                        role_sort += ' (' + attribute['credited-as'] + ')'
+            role = role.replace(" ", "_")
+            role_sort = role_sort.replace(' ', '_')
+            if role in artists:
+                artists[role].append(artist_relation['artist']['name'])
+                artists[role_sort].append(
+                        artist_relation['artist']['sort-name'])
+            else:
+                artists[role] = [artist_relation['artist']['name']]
+                artists[role_sort] = [artist_relation[
+                        'artist']['sort-name']]
+    for key in artists:
+        artists[key] = u', '.join(artists[key])
+
+    return artists
 
 
 class MBSyncPlugin(BeetsPlugin):
