@@ -71,6 +71,9 @@ RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'labels', 'artist-credits', 'aliases',
                     'recording-level-rels', 'work-rels',
                     'work-level-rels', 'artist-rels']
+BROWSE_INCLUDES = ['artist-credits', 'work-rels',
+                   'artist-rels', 'recording-rels', 'release-rels']
+
 TRACK_INCLUDES = ['artists', 'aliases']
 if 'work-level-rels' in musicbrainzngs.VALID_INCLUDES['recording']:
     TRACK_INCLUDES += ['work-level-rels', 'artist-rels']
@@ -284,6 +287,24 @@ def album_info(release):
     # Get artist name using join phrases.
     artist_name, artist_sort_name, artist_credit_name = \
         _flatten_artist_credit(release['artist-credit'])
+
+    ntracks = 0
+    for medium in release['medium-list']:
+        ntracks += len(medium['track-list'])
+
+    # for albums with more than 500 tracks
+    if ntracks > 500:
+        recording_list = []
+        for i in range((ntracks//100)+1):
+            recording_list.extend(musicbrainzngs.browse_recordings(
+                    release=release['id'], limit=100, includes=BROWSE_INCLUDES,
+                    offset=100*i)['recording-list'])
+        for medium in release['medium-list']:
+            for recording in medium['track-list']:
+                recording_info = list(filter(lambda track: track['id'] ==
+                                             recording['recording']['id'],
+                                             recording_list))[0]
+                recording['recording'] = recording_info
 
     # Basic info.
     track_infos = []
