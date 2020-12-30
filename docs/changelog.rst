@@ -290,6 +290,8 @@ Fixes:
   :bug:`2242`
 * :doc:`plugins/replaygain`: Disable parallel analysis on import by default.
   :bug:`3819`
+* Fix :bug:`3308` by using browsing for big releases to retrieve additional
+  information. Thanks to :user:`dosoe`.
 
 For plugin developers:
 
