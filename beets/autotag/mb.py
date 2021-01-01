@@ -288,9 +288,7 @@ def album_info(release):
     artist_name, artist_sort_name, artist_credit_name = \
         _flatten_artist_credit(release['artist-credit'])
 
-    ntracks = 0
-    for medium in release['medium-list']:
-        ntracks += len(medium['track-list'])
+    ntracks = sum(len(m['track-list']) for m in release['medium-list'])
 
     # The MusicBrainz API omits 'artist-relation-list' and 'work-relation-list'
     # when the release has more than 500 tracks. So we use browse_recordings
