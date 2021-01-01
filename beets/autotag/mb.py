@@ -73,6 +73,7 @@ RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'work-level-rels', 'artist-rels']
 BROWSE_INCLUDES = ['artist-credits', 'work-rels',
                    'artist-rels', 'recording-rels', 'release-rels']
+BROWSE_CHUNKSIZE = 100
 TRACK_INCLUDES = ['artists', 'aliases']
 if 'work-level-rels' in musicbrainzngs.VALID_INCLUDES['recording']:
     TRACK_INCLUDES += ['work-level-rels', 'artist-rels']
@@ -291,13 +292,16 @@ def album_info(release):
     for medium in release['medium-list']:
         ntracks += len(medium['track-list'])
 
-    # for albums with more than 500 tracks
+    # The MusicBrainz API omits 'artist-relation-list' and 'work-relation-list'
+    # when the release has more than 500 tracks. So we use browse_recordings
+    # on chunks of tracks to recover the same information in this case.
     if ntracks > 500:
         recording_list = []
-        for i in range((ntracks // 100) + 1):
+        for i in range(0, ntracks, BROWSE_CHUNKSIZE):
             recording_list.extend(musicbrainzngs.browse_recordings(
-                    release=release['id'], limit=100, includes=BROWSE_INCLUDES,
-                    offset=100 * i)['recording-list'])
+                    release=release['id'], limit=BROWSE_CHUNKSIZE,
+                    includes=BROWSE_INCLUDES,
+                    offset=BROWSE_CHUNKSIZE * i)['recording-list'])
         for medium in release['medium-list']:
             for recording in medium['track-list']:
                 recording_info = list(filter(lambda track: track['id'] ==
