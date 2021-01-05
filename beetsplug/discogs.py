@@ -557,7 +557,8 @@ class DiscogsPlugin(BeetsPlugin):
         title = track['title']
         if self.config['index_tracks']:
             prefix = ', '.join(divisions)
-            title = ': '.join([prefix, title])
+            if prefix != '':
+                title = ': '.join([prefix, title])
         track_id = None
         medium, medium_index, _ = self.get_track_index(track['position'])
         artist, artist_id = MetadataSourcePlugin.get_artist(
