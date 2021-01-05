@@ -499,12 +499,18 @@ class DiscogsPlugin(BeetsPlugin):
                 else:
                     # Promote the subtracks to real tracks, discarding the
                     # index track, assuming the subtracks are physical tracks.
-                    index_track = tracklist[-1]
+                    index_track = tracklist.pop()
                     # Fix artists when they are specified on the index track.
                     if index_track.get('artists'):
                         for subtrack in subtracks:
                             if not subtrack.get('artists'):
                                 subtrack['artists'] = index_track['artists']
+                    # Concatenate index with track title when index_tracks
+                    # option is set
+                    if self.config['index_tracks']:
+                        for subtrack in subtracks:
+                            subtrack['title'] = '{}: {}'.format(
+                                    index_track['title'], subtrack['title'])
                     tracklist.extend(subtracks)
             else:
                 # Merge the subtracks, pick a title, and append the new track.
