@@ -176,6 +176,9 @@ New features:
 
 Fixes:
 
+* :bug:`/plugins/discogs`: Fixed a bug with ``index_tracks`` options that
+  sometimes caused the index to be discarded. Also remove the extra semicolon
+  that was added when there is no index track.
 * :doc:`/plugins/subsonicupdate`: REST was using `POST` method rather `GET` method.
   Also includes better exception handling, response parsing, and tests.
 * :doc:`/plugins/the`: Fixed incorrect regex for 'the' that matched any
