@@ -293,6 +293,8 @@ Fixes:
   :bug:`2242`
 * :doc:`plugins/replaygain`: Disable parallel analysis on import by default.
   :bug:`3819`
+* :doc:`/plugins/mpdstats`: Fix Python 2/3 compatibility
+  :bug:`3798`
 
 For plugin developers:
 
