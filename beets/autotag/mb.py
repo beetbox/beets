@@ -295,7 +295,7 @@ def album_info(release):
     # when the release has more than 500 tracks. So we use browse_recordings
     # on chunks of tracks to recover the same information in this case.
     if ntracks > BROWSE_MAXTRACKS:
-        log.info(u'Album ' + str(release['id']) + u' has too many tracks')
+        log.debug(u'Album {} has too many tracks', release['id'])
         log.info(u'Fetching recordings in batches of ' + str(BROWSE_CHUNKSIZE))
         recording_list = []
         for i in range(0, ntracks, BROWSE_CHUNKSIZE):
