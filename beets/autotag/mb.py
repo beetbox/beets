@@ -74,7 +74,7 @@ RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
 BROWSE_INCLUDES = ['artist-credits', 'work-rels',
                    'artist-rels', 'recording-rels', 'release-rels']
 BROWSE_CHUNKSIZE = 100
-v = 500
+BROWSE_MAXTRACKS = 500
 TRACK_INCLUDES = ['artists', 'aliases']
 if 'work-level-rels' in musicbrainzngs.VALID_INCLUDES['recording']:
     TRACK_INCLUDES += ['work-level-rels', 'artist-rels']
