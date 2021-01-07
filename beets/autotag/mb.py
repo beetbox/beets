@@ -295,6 +295,8 @@ def album_info(release):
     # when the release has more than 500 tracks. So we use browse_recordings
     # on chunks of tracks to recover the same information in this case.
     if ntracks > BROWSE_MAXTRACKS:
+        log.info(u'Album '+str(trackid)+u' has too many tracks')
+        log.info(u'Fetching recordings in batches of '+str(BROWSE_CHUNKSIZE))
         recording_list = []
         for i in range(0, ntracks, BROWSE_CHUNKSIZE):
             recording_list.extend(musicbrainzngs.browse_recordings(
@@ -540,6 +542,7 @@ def album_for_id(releaseid):
     try:
         res = musicbrainzngs.get_release_by_id(albumid,
                                                RELEASE_INCLUDES)
+        log.info(u'Album '+str(trackid)+u' fetched from MusicBrainz')
     except musicbrainzngs.ResponseError:
         log.debug(u'Album ID match failed.')
         return None
@@ -559,6 +562,7 @@ def track_for_id(releaseid):
         return
     try:
         res = musicbrainzngs.get_recording_by_id(trackid, TRACK_INCLUDES)
+        log.info(u'Track '+str(trackid)+u' fetched from MusicBrainz')
     except musicbrainzngs.ResponseError:
         log.debug(u'Track ID match failed.')
         return None
