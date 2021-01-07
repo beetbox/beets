@@ -18,6 +18,7 @@ from __future__ import division, absolute_import, print_function
 import mpd
 import socket
 import select
+import sys
 import time
 import os
 
@@ -52,7 +53,13 @@ class MPDClientWrapper(object):
         self.music_directory = (
             mpd_config['music_directory'].as_str())
 
-        self.client = mpd.MPDClient(use_unicode=True)
+        if sys.version_info < (3, 0):
+            # On Python 2, use_unicode will enable the utf-8 mode for
+            # python-mpd2
+            self.client = mpd.MPDClient(use_unicode=True)
+        else:
+            # On Python 3, python-mpd2 always uses Unicode
+            self.client = mpd.MPDClient()
 
     def connect(self):
         """Connect to the MPD.
