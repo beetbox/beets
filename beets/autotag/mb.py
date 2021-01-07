@@ -296,18 +296,19 @@ def album_info(release):
     # on chunks of tracks to recover the same information in this case.
     if ntracks > BROWSE_MAXTRACKS:
         log.debug(u'Album {} has too many tracks', release['id'])
-        log.info(u'Fetching recordings in batches of ' + str(BROWSE_CHUNKSIZE))
         recording_list = []
         for i in range(0, ntracks, BROWSE_CHUNKSIZE):
+            log.debug(u'Retrieving tracks starting at {}', i)
             recording_list.extend(musicbrainzngs.browse_recordings(
                     release=release['id'], limit=BROWSE_CHUNKSIZE,
                     includes=BROWSE_INCLUDES,
-                    offset=BROWSE_CHUNKSIZE * i)['recording-list'])
+                    offset=i)['recording-list'])
+        track_map = {}
+        for recording in recording_list:
+            track_map[recording['id']] = recording
         for medium in release['medium-list']:
             for recording in medium['track-list']:
-                recording_info = list(filter(lambda track: track['id'] ==
-                                             recording['recording']['id'],
-                                             recording_list))[0]
+                recording_info = track_map[recording['recording']['id']]
                 recording['recording'] = recording_info
 
     # Basic info.
@@ -542,7 +543,6 @@ def album_for_id(releaseid):
     try:
         res = musicbrainzngs.get_release_by_id(albumid,
                                                RELEASE_INCLUDES)
-        log.info(u'Album ' + str(releaseid) + u' fetched from MusicBrainz')
     except musicbrainzngs.ResponseError:
         log.debug(u'Album ID match failed.')
         return None
@@ -562,7 +562,6 @@ def track_for_id(releaseid):
         return
     try:
         res = musicbrainzngs.get_recording_by_id(trackid, TRACK_INCLUDES)
-        log.info(u'Track ' + str(releaseid) + u' fetched from MusicBrainz')
     except musicbrainzngs.ResponseError:
         log.debug(u'Track ID match failed.')
         return None
