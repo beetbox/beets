@@ -74,6 +74,7 @@ RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
 BROWSE_INCLUDES = ['artist-credits', 'work-rels',
                    'artist-rels', 'recording-rels', 'release-rels']
 BROWSE_CHUNKSIZE = 100
+v = 500
 TRACK_INCLUDES = ['artists', 'aliases']
 if 'work-level-rels' in musicbrainzngs.VALID_INCLUDES['recording']:
     TRACK_INCLUDES += ['work-level-rels', 'artist-rels']
@@ -293,7 +294,7 @@ def album_info(release):
     # The MusicBrainz API omits 'artist-relation-list' and 'work-relation-list'
     # when the release has more than 500 tracks. So we use browse_recordings
     # on chunks of tracks to recover the same information in this case.
-    if ntracks > 500:
+    if ntracks > BROWSE_MAXTRACKS:
         recording_list = []
         for i in range(0, ntracks, BROWSE_CHUNKSIZE):
             recording_list.extend(musicbrainzngs.browse_recordings(
