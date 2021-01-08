@@ -178,6 +178,9 @@ New features:
 
 Fixes:
 
+* :bug:`/plugins/discogs`: Fixed a bug with ``index_tracks`` options that
+  sometimes caused the index to be discarded. Also remove the extra semicolon
+  that was added when there is no index track.
 * :doc:`/plugins/subsonicupdate`: REST was using `POST` method rather `GET` method.
   Also includes better exception handling, response parsing, and tests.
 * :doc:`/plugins/the`: Fixed incorrect regex for 'the' that matched any
@@ -292,6 +295,10 @@ Fixes:
   :bug:`2242`
 * :doc:`plugins/replaygain`: Disable parallel analysis on import by default.
   :bug:`3819`
+* :doc:`/plugins/mpdstats`: Fix Python 2/3 compatibility
+  :bug:`3798`
+* Fix :bug:`3308` by using browsing for big releases to retrieve additional
+  information. Thanks to :user:`dosoe`.
 
 For plugin developers:
 

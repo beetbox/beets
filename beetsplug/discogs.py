@@ -505,6 +505,12 @@ class DiscogsPlugin(BeetsPlugin):
                         for subtrack in subtracks:
                             if not subtrack.get('artists'):
                                 subtrack['artists'] = index_track['artists']
+                    # Concatenate index with track title when index_tracks
+                    # option is set
+                    if self.config['index_tracks']:
+                        for subtrack in subtracks:
+                            subtrack['title'] = '{}: {}'.format(
+                                    index_track['title'], subtrack['title'])
                     tracklist.extend(subtracks)
             else:
                 # Merge the subtracks, pick a title, and append the new track.
@@ -557,7 +563,8 @@ class DiscogsPlugin(BeetsPlugin):
         title = track['title']
         if self.config['index_tracks']:
             prefix = ', '.join(divisions)
-            title = ': '.join([prefix, title])
+            if prefix:
+                title = '{}: {}'.format(prefix, title)
         track_id = None
         medium, medium_index, _ = self.get_track_index(track['position'])
         artist, artist_id = MetadataSourcePlugin.get_artist(
