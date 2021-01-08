@@ -71,6 +71,12 @@ RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'labels', 'artist-credits', 'aliases',
                     'recording-level-rels', 'work-rels',
                     'work-level-rels', 'artist-rels']
+BROWSE_INCLUDES = ['artist-credits', 'work-rels',
+                   'artist-rels', 'recording-rels', 'release-rels']
+if "work-level-rels" in musicbrainzngs.VALID_BROWSE_INCLUDES['recording']:
+    BROWSE_INCLUDES.append("work-level-rels")
+BROWSE_CHUNKSIZE = 100
+BROWSE_MAXTRACKS = 500
 TRACK_INCLUDES = ['artists', 'aliases']
 if 'work-level-rels' in musicbrainzngs.VALID_INCLUDES['recording']:
     TRACK_INCLUDES += ['work-level-rels', 'artist-rels']
@@ -284,6 +290,26 @@ def album_info(release):
     # Get artist name using join phrases.
     artist_name, artist_sort_name, artist_credit_name = \
         _flatten_artist_credit(release['artist-credit'])
+
+    ntracks = sum(len(m['track-list']) for m in release['medium-list'])
+
+    # The MusicBrainz API omits 'artist-relation-list' and 'work-relation-list'
+    # when the release has more than 500 tracks. So we use browse_recordings
+    # on chunks of tracks to recover the same information in this case.
+    if ntracks > BROWSE_MAXTRACKS:
+        log.debug(u'Album {} has too many tracks', release['id'])
+        recording_list = []
+        for i in range(0, ntracks, BROWSE_CHUNKSIZE):
+            log.debug(u'Retrieving tracks starting at {}', i)
+            recording_list.extend(musicbrainzngs.browse_recordings(
+                    release=release['id'], limit=BROWSE_CHUNKSIZE,
+                    includes=BROWSE_INCLUDES,
+                    offset=i)['recording-list'])
+        track_map = {r['id']: r for r in recording_list}
+        for medium in release['medium-list']:
+            for recording in medium['track-list']:
+                recording_info = track_map[recording['recording']['id']]
+                recording['recording'] = recording_info
 
     # Basic info.
     track_infos = []

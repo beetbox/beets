@@ -295,6 +295,8 @@ Fixes:
   :bug:`3819`
 * :doc:`/plugins/mpdstats`: Fix Python 2/3 compatibility
   :bug:`3798`
+* Fix :bug:`3308` by using browsing for big releases to retrieve additional
+  information. Thanks to :user:`dosoe`.
 
 For plugin developers:
 
