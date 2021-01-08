@@ -6,6 +6,7 @@ Changelog
 
 New features:
 
+* Add ``title_case`` config option to lastgenre to make TitleCasing optional.
 * When config is printed with no available configuration a new message is printed.
   :bug:`3779`
 * When importing a duplicate album it ask if it should "Keep all" instead of "Keep both".
@@ -13,6 +14,9 @@ New features:
 * :doc:`/plugins/chroma`: Update file metadata after generating fingerprints through the `submit` command.
 * :doc:`/plugins/lastgenre`: Added more heavy metal genres: https://en.wikipedia.org/wiki/Heavy_metal_genres to genres.txt and genres-tree.yaml
 * :doc:`/plugins/subsonicplaylist`: import playlist from a subsonic server.
+* A new :ref:`reflink` config option instructs the importer to create fast,
+  copy-on-write file clones on filesystems that support them. Thanks to
+  :user:`rubdos`.
 * A new :ref:`extra_tags` configuration option allows more tagged metadata
   to be included in MusicBrainz queries.
 * A new :doc:`/plugins/fish` adds `Fish shell`_ tab autocompletion to beets
@@ -166,6 +170,9 @@ New features:
   https://github.com/alastair/python-musicbrainzngs/pull/247 and
   https://github.com/alastair/python-musicbrainzngs/pull/266 .
   Thanks to :user:`aereaux`.
+* :doc:`/plugins/replaygain` now does its analysis in parallel when using
+  the ``command``, ``ffmpeg`` or ``bs1770gain`` backends.
+  :bug:`3478`
 * Fields in queries now fall back to an item's album and check its fields too.
   Notably, this allows querying items by an album flex attribute, also in path
   configuration.
@@ -174,6 +181,9 @@ New features:
 
 Fixes:
 
+* :bug:`/plugins/discogs`: Fixed a bug with ``index_tracks`` options that
+  sometimes caused the index to be discarded. Also remove the extra semicolon
+  that was added when there is no index track.
 * :doc:`/plugins/subsonicupdate`: REST was using `POST` method rather `GET` method.
   Also includes better exception handling, response parsing, and tests.
 * :doc:`/plugins/the`: Fixed incorrect regex for 'the' that matched any
@@ -284,6 +294,12 @@ Fixes:
   :bug:`3773` :bug:`3774`
 * Fix a bug causing PIL to generate poor quality JPEGs when resizing artwork.
   :bug:`3743`
+* :doc:`plugins/keyfinder`: Catch output from ``keyfinder-cli`` that is missing key.
+  :bug:`2242`
+* :doc:`plugins/replaygain`: Disable parallel analysis on import by default.
+  :bug:`3819`
+* :doc:`/plugins/mpdstats`: Fix Python 2/3 compatibility
+  :bug:`3798`
 
 For plugin developers:
 

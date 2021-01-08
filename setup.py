@@ -122,6 +122,7 @@ setup(
             'pyxdg',
             'responses>=0.3.0',
             'requests_oauthlib',
+            'reflink',
         ] + (
             # Tests for the thumbnails plugin need pathlib on Python 2 too.
             ['pathlib'] if (sys.version_info < (3, 4, 0)) else []
@@ -163,6 +164,7 @@ setup(
         'scrub': ['mutagen>=1.33'],
         'bpd': ['PyGObject'],
         'replaygain': ['PyGObject'],
+        'reflink': ['reflink'],
     },
     # Non-Python/non-PyPI plugin dependencies:
     #   chroma: chromaprint or fpcalc
