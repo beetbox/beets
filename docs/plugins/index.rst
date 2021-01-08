@@ -275,7 +275,7 @@ Here are a few of the plugins written by the beets community:
 
 * `beet-amazon`_ adds Amazon.com as a tagger data source.
 
-* `copyartifacts`_ helps bring non-music files along during import.
+* `beets-copyartifacts`_ helps bring non-music files along during import.
 
 * `beets-check`_ automatically checksums your files to detect corruption.
 
@@ -326,7 +326,7 @@ Here are a few of the plugins written by the beets community:
 
 .. _beets-barcode: https://github.com/8h2a/beets-barcode
 .. _beets-check: https://github.com/geigerzaehler/beets-check
-.. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
+.. _beets-copyartifacts: https://github.com/adammillerio/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
 .. _beets-artistcountry: https://github.com/agrausem/beets-artistcountry
 .. _beetFs: https://github.com/jbaiter/beetfs

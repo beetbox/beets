@@ -133,6 +133,13 @@ class FishPlugin(BeetsPlugin):
             fish_file.write(totstring)
 
 
+def _escape(name):
+    # Escape ? in fish
+    if name == "?":
+        name = "\\" + name
+    return name
+
+
 def get_cmds_list(cmds_names):
     # Make a list of all Beets core & plugin commands
     substr = ''
@@ -201,6 +208,8 @@ def get_subcommands(cmd_name_and_help, nobasicfields, extravalues):
     # Formatting for Fish to complete our fields/values
     word = ""
     for cmdname, cmdhelp in cmd_name_and_help:
+        cmdname = _escape(cmdname)
+
         word += "\n" + "# ------ {} -------".format(
             "fieldsetups for  " + cmdname) + "\n"
         word += (
@@ -232,6 +241,8 @@ def get_all_commands(beetcmds):
         names = [alias for alias in cmd.aliases]
         names.append(cmd.name)
         for name in names:
+            name = _escape(name)
+
             word += "\n"
             word += ("\n" * 2) + "# ====== {} =====".format(
                 "completions for  " + name) + "\n"
