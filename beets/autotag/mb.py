@@ -305,9 +305,7 @@ def album_info(release):
                     release=release['id'], limit=BROWSE_CHUNKSIZE,
                     includes=BROWSE_INCLUDES,
                     offset=i)['recording-list'])
-        track_map = {}
-        for recording in recording_list:
-            track_map[recording['id']] = recording
+        track_map = {r['id']: r for r in recording_list}
         for medium in release['medium-list']:
             for recording in medium['track-list']:
                 recording_info = track_map[recording['recording']['id']]
