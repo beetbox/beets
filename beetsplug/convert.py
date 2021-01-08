@@ -185,9 +185,8 @@ class ConvertPlugin(BeetsPlugin):
 
     def auto_convert(self, config, task):
         if self.config['auto']:
-            items = zip(repeat(config.lib),list(task.imported_items()))
-            par_map(self.convert_on_import, items )
-
+            items = zip(repeat(config.lib), list(task.imported_items()))
+            par_map(self.convert_on_import, items)
 
     # Utilities converted from functions to methods on logging overhaul
 
