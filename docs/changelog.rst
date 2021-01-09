@@ -175,6 +175,7 @@ New features:
   :bug:`3478`
 * Add ``extracting_albumdata`` and ``extracting_trackdata`` hooks to allow
   plugins to add new fields based on MusicBrainz data. Thanks to :user:`dosoe`.
+
 Fixes:
 
 * :bug:`/plugins/discogs`: Fixed a bug with ``index_tracks`` options that
