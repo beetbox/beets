@@ -20,6 +20,7 @@ a "subsonic" section like the following:
         url: https://mydomain.com:443/subsonic
         user: username
         pass: password
+        auth: enc or token
 """
 from __future__ import division, absolute_import, print_function
 
@@ -29,6 +30,7 @@ import string
 
 import requests
 
+from binascii import hexlify
 from beets import config
 from beets.plugins import BeetsPlugin
 
@@ -38,12 +40,12 @@ __author__ = 'https://github.com/maffo999'
 class SubsonicUpdate(BeetsPlugin):
     def __init__(self):
         super(SubsonicUpdate, self).__init__()
-
         # Set default configuration values
         config['subsonic'].add({
             'user': 'admin',
             'pass': 'admin',
             'url': 'http://localhost:4040',
+            'auth': 'token',
         })
 
         config['subsonic']['pass'].redact = True
@@ -93,21 +95,30 @@ class SubsonicUpdate(BeetsPlugin):
     def start_scan(self):
         user = config['subsonic']['user'].as_str()
         url = self.__format_url()
-        salt, token = self.__create_token()
-
-        payload = {
-            'u': user,
-            't': token,
-            's': salt,
-            'v': '1.15.0',  # Subsonic 6.1 and newer.
-            'c': 'beets',
-            'f': 'json'
-        }
+        if config['subsonic']['user'] == 'token':
+            salt, token = self.__create_token()
+            payload = {
+                'u': user,
+                't': token,
+                's': salt,
+                'v': '1.15.0',  # Subsonic 6.1 and newer.
+                'c': 'beets',
+                'f': 'json'
+            }
+        else:
+            password = config['subsonic']['pass'].as_str()
+            encpass = hexlify(password.encode()).decode()
+            payload = {
+                'u': user,
+                'p': 'enc:{}'.format(encpass),
+                'v': '1.15.0',
+                'c': 'beets',
+                'f': 'json'
+            }
 
         try:
             response = requests.get(url, params=payload)
             json = response.json()
-
             if response.status_code == 200 and \
                     json['subsonic-response']['status'] == "ok":
                 count = json['subsonic-response']['scanStatus']['count']
