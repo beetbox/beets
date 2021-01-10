@@ -20,7 +20,7 @@ a "subsonic" section like the following:
         url: https://mydomain.com:443/subsonic
         user: username
         pass: password
-        auth: enc or token
+        auth: enc or plain
 """
 from __future__ import division, absolute_import, print_function
 
@@ -95,7 +95,7 @@ class SubsonicUpdate(BeetsPlugin):
     def start_scan(self):
         user = config['subsonic']['user'].as_str()
         url = self.__format_url()
-        if config['subsonic']['user'] == 'token':
+        if config['subsonic']['auth'] == 'token':
             salt, token = self.__create_token()
             payload = {
                 'u': user,
@@ -119,6 +119,7 @@ class SubsonicUpdate(BeetsPlugin):
         try:
             response = requests.get(url, params=payload)
             json = response.json()
+
             if response.status_code == 200 and \
                     json['subsonic-response']['status'] == "ok":
                 count = json['subsonic-response']['scanStatus']['count']
