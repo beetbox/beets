@@ -34,7 +34,7 @@ from beets import config
 from beets.plugins import BeetsPlugin
 
 __author__ = 'https://github.com/maffo999'
-authtokenversion = '1.12'
+AUTH_TOKEN_VERSION = '1.12'
 
 
 class SubsonicUpdate(BeetsPlugin):
@@ -47,14 +47,12 @@ class SubsonicUpdate(BeetsPlugin):
             'url': 'http://localhost:4040',
         })
         self.version = self.__get_version()
-        if self.version > authtokenversion:
-            self._log.info(
-                    u'use token authent method')
+        if self.version > AUTH_TOKEN_VERSION:
             self.auth = "token"
         else:
             self.auth = "password"
-            self._log.info(
-                    u'use password authent method')
+        self._log.info(
+            u"using '{}' authentication method".format(self.auth))
         config['subsonic']['pass'].redact = True
         self.register_listener('import', self.start_scan)
 
@@ -77,7 +75,7 @@ class SubsonicUpdate(BeetsPlugin):
 
     @staticmethod
     def __format_url(endpoint):
-        """Get the Subsonic URL to trigger a endpoint put in paramater.
+        """Get the Subsonic URL to trigger the given endpoint.
         Uses either the url config option or the deprecated host, port,
         and context_path config options together.
 

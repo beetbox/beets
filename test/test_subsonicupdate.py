@@ -49,7 +49,7 @@ class SubsonicPluginTest(_common.TestCase, TestHelper):
     PING_BODY = '''
 {
     "subsonic-response": {
-        "status": "failled",
+        "status": "failed",
         "version": "1.15.0"
     }
 }
