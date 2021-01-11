@@ -20,7 +20,6 @@ a "subsonic" section like the following:
         url: https://mydomain.com:443/subsonic
         user: username
         pass: password
-        auth: token or password
 """
 from __future__ import division, absolute_import, print_function
 
@@ -35,6 +34,7 @@ from beets import config
 from beets.plugins import BeetsPlugin
 
 __author__ = 'https://github.com/maffo999'
+authtokenversion = '1.12'
 
 
 class SubsonicUpdate(BeetsPlugin):
@@ -45,9 +45,16 @@ class SubsonicUpdate(BeetsPlugin):
             'user': 'admin',
             'pass': 'admin',
             'url': 'http://localhost:4040',
-            'auth': 'token',
         })
-
+        self.version = self.get_version()
+        if self.version > authtokenversion:
+            self._log.info(
+                    u'use token authent method')
+            self.auth = "token"
+        else:
+            self.auth = "password"
+            self._log.info(
+                    u'use password authent method')
         config['subsonic']['pass'].redact = True
         self.register_listener('import', self.start_scan)
 
@@ -69,10 +76,10 @@ class SubsonicUpdate(BeetsPlugin):
         return salt, token
 
     @staticmethod
-    def __format_url():
-        """Get the Subsonic URL to trigger a scan. Uses either the url
-        config option or the deprecated host, port, and context_path config
-        options together.
+    def __format_url(endpoint):
+        """Get the Subsonic URL to trigger a endpoint put in paramater.
+        Uses either the url config option or the deprecated host, port,
+        and context_path config options together.
 
         :return: Endpoint for updating Subsonic
         """
@@ -90,18 +97,37 @@ class SubsonicUpdate(BeetsPlugin):
                 context_path = ''
             url = "http://{}:{}{}".format(host, port, context_path)
 
-        return url + '/rest/startScan.view'
+        return url + '/rest/{}'.format(endpoint)
+
+    def get_version(self):
+        url = self.__format_url("ping.view")
+        payload = {
+            'c': 'beets',
+            'f': 'json'
+        }
+        try:
+            response = requests.get(url, params=payload)
+            if response.status_code == 200:
+                json = response.json()
+                version = json['subsonic-response']['version']
+                self._log.info(
+                    u'subsonic version:{0} '.format(version))
+                return version
+            else:
+                self._log.error(u'Error: {0}', json)
+        except Exception as error:
+            self._log.error(u'Error: {0}'.format(error))
 
     def start_scan(self):
         user = config['subsonic']['user'].as_str()
-        url = self.__format_url()
-        if config['subsonic']['auth'] == 'token':
+        url = self.__format_url("startScan.view")
+        if self.auth == 'token':
             salt, token = self.__create_token()
             payload = {
                 'u': user,
                 't': token,
                 's': salt,
-                'v': '1.15.0',  # Subsonic 6.1 and newer.
+                'v': self.version,  # Subsonic 6.1 and newer.
                 'c': 'beets',
                 'f': 'json'
             }
@@ -111,7 +137,7 @@ class SubsonicUpdate(BeetsPlugin):
             payload = {
                 'u': user,
                 'p': 'enc:{}'.format(encpass),
-                'v': '1.15.0',
+                'v': self.version,
                 'c': 'beets',
                 'f': 'json'
             }
