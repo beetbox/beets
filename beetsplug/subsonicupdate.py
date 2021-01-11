@@ -46,7 +46,7 @@ class SubsonicUpdate(BeetsPlugin):
             'pass': 'admin',
             'url': 'http://localhost:4040',
         })
-        self.version = self.get_version()
+        self.version = self.__get_version()
         if self.version > authtokenversion:
             self._log.info(
                     u'use token authent method')
@@ -99,7 +99,7 @@ class SubsonicUpdate(BeetsPlugin):
 
         return url + '/rest/{}'.format(endpoint)
 
-    def get_version(self):
+    def __get_version(self):
         url = self.__format_url("ping.view")
         payload = {
             'c': 'beets',
