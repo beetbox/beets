@@ -20,7 +20,7 @@ a "subsonic" section like the following:
         url: https://mydomain.com:443/subsonic
         user: username
         pass: password
-        auth: enc or plain
+        auth: token or password
 """
 from __future__ import division, absolute_import, print_function
 
