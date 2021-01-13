@@ -185,8 +185,8 @@ class ConvertPlugin(BeetsPlugin):
 
     def auto_convert(self, config, task):
         if self.config['auto']:
-            items = zip(repeat(config.lib), list(task.imported_items()))
-            par_map(self.convert_on_import, items)
+            par_map(lambda item: self.convert_on_import(config.lib, item), task.imported_items())
+
 
     # Utilities converted from functions to methods on logging overhaul
 
@@ -510,12 +510,10 @@ class ConvertPlugin(BeetsPlugin):
         pipe = util.pipeline.Pipeline([iter(items), convert])
         pipe.run_parallel()
 
-    def convert_on_import(self, lib_item_pair):
+    def convert_on_import(self, lib, item):
         """Transcode a file automatically after it is imported into the
         library.
         """
-        lib = lib_item_pair[0]
-        item = lib_item_pair[1]
         fmt = self.config['format'].as_str().lower()
         if should_transcode(item, fmt):
             command, ext = get_format()
