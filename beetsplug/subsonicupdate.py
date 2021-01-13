@@ -34,7 +34,7 @@ from beets import config
 from beets.plugins import BeetsPlugin
 
 __author__ = 'https://github.com/maffo999'
-AUTH_TOKEN_VERSION = '1.12'
+AUTH_TOKEN_VERSION = (1, 12)
 
 
 class SubsonicUpdate(BeetsPlugin):
@@ -110,7 +110,7 @@ class SubsonicUpdate(BeetsPlugin):
                 version = json['subsonic-response']['version']
                 self._log.info(
                     u'subsonic version:{0} '.format(version))
-                return version
+                return tuple(int(s) for s in version.split('.'))
             else:
                 self._log.error(u'Error: {0}', json)
         except Exception as error:
