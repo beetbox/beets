@@ -254,7 +254,9 @@ class MissingPlugin(BeetsPlugin):
 
             for release_group in missing:
                 try:
-                    releases_object = musicbrainzngs.browse_releases(release_group=release_group['id'])
+                    releases_object = musicbrainzngs.browse_releases(
+                            release_group=release_group['id']
+                        )
                     albums_list = releases_object['release-list']
                 except MusicBrainzError as err:
                     self._log.info(
