@@ -229,8 +229,8 @@ class MissingPlugin(BeetsPlugin):
                 continue
 
             try:
-                resp = musicbrainzngs.browse_releases(artist=artist[1])
-                release_groups = resp['release-list']
+                resp = musicbrainzngs.browse_release_groups(artist=artist[1])
+                release_groups = resp['release-group-list']
             except MusicBrainzError as err:
                 self._log.info(
                     u"Couldn't fetch info for artist '{}' ({}) - '{}'",
@@ -252,10 +252,21 @@ class MissingPlugin(BeetsPlugin):
             if total:
                 continue
 
-            for album in missing:
-                for album_info in hooks.albums_for_id(album['id']):
-                    item = _album_item(album_info, album_info.album_id)
-                    print_(format(item, fmt))
+            for release_group in missing:
+                try:
+                    releases_object = musicbrainzngs.browse_releases(release_group=release_group['id'])
+                    albums_list = releases_object['release-list']
+                except MusicBrainzError as err:
+                    self._log.info(
+                        u"Couldn't fetch info for release group '{}' - '{}'",
+                        release_group['id'], err
+                    )
+                    continue
+
+                for album in albums_list:
+                    for album_info in hooks.albums_for_id(album['id']):
+                        item = _album_item(album_info, album_info.album_id)
+                        print_(format(item, fmt))
 
         if total:
             print(total_missing)
