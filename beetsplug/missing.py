@@ -84,6 +84,53 @@ def _item(track_info, album_info, album_id):
     })
 
 
+def _album_item(album_info, album_id):
+    """Build and return `item` from `album info`
+    objects. `item` is missing what fields cannot be obtained from
+    MusicBrainz alone (encoder, rg_track_gain, rg_track_peak,
+    rg_album_gain, rg_album_peak, original_year, original_month,
+    original_day, length, bitrate, format, samplerate, bitdepth,
+    channels, mtime.)
+    """
+    a = album_info
+
+    return Item(**{
+        'album_id':           album_id,
+        'album':              a.album,
+        'albumartist':        a.artist,
+        'albumartist_credit': a.artist_credit,
+        'albumartist_sort':   a.artist_sort,
+        'albumdisambig':      a.albumdisambig,
+        'albumstatus':        a.albumstatus,
+        'albumtype':          a.albumtype,
+        'artist':             a.artist,
+        'artist_credit':      a.artist_credit,
+        'artist_sort':        a.artist_sort,
+        'asin':               a.asin,
+        'catalognum':         a.catalognum,
+        'comp':               a.va,
+        'country':            a.country,
+        'day':                a.day,
+        'disc':               None,
+        'disctitle':          None,
+        'disctotal':          a.mediums,
+        'label':              a.label,
+        'language':           a.language,
+        'length':             None,
+        'mb_albumid':         a.album_id,
+        'mb_artistid':        a.artist_id,
+        'mb_releasegroupid':  a.releasegroup_id,
+        'mb_trackid':         None,
+        'media':              a.media,
+        'month':              a.month,
+        'script':             a.script,
+        'title':              None,
+        'track':              None,
+        'tracktotal':         len(a.tracks),
+        'year':               a.year,
+    })
+
+
 class MissingPlugin(BeetsPlugin):
     """List missing tracks
     """
@@ -160,6 +207,7 @@ class MissingPlugin(BeetsPlugin):
         matching query.
         """
         total = self.config['total'].get()
+        fmt = config['format_album'].get()
 
         albums = lib.albums(query)
         # build dict mapping artist to list of their albums in library
@@ -181,8 +229,8 @@ class MissingPlugin(BeetsPlugin):
                 continue
 
             try:
-                resp = musicbrainzngs.browse_release_groups(artist=artist[1])
-                release_groups = resp['release-group-list']
+                resp = musicbrainzngs.browse_releases(artist=artist[1])
+                release_groups = resp['release-list']
             except MusicBrainzError as err:
                 self._log.info(
                     u"Couldn't fetch info for artist '{}' ({}) - '{}'",
@@ -204,10 +252,10 @@ class MissingPlugin(BeetsPlugin):
             if total:
                 continue
 
-            missing_titles = {rg['title'] for rg in missing}
-
-            for release_title in missing_titles:
-                print_(u"{} - {}".format(artist[0], release_title))
+            for album in missing:
+                for album_info in hooks.albums_for_id(album['id']):
+                    item = _album_item(album_info, album_info.album_id)
+                    print_(format(item, fmt))
 
         if total:
             print(total_missing)
