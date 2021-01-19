@@ -238,7 +238,27 @@ class MissingPlugin(BeetsPlugin):
                         artist=artist[1],
                         release_status=release_status,
                         release_type=release_type,
-                        includes=["artist-credits","labels","recordings","isrcs","release-groups","media","discids","area-rels","artist-rels","label-rels","place-rels","event-rels","recording-rels","release-rels","release-group-rels","series-rels","url-rels","work-rels","instrument-rels"]
+                        includes=[
+                            "artist-credits",
+                            "labels",
+                            "recordings",
+                            "isrcs",
+                            "release-groups",
+                            "media",
+                            "discids",
+                            "area-rels",
+                            "artist-rels",
+                            "label-rels",
+                            "place-rels",
+                            "event-rels",
+                            "recording-rels",
+                            "release-rels",
+                            "release-group-rels",
+                            "series-rels",
+                            "url-rels",
+                            "work-rels",
+                            "instrument-rels"
+                        ]
                     )
                 release_groups = resp['release-list']
             except MusicBrainzError as err:
