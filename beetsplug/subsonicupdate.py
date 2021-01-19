@@ -53,14 +53,14 @@ class SubsonicUpdate(BeetsPlugin):
 
     @property
     def version(self):
-        if (self._version is None):
+        if self._version is None:
             self._version = self.__get_version()
         return self._version
 
     @property
     def auth(self):
-        if (self._auth is None):
-            if(self.version is not None):
+        if self._auth is None:
+            if self.version is not None:
                 if self.version > AUTH_TOKEN_VERSION:
                     self._auth = "token"
                 else:
