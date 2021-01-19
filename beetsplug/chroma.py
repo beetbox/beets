@@ -329,7 +329,7 @@ def fingerprint_item(log, item, write=False):
         else:
             log.info(u'{0}: using existing fingerprint',
                      util.displayable_path(item.path))
-            return item.acoustid_fingerprint
+        return item.acoustid_fingerprint
     else:
         log.info(u'{0}: fingerprinting',
                  util.displayable_path(item.path))
