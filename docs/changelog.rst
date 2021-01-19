@@ -6,6 +6,7 @@ Changelog
 
 New features:
 
+* conversion uses par_map to parallelize conversion jobs in python3
 * Add ``title_case`` config option to lastgenre to make TitleCasing optional.
 * When config is printed with no available configuration a new message is printed.
   :bug:`3779`
