@@ -51,8 +51,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
             b"/path/to/thumbnail",
             metadata,
         )
-        # FIXME: Plugin should use syspath
-        mock_stat.assert_called_once_with(album.artpath)
+        mock_stat.assert_called_once_with(syspath(album.artpath))
 
     @patch('beetsplug.thumbnails.os')
     @patch('beetsplug.thumbnails.ArtResizer')
@@ -69,17 +68,14 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         mock_artresizer.shared.can_write_metadata = True
 
         def exists(path):
-            # FIXME: Plugin should use syspath
-            if path == NORMAL_DIR:
+            if path == syspath(NORMAL_DIR):
                 return False
-            # FIXME: Plugin should use syspath
-            if path == LARGE_DIR:
+            if path == syspath(LARGE_DIR):
                 return True
             raise ValueError(f"unexpected path {path!r}")
         mock_os.path.exists = exists
         plugin = ThumbnailsPlugin()
-        # FIXME: Plugin should use syspath
-        mock_os.makedirs.assert_called_once_with(NORMAL_DIR)
+        mock_os.makedirs.assert_called_once_with(syspath(NORMAL_DIR))
         self.assertTrue(plugin._check_local_ok())
 
         # test metadata writer function
@@ -125,11 +121,9 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         mock_os.path.exists.return_value = False
 
         def os_stat(target):
-            # FIXME: Plugin should use syspath
-            if target == md5_file:
+            if target == syspath(md5_file):
                 return Mock(st_mtime=1)
-            # FIXME: Plugin should use syspath
-            elif target == path_to_art:
+            elif target == syspath(path_to_art):
                 return Mock(st_mtime=2)
             else:
                 raise ValueError(f"invalid target {target}")
@@ -140,17 +134,15 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
 
         plugin.make_cover_thumbnail(album, 12345, thumbnail_dir)
 
-        # FIXME: Plugin should use syspath
-        mock_os.path.exists.assert_called_once_with(md5_file)
+        mock_os.path.exists.assert_called_once_with(syspath(md5_file))
         mock_os.stat.has_calls([call(syspath(md5_file)),
                                 call(syspath(path_to_art))],
                                any_order=True)
 
         mock_resize.assert_called_once_with(12345, path_to_art, md5_file)
         plugin.add_tags.assert_called_once_with(album, path_to_resized_art)
-        # FIXME: Plugin should use syspath
-        mock_shutils.move.assert_called_once_with(path_to_resized_art,
-                                                  md5_file)
+        mock_shutils.move.assert_called_once_with(syspath(path_to_resized_art),
+                                                  syspath(md5_file))
 
         # now test with recent thumbnail & with force
         mock_os.path.exists.return_value = True
@@ -158,11 +150,9 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         mock_resize.reset_mock()
 
         def os_stat(target):
-            # FIXME: Plugin should use syspath
-            if target == md5_file:
+            if target == syspath(md5_file):
                 return Mock(st_mtime=3)
-            # FIXME: Plugin should use syspath
-            elif target == path_to_art:
+            elif target == syspath(path_to_art):
                 return Mock(st_mtime=2)
             else:
                 raise ValueError(f"invalid target {target}")
