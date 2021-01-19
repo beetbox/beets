@@ -15,6 +15,7 @@ New features:
 * :doc:`/plugins/chroma`: Update file metadata after generating fingerprints through the `submit` command.
 * :doc:`/plugins/lastgenre`: Added more heavy metal genres: https://en.wikipedia.org/wiki/Heavy_metal_genres to genres.txt and genres-tree.yaml
 * :doc:`/plugins/subsonicplaylist`: import playlist from a subsonic server.
+* :doc:`/plugins/subsonicupdate`: manage tocken and password authentifications method by checking server version. 
 * A new :ref:`reflink` config option instructs the importer to create fast,
   copy-on-write file clones on filesystems that support them. Thanks to
   :user:`rubdos`.
