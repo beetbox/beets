@@ -167,7 +167,7 @@ class SmartPlaylistTest(unittest.TestCase):
         try:
             spl.update_playlists(lib)
         except Exception:
-            rmtree(dir)
+            rmtree(syspath(dir))
             raise
 
         lib.items.assert_called_once_with(q, None)
@@ -177,7 +177,7 @@ class SmartPlaylistTest(unittest.TestCase):
         self.assertTrue(path.exists(m3u_filepath))
         with open(syspath(m3u_filepath), 'rb') as f:
             content = f.read()
-        rmtree(dir)
+        rmtree(syspath(dir))
 
         self.assertEqual(content, b'/tagada.mp3\n')
 
@@ -207,14 +207,14 @@ class SmartPlaylistCLITest(unittest.TestCase, TestHelper):
         self.run_with_output('splupdate', 'my_playlist')
         m3u_path = path.join(self.temp_dir, b'my_playlist.m3u')
         self.assertTrue(path.exists(m3u_path))
-        with open(m3u_path, 'rb') as f:
+        with open(syspath(m3u_path), 'rb') as f:
             self.assertEqual(f.read(), self.item.path + b"\n")
-        remove(m3u_path)
+        remove(syspath(m3u_path))
 
         self.run_with_output('splupdate', 'my_playlist.m3u')
-        with open(m3u_path, 'rb') as f:
+        with open(syspath(m3u_path), 'rb') as f:
             self.assertEqual(f.read(), self.item.path + b"\n")
-        remove(m3u_path)
+        remove(syspath(m3u_path))
 
         self.run_with_output('splupdate')
         for name in (b'my_playlist.m3u', b'all.m3u'):

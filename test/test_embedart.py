@@ -24,7 +24,7 @@ from test.helper import TestHelper
 
 from mediafile import MediaFile
 from beets import config, logging, ui
-from beets.util import syspath, displayable_path
+from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
 from beets import art
 
@@ -108,6 +108,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         logging.getLogger('beets.embedart').setLevel(logging.DEBUG)
 
         handle, tmp_path = tempfile.mkstemp()
+        tmp_path = bytestring_path(tmp_path)
         os.write(handle, self.image_data)
         os.close(handle)
 
@@ -117,9 +118,11 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         config['embedart']['remove_art_file'] = True
         self.run_command('embedart', '-y')
 
-        if os.path.isfile(tmp_path):
-            os.remove(tmp_path)
-            self.fail(f'Artwork file {tmp_path} was not deleted')
+        if os.path.isfile(syspath(tmp_path)):
+            os.remove(syspath(tmp_path))
+            self.fail('Artwork file {} was not deleted'.format(
+                displayable_path(tmp_path)
+            ))
 
     def test_art_file_missing(self):
         self.add_album_fixture()
@@ -132,13 +135,14 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         logging.getLogger('beets.embedart').setLevel(logging.DEBUG)
 
         handle, tmp_path = tempfile.mkstemp()
+        tmp_path = bytestring_path(tmp_path)
         os.write(handle, b'I am not an image.')
         os.close(handle)
 
         try:
             self.run_command('embedart', '-y', '-f', tmp_path)
         finally:
-            os.remove(tmp_path)
+            os.remove(syspath(tmp_path))
 
         mediafile = MediaFile(syspath(album.items()[0].path))
         self.assertFalse(mediafile.images)  # No image added.
