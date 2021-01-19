@@ -32,12 +32,13 @@ from xdg import BaseDirectory
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs
 from beets import util
+from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer, get_im_version, get_pil_version
 
 
 BASE_DIR = os.path.join(BaseDirectory.xdg_cache_home, "thumbnails")
-NORMAL_DIR = util.bytestring_path(os.path.join(BASE_DIR, "normal"))
-LARGE_DIR = util.bytestring_path(os.path.join(BASE_DIR, "large"))
+NORMAL_DIR = bytestring_path(os.path.join(BASE_DIR, "normal"))
+LARGE_DIR = bytestring_path(os.path.join(BASE_DIR, "large"))
 
 
 class ThumbnailsPlugin(BeetsPlugin):
@@ -87,8 +88,8 @@ class ThumbnailsPlugin(BeetsPlugin):
             return False
 
         for dir in (NORMAL_DIR, LARGE_DIR):
-            if not os.path.exists(dir):
-                os.makedirs(dir)
+            if not os.path.exists(syspath(dir)):
+                os.makedirs(syspath(dir))
 
         if get_im_version():
             self.write_metadata = write_metadata_im
@@ -140,8 +141,9 @@ class ThumbnailsPlugin(BeetsPlugin):
         """
         target = os.path.join(target_dir, self.thumbnail_file_name(album.path))
 
-        if os.path.exists(target) and \
-           os.stat(target).st_mtime > os.stat(album.artpath).st_mtime:
+        if (os.path.exists(syspath(target))
+                and os.stat(syspath(target)).st_mtime
+                > os.stat(syspath(album.artpath)).st_mtime):
             if self.config['force']:
                 self._log.debug("found a suitable {1}x{1} thumbnail for {0}, "
                                 "forcing regeneration", album, size)
@@ -149,10 +151,9 @@ class ThumbnailsPlugin(BeetsPlugin):
                 self._log.debug("{1}x{1} thumbnail for {0} exists and is "
                                 "recent enough", album, size)
                 return False
-        resized = ArtResizer.shared.resize(size, album.artpath,
-                                           util.syspath(target))
-        self.add_tags(album, util.syspath(resized))
-        shutil.move(resized, target)
+        resized = ArtResizer.shared.resize(size, album.artpath, target)
+        self.add_tags(album, resized)
+        shutil.move(syspath(resized), syspath(target))
         return True
 
     def thumbnail_file_name(self, path):
@@ -161,31 +162,31 @@ class ThumbnailsPlugin(BeetsPlugin):
         """
         uri = self.get_uri(path)
         hash = md5(uri.encode('utf-8')).hexdigest()
-        return util.bytestring_path(f"{hash}.png")
+        return bytestring_path(f"{hash}.png")
 
     def add_tags(self, album, image_path):
         """Write required metadata to the thumbnail
         See https://standards.freedesktop.org/thumbnail-spec/latest/x142.html
         """
-        mtime = os.stat(album.artpath).st_mtime
+        mtime = os.stat(syspath(album.artpath)).st_mtime
         metadata = {"Thumb::URI": self.get_uri(album.artpath),
                     "Thumb::MTime": str(mtime)}
         try:
             self.write_metadata(image_path, metadata)
         except Exception:
             self._log.exception("could not write metadata to {0}",
-                                util.displayable_path(image_path))
+                                displayable_path(image_path))
 
     def make_dolphin_cover_thumbnail(self, album):
         outfilename = os.path.join(album.path, b".directory")
-        if os.path.exists(outfilename):
+        if os.path.exists(syspath(outfilename)):
             return
         artfile = os.path.split(album.artpath)[1]
-        with open(outfilename, 'w') as f:
+        with open(syspath(outfilename), 'w') as f:
             f.write('[Desktop Entry]\n')
             f.write('Icon=./{}'.format(artfile.decode('utf-8')))
             f.close()
-        self._log.debug("Wrote file {0}", util.displayable_path(outfilename))
+        self._log.debug("Wrote file {0}", displayable_path(outfilename))
 
 
 def write_metadata_im(file, metadata):
@@ -200,11 +201,11 @@ def write_metadata_im(file, metadata):
 def write_metadata_pil(file, metadata):
     """Enrich the file metadata with `metadata` dict thanks to PIL."""
     from PIL import Image, PngImagePlugin
-    im = Image.open(file)
+    im = Image.open(syspath(file))
     meta = PngImagePlugin.PngInfo()
     for k, v in metadata.items():
         meta.add_text(k, v, 0)
-    im.save(file, "PNG", pnginfo=meta)
+    im.save(util.py3_path(file), "PNG", pnginfo=meta)
     return True
 
 
@@ -267,7 +268,7 @@ class GioURI(URIGetter):
         g_file_ptr = self.libgio.g_file_new_for_path(path)
         if not g_file_ptr:
             raise RuntimeError("No gfile pointer received for {}".format(
-                util.displayable_path(path)))
+                displayable_path(path)))
 
         try:
             uri_ptr = self.libgio.g_file_get_uri(g_file_ptr)
@@ -276,7 +277,7 @@ class GioURI(URIGetter):
         if not uri_ptr:
             self.libgio.g_free(uri_ptr)
             raise RuntimeError("No URI received from the gfile pointer for "
-                               "{}".format(util.displayable_path(path)))
+                               "{}".format(displayable_path(path)))
 
         try:
             uri = copy_c_string(uri_ptr)
