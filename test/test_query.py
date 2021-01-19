@@ -31,6 +31,7 @@ from beets.dbcore.query import (NoneQuery, ParsingError,
                                 InvalidQueryArgumentValueError)
 from beets.library import Library, Item
 from beets import util
+from beets.util import syspath
 
 # Because the absolute path begins with something like C:, we
 # can't disambiguate it from an ordinary query.
@@ -662,7 +663,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         # Temporarily change directory so relative paths work.
         cur_dir = os.getcwd()
         try:
-            os.chdir(self.temp_dir)
+            os.chdir(syspath(self.temp_dir))
             self.assertTrue(is_path_query('foo/'))
             self.assertTrue(is_path_query('foo/bar'))
             self.assertTrue(is_path_query('foo/bar:tagada'))
