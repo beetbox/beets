@@ -31,6 +31,7 @@ from beets import library
 from beets import importer
 from beets import logging
 from beets import util
+from beets.util import syspath
 from beets.util.artresizer import ArtResizer
 import confuse
 
@@ -197,7 +198,7 @@ class FSArtTest(UseThePlugin):
     def setUp(self):
         super().setUp()
         self.dpath = os.path.join(self.temp_dir, b'arttest')
-        os.mkdir(self.dpath)
+        os.mkdir(syspath(self.dpath))
 
         self.source = fetchart.FileSystem(logger, self.plugin.config)
         self.settings = Settings(cautious=False,
@@ -251,7 +252,7 @@ class CombinedTest(FetchImageHelper, UseThePlugin, CAAHelper):
     def setUp(self):
         super().setUp()
         self.dpath = os.path.join(self.temp_dir, b'arttest')
-        os.mkdir(self.dpath)
+        os.mkdir(syspath(self.dpath))
 
     def test_main_interface_returns_amazon_art(self):
         self.mock_response(self.AMAZON_URL)
@@ -641,10 +642,13 @@ class ArtImporterTest(UseThePlugin):
         # Test library.
         self.libpath = os.path.join(self.temp_dir, b'tmplib.blb')
         self.libdir = os.path.join(self.temp_dir, b'tmplib')
-        os.mkdir(self.libdir)
-        os.mkdir(os.path.join(self.libdir, b'album'))
+        os.mkdir(syspath(self.libdir))
+        os.mkdir(syspath(os.path.join(self.libdir, b'album')))
         itempath = os.path.join(self.libdir, b'album', b'test.mp3')
-        shutil.copyfile(os.path.join(_common.RSRC, b'full.mp3'), itempath)
+        shutil.copyfile(
+            syspath(os.path.join(_common.RSRC, b'full.mp3')),
+            syspath(itempath),
+        )
         self.lib = library.Library(self.libpath)
         self.i = _common.item()
         self.i.path = itempath
@@ -716,7 +720,7 @@ class ArtImporterTest(UseThePlugin):
 
     def test_do_not_delete_original_if_already_in_place(self):
         artdest = os.path.join(os.path.dirname(self.i.path), b'cover.jpg')
-        shutil.copyfile(self.art_file, artdest)
+        shutil.copyfile(syspath(self.art_file), syspath(artdest))
         self.afa_response = fetchart.Candidate(logger, path=artdest)
         self._fetch_art(True)
 

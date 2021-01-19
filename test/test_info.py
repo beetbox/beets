@@ -41,7 +41,7 @@ class InfoTest(unittest.TestCase, TestHelper):
         mediafile.save()
 
         out = self.run_with_output('info', path)
-        self.assertIn(path, out)
+        self.assertIn(displayable_path(path), out)
         self.assertIn('albumartist: AAA', out)
         self.assertIn('disctitle: DDD', out)
         self.assertIn('genres: a; b; c', out)
