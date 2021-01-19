@@ -26,7 +26,6 @@ import shlex
 import six
 from string import Template
 import platform
-from itertools import repeat
 
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
@@ -185,8 +184,8 @@ class ConvertPlugin(BeetsPlugin):
 
     def auto_convert(self, config, task):
         if self.config['auto']:
-            par_map(lambda item: self.convert_on_import(config.lib, item), task.imported_items())
-
+            par_map(lambda item: self.convert_on_import(config.lib, item),
+                    task.imported_items())
 
     # Utilities converted from functions to methods on logging overhaul
 
