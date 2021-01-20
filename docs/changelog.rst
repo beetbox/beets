@@ -6,6 +6,8 @@ Changelog
 
 New features:
 
+* Submitting acoustID information on tracks which already have a fingerprint
+  :bug:`3834`
 * conversion uses par_map to parallelize conversion jobs in python3
 * Add ``title_case`` config option to lastgenre to make TitleCasing optional.
 * When config is printed with no available configuration a new message is printed.
