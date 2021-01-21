@@ -102,7 +102,8 @@ def _album_item(album_info):
         'albumartist_sort':   a.get("release-group", {}).get("artist-credit", [])[0].get("artist", {}).get("sort-name") if len(a.get("release-group", {}).get("artist-credit", [])) > 0 else None,
         'albumdisambig':      a.get("release-group", {}).get("artist-credit", [])[0].get("artist", {}).get("disambiguation") if len(a.get("release-group", {}).get("artist-credit", [])) > 0 else None,
         'albumstatus':        a.get("status"),
-        'albumtype':          a.get("release-group", {}).get("type"),
+        'albumtype':          a.get("release-group", {}).get("primary-type"),
+        'albumsubtype':       a.get("release-group", {}).get("secondary-type-list", [])[0] if len(a.get("release-group", {}).get("secondary-type-list", [])) > 0 else None,
         'artist':             a.get("artist-credit", [])[0].get("artist", {}).get("name") if len(a.get("artist-credit", [])) > 0 else None,
         'artist_credit':      a.get("artist-credit-phrase"),
         'artist_sort':        a.get("artist-credit", [])[0].get("artist", {}).get("sort-name") if len(a.get("artist-credit", [])) > 0 else None,
@@ -283,6 +284,7 @@ class MissingPlugin(BeetsPlugin):
                 continue
 
             for r in missing:
+                #self._log.info(u"{}\n\n", r)
                 item = _album_item(r)
                 print_(format(item, fmt))
 
