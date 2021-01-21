@@ -6,6 +6,9 @@ Changelog
 
 New features:
 
+* Submitting acoustID information on tracks which already have a fingerprint
+  :bug:`3834`
+* conversion uses par_map to parallelize conversion jobs in python3
 * Add ``title_case`` config option to lastgenre to make TitleCasing optional.
 * When config is printed with no available configuration a new message is printed.
   :bug:`3779`
@@ -14,6 +17,8 @@ New features:
 * :doc:`/plugins/chroma`: Update file metadata after generating fingerprints through the `submit` command.
 * :doc:`/plugins/lastgenre`: Added more heavy metal genres: https://en.wikipedia.org/wiki/Heavy_metal_genres to genres.txt and genres-tree.yaml
 * :doc:`/plugins/subsonicplaylist`: import playlist from a subsonic server.
+* :doc:`/plugins/subsonicupdate`: Automatically choose between token and
+  password-based authentication based on server version
 * A new :ref:`reflink` config option instructs the importer to create fast,
   copy-on-write file clones on filesystems that support them. Thanks to
   :user:`rubdos`.
