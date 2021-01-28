@@ -16,18 +16,14 @@
 
 from __future__ import division, absolute_import, print_function
 
-import unittest
 import six
-
-from mock import patch
-from test.helper import TestHelper, capture_log, has_program
+import unittest
+from mediafile import MediaFile
 
 from beets import config
-from beets.util import CommandOutput
-from mediafile import MediaFile
 from beetsplug.replaygain import (FatalGstreamerPluginReplayGainError,
                                   GStreamerBackend)
-
+from test.helper import TestHelper, has_program
 
 try:
     import gi
@@ -40,11 +36,6 @@ if any(has_program(cmd, ['-v']) for cmd in ['mp3gain', 'aacgain']):
     GAIN_PROG_AVAILABLE = True
 else:
     GAIN_PROG_AVAILABLE = False
-
-if has_program('bs1770gain'):
-    LOUDNESS_PROG_AVAILABLE = True
-else:
-    LOUDNESS_PROG_AVAILABLE = False
 
 FFMPEG_AVAILABLE = has_program('ffmpeg', ['-version'])
 
@@ -153,9 +144,7 @@ class ReplayGainCliTestBase(TestHelper):
         self.assertEqual(max(gains), min(gains))
 
         self.assertNotEqual(max(gains), 0.0)
-        if not self.backend == "bs1770gain":
-            # Actually produces peaks == 0.0 ~ self.add_album_fixture
-            self.assertNotEqual(max(peaks), 0.0)
+        self.assertNotEqual(max(peaks), 0.0)
 
     def test_cli_writes_only_r128_tags(self):
         if self.backend == "command":
@@ -217,62 +206,6 @@ class ReplayGainGstCliTest(ReplayGainCliTestBase, unittest.TestCase):
 @unittest.skipIf(not GAIN_PROG_AVAILABLE, u'no *gain command found')
 class ReplayGainCmdCliTest(ReplayGainCliTestBase, unittest.TestCase):
     backend = u'command'
-
-
-@unittest.skipIf(not LOUDNESS_PROG_AVAILABLE, u'bs1770gain cannot be found')
-class ReplayGainLdnsCliTest(ReplayGainCliTestBase, unittest.TestCase):
-    backend = u'bs1770gain'
-
-
-class ReplayGainLdnsCliMalformedTest(TestHelper, unittest.TestCase):
-    @patch('beetsplug.replaygain.call')
-    def setUp(self, call_patch):
-        self.setup_beets()
-        self.config['replaygain']['backend'] = 'bs1770gain'
-
-        # Patch call to return nothing, bypassing the bs1770gain installation
-        # check.
-        call_patch.return_value = CommandOutput(
-            stdout=b'bs1770gain 0.0.0, ', stderr=b''
-        )
-        try:
-            self.load_plugins('replaygain')
-        except Exception:
-            import sys
-            exc_info = sys.exc_info()
-            try:
-                self.tearDown()
-            except Exception:
-                pass
-            six.reraise(exc_info[1], None, exc_info[2])
-
-        for item in self.add_album_fixture(2).items():
-            reset_replaygain(item)
-
-    def tearDown(self):
-        self.teardown_beets()
-        self.unload_plugins()
-
-    @patch('beetsplug.replaygain.call')
-    def test_malformed_output(self, call_patch):
-        # Return malformed XML (the ampersand should be &amp;)
-        call_patch.return_value = CommandOutput(stdout=b"""
-            <album>
-                <track total="1" number="1" file="&">
-                    <integrated lufs="0" lu="0" />
-                    <sample-peak spfs="0" factor="0" />
-                </track>
-            </album>
-        """, stderr="")
-
-        with capture_log('beets.replaygain') as logs:
-            self.run_command('replaygain')
-
-        # Count how many lines match the expected error.
-        matching = [line for line in logs if
-                    'malformed XML' in line]
-
-        self.assertEqual(len(matching), 2)
 
 
 @unittest.skipIf(not FFMPEG_AVAILABLE, u'ffmpeg cannot be found')
