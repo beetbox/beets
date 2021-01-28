@@ -136,14 +136,14 @@ class CountedInvalidatingQueue():
                 self.not_empty.notifyAll()
                 self.not_full.notifyAll()
             else:
-                assert len(self._queue) == 0
+                assert not self._queue
 
     def _is_full(self):
         """Predicate factored out to increase readability of `put()`.
 
         For internal use only, `self._mutex` must be held.
         """
-        return self._maxsize == 0 or len(self._queue) >= self._maxsize
+        return self._maxsize > 0 and len(self._queue) >= self._maxsize
 
     def put(self, item):
         """Put an item into the queue.
@@ -153,7 +153,7 @@ class CountedInvalidatingQueue():
         return immediately.
         """
         with self.not_full:
-            while (not self._invalidated and self._is_full()):
+            while not self._invalidated and self._is_full():
                 self.not_full.wait()
 
             self._queue.append(item)
@@ -171,7 +171,7 @@ class CountedInvalidatingQueue():
                 if self._invalidated:
                     return self._invalid_value
 
-                if len(self._queue):
+                if self._queue:
                     item = self._queue.popleft()
                     self.not_full.notify()
                     return item
