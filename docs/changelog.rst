@@ -239,8 +239,6 @@ Fixes:
   :bug:`3437`
 * :doc:`/plugins/lyrics`: Fix a corner-case with Genius lowercase artist names
   :bug:`3446`
-* :doc:`/plugins/replaygain`: Support ``bs1770gain`` v0.6.0 and up
-  :bug:`3480`
 * :doc:`/plugins/parentwork`: Don't save tracks when nothing has changed.
   :bug:`3492`
 * Added a warning when configuration files defined in the `include` directive
@@ -352,6 +350,7 @@ For packagers:
   or `repair <https://build.opensuse.org/package/view_file/openSUSE:Factory/beets/fix_test_command_line_option_relative_to_working_dir.diff?expand=1>`_
   the test may no longer be necessary.
 * This version drops support for Python 3.4.
+* Removes the optional dependency on bs1770gain.
 
 .. _Fish shell: https://fishshell.com/
 .. _MediaFile: https://github.com/beetbox/mediafile
