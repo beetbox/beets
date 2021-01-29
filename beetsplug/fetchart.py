@@ -66,7 +66,7 @@ class Candidate(object):
         self.check = None
         self.match = match
         self.size = size
-    
+
     def _validate(self, plugin):
         """Determine whether the candidate artwork is valid based on
         its dimensions (width and ratio).
@@ -75,14 +75,14 @@ class Candidate(object):
         Return `CANDIDATE_EXACT` if the file is usable as-is.
         Return `CANDIDATE_DOWNSCALE` if the file must be rescaled.
         Return `CANDIDATE_DOWNSIZE` if the file must be resized.
-        Return `CANDIDATE_DOWNSCALE_AND_DOWNSIZE` if both resizing 
+        Return `CANDIDATE_DOWNSCALE_AND_DOWNSIZE` if both resizing
         & rescaling are necessary.
         """
         if not self.path:
             return self.CANDIDATE_BAD
 
-        if (not (plugin.enforce_ratio or plugin.minwidth or plugin.maxwidth 
-            or plugin.max_filesize)):
+        if (not (plugin.enforce_ratio or plugin.minwidth or plugin.maxwidth
+                 or plugin.max_filesize)):
             return self.CANDIDATE_EXACT
 
         # get_size returns None if no local imaging backend is available
@@ -134,7 +134,7 @@ class Candidate(object):
             self._log.debug(u'image needs rescaling ({} > {})',
                             self.size[0], plugin.maxwidth)
             downscale = True
-            
+
         # Check filesize.
         filesize = os.stat(syspath(self.path)).st_size
         downsize = False
@@ -157,20 +157,20 @@ class Candidate(object):
         return self.check
 
     def resize(self, plugin):
-        # checks for plugin.maxwidth & plugin.max_filesize have been performed above
         if self.check == self.CANDIDATE_DOWNSCALE_AND_DOWNSIZE:
-            self.path = ArtResizer.shared.resize(plugin.maxwidth, self.path,
-                                                 quality=plugin.quality, 
-                                                 max_filesize=plugin.max_filesize)
+            self.path = \
+                ArtResizer.shared.resize(plugin.maxwidth, self.path,
+                                         quality=plugin.quality,
+                                         max_filesize=plugin.max_filesize)
         elif self.check == self.CANDIDATE_DOWNSCALE:
             self.path = ArtResizer.shared.resize(plugin.maxwidth, self.path,
                                                  quality=plugin.quality)
         elif self.check == self.CANDIDATE_DOWNSIZE:
             # dimensions are correct, so maxwidth is set to maximum dimension
-            self.path = ArtResizer.shared.resize(max(self.size), self.path,
-                                                 quality=plugin.quality,
-                                                 max_filesize=plugin.max_filesize)
-            
+            self.path = \
+                ArtResizer.shared.resize(max(self.size), self.path,
+                                         quality=plugin.quality,
+                                         max_filesize=plugin.max_filesize)
 
 
 def _logged_get(log, *args, **kwargs):

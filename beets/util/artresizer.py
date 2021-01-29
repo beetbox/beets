@@ -98,7 +98,7 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
                 log.debug(u"PIL Pass {0} : Output size: {1}B", i, filesize)
                 if filesize <= max_filesize:
                     return path_out
-                # The relationship between filesize & quality will be 
+                # The relationship between filesize & quality will be
                 # image dependent.
                 lower_qual -= 10
                 # Restrict quality dropping below 10
@@ -108,7 +108,8 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
                 im.save(
                     util.py3_path(path_out), quality=lower_qual, optimize=True
                 )
-            log.warning(u"PIL Failed to resize file to below {0}B", max_filesize)
+            log.warning(u"PIL Failed to resize file to below {0}B",
+                        max_filesize)
             return path_out
 
         else:

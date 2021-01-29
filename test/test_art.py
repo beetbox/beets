@@ -846,7 +846,7 @@ class ArtForAlbumTest(UseThePlugin):
         self._require_backend()
         self.plugin.max_filesize = self.IMG_225x225_SIZE // 2
         self._assertImageResized(self.IMG_225x225, True)
-    
+
     def test_fileresize_if_necessary(self):
         self._require_backend()
         self.plugin.max_filesize = self.IMG_225x225_SIZE
@@ -858,13 +858,12 @@ class ArtForAlbumTest(UseThePlugin):
         self.plugin.maxwidth = 300
         self.plugin.max_filesize = self.IMG_225x225_SIZE // 2
         self._assertImageResized(self.IMG_225x225, True)
-    
+
     def test_fileresize_and_scale(self):
         self._require_backend()
         self.plugin.maxwidth = 200
         self.plugin.max_filesize = self.IMG_225x225_SIZE // 2
         self._assertImageResized(self.IMG_225x225, True)
-
 
 
 class DeprecatedConfigTest(_common.TestCase):

@@ -74,9 +74,12 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         self.assertExists(im_a)
         self.assertExists(im_b)
 
-        # check size has decreased enough (unknown behaviour for quality-only setting)
-        self.assertLess(os.stat(syspath(im_a)).st_size, self.IMG_225x225_SIZE)
-        self.assertLess(os.stat(syspath(im_b)).st_size, self.IMG_225x225_SIZE)
+        # check size has decreased enough
+        # (unknown behaviour for quality-only setting)
+        self.assertLess(os.stat(syspath(im_a)).st_size,
+                        self.IMG_225x225_SIZE)
+        self.assertLess(os.stat(syspath(im_b)).st_size,
+                        self.IMG_225x225_SIZE)
 
     @unittest.skipUnless(get_pil_version(), "PIL not available")
     def test_pil_file_resize(self):
