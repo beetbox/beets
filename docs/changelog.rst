@@ -25,9 +25,9 @@ New features:
 * A new :ref:`extra_tags` configuration option allows more tagged metadata
   to be included in MusicBrainz queries.
 * A new :doc:`/plugins/fish` adds `Fish shell`_ tab autocompletion to beets
-* :doc:`plugins/fetchart` and :doc:`plugins/embedart`: Added new ``quality`` and
-  ``max_filesize`` options that control the quality & filesize of the output when an
-  image is resized.
+* :doc:`plugins/fetchart` and :doc:`plugins/embedart`: Added new ``quality`` option 
+  that controls the quality of the output when an image is resized. Additionally,
+  ``max_filesize`` option for fetchart targets a maximum image filesize.
 * :doc:`plugins/keyfinder`: Added support for `keyfinder-cli`_
   Thanks to :user:`BrainDamage`.
 * :doc:`plugins/fetchart`: Added a new ``high_resolution`` config option to

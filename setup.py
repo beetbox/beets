@@ -31,11 +31,11 @@ def _read(fn):
 
 def build_manpages():
     # Go into the docs directory and build the manpage.
-    docdir = os.path.join(os.path.dirname(__file__), "docs")
+    docdir = os.path.join(os.path.dirname(__file__), 'docs')
     curdir = os.getcwd()
     os.chdir(docdir)
     try:
-        subprocess.check_call(["make", "man"])
+        subprocess.check_call(['make', 'man'])
     except OSError:
         print("Could not build manpages (make man failed)!", file=sys.stderr)
         return
@@ -43,77 +43,72 @@ def build_manpages():
         os.chdir(curdir)
 
     # Copy resulting manpages.
-    mandir = os.path.join(os.path.dirname(__file__), "man")
+    mandir = os.path.join(os.path.dirname(__file__), 'man')
     if os.path.exists(mandir):
         shutil.rmtree(mandir)
-    shutil.copytree(os.path.join(docdir, "_build", "man"), mandir)
+    shutil.copytree(os.path.join(docdir, '_build', 'man'), mandir)
 
 
 # Build manpages if we're making a source distribution tarball.
-if "sdist" in sys.argv:
+if 'sdist' in sys.argv:
     build_manpages()
 
 
 setup(
-    name="beets",
-    version="1.5.0",
-    description="music tagger and library organizer",
-    author="Adrian Sampson",
-    author_email="adrian@radbox.org",
-    url="https://beets.io/",
-    license="MIT",
-    platforms="ALL",
-    long_description=_read("README.rst"),
-    test_suite="test.testall.suite",
+    name='beets',
+    version='1.5.0',
+    description='music tagger and library organizer',
+    author='Adrian Sampson',
+    author_email='adrian@radbox.org',
+    url='https://beets.io/',
+    license='MIT',
+    platforms='ALL',
+    long_description=_read('README.rst'),
+    test_suite='test.testall.suite',
     zip_safe=False,
     include_package_data=True,  # Install plugin resources.
+
     packages=[
-        "beets",
-        "beets.ui",
-        "beets.autotag",
-        "beets.util",
-        "beets.dbcore",
-        "beetsplug",
-        "beetsplug.bpd",
-        "beetsplug.web",
-        "beetsplug.lastgenre",
-        "beetsplug.metasync",
+        'beets',
+        'beets.ui',
+        'beets.autotag',
+        'beets.util',
+        'beets.dbcore',
+        'beetsplug',
+        'beetsplug.bpd',
+        'beetsplug.web',
+        'beetsplug.lastgenre',
+        'beetsplug.metasync',
     ],
-    entry_points={"console_scripts": ["beet = beets.ui:main",],},
+    entry_points={
+        'console_scripts': [
+            'beet = beets.ui:main',
+        ],
+    },
+
     install_requires=[
-        "six>=1.9",
-        "unidecode",
-        "musicbrainzngs>=0.4",
-        "pyyaml",
-        "mediafile>=0.2.0",
-        "confuse>=1.0.0",
-    ]
-    + [
+        'six>=1.9',
+        'unidecode',
+        'musicbrainzngs>=0.4',
+        'pyyaml',
+        'mediafile>=0.2.0',
+        'confuse>=1.0.0',
+    ] + [
         # Avoid a version of munkres incompatible with Python 3.
-        "munkres~=1.0.0"
-        if sys.version_info < (3, 5, 0)
-        else "munkres!=1.1.0,!=1.1.1"
-        if sys.version_info < (3, 6, 0)
-        else "munkres>=1.0.0",
-    ]
-    + (
+        'munkres~=1.0.0' if sys.version_info < (3, 5, 0) else
+        'munkres!=1.1.0,!=1.1.1' if sys.version_info < (3, 6, 0) else
+        'munkres>=1.0.0',
+    ] + (
         # Use the backport of Python 3.4's `enum` module.
-        ["enum34>=1.0.4"]
-        if sys.version_info < (3, 4, 0)
-        else []
-    )
-    + (
+        ['enum34>=1.0.4'] if sys.version_info < (3, 4, 0) else []
+    ) + (
         # Pin a Python 2-compatible version of Jellyfish.
-        ["jellyfish==0.6.0"]
-        if sys.version_info < (3, 4, 0)
-        else ["jellyfish"]
-    )
-    + (
+        ['jellyfish==0.6.0'] if sys.version_info < (3, 4, 0) else ['jellyfish']
+    ) + (
         # Support for ANSI console colors on Windows.
-        ["colorama"]
-        if (sys.platform == "win32")
-        else []
+        ['colorama'] if (sys.platform == 'win32') else []
     ),
+
     extras_require={
         'test': [
             'beautifulsoup4',
@@ -130,37 +125,36 @@ setup(
             'reflink',
         ] + (
             # Tests for the thumbnails plugin need pathlib on Python 2 too.
-            ["pathlib"]
-            if (sys.version_info < (3, 4, 0))
-            else []
-        )
-        + ["rarfile<4" if sys.version_info < (3, 6, 0) else "rarfile",],
-        "lint": [
-            "flake8",
-            "flake8-blind-except",
-            "flake8-coding",
-            "flake8-docstrings",
-            "flake8-future-import",
-            "pep8-naming",
+            ['pathlib'] if (sys.version_info < (3, 4, 0)) else []
+        ) + [
+            'rarfile<4' if sys.version_info < (3, 6, 0) else 'rarfile',
         ],
+        'lint': [
+            'flake8',
+            'flake8-coding',
+            'flake8-docstrings',
+            'flake8-future-import',
+            'pep8-naming',
+        ],
+
         # Plugin (optional) dependencies:
-        "absubmit": ["requests"],
-        "fetchart": ["requests", "Pillow"],
-        "embedart": ["Pillow"],
-        "embyupdate": ["requests"],
-        "chroma": ["pyacoustid"],
-        "gmusic": ["gmusicapi"],
-        "discogs": ["discogs-client>=2.2.1"],
-        "beatport": ["requests-oauthlib>=0.6.1"],
-        "kodiupdate": ["requests"],
-        "lastgenre": ["pylast"],
-        "lastimport": ["pylast"],
-        "lyrics": ["requests", "beautifulsoup4", "langdetect"],
-        "mpdstats": ["python-mpd2>=0.4.2"],
-        "plexupdate": ["requests"],
-        "web": ["flask", "flask-cors"],
-        "import": (
-            ["rarfile<4" if (sys.version_info < (3, 6, 0)) else "rarfile"]
+        'absubmit': ['requests'],
+        'fetchart': ['requests', 'Pillow'],
+        'embedart': ['Pillow'],
+        'embyupdate': ['requests'],
+        'chroma': ['pyacoustid'],
+        'gmusic': ['gmusicapi'],
+        'discogs': ['discogs-client>=2.2.1'],
+        'beatport': ['requests-oauthlib>=0.6.1'],
+        'kodiupdate': ['requests'],
+        'lastgenre': ['pylast'],
+        'lastimport': ['pylast'],
+        'lyrics': ['requests', 'beautifulsoup4', 'langdetect'],
+        'mpdstats': ['python-mpd2>=0.4.2'],
+        'plexupdate': ['requests'],
+        'web': ['flask', 'flask-cors'],
+        'import': (
+            ['rarfile<4' if (sys.version_info < (3, 6, 0)) else 'rarfile']
         ),
         'thumbnails': ['pyxdg', 'Pillow'] +
         (['pathlib'] if (sys.version_info < (3, 4, 0)) else []),
@@ -182,20 +176,21 @@ setup(
     #   replaygain: python-gi and GStreamer 1.0+ or mp3gain/aacgain
     #               or Python Audio Tools
     #   ipfs: go-ipfs
+
     classifiers=[
-        "Topic :: Multimedia :: Sound/Audio",
-        "Topic :: Multimedia :: Sound/Audio :: Players :: MP3",
-        "License :: OSI Approved :: MIT License",
-        "Environment :: Console",
-        "Environment :: Web Environment",
-        "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: Implementation :: CPython",
+        'Topic :: Multimedia :: Sound/Audio',
+        'Topic :: Multimedia :: Sound/Audio :: Players :: MP3',
+        'License :: OSI Approved :: MIT License',
+        'Environment :: Console',
+        'Environment :: Web Environment',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: Implementation :: CPython',
     ],
 )
