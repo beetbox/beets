@@ -64,14 +64,12 @@ New features:
   Thanks to :user:`samuelnilsson`
   :bug:`293`
 * :doc:`/plugins/replaygain`: The new ``ffmpeg`` ReplayGain backend supports
-  ``R128_`` tags, just like the ``bs1770gain`` backend.
+  ``R128_`` tags.
   :bug:`3056`
 * :doc:`plugins/replaygain`: ``r128_targetlevel`` is a new configuration option
   for the ReplayGain plugin: It defines the reference volume for files using
   ``R128_`` tags. ``targetlevel`` only configures the reference volume for
   ``REPLAYGAIN_`` files.
-  This also deprecates the ``bs1770gain`` ReplayGain backend's ``method``
-  option. Use ``targetlevel`` and ``r128_targetlevel`` instead.
   :bug:`3065`
 * A new :doc:`/plugins/parentwork` gets information about the original work,
   which is useful for classical music.
@@ -176,8 +174,10 @@ New features:
   https://github.com/alastair/python-musicbrainzngs/pull/266 .
   Thanks to :user:`aereaux`.
 * :doc:`/plugins/replaygain` now does its analysis in parallel when using
-  the ``command``, ``ffmpeg`` or ``bs1770gain`` backends.
+  the ``command`` or ``ffmpeg`` backends.
   :bug:`3478`
+* Removes usage of the bs1770gain replaygain backend.
+  Thanks to :user:`SamuelCook`.
 
 Fixes:
 
@@ -239,8 +239,6 @@ Fixes:
   :bug:`3437`
 * :doc:`/plugins/lyrics`: Fix a corner-case with Genius lowercase artist names
   :bug:`3446`
-* :doc:`/plugins/replaygain`: Support ``bs1770gain`` v0.6.0 and up
-  :bug:`3480`
 * :doc:`/plugins/parentwork`: Don't save tracks when nothing has changed.
   :bug:`3492`
 * Added a warning when configuration files defined in the `include` directive
@@ -352,6 +350,7 @@ For packagers:
   or `repair <https://build.opensuse.org/package/view_file/openSUSE:Factory/beets/fix_test_command_line_option_relative_to_working_dir.diff?expand=1>`_
   the test may no longer be necessary.
 * This version drops support for Python 3.4.
+* Removes the optional dependency on bs1770gain.
 
 .. _Fish shell: https://fishshell.com/
 .. _MediaFile: https://github.com/beetbox/mediafile
