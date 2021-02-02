@@ -139,11 +139,11 @@ class Candidate(object):
             self._log.debug(u'image needs resizing ({}B > {}B)',
                             filesize, plugin.max_filesize)
             downsize = True
-        
+
         if downscale:
-            return self.CANDIDATE_DOWNSCALE   
+            return self.CANDIDATE_DOWNSCALE
         elif downsize:
-            return self.CANDIDATE_DOWNSIZE     
+            return self.CANDIDATE_DOWNSIZE
         else:
             return self.CANDIDATE_EXACT
 

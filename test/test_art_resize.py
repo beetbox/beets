@@ -69,7 +69,7 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         # target size was achieved
         self.assertLess(os.stat(syspath(im_a)).st_size,
                         os.stat(syspath(im_95_qual)).st_size)
-        
+
         # Attempt with lower initial quality
         im_75_qual = resize_func(
             225,
