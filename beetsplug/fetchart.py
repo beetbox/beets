@@ -52,7 +52,6 @@ class Candidate(object):
     CANDIDATE_EXACT = 1
     CANDIDATE_DOWNSCALE = 2
     CANDIDATE_DOWNSIZE = 3
-    CANDIDATE_DOWNSCALE_AND_DOWNSIZE = 4
 
     MATCH_EXACT = 0
     MATCH_FALLBACK = 1
@@ -75,8 +74,6 @@ class Candidate(object):
         Return `CANDIDATE_EXACT` if the file is usable as-is.
         Return `CANDIDATE_DOWNSCALE` if the file must be rescaled.
         Return `CANDIDATE_DOWNSIZE` if the file must be resized.
-        Return `CANDIDATE_DOWNSCALE_AND_DOWNSIZE` if both resizing
-        & rescaling are necessary.
         """
         if not self.path:
             return self.CANDIDATE_BAD
@@ -142,13 +139,11 @@ class Candidate(object):
             self._log.debug(u'image needs resizing ({}B > {}B)',
                             filesize, plugin.max_filesize)
             downsize = True
-
-        if downscale and downsize:
-            return self.CANDIDATE_DOWNSCALE_AND_DOWNSIZE
-        elif downscale and not downsize:
-            return self.CANDIDATE_DOWNSCALE
-        elif downsize and not downscale:
-            return self.CANDIDATE_DOWNSIZE
+        
+        if downscale:
+            return self.CANDIDATE_DOWNSCALE   
+        elif downsize:
+            return self.CANDIDATE_DOWNSIZE     
         else:
             return self.CANDIDATE_EXACT
 
@@ -157,14 +152,11 @@ class Candidate(object):
         return self.check
 
     def resize(self, plugin):
-        if self.check == self.CANDIDATE_DOWNSCALE_AND_DOWNSIZE:
+        if self.check == self.CANDIDATE_DOWNSCALE:
             self.path = \
                 ArtResizer.shared.resize(plugin.maxwidth, self.path,
                                          quality=plugin.quality,
                                          max_filesize=plugin.max_filesize)
-        elif self.check == self.CANDIDATE_DOWNSCALE:
-            self.path = ArtResizer.shared.resize(plugin.maxwidth, self.path,
-                                                 quality=plugin.quality)
         elif self.check == self.CANDIDATE_DOWNSIZE:
             # dimensions are correct, so maxwidth is set to maximum dimension
             self.path = \
