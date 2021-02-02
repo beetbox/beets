@@ -49,37 +49,46 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
     def _test_img_resize(self, resize_func):
         """Test resizing based on file size, given a resize_func."""
         # Check quality setting unaffected by new parameter
-        im_unchanged = resize_func(
+        im_95_qual = resize_func(
             225,
             self.IMG_225x225,
             quality=95,
             max_filesize=0,
         )
-        # Attempt a lower filesize
+        # check valid path returned - max_filesize hasn't broken resize command
+        self.assertExists(im_95_qual)
+
+        # Attempt a lower filesize with same quality
         im_a = resize_func(
             225,
             self.IMG_225x225,
             quality=95,
-            max_filesize=self.IMG_225x225_SIZE // 2,
+            max_filesize=0.9 * os.stat(syspath(im_95_qual)).st_size,
         )
+        self.assertExists(im_a)
+        # target size was achieved
+        self.assertLess(os.stat(syspath(im_a)).st_size,
+                        os.stat(syspath(im_95_qual)).st_size)
+        
         # Attempt with lower initial quality
-        im_b = resize_func(
+        im_75_qual = resize_func(
             225,
             self.IMG_225x225,
             quality=75,
-            max_filesize=self.IMG_225x225_SIZE // 2,
+            max_filesize=0,
         )
-        # check valid paths returned
-        self.assertExists(im_unchanged)
-        self.assertExists(im_a)
-        self.assertExists(im_b)
+        self.assertExists(im_75_qual)
 
-        # check size has decreased enough
-        # (unknown behaviour for quality-only setting)
-        self.assertLess(os.stat(syspath(im_a)).st_size,
-                        self.IMG_225x225_SIZE)
+        im_b = resize_func(
+            225,
+            self.IMG_225x225,
+            quality=95,
+            max_filesize=0.9 * os.stat(syspath(im_75_qual)).st_size,
+        )
+        self.assertExists(im_b)
+        # Check high (initial) quality still gives a smaller filesize
         self.assertLess(os.stat(syspath(im_b)).st_size,
-                        self.IMG_225x225_SIZE)
+                        os.stat(syspath(im_75_qual)).st_size)
 
     @unittest.skipUnless(get_pil_version(), "PIL not available")
     def test_pil_file_resize(self):

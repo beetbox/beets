@@ -92,7 +92,7 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
                 lower_qual = quality
             else:
                 lower_qual = 95
-            for i in range(3):
+            for i in range(5):
                 # 3 attempts is an abitrary choice
                 filesize = os.stat(util.syspath(path_out)).st_size
                 log.debug(u"PIL Pass {0} : Output size: {1}B", i, filesize)

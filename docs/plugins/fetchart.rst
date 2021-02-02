@@ -52,7 +52,7 @@ file. The available options are:
 - **max_filesize**: The maximum size of a target piece of cover art in bytes.
   When using an ImageMagick backend this sets 
   ``-define jpeg:extent=max_filesize``. Using PIL this will reduce JPG quality
-  by up to 30% to attempt to reach the target filesize. Neither method is
+  by up to 50% to attempt to reach the target filesize. Neither method is
   *guaranteed* to reach the target size, however in most cases it should
   succeed.
   Default: 0 (disabled)
