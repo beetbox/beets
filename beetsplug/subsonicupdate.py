@@ -29,25 +29,45 @@ import string
 
 import requests
 
+from binascii import hexlify
 from beets import config
 from beets.plugins import BeetsPlugin
 
 __author__ = 'https://github.com/maffo999'
+AUTH_TOKEN_VERSION = (1, 12)
 
 
 class SubsonicUpdate(BeetsPlugin):
     def __init__(self):
         super(SubsonicUpdate, self).__init__()
-
         # Set default configuration values
         config['subsonic'].add({
             'user': 'admin',
             'pass': 'admin',
             'url': 'http://localhost:4040',
         })
-
         config['subsonic']['pass'].redact = True
+        self._version = None
+        self._auth = None
         self.register_listener('import', self.start_scan)
+
+    @property
+    def version(self):
+        if self._version is None:
+            self._version = self.__get_version()
+        return self._version
+
+    @property
+    def auth(self):
+        if self._auth is None:
+            if self.version is not None:
+                if self.version > AUTH_TOKEN_VERSION:
+                    self._auth = "token"
+                else:
+                    self._auth = "password"
+            self._log.info(
+                u"using '{}' authentication method".format(self._auth))
+        return self._auth
 
     @staticmethod
     def __create_token():
@@ -67,10 +87,10 @@ class SubsonicUpdate(BeetsPlugin):
         return salt, token
 
     @staticmethod
-    def __format_url():
-        """Get the Subsonic URL to trigger a scan. Uses either the url
-        config option or the deprecated host, port, and context_path config
-        options together.
+    def __format_url(endpoint):
+        """Get the Subsonic URL to trigger the given endpoint.
+        Uses either the url config option or the deprecated host, port,
+        and context_path config options together.
 
         :return: Endpoint for updating Subsonic
         """
@@ -88,22 +108,55 @@ class SubsonicUpdate(BeetsPlugin):
                 context_path = ''
             url = "http://{}:{}{}".format(host, port, context_path)
 
-        return url + '/rest/startScan'
+        return url + '/rest/{}'.format(endpoint)
 
-    def start_scan(self):
-        user = config['subsonic']['user'].as_str()
-        url = self.__format_url()
-        salt, token = self.__create_token()
-
+    def __get_version(self):
+        url = self.__format_url("ping.view")
         payload = {
-            'u': user,
-            't': token,
-            's': salt,
-            'v': '1.15.0',  # Subsonic 6.1 and newer.
             'c': 'beets',
             'f': 'json'
         }
+        try:
+            response = requests.get(url, params=payload)
+            if response.status_code == 200:
+                json = response.json()
+                version = json['subsonic-response']['version']
+                self._log.info(
+                    u'subsonic version:{0} '.format(version))
+                return tuple(int(s) for s in version.split('.'))
+            else:
+                self._log.error(u'Error: {0}', json)
+                return None
+        except Exception as error:
+            self._log.error(u'Error: {0}'.format(error))
+            return None
 
+    def start_scan(self):
+        user = config['subsonic']['user'].as_str()
+        url = self.__format_url("startScan.view")
+
+        if self.auth == 'token':
+            salt, token = self.__create_token()
+            payload = {
+                'u': user,
+                't': token,
+                's': salt,
+                'v': self.version,  # Subsonic 6.1 and newer.
+                'c': 'beets',
+                'f': 'json'
+            }
+        elif self.auth == 'password':
+            password = config['subsonic']['pass'].as_str()
+            encpass = hexlify(password.encode()).decode()
+            payload = {
+                'u': user,
+                'p': 'enc:{}'.format(encpass),
+                'v': self.version,
+                'c': 'beets',
+                'f': 'json'
+            }
+        else:
+            return
         try:
             response = requests.get(url, params=payload)
             json = response.json()
