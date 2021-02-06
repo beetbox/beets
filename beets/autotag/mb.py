@@ -260,7 +260,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     if arranger:
         info.arranger = u', '.join(arranger)
 
-    # supplementary fields provided by plugins
+    # Supplementary fields provided by plugins
     extra_trackdatas = plugins.send('mb_track_extract', data=recording)
     for extra_trackdata in extra_trackdatas:
         info.update(extra_trackdata)
