@@ -200,10 +200,7 @@ class ConvertPlugin(BeetsPlugin):
         assert isinstance(source, bytes)
         assert isinstance(dest, bytes)
 
-        quiet = self.config['quiet'].get(bool)
-
-        if not quiet and not pretend:
-            self._log.info(u'Encoding {0}', util.displayable_path(source))
+        self._log.debug(u'Encoding {0}', util.displayable_path(source))
 
         # On Python 3, we need to construct the command to invoke as a
         # Unicode string. On Unix, this is a little unfortunate---the OS is
@@ -256,10 +253,8 @@ class ConvertPlugin(BeetsPlugin):
                     u' '.join(ui.decargs(args)), exc
                 )
             )
-
-        if not quiet and not pretend:
-            self._log.info(u'Finished encoding {0}',
-                           util.displayable_path(source))
+        self._log.debug(u'Finished encoding {0}',
+                        util.displayable_path(source))
 
     def convert_item(self, dest_dir, keep_new, path_formats, fmt,
                      pretend=False, link=False, hardlink=False):
