@@ -127,9 +127,10 @@ class MPDClientWrapper(object):
         entry = self.get('currentsong')
         if 'file' in entry:
             if not is_url(entry['file']):
-                if entry.startswith(self.strip_path):
-                    entry = entry[len(self.strip_path):]
-                result = os.path.join(self.music_directory, entry)
+                file = entry['file']
+                if file.startswith(self.strip_path):
+                    file = file[len(self.strip_path):]
+                result = os.path.join(self.music_directory, file)
             else:
                 result = entry['file']
         return result, entry.get('id')
