@@ -53,6 +53,9 @@ class MPDClientWrapper(object):
         self.music_directory = (
             mpd_config['music_directory'].as_str())
 
+        self.strip_path = (
+            mpd_config['strip_path'].as_str())
+
         if sys.version_info < (3, 0):
             # On Python 2, use_unicode will enable the utf-8 mode for
             # python-mpd2
@@ -118,12 +121,16 @@ class MPDClientWrapper(object):
         """Return the path to the currently playing song, along with its
         songid.  Prefixes paths with the music_directory, to get the absolute
         path.
+        In some cases, we need to remove the local path from MPD server,
+        we replace 'strip_path' with ''.
+        `strip_path` defaults to ''.
         """
         result = None
         entry = self.get('currentsong')
         if 'file' in entry:
             if not is_url(entry['file']):
-                result = os.path.join(self.music_directory, entry['file'])
+                file = entry['file'].replace(self.strip_path, '')
+                result = os.path.join(self.music_directory, file)
             else:
                 result = entry['file']
         return result, entry.get('id')
@@ -334,6 +341,7 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
         super(MPDStatsPlugin, self).__init__()
         mpd_config.add({
             'music_directory': config['directory'].as_filename(),
+            'strip_path':      u'',
             'rating':          True,
             'rating_mix':      0.75,
             'host':            os.environ.get('MPD_HOST', u'localhost'),
