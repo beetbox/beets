@@ -6,6 +6,8 @@ Changelog
 
 New features:
 
+* :doc:`/plugins/mpdstats`: Add strip_path option to help build the right local path
+  from MPD information
 * Submitting acoustID information on tracks which already have a fingerprint
   :bug:`3834`
 * conversion uses par_map to parallelize conversion jobs in python3
