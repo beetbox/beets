@@ -50,9 +50,8 @@ class MPDClientWrapper(object):
     def __init__(self, log):
         self._log = log
 
-        self.music_directory = (mpd_config['music_directory'].as_str())
-
-        self.strip_path = (mpd_config['strip_path'].as_str())
+        self.music_directory = mpd_config['music_directory'].as_str()
+        self.strip_path = mpd_config['strip_path'].as_str()
 
         if sys.version_info < (3, 0):
             # On Python 2, use_unicode will enable the utf-8 mode for
