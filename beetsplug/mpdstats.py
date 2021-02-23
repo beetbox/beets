@@ -53,6 +53,13 @@ class MPDClientWrapper(object):
         self.music_directory = mpd_config['music_directory'].as_str()
         self.strip_path = mpd_config['strip_path'].as_str()
 
+        # Ensure strip_path end with '/'
+        if not self.strip_path.endswith('/'):
+            self.strip_path += '/'
+
+        self._log.debug('music_directory: {0}', self.music_directory)
+        self._log.debug('strip_path: {0}', self.strip_path)
+
         if sys.version_info < (3, 0):
             # On Python 2, use_unicode will enable the utf-8 mode for
             # python-mpd2
@@ -132,6 +139,7 @@ class MPDClientWrapper(object):
                 result = os.path.join(self.music_directory, file)
             else:
                 result = entry['file']
+        self._log.debug('returning: {0}', result)
         return result, entry.get('id')
 
     def status(self):
