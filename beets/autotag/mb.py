@@ -223,8 +223,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     if recording.get('length'):
         info.length = int(recording['length']) / (1000.0)
 
-    if recording.get('disambiguation'):
-        info.trackdisambig = recording.get('disambiguation')
+    info.trackdisambig = recording.get('disambiguation', None)
 
     lyricist = []
     composer = []
