@@ -163,7 +163,7 @@ class TrackInfo(AttrDict):
                  composer=None, composer_sort=None, arranger=None,
                  track_alt=None, work=None, mb_workid=None,
                  work_disambig=None, bpm=None, initial_key=None, genre=None,
-                 **kwargs):
+                 trackdisambig=None, **kwargs):
         self.title = title
         self.track_id = track_id
         self.release_track_id = release_track_id
@@ -191,6 +191,7 @@ class TrackInfo(AttrDict):
         self.bpm = bpm
         self.initial_key = initial_key
         self.genre = genre
+        self.trackdisambig = trackdisambig
         self.update(kwargs)
 
     # As above, work around a bug in python-musicbrainz-ngs.
