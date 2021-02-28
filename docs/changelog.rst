@@ -180,6 +180,9 @@ New features:
   :bug:`3478`
 * Removes usage of the bs1770gain replaygain backend.
   Thanks to :user:`SamuelCook`.
+* Added ``trackdisambig`` which stores the recording disambiguation from
+  MusicBrainz for each track.
+  :bug:`1904`
 
 Fixes:
 
