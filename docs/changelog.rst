@@ -180,6 +180,9 @@ New features:
   :bug:`3478`
 * Removes usage of the bs1770gain replaygain backend.
   Thanks to :user:`SamuelCook`.
+* Added ``trackdisambig`` which stores the recording disambiguation from
+  MusicBrainz for each track.
+  :bug:`1904`
 
 Fixes:
 
@@ -302,6 +305,8 @@ Fixes:
   :bug:`3798`
 * Fix :bug:`3308` by using browsing for big releases to retrieve additional
   information. Thanks to :user:`dosoe`.
+* :doc:`/plugins/discogs`: Replace deprecated discogs-client library with community
+  supported python3-discogs-client library. :bug:`3608`
 
 For plugin developers:
 

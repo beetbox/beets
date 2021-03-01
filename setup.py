@@ -113,7 +113,6 @@ setup(
         'test': [
             'beautifulsoup4',
             'coverage',
-            'discogs-client',
             'flask',
             'mock',
             'pylast',
@@ -128,6 +127,9 @@ setup(
             ['pathlib'] if (sys.version_info < (3, 4, 0)) else []
         ) + [
             'rarfile<4' if sys.version_info < (3, 6, 0) else 'rarfile',
+        ] + [
+            'discogs-client' if (sys.version_info < (3, 0, 0))
+            else 'python3-discogs-client'
         ],
         'lint': [
             'flake8',
@@ -144,7 +146,10 @@ setup(
         'embyupdate': ['requests'],
         'chroma': ['pyacoustid'],
         'gmusic': ['gmusicapi'],
-        'discogs': ['discogs-client>=2.2.1'],
+        'discogs': (
+            ['discogs-client' if (sys.version_info < (3, 0, 0))
+                else 'python3-discogs-client']
+        ),
         'beatport': ['requests-oauthlib>=0.6.1'],
         'kodiupdate': ['requests'],
         'lastgenre': ['pylast'],
