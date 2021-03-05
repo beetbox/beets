@@ -186,6 +186,7 @@ New features:
 
 Fixes:
 
+* Small improvement to ``web`` plugin test coverage (for `expand` and `stats` features)
 * :bug:`/plugins/discogs`: Fixed a bug with ``index_tracks`` options that
   sometimes caused the index to be discarded. Also remove the extra semicolon
   that was added when there is no index track.
