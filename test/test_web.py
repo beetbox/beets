@@ -25,9 +25,10 @@ class WebPluginTest(_common.LibTestCase):
 
         # Add library elements. Note that self.lib.add overrides any "id=<n>" and assigns
         # the next free id number.
-        # The following adds will create items #1 and #2
+        # The following adds will create items #1, #2 and #3
         self.lib.add(Item(title=u'title', path='/path_1', album_id=2))
         self.lib.add(Item(title=u'another title', path='/path_2'))
+        self.lib.add(Item(title=u'and a third'))
         # The following adds will create albums #1 and #2
         self.lib.add(Album(album=u'album'))
         self.lib.add(Album(album=u'other album'))
@@ -58,7 +59,7 @@ class WebPluginTest(_common.LibTestCase):
         res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(res_json['items']), 2)
+        self.assertEqual(len(res_json['items']), 3)
 
     def test_get_single_item_by_id(self):
         response = self.client.get('/item/1')
@@ -78,7 +79,7 @@ class WebPluginTest(_common.LibTestCase):
         assertCountEqual(self, response_titles, [u'title', u'another title'])
 
     def test_get_single_item_not_found(self):
-        response = self.client.get('/item/3')
+        response = self.client.get('/item/4')
         self.assertEqual(response.status_code, 404)
 
     def test_get_single_item_by_path(self):
@@ -103,7 +104,7 @@ class WebPluginTest(_common.LibTestCase):
         res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(res_json['items']), 2)
+        self.assertEqual(len(res_json['items']), 3)
 
     def test_get_simple_item_query(self):
         response = self.client.get('/item/query/another')
@@ -164,6 +165,14 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(res_json['items'][0]['album'],
                          u'other album')
         self.assertEqual(res_json['items'][0]['id'], 1)
+
+    def test_get_stats(self):
+        response = self.client.get('/stats')
+        res_json = json.loads(response.data.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(res_json['items'], 3)
+        self.assertEqual(res_json['albums'], 2)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
