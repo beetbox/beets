@@ -23,8 +23,8 @@ class WebPluginTest(_common.LibTestCase):
         for track in self.lib.items():
             track.remove()
 
-        # Add library elements. Note that self.lib.add overrides any "id=<n>" and assigns
-        # the next free id number.
+        # Add library elements. Note that self.lib.add overrides any "id=<n>"
+        # and assigns the next free id number.
         # The following adds will create items #1, #2 and #3
         self.lib.add(Item(title=u'title', path='/path_1', album_id=2))
         self.lib.add(Item(title=u'another title', path='/path_2'))
@@ -173,6 +173,7 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(res_json['items'], 3)
         self.assertEqual(res_json['albums'], 2)
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
