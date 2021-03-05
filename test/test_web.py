@@ -156,7 +156,7 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(res_json['results'][0]['id'], 2)
 
     def test_get_album_details(self):
-        response = self.client.get('/album/2?expand=1')
+        response = self.client.get('/album/2?expand')
         res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
