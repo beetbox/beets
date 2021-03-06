@@ -186,6 +186,9 @@ New features:
 
 Fixes:
 
+* :bug:`/plugins/web`: Fixed a small bug which caused album artpath to be
+  redacted even when ``include_paths`` option is set.
+  :bug:`3866`
 * :bug:`/plugins/discogs`: Fixed a bug with ``index_tracks`` options that
   sometimes caused the index to be discarded. Also remove the extra semicolon
   that was added when there is no index track.
