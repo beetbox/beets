@@ -138,18 +138,6 @@ class AURADocument:
         }
         return make_response(document, status)
 
-    def translate_attribute(self, aura_attr):
-        """Translate AURA attribute name to beets attribute name.
-
-        Args:
-            aura_attr: The attribute name to convert, e.g. "title".
-        """
-        try:
-            return self.attribute_map[aura_attr]
-        except KeyError:
-            # Assume native beets attribute
-            return aura_attr
-
     def translate_filters(self):
         """Translate filters from request arguments to a beets Query."""
         # The format of each filter key in the request parameter is:
@@ -162,7 +150,7 @@ class AURADocument:
                 # Extract attribute name from key
                 aura_attr = match.group("attribute")
                 # Get the beets version of the attribute name
-                beets_attr = self.translate_attribute(aura_attr)
+                beets_attr = self.attribute_map.get(aura_attr, aura_attr)
                 converter = self.get_attribute_converter(beets_attr)
                 value = converter(value)
                 # Add exact match query to list
@@ -191,7 +179,7 @@ class AURADocument:
                 # JSON:API default
                 ascending = True
             # Get the beets version of the attribute name
-            beets_attr = self.translate_attribute(aura_attr)
+            beets_attr = self.attribute_map.get(aura_attr, aura_attr)
             # Use slow sort so it works with all fields (inc. computed)
             sorts.append(SlowFieldSort(beets_attr, ascending=ascending))
         return MultipleSort(sorts)
