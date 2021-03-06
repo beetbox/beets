@@ -146,7 +146,7 @@ class AURADocument:
         queries = []
         for key, value in request.args.items():
             match = pattern.match(key)
-            if match is not None:
+            if match:
                 # Extract attribute name from key
                 aura_attr = match.group("attribute")
                 # Get the beets version of the attribute name
@@ -206,10 +206,10 @@ class AURADocument:
             next_url = None
         else:
             # Not the last page so work out links.next url
-            if len(request.args) == 0:
+            if not request.args:
                 # No existing arguments, so current page is 0
                 next_url = request.url + "?page=1"
-            elif request.args.get("page", None) is None:
+            elif not request.args.get("page", None):
                 # No existing page argument, so add one to the end
                 next_url = request.url + "&page=1"
             else:
@@ -272,7 +272,7 @@ class AURADocument:
         """Build document for /tracks, /albums or /artists."""
         query = self.translate_filters()
         sort_arg = request.args.get("sort", None)
-        if sort_arg is not None:
+        if sort_arg:
             sort = self.translate_sorts(sort_arg)
             # For each sort field add a query which ensures all results
             # have a non-empty, non-zero value for that field.
@@ -291,11 +291,11 @@ class AURADocument:
         data, next_url = self.paginate(collection)
         document = {"data": data}
         # If there are more pages then provide a way to access them
-        if next_url is not None:
+        if next_url:
             document["links"] = {"next": next_url}
         # Include related resources for each element in "data"
         include_str = request.args.get("include", None)
-        if include_str is not None:
+        if include_str:
             document["included"] = self.get_included(data, include_str)
         return document
 
@@ -308,7 +308,7 @@ class AURADocument:
         """
         document = {"data": resource_object}
         include_str = request.args.get("include", None)
-        if include_str is not None:
+        if include_str:
             # [document["data"]] is because arg needs to be list
             document["included"] = self.get_included(
                 [document["data"]], include_str
@@ -390,7 +390,7 @@ class TrackDocument(AURADocument):
             track_id: The beets id of the track (integer).
         """
         track = current_app.config["lib"].get_item(track_id)
-        if track is None:
+        if not track:
             return self.error(
                 "404 Not Found",
                 "No track with the requested id.",
@@ -459,7 +459,7 @@ class AlbumDocument(AURADocument):
             }
         }
         # Add images relationship if album has associated images
-        if album.artpath is not None:
+        if album.artpath:
             path = displayable_path(album.artpath)
             filename = path.split("/")[-1]
             image_id = "album-{}-{}".format(album.id, filename)
@@ -488,7 +488,7 @@ class AlbumDocument(AURADocument):
             album_id: The beets id of the album (integer).
         """
         album = current_app.config["lib"].get_album(album_id)
-        if album is None:
+        if not album:
             return self.error(
                 "404 Not Found",
                 "No album with the requested id.",
@@ -546,7 +546,7 @@ class ArtistDocument(AURADocument):
         # Get tracks where artist field exactly matches artist_id
         query = MatchQuery("artist", artist_id)
         tracks = current_app.config["lib"].items(query)
-        if len(tracks) == 0:
+        if not tracks:
             return None
 
         # Get artist information from the first track
@@ -587,7 +587,7 @@ class ArtistDocument(AURADocument):
             artist_id: A string which is the artist's name.
         """
         artist_resource = self.resource_object(artist_id)
-        if artist_resource is None:
+        if not artist_resource:
             return self.error(
                 "404 Not Found",
                 "No artist with the requested id.",
@@ -623,7 +623,7 @@ class ImageDocument(AURADocument):
         # Get the path to the directory parent's images are in
         if parent_type == "album":
             album = current_app.config["lib"].get_album(int(parent_id))
-            if album is None or album.artpath is None:
+            if not album or not album.artpath:
                 return None
             # Cut the filename off of artpath
             # This is in preparation for supporting images in the same
@@ -652,7 +652,7 @@ class ImageDocument(AURADocument):
         # Could be called as a static method, so can't use
         # self.get_image_path()
         image_path = ImageDocument.get_image_path(image_id)
-        if image_path is None:
+        if not image_path:
             return None
 
         attributes = {
@@ -692,7 +692,7 @@ class ImageDocument(AURADocument):
                 "<parent_type>-<parent_id>-<img_filename>".
         """
         image_resource = self.resource_object(image_id)
-        if image_resource is None:
+        if not image_resource:
             return self.error(
                 "404 Not Found",
                 "No image with the requested id.",
@@ -742,7 +742,7 @@ def audio_file(track_id):
         track_id: The id of the track provided in the URL (integer).
     """
     track = current_app.config["lib"].get_item(track_id)
-    if track is None:
+    if not track:
         return AURADocument.error(
             "404 Not Found",
             "No track with the requested id.",
@@ -762,7 +762,7 @@ def audio_file(track_id):
         )
 
     file_mimetype = guess_type(path)[0]
-    if file_mimetype is None:
+    if not file_mimetype:
         return AURADocument.error(
             "500 Internal Server Error",
             "Requested audio file has an unknown mimetype.",
@@ -777,7 +777,7 @@ def audio_file(track_id):
     # Adding support for the bitrate parameter would require some effort so I
     # left it out. This means the client could be sent an error even if the
     # audio doesn't need transcoding.
-    if request.accept_mimetypes.best_match([file_mimetype]) is None:
+    if not request.accept_mimetypes.best_match([file_mimetype]):
         return AURADocument.error(
             "406 Not Acceptable",
             "Unsupported MIME type or bitrate parameter in Accept header.",
@@ -868,7 +868,7 @@ def image_file(image_id):
             the form "<parent_type>-<parent_id>-<img_filename>".
     """
     img_path = ImageDocument.get_image_path(image_id)
-    if img_path is None:
+    if not img_path:
         return AURADocument.error(
             "404 Not Found",
             "No image with the requested id.",
