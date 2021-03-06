@@ -909,7 +909,7 @@ def create_app():
     app.config["lib"] = _open_library(config)
 
     # Enable CORS if required
-    cors = config["aura"]["cors"].get(list)
+    cors = config["aura"]["cors"].as_str_seq(list)
     if cors:
         from flask_cors import CORS
 
