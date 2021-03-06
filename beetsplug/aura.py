@@ -116,7 +116,7 @@ ARTIST_ATTR_MAP = {
     # Required
     "name": "artist",
     # Optional
-    "artist_mbid": "mb_artistid",
+    "artist-mbid": "mb_artistid",
 }
 
 
