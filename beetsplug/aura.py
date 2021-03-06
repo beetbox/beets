@@ -394,7 +394,7 @@ class TrackDocument(AURADocument):
             return self.error(
                 "404 Not Found",
                 "No track with the requested id.",
-                ("There is no track with an id of {} in the library.").format(
+                "There is no track with an id of {} in the library.".format(
                     track_id
                 ),
             )
@@ -492,7 +492,7 @@ class AlbumDocument(AURADocument):
             return self.error(
                 "404 Not Found",
                 "No album with the requested id.",
-                ("There is no album with an id of {} in the library.").format(
+                "There is no album with an id of {} in the library.".format(
                     album_id
                 ),
             )
@@ -591,7 +591,7 @@ class ArtistDocument(AURADocument):
             return self.error(
                 "404 Not Found",
                 "No artist with the requested id.",
-                ("There is no artist with an id of {} in the library.").format(
+                "There is no artist with an id of {} in the library.".format(
                     artist_id
                 ),
             )
@@ -696,7 +696,7 @@ class ImageDocument(AURADocument):
             return self.error(
                 "404 Not Found",
                 "No image with the requested id.",
-                ("There is no image with an id of {} in the library.").format(
+                "There is no image with an id of {} in the library.".format(
                     image_id
                 ),
             )
@@ -746,7 +746,7 @@ def audio_file(track_id):
         return AURADocument.error(
             "404 Not Found",
             "No track with the requested id.",
-            ("There is no track with an id of {} in the library.").format(
+            "There is no track with an id of {} in the library.".format(
                 track_id
             ),
         )
@@ -768,7 +768,7 @@ def audio_file(track_id):
             "Requested audio file has an unknown mimetype.",
             (
                 "The audio file for track {} has an unknown mimetype. "
-                "It's file extension is {}."
+                "Its file extension is {}."
             ).format(track_id, path.split(".")[-1]),
         )
 
@@ -872,7 +872,7 @@ def image_file(image_id):
         return AURADocument.error(
             "404 Not Found",
             "No image with the requested id.",
-            ("There is no image with an id of {} in the library").format(
+            "There is no image with an id of {} in the library".format(
                 image_id
             ),
         )
