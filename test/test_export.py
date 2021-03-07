@@ -66,6 +66,17 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
             self.assertTrue(key in json_data)
             self.assertEqual(val, json_data[key])
 
+    def test_jsonlines_output(self):
+        item1 = self.create_item()
+        out = self.execute_command(
+            format_type='jsonlines',
+            artist=item1.artist
+        )
+        json_data = json.loads(out)
+        for key, val in self.test_values.items():
+            self.assertTrue(key in json_data)
+            self.assertEqual(val, json_data[key])
+
     def test_csv_output(self):
         item1 = self.create_item()
         out = self.execute_command(

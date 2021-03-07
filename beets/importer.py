@@ -222,19 +222,31 @@ class ImportSession(object):
             iconfig['resume'] = False
             iconfig['incremental'] = False
 
-        # Copy, move, link, and hardlink are mutually exclusive.
+        if iconfig['reflink']:
+            iconfig['reflink'] = iconfig['reflink'] \
+                .as_choice(['auto', True, False])
+
+        # Copy, move, reflink, link, and hardlink are mutually exclusive.
         if iconfig['move']:
             iconfig['copy'] = False
             iconfig['link'] = False
             iconfig['hardlink'] = False
+            iconfig['reflink'] = False
         elif iconfig['link']:
             iconfig['copy'] = False
             iconfig['move'] = False
             iconfig['hardlink'] = False
+            iconfig['reflink'] = False
         elif iconfig['hardlink']:
             iconfig['copy'] = False
             iconfig['move'] = False
             iconfig['link'] = False
+            iconfig['reflink'] = False
+        elif iconfig['reflink']:
+            iconfig['copy'] = False
+            iconfig['move'] = False
+            iconfig['link'] = False
+            iconfig['hardlink'] = False
 
         # Only delete when copying.
         if not iconfig['copy']:
@@ -707,7 +719,7 @@ class ImportTask(BaseImportTask):
             item.update(changes)
 
     def manipulate_files(self, operation=None, write=False, session=None):
-        """ Copy, move, link or hardlink (depending on `operation`) the files
+        """ Copy, move, link, hardlink or reflink (depending on `operation`) the files
         as well as write metadata.
 
         `operation` should be an instance of `util.MoveOperation`.
@@ -1536,6 +1548,8 @@ def manipulate_files(session, task):
             operation = MoveOperation.LINK
         elif session.config['hardlink']:
             operation = MoveOperation.HARDLINK
+        elif session.config['reflink']:
+            operation = MoveOperation.REFLINK
         else:
             operation = None
 

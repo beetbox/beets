@@ -16,6 +16,7 @@
 """Converts tracks or albums to external directory
 """
 from __future__ import division, absolute_import, print_function
+from beets.util import par_map
 
 import os
 import threading
@@ -183,8 +184,8 @@ class ConvertPlugin(BeetsPlugin):
 
     def auto_convert(self, config, task):
         if self.config['auto']:
-            for item in task.imported_items():
-                self.convert_on_import(config.lib, item)
+            par_map(lambda item: self.convert_on_import(config.lib, item),
+                    task.imported_items())
 
     # Utilities converted from functions to methods on logging overhaul
 
