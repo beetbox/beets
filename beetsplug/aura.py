@@ -25,7 +25,7 @@ from os.path import isfile, getsize
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, _open_library
 from beets import config
-from beets.util import displayable_path
+from beets.util import py3_path
 from beets.library import Item, Album
 from beets.dbcore.query import (
     MatchQuery,
@@ -460,7 +460,7 @@ class AlbumDocument(AURADocument):
         }
         # Add images relationship if album has associated images
         if album.artpath:
-            path = displayable_path(album.artpath)
+            path = py3_path(album.artpath)
             filename = path.split("/")[-1]
             image_id = "album-{}-{}".format(album.id, filename)
             relationships["images"] = {
@@ -628,7 +628,7 @@ class ImageDocument(AURADocument):
             # Cut the filename off of artpath
             # This is in preparation for supporting images in the same
             # directory that are not tracked by beets.
-            artpath = displayable_path(album.artpath)
+            artpath = py3_path(album.artpath)
             dir_path = "/".join(artpath.split("/")[:-1])
         else:
             # Images for other resource types are not supported
@@ -751,7 +751,7 @@ def audio_file(track_id):
             ),
         )
 
-    path = displayable_path(track.destination())
+    path = py3_path(track.path)
     if not isfile(path):
         return AURADocument.error(
             "404 Not Found",
