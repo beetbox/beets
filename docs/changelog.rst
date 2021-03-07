@@ -6,6 +6,11 @@ Changelog
 
 New features:
 
+* :doc:`/plugins/mpdstats`: Add strip_path option to help build the right local path
+  from MPD information
+* Submitting acoustID information on tracks which already have a fingerprint
+  :bug:`3834`
+* conversion uses par_map to parallelize conversion jobs in python3
 * Add ``title_case`` config option to lastgenre to make TitleCasing optional.
 * When config is printed with no available configuration a new message is printed.
   :bug:`3779`
@@ -14,6 +19,8 @@ New features:
 * :doc:`/plugins/chroma`: Update file metadata after generating fingerprints through the `submit` command.
 * :doc:`/plugins/lastgenre`: Added more heavy metal genres: https://en.wikipedia.org/wiki/Heavy_metal_genres to genres.txt and genres-tree.yaml
 * :doc:`/plugins/subsonicplaylist`: import playlist from a subsonic server.
+* :doc:`/plugins/subsonicupdate`: Automatically choose between token and
+  password-based authentication based on server version
 * A new :ref:`reflink` config option instructs the importer to create fast,
   copy-on-write file clones on filesystems that support them. Thanks to
   :user:`rubdos`.
@@ -59,14 +66,12 @@ New features:
   Thanks to :user:`samuelnilsson`
   :bug:`293`
 * :doc:`/plugins/replaygain`: The new ``ffmpeg`` ReplayGain backend supports
-  ``R128_`` tags, just like the ``bs1770gain`` backend.
+  ``R128_`` tags.
   :bug:`3056`
 * :doc:`plugins/replaygain`: ``r128_targetlevel`` is a new configuration option
   for the ReplayGain plugin: It defines the reference volume for files using
   ``R128_`` tags. ``targetlevel`` only configures the reference volume for
   ``REPLAYGAIN_`` files.
-  This also deprecates the ``bs1770gain`` ReplayGain backend's ``method``
-  option. Use ``targetlevel`` and ``r128_targetlevel`` instead.
   :bug:`3065`
 * A new :doc:`/plugins/parentwork` gets information about the original work,
   which is useful for classical music.
@@ -171,16 +176,24 @@ New features:
   https://github.com/alastair/python-musicbrainzngs/pull/266 .
   Thanks to :user:`aereaux`.
 * :doc:`/plugins/replaygain` now does its analysis in parallel when using
-  the ``command``, ``ffmpeg`` or ``bs1770gain`` backends.
+  the ``command`` or ``ffmpeg`` backends.
   :bug:`3478`
 * Fields in queries now fall back to an item's album and check its fields too.
   Notably, this allows querying items by an album flex attribute, also in path
   configuration.
   Thanks to :user:`FichteFoll`.
   :bug:`2797` :bug:`2988`
+* Removes usage of the bs1770gain replaygain backend.
+  Thanks to :user:`SamuelCook`.
+* Added ``trackdisambig`` which stores the recording disambiguation from
+  MusicBrainz for each track.
+  :bug:`1904`
 
 Fixes:
 
+* :bug:`/plugins/web`: Fixed a small bug which caused album artpath to be
+  redacted even when ``include_paths`` option is set.
+  :bug:`3866`
 * :bug:`/plugins/discogs`: Fixed a bug with ``index_tracks`` options that
   sometimes caused the index to be discarded. Also remove the extra semicolon
   that was added when there is no index track.
@@ -239,8 +252,6 @@ Fixes:
   :bug:`3437`
 * :doc:`/plugins/lyrics`: Fix a corner-case with Genius lowercase artist names
   :bug:`3446`
-* :doc:`/plugins/replaygain`: Support ``bs1770gain`` v0.6.0 and up
-  :bug:`3480`
 * :doc:`/plugins/parentwork`: Don't save tracks when nothing has changed.
   :bug:`3492`
 * Added a warning when configuration files defined in the `include` directive
@@ -300,6 +311,10 @@ Fixes:
   :bug:`3819`
 * :doc:`/plugins/mpdstats`: Fix Python 2/3 compatibility
   :bug:`3798`
+* Fix :bug:`3308` by using browsing for big releases to retrieve additional
+  information. Thanks to :user:`dosoe`.
+* :doc:`/plugins/discogs`: Replace deprecated discogs-client library with community
+  supported python3-discogs-client library. :bug:`3608`
 
 For plugin developers:
 
@@ -356,6 +371,7 @@ For packagers:
   or `repair <https://build.opensuse.org/package/view_file/openSUSE:Factory/beets/fix_test_command_line_option_relative_to_working_dir.diff?expand=1>`_
   the test may no longer be necessary.
 * This version drops support for Python 3.4.
+* Removes the optional dependency on bs1770gain.
 
 .. _Fish shell: https://fishshell.com/
 .. _MediaFile: https://github.com/beetbox/mediafile

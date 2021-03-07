@@ -261,6 +261,8 @@ For albums, the following endpoints are provided:
 
 * ``GET /album/5``
 
+* ``GET /album/5/art``
+
 * ``DELETE /album/5``
 
 * ``GET /album/5,7``

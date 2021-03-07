@@ -14,7 +14,7 @@
 # included in all copies or substantial portions of the Software.
 
 """Adds Discogs album search support to the autotagger. Requires the
-discogs-client library.
+python3-discogs-client library.
 """
 from __future__ import division, absolute_import, print_function
 
