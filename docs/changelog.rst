@@ -183,6 +183,7 @@ New features:
 * Added ``trackdisambig`` which stores the recording disambiguation from
   MusicBrainz for each track.
   :bug:`1904`
+* The :doc:`/plugins/aura` has arrived!
 
 Fixes:
 
