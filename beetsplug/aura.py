@@ -54,7 +54,7 @@ from flask import (
 SERVER_INFO = {
     "aura-version": "0",
     "server": "beets-aura",
-    "server-version": "0",
+    "server-version": "0.1",
     "auth-required": False,
     "features": ["albums", "artists", "images"],
 }

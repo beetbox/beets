@@ -48,8 +48,7 @@ then see :ref:`aura-external-server`.
 
 AURA is designed to separate the client and server functionality. This plugin
 provides the server but not the client, so unless you like looking at JSON you
-will need a separate client. Unfortunately there are no AURA clients yet
-(discounting the broken and outdated reference implementation).
+will need a separate client. Currently the only client is `AURA Web Client`_.
 
 By default the API is served under http://127.0.0.1:8337/aura/. For example
 information about the track with an id of 3 can be obtained at
@@ -59,6 +58,7 @@ http://127.0.0.1:8337/aura/tracks/3.
 http://127.0.0.1:8337/aura/tracks/3/ returns a ``404 Not Found`` error.
 
 .. _development mode: https://flask.palletsprojects.com/en/1.1.x/server
+.. _AURA Web Client: https://sr.ht/~callum/aura-web-client/
 
 
 .. _configuration:
@@ -167,6 +167,10 @@ implementation:
 It is possible that some attributes required by AURA could be absent from the
 server's response if beets does not have a saved value for them. However, this
 has not happened so far.
+
+Beets fields (including flexible fields) that do not have an AURA equivalent
+are not provided in any resource's attributes section, however these fields may
+be used for filtering.
 
 The ``mimetype`` and ``framecount`` attributes for track resources are not
 supported. The first is due to beets storing the file type (e.g. ``MP3``), so
