@@ -39,9 +39,21 @@ class SubsonicPluginTest(_common.TestCase, TestHelper):
         config["subsonic"]["user"] = "admin"
         config["subsonic"]["pass"] = "admin"
         config["subsonic"]["url"] = "http://localhost:4040"
-
+        responses.add(
+            responses.GET,
+            'http://localhost:4040/rest/ping.view',
+            status=200,
+            body=self.PING_BODY
+        )
         self.subsonicupdate = subsonicupdate.SubsonicUpdate()
-
+    PING_BODY = '''
+{
+    "subsonic-response": {
+        "status": "failed",
+        "version": "1.15.0"
+    }
+}
+'''
     SUCCESS_BODY = '''
 {
     "subsonic-response": {

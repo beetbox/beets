@@ -1102,8 +1102,8 @@ optparse.Option.ALWAYS_TYPED_ACTIONS += ('callback',)
 
 # The main entry point and bootstrapping.
 
-def _load_plugins(config):
-    """Load the plugins specified in the configuration.
+def _load_plugins(options, config):
+    """Load the plugins specified on the command line or in the configuration.
     """
     paths = config['pluginpath'].as_str_seq(split=False)
     paths = [util.normpath(p) for p in paths]
@@ -1114,13 +1114,20 @@ def _load_plugins(config):
 
     # Extend the `beetsplug` package to include the plugin paths.
     import beetsplug
-    beetsplug.__path__ = paths + beetsplug.__path__
+    beetsplug.__path__ = paths + list(beetsplug.__path__)
 
     # For backwards compatibility, also support plugin paths that
     # *contain* a `beetsplug` package.
     sys.path += paths
 
-    plugins.load_plugins(config['plugins'].as_str_seq())
+    # If we were given any plugins on the command line, use those.
+    if options.plugins is not None:
+        plugin_list = (options.plugins.split(',')
+                       if len(options.plugins) > 0 else [])
+    else:
+        plugin_list = config['plugins'].as_str_seq()
+
+    plugins.load_plugins(plugin_list)
     plugins.send("pluginload")
     return plugins
 
@@ -1135,7 +1142,7 @@ def _setup(options, lib=None):
 
     config = _configure(options)
 
-    plugins = _load_plugins(config)
+    plugins = _load_plugins(options, config)
 
     # Get the default subcommands.
     from beets.ui.commands import default_commands
@@ -1233,6 +1240,8 @@ def _raw_main(args, lib=None):
                       help=u'log more details (use twice for even more)')
     parser.add_option('-c', '--config', dest='config',
                       help=u'path to configuration file')
+    parser.add_option('-p', '--plugins', dest='plugins',
+                      help=u'a comma-separated list of plugins to load')
     parser.add_option('-h', '--help', dest='help', action='store_true',
                       help=u'show this help message and exit')
     parser.add_option('--version', dest='version', action='store_true',

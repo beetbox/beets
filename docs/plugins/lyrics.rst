@@ -2,10 +2,9 @@ Lyrics Plugin
 =============
 
 The ``lyrics`` plugin fetches and stores song lyrics from databases on the Web.
-Namely, the current version of the plugin uses `Lyric Wiki`_,
-`Musixmatch`_, `Genius.com`_, and, optionally, the Google custom search API.
+Namely, the current version of the plugin uses `Musixmatch`_, `Genius.com`_,
+and, optionally, the Google custom search API.
 
-.. _Lyric Wiki: https://lyrics.wikia.com/
 .. _Musixmatch: https://www.musixmatch.com/
 .. _Genius.com: https://genius.com/
 

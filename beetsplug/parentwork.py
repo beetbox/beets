@@ -96,7 +96,7 @@ class ParentWorkPlugin(BeetsPlugin):
                         item.try_write()
         command = ui.Subcommand(
             'parentwork',
-            help=u'fetche parent works, composers and dates')
+            help=u'fetch parent works, composers and dates')
 
         command.parser.add_option(
             u'-f', u'--force', dest='force',
@@ -129,6 +129,7 @@ class ParentWorkPlugin(BeetsPlugin):
         if 'artist-relation-list' in work_info['work']:
             for artist in work_info['work']['artist-relation-list']:
                 if artist['type'] == 'composer':
+                    composer_exists = True
                     parent_composer.append(artist['artist']['name'])
                     parent_composer_sort.append(artist['artist']['sort-name'])
                     if 'end' in artist.keys():

@@ -6,9 +6,24 @@ Changelog
 
 New features:
 
+* :doc:`/plugins/mpdstats`: Add strip_path option to help build the right local path
+  from MPD information
+* Submitting acoustID information on tracks which already have a fingerprint
+  :bug:`3834`
+* conversion uses par_map to parallelize conversion jobs in python3
+* Add ``title_case`` config option to lastgenre to make TitleCasing optional.
+* When config is printed with no available configuration a new message is printed.
+  :bug:`3779`
+* When importing a duplicate album it ask if it should "Keep all" instead of "Keep both".
+  :bug:`3569`
 * :doc:`/plugins/chroma`: Update file metadata after generating fingerprints through the `submit` command.
 * :doc:`/plugins/lastgenre`: Added more heavy metal genres: https://en.wikipedia.org/wiki/Heavy_metal_genres to genres.txt and genres-tree.yaml
 * :doc:`/plugins/subsonicplaylist`: import playlist from a subsonic server.
+* :doc:`/plugins/subsonicupdate`: Automatically choose between token and
+  password-based authentication based on server version
+* A new :ref:`reflink` config option instructs the importer to create fast,
+  copy-on-write file clones on filesystems that support them. Thanks to
+  :user:`rubdos`.
 * A new :ref:`extra_tags` configuration option allows more tagged metadata
   to be included in MusicBrainz queries.
 * A new :doc:`/plugins/fish` adds `Fish shell`_ tab autocompletion to beets
@@ -20,12 +35,12 @@ New features:
 * :doc:`plugins/fetchart`: Added a new ``high_resolution`` config option to
   allow downloading of higher resolution iTunes artwork (at the expense of
   file size).
-  :bug: `3391`
+  :bug:`3391`
 * :doc:`plugins/discogs` now adds two extra fields: `discogs_labelid` and
   `discogs_artistid`
-  :bug: `3413`
+  :bug:`3413`
 * :doc:`/plugins/export`: Added new ``-f`` (``--format``) flag; 
-  which allows for the ability to export in json, csv and xml.
+  which allows for the ability to export in json, jsonlines, csv and xml.
   Thanks to :user:`austinmm`.
   :bug:`3402`
 * :doc:`/plugins/unimported`: lets you find untracked files in your library directory.
@@ -51,14 +66,12 @@ New features:
   Thanks to :user:`samuelnilsson`
   :bug:`293`
 * :doc:`/plugins/replaygain`: The new ``ffmpeg`` ReplayGain backend supports
-  ``R128_`` tags, just like the ``bs1770gain`` backend.
+  ``R128_`` tags.
   :bug:`3056`
 * :doc:`plugins/replaygain`: ``r128_targetlevel`` is a new configuration option
   for the ReplayGain plugin: It defines the reference volume for files using
   ``R128_`` tags. ``targetlevel`` only configures the reference volume for
   ``REPLAYGAIN_`` files.
-  This also deprecates the ``bs1770gain`` ReplayGain backend's ``method``
-  option. Use ``targetlevel`` and ``r128_targetlevel`` instead.
   :bug:`3065`
 * A new :doc:`/plugins/parentwork` gets information about the original work,
   which is useful for classical music.
@@ -153,9 +166,29 @@ New features:
 * ``beet remove`` now also allows interactive selection of items from the query
   similar to ``beet modify``
 * :doc:`/plugins/web`: add DELETE and PATCH methods for modifying items
+* :doc:`/plugins/lyrics`: Removed LyricWiki source (shut down on 21/09/2020).
+* Added a ``--plugins`` (or ``-p``) flag to specify a list of plugins at startup.
+* Use the musicbrainz genre tag api to get genre information.  This currently
+  depends on functionality that is currently unreleased in musicbrainzngs.
+  Once the functionality has been released, you can enable it with the
+  ``genres`` option inside the ``musicbrainz`` config.  See
+  https://github.com/alastair/python-musicbrainzngs/pull/247 and
+  https://github.com/alastair/python-musicbrainzngs/pull/266 .
+  Thanks to :user:`aereaux`.
+* :doc:`/plugins/replaygain` now does its analysis in parallel when using
+  the ``command`` or ``ffmpeg`` backends.
+  :bug:`3478`
+* Removes usage of the bs1770gain replaygain backend.
+  Thanks to :user:`SamuelCook`.
+* Added ``trackdisambig`` which stores the recording disambiguation from
+  MusicBrainz for each track.
+  :bug:`1904`
 
 Fixes:
 
+* :bug:`/plugins/discogs`: Fixed a bug with ``index_tracks`` options that
+  sometimes caused the index to be discarded. Also remove the extra semicolon
+  that was added when there is no index track.
 * :doc:`/plugins/subsonicupdate`: REST was using `POST` method rather `GET` method.
   Also includes better exception handling, response parsing, and tests.
 * :doc:`/plugins/the`: Fixed incorrect regex for 'the' that matched any
@@ -204,13 +237,13 @@ Fixes:
   wiping out their beets database.
   Thanks to user: `logan-arens`.
   :bug:`1934`
+* ``beet import`` now logs which files are ignored when in debug mode.
+  :bug:`3764`
 * :doc:`/plugins/bpd`: Fix the transition to next track when in consume mode.
   Thanks to :user:`aereaux`.
   :bug:`3437`
 * :doc:`/plugins/lyrics`: Fix a corner-case with Genius lowercase artist names
   :bug:`3446`
-* :doc:`/plugins/replaygain`: Support ``bs1770gain`` v0.6.0 and up
-  :bug:`3480`
 * :doc:`/plugins/parentwork`: Don't save tracks when nothing has changed.
   :bug:`3492`
 * Added a warning when configuration files defined in the `include` directive
@@ -258,6 +291,22 @@ Fixes:
   the current track in the queue.
   Thanks to :user:`aereaux`.
   :bug:`3722`
+* String-typed fields are now normalized to string values, avoiding an
+  occasional crash when using both the :doc:`/plugins/fetchart` and the
+  :doc:`/plugins/discogs` together.
+  :bug:`3773` :bug:`3774`
+* Fix a bug causing PIL to generate poor quality JPEGs when resizing artwork.
+  :bug:`3743`
+* :doc:`plugins/keyfinder`: Catch output from ``keyfinder-cli`` that is missing key.
+  :bug:`2242`
+* :doc:`plugins/replaygain`: Disable parallel analysis on import by default.
+  :bug:`3819`
+* :doc:`/plugins/mpdstats`: Fix Python 2/3 compatibility
+  :bug:`3798`
+* Fix :bug:`3308` by using browsing for big releases to retrieve additional
+  information. Thanks to :user:`dosoe`.
+* :doc:`/plugins/discogs`: Replace deprecated discogs-client library with community
+  supported python3-discogs-client library. :bug:`3608`
 
 For plugin developers:
 
@@ -308,6 +357,7 @@ For packagers:
   or `repair <https://build.opensuse.org/package/view_file/openSUSE:Factory/beets/fix_test_command_line_option_relative_to_working_dir.diff?expand=1>`_
   the test may no longer be necessary.
 * This version drops support for Python 3.4.
+* Removes the optional dependency on bs1770gain.
 
 .. _Fish shell: https://fishshell.com/
 .. _MediaFile: https://github.com/beetbox/mediafile

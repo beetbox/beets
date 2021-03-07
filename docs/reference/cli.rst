@@ -440,6 +440,10 @@ import ...``.
   configuration options entirely, the two are merged. Any individual options set
   in this config file will override the corresponding settings in your base
   configuration.
+* ``-p plugins``: specify a comma-separated list of plugins to enable. If
+  specified, the plugin list in your configuration is ignored. The long form
+  of this argument also allows specifying no plugins, effectively disabling
+  all plugins: ``--plugins=``.
 
 Beets also uses the ``BEETSDIR`` environment variable to look for
 configuration and data.

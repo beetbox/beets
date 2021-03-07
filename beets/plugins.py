@@ -301,6 +301,11 @@ def find_plugins():
     currently loaded beets plugins. Loads the default plugin set
     first.
     """
+    if _instances:
+        # After the first call, use cached instances for performance reasons.
+        # See https://github.com/beetbox/beets/pull/3810
+        return list(_instances.values())
+
     load_plugins()
     plugins = []
     for cls in _classes:
