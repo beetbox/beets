@@ -31,7 +31,7 @@ class WebPluginTest(_common.LibTestCase):
         self.lib.add(Item(title=u'and a third'))
         # The following adds will create albums #1 and #2
         self.lib.add(Album(album=u'album'))
-        self.lib.add(Album(album=u'other album'))
+        self.lib.add(Album(album=u'other album', artpath='/art_path_2'))
 
         web.app.config['TESTING'] = True
         web.app.config['lib'] = self.lib
@@ -46,6 +46,14 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(res_json['path'], u'/path_1')
 
+    def test_config_include_artpaths_true(self):
+        web.app.config['INCLUDE_PATHS'] = True
+        response = self.client.get('/album/2')
+        res_json = json.loads(response.data.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(res_json['artpath'], u'/art_path_2')
+
     def test_config_include_paths_false(self):
         web.app.config['INCLUDE_PATHS'] = False
         response = self.client.get('/item/1')
@@ -53,6 +61,14 @@ class WebPluginTest(_common.LibTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertNotIn('path', res_json)
+
+    def test_config_include_artpaths_false(self):
+        web.app.config['INCLUDE_PATHS'] = False
+        response = self.client.get('/album/2')
+        res_json = json.loads(response.data.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('artpath', res_json)
 
     def test_get_all_items(self):
         response = self.client.get('/item/')

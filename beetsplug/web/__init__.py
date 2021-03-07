@@ -59,7 +59,10 @@ def _rep(obj, expand=False):
         return out
 
     elif isinstance(obj, beets.library.Album):
-        del out['artpath']
+        if app.config.get('INCLUDE_PATHS', False):
+            out['artpath'] = util.displayable_path(out['artpath'])
+        else:
+            del out['artpath']
         if expand:
             out['items'] = [_rep(item) for item in obj.items()]
         return out
