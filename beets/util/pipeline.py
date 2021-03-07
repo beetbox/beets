@@ -247,9 +247,6 @@ class FirstPipelineThread(PipelineThread):
         self.out_queue = out_queue
         self.out_queue.acquire()
 
-        self.abort_lock = Lock()
-        self.abort_flag = False
-
     def run(self):
         try:
             while True:

@@ -22,10 +22,16 @@ class WebPluginTest(_common.LibTestCase):
         # Add fixtures
         for track in self.lib.items():
             track.remove()
-        self.lib.add(Item(title=u'title', path='/path_1', id=1))
-        self.lib.add(Item(title=u'another title', path='/path_2', id=2))
-        self.lib.add(Album(album=u'album', id=3))
-        self.lib.add(Album(album=u'another album', id=4))
+
+        # Add library elements. Note that self.lib.add overrides any "id=<n>"
+        # and assigns the next free id number.
+        # The following adds will create items #1, #2 and #3
+        self.lib.add(Item(title=u'title', path='/path_1', album_id=2))
+        self.lib.add(Item(title=u'another title', path='/path_2'))
+        self.lib.add(Item(title=u'and a third'))
+        # The following adds will create albums #1 and #2
+        self.lib.add(Album(album=u'album'))
+        self.lib.add(Album(album=u'other album', artpath='/art_path_2'))
 
         web.app.config['TESTING'] = True
         web.app.config['lib'] = self.lib
@@ -40,6 +46,14 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(res_json['path'], u'/path_1')
 
+    def test_config_include_artpaths_true(self):
+        web.app.config['INCLUDE_PATHS'] = True
+        response = self.client.get('/album/2')
+        res_json = json.loads(response.data.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(res_json['artpath'], u'/art_path_2')
+
     def test_config_include_paths_false(self):
         web.app.config['INCLUDE_PATHS'] = False
         response = self.client.get('/item/1')
@@ -48,12 +62,20 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotIn('path', res_json)
 
+    def test_config_include_artpaths_false(self):
+        web.app.config['INCLUDE_PATHS'] = False
+        response = self.client.get('/album/2')
+        res_json = json.loads(response.data.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('artpath', res_json)
+
     def test_get_all_items(self):
         response = self.client.get('/item/')
         res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(res_json['items']), 2)
+        self.assertEqual(len(res_json['items']), 3)
 
     def test_get_single_item_by_id(self):
         response = self.client.get('/item/1')
@@ -73,7 +95,7 @@ class WebPluginTest(_common.LibTestCase):
         assertCountEqual(self, response_titles, [u'title', u'another title'])
 
     def test_get_single_item_not_found(self):
-        response = self.client.get('/item/3')
+        response = self.client.get('/item/4')
         self.assertEqual(response.status_code, 404)
 
     def test_get_single_item_by_path(self):
@@ -98,7 +120,7 @@ class WebPluginTest(_common.LibTestCase):
         res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(res_json['items']), 2)
+        self.assertEqual(len(res_json['items']), 3)
 
     def test_get_simple_item_query(self):
         response = self.client.get('/item/query/another')
@@ -115,7 +137,7 @@ class WebPluginTest(_common.LibTestCase):
 
         self.assertEqual(response.status_code, 200)
         response_albums = [album['album'] for album in res_json['albums']]
-        assertCountEqual(self, response_albums, [u'album', u'another album'])
+        assertCountEqual(self, response_albums, [u'album', u'other album'])
 
     def test_get_single_album_by_id(self):
         response = self.client.get('/album/2')
@@ -123,7 +145,7 @@ class WebPluginTest(_common.LibTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(res_json['id'], 2)
-        self.assertEqual(res_json['album'], u'another album')
+        self.assertEqual(res_json['album'], u'other album')
 
     def test_get_multiple_albums_by_id(self):
         response = self.client.get('/album/1,2')
@@ -131,7 +153,7 @@ class WebPluginTest(_common.LibTestCase):
 
         self.assertEqual(response.status_code, 200)
         response_albums = [album['album'] for album in res_json['albums']]
-        assertCountEqual(self, response_albums, [u'album', u'another album'])
+        assertCountEqual(self, response_albums, [u'album', u'other album'])
 
     def test_get_album_empty_query(self):
         response = self.client.get('/album/query/')
@@ -139,6 +161,34 @@ class WebPluginTest(_common.LibTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(res_json['albums']), 2)
+
+    def test_get_simple_album_query(self):
+        response = self.client.get('/album/query/other')
+        res_json = json.loads(response.data.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(res_json['results']), 1)
+        self.assertEqual(res_json['results'][0]['album'],
+                         u'other album')
+        self.assertEqual(res_json['results'][0]['id'], 2)
+
+    def test_get_album_details(self):
+        response = self.client.get('/album/2?expand')
+        res_json = json.loads(response.data.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(res_json['items']), 1)
+        self.assertEqual(res_json['items'][0]['album'],
+                         u'other album')
+        self.assertEqual(res_json['items'][0]['id'], 1)
+
+    def test_get_stats(self):
+        response = self.client.get('/stats')
+        res_json = json.loads(response.data.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(res_json['items'], 3)
+        self.assertEqual(res_json['albums'], 2)
 
 
 def suite():
