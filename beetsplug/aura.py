@@ -142,7 +142,7 @@ class AURADocument:
         """Translate filters from request arguments to a beets Query."""
         # The format of each filter key in the request parameter is:
         # filter[<attribute>]. This regex extracts <attribute>.
-        pattern = re.compile(r"filter\[(?P<attribute>\w+)\]")
+        pattern = re.compile(r"filter\[(?P<attribute>[a-zA-Z0-9_-]+)\]")
         queries = []
         for key, value in request.args.items():
             match = pattern.match(key)
