@@ -178,6 +178,11 @@ New features:
 * :doc:`/plugins/replaygain` now does its analysis in parallel when using
   the ``command`` or ``ffmpeg`` backends.
   :bug:`3478`
+* Fields in queries now fall back to an item's album and check its fields too.
+  Notably, this allows querying items by an album flex attribute, also in path
+  configuration.
+  Thanks to :user:`FichteFoll`.
+  :bug:`2797` :bug:`2988`
 * Removes usage of the bs1770gain replaygain backend.
   Thanks to :user:`SamuelCook`.
 * Added ``trackdisambig`` which stores the recording disambiguation from
@@ -344,6 +349,12 @@ For plugin developers:
   :bug:`3355`
 * The autotag hooks have been modified such that they now take 'bpm',
   'musical_key' and a per-track based 'genre' as attributes.
+* Item (and attribute) access on an item now falls back to the album's
+  attributes as well. If you specifically want to access an item's attributes,
+  use ``Item.get(key, with_album=False)``. :bug:`2988`
+* ``Item.keys`` also has a ``with_album`` argument now, defaulting to ``True``.
+* A ``revision`` attribute has been added to ``Database``. It is increased on
+  every transaction that mutates it. :bug:`2988`
 
 For packagers:
 
