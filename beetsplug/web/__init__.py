@@ -244,7 +244,9 @@ class QueryConverter(PathConverter):
 
     def to_python(self, value):
         queries = value.split('/')
-        return [query.replace('\\', os.sep) for query in queries]
+        """Do not do path substitution on regex value tests"""
+        return [query if '::' in query else query.replace('\\', os.sep)
+                for query in queries]
 
     def to_url(self, value):
         return ','.join([v.replace(os.sep, '\\') for v in value])
