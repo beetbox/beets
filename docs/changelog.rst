@@ -12,7 +12,20 @@ dependencies---packagers, please take note.
 Finally, this is the last version of beets where we intend to support Python
 2.x; future releases will soon require Python 3.5.
 
-New features:
+Major new features:
+
+* A new :ref:`reflink` config option instructs the importer to create fast,
+  copy-on-write file clones on filesystems that support them. Thanks to
+  :user:`rubdos`.
+* A new :doc:`/plugins/unimported` lets you find untracked files in your
+  library directory.
+* We now fetch information about `works`_ from MusicBrainz.
+  MusicBrainz matches provide the fields ``work`` (the title), ``mb_workid``
+  (the MBID), and ``work_disambig`` (the disambiguation string).
+  Thanks to :user:`dosoe`.
+  :bug:`2580` :bug:`3272`
+
+Other new things:
 
 * :doc:`/plugins/mpdstats`: Add a new `strip_path` option to help build the
   right local path from MPD information.
@@ -30,15 +43,13 @@ New features:
   generating fingerprints through the `submit` command.
 * :doc:`/plugins/lastgenre`: Added more heavy metal genres to the built-in
   genre filter lists.
-* :doc:`/plugins/subsonicplaylist`: import playlist from a subsonic server.
-* :doc:`/plugins/subsonicupdate`: Automatically choose between token and
-  password-based authentication based on server version
-* A new :ref:`reflink` config option instructs the importer to create fast,
-  copy-on-write file clones on filesystems that support them. Thanks to
-  :user:`rubdos`.
+* A new :doc:`/plugins/subsonicplaylist` can import playlists from a Subsonic
+  server.
+* :doc:`/plugins/subsonicupdate`: The plugin now automatically chooses between
+  token and password-based authentication based on server version
 * A new :ref:`extra_tags` configuration option allows more tagged metadata
   to be included in MusicBrainz queries.
-* A new :doc:`/plugins/fish` adds `Fish shell`_ tab autocompletion to beets
+* A new :doc:`/plugins/fish` adds `Fish shell`_ tab autocompletion to beets.
 * :doc:`plugins/fetchart` and :doc:`plugins/embedart`: Added a new ``quality``
   option that controls the quality of the image output when the image is
   resized.
@@ -48,34 +59,28 @@ New features:
   allow downloading of higher resolution iTunes artwork (at the expense of
   file size).
   :bug:`3391`
-* :doc:`plugins/discogs` now adds two extra fields: `discogs_labelid` and
-  `discogs_artistid`
+* :doc:`plugins/discogs`: The plugin applies two new fields: `discogs_labelid`
+  and `discogs_artistid`.
   :bug:`3413`
-* :doc:`/plugins/export`: Added new ``-f`` (``--format``) flag; 
-  which allows for the ability to export in json, jsonlines, csv and xml.
+* :doc:`/plugins/export`: Added a new ``-f`` (``--format``) flag,
+  which can export your data as JSON, JSON lines, CSV, or XML.
   Thanks to :user:`austinmm`.
   :bug:`3402`
-* :doc:`/plugins/unimported`: lets you find untracked files in your library directory.
-* We now fetch information about `works`_ from MusicBrainz.
-  MusicBrainz matches provide the fields ``work`` (the title), ``mb_workid``
-  (the MBID), and ``work_disambig`` (the disambiguation string).
-  Thanks to :user:`dosoe`.
-  :bug:`2580` :bug:`3272`
-* :doc:`/plugins/convert`: Added new ``-l`` (``--link``) flag and ``link``
+* :doc:`/plugins/convert`: Added a new ``-l`` (``--link``) flag and ``link``
   option as well as the ``-H`` (``--hardlink``) flag and ``hardlink``
-  option which symlinks or hardlinks files that do not need to
-  be converted instead of copying them.
+  option, which symlink or hardlink files that do not need to
+  be converted (instead of copying them).
   :bug:`2324`
 * :doc:`/plugins/bpd`: BPD now supports most of the features of version 0.16
   of the MPD protocol. This is enough to get it talking to more complicated
   clients like ncmpcpp, but there are still some incompatibilities, largely due
-  to MPD commands we don't support yet. Let us know if you find an MPD client
-  that doesn't get along with BPD!
+  to MPD commands we don't support yet. (Let us know if you find an MPD client
+  that doesn't get along with BPD!)
   :bug:`3214` :bug:`800`
 * :doc:`/plugins/replaygain`: The plugin now supports a ``per_disc`` option
-  which enables calculation of album ReplayGain on disc level instead of album
+  that enables calculation of album ReplayGain on disc level instead of album
   level.
-  Thanks to :user:`samuelnilsson`
+  Thanks to :user:`samuelnilsson`.
   :bug:`293`
 * :doc:`/plugins/replaygain`: The new ``ffmpeg`` ReplayGain backend supports
   ``R128_`` tags.
