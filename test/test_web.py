@@ -26,12 +26,22 @@ class WebPluginTest(_common.LibTestCase):
         # Add library elements. Note that self.lib.add overrides any "id=<n>"
         # and assigns the next free id number.
         # The following adds will create items #1, #2 and #3
-        self.lib.add(Item(title=u'title', path='/path_1', album_id=2, artist='AAA Singers'))
-        self.lib.add(Item(title=u'another title', path='/somewhere/path_2', artist='AAA Singers'))
-        self.lib.add(Item(title=u'and a third', testattr='ABC', path='/somewhere-else/path_2', album_id=2))
+        self.lib.add(Item(title=u'title',
+                          path='/path_1',
+                          album_id=2,
+                          artist='AAA Singers'))
+        self.lib.add(Item(title=u'another title',
+                          path='/somewhere/path_2',
+                          artist='AAA Singers'))
+        self.lib.add(Item(title=u'and a third',
+                          testattr='ABC',
+                          path='/somewhere-else/path_2',
+                          album_id=2))
         # The following adds will create albums #1 and #2
-        self.lib.add(Album(album=u'album', albumtest='xyz'))
-        self.lib.add(Album(album=u'other album', artpath='/somewhere-else/art_path_2'))
+        self.lib.add(Album(album=u'album',
+                           albumtest='xyz'))
+        self.lib.add(Album(album=u'other album',
+                           artpath='/somewhere-else/art_path_2'))
 
         web.app.config['TESTING'] = True
         web.app.config['lib'] = self.lib
@@ -158,7 +168,7 @@ class WebPluginTest(_common.LibTestCase):
                          u'and a third')
 
     def test_query_item_regex_backslash(self):
-        #""" testing item query: testattr::\w+ """
+        # """ testing item query: testattr::\w+ """
         response = self.client.get('/item/query/testattr%3a%3a%5cw%2b')
         res_json = json.loads(response.data.decode('utf-8'))
 
@@ -168,7 +178,7 @@ class WebPluginTest(_common.LibTestCase):
                          u'and a third')
 
     def test_query_item_path(self):
-        #""" testing item query: path:\somewhere """
+        # """ testing item query: path:\somewhere """
         """ Note: path queries are special: the query item must match the path
         from the root all the way to a directory, so this matches 1 item """
         """ Note: filesystem separators must be specified as '\' """
@@ -255,7 +265,7 @@ class WebPluginTest(_common.LibTestCase):
                          u'other album')
 
     def test_query_album_regex_backslash(self):
-        #""" testing query: albumtest::\w+ """
+        # """ testing query: albumtest::\w+ """
         response = self.client.get('/album/query/albumtest%3a%3a%5cw%2b')
         res_json = json.loads(response.data.decode('utf-8'))
 
