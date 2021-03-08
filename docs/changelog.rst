@@ -186,6 +186,8 @@ New features:
 
 Fixes:
 
+* :bug:`/plugins/web`: Allow use of backslash in regex web queries.
+  :bug:`3867`
 * :bug:`/plugins/web`: Fixed a small bug which caused album artpath to be
   redacted even when ``include_paths`` option is set.
   :bug:`3866`
