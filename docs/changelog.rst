@@ -24,6 +24,20 @@ Major new features:
   (the MBID), and ``work_disambig`` (the disambiguation string).
   Thanks to :user:`dosoe`.
   :bug:`2580` :bug:`3272`
+* A new :doc:`/plugins/parentwork` gets information about the original work,
+  which is useful for classical music.
+  Thanks to :user:`dosoe`.
+  :bug:`2580` :bug:`3279`
+* :doc:`/plugins/bpd`: BPD now supports most of the features of version 0.16
+  of the MPD protocol. This is enough to get it talking to more complicated
+  clients like ncmpcpp, but there are still some incompatibilities, largely due
+  to MPD commands we don't support yet. (Let us know if you find an MPD client
+  that doesn't get along with BPD!)
+  :bug:`3214` :bug:`800`
+* A new :doc:`/plugins/deezer` can autotag tracks and albums using the
+  `Deezer`_ database.
+  Thanks to :user:`rhlahuja`.
+  :bug:`3355`
 
 Other new things:
 
@@ -46,14 +60,14 @@ Other new things:
 * A new :doc:`/plugins/subsonicplaylist` can import playlists from a Subsonic
   server.
 * :doc:`/plugins/subsonicupdate`: The plugin now automatically chooses between
-  token and password-based authentication based on server version
-* A new :ref:`extra_tags` configuration option allows more tagged metadata
-  to be included in MusicBrainz queries.
+  token- and password-based authentication based on server version
+* A new :ref:`extra_tags` configuration option lets you use more metadata in
+  MusicBrainz queries to further narrow the search.
 * A new :doc:`/plugins/fish` adds `Fish shell`_ tab autocompletion to beets.
 * :doc:`plugins/fetchart` and :doc:`plugins/embedart`: Added a new ``quality``
   option that controls the quality of the image output when the image is
   resized.
-* :doc:`plugins/keyfinder`: Added support for `keyfinder-cli`_
+* :doc:`plugins/keyfinder`: Added support for `keyfinder-cli`_.
   Thanks to :user:`BrainDamage`.
 * :doc:`plugins/fetchart`: Added a new ``high_resolution`` config option to
   allow downloading of higher resolution iTunes artwork (at the expense of
@@ -71,12 +85,6 @@ Other new things:
   option, which symlink or hardlink files that do not need to
   be converted (instead of copying them).
   :bug:`2324`
-* :doc:`/plugins/bpd`: BPD now supports most of the features of version 0.16
-  of the MPD protocol. This is enough to get it talking to more complicated
-  clients like ncmpcpp, but there are still some incompatibilities, largely due
-  to MPD commands we don't support yet. (Let us know if you find an MPD client
-  that doesn't get along with BPD!)
-  :bug:`3214` :bug:`800`
 * :doc:`/plugins/replaygain`: The plugin now supports a ``per_disc`` option
   that enables calculation of album ReplayGain on disc level instead of album
   level.
@@ -85,20 +93,15 @@ Other new things:
 * :doc:`/plugins/replaygain`: The new ``ffmpeg`` ReplayGain backend supports
   ``R128_`` tags.
   :bug:`3056`
-* :doc:`plugins/replaygain`: ``r128_targetlevel`` is a new configuration option
-  for the ReplayGain plugin: It defines the reference volume for files using
-  ``R128_`` tags. ``targetlevel`` only configures the reference volume for
-  ``REPLAYGAIN_`` files.
+* :doc:`plugins/replaygain`: A new ``r128_targetlevel`` configuration option
+  defines the reference volume for files using ``R128_`` tags. ``targetlevel``
+  only configures the reference volume for ``REPLAYGAIN_`` files.
   :bug:`3065`
-* A new :doc:`/plugins/parentwork` gets information about the original work,
-  which is useful for classical music.
-  Thanks to :user:`dosoe`.
-  :bug:`2580` :bug:`3279`
-* :doc:`/plugins/discogs`: The field now collects the "style" field.
+* :doc:`/plugins/discogs`: The plugin now collects the "style" field.
   Thanks to :user:`thedevilisinthedetails`.
   :bug:`2579` :bug:`3251`
 * :doc:`/plugins/absubmit`: By default, the plugin now avoids re-analyzing
-  files that already have AB data.
+  files that already have AcousticBrainz data.
   There are new ``force`` and ``pretend`` options to help control this new
   behavior.
   Thanks to :user:`SusannaMaria`.
@@ -116,24 +119,21 @@ Other new things:
   Windows.
   Thanks to :user:`MartyLake`.
   :bug:`3331` :bug:`3334`
-* The 'data_source' field is now also applied as an album-level flexible
-  attribute during imports, allowing for more refined album level searches.
+* The `data_source` field, which indicates which metadata source was used
+  during an autotagging import, is now also applied as an album-level flexible
+  attribute.
   :bug:`3350` :bug:`1693`
-* :doc:`/plugins/deezer`: Added Deezer plugin as an import metadata provider:
-  you can now match tracks and albums using the `Deezer`_ database.
-  Thanks to :user:`rhlahuja`.
-  :bug:`3355`
-* :doc:`/plugins/beatport`: The plugin now gets the musical key, BPM and the
+* :doc:`/plugins/beatport`: The plugin now gets the musical key, BPM, and
   genre for each track.
   :bug:`2080`
-* :doc:`/plugins/beatport`: Fix default assignment of the musical key.
+* :doc:`/plugins/beatport`: Fix the default assignment of the musical key.
   :bug:`3377`
 * :doc:`/plugins/bpsync`: Add `bpsync` plugin to sync metadata changes
   from the Beatport database.
 * :doc:`/plugins/beatport`: Fix assignment of `genre` and rename `musical_key`
   to `initial_key`.
   :bug:`3387`
-* :doc:`/plugins/hook` now treats non-zero exit codes as errors.
+* :doc:`/plugins/hook`: The plugin now treats non-zero exit codes as errors.
   :bug:`3409`
 * :doc:`/plugins/subsonicupdate`: A new ``url`` configuration replaces the
   older (and now deprecated) separate ``host``, ``port``, and ``contextpath``
@@ -148,27 +148,24 @@ Other new things:
   :bug:`3459`
 * :doc:`/plugins/fetchart`: Album art can now be fetched from `last.fm`_.
   :bug:`3530`
-* The classes ``AlbumInfo`` and ``TrackInfo`` now have flexible attributes,
-  allowing to solve :bug:`1547`. 
-  Thanks to :user:`dosoe`.
 * :doc:`/plugins/web`: The query API now interprets backslashes as path
   separators to support path queries.
   Thanks to :user:`nmeum`.
   :bug:`3567`
 * ``beet import`` now handles tar archives with bzip2 or gzip compression.
   :bug:`3606`
-* :doc:`/plugins/plexupdate`: Add option to use secure connection to Plex
-  server, and to ignore certificate validation errors if necessary.
+* :doc:`/plugins/plexupdate`: Added an option to use a secure connection to
+  Plex server, and to ignore certificate validation errors if necessary.
   :bug:`2871`
-* :doc:`/plugins/lyrics`: Improved searching Genius backend when artist
-  contained special characters.
+* :doc:`/plugins/lyrics`: Improved searching on the Genius backend when the
+  artist contains special characters.
   :bug:`3634`
 * :doc:`/plugins/parentwork`: Also get the composition date of the parent work,
   instead of just the child work.
   Thanks to :user:`aereaux`.
   :bug:`3650`
 * :doc:`/plugins/lyrics`: Fix a bug in the heuristic for detecting valid
-  lyrics in the Google source of the lyrics plugin
+  lyrics in the Google source.
   :bug:`2969`
 * :doc:`/plugins/thumbnails`: Fix a bug where pathlib expected a string instead
   of bytes for a path.
@@ -375,6 +372,10 @@ For plugin developers:
 * ``Item.keys`` also has a ``with_album`` argument now, defaulting to ``True``.
 * A ``revision`` attribute has been added to ``Database``. It is increased on
   every transaction that mutates it. :bug:`2988`
+* The classes ``AlbumInfo`` and ``TrackInfo`` now convey arbitrary attributes
+  instead of a fixed, built-in set of field names (which was important to
+  address :bug:`1547`).
+  Thanks to :user:`dosoe`.
 
 For packagers:
 
