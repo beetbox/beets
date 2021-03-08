@@ -14,18 +14,22 @@ Finally, this is the last version of beets where we intend to support Python
 
 New features:
 
-* :doc:`/plugins/mpdstats`: Add strip_path option to help build the right local path
-  from MPD information
-* Submitting acoustID information on tracks which already have a fingerprint
-  :bug:`3834`
-* conversion uses par_map to parallelize conversion jobs in python3
-* Add ``title_case`` config option to lastgenre to make TitleCasing optional.
-* When config is printed with no available configuration a new message is printed.
+* :doc:`/plugins/mpdstats`: Add a new `strip_path` option to help build the
+  right local path from MPD information.
+* :doc:`/plugins/convert`: Conversion can now parallelize conversion jobs on
+  Python 3.
+* :doc:`/plugins/lastgenre`: Add a new `title_case` config option to make
+  title-case formatting optional.
+* There's a new message when running ``beet config`` when there's no available
+  configuration file.
   :bug:`3779`
-* When importing a duplicate album it ask if it should "Keep all" instead of "Keep both".
+* When importing a duplicate album, the prompt now says "keep all" instead of
+  "keep both" to reflect that there may be more than two albums involved.
   :bug:`3569`
-* :doc:`/plugins/chroma`: Update file metadata after generating fingerprints through the `submit` command.
-* :doc:`/plugins/lastgenre`: Added more heavy metal genres: https://en.wikipedia.org/wiki/Heavy_metal_genres to genres.txt and genres-tree.yaml
+* :doc:`/plugins/chroma`: The plugin now updates file metadata after
+  generating fingerprints through the `submit` command.
+* :doc:`/plugins/lastgenre`: Added more heavy metal genres to the built-in
+  genre filter lists.
 * :doc:`/plugins/subsonicplaylist`: import playlist from a subsonic server.
 * :doc:`/plugins/subsonicupdate`: Automatically choose between token and
   password-based authentication based on server version
@@ -323,6 +327,9 @@ Fixes:
   information. Thanks to :user:`dosoe`.
 * :doc:`/plugins/discogs`: Replace deprecated discogs-client library with community
   supported python3-discogs-client library. :bug:`3608`
+* :doc:`/plugins/chroma`: Fixed submitting AcoustID information for tracks
+  that already have a fingerprint.
+  :bug:`3834`
 
 For plugin developers:
 
