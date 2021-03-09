@@ -9,16 +9,21 @@ import unittest
 import os.path
 from six import assertCountEqual
 
+import beets.library
 from test import _common
 from beets.library import Item, Album
 from beetsplug import web
 
+#from mock import patch
+from beets import logging
 
 class WebPluginTest(_common.LibTestCase):
 
     def setUp(self):
-        super(WebPluginTest, self).setUp()
 
+        super(WebPluginTest, self).setUp()
+        self.log = logging.getLogger('beets.web')
+        
         # Add fixtures
         for track in self.lib.items():
             track.remove()
@@ -27,22 +32,22 @@ class WebPluginTest(_common.LibTestCase):
         # and assigns the next free id number.
         # The following adds will create items #1, #2 and #3
         self.lib.add(Item(title=u'title',
-                          path=os.sep + os.path.join('path_1'),
-                          album_id=2,
-                          artist='AAA Singers'))
-        self.lib.add(Item(title=u'another title',
-                          path=os.sep + os.path.join('somewhere', 'a'),
-                          artist='AAA Singers'))
+                      path=os.sep + os.path.join('path_1'),
+                      album_id=2,
+                      artist='AAA Singers'))
+        self.debug_item = self.lib.add(Item(title=u'another title',
+                                        path=os.sep + os.path.join('somewhere', 'a'),
+                                        artist='AAA Singers'))
         self.lib.add(Item(title=u'and a third',
-                          testattr='ABC',
-                          path=os.sep + os.path.join('somewhere', 'abc'),
-                          album_id=2))
+                      testattr='ABC',
+                      path=os.sep + os.path.join('somewhere', 'abc'),
+                      album_id=2))
         # The following adds will create albums #1 and #2
         self.lib.add(Album(album=u'album',
-                           albumtest='xyz'))
+                       albumtest='xyz'))
         self.lib.add(Album(album=u'other album',
-                           artpath=os.sep
-                           + os.path.join('somewhere2', 'art_path_2')))
+                       artpath=os.sep
+                       + os.path.join('somewhere2', 'art_path_2')))
 
         web.app.config['TESTING'] = True
         web.app.config['lib'] = self.lib
@@ -180,17 +185,24 @@ class WebPluginTest(_common.LibTestCase):
                          u'and a third')
 
     def test_query_item_path(self):
-        # """ testing item query: path:\somewhere """
+        # """ testing item query: path:\somewhere\a """
         """ Note: path queries are special: the query item must match the path
         from the root all the way to a directory, so this matches 1 item """
         """ Note: filesystem separators in the query must be '\' """
+        self.log.info('os.sep: ' + str(os.sep))
+        self.log.info('os.join: ' + str(os.path.join('somewhere', 'a')))
+        self.log.info('debug item path: ' + str(self.lib.get_item(self.debug_item).path))
+      
         response = self.client.get('/item/query/path:\\somewhere\\a')
         res_json = json.loads(response.data.decode('utf-8'))
+#        self.log.info('json response: ' + str(response.data))
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(res_json['results']), 1)
         self.assertEqual(res_json['results'][0]['title'],
                          u'another title')
+        # Fail
+        self.assertTrue(False)
 
     def test_get_all_albums(self):
         response = self.client.get('/album/')
