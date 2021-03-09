@@ -27,21 +27,21 @@ class WebPluginTest(_common.LibTestCase):
         # and assigns the next free id number.
         # The following adds will create items #1, #2 and #3
         self.lib.add(Item(title=u'title',
-                          path='/path_1',
+                          path=os.sep + os.path.join('path_1'),
                           album_id=2,
                           artist='AAA Singers'))
         self.lib.add(Item(title=u'another title',
-                          path='/somewhere/path_2',
+                          path=os.sep + os.path.join('somewhere', 'a'),
                           artist='AAA Singers'))
         self.lib.add(Item(title=u'and a third',
                           testattr='ABC',
-                          path='/somewhere-else/path_2',
+                          path=os.sep + os.path.join('somewhere', 'abc'),
                           album_id=2))
         # The following adds will create albums #1 and #2
         self.lib.add(Album(album=u'album',
                            albumtest='xyz'))
         self.lib.add(Album(album=u'other album',
-                           artpath='/somewhere-else/art_path_2'))
+                           artpath=os.sep + os.path.join('somewhere-else', 'art_path_2')))
 
         web.app.config['TESTING'] = True
         web.app.config['lib'] = self.lib
@@ -54,7 +54,7 @@ class WebPluginTest(_common.LibTestCase):
         res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(res_json['path'], u'/path_1')
+        self.assertEqual(res_json['path'], os.path.join(os.sep, u'path_1'))
 
         web.app.config['INCLUDE_PATHS'] = False
 
@@ -64,7 +64,7 @@ class WebPluginTest(_common.LibTestCase):
         res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(res_json['artpath'], u'/somewhere-else/art_path_2')
+        self.assertEqual(res_json['artpath'], os.path.join(os.sep, u'somewhere-else', u'art_path_2'))
 
         web.app.config['INCLUDE_PATHS'] = False
 
@@ -180,9 +180,9 @@ class WebPluginTest(_common.LibTestCase):
     def test_query_item_path(self):
         # """ testing item query: path:\somewhere """
         """ Note: path queries are special: the query item must match the path
-        from the root all the way to a directory, so this matches 1 item """
-        """ Note: filesystem separators must be specified as '\' """
-        response = self.client.get('/item/query/path:\\somewhere')
+        from the root all the way to a directory, so this matches just 1 item """
+        """ Note: filesystem separators in the query must be specified as '\' """
+        response = self.client.get('/item/query/path:\\somewhere\\a')
         res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
