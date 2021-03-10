@@ -148,7 +148,7 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
 
     def send(self, endpoint, params=None):
         if params is None:
-            params = dict()
+            params = {}
         a, b = self.generate_token()
         params['u'] = self.config['username']
         params['t'] = a
@@ -163,7 +163,7 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
         return resp
 
     def get_playlists(self, ids):
-        output = dict()
+        output = {}
         for playlist_id in ids:
             name, tracks = self.get_playlist(playlist_id)
             for track in tracks:

@@ -27,7 +27,7 @@ class ImportAddedPlugin(BeetsPlugin):
         # album.path for old albums that were replaced by a reimported album
         self.replaced_album_paths = None
         # item path in the library to the mtime of the source file
-        self.item_mtime = dict()
+        self.item_mtime = {}
 
         register = self.register_listener
         register('import_task_created', self.check_config)

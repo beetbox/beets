@@ -504,7 +504,7 @@ class FanartTV(RemoteArtSource):
 
         matches = []
         # can there be more than one releasegroupid per response?
-        for mbid, art in data.get(u'albums', dict()).items():
+        for mbid, art in data.get(u'albums', {}).items():
             # there might be more art referenced, e.g. cdart, and an albumcover
             # might not be present, even if the request was successful
             if album.mb_releasegroupid == mbid and u'albumcover' in art:
