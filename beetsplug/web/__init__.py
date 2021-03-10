@@ -116,6 +116,7 @@ def resource(name, patchable=False):
             entities = [entity for entity in entities if entity]
 
             if get_method() == "DELETE":
+
                 if app.config.get('READONLY', True):
                     return flask.abort(405)
 
@@ -168,6 +169,7 @@ def resource_query(name, patchable=False):
             entities = query_func(queries)
 
             if get_method() == "DELETE":
+
                 if app.config.get('READONLY', True):
                     return flask.abort(405)
 
