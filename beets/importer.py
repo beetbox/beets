@@ -786,7 +786,7 @@ class ImportTask(BaseImportTask):
                 if (not dup_item.album_id or
                         dup_item.album_id in replaced_album_ids):
                     continue
-                replaced_album = dup_item.get_album()
+                replaced_album = dup_item._cached_album
                 if replaced_album:
                     replaced_album_ids.add(dup_item.album_id)
                     self.replaced_albums[replaced_album.path] = replaced_album
