@@ -116,12 +116,18 @@ def resource(name, patchable=False):
             entities = [entity for entity in entities if entity]
 
             if get_method() == "DELETE":
+                if app.config.get('READONLY', True):
+                    return flask.abort(405)
+
                 for entity in entities:
                     entity.remove(delete=is_delete())
 
                 return flask.make_response(jsonify({'deleted': True}), 200)
 
             elif get_method() == "PATCH" and patchable:
+                if app.config.get('READONLY', True):
+                    return flask.abort(405)
+
                 for entity in entities:
                     entity.update(flask.request.get_json())
                     entity.try_sync(True, False)  # write, don't move
@@ -162,12 +168,18 @@ def resource_query(name, patchable=False):
             entities = query_func(queries)
 
             if get_method() == "DELETE":
+                if app.config.get('READONLY', True):
+                    return flask.abort(405)
+
                 for entity in entities:
                     entity.remove(delete=is_delete())
 
                 return flask.make_response(jsonify({'deleted': True}), 200)
 
             elif get_method() == "PATCH" and patchable:
+                if app.config.get('READONLY', True):
+                    return flask.abort(405)
+
                 for entity in entities:
                     entity.update(flask.request.get_json())
                     entity.try_sync(True, False)  # write, don't move
