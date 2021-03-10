@@ -729,10 +729,10 @@ class Results(object):
     def _get_indexed_flex_attrs(self):
         """ Index flexible attributes by the entity id they belong to
         """
-        flex_values = dict()
+        flex_values = {}
         for row in self.flex_rows:
             if row['entity_id'] not in flex_values:
-                flex_values[row['entity_id']] = dict()
+                flex_values[row['entity_id']] = {}
 
             flex_values[row['entity_id']][row['key']] = row['value']
 
