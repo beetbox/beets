@@ -8,6 +8,7 @@ import json
 import unittest
 import os.path
 from six import assertCountEqual
+import shutil
 
 from test import _common
 from beets.library import Item, Album
@@ -65,6 +66,7 @@ class WebPluginTest(_common.LibTestCase):
         web.app.config['TESTING'] = True
         web.app.config['lib'] = self.lib
         web.app.config['INCLUDE_PATHS'] = False
+        # Default value of READONLY is True
         self.client = web.app.test_client()
 
     def test_config_include_paths_true(self):
@@ -307,6 +309,309 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(res_json['items'], 3)
         self.assertEqual(res_json['albums'], 2)
+
+    def test_delete_item_id(self):
+
+        # Default value of READONLY is True
+        web.app.config['READONLY'] = False
+
+        # Create a temporary item
+        item_id = self.lib.add(Item(title=u'test_delete_item_id',
+                                    test_delete_item_id=1))
+
+        # Check we can find the temporary item we just created
+        response = self.client.get('/item/' + str(item_id))
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(res_json['id'], item_id)
+
+        # Delete item by id
+        response = self.client.delete('/item/' + str(item_id))
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+
+        # Check the item has gone
+        response = self.client.get('/item/' + str(item_id))
+        self.assertEqual(response.status_code, 404)
+        # Note: if this fails, the item may still be around
+        # and may cause other tests to fail
+
+    def test_delete_item_without_file(self):
+
+        # Default value of READONLY is True
+        web.app.config['READONLY'] = False
+
+        # Create an item with a file
+        ipath = os.path.join(self.temp_dir, b'testfile1.mp3')
+        shutil.copy(os.path.join(_common.RSRC, b'full.mp3'), ipath)
+        self.assertTrue(os.path.exists(ipath))
+        item_id = self.lib.add(Item.from_path(ipath))
+
+        # Check we can find the temporary item we just created
+        response = self.client.get('/item/' + str(item_id))
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(res_json['id'], item_id)
+
+        # Delete item by id, without deleting file
+        response = self.client.delete('/item/' + str(item_id))
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+
+        # Check the item has gone
+        response = self.client.get('/item/' + str(item_id))
+        self.assertEqual(response.status_code, 404)
+
+        # Check the file has not gone
+        self.assertTrue(os.path.exists(ipath))
+        os.remove(ipath)
+
+    def test_delete_item_with_file(self):
+
+        # Default value of READONLY is True
+        web.app.config['READONLY'] = False
+
+        # Create an item with a file
+        ipath = os.path.join(self.temp_dir, b'testfile2.mp3')
+        shutil.copy(os.path.join(_common.RSRC, b'full.mp3'), ipath)
+        self.assertTrue(os.path.exists(ipath))
+        item_id = self.lib.add(Item.from_path(ipath))
+
+        # Check we can find the temporary item we just created
+        response = self.client.get('/item/' + str(item_id))
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(res_json['id'], item_id)
+
+        # Delete item by id, with file
+        response = self.client.delete('/item/' + str(item_id) + '?delete')
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+
+        # Check the item has gone
+        response = self.client.get('/item/' + str(item_id))
+        self.assertEqual(response.status_code, 404)
+
+        # Check the file has gone
+        self.assertFalse(os.path.exists(ipath))
+
+    def test_delete_item_query(self):
+
+        # Default value of READONLY is True
+        web.app.config['READONLY'] = False
+
+        # Create a temporary item
+        self.lib.add(Item(title=u'test_delete_item_query',
+                          test_delete_item_query=1))
+
+        # Check we can find the temporary item we just created
+        response = self.client.get('/item/query/test_delete_item_query')
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(res_json['results']), 1)
+
+        # Delete item by query
+        response = self.client.delete('/item/query/test_delete_item_query')
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+
+        # Check the item has gone
+        response = self.client.get('/item/query/test_delete_item_query')
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(res_json['results']), 0)
+
+    def test_delete_item_all_fails(self):
+        """ DELETE is not supported for list all """
+
+        # Default value of READONLY is True
+        web.app.config['READONLY'] = False
+
+        # Delete all items
+        response = self.client.delete('/item/')
+        self.assertEqual(response.status_code, 405)
+
+        # Note: if this fails, all items have gone and rest of
+        # tests wil fail!
+
+    def test_delete_item_id_readonly(self):
+
+        # Default value of READONLY is True
+        del web.app.config['READONLY']
+
+        # Create a temporary item
+        item_id = self.lib.add(Item(title=u'test_delete_item_id_ro',
+                                    test_delete_item_id_ro=1))
+
+        # Check we can find the temporary item we just created
+        response = self.client.get('/item/' + str(item_id))
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(res_json['id'], item_id)
+
+        # Try to delete item by id
+        response = self.client.delete('/item/' + str(item_id))
+        self.assertEqual(response.status_code, 405)
+
+        # Check the item has not gone
+        response = self.client.get('/item/' + str(item_id))
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(res_json['id'], item_id)
+
+        # Remove it
+        self.lib.get_item(item_id).remove()
+
+    def test_delete_item_query_readonly(self):
+
+        # Default value of READONLY is True
+        del web.app.config['READONLY']
+
+        # Create a temporary item
+        item_id = self.lib.add(Item(title=u'test_delete_item_q_ro',
+                                    test_delete_item_q_ro=1))
+
+        # Check we can find the temporary item we just created
+        response = self.client.get('/item/query/test_delete_item_q_ro')
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(res_json['results']), 1)
+
+        # Try to delete item by query
+        response = self.client.delete('/item/query/test_delete_item_q_ro')
+        self.assertEqual(response.status_code, 405)
+
+        # Check the item has not gone
+        response = self.client.get('/item/query/test_delete_item_q_ro')
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(res_json['results']), 1)
+
+        # Remove it
+        self.lib.get_item(item_id).remove()
+
+    def test_delete_album_id(self):
+
+        # Default value of READONLY is True
+        web.app.config['READONLY'] = False
+
+        # Create a temporary album
+        album_id = self.lib.add(Album(album=u'test_delete_album_id',
+                                      test_delete_album_id=1))
+
+        # Check we can find the temporary album we just created
+        response = self.client.get('/album/' + str(album_id))
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(res_json['id'], album_id)
+
+        # Delete album by id
+        response = self.client.delete('/album/' + str(album_id))
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+
+        # Check the album has gone
+        response = self.client.get('/album/' + str(album_id))
+        self.assertEqual(response.status_code, 404)
+        # Note: if this fails, the album may still be around
+        # and may cause other tests to fail
+
+    def test_delete_album_query(self):
+
+        # Default value of READONLY is True
+        web.app.config['READONLY'] = False
+
+        # Create a temporary album
+        self.lib.add(Album(album=u'test_delete_album_query',
+                           test_delete_album_query=1))
+
+        # Check we can find the temporary album we just created
+        response = self.client.get('/album/query/test_delete_album_query')
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(res_json['results']), 1)
+
+        # Delete album
+        response = self.client.delete('/album/query/test_delete_album_query')
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+
+        # Check the album has gone
+        response = self.client.get('/album/query/test_delete_album_query')
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(res_json['results']), 0)
+
+    def test_delete_album_all_fails(self):
+        """ DELETE is not supported for list all """
+
+        # Default value of READONLY is True
+        web.app.config['READONLY'] = False
+
+        # Delete all albums
+        response = self.client.delete('/album/')
+        self.assertEqual(response.status_code, 405)
+
+        # Note: if this fails, all albums have gone and rest of
+        # tests wil fail!
+
+    def test_delete_album_id_readonly(self):
+
+        # Default value of READONLY is True
+        del web.app.config['READONLY']
+
+        # Create a temporary album
+        album_id = self.lib.add(Album(album=u'test_delete_album_id_ro',
+                                      test_delete_album_id_ro=1))
+
+        # Check we can find the temporary album we just created
+        response = self.client.get('/album/' + str(album_id))
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(res_json['id'], album_id)
+
+        # Try to delete album by id
+        response = self.client.delete('/album/' + str(album_id))
+        self.assertEqual(response.status_code, 405)
+
+        # Check the item has not gone
+        response = self.client.get('/album/' + str(album_id))
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(res_json['id'], album_id)
+
+        # Remove it
+        self.lib.get_album(album_id).remove()
+
+    def test_delete_album_query_readonly(self):
+
+        # Default value of READONLY is True
+        del web.app.config['READONLY']
+
+        # Create a temporary album
+        album_id = self.lib.add(Album(album=u'test_delete_album_query_ro',
+                                      test_delete_album_query_ro=1))
+
+        # Check we can find the temporary album we just created
+        response = self.client.get('/album/query/test_delete_album_query_ro')
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(res_json['results']), 1)
+
+        # Try to delete album
+        response = self.client.delete(
+            '/album/query/test_delete_album_query_ro'
+        )
+        self.assertEqual(response.status_code, 405)
+
+        # Check the album has not gone
+        response = self.client.get('/album/query/test_delete_album_query_ro')
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(res_json['results']), 1)
+
+        # Remove it
+        self.lib.get_album(album_id).remove()
 
 
 def suite():
