@@ -613,6 +613,78 @@ class WebPluginTest(_common.LibTestCase):
         # Remove it
         self.lib.get_album(album_id).remove()
 
+    def test_patch_item_id(self):
+        # Note: PATCH is currently only implemented for track items, not albums
+
+        # Default value of READONLY is True
+        web.app.config['READONLY'] = False
+
+        # Create a temporary item
+        item_id = self.lib.add(Item(title=u'test_patch_item_id',
+                                    test_patch_f1=1,
+                                    test_patch_f2="Old"))
+
+        # Check we can find the temporary item we just created
+        response = self.client.get('/item/' + str(item_id))
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(res_json['id'], item_id)
+        self.assertEqual(
+            [res_json['test_patch_f1'], res_json['test_patch_f2']],
+            ['1', 'Old'])
+
+        # Patch item by id
+        # patch_json = json.JSONEncoder().encode({"test_patch_f2": "New"}]})
+        response = self.client.patch('/item/' + str(item_id),
+                                     json={"test_patch_f2": "New"})
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(res_json['id'], item_id)
+        self.assertEqual(
+            [res_json['test_patch_f1'], res_json['test_patch_f2']],
+            ['1', 'New'])
+
+        # Check the update has really worked
+        response = self.client.get('/item/' + str(item_id))
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(res_json['id'], item_id)
+        self.assertEqual(
+            [res_json['test_patch_f1'], res_json['test_patch_f2']],
+            ['1', 'New'])
+
+        # Remove the item
+        self.lib.get_item(item_id).remove()
+
+    def test_patch_item_id_readonly(self):
+        # Note: PATCH is currently only implemented for track items, not albums
+
+        # Default value of READONLY is True
+        del web.app.config['READONLY']
+
+        # Create a temporary item
+        item_id = self.lib.add(Item(title=u'test_patch_item_id_ro',
+                                    test_patch_f1=2,
+                                    test_patch_f2="Old"))
+
+        # Check we can find the temporary item we just created
+        response = self.client.get('/item/' + str(item_id))
+        res_json = json.loads(response.data.decode('utf-8'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(res_json['id'], item_id)
+        self.assertEqual(
+            [res_json['test_patch_f1'], res_json['test_patch_f2']],
+            ['2', 'Old'])
+
+        # Patch item by id
+        # patch_json = json.JSONEncoder().encode({"test_patch_f2": "New"})
+        response = self.client.patch('/item/' + str(item_id),
+                                     json={"test_patch_f2": "New"})
+        self.assertEqual(response.status_code, 405)
+
+        # Remove the item
+        self.lib.get_item(item_id).remove()
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
