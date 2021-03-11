@@ -13,11 +13,22 @@ from test import _common
 from beets.library import Item, Album
 from beetsplug import web
 
+import platform
+
+from beets import logging
+
 
 class WebPluginTest(_common.LibTestCase):
 
     def setUp(self):
+
         super(WebPluginTest, self).setUp()
+        self.log = logging.getLogger('beets.web')
+
+        if platform.system() == 'Windows':
+            self.path_prefix = u'C:'
+        else:
+            self.path_prefix = u''
 
         # Add fixtures
         for track in self.lib.items():
@@ -26,12 +37,30 @@ class WebPluginTest(_common.LibTestCase):
         # Add library elements. Note that self.lib.add overrides any "id=<n>"
         # and assigns the next free id number.
         # The following adds will create items #1, #2 and #3
-        self.lib.add(Item(title=u'title', path='/path_1', album_id=2))
-        self.lib.add(Item(title=u'another title', path='/path_2'))
-        self.lib.add(Item(title=u'and a third'))
+        path1 = self.path_prefix + os.sep + \
+            os.path.join(b'path_1').decode('utf-8')
+        self.lib.add(Item(title=u'title',
+                          path=path1,
+                          album_id=2,
+                          artist='AAA Singers'))
+        path2 = self.path_prefix + os.sep + \
+            os.path.join(b'somewhere', b'a').decode('utf-8')
+        self.lib.add(Item(title=u'another title',
+                          path=path2,
+                          artist='AAA Singers'))
+        path3 = self.path_prefix + os.sep + \
+            os.path.join(b'somewhere', b'abc').decode('utf-8')
+        self.lib.add(Item(title=u'and a third',
+                          testattr='ABC',
+                          path=path3,
+                          album_id=2))
         # The following adds will create albums #1 and #2
-        self.lib.add(Album(album=u'album'))
-        self.lib.add(Album(album=u'other album', artpath='/art_path_2'))
+        self.lib.add(Album(album=u'album',
+                           albumtest='xyz'))
+        path4 = self.path_prefix + os.sep + \
+            os.path.join(b'somewhere2', b'art_path_2').decode('utf-8')
+        self.lib.add(Album(album=u'other album',
+                           artpath=path4))
 
         web.app.config['TESTING'] = True
         web.app.config['lib'] = self.lib
@@ -42,17 +71,25 @@ class WebPluginTest(_common.LibTestCase):
         web.app.config['INCLUDE_PATHS'] = True
         response = self.client.get('/item/1')
         res_json = json.loads(response.data.decode('utf-8'))
+        expected_path = self.path_prefix + os.sep \
+            + os.path.join(b'path_1').decode('utf-8')
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(res_json['path'], u'/path_1')
+        self.assertEqual(res_json['path'], expected_path)
+
+        web.app.config['INCLUDE_PATHS'] = False
 
     def test_config_include_artpaths_true(self):
         web.app.config['INCLUDE_PATHS'] = True
         response = self.client.get('/album/2')
         res_json = json.loads(response.data.decode('utf-8'))
+        expected_path = self.path_prefix + os.sep \
+            + os.path.join(b'somewhere2', b'art_path_2').decode('utf-8')
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(res_json['artpath'], u'/art_path_2')
+        self.assertEqual(res_json['artpath'], expected_path)
+
+        web.app.config['INCLUDE_PATHS'] = False
 
     def test_config_include_paths_false(self):
         web.app.config['INCLUDE_PATHS'] = False
@@ -91,8 +128,8 @@ class WebPluginTest(_common.LibTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(res_json['items']), 2)
-        response_titles = [item['title'] for item in res_json['items']]
-        assertCountEqual(self, response_titles, [u'title', u'another title'])
+        response_titles = {item['title'] for item in res_json['items']}
+        self.assertEqual(response_titles, {u'title', u'another title'})
 
     def test_get_single_item_not_found(self):
         response = self.client.get('/item/4')
@@ -116,6 +153,7 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_get_item_empty_query(self):
+        """ testing item query: <empty> """
         response = self.client.get('/item/query/')
         res_json = json.loads(response.data.decode('utf-8'))
 
@@ -123,7 +161,54 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(len(res_json['items']), 3)
 
     def test_get_simple_item_query(self):
+        """ testing item query: another """
         response = self.client.get('/item/query/another')
+        res_json = json.loads(response.data.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(res_json['results']), 1)
+        self.assertEqual(res_json['results'][0]['title'],
+                         u'another title')
+
+    def test_query_item_string(self):
+        """ testing item query: testattr:ABC """
+        response = self.client.get('/item/query/testattr%3aABC')
+        res_json = json.loads(response.data.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(res_json['results']), 1)
+        self.assertEqual(res_json['results'][0]['title'],
+                         u'and a third')
+
+    def test_query_item_regex(self):
+        """ testing item query: testattr::[A-C]+ """
+        response = self.client.get('/item/query/testattr%3a%3a[A-C]%2b')
+        res_json = json.loads(response.data.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(res_json['results']), 1)
+        self.assertEqual(res_json['results'][0]['title'],
+                         u'and a third')
+
+    def test_query_item_regex_backslash(self):
+        # """ testing item query: testattr::\w+ """
+        response = self.client.get('/item/query/testattr%3a%3a%5cw%2b')
+        res_json = json.loads(response.data.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(res_json['results']), 1)
+        self.assertEqual(res_json['results'][0]['title'],
+                         u'and a third')
+
+    def test_query_item_path(self):
+        # """ testing item query: path:\somewhere\a """
+        """ Note: path queries are special: the query item must match the path
+        from the root all the way to a directory, so this matches 1 item """
+        """ Note: filesystem separators in the query must be '\' """
+
+        response = self.client.get('/item/query/path:'
+                                   + self.path_prefix
+                                   + '\\somewhere\\a')
         res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
@@ -177,10 +262,43 @@ class WebPluginTest(_common.LibTestCase):
         res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(res_json['items']), 1)
+        self.assertEqual(len(res_json['items']), 2)
         self.assertEqual(res_json['items'][0]['album'],
                          u'other album')
-        self.assertEqual(res_json['items'][0]['id'], 1)
+        self.assertEqual(res_json['items'][1]['album'],
+                         u'other album')
+        response_track_titles = {item['title'] for item in res_json['items']}
+        self.assertEqual(response_track_titles, {u'title', u'and a third'})
+
+    def test_query_album_string(self):
+        """ testing query: albumtest:xy """
+        response = self.client.get('/album/query/albumtest%3axy')
+        res_json = json.loads(response.data.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(res_json['results']), 1)
+        self.assertEqual(res_json['results'][0]['album'],
+                         u'album')
+
+    def test_query_album_artpath_regex(self):
+        """ testing query: artpath::art_ """
+        response = self.client.get('/album/query/artpath%3a%3aart_')
+        res_json = json.loads(response.data.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(res_json['results']), 1)
+        self.assertEqual(res_json['results'][0]['album'],
+                         u'other album')
+
+    def test_query_album_regex_backslash(self):
+        # """ testing query: albumtest::\w+ """
+        response = self.client.get('/album/query/albumtest%3a%3a%5cw%2b')
+        res_json = json.loads(response.data.decode('utf-8'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(res_json['results']), 1)
+        self.assertEqual(res_json['results'][0]['album'],
+                         u'album')
 
     def test_get_stats(self):
         response = self.client.get('/stats')
