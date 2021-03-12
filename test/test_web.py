@@ -66,7 +66,7 @@ class WebPluginTest(_common.LibTestCase):
         web.app.config['TESTING'] = True
         web.app.config['lib'] = self.lib
         web.app.config['INCLUDE_PATHS'] = False
-        # Default value of READONLY is True
+        web.app.config['READONLY'] = True
         self.client = web.app.test_client()
 
     def test_config_include_paths_true(self):
@@ -312,7 +312,6 @@ class WebPluginTest(_common.LibTestCase):
 
     def test_delete_item_id(self):
 
-        # Default value of READONLY is True
         web.app.config['READONLY'] = False
 
         # Create a temporary item
@@ -338,7 +337,6 @@ class WebPluginTest(_common.LibTestCase):
 
     def test_delete_item_without_file(self):
 
-        # Default value of READONLY is True
         web.app.config['READONLY'] = False
 
         # Create an item with a file
@@ -368,7 +366,6 @@ class WebPluginTest(_common.LibTestCase):
 
     def test_delete_item_with_file(self):
 
-        # Default value of READONLY is True
         web.app.config['READONLY'] = False
 
         # Create an item with a file
@@ -397,7 +394,6 @@ class WebPluginTest(_common.LibTestCase):
 
     def test_delete_item_query(self):
 
-        # Default value of READONLY is True
         web.app.config['READONLY'] = False
 
         # Create a temporary item
@@ -424,7 +420,6 @@ class WebPluginTest(_common.LibTestCase):
     def test_delete_item_all_fails(self):
         """ DELETE is not supported for list all """
 
-        # Default value of READONLY is True
         web.app.config['READONLY'] = False
 
         # Delete all items
@@ -436,8 +431,7 @@ class WebPluginTest(_common.LibTestCase):
 
     def test_delete_item_id_readonly(self):
 
-        # Default value of READONLY is True
-        del web.app.config['READONLY']
+        web.app.config['READONLY'] = True
 
         # Create a temporary item
         item_id = self.lib.add(Item(title=u'test_delete_item_id_ro',
@@ -464,8 +458,7 @@ class WebPluginTest(_common.LibTestCase):
 
     def test_delete_item_query_readonly(self):
 
-        # Default value of READONLY is True
-        del web.app.config['READONLY']
+        web.app.config['READONLY'] = True
 
         # Create a temporary item
         item_id = self.lib.add(Item(title=u'test_delete_item_q_ro',
@@ -492,7 +485,6 @@ class WebPluginTest(_common.LibTestCase):
 
     def test_delete_album_id(self):
 
-        # Default value of READONLY is True
         web.app.config['READONLY'] = False
 
         # Create a temporary album
@@ -518,7 +510,6 @@ class WebPluginTest(_common.LibTestCase):
 
     def test_delete_album_query(self):
 
-        # Default value of READONLY is True
         web.app.config['READONLY'] = False
 
         # Create a temporary album
@@ -545,7 +536,6 @@ class WebPluginTest(_common.LibTestCase):
     def test_delete_album_all_fails(self):
         """ DELETE is not supported for list all """
 
-        # Default value of READONLY is True
         web.app.config['READONLY'] = False
 
         # Delete all albums
@@ -557,8 +547,7 @@ class WebPluginTest(_common.LibTestCase):
 
     def test_delete_album_id_readonly(self):
 
-        # Default value of READONLY is True
-        del web.app.config['READONLY']
+        web.app.config['READONLY'] = True
 
         # Create a temporary album
         album_id = self.lib.add(Album(album=u'test_delete_album_id_ro',
@@ -585,8 +574,7 @@ class WebPluginTest(_common.LibTestCase):
 
     def test_delete_album_query_readonly(self):
 
-        # Default value of READONLY is True
-        del web.app.config['READONLY']
+        web.app.config['READONLY'] = True
 
         # Create a temporary album
         album_id = self.lib.add(Album(album=u'test_delete_album_query_ro',
@@ -616,7 +604,6 @@ class WebPluginTest(_common.LibTestCase):
     def test_patch_item_id(self):
         # Note: PATCH is currently only implemented for track items, not albums
 
-        # Default value of READONLY is True
         web.app.config['READONLY'] = False
 
         # Create a temporary item
@@ -659,8 +646,7 @@ class WebPluginTest(_common.LibTestCase):
     def test_patch_item_id_readonly(self):
         # Note: PATCH is currently only implemented for track items, not albums
 
-        # Default value of READONLY is True
-        del web.app.config['READONLY']
+        web.app.config['READONLY'] = True
 
         # Create a temporary item
         item_id = self.lib.add(Item(title=u'test_patch_item_id_ro',

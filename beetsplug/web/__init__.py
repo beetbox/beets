@@ -442,6 +442,7 @@ class WebPlugin(BeetsPlugin):
             'cors_supports_credentials': False,
             'reverse_proxy': False,
             'include_paths': False,
+            'readonly': True,
         })
 
     def commands(self):
@@ -461,6 +462,7 @@ class WebPlugin(BeetsPlugin):
             app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
             app.config['INCLUDE_PATHS'] = self.config['include_paths']
+            app.config['READONLY'] = self.config['readonly']
 
             # Enable CORS if required.
             if self.config['cors']:
