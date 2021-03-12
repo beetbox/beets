@@ -216,7 +216,7 @@ class MissingPlugin(BeetsPlugin):
         """Query MusicBrainz to determine items missing from `album`.
         """
         item_mbids = [x.mb_trackid for x in album.items()]
-        if len([i for i in album.items()]) < album.albumtotal:
+        if len(list(album.items())) < album.albumtotal:
             # fetch missing items
             # TODO: Implement caching that without breaking other stuff
             album_info = hooks.album_for_mbid(album.mb_albumid)
