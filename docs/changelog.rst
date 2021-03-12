@@ -335,6 +335,9 @@ Fixes:
 * :doc:`/plugins/chroma`: Fixed submitting AcoustID information for tracks
   that already have a fingerprint.
   :bug:`3834`
+* :doc:`/plugins/web`: DELETE and PATCH methods are disallowed by default.
+  Set ``readonly: no`` web config option to enable them.
+  :bug:`3870`
 
 For plugin developers:
 
