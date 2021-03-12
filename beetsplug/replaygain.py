@@ -1139,7 +1139,7 @@ class ReplayGainPlugin(BeetsPlugin):
         tag_vals = self.tag_specific_values(album.items())
         store_track_gain, store_album_gain, target_level, peak = tag_vals
 
-        discs = dict()
+        discs = {}
         if self.per_disc:
             for item in album.items():
                 if discs.get(item.disc) is None:
@@ -1172,7 +1172,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 self._apply(
                     self.backend_instance.compute_album_gain, args=(),
                     kwds={
-                        "items": [i for i in items],
+                        "items": list(items),
                         "target_level": target_level,
                         "peak": peak
                     },
@@ -1288,7 +1288,7 @@ class ReplayGainPlugin(BeetsPlugin):
         try:
             self._log.info('interrupted')
             self.terminate_pool()
-            exit(0)
+            sys.exit(0)
         except SystemExit:
             # Silence raised SystemExit ~ exit(0)
             pass

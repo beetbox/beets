@@ -187,7 +187,7 @@ class ImportSession(object):
         self.logger = self._setup_logging(loghandler)
         self.paths = paths
         self.query = query
-        self._is_resuming = dict()
+        self._is_resuming = {}
         self._merged_items = set()
         self._merged_dirs = set()
 

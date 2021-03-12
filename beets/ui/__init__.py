@@ -791,7 +791,7 @@ def _store_dict(option, opt_str, value, parser):
     if option_values is None:
         # This is the first supplied ``key=value`` pair of option.
         # Initialize empty dictionary and get a reference to it.
-        setattr(parser.values, dest, dict())
+        setattr(parser.values, dest, {})
         option_values = getattr(parser.values, dest)
 
     try:
