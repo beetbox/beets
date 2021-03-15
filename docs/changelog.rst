@@ -38,6 +38,11 @@ Major new features:
   `Deezer`_ database.
   Thanks to :user:`rhlahuja`.
   :bug:`3355`
+* A new :doc:`/plugins/bareasc` provides a new query type: `bare ASCII`
+  which ignores accented characters, treating them as though they
+  were the base ASCII character. To perform `bare ASCII` searches, use
+  the ``#`` prefix with :ref:`list-cmd` or other commands.
+  :bug:`3882`
 
 Other new things:
 
