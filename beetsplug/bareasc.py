@@ -27,9 +27,14 @@ from unidecode import unidecode
 
 
 class BareascQuery(StringFieldQuery):
-    """Matches items using bare ASCII, without accents etc."""
+    """Compare items using bare ASCII, without accents etc."""
     @classmethod
     def string_match(cls, pattern, val):
+        """Convert both pattern and string to plain ASCII before matching.
+
+        If pattern is all lower case, also convert string to lower case so
+        match is also case insensitive
+        """
         # smartcase
         if pattern.islower():
             val = val.lower()
@@ -39,12 +44,15 @@ class BareascQuery(StringFieldQuery):
 
 
 class BareascPlugin(BeetsPlugin):
+    """Plugin to provide bare-ASCII option for beets matching."""
     def __init__(self):
+        """Default prefix for selecting bare-ASCII matching is #."""
         super(BareascPlugin, self).__init__()
         self.config.add({
             'prefix': '#',
         })
 
     def queries(self):
+        """Reguster bare-ASCII matching."""
         prefix = self.config['prefix'].as_str()
         return {prefix: BareascQuery}
