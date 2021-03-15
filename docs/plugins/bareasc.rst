@@ -35,3 +35,10 @@ file. The only available option is:
 
 - **prefix**: The character used to designate bare-ASCII queries.
   Default: ``#``, which may need to be escaped in some shells.
+
+Credits
+-------
+
+The hard work in this plugin is done in Sean Burke's Unidecode library.
+Thanks are due to Sean and to all the people who created the Python
+version and the beets extensible query architecture.
