@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Philippe Mongeau.
-# Copyright 2021, Graham R. Cobb
+# Copyright 2021, Graham R. Cobb.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and ascociated documentation files (the
@@ -17,8 +17,7 @@
 # This module is adapted from Fuzzy in accordance to the licence of
 # that module
 
-"""Provides a bare-ASCII matching query.
-"""
+"""Provides a bare-ASCII matching query."""
 
 from __future__ import division, absolute_import, print_function
 
@@ -28,6 +27,7 @@ from unidecode import unidecode
 
 
 class BareascQuery(StringFieldQuery):
+    """Matches items using bare ASCII, without accents etc."""
     @classmethod
     def string_match(cls, pattern, val):
         # smartcase
@@ -35,7 +35,7 @@ class BareascQuery(StringFieldQuery):
             val = val.lower()
         pattern = unidecode(pattern)
         val = unidecode(val)
-        return pattern == val
+        return pattern in val
 
 
 class BareascPlugin(BeetsPlugin):

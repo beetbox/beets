@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
+# This file is part of beets.
+# Copyright 2021, Graham R. Cobb.
 
-"""Tests for the 'bareasc' plugin"""
+"""Tests for the 'bareasc' plugin."""
 
 from __future__ import division, absolute_import, print_function
 
@@ -23,9 +25,9 @@ class BareascPluginTest(unittest.TestCase, TestHelper):
         # and assigns the next free id number.
         self.add_item(title=u'with accents',
                       album_id=2,
-                      artist=u'dvořák')
+                      artist=u'Antonín dvořák')
         self.add_item(title=u'without accents',
-                      artist=u'dvorak')
+                      artist=u'Antonín dvorak')
         self.add_item(title=u'with umlaut',
                       album_id=2,
                       artist=u'Brüggen')
