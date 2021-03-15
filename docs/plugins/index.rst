@@ -63,6 +63,7 @@ following to your configuration::
    acousticbrainz
    aura
    badfiles
+   bareasc
    beatport
    bpd
    bpm
@@ -218,6 +219,7 @@ Interoperability
 Miscellaneous
 -------------
 
+* :doc:`bareasc`: Search albums and tracks with bare ASCII string matching.
 * :doc:`bpd`: A music player for your beets library that emulates `MPD`_ and is
   compatible with `MPD clients`_.
 * :doc:`convert`: Transcode music and embed album art while exporting to
