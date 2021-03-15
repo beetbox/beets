@@ -30,7 +30,6 @@ from unidecode import unidecode
 class BareascQuery(StringFieldQuery):
     @classmethod
     def string_match(cls, pattern, val):
-        print('In BareascQuery' + ' ' + pattern + ' ' + val)
         # smartcase
         if pattern.islower():
             val = val.lower()
