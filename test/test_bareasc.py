@@ -33,19 +33,19 @@ class BareascPluginTest(unittest.TestCase, TestHelper):
                       artist=u'Bruggen')
 
     def test_search_normal_noaccent(self):
-        items = self.lib.items('dvorak')
+        items = self.lib.items(u'dvorak')
 
         self.assertEqual(len(items), 1)
         self.assertEqual([items[0].title], [u'without accents'])
 
     def test_search_normal_accent(self):
-        items = self.lib.items('dvořák')
+        items = self.lib.items(u'dvořák')
 
         self.assertEqual(len(items), 1)
         self.assertEqual([items[0].title], [u'with accents'])
 
     def test_search_bareasc_noaccent(self):
-        items = self.lib.items('#dvorak')
+        items = self.lib.items(u'#dvorak')
 
         self.assertEqual(len(items), 2)
         self.assertEqual(
@@ -54,7 +54,7 @@ class BareascPluginTest(unittest.TestCase, TestHelper):
         )
 
     def test_search_bareasc_accent(self):
-        items = self.lib.items('#dvořák')
+        items = self.lib.items(u'#dvořák')
 
         self.assertEqual(len(items), 2)
         self.assertEqual(
@@ -63,7 +63,7 @@ class BareascPluginTest(unittest.TestCase, TestHelper):
         )
 
     def test_search_bareasc_noumlaut(self):
-        items = self.lib.items('#Bruggen')
+        items = self.lib.items(u'#Bruggen')
 
         self.assertEqual(len(items), 2)
         self.assertEqual(
@@ -72,7 +72,7 @@ class BareascPluginTest(unittest.TestCase, TestHelper):
         )
 
     def test_search_bareasc_umlaut(self):
-        items = self.lib.items('#Brüggen')
+        items = self.lib.items(u'#Brüggen')
 
         self.assertEqual(len(items), 2)
         self.assertEqual(
