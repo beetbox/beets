@@ -74,13 +74,12 @@ class BareascPlugin(BeetsPlugin):
         """Emulate normal 'list' command but with unidecode output."""
         query = decargs(args)
         album = opts.album
-        fmt = u''
         # Copied from commands.py - list_items
         if album:
             for album in lib.albums(query):
-                bare = unidecode(six.ensure_text(format(album, fmt)))
+                bare = unidecode(six.ensure_text(str(album)))
                 print_(six.ensure_text(bare))
         else:
             for item in lib.items(query):
-                bare = unidecode(six.ensure_text(format(item, fmt)))
+                bare = unidecode(six.ensure_text(str(item)))
                 print_(six.ensure_text(bare))

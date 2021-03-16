@@ -136,6 +136,15 @@ class BareascPluginTest(unittest.TestCase, TestHelper):
 
         self.assertIn('Antonin Dvorak', output.getvalue())
 
+    def test_bareasc_format_output(self):
+        """Bare-ASCII version of list -f command - check output."""
+        with capture_stdout() as output:
+            self.run_command('bareasc', 'with accents',
+                             '-f', '$artist:: $title')
+
+        self.assertEqual('Antonin Dvorak:: with accents\n',
+                         output.getvalue())
+
 
 def suite():
     """loader."""
