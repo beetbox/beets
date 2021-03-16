@@ -21,6 +21,8 @@
 
 from __future__ import division, absolute_import, print_function
 
+from beets import ui
+from beets.ui import print_, decargs
 from beets.plugins import BeetsPlugin
 from beets.dbcore.query import StringFieldQuery
 from unidecode import unidecode
@@ -53,6 +55,29 @@ class BareascPlugin(BeetsPlugin):
         })
 
     def queries(self):
-        """Reguster bare-ASCII matching."""
+        """Register bare-ASCII matching."""
         prefix = self.config['prefix'].as_str()
         return {prefix: BareascQuery}
+
+    def commands(self):
+        """Add bareasc command as unidecode version of 'list'."""
+        cmd = ui.Subcommand('bareasc',
+                            help='unidecode version of beet list command')
+        cmd.parser.usage += u"\n" \
+            u'Example: %prog -f \'$album: $title\' artist:beatles'
+        cmd.parser.add_all_common_options()
+        cmd.func = self.unidecode_list
+        return [cmd]
+
+    def unidecode_list(self, lib, opts, args):
+        """Emulate normal 'list' command but with unidecode output."""
+        query = decargs(args)
+        album = opts.album
+        fmt = u''
+        # Copied from commands.py - list_items
+        if album:
+            for album in lib.albums(query):
+                print_(unidecode(format(album, fmt)))
+        else:
+            for item in lib.items(query):
+                print_(unidecode(format(item, fmt)))

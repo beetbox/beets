@@ -14,6 +14,23 @@ You'll then be able to use the ``#`` prefix to use bare-ASCII matching::
     $ beet ls '#dvorak'
     István Kertész - REQUIEM - Dvořàk: Requiem, op.89 - Confutatis maledictis
 
+Command
+-------
+
+In addition to the query prefix, the plugin provides a utility ``bareasc`` command.
+This command is **exactly** the same as the ``beet list`` command except that
+the output is passed through the bare-ASCII transformation before being printed.
+This allows you to easily check what the library data looks like in bare ASCII,
+which can be useful if you are trying to work out why a query is not matching.
+
+Using the same example track as above::
+
+    $ beet bareasc 'Dvořàk'
+    Istvan Kertesz - REQUIEM - Dvorak: Requiem, op.89 - Confutatis maledictis
+
+Note: the ``bareasc`` command does NOT automatically use bare-ASCII queries.
+If you want a bare-ASCII query you still need to specify the ``#`` prefix.
+
 Notes
 -----
 
@@ -23,9 +40,16 @@ accents.
 The default ``bareasc`` prefix (``#``) is used as a comment character in some shells
 so may need to be protected (for example in quotes) when typed into the command line.
 
-The bare ASCII transformation is quite simple. It may not work perfectly for all
-languages and does not handle transformations which change the number of letters.
-For example, German u-umlaut ``ü`` is transformed into ASCII ``u``, not into ``ue``.
+The bare ASCII transformation is quite simple. It may not give the expected output
+for all languages. For example, German u-umlaut ``ü`` is transformed into ASCII ``u``,
+not into ``ue``.
+
+The bare ASCII transformation also changes Unicode punctuation like double quotes,
+apostrophes and even some hyphens. It is often best to leave out punctuation
+in the queries. Note that the punctuation changes are often not even visible
+with normal terminal fonts. You can always use the ``bareasc`` command to print the
+transformed entries and use a command like ``diff`` to compare with the output
+from the ``list`` command.
 
 Configuration
 -------------
