@@ -28,7 +28,7 @@ Using the same example track as above::
     $ beet bareasc 'Dvořàk'
     Istvan Kertesz - REQUIEM - Dvorak: Requiem, op.89 - Confutatis maledictis
 
-Note: the ``bareasc`` command does NOT automatically use bare-ASCII queries.
+Note: the ``bareasc`` command does *not* automatically use bare-ASCII queries.
 If you want a bare-ASCII query you still need to specify the ``#`` prefix.
 
 Notes
