@@ -8,7 +8,7 @@ from __future__ import division, absolute_import, print_function
 
 import unittest
 
-from test.helper import TestHelper
+from test.helper import capture_stdout, TestHelper
 
 from beets import logging
 
@@ -27,9 +27,9 @@ class BareascPluginTest(unittest.TestCase, TestHelper):
         # and assigns the next free id number.
         self.add_item(title=u'with accents',
                       album_id=2,
-                      artist=u'Antonín dvořák')
+                      artist=u'Antonín Dvořák')
         self.add_item(title=u'without accents',
-                      artist=u'Antonín dvorak')
+                      artist=u'Antonín Dvorak')
         self.add_item(title=u'with umlaut',
                       album_id=2,
                       artist=u'Brüggen')
@@ -128,6 +128,13 @@ class BareascPluginTest(unittest.TestCase, TestHelper):
             {items[0].title, items[1].title},
             {u'without umlaut or e', u'with umlaut'}
         )
+
+    def test_bareasc_list_output(self):
+        """Bare-ASCII version of list command - check output."""
+        with capture_stdout() as output:
+            self.run_command('bareasc', 'with accents')
+
+        self.assertIn('Antonin Dvorak', output.getvalue())
 
 
 def suite():
