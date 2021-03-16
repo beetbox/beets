@@ -78,7 +78,9 @@ class BareascPlugin(BeetsPlugin):
         # Copied from commands.py - list_items
         if album:
             for album in lib.albums(query):
-                print_(unidecode(format(album, fmt)))
+                bare = unidecode(six.ensure_text(format(album, fmt)))
+                print_(six.ensure_str(bare))
         else:
             for item in lib.items(query):
-                print_(six.ensure_str(unidecode(format(item, fmt))))
+                bare = unidecode(six.ensure_text(format(item, fmt)))
+                print_(six.ensure_str(bare))
