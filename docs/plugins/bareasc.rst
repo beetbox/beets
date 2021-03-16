@@ -40,7 +40,7 @@ accents.
 The default ``bareasc`` prefix (``#``) is used as a comment character in some shells
 so may need to be protected (for example in quotes) when typed into the command line.
 
-The bare ASCII transformation is quite simple. It may not give the expected output
+The bare ASCII transliteration is quite simple. It may not give the expected output
 for all languages. For example, German u-umlaut ``ü`` is transformed into ASCII ``u``,
 not into ``ue``.
 
