@@ -63,6 +63,7 @@ file. The only available option is:
 Credits
 -------
 
-The hard work in this plugin is done in Sean Burke's Unidecode library.
+The hard work in this plugin is done in Sean Burke's
+`Unidecode <https://pypi.org/project/Unidecode/>`__ library.
 Thanks are due to Sean and to all the people who created the Python
 version and the beets extensible query architecture.
