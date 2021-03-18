@@ -1037,24 +1037,55 @@ class ReplayGainPlugin(BeetsPlugin):
         """
         return item.format in self.r128_whitelist
 
+    @staticmethod
+    def has_r128_track_data(item):
+        return item.r128_track_gain is not None
+
+    @staticmethod
+    def has_rg_track_data(item):
+        return (item.rg_track_gain is not None
+                and item.rg_track_peak is not None)
+
     def track_requires_gain(self, item):
-        return self.overwrite or \
-            (self.should_use_r128(item) and not item.r128_track_gain) or \
-            (not self.should_use_r128(item) and
-                (not item.rg_track_gain or not item.rg_track_peak))
+        if self.overwrite:
+            return True
+
+        if self.should_use_r128(item):
+            if not self.has_r128_track_data(item):
+                return True
+        else:
+            if not self.has_rg_track_data(item):
+                return True
+
+        return False
+
+    @staticmethod
+    def has_r128_album_data(item):
+        return (item.r128_track_gain is not None
+                and item.r128_album_gain is not None)
+
+    @staticmethod
+    def has_rg_album_data(item):
+        return (item.rg_album_gain is not None
+                and item.rg_album_peak is not None)
 
     def album_requires_gain(self, album):
         # Skip calculating gain only when *all* files don't need
         # recalculation. This way, if any file among an album's tracks
         # needs recalculation, we still get an accurate album gain
         # value.
-        return self.overwrite or \
-            any([self.should_use_r128(item) and
-                (not item.r128_track_gain or not item.r128_album_gain)
-                for item in album.items()]) or \
-            any([not self.should_use_r128(item) and
-                (not item.rg_album_gain or not item.rg_album_peak)
-                for item in album.items()])
+        if self.overwrite:
+            return True
+
+        for item in album.items():
+            if self.should_use_r128(item):
+                if not self.has_r128_album_data(item):
+                    return True
+            else:
+                if not self.has_rg_album_data(item):
+                    return True
+
+        return False
 
     def store_track_gain(self, item, track_gain):
         item.rg_track_gain = track_gain.gain
