@@ -99,10 +99,61 @@ Gain = collections.namedtuple("Gain", "gain peak")
 AlbumGain = collections.namedtuple("AlbumGain", "album_gain track_gains")
 
 
-class Peak(enum.Enum):
-    none = 0
-    true = 1
-    sample = 2
+ALL_PEAK_METHODS = ["true", "sample"]
+Peak = enum.Enum("Peak", ["none"] + ALL_PEAK_METHODS)
+
+
+class GainHandler():
+    def __init__(self, config, peak, log):
+        self.config = config
+        self.peak = peak
+        self._log = log
+
+    @property
+    def target_level(self):
+        """This currently needs to reloaded from the config since the tests
+        modify its value on-the-fly.
+        """
+        return self.config['targetlevel'].as_number()
+
+    def store_track_gain(self, item, track_gain):
+        item.rg_track_gain = track_gain.gain
+        item.rg_track_peak = track_gain.peak
+        item.store()
+        self._log.debug('applied track gain {0} LU, peak {1} of FS',
+                        item.rg_track_gain, item.rg_track_peak)
+
+    def store_album_gain(self, item, album_gain):
+        item.rg_album_gain = album_gain.gain
+        item.rg_album_peak = album_gain.peak
+        item.store()
+        self._log.debug('applied album gain {0} LU, peak {1} of FS',
+                        item.rg_album_gain, item.rg_album_peak)
+
+
+class R128GainHandler(GainHandler):
+    def __init__(self, config, log):
+        # R128_* tags do not store the track/album peak
+        super().__init__(config, Peak.none, log)
+
+    @property
+    def target_level(self):
+        """This currently needs to reloaded from the config since the tests
+        modify its value on-the-fly.
+        """
+        return self.config['r128_targetlevel'].as_number()
+
+    def store_track_gain(self, item, track_gain):
+        item.r128_track_gain = track_gain.gain
+        item.store()
+        self._log.debug('applied r128 track gain {0} LU',
+                        item.r128_track_gain)
+
+    def store_album_gain(self, item, album_gain):
+        item.r128_album_gain = album_gain.gain
+        item.store()
+        self._log.debug('applied r128 album gain {0} LU',
+                        item.r128_album_gain)
 
 
 class Backend:
@@ -975,11 +1026,6 @@ class ReplayGainPlugin(BeetsPlugin):
     """Provides ReplayGain analysis.
     """
 
-    peak_methods = {
-        "true": Peak.true,
-        "sample": Peak.sample,
-    }
-
     def __init__(self):
         super().__init__()
 
@@ -1013,16 +1059,29 @@ class ReplayGainPlugin(BeetsPlugin):
                     ', '.join(BACKENDS.keys())
                 )
             )
+
         peak_method = self.config["peak"].as_str()
-        if peak_method not in self.peak_methods:
+        if peak_method not in ALL_PEAK_METHODS:
             raise ui.UserError(
                 "Selected ReplayGain peak method {} is not supported. "
                 "Please select one of: {}".format(
                     peak_method,
-                    ', '.join(self.peak_methods.keys())
+                    ', '.join(ALL_PEAK_METHODS)
                 )
             )
-        self._peak_method = self.peak_methods[peak_method]
+
+        # The key in this dict is the `use_r128` flag.
+        self.gain_handlers = {
+            True: R128GainHandler(
+                self.config,
+                self._log,
+            ),
+            False: GainHandler(
+                self.config,
+                Peak[peak_method],
+                self._log,
+            ),
+        }
 
         # On-import analysis.
         if self.config['auto']:
@@ -1091,52 +1150,6 @@ class ReplayGainPlugin(BeetsPlugin):
 
         return False
 
-    def store_track_gain(self, item, track_gain):
-        item.rg_track_gain = track_gain.gain
-        item.rg_track_peak = track_gain.peak
-        item.store()
-        self._log.debug('applied track gain {0} LU, peak {1} of FS',
-                        item.rg_track_gain, item.rg_track_peak)
-
-    def store_album_gain(self, item, album_gain):
-        item.rg_album_gain = album_gain.gain
-        item.rg_album_peak = album_gain.peak
-        item.store()
-        self._log.debug('applied album gain {0} LU, peak {1} of FS',
-                        item.rg_album_gain, item.rg_album_peak)
-
-    def store_track_r128_gain(self, item, track_gain):
-        item.r128_track_gain = track_gain.gain
-        item.store()
-
-        self._log.debug('applied r128 track gain {0} LU',
-                        item.r128_track_gain)
-
-    def store_album_r128_gain(self, item, album_gain):
-        item.r128_album_gain = album_gain.gain
-        item.store()
-        self._log.debug('applied r128 album gain {0} LU',
-                        item.r128_album_gain)
-
-    def tag_specific_values(self, use_r128):
-        """Return some tag specific values.
-
-        Returns a tuple (store_track_gain, store_album_gain, target_level,
-        peak_method).
-        """
-        if use_r128:
-            store_track_gain = self.store_track_r128_gain
-            store_album_gain = self.store_album_r128_gain
-            target_level = self.config['r128_targetlevel'].as_number()
-            peak = Peak.none  # R128_* tags do not store the track/album peak
-        else:
-            store_track_gain = self.store_track_gain
-            store_album_gain = self.store_album_gain
-            target_level = self.config['targetlevel'].as_number()
-            peak = self._peak_method
-
-        return store_track_gain, store_album_gain, target_level, peak
-
     def handle_album(self, album, write, force=False):
         """Compute album and track replay gain store it in all of the
         album's items.
@@ -1159,8 +1172,7 @@ class ReplayGainPlugin(BeetsPlugin):
 
         self._log.info('analyzing {0}', album)
 
-        tag_vals = self.tag_specific_values(use_r128)
-        store_track_gain, store_album_gain, target_level, peak = tag_vals
+        handler = self.gain_handlers[use_r128]
 
         discs = {}
         if self.per_disc:
@@ -1185,8 +1197,8 @@ class ReplayGainPlugin(BeetsPlugin):
                     )
                 for item, track_gain in zip(items,
                                             album_gain.track_gains):
-                    store_track_gain(item, track_gain)
-                    store_album_gain(item, album_gain.album_gain)
+                    handler.store_track_gain(item, track_gain)
+                    handler.store_album_gain(item, album_gain.album_gain)
                     if write:
                         item.try_write()
                     self._log.debug('done analyzing {0}', item)
@@ -1196,8 +1208,8 @@ class ReplayGainPlugin(BeetsPlugin):
                     self.backend_instance.compute_album_gain, args=(),
                     kwds={
                         "items": list(items),
-                        "target_level": target_level,
-                        "peak": peak
+                        "target_level": handler.target_level,
+                        "peak": handler.peak,
                     },
                     callback=_store_album
                 )
@@ -1219,8 +1231,7 @@ class ReplayGainPlugin(BeetsPlugin):
             return
 
         use_r128 = self.should_use_r128(item)
-        tag_vals = self.tag_specific_values(use_r128)
-        store_track_gain, store_album_gain, target_level, peak = tag_vals
+        handler = self.gain_handlers[use_r128]
 
         def _store_track(track_gains):
             if not track_gains or len(track_gains) != 1:
@@ -1232,7 +1243,7 @@ class ReplayGainPlugin(BeetsPlugin):
                     .format(self.backend_name, item)
                 )
 
-            store_track_gain(item, track_gains[0])
+            handler.store_track_gain(item, track_gains[0])
             if write:
                 item.try_write()
             self._log.debug('done analyzing {0}', item)
@@ -1242,8 +1253,8 @@ class ReplayGainPlugin(BeetsPlugin):
                 self.backend_instance.compute_track_gain, args=(),
                 kwds={
                     "items": [item],
-                    "target_level": target_level,
-                    "peak": peak,
+                    "target_level": handler.target_level,
+                    "peak": handler.peak,
                 },
                 callback=_store_track
             )
