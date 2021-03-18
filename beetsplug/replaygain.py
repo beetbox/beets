@@ -989,7 +989,9 @@ class ReplayGainPlugin(BeetsPlugin):
             'r128_targetlevel': lufs_to_db(-23),
         })
 
-        self.overwrite = self.config['overwrite'].get(bool)
+        # FIXME: Consider renaming the configuration option and deprecating the
+        # old name 'overwrite'.
+        self.force_on_import = self.config['overwrite'].get(bool)
         self.per_disc = self.config['per_disc'].get(bool)
 
         # Remember which backend is used for CLI feedback
@@ -1047,9 +1049,6 @@ class ReplayGainPlugin(BeetsPlugin):
                 and item.rg_track_peak is not None)
 
     def track_requires_gain(self, item):
-        if self.overwrite:
-            return True
-
         if self.should_use_r128(item):
             if not self.has_r128_track_data(item):
                 return True
@@ -1074,9 +1073,6 @@ class ReplayGainPlugin(BeetsPlugin):
         # recalculation. This way, if any file among an album's tracks
         # needs recalculation, we still get an accurate album gain
         # value.
-        if self.overwrite:
-            return True
-
         for item in album.items():
             if self.should_use_r128(item):
                 if not self.has_r128_album_data(item):
@@ -1340,9 +1336,9 @@ class ReplayGainPlugin(BeetsPlugin):
         """
         if self.config['auto']:
             if task.is_album:
-                self.handle_album(task.album, False)
+                self.handle_album(task.album, False, self.force_on_import)
             else:
-                self.handle_track(task.item, False)
+                self.handle_track(task.item, False, self.force_on_import)
 
     def command_func(self, lib, opts, args):
         try:
