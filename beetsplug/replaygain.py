@@ -1059,40 +1059,30 @@ class ReplayGainPlugin(BeetsPlugin):
                 (not item.rg_album_gain or not item.rg_album_peak)
                 for item in album.items()])
 
-    def _store(self, item):
-        """Store an item to the database.
-             When testing, item.store() sometimes fails non-destructively with
-             sqlite.OperationalError.
-             This method is here to be patched to a retry-once helper function
-             in test_replaygain.py, so that it can still fail appropriately
-             outside of these tests.
-        """
-        item.store()
-
     def store_track_gain(self, item, track_gain):
         item.rg_track_gain = track_gain.gain
         item.rg_track_peak = track_gain.peak
-        self._store(item)
+        item.store()
         self._log.debug(u'applied track gain {0} LU, peak {1} of FS',
                         item.rg_track_gain, item.rg_track_peak)
 
     def store_album_gain(self, item, album_gain):
         item.rg_album_gain = album_gain.gain
         item.rg_album_peak = album_gain.peak
-        self._store(item)
+        item.store()
         self._log.debug(u'applied album gain {0} LU, peak {1} of FS',
                         item.rg_album_gain, item.rg_album_peak)
 
     def store_track_r128_gain(self, item, track_gain):
         item.r128_track_gain = track_gain.gain
-        self._store(item)
+        item.store()
 
         self._log.debug(u'applied r128 track gain {0} LU',
                         item.r128_track_gain)
 
     def store_album_r128_gain(self, item, album_gain):
         item.r128_album_gain = album_gain.gain
-        self._store(item)
+        item.store()
         self._log.debug(u'applied r128 album gain {0} LU',
                         item.r128_album_gain)
 
