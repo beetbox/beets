@@ -623,7 +623,9 @@ class Item(LibModel):
         """
         keys = super(Item, self).keys(computed=computed)
         if with_album and self._cached_album:
-            keys += self._cached_album.keys(computed=computed)
+            keys = set(keys)
+            keys.update(self._cached_album.keys(computed=computed))
+            keys = list(keys)
         return keys
 
     def get(self, key, default=None, with_album=True):
