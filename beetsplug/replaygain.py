@@ -1333,41 +1333,41 @@ class ReplayGainPlugin(BeetsPlugin):
                     self.config['overwrite'].get(bool)
                 )
 
+    def command_func(self, lib, opts, args):
+        try:
+            write = ui.should_write(opts.write)
+            force = opts.force
+
+            # Bypass self.open_pool() if called with  `--threads 0`
+            if opts.threads != 0:
+                threads = opts.threads or self.config['threads'].get(int)
+                self.open_pool(threads)
+
+            if opts.album:
+                albums = lib.albums(ui.decargs(args))
+                self._log.info(
+                    "Analyzing {} albums ~ {} backend..."
+                    .format(len(albums), self.backend_name)
+                )
+                for album in albums:
+                    self.handle_album(album, write, force)
+            else:
+                items = lib.items(ui.decargs(args))
+                self._log.info(
+                    "Analyzing {} tracks ~ {} backend..."
+                    .format(len(items), self.backend_name)
+                )
+                for item in items:
+                    self.handle_track(item, write, force)
+
+            self.close_pool()
+        except (SystemExit, KeyboardInterrupt):
+            # Silence interrupt exceptions
+            pass
+
     def commands(self):
         """Return the "replaygain" ui subcommand.
         """
-        def func(lib, opts, args):
-            try:
-                write = ui.should_write(opts.write)
-                force = opts.force
-
-                # Bypass self.open_pool() if called with  `--threads 0`
-                if opts.threads != 0:
-                    threads = opts.threads or self.config['threads'].get(int)
-                    self.open_pool(threads)
-
-                if opts.album:
-                    albums = lib.albums(ui.decargs(args))
-                    self._log.info(
-                        "Analyzing {} albums ~ {} backend..."
-                        .format(len(albums), self.backend_name)
-                    )
-                    for album in albums:
-                        self.handle_album(album, write, force)
-                else:
-                    items = lib.items(ui.decargs(args))
-                    self._log.info(
-                        "Analyzing {} tracks ~ {} backend..."
-                        .format(len(items), self.backend_name)
-                    )
-                    for item in items:
-                        self.handle_track(item, write, force)
-
-                self.close_pool()
-            except (SystemExit, KeyboardInterrupt):
-                # Silence interrupt exceptions
-                pass
-
         cmd = ui.Subcommand('replaygain', help=u'analyze for ReplayGain')
         cmd.parser.add_album_option()
         cmd.parser.add_option(
@@ -1385,5 +1385,5 @@ class ReplayGainPlugin(BeetsPlugin):
         cmd.parser.add_option(
             "-W", "--nowrite", dest="write", action="store_false",
             help=u"don't write metadata (opposite of -w)")
-        cmd.func = func
+        cmd.func = self.command_func
         return [cmd]
