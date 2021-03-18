@@ -1110,13 +1110,13 @@ class ReplayGainPlugin(BeetsPlugin):
         self._log.debug('applied r128 album gain {0} LU',
                         item.r128_album_gain)
 
-    def tag_specific_values(self, items):
+    def tag_specific_values(self, use_r128):
         """Return some tag specific values.
 
         Returns a tuple (store_track_gain, store_album_gain, target_level,
         peak_method).
         """
-        if any([self.should_use_r128(item) for item in items]):
+        if use_r128:
             store_track_gain = self.store_track_r128_gain
             store_album_gain = self.store_album_r128_gain
             target_level = self.config['r128_targetlevel'].as_number()
@@ -1151,7 +1151,7 @@ class ReplayGainPlugin(BeetsPlugin):
 
         self._log.info('analyzing {0}', album)
 
-        tag_vals = self.tag_specific_values(album.items())
+        tag_vals = self.tag_specific_values(use_r128)
         store_track_gain, store_album_gain, target_level, peak = tag_vals
 
         discs = {}
@@ -1210,7 +1210,8 @@ class ReplayGainPlugin(BeetsPlugin):
             self._log.info('Skipping track {0}', item)
             return
 
-        tag_vals = self.tag_specific_values([item])
+        use_r128 = self.should_use_r128(item)
+        tag_vals = self.tag_specific_values(use_r128)
         store_track_gain, store_album_gain, target_level, peak = tag_vals
 
         def _store_track(track_gains):
