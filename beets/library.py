@@ -617,6 +617,16 @@ class Item(LibModel):
                 return self._cached_album[key]
             raise
 
+    def __repr__(self):
+        # This must not use `with_album=True`, because that might access
+        # the database. When debugging, that is not guaranteed to succeed, and
+        # can even deadlock due to the database lock.
+        return '{0}({1})'.format(
+            type(self).__name__,
+            ', '.join('{0}={1!r}'.format(k, self[k])
+                      for k in self.keys(with_album=False)),
+        )
+
     def keys(self, computed=False, with_album=True):
         """Get a list of available field names. `with_album`
         controls whether the album's fields are included.
