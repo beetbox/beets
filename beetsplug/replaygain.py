@@ -109,6 +109,7 @@ class Backend:
     """An abstract class representing engine for calculating RG values.
     """
 
+    NAME = ""
     do_parallel = False
 
     def __init__(self, config, log):
@@ -135,6 +136,7 @@ class FfmpegBackend(Backend):
     """A replaygain backend using ffmpeg's ebur128 filter.
     """
 
+    NAME = "ffmpeg"
     do_parallel = True
 
     def __init__(self, config, log):
@@ -379,6 +381,7 @@ class FfmpegBackend(Backend):
 
 # mpgain/aacgain CLI tool backend.
 class CommandBackend(Backend):
+    NAME = "command"
     do_parallel = True
 
     def __init__(self, config, log):
@@ -508,6 +511,8 @@ class CommandBackend(Backend):
 # GStreamer-based backend.
 
 class GStreamerBackend(Backend):
+    NAME = "gstreamer"
+
     def __init__(self, config, log):
         super().__init__(config, log)
         self._import_gst()
@@ -779,6 +784,7 @@ class AudioToolsBackend(Backend):
     <http://audiotools.sourceforge.net/>`_ and its capabilities to read more
     file formats and compute ReplayGain values using it replaygain module.
     """
+    NAME = "audiotools"
 
     def __init__(self, config, log):
         super().__init__(config, log)
@@ -956,16 +962,18 @@ class ExceptionWatcher(Thread):
 
 # Main plugin logic.
 
+BACKEND_CLASSES = [
+    CommandBackend,
+    GStreamerBackend,
+    AudioToolsBackend,
+    FfmpegBackend,
+]
+BACKENDS = {b.NAME: b for b in BACKEND_CLASSES}
+
+
 class ReplayGainPlugin(BeetsPlugin):
     """Provides ReplayGain analysis.
     """
-
-    backends = {
-        "command": CommandBackend,
-        "gstreamer": GStreamerBackend,
-        "audiotools": AudioToolsBackend,
-        "ffmpeg": FfmpegBackend,
-    }
 
     peak_methods = {
         "true": Peak.true,
@@ -997,12 +1005,12 @@ class ReplayGainPlugin(BeetsPlugin):
         # Remember which backend is used for CLI feedback
         self.backend_name = self.config['backend'].as_str()
 
-        if self.backend_name not in self.backends:
+        if self.backend_name not in BACKENDS:
             raise ui.UserError(
                 "Selected ReplayGain backend {} is not supported. "
                 "Please select one of: {}".format(
                     self.backend_name,
-                    ', '.join(self.backends.keys())
+                    ', '.join(BACKENDS.keys())
                 )
             )
         peak_method = self.config["peak"].as_str()
@@ -1026,7 +1034,7 @@ class ReplayGainPlugin(BeetsPlugin):
         self.r128_whitelist = self.config['r128'].as_str_seq()
 
         try:
-            self.backend_instance = self.backends[self.backend_name](
+            self.backend_instance = BACKENDS[self.backend_name](
                 self.config, self._log
             )
         except (ReplayGainError, FatalReplayGainError) as e:
