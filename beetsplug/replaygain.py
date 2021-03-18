@@ -1311,17 +1311,9 @@ class ReplayGainPlugin(BeetsPlugin):
         """
         if self.config['auto']:
             if task.is_album:
-                self.handle_album(
-                    task.album,
-                    self.config['auto'].get(bool),
-                    self.config['overwrite'].get(bool)
-                )
+                self.handle_album(task.album, False)
             else:
-                self.handle_track(
-                    task.item,
-                    self.config['auto'].get(bool),
-                    self.config['overwrite'].get(bool)
-                )
+                self.handle_track(task.item, False)
 
     def command_func(self, lib, opts, args):
         try:
