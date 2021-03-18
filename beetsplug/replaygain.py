@@ -1050,9 +1050,6 @@ class ReplayGainPlugin(BeetsPlugin):
                 and item.rg_track_peak is not None)
 
     def track_requires_gain(self, item):
-        if self.overwrite:
-            return True
-
         if self.should_use_r128(item):
             if not self.has_r128_track_data(item):
                 return True
@@ -1077,9 +1074,6 @@ class ReplayGainPlugin(BeetsPlugin):
         # recalculation. This way, if any file among an album's tracks
         # needs recalculation, we still get an accurate album gain
         # value.
-        if self.overwrite:
-            return True
-
         for item in album.items():
             if self.should_use_r128(item):
                 if not self.has_r128_album_data(item):
