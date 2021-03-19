@@ -30,6 +30,20 @@ from collections import deque
 import threading
 
 
+__all__ = ["CountedInvalidatingQueue"]
+
+
+class Reservation():
+    def __init__(self, queue):
+        self._queue = queue
+
+    def put(self, item):
+        self._queue._put_reservation(self, item)
+
+    def discard(self):
+        self._queue._discard_reservation(self)
+
+
 class CountedInvalidatingQueue():
     """A simple thread-safe queue derived from Python's `queue.Queue`.
 
@@ -55,6 +69,7 @@ class CountedInvalidatingQueue():
         self._invalidated = False
         self._finished = False
         self._nthreads = 0
+        self._reservations = set()
 
         # _mutex must be held whenever the queue is mutating.  All methods
         # that acquire _mutex must release it before returning.  _mutex
@@ -139,14 +154,16 @@ class CountedInvalidatingQueue():
                 # FIXME: maybe allow resumptions in this case? That might be
                 # useful when a pipeline is almost done when the queue is
                 # invalidated.
-                assert not self._queue
+                assert not self._queue and not self._reservations
 
     def _is_full(self):
         """Predicate factored out to increase readability of `put()`.
 
         For internal use only, `self._mutex` must be held.
         """
-        return self._maxsize > 0 and len(self._queue) >= self._maxsize
+        return (self._maxsize > 0
+                and (len(self._queue) + len(self._reservations)
+                     >= self._maxsize))
 
     def put(self, item):
         """Put an item into the queue.
@@ -179,9 +196,63 @@ class CountedInvalidatingQueue():
                     self.not_full.notify()
                     return item
 
-                # When this code is reached, the queue is currently empty.
-                if self._finished:
+                # When this code is reached, the queue is currently empty, so
+                # check whether we're done.
+                if self._finished and not self._reservations:
                     self._invalidate(self._on_finished)
                     return self._on_finished
 
                 self.not_empty.wait()
+
+    def reserve(self):
+        """Reserve the space to put an item into the queue.
+
+        Returns a `Reservation` object which must be used to actually submit
+        the item. Essentially, this splits `put()` into two steps, `reserve()`
+        and `Reservation.put()` where the latter is guaranteed to succeed
+        immediately.
+
+        Blocks if the queue is full, unless the queue is invalidated. In that
+        case, retuan a `Reservation` immediately anyway even if `seld.maxsize`
+        might be exceeded when using it.
+        """
+        with self.not_full:
+            while not self._invalidated and self._is_full():
+                self.not_full.wait()
+
+            res = Reservation(self)
+            self._reservations.add(res)
+            return res
+
+    def _put_reservation(self, res, item):
+        """Put an item into the queue, consuming the reserved space.
+
+        For internal use (by `Reservation.put()`)only.
+        """
+        with self._mutex:
+            # It is an error to use a reservation twice!
+            self._reservations.remove(res)
+
+            self._queue.append(item)
+            if not self._invalidated:
+                self.not_empty.notify()
+
+    def _discard_reservation(self, res):
+        """Discard a reservation, freeing the reserved space.
+
+        For internal use (by `Reservation.discard()`)only.
+        """
+        with self._mutex:
+            self._reservations.remove(res)
+
+            # We might be done now, if there are no more items or reservations:
+            if self._finished and not self._queue and not self._reservations:
+                self._invalidate(self._on_finished)
+                return self._on_finished
+
+            # Otherwise, notify waiters of the free space. That's clearly only
+            # necessary when the queue isn't invalidated; if it is there can't
+            # be any more waiters since they have been notified already and
+            # returned `self._invalid_value`.
+            if not self._invalidated:
+                self.not_full.notify()
