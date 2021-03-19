@@ -21,8 +21,8 @@ which performs the actual work) should block a thread on the pool.
 from __future__ import division, absolute_import, print_function
 
 from concurrent.futures import ThreadPoolExecutor
-import signal
 from beets import logging
+from beets.ui import (register_exit_handler, unregister_exit_handler)
 from beets.util import cpu_count
 
 __all__ = ["pool"]
@@ -31,16 +31,6 @@ __all__ = ["pool"]
 log = logging.getLogger('beets')
 
 pool = None
-
-
-def _sigint_handler(signal, frame):
-    global pool
-
-    if pool is not None:
-        pool.close(wait=True, abort=True)
-
-
-signal.signal(signal.SIGINT, _sigint_handler)
 
 
 class _Pool():
@@ -54,9 +44,9 @@ class _Pool():
                 max_workers=cpu_count() + 2,
                 # thread_name_prefix="worker"  # not available in Python < 3.6
             )
+            self.exit_handler = register_exit_handler(
+                    lambda abort: self.close(abort=abort))
 
-    # FIXME: Cleanly shutdown when beets is shutting down
-    # FIXME: abort on uncaught exceptions
     def close(self, wait=False, abort=False):
         """Shutdown the thread pool.
 
@@ -65,6 +55,8 @@ class _Pool():
         """
         if self._pool is not None:
             self._pool.shutdown(wait=wait, cancel_futures=abort)
+            unregister_exit_handler(self.exit_handler)
+            self.exit_handler = None
             self._pool = None
 
     def submit(self, transform, item):
