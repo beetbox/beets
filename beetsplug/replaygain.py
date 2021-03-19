@@ -101,23 +101,24 @@ Peak = enum.Enum("Peak", ["none"] + ALL_PEAK_METHODS)
 
 
 class RgTask():
-    def __init__(self, items, album, target_level, peak, log):
+    def __init__(self, items, album, target_level, peak, backend_name, log):
         self.items = items
         self.album = album
         self.target_level = target_level
         self.peak = peak
+        self.backend_name = backend_name
         self._log = log
         self.album_gain = None
         self.track_gains = None
 
-    def store_track_gain(self, item, track_gain):
+    def _store_track_gain(self, item, track_gain):
         item.rg_track_gain = track_gain.gain
         item.rg_track_peak = track_gain.peak
         item.store()
         self._log.debug('applied track gain {0} LU, peak {1} of FS',
                         item.rg_track_gain, item.rg_track_peak)
 
-    def store_album_gain(self, item):
+    def _store_album_gain(self, item):
         """
 
         The caller needs to ensure that `self.album_gain is not None`.
@@ -128,15 +129,55 @@ class RgTask():
         self._log.debug('applied album gain {0} LU, peak {1} of FS',
                         item.rg_album_gain, item.rg_album_peak)
 
+    def _store_track(self, write):
+        item = self.items[0]
+        if self.track_gains is None or len(self.track_gains) != 1:
+            # In some cases, backends fail to produce a valid
+            # `track_gains` without throwing FatalReplayGainError
+            #  => raise non-fatal exception & continue
+            raise ReplayGainError(
+                "ReplayGain backend `{}` failed for track {}"
+                .format(self.backend_name, item)
+            )
+
+        self._store_track_gain(item, self.track_gains[0])
+        if write:
+            item.try_write()
+        self._log.debug('done analyzing {0}', item)
+
+    def _store_album(self, write):
+        if (self.album_gain is None or self.track_gains is None
+                or len(self.track_gains) != len(self.items)):
+            # In some cases, backends fail to produce a valid
+            # `album_gain` without throwing FatalReplayGainError
+            #  => raise non-fatal exception & continue
+            raise ReplayGainError(
+                "ReplayGain backend `{}` failed "
+                "for some tracks in album {}"
+                .format(self.backend_name, self.album)
+            )
+        for item, track_gain in zip(self.items, self.track_gains):
+            self._store_track_gain(item, track_gain)
+            self._store_album_gain(item)
+            if write:
+                item.try_write()
+            self._log.debug('done analyzing {0}', item)
+
+    def store(self, write):
+        if self.album is not None:
+            self._store_album(write)
+        else:
+            self._store_track(write)
+
 
 class R128Task(RgTask):
-    def store_track_gain(self, item, track_gain):
+    def _store_track_gain(self, item, track_gain):
         item.r128_track_gain = track_gain.gain
         item.store()
         self._log.debug('applied r128 track gain {0} LU',
                         item.r128_track_gain)
 
-    def store_album_gain(self, item):
+    def _store_album_gain(self, item):
         """
 
         The caller needs to ensure that `self.album_gain is not None`.
@@ -1158,6 +1199,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 items, album,
                 self.config["r128_targetlevel"].as_number(),
                 Peak.none,  # R128_* tags do not store the track/album peak
+                self.backend_instance.NAME,
                 self._log,
             )
         else:
@@ -1165,6 +1207,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 items, album,
                 self.config["targetlevel"].as_number(),
                 self.peak_methods[use_r128],
+                self.backend_instance.NAME,
                 self._log,
             )
 
@@ -1200,30 +1243,12 @@ class ReplayGainPlugin(BeetsPlugin):
             discs[1] = album.items()
 
         for discnumber, items in discs.items():
-            def _store_album(task, write):
-                if (task.album_gain is None or task.track_gains is None
-                        or len(task.track_gains) != len(task.items)):
-                    # In some cases, backends fail to produce a valid
-                    # `album_gain` without throwing FatalReplayGainError
-                    #  => raise non-fatal exception & continue
-                    raise ReplayGainError(
-                        "ReplayGain backend `{}` failed "
-                        "for some tracks in album {}"
-                        .format(self.backend_name, task.album)
-                    )
-                for item, track_gain in zip(task.items, task.track_gains):
-                    task.store_track_gain(item, track_gain)
-                    task.store_album_gain(item)
-                    if write:
-                        item.try_write()
-                    self._log.debug('done analyzing {0}', item)
-
             task = self.create_task(items, use_r128, album=album)
             try:
                 self._apply(
                     self.backend_instance.compute_album_gain,
                     args=[task], kwds={},
-                    callback=lambda task: _store_album(task, write)
+                    callback=lambda task: task.store(write)
                 )
             except ReplayGainError as e:
                 self._log.info("ReplayGain error: {0}", e)
@@ -1244,27 +1269,12 @@ class ReplayGainPlugin(BeetsPlugin):
 
         use_r128 = self.should_use_r128(item)
 
-        def _store_track(task, write):
-            if task.track_gains is None or len(task.track_gains) != 1:
-                # In some cases, backends fail to produce a valid
-                # `track_gains` without throwing FatalReplayGainError
-                #  => raise non-fatal exception & continue
-                raise ReplayGainError(
-                    "ReplayGain backend `{}` failed for track {}"
-                    .format(self.backend_name, item)
-                )
-
-            task.store_track_gain(item, task.track_gains[0])
-            if write:
-                item.try_write()
-            self._log.debug('done analyzing {0}', item)
-
         task = self.create_task([item], use_r128)
         try:
             self._apply(
                 self.backend_instance.compute_track_gain,
                 args=[task], kwds={},
-                callback=lambda task: _store_track(task, write)
+                callback=lambda task: task.store(write)
             )
         except ReplayGainError as e:
             self._log.info("ReplayGain error: {0}", e)
