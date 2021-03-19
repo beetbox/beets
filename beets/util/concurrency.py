@@ -20,12 +20,13 @@ which performs the actual work) should block a thread on the pool.
 
 from __future__ import division, absolute_import, print_function
 
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import CancelledError, Future, ThreadPoolExecutor
+import threading
 from beets import logging
 from beets.ui import (register_exit_handler, unregister_exit_handler)
 from beets.util import cpu_count
 
-__all__ = ["pool"]
+__all__ = ["pool", "combine_futures"]
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -108,3 +109,110 @@ class _Pool():
 
 
 pool = _Pool()
+
+
+class _CombineFutures(Future):
+    """A future that aggregates a set of inner futures.
+
+    Completes when all contained futures have completed. The result is
+    determined by a callback function.
+
+    This is useful when submitting multiple work chunks to a thread pool, which
+    need to be joined and aggregated for further processing.
+    """
+    # All attributes are prefixed with _beets in order to prevent clashes with
+    # any attributes of the base class.
+
+    def __init__(self, func, all_futures):
+        """Initialize.
+
+        `func` is a callback that will be invoked with `all_futures` as its
+        argument as soon as all items in `all_futures` have completed. Note
+        that this means that error handling is fully up to `func`. If the
+        latter (re-)raises an excpetion, this future will store this exception,
+        otherwise, its result will be set to the return value of `func`.
+        """
+        super(_CombineFutures, self).__init__()
+
+        all_futures = list(all_futures)
+        self._beets_func = func
+        self._beets_pending = all_futures[:]
+
+        self._beets_done = []
+        self._beets_lock = threading.Lock()
+
+        # This might invoke the callback immediately, so we must not hold
+        # the lock here. since `self._beets_pending` is a copy of
+        # `all_futures`, the latter nevertheless won't change withing the loop.
+        for f in all_futures:
+            f.add_done_callback(self._beets_done_callback)
+
+    def cancel(self):
+        """Attempt to cancel all inner futures.
+
+        Only if cancellation for all contained futures is successful will this
+        future also be treated as cancelled. Otherwise, the callback will
+        still be invoked with _all_ futures as its argument.
+        """
+        cancelled = True
+
+        # Again, `cancel()` might invoke the callback immediately, so we need
+        # to be careful here. Thus first make a copy
+        with self._beets_lock:
+            pending = self._beets_pending[:]
+
+        # And release the lock. Now, we might `cancel()` futures that complete
+        # in parallel to us, but that's not a problem, since `f.cancel()`
+        # will simply do nothing in that case.
+        for f in pending:
+            cancelled = cancelled and f.cancel()
+
+        # We do not set our own state the cancelled here, that is up to the
+        # callback below.
+
+        return cancelled
+
+    def _beets_done_callback(self, fut):
+        """Keep track of completed futures and aggregate results when done."""
+        # Here, we do need the lock: The two list operation themselves are
+        # safe, since this function can only be called once for each future.
+        # However, there would be a possibility that two or more threads
+        # observe that `self._beets_pending` is empty, which must be avoided.
+        # In other words, this function must be able to determine reliably
+        # whether it's operating on the last future.
+        with self._beets_lock:
+            self._beets_pending.remove(fut)
+            self._beets_done.append(fut)
+
+            # Check whether this was the last pending future, i.e. we're done.
+            if not self._beets_pending:
+                if all(fut.cancelled() for fut in self._beets_done):
+                    # See above: Only consider cancellation successful if all
+                    # inner futures could be cancelled successfully.
+                    super(_CombineFutures, self).cancel()
+                    self.set_running_or_notify_cancel()
+                else:
+                    # Otherwise, it's up to `self._beets_func` to handle the
+                    # status (completed/cancelled/raised) of the individual
+                    # futures. It may (re-)raise CancelledError to mark this
+                    # future as cancelled, too.
+                    try:
+                        # Simply pass the futures to the callback, it is up to
+                        # `func` to handle their status
+                        result = self._beets_func(self._beets_done)
+                    except CancelledError:
+                        super(_CombineFutures, self).cancel()
+                        self.set_running_or_notify_cancel()
+                    except Exception as e:
+                        self.set_exception(e)
+                    else:
+                        self.set_result(result)
+
+                # Be sure to drop all references to the futures so we don't
+                # keep them alive.
+                del self._beets_done
+
+
+def combine_futures(func, all_futures):
+    """A future that aggregates a set of inner futures."""
+    return _CombineFutures(func, all_futures)
