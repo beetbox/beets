@@ -107,6 +107,8 @@ setup(
     ) + (
         # Support for ANSI console colors on Windows.
         ['colorama'] if (sys.platform == 'win32') else []
+    ) + (
+            ['futures'] if sys.version_info[:2] == (2, 7) else []
     ),
 
     extras_require={
