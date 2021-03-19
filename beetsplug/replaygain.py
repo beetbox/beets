@@ -1199,7 +1199,7 @@ class ReplayGainPlugin(BeetsPlugin):
             discs[1] = album.items()
 
         for discnumber, items in discs.items():
-            def _store_album(task):
+            def _store_album(task, write):
                 if (task.album_gain is None or task.track_gains is None
                         or len(task.track_gains) != len(task.items)):
                     # In some cases, backends fail to produce a valid
@@ -1222,7 +1222,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 self._apply(
                     self.backend_instance.compute_album_gain,
                     args=[task], kwds={},
-                    callback=_store_album
+                    callback=lambda task: _store_album(task, write)
                 )
             except ReplayGainError as e:
                 self._log.info(u"ReplayGain error: {0}", e)
@@ -1243,7 +1243,7 @@ class ReplayGainPlugin(BeetsPlugin):
 
         use_r128 = self.should_use_r128(item)
 
-        def _store_track(task):
+        def _store_track(task, write):
             if task.track_gains is None or len(task.track_gains) != 1:
                 # In some cases, backends fail to produce a valid
                 # `track_gains` without throwing FatalReplayGainError
@@ -1263,7 +1263,7 @@ class ReplayGainPlugin(BeetsPlugin):
             self._apply(
                 self.backend_instance.compute_track_gain,
                 args=[task], kwds={},
-                callback=_store_track
+                callback=lambda task: _store_track(task, write)
             )
         except ReplayGainError as e:
             self._log.info(u"ReplayGain error: {0}", e)
