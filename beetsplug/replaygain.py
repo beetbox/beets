@@ -19,14 +19,11 @@ import collections
 import enum
 import math
 import os
-import signal
-import six
 import subprocess
 import sys
 import warnings
-from multiprocessing.pool import ThreadPool, RUN
-from six.moves import zip, queue
-from threading import Thread, Event
+from concurrent import futures
+from six.moves import zip
 
 from beets import ui
 from beets.plugins import BeetsPlugin
@@ -949,33 +946,6 @@ class AudioToolsBackend(Backend):
         return task
 
 
-class ExceptionWatcher(Thread):
-    """Monitors a queue for exceptions asynchronously.
-        Once an exception occurs, raise it and execute a callback.
-    """
-
-    def __init__(self, queue, callback):
-        self._queue = queue
-        self._callback = callback
-        self._stopevent = Event()
-        Thread.__init__(self)
-
-    def run(self):
-        while not self._stopevent.is_set():
-            try:
-                exc = self._queue.get_nowait()
-                self._callback()
-                six.reraise(exc[0], exc[1], exc[2])
-            except queue.Empty:
-                # No exceptions yet, loop back to check
-                #  whether `_stopevent` is set
-                pass
-
-    def join(self, timeout=None):
-        self._stopevent.set()
-        Thread.join(self, timeout)
-
-
 class RgTask():
     def __init__(self, items, album, target_level, peak, backend_name, log):
         self.items = items
@@ -1086,6 +1056,7 @@ class ReplayGainPlugin(BeetsPlugin):
             'overwrite': False,
             'auto': True,
             'backend': u'command',
+            # FIXME: Respect this again
             'threads': cpu_count(),
             'parallel_on_import': False,
             'per_disc': False,
@@ -1211,16 +1182,15 @@ class ReplayGainPlugin(BeetsPlugin):
             )
 
     def handle_album(self, album, write, force=False):
-        """Compute album and track replay gain store it in all of the
-        album's items.
+        """Compute album and track replay gain.
 
-        If ``write`` is truthy then ``item.write()`` is called for each
-        item. If replay gain information is already present in all
-        items, nothing is done.
+        If replay gain information is already present in all items, nothing is
+        done.  Else, the computation is run, and a list of futures for the
+        results is returned.
         """
         if not force and not self.album_requires_gain(album):
             self._log.info(u'Skipping album {0}', album)
-            return
+            return []
 
         items_iter = iter(album.items())
         use_r128 = self.should_use_r128(next(items_iter))
@@ -1228,7 +1198,7 @@ class ReplayGainPlugin(BeetsPlugin):
             self._log.error(
                 u"Cannot calculate gain for album {0} (incompatible formats)",
                 album)
-            return
+            return []
 
         self._log.info(u'analyzing {0}', album)
 
@@ -1241,151 +1211,84 @@ class ReplayGainPlugin(BeetsPlugin):
         else:
             discs[1] = album.items()
 
+        fut = []
         for discnumber, items in discs.items():
             task = self.create_task(items, use_r128, album=album)
-            try:
-                self._apply(
-                    self.backend_instance.compute_album_gain,
-                    args=[task], kwds={},
-                    callback=lambda task: task.store_album(write)
-                )
-            except ReplayGainError as e:
-                self._log.info(u"ReplayGain error: {0}", e)
-            except FatalReplayGainError as e:
-                raise ui.UserError(
-                    u"Fatal replay gain error: {0}".format(e))
+            fut.append(
+                self._apply(self.backend_instance.compute_album_gain, task,
+                    parallel=self.backend_instance.do_parallel)
+            )
 
-    def handle_track(self, item, write, force=False):
-        """Compute track replay gain and store it in the item.
+        return fut
 
-        If ``write`` is truthy then ``item.write()`` is called to write
-        the data to disk.  If replay gain information is already present
-        in the item, nothing is done.
+    def handle_track(self, item, force=False):
+        """Compute track replay gain.
+
+        If replay gain information is already present in the item, nothing is
+        done. Else, the computation is run, and a list of futures for the
+        result is returned.
         """
         if not force and not self.track_requires_gain(item):
             self._log.info(u'Skipping track {0}', item)
-            return
+            return []
 
         use_r128 = self.should_use_r128(item)
 
         task = self.create_task([item], use_r128)
-        try:
-            self._apply(
-                self.backend_instance.compute_track_gain,
-                args=[task], kwds={},
-                callback=lambda task: task.store_track(write)
-            )
-        except ReplayGainError as e:
-            self._log.info(u"ReplayGain error: {0}", e)
-        except FatalReplayGainError as e:
-            raise ui.UserError(u"Fatal replay gain error: {0}".format(e))
+        return [self._apply(self.backend_instance.compute_track_gain, task,
+                            parallel=self.backend_instance.do_parallel)]
 
-    def _has_pool(self):
-        """Check whether a `ThreadPool` is running instance in `self.pool`
-        """
-        if hasattr(self, 'pool'):
-            if isinstance(self.pool, ThreadPool) and self.pool._state == RUN:
-                return True
-        return False
-
-    def open_pool(self, threads):
-        """Open a `ThreadPool` instance in `self.pool`
-        """
-        if False and not self._has_pool() and self.backend_instance.do_parallel:
-            self.pool = ThreadPool(threads)
-            self.exc_queue = queue.Queue()
-
-            signal.signal(signal.SIGINT, self._interrupt)
-
-            self.exc_watcher = ExceptionWatcher(
-                self.exc_queue,      # threads push exceptions here
-                self.terminate_pool  # abort once an exception occurs
-            )
-            self.exc_watcher.start()
-
-    def _apply(self, func, args, kwds, callback):
-        if self._has_pool():
-            def catch_exc(func, exc_queue, log):
-                """Wrapper to catch raised exceptions in threads
-                """
-                def wfunc(*args, **kwargs):
-                    try:
-                        return func(*args, **kwargs)
-                    except ReplayGainError as e:
-                        log.info(e.args[0])  # log non-fatal exceptions
-                    except Exception:
-                        exc_queue.put(sys.exc_info())
-                return wfunc
-
-            # Wrap function and callback to catch exceptions
-            func = catch_exc(func, self.exc_queue, self._log)
-            callback = catch_exc(callback, self.exc_queue, self._log)
-
-            self.pool.apply_async(func, args, kwds, callback)
+    def _apply(self, func, *args, parallel=False):
+        if False and parallel:
+            # FIXME: implement based on a global thread pool
+            raise NotImplementedError()
         else:
-            callback(func(*args, **kwds))
-
-    def terminate_pool(self):
-        """Terminate the `ThreadPool` instance in `self.pool`
-            (e.g. stop execution in case of exception)
-        """
-        # Don't call self._as_pool() here,
-        # self.pool._state may not be == RUN
-        if hasattr(self, 'pool') and isinstance(self.pool, ThreadPool):
-            self.pool.terminate()
-            self.pool.join()
-            # self.exc_watcher.join()
-
-    def _interrupt(self, signal, frame):
-        try:
-            self._log.info('interrupted')
-            self.terminate_pool()
-            sys.exit(0)
-        except SystemExit:
-            # Silence raised SystemExit ~ exit(0)
-            pass
-
-    def close_pool(self):
-        """Close the `ThreadPool` instance in `self.pool` (if there is one)
-        """
-        if self._has_pool():
-            self.pool.close()
-            self.pool.join()
-            self.exc_watcher.join()
+            fut = futures.Future()
+            try:
+                fut.set_result(func(*args))
+            except Exception as e:
+                fut.set_exception(e)
+            return fut
 
     def import_begin(self, session):
-        """Handle `import_begin` event -> open pool
+        """Handle `import_begin` event
         """
-        threads = self.config['threads'].get(int)
-
-        if self.config['parallel_on_import'] \
-                and self.config['auto'] \
-                and threads:
-            self.open_pool(threads)
+        pass
 
     def import_end(self, paths):
-        """Handle `import` event -> close pool
+        """Handle `import` event
         """
-        self.close_pool()
+        pass
+
+    def check_and_store(self, fut, write):
+        for f in futures.as_completed(fut):
+            try:
+                # This will re-raise excpetions that occured during the
+                # computation.
+                task = f.result()
+                task.store(write=write)
+            except ReplayGainError as e:
+                self._log.info(u"ReplayGain error: {0}", e)
+            except FatalReplayGainError as e:
+                raise ui.UserError(u"Fatal replay gain error: {0}".format(e))
 
     def imported(self, session, task):
         """Add replay gain info to items or albums of ``task``.
         """
         if self.config['auto']:
             if task.is_album:
-                self.handle_album(task.album, False)
+                fut = self.handle_album(task.album, False)
             else:
-                self.handle_track(task.item, False)
+                fut = self.handle_track(task.item, False)
+
+            self.check_and_store(fut, write=False)
 
     def command_func(self, lib, opts, args):
         try:
             write = ui.should_write(opts.write)
             force = opts.force
 
-            # Bypass self.open_pool() if called with  `--threads 0`
-            if opts.threads != 0:
-                threads = opts.threads or self.config['threads'].get(int)
-                self.open_pool(threads)
+            fut = []
 
             if opts.album:
                 albums = lib.albums(ui.decargs(args))
@@ -1394,7 +1297,7 @@ class ReplayGainPlugin(BeetsPlugin):
                     .format(len(albums), self.backend_name)
                 )
                 for album in albums:
-                    self.handle_album(album, write, force)
+                    fut.extend(self.handle_album(album, force))
             else:
                 items = lib.items(ui.decargs(args))
                 self._log.info(
@@ -1402,9 +1305,9 @@ class ReplayGainPlugin(BeetsPlugin):
                     .format(len(items), self.backend_name)
                 )
                 for item in items:
-                    self.handle_track(item, write, force)
+                    fut.extend(self.handle_track(item, force))
 
-            self.close_pool()
+            self.check_and_store(fut, write=write)
         except (SystemExit, KeyboardInterrupt):
             # Silence interrupt exceptions
             pass
