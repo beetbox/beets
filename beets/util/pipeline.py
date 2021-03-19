@@ -35,6 +35,7 @@ in place of any single coroutine.
 from __future__ import division, absolute_import, print_function
 
 from beets.util.queue import CountedInvalidatingQueue
+from concurrent import futures
 from threading import Thread, Lock
 import sys
 import six
@@ -101,7 +102,32 @@ def mutator_stage(func):
         task = None
         while True:
             task = yield task
-            func(*(args + (task,)))
+            fut = func(*(args + (task,)))
+            if isinstance(fut, futures.Future):
+                # Wrap the future to return the task
+                outer_fut = futures.Future()
+
+                # Using the default argument here is a trick to correctly
+                # capture `task` in the closure, see
+                # https://stackoverflow.com/questions/2295290/what-do-lambda-function-closures-capture
+                # If omitting this, the `task = outer_fut` assignment below
+                # would override `task`, creating a cycle where
+                # `outer_fut.result() -> outer_fut`...
+                def check_fut(fut, task=task):
+                    # Access (and discard) the result to re-raise errors
+                    try:
+                        fut.result()
+                        outer_fut.set_result(task)
+                    except BaseException as e:
+                        outer_fut.set_exception(e)
+
+                fut.add_done_callback(check_fut)
+
+                # Yield this wrapped future in the next iteration
+                task = outer_fut
+            else:
+                # After all, this is a mutator stage.
+                assert(fut is None)
     return coro
 
 
@@ -152,12 +178,36 @@ class PipelineThread(Thread):
             if self.abort_flag:
                 raise PipelineAborted()
 
+    def check_and_put_future(self, res, fut):
+        try:
+            msg = fut.result()
+            self.check_abort()
+            res.put(msg)
+        except PipelineAborted:
+            # Might be raised from check_abort(): The error occured elsewhere,
+            # so the pipeline is shutting down already. So, we need to
+            # release resources that might block that.
+            res.discard()
+        except BaseException:
+            # Any errors raised in f.result(). This will be executed as a
+            # callback by the ThreadpoolExecutor, which will ignore any
+            # exception. Thus, the excpection can't propagate up to the check
+            # in self.run(), but we need to abort the pipeline explicitly here.
+            res.discard()
+            self.exc_info = sys.exc_info()
+            self.pipeline.abort()
+
     def fanout(self, messages):
         """Send messages to the next stage.
         """
         for msg in _allmsgs(messages):
             self.check_abort()
-            self.out_queue.put(msg)
+            if isinstance(msg, futures.Future):
+                res = self.out_queue.reserve()
+                msg.add_done_callback(
+                        lambda fut: self.check_and_put_future(res, fut))
+            else:
+                self.out_queue.put(msg)
 
     def run(self):
         try:
@@ -350,17 +400,24 @@ class Pipeline(object):
         for coro in coros[1:]:
             next(coro)
 
+        def await_if_future(msg):
+            if isinstance(msg, futures.Future):
+                res = msg.result()
+            else:
+                res = msg
+            return res
+
         # Begin the pipeline.
         for out in coros[0]:
             msgs = _allmsgs(out)
             for coro in coros[1:]:
                 next_msgs = []
                 for msg in msgs:
-                    out = coro.send(msg)
+                    out = coro.send(await_if_future(msg))
                     next_msgs.extend(_allmsgs(out))
                 msgs = next_msgs
             for msg in msgs:
-                yield msg
+                yield await_if_future(msg)
 
 # Smoke test.
 if __name__ == '__main__':
