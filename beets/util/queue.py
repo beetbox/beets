@@ -136,6 +136,9 @@ class CountedInvalidatingQueue():
                 self.not_empty.notifyAll()
                 self.not_full.notifyAll()
             else:
+                # FIXME: maybe allow resumptions in this case? That might be
+                # useful when a pipeline is almost done when the queue is
+                # invalidated.
                 assert not self._queue
 
     def _is_full(self):
