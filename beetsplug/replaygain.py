@@ -29,6 +29,7 @@ from beets import ui
 from beets.plugins import BeetsPlugin
 from beets.util import (syspath, command_output, displayable_path,
                         py3_path, cpu_count)
+from beets.util.concurrency import pool
 
 
 # Utilities.
@@ -1215,8 +1216,8 @@ class ReplayGainPlugin(BeetsPlugin):
         for discnumber, items in discs.items():
             task = self.create_task(items, use_r128, album=album)
             fut.append(
-                self._apply(self.backend_instance.compute_album_gain, task,
-                    parallel=self.backend_instance.do_parallel)
+                self._submit(self.backend_instance.compute_album_gain, task,
+                             parallel=self.backend_instance.do_parallel)
             )
 
         return fut
@@ -1235,17 +1236,16 @@ class ReplayGainPlugin(BeetsPlugin):
         use_r128 = self.should_use_r128(item)
 
         task = self.create_task([item], use_r128)
-        return [self._apply(self.backend_instance.compute_track_gain, task,
-                            parallel=self.backend_instance.do_parallel)]
+        return [self._submit(self.backend_instance.compute_track_gain, task,
+                             parallel=self.backend_instance.do_parallel)]
 
-    def _apply(self, func, *args, parallel=False):
-        if False and parallel:
-            # FIXME: implement based on a global thread pool
-            raise NotImplementedError()
+    def _submit(self, func, task, parallel=False):
+        if parallel:
+            return pool.submit(func, task)
         else:
             fut = futures.Future()
             try:
-                fut.set_result(func(*args))
+                fut.set_result(func(task))
             except Exception as e:
                 fut.set_exception(e)
             return fut
