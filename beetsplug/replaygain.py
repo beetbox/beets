@@ -23,13 +23,14 @@ import subprocess
 import sys
 import warnings
 from concurrent import futures
+from concurrent.futures import CancelledError
 from six.moves import zip
 
 from beets import ui
 from beets.plugins import BeetsPlugin
 from beets.util import (syspath, command_output, displayable_path,
                         py3_path, cpu_count)
-from beets.util.concurrency import pool
+from beets.util.concurrency import combine_futures, pool
 
 
 # Utilities.
@@ -1260,13 +1261,15 @@ class ReplayGainPlugin(BeetsPlugin):
         """
         pass
 
-    def check_and_store(self, fut, write):
-        for f in futures.as_completed(fut):
+    def check_and_store(self, fut_iter, write):
+        for f in fut_iter:
             try:
                 # This will re-raise excpetions that occured during the
                 # computation.
                 task = f.result()
                 task.store(write=write)
+            except CancelledError:
+                pass
             except ReplayGainError as e:
                 self._log.info(u"ReplayGain error: {0}", e)
             except FatalReplayGainError as e:
@@ -1281,7 +1284,10 @@ class ReplayGainPlugin(BeetsPlugin):
             else:
                 fut = self.handle_track(task.item, False)
 
-            self.check_and_store(fut, write=False)
+            return combine_futures(
+                    lambda results: self.check_and_store(results, write=False),
+                    fut
+            )
 
     def command_func(self, lib, opts, args):
         try:
@@ -1307,7 +1313,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 for item in items:
                     fut.extend(self.handle_track(item, force))
 
-            self.check_and_store(fut, write=write)
+            self.check_and_store(futures.as_completed(fut), write=write)
         except (SystemExit, KeyboardInterrupt):
             # Silence interrupt exceptions
             pass
