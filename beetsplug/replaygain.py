@@ -94,9 +94,6 @@ def lufs_to_db(db):
 # gain: in LU to reference level
 # peak: part of full scale (FS is 1.0)
 Gain = collections.namedtuple("Gain", "gain peak")
-# album_gain: Gain object
-# track_gains: list of Gain objects
-AlbumGain = collections.namedtuple("AlbumGain", "album_gain track_gains")
 
 
 ALL_PEAK_METHODS = ["true", "sample"]
@@ -120,9 +117,13 @@ class RgTask():
         self._log.debug('applied track gain {0} LU, peak {1} of FS',
                         item.rg_track_gain, item.rg_track_peak)
 
-    def store_album_gain(self, item, album_gain):
-        item.rg_album_gain = album_gain.gain
-        item.rg_album_peak = album_gain.peak
+    def store_album_gain(self, item):
+        """
+
+        The caller needs to ensure that `self.album_gain is not None`.
+        """
+        item.rg_album_gain = self.album_gain.gain
+        item.rg_album_peak = self.album_gain.peak
         item.store()
         self._log.debug('applied album gain {0} LU, peak {1} of FS',
                         item.rg_album_gain, item.rg_album_peak)
@@ -135,8 +136,12 @@ class R128Task(RgTask):
         self._log.debug('applied r128 track gain {0} LU',
                         item.r128_track_gain)
 
-    def store_album_gain(self, item, album_gain):
-        item.r128_album_gain = album_gain.gain
+    def store_album_gain(self, item):
+        """
+
+        The caller needs to ensure that `self.album_gain is not None`.
+        """
+        item.r128_album_gain = self.album_gain.gain
         item.store()
         self._log.debug('applied r128 album gain {0} LU',
                         item.r128_album_gain)
@@ -277,7 +282,8 @@ class FfmpegBackend(Backend):
             .format(task.items, album_gain, album_peak)
             )
 
-        task.album_gain = AlbumGain(Gain(album_gain, album_peak), track_gains)
+        task.album_gain = Gain(album_gain, album_peak)
+        task.track_gains = track_gains
         return task
 
     def _construct_cmd(self, item, peak_method):
@@ -473,10 +479,13 @@ class CommandBackend(Backend):
         supported_items = list(filter(self.format_supported, task.items))
         if len(supported_items) != len(task.items):
             self._log.debug('tracks are of unsupported format')
-            return AlbumGain(None, [])
+            task.album_gain = None
+            task.track_gains = None
+            return task
 
         output = self.compute_gain(supported_items, task.target_level, True)
-        task.album_gain = AlbumGain(output[-1], output[:-1])
+        task.album_gain = output[-1]
+        task.track_gains = output[:-1]
         return task
 
     def format_supported(self, item):
@@ -701,7 +710,8 @@ class GStreamerBackend(Backend):
         except KeyError:
             raise ReplayGainError("results missing for album")
 
-        task.album_gain = AlbumGain(Gain(gain, peak), track_gains)
+        task.album_gain = Gain(gain, peak)
+        task.track_gains = track_gains
         return task
 
     def close(self):
@@ -978,10 +988,8 @@ class AudioToolsBackend(Backend):
         self._log.debug('ReplayGain for album {0}: {1:.2f}, {2:.2f}',
                         task.items[0].album, rg_album_gain, rg_album_peak)
 
-        task.album_gain = AlbumGain(
-            Gain(gain=rg_album_gain, peak=rg_album_peak),
-            track_gains=track_gains
-        )
+        task.album_gain = Gain(gain=rg_album_gain, peak=rg_album_peak)
+        task.track_gains = track_gains
         return task
 
 
@@ -1193,8 +1201,8 @@ class ReplayGainPlugin(BeetsPlugin):
 
         for discnumber, items in discs.items():
             def _store_album(task):
-                if task.album_gain is None or not task.album_gain.album_gain \
-                        or len(task.album_gain.track_gains) != len(task.items):
+                if (task.album_gain is None or task.track_gains is None
+                        or len(task.track_gains) != len(task.items)):
                     # In some cases, backends fail to produce a valid
                     # `album_gain` without throwing FatalReplayGainError
                     #  => raise non-fatal exception & continue
@@ -1203,10 +1211,9 @@ class ReplayGainPlugin(BeetsPlugin):
                         "for some tracks in album {}"
                         .format(self.backend_name, task.album)
                     )
-                for item, track_gain in zip(task.items,
-                                            task.album_gain.track_gains):
+                for item, track_gain in zip(task.items, task.track_gains):
                     task.store_track_gain(item, track_gain)
-                    task.store_album_gain(item, task.album_gain.album_gain)
+                    task.store_album_gain(item)
                     if write:
                         item.try_write()
                     self._log.debug('done analyzing {0}', item)
