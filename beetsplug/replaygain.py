@@ -977,8 +977,9 @@ class ExceptionWatcher(Thread):
 
 
 class RgTask():
-    def __init__(self, items, target_level, peak, log):
+    def __init__(self, items, album, target_level, peak, log):
         self.items = items
+        self.album = album
         self.target_level = target_level
         self.peak = peak
         self._log = log
@@ -1000,10 +1001,6 @@ class RgTask():
                         item.rg_album_gain, item.rg_album_peak)
 
 class R128Task(RgTask):
-    def __init__(self, items, target_level, log):
-        # R128_* tags do not store the track/album peak
-        super().__init__(items, target_level, Peak.none, log)
-
     def store_track_gain(self, item, track_gain):
         item.r128_track_gain = track_gain.gain
         item.store()
@@ -1146,16 +1143,17 @@ class ReplayGainPlugin(BeetsPlugin):
 
         return False
 
-    def create_task(self, items, use_r128):
+    def create_task(self, items, use_r128, album=None):
         if use_r128:
             return R128Task(
-                items,
+                items, album,
                 self.config["r128_targetlevel"].as_number(),
+                Peak.none,  # R128_* tags do not store the track/album peak
                 self._log,
             )
         else:
             return RgTask(
-                items,
+                items, album,
                 self.config["targetlevel"].as_number(),
                 self.peak_methods[use_r128],
                 self._log,
@@ -1202,7 +1200,7 @@ class ReplayGainPlugin(BeetsPlugin):
                     raise ReplayGainError(
                         u"ReplayGain backend `{}` failed "
                         u"for some tracks in album {}"
-                        .format(self.backend_name, album)
+                        .format(self.backend_name, task.album)
                     )
                 for item, track_gain in zip(task.items,
                                             task.album_gain.track_gains):
@@ -1212,7 +1210,7 @@ class ReplayGainPlugin(BeetsPlugin):
                         item.try_write()
                     self._log.debug(u'done analyzing {0}', item)
 
-            task = self.create_task(items, use_r128)
+            task = self.create_task(items, use_r128, album=album)
             try:
                 self._apply(
                     self.backend_instance.compute_album_gain,
