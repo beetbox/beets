@@ -45,6 +45,8 @@ def reset_replaygain(item):
     item['rg_track_gain'] = None
     item['rg_album_gain'] = None
     item['rg_album_gain'] = None
+    item['r128_track_gain'] = None
+    item['r128_album_gain'] = None
     item.write()
     item.store()
 
@@ -77,16 +79,6 @@ class ReplayGainCliTestBase(TestHelper):
     def tearDown(self):
         self.teardown_beets()
         self.unload_plugins()
-
-    def _reset_replaygain(self, item):
-        item['rg_track_peak'] = None
-        item['rg_track_gain'] = None
-        item['rg_album_peak'] = None
-        item['rg_album_gain'] = None
-        item['r128_track_gain'] = None
-        item['r128_album_gain'] = None
-        item.write()
-        item.store()
 
     def test_cli_saves_track_gain(self):
         for item in self.lib.items():
@@ -151,7 +143,7 @@ class ReplayGainCliTestBase(TestHelper):
 
         album = self.add_album_fixture(2, ext="opus")
         for item in album.items():
-            self._reset_replaygain(item)
+            reset_replaygain(item)
 
         self.run_command(u'replaygain', u'-a')
 
@@ -169,7 +161,7 @@ class ReplayGainCliTestBase(TestHelper):
 
         def analyse(target_level):
             self.config['replaygain']['targetlevel'] = target_level
-            self._reset_replaygain(item)
+            reset_replaygain(item)
             self.run_command(u'replaygain', '-f')
             mediafile = MediaFile(item.path)
             return mediafile.rg_track_gain
