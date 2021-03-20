@@ -51,8 +51,48 @@ def reset_replaygain(item):
     item.store()
 
 
+class GstBackendMixin():
+    backend = u'gstreamer'
+    has_r128_support = True
+
+    def test_backend(self):
+        """Check whether the backend actually has all required functionality.
+        """
+        try:
+            # Check if required plugins can be loaded by instantiating a
+            # GStreamerBackend (via its .__init__).
+            config['replaygain']['targetlevel'] = 89
+            GStreamerBackend(config['replaygain'], None)
+        except FatalGstreamerPluginReplayGainError as e:
+            # Skip the test if plugins could not be loaded.
+            self.skipTest(str(e))
+
+
+class CmdBackendMixin():
+    backend = u'command'
+    has_r128_support = False
+
+    def test_backend(self):
+        """Check whether the backend actually has all required functionality.
+        """
+        pass
+
+
+class FfmpegBackendMixin():
+    backend = u'ffmpeg'
+    has_r128_support = True
+
+    def test_backend(self):
+        """Check whether the backend actually has all required functionality.
+        """
+        pass
+
+
 class ReplayGainCliTestBase(TestHelper):
     def setUp(self):
+        # Implemented by Mixins, see above. This may decide to skip the test.
+        self.test_backend()
+
         self.setup_beets(disk=True)
         self.config['replaygain']['backend'] = self.backend
 
@@ -146,9 +186,9 @@ class ReplayGainCliTestBase(TestHelper):
         self.assertNotEqual(max(peaks), 0.0)
 
     def test_cli_writes_only_r128_tags(self):
-        if self.backend == "command":
-            # opus not supported by command backend
-            return
+        if not self.has_r128_support:
+            self.skipTest("r128 tags for opus not supported on backend {}"
+                          .format(self.backend))
 
         album = self._add_album(2, ext="opus")
 
@@ -197,30 +237,21 @@ class ReplayGainCliTestBase(TestHelper):
 
 
 @unittest.skipIf(not GST_AVAILABLE, u'gstreamer cannot be found')
-class ReplayGainGstCliTest(ReplayGainCliTestBase, unittest.TestCase):
-    backend = u'gstreamer'
-
-    def setUp(self):
-        try:
-            # Check if required plugins can be loaded by instantiating a
-            # GStreamerBackend (via its .__init__).
-            config['replaygain']['targetlevel'] = 89
-            GStreamerBackend(config['replaygain'], None)
-        except FatalGstreamerPluginReplayGainError as e:
-            # Skip the test if plugins could not be loaded.
-            self.skipTest(str(e))
-
-        super(ReplayGainGstCliTest, self).setUp()
+class ReplayGainGstCliTest(ReplayGainCliTestBase, unittest.TestCase,
+                           GstBackendMixin):
+    pass
 
 
 @unittest.skipIf(not GAIN_PROG_AVAILABLE, u'no *gain command found')
-class ReplayGainCmdCliTest(ReplayGainCliTestBase, unittest.TestCase):
-    backend = u'command'
+class ReplayGainCmdCliTest(ReplayGainCliTestBase, unittest.TestCase,
+                           CmdBackendMixin):
+    pass
 
 
 @unittest.skipIf(not FFMPEG_AVAILABLE, u'ffmpeg cannot be found')
-class ReplayGainFfmpegTest(ReplayGainCliTestBase, unittest.TestCase):
-    backend = u'ffmpeg'
+class ReplayGainFfmpegCliTest(ReplayGainCliTestBase, unittest.TestCase,
+                              FfmpegBackendMixin):
+    pass
 
 
 def suite():
