@@ -320,6 +320,75 @@ class ReplayGainFfmpegCliTest(ReplayGainCliTestBase, unittest.TestCase,
     pass
 
 
+class ImportTest(TestHelper):
+    threaded = False
+
+    def setUp(self):
+        # Implemented by Mixins, see above. This may decide to skip the test.
+        self.test_backend()
+
+        self.setup_beets(disk=True)
+        self.config['threaded'] = self.threaded
+        self.config['replaygain'] = {
+                'backend': self.backend,
+        }
+
+        try:
+            self.load_plugins('replaygain')
+        except Exception:
+            import sys
+            # store exception info so an error in teardown does not swallow it
+            exc_info = sys.exc_info()
+            try:
+                self.teardown_beets()
+                self.unload_plugins()
+            except Exception:
+                # if load_plugins() failed then setup is incomplete and
+                # teardown operations may fail. In particular # {Item,Album}
+                # may not have the _original_types attribute in unload_plugins
+                pass
+            raise None.with_traceback(exc_info[2])
+
+        self.importer = self.create_importer()
+
+    def tearDown(self):
+        self.unload_plugins()
+        self.teardown_beets()
+
+    def test_import_converted(self):
+        self.importer.run()
+        for item in self.lib.items():
+            # FIXME: Add fixtures with known track/album gain (within a
+            # suitable tolerance) so that we can actually check correct
+            # operation here.
+            self.assertIsNotNone(item.rg_track_gain)
+            self.assertIsNotNone(item.rg_album_gain)
+
+
+@unittest.skipIf(not GST_AVAILABLE, 'gstreamer cannot be found')
+class ReplayGainGstImportTest(ImportTest, unittest.TestCase,
+                              GstBackendMixin):
+    pass
+
+
+@unittest.skipIf(not GAIN_PROG_AVAILABLE, 'no *gain command found')
+class ReplayGainCmdImportTest(ImportTest, unittest.TestCase,
+                              CmdBackendMixin):
+    pass
+
+
+@unittest.skipIf(not FFMPEG_AVAILABLE, 'ffmpeg cannot be found')
+class ReplayGainFfmpegImportTest(ImportTest, unittest.TestCase,
+                                 FfmpegBackendMixin):
+    pass
+
+
+@unittest.skipIf(not FFMPEG_AVAILABLE, 'ffmpeg cannot be found')
+class ReplayGainFfmpegThreadedImportTest(ImportTest, unittest.TestCase,
+                                         FfmpegBackendMixin):
+    threaded = True
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
