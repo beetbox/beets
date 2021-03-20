@@ -18,11 +18,17 @@
 from __future__ import division, absolute_import, print_function
 
 from concurrent.futures import ThreadPoolExecutor
+import pytest
 import six
 import time
 import unittest
 
 from beets.util import pipeline
+
+
+# Large value to prevent failures on CI, set to something smaller for more
+# convenient local debugging.
+TIMEOUT = 60
 
 
 # Some simple pipeline stages for testing.
@@ -100,6 +106,7 @@ def _multi_work():
         i = pipeline.multiple([i, -i])
 
 
+@pytest.mark.timeout(TIMEOUT)
 class SimplePipelineTest(unittest.TestCase):
     def setUp(self):
         self.l = []
@@ -123,6 +130,7 @@ class SimplePipelineTest(unittest.TestCase):
         self.assertEqual(list(pl2.pull()), [0, 4, 8, 12, 16])
 
 
+@pytest.mark.timeout(TIMEOUT)
 class ParallelStageTest(unittest.TestCase):
     def setUp(self):
         self.l = []
@@ -144,6 +152,7 @@ class ParallelStageTest(unittest.TestCase):
         self.assertEqual(list(pl.pull()), [0, 2, 4, 6, 8])
 
 
+@pytest.mark.timeout(TIMEOUT)
 class ExceptionTest(unittest.TestCase):
     def setUp(self):
         self.l = []
@@ -167,6 +176,7 @@ class ExceptionTest(unittest.TestCase):
             self.assertRaises(ExceptionFixture, pull.__next__)
 
 
+@pytest.mark.timeout(TIMEOUT)
 class ParallelExceptionTest(unittest.TestCase):
     def setUp(self):
         self.l = []
@@ -178,6 +188,7 @@ class ParallelExceptionTest(unittest.TestCase):
         self.assertRaises(ExceptionFixture, self.pl.run_parallel)
 
 
+@pytest.mark.timeout(TIMEOUT)
 class ConstrainedThreadedPipelineTest(unittest.TestCase):
     def test_constrained(self):
         l = []
@@ -202,6 +213,7 @@ class ConstrainedThreadedPipelineTest(unittest.TestCase):
         self.assertEqual(set(l), set(i * 2 for i in range(1000)))
 
 
+@pytest.mark.timeout(TIMEOUT)
 class BubbleTest(unittest.TestCase):
     def setUp(self):
         self.l = []
@@ -221,6 +233,7 @@ class BubbleTest(unittest.TestCase):
         self.assertEqual(list(pl.pull()), [0, 2, 4, 8])
 
 
+@pytest.mark.timeout(TIMEOUT)
 class MultiMessageTest(unittest.TestCase):
     def setUp(self):
         self.l = []
@@ -241,6 +254,7 @@ class MultiMessageTest(unittest.TestCase):
         self.assertEqual(list(pl.pull()), [0, 0, 1, -1, 2, -2, 3, -3, 4, -4])
 
 
+@pytest.mark.timeout(TIMEOUT)
 class StageDecoratorTest(unittest.TestCase):
 
     def test_stage_decorator(self):
@@ -267,6 +281,7 @@ class StageDecoratorTest(unittest.TestCase):
                          [{'x': True}, {'a': False, 'x': True}])
 
 
+@pytest.mark.timeout(TIMEOUT)
 class SimpleFuturesTest(unittest.TestCase):
     def setUp(self):
         self.pool = ThreadPoolExecutor()
@@ -326,6 +341,8 @@ class SimpleFuturesTest(unittest.TestCase):
         pl2 = pipeline.Pipeline((pl.pull(), _work_futures(self.pool)))
         self.assertEqual(set(pl2.pull()), set([0, 4, 8, 12, 16]))
 
+
+@pytest.mark.timeout(TIMEOUT)
 class ConstrainedThreadedPipelineFuturesTest(unittest.TestCase):
     def setUp(self):
         self.pool = ThreadPoolExecutor()
