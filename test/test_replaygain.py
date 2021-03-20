@@ -269,23 +269,37 @@ class ReplayGainCliTestBase(TestHelper):
             self.assertIsNotNone(mediafile.r128_track_gain)
             self.assertIsNotNone(mediafile.r128_album_gain)
 
-    def test_target_level_has_effect(self):
+    def test_targetlevel_has_effect(self):
         album = self._add_album(1)
         item = album.items()[0]
 
         def analyse(target_level):
             self.config['replaygain']['targetlevel'] = target_level
-            reset_replaygain(item)
             self.run_command(u'replaygain', '-f')
-            mediafile = MediaFile(item.path)
-            return mediafile.rg_track_gain
+            item.load()
+            return item.rg_track_gain
 
         gain_relative_to_84 = analyse(84)
         gain_relative_to_89 = analyse(89)
 
-        # check that second calculation did work
-        if gain_relative_to_84 is not None:
-            self.assertIsNotNone(gain_relative_to_89)
+        self.assertNotEqual(gain_relative_to_84, gain_relative_to_89)
+
+    def test_r128_targetlevel_has_effect(self):
+        if not self.has_r128_support:
+            self.skipTest("r128 tags for opus not supported on backend {}"
+                          .format(self.backend))
+
+        album = self._add_album(1, ext="opus")
+        item = album.items()[0]
+
+        def analyse(target_level):
+            self.config['replaygain']['r128_targetlevel'] = target_level
+            self.run_command(u'replaygain', '-f')
+            item.load()
+            return item.r128_track_gain
+
+        gain_relative_to_84 = analyse(84)
+        gain_relative_to_89 = analyse(89)
 
         self.assertNotEqual(gain_relative_to_84, gain_relative_to_89)
 
