@@ -47,8 +47,6 @@ def reset_replaygain(item):
     item['rg_album_gain'] = None
     item.write()
     item.store()
-    item.store()
-    item.store()
 
 
 class ReplayGainCliTestBase(TestHelper):
