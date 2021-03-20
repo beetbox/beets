@@ -17,7 +17,9 @@
 """
 from __future__ import division, absolute_import, print_function
 
+from concurrent.futures import ThreadPoolExecutor
 import six
+import time
 import unittest
 
 from beets.util import pipeline
@@ -54,6 +56,29 @@ def _exc_work(num=3):
         if i == num:
             raise ExceptionFixture()
         i *= 2
+
+
+# This cannot be a nested function in _work_futures because we need to
+# establish a new scope to properly capture i
+# https://stackoverflow.com/questions/2295290/what-do-lambda-function-closures-capture
+def _do_work(i, pool, exc_at, spike_at):
+    def func():
+        if i == spike_at:
+            time.sleep(.2)
+        else:
+            time.sleep(.001)
+        if i == exc_at:
+            raise ExceptionFixture()
+        return i * 2
+
+    return pool.submit(func)
+
+
+def _work_futures(pool, exc_at=-1, spike_at=-1):
+    fut = None
+    while True:
+        i = yield fut
+        fut = _do_work(i, pool, exc_at, spike_at)
 
 
 # A worker that yields a bubble.
@@ -240,6 +265,116 @@ class StageDecoratorTest(unittest.TestCase):
         ])
         self.assertEqual(list(pl.pull()),
                          [{'x': True}, {'a': False, 'x': True}])
+
+
+class SimpleFuturesTest(unittest.TestCase):
+    def setUp(self):
+        self.pool = ThreadPoolExecutor()
+        self.l = []
+        self.pl = pipeline.Pipeline((
+            _produce(),
+            _work_futures(self.pool),
+            _consume(self.l),
+        ))
+
+    def tearDown(self):
+        self.pool.shutdown()
+
+    def test_run_sequential(self):
+        self.pl.run_sequential()
+        self.assertEqual(set(self.l), set([0, 2, 4, 6, 8]))
+
+    def test_run_parallel(self):
+        self.pl.run_parallel()
+        self.assertEqual(set(self.l), set([0, 2, 4, 6, 8]))
+
+    def test_spike(self):
+        pl = pipeline.Pipeline((
+            _produce(),
+            _work_futures(self.pool, spike_at=4),
+            _consume(self.l),
+        ))
+        pl.run_parallel()
+        self.assertEqual(set(self.l), set([0, 2, 4, 6, 8]))
+
+    def test_spike_and_exc(self):
+        # Check that the pipeline doesn't lock up when an exception occurs and
+        # there are pending futures.
+        pl = pipeline.Pipeline((
+            _produce(),
+            _work_futures(self.pool, spike_at=3, exc_at=3),
+            _consume(self.l),
+        ))
+        self.assertRaises(ExceptionFixture, pl.run_parallel)
+
+    def test_spike_then_exc(self):
+        # Check that the pipeline doesn't lock up when an exception occurs and
+        # there are pending futures.
+        pl = pipeline.Pipeline((
+            _produce(),
+            _work_futures(self.pool, spike_at=2, exc_at=3),
+            _consume(self.l),
+        ))
+        self.assertRaises(ExceptionFixture, pl.run_parallel)
+
+    def test_pull(self):
+        pl = pipeline.Pipeline((_produce(), _work_futures(self.pool)))
+        self.assertEqual(set(pl.pull()), set([0, 2, 4, 6, 8]))
+
+    def test_pull_chain(self):
+        pl = pipeline.Pipeline((_produce(), _work_futures(self.pool)))
+        pl2 = pipeline.Pipeline((pl.pull(), _work_futures(self.pool)))
+        self.assertEqual(set(pl2.pull()), set([0, 4, 8, 12, 16]))
+
+class ConstrainedThreadedPipelineFuturesTest(unittest.TestCase):
+    def setUp(self):
+        self.pool = ThreadPoolExecutor()
+
+    def tearDown(self):
+        self.pool.shutdown()
+
+    def test_constrained(self):
+        l = []
+        # Do a "significant" amount of work...
+        pl = pipeline.Pipeline((
+            _produce(1000),
+            _work_futures(self.pool),
+            _consume(l),
+        ))
+        # ... with only a single queue slot.
+        pl.run_parallel(1)
+        self.assertEqual(set(l), set(i * 2 for i in range(1000)))
+
+    def test_constrained_exception(self):
+        # Raise an exception in a constrained pipeline.
+        l = []
+        pl = pipeline.Pipeline((
+            _produce(1000),
+            _work_futures(self.pool, exc_at=300),
+            _consume(l),
+        ))
+        self.assertRaises(ExceptionFixture, pl.run_parallel, 1)
+
+    def test_constrained_spike(self):
+        # One task takes a lot longer than others.
+        l = []
+        pl = pipeline.Pipeline((
+            _produce(1000),
+            _work_futures(self.pool, spike_at=999),
+            _consume(l),
+        ))
+        pl.run_parallel(1)
+        self.assertEqual(set(l), set(i * 2 for i in range(1000)))
+
+    def test_constrained_parallel(self):
+        l = []
+        pl = pipeline.Pipeline((
+            _produce(1000),
+            (_work_futures(self.pool), _work_futures(self.pool)),
+            _consume(l),
+        ))
+        pl.run_parallel(1)
+        self.assertEqual(set(l), set(i * 2 for i in range(1000)))
 
 
 def suite():
