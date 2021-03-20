@@ -1096,7 +1096,6 @@ class ReplayGainPlugin(BeetsPlugin):
         # FIXME: Consider renaming the configuration option and deprecating the
         # old name 'overwrite'.
         self.force_on_import = self.config['overwrite'].get(bool)
-        self.per_disc = self.config['per_disc'].get(bool)
 
         # Remember which backend is used for CLI feedback
         self.backend_name = self.config['backend'].as_str()
@@ -1234,7 +1233,7 @@ class ReplayGainPlugin(BeetsPlugin):
         self._log.info('analyzing {0}', album)
 
         discs = {}
-        if self.per_disc:
+        if self.config['per_disc'].get(bool):
             for item in album.items():
                 if discs.get(item.disc) is None:
                     discs[item.disc] = []

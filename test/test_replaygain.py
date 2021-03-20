@@ -169,6 +169,18 @@ class ReplayGainCliTestBase(TestHelper):
 
         self.assertNotEqual(gain_relative_to_84, gain_relative_to_89)
 
+    def test_per_disc(self):
+        # Use the per_disc option and add a little more concurrency.
+        album = self._add_album(track_count=4, disc_count=3)
+        self.config['replaygain']['per_disc'] = True
+        self.run_command('replaygain', '-a')
+
+        # FIXME: Add fixtures with known track/album gain (within a suitable
+        # tolerance) so that we can actually check per-disc operation here.
+        for item in album.items():
+            self.assertIsNotNone(item.rg_track_gain)
+            self.assertIsNotNone(item.rg_album_gain)
+
 
 @unittest.skipIf(not GST_AVAILABLE, 'gstreamer cannot be found')
 class ReplayGainGstCliTest(ReplayGainCliTestBase, unittest.TestCase):
