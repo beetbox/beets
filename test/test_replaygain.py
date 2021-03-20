@@ -58,15 +58,20 @@ class ReplayGainCliTestBase(TestHelper):
             self.teardown_beets()
             self.unload_plugins()
 
-        album = self.add_album_fixture(2)
+    def _add_album(self, *args, **kwargs):
+        album = self.add_album_fixture(*args, **kwargs)
         for item in album.items():
             reset_replaygain(item)
+
+        return album
 
     def tearDown(self):
         self.teardown_beets()
         self.unload_plugins()
 
     def test_cli_saves_track_gain(self):
+        self._add_album(2)
+
         for item in self.lib.items():
             self.assertIsNone(item.rg_track_peak)
             self.assertIsNone(item.rg_track_gain)
@@ -92,6 +97,8 @@ class ReplayGainCliTestBase(TestHelper):
                 mediafile.rg_track_gain, item.rg_track_gain, places=2)
 
     def test_cli_skips_calculated_tracks(self):
+        self._add_album(2)
+
         self.run_command('replaygain')
         item = self.lib.items()[0]
         peak = item.rg_track_peak
@@ -101,6 +108,8 @@ class ReplayGainCliTestBase(TestHelper):
         self.assertEqual(item.rg_track_peak, peak)
 
     def test_cli_saves_album_gain_to_file(self):
+        self._add_album(2)
+
         for item in self.lib.items():
             mediafile = MediaFile(item.path)
             self.assertIsNone(mediafile.rg_album_peak)
@@ -127,9 +136,7 @@ class ReplayGainCliTestBase(TestHelper):
             # opus not supported by command backend
             return
 
-        album = self.add_album_fixture(2, ext="opus")
-        for item in album.items():
-            reset_replaygain(item)
+        album = self._add_album(2, ext="opus")
 
         self.run_command('replaygain', '-a')
 
@@ -143,7 +150,8 @@ class ReplayGainCliTestBase(TestHelper):
             self.assertIsNotNone(mediafile.r128_album_gain)
 
     def test_target_level_has_effect(self):
-        item = self.lib.items()[0]
+        album = self._add_album(1)
+        item = album.items()[0]
 
         def analyse(target_level):
             self.config['replaygain']['targetlevel'] = target_level
