@@ -343,6 +343,8 @@ Fixes:
 * :doc:`/plugins/web`: DELETE and PATCH methods are disallowed by default.
   Set ``readonly: no`` web config option to enable them.
   :bug:`3870`
+* Allow equals within ``--set`` value when importing.
+  :bug:`2984`
 
 For plugin developers:
 
