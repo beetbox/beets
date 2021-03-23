@@ -24,6 +24,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install tox sphinx
 
+      - name: Install optional dependencies
+        run: |
+          sudo apt-get install ffmpeg  # For replaygain
+
       - name: Test with tox
         if: matrix.python-version != '3.9'
         run: |
