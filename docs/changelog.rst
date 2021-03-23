@@ -10,7 +10,7 @@ As a technical detail, it also introduces two new external libraries:
 `MediaFile`_ and `Confuse`_ used to be part of beets but are now reusable
 dependencies---packagers, please take note.
 Finally, this is the last version of beets where we intend to support Python
-2.x; future releases will soon require Python 3.5.
+2.x and 3.5; future releases will soon require Python 3.6.
 
 Major new features:
 
