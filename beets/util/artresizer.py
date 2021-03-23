@@ -64,12 +64,13 @@ def temp_file_for(path):
         return util.bytestring_path(f.name)
 
 
-def pil_resize(maxwidth, path_in, path_out=None, quality=0):
+def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
     """Resize using Python Imaging Library (PIL).  Return the output path
     of resized image.
     """
     path_out = path_out or temp_file_for(path_in)
     from PIL import Image
+
     log.debug(u'artresizer: PIL resizing {0} to {1}',
               util.displayable_path(path_in), util.displayable_path(path_out))
 
@@ -83,14 +84,43 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0):
             quality = -1
 
         im.save(util.py3_path(path_out), quality=quality)
-        return path_out
+        if max_filesize > 0:
+            # If maximum filesize is set, we attempt to lower the quality of
+            # jpeg conversion by a proportional amount, up to 3 attempts
+            # First, set the maximum quality to either provided, or 95
+            if quality > 0:
+                lower_qual = quality
+            else:
+                lower_qual = 95
+            for i in range(5):
+                # 5 attempts is an abitrary choice
+                filesize = os.stat(util.syspath(path_out)).st_size
+                log.debug(u"PIL Pass {0} : Output size: {1}B", i, filesize)
+                if filesize <= max_filesize:
+                    return path_out
+                # The relationship between filesize & quality will be
+                # image dependent.
+                lower_qual -= 10
+                # Restrict quality dropping below 10
+                if lower_qual < 10:
+                    lower_qual = 10
+                # Use optimize flag to improve filesize decrease
+                im.save(
+                    util.py3_path(path_out), quality=lower_qual, optimize=True
+                )
+            log.warning(u"PIL Failed to resize file to below {0}B",
+                        max_filesize)
+            return path_out
+
+        else:
+            return path_out
     except IOError:
         log.error(u"PIL cannot create thumbnail for '{0}'",
                   util.displayable_path(path_in))
         return path_in
 
 
-def im_resize(maxwidth, path_in, path_out=None, quality=0):
+def im_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
     """Resize using ImageMagick.
 
     Use the ``magick`` program or ``convert`` on older versions. Return
@@ -110,6 +140,11 @@ def im_resize(maxwidth, path_in, path_out=None, quality=0):
 
     if quality > 0:
         cmd += ['-quality', '{0}'.format(quality)]
+
+    # "-define jpeg:extent=SIZEb" sets the target filesize for imagemagick to
+    # SIZE in bytes.
+    if max_filesize > 0:
+        cmd += ['-define', 'jpeg:extent={0}b'.format(max_filesize)]
 
     cmd.append(util.syspath(path_out, prefix=False))
 
@@ -131,6 +166,7 @@ BACKEND_FUNCS = {
 
 def pil_getsize(path_in):
     from PIL import Image
+
     try:
         im = Image.open(util.syspath(path_in))
         return im.size
@@ -171,6 +207,7 @@ class Shareable(type):
     lazily-created shared instance of ``MyClass`` while calling
     ``MyClass()`` to construct a new object works as usual.
     """
+
     def __init__(cls, name, bases, dict):
         super(Shareable, cls).__init__(name, bases, dict)
         cls._instance = None
@@ -205,7 +242,9 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
                 self.im_convert_cmd = ['magick']
                 self.im_identify_cmd = ['magick', 'identify']
 
-    def resize(self, maxwidth, path_in, path_out=None, quality=0):
+    def resize(
+        self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0
+    ):
         """Manipulate an image file according to the method, returning a
         new path. For PIL or IMAGEMAGIC methods, resizes the image to a
         temporary file and encodes with the specified quality level.
@@ -213,7 +252,8 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
         """
         if self.local:
             func = BACKEND_FUNCS[self.method[0]]
-            return func(maxwidth, path_in, path_out, quality=quality)
+            return func(maxwidth, path_in, path_out,
+                        quality=quality, max_filesize=max_filesize)
         else:
             return path_in
 
