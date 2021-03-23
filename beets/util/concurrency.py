@@ -13,9 +13,12 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Provides a global thread pool that can be shared among beets' core and
-plugins. Every piece of work that is CPU-intensive (e.g. calling a subprocess
-which performs the actual work) should block a thread on the pool.
+"""Provides a global shared thread pool.
+
+The common pool should be used both by beets' core and plugins. Every piece of
+work that is CPU-intensive (e.g. calling a subprocess which performs the actual
+work) should block a thread on the pool in order to ensure that different
+tasks don't fight over resources too much.
 """
 
 from __future__ import division, absolute_import, print_function
