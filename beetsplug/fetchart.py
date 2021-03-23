@@ -73,7 +73,8 @@ class Candidate(object):
         Return `CANDIDATE_BAD` if the file is unusable.
         Return `CANDIDATE_EXACT` if the file is usable as-is.
         Return `CANDIDATE_DOWNSCALE` if the file must be rescaled.
-        Return `CANDIDATE_DOWNSIZE` if the file must be resized.
+        Return `CANDIDATE_DOWNSIZE` if the file must be resized, and possibly
+            also rescaled.
         """
         if not self.path:
             return self.CANDIDATE_BAD
@@ -90,8 +91,9 @@ class Candidate(object):
         if not self.size:
             self._log.warning(u'Could not get size of image (please see '
                               u'documentation for dependencies). '
-                              u'The configuration options `minwidth` and '
-                              u'`enforce_ratio` may be violated.')
+                              u'The configuration options `minwidth`, '
+                              u'`enforce_ratio` and `max_filesize` '
+                              u'may be violated.')
             return self.CANDIDATE_EXACT
 
         short_edge = min(self.size)
@@ -133,12 +135,13 @@ class Candidate(object):
             downscale = True
 
         # Check filesize.
-        filesize = os.stat(syspath(self.path)).st_size
         downsize = False
-        if plugin.max_filesize and filesize > plugin.max_filesize:
-            self._log.debug(u'image needs resizing ({}B > {}B)',
-                            filesize, plugin.max_filesize)
-            downsize = True
+        if plugin.max_filesize:
+            filesize = os.stat(syspath(self.path)).st_size
+            if filesize > plugin.max_filesize:
+                self._log.debug(u'image needs resizing ({}B > {}B)',
+                                filesize, plugin.max_filesize)
+                downsize = True
 
         if downscale:
             return self.CANDIDATE_DOWNSCALE
