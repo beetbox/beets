@@ -93,7 +93,7 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
             else:
                 lower_qual = 95
             for i in range(5):
-                # 3 attempts is an abitrary choice
+                # 5 attempts is an abitrary choice
                 filesize = os.stat(util.syspath(path_out)).st_size
                 log.debug(u"PIL Pass {0} : Output size: {1}B", i, filesize)
                 if filesize <= max_filesize:
@@ -133,9 +133,6 @@ def im_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
     # "-resize WIDTHx>" shrinks images with the width larger
     # than the given width while maintaining the aspect ratio
     # with regards to the height.
-
-    # "-define jpeg:extent=SIZEb" sets the target filesize
-    # for imagemagick to SIZE in bytes
     cmd = ArtResizer.shared.im_convert_cmd + [
         util.syspath(path_in, prefix=False),
         '-resize', '{0}x>'.format(maxwidth),
@@ -144,6 +141,8 @@ def im_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
     if quality > 0:
         cmd += ['-quality', '{0}'.format(quality)]
 
+    # "-define jpeg:extent=SIZEb" sets the target filesize for imagemagick to
+    # SIZE in bytes.
     if max_filesize > 0:
         cmd += ['-define', 'jpeg:extent={0}b'.format(max_filesize)]
 
