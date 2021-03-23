@@ -208,6 +208,8 @@ Other new things:
   MusicBrainz for each track.
   :bug:`1904`
 * The :doc:`/plugins/aura` has arrived!
+* :doc:`plugins/fetchart`: The new ``max_filesize`` option for fetchart can be
+  used to target a maximum image filesize.
 
 Fixes:
 
