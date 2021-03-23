@@ -119,6 +119,7 @@ setup(
             'mock',
             'pylast',
             'pytest',
+            'pytest-timeout',
             'python-mpd2',
             'pyxdg',
             'responses>=0.3.0',
