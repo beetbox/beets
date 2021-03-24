@@ -130,29 +130,30 @@ class BeetsPlugin(object):
         be sent for backwards-compatibility.
         """
         if six.PY2:
-            func_args = inspect.getargspec(func).args
+            argspec = inspect.getargspec(func)
+            func_args = argspec.args
+            has_varkw = argspec.keywords is not None
         else:
-            func_args = inspect.getfullargspec(func).args
+            argspec = inspect.getfullargspec(func)
+            func_args = argspec.args
+            has_varkw = argspec.varkw is not None
 
         @wraps(func)
         def wrapper(*args, **kwargs):
             assert self._log.level == logging.NOTSET
+
             verbosity = beets.config['verbose'].get(int)
             log_level = max(logging.DEBUG, base_log_level - 10 * verbosity)
             self._log.setLevel(log_level)
+            if not has_varkw:
+                kwargs = dict((k, v) for k, v in kwargs.items()
+                              if k in func_args)
+
             try:
-                try:
-                    return func(*args, **kwargs)
-                except TypeError as exc:
-                    if exc.args[0].startswith(func.__name__):
-                        # caused by 'func' and not stuff internal to 'func'
-                        kwargs = dict((arg, val) for arg, val in kwargs.items()
-                                      if arg in func_args)
-                        return func(*args, **kwargs)
-                    else:
-                        raise
+                return func(*args, **kwargs)
             finally:
                 self._log.setLevel(logging.NOTSET)
+
         return wrapper
 
     def queries(self):

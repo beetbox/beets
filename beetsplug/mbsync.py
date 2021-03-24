@@ -123,7 +123,7 @@ class MBSyncPlugin(BeetsPlugin):
             # Map release track and recording MBIDs to their information.
             # Recordings can appear multiple times on a release, so each MBID
             # maps to a list of TrackInfo objects.
-            releasetrack_index = dict()
+            releasetrack_index = {}
             track_index = defaultdict(list)
             for track_info in album_info.tracks:
                 releasetrack_index[track_info.release_track_id] = track_info

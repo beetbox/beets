@@ -666,10 +666,10 @@ def term_width():
 FLOAT_EPSILON = 0.01
 
 
-def _field_diff(field, old, new):
-    """Given two Model objects, format their values for `field` and
-    highlight changes among them. Return a human-readable string. If the
-    value has not changed, return None instead.
+def _field_diff(field, old, old_fmt, new, new_fmt):
+    """Given two Model objects and their formatted views, format their values
+    for `field` and highlight changes among them. Return a human-readable
+    string. If the value has not changed, return None instead.
     """
     oldval = old.get(field)
     newval = new.get(field)
@@ -682,8 +682,8 @@ def _field_diff(field, old, new):
         return None
 
     # Get formatted values for output.
-    oldstr = old.formatted().get(field, u'')
-    newstr = new.formatted().get(field, u'')
+    oldstr = old_fmt.get(field, u'')
+    newstr = new_fmt.get(field, u'')
 
     # For strings, highlight changes. For others, colorize the whole
     # thing.
@@ -708,6 +708,11 @@ def show_model_changes(new, old=None, fields=None, always=False):
     """
     old = old or new._db._get(type(new), new.id)
 
+    # Keep the formatted views around instead of re-creating them in each
+    # iteration step
+    old_fmt = old.formatted()
+    new_fmt = new.formatted()
+
     # Build up lines showing changed fields.
     changes = []
     for field in old:
@@ -716,7 +721,7 @@ def show_model_changes(new, old=None, fields=None, always=False):
             continue
 
         # Detect and show difference for this field.
-        line = _field_diff(field, old, new)
+        line = _field_diff(field, old, old_fmt, new, new_fmt)
         if line:
             changes.append(u'  {0}: {1}'.format(field, line))
 
@@ -727,7 +732,7 @@ def show_model_changes(new, old=None, fields=None, always=False):
 
         changes.append(u'  {0}: {1}'.format(
             field,
-            colorize('text_highlight', new.formatted()[field])
+            colorize('text_highlight', new_fmt[field])
         ))
 
     # Print changes.
@@ -791,11 +796,14 @@ def _store_dict(option, opt_str, value, parser):
     if option_values is None:
         # This is the first supplied ``key=value`` pair of option.
         # Initialize empty dictionary and get a reference to it.
-        setattr(parser.values, dest, dict())
+        setattr(parser.values, dest, {})
         option_values = getattr(parser.values, dest)
 
+    # Decode the argument using the platform's argument encoding.
+    value = util.text_string(value, util.arg_encoding())
+
     try:
-        key, value = map(lambda s: util.text_string(s), value.split('='))
+        key, value = value.split('=', 1)
         if not (key and value):
             raise ValueError
     except ValueError:
@@ -1155,8 +1163,13 @@ def _setup(options, lib=None):
         plugins.send("library_opened", lib=lib)
 
     # Add types and queries defined by plugins.
-    library.Item._types.update(plugins.types(library.Item))
-    library.Album._types.update(plugins.types(library.Album))
+    plugin_types_album = plugins.types(library.Album)
+    library.Album._types.update(plugin_types_album)
+    item_types = plugin_types_album.copy()
+    item_types.update(library.Item._types)
+    item_types.update(plugins.types(library.Item))
+    library.Item._types = item_types
+
     library.Item._queries.update(plugins.named_queries(library.Item))
     library.Album._queries.update(plugins.named_queries(library.Album))
 

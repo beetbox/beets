@@ -6,7 +6,7 @@ jobs:
     strategy:
       matrix:
         platform: [ubuntu-latest]
-        python-version: [2.7, 3.5, 3.6, 3.7, 3.8, 3.9-dev]
+        python-version: [2.7, 3.5, 3.6, 3.7, 3.8, 3.9, 3.10-dev]
 
     env:
       PY_COLORS: 1
@@ -24,18 +24,31 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install tox sphinx
 
-      - name: Test with tox
-        if: matrix.python-version != '3.8'
+      - name: Install optional dependencies
+        run: |
+          sudo apt-get install ffmpeg  # For replaygain
+
+      - name: Test older Python versions with tox
+        if: matrix.python-version != '3.9' && matrix.python-version != '3.10-dev'
         run: |
           tox -e py-test
 
-      - name: Test with tox and get coverage
-        if: matrix.python-version == '3.8'
+      - name: Test latest Python version with tox and get coverage
+        if: matrix.python-version == '3.9'
         run: |
           tox -vv -e py-cov
-        
+
+      - name: Test nightly Python version with tox
+        if: matrix.python-version == '3.10-dev'
+        # continue-on-error is not ideal since it doesn't give a visible
+        # warning, but there doesn't seem to be anything better:
+        # https://github.com/actions/toolkit/issues/399
+        continue-on-error: true
+        run: |
+          tox -e py-test
+
       - name: Upload code coverage
-        if: matrix.python-version == '3.8'
+        if: matrix.python-version == '3.9'
         run: |
           pip install codecov || true
           codecov || true
@@ -49,10 +62,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Set up Python 2.7
+      - name: Set up Python 3.9
         uses: actions/setup-python@v2
         with:
-          python-version: 2.7
+          python-version: 3.9
 
       - name: Install base dependencies
         run: |
@@ -71,10 +84,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Set up Python 3.8
+      - name: Set up Python 3.9
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
 
       - name: Install base dependencies
         run: |
