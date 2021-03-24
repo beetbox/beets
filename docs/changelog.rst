@@ -210,6 +210,8 @@ Other new things:
 * The :doc:`/plugins/aura` has arrived!
 * :doc:`plugins/fetchart`: The new ``max_filesize`` option for fetchart can be
   used to target a maximum image filesize.
+* :doc:`/plugins/badfiles`: Checkers can now be run during import with the
+  ``check_on_import`` config option.
 
 Fixes:
 
