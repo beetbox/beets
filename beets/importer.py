@@ -472,6 +472,7 @@ class ImportTask(BaseImportTask):
     def __init__(self, toppath, paths, items):
         super(ImportTask, self).__init__(toppath, paths, items)
         self.choice_flag = None
+        self.skip_summary_judgement = False
         self.cur_album = None
         self.cur_artist = None
         self.candidates = []
