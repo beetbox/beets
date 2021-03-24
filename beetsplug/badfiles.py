@@ -30,7 +30,6 @@ from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets.util import displayable_path, par_map
 from beets import ui
-from beets import importer
 
 
 class CheckerCommandException(Exception):
@@ -141,18 +140,21 @@ class BadFiles(BeetsPlugin):
         error_lines = []
 
         if status > 0:
-            error_lines.append(u"{}: checker exited with status {}"
-                              .format(ui.colorize('text_error', dpath), status))
+            error_lines.append(
+                u"{}: checker exited with status {}"
+                .format(ui.colorize('text_error', dpath), status))
             for line in output:
                 error_lines.append(u"  {}".format(line))
 
         elif errors > 0:
-            error_lines.append(u"{}: checker found {} errors or warnings"
-                               .format(ui.colorize('text_warning', dpath), errors))
+            error_lines.append(
+                    u"{}: checker found {} errors or warnings"
+                    .format(ui.colorize('text_warning', dpath), errors))
             for line in output:
                 error_lines.append(u"  {}".format(line))
         elif self.verbose:
-            error_lines.append(u"{}: ok".format(ui.colorize('text_success', dpath)))
+            error_lines.append(
+                u"{}: ok".format(ui.colorize('text_success', dpath)))
 
         return error_lines
 
@@ -163,7 +165,7 @@ class BadFiles(BeetsPlugin):
         checks_failed = []
 
         for item in task.items:
-            error_lines = self.check_item(item) 
+            error_lines = self.check_item(item)
             if error_lines:
                 checks_failed.append(error_lines)
 
@@ -180,7 +182,6 @@ class BadFiles(BeetsPlugin):
                     ui.print_(error_line)
 
             ui.print_()
-
 
     def command(self, lib, opts, args):
         # Get items from arguments
