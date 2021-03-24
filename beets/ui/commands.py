@@ -698,14 +698,18 @@ class TerminalImportSession(importer.ImportSession):
         print_(displayable_path(task.paths, u'\n') +
                u' ({0} items)'.format(len(task.items)))
 
-        # Take immediate action if appropriate.
-        action = _summary_judgment(task.rec)
-        if action == importer.action.APPLY:
-            match = task.candidates[0]
-            show_change(task.cur_artist, task.cur_album, match)
-            return match
-        elif action is not None:
-            return action
+        # Call here so plugins have the option to skip `_summary_judgement`
+        choices = self._get_choices(task)
+
+        if not task.skip_summary_judgement:
+            # Take immediate action if appropriate.
+            action = _summary_judgment(task.rec)
+            if action == importer.action.APPLY:
+                match = task.candidates[0]
+                show_change(task.cur_artist, task.cur_album, match)
+                return match
+            elif action is not None:
+                return action
 
         # Loop until we have a choice.
         while True:
@@ -713,7 +717,6 @@ class TerminalImportSession(importer.ImportSession):
             # `choose_candidate` may be an `importer.action`, an
             # `AlbumMatch` object for a specific selection, or a
             # `PromptChoice`.
-            choices = self._get_choices(task)
             choice = choose_candidate(
                 task.candidates, False, task.rec, task.cur_artist,
                 task.cur_album, itemcount=len(task.items), choices=choices
@@ -741,6 +744,8 @@ class TerminalImportSession(importer.ImportSession):
                 # AlbumMatch object.
                 assert isinstance(choice, autotag.AlbumMatch)
                 return choice
+
+            choices = self._get_choices(task)
 
     def choose_item(self, task):
         """Ask the user for a choice about tagging a single item. Returns
