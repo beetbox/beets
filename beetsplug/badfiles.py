@@ -157,6 +157,9 @@ class BadFiles(BeetsPlugin):
         return error_lines
 
     def on_import_task_start(self, task, session):
+        if not self.config['check_on_import'].get(False):
+            return
+
         checks_failed = []
 
         for item in task.items:
