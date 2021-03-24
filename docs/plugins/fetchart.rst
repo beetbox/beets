@@ -49,6 +49,13 @@ file. The available options are:
   estimate the input image quality and uses 92 if it cannot be determined, and
   PIL defaults to 75.
   Default: 0 (disabled)
+- **max_filesize**: The maximum size of a target piece of cover art in bytes.
+  When using an ImageMagick backend this sets 
+  ``-define jpeg:extent=max_filesize``. Using PIL this will reduce JPG quality
+  by up to 50% to attempt to reach the target filesize. Neither method is
+  *guaranteed* to reach the target size, however in most cases it should
+  succeed.
+  Default: 0 (disabled)
 - **enforce_ratio**: Only images with a width:height ratio of 1:1 are
   considered as valid album art candidates if set to ``yes``.
   It is also possible to specify a certain deviation to the exact ratio to

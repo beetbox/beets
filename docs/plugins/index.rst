@@ -61,7 +61,9 @@ following to your configuration::
 
    absubmit
    acousticbrainz
+   aura
    badfiles
+   bareasc
    beatport
    bpd
    bpm
@@ -184,6 +186,7 @@ Path Formats
 Interoperability
 ----------------
 
+* :doc:`aura`: A server implementation of the `AURA`_ specification.
 * :doc:`badfiles`: Check audio file integrity.
 * :doc:`embyupdate`: Automatically notifies `Emby`_ whenever the beets library changes.
 * :doc:`fish`: Adds `Fish shell`_ tab autocompletion to ``beet`` commands.
@@ -205,6 +208,7 @@ Interoperability
   library changes.
 
 
+.. _AURA: https://auraspec.readthedocs.io
 .. _Emby: https://emby.media
 .. _Fish shell: https://fishshell.com/
 .. _Plex: https://plex.tv
@@ -215,6 +219,7 @@ Interoperability
 Miscellaneous
 -------------
 
+* :doc:`bareasc`: Search albums and tracks with bare ASCII string matching.
 * :doc:`bpd`: A music player for your beets library that emulates `MPD`_ and is
   compatible with `MPD clients`_.
 * :doc:`convert`: Transcode music and embed album art while exporting to

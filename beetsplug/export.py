@@ -33,7 +33,7 @@ from beetsplug.info import make_key_filter, library_data, tag_data
 class ExportEncoder(json.JSONEncoder):
     """Deals with dates because JSON doesn't have a standard"""
     def default(self, o):
-        if isinstance(o, datetime) or isinstance(o, date):
+        if isinstance(o, (datetime, date)):
             return o.isoformat()
         return json.JSONEncoder.default(self, o)
 
