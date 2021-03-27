@@ -30,6 +30,7 @@ from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets.util import displayable_path, par_map
 from beets import ui
+from beets import importer
 
 
 class CheckerCommandException(Exception):
@@ -56,8 +57,8 @@ class BadFiles(BeetsPlugin):
 
         self.register_listener('import_task_start',
                                self.on_import_task_start)
-        self.register_listener('before_choose_candidate',
-                               self.on_before_choose_candidate)
+        self.register_listener('import_task_before_choice',
+                               self.on_import_task_before_choice)
 
     def run_command(self, cmd):
         self._log.debug(u"running command: {}",
@@ -171,9 +172,8 @@ class BadFiles(BeetsPlugin):
 
         if checks_failed:
             task._badfiles_checks_failed = checks_failed
-            task.skip_summary_judgement = True
 
-    def on_before_choose_candidate(self, task, session):
+    def on_import_task_before_choice(self, task, session, previous):
         if hasattr(task, '_badfiles_checks_failed'):
             ui.print_('{} one or more files failed checks:'
                       .format(ui.colorize('text_warning', 'BAD')))
@@ -182,6 +182,18 @@ class BadFiles(BeetsPlugin):
                     ui.print_(error_line)
 
             ui.print_()
+            ui.print_('What would you like to do?')
+
+            sel = ui.input_options(['aBort', 'skip', 'continue'])
+
+            if sel == 's':
+                return importer.action.SKIP
+            elif sel == 'c':
+                return None
+            elif sel == 'b':
+                raise importer.ImportAbort()
+            else:
+                raise Exception('Unexpected selection: {}'.format(sel))
 
     def command(self, lib, opts, args):
         # Get items from arguments
