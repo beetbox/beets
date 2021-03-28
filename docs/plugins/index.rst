@@ -61,7 +61,9 @@ following to your configuration::
 
    absubmit
    acousticbrainz
+   aura
    badfiles
+   bareasc
    beatport
    bpd
    bpm
@@ -116,6 +118,7 @@ following to your configuration::
    smartplaylist
    sonosupdate
    spotify
+   subsonicplaylist
    subsonicupdate
    the
    thumbnails
@@ -183,6 +186,7 @@ Path Formats
 Interoperability
 ----------------
 
+* :doc:`aura`: A server implementation of the `AURA`_ specification.
 * :doc:`badfiles`: Check audio file integrity.
 * :doc:`embyupdate`: Automatically notifies `Emby`_ whenever the beets library changes.
 * :doc:`fish`: Adds `Fish shell`_ tab autocompletion to ``beet`` commands.
@@ -204,6 +208,7 @@ Interoperability
   library changes.
 
 
+.. _AURA: https://auraspec.readthedocs.io
 .. _Emby: https://emby.media
 .. _Fish shell: https://fishshell.com/
 .. _Plex: https://plex.tv
@@ -214,6 +219,7 @@ Interoperability
 Miscellaneous
 -------------
 
+* :doc:`bareasc`: Search albums and tracks with bare ASCII string matching.
 * :doc:`bpd`: A music player for your beets library that emulates `MPD`_ and is
   compatible with `MPD clients`_.
 * :doc:`convert`: Transcode music and embed album art while exporting to
@@ -274,13 +280,15 @@ Here are a few of the plugins written by the beets community:
 
 * `beet-amazon`_ adds Amazon.com as a tagger data source.
 
-* `copyartifacts`_ helps bring non-music files along during import.
+* `beets-copyartifacts`_ helps bring non-music files along during import.
 
 * `beets-check`_ automatically checksums your files to detect corruption.
 
 * `beets-alternatives`_ manages external files.
 
 * `beets-follow`_ lets you check for new albums from artists you like.
+
+* `beets-ibroadcast`_ uploads tracks to the `iBroadcast`_ cloud service.
 
 * `beets-setlister`_ generate playlists from the setlists of a given artist.
 
@@ -300,15 +308,30 @@ Here are a few of the plugins written by the beets community:
 * `beet-summarize`_ can compute lots of counts and statistics about your music
   library.
 
-* `beets-mosaic`_ generates a montage of a mosiac from cover art.
+* `beets-mosaic`_ generates a montage of a mosaic from cover art.
+
+* `beets-goingrunning`_ generates playlists to go with your running sessions.
+
+* `beets-xtractor`_ extracts low- and high-level musical information from your songs.
+
+* `beets-yearfixer`_ attempts to fix all missing ``original_year`` and ``year`` fields.
+
+* `beets-autofix`_ automates repetitive tasks to keep your library in order.
+
+* `beets-describe`_ gives you the full picture of a single attribute of your library items.
 
 * `beets-bpmanalyser`_ analyses songs and calculates their tempo (BPM).
 
-* `beets-goingrunning`_ copies songs to external device to go with your running session.
+* `beets-originquery`_ augments MusicBrainz queries with locally-sourced data
+  to improve autotagger results.
+
+* `drop2beets`_ automatically imports singles as soon as they are dropped in a
+  folder (using Linux's ``inotify``). You can also set a sub-folders
+  hierarchy to set flexible attributes by the way.
 
 .. _beets-barcode: https://github.com/8h2a/beets-barcode
 .. _beets-check: https://github.com/geigerzaehler/beets-check
-.. _copyartifacts: https://github.com/sbarakat/beets-copyartifacts
+.. _beets-copyartifacts: https://github.com/adammillerio/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
 .. _beets-artistcountry: https://github.com/agrausem/beets-artistcountry
 .. _beetFs: https://github.com/jbaiter/beetfs
@@ -320,6 +343,8 @@ Here are a few of the plugins written by the beets community:
 .. _beet-amazon: https://github.com/jmwatte/beet-amazon
 .. _beets-alternatives: https://github.com/geigerzaehler/beets-alternatives
 .. _beets-follow: https://github.com/nolsto/beets-follow
+.. _beets-ibroadcast: https://github.com/ctrueden/beets-ibroadcast
+.. _iBroadcast: https://ibroadcast.com/
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
 .. _beets-noimport: https://gitlab.com/tiago.dias/beets-noimport
 .. _whatlastgenre: https://github.com/YetAnotherNerd/whatlastgenre/tree/master/plugin/beets
@@ -328,5 +353,11 @@ Here are a few of the plugins written by the beets community:
 .. _beets-ydl: https://github.com/vmassuchetto/beets-ydl
 .. _beet-summarize: https://github.com/steven-murray/beet-summarize
 .. _beets-mosaic: https://github.com/SusannaMaria/beets-mosaic
+.. _beets-goingrunning: https://pypi.org/project/beets-goingrunning
+.. _beets-xtractor: https://github.com/adamjakab/BeetsPluginXtractor
+.. _beets-yearfixer: https://github.com/adamjakab/BeetsPluginYearFixer
+.. _beets-autofix: https://github.com/adamjakab/BeetsPluginAutofix
+.. _beets-describe: https://github.com/adamjakab/BeetsPluginDescribe
 .. _beets-bpmanalyser: https://github.com/adamjakab/BeetsPluginBpmAnalyser
-.. _beets-goingrunning: https://pypi.org/project/beets-goingrunning/
+.. _beets-originquery: https://github.com/x1ppy/beets-originquery
+.. _drop2beets: https://github.com/martinkirch/drop2beets

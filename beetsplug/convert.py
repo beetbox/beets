@@ -16,6 +16,7 @@
 """Converts tracks or albums to external directory
 """
 from __future__ import division, absolute_import, print_function
+from beets.util import par_map
 
 import os
 import threading
@@ -148,6 +149,7 @@ class ConvertPlugin(BeetsPlugin):
             u'never_convert_lossy_files': False,
             u'copy_album_art': False,
             u'album_art_maxwidth': 0,
+            u'delete_originals': False,
         })
         self.early_import_stages = [self.auto_convert]
 
@@ -182,8 +184,8 @@ class ConvertPlugin(BeetsPlugin):
 
     def auto_convert(self, config, task):
         if self.config['auto']:
-            for item in task.imported_items():
-                self.convert_on_import(config.lib, item)
+            par_map(lambda item: self.convert_on_import(config.lib, item),
+                    task.imported_items())
 
     # Utilities converted from functions to methods on logging overhaul
 
@@ -356,7 +358,7 @@ class ConvertPlugin(BeetsPlugin):
                 item.store()  # Store new path and audio data.
 
             if self.config['embed'] and not linked:
-                album = item.get_album()
+                album = item._cached_album
                 if album and album.artpath:
                     self._log.debug(u'embedding album art from {}',
                                     util.displayable_path(album.artpath))
@@ -532,10 +534,15 @@ class ConvertPlugin(BeetsPlugin):
 
             # Change the newly-imported database entry to point to the
             # converted file.
+            source_path = item.path
             item.path = dest
             item.write()
             item.read()  # Load new audio information data.
             item.store()
+
+            if self.config['delete_originals']:
+                self._log.info(u'Removing original file {0}', source_path)
+                util.remove(source_path, False)
 
     def _cleanup(self, task, session):
         for path in task.old_paths:

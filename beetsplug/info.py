@@ -235,7 +235,7 @@ def make_key_filter(include):
         matchers.append(re.compile(key + '$'))
 
     def filter_(data):
-        filtered = dict()
+        filtered = {}
         for key, value in data.items():
             if any([m.match(key) for m in matchers]):
                 filtered[key] = value

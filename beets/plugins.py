@@ -130,29 +130,30 @@ class BeetsPlugin(object):
         be sent for backwards-compatibility.
         """
         if six.PY2:
-            func_args = inspect.getargspec(func).args
+            argspec = inspect.getargspec(func)
+            func_args = argspec.args
+            has_varkw = argspec.keywords is not None
         else:
-            func_args = inspect.getfullargspec(func).args
+            argspec = inspect.getfullargspec(func)
+            func_args = argspec.args
+            has_varkw = argspec.varkw is not None
 
         @wraps(func)
         def wrapper(*args, **kwargs):
             assert self._log.level == logging.NOTSET
+
             verbosity = beets.config['verbose'].get(int)
             log_level = max(logging.DEBUG, base_log_level - 10 * verbosity)
             self._log.setLevel(log_level)
+            if not has_varkw:
+                kwargs = dict((k, v) for k, v in kwargs.items()
+                              if k in func_args)
+
             try:
-                try:
-                    return func(*args, **kwargs)
-                except TypeError as exc:
-                    if exc.args[0].startswith(func.__name__):
-                        # caused by 'func' and not stuff internal to 'func'
-                        kwargs = dict((arg, val) for arg, val in kwargs.items()
-                                      if arg in func_args)
-                        return func(*args, **kwargs)
-                    else:
-                        raise
+                return func(*args, **kwargs)
             finally:
                 self._log.setLevel(logging.NOTSET)
+
         return wrapper
 
     def queries(self):
@@ -172,7 +173,7 @@ class BeetsPlugin(object):
         """
         return beets.autotag.hooks.Distance()
 
-    def candidates(self, items, artist, album, va_likely):
+    def candidates(self, items, artist, album, va_likely, extra_tags=None):
         """Should return a sequence of AlbumInfo objects that match the
         album whose items are provided.
         """
@@ -301,6 +302,11 @@ def find_plugins():
     currently loaded beets plugins. Loads the default plugin set
     first.
     """
+    if _instances:
+        # After the first call, use cached instances for performance reasons.
+        # See https://github.com/beetbox/beets/pull/3810
+        return list(_instances.values())
+
     load_plugins()
     plugins = []
     for cls in _classes:
@@ -379,11 +385,12 @@ def album_distance(items, album_info, mapping):
     return dist
 
 
-def candidates(items, artist, album, va_likely):
+def candidates(items, artist, album, va_likely, extra_tags=None):
     """Gets MusicBrainz candidates for an album from each plugin.
     """
     for plugin in find_plugins():
-        for candidate in plugin.candidates(items, artist, album, va_likely):
+        for candidate in plugin.candidates(items, artist, album, va_likely,
+                                           extra_tags):
             yield candidate
 
 
@@ -714,7 +721,7 @@ class MetadataSourcePlugin(object):
                 return id_
         return None
 
-    def candidates(self, items, artist, album, va_likely):
+    def candidates(self, items, artist, album, va_likely, extra_tags=None):
         """Returns a list of AlbumInfo objects for Search API results
         matching an ``album`` and ``artist`` (if not various).
 

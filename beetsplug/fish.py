@@ -110,7 +110,7 @@ class FishPlugin(BeetsPlugin):
         # Collect commands, their aliases, and their help text
         cmd_names_help = []
         for cmd in beetcmds:
-            names = [alias for alias in cmd.aliases]
+            names = list(cmd.aliases)
             names.append(cmd.name)
             for name in names:
                 cmd_names_help.append((name, cmd.help))
@@ -131,6 +131,13 @@ class FishPlugin(BeetsPlugin):
 
         with open(completion_file_path, 'w') as fish_file:
             fish_file.write(totstring)
+
+
+def _escape(name):
+    # Escape ? in fish
+    if name == "?":
+        name = "\\" + name
+    return name
 
 
 def get_cmds_list(cmds_names):
@@ -201,6 +208,8 @@ def get_subcommands(cmd_name_and_help, nobasicfields, extravalues):
     # Formatting for Fish to complete our fields/values
     word = ""
     for cmdname, cmdhelp in cmd_name_and_help:
+        cmdname = _escape(cmdname)
+
         word += "\n" + "# ------ {} -------".format(
             "fieldsetups for  " + cmdname) + "\n"
         word += (
@@ -229,9 +238,11 @@ def get_all_commands(beetcmds):
     # Formatting for Fish to complete command options
     word = ""
     for cmd in beetcmds:
-        names = [alias for alias in cmd.aliases]
+        names = list(cmd.aliases)
         names.append(cmd.name)
         for name in names:
+            name = _escape(name)
+
             word += "\n"
             word += ("\n" * 2) + "# ====== {} =====".format(
                 "completions for  " + name) + "\n"

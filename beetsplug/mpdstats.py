@@ -18,6 +18,7 @@ from __future__ import division, absolute_import, print_function
 import mpd
 import socket
 import select
+import sys
 import time
 import os
 
@@ -49,10 +50,23 @@ class MPDClientWrapper(object):
     def __init__(self, log):
         self._log = log
 
-        self.music_directory = (
-            mpd_config['music_directory'].as_str())
+        self.music_directory = mpd_config['music_directory'].as_str()
+        self.strip_path = mpd_config['strip_path'].as_str()
 
-        self.client = mpd.MPDClient(use_unicode=True)
+        # Ensure strip_path end with '/'
+        if not self.strip_path.endswith('/'):
+            self.strip_path += '/'
+
+        self._log.debug('music_directory: {0}', self.music_directory)
+        self._log.debug('strip_path: {0}', self.strip_path)
+
+        if sys.version_info < (3, 0):
+            # On Python 2, use_unicode will enable the utf-8 mode for
+            # python-mpd2
+            self.client = mpd.MPDClient(use_unicode=True)
+        else:
+            # On Python 3, python-mpd2 always uses Unicode
+            self.client = mpd.MPDClient()
 
     def connect(self):
         """Connect to the MPD.
@@ -108,17 +122,25 @@ class MPDClientWrapper(object):
         return self.get(command, retries=retries - 1)
 
     def currentsong(self):
-        """Return the path to the currently playing song.  Prefixes paths with the
-        music_directory, to get the absolute path.
+        """Return the path to the currently playing song, along with its
+        songid.  Prefixes paths with the music_directory, to get the absolute
+        path.
+        In some cases, we need to remove the local path from MPD server,
+        we replace 'strip_path' with ''.
+        `strip_path` defaults to ''.
         """
         result = None
         entry = self.get('currentsong')
         if 'file' in entry:
             if not is_url(entry['file']):
-                result = os.path.join(self.music_directory, entry['file'])
+                file = entry['file']
+                if file.startswith(self.strip_path):
+                    file = file[len(self.strip_path):]
+                result = os.path.join(self.music_directory, file)
             else:
                 result = entry['file']
-        return result
+        self._log.debug('returning: {0}', result)
+        return result, entry.get('id')
 
     def status(self):
         """Return the current status of the MPD.
@@ -240,7 +262,9 @@ class MPDStats(object):
     def on_stop(self, status):
         self._log.info(u'stop')
 
-        if self.now_playing:
+        # if the current song stays the same it means that we stopped on the
+        # current track and should not record a skip.
+        if self.now_playing and self.now_playing['id'] != status.get('songid'):
             self.handle_song_change(self.now_playing)
 
         self.now_playing = None
@@ -251,7 +275,7 @@ class MPDStats(object):
 
     def on_play(self, status):
 
-        path = self.mpd.currentsong()
+        path, songid = self.mpd.currentsong()
 
         if not path:
             return
@@ -286,6 +310,7 @@ class MPDStats(object):
             'started':    time.time(),
             'remaining':  remaining,
             'path':       path,
+            'id':         songid,
             'beets_item': self.get_item(path),
         }
 
@@ -323,6 +348,7 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
         super(MPDStatsPlugin, self).__init__()
         mpd_config.add({
             'music_directory': config['directory'].as_filename(),
+            'strip_path':      u'',
             'rating':          True,
             'rating_mix':      0.75,
             'host':            os.environ.get('MPD_HOST', u'localhost'),

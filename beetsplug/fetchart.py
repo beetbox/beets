@@ -21,6 +21,7 @@ from contextlib import closing
 import os
 import re
 from tempfile import NamedTemporaryFile
+from collections import OrderedDict
 
 import requests
 
@@ -50,6 +51,7 @@ class Candidate(object):
     CANDIDATE_BAD = 0
     CANDIDATE_EXACT = 1
     CANDIDATE_DOWNSCALE = 2
+    CANDIDATE_DOWNSIZE = 3
 
     MATCH_EXACT = 0
     MATCH_FALLBACK = 1
@@ -70,12 +72,15 @@ class Candidate(object):
 
         Return `CANDIDATE_BAD` if the file is unusable.
         Return `CANDIDATE_EXACT` if the file is usable as-is.
-        Return `CANDIDATE_DOWNSCALE` if the file must be resized.
+        Return `CANDIDATE_DOWNSCALE` if the file must be rescaled.
+        Return `CANDIDATE_DOWNSIZE` if the file must be resized, and possibly
+            also rescaled.
         """
         if not self.path:
             return self.CANDIDATE_BAD
 
-        if not (plugin.enforce_ratio or plugin.minwidth or plugin.maxwidth):
+        if (not (plugin.enforce_ratio or plugin.minwidth or plugin.maxwidth
+                 or plugin.max_filesize)):
             return self.CANDIDATE_EXACT
 
         # get_size returns None if no local imaging backend is available
@@ -86,14 +91,15 @@ class Candidate(object):
         if not self.size:
             self._log.warning(u'Could not get size of image (please see '
                               u'documentation for dependencies). '
-                              u'The configuration options `minwidth` and '
-                              u'`enforce_ratio` may be violated.')
+                              u'The configuration options `minwidth`, '
+                              u'`enforce_ratio` and `max_filesize` '
+                              u'may be violated.')
             return self.CANDIDATE_EXACT
 
         short_edge = min(self.size)
         long_edge = max(self.size)
 
-        # Check minimum size.
+        # Check minimum dimension.
         if plugin.minwidth and self.size[0] < plugin.minwidth:
             self._log.debug(u'image too small ({} < {})',
                             self.size[0], plugin.minwidth)
@@ -121,22 +127,45 @@ class Candidate(object):
                                 self.size[0], self.size[1])
                 return self.CANDIDATE_BAD
 
-        # Check maximum size.
+        # Check maximum dimension.
+        downscale = False
         if plugin.maxwidth and self.size[0] > plugin.maxwidth:
-            self._log.debug(u'image needs resizing ({} > {})',
+            self._log.debug(u'image needs rescaling ({} > {})',
                             self.size[0], plugin.maxwidth)
-            return self.CANDIDATE_DOWNSCALE
+            downscale = True
 
-        return self.CANDIDATE_EXACT
+        # Check filesize.
+        downsize = False
+        if plugin.max_filesize:
+            filesize = os.stat(syspath(self.path)).st_size
+            if filesize > plugin.max_filesize:
+                self._log.debug(u'image needs resizing ({}B > {}B)',
+                                filesize, plugin.max_filesize)
+                downsize = True
+
+        if downscale:
+            return self.CANDIDATE_DOWNSCALE
+        elif downsize:
+            return self.CANDIDATE_DOWNSIZE
+        else:
+            return self.CANDIDATE_EXACT
 
     def validate(self, plugin):
         self.check = self._validate(plugin)
         return self.check
 
     def resize(self, plugin):
-        if plugin.maxwidth and self.check == self.CANDIDATE_DOWNSCALE:
-            self.path = ArtResizer.shared.resize(plugin.maxwidth, self.path,
-                                                 quality=plugin.quality)
+        if self.check == self.CANDIDATE_DOWNSCALE:
+            self.path = \
+                ArtResizer.shared.resize(plugin.maxwidth, self.path,
+                                         quality=plugin.quality,
+                                         max_filesize=plugin.max_filesize)
+        elif self.check == self.CANDIDATE_DOWNSIZE:
+            # dimensions are correct, so maxwidth is set to maximum dimension
+            self.path = \
+                ArtResizer.shared.resize(max(self.size), self.path,
+                                         quality=plugin.quality,
+                                         max_filesize=plugin.max_filesize)
 
 
 def _logged_get(log, *args, **kwargs):
@@ -208,6 +237,9 @@ class ArtSource(RequestMixin):
 
     def fetch_image(self, candidate, plugin):
         raise NotImplementedError()
+
+    def cleanup(self, candidate):
+        pass
 
 
 class LocalArtSource(ArtSource):
@@ -290,29 +322,76 @@ class RemoteArtSource(ArtSource):
             self._log.debug(u'error fetching art: {}', exc)
             return
 
+    def cleanup(self, candidate):
+        if candidate.path:
+            try:
+                util.remove(path=candidate.path)
+            except util.FilesystemError as exc:
+                self._log.debug(u'error cleaning up tmp art: {}', exc)
+
 
 class CoverArtArchive(RemoteArtSource):
     NAME = u"Cover Art Archive"
     VALID_MATCHING_CRITERIA = ['release', 'releasegroup']
+    VALID_THUMBNAIL_SIZES = [250, 500, 1200]
 
     if util.SNI_SUPPORTED:
-        URL = 'https://coverartarchive.org/release/{mbid}/front'
-        GROUP_URL = 'https://coverartarchive.org/release-group/{mbid}/front'
+        URL = 'https://coverartarchive.org/release/{mbid}'
+        GROUP_URL = 'https://coverartarchive.org/release-group/{mbid}'
     else:
-        URL = 'http://coverartarchive.org/release/{mbid}/front'
-        GROUP_URL = 'http://coverartarchive.org/release-group/{mbid}/front'
+        URL = 'http://coverartarchive.org/release/{mbid}'
+        GROUP_URL = 'http://coverartarchive.org/release-group/{mbid}'
 
     def get(self, album, plugin, paths):
         """Return the Cover Art Archive and Cover Art Archive release group URLs
         using album MusicBrainz release ID and release group ID.
         """
+
+        def get_image_urls(url, size_suffix=None):
+            try:
+                response = self.request(url)
+            except requests.RequestException:
+                self._log.debug(u'{0}: error receiving response'
+                                .format(self.NAME))
+                return
+
+            try:
+                data = response.json()
+            except ValueError:
+                self._log.debug(u'{0}: error loading response: {1}'
+                                .format(self.NAME, response.text))
+                return
+
+            for item in data.get('images', []):
+                try:
+                    if 'Front' not in item['types']:
+                        continue
+
+                    if size_suffix:
+                        yield item['thumbnails'][size_suffix]
+                    else:
+                        yield item['image']
+                except KeyError:
+                    pass
+
+        release_url = self.URL.format(mbid=album.mb_albumid)
+        release_group_url = self.GROUP_URL.format(mbid=album.mb_releasegroupid)
+
+        # Cover Art Archive API offers pre-resized thumbnails at several sizes.
+        # If the maxwidth config matches one of the already available sizes
+        # fetch it directly intead of fetching the full sized image and
+        # resizing it.
+        size_suffix = None
+        if plugin.maxwidth in self.VALID_THUMBNAIL_SIZES:
+            size_suffix = "-" + str(plugin.maxwidth)
+
         if 'release' in self.match_by and album.mb_albumid:
-            yield self._candidate(url=self.URL.format(mbid=album.mb_albumid),
-                                  match=Candidate.MATCH_EXACT)
+            for url in get_image_urls(release_url, size_suffix):
+                yield self._candidate(url=url, match=Candidate.MATCH_EXACT)
+
         if 'releasegroup' in self.match_by and album.mb_releasegroupid:
-            yield self._candidate(
-                url=self.GROUP_URL.format(mbid=album.mb_releasegroupid),
-                match=Candidate.MATCH_FALLBACK)
+            for url in get_image_urls(release_group_url):
+                yield self._candidate(url=url, match=Candidate.MATCH_FALLBACK)
 
 
 class Amazon(RemoteArtSource):
@@ -453,7 +532,7 @@ class FanartTV(RemoteArtSource):
 
         matches = []
         # can there be more than one releasegroupid per response?
-        for mbid, art in data.get(u'albums', dict()).items():
+        for mbid, art in data.get(u'albums', {}).items():
             # there might be more art referenced, e.g. cdart, and an albumcover
             # might not be present, even if the request was successful
             if album.mb_releasegroupid == mbid and u'albumcover' in art:
@@ -742,11 +821,72 @@ class FileSystem(LocalArtSource):
                                       match=Candidate.MATCH_FALLBACK)
 
 
+class LastFM(RemoteArtSource):
+    NAME = u"Last.fm"
+
+    # Sizes in priority order.
+    SIZES = OrderedDict([
+        ('mega', (300, 300)),
+        ('extralarge', (300, 300)),
+        ('large', (174, 174)),
+        ('medium', (64, 64)),
+        ('small', (34, 34)),
+    ])
+
+    if util.SNI_SUPPORTED:
+        API_URL = 'https://ws.audioscrobbler.com/2.0'
+    else:
+        API_URL = 'http://ws.audioscrobbler.com/2.0'
+
+    def __init__(self, *args, **kwargs):
+        super(LastFM, self).__init__(*args, **kwargs)
+        self.key = self._config['lastfm_key'].get(),
+
+    def get(self, album, plugin, paths):
+        if not album.mb_albumid:
+            return
+
+        try:
+            response = self.request(self.API_URL, params={
+                'method': 'album.getinfo',
+                'api_key': self.key,
+                'mbid': album.mb_albumid,
+                'format': 'json',
+            })
+        except requests.RequestException:
+            self._log.debug(u'lastfm: error receiving response')
+            return
+
+        try:
+            data = response.json()
+
+            if 'error' in data:
+                if data['error'] == 6:
+                    self._log.debug('lastfm: no results for {}',
+                                    album.mb_albumid)
+                else:
+                    self._log.error(
+                        'lastfm: failed to get album info: {} ({})',
+                        data['message'], data['error'])
+            else:
+                images = {image['size']: image['#text']
+                          for image in data['album']['image']}
+
+                # Provide candidates in order of size.
+                for size in self.SIZES.keys():
+                    if size in images:
+                        yield self._candidate(url=images[size],
+                                              size=self.SIZES[size])
+        except ValueError:
+            self._log.debug(u'lastfm: error loading response: {}'
+                            .format(response.text))
+            return
+
 # Try each source in turn.
 
 SOURCES_ALL = [u'filesystem',
                u'coverart', u'itunes', u'amazon', u'albumart',
-               u'wikipedia', u'google', u'fanarttv']
+               u'wikipedia', u'google', u'fanarttv', u'lastfm']
 
 ART_SOURCES = {
     u'filesystem': FileSystem,
@@ -757,6 +897,7 @@ ART_SOURCES = {
     u'wikipedia': Wikipedia,
     u'google': GoogleImages,
     u'fanarttv': FanartTV,
+    u'lastfm': LastFM,
 }
 SOURCE_NAMES = {v: k for k, v in ART_SOURCES.items()}
 
@@ -779,6 +920,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'minwidth': 0,
             'maxwidth': 0,
             'quality': 0,
+            'max_filesize': 0,
             'enforce_ratio': False,
             'cautious': False,
             'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
@@ -787,14 +929,17 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'google_key': None,
             'google_engine': u'001442825323518660753:hrh5ch1gjzm',
             'fanarttv_key': None,
+            'lastfm_key': None,
             'store_source': False,
             'high_resolution': False,
         })
         self.config['google_key'].redact = True
         self.config['fanarttv_key'].redact = True
+        self.config['lastfm_key'].redact = True
 
         self.minwidth = self.config['minwidth'].get(int)
         self.maxwidth = self.config['maxwidth'].get(int)
+        self.max_filesize = self.config['max_filesize'].get(int)
         self.quality = self.config['quality'].get(int)
 
         # allow both pixel and percentage-based margin specifications
@@ -831,6 +976,9 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         if not self.config['google_key'].get() and \
                 u'google' in available_sources:
             available_sources.remove(u'google')
+        if not self.config['lastfm_key'].get() and \
+                u'lastfm' in available_sources:
+            available_sources.remove(u'lastfm')
         available_sources = [(s, c)
                              for s in available_sources
                              for c in ART_SOURCES[s].VALID_MATCHING_CRITERIA]
@@ -911,7 +1059,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         cmd.parser.add_option(
             u'-q', u'--quiet', dest='quiet',
             action='store_true', default=False,
-            help=u'shows only quiet art'
+            help=u'quiet mode: do not output albums that already have artwork'
         )
 
         def func(lib, opts, args):
@@ -949,6 +1097,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                             u'using {0.LOC_STR} image {1}'.format(
                                 source, util.displayable_path(out.path)))
                         break
+                    # Remove temporary files for invalid candidates.
+                    source.cleanup(candidate)
                 if out:
                     break
 

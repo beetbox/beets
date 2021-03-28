@@ -120,7 +120,7 @@ class PlaylistQueryTestHelper(PlaylistTestHelper):
         ]))
 
     def test_name_query_with_nonexisting_playlist(self):
-        q = u'playlist:nonexisting'.format(self.playlist_dir)
+        q = u'playlist:nonexisting'
         results = self.lib.items(q)
         self.assertEqual(set(results), set())
 

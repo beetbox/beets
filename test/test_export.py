@@ -23,7 +23,7 @@ from test.helper import TestHelper
 import re  # used to test csv format
 import json
 from xml.etree.ElementTree import Element
-import xml.etree.ElementTree as ET
+from xml.etree import ElementTree
 
 
 class ExportPluginTest(unittest.TestCase, TestHelper):
@@ -66,6 +66,17 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
             self.assertTrue(key in json_data)
             self.assertEqual(val, json_data[key])
 
+    def test_jsonlines_output(self):
+        item1 = self.create_item()
+        out = self.execute_command(
+            format_type='jsonlines',
+            artist=item1.artist
+        )
+        json_data = json.loads(out)
+        for key, val in self.test_values.items():
+            self.assertTrue(key in json_data)
+            self.assertEqual(val, json_data[key])
+
     def test_csv_output(self):
         item1 = self.create_item()
         out = self.execute_command(
@@ -85,7 +96,7 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
             format_type='xml',
             artist=item1.artist
         )
-        library = ET.fromstring(out)
+        library = ElementTree.fromstring(out)
         self.assertIsInstance(library, Element)
         for track in library[0]:
             for details in track:

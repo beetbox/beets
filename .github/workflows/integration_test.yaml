@@ -1,0 +1,49 @@
+name: integration tests
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * SUN'  # run every Sunday at midnight
+jobs:
+  test_integration:
+    runs-on: ubuntu-latest
+
+    env:
+      PY_COLORS: 1
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up latest Python version
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9-dev
+
+      - name: Install base dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install tox sphinx
+
+      - name: Test with tox
+        run: |
+          tox -e int
+
+      - name: Check external links in docs
+        run: |
+          tox -e links
+
+      - name: Notify on failure
+        if: ${{ failure() }}
+        env:
+          ZULIP_BOT_CREDENTIALS: ${{ secrets.ZULIP_BOT_CREDENTIALS }}
+        run: |
+          if [ -z "${ZULIP_BOT_CREDENTIALS}" ]; then
+            echo "Skipping notify, ZULIP_BOT_CREDENTIALS is unset"
+            exit 0
+          fi
+
+          curl -X POST https://beets.zulipchat.com/api/v1/messages \
+            -u "${ZULIP_BOT_CREDENTIALS}" \
+            -d "type=stream" \
+            -d "to=github" \
+            -d "subject=${GITHUB_WORKFLOW} - $(date -u +%Y-%m-%d)" \
+            -d "content=[${GITHUB_WORKFLOW}#${GITHUB_RUN_NUMBER}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}) failed."

@@ -71,7 +71,7 @@ class PlaylistQuery(beets.dbcore.Query):
         if not self.paths:
             # Playlist is empty
             return '0', ()
-        clause  = 'path IN ({0})'.format(', '.join('?' for path in self.paths))
+        clause = 'path IN ({0})'.format(', '.join('?' for path in self.paths))
         return clause, (beets.library.BLOB_TYPE(p) for p in self.paths)
 
     def match(self, item):

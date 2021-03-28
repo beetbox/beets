@@ -14,7 +14,7 @@
 # included in all copies or substantial portions of the Software.
 
 """Adds Discogs album search support to the autotagger. Requires the
-discogs-client library.
+python3-discogs-client library.
 """
 from __future__ import division, absolute_import, print_function
 
@@ -38,7 +38,7 @@ from string import ascii_lowercase
 
 
 USER_AGENT = u'beets/{0} +https://beets.io/'.format(beets.__version__)
-API_KEY    = 'rAzVUQYRaoFjeBjyWuWZ'
+API_KEY = 'rAzVUQYRaoFjeBjyWuWZ'
 API_SECRET = 'plxtUTqoCzwxZpqdPysCwGuBSmZNdZVy'
 
 # Exceptions that discogs_client should really handle but does not.
@@ -175,7 +175,7 @@ class DiscogsPlugin(BeetsPlugin):
             config=self.config
         )
 
-    def candidates(self, items, artist, album, va_likely):
+    def candidates(self, items, artist, album, va_likely, extra_tags=None):
         """Returns a list of AlbumInfo objects for discogs search results
         matching an album and artist (if not various).
         """
@@ -239,13 +239,10 @@ class DiscogsPlugin(BeetsPlugin):
         # cause a query to return no results, even if they match the artist or
         # album title. Use `re.UNICODE` flag to avoid stripping non-english
         # word characters.
-        # FIXME: Encode as ASCII to work around a bug:
-        # https://github.com/beetbox/beets/issues/1051
-        # When the library is fixed, we should encode as UTF-8.
-        query = re.sub(r'(?u)\W+', ' ', query).encode('ascii', "replace")
+        query = re.sub(r'(?u)\W+', ' ', query)
         # Strip medium information from query, Things like "CD1" and "disk 1"
         # can also negate an otherwise positive result.
-        query = re.sub(br'(?i)\b(CD|disc)\s*\d+', b'', query)
+        query = re.sub(r'(?i)\b(CD|disc)\s*\d+', '', query)
 
         self.request_start()
         try:
@@ -356,17 +353,14 @@ class DiscogsPlugin(BeetsPlugin):
         # a master release, otherwise fetch the master release.
         original_year = self.get_master_year(master_id) if master_id else year
 
-        return AlbumInfo(album, album_id, artist, artist_id, tracks, asin=None,
-                         albumtype=albumtype, va=va, year=year, month=None,
-                         day=None, label=label, mediums=len(set(mediums)),
-                         artist_sort=None, releasegroup_id=master_id,
-                         catalognum=catalogno, script=None, language=None,
+        return AlbumInfo(album=album, album_id=album_id, artist=artist,
+                         artist_id=artist_id, tracks=tracks,
+                         albumtype=albumtype, va=va, year=year,
+                         label=label, mediums=len(set(mediums)),
+                         releasegroup_id=master_id, catalognum=catalogno,
                          country=country, style=style, genre=genre,
-                         albumstatus=None, media=media,
-                         albumdisambig=None, artist_credit=None,
-                         original_year=original_year, original_month=None,
-                         original_day=None, data_source='Discogs',
-                         data_url=data_url,
+                         media=media, original_year=original_year,
+                         data_source='Discogs', data_url=data_url,
                          discogs_albumid=discogs_albumid,
                          discogs_labelid=labelid, discogs_artistid=artist_id)
 
@@ -508,6 +502,12 @@ class DiscogsPlugin(BeetsPlugin):
                         for subtrack in subtracks:
                             if not subtrack.get('artists'):
                                 subtrack['artists'] = index_track['artists']
+                    # Concatenate index with track title when index_tracks
+                    # option is set
+                    if self.config['index_tracks']:
+                        for subtrack in subtracks:
+                            subtrack['title'] = '{}: {}'.format(
+                                    index_track['title'], subtrack['title'])
                     tracklist.extend(subtracks)
             else:
                 # Merge the subtracks, pick a title, and append the new track.
@@ -560,17 +560,17 @@ class DiscogsPlugin(BeetsPlugin):
         title = track['title']
         if self.config['index_tracks']:
             prefix = ', '.join(divisions)
-            title = ': '.join([prefix, title])
+            if prefix:
+                title = '{}: {}'.format(prefix, title)
         track_id = None
         medium, medium_index, _ = self.get_track_index(track['position'])
         artist, artist_id = MetadataSourcePlugin.get_artist(
             track.get('artists', [])
         )
         length = self.get_track_length(track['duration'])
-        return TrackInfo(title, track_id, artist=artist, artist_id=artist_id,
-                         length=length, index=index,
-                         medium=medium, medium_index=medium_index,
-                         artist_sort=None, disctitle=None, artist_credit=None)
+        return TrackInfo(title=title, track_id=track_id, artist=artist,
+                         artist_id=artist_id, length=length, index=index,
+                         medium=medium, medium_index=medium_index)
 
     def get_track_index(self, position):
         """Returns the medium, medium index and subtrack index for a discogs
