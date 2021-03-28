@@ -62,7 +62,8 @@ configuration file. The available options are:
   Default: ``google musixmatch genius tekstowo``, i.e., all the
   available sources. The ``google`` source will be automatically
   deactivated if no ``google_API_key`` is setup.
-  The following sources will only be enabled if BeatifulSoup is installed: ``[google, genius, tekstowo]``
+  The ``google``, ``genius``, and ``tekstowo`` sources will only be enabled if
+  BeautifulSoup is installed.
 
 Here's an example of ``config.yaml``::
 
@@ -128,6 +129,11 @@ few suggestions.
 Activate Google Custom Search
 ------------------------------
 
+Using the Google backend requires `BeautifulSoup`_, which you can install
+using `pip`_ by typing::
+
+    pip install beautifulsoup4
+
 You also need to `register for a Google API key`_. Set the ``google_API_key``
 configuration option to your key.
 Then add ``google`` to the list of sources in your configuration (or use
@@ -150,11 +156,11 @@ After that, the lyrics plugin will fall back on other declared data sources.
 .. _pip: https://pip.pypa.io
 .. _BeautifulSoup: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
 
-Installing BeautifulSoup for Google, Genius, or Tekstowo.pl Backends
+Activate Genius and Tekstowo.pl Lyrics
 --------------------------------------------------------------------
 
-Using the Google, Genius, or Tekstowo.pl backends requires `BeautifulSoup`_,
-which you can install using `pip`_ by typing::
+Using the Genius or Tekstowo.pl backends requires `BeautifulSoup`_, which
+you can install using `pip`_ by typing::
 
     pip install beautifulsoup4
 

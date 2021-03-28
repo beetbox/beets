@@ -716,10 +716,10 @@ class LyricsPlugin(plugins.BeetsPlugin):
     def sanitize_bs_sources(self, sources):
         for source in self.BS_SOURCES:
             if source in sources:
-                self._log.warning(u'To use the %s lyrics source, you must '
-                                  u'install the beautifulsoup4 module. See '
-                                  u'the documentation for further details.'
-                                  % source)
+                self._log.debug(u'To use the %s lyrics source, you must '
+                                u'install the beautifulsoup4 module. See '
+                                u'the documentation for further details.'
+                                % source)
                 sources.remove(source)
 
         return sources
