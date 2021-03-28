@@ -132,6 +132,21 @@ class GetSetTest(_common.TestCase):
     def test_invalid_field_raises_attributeerror(self):
         self.assertRaises(AttributeError, getattr, self.i, u'xyzzy')
 
+    def test_album_fallback(self):
+        # integration test of item-album fallback
+        lib = beets.library.Library(':memory:')
+        i = item(lib)
+        album = lib.add_album([i])
+        album['flex'] = u'foo'
+        album.store()
+
+        self.assertTrue('flex' in i)
+        self.assertFalse('flex' in i.keys(with_album=False))
+        self.assertEqual(i['flex'], u'foo')
+        self.assertEqual(i.get('flex'), u'foo')
+        self.assertEqual(i.get('flex', with_album=False), None)
+        self.assertEqual(i.get('flexx'), None)
+
 
 class DestinationTest(_common.TestCase):
     def setUp(self):
@@ -490,6 +505,24 @@ class DestinationTest(_common.TestCase):
         # of the correct length, containing Xs.
         dest = self.i.destination()
         self.assertEqual(dest[-2:], b'XX')
+
+    def test_album_field_query(self):
+        self.lib.directory = b'one'
+        self.lib.path_formats = [(u'default', u'two'),
+                                 (u'flex:foo', u'three')]
+        album = self.lib.add_album([self.i])
+        self.assertEqual(self.i.destination(), np('one/two'))
+        album['flex'] = u'foo'
+        album.store()
+        self.assertEqual(self.i.destination(), np('one/three'))
+
+    def test_album_field_in_template(self):
+        self.lib.directory = b'one'
+        self.lib.path_formats = [(u'default', u'$flex/two')]
+        album = self.lib.add_album([self.i])
+        album['flex'] = u'foo'
+        album.store()
+        self.assertEqual(self.i.destination(), np('one/foo/two'))
 
 
 class ItemFormattedMappingTest(_common.LibTestCase):

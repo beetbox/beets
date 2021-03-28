@@ -36,6 +36,8 @@ class ThePluginTest(_common.TestCase):
                          u'A Thing, An')
         self.assertEqual(ThePlugin().unthe(u'the An Arse', PATTERN_A),
                          u'the An Arse')
+        self.assertEqual(ThePlugin().unthe(u'TET - Travailleur', PATTERN_THE),
+                         u'TET - Travailleur')
 
     def test_unthe_with_strip(self):
         config['the']['strip'] = True

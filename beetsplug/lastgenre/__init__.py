@@ -111,6 +111,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             'auto': True,
             'separator': u', ',
             'prefer_specific': False,
+            'title_case': True,
         })
 
         self.setup()
@@ -224,11 +225,16 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
-        tags = [x.title() for x in tags if self._is_allowed(x)]
+        tags = [self._format_tag(x) for x in tags if self._is_allowed(x)]
 
         return self.config['separator'].as_str().join(
             tags[:self.config['count'].get(int)]
         )
+
+    def _format_tag(self, tag):
+        if self.config["title_case"]:
+            return tag.title()
+        return tag
 
     def fetch_genre(self, lastfm_obj):
         """Return the genre for a pylast entity or None if no suitable genre

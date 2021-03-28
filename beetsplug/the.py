@@ -23,7 +23,7 @@ from beets.plugins import BeetsPlugin
 __author__ = 'baobab@heresiarch.info'
 __version__ = '1.1'
 
-PATTERN_THE = u'^[the]{3}\\s'
+PATTERN_THE = u'^the\\s'
 PATTERN_A = u'^[a][n]?\\s'
 FORMAT = u'{0}, {1}'
 

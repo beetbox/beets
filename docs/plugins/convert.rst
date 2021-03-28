@@ -111,6 +111,8 @@ file. The available options are:
   This option overrides ``link``. Only works when converting to a directory
   on the same filesystem as the library.
   Default: ``false``.
+- **delete_originals**: Transcoded files will be copied or moved to their destination, depending on the import configuration. By default, the original files are not modified by the plugin. This option deletes the original files after the transcoding step has completed.
+  Default: ``false``.
 
 You can also configure the format to use for transcoding (see the next
 section):
@@ -189,7 +191,7 @@ can use the :doc:`/plugins/replaygain` to do this analysis. See the LAME
 `documentation`_ and the `HydrogenAudio wiki`_ for other LAME configuration
 options and a thorough discussion of MP3 encoding.
 
-.. _documentation: http://lame.sourceforge.net/using.php
+.. _documentation: https://lame.sourceforge.io/index.php
 .. _HydrogenAudio wiki: https://wiki.hydrogenaud.io/index.php?title=LAME
 .. _gapless: https://wiki.hydrogenaud.io/index.php?title=Gapless_playback
-.. _LAME: https://lame.sourceforge.net/
+.. _LAME: https://lame.sourceforge.io/index.php

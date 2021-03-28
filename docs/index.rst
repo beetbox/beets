@@ -32,6 +32,7 @@ Contents
    reference/index
    plugins/index
    faq
+   contributing
    dev/index
 
 .. toctree::

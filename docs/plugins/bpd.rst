@@ -5,7 +5,7 @@ BPD is a music player using music from a beets library. It runs as a daemon and
 implements the MPD protocol, so it's compatible with all the great MPD clients
 out there. I'm using `Theremin`_, `gmpc`_, `Sonata`_, and `Ario`_ successfully.
 
-.. _Theremin: https://theremin.sigterm.eu/
+.. _Theremin: https://github.com/TheStalwart/Theremin
 .. _gmpc: https://gmpc.wikia.com/wiki/Gnome_Music_Player_Client
 .. _Sonata: http://sonata.berlios.de/
 .. _Ario: http://ario-player.sourceforge.net/
@@ -13,7 +13,7 @@ out there. I'm using `Theremin`_, `gmpc`_, `Sonata`_, and `Ario`_ successfully.
 Dependencies
 ------------
 
-Before you can use BPD, you'll need the media library called GStreamer (along
+Before you can use BPD, you'll need the media library called `GStreamer`_ (along
 with its Python bindings) on your system.
 
 * On Mac OS X, you can use `Homebrew`_. Run ``brew install gstreamer
@@ -22,14 +22,11 @@ with its Python bindings) on your system.
 * On Linux, you need to install GStreamer 1.0 and the GObject bindings for
   python. Under Ubuntu, they are called ``python-gi`` and ``gstreamer1.0``.
 
-* On Windows, you may want to try `GStreamer WinBuilds`_ (caveat emptor: I
-  haven't tried this).
-
 You will also need the various GStreamer plugin packages to make everything
 work. See the :doc:`/plugins/chroma` documentation for more information on
 installing GStreamer plugins.
 
-.. _GStreamer WinBuilds: https://www.gstreamer-winbuild.ylatuya.es/
+.. _GStreamer: https://gstreamer.freedesktop.org/download
 .. _Homebrew: https://brew.sh
 
 Usage

@@ -21,6 +21,7 @@ use of the wide range of MPD clients.
 from __future__ import division, absolute_import, print_function
 
 import re
+import sys
 from string import Template
 import traceback
 import random
@@ -334,7 +335,7 @@ class BaseServer(object):
 
     def cmd_kill(self, conn):
         """Exits the server process."""
-        exit(0)
+        sys.exit(0)
 
     def cmd_close(self, conn):
         """Closes the connection."""

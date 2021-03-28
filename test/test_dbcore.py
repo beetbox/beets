@@ -225,6 +225,31 @@ class MigrationTest(unittest.TestCase):
             self.fail("select failed")
 
 
+class TransactionTest(unittest.TestCase):
+    def setUp(self):
+        self.db = DatabaseFixture1(':memory:')
+
+    def tearDown(self):
+        self.db._connection().close()
+
+    def test_mutate_increase_revision(self):
+        old_rev = self.db.revision
+        with self.db.transaction() as tx:
+            tx.mutate(
+                'INSERT INTO {0} '
+                '(field_one) '
+                'VALUES (?);'.format(ModelFixture1._table),
+                (111,),
+            )
+        self.assertGreater(self.db.revision, old_rev)
+
+    def test_query_no_increase_revision(self):
+        old_rev = self.db.revision
+        with self.db.transaction() as tx:
+            tx.query('PRAGMA table_info(%s)' % ModelFixture1._table)
+        self.assertEqual(self.db.revision, old_rev)
+
+
 class ModelTest(unittest.TestCase):
     def setUp(self):
         self.db = DatabaseFixture1(':memory:')
@@ -245,6 +270,30 @@ class ModelTest(unittest.TestCase):
         model.store()
         row = self.db._connection().execute('select * from test').fetchone()
         self.assertEqual(row['field_one'], 123)
+
+    def test_revision(self):
+        old_rev = self.db.revision
+        model = ModelFixture1()
+        model.add(self.db)
+        model.store()
+        self.assertEqual(model._revision, self.db.revision)
+        self.assertGreater(self.db.revision, old_rev)
+
+        mid_rev = self.db.revision
+        model2 = ModelFixture1()
+        model2.add(self.db)
+        model2.store()
+        self.assertGreater(model2._revision, mid_rev)
+        self.assertGreater(self.db.revision, model._revision)
+
+        # revision changed, so the model should be re-loaded
+        model.load()
+        self.assertEqual(model._revision, self.db.revision)
+
+        # revision did not change, so no reload
+        mod2_old_rev = model2._revision
+        model2.load()
+        self.assertEqual(model2._revision, mod2_old_rev)
 
     def test_retrieve_by_id(self):
         model = ModelFixture1()
