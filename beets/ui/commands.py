@@ -700,10 +700,16 @@ class TerminalImportSession(importer.ImportSession):
 
         # Let plugins display info or prompt the user before we go through the
         # process of selecting candidate.
-        action = plugins.send_seq('import_task_before_choice',
-                                  session=self, task=task)
-        if action is not None:
-            return action
+        results = plugins.send('import_task_before_choice',
+                               session=self, task=task)
+        actions = [action for action in results if action]
+
+        if len(actions) == 1:
+            return actions[0]
+        elif len(actions) > 1:
+            raise Exception(
+                u'Only one handler for `import_task_before_choice` may return '
+                u'an action.')
 
         # Take immediate action if appropriate.
         action = _summary_judgment(task.rec)

@@ -501,22 +501,6 @@ def send(event, **arguments):
     return results
 
 
-def send_seq(event, **arguments):
-    """Like `send` but passes the result of the previous event handler to the
-    next, and returns only the result of the last non-None event handler.
-
-    `event` is the name of  the event to send, all other named arguments
-    are passed along to the handlers.
-    """
-    log.debug(u'Sequentially sending event: {0}', event)
-    previous = None
-    for handler in event_handlers()[event]:
-        result = handler(previous=previous, **arguments)
-        previous = result or previous
-
-    return previous
-
-
 def feat_tokens(for_artist=True):
     """Return a regular expression that matches phrases like "featuring"
     that separate a main artist or a song title from secondary artists.

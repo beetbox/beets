@@ -204,9 +204,8 @@ The events currently available are:
   before any decision is made about how/if to import or tag. Can be used to
   present information about the task or initiate interaction with the user
   before importing occurs. Return an importer action to take a specific action.
-  Parameters: ``task``, ``session``, and ``previous`` (which is the action
-  specified by the previous event handler for the same task, allowing an early
-  exist if e.g. a previous plugin has already selected to skip the import)
+  Only one handler may return a non-None result.
+  Parameters: ``task`` and ``session``
 
 * `import_task_choice`: called after a decision has been made about an import
   task. This event can be used to initiate further interaction with the user.
