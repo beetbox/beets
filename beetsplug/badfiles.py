@@ -173,11 +173,7 @@ class BadFiles(BeetsPlugin):
         if checks_failed:
             task._badfiles_checks_failed = checks_failed
 
-    def on_import_task_before_choice(self, task, session, previous):
-        # Already skipping, so no need to notify the user of anything
-        if previous == importer.action.SKIP:
-            return None
-
+    def on_import_task_before_choice(self, task, session):
         if hasattr(task, '_badfiles_checks_failed'):
             ui.print_('{} one or more files failed checks:'
                       .format(ui.colorize('text_warning', 'BAD')))
