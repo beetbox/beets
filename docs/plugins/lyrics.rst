@@ -157,7 +157,7 @@ After that, the lyrics plugin will fall back on other declared data sources.
 .. _BeautifulSoup: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
 
 Activate Genius and Tekstowo.pl Lyrics
---------------------------------------------------------------------
+--------------------------------------
 
 Using the Genius or Tekstowo.pl backends requires `BeautifulSoup`_, which
 you can install using `pip`_ by typing::
