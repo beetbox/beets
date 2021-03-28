@@ -401,6 +401,56 @@ class Genius(Backend):
         return lyrics_div.get_text()
 
 
+class Tekstowo(Backend):
+    # Fetch lyrics from Tekstowo.pl.
+
+    BASE_URL = 'http://www.tekstowo.pl'
+    URL_PATTERN = BASE_URL + '/wyszukaj.html?search-title=%s&search-artist=%s'
+
+    def fetch(self, artist, title):
+        url = self.build_url(title, artist)
+        search_results = self.fetch_url(url)
+        song_page_url = self.parse_search_results(search_results)
+
+        if not song_page_url:
+            return None
+
+        song_page_html = self.fetch_url(song_page_url)
+        return self.extract_lyrics(song_page_html)
+
+    def parse_search_results(self, html):
+        if not HAS_BEAUTIFUL_SOUP:
+            return None
+
+        html = _scrape_strip_cruft(html)
+        html = _scrape_merge_paragraphs(html)
+
+        try:
+            html = BeautifulSoup(html, "html.parser")
+        except HTMLParseError:
+            return None
+
+        song_row = html.find("div", class_="content"). \
+            find_all("div", class_="box-przeboje")[0]
+
+        if not song_row:
+            return None
+
+        href = song_row.find('a').get('href')
+        return self.BASE_URL + href
+
+    def extract_lyrics(self, html):
+        html = _scrape_strip_cruft(html)
+        html = _scrape_merge_paragraphs(html)
+
+        try:
+            html = BeautifulSoup(html, "html.parser")
+        except HTMLParseError:
+            return None
+
+        return html.find("div", class_="song-text").get_text()
+
+
 def remove_credits(text):
     """Remove first/last line of text if it contains the word 'lyrics'
     eg 'Lyrics by songsdatabase.com'
@@ -593,11 +643,13 @@ class Google(Backend):
 
 
 class LyricsPlugin(plugins.BeetsPlugin):
-    SOURCES = ['google', 'musixmatch', 'genius']
+    SOURCES = ['google', 'musixmatch', 'genius', 'tekstowo']
+    BS_SOURCES = ['google', 'genius', 'tekstowo']
     SOURCE_BACKENDS = {
         'google': Google,
         'musixmatch': MusiXmatch,
         'genius': Genius,
+        'tekstowo': Tekstowo,
     }
 
     def __init__(self):
@@ -636,6 +688,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
         sources = plugins.sanitize_choices(
             self.config['sources'].as_str_seq(), available_sources)
 
+        if not HAS_BEAUTIFUL_SOUP:
+            sources = self.sanitize_bs_sources(sources)
+
         if 'google' in sources:
             if not self.config['google_API_key'].get():
                 # We log a *debug* message here because the default
@@ -645,18 +700,6 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 self._log.debug(u'Disabling google source: '
                                 u'no API key configured.')
                 sources.remove('google')
-            elif not HAS_BEAUTIFUL_SOUP:
-                self._log.warning(u'To use the google lyrics source, you must '
-                                  u'install the beautifulsoup4 module. See '
-                                  u'the documentation for further details.')
-                sources.remove('google')
-
-        if 'genius' in sources and not HAS_BEAUTIFUL_SOUP:
-            self._log.debug(
-                u'The Genius backend requires BeautifulSoup, which is not '
-                u'installed, so the source is disabled.'
-            )
-            sources.remove('genius')
 
         self.config['bing_lang_from'] = [
             x.lower() for x in self.config['bing_lang_from'].as_str_seq()]
@@ -669,6 +712,17 @@ class LyricsPlugin(plugins.BeetsPlugin):
 
         self.backends = [self.SOURCE_BACKENDS[source](self.config, self._log)
                          for source in sources]
+
+    def sanitize_bs_sources(self, sources):
+        for source in self.BS_SOURCES:
+            if source in sources:
+                self._log.debug(u'To use the %s lyrics source, you must '
+                                u'install the beautifulsoup4 module. See '
+                                u'the documentation for further details.'
+                                % source)
+                sources.remove(source)
+
+        return sources
 
     def get_bing_access_token(self):
         params = {
