@@ -707,7 +707,7 @@ class TerminalImportSession(importer.ImportSession):
         if len(actions) == 1:
             return actions[0]
         elif len(actions) > 1:
-            raise Exception(
+            raise plugins.PluginConflictException(
                 u'Only one handler for `import_task_before_choice` may return '
                 u'an action.')
 
