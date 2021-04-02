@@ -292,15 +292,11 @@ class MusiXmatch(Backend):
                               % url)
             return
         html_parts = html.split('<p class="mxm-lyrics__content')
-        # Sometimes lyrics come in 2 parts
-        if len(html_parts) > 1:
-            html_part1 = html_parts[-2]
-            lyrics_part1 = extract_text_between(html_part1, '>', '</p>')
-        else:
-            lyrics_part1 = ''
-        html_part2 = html_parts[-1]
-        lyrics_part2 = extract_text_between(html_part2, '>', '</p>')
-        lyrics = lyrics_part1 + '\n' + lyrics_part2
+        # Sometimes lyrics come in 2 or more parts
+        lyrics_parts = []
+        for html_part in html_parts:
+            lyrics_parts.append(extract_text_between(html_part, '>', '</p>'))
+        lyrics = '\n'.join(lyrics_parts)
         lyrics = lyrics.strip(',"').replace('\\n', '\n')
         # another odd case: sometimes only that string remains, for
         # missing songs. this seems to happen after being blocked
@@ -308,7 +304,7 @@ class MusiXmatch(Backend):
         if "Instant lyrics for all your music." in lyrics:
             return
         # sometimes there are non-existent lyrics with some content
-        if 'Think is wrong? You can always add the lyrics' in lyrics:
+        if 'Lyrics | Musixmatch' in lyrics:
             return
         return lyrics
 
