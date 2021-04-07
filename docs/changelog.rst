@@ -215,6 +215,8 @@ Other new things:
 
 Fixes:
 
+* :bug:`/plugins/lyrics`: Fixed Musixmatch fetch lyrics divided into multiple elements on the web-page
+* :bug:`/plugins/lyrics`: Fixed Musixmatch fetch for non-existing lyrics
 * :bug:`/plugins/web`: Allow use of backslash in regex web queries.
   :bug:`3867`
 * :bug:`/plugins/web`: Fixed a small bug which caused album artpath to be
