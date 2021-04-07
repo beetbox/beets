@@ -291,13 +291,20 @@ class MusiXmatch(Backend):
             self._log.warning(u'we are blocked at MusixMatch: url %s failed'
                               % url)
             return
-        html_part = html.split('<p class="mxm-lyrics__content')[-1]
-        lyrics = extract_text_between(html_part, '>', '</p>')
+        html_parts = html.split('<p class="mxm-lyrics__content')
+        # Sometimes lyrics come in 2 or more parts
+        lyrics_parts = []
+        for html_part in html_parts:
+            lyrics_parts.append(extract_text_between(html_part, '>', '</p>'))
+        lyrics = '\n'.join(lyrics_parts)
         lyrics = lyrics.strip(',"').replace('\\n', '\n')
         # another odd case: sometimes only that string remains, for
         # missing songs. this seems to happen after being blocked
         # above, when filling in the CAPTCHA.
         if "Instant lyrics for all your music." in lyrics:
+            return
+        # sometimes there are non-existent lyrics with some content
+        if 'Lyrics | Musixmatch' in lyrics:
             return
         return lyrics
 
