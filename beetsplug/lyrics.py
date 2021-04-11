@@ -416,11 +416,15 @@ class Tekstowo(Backend):
 
     def fetch(self, artist, title):
         url = self.build_url(title, artist)
+        print(url)
         search_results = self.fetch_url(url)
         song_page_url = self.parse_search_results(search_results)
 
         if not song_page_url:
             return None
+
+        print('--------------------')
+        print(song_page_url)
 
         song_page_html = self.fetch_url(song_page_url)
         return self.extract_lyrics(song_page_html)
@@ -437,8 +441,14 @@ class Tekstowo(Backend):
         except HTMLParseError:
             return None
 
-        song_row = html.find("div", class_="content"). \
-            find_all("div", class_="box-przeboje")[0]
+        song_rows = html.find("div", class_="content"). \
+            find("div", class_="card"). \
+            find_all("div", class_="box-przeboje")
+
+        if len(song_rows) < 1:
+            return None
+
+        song_row = song_rows[0]
 
         if not song_row:
             return None
