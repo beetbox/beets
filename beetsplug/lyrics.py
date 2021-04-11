@@ -416,15 +416,11 @@ class Tekstowo(Backend):
 
     def fetch(self, artist, title):
         url = self.build_url(title, artist)
-        print(url)
         search_results = self.fetch_url(url)
         song_page_url = self.parse_search_results(search_results)
 
         if not song_page_url:
             return None
-
-        print('--------------------')
-        print(song_page_url)
 
         song_page_html = self.fetch_url(song_page_url)
         return self.extract_lyrics(song_page_html)
@@ -445,7 +441,7 @@ class Tekstowo(Backend):
             find("div", class_="card"). \
             find_all("div", class_="box-przeboje")
 
-        if len(song_rows) < 1:
+        if not song_rows:
             return None
 
         song_row = song_rows[0]
