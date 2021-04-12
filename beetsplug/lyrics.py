@@ -437,8 +437,14 @@ class Tekstowo(Backend):
         except HTMLParseError:
             return None
 
-        song_row = html.find("div", class_="content"). \
-            find_all("div", class_="box-przeboje")[0]
+        song_rows = html.find("div", class_="content"). \
+            find("div", class_="card"). \
+            find_all("div", class_="box-przeboje")
+
+        if not song_rows:
+            return None
+
+        song_row = song_rows[0]
 
         if not song_row:
             return None
