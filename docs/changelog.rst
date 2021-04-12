@@ -353,6 +353,8 @@ Fixes:
   :bug:`3870`
 * Allow equals within ``--set`` value when importing.
   :bug:`2984`
+* :doc:`/plugins/lyrics`: Fix crashes for Tekstowo false positives
+  :bug:`3904`
 
 For plugin developers:
 
