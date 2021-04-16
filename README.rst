@@ -113,12 +113,13 @@ Contact
     * If you'd like to vote on a feature/bug, simply give a :+1: on issues
       you'd like to see prioritized over others.
 * Need help/support, would like to start a discussion, have an idea for a new
-  feature, or would just like to introduce yourself to the team? Check out our
-  `GitHub discussions`_!
+  feature, or would just like to introduce yourself to the team? Check out
+  `GitHub Discussions`_ or `Discourse`_!
 
 .. _GitHub Discussions: https://github.com/beetbox/beets/discussions
 .. _issue tracker: https://github.com/beetbox/beets/issues
 .. _open a new ticket: https://github.com/beetbox/beets/issues/new/choose
+.. _Discourse: https://discourse.beets.io/
 
 Authors
 -------
