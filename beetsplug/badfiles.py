@@ -30,6 +30,7 @@ from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets.util import displayable_path, par_map
 from beets import ui
+from beets import importer
 
 
 class CheckerCommandException(Exception):
@@ -53,6 +54,11 @@ class BadFiles(BeetsPlugin):
     def __init__(self):
         super(BadFiles, self).__init__()
         self.verbose = False
+
+        self.register_listener('import_task_start',
+                               self.on_import_task_start)
+        self.register_listener('import_task_before_choice',
+                               self.on_import_task_before_choice)
 
     def run_command(self, cmd):
         self._log.debug(u"running command: {}",
@@ -115,7 +121,7 @@ class BadFiles(BeetsPlugin):
         if not checker:
             self._log.error(u"no checker specified in the config for {}",
                             ext)
-            return
+            return []
         path = item.path
         if not isinstance(path, six.text_type):
             path = item.path.decode(sys.getfilesystemencoding())
@@ -130,25 +136,75 @@ class BadFiles(BeetsPlugin):
                 )
             else:
                 self._log.error(u"error invoking {}: {}", e.checker, e.msg)
-            return
+            return []
+
+        error_lines = []
+
         if status > 0:
-            ui.print_(u"{}: checker exited with status {}"
-                      .format(ui.colorize('text_error', dpath), status))
+            error_lines.append(
+                u"{}: checker exited with status {}"
+                .format(ui.colorize('text_error', dpath), status))
             for line in output:
-                ui.print_(u"  {}".format(line))
+                error_lines.append(u"  {}".format(line))
+
         elif errors > 0:
-            ui.print_(u"{}: checker found {} errors or warnings"
-                      .format(ui.colorize('text_warning', dpath), errors))
+            error_lines.append(
+                    u"{}: checker found {} errors or warnings"
+                    .format(ui.colorize('text_warning', dpath), errors))
             for line in output:
-                ui.print_(u"  {}".format(line))
+                error_lines.append(u"  {}".format(line))
         elif self.verbose:
-            ui.print_(u"{}: ok".format(ui.colorize('text_success', dpath)))
+            error_lines.append(
+                u"{}: ok".format(ui.colorize('text_success', dpath)))
+
+        return error_lines
+
+    def on_import_task_start(self, task, session):
+        if not self.config['check_on_import'].get(False):
+            return
+
+        checks_failed = []
+
+        for item in task.items:
+            error_lines = self.check_item(item)
+            if error_lines:
+                checks_failed.append(error_lines)
+
+        if checks_failed:
+            task._badfiles_checks_failed = checks_failed
+
+    def on_import_task_before_choice(self, task, session):
+        if hasattr(task, '_badfiles_checks_failed'):
+            ui.print_('{} one or more files failed checks:'
+                      .format(ui.colorize('text_warning', 'BAD')))
+            for error in task._badfiles_checks_failed:
+                for error_line in error:
+                    ui.print_(error_line)
+
+            ui.print_()
+            ui.print_('What would you like to do?')
+
+            sel = ui.input_options(['aBort', 'skip', 'continue'])
+
+            if sel == 's':
+                return importer.action.SKIP
+            elif sel == 'c':
+                return None
+            elif sel == 'b':
+                raise importer.ImportAbort()
+            else:
+                raise Exception('Unexpected selection: {}'.format(sel))
 
     def command(self, lib, opts, args):
         # Get items from arguments
         items = lib.items(ui.decargs(args))
         self.verbose = opts.verbose
-        par_map(self.check_item, items)
+
+        def check_and_print(item):
+            for error_line in self.check_item(item):
+                ui.print_(error_line)
+
+        par_map(check_and_print, items)
 
     def commands(self):
         bad_command = Subcommand('bad',

@@ -698,6 +698,19 @@ class TerminalImportSession(importer.ImportSession):
         print_(displayable_path(task.paths, u'\n') +
                u' ({0} items)'.format(len(task.items)))
 
+        # Let plugins display info or prompt the user before we go through the
+        # process of selecting candidate.
+        results = plugins.send('import_task_before_choice',
+                               session=self, task=task)
+        actions = [action for action in results if action]
+
+        if len(actions) == 1:
+            return actions[0]
+        elif len(actions) > 1:
+            raise plugins.PluginConflictException(
+                u'Only one handler for `import_task_before_choice` may return '
+                u'an action.')
+
         # Take immediate action if appropriate.
         action = _summary_judgment(task.rec)
         if action == importer.action.APPLY:
