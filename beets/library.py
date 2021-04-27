@@ -1738,7 +1738,7 @@ class DefaultTemplateFunctions(object):
         :param falseval: The string if the condition is false
         :return: The string, based on condition
         """
-        if self.item.formatted().get(field):
+        if self.item.get(field):
             return trueval if trueval else self.item.formatted().get(field)
         else:
             return falseval
