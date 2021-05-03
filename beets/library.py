@@ -374,12 +374,19 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
     Album-level fields take precedence if `for_path` is true.
     """
 
-    def __init__(self, item, for_path=False):
+    ALL_KEYS = '*'
+
+    def __init__(self, item, included_keys=ALL_KEYS, for_path=False):
         # We treat album and item keys specially here,
         # so exclude transitive album keys from the model's keys.
-        super(FormattedItemMapping, self).__init__(item, for_path,
-                                                   compute_keys=False)
-        self.model_keys = item.keys(computed=True, with_album=False)
+        super(FormattedItemMapping, self).__init__(item, included_keys=[],
+                                                   for_path=for_path)
+        self.included_keys = included_keys
+        if included_keys == self.ALL_KEYS:
+            # Performance note: this triggers a database query.
+            self.model_keys = item.keys(computed=True, with_album=False)
+        else:
+            self.model_keys = included_keys
         self.item = item
 
     @lazy_property
@@ -390,10 +397,14 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
     def album_keys(self):
         album_keys = []
         if self.album:
-            for key in self.album.keys(computed=True):
-                if key in Album.item_keys \
-                        or key not in self.item._fields.keys():
-                    album_keys.append(key)
+            if self.included_keys == self.ALL_KEYS:
+                # Performance note: this triggers a database query.
+                for key in self.album.keys(computed=True):
+                    if key in Album.item_keys \
+                            or key not in self.item._fields.keys():
+                        album_keys.append(key)
+            else:
+                album_keys = self.included_keys
         return album_keys
 
     @property
@@ -422,12 +433,15 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
         # `artist` and `albumartist` fields fall back to one another.
         # This is helpful in path formats when the album artist is unset
         # on as-is imports.
-        if key == 'artist' and not value:
-            return self._get('albumartist')
-        elif key == 'albumartist' and not value:
-            return self._get('artist')
-        else:
-            return value
+        try:
+            if key == 'artist' and not value:
+                return self._get('albumartist')
+            elif key == 'albumartist' and not value:
+                return self._get('artist')
+        except KeyError:
+            pass
+
+        return value
 
     def __iter__(self):
         return iter(self.all_keys)
@@ -1703,7 +1717,7 @@ class DefaultTemplateFunctions(object):
             return res
 
         # Flatten disambiguation value into a string.
-        disam_value = album.formatted(True).get(disambiguator)
+        disam_value = album.formatted(for_path=True).get(disambiguator)
 
         # Return empty string if disambiguator is empty.
         if disam_value:

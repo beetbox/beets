@@ -212,6 +212,8 @@ Other new things:
   used to target a maximum image filesize.
 * :doc:`/plugins/badfiles`: Checkers can now be run during import with the
   ``check_on_import`` config option.
+* :doc:`/plugins/export`: big speedups when `--include-keys` option is used
+  Thanks to :user:`ssssam`.
 
 Fixes:
 
