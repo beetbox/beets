@@ -97,7 +97,8 @@ def configure():
     from the beets configuration. This should be called at startup.
     """
     hostname = config['musicbrainz']['host'].as_str()
-    musicbrainzngs.set_hostname(hostname)
+    use_https = config['musicbrainz']['use_https'].get(bool)
+    musicbrainzngs.set_hostname(hostname, use_https)
     musicbrainzngs.set_rate_limit(
         config['musicbrainz']['ratelimit_interval'].as_number(),
         config['musicbrainz']['ratelimit'].get(int),

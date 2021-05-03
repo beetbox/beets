@@ -691,15 +691,17 @@ MusicBrainz Options
 -------------------
 
 You can instruct beets to use `your own MusicBrainz database`_ instead of
-the `main server`_. Use the ``host`` and ``ratelimit`` options under a
-``musicbrainz:`` header, like so::
+the `main server`_. Use the ``host``, ``use_https`` and ``ratelimit`` options
+under a ``musicbrainz:`` header, like so::
 
     musicbrainz:
         host: localhost:5000
+        use_https: no
         ratelimit: 100
 
 The ``host`` key, of course, controls the Web server hostname (and port,
 optionally) that will be contacted by beets (default: musicbrainz.org).
+The ``use_https`` key makes the client use https instead of http (default: yes).
 The server must have search indices enabled (see `Building search indexes`_).
 
 The ``ratelimit`` option, an integer, controls the number of Web service requests
