@@ -52,15 +52,24 @@ class FormattedMapping(Mapping):
     The accessor `mapping[key]` returns the formatted version of
     `model[key]` as a unicode string.
 
+    The `included_keys` parameter allows filtering the fields that are
+    returned. By default all fields are returned. Limiting to specific keys can
+    avoid expensive per-item database queries.
+
     If `for_path` is true, all path separators in the formatted values
     are replaced.
     """
 
-    def __init__(self, model, for_path=False, compute_keys=True):
+    ALL_KEYS = '*'
+
+    def __init__(self, model, included_keys=ALL_KEYS, for_path=False):
         self.for_path = for_path
         self.model = model
-        if compute_keys:
-            self.model_keys = model.keys(True)
+        if included_keys == self.ALL_KEYS:
+            # Performance note: this triggers a database query.
+            self.model_keys = self.model.keys(True)
+        else:
+            self.model_keys = included_keys
 
     def __getitem__(self, key):
         if key in self.model_keys:
@@ -605,11 +614,11 @@ class Model(object):
 
     _formatter = FormattedMapping
 
-    def formatted(self, for_path=False):
+    def formatted(self, included_keys=_formatter.ALL_KEYS, for_path=False):
         """Get a mapping containing all values on this object formatted
         as human-readable unicode strings.
         """
-        return self._formatter(self, for_path)
+        return self._formatter(self, included_keys, for_path)
 
     def evaluate_template(self, template, for_path=False):
         """Evaluate a template (a string or a `Template` object) using
@@ -619,7 +628,7 @@ class Model(object):
         # Perform substitution.
         if isinstance(template, six.string_types):
             template = functemplate.template(template)
-        return template.substitute(self.formatted(for_path),
+        return template.substitute(self.formatted(for_path=for_path),
                                    self._template_funcs())
 
     # Parsing.
