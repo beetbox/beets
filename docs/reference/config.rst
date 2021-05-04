@@ -701,8 +701,8 @@ under a ``musicbrainz:`` header, like so::
 
 The ``host`` key, of course, controls the Web server hostname (and port,
 optionally) that will be contacted by beets (default: musicbrainz.org).
-The ``https`` key makes the client use https instead of http, this setting applies
-only to custom servers. The official musicbrainz server always uses HTTPS (default: no).
+The ``https`` key makes the client use HTTPS instead of HTTP. This setting applies
+only to custom servers. The official MusicBrainz server always uses HTTPS. (Default: no.)
 The server must have search indices enabled (see `Building search indexes`_).
 
 The ``ratelimit`` option, an integer, controls the number of Web service requests
