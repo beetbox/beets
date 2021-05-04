@@ -46,7 +46,7 @@ Major new features:
 
 Other new things:
 
-* Enable HTTPS support to Musicbrainz by default and add configuration option
+* Enable HTTPS for MusicBrainz by default and add configuration option
   `https` for custom servers.
 * :doc:`/plugins/mpdstats`: Add a new `strip_path` option to help build the
   right local path from MPD information.
