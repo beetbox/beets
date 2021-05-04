@@ -47,7 +47,7 @@ Major new features:
 Other new things:
 
 * Enable HTTPS support to Musicbrainz by default and add configuration option
-  `use_https`.
+  `https` for custom servers.
 * :doc:`/plugins/mpdstats`: Add a new `strip_path` option to help build the
   right local path from MPD information.
 * :doc:`/plugins/convert`: Conversion can now parallelize conversion jobs on
