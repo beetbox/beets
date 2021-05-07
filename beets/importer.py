@@ -577,6 +577,7 @@ class ImportTask(BaseImportTask):
         values, for both the album and all its items.
         """
         with lib.transaction():
+            items = self.imported_items()
             for field, view in config['import']['set_fields'].items():
                 value = view.get()
                 log.debug(u'Set field {1}={2} for {0}',
@@ -584,9 +585,10 @@ class ImportTask(BaseImportTask):
                           field,
                           value)
                 self.album[field] = value
-                for item in self.imported_items():
+                for item in items:
                     item[field] = value
-                    item.store()
+            for item in items:
+                item.store()
             self.album.store()
 
     def finalize(self, session):
