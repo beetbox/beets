@@ -131,7 +131,7 @@ setup(
             'discogs-client' if (sys.version_info < (3, 0, 0))
             else 'python3-discogs-client'
         ] + (
-            ['py7zr'] if  (sys.version_info > (3, 5, 0)) else []
+            ['py7zr'] if (sys.version_info > (3, 5, 0)) else []
         ),
         'lint': [
             'flake8',
