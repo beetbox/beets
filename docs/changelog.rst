@@ -180,9 +180,6 @@ New features:
   :bug:`3478`
 * Removes usage of the bs1770gain replaygain backend.
   Thanks to :user:`SamuelCook`.
-* Duplicates can now generate checksums. Thanks user:`wisp3rwind` for the
-  pointer to how to solve.
-  Thanks to :user:`arogl`. :bug:`2873`
 
 Fixes:
 
@@ -307,6 +304,9 @@ Fixes:
   information. Thanks to :user:`dosoe`.
 * :doc:`/plugins/discogs`: Replace deprecated discogs-client library with community
   supported python3-discogs-client library. :bug:`3608`
+* Fix :bug:`2873`. Duplicates can now generate checksums. Thanks user:`wisp3rwind`
+  for the pointer to how to solve. Thanks to :user:`arogl`.
+
 
 For plugin developers:
 
