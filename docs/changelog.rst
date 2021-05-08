@@ -359,6 +359,7 @@ Fixes:
   :bug:`2984`
 * :doc:`/plugins/lyrics`: Fix crashes for Tekstowo false positives
   :bug:`3904`
+* :doc`/reference/cli`: Remove reference to rarfile version in link
 
 For plugin developers:
 
