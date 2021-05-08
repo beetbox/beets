@@ -151,7 +151,7 @@ Optional command flags:
 
     beet import --set genre="Alternative Rock" --set mood="emotional"
 
-.. _rarfile: https://pypi.python.org/pypi/rarfile/2.2
+.. _rarfile: https://pypi.python.org/pypi/rarfile/
 .. _py7zr: https://pypi.org/project/py7zr/
 
 .. only:: html
