@@ -217,7 +217,7 @@ Other new things:
 * Added 7z support via the `py7zr`_ library
   Thanks to :user:`arogl`.  :bug:`3906`
 
-  .. _py7zr: https://github.com/miurahr/py7zr
+  .. _py7zr: https://pypi.org/project/py7zr/
 
 Fixes:
 
