@@ -180,6 +180,9 @@ New features:
   :bug:`3478`
 * Removes usage of the bs1770gain replaygain backend.
   Thanks to :user:`SamuelCook`.
+* Duplicates can now generate checksums. Thanks user:`wisp3rwind` for the
+  pointer to how to solve.
+  Thanks to :user:`arogl`. :bug:`2873`
 
 Fixes:
 
