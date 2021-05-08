@@ -46,6 +46,8 @@ Major new features:
 
 Other new things:
 
+* Enable HTTPS for MusicBrainz by default and add configuration option
+  `https` for custom servers.
 * :doc:`/plugins/mpdstats`: Add a new `strip_path` option to help build the
   right local path from MPD information.
 * :doc:`/plugins/convert`: Conversion can now parallelize conversion jobs on
@@ -361,6 +363,7 @@ Fixes:
   :bug:`2984`
 * :doc:`/plugins/lyrics`: Fix crashes for Tekstowo false positives
   :bug:`3904`
+* :doc`/reference/cli`: Remove reference to rarfile version in link
 
 For plugin developers:
 
