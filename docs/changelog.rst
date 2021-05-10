@@ -216,6 +216,10 @@ Other new things:
   ``check_on_import`` config option.
 * :doc:`/plugins/export`: big speedups when `--include-keys` option is used
   Thanks to :user:`ssssam`.
+* Added 7z support via the `py7zr`_ library
+  Thanks to :user:`arogl`.  :bug:`3906`
+
+  .. _py7zr: https://pypi.org/project/py7zr/
 
 Fixes:
 
