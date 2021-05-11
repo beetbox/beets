@@ -4,15 +4,15 @@ Discogs Plugin
 The ``discogs`` plugin extends the autotagger's search capabilities to
 include matches from the `Discogs`_ database.
 
-.. _Discogs: http://discogs.com
+.. _Discogs: https://discogs.com
 
 Installation
 ------------
 
 To use the ``discogs`` plugin, first enable it in your configuration (see
-:ref:`using-plugins`). Then, install the `discogs-client`_ library by typing::
+:ref:`using-plugins`). Then, install the `python3-discogs-client`_ library by typing::
 
-    pip install discogs-client
+    pip install python3-discogs-client
 
 You will also need to register for a `Discogs`_ account, and provide
 authentication credentials via a personal access token or an OAuth2
@@ -36,12 +36,44 @@ Authentication via Personal Access Token
 
 As an alternative to OAuth, you can get a token from Discogs and add it to
 your configuration.
-To get a personal access token (called a "user token" in the `discogs-client`_
+To get a personal access token (called a "user token" in the `python3-discogs-client`_
 documentation), login to `Discogs`_, and visit the
 `Developer settings page
 <https://www.discogs.com/settings/developers>`_. Press the ``Generate new
 token`` button, and place the generated token in your configuration, as the
 ``user_token`` config option in the ``discogs`` section.
+
+Configuration
+-------------
+
+This plugin can be configured like other metadata source plugins as described in :ref:`metadata-source-plugin-configuration`.
+
+There is one additional option in the ``discogs:`` section, ``index_tracks``.
+Index tracks (see the `Discogs guidelines
+<https://support.discogs.com/hc/en-us/articles/360005055373-Database-Guidelines-12-Tracklisting#12.13>`_),
+along with headers, mark divisions between distinct works on the same release
+or within works. When ``index_tracks`` is enabled::
+
+    discogs:
+        index_tracks: yes
+
+beets will incorporate the names of the divisions containing each track into
+the imported track's title. For example, importing
+`this album
+<https://www.discogs.com/Handel-Sutherland-Kirkby-Kwella-Nelson-Watkinson-Bowman-Rolfe-Johnson-Elliott-Partridge-Thomas-The-A/release/2026070>`_
+would result in track names like::
+
+    Messiah, Part I: No.1: Sinfony
+    Messiah, Part II: No.22: Chorus- Behold The Lamb Of God
+    Athalia, Act I, Scene I: Sinfonia
+
+whereas with ``index_tracks`` disabled you'd get::
+
+    No.1: Sinfony
+    No.22: Chorus- Behold The Lamb Of God
+    Sinfonia
+
+This option is useful when importing classical music.
 
 Troubleshooting
 ---------------
@@ -57,4 +89,4 @@ Here are two things you can try:
 * Make sure that your system clock is accurate. The Discogs servers can reject
   your request if your clock is too out of sync.
 
-.. _discogs-client: https://github.com/discogs/discogs_client
+.. _python3-discogs-client: https://github.com/joalla/discogs_client

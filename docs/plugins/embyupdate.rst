@@ -17,8 +17,8 @@ To use the ``embyupdate`` plugin you need to install the `requests`_ library wit
 
 With that all in place, you'll see beets send the "update" command to your Emby server every time you change your beets library.
 
-.. _Emby: http://emby.media/
-.. _requests: http://docs.python-requests.org/en/latest/
+.. _Emby: https://emby.media/
+.. _requests: https://requests.readthedocs.io/en/master/
 
 Configuration
 -------------
@@ -34,5 +34,5 @@ The available options under the ``emby:`` section are:
 - **password**: The password for the user. (This is only necessary if no API
   key is provided.)
 
-You can choose to authenticate either with `apikey` or `password`, but only
+You can choose to authenticate either with ``apikey`` or ``password``, but only
 one of those two is required.

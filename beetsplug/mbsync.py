@@ -17,7 +17,7 @@
 """
 from __future__ import division, absolute_import, print_function
 
-from beets.plugins import BeetsPlugin
+from beets.plugins import BeetsPlugin, apply_item_changes
 from beets import autotag, library, ui, util
 from beets.autotag import hooks
 from collections import defaultdict
@@ -25,19 +25,6 @@ from collections import defaultdict
 import re
 
 MBID_REGEX = r"(\d|\w){8}-(\d|\w){4}-(\d|\w){4}-(\d|\w){4}-(\d|\w){12}"
-
-
-def apply_item_changes(lib, item, move, pretend, write):
-    """Store, move and write the item according to the arguments.
-    """
-    if not pretend:
-        # Move the item if it's in the library.
-        if move and lib.directory in util.ancestry(item.path):
-            item.move(with_album=False)
-
-        if write:
-            item.try_write()
-        item.store()
 
 
 class MBSyncPlugin(BeetsPlugin):
@@ -136,7 +123,7 @@ class MBSyncPlugin(BeetsPlugin):
             # Map release track and recording MBIDs to their information.
             # Recordings can appear multiple times on a release, so each MBID
             # maps to a list of TrackInfo objects.
-            releasetrack_index = dict()
+            releasetrack_index = {}
             track_index = defaultdict(list)
             for track_info in album_info.tracks:
                 releasetrack_index[track_info.release_track_id] = track_info

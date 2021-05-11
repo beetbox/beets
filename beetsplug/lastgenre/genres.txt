@@ -450,6 +450,8 @@ emo rap
 emocore
 emotronic
 enka
+epic doom metal
+epic metal
 eremwu eu
 ethereal pop
 ethereal wave
@@ -1024,6 +1026,7 @@ neo-medieval
 neo-prog
 neo-psychedelia
 neoclassical
+neoclassical metal
 neoclassical music
 neofolk
 neotraditional country
@@ -1176,8 +1179,10 @@ progressive folk
 progressive folk music
 progressive house
 progressive metal
+progressive power metal
 progressive rock
 progressive trance
+progressive thrash metal
 protopunk
 psych folk
 psychedelic music
@@ -1396,6 +1401,7 @@ symphonic metal
 symphonic poem
 symphonic rock
 symphony
+synthcore
 synthpop
 synthpunk
 t'ong guitar
@@ -1428,6 +1434,7 @@ tejano
 tejano music
 tekno
 tembang sunda
+teutonic thrash metal
 texas blues
 thai pop
 thillana
@@ -1444,6 +1451,7 @@ toeshey
 togaku
 trad jazz
 traditional bluegrass
+traditional heavy metal
 traditional pop music
 trallalero
 trance

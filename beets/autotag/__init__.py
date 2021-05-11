@@ -22,12 +22,53 @@ from beets import logging
 from beets import config
 
 # Parts of external interface.
-from .hooks import AlbumInfo, TrackInfo, AlbumMatch, TrackMatch  # noqa
+from .hooks import (  # noqa
+    AlbumInfo,
+    TrackInfo,
+    AlbumMatch,
+    TrackMatch,
+    Distance,
+)
 from .match import tag_item, tag_album, Proposal  # noqa
 from .match import Recommendation  # noqa
 
 # Global logger.
 log = logging.getLogger('beets')
+
+# Metadata fields that are already hardcoded, or where the tag name changes.
+SPECIAL_FIELDS = {
+    'album': (
+        'va',
+        'releasegroup_id',
+        'artist_id',
+        'album_id',
+        'mediums',
+        'tracks',
+        'year',
+        'month',
+        'day',
+        'artist',
+        'artist_credit',
+        'artist_sort',
+        'data_url'
+    ),
+    'track': (
+        'track_alt',
+        'artist_id',
+        'release_track_id',
+        'medium',
+        'index',
+        'medium_index',
+        'title',
+        'artist_credit',
+        'artist_sort',
+        'artist',
+        'track_id',
+        'medium_total',
+        'data_url',
+        'length'
+    )
+}
 
 
 # Additional utilities for the main interface.
@@ -43,17 +84,14 @@ def apply_item_metadata(item, track_info):
     item.mb_releasetrackid = track_info.release_track_id
     if track_info.artist_id:
         item.mb_artistid = track_info.artist_id
-    if track_info.data_source:
-        item.data_source = track_info.data_source
 
-    if track_info.lyricist is not None:
-        item.lyricist = track_info.lyricist
-    if track_info.composer is not None:
-        item.composer = track_info.composer
-    if track_info.composer_sort is not None:
-        item.composer_sort = track_info.composer_sort
-    if track_info.arranger is not None:
-        item.arranger = track_info.arranger
+    for field, value in track_info.items():
+        # We only overwrite fields that are not already hardcoded.
+        if field in SPECIAL_FIELDS['track']:
+            continue
+        if value is None:
+            continue
+        item[field] = value
 
     # At the moment, the other metadata is left intact (including album
     # and track number). Perhaps these should be emptied?
@@ -145,41 +183,19 @@ def apply_metadata(album_info, mapping):
         # Track alt.
         item.track_alt = track_info.track_alt
 
-        # Miscellaneous/nullable metadata.
-        misc_fields = {
-            'album': (
-                'albumtype',
-                'label',
-                'asin',
-                'catalognum',
-                'script',
-                'language',
-                'country',
-                'albumstatus',
-                'albumdisambig',
-                'releasegroupdisambig',
-                'data_source',
-            ),
-            'track': (
-                'disctitle',
-                'lyricist',
-                'media',
-                'composer',
-                'composer_sort',
-                'arranger',
-            )
-        }
-
         # Don't overwrite fields with empty values unless the
         # field is explicitly allowed to be overwritten
-        for field in misc_fields['album']:
+        for field, value in album_info.items():
+            if field in SPECIAL_FIELDS['album']:
+                continue
             clobber = field in config['overwrite_null']['album'].as_str_seq()
-            value = getattr(album_info, field)
             if value is None and not clobber:
                 continue
             item[field] = value
 
-        for field in misc_fields['track']:
+        for field, value in track_info.items():
+            if field in SPECIAL_FIELDS['track']:
+                continue
             clobber = field in config['overwrite_null']['track'].as_str_seq()
             value = getattr(track_info, field)
             if value is None and not clobber:

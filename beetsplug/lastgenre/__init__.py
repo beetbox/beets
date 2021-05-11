@@ -14,6 +14,7 @@
 # included in all copies or substantial portions of the Software.
 
 from __future__ import division, absolute_import, print_function
+
 import six
 
 """Gets genres for imported music based on Last.fm tags.
@@ -110,6 +111,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             'auto': True,
             'separator': u', ',
             'prefer_specific': False,
+            'title_case': True,
         })
 
         self.setup()
@@ -152,7 +154,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             self._log.debug('Loading canonicalization tree {0}', c14n_filename)
             c14n_filename = normpath(c14n_filename)
             with codecs.open(c14n_filename, 'r', encoding='utf-8') as f:
-                genres_tree = yaml.load(f)
+                genres_tree = yaml.safe_load(f)
             flatten_tree(genres_tree, [], self.c14n_branches)
 
     @property
@@ -223,11 +225,16 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
-        tags = [x.title() for x in tags if self._is_allowed(x)]
+        tags = [self._format_tag(x) for x in tags if self._is_allowed(x)]
 
         return self.config['separator'].as_str().join(
             tags[:self.config['count'].get(int)]
         )
+
+    def _format_tag(self, tag):
+        if self.config["title_case"]:
+            return tag.title()
+        return tag
 
     def fetch_genre(self, lastfm_obj):
         """Return the genre for a pylast entity or None if no suitable genre
@@ -373,35 +380,53 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         lastgenre_cmd = ui.Subcommand('lastgenre', help=u'fetch genres')
         lastgenre_cmd.parser.add_option(
             u'-f', u'--force', dest='force',
-            action='store_true', default=False,
+            action='store_true',
             help=u're-download genre when already present'
         )
         lastgenre_cmd.parser.add_option(
             u'-s', u'--source', dest='source', type='string',
             help=u'genre source: artist, album, or track'
         )
+        lastgenre_cmd.parser.add_option(
+            u'-A', u'--items', action='store_false', dest='album',
+            help=u'match items instead of albums')
+        lastgenre_cmd.parser.add_option(
+            u'-a', u'--albums', action='store_true', dest='album',
+            help=u'match albums instead of items')
+        lastgenre_cmd.parser.set_defaults(album=True)
 
         def lastgenre_func(lib, opts, args):
             write = ui.should_write()
             self.config.set_args(opts)
 
-            for album in lib.albums(ui.decargs(args)):
-                album.genre, src = self._get_genre(album)
-                self._log.info(u'genre for album {0} ({1}): {0.genre}',
-                               album, src)
-                album.store()
+            if opts.album:
+                # Fetch genres for whole albums
+                for album in lib.albums(ui.decargs(args)):
+                    album.genre, src = self._get_genre(album)
+                    self._log.info(u'genre for album {0} ({1}): {0.genre}',
+                                   album, src)
+                    album.store()
 
-                for item in album.items():
-                    # If we're using track-level sources, also look up each
-                    # track on the album.
-                    if 'track' in self.sources:
-                        item.genre, src = self._get_genre(item)
-                        item.store()
-                        self._log.info(u'genre for track {0} ({1}): {0.genre}',
-                                       item, src)
+                    for item in album.items():
+                        # If we're using track-level sources, also look up each
+                        # track on the album.
+                        if 'track' in self.sources:
+                            item.genre, src = self._get_genre(item)
+                            item.store()
+                            self._log.info(
+                                u'genre for track {0} ({1}): {0.genre}',
+                                item, src)
 
-                    if write:
-                        item.try_write()
+                        if write:
+                            item.try_write()
+            else:
+                # Just query singletons, i.e. items that are not part of
+                # an album
+                for item in lib.items(ui.decargs(args)):
+                    item.genre, src = self._get_genre(item)
+                    self._log.debug(u'added last.fm item genre ({0}): {1}',
+                                    src, item.genre)
+                    item.store()
 
         lastgenre_cmd.func = lastgenre_func
         return [lastgenre_cmd]

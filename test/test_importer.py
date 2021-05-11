@@ -32,10 +32,11 @@ import unittest
 
 from test import _common
 from beets.util import displayable_path, bytestring_path, py3_path
-from test.helper import TestImportSession, TestHelper, has_program, capture_log
+from test.helper import TestHelper, has_program, capture_log
+from test.helper import ImportSessionFixture
 from beets import importer
 from beets.importer import albums_in_dir
-from beets.mediafile import MediaFile
+from mediafile import MediaFile
 from beets import autotag
 from beets.autotag import AlbumInfo, TrackInfo, AlbumMatch
 from beets import config
@@ -78,7 +79,7 @@ class AutotagStub(object):
         autotag.mb.album_for_id = self.mb_album_for_id
         autotag.mb.track_for_id = self.mb_track_for_id
 
-    def match_album(self, albumartist, album, tracks):
+    def match_album(self, albumartist, album, tracks, extra_tags):
         if self.matching == self.IDENT:
             yield self._make_album_match(albumartist, album, tracks)
 
@@ -223,7 +224,7 @@ class ImportHelper(TestHelper):
         config['import']['link'] = link
         config['import']['hardlink'] = hardlink
 
-        self.importer = TestImportSession(
+        self.importer = ImportSessionFixture(
             self.lib, loghandler=None, query=None,
             paths=[import_dir or self.import_dir]
         )
@@ -447,6 +448,12 @@ class ImportRarTest(ImportZipTest):
 
     def create_archive(self):
         return os.path.join(_common.RSRC, b'archive.rar')
+
+
+class Import7zTest(ImportZipTest):
+
+    def create_archive(self):
+        return os.path.join(_common.RSRC, b'archive.7z')
 
 
 @unittest.skip('Implement me!')

@@ -21,7 +21,7 @@ from beets import ui
 from beets import util
 import beets.library
 import flask
-from flask import g
+from flask import g, jsonify
 from werkzeug.routing import BaseConverter, PathConverter
 import os
 from unidecode import unidecode
@@ -59,7 +59,10 @@ def _rep(obj, expand=False):
         return out
 
     elif isinstance(obj, beets.library.Album):
-        del out['artpath']
+        if app.config.get('INCLUDE_PATHS', False):
+            out['artpath'] = util.displayable_path(out['artpath'])
+        else:
+            del out['artpath']
         if expand:
             out['items'] = [_rep(item) for item in obj.items()]
         return out
@@ -91,7 +94,20 @@ def is_expand():
     return flask.request.args.get('expand') is not None
 
 
-def resource(name):
+def is_delete():
+    """Returns whether the current delete request should remove the selected
+    files.
+    """
+
+    return flask.request.args.get('delete') is not None
+
+
+def get_method():
+    """Returns the HTTP method of the current request."""
+    return flask.request.method
+
+
+def resource(name, patchable=False):
     """Decorates a function to handle RESTful HTTP requests for a resource.
     """
     def make_responder(retriever):
@@ -99,34 +115,98 @@ def resource(name):
             entities = [retriever(id) for id in ids]
             entities = [entity for entity in entities if entity]
 
-            if len(entities) == 1:
-                return flask.jsonify(_rep(entities[0], expand=is_expand()))
-            elif entities:
-                return app.response_class(
-                    json_generator(entities, root=name),
-                    mimetype='application/json'
-                )
+            if get_method() == "DELETE":
+
+                if app.config.get('READONLY', True):
+                    return flask.abort(405)
+
+                for entity in entities:
+                    entity.remove(delete=is_delete())
+
+                return flask.make_response(jsonify({'deleted': True}), 200)
+
+            elif get_method() == "PATCH" and patchable:
+                if app.config.get('READONLY', True):
+                    return flask.abort(405)
+
+                for entity in entities:
+                    entity.update(flask.request.get_json())
+                    entity.try_sync(True, False)  # write, don't move
+
+                if len(entities) == 1:
+                    return flask.jsonify(_rep(entities[0], expand=is_expand()))
+                elif entities:
+                    return app.response_class(
+                        json_generator(entities, root=name),
+                        mimetype='application/json'
+                    )
+
+            elif get_method() == "GET":
+                if len(entities) == 1:
+                    return flask.jsonify(_rep(entities[0], expand=is_expand()))
+                elif entities:
+                    return app.response_class(
+                        json_generator(entities, root=name),
+                        mimetype='application/json'
+                    )
+                else:
+                    return flask.abort(404)
+
             else:
-                return flask.abort(404)
+                return flask.abort(405)
+
         responder.__name__ = 'get_{0}'.format(name)
+
         return responder
     return make_responder
 
 
-def resource_query(name):
+def resource_query(name, patchable=False):
     """Decorates a function to handle RESTful HTTP queries for resources.
     """
     def make_responder(query_func):
         def responder(queries):
-            return app.response_class(
-                json_generator(
-                    query_func(queries),
-                    root='results', expand=is_expand()
-                ),
-                mimetype='application/json'
-            )
+            entities = query_func(queries)
+
+            if get_method() == "DELETE":
+
+                if app.config.get('READONLY', True):
+                    return flask.abort(405)
+
+                for entity in entities:
+                    entity.remove(delete=is_delete())
+
+                return flask.make_response(jsonify({'deleted': True}), 200)
+
+            elif get_method() == "PATCH" and patchable:
+                if app.config.get('READONLY', True):
+                    return flask.abort(405)
+
+                for entity in entities:
+                    entity.update(flask.request.get_json())
+                    entity.try_sync(True, False)  # write, don't move
+
+                return app.response_class(
+                    json_generator(entities, root=name),
+                    mimetype='application/json'
+                )
+
+            elif get_method() == "GET":
+                return app.response_class(
+                    json_generator(
+                        entities,
+                        root='results', expand=is_expand()
+                    ),
+                    mimetype='application/json'
+                )
+
+            else:
+                return flask.abort(405)
+
         responder.__name__ = 'query_{0}'.format(name)
+
         return responder
+
     return make_responder
 
 
@@ -169,7 +249,7 @@ class IdListConverter(BaseConverter):
         return ids
 
     def to_url(self, value):
-        return ','.join(value)
+        return ','.join(str(v) for v in value)
 
 
 class QueryConverter(PathConverter):
@@ -177,10 +257,13 @@ class QueryConverter(PathConverter):
     """
 
     def to_python(self, value):
-        return value.split('/')
+        queries = value.split('/')
+        """Do not do path substitution on regex value tests"""
+        return [query if '::' in query else query.replace('\\', os.sep)
+                for query in queries]
 
     def to_url(self, value):
-        return ','.join(value)
+        return ','.join([v.replace(os.sep, '\\') for v in value])
 
 
 class EverythingConverter(PathConverter):
@@ -202,8 +285,8 @@ def before_request():
 
 # Items.
 
-@app.route('/item/<idlist:ids>')
-@resource('items')
+@app.route('/item/<idlist:ids>', methods=["GET", "DELETE", "PATCH"])
+@resource('items', patchable=True)
 def get_item(id):
     return g.lib.get_item(id)
 
@@ -243,8 +326,8 @@ def item_file(item_id):
     return response
 
 
-@app.route('/item/query/<query:queries>')
-@resource_query('items')
+@app.route('/item/query/<query:queries>', methods=["GET", "DELETE", "PATCH"])
+@resource_query('items', patchable=True)
 def item_query(queries):
     return g.lib.items(queries)
 
@@ -272,7 +355,7 @@ def item_unique_field_values(key):
 
 # Albums.
 
-@app.route('/album/<idlist:ids>')
+@app.route('/album/<idlist:ids>', methods=["GET", "DELETE"])
 @resource('albums')
 def get_album(id):
     return g.lib.get_album(id)
@@ -285,7 +368,7 @@ def all_albums():
     return g.lib.albums()
 
 
-@app.route('/album/query/<query:queries>')
+@app.route('/album/query/<query:queries>', methods=["GET", "DELETE"])
 @resource_query('albums')
 def album_query(queries):
     return g.lib.albums(queries)
@@ -353,6 +436,7 @@ class WebPlugin(BeetsPlugin):
             'cors_supports_credentials': False,
             'reverse_proxy': False,
             'include_paths': False,
+            'readonly': True,
         })
 
     def commands(self):
@@ -372,6 +456,7 @@ class WebPlugin(BeetsPlugin):
             app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
             app.config['INCLUDE_PATHS'] = self.config['include_paths']
+            app.config['READONLY'] = self.config['readonly']
 
             # Enable CORS if required.
             if self.config['cors']:

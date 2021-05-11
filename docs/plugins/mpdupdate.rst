@@ -4,7 +4,7 @@ MPDUpdate Plugin
 ``mpdupdate`` is a very simple plugin for beets that lets you automatically
 update `MPD`_'s index whenever you change your beets library.
 
-.. _MPD: http://www.musicpd.org/
+.. _MPD: https://www.musicpd.org/
 
 To use ``mpdupdate`` plugin, enable it in your configuration
 (see :ref:`using-plugins`).
@@ -33,6 +33,7 @@ The available options under the ``mpd:`` section are:
 - **host**: The MPD server name.
   Default: The ``$MPD_HOST`` environment variable if set, falling back to ``localhost`` otherwise.
 - **port**: The MPD server port.
-  Default: 6600.
+  Default: The ``$MPD_PORT`` environment variable if set, falling back to 6600
+  otherwise.
 - **password**: The MPD server password.
   Default: None.

@@ -109,7 +109,7 @@ class DummyDataTestCase(_common.TestCase, AssertsMixin):
         items[2].comp = False
         for item in items:
             self.lib.add(item)
-        self.lib.add_album(items[:2])
+        self.album = self.lib.add_album(items[:2])
 
     def assert_items_matched_all(self, results):
         self.assert_items_matched(results, [
@@ -299,6 +299,17 @@ class GetTest(DummyDataTestCase):
         q = dbcore.query.NumericQuery('year', u'1999')
         results = self.lib.items(q)
         self.assertFalse(results)
+
+    def test_album_field_fallback(self):
+        self.album['albumflex'] = u'foo'
+        self.album.store()
+
+        q = u'albumflex:foo'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, [
+            u'foo bar',
+            u'baz qux',
+        ])
 
     def test_invalid_query(self):
         with self.assertRaises(InvalidQueryArgumentValueError) as raised:
@@ -770,6 +781,21 @@ class NoneQueryTest(unittest.TestCase, TestHelper):
         item['rg_track_gain'] = None
         item.store()
         matched = self.lib.items(NoneQuery(u'rg_track_gain'))
+        self.assertInResult(item, matched)
+
+    def test_match_slow(self):
+        item = self.add_item()
+        matched = self.lib.items(NoneQuery(u'rg_track_peak', fast=False))
+        self.assertInResult(item, matched)
+
+    def test_match_slow_after_set_none(self):
+        item = self.add_item(rg_track_gain=0)
+        matched = self.lib.items(NoneQuery(u'rg_track_gain', fast=False))
+        self.assertNotInResult(item, matched)
+
+        item['rg_track_gain'] = None
+        item.store()
+        matched = self.lib.items(NoneQuery(u'rg_track_gain', fast=False))
         self.assertInResult(item, matched)
 
 

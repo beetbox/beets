@@ -34,7 +34,7 @@ from beets import importer
 from beets import logging
 from beets import util
 from beets.util.artresizer import ArtResizer, WEBPROXY
-from beets.util import confit
+import confuse
 
 
 logger = logging.getLogger('beets.test_art')
@@ -74,6 +74,96 @@ class FetchImageHelper(_common.TestCase):
                       # imghdr reads 32 bytes
                       body=self.IMAGEHEADER.get(
                           file_type, b'').ljust(32, b'\x00'))
+
+
+class CAAHelper():
+    """Helper mixin for mocking requests to the Cover Art Archive."""
+    MBID_RELASE = 'rid'
+    MBID_GROUP = 'rgid'
+
+    RELEASE_URL = 'coverartarchive.org/release/{0}' \
+                  .format(MBID_RELASE)
+    GROUP_URL = 'coverartarchive.org/release-group/{0}' \
+                .format(MBID_GROUP)
+
+    if util.SNI_SUPPORTED:
+        RELEASE_URL = "https://" + RELEASE_URL
+        GROUP_URL = "https://" + GROUP_URL
+    else:
+        RELEASE_URL = "http://" + RELEASE_URL
+        GROUP_URL = "http://" + GROUP_URL
+
+    RESPONSE_RELEASE = """{
+    "images": [
+      {
+        "approved": false,
+        "back": false,
+        "comment": "GIF",
+        "edit": 12345,
+        "front": true,
+        "id": 12345,
+        "image": "http://coverartarchive.org/release/rid/12345.gif",
+        "thumbnails": {
+          "1200": "http://coverartarchive.org/release/rid/12345-1200.jpg",
+          "250": "http://coverartarchive.org/release/rid/12345-250.jpg",
+          "500": "http://coverartarchive.org/release/rid/12345-500.jpg",
+          "large": "http://coverartarchive.org/release/rid/12345-500.jpg",
+          "small": "http://coverartarchive.org/release/rid/12345-250.jpg"
+        },
+        "types": [
+          "Front"
+        ]
+      },
+      {
+        "approved": false,
+        "back": false,
+        "comment": "",
+        "edit": 12345,
+        "front": false,
+        "id": 12345,
+        "image": "http://coverartarchive.org/release/rid/12345.jpg",
+        "thumbnails": {
+          "1200": "http://coverartarchive.org/release/rid/12345-1200.jpg",
+          "250": "http://coverartarchive.org/release/rid/12345-250.jpg",
+          "500": "http://coverartarchive.org/release/rid/12345-500.jpg",
+          "large": "http://coverartarchive.org/release/rid/12345-500.jpg",
+          "small": "http://coverartarchive.org/release/rid/12345-250.jpg"
+        },
+        "types": [
+          "Front"
+        ]
+      }
+    ],
+    "release": "https://musicbrainz.org/release/releaseid"
+}"""
+    RESPONSE_GROUP = """{
+        "images": [
+          {
+            "approved": false,
+            "back": false,
+            "comment": "",
+            "edit": 12345,
+            "front": true,
+            "id": 12345,
+            "image": "http://coverartarchive.org/release/releaseid/12345.jpg",
+            "thumbnails": {
+              "1200": "http://coverartarchive.org/release/rgid/12345-1200.jpg",
+              "250": "http://coverartarchive.org/release/rgid/12345-250.jpg",
+              "500": "http://coverartarchive.org/release/rgid/12345-500.jpg",
+              "large": "http://coverartarchive.org/release/rgid/12345-500.jpg",
+              "small": "http://coverartarchive.org/release/rgid/12345-250.jpg"
+            },
+            "types": [
+              "Front"
+            ]
+          }
+        ],
+        "release": "https://musicbrainz.org/release/release-id"
+    }"""
+
+    def mock_caa_response(self, url, json):
+        responses.add(responses.GET, url, body=json,
+                      content_type='application/json')
 
 
 class FetchImageTest(FetchImageHelper, UseThePlugin):
@@ -156,15 +246,13 @@ class FSArtTest(UseThePlugin):
         self.assertEqual(candidates, paths)
 
 
-class CombinedTest(FetchImageHelper, UseThePlugin):
+class CombinedTest(FetchImageHelper, UseThePlugin, CAAHelper):
     ASIN = 'xxxx'
     MBID = 'releaseid'
-    AMAZON_URL = 'http://images.amazon.com/images/P/{0}.01.LZZZZZZZ.jpg' \
+    AMAZON_URL = 'https://images.amazon.com/images/P/{0}.01.LZZZZZZZ.jpg' \
                  .format(ASIN)
-    AAO_URL = 'http://www.albumart.org/index_detail.php?asin={0}' \
+    AAO_URL = 'https://www.albumart.org/index_detail.php?asin={0}' \
               .format(ASIN)
-    CAA_URL = 'coverartarchive.org/release/{0}/front' \
-              .format(MBID)
 
     def setUp(self):
         super(CombinedTest, self).setUp()
@@ -211,17 +299,19 @@ class CombinedTest(FetchImageHelper, UseThePlugin):
         self.assertEqual(responses.calls[-1].request.url, self.AAO_URL)
 
     def test_main_interface_uses_caa_when_mbid_available(self):
-        self.mock_response("http://" + self.CAA_URL)
-        self.mock_response("https://" + self.CAA_URL)
-        album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
+        self.mock_caa_response(self.RELEASE_URL, self.RESPONSE_RELEASE)
+        self.mock_caa_response(self.GROUP_URL, self.RESPONSE_GROUP)
+        self.mock_response('http://coverartarchive.org/release/rid/12345.gif',
+                           content_type='image/gif')
+        self.mock_response('http://coverartarchive.org/release/rid/12345.jpg',
+                           content_type='image/jpeg')
+        album = _common.Bag(mb_albumid=self.MBID_RELASE,
+                            mb_releasegroupid=self.MBID_GROUP,
+                            asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, None)
         self.assertIsNotNone(candidate)
-        self.assertEqual(len(responses.calls), 1)
-        if util.SNI_SUPPORTED:
-            url = "https://" + self.CAA_URL
-        else:
-            url = "http://" + self.CAA_URL
-        self.assertEqual(responses.calls[0].request.url, url)
+        self.assertEqual(len(responses.calls), 3)
+        self.assertEqual(responses.calls[0].request.url, self.RELEASE_URL)
 
     def test_local_only_does_not_access_network(self):
         album = _common.Bag(mb_albumid=self.MBID, asin=self.ASIN)
@@ -240,7 +330,7 @@ class CombinedTest(FetchImageHelper, UseThePlugin):
 
 class AAOTest(UseThePlugin):
     ASIN = 'xxxx'
-    AAO_URL = 'http://www.albumart.org/index_detail.php?asin={0}'.format(ASIN)
+    AAO_URL = 'https://www.albumart.org/index_detail.php?asin={0}'.format(ASIN)
 
     def setUp(self):
         super(AAOTest, self).setUp()
@@ -414,6 +504,28 @@ class GoogleImageTest(UseThePlugin):
         self.mock_response(fetchart.GoogleImages.URL, json)
         with self.assertRaises(StopIteration):
             next(self.source.get(album, self.settings, []))
+
+
+class CoverArtArchiveTest(UseThePlugin, CAAHelper):
+
+    def setUp(self):
+        super(CoverArtArchiveTest, self).setUp()
+        self.source = fetchart.CoverArtArchive(logger, self.plugin.config)
+        self.settings = Settings(maxwidth=0)
+
+    @responses.activate
+    def run(self, *args, **kwargs):
+        super(CoverArtArchiveTest, self).run(*args, **kwargs)
+
+    def test_caa_finds_image(self):
+        album = _common.Bag(mb_albumid=self.MBID_RELASE,
+                            mb_releasegroupid=self.MBID_GROUP)
+        self.mock_caa_response(self.RELEASE_URL, self.RESPONSE_RELEASE)
+        self.mock_caa_response(self.GROUP_URL, self.RESPONSE_GROUP)
+        candidates = list(self.source.get(album, self.settings, []))
+        self.assertEqual(len(candidates), 3)
+        self.assertEqual(len(responses.calls), 2)
+        self.assertEqual(responses.calls[0].request.url, self.RELEASE_URL)
 
 
 class FanartTVTest(UseThePlugin):
@@ -630,13 +742,16 @@ class ArtImporterTest(UseThePlugin):
 
 
 class ArtForAlbumTest(UseThePlugin):
-    """ Tests that fetchart.art_for_album respects the size
-    configuration (e.g., minwidth, enforce_ratio)
+    """ Tests that fetchart.art_for_album respects the scale & filesize
+    configurations (e.g., minwidth, enforce_ratio, max_filesize)
     """
 
     IMG_225x225 = os.path.join(_common.RSRC, b'abbey.jpg')
     IMG_348x348 = os.path.join(_common.RSRC, b'abbey-different.jpg')
     IMG_500x490 = os.path.join(_common.RSRC, b'abbey-similar.jpg')
+
+    IMG_225x225_SIZE = os.stat(util.syspath(IMG_225x225)).st_size
+    IMG_348x348_SIZE = os.stat(util.syspath(IMG_348x348)).st_size
 
     def setUp(self):
         super(ArtForAlbumTest, self).setUp()
@@ -727,6 +842,29 @@ class ArtForAlbumTest(UseThePlugin):
         self._assertImageResized(self.IMG_225x225, False)
         self._assertImageResized(self.IMG_348x348, True)
 
+    def test_fileresize(self):
+        self._require_backend()
+        self.plugin.max_filesize = self.IMG_225x225_SIZE // 2
+        self._assertImageResized(self.IMG_225x225, True)
+
+    def test_fileresize_if_necessary(self):
+        self._require_backend()
+        self.plugin.max_filesize = self.IMG_225x225_SIZE
+        self._assertImageResized(self.IMG_225x225, False)
+        self._assertImageIsValidArt(self.IMG_225x225, True)
+
+    def test_fileresize_no_scale(self):
+        self._require_backend()
+        self.plugin.maxwidth = 300
+        self.plugin.max_filesize = self.IMG_225x225_SIZE // 2
+        self._assertImageResized(self.IMG_225x225, True)
+
+    def test_fileresize_and_scale(self):
+        self._require_backend()
+        self.plugin.maxwidth = 200
+        self.plugin.max_filesize = self.IMG_225x225_SIZE // 2
+        self._assertImageResized(self.IMG_225x225, True)
+
 
 class DeprecatedConfigTest(_common.TestCase):
     """While refactoring the plugin, the remote_priority option was deprecated,
@@ -753,7 +891,7 @@ class EnforceRatioConfigTest(_common.TestCase):
         if should_raise:
             for v in values:
                 config['fetchart']['enforce_ratio'] = v
-                with self.assertRaises(confit.ConfigValueError):
+                with self.assertRaises(confuse.ConfigValueError):
                     fetchart.FetchArtPlugin()
         else:
             for v in values:

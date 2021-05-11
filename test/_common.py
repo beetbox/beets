@@ -25,6 +25,8 @@ import six
 import unittest
 from contextlib import contextmanager
 
+import reflink
+
 
 # Mangle the search path to include the beets sources.
 sys.path.insert(0, '..')
@@ -44,7 +46,7 @@ beetsplug.__path__ = [os.path.abspath(
 RSRC = util.bytestring_path(os.path.join(os.path.dirname(__file__), 'rsrc'))
 PLUGINPATH = os.path.join(os.path.dirname(__file__), 'rsrc', 'beetsplug')
 
-# Propagate to root logger so nosetest can capture it
+# Propagate to root logger so the test runner can capture it
 log = logging.getLogger('beets')
 log.propagate = True
 log.setLevel(logging.DEBUG)
@@ -55,6 +57,7 @@ _item_ident = 0
 # OS feature test.
 HAVE_SYMLINK = sys.platform != 'win32'
 HAVE_HARDLINK = sys.platform != 'win32'
+HAVE_REFLINK = reflink.supported_at(tempfile.gettempdir())
 
 
 def item(lib=None):
@@ -70,6 +73,9 @@ def item(lib=None):
         composer=u'the composer',
         arranger=u'the arranger',
         grouping=u'the grouping',
+        work=u'the work title',
+        mb_workid=u'the work musicbrainz id',
+        work_disambig=u'the work disambiguation',
         year=1,
         month=2,
         day=3,
@@ -172,8 +178,7 @@ class TestCase(unittest.TestCase, Assertions):
         beets.config['directory'] = \
             util.py3_path(os.path.join(self.temp_dir, b'libdir'))
 
-        # Set $HOME, which is used by confit's `config_dir()` to create
-        # directories.
+        # Set $HOME, which is used by Confuse to create directories.
         self._old_home = os.environ.get('HOME')
         os.environ['HOME'] = util.py3_path(self.temp_dir)
 
@@ -283,6 +288,9 @@ class DummyIn(object):
             self.buf.append(s + b'\n')
         else:
             self.buf.append(s + '\n')
+
+    def close(self):
+        pass
 
     def readline(self):
         if not self.buf:

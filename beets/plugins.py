@@ -19,15 +19,17 @@ from __future__ import division, absolute_import, print_function
 
 import traceback
 import re
+import inspect
+import abc
 from collections import defaultdict
 from functools import wraps
 
 
 import beets
 from beets import logging
-from beets import mediafile
-from beets.util import inspect
+import mediafile
 import six
+
 
 PLUGIN_NAMESPACE = 'beetsplug'
 
@@ -127,27 +129,31 @@ class BeetsPlugin(object):
         value after the function returns). Also determines which params may not
         be sent for backwards-compatibility.
         """
-        argspec = inspect.getargspec(func)
+        if six.PY2:
+            argspec = inspect.getargspec(func)
+            func_args = argspec.args
+            has_varkw = argspec.keywords is not None
+        else:
+            argspec = inspect.getfullargspec(func)
+            func_args = argspec.args
+            has_varkw = argspec.varkw is not None
 
         @wraps(func)
         def wrapper(*args, **kwargs):
             assert self._log.level == logging.NOTSET
+
             verbosity = beets.config['verbose'].get(int)
             log_level = max(logging.DEBUG, base_log_level - 10 * verbosity)
             self._log.setLevel(log_level)
+            if not has_varkw:
+                kwargs = dict((k, v) for k, v in kwargs.items()
+                              if k in func_args)
+
             try:
-                try:
-                    return func(*args, **kwargs)
-                except TypeError as exc:
-                    if exc.args[0].startswith(func.__name__):
-                        # caused by 'func' and not stuff internal to 'func'
-                        kwargs = dict((arg, val) for arg, val in kwargs.items()
-                                      if arg in argspec.args)
-                        return func(*args, **kwargs)
-                    else:
-                        raise
+                return func(*args, **kwargs)
             finally:
                 self._log.setLevel(logging.NOTSET)
+
         return wrapper
 
     def queries(self):
@@ -167,7 +173,7 @@ class BeetsPlugin(object):
         """
         return beets.autotag.hooks.Distance()
 
-    def candidates(self, items, artist, album, va_likely):
+    def candidates(self, items, artist, album, va_likely, extra_tags=None):
         """Should return a sequence of AlbumInfo objects that match the
         album whose items are provided.
         """
@@ -201,7 +207,7 @@ class BeetsPlugin(object):
 
         ``descriptor`` must be an instance of ``mediafile.MediaField``.
         """
-        # Defer impor to prevent circular dependency
+        # Defer import to prevent circular dependency
         from beets import library
         mediafile.MediaFile.add_field(name, descriptor)
         library.Item._media_fields.add(name)
@@ -296,6 +302,11 @@ def find_plugins():
     currently loaded beets plugins. Loads the default plugin set
     first.
     """
+    if _instances:
+        # After the first call, use cached instances for performance reasons.
+        # See https://github.com/beetbox/beets/pull/3810
+        return list(_instances.values())
+
     load_plugins()
     plugins = []
     for cls in _classes:
@@ -374,11 +385,12 @@ def album_distance(items, album_info, mapping):
     return dist
 
 
-def candidates(items, artist, album, va_likely):
+def candidates(items, artist, album, va_likely, extra_tags=None):
     """Gets MusicBrainz candidates for an album from each plugin.
     """
     for plugin in find_plugins():
-        for candidate in plugin.candidates(items, artist, album, va_likely):
+        for candidate in plugin.candidates(items, artist, album, va_likely,
+                                           extra_tags):
             yield candidate
 
 
@@ -523,7 +535,7 @@ def sanitize_choices(choices, choices_all):
 
 def sanitize_pairs(pairs, pairs_all):
     """Clean up a single-element mapping configuration attribute as returned
-    by `confit`'s `Pairs` template: keep only two-element tuples present in
+    by Confuse's `Pairs` template: keep only two-element tuples present in
     pairs_all, remove duplicate elements, expand ('str', '*') and ('*', '*')
     wildcards while keeping the original order. Note that ('*', '*') and
     ('*', 'whatever') have the same effect.
@@ -573,3 +585,189 @@ def notify_info_yielded(event):
                 yield v
         return decorated
     return decorator
+
+
+def get_distance(config, data_source, info):
+    """Returns the ``data_source`` weight and the maximum source weight
+    for albums or individual tracks.
+    """
+    dist = beets.autotag.Distance()
+    if info.data_source == data_source:
+        dist.add('source', config['source_weight'].as_number())
+    return dist
+
+
+def apply_item_changes(lib, item, move, pretend, write):
+    """Store, move, and write the item according to the arguments.
+
+    :param lib: beets library.
+    :type lib: beets.library.Library
+    :param item: Item whose changes to apply.
+    :type item: beets.library.Item
+    :param move: Move the item if it's in the library.
+    :type move: bool
+    :param pretend: Return without moving, writing, or storing the item's
+        metadata.
+    :type pretend: bool
+    :param write: Write the item's metadata to its media file.
+    :type write: bool
+    """
+    if pretend:
+        return
+
+    from beets import util
+
+    # Move the item if it's in the library.
+    if move and lib.directory in util.ancestry(item.path):
+        item.move(with_album=False)
+
+    if write:
+        item.try_write()
+
+    item.store()
+
+
+@six.add_metaclass(abc.ABCMeta)
+class MetadataSourcePlugin(object):
+    def __init__(self):
+        super(MetadataSourcePlugin, self).__init__()
+        self.config.add({'source_weight': 0.5})
+
+    @abc.abstractproperty
+    def id_regex(self):
+        raise NotImplementedError
+
+    @abc.abstractproperty
+    def data_source(self):
+        raise NotImplementedError
+
+    @abc.abstractproperty
+    def search_url(self):
+        raise NotImplementedError
+
+    @abc.abstractproperty
+    def album_url(self):
+        raise NotImplementedError
+
+    @abc.abstractproperty
+    def track_url(self):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def _search_api(self, query_type, filters, keywords=''):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def album_for_id(self, album_id):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def track_for_id(self, track_id=None, track_data=None):
+        raise NotImplementedError
+
+    @staticmethod
+    def get_artist(artists, id_key='id', name_key='name'):
+        """Returns an artist string (all artists) and an artist_id (the main
+        artist) for a list of artist object dicts.
+
+        For each artist, this function moves articles (such as 'a', 'an',
+        and 'the') to the front and strips trailing disambiguation numbers. It
+        returns a tuple containing the comma-separated string of all
+        normalized artists and the ``id`` of the main/first artist.
+
+        :param artists: Iterable of artist dicts or lists returned by API.
+        :type artists: list[dict] or list[list]
+        :param id_key: Key or index corresponding to the value of ``id`` for
+            the main/first artist. Defaults to 'id'.
+        :type id_key: str or int
+        :param name_key: Key or index corresponding to values of names
+            to concatenate for the artist string (containing all artists).
+            Defaults to 'name'.
+        :type name_key: str or int
+        :return: Normalized artist string.
+        :rtype: str
+        """
+        artist_id = None
+        artist_names = []
+        for artist in artists:
+            if not artist_id:
+                artist_id = artist[id_key]
+            name = artist[name_key]
+            # Strip disambiguation number.
+            name = re.sub(r' \(\d+\)$', '', name)
+            # Move articles to the front.
+            name = re.sub(r'^(.*?), (a|an|the)$', r'\2 \1', name, flags=re.I)
+            artist_names.append(name)
+        artist = ', '.join(artist_names).replace(' ,', ',') or None
+        return artist, artist_id
+
+    def _get_id(self, url_type, id_):
+        """Parse an ID from its URL if necessary.
+
+        :param url_type: Type of URL. Either 'album' or 'track'.
+        :type url_type: str
+        :param id_: Album/track ID or URL.
+        :type id_: str
+        :return: Album/track ID.
+        :rtype: str
+        """
+        self._log.debug(
+            u"Searching {} for {} '{}'", self.data_source, url_type, id_
+        )
+        match = re.search(self.id_regex['pattern'].format(url_type), str(id_))
+        if match:
+            id_ = match.group(self.id_regex['match_group'])
+            if id_:
+                return id_
+        return None
+
+    def candidates(self, items, artist, album, va_likely, extra_tags=None):
+        """Returns a list of AlbumInfo objects for Search API results
+        matching an ``album`` and ``artist`` (if not various).
+
+        :param items: List of items comprised by an album to be matched.
+        :type items: list[beets.library.Item]
+        :param artist: The artist of the album to be matched.
+        :type artist: str
+        :param album: The name of the album to be matched.
+        :type album: str
+        :param va_likely: True if the album to be matched likely has
+            Various Artists.
+        :type va_likely: bool
+        :return: Candidate AlbumInfo objects.
+        :rtype: list[beets.autotag.hooks.AlbumInfo]
+        """
+        query_filters = {'album': album}
+        if not va_likely:
+            query_filters['artist'] = artist
+        results = self._search_api(query_type='album', filters=query_filters)
+        albums = [self.album_for_id(album_id=r['id']) for r in results]
+        return [a for a in albums if a is not None]
+
+    def item_candidates(self, item, artist, title):
+        """Returns a list of TrackInfo objects for Search API results
+        matching ``title`` and ``artist``.
+
+        :param item: Singleton item to be matched.
+        :type item: beets.library.Item
+        :param artist: The artist of the track to be matched.
+        :type artist: str
+        :param title: The title of the track to be matched.
+        :type title: str
+        :return: Candidate TrackInfo objects.
+        :rtype: list[beets.autotag.hooks.TrackInfo]
+        """
+        tracks = self._search_api(
+            query_type='track', keywords=title, filters={'artist': artist}
+        )
+        return [self.track_for_id(track_data=track) for track in tracks]
+
+    def album_distance(self, items, album_info, mapping):
+        return get_distance(
+            data_source=self.data_source, info=album_info, config=self.config
+        )
+
+    def track_distance(self, item, track_info):
+        return get_distance(
+            data_source=self.data_source, info=track_info, config=self.config
+        )

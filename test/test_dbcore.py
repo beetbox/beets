@@ -32,11 +32,11 @@ import six
 # Fixture: concrete database and model classes. For migration tests, we
 # have multiple models with different numbers of fields.
 
-class TestSort(dbcore.query.FieldSort):
+class SortFixture(dbcore.query.FieldSort):
     pass
 
 
-class TestQuery(dbcore.query.Query):
+class QueryFixture(dbcore.query.Query):
     def __init__(self, pattern):
         self.pattern = pattern
 
@@ -47,21 +47,22 @@ class TestQuery(dbcore.query.Query):
         return True
 
 
-class TestModel1(dbcore.Model):
+class ModelFixture1(dbcore.Model):
     _table = 'test'
     _flex_table = 'testflex'
     _fields = {
         'id': dbcore.types.PRIMARY_ID,
         'field_one': dbcore.types.INTEGER,
+        'field_two': dbcore.types.STRING,
     }
     _types = {
         'some_float_field': dbcore.types.FLOAT,
     }
     _sorts = {
-        'some_sort': TestSort,
+        'some_sort': SortFixture,
     }
     _queries = {
-        'some_query': TestQuery,
+        'some_query': QueryFixture,
     }
 
     @classmethod
@@ -72,12 +73,12 @@ class TestModel1(dbcore.Model):
         return {}
 
 
-class TestDatabase1(dbcore.Database):
-    _models = (TestModel1,)
+class DatabaseFixture1(dbcore.Database):
+    _models = (ModelFixture1,)
     pass
 
 
-class TestModel2(TestModel1):
+class ModelFixture2(ModelFixture1):
     _fields = {
         'id': dbcore.types.PRIMARY_ID,
         'field_one': dbcore.types.INTEGER,
@@ -85,12 +86,12 @@ class TestModel2(TestModel1):
     }
 
 
-class TestDatabase2(dbcore.Database):
-    _models = (TestModel2,)
+class DatabaseFixture2(dbcore.Database):
+    _models = (ModelFixture2,)
     pass
 
 
-class TestModel3(TestModel1):
+class ModelFixture3(ModelFixture1):
     _fields = {
         'id': dbcore.types.PRIMARY_ID,
         'field_one': dbcore.types.INTEGER,
@@ -99,12 +100,12 @@ class TestModel3(TestModel1):
     }
 
 
-class TestDatabase3(dbcore.Database):
-    _models = (TestModel3,)
+class DatabaseFixture3(dbcore.Database):
+    _models = (ModelFixture3,)
     pass
 
 
-class TestModel4(TestModel1):
+class ModelFixture4(ModelFixture1):
     _fields = {
         'id': dbcore.types.PRIMARY_ID,
         'field_one': dbcore.types.INTEGER,
@@ -114,12 +115,12 @@ class TestModel4(TestModel1):
     }
 
 
-class TestDatabase4(dbcore.Database):
-    _models = (TestModel4,)
+class DatabaseFixture4(dbcore.Database):
+    _models = (ModelFixture4,)
     pass
 
 
-class AnotherTestModel(TestModel1):
+class AnotherModelFixture(ModelFixture1):
     _table = 'another'
     _flex_table = 'anotherflex'
     _fields = {
@@ -128,7 +129,7 @@ class AnotherTestModel(TestModel1):
     }
 
 
-class TestModel5(TestModel1):
+class ModelFixture5(ModelFixture1):
     _fields = {
         'some_string_field': dbcore.types.STRING,
         'some_float_field': dbcore.types.FLOAT,
@@ -136,17 +137,17 @@ class TestModel5(TestModel1):
     }
 
 
-class TestDatabase5(dbcore.Database):
-    _models = (TestModel5,)
+class DatabaseFixture5(dbcore.Database):
+    _models = (ModelFixture5,)
     pass
 
 
-class TestDatabaseTwoModels(dbcore.Database):
-    _models = (TestModel2, AnotherTestModel)
+class DatabaseFixtureTwoModels(dbcore.Database):
+    _models = (ModelFixture2, AnotherModelFixture)
     pass
 
 
-class TestModelWithGetters(dbcore.Model):
+class ModelFixtureWithGetters(dbcore.Model):
 
     @classmethod
     def _getters(cls):
@@ -167,7 +168,7 @@ class MigrationTest(unittest.TestCase):
         handle, cls.orig_libfile = mkstemp('orig_db')
         os.close(handle)
         # Set up a database with the two-field schema.
-        old_lib = TestDatabase2(cls.orig_libfile)
+        old_lib = DatabaseFixture2(cls.orig_libfile)
 
         # Add an item to the old library.
         old_lib._connection().execute(
@@ -189,111 +190,160 @@ class MigrationTest(unittest.TestCase):
         os.remove(self.libfile)
 
     def test_open_with_same_fields_leaves_untouched(self):
-        new_lib = TestDatabase2(self.libfile)
+        new_lib = DatabaseFixture2(self.libfile)
         c = new_lib._connection().cursor()
         c.execute("select * from test")
         row = c.fetchone()
-        self.assertEqual(len(row.keys()), len(TestModel2._fields))
+        self.assertEqual(len(row.keys()), len(ModelFixture2._fields))
 
     def test_open_with_new_field_adds_column(self):
-        new_lib = TestDatabase3(self.libfile)
+        new_lib = DatabaseFixture3(self.libfile)
         c = new_lib._connection().cursor()
         c.execute("select * from test")
         row = c.fetchone()
-        self.assertEqual(len(row.keys()), len(TestModel3._fields))
+        self.assertEqual(len(row.keys()), len(ModelFixture3._fields))
 
     def test_open_with_fewer_fields_leaves_untouched(self):
-        new_lib = TestDatabase1(self.libfile)
+        new_lib = DatabaseFixture1(self.libfile)
         c = new_lib._connection().cursor()
         c.execute("select * from test")
         row = c.fetchone()
-        self.assertEqual(len(row.keys()), len(TestModel2._fields))
+        self.assertEqual(len(row.keys()), len(ModelFixture2._fields))
 
     def test_open_with_multiple_new_fields(self):
-        new_lib = TestDatabase4(self.libfile)
+        new_lib = DatabaseFixture4(self.libfile)
         c = new_lib._connection().cursor()
         c.execute("select * from test")
         row = c.fetchone()
-        self.assertEqual(len(row.keys()), len(TestModel4._fields))
+        self.assertEqual(len(row.keys()), len(ModelFixture4._fields))
 
     def test_extra_model_adds_table(self):
-        new_lib = TestDatabaseTwoModels(self.libfile)
+        new_lib = DatabaseFixtureTwoModels(self.libfile)
         try:
             new_lib._connection().execute("select * from another")
         except sqlite3.OperationalError:
             self.fail("select failed")
 
 
+class TransactionTest(unittest.TestCase):
+    def setUp(self):
+        self.db = DatabaseFixture1(':memory:')
+
+    def tearDown(self):
+        self.db._connection().close()
+
+    def test_mutate_increase_revision(self):
+        old_rev = self.db.revision
+        with self.db.transaction() as tx:
+            tx.mutate(
+                'INSERT INTO {0} '
+                '(field_one) '
+                'VALUES (?);'.format(ModelFixture1._table),
+                (111,),
+            )
+        self.assertGreater(self.db.revision, old_rev)
+
+    def test_query_no_increase_revision(self):
+        old_rev = self.db.revision
+        with self.db.transaction() as tx:
+            tx.query('PRAGMA table_info(%s)' % ModelFixture1._table)
+        self.assertEqual(self.db.revision, old_rev)
+
+
 class ModelTest(unittest.TestCase):
     def setUp(self):
-        self.db = TestDatabase1(':memory:')
+        self.db = DatabaseFixture1(':memory:')
 
     def tearDown(self):
         self.db._connection().close()
 
     def test_add_model(self):
-        model = TestModel1()
+        model = ModelFixture1()
         model.add(self.db)
         rows = self.db._connection().execute('select * from test').fetchall()
         self.assertEqual(len(rows), 1)
 
     def test_store_fixed_field(self):
-        model = TestModel1()
+        model = ModelFixture1()
         model.add(self.db)
         model.field_one = 123
         model.store()
         row = self.db._connection().execute('select * from test').fetchone()
         self.assertEqual(row['field_one'], 123)
 
-    def test_retrieve_by_id(self):
-        model = TestModel1()
+    def test_revision(self):
+        old_rev = self.db.revision
+        model = ModelFixture1()
         model.add(self.db)
-        other_model = self.db._get(TestModel1, model.id)
+        model.store()
+        self.assertEqual(model._revision, self.db.revision)
+        self.assertGreater(self.db.revision, old_rev)
+
+        mid_rev = self.db.revision
+        model2 = ModelFixture1()
+        model2.add(self.db)
+        model2.store()
+        self.assertGreater(model2._revision, mid_rev)
+        self.assertGreater(self.db.revision, model._revision)
+
+        # revision changed, so the model should be re-loaded
+        model.load()
+        self.assertEqual(model._revision, self.db.revision)
+
+        # revision did not change, so no reload
+        mod2_old_rev = model2._revision
+        model2.load()
+        self.assertEqual(model2._revision, mod2_old_rev)
+
+    def test_retrieve_by_id(self):
+        model = ModelFixture1()
+        model.add(self.db)
+        other_model = self.db._get(ModelFixture1, model.id)
         self.assertEqual(model.id, other_model.id)
 
     def test_store_and_retrieve_flexattr(self):
-        model = TestModel1()
+        model = ModelFixture1()
         model.add(self.db)
         model.foo = 'bar'
         model.store()
 
-        other_model = self.db._get(TestModel1, model.id)
+        other_model = self.db._get(ModelFixture1, model.id)
         self.assertEqual(other_model.foo, 'bar')
 
     def test_delete_flexattr(self):
-        model = TestModel1()
+        model = ModelFixture1()
         model['foo'] = 'bar'
         self.assertTrue('foo' in model)
         del model['foo']
         self.assertFalse('foo' in model)
 
     def test_delete_flexattr_via_dot(self):
-        model = TestModel1()
+        model = ModelFixture1()
         model['foo'] = 'bar'
         self.assertTrue('foo' in model)
         del model.foo
         self.assertFalse('foo' in model)
 
     def test_delete_flexattr_persists(self):
-        model = TestModel1()
+        model = ModelFixture1()
         model.add(self.db)
         model.foo = 'bar'
         model.store()
 
-        model = self.db._get(TestModel1, model.id)
+        model = self.db._get(ModelFixture1, model.id)
         del model['foo']
         model.store()
 
-        model = self.db._get(TestModel1, model.id)
+        model = self.db._get(ModelFixture1, model.id)
         self.assertFalse('foo' in model)
 
     def test_delete_non_existent_attribute(self):
-        model = TestModel1()
+        model = ModelFixture1()
         with self.assertRaises(KeyError):
             del model['foo']
 
     def test_delete_fixed_attribute(self):
-        model = TestModel5()
+        model = ModelFixture5()
         model.some_string_field = 'foo'
         model.some_float_field = 1.23
         model.some_boolean_field = True
@@ -306,26 +356,26 @@ class ModelTest(unittest.TestCase):
             self.assertEqual(model[field], type_.null)
 
     def test_null_value_normalization_by_type(self):
-        model = TestModel1()
+        model = ModelFixture1()
         model.field_one = None
         self.assertEqual(model.field_one, 0)
 
     def test_null_value_stays_none_for_untyped_field(self):
-        model = TestModel1()
+        model = ModelFixture1()
         model.foo = None
         self.assertEqual(model.foo, None)
 
     def test_normalization_for_typed_flex_fields(self):
-        model = TestModel1()
+        model = ModelFixture1()
         model.some_float_field = None
         self.assertEqual(model.some_float_field, 0.0)
 
     def test_load_deleted_flex_field(self):
-        model1 = TestModel1()
+        model1 = ModelFixture1()
         model1['flex_field'] = True
         model1.add(self.db)
 
-        model2 = self.db._get(TestModel1, model1.id)
+        model2 = self.db._get(ModelFixture1, model1.id)
         self.assertIn('flex_field', model2)
 
         del model1['flex_field']
@@ -338,24 +388,24 @@ class ModelTest(unittest.TestCase):
         with assertRaisesRegex(self, ValueError, 'no database'):
             dbcore.Model()._check_db()
         with assertRaisesRegex(self, ValueError, 'no id'):
-            TestModel1(self.db)._check_db()
+            ModelFixture1(self.db)._check_db()
 
         dbcore.Model(self.db)._check_db(need_id=False)
 
     def test_missing_field(self):
         with self.assertRaises(AttributeError):
-            TestModel1(self.db).nonExistingKey
+            ModelFixture1(self.db).nonExistingKey
 
     def test_computed_field(self):
-        model = TestModelWithGetters()
+        model = ModelFixtureWithGetters()
         self.assertEqual(model.aComputedField, 'thing')
         with assertRaisesRegex(self, KeyError, u'computed field .+ deleted'):
             del model.aComputedField
 
     def test_items(self):
-        model = TestModel1(self.db)
+        model = ModelFixture1(self.db)
         model.id = 5
-        self.assertEqual({('id', 5), ('field_one', 0)},
+        self.assertEqual({('id', 5), ('field_one', 0), ('field_two', '')},
                          set(model.items()))
 
     def test_delete_internal_field(self):
@@ -370,32 +420,50 @@ class ModelTest(unittest.TestCase):
 
 
 class FormatTest(unittest.TestCase):
-    def test_format_fixed_field(self):
-        model = TestModel1()
-        model.field_one = u'caf\xe9'
+    def test_format_fixed_field_integer(self):
+        model = ModelFixture1()
+        model.field_one = 155
         value = model.formatted().get('field_one')
+        self.assertEqual(value, u'155')
+
+    def test_format_fixed_field_integer_normalized(self):
+        """The normalize method of the Integer class rounds floats
+        """
+        model = ModelFixture1()
+        model.field_one = 142.432
+        value = model.formatted().get('field_one')
+        self.assertEqual(value, u'142')
+
+        model.field_one = 142.863
+        value = model.formatted().get('field_one')
+        self.assertEqual(value, u'143')
+
+    def test_format_fixed_field_string(self):
+        model = ModelFixture1()
+        model.field_two = u'caf\xe9'
+        value = model.formatted().get('field_two')
         self.assertEqual(value, u'caf\xe9')
 
     def test_format_flex_field(self):
-        model = TestModel1()
+        model = ModelFixture1()
         model.other_field = u'caf\xe9'
         value = model.formatted().get('other_field')
         self.assertEqual(value, u'caf\xe9')
 
     def test_format_flex_field_bytes(self):
-        model = TestModel1()
+        model = ModelFixture1()
         model.other_field = u'caf\xe9'.encode('utf-8')
         value = model.formatted().get('other_field')
         self.assertTrue(isinstance(value, six.text_type))
         self.assertEqual(value, u'caf\xe9')
 
     def test_format_unset_field(self):
-        model = TestModel1()
+        model = ModelFixture1()
         value = model.formatted().get('other_field')
         self.assertEqual(value, u'')
 
     def test_format_typed_flex_field(self):
-        model = TestModel1()
+        model = ModelFixture1()
         model.some_float_field = 3.14159265358979
         value = model.formatted().get('some_float_field')
         self.assertEqual(value, u'3.1')
@@ -403,40 +471,40 @@ class FormatTest(unittest.TestCase):
 
 class FormattedMappingTest(unittest.TestCase):
     def test_keys_equal_model_keys(self):
-        model = TestModel1()
+        model = ModelFixture1()
         formatted = model.formatted()
         self.assertEqual(set(model.keys(True)), set(formatted.keys()))
 
     def test_get_unset_field(self):
-        model = TestModel1()
+        model = ModelFixture1()
         formatted = model.formatted()
         with self.assertRaises(KeyError):
             formatted['other_field']
 
     def test_get_method_with_default(self):
-        model = TestModel1()
+        model = ModelFixture1()
         formatted = model.formatted()
         self.assertEqual(formatted.get('other_field'), u'')
 
     def test_get_method_with_specified_default(self):
-        model = TestModel1()
+        model = ModelFixture1()
         formatted = model.formatted()
         self.assertEqual(formatted.get('other_field', 'default'), 'default')
 
 
 class ParseTest(unittest.TestCase):
     def test_parse_fixed_field(self):
-        value = TestModel1._parse('field_one', u'2')
+        value = ModelFixture1._parse('field_one', u'2')
         self.assertIsInstance(value, int)
         self.assertEqual(value, 2)
 
     def test_parse_flex_field(self):
-        value = TestModel1._parse('some_float_field', u'2')
+        value = ModelFixture1._parse('some_float_field', u'2')
         self.assertIsInstance(value, float)
         self.assertEqual(value, 2.0)
 
     def test_parse_untyped_field(self):
-        value = TestModel1._parse('field_nine', u'2')
+        value = ModelFixture1._parse('field_nine', u'2')
         self.assertEqual(value, u'2')
 
 
@@ -503,7 +571,7 @@ class QueryFromStringsTest(unittest.TestCase):
     def qfs(self, strings):
         return dbcore.queryparse.query_from_strings(
             dbcore.query.AndQuery,
-            TestModel1,
+            ModelFixture1,
             {':': dbcore.query.RegexpQuery},
             strings,
         )
@@ -535,13 +603,13 @@ class QueryFromStringsTest(unittest.TestCase):
 
     def test_parse_named_query(self):
         q = self.qfs(['some_query:foo'])
-        self.assertIsInstance(q.subqueries[0], TestQuery)
+        self.assertIsInstance(q.subqueries[0], QueryFixture)
 
 
 class SortFromStringsTest(unittest.TestCase):
     def sfs(self, strings):
         return dbcore.queryparse.sort_from_strings(
-            TestModel1,
+            ModelFixture1,
             strings,
         )
 
@@ -571,13 +639,13 @@ class SortFromStringsTest(unittest.TestCase):
 
     def test_special_sort(self):
         s = self.sfs(['some_sort+'])
-        self.assertIsInstance(s, TestSort)
+        self.assertIsInstance(s, SortFixture)
 
 
 class ParseSortedQueryTest(unittest.TestCase):
     def psq(self, parts):
         return dbcore.parse_sorted_query(
-            TestModel1,
+            ModelFixture1,
             parts.split(),
         )
 
@@ -626,11 +694,11 @@ class ParseSortedQueryTest(unittest.TestCase):
 
 class ResultsIteratorTest(unittest.TestCase):
     def setUp(self):
-        self.db = TestDatabase1(':memory:')
-        model = TestModel1()
+        self.db = DatabaseFixture1(':memory:')
+        model = ModelFixture1()
         model['foo'] = 'baz'
         model.add(self.db)
-        model = TestModel1()
+        model = ModelFixture1()
         model['foo'] = 'bar'
         model.add(self.db)
 
@@ -638,16 +706,16 @@ class ResultsIteratorTest(unittest.TestCase):
         self.db._connection().close()
 
     def test_iterate_once(self):
-        objs = self.db._fetch(TestModel1)
+        objs = self.db._fetch(ModelFixture1)
         self.assertEqual(len(list(objs)), 2)
 
     def test_iterate_twice(self):
-        objs = self.db._fetch(TestModel1)
+        objs = self.db._fetch(ModelFixture1)
         list(objs)
         self.assertEqual(len(list(objs)), 2)
 
     def test_concurrent_iterators(self):
-        results = self.db._fetch(TestModel1)
+        results = self.db._fetch(ModelFixture1)
         it1 = iter(results)
         it2 = iter(results)
         next(it1)
@@ -656,44 +724,44 @@ class ResultsIteratorTest(unittest.TestCase):
 
     def test_slow_query(self):
         q = dbcore.query.SubstringQuery('foo', 'ba', False)
-        objs = self.db._fetch(TestModel1, q)
+        objs = self.db._fetch(ModelFixture1, q)
         self.assertEqual(len(list(objs)), 2)
 
     def test_slow_query_negative(self):
         q = dbcore.query.SubstringQuery('foo', 'qux', False)
-        objs = self.db._fetch(TestModel1, q)
+        objs = self.db._fetch(ModelFixture1, q)
         self.assertEqual(len(list(objs)), 0)
 
     def test_iterate_slow_sort(self):
         s = dbcore.query.SlowFieldSort('foo')
-        res = self.db._fetch(TestModel1, sort=s)
+        res = self.db._fetch(ModelFixture1, sort=s)
         objs = list(res)
         self.assertEqual(objs[0].foo, 'bar')
         self.assertEqual(objs[1].foo, 'baz')
 
     def test_unsorted_subscript(self):
-        objs = self.db._fetch(TestModel1)
+        objs = self.db._fetch(ModelFixture1)
         self.assertEqual(objs[0].foo, 'baz')
         self.assertEqual(objs[1].foo, 'bar')
 
     def test_slow_sort_subscript(self):
         s = dbcore.query.SlowFieldSort('foo')
-        objs = self.db._fetch(TestModel1, sort=s)
+        objs = self.db._fetch(ModelFixture1, sort=s)
         self.assertEqual(objs[0].foo, 'bar')
         self.assertEqual(objs[1].foo, 'baz')
 
     def test_length(self):
-        objs = self.db._fetch(TestModel1)
+        objs = self.db._fetch(ModelFixture1)
         self.assertEqual(len(objs), 2)
 
     def test_out_of_range(self):
-        objs = self.db._fetch(TestModel1)
+        objs = self.db._fetch(ModelFixture1)
         with self.assertRaises(IndexError):
             objs[100]
 
     def test_no_results(self):
         self.assertIsNone(self.db._fetch(
-            TestModel1, dbcore.query.FalseQuery()).get())
+            ModelFixture1, dbcore.query.FalseQuery()).get())
 
 
 def suite():

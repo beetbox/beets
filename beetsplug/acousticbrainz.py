@@ -17,10 +17,12 @@
 """
 from __future__ import division, absolute_import, print_function
 
+from collections import defaultdict
+
 import requests
 
-from collections import defaultdict
 from beets import plugins, ui
+from beets.dbcore import types
 
 ACOUSTIC_BASE = "https://acousticbrainz.org/"
 LEVELS = ["/low-level", "/high-level"]
@@ -72,6 +74,9 @@ ABSCHEME = {
                 'sad': 'mood_sad'
             }
         },
+        'moods_mirex': {
+            'value': 'moods_mirex'
+        },
         'ismir04_rhythm': {
             'value': 'rhythm'
         },
@@ -79,6 +84,9 @@ ABSCHEME = {
             'all': {
                 'tonal': 'tonal'
             }
+        },
+        'timbre': {
+            'value': 'timbre'
         },
         'voice_instrumental': {
             'value': 'voice_instrumental'
@@ -104,6 +112,31 @@ ABSCHEME = {
 
 
 class AcousticPlugin(plugins.BeetsPlugin):
+    item_types = {
+        'average_loudness': types.Float(6),
+        'chords_changes_rate': types.Float(6),
+        'chords_key': types.STRING,
+        'chords_number_rate': types.Float(6),
+        'chords_scale': types.STRING,
+        'danceable': types.Float(6),
+        'gender': types.STRING,
+        'genre_rosamerica': types.STRING,
+        'initial_key': types.STRING,
+        'key_strength': types.Float(6),
+        'mood_acoustic': types.Float(6),
+        'mood_aggressive': types.Float(6),
+        'mood_electronic': types.Float(6),
+        'mood_happy': types.Float(6),
+        'mood_party': types.Float(6),
+        'mood_relaxed': types.Float(6),
+        'mood_sad': types.Float(6),
+        'moods_mirex': types.STRING,
+        'rhythm': types.Float(6),
+        'timbre': types.STRING,
+        'tonal': types.Float(6),
+        'voice_instrumental': types.STRING,
+    }
+
     def __init__(self):
         super(AcousticPlugin, self).__init__()
 

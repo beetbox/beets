@@ -16,15 +16,14 @@
 
 from __future__ import division, absolute_import, print_function
 
-import unittest
 import six
-
-from test.helper import TestHelper, has_program
+import unittest
+from mediafile import MediaFile
 
 from beets import config
-from beets.mediafile import MediaFile
 from beetsplug.replaygain import (FatalGstreamerPluginReplayGainError,
                                   GStreamerBackend)
+from test.helper import TestHelper, has_program
 
 try:
     import gi
@@ -38,16 +37,23 @@ if any(has_program(cmd, ['-v']) for cmd in ['mp3gain', 'aacgain']):
 else:
     GAIN_PROG_AVAILABLE = False
 
-if has_program('bs1770gain', ['--replaygain']):
-    LOUDNESS_PROG_AVAILABLE = True
-else:
-    LOUDNESS_PROG_AVAILABLE = False
+FFMPEG_AVAILABLE = has_program('ffmpeg', ['-version'])
+
+
+def reset_replaygain(item):
+    item['rg_track_peak'] = None
+    item['rg_track_gain'] = None
+    item['rg_album_gain'] = None
+    item['rg_album_gain'] = None
+    item.write()
+    item.store()
+    item.store()
+    item.store()
 
 
 class ReplayGainCliTestBase(TestHelper):
-
     def setUp(self):
-        self.setup_beets()
+        self.setup_beets(disk=True)
         self.config['replaygain']['backend'] = self.backend
 
         try:
@@ -68,7 +74,7 @@ class ReplayGainCliTestBase(TestHelper):
 
         album = self.add_album_fixture(2)
         for item in album.items():
-            self._reset_replaygain(item)
+            reset_replaygain(item)
 
     def tearDown(self):
         self.teardown_beets()
@@ -77,8 +83,10 @@ class ReplayGainCliTestBase(TestHelper):
     def _reset_replaygain(self, item):
         item['rg_track_peak'] = None
         item['rg_track_gain'] = None
+        item['rg_album_peak'] = None
         item['rg_album_gain'] = None
-        item['rg_album_gain'] = None
+        item['r128_track_gain'] = None
+        item['r128_album_gain'] = None
         item.write()
         item.store()
 
@@ -138,6 +146,45 @@ class ReplayGainCliTestBase(TestHelper):
         self.assertNotEqual(max(gains), 0.0)
         self.assertNotEqual(max(peaks), 0.0)
 
+    def test_cli_writes_only_r128_tags(self):
+        if self.backend == "command":
+            # opus not supported by command backend
+            return
+
+        album = self.add_album_fixture(2, ext="opus")
+        for item in album.items():
+            self._reset_replaygain(item)
+
+        self.run_command(u'replaygain', u'-a')
+
+        for item in album.items():
+            mediafile = MediaFile(item.path)
+            # does not write REPLAYGAIN_* tags
+            self.assertIsNone(mediafile.rg_track_gain)
+            self.assertIsNone(mediafile.rg_album_gain)
+            # writes R128_* tags
+            self.assertIsNotNone(mediafile.r128_track_gain)
+            self.assertIsNotNone(mediafile.r128_album_gain)
+
+    def test_target_level_has_effect(self):
+        item = self.lib.items()[0]
+
+        def analyse(target_level):
+            self.config['replaygain']['targetlevel'] = target_level
+            self._reset_replaygain(item)
+            self.run_command(u'replaygain', '-f')
+            mediafile = MediaFile(item.path)
+            return mediafile.rg_track_gain
+
+        gain_relative_to_84 = analyse(84)
+        gain_relative_to_89 = analyse(89)
+
+        # check that second calculation did work
+        if gain_relative_to_84 is not None:
+            self.assertIsNotNone(gain_relative_to_89)
+
+        self.assertNotEqual(gain_relative_to_84, gain_relative_to_89)
+
 
 @unittest.skipIf(not GST_AVAILABLE, u'gstreamer cannot be found')
 class ReplayGainGstCliTest(ReplayGainCliTestBase, unittest.TestCase):
@@ -161,9 +208,9 @@ class ReplayGainCmdCliTest(ReplayGainCliTestBase, unittest.TestCase):
     backend = u'command'
 
 
-@unittest.skipIf(not LOUDNESS_PROG_AVAILABLE, u'bs1770gain cannot be found')
-class ReplayGainLdnsCliTest(ReplayGainCliTestBase, unittest.TestCase):
-    backend = u'bs1770gain'
+@unittest.skipIf(not FFMPEG_AVAILABLE, u'ffmpeg cannot be found')
+class ReplayGainFfmpegTest(ReplayGainCliTestBase, unittest.TestCase):
+    backend = u'ffmpeg'
 
 
 def suite():

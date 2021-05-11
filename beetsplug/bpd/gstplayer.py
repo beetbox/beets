@@ -64,7 +64,8 @@ class GstPlayer(object):
         """
 
         # Set up the Gstreamer player. From the pygst tutorial:
-        # http://pygstdocs.berlios.de/pygst-tutorial/playbin.html
+        # https://pygstdocs.berlios.de/pygst-tutorial/playbin.html (gone)
+        # https://brettviren.github.io/pygst-tutorial-org/pygst-tutorial.html
         ####
         # Updated to GStreamer 1.0 with:
         # https://wiki.ubuntu.com/Novacut/GStreamer1.0
@@ -177,12 +178,12 @@ class GstPlayer(object):
             posq = self.player.query_position(fmt)
             if not posq[0]:
                 raise QueryError("query_position failed")
-            pos = posq[1] // (10 ** 9)
+            pos = posq[1] / (10 ** 9)
 
             lengthq = self.player.query_duration(fmt)
             if not lengthq[0]:
                 raise QueryError("query_duration failed")
-            length = lengthq[1] // (10 ** 9)
+            length = lengthq[1] / (10 ** 9)
 
             self.cached_time = (pos, length)
             return (pos, length)
@@ -214,6 +215,59 @@ class GstPlayer(object):
         """Block until playing finishes."""
         while self.playing:
             time.sleep(1)
+
+    def get_decoders(self):
+        return get_decoders()
+
+
+def get_decoders():
+    """Get supported audio decoders from GStreamer.
+    Returns a dict mapping decoder element names to the associated media types
+    and file extensions.
+    """
+    # We only care about audio decoder elements.
+    filt = (Gst.ELEMENT_FACTORY_TYPE_DEPAYLOADER |
+            Gst.ELEMENT_FACTORY_TYPE_DEMUXER |
+            Gst.ELEMENT_FACTORY_TYPE_PARSER |
+            Gst.ELEMENT_FACTORY_TYPE_DECODER |
+            Gst.ELEMENT_FACTORY_TYPE_MEDIA_AUDIO)
+
+    decoders = {}
+    mime_types = set()
+    for f in Gst.ElementFactory.list_get_elements(filt, Gst.Rank.NONE):
+        for pad in f.get_static_pad_templates():
+            if pad.direction == Gst.PadDirection.SINK:
+                caps = pad.static_caps.get()
+                mimes = set()
+                for i in range(caps.get_size()):
+                    struct = caps.get_structure(i)
+                    mime = struct.get_name()
+                    if mime == 'unknown/unknown':
+                        continue
+                    mimes.add(mime)
+                    mime_types.add(mime)
+                if mimes:
+                    decoders[f.get_name()] = (mimes, set())
+
+    # Check all the TypeFindFactory plugin features form the registry. If they
+    # are associated with an audio media type that we found above, get the list
+    # of corresponding file extensions.
+    mime_extensions = {mime: set() for mime in mime_types}
+    for feat in Gst.Registry.get().get_feature_list(Gst.TypeFindFactory):
+        caps = feat.get_caps()
+        if caps:
+            for i in range(caps.get_size()):
+                struct = caps.get_structure(i)
+                mime = struct.get_name()
+                if mime in mime_types:
+                    mime_extensions[mime].update(feat.get_extensions())
+
+    # Fill in the slot we left for file extensions.
+    for name, (mimes, exts) in decoders.items():
+        for mime in mimes:
+            exts.update(mime_extensions[mime])
+
+    return decoders
 
 
 def play_simple(paths):

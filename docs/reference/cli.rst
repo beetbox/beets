@@ -67,11 +67,11 @@ albums (the latter case is true of typical Artist/Album organizations
 and many people's "downloads" folders). The path can also be a single
 song or an archive. Beets supports `zip` and `tar` archives out of the
 box. To extract `rar` files, install the `rarfile`_ package and the
-`unrar` command.
+`unrar` command. To extract `7z` files, install the `py7zr`_ package.
 
 Optional command flags:
 
-* By default, the command copies files your the library directory and
+* By default, the command copies files to your library directory and
   updates the ID3 tags on your music. In order to move the files, instead of
   copying, use the ``-m`` (move) option. If you'd like to leave your music
   files untouched, try the ``-C`` (don't copy) and ``-W`` (don't write tags)
@@ -151,7 +151,8 @@ Optional command flags:
 
     beet import --set genre="Alternative Rock" --set mood="emotional"
 
-.. _rarfile: https://pypi.python.org/pypi/rarfile/2.2
+.. _rarfile: https://pypi.python.org/pypi/rarfile/
+.. _py7zr: https://pypi.org/project/py7zr/
 
 .. only:: html
 
@@ -212,12 +213,12 @@ The ``-p`` option makes beets print out filenames of matched items, which might
 be useful for piping into other Unix commands (such as `xargs`_). Similarly, the
 ``-f`` option lets you specify a specific format with which to print every album
 or track. This uses the same template syntax as beets' :doc:`path formats
-<pathformat>`. For example, the command ``beet ls -af '$album: $tracktotal'
+<pathformat>`. For example, the command ``beet ls -af '$album: $albumtotal'
 beatles`` prints out the number of tracks on each Beatles album. In Unix shells,
 remember to enclose the template argument in single quotes to avoid environment
 variable expansion.
 
-.. _xargs: http://en.wikipedia.org/wiki/Xargs
+.. _xargs: https://en.wikipedia.org/wiki/Xargs
 
 .. _remove-cmd:
 
@@ -230,10 +231,21 @@ remove
 Remove music from your library.
 
 This command uses the same :doc:`query <query>` syntax as the ``list`` command.
-You'll be shown a list of the files that will be removed and asked to confirm.
-By default, this just removes entries from the library database; it doesn't
-touch the files on disk. To actually delete the files, use ``beet remove -d``.
-If you do not want to be prompted to remove the files, use ``beet remove -f``.
+By default, it just removes entries from the library database; it doesn't
+touch the files on disk. To actually delete the files, use the ``-d`` flag.
+When the ``-a`` flag is given, the command operates on albums instead of
+individual tracks.
+
+When you run the ``remove`` command, it prints a list of all
+affected items in the library and asks for your permission before removing
+them. You can then choose to abort (type `n`), confirm (`y`), or interactively
+choose some of the items (`s`). In the latter case, the command will prompt you
+for every matching item or album and invite you to type `y` to remove the
+item/album, `n` to keep it or `q` to exit and only remove the items/albums
+selected up to this point.
+This option lets you choose precisely which tracks/albums to remove without
+spending too much time to carefully craft a query.
+If you do not want to be prompted at all, use the ``-f`` option.
 
 .. _modify-cmd:
 
@@ -429,6 +441,10 @@ import ...``.
   configuration options entirely, the two are merged. Any individual options set
   in this config file will override the corresponding settings in your base
   configuration.
+* ``-p plugins``: specify a comma-separated list of plugins to enable. If
+  specified, the plugin list in your configuration is ignored. The long form
+  of this argument also allows specifying no plugins, effectively disabling
+  all plugins: ``--plugins=``.
 
 Beets also uses the ``BEETSDIR`` environment variable to look for
 configuration and data.
@@ -453,7 +469,7 @@ available via your package manager. On OS X, you can install it via Homebrew
 with ``brew install bash-completion``; Homebrew will give you instructions for
 sourcing the script.
 
-.. _bash-completion: http://bash-completion.alioth.debian.org/
+.. _bash-completion: https://github.com/scop/bash-completion
 .. _bash: https://www.gnu.org/software/bash/
 
 The completion script suggests names of subcommands and (after typing
@@ -498,6 +514,6 @@ defines some bash-specific functions to make this work without errors::
     See Also
     --------
 
-    ``http://beets.readthedocs.org/``
+    ``https://beets.readthedocs.org/``
 
     :manpage:`beetsconfig(5)`

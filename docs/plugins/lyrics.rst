@@ -2,12 +2,12 @@ Lyrics Plugin
 =============
 
 The ``lyrics`` plugin fetches and stores song lyrics from databases on the Web.
-Namely, the current version of the plugin uses `Lyric Wiki`_,
-`Musixmatch`_, `Genius.com`_, and, optionally, the Google custom search API.
+Namely, the current version of the plugin uses `Musixmatch`_, `Genius.com`_,
+`Tekstowo.pl`_, and, optionally, the Google custom search API.
 
-.. _Lyric Wiki: http://lyrics.wikia.com/
 .. _Musixmatch: https://www.musixmatch.com/
-.. _Genius.com: http://genius.com/
+.. _Genius.com: https://genius.com/
+.. _Tekstowo.pl: https://www.tekstowo.pl/
 
 
 Fetch Lyrics During Import
@@ -26,7 +26,7 @@ already have them. The lyrics will be stored in the beets database. If the
 ``import.write`` config option is on, then the lyrics will also be written to
 the files' tags.
 
-.. _requests: http://docs.python-requests.org/en/latest/
+.. _requests: https://requests.readthedocs.io/en/master/
 
 
 Configuration
@@ -59,11 +59,11 @@ configuration file. The available options are:
   sources known to be scrapeable.
 - **sources**: List of sources to search for lyrics. An asterisk ``*`` expands
   to all available sources.
-  Default: ``google lyricwiki musixmatch genius``, i.e., all the
-  available sources. The `google` source will be automatically
+  Default: ``google musixmatch genius tekstowo``, i.e., all the
+  available sources. The ``google`` source will be automatically
   deactivated if no ``google_API_key`` is setup.
-  Both it and the `genius` source will only be enabled if BeautifulSoup is
-  installed.
+  The ``google``, ``genius``, and ``tekstowo`` sources will only be enabled if
+  BeautifulSoup is installed.
 
 Here's an example of ``config.yaml``::
 
@@ -105,11 +105,11 @@ A minimal ``conf.py`` and ``index.rst`` files are created the first time the
 command is run. They are not overwritten on subsequent runs, so you can safely
 modify these files to customize the output.
 
-.. _Sphinx: http://www.sphinx-doc.org/
+.. _Sphinx: https://www.sphinx-doc.org/
 .. _reStructuredText: http://docutils.sourceforge.net/rst.html
 
 Sphinx supports various `builders
-<http://www.sphinx-doc.org/en/stable/builders.html>`_, but here are a
+<https://www.sphinx-doc.org/en/stable/builders.html>`_, but here are a
 few suggestions.
 
  * Build an HTML version::
@@ -148,23 +148,23 @@ Optionally, you can `define a custom search engine`_. Get your search engine's
 token and use it for your ``google_engine_ID`` configuration option. By
 default, beets use a list of sources known to be scrapeable.
 
-.. _define a custom search engine: http://www.google.com/cse/all
+.. _define a custom search engine: https://www.google.com/cse/all
 
 Note that the Google custom search API is limited to 100 queries per day.
 After that, the lyrics plugin will fall back on other declared data sources.
 
-.. _pip: http://www.pip-installer.org/
-.. _BeautifulSoup: http://www.crummy.com/software/BeautifulSoup/bs4/doc/
+.. _pip: https://pip.pypa.io
+.. _BeautifulSoup: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
 
-Activate Genius Lyrics
-----------------------
+Activate Genius and Tekstowo.pl Lyrics
+--------------------------------------
 
-Like the Google backend, the Genius backend requires the `BeautifulSoup`_
-library. Install it by typing::
+Using the Genius or Tekstowo.pl backends requires `BeautifulSoup`_, which
+you can install using `pip`_ by typing::
 
     pip install beautifulsoup4
 
-The backend is enabled by default.
+These backends are enabled by default.
 
 .. _lyrics-translation:
 
@@ -180,8 +180,7 @@ You also need to register for a Microsoft Azure Marketplace free account and
 to the `Microsoft Translator API`_. Follow the four steps process, specifically
 at step 3 enter ``beets`` as *Client ID* and copy/paste the generated
 *Client secret* into your ``bing_client_secret`` configuration, alongside
-``bing_lang_to`` target `language code`_.
+``bing_lang_to`` target `language code`.
 
 .. _langdetect: https://pypi.python.org/pypi/langdetect
-.. _Microsoft Translator API: https://www.microsoft.com/en-us/translator/getstarted.aspx
-.. _language code: https://msdn.microsoft.com/en-us/library/hh456380.aspx
+.. _Microsoft Translator API: https://docs.microsoft.com/en-us/azure/cognitive-services/translator/translator-how-to-signup

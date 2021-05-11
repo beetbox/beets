@@ -22,7 +22,6 @@ import shutil
 import re
 import subprocess
 import platform
-from copy import deepcopy
 import six
 import unittest
 
@@ -35,10 +34,10 @@ from beets import ui
 from beets.ui import commands
 from beets import autotag
 from beets.autotag.match import distance
-from beets.mediafile import MediaFile
+from mediafile import MediaFile
 from beets import config
 from beets import plugins
-from beets.util.confit import ConfigError
+from confuse import ConfigError
 from beets import util
 from beets.util import syspath, MoveOperation
 
@@ -112,7 +111,7 @@ class ListTest(unittest.TestCase):
         self.assertNotIn(u'the album', stdout.getvalue())
 
 
-class RemoveTest(_common.TestCase):
+class RemoveTest(_common.TestCase, TestHelper):
     def setUp(self):
         super(RemoveTest, self).setUp()
 
@@ -123,8 +122,8 @@ class RemoveTest(_common.TestCase):
 
         # Copy a file into the library.
         self.lib = library.Library(':memory:', self.libdir)
-        item_path = os.path.join(_common.RSRC, b'full.mp3')
-        self.i = library.Item.from_path(item_path)
+        self.item_path = os.path.join(_common.RSRC, b'full.mp3')
+        self.i = library.Item.from_path(self.item_path)
         self.lib.add(self.i)
         self.i.move(operation=MoveOperation.COPY)
 
@@ -153,6 +152,44 @@ class RemoveTest(_common.TestCase):
         items = self.lib.items()
         self.assertEqual(len(list(items)), 0)
         self.assertFalse(os.path.exists(self.i.path))
+
+    def test_remove_items_select_with_delete(self):
+        i2 = library.Item.from_path(self.item_path)
+        self.lib.add(i2)
+        i2.move(operation=MoveOperation.COPY)
+
+        for s in ('s', 'y', 'n'):
+            self.io.addinput(s)
+        commands.remove_items(self.lib, u'', False, True, False)
+        items = self.lib.items()
+        self.assertEqual(len(list(items)), 1)
+        # There is probably no guarantee that the items are queried in any
+        # spcecific order, thus just ensure that exactly one was removed.
+        # To improve upon this, self.io would need to have the capability to
+        # generate input that depends on previous output.
+        num_existing = 0
+        num_existing += 1 if os.path.exists(syspath(self.i.path)) else 0
+        num_existing += 1 if os.path.exists(syspath(i2.path)) else 0
+        self.assertEqual(num_existing, 1)
+
+    def test_remove_albums_select_with_delete(self):
+        a1 = self.add_album_fixture()
+        a2 = self.add_album_fixture()
+        path1 = a1.items()[0].path
+        path2 = a2.items()[0].path
+        items = self.lib.items()
+        self.assertEqual(len(list(items)), 3)
+
+        for s in ('s', 'y', 'n'):
+            self.io.addinput(s)
+        commands.remove_items(self.lib, u'', True, True, False)
+        items = self.lib.items()
+        self.assertEqual(len(list(items)), 2)  # incl. the item from setUp()
+        # See test_remove_items_select_with_delete()
+        num_existing = 0
+        num_existing += 1 if os.path.exists(syspath(path1)) else 0
+        num_existing += 1 if os.path.exists(syspath(path2)) else 0
+        self.assertEqual(num_existing, 1)
 
 
 class ModifyTest(unittest.TestCase, TestHelper):
@@ -507,10 +544,14 @@ class UpdateTest(_common.TestCase):
         # Copy a file into the library.
         self.lib = library.Library(':memory:', self.libdir)
         item_path = os.path.join(_common.RSRC, b'full.mp3')
+        item_path_two = os.path.join(_common.RSRC, b'full.flac')
         self.i = library.Item.from_path(item_path)
+        self.i2 = library.Item.from_path(item_path_two)
         self.lib.add(self.i)
+        self.lib.add(self.i2)
         self.i.move(operation=MoveOperation.COPY)
-        self.album = self.lib.add_album([self.i])
+        self.i2.move(operation=MoveOperation.COPY)
+        self.album = self.lib.add_album([self.i, self.i2])
 
         # Album art.
         artfile = os.path.join(self.temp_dir, b'testart.jpg')
@@ -531,12 +572,14 @@ class UpdateTest(_common.TestCase):
     def test_delete_removes_item(self):
         self.assertTrue(list(self.lib.items()))
         os.remove(self.i.path)
+        os.remove(self.i2.path)
         self._update()
         self.assertFalse(list(self.lib.items()))
 
     def test_delete_removes_album(self):
         self.assertTrue(self.lib.albums())
         os.remove(self.i.path)
+        os.remove(self.i2.path)
         self._update()
         self.assertFalse(self.lib.albums())
 
@@ -544,6 +587,7 @@ class UpdateTest(_common.TestCase):
         artpath = self.album.artpath
         self.assertExists(artpath)
         os.remove(self.i.path)
+        os.remove(self.i2.path)
         self._update()
         self.assertNotExists(artpath)
 
@@ -607,6 +651,7 @@ class UpdateTest(_common.TestCase):
         self._update(move=True)
         album = self.lib.albums()[0]
         self.assertNotEqual(artpath, album.artpath)
+        self.assertIsNotNone(album.artpath)
 
     def test_selective_modified_album_metadata_moved(self):
         mf = MediaFile(syspath(self.i.path))
@@ -910,6 +955,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         )
 
     def test_command_line_option_relative_to_working_dir(self):
+        config.read()
         os.chdir(self.temp_dir)
         self.run_command('--library', 'foo.db', 'test', lib=None)
         self.assert_equal_path(config['library'].as_filename(),
@@ -1042,8 +1088,10 @@ class ShowChangeTest(_common.TestCase):
         self.items[0].track = 1
         self.items[0].path = b'/path/to/file.mp3'
         self.info = autotag.AlbumInfo(
-            u'the album', u'album id', u'the artist', u'artist id', [
-                autotag.TrackInfo(u'the title', u'track id', index=1)
+            album=u'the album', album_id=u'album id', artist=u'the artist',
+            artist_id=u'artist id', tracks=[
+                autotag.TrackInfo(title=u'the title', track_id=u'track id',
+                                  index=1)
             ]
         )
 
@@ -1127,7 +1175,9 @@ class SummarizeItemsTest(_common.TestCase):
         summary = commands.summarize_items([self.item], False)
         self.assertEqual(summary, u"1 items, F, 4kbps, 10:54, 987.0 B")
 
-        i2 = deepcopy(self.item)
+        # make a copy of self.item
+        i2 = self.item.copy()
+
         summary = commands.summarize_items([self.item, i2], False)
         self.assertEqual(summary, u"2 items, F, 4kbps, 21:48, 1.9 KiB")
 
@@ -1215,13 +1265,14 @@ class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):
     """
     def setUp(self):
         self.setup_beets()
-        self.lib = library.Library(':memory:')
         self.item = _common.item()
         self.item.path = b'xxx/yyy'
         self.lib.add(self.item)
         self.lib.add_album([self.item])
+        self.load_plugins()
 
     def tearDown(self):
+        self.unload_plugins()
         self.teardown_beets()
 
     def test_base(self):

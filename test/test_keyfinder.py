@@ -38,7 +38,7 @@ class KeyFinderTest(unittest.TestCase, TestHelper):
         item = Item(path='/file')
         item.add(self.lib)
 
-        command_output.return_value = 'dbm'
+        command_output.return_value = util.CommandOutput(b"dbm", b"")
         self.run_command('keyfinder')
 
         item.load()
@@ -47,7 +47,7 @@ class KeyFinderTest(unittest.TestCase, TestHelper):
             ['KeyFinder', '-f', util.syspath(item.path)])
 
     def test_add_key_on_import(self, command_output):
-        command_output.return_value = 'dbm'
+        command_output.return_value = util.CommandOutput(b"dbm", b"")
         importer = self.create_importer()
         importer.run()
 
@@ -60,7 +60,7 @@ class KeyFinderTest(unittest.TestCase, TestHelper):
         item = Item(path='/file', initial_key='F')
         item.add(self.lib)
 
-        command_output.return_value = 'C#m'
+        command_output.return_value = util.CommandOutput(b"C#m", b"")
         self.run_command('keyfinder')
 
         item.load()
@@ -70,11 +70,21 @@ class KeyFinderTest(unittest.TestCase, TestHelper):
         item = Item(path='/file', initial_key='F')
         item.add(self.lib)
 
-        command_output.return_value = 'dbm'
+        command_output.return_value = util.CommandOutput(b"dbm", b"")
         self.run_command('keyfinder')
 
         item.load()
         self.assertEqual(item['initial_key'], 'F')
+
+    def test_no_key(self, command_output):
+        item = Item(path='/file')
+        item.add(self.lib)
+
+        command_output.return_value = util.CommandOutput(b"", b"")
+        self.run_command('keyfinder')
+
+        item.load()
+        self.assertEqual(item['initial_key'], None)
 
 
 def suite():

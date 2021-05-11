@@ -22,8 +22,8 @@ from beets import plugins
 from beets import ui
 from beets import util
 from beets import config
-from beets.util import confit
 from beets.autotag import hooks
+import confuse
 import acoustid
 from collections import defaultdict
 from functools import partial
@@ -191,7 +191,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         dist.add_expr('track_id', info.track_id not in recording_ids)
         return dist
 
-    def candidates(self, items, artist, album, va_likely):
+    def candidates(self, items, artist, album, va_likely, extra_tags=None):
         albums = []
         for relid in prefix(_all_releases(items), MAX_RELEASES):
             album = hooks.album_for_mbid(relid)
@@ -221,7 +221,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         def submit_cmd_func(lib, opts, args):
             try:
                 apikey = config['acoustid']['apikey'].as_str()
-            except confit.NotFoundError:
+            except confuse.NotFoundError:
                 raise ui.UserError(u'no Acoustid user API key provided')
             submit_items(self._log, apikey, lib.items(ui.decargs(args)))
         submit_cmd.func = submit_cmd_func
@@ -279,7 +279,7 @@ def submit_items(log, userkey, items, chunksize=64):
         del data[:]
 
     for item in items:
-        fp = fingerprint_item(log, item)
+        fp = fingerprint_item(log, item, write=ui.should_write())
 
         # Construct a submission dictionary for this item.
         item_data = {
@@ -329,7 +329,7 @@ def fingerprint_item(log, item, write=False):
         else:
             log.info(u'{0}: using existing fingerprint',
                      util.displayable_path(item.path))
-            return item.acoustid_fingerprint
+        return item.acoustid_fingerprint
     else:
         log.info(u'{0}: fingerprinting',
                  util.displayable_path(item.path))

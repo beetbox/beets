@@ -21,7 +21,7 @@ from __future__ import division, absolute_import, print_function
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets.util import (mkdirall, normpath, sanitize_path, syspath,
-                        bytestring_path)
+                        bytestring_path, path_as_posix)
 from beets.library import Item, Album, parse_query_string
 from beets.dbcore import OrQuery
 from beets.dbcore.query import MultipleSort, ParsingError
@@ -37,7 +37,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
             'relative_to': None,
             'playlist_dir': u'.',
             'auto': True,
-            'playlists': []
+            'playlists': [],
+            'forward_slash': False,
         })
 
         self._matched_playlists = None
@@ -104,17 +105,18 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
             playlist_data = (playlist['name'],)
             try:
-                for key, Model in (('query', Item), ('album_query', Album)):
+                for key, model_cls in (('query', Item),
+                                       ('album_query', Album)):
                     qs = playlist.get(key)
                     if qs is None:
                         query_and_sort = None, None
                     elif isinstance(qs, six.string_types):
-                        query_and_sort = parse_query_string(qs, Model)
+                        query_and_sort = parse_query_string(qs, model_cls)
                     elif len(qs) == 1:
-                        query_and_sort = parse_query_string(qs[0], Model)
+                        query_and_sort = parse_query_string(qs[0], model_cls)
                     else:
                         # multiple queries and sorts
-                        queries, sorts = zip(*(parse_query_string(q, Model)
+                        queries, sorts = zip(*(parse_query_string(q, model_cls)
                                                for q in qs))
                         query = OrQuery(queries)
                         final_sorts = []
@@ -206,6 +208,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
             mkdirall(m3u_path)
             with open(syspath(m3u_path), 'wb') as f:
                 for path in m3us[m3u]:
+                    if self.config['forward_slash'].get():
+                        path = path_as_posix(path)
                     f.write(path + b'\n')
 
         self._log.info(u"{0} playlists updated", len(self._matched_playlists))

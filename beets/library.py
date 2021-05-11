@@ -26,12 +26,12 @@ import six
 import string
 
 from beets import logging
-from beets.mediafile import MediaFile, UnreadableFileError
+from mediafile import MediaFile, UnreadableFileError
 from beets import plugins
 from beets import util
 from beets.util import bytestring_path, syspath, normpath, samefile, \
-    MoveOperation
-from beets.util.functemplate import Template
+    MoveOperation, lazy_property
+from beets.util.functemplate import template, Template
 from beets import dbcore
 from beets.dbcore import types
 import beets
@@ -374,15 +374,42 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
     Album-level fields take precedence if `for_path` is true.
     """
 
-    def __init__(self, item, for_path=False):
-        super(FormattedItemMapping, self).__init__(item, for_path)
-        self.album = item.get_album()
-        self.album_keys = []
+    ALL_KEYS = '*'
+
+    def __init__(self, item, included_keys=ALL_KEYS, for_path=False):
+        # We treat album and item keys specially here,
+        # so exclude transitive album keys from the model's keys.
+        super(FormattedItemMapping, self).__init__(item, included_keys=[],
+                                                   for_path=for_path)
+        self.included_keys = included_keys
+        if included_keys == self.ALL_KEYS:
+            # Performance note: this triggers a database query.
+            self.model_keys = item.keys(computed=True, with_album=False)
+        else:
+            self.model_keys = included_keys
+        self.item = item
+
+    @lazy_property
+    def all_keys(self):
+        return set(self.model_keys).union(self.album_keys)
+
+    @lazy_property
+    def album_keys(self):
+        album_keys = []
         if self.album:
-            for key in self.album.keys(True):
-                if key in Album.item_keys or key not in item._fields.keys():
-                    self.album_keys.append(key)
-        self.all_keys = set(self.model_keys).union(self.album_keys)
+            if self.included_keys == self.ALL_KEYS:
+                # Performance note: this triggers a database query.
+                for key in self.album.keys(computed=True):
+                    if key in Album.item_keys \
+                            or key not in self.item._fields.keys():
+                        album_keys.append(key)
+            else:
+                album_keys = self.included_keys
+        return album_keys
+
+    @property
+    def album(self):
+        return self.item._cached_album
 
     def _get(self, key):
         """Get the value for a key, either from the album or the item.
@@ -398,19 +425,23 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
             raise KeyError(key)
 
     def __getitem__(self, key):
-        """Get the value for a key. Certain unset values are remapped.
+        """Get the value for a key. `artist` and `albumartist`
+        are fallback values for each other when not set.
         """
         value = self._get(key)
 
         # `artist` and `albumartist` fields fall back to one another.
         # This is helpful in path formats when the album artist is unset
         # on as-is imports.
-        if key == 'artist' and not value:
-            return self._get('albumartist')
-        elif key == 'albumartist' and not value:
-            return self._get('artist')
-        else:
-            return value
+        try:
+            if key == 'artist' and not value:
+                return self._get('albumartist')
+            elif key == 'albumartist' and not value:
+                return self._get('artist')
+        except KeyError:
+            pass
+
+        return value
 
     def __iter__(self):
         return iter(self.all_keys)
@@ -436,9 +467,16 @@ class Item(LibModel):
         'albumartist_sort':     types.STRING,
         'albumartist_credit':   types.STRING,
         'genre':                types.STRING,
+        'style':                types.STRING,
+        'discogs_albumid':      types.INTEGER,
+        'discogs_artistid':     types.INTEGER,
+        'discogs_labelid':      types.INTEGER,
         'lyricist':             types.STRING,
         'composer':             types.STRING,
         'composer_sort':        types.STRING,
+        'work':                 types.STRING,
+        'mb_workid':            types.STRING,
+        'work_disambig':        types.STRING,
         'arranger':             types.STRING,
         'grouping':             types.STRING,
         'year':                 types.PaddedInt(4),
@@ -457,6 +495,7 @@ class Item(LibModel):
         'mb_artistid':          types.STRING,
         'mb_albumartistid':     types.STRING,
         'mb_releasetrackid':    types.STRING,
+        'trackdisambig':        types.STRING,
         'albumtype':            types.STRING,
         'label':                types.STRING,
         'acoustid_fingerprint': types.STRING,
@@ -524,6 +563,29 @@ class Item(LibModel):
 
     _format_config_key = 'format_item'
 
+    __album = None
+    """Cached album object. Read-only."""
+
+    @property
+    def _cached_album(self):
+        """The Album object that this item belongs to, if any, or
+        None if the item is a singleton or is not associated with a
+        library.
+        The instance is cached and refreshed on access.
+
+        DO NOT MODIFY!
+        If you want a copy to modify, use :meth:`get_album`.
+        """
+        if not self.__album and self._db:
+            self.__album = self._db.get_album(self)
+        elif self.__album:
+            self.__album.load()
+        return self.__album
+
+    @_cached_album.setter
+    def _cached_album(self, album):
+        self.__album = album
+
     @classmethod
     def _getters(cls):
         getters = plugins.item_field_getters()
@@ -550,11 +612,56 @@ class Item(LibModel):
                 value = bytestring_path(value)
             elif isinstance(value, BLOB_TYPE):
                 value = bytes(value)
+        elif key == 'album_id':
+            self._cached_album = None
 
         changed = super(Item, self)._setitem(key, value)
 
         if changed and key in MediaFile.fields():
             self.mtime = 0  # Reset mtime on dirty.
+
+    def __getitem__(self, key):
+        """Get the value for a field, falling back to the album if
+        necessary. Raise a KeyError if the field is not available.
+        """
+        try:
+            return super(Item, self).__getitem__(key)
+        except KeyError:
+            if self._cached_album:
+                return self._cached_album[key]
+            raise
+
+    def __repr__(self):
+        # This must not use `with_album=True`, because that might access
+        # the database. When debugging, that is not guaranteed to succeed, and
+        # can even deadlock due to the database lock.
+        return '{0}({1})'.format(
+            type(self).__name__,
+            ', '.join('{0}={1!r}'.format(k, self[k])
+                      for k in self.keys(with_album=False)),
+        )
+
+    def keys(self, computed=False, with_album=True):
+        """Get a list of available field names. `with_album`
+        controls whether the album's fields are included.
+        """
+        keys = super(Item, self).keys(computed=computed)
+        if with_album and self._cached_album:
+            keys = set(keys)
+            keys.update(self._cached_album.keys(computed=computed))
+            keys = list(keys)
+        return keys
+
+    def get(self, key, default=None, with_album=True):
+        """Get the value for a given key or `default` if it does not
+        exist. Set `with_album` to false to skip album fallback.
+        """
+        try:
+            return self._get(key, default, raise_=with_album)
+        except KeyError:
+            if self._cached_album:
+                return self._cached_album.get(key, default)
+            return default
 
     def update(self, values):
         """Set all key/value pairs in the mapping. If mtime is
@@ -727,6 +834,16 @@ class Item(LibModel):
             util.hardlink(self.path, dest)
             plugins.send("item_hardlinked", item=self, source=self.path,
                          destination=dest)
+        elif operation == MoveOperation.REFLINK:
+            util.reflink(self.path, dest, fallback=False)
+            plugins.send("item_reflinked", item=self, source=self.path,
+                         destination=dest)
+        elif operation == MoveOperation.REFLINK_AUTO:
+            util.reflink(self.path, dest, fallback=True)
+            plugins.send("item_reflinked", item=self, source=self.path,
+                         destination=dest)
+        else:
+            assert False, 'unknown MoveOperation'
 
         # Either copying or moving succeeded, so update the stored path.
         self.path = dest
@@ -855,7 +972,7 @@ class Item(LibModel):
         if isinstance(path_format, Template):
             subpath_tmpl = path_format
         else:
-            subpath_tmpl = Template(path_format)
+            subpath_tmpl = template(path_format)
 
         # Evaluate the selected template.
         subpath = self.evaluate_template(subpath_tmpl, True)
@@ -915,6 +1032,10 @@ class Album(LibModel):
         'albumartist_credit':   types.STRING,
         'album':                types.STRING,
         'genre':                types.STRING,
+        'style':                types.STRING,
+        'discogs_albumid':      types.INTEGER,
+        'discogs_artistid':     types.INTEGER,
+        'discogs_labelid':      types.INTEGER,
         'year':                 types.PaddedInt(4),
         'month':                types.PaddedInt(2),
         'day':                  types.PaddedInt(2),
@@ -935,7 +1056,7 @@ class Album(LibModel):
         'releasegroupdisambig': types.STRING,
         'rg_album_gain':        types.NULL_FLOAT,
         'rg_album_peak':        types.NULL_FLOAT,
-        'r128_album_gain':      types.PaddedInt(6),
+        'r128_album_gain':      types.NullPaddedInt(6),
         'original_year':        types.PaddedInt(4),
         'original_month':       types.PaddedInt(2),
         'original_day':         types.PaddedInt(2),
@@ -960,6 +1081,10 @@ class Album(LibModel):
         'albumartist_credit',
         'album',
         'genre',
+        'style',
+        'discogs_albumid',
+        'discogs_artistid',
+        'discogs_labelid',
         'year',
         'month',
         'day',
@@ -1059,6 +1184,12 @@ class Album(LibModel):
             util.link(old_art, new_art)
         elif operation == MoveOperation.HARDLINK:
             util.hardlink(old_art, new_art)
+        elif operation == MoveOperation.REFLINK:
+            util.reflink(old_art, new_art, fallback=False)
+        elif operation == MoveOperation.REFLINK_AUTO:
+            util.reflink(old_art, new_art, fallback=True)
+        else:
+            assert False, 'unknown MoveOperation'
         self.artpath = new_art
 
     def move(self, operation=MoveOperation.MOVE, basedir=None, store=True):
@@ -1098,7 +1229,7 @@ class Album(LibModel):
         """
         item = self.items().get()
         if not item:
-            raise ValueError(u'empty album')
+            raise ValueError(u'empty album for album id %d' % self.id)
         return os.path.dirname(item.path)
 
     def _albumtotal(self):
@@ -1134,7 +1265,7 @@ class Album(LibModel):
         image = bytestring_path(image)
         item_dir = item_dir or self.item_dir()
 
-        filename_tmpl = Template(
+        filename_tmpl = template(
             beets.config['art_filename'].as_str())
         subpath = self.evaluate_template(filename_tmpl, True)
         if beets.config['asciify_paths']:
@@ -1239,8 +1370,10 @@ def parse_query_parts(parts, model_cls):
         else:
             non_path_parts.append(s)
 
+    case_insensitive = beets.config['sort_case_insensitive'].get(bool)
+
     query, sort = dbcore.parse_sorted_query(
-        model_cls, non_path_parts, prefixes
+        model_cls, non_path_parts, prefixes, case_insensitive
     )
 
     # Add path queries to aggregate query.
@@ -1584,7 +1717,7 @@ class DefaultTemplateFunctions(object):
             return res
 
         # Flatten disambiguation value into a string.
-        disam_value = album.formatted(True).get(disambiguator)
+        disam_value = album.formatted(for_path=True).get(disambiguator)
 
         # Return empty string if disambiguator is empty.
         if disam_value:

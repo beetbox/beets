@@ -27,7 +27,7 @@ class ImportAddedPlugin(BeetsPlugin):
         # album.path for old albums that were replaced by a reimported album
         self.replaced_album_paths = None
         # item path in the library to the mtime of the source file
-        self.item_mtime = dict()
+        self.item_mtime = {}
 
         register = self.register_listener
         register('import_task_created', self.check_config)
@@ -124,7 +124,7 @@ class ImportAddedPlugin(BeetsPlugin):
                             util.displayable_path(item.path), item.added)
             item.store()
 
-    def update_after_write_time(self, item):
+    def update_after_write_time(self, item, path):
         """Update the mtime of the item's file with the item.added value
         after each write of the item if `preserve_write_mtimes` is enabled.
         """

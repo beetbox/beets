@@ -19,13 +19,11 @@ The Web interface depends on `Flask`_. To get it, just run ``pip install
 flask``. Then enable the ``web`` plugin in your configuration (see
 :ref:`using-plugins`).
 
-.. _Flask: http://flask.pocoo.org/
-
 If you need CORS (it's disabled by default---see :ref:`web-cors`, below), then
 you also need `flask-cors`_. Just type ``pip install flask-cors``.
 
 .. _flask-cors: https://github.com/CoryDolphin/flask-cors
-.. _CORS: http://en.wikipedia.org/wiki/Cross-origin_resource_sharing
+.. _CORS: https://en.wikipedia.org/wiki/Cross-origin_resource_sharing
 
 
 Run the Server
@@ -47,9 +45,7 @@ Usage
 -----
 
 Type queries into the little search box. Double-click a track to play it with
-`HTML5 Audio`_.
-
-.. _HTML5 Audio: http://www.w3.org/TR/html-markup/audio.html
+HTML5 Audio.
 
 Configuration
 -------------
@@ -70,6 +66,8 @@ configuration file. The available options are:
   Default: false.
 - **include_paths**: If true, includes paths in item objects.
   Default: false.
+- **readonly**: If true, DELETE and PATCH operations are not allowed. Only GET is permitted.
+  Default: true.
 
 Implementation
 --------------
@@ -78,8 +76,8 @@ The Web backend is built using a simple REST+JSON API with the excellent
 `Flask`_ library. The frontend is a single-page application written with
 `Backbone.js`_. This allows future non-Web clients to use the same backend API.
 
-.. _Flask: http://flask.pocoo.org/
-.. _Backbone.js: http://backbonejs.org
+
+.. _Backbone.js: https://backbonejs.org
 
 Eventually, to make the Web player really viable, we should use a Flash fallback
 for unsupported formats/browsers. There are a number of options for this:
@@ -88,9 +86,9 @@ for unsupported formats/browsers. There are a number of options for this:
 * `html5media`_
 * `MediaElement.js`_
 
-.. _audio.js: http://kolber.github.com/audiojs/
-.. _html5media: http://html5media.info/
-.. _MediaElement.js: http://mediaelementjs.com/
+.. _audio.js: https://kolber.github.io/audiojs/
+.. _html5media: https://html5media.info/
+.. _MediaElement.js: https://www.mediaelementjs.com/
 
 .. _web-cors:
 
@@ -187,6 +185,29 @@ representation. ::
 If there is no item with that id responds with a *404* status
 code.
 
+``DELETE /item/6``
+++++++++++++++++++
+
+Removes the item with id *6* from the beets library. If the *?delete* query string is included,
+the matching file will be deleted from disk.
+
+Only allowed if ``readonly`` configuration option is set to ``no``.
+
+``PATCH /item/6``
+++++++++++++++++++
+
+Updates the item with id *6* and write the changes to the music file. The body should be a JSON object
+containing the changes to the object.
+
+Returns the updated JSON representation. ::
+
+    {
+      "id": 6,
+      "title": "A Song",
+      ...
+    }
+
+Only allowed if ``readonly`` configuration option is set to ``no``.
 
 ``GET /item/6,12,13``
 +++++++++++++++++++++
@@ -196,6 +217,8 @@ the response is the same as for `GET /item/`_. It is *not guaranteed* that the
 response includes all the items requested. If a track is not found it is silently
 dropped from the response.
 
+This endpoint also supports *DELETE* and *PATCH* methods as above, to operate on all
+items of the list.
 
 ``GET /item/path/...``
 ++++++++++++++++++++++
@@ -210,7 +233,8 @@ If the server runs UNIX, you'll need to include an extra leading slash:
 ``GET /item/query/querystring``
 +++++++++++++++++++++++++++++++
 
-Returns a list of tracks matching the query. The *querystring* must be a valid query as described in :doc:`/reference/query`. ::
+Returns a list of tracks matching the query. The *querystring* must be a
+valid query as described in :doc:`/reference/query`. ::
 
     {
       "results": [
@@ -219,6 +243,13 @@ Returns a list of tracks matching the query. The *querystring* must be a valid q
       ]
     }
 
+Path elements are joined as parts of a query. For example,
+``/item/query/foo/bar`` will be converted to the query ``foo,bar``.
+To specify literal path separators in a query, use a backslash instead of a
+slash.
+
+This endpoint also supports *DELETE* and *PATCH* methods as above, to operate on all
+items returned by the query.
 
 ``GET /item/6/file``
 ++++++++++++++++++++
@@ -236,9 +267,17 @@ For albums, the following endpoints are provided:
 
 * ``GET /album/5``
 
+* ``GET /album/5/art``
+
+* ``DELETE /album/5``
+
 * ``GET /album/5,7``
 
+* ``DELETE /album/5,7``
+
 * ``GET /album/query/querystring``
+
+* ``DELETE /album/query/querystring``
 
 The interface and response format is similar to the item API, except replacing
 the encapsulation key ``"items"`` with ``"albums"`` when requesting ``/album/``
@@ -246,6 +285,7 @@ or ``/album/5,7``. In addition we can request the cover art of an album with
 ``GET /album/5/art``.
 You can also add the '?expand' flag to get the individual items of an album.
 
+``DELETE`` is only allowed if ``readonly`` configuration option is set to ``no``.
 
 ``GET /stats``
 ++++++++++++++
@@ -256,3 +296,5 @@ Responds with the number of tracks and albums in the database. ::
       "items": 5,
       "albums": 3
     }
+
+.. _Flask: https://flask.palletsprojects.com/en/1.1.x/

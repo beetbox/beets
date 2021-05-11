@@ -39,7 +39,6 @@ from beets.util import syspath, normpath, ancestry, displayable_path, \
 from beets import library
 from beets import config
 from beets import logging
-from beets.util.confit import _package_path
 import six
 from . import _store_dict
 
@@ -242,7 +241,8 @@ def show_change(cur_artist, cur_album, match):
             if mediums and mediums > 1:
                 return u'{0}-{1}'.format(medium, medium_index)
             else:
-                return six.text_type(medium_index or index)
+                return six.text_type(medium_index if medium_index is not None
+                                     else index)
         else:
             return six.text_type(index)
 
@@ -468,6 +468,10 @@ def summarize_items(items, singleton):
         total_duration = sum([item.length for item in items])
         total_filesize = sum([item.filesize for item in items])
         summary_parts.append(u'{0}kbps'.format(int(average_bitrate / 1000)))
+        if items[0].format == "FLAC":
+            sample_bits = u'{}kHz/{} bit'.format(
+                round(int(items[0].samplerate) / 1000, 1), items[0].bitdepth)
+            summary_parts.append(sample_bits)
         summary_parts.append(ui.human_seconds_short(total_duration))
         summary_parts.append(ui.human_bytes(total_filesize))
 
@@ -477,10 +481,11 @@ def summarize_items(items, singleton):
 def _summary_judgment(rec):
     """Determines whether a decision should be made without even asking
     the user. This occurs in quiet mode and when an action is chosen for
-    NONE recommendations. Return an action or None if the user should be
-    queried. May also print to the console if a summary judgment is
-    made.
+    NONE recommendations. Return None if the user should be queried.
+    Otherwise, returns an action. May also print to the console if a
+    summary judgment is made.
     """
+
     if config['import']['quiet']:
         if rec == Recommendation.strong:
             return importer.action.APPLY
@@ -489,14 +494,14 @@ def _summary_judgment(rec):
                 'skip': importer.action.SKIP,
                 'asis': importer.action.ASIS,
             })
-
+    elif config['import']['timid']:
+        return None
     elif rec == Recommendation.none:
         action = config['import']['none_rec_action'].as_choice({
             'skip': importer.action.SKIP,
             'asis': importer.action.ASIS,
             'ask': None,
         })
-
     else:
         return None
 
@@ -543,7 +548,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
             print_(u"No matching release found for {0} tracks."
                    .format(itemcount))
             print_(u'For help, see: '
-                   u'http://beets.readthedocs.org/en/latest/faq.html#nomatch')
+                   u'https://beets.readthedocs.org/en/latest/faq.html#nomatch')
         sel = ui.input_options(choice_opts)
         if sel in choice_actions:
             return choice_actions[sel]
@@ -693,6 +698,19 @@ class TerminalImportSession(importer.ImportSession):
         print_(displayable_path(task.paths, u'\n') +
                u' ({0} items)'.format(len(task.items)))
 
+        # Let plugins display info or prompt the user before we go through the
+        # process of selecting candidate.
+        results = plugins.send('import_task_before_choice',
+                               session=self, task=task)
+        actions = [action for action in results if action]
+
+        if len(actions) == 1:
+            return actions[0]
+        elif len(actions) > 1:
+            raise plugins.PluginConflictException(
+                u'Only one handler for `import_task_before_choice` may return '
+                u'an action.')
+
         # Take immediate action if appropriate.
         action = _summary_judgment(task.rec)
         if action == importer.action.APPLY:
@@ -802,7 +820,7 @@ class TerminalImportSession(importer.ImportSession):
             ))
 
             sel = ui.input_options(
-                (u'Skip new', u'Keep both', u'Remove old', u'Merge all')
+                (u'Skip new', u'Keep all', u'Remove old', u'Merge all')
             )
 
         if sel == u's':
@@ -1177,13 +1195,19 @@ def update_items(lib, query, album, move, pretend, fields):
                 # Manually moving and storing the album.
                 items = list(album.items())
                 for item in items:
-                    item.move(store=False)
+                    item.move(store=False, with_album=False)
                     item.store(fields=fields)
                 album.move(store=False)
                 album.store(fields=fields)
 
 
 def update_func(lib, opts, args):
+    # Verify that the library folder exists to prevent accidental wipes.
+    if not os.path.isdir(lib.directory):
+        ui.print_("Library path is unavailable or does not exist.")
+        ui.print_(lib.directory)
+        if not ui.input_yn("Are you sure you want to continue (y/n)?", True):
+            return
     update_items(lib, decargs(args), opts.album, ui.should_move(opts.move),
                  opts.pretend, opts.fields)
 
@@ -1221,31 +1245,53 @@ def remove_items(lib, query, album, delete, force):
     """
     # Get the matching items.
     items, albums = _do_query(lib, query, album)
+    objs = albums if album else items
 
     # Confirm file removal if not forcing removal.
     if not force:
         # Prepare confirmation with user.
-        print_()
+        album_str = u" in {} album{}".format(
+                 len(albums), u's' if len(albums) > 1 else u''
+            ) if album else ""
+
         if delete:
             fmt = u'$path - $title'
-            prompt = u'Really DELETE %i file%s (y/n)?' % \
-                     (len(items), 's' if len(items) > 1 else '')
+            prompt = u'Really DELETE'
+            prompt_all = u'Really DELETE {} file{}{}'.format(
+                 len(items), u's' if len(items) > 1 else u'', album_str
+            )
         else:
             fmt = u''
-            prompt = u'Really remove %i item%s from the library (y/n)?' % \
-                     (len(items), 's' if len(items) > 1 else '')
+            prompt = u'Really remove from the library?'
+            prompt_all = u'Really remove {} item{}{} from the library?'.format(
+                 len(items), u's' if len(items) > 1 else u'', album_str
+            )
+
+        # Helpers for printing affected items
+        def fmt_track(t):
+            ui.print_(format(t, fmt))
+
+        def fmt_album(a):
+            ui.print_()
+            for i in a.items():
+                fmt_track(i)
+
+        fmt_obj = fmt_album if album else fmt_track
 
         # Show all the items.
-        for item in items:
-            ui.print_(format(item, fmt))
+        for o in objs:
+            fmt_obj(o)
 
         # Confirm with user.
-        if not ui.input_yn(prompt, True):
-            return
+        objs = ui.input_select_objects(prompt, objs, fmt_obj,
+                                       prompt_all=prompt_all)
+
+    if not objs:
+        return
 
     # Remove (and possibly delete) items.
     with lib.transaction():
-        for obj in (albums if album else items):
+        for obj in objs:
             obj.remove(delete)
 
 
@@ -1658,7 +1704,10 @@ def config_func(lib, opts, args):
     # Dump configuration.
     else:
         config_out = config.dump(full=opts.defaults, redact=opts.redact)
-        print_(util.text_string(config_out))
+        if config_out.strip() != '{}':
+            print_(util.text_string(config_out))
+        else:
+            print("Empty configuration")
 
 
 def config_edit():
@@ -1726,7 +1775,7 @@ def completion_script(commands):
     ``commands`` is alist of ``ui.Subcommand`` instances to generate
     completion data for.
     """
-    base_script = os.path.join(_package_path('beets.ui'), 'completion_base.sh')
+    base_script = os.path.join(os.path.dirname(__file__), 'completion_base.sh')
     with open(base_script, 'r') as base_script:
         yield util.text_string(base_script.read())
 

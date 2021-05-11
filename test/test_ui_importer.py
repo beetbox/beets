@@ -30,11 +30,11 @@ from beets import config
 import six
 
 
-class TestTerminalImportSession(TerminalImportSession):
+class TerminalImportSessionFixture(TerminalImportSession):
 
     def __init__(self, *args, **kwargs):
         self.io = kwargs.pop('io')
-        super(TestTerminalImportSession, self).__init__(*args, **kwargs)
+        super(TerminalImportSessionFixture, self).__init__(*args, **kwargs)
         self._choices = []
 
     default_choice = importer.action.APPLY
@@ -47,11 +47,11 @@ class TestTerminalImportSession(TerminalImportSession):
 
     def choose_match(self, task):
         self._add_choice_input()
-        return super(TestTerminalImportSession, self).choose_match(task)
+        return super(TerminalImportSessionFixture, self).choose_match(task)
 
     def choose_item(self, task):
         self._add_choice_input()
-        return super(TestTerminalImportSession, self).choose_item(task)
+        return super(TerminalImportSessionFixture, self).choose_item(task)
 
     def _add_choice_input(self):
         try:
@@ -96,7 +96,7 @@ class TerminalImportSessionSetup(object):
         if not hasattr(self, 'io'):
             self.io = DummyIO()
         self.io.install()
-        self.importer = TestTerminalImportSession(
+        self.importer = TerminalImportSessionFixture(
             self.lib, loghandler=None, query=None, io=self.io,
             paths=[import_dir or self.import_dir],
         )

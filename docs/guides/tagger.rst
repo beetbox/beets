@@ -234,7 +234,7 @@ If beets finds an album or item in your library that seems to be the same as the
 one you're importing, you may see a prompt like this::
 
     This album is already in the library!
-    [S]kip new, Keep both, Remove old, Merge all?
+    [S]kip new, Keep all, Remove old, Merge all?
 
 Beets wants to keep you safe from duplicates, which can be a real pain, so you
 have four choices in this situation. You can skip importing the new music,
@@ -272,7 +272,7 @@ Before you jump into acoustic fingerprinting with both feet, though, give beets
 a try without it. You may be surprised at how well metadata-based matching
 works.
 
-.. _Chromaprint: http://acoustid.org/chromaprint
+.. _Chromaprint: https://acoustid.org/chromaprint
 
 Album Art, Lyrics, Genres and Such
 ----------------------------------
@@ -292,7 +292,7 @@ sure the album is present in `the MusicBrainz database`_.  You can search on
 their site to make sure it's cataloged there. If not, anyone can edit
 MusicBrainz---so consider adding the data yourself.
 
-.. _the MusicBrainz database: http://musicbrainz.org/
+.. _the MusicBrainz database: https://musicbrainz.org/
 
 If you think beets is ignoring an album that's listed in MusicBrainz, please
 `file a bug report`_.
@@ -305,5 +305,5 @@ I Hope That Makes Sense
 If we haven't made the process clear, please post on `the discussion
 board`_ and we'll try to improve this guide.
 
-.. _the mailing list: http://groups.google.com/group/beets-users
-.. _the discussion board: http://discourse.beets.io
+.. _the mailing list: https://groups.google.com/group/beets-users
+.. _the discussion board: https://discourse.beets.io

@@ -5,7 +5,7 @@ Smart Playlist Plugin
 beets queries every time your library changes. This plugin is specifically
 created to work well with `MPD's`_ playlist functionality.
 
-.. _MPD's: http://www.musicpd.org/
+.. _MPD's: https://www.musicpd.org/
 
 To use it, enable the ``smartplaylist`` plugin in your configuration
 (see :ref:`using-plugins`).
@@ -14,6 +14,7 @@ Then configure your smart playlists like the following example::
     smartplaylist:
         relative_to: ~/Music
         playlist_dir: ~/.mpd/playlists
+        forward_slash: no
         playlists:
             - name: all.m3u
               query: ''
@@ -36,7 +37,7 @@ For more advanced usage, you can use template syntax (see
       query: 'year::201(0|1)'
 
 This will query all the songs in 2010 and 2011 and generate the two playlist
-files `ReleasedIn2010.m3u` and `ReleasedIn2011.m3u` using those songs.
+files ``ReleasedIn2010.m3u`` and ``ReleasedIn2011.m3u`` using those songs.
 
 You can also gather the results of several queries by putting them in a list.
 (Items that match both queries are not included twice.) For example::
@@ -96,3 +97,7 @@ other configuration options are:
   directory. If you intend to use this plugin to generate playlists for MPD,
   point this to your MPD music directory.
   Default: Use absolute paths.
+- **forward_slash**: Forces forward slashes in the generated playlist files.
+  If you intend to use this plugin to generate playlists for MPD on
+  Windows, set this to yes.
+  Default: Use system separator.

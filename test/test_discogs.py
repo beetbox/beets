@@ -32,7 +32,7 @@ class DGAlbumInfoTest(_common.TestCase):
         those required for the tests on this class."""
         data = {
             'id': 'ALBUM ID',
-            'uri': 'ALBUM URI',
+            'uri': 'https://www.discogs.com/release/release/13633721',
             'title': 'ALBUM TITLE',
             'year': '3001',
             'artists': [{
@@ -45,6 +45,12 @@ class DGAlbumInfoTest(_common.TestCase):
                 'name': 'FORMAT',
                 'qty': 1
             }],
+            'styles': [
+                'STYLE1', 'STYLE2'
+            ],
+            'genres': [
+                'GENRE1', 'GENRE2'
+            ],
             'labels': [{
                 'name': 'LABEL NAME',
                 'catno': 'CATALOG NUMBER',

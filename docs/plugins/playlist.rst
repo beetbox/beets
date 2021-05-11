@@ -1,5 +1,5 @@
-Smart Playlist Plugin
-=====================
+Playlist Plugin
+===============
 
 ``playlist`` is a plugin to use playlists in m3u format.
 
@@ -11,14 +11,15 @@ Then configure your playlists like this::
         auto: no
         relative_to: ~/Music
         playlist_dir: ~/.mpd/playlists
+        forward_slash: no
 
-It is possible to query the library based on a playlist by speicifying its
+It is possible to query the library based on a playlist by specifying its
 absolute path::
 
     $ beet ls playlist:/path/to/someplaylist.m3u
 
 The plugin also supports referencing playlists by name. The playlist is then
-seached in the playlist_dir and the ".m3u" extension is appended to the
+searched in the playlist_dir and the ".m3u" extension is appended to the
 name::
 
     $ beet ls playlist:anotherplaylist
@@ -30,7 +31,7 @@ configuration option.
 Configuration
 -------------
 
-To configure the plugin, make a ``smartplaylist:`` section in your
+To configure the plugin, make a ``playlist:`` section in your
 configuration file. In addition to the ``playlists`` described above, the
 other configuration options are:
 
@@ -45,3 +46,7 @@ other configuration options are:
   set it to ``playlist`` to use the playlist's parent directory or to
   ``library`` to use the library directory.
   Default: ``library``
+- **forward_slash**: Forces forward slashes in the generated playlist files.
+  If you intend to use this plugin to generate playlists for MPD on
+  Windows, set this to yes.
+  Default: Use system separator.

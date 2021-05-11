@@ -14,7 +14,7 @@ To use the ``convert`` plugin, first enable it in your configuration (see
 :ref:`using-plugins`). By default, the plugin depends on `FFmpeg`_ to
 transcode the audio, so you might want to install it.
 
-.. _FFmpeg: http://ffmpeg.org
+.. _FFmpeg: https://ffmpeg.org
 
 
 Usage
@@ -24,7 +24,9 @@ To convert a part of your collection, run ``beet convert QUERY``. The
 command will transcode all the files matching the query to the
 destination directory given by the ``-d`` (``--dest``) option or the
 ``dest`` configuration. The path layout mirrors that of your library,
-but it may be customized through the ``paths`` configuration.
+but it may be customized through the ``paths`` configuration. Files
+that have been previously converted---and thus already exist in the
+destination directory---will be skipped.
 
 The plugin uses a command-line program to transcode the audio. With the
 ``-f`` (``--format``) option you can choose the transcoding command
@@ -45,6 +47,12 @@ the destination directory and keep converted files in your library, use the
 To test your configuration without taking any actions, use the ``--pretend``
 flag. The plugin will print out the commands it will run instead of executing
 them.
+
+By default, files that do not need to be transcoded will be copied to their
+destination. Passing the ``-l`` (``--link``) flag creates symbolic links
+instead, passing ``-H`` (``--hardlink``) creates hard links.
+Note that album art embedding is disabled for files that are linked.
+Refer to the ``link`` and ``hardlink`` options below.
 
 
 Configuration
@@ -91,6 +99,20 @@ file. The available options are:
 - **threads**: The number of threads to use for parallel encoding.
   By default, the plugin will detect the number of processors available and use
   them all.
+- **link**: By default, files that do not need to be transcoded will be copied
+  to their destination. This option creates symbolic links instead. Note that
+  options such as ``embed`` that modify the output files after the transcoding
+  step will cause the original files to be modified as well if ``link`` is
+  enabled. For this reason, album-art embedding is disabled
+  for files that are linked.
+  Default: ``false``.
+- **hardlink**: This options works similar to ``link``, but it creates
+  hard links instead of symlinks.
+  This option overrides ``link``. Only works when converting to a directory
+  on the same filesystem as the library.
+  Default: ``false``.
+- **delete_originals**: Transcoded files will be copied or moved to their destination, depending on the import configuration. By default, the original files are not modified by the plugin. This option deletes the original files after the transcoding step has completed.
+  Default: ``false``.
 
 You can also configure the format to use for transcoding (see the next
 section):
@@ -122,7 +144,7 @@ and select a command with the ``--format`` command-line option or the
 
 In this example ``beet convert`` will use the *speex* command by
 default. To convert the audio to `wav`, run ``beet convert -f wav``.
-This will also use the format key (`wav`) as the file extension.
+This will also use the format key (``wav``) as the file extension.
 
 Each entry in the ``formats`` map consists of a key (the name of the
 format) as well as the command and optionally the file extension.
@@ -169,7 +191,7 @@ can use the :doc:`/plugins/replaygain` to do this analysis. See the LAME
 `documentation`_ and the `HydrogenAudio wiki`_ for other LAME configuration
 options and a thorough discussion of MP3 encoding.
 
-.. _documentation: http://lame.sourceforge.net/using.php
-.. _HydrogenAudio wiki: http://wiki.hydrogenaud.io/index.php?title=LAME
-.. _gapless: http://wiki.hydrogenaud.io/index.php?title=Gapless_playback
-.. _LAME: http://lame.sourceforge.net/
+.. _documentation: https://lame.sourceforge.io/index.php
+.. _HydrogenAudio wiki: https://wiki.hydrogenaud.io/index.php?title=LAME
+.. _gapless: https://wiki.hydrogenaud.io/index.php?title=Gapless_playback
+.. _LAME: https://lame.sourceforge.io/index.php

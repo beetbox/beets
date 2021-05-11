@@ -117,9 +117,13 @@ class InlinePlugin(BeetsPlugin):
             # For function bodies, invoke the function with values as global
             # variables.
             def _func_func(obj):
+                old_globals = dict(func.__globals__)
                 func.__globals__.update(_dict_for(obj))
                 try:
                     return func()
                 except Exception as exc:
                     raise InlineError(python_code, exc)
+                finally:
+                    func.__globals__.clear()
+                    func.__globals__.update(old_globals)
             return _func_func

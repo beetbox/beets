@@ -40,7 +40,7 @@ from beets import config
 from beets.util import pipeline, sorted_walk, ancestry, MoveOperation
 from beets.util import syspath, normpath, displayable_path
 from enum import Enum
-from beets import mediafile
+import mediafile
 
 action = Enum('action',
               ['SKIP', 'ASIS', 'TRACKS', 'APPLY', 'ALBUMS', 'RETAG'])
@@ -187,7 +187,7 @@ class ImportSession(object):
         self.logger = self._setup_logging(loghandler)
         self.paths = paths
         self.query = query
-        self._is_resuming = dict()
+        self._is_resuming = {}
         self._merged_items = set()
         self._merged_dirs = set()
 
@@ -222,19 +222,31 @@ class ImportSession(object):
             iconfig['resume'] = False
             iconfig['incremental'] = False
 
-        # Copy, move, link, and hardlink are mutually exclusive.
+        if iconfig['reflink']:
+            iconfig['reflink'] = iconfig['reflink'] \
+                .as_choice(['auto', True, False])
+
+        # Copy, move, reflink, link, and hardlink are mutually exclusive.
         if iconfig['move']:
             iconfig['copy'] = False
             iconfig['link'] = False
             iconfig['hardlink'] = False
+            iconfig['reflink'] = False
         elif iconfig['link']:
             iconfig['copy'] = False
             iconfig['move'] = False
             iconfig['hardlink'] = False
+            iconfig['reflink'] = False
         elif iconfig['hardlink']:
             iconfig['copy'] = False
             iconfig['move'] = False
             iconfig['link'] = False
+            iconfig['reflink'] = False
+        elif iconfig['reflink']:
+            iconfig['copy'] = False
+            iconfig['move'] = False
+            iconfig['link'] = False
+            iconfig['hardlink'] = False
 
         # Only delete when copying.
         if not iconfig['copy']:
@@ -707,7 +719,7 @@ class ImportTask(BaseImportTask):
             item.update(changes)
 
     def manipulate_files(self, operation=None, write=False, session=None):
-        """ Copy, move, link or hardlink (depending on `operation`) the files
+        """ Copy, move, link, hardlink or reflink (depending on `operation`) the files
         as well as write metadata.
 
         `operation` should be an instance of `util.MoveOperation`.
@@ -754,6 +766,8 @@ class ImportTask(BaseImportTask):
             self.record_replaced(lib)
             self.remove_replaced(lib)
             self.album = lib.add_album(self.imported_items())
+            if 'data_source' in self.imported_items()[0]:
+                self.album.data_source = self.imported_items()[0].data_source
             self.reimport_metadata(lib)
 
     def record_replaced(self, lib):
@@ -772,7 +786,7 @@ class ImportTask(BaseImportTask):
                 if (not dup_item.album_id or
                         dup_item.album_id in replaced_album_ids):
                     continue
-                replaced_album = dup_item.get_album()
+                replaced_album = dup_item._cached_album
                 if replaced_album:
                     replaced_album_ids.add(dup_item.album_id)
                     self.replaced_albums[replaced_album.path] = replaced_album
@@ -1032,14 +1046,20 @@ class ArchiveImportTask(SentinelImportTask):
             cls._handlers = []
             from zipfile import is_zipfile, ZipFile
             cls._handlers.append((is_zipfile, ZipFile))
-            from tarfile import is_tarfile, TarFile
-            cls._handlers.append((is_tarfile, TarFile))
+            import tarfile
+            cls._handlers.append((tarfile.is_tarfile, tarfile.open))
             try:
                 from rarfile import is_rarfile, RarFile
             except ImportError:
                 pass
             else:
                 cls._handlers.append((is_rarfile, RarFile))
+            try:
+                from py7zr import is_7zfile, SevenZipFile
+            except ImportError:
+                pass
+            else:
+                cls._handlers.append((is_7zfile, SevenZipFile))
 
         return cls._handlers
 
@@ -1534,6 +1554,8 @@ def manipulate_files(session, task):
             operation = MoveOperation.LINK
         elif session.config['hardlink']:
             operation = MoveOperation.HARDLINK
+        elif session.config['reflink']:
+            operation = MoveOperation.REFLINK
         else:
             operation = None
 

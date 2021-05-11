@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # This file is part of beets.
-# Copyright 2016, Rafael Bodill http://github.com/rafi
+# Copyright 2016, Rafael Bodill https://github.com/rafi
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the

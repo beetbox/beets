@@ -18,20 +18,23 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-import json
 import codecs
+import json
+import csv
+from xml.etree import ElementTree
 
 from datetime import datetime, date
 from beets.plugins import BeetsPlugin
 from beets import ui
-from beets import mediafile
-from beetsplug.info import make_key_filter, library_data, tag_data
+from beets import util
+import mediafile
+from beetsplug.info import library_data, tag_data
 
 
 class ExportEncoder(json.JSONEncoder):
     """Deals with dates because JSON doesn't have a standard"""
     def default(self, o):
-        if isinstance(o, datetime) or isinstance(o, date):
+        if isinstance(o, (datetime, date)):
             return o.isoformat()
         return json.JSONEncoder.default(self, o)
 
@@ -44,7 +47,7 @@ class ExportPlugin(BeetsPlugin):
         self.config.add({
             'default_format': 'json',
             'json': {
-                # json module formatting options
+                # JSON module formatting options.
                 'formatting': {
                     'ensure_ascii': False,
                     'indent': 4,
@@ -52,6 +55,27 @@ class ExportPlugin(BeetsPlugin):
                     'sort_keys': True
                 }
             },
+            'jsonlines': {
+                # JSON Lines formatting options.
+                'formatting': {
+                    'ensure_ascii': False,
+                    'separators': (',', ': '),
+                    'sort_keys': True
+                }
+            },
+            'csv': {
+                # CSV module formatting options.
+                'formatting': {
+                    # The delimiter used to seperate columns.
+                    'delimiter': ',',
+                    # The dialect to use when formating the file output.
+                    'dialect': 'excel'
+                }
+            },
+            'xml': {
+                # XML module formatting options.
+                'formatting': {}
+            }
             # TODO: Use something like the edit plugin
             # 'item_fields': []
         })
@@ -78,17 +102,22 @@ class ExportPlugin(BeetsPlugin):
             u'-o', u'--output',
             help=u'path for the output file. If not given, will print the data'
         )
+        cmd.parser.add_option(
+            u'-f', u'--format', default='json',
+            help=u"the output format: json (default), jsonlines, csv, or xml"
+        )
         return [cmd]
 
     def run(self, lib, opts, args):
-
         file_path = opts.output
-        file_format = self.config['default_format'].get(str)
         file_mode = 'a' if opts.append else 'w'
+        file_format = opts.format or self.config['default_format'].get(str)
+        file_format_is_line_based = (file_format == 'jsonlines')
         format_options = self.config[file_format]['formatting'].get(dict)
 
         export_format = ExportFormat.factory(
-            file_format, **{
+            file_type=file_format,
+            **{
                 'file_path': file_path,
                 'file_mode': file_mode
             }
@@ -100,52 +129,95 @@ class ExportPlugin(BeetsPlugin):
         included_keys = []
         for keys in opts.included_keys:
             included_keys.extend(keys.split(','))
-        key_filter = make_key_filter(included_keys)
 
         for data_emitter in data_collector(lib, ui.decargs(args)):
             try:
-                data, item = data_emitter()
+                data, item = data_emitter(included_keys or '*')
             except (mediafile.UnreadableFileError, IOError) as ex:
                 self._log.error(u'cannot read file: {0}', ex)
                 continue
 
-            data = key_filter(data)
+            for key, value in data.items():
+                if isinstance(value, bytes):
+                    data[key] = util.displayable_path(value)
+
             items += [data]
 
-        export_format.export(items, **format_options)
+            if file_format_is_line_based:
+                export_format.export(data, **format_options)
+            else:
+                items += [data]
+
+        if not file_format_is_line_based:
+            export_format.export(items, **format_options)
 
 
 class ExportFormat(object):
     """The output format type"""
-
-    @classmethod
-    def factory(cls, type, **kwargs):
-        if type == "json":
-            if kwargs['file_path']:
-                return JsonFileFormat(**kwargs)
-            else:
-                return JsonPrintFormat()
-        raise NotImplementedError()
-
-    def export(self, data, **kwargs):
-        raise NotImplementedError()
-
-
-class JsonPrintFormat(ExportFormat):
-    """Outputs to the console"""
-
-    def export(self, data, **kwargs):
-        json.dump(data, sys.stdout, cls=ExportEncoder, **kwargs)
-
-
-class JsonFileFormat(ExportFormat):
-    """Saves in a json file"""
-
     def __init__(self, file_path, file_mode=u'w', encoding=u'utf-8'):
         self.path = file_path
         self.mode = file_mode
         self.encoding = encoding
+        # creates a file object to write/append or sets to stdout
+        self.out_stream = codecs.open(self.path, self.mode, self.encoding) \
+            if self.path else sys.stdout
+
+    @classmethod
+    def factory(cls, file_type, **kwargs):
+        if file_type in ["json", "jsonlines"]:
+            return JsonFormat(**kwargs)
+        elif file_type == "csv":
+            return CSVFormat(**kwargs)
+        elif file_type == "xml":
+            return XMLFormat(**kwargs)
+        else:
+            raise NotImplementedError()
 
     def export(self, data, **kwargs):
-        with codecs.open(self.path, self.mode, self.encoding) as f:
-            json.dump(data, f, cls=ExportEncoder, **kwargs)
+        raise NotImplementedError()
+
+
+class JsonFormat(ExportFormat):
+    """Saves in a json file"""
+    def __init__(self, file_path, file_mode=u'w', encoding=u'utf-8'):
+        super(JsonFormat, self).__init__(file_path, file_mode, encoding)
+
+    def export(self, data, **kwargs):
+        json.dump(data, self.out_stream, cls=ExportEncoder, **kwargs)
+        self.out_stream.write('\n')
+
+
+class CSVFormat(ExportFormat):
+    """Saves in a csv file"""
+    def __init__(self, file_path, file_mode=u'w', encoding=u'utf-8'):
+        super(CSVFormat, self).__init__(file_path, file_mode, encoding)
+
+    def export(self, data, **kwargs):
+        header = list(data[0].keys()) if data else []
+        writer = csv.DictWriter(self.out_stream, fieldnames=header, **kwargs)
+        writer.writeheader()
+        writer.writerows(data)
+
+
+class XMLFormat(ExportFormat):
+    """Saves in a xml file"""
+    def __init__(self, file_path, file_mode=u'w', encoding=u'utf-8'):
+        super(XMLFormat, self).__init__(file_path, file_mode, encoding)
+
+    def export(self, data, **kwargs):
+        # Creates the XML file structure.
+        library = ElementTree.Element(u'library')
+        tracks = ElementTree.SubElement(library, u'tracks')
+        if data and isinstance(data[0], dict):
+            for index, item in enumerate(data):
+                track = ElementTree.SubElement(tracks, u'track')
+                for key, value in item.items():
+                    track_details = ElementTree.SubElement(track, key)
+                    track_details.text = value
+        # Depending on the version of python the encoding needs to change
+        try:
+            data = ElementTree.tostring(library, encoding='unicode', **kwargs)
+        except LookupError:
+            data = ElementTree.tostring(library, encoding='utf-8', **kwargs)
+
+        self.out_stream.write(data)

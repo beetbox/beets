@@ -38,8 +38,16 @@ else:
 
 SKIPPED_TRACKS = ['[data track]']
 
+FIELDS_TO_MB_KEYS = {
+    'catalognum': 'catno',
+    'country': 'country',
+    'label': 'label',
+    'media': 'format',
+    'year': 'date',
+}
+
 musicbrainzngs.set_useragent('beets', beets.__version__,
-                             'http://beets.io/')
+                             'https://beets.io/')
 
 
 class MusicBrainzAPIError(util.HumanReadableException):
@@ -63,9 +71,17 @@ RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'labels', 'artist-credits', 'aliases',
                     'recording-level-rels', 'work-rels',
                     'work-level-rels', 'artist-rels']
+BROWSE_INCLUDES = ['artist-credits', 'work-rels',
+                   'artist-rels', 'recording-rels', 'release-rels']
+if "work-level-rels" in musicbrainzngs.VALID_BROWSE_INCLUDES['recording']:
+    BROWSE_INCLUDES.append("work-level-rels")
+BROWSE_CHUNKSIZE = 100
+BROWSE_MAXTRACKS = 500
 TRACK_INCLUDES = ['artists', 'aliases']
 if 'work-level-rels' in musicbrainzngs.VALID_INCLUDES['recording']:
     TRACK_INCLUDES += ['work-level-rels', 'artist-rels']
+if 'genres' in musicbrainzngs.VALID_INCLUDES['recording']:
+    RELEASE_INCLUDES += ['genres']
 
 
 def track_url(trackid):
@@ -81,7 +97,11 @@ def configure():
     from the beets configuration. This should be called at startup.
     """
     hostname = config['musicbrainz']['host'].as_str()
-    musicbrainzngs.set_hostname(hostname)
+    https = config['musicbrainz']['https'].get(bool)
+    # Only call set_hostname when a custom server is configured. Since
+    # musicbrainz-ngs connects to musicbrainz.org with HTTPS by default
+    if hostname != "musicbrainz.org":
+        musicbrainzngs.set_hostname(hostname, https)
     musicbrainzngs.set_rate_limit(
         config['musicbrainz']['ratelimit_interval'].as_number(),
         config['musicbrainz']['ratelimit'].get(int),
@@ -185,8 +205,8 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     the number of tracks on the medium. Each number is a 1-based index.
     """
     info = beets.autotag.hooks.TrackInfo(
-        recording['title'],
-        recording['id'],
+        title=recording['title'],
+        track_id=recording['id'],
         index=index,
         medium=medium,
         medium_index=medium_index,
@@ -207,12 +227,19 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     if recording.get('length'):
         info.length = int(recording['length']) / (1000.0)
 
+    info.trackdisambig = recording.get('disambiguation')
+
     lyricist = []
     composer = []
     composer_sort = []
     for work_relation in recording.get('work-relation-list', ()):
         if work_relation['type'] != 'performance':
             continue
+        info.work = work_relation['work']['title']
+        info.mb_workid = work_relation['work']['id']
+        if 'disambiguation' in work_relation['work']:
+            info.work_disambig = work_relation['work']['disambiguation']
+
         for artist_relation in work_relation['work'].get(
                 'artist-relation-list', ()):
             if 'type' in artist_relation:
@@ -269,6 +296,26 @@ def album_info(release):
     # Get artist name using join phrases.
     artist_name, artist_sort_name, artist_credit_name = \
         _flatten_artist_credit(release['artist-credit'])
+
+    ntracks = sum(len(m['track-list']) for m in release['medium-list'])
+
+    # The MusicBrainz API omits 'artist-relation-list' and 'work-relation-list'
+    # when the release has more than 500 tracks. So we use browse_recordings
+    # on chunks of tracks to recover the same information in this case.
+    if ntracks > BROWSE_MAXTRACKS:
+        log.debug(u'Album {} has too many tracks', release['id'])
+        recording_list = []
+        for i in range(0, ntracks, BROWSE_CHUNKSIZE):
+            log.debug(u'Retrieving tracks starting at {}', i)
+            recording_list.extend(musicbrainzngs.browse_recordings(
+                    release=release['id'], limit=BROWSE_CHUNKSIZE,
+                    includes=BROWSE_INCLUDES,
+                    offset=i)['recording-list'])
+        track_map = {r['id']: r for r in recording_list}
+        for medium in release['medium-list']:
+            for recording in medium['track-list']:
+                recording_info = track_map[recording['recording']['id']]
+                recording['recording'] = recording_info
 
     # Basic info.
     track_infos = []
@@ -328,11 +375,11 @@ def album_info(release):
             track_infos.append(ti)
 
     info = beets.autotag.hooks.AlbumInfo(
-        release['title'],
-        release['id'],
-        artist_name,
-        release['artist-credit'][0]['artist']['id'],
-        track_infos,
+        album=release['title'],
+        album_id=release['id'],
+        artist=artist_name,
+        artist_id=release['artist-credit'][0]['artist']['id'],
+        tracks=track_infos,
         mediums=len(release['medium-list']),
         artist_sort=artist_sort_name,
         artist_credit=artist_credit_name,
@@ -402,17 +449,21 @@ def album_info(release):
         first_medium = release['medium-list'][0]
         info.media = first_medium.get('format')
 
+    genres = release.get('genre-list')
+    if config['musicbrainz']['genres'] and genres:
+        info.genre = ';'.join(g['name'] for g in genres)
+
     info.decode()
     return info
 
 
-def match_album(artist, album, tracks=None):
+def match_album(artist, album, tracks=None, extra_tags=None):
     """Searches for a single album ("release" in MusicBrainz parlance)
     and returns an iterator over AlbumInfo objects. May raise a
     MusicBrainzAPIError.
 
     The query consists of an artist name, an album name, and,
-    optionally, a number of tracks on the album.
+    optionally, a number of tracks on the album and any other extra tags.
     """
     # Build search criteria.
     criteria = {'release': album.lower().strip()}
@@ -423,6 +474,16 @@ def match_album(artist, album, tracks=None):
         criteria['arid'] = VARIOUS_ARTISTS_ID
     if tracks is not None:
         criteria['tracks'] = six.text_type(tracks)
+
+    # Additional search cues from existing metadata.
+    if extra_tags:
+        for tag in extra_tags:
+            key = FIELDS_TO_MB_KEYS[tag]
+            value = six.text_type(extra_tags.get(tag, '')).lower().strip()
+            if key == 'catno':
+                value = value.replace(u' ', '')
+            if value:
+                criteria[key] = value
 
     # Abort if we have no search terms.
     if not any(criteria.values()):

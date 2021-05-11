@@ -4,7 +4,7 @@ AcousticBrainz Plugin
 The ``acousticbrainz`` plugin gets acoustic-analysis information from the
 `AcousticBrainz`_ project.
 
-.. _AcousticBrainz: http://acousticbrainz.org/
+.. _AcousticBrainz: https://acousticbrainz.org/
 
 Enable the ``acousticbrainz`` plugin in your configuration (see :ref:`using-plugins`) and run it by typing::
 
@@ -38,7 +38,9 @@ these fields:
 * ``mood_party``
 * ``mood_relaxed``
 * ``mood_sad``
+* ``moods_mirex``
 * ``rhythm``
+* ``timbre``
 * ``tonal``
 * ``voice_instrumental``
 
