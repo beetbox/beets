@@ -53,6 +53,9 @@ configuration file. The available options are:
 - **music_directory**: If your MPD library is at a different location from the
   beets library (e.g., because one is mounted on a NFS share), specify the path
   here.
+- **strip_path**: If your MPD library contains local path, specify the part to remove
+  here. Combining this with **music_directory** you can mangle MPD path to match the 
+  beets library one.
   Default: The beets library directory.
 - **rating**: Enable rating updates.
   Default: ``yes``.

@@ -52,14 +52,24 @@ class FormattedMapping(Mapping):
     The accessor `mapping[key]` returns the formatted version of
     `model[key]` as a unicode string.
 
+    The `included_keys` parameter allows filtering the fields that are
+    returned. By default all fields are returned. Limiting to specific keys can
+    avoid expensive per-item database queries.
+
     If `for_path` is true, all path separators in the formatted values
     are replaced.
     """
 
-    def __init__(self, model, for_path=False):
+    ALL_KEYS = '*'
+
+    def __init__(self, model, included_keys=ALL_KEYS, for_path=False):
         self.for_path = for_path
         self.model = model
-        self.model_keys = model.keys(True)
+        if included_keys == self.ALL_KEYS:
+            # Performance note: this triggers a database query.
+            self.model_keys = self.model.keys(True)
+        else:
+            self.model_keys = included_keys
 
     def __getitem__(self, key):
         if key in self.model_keys:
@@ -257,6 +267,11 @@ class Model(object):
     value is the same as the old value (e.g., `o.f = o.f`).
     """
 
+    _revision = -1
+    """A revision number from when the model was loaded from or written
+    to the database.
+    """
+
     @classmethod
     def _getters(cls):
         """Return a mapping from field names to getter functions.
@@ -309,9 +324,11 @@ class Model(object):
 
     def clear_dirty(self):
         """Mark all fields as *clean* (i.e., not needing to be stored to
-        the database).
+        the database). Also update the revision.
         """
         self._dirty = set()
+        if self._db:
+            self._revision = self._db.revision
 
     def _check_db(self, need_id=True):
         """Ensure that this object is associated with a database row: it
@@ -351,9 +368,9 @@ class Model(object):
         """
         return cls._fields.get(key) or cls._types.get(key) or types.DEFAULT
 
-    def __getitem__(self, key):
-        """Get the value for a field. Raise a KeyError if the field is
-        not available.
+    def _get(self, key, default=None, raise_=False):
+        """Get the value for a field, or `default`. Alternatively,
+        raise a KeyError if the field is not available.
         """
         getters = self._getters()
         if key in getters:  # Computed.
@@ -365,8 +382,18 @@ class Model(object):
                 return self._type(key).null
         elif key in self._values_flex:  # Flexible.
             return self._values_flex[key]
-        else:
+        elif raise_:
             raise KeyError(key)
+        else:
+            return default
+
+    get = _get
+
+    def __getitem__(self, key):
+        """Get the value for a field. Raise a KeyError if the field is
+        not available.
+        """
+        return self._get(key, raise_=True)
 
     def _setitem(self, key, value):
         """Assign the value for a field, return whether new and old value
@@ -441,19 +468,10 @@ class Model(object):
         for key in self:
             yield key, self[key]
 
-    def get(self, key, default=None):
-        """Get the value for a given key or `default` if it does not
-        exist.
-        """
-        if key in self:
-            return self[key]
-        else:
-            return default
-
     def __contains__(self, key):
         """Determine whether `key` is an attribute on this object.
         """
-        return key in self.keys(True)
+        return key in self.keys(computed=True)
 
     def __iter__(self):
         """Iterate over the available field names (excluding computed
@@ -538,8 +556,14 @@ class Model(object):
 
     def load(self):
         """Refresh the object's metadata from the library database.
+
+        If check_revision is true, the database is only queried loaded when a
+        transaction has been committed since the item was last loaded.
         """
         self._check_db()
+        if not self._dirty and self._db.revision == self._revision:
+            # Exit early
+            return
         stored_obj = self._db._get(type(self), self.id)
         assert stored_obj is not None, u"object {0} not in DB".format(self.id)
         self._values_fixed = LazyConvertDict(self)
@@ -590,11 +614,11 @@ class Model(object):
 
     _formatter = FormattedMapping
 
-    def formatted(self, for_path=False):
+    def formatted(self, included_keys=_formatter.ALL_KEYS, for_path=False):
         """Get a mapping containing all values on this object formatted
         as human-readable unicode strings.
         """
-        return self._formatter(self, for_path)
+        return self._formatter(self, included_keys, for_path)
 
     def evaluate_template(self, template, for_path=False):
         """Evaluate a template (a string or a `Template` object) using
@@ -604,7 +628,7 @@ class Model(object):
         # Perform substitution.
         if isinstance(template, six.string_types):
             template = functemplate.template(template)
-        return template.substitute(self.formatted(for_path),
+        return template.substitute(self.formatted(for_path=for_path),
                                    self._template_funcs())
 
     # Parsing.
@@ -714,10 +738,10 @@ class Results(object):
     def _get_indexed_flex_attrs(self):
         """ Index flexible attributes by the entity id they belong to
         """
-        flex_values = dict()
+        flex_values = {}
         for row in self.flex_rows:
             if row['entity_id'] not in flex_values:
-                flex_values[row['entity_id']] = dict()
+                flex_values[row['entity_id']] = {}
 
             flex_values[row['entity_id']][row['key']] = row['value']
 
@@ -794,6 +818,12 @@ class Transaction(object):
     """A context manager for safe, concurrent access to the database.
     All SQL commands should be executed through a transaction.
     """
+
+    _mutated = False
+    """A flag storing whether a mutation has been executed in the
+    current transaction.
+    """
+
     def __init__(self, db):
         self.db = db
 
@@ -815,12 +845,15 @@ class Transaction(object):
         entered but not yet exited transaction. If it is the last active
         transaction, the database updates are committed.
         """
+        # Beware of races; currently secured by db._db_lock
+        self.db.revision += self._mutated
         with self.db._tx_stack() as stack:
             assert stack.pop() is self
             empty = not stack
         if empty:
             # Ending a "root" transaction. End the SQLite transaction.
             self.db._connection().commit()
+            self._mutated = False
             self.db._db_lock.release()
 
     def query(self, statement, subvals=()):
@@ -836,7 +869,6 @@ class Transaction(object):
         """
         try:
             cursor = self.db._connection().execute(statement, subvals)
-            return cursor.lastrowid
         except sqlite3.OperationalError as e:
             # In two specific cases, SQLite reports an error while accessing
             # the underlying database file. We surface these exceptions as
@@ -846,9 +878,14 @@ class Transaction(object):
                 raise DBAccessError(e.args[0])
             else:
                 raise
+        else:
+            self._mutated = True
+            return cursor.lastrowid
 
     def script(self, statements):
         """Execute a string containing multiple SQL statements."""
+        # We don't know whether this mutates, but quite likely it does.
+        self._mutated = True
         self.db._connection().executescript(statements)
 
 
@@ -863,6 +900,11 @@ class Database(object):
 
     supports_extensions = hasattr(sqlite3.Connection, 'enable_load_extension')
     """Whether or not the current version of SQLite supports extensions"""
+
+    revision = 0
+    """The current revision of the database. To be increased whenever
+    data is written in a transaction.
+    """
 
     def __init__(self, path, timeout=5.0):
         self.path = path

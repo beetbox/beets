@@ -111,7 +111,8 @@ class MBAlbumInfoTest(_common.TestCase):
         })
         return release
 
-    def _make_track(self, title, tr_id, duration, artist=False, video=False):
+    def _make_track(self, title, tr_id, duration, artist=False, video=False,
+                    disambiguation=None):
         track = {
             'title': title,
             'id': tr_id,
@@ -131,6 +132,8 @@ class MBAlbumInfoTest(_common.TestCase):
             ]
         if video:
             track['video'] = 'true'
+        if disambiguation:
+            track['disambiguation'] = disambiguation
         return track
 
     def test_parse_release_with_year(self):
@@ -444,6 +447,18 @@ class MBAlbumInfoTest(_common.TestCase):
         self.assertEqual(d.tracks[0].title, 'TITLE ONE')
         self.assertEqual(d.tracks[1].title, 'TITLE TWO')
         self.assertEqual(d.tracks[2].title, 'TITLE VIDEO')
+
+    def test_track_disambiguation(self):
+        tracks = [self._make_track('TITLE ONE', 'ID ONE', 100.0 * 1000.0),
+                  self._make_track('TITLE TWO', 'ID TWO', 200.0 * 1000.0,
+                                   disambiguation="SECOND TRACK")]
+        release = self._make_release(tracks=tracks)
+
+        d = mb.album_info(release)
+        t = d.tracks
+        self.assertEqual(len(t), 2)
+        self.assertEqual(t[0].trackdisambig, None)
+        self.assertEqual(t[1].trackdisambig, "SECOND TRACK")
 
 
 class ParseIDTest(_common.TestCase):
