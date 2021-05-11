@@ -247,12 +247,15 @@ The events currently available are:
   list of ``PromptChoices``. Parameters: ``task`` and ``session``.
   
 * `mb_track_extract`: called after the metadata is obtained from
-  MusicBrainz. The parameter is a ``dict`` containing the data
-  retrieved from MusicBrainz for a track in the form ``field : value``
-  Allows to add additional tags.
+  MusicBrainz. The parameter is a ``dict`` containing the tags retrieved from
+  MusicBrainz for a track. Plugins must return a new (potentially empty)
+  ``dict`` with additional ``field: value`` pairs, which the autotagger will
+  apply to the item, as flexible attributes if ``field`` is not a hardcoded
+  field. Fields already present on the track are overwritten. 
   Parameter: ``data``
 
-* `mb_album_extract`: Like `mb_track_extract`, but for album tags.
+* `mb_album_extract`: Like `mb_track_extract`, but for album tags. Overwrites
+  tags set at the track level, if they have the same ``field``.
   Parameter: ``data``
 
 The included ``mpdupdate`` plugin provides an example use case for event listeners.
