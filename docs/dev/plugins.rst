@@ -241,7 +241,7 @@ The events currently available are:
   
 * `mb_track_extract`: called after the metadata is obtained from
   MusicBrainz. The parameter is a ``dict`` containing the data
-  retrieved from MusicBrainz for a track.
+  retrieved from MusicBrainz for a track in the form ``field : value``
   Allows to add additional tags.
   Parameter: ``data``
 
