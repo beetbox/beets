@@ -450,6 +450,12 @@ class ImportRarTest(ImportZipTest):
         return os.path.join(_common.RSRC, b'archive.rar')
 
 
+class Import7zTest(ImportZipTest):
+
+    def create_archive(self):
+        return os.path.join(_common.RSRC, b'archive.7z')
+
+
 @unittest.skip('Implement me!')
 class ImportPasswordRarTest(ImportZipTest):
 

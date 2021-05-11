@@ -98,7 +98,11 @@ def configure():
     from the beets configuration. This should be called at startup.
     """
     hostname = config['musicbrainz']['host'].as_str()
-    musicbrainzngs.set_hostname(hostname)
+    https = config['musicbrainz']['https'].get(bool)
+    # Only call set_hostname when a custom server is configured. Since
+    # musicbrainz-ngs connects to musicbrainz.org with HTTPS by default
+    if hostname != "musicbrainz.org":
+        musicbrainzngs.set_hostname(hostname, https)
     musicbrainzngs.set_rate_limit(
         config['musicbrainz']['ratelimit_interval'].as_number(),
         config['musicbrainz']['ratelimit'].get(int),
@@ -223,6 +227,8 @@ def track_info(recording, index=None, medium=None, medium_index=None,
 
     if recording.get('length'):
         info.length = int(recording['length']) / (1000.0)
+
+    info.trackdisambig = recording.get('disambiguation')
 
     lyricist = []
     composer = []
