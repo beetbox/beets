@@ -220,9 +220,10 @@ Other new things:
   Thanks to :user:`ssssam`.
 * Added 7z support via the `py7zr`_ library
   Thanks to :user:`arogl`.  :bug:`3906`
-  .. _py7zr: https://pypi.org/project/py7zr/
 * The ``mbsync`` plugin now also fetches performers, if the ``performer_info``
   option is enabled. Fixes :bug:`1547`, thanks to :user:`dosoe`.
+  
+  .. _py7zr: https://pypi.org/project/py7zr/
 
 Fixes:
 
