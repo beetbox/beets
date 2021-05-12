@@ -258,11 +258,6 @@ The events currently available are:
   tags set at the track level, if they have the same ``field``.
   Parameter: ``data``
 
-* `extracting_trackdata` and `extracting_albumdata`: called after the metadata
-  is obtained from MusicBrainz. The parameter is a ``dict`` containing the data
-  retrieved from MusicBrainz for a track or an album.
-  Allows to add additional tags.
-
 The included ``mpdupdate`` plugin provides an example use case for event listeners.
 
 Extend the Autotagger
