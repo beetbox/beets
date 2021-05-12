@@ -220,6 +220,8 @@ Other new things:
   Thanks to :user:`ssssam`.
 * Added 7z support via the `py7zr`_ library
   Thanks to :user:`arogl`.  :bug:`3906`
+* Get ISRC identifiers from musicbrainz
+  Thanks to :user:`aereaux`.
 
   .. _py7zr: https://pypi.org/project/py7zr/
 
