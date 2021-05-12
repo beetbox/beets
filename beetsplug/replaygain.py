@@ -15,26 +15,23 @@
 
 from __future__ import division, absolute_import, print_function
 
-import subprocess
-import os
 import collections
+import enum
 import math
+import os
+import signal
+import six
+import subprocess
 import sys
 import warnings
-import enum
-import re
-import xml.parsers.expat
-from six.moves import zip, queue
-import six
-
 from multiprocessing.pool import ThreadPool, RUN
+from six.moves import zip, queue
 from threading import Thread, Event
-import signal
 
 from beets import ui
 from beets.plugins import BeetsPlugin
-from beets.util import (syspath, command_output, bytestring_path,
-                        displayable_path, py3_path, cpu_count)
+from beets.util import (syspath, command_output, displayable_path,
+                        py3_path, cpu_count)
 
 
 # Utilities.
@@ -134,252 +131,6 @@ class Backend(object):
         AlbumGain object.
         """
         raise NotImplementedError()
-
-
-# bsg1770gain backend
-class Bs1770gainBackend(Backend):
-    """bs1770gain is a loudness scanner compliant with ITU-R BS.1770 and
-    its flavors EBU R128, ATSC A/85 and Replaygain 2.0.
-    """
-
-    methods = {
-        -24: "atsc",
-        -23: "ebu",
-        -18: "replaygain",
-    }
-
-    do_parallel = True
-
-    def __init__(self, config, log):
-        super(Bs1770gainBackend, self).__init__(config, log)
-        config.add({
-            'chunk_at': 5000,
-            'method': '',
-        })
-        self.chunk_at = config['chunk_at'].as_number()
-        # backward compatibility to `method` config option
-        self.__method = config['method'].as_str()
-
-        cmd = 'bs1770gain'
-        try:
-            version_out = call([cmd, '--version'])
-            self.command = cmd
-            self.version = re.search(
-                'bs1770gain ([0-9]+.[0-9]+.[0-9]+), ',
-                version_out.stdout.decode('utf-8')
-            ).group(1)
-        except OSError:
-            raise FatalReplayGainError(
-                u'Is bs1770gain installed?'
-            )
-        if not self.command:
-            raise FatalReplayGainError(
-                u'no replaygain command found: install bs1770gain'
-            )
-
-    def compute_track_gain(self, items, target_level, peak):
-        """Computes the track gain of the given tracks, returns a list
-        of TrackGain objects.
-        """
-
-        output = self.compute_gain(items, target_level, False)
-        return output
-
-    def compute_album_gain(self, items, target_level, peak):
-        """Computes the album gain of the given album, returns an
-        AlbumGain object.
-        """
-        # TODO: What should be done when not all tracks in the album are
-        # supported?
-
-        output = self.compute_gain(items, target_level, True)
-
-        if not output:
-            raise ReplayGainError(u'no output from bs1770gain')
-        return AlbumGain(output[-1], output[:-1])
-
-    def isplitter(self, items, chunk_at):
-        """Break an iterable into chunks of at most size `chunk_at`,
-        generating lists for each chunk.
-        """
-        iterable = iter(items)
-        while True:
-            result = []
-            for i in range(chunk_at):
-                try:
-                    a = next(iterable)
-                except StopIteration:
-                    break
-                else:
-                    result.append(a)
-            if result:
-                yield result
-            else:
-                break
-
-    def compute_gain(self, items, target_level, is_album):
-        """Computes the track or album gain of a list of items, returns
-        a list of TrackGain objects.
-        When computing album gain, the last TrackGain object returned is
-        the album gain
-        """
-
-        if len(items) == 0:
-            return []
-
-        albumgaintot = 0.0
-        albumpeaktot = 0.0
-        returnchunks = []
-
-        # In the case of very large sets of music, we break the tracks
-        # into smaller chunks and process them one at a time. This
-        # avoids running out of memory.
-        if len(items) > self.chunk_at:
-            i = 0
-            for chunk in self.isplitter(items, self.chunk_at):
-                i += 1
-                returnchunk = self.compute_chunk_gain(
-                    chunk,
-                    is_album,
-                    target_level
-                )
-                albumgaintot += returnchunk[-1].gain
-                albumpeaktot = max(albumpeaktot, returnchunk[-1].peak)
-                returnchunks = returnchunks + returnchunk[0:-1]
-            returnchunks.append(Gain(albumgaintot / i, albumpeaktot))
-            return returnchunks
-        else:
-            return self.compute_chunk_gain(items, is_album, target_level)
-
-    def compute_chunk_gain(self, items, is_album, target_level):
-        """Compute ReplayGain values and return a list of results
-        dictionaries as given by `parse_tool_output`.
-        """
-        # choose method
-        target_level = db_to_lufs(target_level)
-        if self.__method != "":
-            # backward compatibility to `method` option
-            method = self.__method
-            gain_adjustment = target_level \
-                - [k for k, v in self.methods.items() if v == method][0]
-        elif target_level in self.methods:
-            method = self.methods[target_level]
-            gain_adjustment = 0
-        else:
-            lufs_target = -23
-            method = self.methods[lufs_target]
-            gain_adjustment = target_level - lufs_target
-
-        # Construct shell command.
-        cmd = [self.command]
-        cmd += ["--" + method]
-        cmd += ['--xml', '-p']
-        if after_version(self.version, '0.6.0'):
-            cmd += ['--unit=ebu']            # set units to LU
-            cmd += ['--suppress-progress']   # don't print % to XML output
-
-        # Workaround for Windows: the underlying tool fails on paths
-        # with the \\?\ prefix, so we don't use it here. This
-        # prevents the backend from working with long paths.
-        args = cmd + [syspath(i.path, prefix=False) for i in items]
-        path_list = [i.path for i in items]
-
-        # Invoke the command.
-        self._log.debug(
-            u'executing {0}', u' '.join(map(displayable_path, args))
-        )
-        output = call(args).stdout
-
-        self._log.debug(u'analysis finished: {0}', output)
-        results = self.parse_tool_output(output, path_list, is_album)
-
-        if gain_adjustment:
-            results = [
-                Gain(res.gain + gain_adjustment, res.peak)
-                for res in results
-            ]
-
-        self._log.debug(u'{0} items, {1} results', len(items), len(results))
-        return results
-
-    def parse_tool_output(self, text, path_list, is_album):
-        """Given the  output from bs1770gain, parse the text and
-        return a list of dictionaries
-        containing information about each analyzed file.
-        """
-        per_file_gain = {}
-        album_gain = {}  # mutable variable so it can be set from handlers
-        parser = xml.parsers.expat.ParserCreate(encoding='utf-8')
-        state = {'file': None, 'gain': None, 'peak': None}
-        album_state = {'gain': None, 'peak': None}
-
-        def start_element_handler(name, attrs):
-            if name == u'track':
-                state['file'] = bytestring_path(attrs[u'file'])
-                if state['file'] in per_file_gain:
-                    raise ReplayGainError(
-                        u'duplicate filename in bs1770gain output')
-            elif name == u'integrated':
-                if 'lu' in attrs:
-                    state['gain'] = float(attrs[u'lu'])
-            elif name == u'sample-peak':
-                if 'factor' in attrs:
-                    state['peak'] = float(attrs[u'factor'])
-                elif 'amplitude' in attrs:
-                    state['peak'] = float(attrs[u'amplitude'])
-
-        def end_element_handler(name):
-            if name == u'track':
-                if state['gain'] is None or state['peak'] is None:
-                    raise ReplayGainError(u'could not parse gain or peak from '
-                                          'the output of bs1770gain')
-                per_file_gain[state['file']] = Gain(state['gain'],
-                                                    state['peak'])
-                state['gain'] = state['peak'] = None
-            elif name == u'summary':
-                if state['gain'] is None or state['peak'] is None:
-                    raise ReplayGainError(u'could not parse gain or peak from '
-                                          'the output of bs1770gain')
-                album_gain["album"] = Gain(state['gain'], state['peak'])
-                state['gain'] = state['peak'] = None
-            elif len(per_file_gain) == len(path_list):
-                if state['gain'] is not None:
-                    album_state['gain'] = state['gain']
-                if state['peak'] is not None:
-                    album_state['peak'] = state['peak']
-                if album_state['gain'] is not None \
-                        and album_state['peak'] is not None:
-                    album_gain["album"] = Gain(
-                        album_state['gain'], album_state['peak'])
-                state['gain'] = state['peak'] = None
-
-        parser.StartElementHandler = start_element_handler
-        parser.EndElementHandler = end_element_handler
-
-        try:
-            parser.Parse(text, True)
-        except xml.parsers.expat.ExpatError:
-            raise ReplayGainError(
-                u'The bs1770gain tool produced malformed XML. '
-                u'Using version >=0.4.10 may solve this problem.')
-
-        if len(per_file_gain) != len(path_list):
-            raise ReplayGainError(
-                u'the number of results returned by bs1770gain does not match '
-                'the number of files passed to it')
-
-        # bs1770gain does not return the analysis results in the order that
-        # files are passed on the command line, because it is sorting the files
-        # internally. We must recover the order from the filenames themselves.
-        try:
-            out = [per_file_gain[os.path.basename(p)] for p in path_list]
-        except KeyError:
-            raise ReplayGainError(
-                u'unrecognized filename in bs1770gain output '
-                '(bs1770gain can only deal with utf-8 file names)')
-        if is_album:
-            out.append(album_gain["album"])
-        return out
 
 
 # ffmpeg backend
@@ -1216,7 +967,6 @@ class ReplayGainPlugin(BeetsPlugin):
         "command": CommandBackend,
         "gstreamer": GStreamerBackend,
         "audiotools": AudioToolsBackend,
-        "bs1770gain": Bs1770gainBackend,
         "ffmpeg": FfmpegBackend,
     }
 
@@ -1309,40 +1059,30 @@ class ReplayGainPlugin(BeetsPlugin):
                 (not item.rg_album_gain or not item.rg_album_peak)
                 for item in album.items()])
 
-    def _store(self, item):
-        """Store an item to the database.
-             When testing, item.store() sometimes fails non-destructively with
-             sqlite.OperationalError.
-             This method is here to be patched to a retry-once helper function
-             in test_replaygain.py, so that it can still fail appropriately
-             outside of these tests.
-        """
-        item.store()
-
     def store_track_gain(self, item, track_gain):
         item.rg_track_gain = track_gain.gain
         item.rg_track_peak = track_gain.peak
-        self._store(item)
+        item.store()
         self._log.debug(u'applied track gain {0} LU, peak {1} of FS',
                         item.rg_track_gain, item.rg_track_peak)
 
     def store_album_gain(self, item, album_gain):
         item.rg_album_gain = album_gain.gain
         item.rg_album_peak = album_gain.peak
-        self._store(item)
+        item.store()
         self._log.debug(u'applied album gain {0} LU, peak {1} of FS',
                         item.rg_album_gain, item.rg_album_peak)
 
     def store_track_r128_gain(self, item, track_gain):
         item.r128_track_gain = track_gain.gain
-        self._store(item)
+        item.store()
 
         self._log.debug(u'applied r128 track gain {0} LU',
                         item.r128_track_gain)
 
     def store_album_r128_gain(self, item, album_gain):
         item.r128_album_gain = album_gain.gain
-        self._store(item)
+        item.store()
         self._log.debug(u'applied r128 album gain {0} LU',
                         item.r128_album_gain)
 
@@ -1389,7 +1129,7 @@ class ReplayGainPlugin(BeetsPlugin):
         tag_vals = self.tag_specific_values(album.items())
         store_track_gain, store_album_gain, target_level, peak = tag_vals
 
-        discs = dict()
+        discs = {}
         if self.per_disc:
             for item in album.items():
                 if discs.get(item.disc) is None:
@@ -1422,7 +1162,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 self._apply(
                     self.backend_instance.compute_album_gain, args=(),
                     kwds={
-                        "items": [i for i in items],
+                        "items": list(items),
                         "target_level": target_level,
                         "peak": peak
                     },
@@ -1538,7 +1278,7 @@ class ReplayGainPlugin(BeetsPlugin):
         try:
             self._log.info('interrupted')
             self.terminate_pool()
-            exit(0)
+            sys.exit(0)
         except SystemExit:
             # Silence raised SystemExit ~ exit(0)
             pass
@@ -1571,53 +1311,45 @@ class ReplayGainPlugin(BeetsPlugin):
         """
         if self.config['auto']:
             if task.is_album:
-                self.handle_album(
-                    task.album,
-                    self.config['auto'].get(bool),
-                    self.config['overwrite'].get(bool)
-                )
+                self.handle_album(task.album, False)
             else:
-                self.handle_track(
-                    task.item,
-                    self.config['auto'].get(bool),
-                    self.config['overwrite'].get(bool)
+                self.handle_track(task.item, False)
+
+    def command_func(self, lib, opts, args):
+        try:
+            write = ui.should_write(opts.write)
+            force = opts.force
+
+            # Bypass self.open_pool() if called with  `--threads 0`
+            if opts.threads != 0:
+                threads = opts.threads or self.config['threads'].get(int)
+                self.open_pool(threads)
+
+            if opts.album:
+                albums = lib.albums(ui.decargs(args))
+                self._log.info(
+                    "Analyzing {} albums ~ {} backend..."
+                    .format(len(albums), self.backend_name)
                 )
+                for album in albums:
+                    self.handle_album(album, write, force)
+            else:
+                items = lib.items(ui.decargs(args))
+                self._log.info(
+                    "Analyzing {} tracks ~ {} backend..."
+                    .format(len(items), self.backend_name)
+                )
+                for item in items:
+                    self.handle_track(item, write, force)
+
+            self.close_pool()
+        except (SystemExit, KeyboardInterrupt):
+            # Silence interrupt exceptions
+            pass
 
     def commands(self):
         """Return the "replaygain" ui subcommand.
         """
-        def func(lib, opts, args):
-            try:
-                write = ui.should_write(opts.write)
-                force = opts.force
-
-                # Bypass self.open_pool() if called with  `--threads 0`
-                if opts.threads != 0:
-                    threads = opts.threads or self.config['threads'].get(int)
-                    self.open_pool(threads)
-
-                if opts.album:
-                    albums = lib.albums(ui.decargs(args))
-                    self._log.info(
-                        "Analyzing {} albums ~ {} backend..."
-                        .format(len(albums), self.backend_name)
-                    )
-                    for album in albums:
-                        self.handle_album(album, write, force)
-                else:
-                    items = lib.items(ui.decargs(args))
-                    self._log.info(
-                        "Analyzing {} tracks ~ {} backend..."
-                        .format(len(items), self.backend_name)
-                    )
-                    for item in items:
-                        self.handle_track(item, write, force)
-
-                self.close_pool()
-            except (SystemExit, KeyboardInterrupt):
-                # Silence interrupt exceptions
-                pass
-
         cmd = ui.Subcommand('replaygain', help=u'analyze for ReplayGain')
         cmd.parser.add_album_option()
         cmd.parser.add_option(
@@ -1635,5 +1367,5 @@ class ReplayGainPlugin(BeetsPlugin):
         cmd.parser.add_option(
             "-W", "--nowrite", dest="write", action="store_false",
             help=u"don't write metadata (opposite of -w)")
-        cmd.func = func
+        cmd.func = self.command_func
         return [cmd]

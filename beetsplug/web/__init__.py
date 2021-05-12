@@ -59,7 +59,10 @@ def _rep(obj, expand=False):
         return out
 
     elif isinstance(obj, beets.library.Album):
-        del out['artpath']
+        if app.config.get('INCLUDE_PATHS', False):
+            out['artpath'] = util.displayable_path(out['artpath'])
+        else:
+            del out['artpath']
         if expand:
             out['items'] = [_rep(item) for item in obj.items()]
         return out
@@ -113,12 +116,19 @@ def resource(name, patchable=False):
             entities = [entity for entity in entities if entity]
 
             if get_method() == "DELETE":
+
+                if app.config.get('READONLY', True):
+                    return flask.abort(405)
+
                 for entity in entities:
                     entity.remove(delete=is_delete())
 
                 return flask.make_response(jsonify({'deleted': True}), 200)
 
             elif get_method() == "PATCH" and patchable:
+                if app.config.get('READONLY', True):
+                    return flask.abort(405)
+
                 for entity in entities:
                     entity.update(flask.request.get_json())
                     entity.try_sync(True, False)  # write, don't move
@@ -159,12 +169,19 @@ def resource_query(name, patchable=False):
             entities = query_func(queries)
 
             if get_method() == "DELETE":
+
+                if app.config.get('READONLY', True):
+                    return flask.abort(405)
+
                 for entity in entities:
                     entity.remove(delete=is_delete())
 
                 return flask.make_response(jsonify({'deleted': True}), 200)
 
             elif get_method() == "PATCH" and patchable:
+                if app.config.get('READONLY', True):
+                    return flask.abort(405)
+
                 for entity in entities:
                     entity.update(flask.request.get_json())
                     entity.try_sync(True, False)  # write, don't move
@@ -241,7 +258,9 @@ class QueryConverter(PathConverter):
 
     def to_python(self, value):
         queries = value.split('/')
-        return [query.replace('\\', os.sep) for query in queries]
+        """Do not do path substitution on regex value tests"""
+        return [query if '::' in query else query.replace('\\', os.sep)
+                for query in queries]
 
     def to_url(self, value):
         return ','.join([v.replace(os.sep, '\\') for v in value])
@@ -423,6 +442,7 @@ class WebPlugin(BeetsPlugin):
             'cors_supports_credentials': False,
             'reverse_proxy': False,
             'include_paths': False,
+            'readonly': True,
         })
 
     def commands(self):
@@ -442,6 +462,7 @@ class WebPlugin(BeetsPlugin):
             app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
             app.config['INCLUDE_PATHS'] = self.config['include_paths']
+            app.config['READONLY'] = self.config['readonly']
 
             # Enable CORS if required.
             if self.config['cors']:

@@ -99,7 +99,11 @@ def configure():
     from the beets configuration. This should be called at startup.
     """
     hostname = config['musicbrainz']['host'].as_str()
-    musicbrainzngs.set_hostname(hostname)
+    https = config['musicbrainz']['https'].get(bool)
+    # Only call set_hostname when a custom server is configured. Since
+    # musicbrainz-ngs connects to musicbrainz.org with HTTPS by default
+    if hostname != "musicbrainz.org":
+        musicbrainzngs.set_hostname(hostname, https)
     musicbrainzngs.set_rate_limit(
         config['musicbrainz']['ratelimit_interval'].as_number(),
         config['musicbrainz']['ratelimit'].get(int),
@@ -225,6 +229,8 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     if recording.get('length'):
         info.length = int(recording['length']) / (1000.0)
 
+    info.trackdisambig = recording.get('disambiguation')
+
     lyricist = []
     composer = []
     composer_sort = []
@@ -262,11 +268,10 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     if arranger:
         info.arranger = u', '.join(arranger)
 
-    # supplementary tags provided by plugins
-    extra_trackdatas = plugins.send('extracting_trackdata', info=recording)
+    # Supplementary fields provided by plugins
+    extra_trackdatas = plugins.send('mb_track_extract', data=recording)
     for extra_trackdata in extra_trackdatas:
-        for key in extra_trackdata:
-            info[key] = extra_trackdata[key]
+        info.update(extra_trackdata)
 
     info.decode()
     return info
@@ -456,11 +461,9 @@ def album_info(release):
     if config['musicbrainz']['genres'] and genres:
         info.genre = ';'.join(g['name'] for g in genres)
 
-    # supplementary tags provided by plugins
-    extra_albumdatas = plugins.send('extracting_albumdata', info=release)
+    extra_albumdatas = plugins.send('mb_album_extract', data=release)
     for extra_albumdata in extra_albumdatas:
-        for key in extra_albumdata:
-            info[key] = extra_albumdata[key]
+        info.update(extra_albumdata)
 
     info.decode()
     return info

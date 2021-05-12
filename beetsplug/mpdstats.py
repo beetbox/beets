@@ -50,8 +50,15 @@ class MPDClientWrapper(object):
     def __init__(self, log):
         self._log = log
 
-        self.music_directory = (
-            mpd_config['music_directory'].as_str())
+        self.music_directory = mpd_config['music_directory'].as_str()
+        self.strip_path = mpd_config['strip_path'].as_str()
+
+        # Ensure strip_path end with '/'
+        if not self.strip_path.endswith('/'):
+            self.strip_path += '/'
+
+        self._log.debug('music_directory: {0}', self.music_directory)
+        self._log.debug('strip_path: {0}', self.strip_path)
 
         if sys.version_info < (3, 0):
             # On Python 2, use_unicode will enable the utf-8 mode for
@@ -118,14 +125,21 @@ class MPDClientWrapper(object):
         """Return the path to the currently playing song, along with its
         songid.  Prefixes paths with the music_directory, to get the absolute
         path.
+        In some cases, we need to remove the local path from MPD server,
+        we replace 'strip_path' with ''.
+        `strip_path` defaults to ''.
         """
         result = None
         entry = self.get('currentsong')
         if 'file' in entry:
             if not is_url(entry['file']):
-                result = os.path.join(self.music_directory, entry['file'])
+                file = entry['file']
+                if file.startswith(self.strip_path):
+                    file = file[len(self.strip_path):]
+                result = os.path.join(self.music_directory, file)
             else:
                 result = entry['file']
+        self._log.debug('returning: {0}', result)
         return result, entry.get('id')
 
     def status(self):
@@ -334,6 +348,7 @@ class MPDStatsPlugin(plugins.BeetsPlugin):
         super(MPDStatsPlugin, self).__init__()
         mpd_config.add({
             'music_directory': config['directory'].as_filename(),
+            'strip_path':      u'',
             'rating':          True,
             'rating_mix':      0.75,
             'host':            os.environ.get('MPD_HOST', u'localhost'),

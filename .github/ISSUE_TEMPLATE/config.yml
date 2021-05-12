@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💡 Have an idea for a new feature?
+    url: https://github.com/beetbox/beets/discussions
+    about: Create a new idea discussion!
+  - name: 🙇 Need help with beets?
+    url: https://github.com/beetbox/beets/discussions
+    about: Create a new help discussion if it hasn't been asked before!
