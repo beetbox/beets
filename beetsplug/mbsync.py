@@ -112,8 +112,8 @@ class MBSyncPlugin(BeetsPlugin):
         })
 
         if self.config['performer_info'].get(bool):
-            self.register_listener('extracting_trackdata', track_performers)
-            self.register_listener('extracting_albumdata', album_performers)
+            self.register_listener('mb_track_extract', track_performers)
+            self.register_listener('mb_album_extract', album_performers)
 
     def commands(self):
         cmd = ui.Subcommand('mbsync',
