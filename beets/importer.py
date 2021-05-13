@@ -576,17 +576,17 @@ class ImportTask(BaseImportTask):
         """Sets the fields given at CLI or configuration to the specified
         values, for both the album and all its items.
         """
+        items = self.imported_items()
+        for field, view in config['import']['set_fields'].items():
+            value = view.get()
+            log.debug(u'Set field {1}={2} for {0}',
+                      displayable_path(self.paths),
+                      field,
+                      value)
+            self.album[field] = value
+            for item in items:
+                item[field] = value
         with lib.transaction():
-            items = self.imported_items()
-            for field, view in config['import']['set_fields'].items():
-                value = view.get()
-                log.debug(u'Set field {1}={2} for {0}',
-                          displayable_path(self.paths),
-                          field,
-                          value)
-                self.album[field] = value
-                for item in items:
-                    item[field] = value
             for item in items:
                 item.store()
             self.album.store()
@@ -956,15 +956,14 @@ class SingletonImportTask(ImportTask):
         """Sets the fields given at CLI or configuration to the specified
         values, for the singleton item.
         """
-        with lib.transaction():
-            for field, view in config['import']['set_fields'].items():
-                value = view.get()
-                log.debug(u'Set field {1}={2} for {0}',
-                          displayable_path(self.paths),
-                          field,
-                          value)
-                self.item[field] = value
-            self.item.store()
+        for field, view in config['import']['set_fields'].items():
+            value = view.get()
+            log.debug(u'Set field {1}={2} for {0}',
+                      displayable_path(self.paths),
+                      field,
+                      value)
+            self.item[field] = value
+        self.item.store()
 
 
 # FIXME The inheritance relationships are inverted. This is why there

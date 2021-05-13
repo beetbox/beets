@@ -743,7 +743,6 @@ class ImportTest(_common.TestCase, ImportHelper):
         comments = u"managed by beets"
 
         config['import']['set_fields'] = {
-            u'collection': collection,
             u'genre': genre,
             u'comments': comments
         }
@@ -756,11 +755,10 @@ class ImportTest(_common.TestCase, ImportHelper):
         for album in self.lib.albums():
             album.load()  # TODO: Not sure this is necessary.
             self.assertEqual(album.genre, genre)
-            self.assertEqual(album.collection, collection)
+            self.assertEqual(album.comments, comments)
             for item in album.items():
-                self.assertEqual(item.genre, genre)
-                self.assertEqual(item.collection, collection)
-                self.assertEqual(item.comments, comments)
+                self.assertEqual(item.get("genre", with_album=False), genre)
+                self.assertEqual(item.get("comments", with_album=False), comments)
             # Remove album from library to test again with APPLY choice.
             album.remove()
 
@@ -773,11 +771,10 @@ class ImportTest(_common.TestCase, ImportHelper):
         for album in self.lib.albums():
             album.load()
             self.assertEqual(album.genre, genre)
-            self.assertEqual(album.collection, collection)
+            self.assertEqual(album.comments, comments)
             for item in album.items():
-                self.assertEqual(item.genre, genre)
-                self.assertEqual(item.collection, collection)
-                self.assertEqual(item.comments, comments)
+                self.assertEqual(item.get("genre", with_album=False), genre)
+                self.assertEqual(item.get("comments", with_album=False), comments)
 
 
 class ImportTracksTest(_common.TestCase, ImportHelper):
