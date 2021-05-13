@@ -1061,6 +1061,12 @@ class ArchiveImportTask(SentinelImportTask):
                 pass
             else:
                 cls._handlers.append((is_rarfile, RarFile))
+            try:
+                from py7zr import is_7zfile, SevenZipFile
+            except ImportError:
+                pass
+            else:
+                cls._handlers.append((is_7zfile, SevenZipFile))
 
         return cls._handlers
 
