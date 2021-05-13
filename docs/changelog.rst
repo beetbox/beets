@@ -222,6 +222,7 @@ Other new things:
   Thanks to :user:`arogl`.  :bug:`3906`
 * Get ISRC identifiers from musicbrainz
   Thanks to :user:`aereaux`.
+* :doc:`/plugins/metasync`: The ``metasync`` plugin now also fetches the ``Date Added`` field from iTunes databases and stores it in the``itunes_dateadded`` field.Thanks to :user:`sandersantema`.
 
   .. _py7zr: https://pypi.org/project/py7zr/
 
