@@ -204,6 +204,8 @@ Other new things:
   configuration.
   Thanks to :user:`FichteFoll`.
   :bug:`2797` :bug:`2988`
+* Add ``mb_album_extract`` and ``mb_track_extract`` hooks to allow
+  plugins to add new fields based on MusicBrainz data. Thanks to :user:`dosoe`.
 * Removes usage of the bs1770gain replaygain backend.
   Thanks to :user:`SamuelCook`.
 * Added ``trackdisambig`` which stores the recording disambiguation from
@@ -218,6 +220,12 @@ Other new things:
   Thanks to :user:`ssssam`.
 * The `importer` persists all fields set using :ref:`set_fields` to the
   mediafiles of all imported tracks.
+* Added 7z support via the `py7zr`_ library
+  Thanks to :user:`arogl`.  :bug:`3906`
+* Get ISRC identifiers from musicbrainz
+  Thanks to :user:`aereaux`.
+
+  .. _py7zr: https://pypi.org/project/py7zr/
 
 Fixes:
 
@@ -361,6 +369,7 @@ Fixes:
   :bug:`2984`
 * :doc:`/plugins/lyrics`: Fix crashes for Tekstowo false positives
   :bug:`3904`
+* :doc`/reference/cli`: Remove reference to rarfile version in link
 
 For plugin developers:
 
@@ -2004,7 +2013,7 @@ Major new features and bigger changes:
   search results you wish to see when looking up releases at MusicBrainz
   during import. :bug:`1245`
 * The importer now records the data source for a match in a new
-  flexible attribute `data_source` on items and albums. :bug:`1311`
+  flexible attribute ``data_source`` on items and albums. :bug:`1311`
 * The colors used in the terminal interface are now configurable via the new
   config option ``colors``, nested under the option ``ui``. (Also, the `color`
   config option has been moved from top-level to under ``ui``. Beets will

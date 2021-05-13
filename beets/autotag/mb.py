@@ -23,6 +23,7 @@ import traceback
 from six.moves.urllib.parse import urljoin
 
 from beets import logging
+from beets import plugins
 import beets.autotag.hooks
 import beets
 from beets import util
@@ -70,14 +71,14 @@ log = logging.getLogger('beets')
 RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'labels', 'artist-credits', 'aliases',
                     'recording-level-rels', 'work-rels',
-                    'work-level-rels', 'artist-rels']
+                    'work-level-rels', 'artist-rels', 'isrcs']
 BROWSE_INCLUDES = ['artist-credits', 'work-rels',
                    'artist-rels', 'recording-rels', 'release-rels']
 if "work-level-rels" in musicbrainzngs.VALID_BROWSE_INCLUDES['recording']:
     BROWSE_INCLUDES.append("work-level-rels")
 BROWSE_CHUNKSIZE = 100
 BROWSE_MAXTRACKS = 500
-TRACK_INCLUDES = ['artists', 'aliases']
+TRACK_INCLUDES = ['artists', 'aliases', 'isrcs']
 if 'work-level-rels' in musicbrainzngs.VALID_INCLUDES['recording']:
     TRACK_INCLUDES += ['work-level-rels', 'artist-rels']
 if 'genres' in musicbrainzngs.VALID_INCLUDES['recording']:
@@ -229,6 +230,9 @@ def track_info(recording, index=None, medium=None, medium_index=None,
 
     info.trackdisambig = recording.get('disambiguation')
 
+    if recording.get('isrc-list'):
+        info.isrc = ';'.join(recording['isrc-list'])
+
     lyricist = []
     composer = []
     composer_sort = []
@@ -264,6 +268,11 @@ def track_info(recording, index=None, medium=None, medium_index=None,
                 arranger.append(artist_relation['artist']['name'])
     if arranger:
         info.arranger = u', '.join(arranger)
+
+    # Supplementary fields provided by plugins
+    extra_trackdatas = plugins.send('mb_track_extract', data=recording)
+    for extra_trackdata in extra_trackdatas:
+        info.update(extra_trackdata)
 
     info.decode()
     return info
@@ -452,6 +461,10 @@ def album_info(release):
     genres = release.get('genre-list')
     if config['musicbrainz']['genres'] and genres:
         info.genre = ';'.join(g['name'] for g in genres)
+
+    extra_albumdatas = plugins.send('mb_album_extract', data=release)
+    for extra_albumdata in extra_albumdatas:
+        info.update(extra_albumdata)
 
     info.decode()
     return info
