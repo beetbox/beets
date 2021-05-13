@@ -69,6 +69,7 @@ class Itunes(MetaSource):
         'itunes_skipcount':   types.INTEGER,
         'itunes_lastplayed':  DateType(),
         'itunes_lastskipped': DateType(),
+        'itunes_dateadded':   DateType(),
     }
 
     def __init__(self, config, log):
@@ -117,10 +118,11 @@ class Itunes(MetaSource):
         item.itunes_playcount = result.get('Play Count')
         item.itunes_skipcount = result.get('Skip Count')
 
-        if result.get('Play Date UTC'):
-            item.itunes_lastplayed = mktime(
-                result.get('Play Date UTC').timetuple())
+        if (result_playdateutc := result.get("Play Date UTC")) :
+            item.itunes_lastplayed = mktime(result_playdateutc.timetuple())
 
-        if result.get('Skip Date'):
-            item.itunes_lastskipped = mktime(
-                result.get('Skip Date').timetuple())
+        if (result_skipdate := result.get("Skip Date")) :
+            item.itunes_lastskipped = mktime(result_skipdate.timetuple())
+
+        if (result_dateadded := result.get("Date Added")) :
+            item.itunes_dateadded = mktime(result_dateadded.timetuple())
