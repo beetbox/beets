@@ -218,6 +218,8 @@ Other new things:
   ``check_on_import`` config option.
 * :doc:`/plugins/export`: big speedups when `--include-keys` option is used
   Thanks to :user:`ssssam`.
+* The `importer` persists all fields set using :ref:`set_fields` to the
+  mediafiles of all imported tracks.
 * Added 7z support via the `py7zr`_ library
   Thanks to :user:`arogl`.  :bug:`3906`
 * Get ISRC identifiers from musicbrainz
