@@ -69,6 +69,7 @@ class Itunes(MetaSource):
         'itunes_skipcount':   types.INTEGER,
         'itunes_lastplayed':  DateType(),
         'itunes_lastskipped': DateType(),
+        'itunes_dateadded':   DateType(),
     }
 
     def __init__(self, config, log):
@@ -124,3 +125,7 @@ class Itunes(MetaSource):
         if result.get('Skip Date'):
             item.itunes_lastskipped = mktime(
                 result.get('Skip Date').timetuple())
+
+        if result.get('Date Added'):
+            item.itunes_dateadded = mktime(
+                result.get('Date Added').timetuple())

@@ -740,10 +740,12 @@ class ImportTest(_common.TestCase, ImportHelper):
     def test_set_fields(self):
         genre = u"\U0001F3B7 Jazz"
         collection = u"To Listen"
+        comments = u"managed by beets"
 
         config['import']['set_fields'] = {
+            u'genre': genre,
             u'collection': collection,
-            u'genre': genre
+            u'comments': comments
         }
 
         # As-is album import.
@@ -754,7 +756,17 @@ class ImportTest(_common.TestCase, ImportHelper):
         for album in self.lib.albums():
             album.load()  # TODO: Not sure this is necessary.
             self.assertEqual(album.genre, genre)
-            self.assertEqual(album.collection, collection)
+            self.assertEqual(album.comments, comments)
+            for item in album.items():
+                self.assertEqual(
+                        item.get("genre", with_album=False),
+                        genre)
+                self.assertEqual(
+                        item.get("collection", with_album=False),
+                        collection)
+                self.assertEqual(
+                        item.get("comments", with_album=False),
+                        comments)
             # Remove album from library to test again with APPLY choice.
             album.remove()
 
@@ -767,7 +779,17 @@ class ImportTest(_common.TestCase, ImportHelper):
         for album in self.lib.albums():
             album.load()
             self.assertEqual(album.genre, genre)
-            self.assertEqual(album.collection, collection)
+            self.assertEqual(album.comments, comments)
+            for item in album.items():
+                self.assertEqual(
+                        item.get("genre", with_album=False),
+                        genre)
+                self.assertEqual(
+                        item.get("collection", with_album=False),
+                        collection)
+                self.assertEqual(
+                        item.get("comments", with_album=False),
+                        comments)
 
 
 class ImportTracksTest(_common.TestCase, ImportHelper):

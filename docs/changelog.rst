@@ -218,11 +218,15 @@ Other new things:
   ``check_on_import`` config option.
 * :doc:`/plugins/export`: big speedups when `--include-keys` option is used
   Thanks to :user:`ssssam`.
+* The `importer` persists all fields set using :ref:`set_fields` to the
+  mediafiles of all imported tracks.
 * Added 7z support via the `py7zr`_ library
   Thanks to :user:`arogl`.  :bug:`3906`
-* The ``mbsync`` plugin now also fetches performers, if the ``performer_info``
+* Get ISRC identifiers from musicbrainz
+  Thanks to :user:`aereaux`.
+* :doc:`/plugins/metasync`: The ``metasync`` plugin now also fetches the ``Date Added`` field from iTunes databases and stores it in the``itunes_dateadded`` field.Thanks to :user:`sandersantema`.* The ``mbsync`` plugin now also fetches performers, if the ``performer_info``
   option is enabled. Fixes :bug:`1547`, thanks to :user:`dosoe`.
-  
+
   .. _py7zr: https://pypi.org/project/py7zr/
 
 Fixes:
