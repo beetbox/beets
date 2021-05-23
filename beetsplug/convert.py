@@ -16,7 +16,7 @@
 """Converts tracks or albums to external directory
 """
 from __future__ import division, absolute_import, print_function
-from beets.util import par_map, decode_commandline_path
+from beets.util import par_map, decode_commandline_path, arg_encoding
 
 import os
 import threading
@@ -203,6 +203,9 @@ class ConvertPlugin(BeetsPlugin):
 
         if not quiet and not pretend:
             self._log.info(u'Encoding {0}', util.displayable_path(source))
+
+        if not six.PY2:
+            command = command.decode(arg_encoding(), 'surrogateescape')
 
         source = decode_commandline_path(source)
         dest = decode_commandline_path(dest)
