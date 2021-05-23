@@ -13,9 +13,9 @@ Then you can get a more detailed look at beets' features in the
 be interested in exploring the :doc:`plugins </plugins/index>`.
 
 If you still need help, your can drop by the ``#beets`` IRC channel on
-Freenode, drop by `the discussion board`_, send email to `the mailing list`_,
-or `file a bug`_ in the issue tracker. Please let us know where you think this
-documentation can be improved.
+Libera.Chat, drop by `the discussion board`_, send email to
+`the mailing list`_, or `file a bug`_ in the issue tracker. Please let us know
+where you think this documentation can be improved.
 
 .. _beets: https://beets.io/
 .. _the mailing list: https://groups.google.com/group/beets-users
