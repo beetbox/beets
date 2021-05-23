@@ -16,7 +16,7 @@
 """Converts tracks or albums to external directory
 """
 from __future__ import division, absolute_import, print_function
-from beets.util import par_map
+from beets.util import par_map, decode_commandline_path
 
 import os
 import threading
@@ -25,7 +25,6 @@ import tempfile
 import shlex
 import six
 from string import Template
-import platform
 
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
@@ -205,20 +204,8 @@ class ConvertPlugin(BeetsPlugin):
         if not quiet and not pretend:
             self._log.info(u'Encoding {0}', util.displayable_path(source))
 
-        # On Python 3, we need to construct the command to invoke as a
-        # Unicode string. On Unix, this is a little unfortunate---the OS is
-        # expecting bytes---so we use surrogate escaping and decode with the
-        # argument encoding, which is the same encoding that will then be
-        # *reversed* to recover the same bytes before invoking the OS. On
-        # Windows, we want to preserve the Unicode filename "as is."
-        if not six.PY2:
-            command = command.decode(util.arg_encoding(), 'surrogateescape')
-            if platform.system() == 'Windows':
-                source = source.decode(util._fsencoding())
-                dest = dest.decode(util._fsencoding())
-            else:
-                source = source.decode(util.arg_encoding(), 'surrogateescape')
-                dest = dest.decode(util.arg_encoding(), 'surrogateescape')
+        source = decode_commandline_path(source)
+        dest = decode_commandline_path(dest)
 
         # Substitute $source and $dest in the argument list.
         args = shlex.split(command)
