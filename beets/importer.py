@@ -187,7 +187,7 @@ class ImportSession(object):
         self.logger = self._setup_logging(loghandler)
         self.paths = paths
         self.query = query
-        self._is_resuming = dict()
+        self._is_resuming = {}
         self._merged_items = set()
         self._merged_dirs = set()
 
@@ -572,10 +572,11 @@ class ImportTask(BaseImportTask):
                 util.prune_dirs(os.path.dirname(item.path),
                                 lib.directory)
 
-    def set_fields(self):
+    def set_fields(self, lib):
         """Sets the fields given at CLI or configuration to the specified
-        values.
+        values, for both the album and all its items.
         """
+        items = self.imported_items()
         for field, view in config['import']['set_fields'].items():
             value = view.get()
             log.debug(u'Set field {1}={2} for {0}',
@@ -583,7 +584,12 @@ class ImportTask(BaseImportTask):
                       field,
                       value)
             self.album[field] = value
-        self.album.store()
+            for item in items:
+                item[field] = value
+        with lib.transaction():
+            for item in items:
+                item.store()
+            self.album.store()
 
     def finalize(self, session):
         """Save progress, clean up files, and emit plugin event.
@@ -786,7 +792,7 @@ class ImportTask(BaseImportTask):
                 if (not dup_item.album_id or
                         dup_item.album_id in replaced_album_ids):
                     continue
-                replaced_album = dup_item.get_album()
+                replaced_album = dup_item._cached_album
                 if replaced_album:
                     replaced_album_ids.add(dup_item.album_id)
                     self.replaced_albums[replaced_album.path] = replaced_album
@@ -946,9 +952,9 @@ class SingletonImportTask(ImportTask):
     def reload(self):
         self.item.load()
 
-    def set_fields(self):
+    def set_fields(self, lib):
         """Sets the fields given at CLI or configuration to the specified
-        values.
+        values, for the singleton item.
         """
         for field, view in config['import']['set_fields'].items():
             value = view.get()
@@ -1054,6 +1060,12 @@ class ArchiveImportTask(SentinelImportTask):
                 pass
             else:
                 cls._handlers.append((is_rarfile, RarFile))
+            try:
+                from py7zr import is_7zfile, SevenZipFile
+            except ImportError:
+                pass
+            else:
+                cls._handlers.append((is_7zfile, SevenZipFile))
 
         return cls._handlers
 
@@ -1510,7 +1522,7 @@ def apply_choice(session, task):
     # because then the ``ImportTask`` won't have an `album` for which
     # it can set the fields.
     if config['import']['set_fields']:
-        task.set_fields()
+        task.set_fields(session.lib)
 
 
 @pipeline.mutator_stage

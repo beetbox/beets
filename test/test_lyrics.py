@@ -274,6 +274,8 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
         dict(DEFAULT_SONG, backend=lyrics.Genius,
              # GitHub actions is on some form of Cloudflare blacklist.
              skip=os.environ.get('GITHUB_ACTIONS') == 'true'),
+        dict(artist=u'Boy In Space', title=u'u n eye',
+             backend=lyrics.Tekstowo),
     ]
 
     GOOGLE_SOURCES = [

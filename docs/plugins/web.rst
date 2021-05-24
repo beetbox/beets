@@ -66,6 +66,8 @@ configuration file. The available options are:
   Default: false.
 - **include_paths**: If true, includes paths in item objects.
   Default: false.
+- **readonly**: If true, DELETE and PATCH operations are not allowed. Only GET is permitted.
+  Default: true.
 
 Implementation
 --------------
@@ -189,6 +191,8 @@ code.
 Removes the item with id *6* from the beets library. If the *?delete* query string is included,
 the matching file will be deleted from disk.
 
+Only allowed if ``readonly`` configuration option is set to ``no``.
+
 ``PATCH /item/6``
 ++++++++++++++++++
 
@@ -202,6 +206,8 @@ Returns the updated JSON representation. ::
       "title": "A Song",
       ...
     }
+
+Only allowed if ``readonly`` configuration option is set to ``no``.
 
 ``GET /item/6,12,13``
 +++++++++++++++++++++
@@ -261,6 +267,8 @@ For albums, the following endpoints are provided:
 
 * ``GET /album/5``
 
+* ``GET /album/5/art``
+
 * ``DELETE /album/5``
 
 * ``GET /album/5,7``
@@ -277,6 +285,7 @@ or ``/album/5,7``. In addition we can request the cover art of an album with
 ``GET /album/5/art``.
 You can also add the '?expand' flag to get the individual items of an album.
 
+``DELETE`` is only allowed if ``readonly`` configuration option is set to ``no``.
 
 ``GET /stats``
 ++++++++++++++

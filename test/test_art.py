@@ -742,13 +742,16 @@ class ArtImporterTest(UseThePlugin):
 
 
 class ArtForAlbumTest(UseThePlugin):
-    """ Tests that fetchart.art_for_album respects the size
-    configuration (e.g., minwidth, enforce_ratio)
+    """ Tests that fetchart.art_for_album respects the scale & filesize
+    configurations (e.g., minwidth, enforce_ratio, max_filesize)
     """
 
     IMG_225x225 = os.path.join(_common.RSRC, b'abbey.jpg')
     IMG_348x348 = os.path.join(_common.RSRC, b'abbey-different.jpg')
     IMG_500x490 = os.path.join(_common.RSRC, b'abbey-similar.jpg')
+
+    IMG_225x225_SIZE = os.stat(util.syspath(IMG_225x225)).st_size
+    IMG_348x348_SIZE = os.stat(util.syspath(IMG_348x348)).st_size
 
     def setUp(self):
         super(ArtForAlbumTest, self).setUp()
@@ -838,6 +841,29 @@ class ArtForAlbumTest(UseThePlugin):
         self.plugin.maxwidth = 300
         self._assertImageResized(self.IMG_225x225, False)
         self._assertImageResized(self.IMG_348x348, True)
+
+    def test_fileresize(self):
+        self._require_backend()
+        self.plugin.max_filesize = self.IMG_225x225_SIZE // 2
+        self._assertImageResized(self.IMG_225x225, True)
+
+    def test_fileresize_if_necessary(self):
+        self._require_backend()
+        self.plugin.max_filesize = self.IMG_225x225_SIZE
+        self._assertImageResized(self.IMG_225x225, False)
+        self._assertImageIsValidArt(self.IMG_225x225, True)
+
+    def test_fileresize_no_scale(self):
+        self._require_backend()
+        self.plugin.maxwidth = 300
+        self.plugin.max_filesize = self.IMG_225x225_SIZE // 2
+        self._assertImageResized(self.IMG_225x225, True)
+
+    def test_fileresize_and_scale(self):
+        self._require_backend()
+        self.plugin.maxwidth = 200
+        self.plugin.max_filesize = self.IMG_225x225_SIZE // 2
+        self._assertImageResized(self.IMG_225x225, True)
 
 
 class DeprecatedConfigTest(_common.TestCase):
