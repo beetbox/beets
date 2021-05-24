@@ -12,6 +12,9 @@ dependencies---packagers, please take note.
 Finally, this is the last version of beets where we intend to support Python
 2.x and 3.5; future releases will soon require Python 3.6.
 
+One non-technical change includes that we moved our official ``#beets`` home
+on IRC from freenode to Libera.Chat.
+
 Major new features:
 
 * A new :ref:`reflink` config option instructs the importer to create fast,
@@ -46,6 +49,7 @@ Major new features:
 
 Other new things:
 
+* Document Libera.Chat as the new official IRC home. Thanks to :user:`Freso`.
 * Enable HTTPS for MusicBrainz by default and add configuration option
   `https` for custom servers.
 * :doc:`/plugins/mpdstats`: Add a new `strip_path` option to help build the
