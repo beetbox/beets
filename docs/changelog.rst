@@ -371,6 +371,9 @@ Fixes:
 * :doc:`/plugins/lyrics`: Fix crashes for Tekstowo false positives
   :bug:`3904`
 * :doc`/reference/cli`: Remove reference to rarfile version in link
+* Fix :bug:`2873`. Duplicates can now generate checksums. Thanks user:`wisp3rwind`
+  for the pointer to how to solve. Thanks to :user:`arogl`.
+
 
 For plugin developers:
 
