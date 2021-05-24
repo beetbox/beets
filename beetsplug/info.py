@@ -19,7 +19,6 @@
 from __future__ import division, absolute_import, print_function
 
 import os
-import re
 
 from beets.plugins import BeetsPlugin
 from beets import ui
@@ -42,15 +41,29 @@ def tag_data(lib, args):
             yield tag_data_emitter(item.path)
 
 
+def tag_fields():
+    fields = set(mediafile.MediaFile.readable_fields())
+    fields.add('art')
+    return fields
+
+
 def tag_data_emitter(path):
-    def emitter():
-        fields = list(mediafile.MediaFile.readable_fields())
-        fields.remove('images')
+    def emitter(included_keys):
+        if included_keys == '*':
+            fields = tag_fields()
+        else:
+            fields = included_keys
+        if 'images' in fields:
+            # We can't serialize the image data.
+            fields.remove('images')
         mf = mediafile.MediaFile(syspath(path))
         tags = {}
         for field in fields:
-            tags[field] = getattr(mf, field)
-        tags['art'] = mf.art is not None
+            if field == 'art':
+                tags[field] = mf.art is not None
+            else:
+                tags[field] = getattr(mf, field, None)
+
         # create a temporary Item to take advantage of __format__
         item = Item.from_path(syspath(path))
 
@@ -64,8 +77,8 @@ def library_data(lib, args):
 
 
 def library_data_emitter(item):
-    def emitter():
-        data = dict(item.formatted())
+    def emitter(included_keys):
+        data = dict(item.formatted(included_keys=included_keys))
 
         return data, item
     return emitter
@@ -185,18 +198,16 @@ class InfoPlugin(BeetsPlugin):
             included_keys.extend(keys.split(','))
         # Drop path even if user provides it multiple times
         included_keys = [k for k in included_keys if k != 'path']
-        key_filter = make_key_filter(included_keys)
 
         first = True
         summary = {}
         for data_emitter in data_collector(lib, ui.decargs(args)):
             try:
-                data, item = data_emitter()
+                data, item = data_emitter(included_keys or '*')
             except (mediafile.UnreadableFileError, IOError) as ex:
                 self._log.error(u'cannot read file: {0}', ex)
                 continue
 
-            data = key_filter(data)
             if opts.summarize:
                 update_summary(summary, data)
             else:
@@ -211,34 +222,3 @@ class InfoPlugin(BeetsPlugin):
 
         if opts.summarize:
             print_data(summary)
-
-
-def make_key_filter(include):
-    """Return a function that filters a dictionary.
-
-    The returned filter takes a dictionary and returns another
-    dictionary that only includes the key-value pairs where the key
-    glob-matches one of the keys in `include`.
-    """
-    # By default, if no field inclusions are specified, include
-    # everything but `path`.
-    if not include:
-        def filter_(data):
-            return {k: v for k, v in data.items()
-                    if k != 'path'}
-        return filter_
-
-    matchers = []
-    for key in include:
-        key = re.escape(key)
-        key = key.replace(r'\*', '.*')
-        matchers.append(re.compile(key + '$'))
-
-    def filter_(data):
-        filtered = dict()
-        for key, value in data.items():
-            if any([m.match(key) for m in matchers]):
-                filtered[key] = value
-        return filtered
-
-    return filter_

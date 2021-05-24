@@ -1059,40 +1059,30 @@ class ReplayGainPlugin(BeetsPlugin):
                 (not item.rg_album_gain or not item.rg_album_peak)
                 for item in album.items()])
 
-    def _store(self, item):
-        """Store an item to the database.
-             When testing, item.store() sometimes fails non-destructively with
-             sqlite.OperationalError.
-             This method is here to be patched to a retry-once helper function
-             in test_replaygain.py, so that it can still fail appropriately
-             outside of these tests.
-        """
-        item.store()
-
     def store_track_gain(self, item, track_gain):
         item.rg_track_gain = track_gain.gain
         item.rg_track_peak = track_gain.peak
-        self._store(item)
+        item.store()
         self._log.debug(u'applied track gain {0} LU, peak {1} of FS',
                         item.rg_track_gain, item.rg_track_peak)
 
     def store_album_gain(self, item, album_gain):
         item.rg_album_gain = album_gain.gain
         item.rg_album_peak = album_gain.peak
-        self._store(item)
+        item.store()
         self._log.debug(u'applied album gain {0} LU, peak {1} of FS',
                         item.rg_album_gain, item.rg_album_peak)
 
     def store_track_r128_gain(self, item, track_gain):
         item.r128_track_gain = track_gain.gain
-        self._store(item)
+        item.store()
 
         self._log.debug(u'applied r128 track gain {0} LU',
                         item.r128_track_gain)
 
     def store_album_r128_gain(self, item, album_gain):
         item.r128_album_gain = album_gain.gain
-        self._store(item)
+        item.store()
         self._log.debug(u'applied r128 album gain {0} LU',
                         item.r128_album_gain)
 
@@ -1139,7 +1129,7 @@ class ReplayGainPlugin(BeetsPlugin):
         tag_vals = self.tag_specific_values(album.items())
         store_track_gain, store_album_gain, target_level, peak = tag_vals
 
-        discs = dict()
+        discs = {}
         if self.per_disc:
             for item in album.items():
                 if discs.get(item.disc) is None:
@@ -1172,7 +1162,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 self._apply(
                     self.backend_instance.compute_album_gain, args=(),
                     kwds={
-                        "items": [i for i in items],
+                        "items": list(items),
                         "target_level": target_level,
                         "peak": peak
                     },
@@ -1288,7 +1278,7 @@ class ReplayGainPlugin(BeetsPlugin):
         try:
             self._log.info('interrupted')
             self.terminate_pool()
-            exit(0)
+            sys.exit(0)
         except SystemExit:
             # Silence raised SystemExit ~ exit(0)
             pass
@@ -1321,53 +1311,45 @@ class ReplayGainPlugin(BeetsPlugin):
         """
         if self.config['auto']:
             if task.is_album:
-                self.handle_album(
-                    task.album,
-                    self.config['auto'].get(bool),
-                    self.config['overwrite'].get(bool)
-                )
+                self.handle_album(task.album, False)
             else:
-                self.handle_track(
-                    task.item,
-                    self.config['auto'].get(bool),
-                    self.config['overwrite'].get(bool)
+                self.handle_track(task.item, False)
+
+    def command_func(self, lib, opts, args):
+        try:
+            write = ui.should_write(opts.write)
+            force = opts.force
+
+            # Bypass self.open_pool() if called with  `--threads 0`
+            if opts.threads != 0:
+                threads = opts.threads or self.config['threads'].get(int)
+                self.open_pool(threads)
+
+            if opts.album:
+                albums = lib.albums(ui.decargs(args))
+                self._log.info(
+                    "Analyzing {} albums ~ {} backend..."
+                    .format(len(albums), self.backend_name)
                 )
+                for album in albums:
+                    self.handle_album(album, write, force)
+            else:
+                items = lib.items(ui.decargs(args))
+                self._log.info(
+                    "Analyzing {} tracks ~ {} backend..."
+                    .format(len(items), self.backend_name)
+                )
+                for item in items:
+                    self.handle_track(item, write, force)
+
+            self.close_pool()
+        except (SystemExit, KeyboardInterrupt):
+            # Silence interrupt exceptions
+            pass
 
     def commands(self):
         """Return the "replaygain" ui subcommand.
         """
-        def func(lib, opts, args):
-            try:
-                write = ui.should_write(opts.write)
-                force = opts.force
-
-                # Bypass self.open_pool() if called with  `--threads 0`
-                if opts.threads != 0:
-                    threads = opts.threads or self.config['threads'].get(int)
-                    self.open_pool(threads)
-
-                if opts.album:
-                    albums = lib.albums(ui.decargs(args))
-                    self._log.info(
-                        "Analyzing {} albums ~ {} backend..."
-                        .format(len(albums), self.backend_name)
-                    )
-                    for album in albums:
-                        self.handle_album(album, write, force)
-                else:
-                    items = lib.items(ui.decargs(args))
-                    self._log.info(
-                        "Analyzing {} tracks ~ {} backend..."
-                        .format(len(items), self.backend_name)
-                    )
-                    for item in items:
-                        self.handle_track(item, write, force)
-
-                self.close_pool()
-            except (SystemExit, KeyboardInterrupt):
-                # Silence interrupt exceptions
-                pass
-
         cmd = ui.Subcommand('replaygain', help=u'analyze for ReplayGain')
         cmd.parser.add_album_option()
         cmd.parser.add_option(
@@ -1385,5 +1367,5 @@ class ReplayGainPlugin(BeetsPlugin):
         cmd.parser.add_option(
             "-W", "--nowrite", dest="write", action="store_false",
             help=u"don't write metadata (opposite of -w)")
-        cmd.func = func
+        cmd.func = self.command_func
         return [cmd]

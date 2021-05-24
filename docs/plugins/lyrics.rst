@@ -3,10 +3,11 @@ Lyrics Plugin
 
 The ``lyrics`` plugin fetches and stores song lyrics from databases on the Web.
 Namely, the current version of the plugin uses `Musixmatch`_, `Genius.com`_,
-and, optionally, the Google custom search API.
+`Tekstowo.pl`_, and, optionally, the Google custom search API.
 
 .. _Musixmatch: https://www.musixmatch.com/
 .. _Genius.com: https://genius.com/
+.. _Tekstowo.pl: https://www.tekstowo.pl/
 
 
 Fetch Lyrics During Import
@@ -58,11 +59,11 @@ configuration file. The available options are:
   sources known to be scrapeable.
 - **sources**: List of sources to search for lyrics. An asterisk ``*`` expands
   to all available sources.
-  Default: ``google lyricwiki musixmatch genius``, i.e., all the
+  Default: ``google musixmatch genius tekstowo``, i.e., all the
   available sources. The ``google`` source will be automatically
   deactivated if no ``google_API_key`` is setup.
-  Both it and the ``genius`` source will only be enabled if BeautifulSoup is
-  installed.
+  The ``google``, ``genius``, and ``tekstowo`` sources will only be enabled if
+  BeautifulSoup is installed.
 
 Here's an example of ``config.yaml``::
 
@@ -155,15 +156,15 @@ After that, the lyrics plugin will fall back on other declared data sources.
 .. _pip: https://pip.pypa.io
 .. _BeautifulSoup: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
 
-Activate Genius Lyrics
-----------------------
+Activate Genius and Tekstowo.pl Lyrics
+--------------------------------------
 
-Like the Google backend, the Genius backend requires the `BeautifulSoup`_
-library. Install it by typing::
+Using the Genius or Tekstowo.pl backends requires `BeautifulSoup`_, which
+you can install using `pip`_ by typing::
 
     pip install beautifulsoup4
 
-The backend is enabled by default.
+These backends are enabled by default.
 
 .. _lyrics-translation:
 

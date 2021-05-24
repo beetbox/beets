@@ -26,14 +26,15 @@ from xml.etree import ElementTree
 from datetime import datetime, date
 from beets.plugins import BeetsPlugin
 from beets import ui
+from beets import util
 import mediafile
-from beetsplug.info import make_key_filter, library_data, tag_data
+from beetsplug.info import library_data, tag_data
 
 
 class ExportEncoder(json.JSONEncoder):
     """Deals with dates because JSON doesn't have a standard"""
     def default(self, o):
-        if isinstance(o, datetime) or isinstance(o, date):
+        if isinstance(o, (datetime, date)):
             return o.isoformat()
         return json.JSONEncoder.default(self, o)
 
@@ -129,16 +130,18 @@ class ExportPlugin(BeetsPlugin):
         for keys in opts.included_keys:
             included_keys.extend(keys.split(','))
 
-        key_filter = make_key_filter(included_keys)
-
         for data_emitter in data_collector(lib, ui.decargs(args)):
             try:
-                data, item = data_emitter()
+                data, item = data_emitter(included_keys or '*')
             except (mediafile.UnreadableFileError, IOError) as ex:
                 self._log.error(u'cannot read file: {0}', ex)
                 continue
 
-            data = key_filter(data)
+            for key, value in data.items():
+                if isinstance(value, bytes):
+                    data[key] = util.displayable_path(value)
+
+            items += [data]
 
             if file_format_is_line_based:
                 export_format.export(data, **format_options)

@@ -17,6 +17,7 @@ install yourself:
 You can also add custom commands for a specific extension, like this::
 
     badfiles:
+        check_on_import: yes
         commands:
             ogg: myoggchecker --opt1 --opt2
             flac: flac --test --warnings-as-errors --silent
@@ -24,6 +25,10 @@ You can also add custom commands for a specific extension, like this::
 Custom commands will be run once for each file of the specified type, with the
 path to the file as the last argument. Commands must return a status code
 greater than zero for a file to be considered corrupt.
+
+You can run the checkers when importing files by using the `check_on_import`
+option. When on, checkers will be run against every imported file and warnings
+and errors will be presented when selecting a tagging option.
 
 .. _mp3val: http://mp3val.sourceforge.net/
 .. _flac: https://xiph.org/flac/

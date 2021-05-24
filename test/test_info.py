@@ -92,17 +92,6 @@ class InfoTest(unittest.TestCase, TestHelper):
         self.assertIn(u'title: [various]', out)
         self.remove_mediafile_fixtures()
 
-    def test_include_pattern(self):
-        item, = self.add_item_fixtures()
-        item.album = 'xxxx'
-        item.store()
-
-        out = self.run_with_output('info', '--library', 'album:xxxx',
-                                   '--include-keys', '*lbu*')
-        self.assertIn(displayable_path(item.path), out)
-        self.assertNotIn(u'title:', out)
-        self.assertIn(u'album: xxxx', out)
-
     def test_custom_format(self):
         self.add_item_fixtures()
         out = self.run_with_output('info', '--library', '--format',

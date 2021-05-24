@@ -1,26 +1,35 @@
 ---
 name: "\U0001F680 Feature request"
-about: Suggest a new idea for beets
+about: "Formalize a feature request from GitHub Discussions"
 
 ---
 
-### Use case
-
-I'm trying to use beets to...
-
-
-### Solution
 <!--
-Do you have a proposal for how beets should work?
-
-Try to be as specific as possible—for example, you could propose the name for
-a new command-line option or refer to the particular ID3 frame you wish
-were supported.
+If you're landing here as a user, we ask you bring up your idea in the
+Discussions (https://github.com/beetbox/beets/discussions).
 -->
 
+### Proposed solution
 
-### Alternatives
+<!-- What is solution to this feature request? -->
+
+### Objective
+
+<!-- Ref to Discussions -->
+
+#### Goals
+
+<!-- What is the purpose of feature request? -->
+
+#### Non-goals
+
 <!--
-Have you tried using an existing plugin to do something similar?
-Is there any current feature that _almost_ does what you need?
+What else could be accomplished with this feature request, but is currently out
+of scope?
+-->
+
+#### Anti-goals
+
+<!--
+What could go wrong (side effects) if we implement this feature request?
 -->

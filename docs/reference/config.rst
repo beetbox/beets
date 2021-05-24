@@ -683,6 +683,9 @@ Here's an example::
 Other field/value pairs supplied via the ``--set`` option on the command-line
 override any settings here for fields with the same name.
 
+Fields are set on both the album and each individual track of the album.
+Fields are persisted to the media files of each track.
+
 Default: ``{}`` (empty).
 
 .. _musicbrainz-config:
@@ -691,15 +694,18 @@ MusicBrainz Options
 -------------------
 
 You can instruct beets to use `your own MusicBrainz database`_ instead of
-the `main server`_. Use the ``host`` and ``ratelimit`` options under a
-``musicbrainz:`` header, like so::
+the `main server`_. Use the ``host``, ``https`` and ``ratelimit`` options
+under a ``musicbrainz:`` header, like so::
 
     musicbrainz:
         host: localhost:5000
+        https: no
         ratelimit: 100
 
 The ``host`` key, of course, controls the Web server hostname (and port,
 optionally) that will be contacted by beets (default: musicbrainz.org).
+The ``https`` key makes the client use HTTPS instead of HTTP. This setting applies
+only to custom servers. The official MusicBrainz server always uses HTTPS. (Default: no.)
 The server must have search indices enabled (see `Building search indexes`_).
 
 The ``ratelimit`` option, an integer, controls the number of Web service requests

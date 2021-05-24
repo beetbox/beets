@@ -200,6 +200,13 @@ The events currently available are:
   import pipeline stage is a better choice (see :ref:`plugin-stage`).
   Parameters: ``task`` and ``session``.
 
+* `import_task_before_choice`: called after candidate search for an import task
+  before any decision is made about how/if to import or tag. Can be used to
+  present information about the task or initiate interaction with the user
+  before importing occurs. Return an importer action to take a specific action.
+  Only one handler may return a non-None result.
+  Parameters: ``task`` and ``session``
+
 * `import_task_choice`: called after a decision has been made about an import
   task. This event can be used to initiate further interaction with the user.
   Use ``task.choice_flag`` to determine or change the action to be
@@ -238,6 +245,18 @@ The events currently available are:
   during a ``beet import`` interactive session. Plugins can use this event for
   :ref:`appending choices to the prompt <append_prompt_choices>` by returning a
   list of ``PromptChoices``. Parameters: ``task`` and ``session``.
+  
+* `mb_track_extract`: called after the metadata is obtained from
+  MusicBrainz. The parameter is a ``dict`` containing the tags retrieved from
+  MusicBrainz for a track. Plugins must return a new (potentially empty)
+  ``dict`` with additional ``field: value`` pairs, which the autotagger will
+  apply to the item, as flexible attributes if ``field`` is not a hardcoded
+  field. Fields already present on the track are overwritten. 
+  Parameter: ``data``
+
+* `mb_album_extract`: Like `mb_track_extract`, but for album tags. Overwrites
+  tags set at the track level, if they have the same ``field``.
+  Parameter: ``data``
 
 The included ``mpdupdate`` plugin provides an example use case for event listeners.
 
