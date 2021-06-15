@@ -33,7 +33,8 @@ import six
 from six.moves import urllib
 
 try:
-    from bs4 import SoupStrainer, BeautifulSoup
+    import bs4
+    from bs4 import SoupStrainer
     HAS_BEAUTIFUL_SOUP = True
 except ImportError:
     HAS_BEAUTIFUL_SOUP = False
@@ -219,6 +220,17 @@ def slug(text):
     return re.sub(r'\W+', '-', unidecode(text).lower().strip()).strip('-')
 
 
+if HAS_BEAUTIFUL_SOUP:
+    def try_parse_html(html, **kwargs):
+        try:
+            return bs4.BeautifulSoup(html, 'html.parser', **kwargs)
+        except HTMLParseError:
+            return None
+else:
+    def try_parse_html(html, **kwargs):
+        return None
+
+
 class Backend(object):
     def __init__(self, config, log):
         self._log = log
@@ -377,7 +389,9 @@ class Genius(Backend):
     def _scrape_lyrics_from_html(self, html):
         """Scrape lyrics from a given genius.com html"""
 
-        soup = BeautifulSoup(html, "html.parser")
+        soup = try_parse_html(html)
+        if not soup:
+            return
 
         # Remove script tags that they put in the middle of the lyrics.
         [h.extract() for h in soup('script')]
@@ -440,9 +454,8 @@ class Tekstowo(Backend):
         html = _scrape_strip_cruft(html)
         html = _scrape_merge_paragraphs(html)
 
-        try:
-            soup = BeautifulSoup(html, "html.parser")
-        except HTMLParseError:
+        soup = try_parse_html(html)
+        if not soup:
             return None
 
         song_rows = soup.find("div", class_="content"). \
@@ -464,9 +477,8 @@ class Tekstowo(Backend):
         html = _scrape_strip_cruft(html)
         html = _scrape_merge_paragraphs(html)
 
-        try:
-            soup = BeautifulSoup(html, "html.parser")
-        except HTMLParseError:
+        soup = try_parse_html(html)
+        if not soup:
             return None
 
         return soup.find("div", class_="song-text").get_text()
@@ -527,10 +539,8 @@ def scrape_lyrics_from_html(html):
     html = _scrape_merge_paragraphs(html)
 
     # extract all long text blocks that are not code
-    try:
-        soup = BeautifulSoup(html, "html.parser",
-                             parse_only=SoupStrainer(text=is_text_notcode))
-    except HTMLParseError:
+    soup = try_parse_html(html, parse_only=SoupStrainer(text=is_text_notcode))
+    if not soup:
         return None
 
     # Get the longest text element (if any).
