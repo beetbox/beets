@@ -1108,3 +1108,25 @@ def lazy_property(func):
         return value
 
     return wrapper
+
+
+def decode_commandline_path(path):
+    """Prepare a path for substitution into commandline template.
+
+    On Python 3, we need to construct the subprocess commands to invoke as a
+    Unicode string. On Unix, this is a little unfortunate---the OS is
+    expecting bytes---so we use surrogate escaping and decode with the
+    argument encoding, which is the same encoding that will then be
+    *reversed* to recover the same bytes before invoking the OS. On
+    Windows, we want to preserve the Unicode filename "as is."
+    """
+    if six.PY2:
+        # On Python 2, substitute the bytestring directly into the template.
+        return path
+    else:
+        # On Python 3, the template is a Unicode string, which only supports
+        # substitution of Unicode variables.
+        if platform.system() == 'Windows':
+            return path.decode(_fsencoding())
+        else:
+            return path.decode(arg_encoding(), 'surrogateescape')
