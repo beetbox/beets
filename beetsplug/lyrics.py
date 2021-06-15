@@ -448,9 +448,6 @@ class Tekstowo(Backend):
         return self.extract_lyrics(song_page_html)
 
     def parse_search_results(self, html):
-        if not HAS_BEAUTIFUL_SOUP:
-            return None
-
         html = _scrape_strip_cruft(html)
         html = _scrape_merge_paragraphs(html)
 
@@ -527,9 +524,6 @@ def scrape_lyrics_from_html(html):
     """Scrape lyrics from a URL. If no lyrics can be found, return None
     instead.
     """
-    if not HAS_BEAUTIFUL_SOUP:
-        return None
-
     def is_text_notcode(text):
         length = len(text)
         return (length > 20 and
