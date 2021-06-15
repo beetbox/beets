@@ -344,8 +344,10 @@ class Genius(Backend):
             hit_artist = hit["result"]["primary_artist"]["name"]
 
             if slug(hit_artist) == slug(artist):
-                return self._scrape_lyrics_from_html(
-                    self.fetch_url(hit["result"]["url"]))
+                html = self.fetch_url(hit["result"]["url"])
+                if not html:
+                    return None
+                return self._scrape_lyrics_from_html(html)
 
         self._log.debug(u'Genius failed to find a matching artist for \'{0}\'',
                         artist)
@@ -419,12 +421,16 @@ class Tekstowo(Backend):
     def fetch(self, artist, title):
         url = self.build_url(title, artist)
         search_results = self.fetch_url(url)
+        if not search_results:
+            return None
         song_page_url = self.parse_search_results(search_results)
 
         if not song_page_url:
             return None
 
         song_page_html = self.fetch_url(song_page_url)
+        if not song_page_html:
+            return None
         return self.extract_lyrics(song_page_html)
 
     def parse_search_results(self, html):
@@ -510,9 +516,6 @@ def scrape_lyrics_from_html(html):
     instead.
     """
     if not HAS_BEAUTIFUL_SOUP:
-        return None
-
-    if not html:
         return None
 
     def is_text_notcode(text):
@@ -647,6 +650,8 @@ class Google(Backend):
                                               title, artist):
                     continue
                 html = self.fetch_url(url_link)
+                if not html:
+                    continue
                 lyrics = scrape_lyrics_from_html(html)
                 if not lyrics:
                     continue
