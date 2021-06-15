@@ -232,6 +232,8 @@ else:
 
 
 class Backend(object):
+    REQUIRES_BS = False
+
     def __init__(self, config, log):
         self._log = log
 
@@ -328,6 +330,8 @@ class Genius(Backend):
     Simply adapted from
     bigishdata.com/2016/09/27/getting-song-lyrics-from-geniuss-api-scraping/
     """
+
+    REQUIRES_BS = True
 
     base_url = "https://api.genius.com"
 
@@ -428,6 +432,7 @@ class Genius(Backend):
 
 class Tekstowo(Backend):
     # Fetch lyrics from Tekstowo.pl.
+    REQUIRES_BS = True
 
     BASE_URL = 'http://www.tekstowo.pl'
     URL_PATTERN = BASE_URL + '/wyszukaj.html?search-title=%s&search-artist=%s'
@@ -547,6 +552,8 @@ def scrape_lyrics_from_html(html):
 
 class Google(Backend):
     """Fetch lyrics from Google search results."""
+
+    REQUIRES_BS = True
 
     def __init__(self, config, log):
         super(Google, self).__init__(config, log)
@@ -670,7 +677,6 @@ class Google(Backend):
 
 class LyricsPlugin(plugins.BeetsPlugin):
     SOURCES = ['google', 'musixmatch', 'genius', 'tekstowo']
-    BS_SOURCES = ['google', 'genius', 'tekstowo']
     SOURCE_BACKENDS = {
         'google': Google,
         'musixmatch': MusiXmatch,
@@ -740,15 +746,17 @@ class LyricsPlugin(plugins.BeetsPlugin):
                          for source in sources]
 
     def sanitize_bs_sources(self, sources):
-        for source in self.BS_SOURCES:
-            if source in sources:
+        enabled_sources = []
+        for source in sources:
+            if source.REQUIRES_BS:
                 self._log.debug(u'To use the %s lyrics source, you must '
                                 u'install the beautifulsoup4 module. See '
                                 u'the documentation for further details.'
                                 % source)
-                sources.remove(source)
+            else:
+                enabled_sources.append(source)
 
-        return sources
+        return enabled_sources
 
     def get_bing_access_token(self):
         params = {
