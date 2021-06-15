@@ -257,6 +257,7 @@ class Backend(object):
             return r.text
         else:
             self._log.debug(u'failed to fetch: {0} ({1})', url, r.status_code)
+            return None
 
     def fetch(self, artist, title):
         raise NotImplementedError()
@@ -286,11 +287,11 @@ class MusiXmatch(Backend):
 
         html = self.fetch_url(url)
         if not html:
-            return
+            return None
         if "We detected that your IP is blocked" in html:
             self._log.warning(u'we are blocked at MusixMatch: url %s failed'
                               % url)
-            return
+            return None
         html_parts = html.split('<p class="mxm-lyrics__content')
         # Sometimes lyrics come in 2 or more parts
         lyrics_parts = []
@@ -302,10 +303,10 @@ class MusiXmatch(Backend):
         # missing songs. this seems to happen after being blocked
         # above, when filling in the CAPTCHA.
         if "Instant lyrics for all your music." in lyrics:
-            return
+            return None
         # sometimes there are non-existent lyrics with some content
         if 'Lyrics | Musixmatch' in lyrics:
-            return
+            return None
         return lyrics
 
 
@@ -348,6 +349,7 @@ class Genius(Backend):
 
         self._log.debug(u'Genius failed to find a matching artist for \'{0}\'',
                         artist)
+        return None
 
     def _search(self, artist, title):
         """Searches the genius api for a given artist and title
@@ -653,6 +655,8 @@ class Google(Backend):
                     self._log.debug(u'got lyrics from {0}',
                                     item['displayLink'])
                     return lyrics
+
+        return None
 
 
 class LyricsPlugin(plugins.BeetsPlugin):
