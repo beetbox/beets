@@ -383,6 +383,9 @@ Fixes:
 * :doc:`/plugins/lyrics`: Fix crashes when a website could not be retrieved,
   affecting at least the Genius source
   :bug:`3970`
+* :doc:`/plugins/duplicates`: Fix a crash when running the ``dup`` command with
+  a query that returns no results.
+  :bug:`3943`
 
 For plugin developers:
 
