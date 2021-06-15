@@ -373,22 +373,22 @@ class Genius(Backend):
     def _scrape_lyrics_from_html(self, html):
         """Scrape lyrics from a given genius.com html"""
 
-        html = BeautifulSoup(html, "html.parser")
+        soup = BeautifulSoup(html, "html.parser")
 
         # Remove script tags that they put in the middle of the lyrics.
-        [h.extract() for h in html('script')]
+        [h.extract() for h in soup('script')]
 
         # Most of the time, the page contains a div with class="lyrics" where
         # all of the lyrics can be found already correctly formatted
         # Sometimes, though, it packages the lyrics into separate divs, most
         # likely for easier ad placement
-        lyrics_div = html.find("div", class_="lyrics")
+        lyrics_div = soup.find("div", class_="lyrics")
         if not lyrics_div:
             self._log.debug(u'Received unusual song page html')
-            verse_div = html.find("div",
+            verse_div = soup.find("div",
                                   class_=re.compile("Lyrics__Container"))
             if not verse_div:
-                if html.find("div",
+                if soup.find("div",
                              class_=re.compile("LyricsPlaceholder__Message"),
                              string="This song is an instrumental"):
                     self._log.debug('Detected instrumental')
@@ -433,11 +433,11 @@ class Tekstowo(Backend):
         html = _scrape_merge_paragraphs(html)
 
         try:
-            html = BeautifulSoup(html, "html.parser")
+            soup = BeautifulSoup(html, "html.parser")
         except HTMLParseError:
             return None
 
-        song_rows = html.find("div", class_="content"). \
+        song_rows = soup.find("div", class_="content"). \
             find("div", class_="card"). \
             find_all("div", class_="box-przeboje")
 
@@ -457,11 +457,11 @@ class Tekstowo(Backend):
         html = _scrape_merge_paragraphs(html)
 
         try:
-            html = BeautifulSoup(html, "html.parser")
+            soup = BeautifulSoup(html, "html.parser")
         except HTMLParseError:
             return None
 
-        return html.find("div", class_="song-text").get_text()
+        return soup.find("div", class_="song-text").get_text()
 
 
 def remove_credits(text):
