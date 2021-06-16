@@ -377,6 +377,9 @@ Fixes:
 * :doc`/reference/cli`: Remove reference to rarfile version in link
 * Fix :bug:`2873`. Duplicates can now generate checksums. Thanks user:`wisp3rwind`
   for the pointer to how to solve. Thanks to :user:`arogl`.
+* Templates that use ``%ifdef`` now produce the expected behavior when used in
+  conjunction with non-string fields from the :doc:`/plugins/types`.
+  :bug:`3852`
 
 
 For plugin developers:
