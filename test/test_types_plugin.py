@@ -145,6 +145,39 @@ class TypesPluginTest(unittest.TestCase, TestHelper):
         with self.assertRaises(ConfigValueError):
             self.run_command(u'ls')
 
+    def test_template_if_def(self):
+        # Tests for a subtle bug when using %ifdef in templates along with
+        # types that have truthy default values (e.g. '0', '0.0', 'False')
+        # https://github.com/beetbox/beets/issues/3852
+        self.config['types'] = {'playcount': u'int', 'rating': u'float',
+                                'starred': u'bool'}
+
+        with_fields = self.add_item(artist=u'prince')
+        self.modify(u'playcount=10', u'artist=prince')
+        self.modify(u'rating=5.0', u'artist=prince')
+        self.modify(u'starred=yes', u'artist=prince')
+        with_fields.load()
+
+        without_fields = self.add_item(artist=u'britney')
+
+        int_template = u'%ifdef{playcount,Play count: $playcount,Not played}'
+        self.assertEqual(with_fields.evaluate_template(int_template),
+                         u'Play count: 10')
+        self.assertEqual(without_fields.evaluate_template(int_template),
+                         u'Not played')
+
+        float_template = u'%ifdef{rating,Rating: $rating,Not rated}'
+        self.assertEqual(with_fields.evaluate_template(float_template),
+                         u'Rating: 5.0')
+        self.assertEqual(without_fields.evaluate_template(float_template),
+                         u'Not rated')
+
+        bool_template = u'%ifdef{starred,Starred: $starred,Not starred}'
+        self.assertIn(with_fields.evaluate_template(bool_template).lower(),
+                      (u'starred: true', u'starred: yes', u'starred: y'))
+        self.assertEqual(without_fields.evaluate_template(bool_template),
+                         u'Not starred')
+
     def modify(self, *args):
         return self.run_with_output(u'modify', u'--yes', u'--nowrite',
                                     u'--nomove', *args)
