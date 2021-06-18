@@ -136,6 +136,11 @@ class DuplicatesPlugin(BeetsPlugin):
                     keys = ['mb_trackid', 'mb_albumid']
                 items = lib.items(decargs(args))
 
+            # If there's nothing to do, return early. The code below assumes
+            # `items` to be non-empty.
+            if not items:
+                return
+
             if path:
                 fmt = u'$path'
 
