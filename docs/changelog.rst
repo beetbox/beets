@@ -380,7 +380,9 @@ Fixes:
 * Templates that use ``%ifdef`` now produce the expected behavior when used in
   conjunction with non-string fields from the :doc:`/plugins/types`.
   :bug:`3852`
-
+* :doc:`/plugins/lyrics`: Fix crashes when a website could not be retrieved,
+  affecting at least the Genius source
+  :bug:`3970`
 
 For plugin developers:
 
