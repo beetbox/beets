@@ -38,6 +38,6 @@ The command has a few command-line options:
   ``format_album`` for items and albums, respectively.
 * To also get performer data from MusicBrainz, use the ``-P``
   (``--performer_info``) option. This will add all track and album performers
-  as additional tags (recognisable by the ``mbsync_`` prefix). To autmatically
+  as additional tags (recognisable by the ``mbsync_`` prefix). To automatically
   fetch performer info, enable the ``performer_info`` option in the
   configuration. Default: ``no``.
