@@ -66,7 +66,6 @@ class MusicBrainzAPIError(util.HumanReadableException):
             self._reasonstr(), self.verb, repr(self.query)
         )
 
-
 log = logging.getLogger('beets')
 
 RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
@@ -237,7 +236,6 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     lyricist = []
     composer = []
     composer_sort = []
-
     for work_relation in recording.get('work-relation-list', ()):
         if work_relation['type'] != 'performance':
             continue
