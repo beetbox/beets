@@ -29,8 +29,8 @@ MBID_REGEX = r"(\d|\w){8}-(\d|\w){4}-(\d|\w){4}-(\d|\w){4}-(\d|\w){12}"
 def track_performers(info):
     """
     Gets the info dict (track info) from MusicBrainz and extracts
-    performer names and roles, puts them in the artists dict. 
-    Fetches both names and sort names, adapts the roles to fit as 
+    performer names and roles, puts them in the artists dict.
+    Fetches both names and sort names, adapts the roles to fit as
     single understandable strings, with the mbsync_ prefix.
     input: info (dict from MusicBrainz)
     output: artists (dict with roles, names and sort names)
@@ -72,8 +72,8 @@ def track_performers(info):
 
 def album_performers(info):
     """
-    Similar to track_performers but with album performers, 
-    info is the album_info dict from MusicBrainz. 
+    Similar to track_performers but with album performers,
+    info is the album_info dict from MusicBrainz.
     """
 
     artists = {}
