@@ -32,7 +32,8 @@ jobs:
 
       - name: Install optional dependencies
         run: |
-          sudo apt-get install ffmpeg  # For replaygain
+          sudo apt update
+          sudo apt install ffmpeg  # For replaygain
 
       - name: Test older Python versions with tox
         if: matrix.python-version != '3.9' && matrix.python-version != '3.10-dev'
