@@ -271,7 +271,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
 
     # Supplementary fields provided by plugins
     extra_trackdatasets = plugins.send('mb_track_extract', info=recording)
-    for extra_trackdata in extra_trackdatas:
+    for extra_trackdata in extra_trackdatasets:
         info.update(extra_trackdata)
 
     info.decode()
@@ -463,7 +463,7 @@ def album_info(release):
         info.genre = ';'.join(g['name'] for g in genres)
 
     extra_albumdatasets = plugins.send('mb_album_extract', info=release)
-    for extra_albumdata in extra_albumdatas:
+    for extra_albumdata in extra_albumdatasets:
         info.update(extra_albumdata)
 
     info.decode()
