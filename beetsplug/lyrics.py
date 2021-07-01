@@ -483,7 +483,10 @@ class Tekstowo(Backend):
         if not soup:
             return None
 
-        return soup.find("div", class_="song-text").get_text()
+        c = soup.find("div", class_="song-text")
+        if c:
+            return c.get_text()
+        return None
 
 
 def remove_credits(text):
