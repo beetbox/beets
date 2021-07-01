@@ -127,13 +127,15 @@ def unescape(text):
     """Resolve &#xxx; HTML entities (and some others)."""
     if isinstance(text, bytes):
         text = text.decode('utf-8', 'ignore')
-    out = text.replace(u'&nbsp;', u' ')
+    if text:
+        out = text.replace(u'&nbsp;', u' ')
 
-    def replchar(m):
-        num = m.group(1)
-        return unichar(int(num))
-    out = re.sub(u"&#(\\d+);", replchar, out)
-    return out
+        def replchar(m):
+            num = m.group(1)
+            return unichar(int(num))
+        out = re.sub(u"&#(\\d+);", replchar, out)
+        return out
+    return None
 
 
 def extract_text_between(html, start_marker, end_marker):
