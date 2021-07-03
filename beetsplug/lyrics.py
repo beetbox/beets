@@ -442,14 +442,15 @@ class Tekstowo(Backend):
         search_results = self.fetch_url(url)
         if not search_results:
             return None
-        song_page_url = self.parse_search_results(search_results)
 
+        song_page_url = self.parse_search_results(search_results)
         if not song_page_url:
             return None
 
         song_page_html = self.fetch_url(song_page_url)
         if not song_page_html:
             return None
+
         return self.extract_lyrics(song_page_html)
 
     def parse_search_results(self, html):
