@@ -27,17 +27,17 @@ import re
 MBID_REGEX = r"(\d|\w){8}-(\d|\w){4}-(\d|\w){4}-(\d|\w){4}-(\d|\w){12}"
 
 
-def track_performers(info):
+def track_performers(data):
     """
-    Gets the info dict (track info) from MusicBrainz and extracts
+    Gets the data dict (track info) from MusicBrainz and extracts
     performer names and roles, puts them in the artists dict.
     Fetches both names and sort names, adapts the roles to fit as
     single understandable strings, with the mbsync_ prefix.
-    input: info (dict from MusicBrainz)
+    input: data (dict from MusicBrainz)
     output: artists (dict with roles, names and sort names)
     """
     artists = {}
-    for artist_relation in info.get('artist-relation-list', ()):
+    for artist_relation in data.get('artist-relation-list', ()):
         if 'type' in artist_relation:
             role = 'mbsync '
             role += artist_relation['type']
@@ -71,14 +71,14 @@ def track_performers(info):
     return artists
 
 
-def album_performers(info):
+def album_performers(data):
     """
     Similar to track_performers but with album performers,
-    info is the album_info dict from MusicBrainz.
+    data is the album_info dict from MusicBrainz.
     """
 
     artists = {}
-    for artist_relation in info.get('artist-relation-list', ()):
+    for artist_relation in data.get('artist-relation-list', ()):
         if 'type' in artist_relation:
             role = 'mbsync album '
             role += artist_relation['type']
