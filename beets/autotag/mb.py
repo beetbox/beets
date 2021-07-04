@@ -270,7 +270,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
         info.arranger = u', '.join(arranger)
 
     # Supplementary fields provided by plugins
-    extra_trackdatasets = plugins.send('mb_track_extract', info=recording)
+    extra_trackdatasets = plugins.send('mb_track_extract', data=recording)
     for extra_trackdata in extra_trackdatasets:
         info.update(extra_trackdata)
 
@@ -462,7 +462,7 @@ def album_info(release):
     if config['musicbrainz']['genres'] and genres:
         info.genre = ';'.join(g['name'] for g in genres)
 
-    extra_albumdatasets = plugins.send('mb_album_extract', info=release)
+    extra_albumdatasets = plugins.send('mb_album_extract', data=release)
     for extra_albumdata in extra_albumdatasets:
         info.update(extra_albumdata)
 
