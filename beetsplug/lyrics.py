@@ -442,14 +442,15 @@ class Tekstowo(Backend):
         search_results = self.fetch_url(url)
         if not search_results:
             return None
-        song_page_url = self.parse_search_results(search_results)
 
+        song_page_url = self.parse_search_results(search_results)
         if not song_page_url:
             return None
 
         song_page_html = self.fetch_url(song_page_url)
         if not song_page_html:
             return None
+
         return self.extract_lyrics(song_page_html)
 
     def parse_search_results(self, html):
@@ -460,20 +461,27 @@ class Tekstowo(Backend):
         if not soup:
             return None
 
-        song_rows = soup.find("div", class_="content"). \
-            find("div", class_="card"). \
-            find_all("div", class_="box-przeboje")
+        content_div = soup.find("div", class_="content")
+        if not content_div:
+            return None
 
+        card_div = content_div.find("div", class_="card")
+        if not card_div:
+            return None
+
+        song_rows = card_div.find_all("div", class_="box-przeboje")
         if not song_rows:
             return None
 
         song_row = song_rows[0]
-
         if not song_row:
             return None
 
-        href = song_row.find('a').get('href')
-        return self.BASE_URL + href
+        link = song_row.find('a')
+        if not link:
+            return None
+
+        return self.BASE_URL + link.get('href')
 
     def extract_lyrics(self, html):
         html = _scrape_strip_cruft(html)
@@ -483,10 +491,11 @@ class Tekstowo(Backend):
         if not soup:
             return None
 
-        c = soup.find("div", class_="song-text")
-        if c:
-            return c.get_text()
-        return None
+        lyrics_div = soup.find("div", class_="song-text")
+        if not lyrics_div:
+            return None
+
+        return lyrics_div.get_text()
 
 
 def remove_credits(text):
