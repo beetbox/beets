@@ -18,13 +18,14 @@
 from __future__ import division, absolute_import, print_function
 
 import shlex
+import six
 
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_, Subcommand, UserError
 from beets.util import command_output, displayable_path, subprocess, \
-    bytestring_path, MoveOperation
+    bytestring_path, MoveOperation, decode_commandline_path
 from beets.library import Item, Album
-import six
+
 
 PLUGIN = 'duplicates'
 
@@ -135,6 +136,11 @@ class DuplicatesPlugin(BeetsPlugin):
                     keys = ['mb_trackid', 'mb_albumid']
                 items = lib.items(decargs(args))
 
+            # If there's nothing to do, return early. The code below assumes
+            # `items` to be non-empty.
+            if not items:
+                return
+
             if path:
                 fmt = u'$path'
 
@@ -197,7 +203,8 @@ class DuplicatesPlugin(BeetsPlugin):
         output as flexattr on a key that is the name of the program, and
         return the key, checksum tuple.
         """
-        args = [p.format(file=item.path) for p in shlex.split(prog)]
+        args = [p.format(file=decode_commandline_path(item.path))
+                for p in shlex.split(prog)]
         key = args[0]
         checksum = getattr(item, key, False)
         if not checksum:
