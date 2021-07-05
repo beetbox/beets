@@ -212,6 +212,9 @@ Other new things:
 * Get ISRC identifiers from musicbrainz
   Thanks to :user:`aereaux`.
 * :doc:`/plugins/metasync`: The ``metasync`` plugin now also fetches the ``Date Added`` field from iTunes databases and stores it in the``itunes_dateadded`` field.Thanks to :user:`sandersantema`.
+* :doc:`/plugins/lyrics`: Added Tekstowo.pl lyrics provider. Thanks to various
+  people for the implementation and for reporting issues with the initial version.
+  :bug:`3344` :bug:`3904` :bug:`3905` :bug:`3994`
 
   .. _py7zr: https://pypi.org/project/py7zr/
 
@@ -294,8 +297,6 @@ Fixes:
 * Removed ``@classmethod`` decorator from dbcore.query.NoneQuery.match method
   failing with AttributeError when called. It is now an instance method.
   :bug:`3516` :bug:`3517`
-* :doc:`/plugins/lyrics`: Added Tekstowo.pl lyrics provider
-  :bug:`3344`
 * :doc:`/plugins/lyrics`: Tolerate missing lyrics div in Genius scraper.
   Thanks to :user:`thejli21`.
   :bug:`3535` :bug:`3554`
@@ -355,8 +356,6 @@ Fixes:
   :bug:`3870`
 * Allow equals within ``--set`` value when importing.
   :bug:`2984`
-* :doc:`/plugins/lyrics`: Fix crashes for Tekstowo false positives
-  :bug:`3904`
 * :doc`/reference/cli`: Remove reference to rarfile version in link
 * Fix :bug:`2873`. Duplicates can now generate checksums. Thanks user:`wisp3rwind`
   for the pointer to how to solve. Thanks to :user:`arogl`.
