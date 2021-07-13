@@ -144,7 +144,7 @@ class SubsonicUpdate(BeetsPlugin):
         self._log.info(u'URL is {0}', url)
         self._log.info(u'auth type is {0}', config['subsonic']['auth'])
 
-        if config['subsonic']['auth'] == 'token':
+        if config['subsonic']['auth'].as_str() == 'token':
             salt, token = self.__create_token()
             payload = {
                 'u': user,
@@ -154,7 +154,7 @@ class SubsonicUpdate(BeetsPlugin):
                 'c': 'beets',
                 'f': 'json'
             }
-        elif config['subsonic']['auth'] == 'password':
+        elif config['subsonic']['auth'].as_str() == 'password':
             password = config['subsonic']['pass'].as_str()
             encpass = hexlify(password.encode()).decode()
             payload = {
