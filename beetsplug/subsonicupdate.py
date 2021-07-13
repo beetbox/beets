@@ -169,6 +169,7 @@ class SubsonicUpdate(BeetsPlugin):
             return
         self._log.info(u'Payload is {0}', payload)
         try:
+            self._log.info(u'URL is {0}', url)
             response = requests.get(url, params=payload)
             json = response.json()
 
