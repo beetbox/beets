@@ -42,6 +42,8 @@ from beets import config
 from beets.plugins import BeetsPlugin
 
 __author__ = 'https://github.com/maffo999'
+#AUTH_TOKEN_VERSION = (1, 12)
+
 
 class SubsonicUpdate(BeetsPlugin):
     def __init__(self):
@@ -53,7 +55,27 @@ class SubsonicUpdate(BeetsPlugin):
             'url': 'http://localhost:4040',
         })
         config['subsonic']['pass'].redact = True
+        self._version = None
+        self._auth = None
         self.register_listener('import', self.start_scan)
+
+    @property
+    def version(self):
+        if self._version is None:
+            self._version = self.__get_version()
+        return self._version
+
+    @property
+    def auth(self):
+        if self._auth is None:
+            if self.version is not None:
+                if self.version > AUTH_TOKEN_VERSION:
+                    self._auth = "token"
+                else:
+                    self._auth = "password"
+            self._log.info(
+                u"using '{}' authentication method".format(self._auth))
+        return self._auth
 
     @staticmethod
     def __create_token():
@@ -95,6 +117,27 @@ class SubsonicUpdate(BeetsPlugin):
             url = "http://{}:{}{}".format(host, port, context_path)
 
         return url + '/rest/{}'.format(endpoint)
+
+    def __get_version(self):
+        url = self.__format_url("ping.view")
+        payload = {
+            'c': 'beets',
+            'f': 'json'
+        }
+        try:
+            response = requests.get(url, params=payload)
+            if response.status_code == 200:
+                json = response.json()
+                version = json['subsonic-response']['version']
+                self._log.info(
+                    u'subsonic version:{0} '.format(version))
+                return tuple(int(s) for s in version.split('.'))
+            else:
+                self._log.error(u'Error: {0}', json)
+                return None
+        except Exception as error:
+            self._log.error(u'Error: {0}'.format(error))
+            return None
 
     def start_scan(self):
         user = config['subsonic']['user'].as_str()
@@ -144,3 +187,4 @@ class SubsonicUpdate(BeetsPlugin):
                 self._log.error(u'Error: {0}', json)
         except Exception as error:
             self._log.error(u'Error: {0}'.format(error))
+
