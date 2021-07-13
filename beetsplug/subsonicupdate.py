@@ -141,6 +141,8 @@ class SubsonicUpdate(BeetsPlugin):
     def start_scan(self):
         user = config['subsonic']['user'].as_str()
         url = self.__format_url("startScan")
+        self._log.info(u'URL is {0}', url)
+        self._log.info(u'auth type is {0}', config['subsonic']['auth'])
 
         if config['subsonic']['auth'] == 'token':
             salt, token = self.__create_token()
@@ -164,6 +166,7 @@ class SubsonicUpdate(BeetsPlugin):
             }
         else:
             return
+        self._log.info(u'Payload is {0}', payload)
         try:
             response = requests.get(url, params=payload)
             json = response.json()
