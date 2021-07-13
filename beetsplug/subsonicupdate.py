@@ -56,7 +56,6 @@ class SubsonicUpdate(BeetsPlugin):
         })
         config['subsonic']['pass'].redact = True
 #        self._version = None
-        self._auth = config['subsonic']['auth']
         self.register_listener('import', self.start_scan)
 
 #    @property
@@ -143,7 +142,7 @@ class SubsonicUpdate(BeetsPlugin):
         user = config['subsonic']['user'].as_str()
         url = self.__format_url("startScan")
 
-        if self.auth == 'token':
+        if config['subsonic']['auth'] == 'token':
             salt, token = self.__create_token()
             payload = {
                 'u': user,
@@ -153,7 +152,7 @@ class SubsonicUpdate(BeetsPlugin):
                 'c': 'beets',
                 'f': 'json'
             }
-        elif self.auth == 'password':
+        elif config['subsonic']['auth'] == 'password':
             password = config['subsonic']['pass'].as_str()
             encpass = hexlify(password.encode()).decode()
             payload = {
