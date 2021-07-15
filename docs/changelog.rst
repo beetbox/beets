@@ -387,6 +387,9 @@ Fixes:
   all front images instead of blindly selecting the first one.
 * :doc:`/plugins/lyrics`: Removed the LyricWiki source (the site shut down on
   21/09/2020).
+* Fix :bug:`4002`. Subsonicupdate plugin is now functional again. New option
+  'auth' is required in the configuration file to specify the authentication
+  type.
 
 For plugin developers:
 
