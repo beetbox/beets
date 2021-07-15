@@ -43,6 +43,7 @@ from beets.plugins import BeetsPlugin
 
 __author__ = 'https://github.com/maffo999'
 
+
 class SubsonicUpdate(BeetsPlugin):
     def __init__(self):
         super(SubsonicUpdate, self).__init__()
@@ -101,8 +102,8 @@ class SubsonicUpdate(BeetsPlugin):
         user = config['subsonic']['user'].as_str()
         auth = config['subsonic']['auth'].as_str()
         url = self.__format_url("startScan")
-        self._log.info(u'URL is {0}', url)
-        self._log.info(u'auth type is {0}', config['subsonic']['auth'])
+        self._log.debug(u'URL is {0}', url)
+        self._log.debug(u'auth type is {0}', config['subsonic']['auth'])
 
         if auth == "token":
             salt, token = self.__create_token()
