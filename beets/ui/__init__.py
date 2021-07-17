@@ -534,9 +534,9 @@ def _colorize(color, text):
         # 38 == foreground color, but attributes as well as background
         # color can be specified in the same string if desired, i.e:
         # 38;5;196;1;3;4;5;7;48;5;220m
-        COLOR_ESCAPE = "\x1b[38;5"
+        COLOR_ESCAPE = "\x1b[38;5;"
         RESET_COLOR  = "\x1b[m"
-        escape = COLOR_ESCAPE + "%sm" (MORE_COLORS[color])
+        escape = COLOR_ESCAPE + MORE_COLORS[color] + "m"
     else:
         raise ValueError(u'no such color %s', color)
     return escape + text + RESET_COLOR
