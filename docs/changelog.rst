@@ -52,6 +52,8 @@ Major new features:
 
 Other new things:
 
+* Support for 256 colors. Can be accessed by referencing color index 0-255 as
+  color name in the configuration file.
 * Enable HTTPS for MusicBrainz by default and add configuration option
   `https` for custom servers. See :ref:`musicbrainz-config` for more details.
 * :doc:`/plugins/mpdstats`: Add a new `strip_path` option to help build the

@@ -505,6 +505,13 @@ LIGHT_COLORS = {
     "cyan": 6,
     "white": 7
 }
+MORE_COLORS = { }
+# Generate color index mappings for 256 colors since there's no good way
+# to create meaningful names for them.
+for index in range(0, 256):
+    index = str(index)
+    MORE_COLORS[index] = index
+
 RESET_COLOR = COLOR_ESCAPE + "39;49;00m"
 
 # These abstract COLOR_NAMES are lazily mapped on to the actual color in COLORS
@@ -523,6 +530,13 @@ def _colorize(color, text):
         escape = COLOR_ESCAPE + "%im" % (DARK_COLORS[color] + 30)
     elif color in LIGHT_COLORS:
         escape = COLOR_ESCAPE + "%i;01m" % (LIGHT_COLORS[color] + 30)
+    elif color in MORE_COLORS:
+        # 38 == foreground color, but attributes as well as background
+        # color can be specified in the same string if desired, i.e:
+        # 38;5;196;1;3;4;5;7;48;5;220m
+        COLOR_ESCAPE = "\x1b[38;5"
+        RESET_COLOR  = "\x1b[m"
+        escape = COLOR_ESCAPE + "%sm" (MORE_COLORS[color])
     else:
         raise ValueError(u'no such color %s', color)
     return escape + text + RESET_COLOR
