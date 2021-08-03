@@ -215,6 +215,8 @@ Other new things:
 * :doc:`/plugins/lyrics`: Added Tekstowo.pl lyrics provider. Thanks to various
   people for the implementation and for reporting issues with the initial version.
   :bug:`3344` :bug:`3904` :bug:`3905` :bug:`3994`
+* :doc:`/plugins/fetchart`: Album art can now be forced into JPEG baseline
+  format.
 
   .. _py7zr: https://pypi.org/project/py7zr/
 

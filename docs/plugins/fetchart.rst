@@ -86,6 +86,8 @@ file. The available options are:
 - **high_resolution**: If enabled, fetchart retrieves artwork in the highest
   resolution it can find (warning: image files can sometimes reach >20MB).
   Default: ``no``.
+- **jpg_always_baseline**: If enabled, forces fetchart to reencode all
+  progressive JPEGs to baseline. This requires `Pillow`_.
 
 Note: ``maxwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
 or `Pillow`_.
