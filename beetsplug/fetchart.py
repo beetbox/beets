@@ -35,6 +35,8 @@ from beets.util.artresizer import ArtResizer
 from beets.util import sorted_walk
 from beets.util import syspath, bytestring_path, py3_path
 import confuse
+from PIL import Image
+import os
 import six
 
 CONTENT_TYPES = {
@@ -80,7 +82,7 @@ class Candidate(object):
             return self.CANDIDATE_BAD
 
         if (not (plugin.enforce_ratio or plugin.minwidth or plugin.maxwidth
-                 or plugin.max_filesize)):
+                 or plugin.max_filesize or plugin.jpg_always_baseline)):
             return self.CANDIDATE_EXACT
 
         # get_size returns None if no local imaging backend is available
@@ -142,6 +144,19 @@ class Candidate(object):
                 self._log.debug(u'image needs resizing ({}B > {}B)',
                                 filesize, plugin.max_filesize)
                 downsize = True
+
+        # Check for badly encoded JPEG
+        # Progressive JPEGs have a much higher minimum coding unit, due to
+        # this, some lower memory devices are unable to process them
+        # efficiently.
+        # This appears to be the best position for this code.
+        if plugin.jpg_always_baseline:
+            with Image.open(self.path) as img:
+                if img.format == 'JPEG' and img.info['progressive']:
+                    self._log.debug(u'image needs reformatting')
+                    with NamedTemporaryFile(suffix="jpg", delete=False) as bim:
+                        img.save(bim, "JPEG", progressive=False)
+                    os.replace(bim.name, self.path)
 
         if downscale:
             return self.CANDIDATE_DOWNSCALE
@@ -932,6 +947,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'lastfm_key': None,
             'store_source': False,
             'high_resolution': False,
+            'jpg_always_baseline': False,
         })
         self.config['google_key'].redact = True
         self.config['fanarttv_key'].redact = True
@@ -1003,6 +1019,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
         self.sources = [ART_SOURCES[s](self._log, self.config, match_by=[c])
                         for s, c in sources]
+        self.jpg_always_baseline = self.config['jpg_always_baseline']
 
     # Asynchronous; after music is added to the library.
     def fetch_art(self, session, task):
