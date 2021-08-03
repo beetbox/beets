@@ -280,6 +280,8 @@ Here are a few of the plugins written by the beets community:
 * `beets-barcode`_ lets you scan or enter barcodes for physical media to
   search for their metadata.
 
+* `beetcamp`_ enables **bandcamp.com** autotagger with a fairly extensive amount of metadata.
+
 * `beets-bpmanalyser`_ analyses songs and calculates their tempo (BPM).
 
 * `beets-check`_ automatically checksums your files to detect corruption.
@@ -330,6 +332,7 @@ Here are a few of the plugins written by the beets community:
 * `beets-yearfixer`_ attempts to fix all missing ``original_year`` and ``year`` fields.
 
 .. _beets-barcode: https://github.com/8h2a/beets-barcode
+.. _beetcamp: https://github.com/snejus/beetcamp
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _beets-copyartifacts: https://github.com/adammillerio/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
