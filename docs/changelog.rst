@@ -400,12 +400,12 @@ For plugin developers:
   re-exports MediaFile at the old location for backwards-compatibility, but a
   deprecation warning is raised if you do this since we might drop this wrapper
   in a future release.
-* We've replaced beets' configuration library confit with a standalone
-  version called `Confuse`_. Where you used to do
+* Similarly, we've replaced beets' configuration library (previously called
+  Confit) with a standalone version called `Confuse`_. Where you used to do
   ``from beets.util import confit``, now just do ``import confuse``. The code
   is almost identical apart from the name change. Again, we'll re-export at the
   old location (with a deprecation warning) for backwards compatibility, but
-  might stop doing this in a future release.
+  we might stop doing this in a future release.
 * ``beets.util.command_output`` now returns a named tuple containing both the
   standard output and the standard error data instead of just stdout alone.
   Client code will need to access the ``stdout`` attribute on the return
@@ -415,20 +415,17 @@ For plugin developers:
 * There were sporadic failures in ``test.test_player``. Hopefully these are
   fixed. If they resurface, please reopen the relevant issue.
   :bug:`3309` :bug:`3330`
-* The internal structure of the replaygain plugin had some changes: There are no
-  longer separate R128 backend instances. Instead the targetlevel is passed to
-  ``compute_album_gain`` and ``compute_track_gain``.
-  :bug:`3065`
 * The ``beets.plugins.MetadataSourcePlugin`` base class has been added to
   simplify development of plugins which query album, track, and search
-  APIs to provide metadata matches for the importer. Refer to the Spotify and
-  Deezer plugins for examples of using this template class.
+  APIs to provide metadata matches for the importer. Refer to the
+  :doc:`/plugins/spotify` and the :doc:`/plugins/deezer` for examples of using
+  this template class.
   :bug:`3355`
-* The autotag hooks have been modified such that they now take 'bpm',
-  'musical_key' and a per-track based 'genre' as attributes.
-* Item (and attribute) access on an item now falls back to the album's
-  attributes as well. If you specifically want to access an item's attributes,
-  use ``Item.get(key, with_album=False)``. :bug:`2988`
+* Accessing fields on an `Item` now falls back to the album's
+  attributes. So, for example, ``item.foo`` will first look for a field `foo` on
+  `item` and, if it doesn't exist, next tries looking for a field named `foo`
+  on the album that contains `item`. If you specifically want to access an
+  item's attributes, use ``Item.get(key, with_album=False)``. :bug:`2988`
 * ``Item.keys`` also has a ``with_album`` argument now, defaulting to ``True``.
 * A ``revision`` attribute has been added to ``Database``. It is increased on
   every transaction that mutates it. :bug:`2988`
@@ -436,7 +433,7 @@ For plugin developers:
   instead of a fixed, built-in set of field names (which was important to
   address :bug:`1547`).
   Thanks to :user:`dosoe`.
-* Two new events, ``mb_album_extract`` and ``mb_track_extract``, let plugin
+* Two new events, ``mb_album_extract`` and ``mb_track_extract``, let plugins
   add new fields based on MusicBrainz data. Thanks to :user:`dosoe`.
 
 For packagers:
@@ -445,7 +442,7 @@ For packagers:
   standalone project called `MediaFile`_, released as :pypi:`mediafile`. Beets
   now depends on this new package. Beets now depends on Mutagen transitively
   through MediaFile rather than directly, except in the case of one of beets'
-  plugins (scrub).
+  plugins (in particular, the :doc:`/plugins/scrub`).
 * Beets' library for configuration has been split into a standalone project
   called `Confuse`_, released as :pypi:`confuse`. Beets now depends on this
   package. Confuse has existed separately for some time and is used by
@@ -454,7 +451,7 @@ For packagers:
   or `repair <https://build.opensuse.org/package/view_file/openSUSE:Factory/beets/fix_test_command_line_option_relative_to_working_dir.diff?expand=1>`_
   the test may no longer be necessary.
 * This version drops support for Python 3.4.
-* Removes the optional dependency on bs1770gain.
+* We have removed an optional dependency on bs1770gain.
 
 .. _Fish shell: https://fishshell.com/
 .. _MediaFile: https://github.com/beetbox/mediafile
