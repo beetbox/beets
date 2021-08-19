@@ -18,7 +18,7 @@ from __future__ import division, absolute_import, print_function
 import confuse
 from sys import stderr
 
-__version__ = u'1.5.0'
+__version__ = u'1.5.1'
 __author__ = u'Adrian Sampson <adrian@radbox.org>'
 
 
