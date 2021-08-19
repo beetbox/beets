@@ -19,17 +19,21 @@ on IRC from freenode to `Libera.Chat`_.
 
 Major new features:
 
+* Fields in queries now fall back to an item's album and check its fields too.
+  Notably, this allows querying items by an album's attribute: in other words,
+  ``beet list foo:bar`` will not only find tracks with the `foo` attribute; it
+  will also find tracks *on albums* that have the `foo` attribute. This may be
+  particularly useful in the :ref:`path-format-config`, which matches
+  individual items to decide which path to use.
+  Thanks to :user:`FichteFoll`.
+  :bug:`2797` :bug:`2988`
 * A new :ref:`reflink` config option instructs the importer to create fast,
   copy-on-write file clones on filesystems that support them. Thanks to
   :user:`rubdos`.
-* Fields in queries now fall back to an item's album and check its fields too.
-  Notably, this allows querying items by an album flex attribute, also in path
-  configuration.
-  Thanks to :user:`FichteFoll`.
-  :bug:`2797` :bug:`2988`
 * A new :doc:`/plugins/unimported` lets you find untracked files in your
   library directory.
-* The :doc:`/plugins/aura` has arrived!
+* The :doc:`/plugins/aura` has arrived! Try out the future of remote music
+  library access today.
 * We now fetch information about `works`_ from MusicBrainz.
   MusicBrainz matches provide the fields ``work`` (the title), ``mb_workid``
   (the MBID), and ``work_disambig`` (the disambiguation string).
@@ -53,10 +57,8 @@ Major new features:
   queries that ignore accented characters, treating them as though they
   were plain ASCII characters. Use the ``#`` prefix with :ref:`list-cmd` or
   other commands. :bug:`3882`
-* :doc:`/plugins/fetchart`: Album art can now be fetched from `last.fm`_.
+* :doc:`/plugins/fetchart`: The plugin can now get album art from `last.fm`_.
   :bug:`3530`
-* ``beet remove`` now also allows interactive selection of items from the query,
-  similar to ``beet modify``.
 * :doc:`/plugins/web`: The API now supports the HTTP `DELETE` and `PATCH`
   methods for modifying items.
   They are disabled by default; set ``readonly: no`` in your configuration
@@ -65,6 +67,8 @@ Major new features:
 
 Other new things:
 
+* ``beet remove`` now also allows interactive selection of items from the query,
+  similar to ``beet modify``.
 * Enable HTTPS for MusicBrainz by default and add configuration option
   `https` for custom servers. See :ref:`musicbrainz-config` for more details.
 * :doc:`/plugins/mpdstats`: Add a new `strip_path` option to help build the
