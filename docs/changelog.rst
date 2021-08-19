@@ -22,8 +22,14 @@ Major new features:
 * A new :ref:`reflink` config option instructs the importer to create fast,
   copy-on-write file clones on filesystems that support them. Thanks to
   :user:`rubdos`.
+* Fields in queries now fall back to an item's album and check its fields too.
+  Notably, this allows querying items by an album flex attribute, also in path
+  configuration.
+  Thanks to :user:`FichteFoll`.
+  :bug:`2797` :bug:`2988`
 * A new :doc:`/plugins/unimported` lets you find untracked files in your
   library directory.
+* The :doc:`/plugins/aura` has arrived!
 * We now fetch information about `works`_ from MusicBrainz.
   MusicBrainz matches provide the fields ``work`` (the title), ``mb_workid``
   (the MBID), and ``work_disambig`` (the disambiguation string).
@@ -49,6 +55,10 @@ Major new features:
   other commands. :bug:`3882`
 * :doc:`/plugins/fetchart`: Album art can now be fetched from `last.fm`_.
   :bug:`3530`
+* ``beet remove`` now also allows interactive selection of items from the query,
+  similar to ``beet modify``.
+* :doc:`/plugins/web`: The API now supports the HTTP `DELETE` and `PATCH`
+  methods for modifying items.
 
 Other new things:
 
@@ -139,11 +149,8 @@ Other new things:
 * :doc:`/plugins/beatport`: The plugin now gets the musical key, BPM, and
   genre for each track.
   :bug:`2080`
-* :doc:`/plugins/bpsync`: Add `bpsync` plugin to sync metadata changes
-  from the Beatport database.
-* :doc:`/plugins/beatport`: Fix assignment of `genre` and rename `musical_key`
-  to `initial_key`.
-  :bug:`3387`
+* A new :doc:`/plugins/bpsync` can synchronize metadata changes from the
+  Beatport database (like the existing :doc:`/plugins/mbsync` for MusicBrainz).
 * :doc:`/plugins/hook`: The plugin now treats non-zero exit codes as errors.
   :bug:`3409`
 * :doc:`/plugins/subsonicupdate`: A new ``url`` configuration replaces the
@@ -163,63 +170,58 @@ Other new things:
   :bug:`3567`
 * ``beet import`` now handles tar archives with bzip2 or gzip compression.
   :bug:`3606`
+* ``beet import`` *also* now handles 7z archives, via the `py7zr`_ library.
+  Thanks to :user:`arogl`.
+  :bug:`3906`
 * :doc:`/plugins/plexupdate`: Added an option to use a secure connection to
   Plex server, and to ignore certificate validation errors if necessary.
   :bug:`2871`
-* :doc:`/plugins/convert`: If ``delete_originals`` is enabled, then the source files will
-  be deleted after importing.
+* :doc:`/plugins/convert`: A new ``delete_originals`` configuration option can
+  delete the source files after conversion during import.
   Thanks to :user:`logan-arens`.
   :bug:`2947`
-* ``beet remove`` now also allows interactive selection of items from the query,
-  similar to ``beet modify``.
-* :doc:`/plugins/web`: The API now supports the HTTP `DELETE` and `PATCH`
-  methods for modifying items.
 * There is a new ``--plugins`` (or ``-p``) CLI flag to specify a list of
   plugins to load.
-* Use the musicbrainz genre tag api to get genre information.  This currently
-  depends on functionality that is currently unreleased in musicbrainzngs.
-  Once the functionality has been released, you can enable it with the
-  ``genres`` option inside the ``musicbrainz`` config.  See
-  https://github.com/alastair/python-musicbrainzngs/pull/247 and
-  https://github.com/alastair/python-musicbrainzngs/pull/266 .
+* A new :ref:`genres` option fetches genre information from MusicBrainz. This
+  functionality depends on functionality that is currently unreleased in the
+  `python-musicbrainzngs`_ library: see PR `#266
+  <https://github.com/alastair/python-musicbrainzngs/pull/266>`_.
   Thanks to :user:`aereaux`.
-* :doc:`/plugins/replaygain` now does its analysis in parallel when using
-  the ``command`` or ``ffmpeg`` backends.
+* :doc:`/plugins/replaygain`: Analysis now happens in parallel using the
+  ``command`` and ``ffmpeg`` backends.
   :bug:`3478`
-* Fields in queries now fall back to an item's album and check its fields too.
-  Notably, this allows querying items by an album flex attribute, also in path
-  configuration.
-  Thanks to :user:`FichteFoll`.
-  :bug:`2797` :bug:`2988`
-* Add ``mb_album_extract`` and ``mb_track_extract`` hooks to allow
-  plugins to add new fields based on MusicBrainz data. Thanks to :user:`dosoe`.
-* Removes usage of the bs1770gain replaygain backend.
+* :doc:`plugins/replaygain`: The bs1770gain backend is removed.
   Thanks to :user:`SamuelCook`.
 * Added ``trackdisambig`` which stores the recording disambiguation from
   MusicBrainz for each track.
   :bug:`1904`
-* The :doc:`/plugins/aura` has arrived!
-* :doc:`plugins/fetchart`: The new ``max_filesize`` option for fetchart can be
-  used to target a maximum image filesize.
-* :doc:`/plugins/badfiles`: Checkers can now be run during import with the
+* :doc:`plugins/fetchart`: The new ``max_filesize`` configuration sets a
+  maximum target image file size.
+* :doc:`/plugins/badfiles`: Checkers can now run during import with the
   ``check_on_import`` config option.
-* :doc:`/plugins/export`: big speedups when `--include-keys` option is used
+* :doc:`/plugins/export`: The plugin is now much faster when using the
+  `--include-keys` option is used.
   Thanks to :user:`ssssam`.
-* The `importer` persists all fields set using :ref:`set_fields` to the
-  mediafiles of all imported tracks.
-* Added 7z support via the `py7zr`_ library
-  Thanks to :user:`arogl`.  :bug:`3906`
-* Get ISRC identifiers from musicbrainz
+* The importer's :ref:`set_fields` option now saves all updated fields to
+  on-disk metadata.
+  :bug:`3925` :bug:`3927`
+* We now fetch ISRC identifiers from MusicBrainz.
   Thanks to :user:`aereaux`.
-* :doc:`/plugins/metasync`: The ``metasync`` plugin now also fetches the ``Date Added`` field from iTunes databases and stores it in the``itunes_dateadded`` field.Thanks to :user:`sandersantema`.
-* :doc:`/plugins/lyrics`: Added Tekstowo.pl lyrics provider. Thanks to various
-  people for the implementation and for reporting issues with the initial version.
+* :doc:`/plugins/metasync`: The plugin now also fetches the "Date Added" field
+  from iTunes databases and stores it in the ``itunes_dateadded`` field.
+  Thanks to :user:`sandersantema`.
+* :doc:`/plugins/lyrics`: Added a new Tekstowo.pl lyrics provider. Thanks to
+  various people for the implementation and for reporting issues with the
+  initial version.
   :bug:`3344` :bug:`3904` :bug:`3905` :bug:`3994`
 
-  .. _py7zr: https://pypi.org/project/py7zr/
+.. _py7zr: https://pypi.org/project/py7zr/
 
 Fixes:
 
+* :doc:`/plugins/beatport`: Fix assignment of `genre` and rename `musical_key`
+  to `initial_key`.
+  :bug:`3387`
 * :bug:`/plugins/lyrics`: Fixed Musixmatch fetch lyrics divided into multiple elements on the web-page
 * :bug:`/plugins/lyrics`: Fixed Musixmatch fetch for non-existing lyrics
 * :bug:`/plugins/web`: Allow use of backslash in regex web queries.
@@ -434,6 +436,8 @@ For plugin developers:
   instead of a fixed, built-in set of field names (which was important to
   address :bug:`1547`).
   Thanks to :user:`dosoe`.
+* Two new events, ``mb_album_extract`` and ``mb_track_extract``, let plugin
+  add new fields based on MusicBrainz data. Thanks to :user:`dosoe`.
 
 For packagers:
 
