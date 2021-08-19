@@ -29,6 +29,7 @@ import yaml
 from tempfile import NamedTemporaryFile
 import os
 import six
+import shlex
 
 
 # These "safe" types can avoid the format/parse cycle that most fields go
@@ -45,7 +46,7 @@ class ParseError(Exception):
 def edit(filename, log):
     """Open `filename` in a text editor.
     """
-    cmd = util.shlex_split(util.editor_command())
+    cmd = shlex.split(util.editor_command())
     cmd.append(filename)
     log.debug(u'invoking editor command: {!r}', cmd)
     try:

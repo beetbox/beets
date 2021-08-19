@@ -18,9 +18,10 @@ from __future__ import division, absolute_import, print_function
 
 import string
 import subprocess
+import shlex
 
 from beets.plugins import BeetsPlugin
-from beets.util import shlex_split, arg_encoding
+from beets.util import arg_encoding
 
 
 class CodingFormatter(string.Formatter):
@@ -95,7 +96,7 @@ class HookPlugin(BeetsPlugin):
             # Use a string formatter that works on Unicode strings.
             formatter = CodingFormatter(arg_encoding())
 
-            command_pieces = shlex_split(command)
+            command_pieces = shlex.split(command)
 
             for i, piece in enumerate(command_pieces):
                 command_pieces[i] = formatter.format(piece, event=event,

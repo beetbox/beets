@@ -24,6 +24,7 @@ import time
 import re
 import six
 import string
+import shlex
 
 from beets import logging
 from mediafile import MediaFile, UnreadableFileError
@@ -1391,7 +1392,7 @@ def parse_query_string(s, model_cls):
     message = u"Query is not unicode: {0!r}".format(s)
     assert isinstance(s, six.text_type), message
     try:
-        parts = util.shlex_split(s)
+        parts = shlex.split(s)
     except ValueError as exc:
         raise dbcore.InvalidQueryError(s, exc)
     return parse_query_parts(parts, model_cls)
