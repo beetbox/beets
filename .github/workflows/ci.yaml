@@ -39,6 +39,7 @@ jobs:
           python -m pip install tox sphinx
 
       - name: Install optional dependencies
+        if: matrix.platform != 'windows-latest'
         run: |
           sudo apt update
           sudo apt install ffmpeg  # For replaygain
