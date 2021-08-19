@@ -244,15 +244,10 @@ class EditPlugin(plugins.BeetsPlugin):
         old_data = [flatten(o, fields) for o in objs]
 
         # Set up a temporary file with the initial data for editing.
-        if six.PY2:
-            new = NamedTemporaryFile(mode='w', suffix='.yaml', delete=False)
-        else:
-            new = NamedTemporaryFile(mode='w', suffix='.yaml', delete=False,
-                                     encoding='utf-8')
+        new = NamedTemporaryFile(mode='w', suffix='.yaml', delete=False,
+                                 encoding='utf-8')
         old_str = dump(old_data)
         new.write(old_str)
-        if six.PY2:
-            old_str = old_str.decode('utf-8')
         new.close()
 
         # Loop until we have parseable data and the user confirms.

@@ -136,10 +136,7 @@ class ExceptionTest(unittest.TestCase):
         pull = pl.pull()
         for i in range(3):
             next(pull)
-        if six.PY2:
-            self.assertRaises(ExceptionFixture, pull.next)
-        else:
-            self.assertRaises(ExceptionFixture, pull.__next__)
+        self.assertRaises(ExceptionFixture, pull.__next__)
 
 
 class ParallelExceptionTest(unittest.TestCase):
