@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.5.0 (in development)
-----------------------
+1.5.0 (August 19, 2021)
+-----------------------
 
 This long overdue release of beets includes far too many exciting and useful
 features than could ever be satisfactorily enumerated.
