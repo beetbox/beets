@@ -59,6 +59,9 @@ Major new features:
   similar to ``beet modify``.
 * :doc:`/plugins/web`: The API now supports the HTTP `DELETE` and `PATCH`
   methods for modifying items.
+  They are disabled by default; set ``readonly: no`` in your configuration
+  file to enable modification via the API.
+  :bug:`3870`
 
 Other new things:
 
@@ -214,34 +217,41 @@ Other new things:
   various people for the implementation and for reporting issues with the
   initial version.
   :bug:`3344` :bug:`3904` :bug:`3905` :bug:`3994`
-
-.. _py7zr: https://pypi.org/project/py7zr/
+* ``beet update`` will now confirm that the user still wants to update if
+  their library folder cannot be found, preventing the user from accidentally
+  wiping out their beets database.
+  Thanks to user: `logan-arens`.
+  :bug:`1934`
 
 Fixes:
 
-* :doc:`/plugins/beatport`: Fix assignment of `genre` and rename `musical_key`
-  to `initial_key`.
+* Adapt to breaking changes in Python's ``ast`` module in Python 3.8.
+* :doc:`/plugins/beatport`: Fix the assignment of the `genre` field, and
+  rename `musical_key` to `initial_key`.
   :bug:`3387`
-* :bug:`/plugins/lyrics`: Fixed Musixmatch fetch lyrics divided into multiple elements on the web-page
-* :bug:`/plugins/lyrics`: Fixed Musixmatch fetch for non-existing lyrics
-* :bug:`/plugins/web`: Allow use of backslash in regex web queries.
+* :doc:`/plugins/lyrics`: Fixed the Musixmatch backend for lyrics pages when
+  lyrics are divided into multiple elements on the webpage, and when the
+  lyrics are missing.
+* :doc:`/plugins/web`: Allow use of the backslash character in regex queries.
   :bug:`3867`
-* :bug:`/plugins/web`: Fixed a small bug which caused album artpath to be
+* :doc:`/plugins/web`: Fixed a small bug that caused the album art path to be
   redacted even when ``include_paths`` option is set.
   :bug:`3866`
-* :bug:`/plugins/discogs`: Fixed a bug with ``index_tracks`` options that
-  sometimes caused the index to be discarded. Also remove the extra semicolon
+* :doc:`/plugins/discogs`: Fixed a bug with the ``index_tracks`` option that
+  sometimes caused the index to be discarded. Also, remove the extra semicolon
   that was added when there is no index track.
-* :doc:`/plugins/subsonicupdate`: REST was using `POST` method rather `GET` method.
+* :doc:`/plugins/subsonicupdate`: The API client was using the `POST` method
+  rather the `GET` method.
   Also includes better exception handling, response parsing, and tests.
-* :doc:`/plugins/the`: Fixed incorrect regex for 'the' that matched any
+* :doc:`/plugins/the`: Fixed incorrect regex for "the" that matched any
   3-letter combination of the letters t, h, e.
   :bug:`3701`
-* :doc:`/plugins/fetchart`: Fixed a bug that caused fetchart to not take
-  environment variables such as proxy servers into account when making requests
+* :doc:`/plugins/fetchart`: Fixed a bug that caused the plugin to not take
+  environment variables, such as proxy servers, into account when making
+  requests.
   :bug:`3450`
 * :doc:`/plugins/fetchart`: Temporary files for fetched album art that fail
-  validation are now removed
+  validation are now removed.
 * :doc:`/plugins/inline`: In function-style field definitions that refer to
   flexible attributes, values could stick around from one function invocation
   to the next. This meant that, when displaying a list of objects, later
@@ -258,13 +268,13 @@ Fixes:
 * :doc:`/plugins/importadded`: Fixed a crash that occurred when the
   ``after_write`` signal was emitted.
   :bug:`3301`
-* :doc:`plugins/replaygain`: Fix the storage format in R128 gain tags.
+* :doc:`plugins/replaygain`: Fix the storage format for R128 gain tags.
   :bug:`3311` :bug:`3314`
-* :doc:`/plugins/discogs`: Fixed a crash that occurred when the Master URI
-  isn't set.
+* :doc:`/plugins/discogs`: Fixed a crash that occurred when the master URI
+  isn't set in the API response.
   :bug:`2965` :bug:`3239`
 * :doc:`/plugins/spotify`: Fix handling of year-only release dates
-  returned by Spotify Albums API.
+  returned by the Spotify albums API.
   Thanks to :user:`rhlahuja`.
   :bug:`3343`
 * Fixed a bug that caused the UI to display incorrect track numbers for tracks
@@ -275,11 +285,6 @@ Fixes:
   :bug:`3242`
 * Fix a bug that caused a crash when tagging items with the beatport plugin.
   :bug:`3374`
-* ``beet update`` will now confirm that the user still wants to update if
-  their library folder cannot be found, preventing the user from accidentally
-  wiping out their beets database.
-  Thanks to user: `logan-arens`.
-  :bug:`1934`
 * ``beet import`` now logs which files are ignored when in debug mode.
   :bug:`3764`
 * :doc:`/plugins/bpd`: Fix the transition to next track when in consume mode.
@@ -292,14 +297,12 @@ Fixes:
 * Added a warning when configuration files defined in the `include` directive
   of the configuration file fail to be imported.
   :bug:`3498`
-* Added the normalize method to the dbcore.types.INTEGER class which now
-  properly returns integer values, which should avoid problems where fields
-  like ``bpm`` would sometimes store non-integer values.
+* Added normalization to integer values in the database, which should avoid
+  problems where fields like ``bpm`` would sometimes store non-integer values.
   :bug:`762` :bug:`3507` :bug:`3508`
-* Removed ``@classmethod`` decorator from dbcore.query.NoneQuery.match method
-  failing with AttributeError when called. It is now an instance method.
+* Fix a crash when querying for null values.
   :bug:`3516` :bug:`3517`
-* :doc:`/plugins/lyrics`: Tolerate missing lyrics div in Genius scraper.
+* :doc:`/plugins/lyrics`: Tolerate a missing lyrics div in the Genius scraper.
   Thanks to :user:`thejli21`.
   :bug:`3535` :bug:`3554`
 * :doc:`/plugins/lyrics`: Use the artist sort name to search for lyrics, which
@@ -315,10 +318,9 @@ Fixes:
 * :doc:`/plugins/lyrics`: Adapt the Genius backend to changes in markup to
   reduce the scraping failure rate.
   :bug:`3535` :bug:`3594`
-* :doc:`/plugins/lyrics`: Fix crash when writing ReST files for a query without
-  results or fetched lyrics
+* :doc:`/plugins/lyrics`: Fix a crash when writing ReST files for a query
+  without results or fetched lyrics.
   :bug:`2805`
-* Adapt to breaking changes in Python's ``ast`` module in 3.8
 * :doc:`/plugins/fetchart`: Attempt to fetch pre-resized thumbnails from Cover
   Art Archive if the ``maxwidth`` option matches one of the sizes supported by
   the Cover Art Archive API.
@@ -346,26 +348,23 @@ Fixes:
   :bug:`3819`
 * :doc:`/plugins/mpdstats`: Fix Python 2/3 compatibility
   :bug:`3798`
-* Fix :bug:`3308` by using browsing for big releases to retrieve additional
-  information. Thanks to :user:`dosoe`.
-* :doc:`/plugins/discogs`: Replace deprecated discogs-client library with community
-  supported python3-discogs-client library. :bug:`3608`
+* :doc:`/plugins/discogs`: Replace the deprecated official `discogs-client`
+  library with the community supported `python3-discogs-client`_ library.
+  :bug:`3608`
 * :doc:`/plugins/chroma`: Fixed submitting AcoustID information for tracks
   that already have a fingerprint.
   :bug:`3834`
-* :doc:`/plugins/web`: DELETE and PATCH methods are disallowed by default.
-  Set ``readonly: no`` web config option to enable them.
-  :bug:`3870`
-* Allow equals within ``--set`` value when importing.
+* Allow equals within the value part of the ``--set`` option to the ``beet
+  import`` command.
   :bug:`2984`
-* :doc`/reference/cli`: Remove reference to rarfile version in link
-* Fix :bug:`2873`. Duplicates can now generate checksums. Thanks user:`wisp3rwind`
+* Duplicates can now generate checksums. Thanks :user:`wisp3rwind`
   for the pointer to how to solve. Thanks to :user:`arogl`.
+  :bug:`2873`
 * Templates that use ``%ifdef`` now produce the expected behavior when used in
   conjunction with non-string fields from the :doc:`/plugins/types`.
   :bug:`3852`
 * :doc:`/plugins/lyrics`: Fix crashes when a website could not be retrieved,
-  affecting at least the Genius source
+  affecting at least the Genius source.
   :bug:`3970`
 * :doc:`/plugins/duplicates`: Fix a crash when running the ``dup`` command with
   a query that returns no results.
@@ -382,16 +381,17 @@ Fixes:
 * :doc:`/plugins/lyrics`: Fix a bug in the heuristic for detecting valid
   lyrics in the Google source.
   :bug:`2969`
-* :doc:`/plugins/thumbnails`: Fix a bug where pathlib expected a string instead
-  of bytes for a path.
+* :doc:`/plugins/thumbnails`: Fix a crash due to an incorrect string type on
+  Python 3.
   :bug:`3360`
 * :doc:`/plugins/fetchart`: The Cover Art Archive source now iterates over
   all front images instead of blindly selecting the first one.
 * :doc:`/plugins/lyrics`: Removed the LyricWiki source (the site shut down on
   21/09/2020).
-* Fix :bug:`4002`. Subsonicupdate plugin is now functional again. New option
-  'auth' is required in the configuration file to specify the authentication
-  type.
+* :doc:`/plugins/subsonicupdate`: The plugin is now functional again. A new
+  `auth` configuration option is required in the configuration to specify the
+  flavor of authentication to use.
+  :bug:`4002`
 
 For plugin developers:
 
@@ -463,6 +463,8 @@ For packagers:
 .. _Deezer: https://www.deezer.com
 .. _keyfinder-cli: https://github.com/EvanPurkhiser/keyfinder-cli
 .. _last.fm: https://last.fm
+.. _python3-discogs-client: https://github.com/joalla/discogs_client
+.. _py7zr: https://pypi.org/project/py7zr/
 
 
 1.4.9 (May 30, 2019)
