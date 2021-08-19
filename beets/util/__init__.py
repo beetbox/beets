@@ -924,25 +924,6 @@ def editor_command():
     return open_anything()
 
 
-def shlex_split(s):
-    """Split a Unicode or bytes string according to shell lexing rules.
-
-    Raise `ValueError` if the string is not a well-formed shell string.
-    This is a workaround for a bug in some versions of Python.
-    """
-    if isinstance(s, bytes):  # Shlex works fine.
-        return shlex.split(s)
-
-    elif isinstance(s, six.text_type):
-        # Work around a Python bug.
-        # http://bugs.python.org/issue6988
-        bs = s.encode('utf-8')
-        return [c.decode('utf-8') for c in shlex.split(bs)]
-
-    else:
-        raise TypeError(u'shlex_split called with non-string')
-
-
 def interactive_open(targets, command):
     """Open the files in `targets` by `exec`ing a new `command`, given
     as a Unicode string. (The new program takes over, and Python
@@ -954,7 +935,7 @@ def interactive_open(targets, command):
 
     # Split the command string into its arguments.
     try:
-        args = shlex_split(command)
+        args = shlex.split(command)
     except ValueError:  # Malformed shell tokens.
         args = [command]
 
