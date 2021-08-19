@@ -56,7 +56,7 @@ if 'sdist' in sys.argv:
 
 setup(
     name='beets',
-    version='1.5.0',
+    version='1.5.1',
     description='music tagger and library organizer',
     author='Adrian Sampson',
     author_email='adrian@radbox.org',
