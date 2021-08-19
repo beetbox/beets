@@ -12,7 +12,7 @@ dependencies---packagers, please take note.
 Finally, this is the last version of beets where we intend to support Python
 2.x and 3.5; future releases will soon require Python 3.6.
 
-One non-technical change includes that we moved our official ``#beets`` home
+One non-technical change is that we moved our official ``#beets`` home
 on IRC from freenode to `Libera.Chat`_.
 
 .. _Libera.Chat: https://libera.chat/
