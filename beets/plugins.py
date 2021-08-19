@@ -129,14 +129,9 @@ class BeetsPlugin(object):
         value after the function returns). Also determines which params may not
         be sent for backwards-compatibility.
         """
-        if six.PY2:
-            argspec = inspect.getargspec(func)
-            func_args = argspec.args
-            has_varkw = argspec.keywords is not None
-        else:
-            argspec = inspect.getfullargspec(func)
-            func_args = argspec.args
-            has_varkw = argspec.varkw is not None
+        argspec = inspect.getfullargspec(func)
+        func_args = argspec.args
+        has_varkw = argspec.varkw is not None
 
         @wraps(func)
         def wrapper(*args, **kwargs):

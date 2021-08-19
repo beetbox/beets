@@ -22,7 +22,6 @@ import shutil
 import re
 import subprocess
 import platform
-import six
 import unittest
 
 from mock import patch, Mock
@@ -66,8 +65,6 @@ class ListTest(unittest.TestCase):
 
         stdout = self._run_list([u'na\xefve'])
         out = stdout.getvalue()
-        if six.PY2:
-            out = out.decode(stdout.encoding)
         self.assertTrue(u'na\xefve' in out)
 
     def test_list_item_path(self):

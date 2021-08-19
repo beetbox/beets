@@ -113,10 +113,7 @@ def decargs(arglist):
     """Given a list of command-line argument bytestrings, attempts to
     decode them to Unicode strings when running under Python 2.
     """
-    if six.PY2:
-        return [s.decode(util.arg_encoding()) for s in arglist]
-    else:
-        return arglist
+    return arglist
 
 
 def print_(*strings, **kwargs):
@@ -138,23 +135,18 @@ def print_(*strings, **kwargs):
     txt += kwargs.get('end', u'\n')
 
     # Encode the string and write it to stdout.
-    if six.PY2:
-        # On Python 2, sys.stdout expects bytes.
+    # On Python 3, sys.stdout expects text strings and uses the
+    # exception-throwing encoding error policy. To avoid throwing
+    # errors and use our configurable encoding override, we use the
+    # underlying bytes buffer instead.
+    if hasattr(sys.stdout, 'buffer'):
         out = txt.encode(_out_encoding(), 'replace')
-        sys.stdout.write(out)
+        sys.stdout.buffer.write(out)
+        sys.stdout.buffer.flush()
     else:
-        # On Python 3, sys.stdout expects text strings and uses the
-        # exception-throwing encoding error policy. To avoid throwing
-        # errors and use our configurable encoding override, we use the
-        # underlying bytes buffer instead.
-        if hasattr(sys.stdout, 'buffer'):
-            out = txt.encode(_out_encoding(), 'replace')
-            sys.stdout.buffer.write(out)
-            sys.stdout.buffer.flush()
-        else:
-            # In our test harnesses (e.g., DummyOut), sys.stdout.buffer
-            # does not exist. We instead just record the text string.
-            sys.stdout.write(txt)
+        # In our test harnesses (e.g., DummyOut), sys.stdout.buffer
+        # does not exist. We instead just record the text string.
+        sys.stdout.write(txt)
 
 
 # Configuration wrappers.
@@ -213,10 +205,7 @@ def input_(prompt=None):
     except EOFError:
         raise UserError(u'stdin stream ended while input required')
 
-    if six.PY2:
-        return resp.decode(_in_encoding(), 'ignore')
-    else:
-        return resp
+    return resp
 
 
 def input_options(options, require=False, prompt=None, fallback_prompt=None,

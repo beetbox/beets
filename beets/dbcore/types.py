@@ -21,9 +21,6 @@ from . import query
 from beets.util import str2bool
 import six
 
-if not six.PY2:
-    buffer = memoryview  # sqlite won't accept memoryview in python 2
-
 
 # Abstract base.
 
@@ -104,7 +101,7 @@ class Type(object):
         `sql_value` is either a `buffer`/`memoryview` or a `unicode` object`
         and the method must handle these in addition.
         """
-        if isinstance(sql_value, buffer):
+        if isinstance(sql_value, memoryview):
             sql_value = bytes(sql_value).decode('utf-8', 'ignore')
         if isinstance(sql_value, six.text_type):
             return self.parse(sql_value)

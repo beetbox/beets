@@ -753,10 +753,7 @@ def as_string(value):
     """Convert a value to a Unicode object for matching with a query.
     None becomes the empty string. Bytestrings are silently decoded.
     """
-    if six.PY2:
-        buffer_types = buffer, memoryview  # noqa: F821
-    else:
-        buffer_types = memoryview
+    buffer_types = memoryview
 
     if value is None:
         return u''
@@ -829,12 +826,8 @@ def convert_command_args(args):
     assert isinstance(args, list)
 
     def convert(arg):
-        if six.PY2:
-            if isinstance(arg, six.text_type):
-                arg = arg.encode(arg_encoding())
-        else:
-            if isinstance(arg, bytes):
-                arg = arg.decode(arg_encoding(), 'surrogateescape')
+        if isinstance(arg, bytes):
+            arg = arg.decode(arg_encoding(), 'surrogateescape')
         return arg
 
     return [convert(a) for a in args]
@@ -937,7 +930,7 @@ def shlex_split(s):
     Raise `ValueError` if the string is not a well-formed shell string.
     This is a workaround for a bug in some versions of Python.
     """
-    if not six.PY2 or isinstance(s, bytes):  # Shlex works fine.
+    if isinstance(s, bytes):  # Shlex works fine.
         return shlex.split(s)
 
     elif isinstance(s, six.text_type):
@@ -1120,13 +1113,9 @@ def decode_commandline_path(path):
     *reversed* to recover the same bytes before invoking the OS. On
     Windows, we want to preserve the Unicode filename "as is."
     """
-    if six.PY2:
-        # On Python 2, substitute the bytestring directly into the template.
-        return path
+    # On Python 3, the template is a Unicode string, which only supports
+    # substitution of Unicode variables.
+    if platform.system() == 'Windows':
+        return path.decode(_fsencoding())
     else:
-        # On Python 3, the template is a Unicode string, which only supports
-        # substitution of Unicode variables.
-        if platform.system() == 'Windows':
-            return path.decode(_fsencoding())
-        else:
-            return path.decode(arg_encoding(), 'surrogateescape')
+        return path.decode(arg_encoding(), 'surrogateescape')
