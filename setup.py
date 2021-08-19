@@ -114,7 +114,7 @@ setup(
             'requests_oauthlib',
             'reflink',
             'rarfile',
-            'python3-discogs-client'
+            'python3-discogs-client',
             'py7zr',
         ],
         'lint': [
