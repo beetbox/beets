@@ -93,18 +93,9 @@ setup(
         'pyyaml',
         'mediafile>=0.2.0',
         'confuse>=1.0.0',
-    ] + [
-        # Avoid a version of munkres incompatible with Python 3.
-        'munkres~=1.0.0' if sys.version_info < (3, 5, 0) else
-        'munkres!=1.1.0,!=1.1.1' if sys.version_info < (3, 6, 0) else
         'munkres>=1.0.0',
+        'jellyfish',
     ] + (
-        # Use the backport of Python 3.4's `enum` module.
-        ['enum34>=1.0.4'] if sys.version_info < (3, 4, 0) else []
-    ) + (
-        # Pin a Python 2-compatible version of Jellyfish.
-        ['jellyfish==0.6.0'] if sys.version_info < (3, 4, 0) else ['jellyfish']
-    ) + (
         # Support for ANSI console colors on Windows.
         ['colorama'] if (sys.platform == 'win32') else []
     ),
@@ -122,17 +113,10 @@ setup(
             'responses>=0.3.0',
             'requests_oauthlib',
             'reflink',
-        ] + (
-            # Tests for the thumbnails plugin need pathlib on Python 2 too.
-            ['pathlib'] if (sys.version_info < (3, 4, 0)) else []
-        ) + [
-            'rarfile<4' if sys.version_info < (3, 6, 0) else 'rarfile',
-        ] + [
-            'discogs-client' if (sys.version_info < (3, 0, 0))
-            else 'python3-discogs-client'
-        ] + (
-            ['py7zr'] if (sys.version_info > (3, 5, 0)) else []
-        ),
+            'rarfile',
+            'python3-discogs-client'
+            'py7zr',
+        ],
         'lint': [
             'flake8',
             'flake8-coding',
@@ -148,10 +132,7 @@ setup(
         'embyupdate': ['requests'],
         'chroma': ['pyacoustid'],
         'gmusic': ['gmusicapi'],
-        'discogs': (
-            ['discogs-client' if (sys.version_info < (3, 0, 0))
-                else 'python3-discogs-client']
-        ),
+        'discogs': ['python3-discogs-client'],
         'beatport': ['requests-oauthlib>=0.6.1'],
         'kodiupdate': ['requests'],
         'lastgenre': ['pylast'],
@@ -160,11 +141,8 @@ setup(
         'mpdstats': ['python-mpd2>=0.4.2'],
         'plexupdate': ['requests'],
         'web': ['flask', 'flask-cors'],
-        'import': (
-            ['rarfile<4' if (sys.version_info < (3, 6, 0)) else 'rarfile']
-        ),
-        'thumbnails': ['pyxdg', 'Pillow'] +
-        (['pathlib'] if (sys.version_info < (3, 4, 0)) else []),
+        'import': ['rarfile'],
+        'thumbnails': ['pyxdg', 'Pillow'],
         'metasync': ['dbus-python'],
         'sonosupdate': ['soco'],
         'scrub': ['mutagen>=1.33'],
@@ -193,10 +171,7 @@ setup(
         'Environment :: Console',
         'Environment :: Web Environment',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
