@@ -98,7 +98,7 @@ class Type(object):
         https://docs.python.org/2/library/sqlite3.html#sqlite-and-python-types
 
         Flexible fields have the type affinity `TEXT`. This means the
-        `sql_value` is either a `buffer`/`memoryview` or a `unicode` object`
+        `sql_value` is either a `memoryview` or a `unicode` object`
         and the method must handle these in addition.
         """
         if isinstance(sql_value, memoryview):
