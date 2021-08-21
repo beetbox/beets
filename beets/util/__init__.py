@@ -753,11 +753,9 @@ def as_string(value):
     """Convert a value to a Unicode object for matching with a query.
     None becomes the empty string. Bytestrings are silently decoded.
     """
-    buffer_types = memoryview
-
     if value is None:
         return u''
-    elif isinstance(value, buffer_types):
+    elif isinstance(value, memoryview):
         return bytes(value).decode('utf-8', 'ignore')
     elif isinstance(value, bytes):
         return value.decode('utf-8', 'ignore')
