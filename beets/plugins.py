@@ -130,8 +130,6 @@ class BeetsPlugin(object):
         be sent for backwards-compatibility.
         """
         argspec = inspect.getfullargspec(func)
-        func_args = argspec.args
-        has_varkw = argspec.varkw is not None
 
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -140,9 +138,9 @@ class BeetsPlugin(object):
             verbosity = beets.config['verbose'].get(int)
             log_level = max(logging.DEBUG, base_log_level - 10 * verbosity)
             self._log.setLevel(log_level)
-            if not has_varkw:
+            if argspec.varkw is None:
                 kwargs = dict((k, v) for k, v in kwargs.items()
-                              if k in func_args)
+                              if k in argspec.args)
 
             try:
                 return func(*args, **kwargs)
