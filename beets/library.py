@@ -38,7 +38,7 @@ from beets.dbcore import types
 import beets
 
 # To use the SQLite "blob" type, it doesn't suffice to provide a byte
-# string; SQLite treats that as encoded text. Wrapping it in a tells it
+# string; SQLite treats that as encoded text. Wrapping it in a `memoryview` tells it
 # that we actually mean non-text data.
 BLOB_TYPE = memoryview
 
