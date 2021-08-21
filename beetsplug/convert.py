@@ -16,7 +16,7 @@
 """Converts tracks or albums to external directory
 """
 from __future__ import division, absolute_import, print_function
-from beets.util import par_map, decode_commandline_path
+from beets.util import par_map, decode_commandline_path, arg_encoding
 
 import os
 import threading
@@ -203,18 +203,12 @@ class ConvertPlugin(BeetsPlugin):
         if not quiet and not pretend:
             self._log.info(u'Encoding {0}', util.displayable_path(source))
 
+        command = command.decode(arg_encoding(), 'surrogateescape')
         source = decode_commandline_path(source)
         dest = decode_commandline_path(dest)
 
-        # Split the command using shell syntax. We need to pass the
-        # string through a `str` because, at least on some Python
-        # versions, shlex.split does not support bytes.
-        args = [
-            a.encode('utf8', 'surrogateescape')
-            for a in shlex.split(command.decode('utf8', 'surrogateescape'))
-        ]
-
         # Substitute $source and $dest in the argument list.
+        args = shlex.split(command)
         encode_cmd = []
         for i, arg in enumerate(args):
             args[i] = Template(arg).safe_substitute({
