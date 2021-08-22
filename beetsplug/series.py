@@ -21,8 +21,9 @@ from beets.autotag.mb import musicbrainzngs
 from collections import defaultdict, namedtuple
 
 from dataclasses import dataclass
+from itertools import groupby
 
-import re
+from six.moves.urllib.parse import urljoin
 
 ORDER_ATTR_ID = 'a59c5830-5ec7-38fe-9a21-c7ea54f6650a'
 
@@ -71,11 +72,49 @@ def get_attribute(item, attr):
         return None
 
 
+def group_by_series_type(items, key='type'):
+    supported_series = [t.name for t in TYPES]
+    keyfunc = lambda x: x[key]
+
+    for k, item in groupby(sorted(items, key=keyfunc), keyfunc):
+        if k in supported_series:
+            yield (k, item)
+
+
+def print_ui(query, data):
+    available_items = {}
+    choice_number = 0
+    for series_type, valid_series in group_by_series_type(data):
+        series_text = ui.colorize('text_highlight_minor', series_type)
+        ui.print_(f"\n{series_text}:\n")
+
+        for series in valid_series:
+            choice_number += 1
+            available_items[choice_number] = series['id']
+
+            try:
+                name = ui.colordiff(query, series['name'])[1]
+                disambiguation = ui.colorize(
+                    'text_highlight_minor',
+                    series['disambiguation']
+                )
+                text = f"{name} ({disambiguation})"
+            except KeyError:
+                text = ui.colordiff(query, series['name'])[1]
+
+            url = urljoin(mb.BASE_URL, 'mbid/' + series['id'])
+            ui.print_(f"  {choice_number}. {text}")
+            ui.print_(f"  {url}")
+            ui.print_('')
+
+    return available_items
+
 class SeriesProvider:
 
-    @property
-    def item_limit(self):
-        return None
+    page_size: int
+
+    def __init__(self, page_size = 10):
+        self.page_size = page_size
 
     def _build_series(self, series):
         data = {
@@ -102,64 +141,47 @@ class SeriesProvider:
             return
 
     def search(self, query):
-        # TODO: Pagination
-        result = musicbrainzngs.search_series(
-            query,
-            limit=self.item_limit)
+        offset = 0
+        while True:
+            result = musicbrainzngs.search_series(
+                query,
+                limit=self.page_size,
+                offset=offset
+            )
 
-        if result['series-count'] == 0:
-            print(u'No results for {}'.format(query))
-            return
+            ui.print_(f"Found {result['series-count']} results for '{query}'")
+            if result['series-count'] == 0:
+                return
 
-        print(u"Found {} results for '{}'".format(
-            result['series-count'],
-            query
-        ))
+            available_items = print_ui(query, result['series-list'])
+            if len(available_items) == 0:
+                types = ' or '.join([f"'{t.name}'" for t in TYPES])
+                ui.print_(f"No series with type {types}")
+                return
 
-        # TODO: move function
-        def group_by_type(items, key='type'):
-            from itertools import groupby
 
-            supported_series = [t.name for t in TYPES]
-            keyfunc = lambda x: x[key]
+            choices = []
+            if offset > 0:
+                choices += ['Previous']
+            if offset < result['series-count']:
+                # We filter some of the results client-side,
+                # so we have a bug that a page can return 0 items
+                choices += ['Next']
 
-            for k, item in groupby(sorted(items, key=keyfunc), keyfunc):
-                if k in supported_series:
-                    yield (k, item)
+            response = ui.input_options(
+                choices,
+                numrange=(1, len(available_items)),
+            )
 
-        i = 0
-        available_items = {}
-        # TODO: Extract choosing method
-        for key, items in group_by_type(result['series-list']):
-            ui.print_(f"\n{ui.colorize('text_highlight_minor', key)}:\n")
+            if response == 'n':
+                offset = min(offset + self.page_size, result['series-count'])
+                continue
+            if response == 'p':
+                offset = max(0, offset - self.page_size)
+                continue
 
-            for item in items:
-                i += 1
-                available_items[i] = item['id']
+            return available_items[response]
 
-                try:
-                    text = "{} ({})".format(
-                        ui.colordiff(query, item['name'])[1],
-                        ui.colorize('text_highlight_minor',
-                                    item['disambiguation']),
-                    )
-                except KeyError:
-                    text = ui.colordiff(query, item['name'])[1]
-                ui.print_(f"  {i}. {text}\n  {mb.BASE_URL}{item['id']}\n")
-
-        def parse_items():
-            while True:
-                choices = []
-                response = ui.input_options(
-                    choices,
-                    prompt='Choose a number',
-                    numrange=(1, len(available_items)))
-
-                try:
-                    return available_items[response]
-                except KeyError:
-                    pass
-        return parse_items()
 
 
 class MbSeriesPlugin(BeetsPlugin):
@@ -176,6 +198,7 @@ class MbSeriesPlugin(BeetsPlugin):
 
         self.config.add({
             'auto': True,
+            'items_per_page': 10,
             'fields': {
                 'id': {
                     'field_name': 'mb_seriesid',
@@ -203,7 +226,7 @@ class MbSeriesPlugin(BeetsPlugin):
             query = ui.decargs(args)
             mb_query = opts.mb_query
             series_id = mb._parse_id(opts.id or '')
-            series = SeriesProvider()
+            series = SeriesProvider(page_size=self.config['items_per_page'])
 
             if series_id:
                 self._log.info(u'Updating series {0}'.format(series_id))
