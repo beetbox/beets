@@ -164,6 +164,7 @@ class SeriesProvider:
 
 class MbSeriesPlugin(BeetsPlugin):
 
+    # Mapping between internal names and musicbrainz attributes
     mapping = {
         'id': 'id',
         'name': 'name',
@@ -262,10 +263,10 @@ class MbSeriesPlugin(BeetsPlugin):
             return
 
         fields = []
-        for key, field in self.config['fields'].items():
-            if field['write']:
-                field['attr'] = self.mapping[key]
-                fields.append(field)
+        for field, external_field in self.mapping.items():
+            if self.config['fields'][field]['write']:
+                self.config['fields'][field]['attr'] = external_field
+                fields.append(self.config['fields'][field])
 
         for a in [a for a in lib.albums(query) if self.is_mb_release(a)]:
             mbid = series['type'].get_field(a)
