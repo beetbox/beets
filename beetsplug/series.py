@@ -197,7 +197,6 @@ class MbSeriesPlugin(BeetsPlugin):
         super(MbSeriesPlugin, self).__init__()
 
         self.config.add({
-            'auto': True,
             'items_per_page': 10,
             'fields': {
                 'id': {
