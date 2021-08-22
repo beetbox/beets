@@ -19,12 +19,12 @@ from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets import ui, util
+from beets.autotag import mb
 from beets.autotag.mb import _parse_id, musicbrainzngs
 from collections import defaultdict, namedtuple
 
 import re
 
-MUSICBRAINZ_URL = 'https://musicbrainz.org/mbid/'
 ORDER_ATTR_ID = 'a59c5830-5ec7-38fe-9a21-c7ea54f6650a'
 
 SeriesType = namedtuple('SeriesType', [
@@ -151,7 +151,7 @@ class SeriesProvider:
                     )
                 except KeyError:
                     text = ui.colordiff(query, item['name'])[1]
-                ui.print_(f"  {i}. {text}\n  {MUSICBRAINZ_URL}{item['id']}\n")
+                ui.print_(f"  {i}. {text}\n  {mb.BASE_URL}{item['id']}\n")
 
         def parse_items():
             while True:
