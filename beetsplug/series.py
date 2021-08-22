@@ -12,27 +12,27 @@
 #
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
-
-"""Update library's tags using MusicBrainz.
-"""
-from __future__ import division, absolute_import, print_function
-
+"""Update series tags using MusicBrainz."""
+from typing import Callable
 from beets.plugins import BeetsPlugin
 from beets import ui, util
 from beets.autotag import mb
 from beets.autotag.mb import musicbrainzngs
 from collections import defaultdict, namedtuple
 
+from dataclasses import dataclass
+
 import re
 
 ORDER_ATTR_ID = 'a59c5830-5ec7-38fe-9a21-c7ea54f6650a'
 
-SeriesType = namedtuple('SeriesType', [
-    'name',
-    'relation',
-    'relation_list',
-    'get_field'
-])
+@dataclass
+class SeriesType:
+    name: str
+    relation: str
+    relation_list: str
+    get_field: Callable
+
 
 TYPES = [
     SeriesType(
