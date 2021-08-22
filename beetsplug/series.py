@@ -20,7 +20,7 @@ from __future__ import division, absolute_import, print_function
 from beets.plugins import BeetsPlugin
 from beets import ui, util
 from beets.autotag import mb
-from beets.autotag.mb import _parse_id, musicbrainzngs
+from beets.autotag.mb import musicbrainzngs
 from collections import defaultdict, namedtuple
 
 import re
@@ -201,24 +201,17 @@ class MbSeriesPlugin(BeetsPlugin):
             write = ui.should_write(opts.write)
             query = ui.decargs(args)
             mb_query = opts.mb_query
-            series_id = _parse_id(opts.id or '')
+            series_id = mb._parse_id(opts.id or '')
             series = SeriesProvider()
 
             if series_id:
                 self._log.info(u'Updating series {0}'.format(series_id))
-                self.albums(lib, query, series_id, move, pretend, write)
+                self.update_albums(lib, query, series_id, move, pretend, write)
             elif mb_query:
                 series_id = series.search(mb_query)
-                self.albums(lib, query, series_id, move, pretend, write)
+                self.update_albums(lib, query, series_id, move, pretend, write)
             else:
-                series = set()
-                for album in lib.albums('mb_seriesid::.'):
-                    series.add(album.mb_seriesid)
-
-                self._log.info(f'updating {len(series)} series')
-                for item in series:
-                    self.albums(lib, f'mb_seriesid:{item}', item,
-                                move, pretend, write)
+                self.update_all_albums(lib, move, pretend, write)
 
         cmd = ui.Subcommand('series', help=u'Fetch series from MusicBrainz')
         cmd.parser.add_option(
@@ -244,9 +237,17 @@ class MbSeriesPlugin(BeetsPlugin):
         return [cmd]
 
     def is_mb_release(self, a):
-        return a.mb_albumid and _parse_id(a.mb_albumid)
+        return a.mb_albumid and mb._parse_id(a.mb_albumid)
 
-    def albums(self, lib, query, series_id, move, pretend, write):
+    def update_all_albums(self, lib, move, pretend, write):
+        mb_seriesid = self.config['fields']['id']['field_name'].as_str()
+        series_ids = set((getattr(a, mb_seriesid) for a in lib.albums(f'{mb_seriesid}::.')))
+
+        self._log.info(f'updating {len(series_ids)} series')
+        for _id in series_ids:
+            self.update_albums(lib, f'{mb_seriesid}:{_id}', _id, move, pretend, write)
+
+    def update_albums(self, lib, query, series_id, move, pretend, write):
         """Retrieve and apply info from the autotagger for albums matched by
         query and their items.
         """
