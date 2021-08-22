@@ -216,10 +216,10 @@ class MbSeriesPlugin(BeetsPlugin):
         cmd = ui.Subcommand('series', help=u'Fetch series from MusicBrainz')
         cmd.parser.add_option(
             u'-S', u'--id', action='store',
-            help=u'Series id')
+            help=u'query MusicBrainz series with this id')
         cmd.parser.add_option(
             u'-q', u'--mb-query', action='store',
-            help=u'MusicBrainz query')
+            help=u'query MusicBrainz series with this query')
         cmd.parser.add_option(
             u'-p', u'--pretend', action='store_true',
             help=u'show all changes but do nothing')
@@ -229,6 +229,10 @@ class MbSeriesPlugin(BeetsPlugin):
         cmd.parser.add_option(
             u'-M', u'--nomove', action='store_false', dest='move',
             help=u"don't move files in library")
+        cmd.parser.add_option(
+            u'-w', u'--write', action='store_true', default=None,
+            help=u"write new metadata to files' tags"
+        )
         cmd.parser.add_option(
             u'-W', u'--nowrite', action='store_false',
             default=None, dest='write',
