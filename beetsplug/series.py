@@ -252,7 +252,7 @@ class MbSeriesPlugin(BeetsPlugin):
         for _id in series_ids:
             self.update_albums(lib, f'{mb_seriesid}:{_id}', _id, move, pretend, write)
 
-    def update_albums(self, lib, query, series_id, move, pretend, write):
+    def update_albums(self, lib, query: str, series_id: str, move, pretend, write):
         """Retrieve and apply info from the autotagger for albums matched by
         query and their items.
         """
