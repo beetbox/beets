@@ -128,24 +128,15 @@ def compile_func(arg_names, statements, name='_the_func', debug=False):
     the resulting Python function. If `debug`, then print out the
     bytecode of the compiled function.
     """
-    if six.PY2:
-        name = name.encode('utf-8')
-        args = ast.arguments(
-            args=[ast.Name(n, ast.Param()) for n in arg_names],
-            vararg=None,
-            kwarg=None,
-            defaults=[ex_literal(None) for _ in arg_names],
-        )
-    else:
-        args_fields = {
-            'args': [ast.arg(arg=n, annotation=None) for n in arg_names],
-            'kwonlyargs': [],
-            'kw_defaults': [],
-            'defaults': [ex_literal(None) for _ in arg_names],
-        }
-        if 'posonlyargs' in ast.arguments._fields:  # Added in Python 3.8.
-            args_fields['posonlyargs'] = []
-        args = ast.arguments(**args_fields)
+    args_fields = {
+        'args': [ast.arg(arg=n, annotation=None) for n in arg_names],
+        'kwonlyargs': [],
+        'kw_defaults': [],
+        'defaults': [ex_literal(None) for _ in arg_names],
+    }
+    if 'posonlyargs' in ast.arguments._fields:  # Added in Python 3.8.
+        args_fields['posonlyargs'] = []
+    args = ast.arguments(**args_fields)
 
     func_def = ast.FunctionDef(
         name=name,
@@ -201,10 +192,7 @@ class Symbol(object):
 
     def translate(self):
         """Compile the variable lookup."""
-        if six.PY2:
-            ident = self.ident.encode('utf-8')
-        else:
-            ident = self.ident
+        ident = self.ident
         expr = ex_rvalue(VARIABLE_PREFIX + ident)
         return [expr], set([ident]), set()
 
@@ -239,11 +227,7 @@ class Call(object):
     def translate(self):
         """Compile the function call."""
         varnames = set()
-        if six.PY2:
-            ident = self.ident.encode('utf-8')
-        else:
-            ident = self.ident
-        funcnames = set([ident])
+        funcnames = set([self.ident])
 
         arg_exprs = []
         for arg in self.args:
@@ -265,7 +249,7 @@ class Call(object):
             ))
 
         subexpr_call = ex_call(
-            FUNCTION_PREFIX + ident,
+            FUNCTION_PREFIX + self.ident,
             arg_exprs
         )
         return [subexpr_call], varnames, funcnames

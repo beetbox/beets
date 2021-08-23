@@ -753,14 +753,9 @@ def as_string(value):
     """Convert a value to a Unicode object for matching with a query.
     None becomes the empty string. Bytestrings are silently decoded.
     """
-    if six.PY2:
-        buffer_types = buffer, memoryview  # noqa: F821
-    else:
-        buffer_types = memoryview
-
     if value is None:
         return u''
-    elif isinstance(value, buffer_types):
+    elif isinstance(value, memoryview):
         return bytes(value).decode('utf-8', 'ignore')
     elif isinstance(value, bytes):
         return value.decode('utf-8', 'ignore')
@@ -829,12 +824,8 @@ def convert_command_args(args):
     assert isinstance(args, list)
 
     def convert(arg):
-        if six.PY2:
-            if isinstance(arg, six.text_type):
-                arg = arg.encode(arg_encoding())
-        else:
-            if isinstance(arg, bytes):
-                arg = arg.decode(arg_encoding(), 'surrogateescape')
+        if isinstance(arg, bytes):
+            arg = arg.decode(arg_encoding(), 'surrogateescape')
         return arg
 
     return [convert(a) for a in args]
@@ -931,25 +922,6 @@ def editor_command():
     return open_anything()
 
 
-def shlex_split(s):
-    """Split a Unicode or bytes string according to shell lexing rules.
-
-    Raise `ValueError` if the string is not a well-formed shell string.
-    This is a workaround for a bug in some versions of Python.
-    """
-    if not six.PY2 or isinstance(s, bytes):  # Shlex works fine.
-        return shlex.split(s)
-
-    elif isinstance(s, six.text_type):
-        # Work around a Python bug.
-        # http://bugs.python.org/issue6988
-        bs = s.encode('utf-8')
-        return [c.decode('utf-8') for c in shlex.split(bs)]
-
-    else:
-        raise TypeError(u'shlex_split called with non-string')
-
-
 def interactive_open(targets, command):
     """Open the files in `targets` by `exec`ing a new `command`, given
     as a Unicode string. (The new program takes over, and Python
@@ -961,7 +933,7 @@ def interactive_open(targets, command):
 
     # Split the command string into its arguments.
     try:
-        args = shlex_split(command)
+        args = shlex.split(command)
     except ValueError:  # Malformed shell tokens.
         args = [command]
 
@@ -1120,13 +1092,9 @@ def decode_commandline_path(path):
     *reversed* to recover the same bytes before invoking the OS. On
     Windows, we want to preserve the Unicode filename "as is."
     """
-    if six.PY2:
-        # On Python 2, substitute the bytestring directly into the template.
-        return path
+    # On Python 3, the template is a Unicode string, which only supports
+    # substitution of Unicode variables.
+    if platform.system() == 'Windows':
+        return path.decode(_fsencoding())
     else:
-        # On Python 3, the template is a Unicode string, which only supports
-        # substitution of Unicode variables.
-        if platform.system() == 'Windows':
-            return path.decode(_fsencoding())
-        else:
-            return path.decode(arg_encoding(), 'surrogateescape')
+        return path.decode(arg_encoding(), 'surrogateescape')

@@ -11,8 +11,8 @@ jobs:
     runs-on: ${{ matrix.platform }}
     strategy:
       matrix:
-        platform: [ubuntu-latest]
-        python-version: [2.7, 3.6, 3.7, 3.8, 3.9, 3.10-dev]
+        platform: [ubuntu-latest, windows-latest]
+        python-version: [3.6, 3.7, 3.8, 3.9, 3.10-dev]
 
     env:
       PY_COLORS: 1
@@ -25,12 +25,21 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install base dependencies
+      # tox fails on Windows if version > 3.8.3
+      - name: Install base dependencies - Windows
+        if: matrix.platform == 'windows-latest'
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install tox==3.8.3 sphinx
+
+      - name: Install base dependencies - Ubuntu
+        if: matrix.platform != 'windows-latest'
         run: |
           python -m pip install --upgrade pip
           python -m pip install tox sphinx
 
       - name: Install optional dependencies
+        if: matrix.platform != 'windows-latest'
         run: |
           sudo apt update
           sudo apt install ffmpeg  # For replaygain

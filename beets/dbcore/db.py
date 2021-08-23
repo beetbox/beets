@@ -31,10 +31,7 @@ from beets.util import py3_path
 from beets.dbcore import types
 from .query import MatchQuery, NullSort, TrueQuery
 import six
-if six.PY2:
-    from collections import Mapping
-else:
-    from collections.abc import Mapping
+from collections.abc import Mapping
 
 
 class DBAccessError(Exception):

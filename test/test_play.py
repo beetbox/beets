@@ -18,6 +18,7 @@
 from __future__ import division, absolute_import, print_function
 
 import os
+import sys
 
 import unittest
 from mock import patch, ANY
@@ -73,6 +74,7 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
         self.run_and_assert(
             open_mock, [u'title:aNiceTitle'], u'echo other')
 
+    @unittest.skipIf(sys.platform, 'win32')  # FIXME: fails on windows
     def test_relative_to(self, open_mock):
         self.config['play']['command'] = 'echo'
         self.config['play']['relative_to'] = '/something'

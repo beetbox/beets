@@ -29,6 +29,7 @@ import yaml
 from tempfile import NamedTemporaryFile
 import os
 import six
+import shlex
 
 
 # These "safe" types can avoid the format/parse cycle that most fields go
@@ -45,7 +46,7 @@ class ParseError(Exception):
 def edit(filename, log):
     """Open `filename` in a text editor.
     """
-    cmd = util.shlex_split(util.editor_command())
+    cmd = shlex.split(util.editor_command())
     cmd.append(filename)
     log.debug(u'invoking editor command: {!r}', cmd)
     try:
@@ -244,15 +245,10 @@ class EditPlugin(plugins.BeetsPlugin):
         old_data = [flatten(o, fields) for o in objs]
 
         # Set up a temporary file with the initial data for editing.
-        if six.PY2:
-            new = NamedTemporaryFile(mode='w', suffix='.yaml', delete=False)
-        else:
-            new = NamedTemporaryFile(mode='w', suffix='.yaml', delete=False,
-                                     encoding='utf-8')
+        new = NamedTemporaryFile(mode='w', suffix='.yaml', delete=False,
+                                 encoding='utf-8')
         old_str = dump(old_data)
         new.write(old_str)
-        if six.PY2:
-            old_str = old_str.decode('utf-8')
         new.close()
 
         # Loop until we have parseable data and the user confirms.
