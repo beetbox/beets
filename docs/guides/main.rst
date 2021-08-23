@@ -10,12 +10,10 @@ Installing
 ----------
 
 You will need Python.
-Beets works on `Python 2.7`_ and Python 3.4 or later.
+Beets works on Python 3.6 or later.
 
-.. _Python 2.7: https://www.python.org/download/
-
-* **macOS** v10.7 (Lion) and later include Python 2.7 out of the box.
-  You can opt for Python 3 by installing it via `Homebrew`_:
+* **macOS** 11 (Big Sur) includes Python 3.8 out of the box.
+  You can opt for a more recent Python installing it via `Homebrew`_:
   ``brew install python3``
 
 * On **Debian or Ubuntu**, depending on the version, beets is available as an
