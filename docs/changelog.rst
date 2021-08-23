@@ -4,7 +4,8 @@ Changelog
 1.5.1 (in development)
 ----------------------
 
-Changelog goes here!
+This release now requires Python 3.6 or later (it removes support for Python
+2.7, 3.4, and 3.5).
 
 
 1.5.0 (August 19, 2021)
