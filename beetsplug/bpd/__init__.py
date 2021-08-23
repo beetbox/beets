@@ -984,12 +984,7 @@ class Command(object):
             raise AttributeError(u'unknown command "{}"'.format(self.name))
         func = getattr(target, func_name)
 
-        if six.PY2:
-            # caution: the fields of the namedtuple are slightly different
-            # between the results of getargspec and getfullargspec.
-            argspec = inspect.getargspec(func)
-        else:
-            argspec = inspect.getfullargspec(func)
+        argspec = inspect.getfullargspec(func)
 
         # Check that `func` is able to handle the number of arguments sent
         # by the client (so we can raise ERROR_ARG instead of ERROR_SYSTEM).

@@ -24,6 +24,7 @@ import time
 import re
 import six
 import string
+import shlex
 
 from beets import logging
 from mediafile import MediaFile, UnreadableFileError
@@ -37,13 +38,9 @@ from beets.dbcore import types
 import beets
 
 # To use the SQLite "blob" type, it doesn't suffice to provide a byte
-# string; SQLite treats that as encoded text. Wrapping it in a `buffer` or a
-# `memoryview`, depending on the Python version, tells it that we
-# actually mean non-text data.
-if six.PY2:
-    BLOB_TYPE = buffer  # noqa: F821
-else:
-    BLOB_TYPE = memoryview
+# string; SQLite treats that as encoded text. Wrapping it in a
+# `memoryview` tells it that we actually mean non-text data.
+BLOB_TYPE = memoryview
 
 log = logging.getLogger('beets')
 
@@ -1395,7 +1392,7 @@ def parse_query_string(s, model_cls):
     message = u"Query is not unicode: {0!r}".format(s)
     assert isinstance(s, six.text_type), message
     try:
-        parts = util.shlex_split(s)
+        parts = shlex.split(s)
     except ValueError as exc:
         raise dbcore.InvalidQueryError(s, exc)
     return parse_query_parts(parts, model_cls)
@@ -1408,10 +1405,7 @@ def _sqlite_bytelower(bytestring):
         ``-DSQLITE_LIKE_DOESNT_MATCH_BLOBS``. See
         ``https://github.com/beetbox/beets/issues/2172`` for details.
     """
-    if not six.PY2:
-        return bytestring.lower()
-
-    return buffer(bytes(bytestring).lower())  # noqa: F821
+    return bytestring.lower()
 
 
 # The Library: interface to the database.

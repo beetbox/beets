@@ -963,12 +963,12 @@ def import_func(lib, opts, args):
         if not paths:
             raise ui.UserError(u'no path specified')
 
-        # On Python 2, we get filenames as raw bytes, which is what we
-        # need. On Python 3, we need to undo the "helpful" conversion to
-        # Unicode strings to get the real bytestring filename.
-        if not six.PY2:
-            paths = [p.encode(util.arg_encoding(), 'surrogateescape')
-                     for p in paths]
+        # On Python 2, we used to get filenames as raw bytes, which is
+        # what we need. On Python 3, we need to undo the "helpful"
+        # conversion to Unicode strings to get the real bytestring
+        # filename.
+        paths = [p.encode(util.arg_encoding(), 'surrogateescape')
+                 for p in paths]
 
     import_files(lib, paths, query)
 

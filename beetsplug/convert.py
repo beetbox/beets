@@ -23,7 +23,6 @@ import threading
 import subprocess
 import tempfile
 import shlex
-import six
 from string import Template
 
 from beets import ui, util, plugins, config
@@ -204,9 +203,7 @@ class ConvertPlugin(BeetsPlugin):
         if not quiet and not pretend:
             self._log.info(u'Encoding {0}', util.displayable_path(source))
 
-        if not six.PY2:
-            command = command.decode(arg_encoding(), 'surrogateescape')
-
+        command = command.decode(arg_encoding(), 'surrogateescape')
         source = decode_commandline_path(source)
         dest = decode_commandline_path(dest)
 
@@ -218,10 +215,7 @@ class ConvertPlugin(BeetsPlugin):
                 'source': source,
                 'dest': dest,
             })
-            if six.PY2:
-                encode_cmd.append(args[i])
-            else:
-                encode_cmd.append(args[i].encode(util.arg_encoding()))
+            encode_cmd.append(args[i].encode(util.arg_encoding()))
 
         if pretend:
             self._log.info(u'{0}', u' '.join(ui.decargs(args)))

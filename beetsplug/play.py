@@ -26,6 +26,7 @@ from beets import util
 from os.path import relpath
 from tempfile import NamedTemporaryFile
 import subprocess
+import shlex
 
 # Indicate where arguments should be inserted into the command string.
 # If this is missing, they're placed at the end.
@@ -44,7 +45,7 @@ def play(command_str, selection, paths, open_args, log, item_type='track',
 
     try:
         if keep_open:
-            command = util.shlex_split(command_str)
+            command = shlex.split(command_str)
             command = command + open_args
             subprocess.call(command)
         else:

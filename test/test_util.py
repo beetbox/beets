@@ -104,8 +104,6 @@ class UtilTest(unittest.TestCase):
             ])
         self.assertEqual(p, u'foo/_/bar')
 
-    @unittest.skipIf(six.PY2, 'surrogateescape error handler not available'
-                     'on Python 2')
     def test_convert_command_args_keeps_undecodeable_bytes(self):
         arg = b'\x82'  # non-ascii bytes
         cmd_args = util.convert_command_args([arg])

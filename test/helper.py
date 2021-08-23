@@ -90,8 +90,6 @@ def control_stdin(input=None):
     """
     org = sys.stdin
     sys.stdin = StringIO(input)
-    if six.PY2:  # StringIO encoding attr isn't writable in python >= 3
-        sys.stdin.encoding = 'utf-8'
     try:
         yield sys.stdin
     finally:
@@ -110,8 +108,6 @@ def capture_stdout():
     """
     org = sys.stdout
     sys.stdout = capture = StringIO()
-    if six.PY2:  # StringIO encoding attr isn't writable in python >= 3
-        sys.stdout.encoding = 'utf-8'
     try:
         yield sys.stdout
     finally:
@@ -124,12 +120,8 @@ def _convert_args(args):
        on Python 3.
     """
     for i, elem in enumerate(args):
-        if six.PY2:
-            if isinstance(elem, six.text_type):
-                args[i] = elem.encode(util.arg_encoding())
-        else:
-            if isinstance(elem, bytes):
-                args[i] = elem.decode(util.arg_encoding())
+        if isinstance(elem, bytes):
+            args[i] = elem.decode(util.arg_encoding())
 
     return args
 
