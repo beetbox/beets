@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -15,7 +14,6 @@
 
 """Searches for albums in the MusicBrainz database.
 """
-from __future__ import division, absolute_import, print_function
 
 import musicbrainzngs
 import re
@@ -58,11 +56,11 @@ class MusicBrainzAPIError(util.HumanReadableException):
     def __init__(self, reason, verb, query, tb=None):
         self.query = query
         if isinstance(reason, musicbrainzngs.WebServiceError):
-            reason = u'MusicBrainz not reachable'
-        super(MusicBrainzAPIError, self).__init__(reason, verb, tb)
+            reason = 'MusicBrainz not reachable'
+        super().__init__(reason, verb, tb)
 
     def get_message(self):
-        return u'{0} in {1} with query {2}'.format(
+        return '{} in {} with query {}'.format(
             self._reasonstr(), self.verb, repr(self.query)
         )
 
@@ -159,7 +157,7 @@ def _flatten_artist_credit(credit):
     artist_sort_parts = []
     artist_credit_parts = []
     for el in credit:
-        if isinstance(el, six.string_types):
+        if isinstance(el, str):
             # Join phrase.
             artist_parts.append(el)
             artist_credit_parts.append(el)
@@ -212,7 +210,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
         medium=medium,
         medium_index=medium_index,
         medium_total=medium_total,
-        data_source=u'MusicBrainz',
+        data_source='MusicBrainz',
         data_url=track_url(recording['id']),
     )
 
@@ -255,10 +253,10 @@ def track_info(recording, index=None, medium=None, medium_index=None,
                     composer_sort.append(
                         artist_relation['artist']['sort-name'])
     if lyricist:
-        info.lyricist = u', '.join(lyricist)
+        info.lyricist = ', '.join(lyricist)
     if composer:
-        info.composer = u', '.join(composer)
-        info.composer_sort = u', '.join(composer_sort)
+        info.composer = ', '.join(composer)
+        info.composer_sort = ', '.join(composer_sort)
 
     arranger = []
     for artist_relation in recording.get('artist-relation-list', ()):
@@ -267,7 +265,7 @@ def track_info(recording, index=None, medium=None, medium_index=None,
             if type == 'arranger':
                 arranger.append(artist_relation['artist']['name'])
     if arranger:
-        info.arranger = u', '.join(arranger)
+        info.arranger = ', '.join(arranger)
 
     # Supplementary fields provided by plugins
     extra_trackdatas = plugins.send('mb_track_extract', data=recording)
@@ -312,10 +310,10 @@ def album_info(release):
     # when the release has more than 500 tracks. So we use browse_recordings
     # on chunks of tracks to recover the same information in this case.
     if ntracks > BROWSE_MAXTRACKS:
-        log.debug(u'Album {} has too many tracks', release['id'])
+        log.debug('Album {} has too many tracks', release['id'])
         recording_list = []
         for i in range(0, ntracks, BROWSE_CHUNKSIZE):
-            log.debug(u'Retrieving tracks starting at {}', i)
+            log.debug('Retrieving tracks starting at {}', i)
             recording_list.extend(musicbrainzngs.browse_recordings(
                     release=release['id'], limit=BROWSE_CHUNKSIZE,
                     includes=BROWSE_INCLUDES,
@@ -392,7 +390,7 @@ def album_info(release):
         mediums=len(release['medium-list']),
         artist_sort=artist_sort_name,
         artist_credit=artist_credit_name,
-        data_source=u'MusicBrainz',
+        data_source='MusicBrainz',
         data_url=album_url(release['id']),
     )
     info.va = info.artist_id == VARIOUS_ARTISTS_ID
@@ -486,15 +484,15 @@ def match_album(artist, album, tracks=None, extra_tags=None):
         # Various Artists search.
         criteria['arid'] = VARIOUS_ARTISTS_ID
     if tracks is not None:
-        criteria['tracks'] = six.text_type(tracks)
+        criteria['tracks'] = str(tracks)
 
     # Additional search cues from existing metadata.
     if extra_tags:
         for tag in extra_tags:
             key = FIELDS_TO_MB_KEYS[tag]
-            value = six.text_type(extra_tags.get(tag, '')).lower().strip()
+            value = str(extra_tags.get(tag, '')).lower().strip()
             if key == 'catno':
-                value = value.replace(u' ', '')
+                value = value.replace(' ', '')
             if value:
                 criteria[key] = value
 
@@ -503,7 +501,7 @@ def match_album(artist, album, tracks=None, extra_tags=None):
         return
 
     try:
-        log.debug(u'Searching for MusicBrainz releases with: {!r}', criteria)
+        log.debug('Searching for MusicBrainz releases with: {!r}', criteria)
         res = musicbrainzngs.search_releases(
             limit=config['musicbrainz']['searchlimit'].get(int), **criteria)
     except musicbrainzngs.MusicBrainzError as exc:
@@ -544,7 +542,7 @@ def _parse_id(s):
     no ID can be found, return None.
     """
     # Find the first thing that looks like a UUID/MBID.
-    match = re.search(u'[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}', s)
+    match = re.search('[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}', s)
     if match:
         return match.group()
 
@@ -554,19 +552,19 @@ def album_for_id(releaseid):
     object or None if the album is not found. May raise a
     MusicBrainzAPIError.
     """
-    log.debug(u'Requesting MusicBrainz release {}', releaseid)
+    log.debug('Requesting MusicBrainz release {}', releaseid)
     albumid = _parse_id(releaseid)
     if not albumid:
-        log.debug(u'Invalid MBID ({0}).', releaseid)
+        log.debug('Invalid MBID ({0}).', releaseid)
         return
     try:
         res = musicbrainzngs.get_release_by_id(albumid,
                                                RELEASE_INCLUDES)
     except musicbrainzngs.ResponseError:
-        log.debug(u'Album ID match failed.')
+        log.debug('Album ID match failed.')
         return None
     except musicbrainzngs.MusicBrainzError as exc:
-        raise MusicBrainzAPIError(exc, u'get release by ID', albumid,
+        raise MusicBrainzAPIError(exc, 'get release by ID', albumid,
                                   traceback.format_exc())
     return album_info(res['release'])
 
@@ -577,14 +575,14 @@ def track_for_id(releaseid):
     """
     trackid = _parse_id(releaseid)
     if not trackid:
-        log.debug(u'Invalid MBID ({0}).', releaseid)
+        log.debug('Invalid MBID ({0}).', releaseid)
         return
     try:
         res = musicbrainzngs.get_recording_by_id(trackid, TRACK_INCLUDES)
     except musicbrainzngs.ResponseError:
-        log.debug(u'Track ID match failed.')
+        log.debug('Track ID match failed.')
         return None
     except musicbrainzngs.MusicBrainzError as exc:
-        raise MusicBrainzAPIError(exc, u'get recording by ID', trackid,
+        raise MusicBrainzAPIError(exc, 'get recording by ID', trackid,
                                   traceback.format_exc())
     return track_info(res['recording'])

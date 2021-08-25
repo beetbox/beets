@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -14,7 +13,6 @@
 # included in all copies or substantial portions of the Software.
 
 """Glue between metadata sources and the matching logic."""
-from __future__ import division, absolute_import, print_function
 
 from collections import namedtuple
 from functools import total_ordering
@@ -236,8 +234,8 @@ def _string_dist_basic(str1, str2):
     transliteration/lowering to ASCII characters. Normalized by string
     length.
     """
-    assert isinstance(str1, six.text_type)
-    assert isinstance(str2, six.text_type)
+    assert isinstance(str1, str)
+    assert isinstance(str2, str)
     str1 = as_string(unidecode(str1))
     str2 = as_string(unidecode(str2))
     str1 = re.sub(r'[^a-z0-9]', '', str1.lower())
@@ -265,9 +263,9 @@ def string_dist(str1, str2):
     # "something, the".
     for word in SD_END_WORDS:
         if str1.endswith(', %s' % word):
-            str1 = '%s %s' % (word, str1[:-len(word) - 2])
+            str1 = '{} {}'.format(word, str1[:-len(word) - 2])
         if str2.endswith(', %s' % word):
-            str2 = '%s %s' % (word, str2[:-len(word) - 2])
+            str2 = '{} {}'.format(word, str2[:-len(word) - 2])
 
     # Perform a couple of basic normalizing substitutions.
     for pat, repl in SD_REPLACE:
@@ -305,7 +303,7 @@ def string_dist(str1, str2):
     return base_dist + penalty
 
 
-class LazyClassProperty(object):
+class LazyClassProperty:
     """A decorator implementing a read-only property that is *lazy* in
     the sense that the getter is only invoked once. Subsequent accesses
     through *any* instance use the cached result.
@@ -322,8 +320,7 @@ class LazyClassProperty(object):
 
 
 @total_ordering
-@six.python_2_unicode_compatible
-class Distance(object):
+class Distance:
     """Keeps track of multiple distance penalties. Provides a single
     weighted distance for all penalties as well as a weighted distance
     for each individual penalty.
@@ -410,7 +407,7 @@ class Distance(object):
         return other - self.distance
 
     def __str__(self):
-        return "{0:.2f}".format(self.distance)
+        return f"{self.distance:.2f}"
 
     # Behave like a dict.
 
@@ -437,7 +434,7 @@ class Distance(object):
         """
         if not isinstance(dist, Distance):
             raise ValueError(
-                u'`dist` must be a Distance object, not {0}'.format(type(dist))
+                '`dist` must be a Distance object, not {}'.format(type(dist))
             )
         for key, penalties in dist._penalties.items():
             self._penalties.setdefault(key, []).extend(penalties)
@@ -461,7 +458,7 @@ class Distance(object):
         """
         if not 0.0 <= dist <= 1.0:
             raise ValueError(
-                u'`dist` must be between 0.0 and 1.0, not {0}'.format(dist)
+                f'`dist` must be between 0.0 and 1.0, not {dist}'
             )
         self._penalties.setdefault(key, []).append(dist)
 
@@ -557,7 +554,7 @@ def album_for_mbid(release_id):
     try:
         album = mb.album_for_id(release_id)
         if album:
-            plugins.send(u'albuminfo_received', info=album)
+            plugins.send('albuminfo_received', info=album)
         return album
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
@@ -570,7 +567,7 @@ def track_for_mbid(recording_id):
     try:
         track = mb.track_for_id(recording_id)
         if track:
-            plugins.send(u'trackinfo_received', info=track)
+            plugins.send('trackinfo_received', info=track)
         return track
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
@@ -583,7 +580,7 @@ def albums_for_id(album_id):
         yield a
     for a in plugins.album_for_id(album_id):
         if a:
-            plugins.send(u'albuminfo_received', info=a)
+            plugins.send('albuminfo_received', info=a)
             yield a
 
 
@@ -594,11 +591,11 @@ def tracks_for_id(track_id):
         yield t
     for t in plugins.track_for_id(track_id):
         if t:
-            plugins.send(u'trackinfo_received', info=t)
+            plugins.send('trackinfo_received', info=t)
             yield t
 
 
-@plugins.notify_info_yielded(u'albuminfo_received')
+@plugins.notify_info_yielded('albuminfo_received')
 def album_candidates(items, artist, album, va_likely, extra_tags):
     """Search for album matches. ``items`` is a list of Item objects
     that make up the album. ``artist`` and ``album`` are the respective
@@ -612,28 +609,25 @@ def album_candidates(items, artist, album, va_likely, extra_tags):
     # Base candidates if we have album and artist to match.
     if artist and album:
         try:
-            for candidate in mb.match_album(artist, album, len(items),
-                                            extra_tags):
-                yield candidate
+            yield from mb.match_album(artist, album, len(items),
+                                            extra_tags)
         except mb.MusicBrainzAPIError as exc:
             exc.log(log)
 
     # Also add VA matches from MusicBrainz where appropriate.
     if va_likely and album:
         try:
-            for candidate in mb.match_album(None, album, len(items),
-                                            extra_tags):
-                yield candidate
+            yield from mb.match_album(None, album, len(items),
+                                            extra_tags)
         except mb.MusicBrainzAPIError as exc:
             exc.log(log)
 
     # Candidates from plugins.
-    for candidate in plugins.candidates(items, artist, album, va_likely,
-                                        extra_tags):
-        yield candidate
+    yield from plugins.candidates(items, artist, album, va_likely,
+                                        extra_tags)
 
 
-@plugins.notify_info_yielded(u'trackinfo_received')
+@plugins.notify_info_yielded('trackinfo_received')
 def item_candidates(item, artist, title):
     """Search for item matches. ``item`` is the Item to be matched.
     ``artist`` and ``title`` are strings and either reflect the item or
@@ -643,11 +637,9 @@ def item_candidates(item, artist, title):
     # MusicBrainz candidates.
     if artist and title:
         try:
-            for candidate in mb.match_track(artist, title):
-                yield candidate
+            yield from mb.match_track(artist, title)
         except mb.MusicBrainzAPIError as exc:
             exc.log(log)
 
     # Plugin candidates.
-    for candidate in plugins.item_candidates(item, artist, title):
-        yield candidate
+    yield from plugins.item_candidates(item, artist, title)
