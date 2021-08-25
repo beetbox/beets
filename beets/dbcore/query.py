@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -15,7 +14,6 @@
 
 """The Query type hierarchy for DBCore.
 """
-from __future__ import division, absolute_import, print_function
 
 import re
 from operator import mul
@@ -23,7 +21,6 @@ from beets import util
 from datetime import datetime, timedelta
 import unicodedata
 from functools import reduce
-import six
 
 
 class ParsingError(ValueError):
@@ -41,8 +38,8 @@ class InvalidQueryError(ParsingError):
     def __init__(self, query, explanation):
         if isinstance(query, list):
             query = " ".join(query)
-        message = u"'{0}': {1}".format(query, explanation)
-        super(InvalidQueryError, self).__init__(message)
+        message = f"'{query}': {explanation}"
+        super().__init__(message)
 
 
 class InvalidQueryArgumentValueError(ParsingError):
@@ -53,13 +50,13 @@ class InvalidQueryArgumentValueError(ParsingError):
     """
 
     def __init__(self, what, expected, detail=None):
-        message = u"'{0}' is not {1}".format(what, expected)
+        message = f"'{what}' is not {expected}"
         if detail:
-            message = u"{0}: {1}".format(message, detail)
-        super(InvalidQueryArgumentValueError, self).__init__(message)
+            message = f"{message}: {detail}"
+        super().__init__(message)
 
 
-class Query(object):
+class Query:
     """An abstract class representing a query into the item database.
     """
 
@@ -79,7 +76,7 @@ class Query(object):
         raise NotImplementedError
 
     def __repr__(self):
-        return "{0.__class__.__name__}()".format(self)
+        return f"{self.__class__.__name__}()"
 
     def __eq__(self, other):
         return type(self) == type(other)
@@ -126,7 +123,7 @@ class FieldQuery(Query):
                 "{0.fast})".format(self))
 
     def __eq__(self, other):
-        return super(FieldQuery, self).__eq__(other) and \
+        return super().__eq__(other) and \
             self.field == other.field and self.pattern == other.pattern
 
     def __hash__(self):
@@ -148,7 +145,7 @@ class NoneQuery(FieldQuery):
     """A query that checks whether a field is null."""
 
     def __init__(self, field, fast=True):
-        super(NoneQuery, self).__init__(field, None, fast)
+        super().__init__(field, None, fast)
 
     def col_clause(self):
         return self.field + " IS NULL", ()
@@ -207,14 +204,14 @@ class RegexpQuery(StringFieldQuery):
     """
 
     def __init__(self, field, pattern, fast=True):
-        super(RegexpQuery, self).__init__(field, pattern, fast)
+        super().__init__(field, pattern, fast)
         pattern = self._normalize(pattern)
         try:
             self.pattern = re.compile(self.pattern)
         except re.error as exc:
             # Invalid regular expression.
             raise InvalidQueryArgumentValueError(pattern,
-                                                 u"a regular expression",
+                                                 "a regular expression",
                                                  format(exc))
 
     @staticmethod
@@ -235,8 +232,8 @@ class BooleanQuery(MatchQuery):
     """
 
     def __init__(self, field, pattern, fast=True):
-        super(BooleanQuery, self).__init__(field, pattern, fast)
-        if isinstance(pattern, six.string_types):
+        super().__init__(field, pattern, fast)
+        if isinstance(pattern, str):
             self.pattern = util.str2bool(pattern)
         self.pattern = int(self.pattern)
 
@@ -249,13 +246,13 @@ class BytesQuery(MatchQuery):
     """
 
     def __init__(self, field, pattern):
-        super(BytesQuery, self).__init__(field, pattern)
+        super().__init__(field, pattern)
 
         # Use a buffer/memoryview representation of the pattern for SQLite
         # matching. This instructs SQLite to treat the blob as binary
         # rather than encoded Unicode.
-        if isinstance(self.pattern, (six.text_type, bytes)):
-            if isinstance(self.pattern, six.text_type):
+        if isinstance(self.pattern, (str, bytes)):
+            if isinstance(self.pattern, str):
                 self.pattern = self.pattern.encode('utf-8')
             self.buf_pattern = memoryview(self.pattern)
         elif isinstance(self.pattern, memoryview):
@@ -290,10 +287,10 @@ class NumericQuery(FieldQuery):
             try:
                 return float(s)
             except ValueError:
-                raise InvalidQueryArgumentValueError(s, u"an int or a float")
+                raise InvalidQueryArgumentValueError(s, "an int or a float")
 
     def __init__(self, field, pattern, fast=True):
-        super(NumericQuery, self).__init__(field, pattern, fast)
+        super().__init__(field, pattern, fast)
 
         parts = pattern.split('..', 1)
         if len(parts) == 1:
@@ -311,7 +308,7 @@ class NumericQuery(FieldQuery):
         if self.field not in item:
             return False
         value = item[self.field]
-        if isinstance(value, six.string_types):
+        if isinstance(value, str):
             value = self._convert(value)
 
         if self.point is not None:
@@ -328,14 +325,14 @@ class NumericQuery(FieldQuery):
             return self.field + '=?', (self.point,)
         else:
             if self.rangemin is not None and self.rangemax is not None:
-                return (u'{0} >= ? AND {0} <= ?'.format(self.field),
+                return ('{0} >= ? AND {0} <= ?'.format(self.field),
                         (self.rangemin, self.rangemax))
             elif self.rangemin is not None:
-                return u'{0} >= ?'.format(self.field), (self.rangemin,)
+                return f'{self.field} >= ?', (self.rangemin,)
             elif self.rangemax is not None:
-                return u'{0} <= ?'.format(self.field), (self.rangemax,)
+                return f'{self.field} <= ?', (self.rangemax,)
             else:
-                return u'1', ()
+                return '1', ()
 
 
 class CollectionQuery(Query):
@@ -380,7 +377,7 @@ class CollectionQuery(Query):
         return "{0.__class__.__name__}({0.subqueries!r})".format(self)
 
     def __eq__(self, other):
-        return super(CollectionQuery, self).__eq__(other) and \
+        return super().__eq__(other) and \
             self.subqueries == other.subqueries
 
     def __hash__(self):
@@ -404,7 +401,7 @@ class AnyFieldQuery(CollectionQuery):
         subqueries = []
         for field in self.fields:
             subqueries.append(cls(field, pattern, True))
-        super(AnyFieldQuery, self).__init__(subqueries)
+        super().__init__(subqueries)
 
     def clause(self):
         return self.clause_with_joiner('or')
@@ -420,7 +417,7 @@ class AnyFieldQuery(CollectionQuery):
                 "{0.query_class.__name__})".format(self))
 
     def __eq__(self, other):
-        return super(AnyFieldQuery, self).__eq__(other) and \
+        return super().__eq__(other) and \
             self.query_class == other.query_class
 
     def __hash__(self):
@@ -470,7 +467,7 @@ class NotQuery(Query):
     def clause(self):
         clause, subvals = self.subquery.clause()
         if clause:
-            return 'not ({0})'.format(clause), subvals
+            return f'not ({clause})', subvals
         else:
             # If there is no clause, there is nothing to negate. All the logic
             # is handled by match() for slow queries.
@@ -483,7 +480,7 @@ class NotQuery(Query):
         return "{0.__class__.__name__}({0.subquery!r})".format(self)
 
     def __eq__(self, other):
-        return super(NotQuery, self).__eq__(other) and \
+        return super().__eq__(other) and \
             self.subquery == other.subquery
 
     def __hash__(self):
@@ -539,7 +536,7 @@ def _parse_periods(pattern):
         return (start, end)
 
 
-class Period(object):
+class Period:
     """A period of time given by a date, time and precision.
 
     Example: 2014-01-01 10:50:30 with precision 'month' represents all
@@ -565,7 +562,7 @@ class Period(object):
         or "second").
         """
         if precision not in Period.precisions:
-            raise ValueError(u'Invalid precision {0}'.format(precision))
+            raise ValueError(f'Invalid precision {precision}')
         self.date = date
         self.precision = precision
 
@@ -646,10 +643,10 @@ class Period(object):
         elif 'second' == precision:
             return date + timedelta(seconds=1)
         else:
-            raise ValueError(u'unhandled precision {0}'.format(precision))
+            raise ValueError(f'unhandled precision {precision}')
 
 
-class DateInterval(object):
+class DateInterval:
     """A closed-open interval of dates.
 
     A left endpoint of None means since the beginning of time.
@@ -658,7 +655,7 @@ class DateInterval(object):
 
     def __init__(self, start, end):
         if start is not None and end is not None and not start < end:
-            raise ValueError(u"start date {0} is not before end date {1}"
+            raise ValueError("start date {} is not before end date {}"
                              .format(start, end))
         self.start = start
         self.end = end
@@ -679,7 +676,7 @@ class DateInterval(object):
         return True
 
     def __str__(self):
-        return '[{0}, {1})'.format(self.start, self.end)
+        return f'[{self.start}, {self.end})'
 
 
 class DateQuery(FieldQuery):
@@ -693,7 +690,7 @@ class DateQuery(FieldQuery):
     """
 
     def __init__(self, field, pattern, fast=True):
-        super(DateQuery, self).__init__(field, pattern, fast)
+        super().__init__(field, pattern, fast)
         start, end = _parse_periods(pattern)
         self.interval = DateInterval.from_periods(start, end)
 
@@ -752,12 +749,12 @@ class DurationQuery(NumericQuery):
             except ValueError:
                 raise InvalidQueryArgumentValueError(
                     s,
-                    u"a M:SS string or a float")
+                    "a M:SS string or a float")
 
 
 # Sorting.
 
-class Sort(object):
+class Sort:
     """An abstract class representing a sort operation for a query into
     the item database.
     """
@@ -844,13 +841,13 @@ class MultipleSort(Sort):
         return items
 
     def __repr__(self):
-        return 'MultipleSort({!r})'.format(self.sorts)
+        return f'MultipleSort({self.sorts!r})'
 
     def __hash__(self):
         return hash(tuple(self.sorts))
 
     def __eq__(self, other):
-        return super(MultipleSort, self).__eq__(other) and \
+        return super().__eq__(other) and \
             self.sorts == other.sorts
 
 
@@ -871,14 +868,14 @@ class FieldSort(Sort):
 
         def key(item):
             field_val = item.get(self.field, '')
-            if self.case_insensitive and isinstance(field_val, six.text_type):
+            if self.case_insensitive and isinstance(field_val, str):
                 field_val = field_val.lower()
             return field_val
 
         return sorted(objs, key=key, reverse=not self.ascending)
 
     def __repr__(self):
-        return '<{0}: {1}{2}>'.format(
+        return '<{}: {}{}>'.format(
             type(self).__name__,
             self.field,
             '+' if self.ascending else '-',
@@ -888,7 +885,7 @@ class FieldSort(Sort):
         return hash((self.field, self.ascending))
 
     def __eq__(self, other):
-        return super(FieldSort, self).__eq__(other) and \
+        return super().__eq__(other) and \
             self.field == other.field and \
             self.ascending == other.ascending
 
@@ -906,7 +903,7 @@ class FixedFieldSort(FieldSort):
                     'ELSE {0} END)'.format(self.field)
         else:
             field = self.field
-        return "{0} {1}".format(field, order)
+        return f"{field} {order}"
 
 
 class SlowFieldSort(FieldSort):
