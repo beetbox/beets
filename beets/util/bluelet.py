@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Extremely simple pure-Python implementation of coroutine-style
 asynchronous socket I/O. Inspired by, but inferior to, Eventlet.
 Bluelet can also be thought of as a less-terrible replacement for
@@ -7,7 +5,6 @@ asyncore.
 
 Bluelet: easy concurrency without all the messy parallelism.
 """
-from __future__ import division, absolute_import, print_function
 
 import six
 import socket
@@ -22,7 +19,7 @@ import collections
 
 # Basic events used for thread scheduling.
 
-class Event(object):
+class Event:
     """Just a base class identifying Bluelet events. An event is an
     object yielded from a Bluelet thread coroutine to suspend operation
     and communicate with the scheduler.
@@ -201,7 +198,7 @@ class ThreadException(Exception):
         self.exc_info = exc_info
 
     def reraise(self):
-        six.reraise(self.exc_info[0], self.exc_info[1], self.exc_info[2])
+        raise self.exc_info[1].with_traceback(self.exc_info[2])
 
 
 SUSPENDED = Event()  # Special sentinel placeholder for suspended threads.
@@ -336,12 +333,12 @@ def run(root_coro):
                     break
 
             # Wait and fire.
-            event2coro = dict((v, k) for k, v in threads.items())
+            event2coro = {v: k for k, v in threads.items()}
             for event in _event_select(threads.values()):
                 # Run the IO operation, but catch socket errors.
                 try:
                     value = event.fire()
-                except socket.error as exc:
+                except OSError as exc:
                     if isinstance(exc.args, tuple) and \
                             exc.args[0] == errno.EPIPE:
                         # Broken pipe. Remote host disconnected.
@@ -390,7 +387,7 @@ class SocketClosedError(Exception):
     pass
 
 
-class Listener(object):
+class Listener:
     """A socket wrapper object for listening sockets.
     """
     def __init__(self, host, port):
@@ -420,7 +417,7 @@ class Listener(object):
         self.sock.close()
 
 
-class Connection(object):
+class Connection:
     """A socket wrapper object for connected sockets.
     """
     def __init__(self, sock, addr):
@@ -545,7 +542,7 @@ def spawn(coro):
     and child coroutines run concurrently.
     """
     if not isinstance(coro, types.GeneratorType):
-        raise ValueError(u'%s is not a coroutine' % coro)
+        raise ValueError('%s is not a coroutine' % coro)
     return SpawnEvent(coro)
 
 
@@ -555,7 +552,7 @@ def call(coro):
     returns a value using end(), then this event returns that value.
     """
     if not isinstance(coro, types.GeneratorType):
-        raise ValueError(u'%s is not a coroutine' % coro)
+        raise ValueError('%s is not a coroutine' % coro)
     return DelegationEvent(coro)
 
 
