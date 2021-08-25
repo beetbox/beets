@@ -64,7 +64,10 @@ def temp_file_for(path):
         return util.bytestring_path(f.name)
 
 
-def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
+def pil_resize(
+    maxwidth, path_in, path_out=None,
+    quality=0, max_filesize=0, deinterlace=False
+):
     """Resize using Python Imaging Library (PIL).  Return the output path
     of resized image.
     """
@@ -83,7 +86,12 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
             # Use PIL's default quality.
             quality = -1
 
-        im.save(util.py3_path(path_out), quality=quality)
+        if not deinterlace:
+            im.save(util.py3_path(path_out), quality=quality)
+        else:
+            im.save(util.py3_path(path_out), quality=quality,
+                    progressive=False)
+
         if max_filesize > 0:
             # If maximum filesize is set, we attempt to lower the quality of
             # jpeg conversion by a proportional amount, up to 3 attempts
@@ -105,9 +113,12 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
                 if lower_qual < 10:
                     lower_qual = 10
                 # Use optimize flag to improve filesize decrease
-                im.save(
-                    util.py3_path(path_out), quality=lower_qual, optimize=True
-                )
+                if not deinterlace:
+                    im.save(util.py3_path(path_out), quality=lower_qual,
+                            optimize=True)
+                else:
+                    im.save(util.py3_path(path_out), quality=lower_qual,
+                            optimize=True, progressive=False)
             log.warning(u"PIL Failed to resize file to below {0}B",
                         max_filesize)
             return path_out
@@ -120,7 +131,8 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
         return path_in
 
 
-def im_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
+def im_resize(maxwidth, path_in, path_out=None,
+              quality=0, max_filesize=0, deinterlace=False):
     """Resize using ImageMagick.
 
     Use the ``magick`` program or ``convert`` on older versions. Return
@@ -145,6 +157,9 @@ def im_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
     # SIZE in bytes.
     if max_filesize > 0:
         cmd += ['-define', 'jpeg:extent={0}b'.format(max_filesize)]
+
+    if deinterlace:
+        cmd += ['-interlace', 'none']
 
     cmd.append(util.syspath(path_out, prefix=False))
 
@@ -243,7 +258,8 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
                 self.im_identify_cmd = ['magick', 'identify']
 
     def resize(
-        self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0
+        self, maxwidth, path_in, path_out=None,
+        quality=0, max_filesize=0, deinterlace=False
     ):
         """Manipulate an image file according to the method, returning a
         new path. For PIL or IMAGEMAGIC methods, resizes the image to a
@@ -253,7 +269,8 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
         if self.local:
             func = BACKEND_FUNCS[self.method[0]]
             return func(maxwidth, path_in, path_out,
-                        quality=quality, max_filesize=max_filesize)
+                        quality=quality, max_filesize=max_filesize,
+                        deinterlace=deinterlace)
         else:
             return path_in
 
