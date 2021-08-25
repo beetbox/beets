@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -27,7 +26,6 @@ This is sort of like a tiny, horrible degeneration of a real templating
 engine like Jinja2 or Mustache.
 """
 
-from __future__ import division, absolute_import, print_function
 
 import re
 import ast
@@ -37,18 +35,18 @@ import sys
 import six
 import functools
 
-SYMBOL_DELIM = u'$'
-FUNC_DELIM = u'%'
-GROUP_OPEN = u'{'
-GROUP_CLOSE = u'}'
-ARG_SEP = u','
-ESCAPE_CHAR = u'$'
+SYMBOL_DELIM = '$'
+FUNC_DELIM = '%'
+GROUP_OPEN = '{'
+GROUP_CLOSE = '}'
+ARG_SEP = ','
+ESCAPE_CHAR = '$'
 
 VARIABLE_PREFIX = '__var_'
 FUNCTION_PREFIX = '__func_'
 
 
-class Environment(object):
+class Environment:
     """Contains the values and functions to be substituted into a
     template.
     """
@@ -76,21 +74,21 @@ def ex_literal(val):
     if sys.version_info[:2] < (3, 4):
         if val is None:
             return ast.Name('None', ast.Load())
-        elif isinstance(val, six.integer_types):
+        elif isinstance(val, int):
             return ast.Num(val)
         elif isinstance(val, bool):
             return ast.Name(bytes(val), ast.Load())
-        elif isinstance(val, six.string_types):
+        elif isinstance(val, str):
             return ast.Str(val)
-        raise TypeError(u'no literal for {0}'.format(type(val)))
+        raise TypeError('no literal for {}'.format(type(val)))
     elif sys.version_info[:2] < (3, 6):
         if val in [None, True, False]:
             return ast.NameConstant(val)
-        elif isinstance(val, six.integer_types):
+        elif isinstance(val, int):
             return ast.Num(val)
-        elif isinstance(val, six.string_types):
+        elif isinstance(val, str):
             return ast.Str(val)
-        raise TypeError(u'no literal for {0}'.format(type(val)))
+        raise TypeError('no literal for {}'.format(type(val)))
     else:
         return ast.Constant(val)
 
@@ -109,7 +107,7 @@ def ex_call(func, args):
     function may be an expression or the name of a function. Each
     argument may be an expression or a value to be used as a literal.
     """
-    if isinstance(func, six.string_types):
+    if isinstance(func, str):
         func = ex_rvalue(func)
 
     args = list(args)
@@ -170,14 +168,14 @@ def compile_func(arg_names, statements, name='_the_func', debug=False):
 
 # AST nodes for the template language.
 
-class Symbol(object):
+class Symbol:
     """A variable-substitution symbol in a template."""
     def __init__(self, ident, original):
         self.ident = ident
         self.original = original
 
     def __repr__(self):
-        return u'Symbol(%s)' % repr(self.ident)
+        return 'Symbol(%s)' % repr(self.ident)
 
     def evaluate(self, env):
         """Evaluate the symbol in the environment, returning a Unicode
@@ -194,10 +192,10 @@ class Symbol(object):
         """Compile the variable lookup."""
         ident = self.ident
         expr = ex_rvalue(VARIABLE_PREFIX + ident)
-        return [expr], set([ident]), set()
+        return [expr], {ident}, set()
 
 
-class Call(object):
+class Call:
     """A function call in a template."""
     def __init__(self, ident, args, original):
         self.ident = ident
@@ -205,7 +203,7 @@ class Call(object):
         self.original = original
 
     def __repr__(self):
-        return u'Call(%s, %s, %s)' % (repr(self.ident), repr(self.args),
+        return 'Call({}, {}, {})'.format(repr(self.ident), repr(self.args),
                                       repr(self.original))
 
     def evaluate(self, env):
@@ -219,15 +217,15 @@ class Call(object):
             except Exception as exc:
                 # Function raised exception! Maybe inlining the name of
                 # the exception will help debug.
-                return u'<%s>' % six.text_type(exc)
-            return six.text_type(out)
+                return '<%s>' % str(exc)
+            return str(out)
         else:
             return self.original
 
     def translate(self):
         """Compile the function call."""
         varnames = set()
-        funcnames = set([self.ident])
+        funcnames = {self.ident}
 
         arg_exprs = []
         for arg in self.args:
@@ -238,11 +236,11 @@ class Call(object):
             # Create a subexpression that joins the result components of
             # the arguments.
             arg_exprs.append(ex_call(
-                ast.Attribute(ex_literal(u''), 'join', ast.Load()),
+                ast.Attribute(ex_literal(''), 'join', ast.Load()),
                 [ex_call(
                     'map',
                     [
-                        ex_rvalue(six.text_type.__name__),
+                        ex_rvalue(str.__name__),
                         ast.List(subexprs, ast.Load()),
                     ]
                 )],
@@ -255,7 +253,7 @@ class Call(object):
         return [subexpr_call], varnames, funcnames
 
 
-class Expression(object):
+class Expression:
     """Top-level template construct: contains a list of text blobs,
     Symbols, and Calls.
     """
@@ -263,7 +261,7 @@ class Expression(object):
         self.parts = parts
 
     def __repr__(self):
-        return u'Expression(%s)' % (repr(self.parts))
+        return 'Expression(%s)' % (repr(self.parts))
 
     def evaluate(self, env):
         """Evaluate the entire expression in the environment, returning
@@ -271,11 +269,11 @@ class Expression(object):
         """
         out = []
         for part in self.parts:
-            if isinstance(part, six.string_types):
+            if isinstance(part, str):
                 out.append(part)
             else:
                 out.append(part.evaluate(env))
-        return u''.join(map(six.text_type, out))
+        return ''.join(map(str, out))
 
     def translate(self):
         """Compile the expression to a list of Python AST expressions, a
@@ -285,7 +283,7 @@ class Expression(object):
         varnames = set()
         funcnames = set()
         for part in self.parts:
-            if isinstance(part, six.string_types):
+            if isinstance(part, str):
                 expressions.append(ex_literal(part))
             else:
                 e, v, f = part.translate()
@@ -301,7 +299,7 @@ class ParseError(Exception):
     pass
 
 
-class Parser(object):
+class Parser:
     """Parses a template expression string. Instantiate the class with
     the template source and call ``parse_expression``. The ``pos`` field
     will indicate the character after the expression finished and
@@ -329,7 +327,7 @@ class Parser(object):
     special_chars = (SYMBOL_DELIM, FUNC_DELIM, GROUP_OPEN, GROUP_CLOSE,
                      ESCAPE_CHAR)
     special_char_re = re.compile(r'[%s]|\Z' %
-                                 u''.join(re.escape(c) for c in special_chars))
+                                 ''.join(re.escape(c) for c in special_chars))
     escapable_chars = (SYMBOL_DELIM, FUNC_DELIM, GROUP_CLOSE, ARG_SEP)
     terminator_chars = (GROUP_CLOSE,)
 
@@ -346,7 +344,7 @@ class Parser(object):
         if self.in_argument:
             extra_special_chars = (ARG_SEP,)
             special_char_re = re.compile(
-                r'[%s]|\Z' % u''.join(
+                r'[%s]|\Z' % ''.join(
                     re.escape(c) for c in
                     self.special_chars + extra_special_chars
                 )
@@ -390,7 +388,7 @@ class Parser(object):
 
             # Shift all characters collected so far into a single string.
             if text_parts:
-                self.parts.append(u''.join(text_parts))
+                self.parts.append(''.join(text_parts))
                 text_parts = []
 
             if char == SYMBOL_DELIM:
@@ -412,7 +410,7 @@ class Parser(object):
 
         # If any parsed characters remain, shift them into a string.
         if text_parts:
-            self.parts.append(u''.join(text_parts))
+            self.parts.append(''.join(text_parts))
 
     def parse_symbol(self):
         """Parse a variable reference (like ``$foo`` or ``${foo}``)
@@ -567,7 +565,7 @@ def template(fmt):
 
 
 # External interface.
-class Template(object):
+class Template:
     """A string template, including text, Symbols, and Calls.
     """
     def __init__(self, template):
@@ -618,7 +616,7 @@ class Template(object):
             for funcname in funcnames:
                 args[FUNCTION_PREFIX + funcname] = functions[funcname]
             parts = func(**args)
-            return u''.join(parts)
+            return ''.join(parts)
 
         return wrapper_func
 
@@ -627,9 +625,9 @@ class Template(object):
 
 if __name__ == '__main__':
     import timeit
-    _tmpl = Template(u'foo $bar %baz{foozle $bar barzle} $bar')
+    _tmpl = Template('foo $bar %baz{foozle $bar barzle} $bar')
     _vars = {'bar': 'qux'}
-    _funcs = {'baz': six.text_type.upper}
+    _funcs = {'baz': str.upper}
     interp_time = timeit.timeit('_tmpl.interpret(_vars, _funcs)',
                                 'from __main__ import _tmpl, _vars, _funcs',
                                 number=10000)
@@ -638,4 +636,4 @@ if __name__ == '__main__':
                               'from __main__ import _tmpl, _vars, _funcs',
                               number=10000)
     print(comp_time)
-    print(u'Speedup:', interp_time / comp_time)
+    print('Speedup:', interp_time / comp_time)
