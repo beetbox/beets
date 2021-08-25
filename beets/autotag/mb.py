@@ -26,7 +26,6 @@ import beets.autotag.hooks
 import beets
 from beets import util
 from beets import config
-import six
 
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
 
@@ -53,6 +52,7 @@ class MusicBrainzAPIError(util.HumanReadableException):
     """An error while talking to MusicBrainz. The `query` field is the
     parameter to the action and may have any type.
     """
+
     def __init__(self, reason, verb, query, tb=None):
         self.query = query
         if isinstance(reason, musicbrainzngs.WebServiceError):
@@ -63,6 +63,7 @@ class MusicBrainzAPIError(util.HumanReadableException):
         return '{} in {} with query {}'.format(
             self._reasonstr(), self.verb, repr(self.query)
         )
+
 
 log = logging.getLogger('beets')
 
@@ -315,9 +316,9 @@ def album_info(release):
         for i in range(0, ntracks, BROWSE_CHUNKSIZE):
             log.debug('Retrieving tracks starting at {}', i)
             recording_list.extend(musicbrainzngs.browse_recordings(
-                    release=release['id'], limit=BROWSE_CHUNKSIZE,
-                    includes=BROWSE_INCLUDES,
-                    offset=i)['recording-list'])
+                release=release['id'], limit=BROWSE_CHUNKSIZE,
+                includes=BROWSE_INCLUDES,
+                offset=i)['recording-list'])
         track_map = {r['id']: r for r in recording_list}
         for medium in release['medium-list']:
             for recording in medium['track-list']:

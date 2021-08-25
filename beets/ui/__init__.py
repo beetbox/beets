@@ -40,7 +40,6 @@ from beets.autotag import mb
 from beets.dbcore import query as db_query
 from beets.dbcore import db
 import confuse
-import six
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
 if sys.platform == 'win32':
@@ -524,8 +523,8 @@ def colorize(color_name, text):
     global COLORS
     if not COLORS:
         COLORS = {name:
-                       config['ui']['colors'][name].as_str()
-                      for name in COLOR_NAMES}
+                  config['ui']['colors'][name].as_str()
+                  for name in COLOR_NAMES}
     # In case a 3rd party plugin is still passing the actual color ('red')
     # instead of the abstract color name ('text_error')
     color = COLORS.get(color_name)
@@ -815,6 +814,7 @@ class CommonOptionsParser(optparse.OptionParser):
 
     Each method is fully documented in the related method.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._album_flags = False
@@ -933,6 +933,7 @@ class Subcommand:
     """A subcommand of a root command-line application that may be
     invoked by a SubcommandOptionParser.
     """
+
     def __init__(self, name, parser=None, help='', aliases=(), hide=False):
         """Creates a new subcommand. name is the primary way to invoke
         the subcommand; aliases are alternate names. parser is an

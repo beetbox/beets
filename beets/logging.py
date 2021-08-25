@@ -25,7 +25,6 @@ from copy import copy
 from logging import *  # noqa
 import subprocess
 import threading
-import six
 
 
 def logsafe(val):
@@ -92,6 +91,7 @@ class StrFormatLogger(Logger):
 class ThreadLocalLevelLogger(Logger):
     """A version of `Logger` whose level is thread-local instead of shared.
     """
+
     def __init__(self, name, level=NOTSET):
         self._thread_level = threading.local()
         self.default_level = NOTSET
