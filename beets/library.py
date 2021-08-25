@@ -20,7 +20,6 @@ import sys
 import unicodedata
 import time
 import re
-import six
 import string
 import shlex
 
@@ -247,6 +246,7 @@ class SmartArtistSort(dbcore.query.Sort):
     """Sort by artist (either album artist or track artist),
     prioritizing the sort field over the raw field.
     """
+
     def __init__(self, model_cls, ascending=True, case_insensitive=True):
         self.album = model_cls is Album
         self.ascending = ascending
@@ -262,12 +262,15 @@ class SmartArtistSort(dbcore.query.Sort):
 
     def sort(self, objs):
         if self.album:
-            field = lambda a: a.albumartist_sort or a.albumartist
+            def field(a):
+                return a.albumartist_sort or a.albumartist
         else:
-            field = lambda i: i.artist_sort or i.artist
+            def field(i):
+                return i.artist_sort or i.artist
 
         if self.case_insensitive:
-            key = lambda x: field(x).lower()
+            def key(x):
+                return field(x).lower()
         else:
             key = field
         return sorted(objs, key=key, reverse=not self.ascending)
@@ -283,6 +286,7 @@ class FileOperationError(Exception):
     Possibilities include an unsupported media type, a permissions
     error, and an unhandled Mutagen exception.
     """
+
     def __init__(self, path, reason):
         """Create an exception describing an operation on the file at
         `path` with the underlying (chained) exception `reason`.
@@ -308,6 +312,7 @@ class FileOperationError(Exception):
 class ReadError(FileOperationError):
     """An error while reading a file (i.e. in `Item.read`).
     """
+
     def __str__(self):
         return 'error reading ' + super().text()
 
@@ -315,6 +320,7 @@ class ReadError(FileOperationError):
 class WriteError(FileOperationError):
     """An error while writing a file (i.e. in `Item.write`).
     """
+
     def __str__(self):
         return 'error writing ' + super().text()
 
@@ -371,7 +377,7 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
         # We treat album and item keys specially here,
         # so exclude transitive album keys from the model's keys.
         super().__init__(item, included_keys=[],
-                                                   for_path=for_path)
+                         for_path=for_path)
         self.included_keys = included_keys
         if included_keys == self.ALL_KEYS:
             # Performance note: this triggers a database query.
@@ -445,84 +451,84 @@ class Item(LibModel):
     _table = 'items'
     _flex_table = 'item_attributes'
     _fields = {
-        'id':       types.PRIMARY_ID,
-        'path':     PathType(),
+        'id': types.PRIMARY_ID,
+        'path': PathType(),
         'album_id': types.FOREIGN_ID,
 
-        'title':                types.STRING,
-        'artist':               types.STRING,
-        'artist_sort':          types.STRING,
-        'artist_credit':        types.STRING,
-        'album':                types.STRING,
-        'albumartist':          types.STRING,
-        'albumartist_sort':     types.STRING,
-        'albumartist_credit':   types.STRING,
-        'genre':                types.STRING,
-        'style':                types.STRING,
-        'discogs_albumid':      types.INTEGER,
-        'discogs_artistid':     types.INTEGER,
-        'discogs_labelid':      types.INTEGER,
-        'lyricist':             types.STRING,
-        'composer':             types.STRING,
-        'composer_sort':        types.STRING,
-        'work':                 types.STRING,
-        'mb_workid':            types.STRING,
-        'work_disambig':        types.STRING,
-        'arranger':             types.STRING,
-        'grouping':             types.STRING,
-        'year':                 types.PaddedInt(4),
-        'month':                types.PaddedInt(2),
-        'day':                  types.PaddedInt(2),
-        'track':                types.PaddedInt(2),
-        'tracktotal':           types.PaddedInt(2),
-        'disc':                 types.PaddedInt(2),
-        'disctotal':            types.PaddedInt(2),
-        'lyrics':               types.STRING,
-        'comments':             types.STRING,
-        'bpm':                  types.INTEGER,
-        'comp':                 types.BOOLEAN,
-        'mb_trackid':           types.STRING,
-        'mb_albumid':           types.STRING,
-        'mb_artistid':          types.STRING,
-        'mb_albumartistid':     types.STRING,
-        'mb_releasetrackid':    types.STRING,
-        'trackdisambig':        types.STRING,
-        'albumtype':            types.STRING,
-        'label':                types.STRING,
+        'title': types.STRING,
+        'artist': types.STRING,
+        'artist_sort': types.STRING,
+        'artist_credit': types.STRING,
+        'album': types.STRING,
+        'albumartist': types.STRING,
+        'albumartist_sort': types.STRING,
+        'albumartist_credit': types.STRING,
+        'genre': types.STRING,
+        'style': types.STRING,
+        'discogs_albumid': types.INTEGER,
+        'discogs_artistid': types.INTEGER,
+        'discogs_labelid': types.INTEGER,
+        'lyricist': types.STRING,
+        'composer': types.STRING,
+        'composer_sort': types.STRING,
+        'work': types.STRING,
+        'mb_workid': types.STRING,
+        'work_disambig': types.STRING,
+        'arranger': types.STRING,
+        'grouping': types.STRING,
+        'year': types.PaddedInt(4),
+        'month': types.PaddedInt(2),
+        'day': types.PaddedInt(2),
+        'track': types.PaddedInt(2),
+        'tracktotal': types.PaddedInt(2),
+        'disc': types.PaddedInt(2),
+        'disctotal': types.PaddedInt(2),
+        'lyrics': types.STRING,
+        'comments': types.STRING,
+        'bpm': types.INTEGER,
+        'comp': types.BOOLEAN,
+        'mb_trackid': types.STRING,
+        'mb_albumid': types.STRING,
+        'mb_artistid': types.STRING,
+        'mb_albumartistid': types.STRING,
+        'mb_releasetrackid': types.STRING,
+        'trackdisambig': types.STRING,
+        'albumtype': types.STRING,
+        'label': types.STRING,
         'acoustid_fingerprint': types.STRING,
-        'acoustid_id':          types.STRING,
-        'mb_releasegroupid':    types.STRING,
-        'asin':                 types.STRING,
-        'isrc':                 types.STRING,
-        'catalognum':           types.STRING,
-        'script':               types.STRING,
-        'language':             types.STRING,
-        'country':              types.STRING,
-        'albumstatus':          types.STRING,
-        'media':                types.STRING,
-        'albumdisambig':        types.STRING,
+        'acoustid_id': types.STRING,
+        'mb_releasegroupid': types.STRING,
+        'asin': types.STRING,
+        'isrc': types.STRING,
+        'catalognum': types.STRING,
+        'script': types.STRING,
+        'language': types.STRING,
+        'country': types.STRING,
+        'albumstatus': types.STRING,
+        'media': types.STRING,
+        'albumdisambig': types.STRING,
         'releasegroupdisambig': types.STRING,
-        'disctitle':            types.STRING,
-        'encoder':              types.STRING,
-        'rg_track_gain':        types.NULL_FLOAT,
-        'rg_track_peak':        types.NULL_FLOAT,
-        'rg_album_gain':        types.NULL_FLOAT,
-        'rg_album_peak':        types.NULL_FLOAT,
-        'r128_track_gain':      types.NullPaddedInt(6),
-        'r128_album_gain':      types.NullPaddedInt(6),
-        'original_year':        types.PaddedInt(4),
-        'original_month':       types.PaddedInt(2),
-        'original_day':         types.PaddedInt(2),
-        'initial_key':          MusicalKey(),
+        'disctitle': types.STRING,
+        'encoder': types.STRING,
+        'rg_track_gain': types.NULL_FLOAT,
+        'rg_track_peak': types.NULL_FLOAT,
+        'rg_album_gain': types.NULL_FLOAT,
+        'rg_album_peak': types.NULL_FLOAT,
+        'r128_track_gain': types.NullPaddedInt(6),
+        'r128_album_gain': types.NullPaddedInt(6),
+        'original_year': types.PaddedInt(4),
+        'original_month': types.PaddedInt(2),
+        'original_day': types.PaddedInt(2),
+        'initial_key': MusicalKey(),
 
-        'length':      DurationType(),
-        'bitrate':     types.ScaledInt(1000, 'kbps'),
-        'format':      types.STRING,
-        'samplerate':  types.ScaledInt(1000, 'kHz'),
-        'bitdepth':    types.INTEGER,
-        'channels':    types.INTEGER,
-        'mtime':       DateType(),
-        'added':       DateType(),
+        'length': DurationType(),
+        'bitrate': types.ScaledInt(1000, 'kbps'),
+        'format': types.STRING,
+        'samplerate': types.ScaledInt(1000, 'kHz'),
+        'bitdepth': types.INTEGER,
+        'channels': types.INTEGER,
+        'mtime': DateType(),
+        'added': DateType(),
     }
 
     _search_fields = ('artist', 'title', 'comments',
@@ -1015,49 +1021,49 @@ class Album(LibModel):
     _flex_table = 'album_attributes'
     _always_dirty = True
     _fields = {
-        'id':      types.PRIMARY_ID,
+        'id': types.PRIMARY_ID,
         'artpath': PathType(True),
-        'added':   DateType(),
+        'added': DateType(),
 
-        'albumartist':          types.STRING,
-        'albumartist_sort':     types.STRING,
-        'albumartist_credit':   types.STRING,
-        'album':                types.STRING,
-        'genre':                types.STRING,
-        'style':                types.STRING,
-        'discogs_albumid':      types.INTEGER,
-        'discogs_artistid':     types.INTEGER,
-        'discogs_labelid':      types.INTEGER,
-        'year':                 types.PaddedInt(4),
-        'month':                types.PaddedInt(2),
-        'day':                  types.PaddedInt(2),
-        'disctotal':            types.PaddedInt(2),
-        'comp':                 types.BOOLEAN,
-        'mb_albumid':           types.STRING,
-        'mb_albumartistid':     types.STRING,
-        'albumtype':            types.STRING,
-        'label':                types.STRING,
-        'mb_releasegroupid':    types.STRING,
-        'asin':                 types.STRING,
-        'catalognum':           types.STRING,
-        'script':               types.STRING,
-        'language':             types.STRING,
-        'country':              types.STRING,
-        'albumstatus':          types.STRING,
-        'albumdisambig':        types.STRING,
+        'albumartist': types.STRING,
+        'albumartist_sort': types.STRING,
+        'albumartist_credit': types.STRING,
+        'album': types.STRING,
+        'genre': types.STRING,
+        'style': types.STRING,
+        'discogs_albumid': types.INTEGER,
+        'discogs_artistid': types.INTEGER,
+        'discogs_labelid': types.INTEGER,
+        'year': types.PaddedInt(4),
+        'month': types.PaddedInt(2),
+        'day': types.PaddedInt(2),
+        'disctotal': types.PaddedInt(2),
+        'comp': types.BOOLEAN,
+        'mb_albumid': types.STRING,
+        'mb_albumartistid': types.STRING,
+        'albumtype': types.STRING,
+        'label': types.STRING,
+        'mb_releasegroupid': types.STRING,
+        'asin': types.STRING,
+        'catalognum': types.STRING,
+        'script': types.STRING,
+        'language': types.STRING,
+        'country': types.STRING,
+        'albumstatus': types.STRING,
+        'albumdisambig': types.STRING,
         'releasegroupdisambig': types.STRING,
-        'rg_album_gain':        types.NULL_FLOAT,
-        'rg_album_peak':        types.NULL_FLOAT,
-        'r128_album_gain':      types.NullPaddedInt(6),
-        'original_year':        types.PaddedInt(4),
-        'original_month':       types.PaddedInt(2),
-        'original_day':         types.PaddedInt(2),
+        'rg_album_gain': types.NULL_FLOAT,
+        'rg_album_peak': types.NULL_FLOAT,
+        'r128_album_gain': types.NullPaddedInt(6),
+        'original_year': types.PaddedInt(4),
+        'original_month': types.PaddedInt(2),
+        'original_day': types.PaddedInt(2),
     }
 
     _search_fields = ('album', 'albumartist', 'genre')
 
     _types = {
-        'path':        PathType(),
+        'path': PathType(),
         'data_source': types.STRING,
     }
 

@@ -23,7 +23,6 @@ from tempfile import NamedTemporaryFile
 from six.moves.urllib.parse import urlencode
 from beets import logging
 from beets import util
-import six
 
 # Resizing methods
 PIL = 1

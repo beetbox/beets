@@ -6,7 +6,6 @@ asyncore.
 Bluelet: easy concurrency without all the messy parallelism.
 """
 
-import six
 import socket
 import select
 import sys

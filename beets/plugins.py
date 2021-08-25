@@ -26,7 +26,6 @@ from functools import wraps
 import beets
 from beets import logging
 import mediafile
-import six
 
 
 PLUGIN_NAMESPACE = 'beetsplug'
@@ -50,6 +49,7 @@ class PluginLogFilter(logging.Filter):
     """A logging filter that identifies the plugin that emitted a log
     message.
     """
+
     def __init__(self, plugin):
         self.prefix = f'{plugin.name}: '
 
@@ -70,6 +70,7 @@ class BeetsPlugin:
     functionality by defining a subclass of BeetsPlugin and overriding
     the abstract methods defined here.
     """
+
     def __init__(self, name=None):
         """Perform one-time plugin setup.
         """
@@ -138,7 +139,7 @@ class BeetsPlugin:
             self._log.setLevel(log_level)
             if argspec.varkw is None:
                 kwargs = {k: v for k, v in kwargs.items()
-                              if k in argspec.args}
+                          if k in argspec.args}
 
             try:
                 return func(*args, **kwargs)
@@ -381,7 +382,7 @@ def candidates(items, artist, album, va_likely, extra_tags=None):
     """
     for plugin in find_plugins():
         yield from plugin.candidates(items, artist, album, va_likely,
-                                           extra_tags)
+                                     extra_tags)
 
 
 def item_candidates(item, artist, title):

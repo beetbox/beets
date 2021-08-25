@@ -176,6 +176,7 @@ class ImportSession:
     """Controls an import action. Subclasses should implement methods to
     communicate with the user or otherwise make decisions.
     """
+
     def __init__(self, lib, loghandler, paths, query):
         """Create a session. `lib` is a Library object. `loghandler` is a
         logging.Handler. Either `paths` or `query` is non-null and indicates
@@ -379,7 +380,7 @@ class ImportSession:
         """
         self._merged_items.update(paths)
         dirs = {os.path.dirname(path) if os.path.isfile(path) else path
-                    for path in paths}
+                for path in paths}
         self._merged_dirs.update(dirs)
 
     def is_resuming(self, toppath):
@@ -414,6 +415,7 @@ class BaseImportTask:
 
     Tasks flow through the importer pipeline. Each stage can update
     them.     """
+
     def __init__(self, toppath, paths, items):
         """Create a task. The primary fields that define a task are:
 
@@ -467,6 +469,7 @@ class ImportTask(BaseImportTask):
     * `finalize()` Update the import progress and cleanup the file
       system.
     """
+
     def __init__(self, toppath, paths, items):
         super().__init__(toppath, paths, items)
         self.choice_flag = None
@@ -1097,6 +1100,7 @@ class ImportTaskFactory:
     """Generate album and singleton import tasks for all media files
     indicated by a path.
     """
+
     def __init__(self, toppath, session):
         """Create a new task factory.
 

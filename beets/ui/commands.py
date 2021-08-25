@@ -37,7 +37,7 @@ from beets.util import syspath, normpath, ancestry, displayable_path, \
 from beets import library
 from beets import config
 from beets import logging
-import six
+
 from . import _store_dict
 
 VARIOUS_ARTISTS = 'Various Artists'
@@ -109,6 +109,7 @@ def fields_func(lib, opts, args):
 
         print_("Album flexible attributes:")
         _print_keys(tx.query(unique_fields % library.Album._flex_table))
+
 
 fields_cmd = ui.Subcommand(
     'fields',
@@ -240,7 +241,7 @@ def show_change(cur_artist, cur_album, match):
                 return f'{medium}-{medium_index}'
             else:
                 return str(medium_index if medium_index is not None
-                                     else index)
+                           else index)
         else:
             return str(index)
 
@@ -249,7 +250,7 @@ def show_change(cur_artist, cur_album, match):
             (cur_album != match.info.album and
              match.info.album != VARIOUS_ARTISTS):
         artist_l, artist_r = cur_artist or '', match.info.artist
-        album_l,  album_r = cur_album or '', match.info.album
+        album_l, album_r = cur_album or '', match.info.album
         if artist_r == VARIOUS_ARTISTS:
             # Hide artists for VA releases.
             artist_l, artist_r = '', ''
@@ -301,7 +302,7 @@ def show_change(cur_artist, cur_album, match):
             media = match.info.media or 'Media'
             if match.info.mediums > 1 and track_info.disctitle:
                 lhs = '{} {}: {}'.format(media, track_info.medium,
-                                      track_info.disctitle)
+                                         track_info.disctitle)
             elif match.info.mediums > 1:
                 lhs = f'{media} {track_info.medium}'
             elif track_info.disctitle:
@@ -380,8 +381,8 @@ def show_change(cur_artist, cur_album, match):
                         match.extra_tracks)
     for track_info in match.extra_tracks:
         line = ' ! {0: <{width}} (#{1: >2})'.format(track_info.title,
-                                                     format_index(track_info),
-                                                     width=pad_width)
+                                                    format_index(track_info),
+                                                    width=pad_width)
         if track_info.length:
             line += ' (%s)' % ui.human_seconds_short(track_info.length)
         print_(ui.colorize('text_warning', line))
@@ -390,8 +391,8 @@ def show_change(cur_artist, cur_album, match):
         pad_width = max(len(item.title) for item in match.extra_items)
     for item in match.extra_items:
         line = ' ! {0: <{width}} (#{1: >2})'.format(item.title,
-                                                     format_index(item),
-                                                     width=pad_width)
+                                                    format_index(item),
+                                                    width=pad_width)
         if item.length:
             line += ' (%s)' % ui.human_seconds_short(item.length)
         print_(ui.colorize('text_warning', line))
@@ -665,7 +666,7 @@ def manual_id(session, task):
     Input an ID, either for an album ("release") or a track ("recording").
     """
     prompt = 'Enter {} ID:'.format('release' if task.is_album
-                                     else 'recording')
+                                   else 'recording')
     search_id = input_(prompt).strip()
 
     if task.is_album:
@@ -686,6 +687,7 @@ def abort_action(session, task):
 class TerminalImportSession(importer.ImportSession):
     """An import session that runs in a terminal.
     """
+
     def choose_match(self, task):
         """Given an initial autotagging of items, go through an interactive
         dance with the user to ask for a choice of metadata. Returns an
@@ -1249,20 +1251,20 @@ def remove_items(lib, query, album, delete, force):
     if not force:
         # Prepare confirmation with user.
         album_str = " in {} album{}".format(
-                 len(albums), 's' if len(albums) > 1 else ''
-            ) if album else ""
+            len(albums), 's' if len(albums) > 1 else ''
+        ) if album else ""
 
         if delete:
             fmt = '$path - $title'
             prompt = 'Really DELETE'
             prompt_all = 'Really DELETE {} file{}{}'.format(
-                 len(items), 's' if len(items) > 1 else '', album_str
+                len(items), 's' if len(items) > 1 else '', album_str
             )
         else:
             fmt = ''
             prompt = 'Really remove from the library?'
             prompt_all = 'Really remove {} item{}{} from the library?'.format(
-                 len(items), 's' if len(items) > 1 else '', album_str
+                len(items), 's' if len(items) > 1 else '', album_str
             )
 
         # Helpers for printing affected items
@@ -1537,8 +1539,12 @@ def move_items(lib, dest, query, copy, album, pretend, confirm=False,
     num_objs = len(objs)
 
     # Filter out files that don't need to be moved.
-    isitemmoved = lambda item: item.path != item.destination(basedir=dest)
-    isalbummoved = lambda album: any(isitemmoved(i) for i in album.items())
+    def isitemmoved(item):
+        return item.path != item.destination(basedir=dest)
+
+    def isalbummoved(album):
+        return any(isitemmoved(i) for i in album.items())
+
     objs = [o for o in objs if (isalbummoved if album else isitemmoved)(o)]
     num_unmoved = num_objs - len(objs)
     # Report unmoved files that match the query.
@@ -1724,6 +1730,7 @@ def config_edit():
             message += ". Please set the EDITOR environment variable"
         raise ui.UserError(message)
 
+
 config_cmd = ui.Subcommand('config',
                            help='show or edit the user configuration')
 config_cmd.parser.add_option(
@@ -1755,6 +1762,7 @@ def print_completion(*args):
     if not any(map(os.path.isfile, BASH_COMPLETION_PATHS)):
         log.warning('Warning: Unable to find the bash-completion package. '
                     'Command line completion might not work.')
+
 
 BASH_COMPLETION_PATHS = map(syspath, [
     '/etc/bash_completion',
