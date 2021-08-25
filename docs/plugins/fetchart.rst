@@ -86,8 +86,10 @@ file. The available options are:
 - **high_resolution**: If enabled, fetchart retrieves artwork in the highest
   resolution it can find (warning: image files can sometimes reach >20MB).
   Default: ``no``.
+- **deinterlace**: If enabled, convert images to non-progressive/baseline.
+  Default: ``no``.
 
-Note: ``maxwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
+Note: ``maxwidth``, ``enforce_ratio`` and ``deinterlace`` options require either `ImageMagick`_
 or `Pillow`_.
 
 .. note::
