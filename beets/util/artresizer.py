@@ -216,6 +216,40 @@ BACKEND_GET_SIZE = {
 }
 
 
+def pil_deinterlace(path_in, path_out=None):
+    path_out = path_out or temp_file_for(path_in)
+    from PIL import Image
+
+    try:
+        im = Image.open(util.syspath(path_in))
+        im.save(util.py3_path(path_out), progressive=False)
+        return path_out
+    except IOError:
+        return path_in
+
+
+def im_deinterlace(path_in, path_out=None):
+    path_out = path_out or temp_file_for(path_in)
+
+    cmd = ArtResizer.shared.im_convert_cmd + [
+        util.syspath(path_in, prefix=False),
+        '-interlace', 'none',
+        util.syspath(path_out, prefix=False),
+    ]
+
+    try:
+        util.command_output(cmd)
+        return path_out
+    except subprocess.CalledProcessError:
+        return path_in
+
+
+DEINTERLACE_FUNCS = {
+    PIL: pil_deinterlace,
+    IMAGEMAGICK: im_deinterlace,
+}
+
+
 class Shareable(type):
     """A pseudo-singleton metaclass that allows both shared and
     non-shared instances. The ``MyClass.shared`` property holds a
@@ -271,6 +305,13 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
             return func(maxwidth, path_in, path_out,
                         quality=quality, max_filesize=max_filesize,
                         deinterlace=deinterlace)
+        else:
+            return path_in
+
+    def deinterlace(self, path_in, path_out=None):
+        if self.local:
+            func = DEINTERLACE_FUNCS[self.method[0]]
+            return func(path_in, path_out)
         else:
             return path_in
 
