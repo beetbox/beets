@@ -26,7 +26,6 @@ import subprocess
 import yaml
 from tempfile import NamedTemporaryFile
 import os
-import six
 import shlex
 
 

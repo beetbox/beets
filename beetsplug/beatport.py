@@ -17,7 +17,6 @@
 
 import json
 import re
-import six
 from datetime import datetime, timedelta
 
 from requests_oauthlib import OAuth1Session

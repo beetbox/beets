@@ -20,7 +20,7 @@ import subprocess
 import os
 import re
 from tempfile import NamedTemporaryFile
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 from beets import logging
 from beets import util
 

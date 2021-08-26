@@ -112,7 +112,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         album = self.lib.albums().get()
         album_added_before = album.added
         items_added_before = {item.path: item.added
-                                  for item in album.items()}
+                              for item in album.items()}
         # Newer Item path mtimes as if Beets had modified them
         modify_mtimes(items_added_before.keys(), offset=10000)
         # Reimport
@@ -122,7 +122,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         album = self.lib.albums().get()
         self.assertEqualTimes(album.added, album_added_before)
         items_added_after = {item.path: item.added
-                                 for item in album.items()}
+                             for item in album.items()}
         for item_path, added_after in items_added_after.items():
             self.assertEqualTimes(items_added_before[item_path], added_after,
                                   "reimport modified Item.added for " +
@@ -151,7 +151,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         # Import and record the original added dates
         self.importer.run()
         items_added_before = {item.path: item.added
-                                  for item in self.lib.items()}
+                              for item in self.lib.items()}
         # Newer Item path mtimes as if Beets had modified them
         modify_mtimes(items_added_before.keys(), offset=10000)
         # Reimport
@@ -160,7 +160,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         self.importer.run()
         # Verify the reimported items
         items_added_after = {item.path: item.added
-                                 for item in self.lib.items()}
+                             for item in self.lib.items()}
         for item_path, added_after in items_added_after.items():
             self.assertEqualTimes(items_added_before[item_path], added_after,
                                   "reimport modified Item.added for " +
@@ -169,6 +169,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')

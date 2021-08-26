@@ -16,7 +16,6 @@
 """
 
 import unittest
-import six
 from beets.util import functemplate
 
 

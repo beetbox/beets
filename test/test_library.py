@@ -35,7 +35,6 @@ from beets import config
 from mediafile import MediaFile, UnreadableFileError
 from beets.util import syspath, bytestring_path
 from test.helper import TestHelper
-import six
 
 # Shortcut to path normalization.
 np = util.normpath

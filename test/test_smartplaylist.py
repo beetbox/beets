@@ -83,7 +83,7 @@ class SmartPlaylistTest(unittest.TestCase):
 
         spl.build_queries()
         sorts = {name: sort
-                     for name, (_, sort), _ in spl._unmatched_playlists}
+                 for name, (_, sort), _ in spl._unmatched_playlists}
 
         asseq = self.assertEqual  # less cluttered code
         sort = FixedFieldSort  # short cut since we're only dealing with this

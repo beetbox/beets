@@ -42,7 +42,7 @@ class Unimported(BeetsPlugin):
                            in self.config['ignore_extensions'].as_str_seq()]
             in_folder = {
                 os.path.join(r, file) for r, d, f in os.walk(lib.directory)
-                 for file in f if not any(
+                for file in f if not any(
                     [file.endswith(extension) for extension in
                      ignore_exts])}
             in_library = {x.path for x in lib.items()}

@@ -12,7 +12,6 @@ import beetsplug
 from test import _common
 from test._common import TestCase
 from test import helper
-import six
 
 
 class LoggingTest(TestCase):

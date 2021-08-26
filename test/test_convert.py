@@ -49,7 +49,7 @@ class TestHelper(helper.TestHelper):
         # A Python script that copies the file and appends a tag.
         stub = os.path.join(_common.RSRC, b'convert_stub.py').decode('utf-8')
         return "{} {} $source $dest {}".format(shell_quote(sys.executable),
-                                                shell_quote(stub), tag)
+                                               shell_quote(stub), tag)
 
     def assertFileTag(self, path, tag):  # noqa
         """Assert that the path is a file and the files content ends with `tag`.
@@ -135,6 +135,7 @@ class ConvertCommand:
     """A mixin providing a utility method to run the `convert`command
     in tests.
     """
+
     def run_convert_path(self, path, *args):
         """Run the `convert` command on a given path."""
         # The path is currently a filesystem bytestring. Convert it to

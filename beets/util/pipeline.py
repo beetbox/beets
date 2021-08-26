@@ -32,7 +32,7 @@ in place of any single coroutine.
 """
 
 
-from six.moves import queue
+import queue
 from threading import Thread, Lock
 import sys
 

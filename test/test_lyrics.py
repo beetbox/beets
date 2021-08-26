@@ -18,7 +18,6 @@
 import itertools
 import os
 import re
-import six
 import sys
 import unittest
 

@@ -24,7 +24,6 @@ from unittest.mock import patch, Mock
 
 from test import _common
 from beets import util
-import six
 
 
 class UtilTest(unittest.TestCase):

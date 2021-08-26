@@ -27,8 +27,7 @@ import requests
 import unicodedata
 from unidecode import unidecode
 import warnings
-import six
-from six.moves import urllib
+import urllib
 
 try:
     import bs4
@@ -47,7 +46,7 @@ try:
     # PY3: HTMLParseError was removed in 3.5 as strict mode
     # was deprecated in 3.3.
     # https://docs.python.org/3.3/library/html.parser.html
-    from six.moves.html_parser import HTMLParseError
+    from html.parser import HTMLParseError
 except ImportError:
     class HTMLParseError(Exception):
         pass
@@ -864,8 +863,8 @@ class LyricsPlugin(plugins.BeetsPlugin):
         title_str = ":index:`%s`" % item.title.strip()
         block = '| ' + item.lyrics.replace('\n', '\n| ')
         self.rest += "{}\n{}\n\n{}\n\n".format(title_str,
-                                            '~' * len(title_str),
-                                            block)
+                                               '~' * len(title_str),
+                                               block)
 
     def writerest(self, directory):
         """Write self.rest to a ReST file

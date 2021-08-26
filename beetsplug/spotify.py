@@ -22,7 +22,6 @@ import base64
 import webbrowser
 import collections
 
-import six
 import unidecode
 import requests
 import confuse

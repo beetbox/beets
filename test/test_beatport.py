@@ -18,7 +18,6 @@
 import unittest
 from test import _common
 from test.helper import TestHelper
-import six
 from datetime import timedelta
 
 from beetsplug import beatport

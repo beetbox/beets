@@ -26,7 +26,6 @@ Put something like the following in your config.yaml to configure:
 import requests
 from beets import config
 from beets.plugins import BeetsPlugin
-import six
 
 
 def update_kodi(host, port, user, password):

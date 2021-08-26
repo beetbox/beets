@@ -13,8 +13,6 @@
 # included in all copies or substantial portions of the Software.
 
 
-
-import six
 import unittest
 from mediafile import MediaFile
 
@@ -213,6 +211,7 @@ class ReplayGainFfmpegTest(ReplayGainCliTestBase, unittest.TestCase):
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')

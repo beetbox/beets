@@ -24,7 +24,6 @@ from beets.ui import print_, decargs
 from beets.plugins import BeetsPlugin
 from beets.dbcore.query import StringFieldQuery
 from unidecode import unidecode
-import six
 
 
 class BareascQuery(StringFieldQuery):
@@ -75,9 +74,9 @@ class BareascPlugin(BeetsPlugin):
         # Copied from commands.py - list_items
         if album:
             for album in lib.albums(query):
-                bare = unidecode(six.ensure_text(str(album)))
-                print_(six.ensure_text(bare))
+                bare = unidecode(str(album))
+                print_(bare)
         else:
             for item in lib.items(query):
-                bare = unidecode(six.ensure_text(str(item)))
-                print_(six.ensure_text(bare))
+                bare = unidecode(str(item))
+                print_(bare)

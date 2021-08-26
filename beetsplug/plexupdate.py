@@ -10,7 +10,7 @@ Put something like the following in your config.yaml to configure:
 
 import requests
 from xml.etree import ElementTree
-from six.moves.urllib.parse import urljoin, urlencode
+from urllib.parse import urljoin, urlencode
 from beets import config
 from beets.plugins import BeetsPlugin
 

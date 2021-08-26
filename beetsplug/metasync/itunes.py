@@ -22,7 +22,7 @@ import shutil
 import tempfile
 import plistlib
 
-from six.moves.urllib.parse import urlparse, unquote
+from urllib.parse import urlparse, unquote
 from time import mktime
 
 from beets import util
@@ -61,12 +61,12 @@ def _norm_itunes_path(path):
 class Itunes(MetaSource):
 
     item_types = {
-        'itunes_rating':      types.INTEGER,  # 0..100 scale
-        'itunes_playcount':   types.INTEGER,
-        'itunes_skipcount':   types.INTEGER,
-        'itunes_lastplayed':  DateType(),
+        'itunes_rating': types.INTEGER,  # 0..100 scale
+        'itunes_playcount': types.INTEGER,
+        'itunes_skipcount': types.INTEGER,
+        'itunes_lastplayed': DateType(),
         'itunes_lastskipped': DateType(),
-        'itunes_dateadded':   DateType(),
+        'itunes_dateadded': DateType(),
     }
 
     def __init__(self, config, log):

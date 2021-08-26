@@ -48,7 +48,7 @@ class CodingFormatter(string.Formatter):
             format_string = format_string.decode(self._coding)
 
         return super().format(format_string, *args,
-                                                   **kwargs)
+                              **kwargs)
 
     def convert_field(self, value, conversion):
         """Converts the provided value given a conversion type.
@@ -58,7 +58,7 @@ class CodingFormatter(string.Formatter):
         See string.Formatter.convert_field.
         """
         converted = super().convert_field(value,
-                                                               conversion)
+                                          conversion)
 
         if isinstance(converted, bytes):
             return converted.decode(self._coding)
@@ -68,6 +68,7 @@ class CodingFormatter(string.Formatter):
 
 class HookPlugin(BeetsPlugin):
     """Allows custom commands to be run when an event is emitted by beets"""
+
     def __init__(self):
         super().__init__()
 
