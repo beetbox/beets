@@ -60,8 +60,8 @@ class ImportAddedPlugin(BeetsPlugin):
 
     def record_reimported(self, task, session):
         self.reimported_item_ids = {item.id for item, replaced_items
-                                       in task.replaced_items.items()
-                                       if replaced_items}
+                                    in task.replaced_items.items()
+                                    if replaced_items}
         self.replaced_album_paths = set(task.replaced_albums.keys())
 
     def write_file_mtime(self, path, mtime):

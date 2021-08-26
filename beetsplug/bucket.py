@@ -126,9 +126,9 @@ def str2fmt(s):
     res = {'fromnchars': len(m.group('fromyear')),
            'tonchars': len(m.group('toyear'))}
     res['fmt'] = "{}%s{}{}{}".format(m.group('bef'),
-                                  m.group('sep'),
-                                  '%s' if res['tonchars'] else '',
-                                  m.group('after'))
+                                     m.group('sep'),
+                                     '%s' if res['tonchars'] else '',
+                                     m.group('after'))
     return res
 
 

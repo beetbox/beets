@@ -52,7 +52,7 @@ class IPFSPluginTest(unittest.TestCase, TestHelper):
                         _fsencoding(),
                     )
                     want_path = '/ipfs/{}/{}'.format(test_album.ipfs,
-                                                       ipfs_item)
+                                                     ipfs_item)
                     want_path = bytestring_path(want_path)
                     self.assertEqual(check_item.path, want_path)
                     self.assertEqual(check_item.get('ipfs', with_album=False),
@@ -94,6 +94,7 @@ class IPFSPluginTest(unittest.TestCase, TestHelper):
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')

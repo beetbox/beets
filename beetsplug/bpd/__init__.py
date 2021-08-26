@@ -36,7 +36,6 @@ from beets.util import bluelet
 from beets.library import Item
 from beets import dbcore
 from mediafile import MediaFile
-import six
 
 PROTOCOL_VERSION = '0.16.0'
 BUFSIZE = 1024

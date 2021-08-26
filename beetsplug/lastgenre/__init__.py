@@ -13,8 +13,6 @@
 # included in all copies or substantial portions of the Software.
 
 
-import six
-
 """Gets genres for imported music based on Last.fm tags.
 
 Uses a provided whitelist file to determine which tags are valid genres.
@@ -266,7 +264,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return None
 
         key = '{}.{}'.format(entity,
-                                '-'.join(str(a) for a in args))
+                             '-'.join(str(a) for a in args))
         if key in self._genre_cache:
             return self._genre_cache[key]
         else:

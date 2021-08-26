@@ -22,7 +22,6 @@ implemented by MusicBrainz yet.
 """
 
 
-
 from beets.autotag import Recommendation
 from beets.plugins import BeetsPlugin
 from beets.ui.commands import PromptChoice

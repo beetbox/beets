@@ -14,7 +14,6 @@
 
 """ Clears tag fields in media files."""
 
-import six
 
 import re
 

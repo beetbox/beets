@@ -24,7 +24,6 @@ from beets.library import Item, Album, parse_query_string
 from beets.dbcore import OrQuery
 from beets.dbcore.query import MultipleSort, ParsingError
 import os
-import six
 
 try:
     from urllib.request import pathname2url
@@ -72,8 +71,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
                     args.add(f"{a}.m3u")
 
             playlists = {(name, q, a_q)
-                            for name, q, a_q in self._unmatched_playlists
-                            if name in args}
+                         for name, q, a_q in self._unmatched_playlists
+                         if name in args}
             if not playlists:
                 raise ui.UserError(
                     'No playlist matching any of {} found'.format(

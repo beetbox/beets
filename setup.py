@@ -85,7 +85,6 @@ setup(
     },
 
     install_requires=[
-        'six>=1.9',
         'unidecode',
         'musicbrainzngs>=0.4',
         'pyyaml',

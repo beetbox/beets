@@ -16,7 +16,6 @@
 """
 
 import shlex
-import six
 
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_, Subcommand, UserError

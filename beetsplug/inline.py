@@ -20,7 +20,6 @@ import itertools
 
 from beets.plugins import BeetsPlugin
 from beets import config
-import six
 
 FUNC_NAME = '__INLINE_FUNC__'
 

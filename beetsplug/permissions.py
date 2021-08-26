@@ -9,7 +9,6 @@ import os
 from beets import config, util
 from beets.plugins import BeetsPlugin
 from beets.util import ancestry
-import six
 
 
 def convert_perm(perm):

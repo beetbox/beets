@@ -19,12 +19,10 @@ import os
 import shutil
 import sqlite3
 import unittest
-from six import assertRaisesRegex
 
 from test import _common
 from beets import dbcore
 from tempfile import mkstemp
-import six
 
 
 # Fixture: concrete database and model classes. For migration tests, we

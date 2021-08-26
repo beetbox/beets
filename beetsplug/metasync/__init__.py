@@ -22,7 +22,6 @@ from importlib import import_module
 from confuse import ConfigValueError
 from beets import ui
 from beets.plugins import BeetsPlugin
-import six
 
 
 METASYNC_MODULE = 'beetsplug.metasync'

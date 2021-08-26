@@ -18,7 +18,6 @@ import enum
 import math
 import os
 import signal
-import six
 import subprocess
 import sys
 import warnings

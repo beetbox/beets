@@ -25,7 +25,6 @@ from beets.plugins import BeetsPlugin
 import os
 import socket
 from beets import config
-import six
 
 
 # No need to introduce a dependency on an MPD library for such a

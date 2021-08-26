@@ -287,8 +287,8 @@ class AcousticPlugin(plugins.BeetsPlugin):
         # The recursive traversal.
         composites = defaultdict(list)
         yield from self._data_to_scheme_child(data,
-                                                    scheme,
-                                                    composites)
+                                              scheme,
+                                              composites)
 
         # When composites has been populated, yield the composite attributes
         # by joining their parts.
@@ -309,8 +309,8 @@ class AcousticPlugin(plugins.BeetsPlugin):
             if k in subdata:
                 if type(v) == dict:
                     yield from self._data_to_scheme_child(subdata[k],
-                                                                v,
-                                                                composites)
+                                                          v,
+                                                          composites)
                 elif type(v) == tuple:
                     composite_attribute, part_number = v
                     attribute_parts = composites[composite_attribute]

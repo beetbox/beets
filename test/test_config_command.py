@@ -10,7 +10,6 @@ from beets import config
 
 from test.helper import TestHelper
 from beets.library import Library
-import six
 
 
 class ConfigCommandTest(unittest.TestCase, TestHelper):

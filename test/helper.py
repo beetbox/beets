@@ -30,7 +30,6 @@ information or mock the environment.
 """
 
 
-
 import sys
 import os
 import os.path
@@ -54,7 +53,6 @@ from beets.util import MoveOperation
 
 # TODO Move AutotagMock here
 from test import _common
-import six
 
 
 class LogCapture(logging.Handler):
@@ -578,6 +576,7 @@ def generate_album_info(album_id, track_values):
 
     return album
 
+
 ALBUM_INFO_FIELDS = ['album', 'album_id', 'artist', 'artist_id',
                      'asin', 'albumtype', 'va', 'label',
                      'artist_sort', 'releasegroup_id', 'catalognum',
@@ -601,6 +600,7 @@ def generate_track_info(track_id='track info', values={}):
     for field, value in values.items():
         setattr(track, field, value)
     return track
+
 
 TRACK_INFO_FIELDS = ['artist', 'artist_id', 'artist_sort',
                      'disctitle', 'artist_credit', 'data_source',

@@ -15,7 +15,6 @@
 """Tests for image resizing based on filesize."""
 
 
-
 import unittest
 import os
 

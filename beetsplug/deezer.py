@@ -17,7 +17,6 @@
 
 import collections
 
-import six
 import unidecode
 import requests
 

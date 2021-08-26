@@ -18,7 +18,6 @@
 import musicbrainzngs
 import re
 import traceback
-from six.moves.urllib.parse import urljoin
 
 from beets import logging
 from beets import plugins
@@ -26,6 +25,7 @@ import beets.autotag.hooks
 import beets
 from beets import util
 from beets import config
+from urllib.parse import urljoin
 
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
 

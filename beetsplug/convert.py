@@ -119,7 +119,7 @@ class ConvertPlugin(BeetsPlugin):
             'formats': {
                 'aac': {
                     'command': 'ffmpeg -i $source -y -vn -acodec aac '
-                                '-aq 1 $dest',
+                    '-aq 1 $dest',
                     'extension': 'm4a',
                 },
                 'alac': {

@@ -20,7 +20,6 @@ from beets import plugins
 from beets.util import displayable_path
 import os
 import re
-import six
 
 
 # Filename field extraction patterns.

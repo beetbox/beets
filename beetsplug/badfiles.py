@@ -22,7 +22,6 @@ import shlex
 import os
 import errno
 import sys
-import six
 import confuse
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand

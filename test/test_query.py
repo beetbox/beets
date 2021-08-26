@@ -32,7 +32,6 @@ from beets.dbcore.query import (NoneQuery, ParsingError,
 from beets.library import Library, Item
 from beets import util
 import platform
-import six
 
 
 class TestHelper(helper.TestHelper):

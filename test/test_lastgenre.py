@@ -23,7 +23,6 @@ from beetsplug import lastgenre
 from beets import config
 
 from test.helper import TestHelper
-import six
 
 
 class LastGenrePluginTest(unittest.TestCase, TestHelper):

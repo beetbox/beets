@@ -24,7 +24,7 @@ import confuse
 from discogs_client import Release, Master, Client
 from discogs_client.exceptions import DiscogsAPIError
 from requests.exceptions import ConnectionError
-from six.moves import http_client
+import http.client
 import beets
 import re
 import time
@@ -40,7 +40,7 @@ API_KEY = 'rAzVUQYRaoFjeBjyWuWZ'
 API_SECRET = 'plxtUTqoCzwxZpqdPysCwGuBSmZNdZVy'
 
 # Exceptions that discogs_client should really handle but does not.
-CONNECTION_ERRORS = (ConnectionError, socket.error, http_client.HTTPException,
+CONNECTION_ERRORS = (ConnectionError, socket.error, http.client.HTTPException,
                      ValueError,  # JSON decoding raises a ValueError.
                      DiscogsAPIError)
 
@@ -505,7 +505,7 @@ class DiscogsPlugin(BeetsPlugin):
                     if self.config['index_tracks']:
                         for subtrack in subtracks:
                             subtrack['title'] = '{}: {}'.format(
-                                    index_track['title'], subtrack['title'])
+                                index_track['title'], subtrack['title'])
                     tracklist.extend(subtracks)
             else:
                 # Merge the subtracks, pick a title, and append the new track.

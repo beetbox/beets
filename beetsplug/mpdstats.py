@@ -14,9 +14,6 @@
 
 
 import mpd
-import socket
-import select
-import sys
 import time
 import os
 
@@ -300,10 +297,10 @@ class MPDStats:
         self._log.info('playing {0}', displayable_path(path))
 
         self.now_playing = {
-            'started':    time.time(),
-            'remaining':  remaining,
-            'path':       path,
-            'id':         songid,
+            'started': time.time(),
+            'remaining': remaining,
+            'path': path,
+            'id': songid,
             'beets_item': self.get_item(path),
         }
 
@@ -331,22 +328,22 @@ class MPDStats:
 class MPDStatsPlugin(plugins.BeetsPlugin):
 
     item_types = {
-        'play_count':  types.INTEGER,
-        'skip_count':  types.INTEGER,
+        'play_count': types.INTEGER,
+        'skip_count': types.INTEGER,
         'last_played': library.DateType(),
-        'rating':      types.FLOAT,
+        'rating': types.FLOAT,
     }
 
     def __init__(self):
         super().__init__()
         mpd_config.add({
             'music_directory': config['directory'].as_filename(),
-            'strip_path':      '',
-            'rating':          True,
-            'rating_mix':      0.75,
-            'host':            os.environ.get('MPD_HOST', 'localhost'),
-            'port':            int(os.environ.get('MPD_PORT', 6600)),
-            'password':        '',
+            'strip_path': '',
+            'rating': True,
+            'rating_mix': 0.75,
+            'host': os.environ.get('MPD_HOST', 'localhost'),
+            'port': int(os.environ.get('MPD_PORT', 6600)),
+            'password': '',
         })
         mpd_config['password'].redact = True
 

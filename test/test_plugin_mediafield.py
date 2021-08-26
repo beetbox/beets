@@ -16,7 +16,6 @@
 """
 
 import os
-import six
 import shutil
 import unittest
 

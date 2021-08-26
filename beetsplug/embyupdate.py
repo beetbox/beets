@@ -11,9 +11,7 @@
 import hashlib
 import requests
 
-from six.moves.urllib.parse import urlencode
-from six.moves.urllib.parse import urljoin, parse_qs, urlsplit, urlunsplit
-
+from urllib.parse import urlencode, urljoin, parse_qs, urlsplit, urlunsplit
 from beets import config
 from beets.plugins import BeetsPlugin
 

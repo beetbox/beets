@@ -25,7 +25,6 @@ from test import test_importer
 from beets.ui.commands import TerminalImportSession
 from beets import importer
 from beets import config
-import six
 
 
 class TerminalImportSessionFixture(TerminalImportSession):

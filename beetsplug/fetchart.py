@@ -33,7 +33,6 @@ from beets.util.artresizer import ArtResizer
 from beets.util import sorted_walk
 from beets.util import syspath, bytestring_path, py3_path
 import confuse
-import six
 
 CONTENT_TYPES = {
     'image/jpeg': [b'jpg', b'jpeg'],

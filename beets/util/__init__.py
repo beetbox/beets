@@ -29,7 +29,6 @@ import subprocess
 import platform
 import shlex
 from beets.util import hidden
-import six
 from unidecode import unidecode
 from enum import Enum
 
@@ -100,6 +99,7 @@ class FilesystemError(HumanReadableException):
     via a function in this module. The `paths` field is a sequence of
     pathnames involved in the operation.
     """
+
     def __init__(self, reason, verb, paths, tb=None):
         self.paths = paths
         super().__init__(reason, verb, tb)
@@ -599,6 +599,7 @@ def unique_path(path):
         if not os.path.exists(new_path):
             return new_path
 
+
 # Note: The Windows "reserved characters" are, of course, allowed on
 # Unix. They are forbidden here because they cause problems on Samba
 # shares, which are sufficiently common as to cause frequent problems.
@@ -736,8 +737,6 @@ def py3_path(path):
     if isinstance(path, str):
         return path
     assert isinstance(path, bytes)
-    if six.PY2:
-        return path
     return os.fsdecode(path)
 
 
@@ -801,7 +800,7 @@ def cpu_count():
                 '/usr/sbin/sysctl',
                 '-n',
                 'hw.ncpu',
-                ]).stdout)
+            ]).stdout)
         except (ValueError, OSError, subprocess.CalledProcessError):
             num = 0
     else:

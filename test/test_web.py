@@ -4,7 +4,6 @@
 import json
 import unittest
 import os.path
-from six import assertCountEqual
 import shutil
 
 from test import _common
@@ -671,6 +670,7 @@ class WebPluginTest(_common.LibTestCase):
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')
