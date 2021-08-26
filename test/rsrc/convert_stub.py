@@ -1,11 +1,9 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """A tiny tool used to test the `convert` plugin. It copies a file and appends
 a specified text tag.
 """
 
-from __future__ import division, absolute_import, print_function
 import sys
 import platform
 import locale
