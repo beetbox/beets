@@ -104,7 +104,6 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         # check valid path returned - deinterlace hasn't broken resize command
         self.assertExists(im_di)
 
-
     @unittest.skipUnless(get_pil_version(), "PIL not available")
     def test_pil_file_resize(self):
         """Test PIL resize function is lowering file size."""
