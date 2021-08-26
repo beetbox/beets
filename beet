@@ -17,5 +17,5 @@
 
 import beets.ui
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     beets.ui.main()

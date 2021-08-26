@@ -27,38 +27,32 @@ from xml.etree import ElementTree
 class ExportPluginTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.setup_beets()
-        self.load_plugins('export')
-        self.test_values = {'title': 'xtitle', 'album': 'xalbum'}
+        self.load_plugins("export")
+        self.test_values = {"title": "xtitle", "album": "xalbum"}
 
     def tearDown(self):
         self.unload_plugins()
         self.teardown_beets()
 
     def execute_command(self, format_type, artist):
-        query = ','.join(self.test_values.keys())
+        query = ",".join(self.test_values.keys())
         out = self.run_with_output(
-            'export',
-            '-f', format_type,
-            '-i', query,
-            artist
+            "export", "-f", format_type, "-i", query, artist
         )
         return out
 
     def create_item(self):
-        item, = self.add_item_fixtures()
-        item.artist = 'xartist'
-        item.title = self.test_values['title']
-        item.album = self.test_values['album']
+        (item,) = self.add_item_fixtures()
+        item.artist = "xartist"
+        item.title = self.test_values["title"]
+        item.album = self.test_values["album"]
         item.write()
         item.store()
         return item
 
     def test_json_output(self):
         item1 = self.create_item()
-        out = self.execute_command(
-            format_type='json',
-            artist=item1.artist
-        )
+        out = self.execute_command(format_type="json", artist=item1.artist)
         json_data = json.loads(out)[0]
         for key, val in self.test_values.items():
             self.assertTrue(key in json_data)
@@ -67,8 +61,7 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
     def test_jsonlines_output(self):
         item1 = self.create_item()
         out = self.execute_command(
-            format_type='jsonlines',
-            artist=item1.artist
+            format_type="jsonlines", artist=item1.artist
         )
         json_data = json.loads(out)
         for key, val in self.test_values.items():
@@ -77,23 +70,17 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
 
     def test_csv_output(self):
         item1 = self.create_item()
-        out = self.execute_command(
-            format_type='csv',
-            artist=item1.artist
-        )
-        csv_list = re.split('\r', re.sub('\n', '', out))
-        head = re.split(',', csv_list[0])
-        vals = re.split(',|\r', csv_list[1])
+        out = self.execute_command(format_type="csv", artist=item1.artist)
+        csv_list = re.split("\r", re.sub("\n", "", out))
+        head = re.split(",", csv_list[0])
+        vals = re.split(",|\r", csv_list[1])
         for index, column in enumerate(head):
             self.assertTrue(self.test_values.get(column, None) is not None)
             self.assertEqual(vals[index], self.test_values[column])
 
     def test_xml_output(self):
         item1 = self.create_item()
-        out = self.execute_command(
-            format_type='xml',
-            artist=item1.artist
-        )
+        out = self.execute_command(format_type="xml", artist=item1.artist)
         library = ElementTree.fromstring(out)
         self.assertIsInstance(library, Element)
         for track in library[0]:
@@ -107,5 +94,6 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")

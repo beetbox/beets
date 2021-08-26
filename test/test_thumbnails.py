@@ -22,9 +22,15 @@ import unittest
 from test.helper import TestHelper
 
 from beets.util import bytestring_path
-from beetsplug.thumbnails import (ThumbnailsPlugin, NORMAL_DIR, LARGE_DIR,
-                                  write_metadata_im, write_metadata_pil,
-                                  PathlibURI, GioURI)
+from beetsplug.thumbnails import (
+    ThumbnailsPlugin,
+    NORMAL_DIR,
+    LARGE_DIR,
+    write_metadata_im,
+    write_metadata_pil,
+    PathlibURI,
+    GioURI,
+)
 
 
 class ThumbnailsTest(unittest.TestCase, TestHelper):
@@ -34,42 +40,44 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
     def tearDown(self):
         self.teardown_beets()
 
-    @patch('beetsplug.thumbnails.util')
+    @patch("beetsplug.thumbnails.util")
     def test_write_metadata_im(self, mock_util):
         metadata = {"a": "A", "b": "B"}
         write_metadata_im("foo", metadata)
         try:
-            command = "convert foo -set a A -set b B foo".split(' ')
+            command = "convert foo -set a A -set b B foo".split(" ")
             mock_util.command_output.assert_called_once_with(command)
         except AssertionError:
-            command = "convert foo -set b B -set a A foo".split(' ')
+            command = "convert foo -set b B -set a A foo".split(" ")
             mock_util.command_output.assert_called_once_with(command)
 
-    @patch('beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok')
-    @patch('beetsplug.thumbnails.os.stat')
+    @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok")
+    @patch("beetsplug.thumbnails.os.stat")
     def test_add_tags(self, mock_stat, _):
         plugin = ThumbnailsPlugin()
         plugin.write_metadata = Mock()
-        plugin.get_uri = Mock(side_effect={b"/path/to/cover":
-                                           "COVER_URI"}.__getitem__)
+        plugin.get_uri = Mock(
+            side_effect={b"/path/to/cover": "COVER_URI"}.__getitem__
+        )
         album = Mock(artpath=b"/path/to/cover")
         mock_stat.return_value.st_mtime = 12345
 
         plugin.add_tags(album, b"/path/to/thumbnail")
 
-        metadata = {"Thumb::URI": "COVER_URI",
-                    "Thumb::MTime": "12345"}
-        plugin.write_metadata.assert_called_once_with(b"/path/to/thumbnail",
-                                                      metadata)
+        metadata = {"Thumb::URI": "COVER_URI", "Thumb::MTime": "12345"}
+        plugin.write_metadata.assert_called_once_with(
+            b"/path/to/thumbnail", metadata
+        )
         mock_stat.assert_called_once_with(album.artpath)
 
-    @patch('beetsplug.thumbnails.os')
-    @patch('beetsplug.thumbnails.ArtResizer')
-    @patch('beetsplug.thumbnails.get_im_version')
-    @patch('beetsplug.thumbnails.get_pil_version')
-    @patch('beetsplug.thumbnails.GioURI')
-    def test_check_local_ok(self, mock_giouri, mock_pil, mock_im,
-                            mock_artresizer, mock_os):
+    @patch("beetsplug.thumbnails.os")
+    @patch("beetsplug.thumbnails.ArtResizer")
+    @patch("beetsplug.thumbnails.get_im_version")
+    @patch("beetsplug.thumbnails.get_pil_version")
+    @patch("beetsplug.thumbnails.GioURI")
+    def test_check_local_ok(
+        self, mock_giouri, mock_pil, mock_im, mock_artresizer, mock_os
+    ):
         # test local resizing capability
         mock_artresizer.shared.local = False
         plugin = ThumbnailsPlugin()
@@ -84,6 +92,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
             if path == LARGE_DIR:
                 return True
             raise ValueError(f"unexpected path {path!r}")
+
         mock_os.path.exists = exists
         plugin = ThumbnailsPlugin()
         mock_os.makedirs.assert_called_once_with(NORMAL_DIR)
@@ -113,16 +122,18 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         self.assertEqual(ThumbnailsPlugin().get_uri, giouri_inst.uri)
 
         giouri_inst.available = False
-        self.assertEqual(ThumbnailsPlugin().get_uri.__self__.__class__,
-                         PathlibURI)
+        self.assertEqual(
+            ThumbnailsPlugin().get_uri.__self__.__class__, PathlibURI
+        )
 
-    @patch('beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok')
-    @patch('beetsplug.thumbnails.ArtResizer')
-    @patch('beetsplug.thumbnails.util')
-    @patch('beetsplug.thumbnails.os')
-    @patch('beetsplug.thumbnails.shutil')
-    def test_make_cover_thumbnail(self, mock_shutils, mock_os, mock_util,
-                                  mock_artresizer, _):
+    @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok")
+    @patch("beetsplug.thumbnails.ArtResizer")
+    @patch("beetsplug.thumbnails.util")
+    @patch("beetsplug.thumbnails.os")
+    @patch("beetsplug.thumbnails.shutil")
+    def test_make_cover_thumbnail(
+        self, mock_shutils, mock_os, mock_util, mock_artresizer, _
+    ):
         thumbnail_dir = os.path.normpath(b"/thumbnail/dir")
         md5_file = os.path.join(thumbnail_dir, b"md5")
         path_to_art = os.path.normpath(b"/path/to/art")
@@ -133,7 +144,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
 
         album = Mock(artpath=path_to_art)
         mock_util.syspath.side_effect = lambda x: x
-        plugin.thumbnail_file_name = Mock(return_value=b'md5')
+        plugin.thumbnail_file_name = Mock(return_value=b"md5")
         mock_os.path.exists.return_value = False
 
         def os_stat(target):
@@ -143,19 +154,22 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
                 return Mock(st_mtime=2)
             else:
                 raise ValueError(f"invalid target {target}")
+
         mock_os.stat.side_effect = os_stat
 
         plugin.make_cover_thumbnail(album, 12345, thumbnail_dir)
 
         mock_os.path.exists.assert_called_once_with(md5_file)
-        mock_os.stat.has_calls([call(md5_file), call(path_to_art)],
-                               any_order=True)
+        mock_os.stat.has_calls(
+            [call(md5_file), call(path_to_art)], any_order=True
+        )
 
         resize = mock_artresizer.shared.resize
         resize.assert_called_once_with(12345, path_to_art, md5_file)
         plugin.add_tags.assert_called_once_with(album, resize.return_value)
-        mock_shutils.move.assert_called_once_with(resize.return_value,
-                                                  md5_file)
+        mock_shutils.move.assert_called_once_with(
+            resize.return_value, md5_file
+        )
 
         # now test with recent thumbnail & with force
         mock_os.path.exists.return_value = True
@@ -169,27 +183,27 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
                 return Mock(st_mtime=2)
             else:
                 raise ValueError(f"invalid target {target}")
+
         mock_os.stat.side_effect = os_stat
 
         plugin.make_cover_thumbnail(album, 12345, thumbnail_dir)
         self.assertEqual(resize.call_count, 0)
 
         # and with force
-        plugin.config['force'] = True
+        plugin.config["force"] = True
         plugin.make_cover_thumbnail(album, 12345, thumbnail_dir)
         resize.assert_called_once_with(12345, path_to_art, md5_file)
 
-    @patch('beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok')
+    @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok")
     def test_make_dolphin_cover_thumbnail(self, _):
         plugin = ThumbnailsPlugin()
         tmp = bytestring_path(mkdtemp())
-        album = Mock(path=tmp,
-                     artpath=os.path.join(tmp, b"cover.jpg"))
+        album = Mock(path=tmp, artpath=os.path.join(tmp, b"cover.jpg"))
         plugin.make_dolphin_cover_thumbnail(album)
         with open(os.path.join(tmp, b".directory"), "rb") as f:
             self.assertEqual(
                 f.read().splitlines(),
-                [b"[Desktop Entry]", b"Icon=./cover.jpg"]
+                [b"[Desktop Entry]", b"Icon=./cover.jpg"],
             )
 
         # not rewritten when it already exists (yup that's a big limitation)
@@ -198,13 +212,13 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         with open(os.path.join(tmp, b".directory"), "rb") as f:
             self.assertEqual(
                 f.read().splitlines(),
-                [b"[Desktop Entry]", b"Icon=./cover.jpg"]
+                [b"[Desktop Entry]", b"Icon=./cover.jpg"],
             )
 
         rmtree(tmp)
 
-    @patch('beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok')
-    @patch('beetsplug.thumbnails.ArtResizer')
+    @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok")
+    @patch("beetsplug.thumbnails.ArtResizer")
     def test_process_album(self, mock_artresizer, _):
         get_size = mock_artresizer.shared.get_size
 
@@ -226,11 +240,11 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         self.assertEqual(make_cover.call_count, 0)
 
         # dolphin tests
-        plugin.config['dolphin'] = False
+        plugin.config["dolphin"] = False
         plugin.process_album(album)
         self.assertEqual(make_dolphin.call_count, 0)
 
-        plugin.config['dolphin'] = True
+        plugin.config["dolphin"] = True
         plugin.process_album(album)
         make_dolphin.assert_called_once_with(album)
 
@@ -243,11 +257,13 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         make_cover.reset_mock()
         get_size.return_value = 500, 500
         plugin.process_album(album)
-        make_cover.has_calls([call(album, 128, NORMAL_DIR),
-                              call(album, 256, LARGE_DIR)], any_order=True)
+        make_cover.has_calls(
+            [call(album, 128, NORMAL_DIR), call(album, 256, LARGE_DIR)],
+            any_order=True,
+        )
 
-    @patch('beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok')
-    @patch('beetsplug.thumbnails.decargs')
+    @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok")
+    @patch("beetsplug.thumbnails.decargs")
     def test_invokations(self, mock_decargs, _):
         plugin = ThumbnailsPlugin()
         plugin.process_album = Mock()
@@ -259,15 +275,18 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         lib.albums.return_value = [album, album2]
         plugin.process_query(lib, Mock(), None)
         lib.albums.assert_called_once_with(mock_decargs.return_value)
-        plugin.process_album.has_calls([call(album), call(album2)],
-                                       any_order=True)
+        plugin.process_album.has_calls(
+            [call(album), call(album2)], any_order=True
+        )
 
-    @patch('beetsplug.thumbnails.BaseDirectory')
+    @patch("beetsplug.thumbnails.BaseDirectory")
     def test_thumbnail_file_name(self, mock_basedir):
         plug = ThumbnailsPlugin()
         plug.get_uri = Mock(return_value="file:///my/uri")
-        self.assertEqual(plug.thumbnail_file_name(b'idontcare'),
-                         b"9488f5797fbe12ffb316d607dfd93d04.png")
+        self.assertEqual(
+            plug.thumbnail_file_name(b"idontcare"),
+            b"9488f5797fbe12ffb316d607dfd93d04.png",
+        )
 
     def test_uri(self):
         gio = GioURI()
@@ -278,21 +297,24 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         self.assertEqual(gio.uri(b"/foo"), "file:///foo")
         self.assertEqual(gio.uri(b"/foo!"), "file:///foo!")
         self.assertEqual(
-            gio.uri(b'/music/\xec\x8b\xb8\xec\x9d\xb4'),
-            'file:///music/%EC%8B%B8%EC%9D%B4')
+            gio.uri(b"/music/\xec\x8b\xb8\xec\x9d\xb4"),
+            "file:///music/%EC%8B%B8%EC%9D%B4",
+        )
 
 
-class TestPathlibURI():
+class TestPathlibURI:
     """Test PathlibURI class"""
+
     def test_uri(self):
         test_uri = PathlibURI()
 
         # test it won't break if we pass it bytes for a path
-        test_uri.uri(b'/')
+        test_uri.uri(b"/")
 
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")

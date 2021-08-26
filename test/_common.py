@@ -26,7 +26,7 @@ import reflink
 
 
 # Mangle the search path to include the beets sources.
-sys.path.insert(0, '..')
+sys.path.insert(0, "..")
 import beets.library  # noqa: E402
 from beets import importer, logging  # noqa: E402
 from beets.ui import commands  # noqa: E402
@@ -35,16 +35,17 @@ import beets  # noqa: E402
 
 # Make sure the development versions of the plugins are used
 import beetsplug  # noqa: E402
-beetsplug.__path__ = [os.path.abspath(
-    os.path.join(__file__, '..', '..', 'beetsplug')
-)]
+
+beetsplug.__path__ = [
+    os.path.abspath(os.path.join(__file__, "..", "..", "beetsplug"))
+]
 
 # Test resources path.
-RSRC = util.bytestring_path(os.path.join(os.path.dirname(__file__), 'rsrc'))
-PLUGINPATH = os.path.join(os.path.dirname(__file__), 'rsrc', 'beetsplug')
+RSRC = util.bytestring_path(os.path.join(os.path.dirname(__file__), "rsrc"))
+PLUGINPATH = os.path.join(os.path.dirname(__file__), "rsrc", "beetsplug")
 
 # Propagate to root logger so the test runner can capture it
-log = logging.getLogger('beets')
+log = logging.getLogger("beets")
 log.propagate = True
 log.setLevel(logging.DEBUG)
 
@@ -52,8 +53,8 @@ log.setLevel(logging.DEBUG)
 _item_ident = 0
 
 # OS feature test.
-HAVE_SYMLINK = sys.platform != 'win32'
-HAVE_HARDLINK = sys.platform != 'win32'
+HAVE_SYMLINK = sys.platform != "win32"
+HAVE_HARDLINK = sys.platform != "win32"
 HAVE_REFLINK = reflink.supported_at(tempfile.gettempdir())
 
 
@@ -61,18 +62,18 @@ def item(lib=None):
     global _item_ident
     _item_ident += 1
     i = beets.library.Item(
-        title='the title',
-        artist='the artist',
-        albumartist='the album artist',
-        album='the album',
-        genre='the genre',
-        lyricist='the lyricist',
-        composer='the composer',
-        arranger='the arranger',
-        grouping='the grouping',
-        work='the work title',
-        mb_workid='the work musicbrainz id',
-        work_disambig='the work disambiguation',
+        title="the title",
+        artist="the artist",
+        albumartist="the album artist",
+        album="the album",
+        genre="the genre",
+        lyricist="the lyricist",
+        composer="the composer",
+        arranger="the arranger",
+        grouping="the grouping",
+        work="the work title",
+        mb_workid="the work musicbrainz id",
+        work_disambig="the work disambiguation",
         year=1,
         month=2,
         day=3,
@@ -80,25 +81,26 @@ def item(lib=None):
         tracktotal=5,
         disc=6,
         disctotal=7,
-        lyrics='the lyrics',
-        comments='the comments',
+        lyrics="the lyrics",
+        comments="the comments",
         bpm=8,
         comp=True,
-        path=f'somepath{_item_ident}',
+        path=f"somepath{_item_ident}",
         length=60.0,
         bitrate=128000,
-        format='FLAC',
-        mb_trackid='someID-1',
-        mb_albumid='someID-2',
-        mb_artistid='someID-3',
-        mb_albumartistid='someID-4',
-        mb_releasetrackid='someID-5',
+        format="FLAC",
+        mb_trackid="someID-1",
+        mb_albumid="someID-2",
+        mb_artistid="someID-3",
+        mb_albumartistid="someID-4",
+        mb_releasetrackid="someID-5",
         album_id=None,
         mtime=12345,
     )
     if lib:
         lib.add(i)
     return i
+
 
 _album_ident = 0
 
@@ -108,19 +110,19 @@ def album(lib=None):
     _item_ident += 1
     i = beets.library.Album(
         artpath=None,
-        albumartist='some album artist',
-        albumartist_sort='some sort album artist',
-        albumartist_credit='some album artist credit',
-        album='the album',
-        genre='the genre',
+        albumartist="some album artist",
+        albumartist_sort="some sort album artist",
+        albumartist_credit="some album artist credit",
+        album="the album",
+        genre="the genre",
         year=2014,
         month=2,
         day=5,
         tracktotal=0,
         disctotal=1,
         comp=False,
-        mb_albumid='someID-1',
-        mb_albumartistid='someID-1'
+        mb_albumid="someID-1",
+        mb_albumartistid="someID-1",
     )
     if lib:
         lib.add(i)
@@ -137,17 +139,23 @@ class Assertions:
     """A mixin with additional unit test assertions."""
 
     def assertExists(self, path):  # noqa
-        self.assertTrue(os.path.exists(util.syspath(path)),
-                        f'file does not exist: {path!r}')
+        self.assertTrue(
+            os.path.exists(util.syspath(path)),
+            f"file does not exist: {path!r}",
+        )
 
     def assertNotExists(self, path):  # noqa
-        self.assertFalse(os.path.exists(util.syspath(path)),
-                         f'file exists: {path!r}')
+        self.assertFalse(
+            os.path.exists(util.syspath(path)), f"file exists: {path!r}"
+        )
 
     def assert_equal_path(self, a, b):
         """Check that two paths are equal."""
-        self.assertEqual(util.normpath(a), util.normpath(b),
-                         f'paths are not equal: {a!r} and {b!r}')
+        self.assertEqual(
+            util.normpath(a),
+            util.normpath(b),
+            f"paths are not equal: {a!r} and {b!r}",
+        )
 
 
 # A test harness for all beets tests.
@@ -159,6 +167,7 @@ class TestCase(unittest.TestCase, Assertions):
     completes. Also provides some additional assertion methods, a
     temporary directory, and a DummyIO.
     """
+
     def setUp(self):
         # A "clean" source list including only the defaults.
         beets.config.sources = []
@@ -168,16 +177,19 @@ class TestCase(unittest.TestCase, Assertions):
         # temporary directory.
         self.temp_dir = util.bytestring_path(tempfile.mkdtemp())
 
-        beets.config['statefile'] = \
-            util.py3_path(os.path.join(self.temp_dir, b'state.pickle'))
-        beets.config['library'] = \
-            util.py3_path(os.path.join(self.temp_dir, b'library.db'))
-        beets.config['directory'] = \
-            util.py3_path(os.path.join(self.temp_dir, b'libdir'))
+        beets.config["statefile"] = util.py3_path(
+            os.path.join(self.temp_dir, b"state.pickle")
+        )
+        beets.config["library"] = util.py3_path(
+            os.path.join(self.temp_dir, b"library.db")
+        )
+        beets.config["directory"] = util.py3_path(
+            os.path.join(self.temp_dir, b"libdir")
+        )
 
         # Set $HOME, which is used by Confuse to create directories.
-        self._old_home = os.environ.get('HOME')
-        os.environ['HOME'] = util.py3_path(self.temp_dir)
+        self._old_home = os.environ.get("HOME")
+        os.environ["HOME"] = util.py3_path(self.temp_dir)
 
         # Initialize, but don't install, a DummyIO.
         self.io = DummyIO()
@@ -186,9 +198,9 @@ class TestCase(unittest.TestCase, Assertions):
         if os.path.isdir(self.temp_dir):
             shutil.rmtree(self.temp_dir)
         if self._old_home is None:
-            del os.environ['HOME']
+            del os.environ["HOME"]
         else:
-            os.environ['HOME'] = self._old_home
+            os.environ["HOME"] = self._old_home
         self.io.restore()
 
         beets.config.clear()
@@ -199,9 +211,10 @@ class LibTestCase(TestCase):
     """A test case that includes an in-memory library object (`lib`) and
     an item added to the library (`i`).
     """
+
     def setUp(self):
         super().setUp()
-        self.lib = beets.library.Library(':memory:')
+        self.lib = beets.library.Library(":memory:")
         self.i = item(self.lib)
 
     def tearDown(self):
@@ -211,10 +224,12 @@ class LibTestCase(TestCase):
 
 # Mock timing.
 
+
 class Timecop:
     """Mocks the timing system (namely time() and sleep()) for testing.
     Inspired by the Ruby timecop library.
     """
+
     def __init__(self):
         self.now = time.time()
 
@@ -226,18 +241,19 @@ class Timecop:
 
     def install(self):
         self.orig = {
-            'time': time.time,
-            'sleep': time.sleep,
+            "time": time.time,
+            "sleep": time.sleep,
         }
         time.time = self.time
         time.sleep = self.sleep
 
     def restore(self):
-        time.time = self.orig['time']
-        time.sleep = self.orig['sleep']
+        time.time = self.orig["time"]
+        time.sleep = self.orig["sleep"]
 
 
 # Mock I/O.
+
 
 class InputException(Exception):
     def __init__(self, output=None):
@@ -251,7 +267,7 @@ class InputException(Exception):
 
 
 class DummyOut:
-    encoding = 'utf-8'
+    encoding = "utf-8"
 
     def __init__(self):
         self.buf = []
@@ -260,7 +276,7 @@ class DummyOut:
         self.buf.append(s)
 
     def get(self):
-        return ''.join(self.buf)
+        return "".join(self.buf)
 
     def flush(self):
         self.clear()
@@ -270,7 +286,7 @@ class DummyOut:
 
 
 class DummyIn:
-    encoding = 'utf-8'
+    encoding = "utf-8"
 
     def __init__(self, out=None):
         self.buf = []
@@ -278,7 +294,7 @@ class DummyIn:
         self.out = out
 
     def add(self, s):
-        self.buf.append(s + '\n')
+        self.buf.append(s + "\n")
 
     def close(self):
         pass
@@ -295,6 +311,7 @@ class DummyIn:
 
 class DummyIO:
     """Mocks input and output streams for testing UI code."""
+
     def __init__(self):
         self.stdout = DummyOut()
         self.stdin = DummyIn(self.stdout)
@@ -321,8 +338,9 @@ class DummyIO:
 
 # Utility.
 
+
 def touch(path):
-    open(path, 'a').close()
+    open(path, "a").close()
 
 
 class Bag:
@@ -330,6 +348,7 @@ class Bag:
     arguments. Any field not found in the dictionary appears to be None.
     Used for mocking Album objects and the like.
     """
+
     def __init__(self, **fields):
         self.fields = fields
 
@@ -340,9 +359,9 @@ class Bag:
 # Convenience methods for setting up a temporary sandbox directory for tests
 # that need to interact with the filesystem.
 
+
 class TempDirMixin:
-    """Text mixin for creating and deleting a temporary directory.
-    """
+    """Text mixin for creating and deleting a temporary directory."""
 
     def create_temp_dir(self):
         """Create a temporary directory and assign it into `self.temp_dir`.
@@ -350,21 +369,22 @@ class TempDirMixin:
         """
         path = tempfile.mkdtemp()
         if not isinstance(path, bytes):
-            path = path.encode('utf8')
+            path = path.encode("utf8")
         self.temp_dir = path
 
     def remove_temp_dir(self):
-        """Delete the temporary directory created by `create_temp_dir`.
-        """
+        """Delete the temporary directory created by `create_temp_dir`."""
         if os.path.isdir(self.temp_dir):
             shutil.rmtree(self.temp_dir)
 
 
 # Platform mocking.
 
+
 @contextmanager
 def platform_windows():
     import ntpath
+
     old_path = os.path
     try:
         os.path = ntpath
@@ -376,6 +396,7 @@ def platform_windows():
 @contextmanager
 def platform_posix():
     import posixpath
+
     old_path = os.path
     try:
         os.path = posixpath
@@ -387,6 +408,7 @@ def platform_posix():
 @contextmanager
 def system_mock(name):
     import platform
+
     old_system = platform.system
     platform.system = lambda: name
     try:
@@ -398,6 +420,7 @@ def system_mock(name):
 def slow_test(unused=None):
     def _id(obj):
         return obj
-    if 'SKIP_SLOW_TESTS' in os.environ:
-        return unittest.skip('test is slow')
+
+    if "SKIP_SLOW_TESTS" in os.environ:
+        return unittest.skip("test is slow")
     return _id

@@ -19,11 +19,12 @@ from test.test_importer import ImportHelper, AutotagStub
 from test.test_ui_importer import TerminalImportSessionSetup
 
 
-class MBSubmitPluginTest(TerminalImportSessionSetup, unittest.TestCase,
-                         ImportHelper, TestHelper):
+class MBSubmitPluginTest(
+    TerminalImportSessionSetup, unittest.TestCase, ImportHelper, TestHelper
+):
     def setUp(self):
         self.setup_beets()
-        self.load_plugins('mbsubmit')
+        self.load_plugins("mbsubmit")
         self._create_import_dir(2)
         self._setup_import_session()
         self.matcher = AutotagStub().install()
@@ -38,14 +39,16 @@ class MBSubmitPluginTest(TerminalImportSessionSetup, unittest.TestCase,
         self.matcher.matching = AutotagStub.BAD
 
         with capture_stdout() as output:
-            with control_stdin('\n'.join(['p', 's'])):
+            with control_stdin("\n".join(["p", "s"])):
                 # Print tracks; Skip
                 self.importer.run()
 
         # Manually build the string for comparing the output.
-        tracklist = ('Print tracks? '
-                     '01. Tag Title 1 - Tag Artist (0:01)\n'
-                     '02. Tag Title 2 - Tag Artist (0:01)')
+        tracklist = (
+            "Print tracks? "
+            "01. Tag Title 1 - Tag Artist (0:01)\n"
+            "02. Tag Title 2 - Tag Artist (0:01)"
+        )
         self.assertIn(tracklist, output.getvalue())
 
     def test_print_tracks_output_as_tracks(self):
@@ -53,18 +56,18 @@ class MBSubmitPluginTest(TerminalImportSessionSetup, unittest.TestCase,
         self.matcher.matching = AutotagStub.BAD
 
         with capture_stdout() as output:
-            with control_stdin('\n'.join(['t', 's', 'p', 's'])):
+            with control_stdin("\n".join(["t", "s", "p", "s"])):
                 # as Tracks; Skip; Print tracks; Skip
                 self.importer.run()
 
         # Manually build the string for comparing the output.
-        tracklist = ('Print tracks? '
-                     '02. Tag Title 2 - Tag Artist (0:01)')
+        tracklist = "Print tracks? " "02. Tag Title 2 - Tag Artist (0:01)"
         self.assertIn(tracklist, output.getvalue())
 
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")

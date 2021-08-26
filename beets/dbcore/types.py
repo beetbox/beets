@@ -21,13 +21,14 @@ from beets.util import str2bool
 
 # Abstract base.
 
+
 class Type:
     """An object encapsulating the type of a model field. Includes
     information about how to store, query, format, and parse a given
     field.
     """
 
-    sql = 'TEXT'
+    sql = "TEXT"
     """The SQLite column type for the value.
     """
 
@@ -45,8 +46,7 @@ class Type:
 
     @property
     def null(self):
-        """The value to be exposed when the underlying value is None.
-        """
+        """The value to be exposed when the underlying value is None."""
         return self.model_type()
 
     def format(self, value):
@@ -57,9 +57,9 @@ class Type:
             value = self.null
         # `self.null` might be `None`
         if value is None:
-            value = ''
+            value = ""
         if isinstance(value, bytes):
-            value = value.decode('utf-8', 'ignore')
+            value = value.decode("utf-8", "ignore")
 
         return str(value)
 
@@ -99,7 +99,7 @@ class Type:
         and the method must handle these in addition.
         """
         if isinstance(sql_value, memoryview):
-            sql_value = bytes(sql_value).decode('utf-8', 'ignore')
+            sql_value = bytes(sql_value).decode("utf-8", "ignore")
         if isinstance(sql_value, str):
             return self.parse(sql_value)
         else:
@@ -114,14 +114,15 @@ class Type:
 
 # Reusable types.
 
+
 class Default(Type):
     null = None
 
 
 class Integer(Type):
-    """A basic integer type.
-    """
-    sql = 'INTEGER'
+    """A basic integer type."""
+
+    sql = "INTEGER"
     query = query.NumericQuery
     model_type = int
 
@@ -138,16 +139,17 @@ class PaddedInt(Integer):
     """An integer field that is formatted with a given number of digits,
     padded with zeroes.
     """
+
     def __init__(self, digits):
         self.digits = digits
 
     def format(self, value):
-        return '{0:0{1}d}'.format(value or 0, self.digits)
+        return "{0:0{1}d}".format(value or 0, self.digits)
 
 
 class NullPaddedInt(PaddedInt):
-    """Same as `PaddedInt`, but does not normalize `None` to `0.0`.
-    """
+    """Same as `PaddedInt`, but does not normalize `None` to `0.0`."""
+
     null = None
 
 
@@ -155,30 +157,33 @@ class ScaledInt(Integer):
     """An integer whose formatting operation scales the number by a
     constant and adds a suffix. Good for units with large magnitudes.
     """
-    def __init__(self, unit, suffix=''):
+
+    def __init__(self, unit, suffix=""):
         self.unit = unit
         self.suffix = suffix
 
     def format(self, value):
-        return '{}{}'.format((value or 0) // self.unit, self.suffix)
+        return "{}{}".format((value or 0) // self.unit, self.suffix)
 
 
 class Id(Integer):
     """An integer used as the row id or a foreign key in a SQLite table.
     This type is nullable: None values are not translated to zero.
     """
+
     null = None
 
     def __init__(self, primary=True):
         if primary:
-            self.sql = 'INTEGER PRIMARY KEY'
+            self.sql = "INTEGER PRIMARY KEY"
 
 
 class Float(Type):
     """A basic floating-point type. The `digits` parameter specifies how
     many decimal places to use in the human-readable representation.
     """
-    sql = 'REAL'
+
+    sql = "REAL"
     query = query.NumericQuery
     model_type = float
 
@@ -186,19 +191,19 @@ class Float(Type):
         self.digits = digits
 
     def format(self, value):
-        return '{0:.{1}f}'.format(value or 0, self.digits)
+        return "{0:.{1}f}".format(value or 0, self.digits)
 
 
 class NullFloat(Float):
-    """Same as `Float`, but does not normalize `None` to `0.0`.
-    """
+    """Same as `Float`, but does not normalize `None` to `0.0`."""
+
     null = None
 
 
 class String(Type):
-    """A Unicode string type.
-    """
-    sql = 'TEXT'
+    """A Unicode string type."""
+
+    sql = "TEXT"
     query = query.SubstringQuery
 
     def normalize(self, value):
@@ -209,9 +214,9 @@ class String(Type):
 
 
 class Boolean(Type):
-    """A boolean type.
-    """
-    sql = 'INTEGER'
+    """A boolean type."""
+
+    sql = "INTEGER"
     query = query.BooleanQuery
     model_type = bool
 

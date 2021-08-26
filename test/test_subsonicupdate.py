@@ -28,6 +28,7 @@ def _params(url):
 
 class SubsonicPluginTest(_common.TestCase, TestHelper):
     """Test class for subsonicupdate."""
+
     @responses.activate
     def setUp(self):
         """Sets up config and plugin for test."""
@@ -39,20 +40,21 @@ class SubsonicPluginTest(_common.TestCase, TestHelper):
         config["subsonic"]["url"] = "http://localhost:4040"
         responses.add(
             responses.GET,
-            'http://localhost:4040/rest/ping.view',
+            "http://localhost:4040/rest/ping.view",
             status=200,
-            body=self.PING_BODY
+            body=self.PING_BODY,
         )
         self.subsonicupdate = subsonicupdate.SubsonicUpdate()
-    PING_BODY = '''
+
+    PING_BODY = """
 {
     "subsonic-response": {
         "status": "failed",
         "version": "1.15.0"
     }
 }
-'''
-    SUCCESS_BODY = '''
+"""
+    SUCCESS_BODY = """
 {
     "subsonic-response": {
         "status": "ok",
@@ -63,9 +65,9 @@ class SubsonicPluginTest(_common.TestCase, TestHelper):
         }
     }
 }
-'''
+"""
 
-    FAILED_BODY = '''
+    FAILED_BODY = """
 {
     "subsonic-response": {
         "status": "failed",
@@ -76,9 +78,9 @@ class SubsonicPluginTest(_common.TestCase, TestHelper):
         }
     }
 }
-'''
+"""
 
-    ERROR_BODY = '''
+    ERROR_BODY = """
 {
     "timestamp": 1599185854498,
     "status": 404,
@@ -86,7 +88,7 @@ class SubsonicPluginTest(_common.TestCase, TestHelper):
     "message": "No message available",
     "path": "/rest/startScn"
 }
-'''
+"""
 
     def tearDown(self):
         """Tears down tests."""
@@ -97,9 +99,9 @@ class SubsonicPluginTest(_common.TestCase, TestHelper):
         """Tests success path based on best case scenario."""
         responses.add(
             responses.GET,
-            'http://localhost:4040/rest/startScan',
+            "http://localhost:4040/rest/startScan",
             status=200,
-            body=self.SUCCESS_BODY
+            body=self.SUCCESS_BODY,
         )
 
         self.subsonicupdate.start_scan()
@@ -109,9 +111,9 @@ class SubsonicPluginTest(_common.TestCase, TestHelper):
         """Tests failed path based on bad credentials."""
         responses.add(
             responses.GET,
-            'http://localhost:4040/rest/startScan',
+            "http://localhost:4040/rest/startScan",
             status=200,
-            body=self.FAILED_BODY
+            body=self.FAILED_BODY,
         )
 
         self.subsonicupdate.start_scan()
@@ -121,9 +123,9 @@ class SubsonicPluginTest(_common.TestCase, TestHelper):
         """Tests failed path based on resource not found."""
         responses.add(
             responses.GET,
-            'http://localhost:4040/rest/startScan',
+            "http://localhost:4040/rest/startScan",
             status=404,
-            body=self.ERROR_BODY
+            body=self.ERROR_BODY,
         )
 
         self.subsonicupdate.start_scan()
@@ -139,9 +141,9 @@ class SubsonicPluginTest(_common.TestCase, TestHelper):
 
         responses.add(
             responses.GET,
-            'http://localhost:4040/contextPath/rest/startScan',
+            "http://localhost:4040/contextPath/rest/startScan",
             status=200,
-            body=self.SUCCESS_BODY
+            body=self.SUCCESS_BODY,
         )
 
         self.subsonicupdate.start_scan()
@@ -153,9 +155,9 @@ class SubsonicPluginTest(_common.TestCase, TestHelper):
 
         responses.add(
             responses.GET,
-            'http://localhost:4040/rest/startScan',
+            "http://localhost:4040/rest/startScan",
             status=200,
-            body=self.SUCCESS_BODY
+            body=self.SUCCESS_BODY,
         )
 
         self.subsonicupdate.start_scan()
@@ -167,9 +169,9 @@ class SubsonicPluginTest(_common.TestCase, TestHelper):
 
         responses.add(
             responses.GET,
-            'http://localhost/airsonic/rest/startScan',
+            "http://localhost/airsonic/rest/startScan",
             status=200,
-            body=self.SUCCESS_BODY
+            body=self.SUCCESS_BODY,
         )
 
         self.subsonicupdate.start_scan()
@@ -181,9 +183,9 @@ class SubsonicPluginTest(_common.TestCase, TestHelper):
 
         responses.add(
             responses.GET,
-            'http://localhost:4040/rest/startScan',
+            "http://localhost:4040/rest/startScan",
             status=200,
-            body=self.SUCCESS_BODY
+            body=self.SUCCESS_BODY,
         )
 
         self.subsonicupdate.start_scan()
@@ -194,5 +196,5 @@ def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")

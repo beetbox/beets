@@ -31,34 +31,46 @@ class Gmusic(BeetsPlugin):
         self.m = Musicmanager()
 
         # OAUTH_FILEPATH was moved in gmusicapi 12.0.0.
-        if hasattr(Musicmanager, 'OAUTH_FILEPATH'):
+        if hasattr(Musicmanager, "OAUTH_FILEPATH"):
             oauth_file = Musicmanager.OAUTH_FILEPATH
         else:
             oauth_file = gmusicapi.clients.OAUTH_FILEPATH
 
-        self.config.add({
-            'auto': False,
-            'uploader_id': '',
-            'uploader_name': '',
-            'device_id': '',
-            'oauth_file': oauth_file,
-        })
-        if self.config['auto']:
+        self.config.add(
+            {
+                "auto": False,
+                "uploader_id": "",
+                "uploader_name": "",
+                "device_id": "",
+                "oauth_file": oauth_file,
+            }
+        )
+        if self.config["auto"]:
             self.import_stages = [self.autoupload]
 
     def commands(self):
-        gupload = Subcommand('gmusic-upload',
-                             help='upload your tracks to Google Play Music')
+        gupload = Subcommand(
+            "gmusic-upload", help="upload your tracks to Google Play Music"
+        )
         gupload.func = self.upload
 
-        search = Subcommand('gmusic-songs',
-                            help='list of songs in Google Play Music library')
-        search.parser.add_option('-t', '--track', dest='track',
-                                 action='store_true',
-                                 help='Search by track name')
-        search.parser.add_option('-a', '--artist', dest='artist',
-                                 action='store_true',
-                                 help='Search by artist')
+        search = Subcommand(
+            "gmusic-songs", help="list of songs in Google Play Music library"
+        )
+        search.parser.add_option(
+            "-t",
+            "--track",
+            dest="track",
+            action="store_true",
+            help="Search by track name",
+        )
+        search.parser.add_option(
+            "-a",
+            "--artist",
+            dest="artist",
+            action="store_true",
+            help="Search by artist",
+        )
         search.func = self.search
         return [gupload, search]
 
@@ -67,13 +79,15 @@ class Gmusic(BeetsPlugin):
             return
         # Checks for OAuth2 credentials,
         # if they don't exist - performs authorization
-        oauth_file = self.config['oauth_file'].as_filename()
+        oauth_file = self.config["oauth_file"].as_filename()
         if os.path.isfile(oauth_file):
-            uploader_id = self.config['uploader_id']
-            uploader_name = self.config['uploader_name']
-            self.m.login(oauth_credentials=oauth_file,
-                         uploader_id=uploader_id.as_str().upper() or None,
-                         uploader_name=uploader_name.as_str() or None)
+            uploader_id = self.config["uploader_id"]
+            uploader_name = self.config["uploader_name"]
+            self.m.login(
+                oauth_credentials=oauth_file,
+                uploader_id=uploader_id.as_str().upper() or None,
+                uploader_name=uploader_name.as_str() or None,
+            )
         else:
             self.m.perform_oauth(oauth_file)
 
@@ -81,55 +95,63 @@ class Gmusic(BeetsPlugin):
         items = lib.items(ui.decargs(args))
         files = self.getpaths(items)
         self.authenticate()
-        ui.print_('Uploading your files...')
+        ui.print_("Uploading your files...")
         self.m.upload(filepaths=files)
-        ui.print_('Your files were successfully added to library')
+        ui.print_("Your files were successfully added to library")
 
     def autoupload(self, session, task):
         items = task.imported_items()
         files = self.getpaths(items)
         self.authenticate()
-        self._log.info('Uploading files to Google Play Music...', files)
+        self._log.info("Uploading files to Google Play Music...", files)
         self.m.upload(filepaths=files)
-        self._log.info('Your files were successfully added to your '
-                       + 'Google Play Music library')
+        self._log.info(
+            "Your files were successfully added to your "
+            + "Google Play Music library"
+        )
 
     def getpaths(self, items):
         return [x.path for x in items]
 
     def search(self, lib, opts, args):
-        password = config['gmusic']['password']
-        email = config['gmusic']['email']
-        uploader_id = config['gmusic']['uploader_id']
-        device_id = config['gmusic']['device_id']
+        password = config["gmusic"]["password"]
+        email = config["gmusic"]["email"]
+        uploader_id = config["gmusic"]["uploader_id"]
+        device_id = config["gmusic"]["device_id"]
         password.redact = True
         email.redact = True
         # Since Musicmanager doesn't support library management
         # we need to use mobileclient interface
         mobile = Mobileclient()
         try:
-            new_device_id = (device_id.as_str()
-                             or uploader_id.as_str().replace(':', '')
-                             or Mobileclient.FROM_MAC_ADDRESS).upper()
+            new_device_id = (
+                device_id.as_str()
+                or uploader_id.as_str().replace(":", "")
+                or Mobileclient.FROM_MAC_ADDRESS
+            ).upper()
             mobile.login(email.as_str(), password.as_str(), new_device_id)
             files = mobile.get_all_songs()
         except NotLoggedIn:
             ui.print_(
-                'Authentication error. Please check your email and password.'
+                "Authentication error. Please check your email and password."
             )
             return
         if not args:
             for i, file in enumerate(files, start=1):
-                print(i, ui.colorize('blue', file['artist']),
-                      file['title'], ui.colorize('red', file['album']))
+                print(
+                    i,
+                    ui.colorize("blue", file["artist"]),
+                    file["title"],
+                    ui.colorize("red", file["album"]),
+                )
         else:
             if opts.track:
-                self.match(files, args, 'title')
+                self.match(files, args, "title")
             else:
-                self.match(files, args, 'artist')
+                self.match(files, args, "artist")
 
     @staticmethod
     def match(files, args, search_by):
         for file in files:
-            if ' '.join(ui.decargs(args)) in file[search_by]:
-                print(file['artist'], file['title'], file['album'])
+            if " ".join(ui.decargs(args)) in file[search_by]:
+                print(file["artist"], file["title"], file["album"])

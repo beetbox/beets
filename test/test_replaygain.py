@@ -17,30 +17,33 @@ import unittest
 from mediafile import MediaFile
 
 from beets import config
-from beetsplug.replaygain import (FatalGstreamerPluginReplayGainError,
-                                  GStreamerBackend)
+from beetsplug.replaygain import (
+    FatalGstreamerPluginReplayGainError,
+    GStreamerBackend,
+)
 from test.helper import TestHelper, has_program
 
 try:
     import gi
-    gi.require_version('Gst', '1.0')
+
+    gi.require_version("Gst", "1.0")
     GST_AVAILABLE = True
 except (ImportError, ValueError):
     GST_AVAILABLE = False
 
-if any(has_program(cmd, ['-v']) for cmd in ['mp3gain', 'aacgain']):
+if any(has_program(cmd, ["-v"]) for cmd in ["mp3gain", "aacgain"]):
     GAIN_PROG_AVAILABLE = True
 else:
     GAIN_PROG_AVAILABLE = False
 
-FFMPEG_AVAILABLE = has_program('ffmpeg', ['-version'])
+FFMPEG_AVAILABLE = has_program("ffmpeg", ["-version"])
 
 
 def reset_replaygain(item):
-    item['rg_track_peak'] = None
-    item['rg_track_gain'] = None
-    item['rg_album_gain'] = None
-    item['rg_album_gain'] = None
+    item["rg_track_peak"] = None
+    item["rg_track_gain"] = None
+    item["rg_album_gain"] = None
+    item["rg_album_gain"] = None
     item.write()
     item.store()
     item.store()
@@ -50,12 +53,13 @@ def reset_replaygain(item):
 class ReplayGainCliTestBase(TestHelper):
     def setUp(self):
         self.setup_beets(disk=True)
-        self.config['replaygain']['backend'] = self.backend
+        self.config["replaygain"]["backend"] = self.backend
 
         try:
-            self.load_plugins('replaygain')
+            self.load_plugins("replaygain")
         except Exception:
             import sys
+
             # store exception info so an error in teardown does not swallow it
             exc_info = sys.exc_info()
             try:
@@ -77,12 +81,12 @@ class ReplayGainCliTestBase(TestHelper):
         self.unload_plugins()
 
     def _reset_replaygain(self, item):
-        item['rg_track_peak'] = None
-        item['rg_track_gain'] = None
-        item['rg_album_peak'] = None
-        item['rg_album_gain'] = None
-        item['r128_track_gain'] = None
-        item['r128_album_gain'] = None
+        item["rg_track_peak"] = None
+        item["rg_track_gain"] = None
+        item["rg_album_peak"] = None
+        item["rg_album_gain"] = None
+        item["r128_track_gain"] = None
+        item["r128_album_gain"] = None
         item.write()
         item.store()
 
@@ -94,29 +98,33 @@ class ReplayGainCliTestBase(TestHelper):
             self.assertIsNone(mediafile.rg_track_peak)
             self.assertIsNone(mediafile.rg_track_gain)
 
-        self.run_command('replaygain')
+        self.run_command("replaygain")
 
         # Skip the test if rg_track_peak and rg_track gain is None, assuming
         # that it could only happen if the decoder plugins are missing.
-        if all(i.rg_track_peak is None and i.rg_track_gain is None
-               for i in self.lib.items()):
-            self.skipTest('decoder plugins could not be loaded.')
+        if all(
+            i.rg_track_peak is None and i.rg_track_gain is None
+            for i in self.lib.items()
+        ):
+            self.skipTest("decoder plugins could not be loaded.")
 
         for item in self.lib.items():
             self.assertIsNotNone(item.rg_track_peak)
             self.assertIsNotNone(item.rg_track_gain)
             mediafile = MediaFile(item.path)
             self.assertAlmostEqual(
-                mediafile.rg_track_peak, item.rg_track_peak, places=6)
+                mediafile.rg_track_peak, item.rg_track_peak, places=6
+            )
             self.assertAlmostEqual(
-                mediafile.rg_track_gain, item.rg_track_gain, places=2)
+                mediafile.rg_track_gain, item.rg_track_gain, places=2
+            )
 
     def test_cli_skips_calculated_tracks(self):
-        self.run_command('replaygain')
+        self.run_command("replaygain")
         item = self.lib.items()[0]
         peak = item.rg_track_peak
         item.rg_track_gain = 0.0
-        self.run_command('replaygain')
+        self.run_command("replaygain")
         self.assertEqual(item.rg_track_gain, 0.0)
         self.assertEqual(item.rg_track_peak, peak)
 
@@ -126,7 +134,7 @@ class ReplayGainCliTestBase(TestHelper):
             self.assertIsNone(mediafile.rg_album_peak)
             self.assertIsNone(mediafile.rg_album_gain)
 
-        self.run_command('replaygain', '-a')
+        self.run_command("replaygain", "-a")
 
         peaks = []
         gains = []
@@ -151,7 +159,7 @@ class ReplayGainCliTestBase(TestHelper):
         for item in album.items():
             self._reset_replaygain(item)
 
-        self.run_command('replaygain', '-a')
+        self.run_command("replaygain", "-a")
 
         for item in album.items():
             mediafile = MediaFile(item.path)
@@ -166,9 +174,9 @@ class ReplayGainCliTestBase(TestHelper):
         item = self.lib.items()[0]
 
         def analyse(target_level):
-            self.config['replaygain']['targetlevel'] = target_level
+            self.config["replaygain"]["targetlevel"] = target_level
             self._reset_replaygain(item)
-            self.run_command('replaygain', '-f')
+            self.run_command("replaygain", "-f")
             mediafile = MediaFile(item.path)
             return mediafile.rg_track_gain
 
@@ -182,16 +190,16 @@ class ReplayGainCliTestBase(TestHelper):
         self.assertNotEqual(gain_relative_to_84, gain_relative_to_89)
 
 
-@unittest.skipIf(not GST_AVAILABLE, 'gstreamer cannot be found')
+@unittest.skipIf(not GST_AVAILABLE, "gstreamer cannot be found")
 class ReplayGainGstCliTest(ReplayGainCliTestBase, unittest.TestCase):
-    backend = 'gstreamer'
+    backend = "gstreamer"
 
     def setUp(self):
         try:
             # Check if required plugins can be loaded by instantiating a
             # GStreamerBackend (via its .__init__).
-            config['replaygain']['targetlevel'] = 89
-            GStreamerBackend(config['replaygain'], None)
+            config["replaygain"]["targetlevel"] = 89
+            GStreamerBackend(config["replaygain"], None)
         except FatalGstreamerPluginReplayGainError as e:
             # Skip the test if plugins could not be loaded.
             self.skipTest(str(e))
@@ -199,19 +207,19 @@ class ReplayGainGstCliTest(ReplayGainCliTestBase, unittest.TestCase):
         super().setUp()
 
 
-@unittest.skipIf(not GAIN_PROG_AVAILABLE, 'no *gain command found')
+@unittest.skipIf(not GAIN_PROG_AVAILABLE, "no *gain command found")
 class ReplayGainCmdCliTest(ReplayGainCliTestBase, unittest.TestCase):
-    backend = 'command'
+    backend = "command"
 
 
-@unittest.skipIf(not FFMPEG_AVAILABLE, 'ffmpeg cannot be found')
+@unittest.skipIf(not FFMPEG_AVAILABLE, "ffmpeg cannot be found")
 class ReplayGainFfmpegTest(ReplayGainCliTestBase, unittest.TestCase):
-    backend = 'ffmpeg'
+    backend = "ffmpeg"
 
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")

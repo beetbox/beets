@@ -28,10 +28,9 @@ import mediafile
 
 
 def mediafile_image(image_path, maxwidth=None):
-    """Return a `mediafile.Image` object for the path.
-    """
+    """Return a `mediafile.Image` object for the path."""
 
-    with open(syspath(image_path), 'rb') as f:
+    with open(syspath(image_path), "rb") as f:
         data = f.read()
     return mediafile.Image(data, type=mediafile.ImageType.front)
 
@@ -41,83 +40,117 @@ def get_art(log, item):
     try:
         mf = mediafile.MediaFile(syspath(item.path))
     except mediafile.UnreadableFileError as exc:
-        log.warning('Could not extract art from {0}: {1}',
-                    displayable_path(item.path), exc)
+        log.warning(
+            "Could not extract art from {0}: {1}",
+            displayable_path(item.path),
+            exc,
+        )
         return
 
     return mf.art
 
 
-def embed_item(log, item, imagepath, maxwidth=None, itempath=None,
-               compare_threshold=0, ifempty=False, as_album=False, id3v23=None,
-               quality=0):
-    """Embed an image into the item's media file.
-    """
+def embed_item(
+    log,
+    item,
+    imagepath,
+    maxwidth=None,
+    itempath=None,
+    compare_threshold=0,
+    ifempty=False,
+    as_album=False,
+    id3v23=None,
+    quality=0,
+):
+    """Embed an image into the item's media file."""
     # Conditions and filters.
     if compare_threshold:
         if not check_art_similarity(log, item, imagepath, compare_threshold):
-            log.info('Image not similar; skipping.')
+            log.info("Image not similar; skipping.")
             return
     if ifempty and get_art(log, item):
-        log.info('media file already contained art')
+        log.info("media file already contained art")
         return
     if maxwidth and not as_album:
         imagepath = resize_image(log, imagepath, maxwidth, quality)
 
     # Get the `Image` object from the file.
     try:
-        log.debug('embedding {0}', displayable_path(imagepath))
+        log.debug("embedding {0}", displayable_path(imagepath))
         image = mediafile_image(imagepath, maxwidth)
     except OSError as exc:
-        log.warning('could not read image file: {0}', exc)
+        log.warning("could not read image file: {0}", exc)
         return
 
     # Make sure the image kind is safe (some formats only support PNG
     # and JPEG).
-    if image.mime_type not in ('image/jpeg', 'image/png'):
-        log.info('not embedding image of unsupported type: {}',
-                 image.mime_type)
+    if image.mime_type not in ("image/jpeg", "image/png"):
+        log.info(
+            "not embedding image of unsupported type: {}", image.mime_type
+        )
         return
 
-    item.try_write(path=itempath, tags={'images': [image]}, id3v23=id3v23)
+    item.try_write(path=itempath, tags={"images": [image]}, id3v23=id3v23)
 
 
-def embed_album(log, album, maxwidth=None, quiet=False, compare_threshold=0,
-                ifempty=False, quality=0):
-    """Embed album art into all of the album's items.
-    """
+def embed_album(
+    log,
+    album,
+    maxwidth=None,
+    quiet=False,
+    compare_threshold=0,
+    ifempty=False,
+    quality=0,
+):
+    """Embed album art into all of the album's items."""
     imagepath = album.artpath
     if not imagepath:
-        log.info('No album art present for {0}', album)
+        log.info("No album art present for {0}", album)
         return
     if not os.path.isfile(syspath(imagepath)):
-        log.info('Album art not found at {0} for {1}',
-                 displayable_path(imagepath), album)
+        log.info(
+            "Album art not found at {0} for {1}",
+            displayable_path(imagepath),
+            album,
+        )
         return
     if maxwidth:
         imagepath = resize_image(log, imagepath, maxwidth, quality)
 
-    log.info('Embedding album art into {0}', album)
+    log.info("Embedding album art into {0}", album)
 
     for item in album.items():
-        embed_item(log, item, imagepath, maxwidth, None, compare_threshold,
-                   ifempty, as_album=True, quality=quality)
+        embed_item(
+            log,
+            item,
+            imagepath,
+            maxwidth,
+            None,
+            compare_threshold,
+            ifempty,
+            as_album=True,
+            quality=quality,
+        )
 
 
 def resize_image(log, imagepath, maxwidth, quality):
     """Returns path to an image resized to maxwidth and encoded with the
     specified quality level.
     """
-    log.debug('Resizing album art to {0} pixels wide and encoding at quality \
-              level {1}', maxwidth, quality)
-    imagepath = ArtResizer.shared.resize(maxwidth, syspath(imagepath),
-                                         quality=quality)
+    log.debug(
+        "Resizing album art to {0} pixels wide and encoding at quality \
+              level {1}",
+        maxwidth,
+        quality,
+    )
+    imagepath = ArtResizer.shared.resize(
+        maxwidth, syspath(imagepath), quality=quality
+    )
     return imagepath
 
 
 def check_art_similarity(log, item, imagepath, compare_threshold):
-    """A boolean indicating if an image is similar to embedded item art.
-    """
+    """A boolean indicating if an image is similar to embedded item art."""
     with NamedTemporaryFile(delete=True) as f:
         art = extract(log, f.name, item)
 
@@ -129,12 +162,20 @@ def check_art_similarity(log, item, imagepath, compare_threshold):
             # to grayscale and then pipe them into the `compare` command.
             # On Windows, ImageMagick doesn't support the magic \\?\ prefix
             # on paths, so we pass `prefix=False` to `syspath`.
-            convert_cmd = ['convert', syspath(imagepath, prefix=False),
-                           syspath(art, prefix=False),
-                           '-colorspace', 'gray', 'MIFF:-']
-            compare_cmd = ['compare', '-metric', 'PHASH', '-', 'null:']
-            log.debug('comparing images with pipeline {} | {}',
-                      convert_cmd, compare_cmd)
+            convert_cmd = [
+                "convert",
+                syspath(imagepath, prefix=False),
+                syspath(art, prefix=False),
+                "-colorspace",
+                "gray",
+                "MIFF:-",
+            ]
+            compare_cmd = ["compare", "-metric", "PHASH", "-", "null:"]
+            log.debug(
+                "comparing images with pipeline {} | {}",
+                convert_cmd,
+                compare_cmd,
+            )
             convert_proc = subprocess.Popen(
                 convert_cmd,
                 stdout=subprocess.PIPE,
@@ -157,7 +198,7 @@ def check_art_similarity(log, item, imagepath, compare_threshold):
             convert_proc.wait()
             if convert_proc.returncode:
                 log.debug(
-                    'ImageMagick convert failed with status {}: {!r}',
+                    "ImageMagick convert failed with status {}: {!r}",
                     convert_proc.returncode,
                     convert_stderr,
                 )
@@ -167,9 +208,11 @@ def check_art_similarity(log, item, imagepath, compare_threshold):
             stdout, stderr = compare_proc.communicate()
             if compare_proc.returncode:
                 if compare_proc.returncode != 1:
-                    log.debug('ImageMagick compare failed: {0}, {1}',
-                              displayable_path(imagepath),
-                              displayable_path(art))
+                    log.debug(
+                        "ImageMagick compare failed: {0}, {1}",
+                        displayable_path(imagepath),
+                        displayable_path(art),
+                    )
                     return
                 out_str = stderr
             else:
@@ -178,10 +221,10 @@ def check_art_similarity(log, item, imagepath, compare_threshold):
             try:
                 phash_diff = float(out_str)
             except ValueError:
-                log.debug('IM output is not a number: {0!r}', out_str)
+                log.debug("IM output is not a number: {0!r}", out_str)
                 return
 
-            log.debug('ImageMagick compare score: {0}', phash_diff)
+            log.debug("ImageMagick compare score: {0}", phash_diff)
             return phash_diff <= compare_threshold
 
     return True
@@ -191,20 +234,22 @@ def extract(log, outpath, item):
     art = get_art(log, item)
     outpath = bytestring_path(outpath)
     if not art:
-        log.info('No album art present in {0}, skipping.', item)
+        log.info("No album art present in {0}, skipping.", item)
         return
 
     # Add an extension to the filename.
     ext = mediafile.image_extension(art)
     if not ext:
-        log.warning('Unknown image type in {0}.',
-                    displayable_path(item.path))
+        log.warning("Unknown image type in {0}.", displayable_path(item.path))
         return
-    outpath += bytestring_path('.' + ext)
+    outpath += bytestring_path("." + ext)
 
-    log.info('Extracting album art from: {0} to: {1}',
-             item, displayable_path(outpath))
-    with open(syspath(outpath), 'wb') as f:
+    log.info(
+        "Extracting album art from: {0} to: {1}",
+        item,
+        displayable_path(outpath),
+    )
+    with open(syspath(outpath), "wb") as f:
         f.write(art)
     return outpath
 
@@ -218,7 +263,7 @@ def extract_first(log, outpath, items):
 
 def clear(log, lib, query):
     items = lib.items(query)
-    log.info('Clearing album art from {0} items', len(items))
+    log.info("Clearing album art from {0} items", len(items))
     for item in items:
-        log.debug('Clearing art for {0}', item)
-        item.try_write(tags={'images': None})
+        log.debug("Clearing art for {0}", item)
+        item.try_write(tags={"images": None})

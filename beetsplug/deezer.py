@@ -26,17 +26,17 @@ from beets.plugins import MetadataSourcePlugin, BeetsPlugin
 
 
 class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
-    data_source = 'Deezer'
+    data_source = "Deezer"
 
     # Base URLs for the Deezer API
     # Documentation: https://developers.deezer.com/api/
-    search_url = 'https://api.deezer.com/search/'
-    album_url = 'https://api.deezer.com/album/'
-    track_url = 'https://api.deezer.com/track/'
+    search_url = "https://api.deezer.com/search/"
+    album_url = "https://api.deezer.com/album/"
+    track_url = "https://api.deezer.com/track/"
 
     id_regex = {
-        'pattern': r'(^|deezer\.com/)([a-z]*/)?({}/)?(\d+)',
-        'match_group': 4,
+        "pattern": r"(^|deezer\.com/)([a-z]*/)?({}/)?(\d+)",
+        "match_group": 4,
     }
 
     def __init__(self):
@@ -51,15 +51,15 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         :return: AlbumInfo object for album.
         :rtype: beets.autotag.hooks.AlbumInfo or None
         """
-        deezer_id = self._get_id('album', album_id)
+        deezer_id = self._get_id("album", album_id)
         if deezer_id is None:
             return None
 
         album_data = requests.get(self.album_url + deezer_id).json()
-        artist, artist_id = self.get_artist(album_data['contributors'])
+        artist, artist_id = self.get_artist(album_data["contributors"])
 
-        release_date = album_data['release_date']
-        date_parts = [int(part) for part in release_date.split('-')]
+        release_date = album_data["release_date"]
+        date_parts = [int(part) for part in release_date.split("-")]
         num_date_parts = len(date_parts)
 
         if num_date_parts == 3:
@@ -78,8 +78,8 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             )
 
         tracks_data = requests.get(
-            self.album_url + deezer_id + '/tracks'
-        ).json()['data']
+            self.album_url + deezer_id + "/tracks"
+        ).json()["data"]
         if not tracks_data:
             return None
         tracks = []
@@ -93,22 +93,22 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             track.medium_total = medium_totals[track.medium]
 
         return AlbumInfo(
-            album=album_data['title'],
+            album=album_data["title"],
             album_id=deezer_id,
             artist=artist,
-            artist_credit=self.get_artist([album_data['artist']])[0],
+            artist_credit=self.get_artist([album_data["artist"]])[0],
             artist_id=artist_id,
             tracks=tracks,
-            albumtype=album_data['record_type'],
-            va=len(album_data['contributors']) == 1
-            and artist.lower() == 'various artists',
+            albumtype=album_data["record_type"],
+            va=len(album_data["contributors"]) == 1
+            and artist.lower() == "various artists",
             year=year,
             month=month,
             day=day,
-            label=album_data['label'],
+            label=album_data["label"],
             mediums=max(medium_totals.keys()),
             data_source=self.data_source,
-            data_url=album_data['link'],
+            data_url=album_data["link"],
         )
 
     def _get_track(self, track_data):
@@ -120,19 +120,19 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         :rtype: beets.autotag.hooks.TrackInfo
         """
         artist, artist_id = self.get_artist(
-            track_data.get('contributors', [track_data['artist']])
+            track_data.get("contributors", [track_data["artist"]])
         )
         return TrackInfo(
-            title=track_data['title'],
-            track_id=track_data['id'],
+            title=track_data["title"],
+            track_id=track_data["id"],
             artist=artist,
             artist_id=artist_id,
-            length=track_data['duration'],
-            index=track_data['track_position'],
-            medium=track_data['disk_number'],
-            medium_index=track_data['track_position'],
+            length=track_data["duration"],
+            index=track_data["track_position"],
+            medium=track_data["disk_number"],
+            medium_index=track_data["track_position"],
             data_source=self.data_source,
-            data_url=track_data['link'],
+            data_url=track_data["link"],
         )
 
     def track_for_id(self, track_id=None, track_data=None):
@@ -149,7 +149,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         :rtype: beets.autotag.hooks.TrackInfo or None
         """
         if track_data is None:
-            deezer_id = self._get_id('track', track_id)
+            deezer_id = self._get_id("track", track_id)
             if deezer_id is None:
                 return None
             track_data = requests.get(self.track_url + deezer_id).json()
@@ -159,19 +159,19 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         # release) and `track.medium_total` (total number of tracks on
         # the track's disc).
         album_tracks_data = requests.get(
-            self.album_url + str(track_data['album']['id']) + '/tracks'
-        ).json()['data']
+            self.album_url + str(track_data["album"]["id"]) + "/tracks"
+        ).json()["data"]
         medium_total = 0
         for i, track_data in enumerate(album_tracks_data, start=1):
-            if track_data['disk_number'] == track.medium:
+            if track_data["disk_number"] == track.medium:
                 medium_total += 1
-                if track_data['id'] == track.track_id:
+                if track_data["id"] == track.track_id:
                     track.index = i
         track.medium_total = medium_total
         return track
 
     @staticmethod
-    def _construct_search_query(filters=None, keywords=''):
+    def _construct_search_query(filters=None, keywords=""):
         """Construct a query string with the specified filters and keywords to
         be provided to the Deezer Search API
         (https://developers.deezer.com/api/search).
@@ -185,14 +185,14 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         """
         query_components = [
             keywords,
-            ' '.join(f'{k}:"{v}"' for k, v in filters.items()),
+            " ".join(f'{k}:"{v}"' for k, v in filters.items()),
         ]
-        query = ' '.join([q for q in query_components if q])
+        query = " ".join([q for q in query_components if q])
         if not isinstance(query, str):
-            query = query.decode('utf8')
+            query = query.decode("utf8")
         return unidecode.unidecode(query)
 
-    def _search_api(self, query_type, filters=None, keywords=''):
+    def _search_api(self, query_type, filters=None, keywords=""):
         """Query the Deezer Search API for the specified ``keywords``, applying
         the provided ``filters``.
 
@@ -213,14 +213,12 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         )
         if not query:
             return None
-        self._log.debug(
-            f"Searching {self.data_source} for '{query}'"
-        )
+        self._log.debug(f"Searching {self.data_source} for '{query}'")
         response = requests.get(
-            self.search_url + query_type, params={'q': query}
+            self.search_url + query_type, params={"q": query}
         )
         response.raise_for_status()
-        response_data = response.json().get('data', [])
+        response_data = response.json().get("data", [])
         self._log.debug(
             "Found {} result(s) from {} for '{}'",
             len(response_data),

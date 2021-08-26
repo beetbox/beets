@@ -29,6 +29,7 @@ def rewriter(field, rules):
     with the given rewriting rules. ``rules`` must be a list of
     (pattern, replacement) pairs.
     """
+
     def fieldfunc(item):
         value = item._values_fixed[field]
         for pattern, replacement in rules:
@@ -37,6 +38,7 @@ def rewriter(field, rules):
                 return replacement
         # Not activated; return original value.
         return value
+
     return fieldfunc
 
 
@@ -55,15 +57,16 @@ class RewritePlugin(BeetsPlugin):
             except ValueError:
                 raise ui.UserError("invalid rewrite specification")
             if fieldname not in library.Item._fields:
-                raise ui.UserError("invalid field name (%s) in rewriter" %
-                                   fieldname)
-            self._log.debug('adding template field {0}', key)
+                raise ui.UserError(
+                    "invalid field name (%s) in rewriter" % fieldname
+                )
+            self._log.debug("adding template field {0}", key)
             pattern = re.compile(pattern.lower())
             rules[fieldname].append((pattern, value))
-            if fieldname == 'artist':
+            if fieldname == "artist":
                 # Special case for the artist field: apply the same
                 # rewrite for "albumartist" as well.
-                rules['albumartist'].append((pattern, value))
+                rules["albumartist"].append((pattern, value))
 
         # Replace each template field with the new rewriter function.
         for fieldname, fieldrules in rules.items():

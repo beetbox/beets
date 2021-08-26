@@ -16,11 +16,12 @@
 import mediafile
 
 import warnings
+
 warnings.warn("beets.mediafile is deprecated; use mediafile instead")
 
 # Import everything from the mediafile module into this module.
 for key, value in mediafile.__dict__.items():
-    if key not in ['__name__']:
+    if key not in ["__name__"]:
         globals()[key] = value
 
 del key, value, warnings, mediafile

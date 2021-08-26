@@ -18,12 +18,12 @@
 import re
 from beets.plugins import BeetsPlugin
 
-__author__ = 'baobab@heresiarch.info'
-__version__ = '1.1'
+__author__ = "baobab@heresiarch.info"
+__version__ = "1.1"
 
-PATTERN_THE = '^the\\s'
-PATTERN_A = '^[a][n]?\\s'
-FORMAT = '{0}, {1}'
+PATTERN_THE = "^the\\s"
+PATTERN_A = "^[a][n]?\\s"
+FORMAT = "{0}, {1}"
 
 
 class ThePlugin(BeetsPlugin):
@@ -33,33 +33,38 @@ class ThePlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
 
-        self.template_funcs['the'] = self.the_template_func
+        self.template_funcs["the"] = self.the_template_func
 
-        self.config.add({
-            'the': True,
-            'a': True,
-            'format': '{0}, {1}',
-            'strip': False,
-            'patterns': [],
-        })
+        self.config.add(
+            {
+                "the": True,
+                "a": True,
+                "format": "{0}, {1}",
+                "strip": False,
+                "patterns": [],
+            }
+        )
 
-        self.patterns = self.config['patterns'].as_str_seq()
+        self.patterns = self.config["patterns"].as_str_seq()
         for p in self.patterns:
             if p:
                 try:
                     re.compile(p)
                 except re.error:
-                    self._log.error('invalid pattern: {0}', p)
+                    self._log.error("invalid pattern: {0}", p)
                 else:
-                    if not (p.startswith('^') or p.endswith('$')):
-                        self._log.warning('warning: \"{0}\" will not '
-                                          'match string start/end', p)
-        if self.config['a']:
+                    if not (p.startswith("^") or p.endswith("$")):
+                        self._log.warning(
+                            'warning: "{0}" will not '
+                            "match string start/end",
+                            p,
+                        )
+        if self.config["a"]:
             self.patterns = [PATTERN_A] + self.patterns
-        if self.config['the']:
+        if self.config["the"]:
             self.patterns = [PATTERN_THE] + self.patterns
         if not self.patterns:
-            self._log.warning('no patterns defined!')
+            self._log.warning("no patterns defined!")
 
     def unthe(self, text, pattern):
         """Moves pattern in the path format string or strips it
@@ -75,14 +80,14 @@ class ThePlugin(BeetsPlugin):
             except IndexError:
                 return text
             else:
-                r = re.sub(r, '', text).strip()
-                if self.config['strip']:
+                r = re.sub(r, "", text).strip()
+                if self.config["strip"]:
                     return r
                 else:
-                    fmt = self.config['format'].as_str()
+                    fmt = self.config["format"].as_str()
                     return fmt.format(r, t.strip()).strip()
         else:
-            return ''
+            return ""
 
     def the_template_func(self, text):
         if not self.patterns:
@@ -91,8 +96,8 @@ class ThePlugin(BeetsPlugin):
             for p in self.patterns:
                 r = self.unthe(text, p)
                 if r != text:
-                    self._log.debug('\"{0}\" -> \"{1}\"', text, r)
+                    self._log.debug('"{0}" -> "{1}"', text, r)
                     break
             return r
         else:
-            return ''
+            return ""

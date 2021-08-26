@@ -47,10 +47,7 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         """Test resizing based on file size, given a resize_func."""
         # Check quality setting unaffected by new parameter
         im_95_qual = resize_func(
-            225,
-            self.IMG_225x225,
-            quality=95,
-            max_filesize=0,
+            225, self.IMG_225x225, quality=95, max_filesize=0,
         )
         # check valid path returned - max_filesize hasn't broken resize command
         self.assertExists(im_95_qual)
@@ -64,15 +61,14 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         )
         self.assertExists(im_a)
         # target size was achieved
-        self.assertLess(os.stat(syspath(im_a)).st_size,
-                        os.stat(syspath(im_95_qual)).st_size)
+        self.assertLess(
+            os.stat(syspath(im_a)).st_size,
+            os.stat(syspath(im_95_qual)).st_size,
+        )
 
         # Attempt with lower initial quality
         im_75_qual = resize_func(
-            225,
-            self.IMG_225x225,
-            quality=75,
-            max_filesize=0,
+            225, self.IMG_225x225, quality=75, max_filesize=0,
         )
         self.assertExists(im_75_qual)
 
@@ -84,8 +80,10 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         )
         self.assertExists(im_b)
         # Check high (initial) quality still gives a smaller filesize
-        self.assertLess(os.stat(syspath(im_b)).st_size,
-                        os.stat(syspath(im_75_qual)).st_size)
+        self.assertLess(
+            os.stat(syspath(im_b)).st_size,
+            os.stat(syspath(im_75_qual)).st_size,
+        )
 
     @unittest.skipUnless(get_pil_version(), "PIL not available")
     def test_pil_file_resize(self):

@@ -32,26 +32,31 @@ class MBSubmitPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
 
-        self.config.add({
-            'format': '$track. $title - $artist ($length)',
-            'threshold': 'medium',
-        })
+        self.config.add(
+            {
+                "format": "$track. $title - $artist ($length)",
+                "threshold": "medium",
+            }
+        )
 
         # Validate and store threshold.
-        self.threshold = self.config['threshold'].as_choice({
-            'none': Recommendation.none,
-            'low': Recommendation.low,
-            'medium': Recommendation.medium,
-            'strong': Recommendation.strong
-        })
+        self.threshold = self.config["threshold"].as_choice(
+            {
+                "none": Recommendation.none,
+                "low": Recommendation.low,
+                "medium": Recommendation.medium,
+                "strong": Recommendation.strong,
+            }
+        )
 
-        self.register_listener('before_choose_candidate',
-                               self.before_choose_candidate_event)
+        self.register_listener(
+            "before_choose_candidate", self.before_choose_candidate_event
+        )
 
     def before_choose_candidate_event(self, session, task):
         if task.rec <= self.threshold:
-            return [PromptChoice('p', 'Print tracks', self.print_tracks)]
+            return [PromptChoice("p", "Print tracks", self.print_tracks)]
 
     def print_tracks(self, session, task):
         for i in sorted(task.items, key=lambda i: i.track):
-            print_data(None, i, self.config['format'].as_str())
+            print_data(None, i, self.config["format"].as_str())

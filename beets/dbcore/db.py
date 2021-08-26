@@ -54,7 +54,7 @@ class FormattedMapping(Mapping):
     are replaced.
     """
 
-    ALL_KEYS = '*'
+    ALL_KEYS = "*"
 
     def __init__(self, model, included_keys=ALL_KEYS, for_path=False):
         self.for_path = for_path
@@ -85,14 +85,14 @@ class FormattedMapping(Mapping):
     def _get_formatted(self, model, key):
         value = model._type(key).format(model.get(key))
         if isinstance(value, bytes):
-            value = value.decode('utf-8', 'ignore')
+            value = value.decode("utf-8", "ignore")
 
         if self.for_path:
-            sep_repl = beets.config['path_sep_replace'].as_str()
-            sep_drive = beets.config['drive_sep_replace'].as_str()
+            sep_repl = beets.config["path_sep_replace"].as_str()
+            sep_drive = beets.config["drive_sep_replace"].as_str()
 
-            if re.match(r'^\w:', value):
-                value = re.sub(r'(?<=^\w):', sep_drive, value)
+            if re.match(r"^\w:", value):
+                value = re.sub(r"(?<=^\w):", sep_drive, value)
 
             for sep in (os.path.sep, os.path.altsep):
                 if sep:
@@ -102,29 +102,24 @@ class FormattedMapping(Mapping):
 
 
 class LazyConvertDict:
-    """Lazily convert types for attributes fetched from the database
-    """
+    """Lazily convert types for attributes fetched from the database"""
 
     def __init__(self, model_cls):
-        """Initialize the object empty
-        """
+        """Initialize the object empty"""
         self.data = {}
         self.model_cls = model_cls
         self._converted = {}
 
     def init(self, data):
-        """Set the base data that should be lazily converted
-        """
+        """Set the base data that should be lazily converted"""
         self.data = data
 
     def _convert(self, key, value):
-        """Convert the attribute type according the the SQL type
-        """
+        """Convert the attribute type according the the SQL type"""
         return self.model_cls._type(key).from_sql(value)
 
     def __setitem__(self, key, value):
-        """Set an attribute value, assume it's already converted
-        """
+        """Set an attribute value, assume it's already converted"""
         self._converted[key] = value
 
     def __getitem__(self, key):
@@ -139,21 +134,18 @@ class LazyConvertDict:
             return value
 
     def __delitem__(self, key):
-        """Delete both converted and base data
-        """
+        """Delete both converted and base data"""
         if key in self._converted:
             del self._converted[key]
         if key in self.data:
             del self.data[key]
 
     def keys(self):
-        """Get a list of available field names for this object.
-        """
+        """Get a list of available field names for this object."""
         return list(self._converted.keys()) + list(self.data.keys())
 
     def copy(self):
-        """Create a copy of the object.
-        """
+        """Create a copy of the object."""
         new = self.__class__(self.model_cls)
         new.data = self.data.copy()
         new._converted = self._converted.copy()
@@ -162,8 +154,7 @@ class LazyConvertDict:
     # Act like a dictionary.
 
     def update(self, values):
-        """Assign all values in the given dict.
-        """
+        """Assign all values in the given dict."""
         for key, value in values.items():
             self[key] = value
 
@@ -184,8 +175,7 @@ class LazyConvertDict:
             return default
 
     def __contains__(self, key):
-        """Determine whether `key` is an attribute on this object.
-        """
+        """Determine whether `key` is an attribute on this object."""
         return key in self.keys()
 
     def __iter__(self):
@@ -196,6 +186,7 @@ class LazyConvertDict:
 
 
 # Abstract base for model classes.
+
 
 class Model:
     """An abstract object representing an object in the database. Model
@@ -268,8 +259,7 @@ class Model:
 
     @classmethod
     def _getters(cls):
-        """Return a mapping from field names to getter functions.
-        """
+        """Return a mapping from field names to getter functions."""
         # We could cache this if it becomes a performance problem to
         # gather the getter mapping every time.
         raise NotImplementedError()
@@ -311,9 +301,9 @@ class Model:
         return obj
 
     def __repr__(self):
-        return '{}({})'.format(
+        return "{}({})".format(
             type(self).__name__,
-            ', '.join(f'{k}={v!r}' for k, v in dict(self).items()),
+            ", ".join(f"{k}={v!r}" for k, v in dict(self).items()),
         )
 
     def clear_dirty(self):
@@ -330,11 +320,9 @@ class Model:
         exception is raised otherwise.
         """
         if not self._db:
-            raise ValueError(
-                '{} has no database'.format(type(self).__name__)
-            )
+            raise ValueError("{} has no database".format(type(self).__name__))
         if need_id and not self.id:
-            raise ValueError('{} has no id'.format(type(self).__name__))
+            raise ValueError("{} has no id".format(type(self).__name__))
 
     def copy(self):
         """Create a copy of the model object.
@@ -412,22 +400,20 @@ class Model:
         return changed
 
     def __setitem__(self, key, value):
-        """Assign the value for a field.
-        """
+        """Assign the value for a field."""
         self._setitem(key, value)
 
     def __delitem__(self, key):
-        """Remove a flexible attribute from the model.
-        """
+        """Remove a flexible attribute from the model."""
         if key in self._values_flex:  # Flexible.
             del self._values_flex[key]
             self._dirty.add(key)  # Mark for dropping on store.
         elif key in self._fields:  # Fixed
             setattr(self, key, self._type(key).null)
         elif key in self._getters():  # Computed.
-            raise KeyError(f'computed field {key} cannot be deleted')
+            raise KeyError(f"computed field {key} cannot be deleted")
         else:
-            raise KeyError(f'no such field {key}')
+            raise KeyError(f"no such field {key}")
 
     def keys(self, computed=False):
         """Get a list of available field names for this object. The
@@ -450,8 +436,7 @@ class Model:
     # Act like a dictionary.
 
     def update(self, values):
-        """Assign all values in the given dict.
-        """
+        """Assign all values in the given dict."""
         for key, value in values.items():
             self[key] = value
 
@@ -463,8 +448,7 @@ class Model:
             yield key, self[key]
 
     def __contains__(self, key):
-        """Determine whether `key` is an attribute on this object.
-        """
+        """Determine whether `key` is an attribute on this object."""
         return key in self.keys(computed=True)
 
     def __iter__(self):
@@ -476,22 +460,22 @@ class Model:
     # Convenient attribute access.
 
     def __getattr__(self, key):
-        if key.startswith('_'):
-            raise AttributeError(f'model has no attribute {key!r}')
+        if key.startswith("_"):
+            raise AttributeError(f"model has no attribute {key!r}")
         else:
             try:
                 return self[key]
             except KeyError:
-                raise AttributeError(f'no such field {key!r}')
+                raise AttributeError(f"no such field {key!r}")
 
     def __setattr__(self, key, value):
-        if key.startswith('_'):
+        if key.startswith("_"):
             super().__setattr__(key, value)
         else:
             self[key] = value
 
     def __delattr__(self, key):
-        if key.startswith('_'):
+        if key.startswith("_"):
             super().__delattr__(key)
         else:
             del self[key]
@@ -511,17 +495,17 @@ class Model:
         assignments = []
         subvars = []
         for key in fields:
-            if key != 'id' and key in self._dirty:
+            if key != "id" and key in self._dirty:
                 self._dirty.remove(key)
-                assignments.append(key + '=?')
+                assignments.append(key + "=?")
                 value = self._type(key).to_sql(self[key])
                 subvars.append(value)
-        assignments = ','.join(assignments)
+        assignments = ",".join(assignments)
 
         with self._db.transaction() as tx:
             # Main table update.
             if assignments:
-                query = 'UPDATE {} SET {} WHERE id=?'.format(
+                query = "UPDATE {} SET {} WHERE id=?".format(
                     self._table, assignments
                 )
                 subvars.append(self.id)
@@ -532,18 +516,18 @@ class Model:
                 if key in self._dirty:
                     self._dirty.remove(key)
                     tx.mutate(
-                        'INSERT INTO {} '
-                        '(entity_id, key, value) '
-                        'VALUES (?, ?, ?);'.format(self._flex_table),
+                        "INSERT INTO {} "
+                        "(entity_id, key, value) "
+                        "VALUES (?, ?, ?);".format(self._flex_table),
                         (self.id, key, value),
                     )
 
             # Deleted flexible attributes.
             for key in self._dirty:
                 tx.mutate(
-                    'DELETE FROM {} '
-                    'WHERE entity_id=? AND key=?'.format(self._flex_table),
-                    (self.id, key)
+                    "DELETE FROM {} "
+                    "WHERE entity_id=? AND key=?".format(self._flex_table),
+                    (self.id, key),
                 )
 
         self.clear_dirty()
@@ -566,17 +550,12 @@ class Model:
         self.clear_dirty()
 
     def remove(self):
-        """Remove the object's associated rows from the database.
-        """
+        """Remove the object's associated rows from the database."""
         self._check_db()
         with self._db.transaction() as tx:
+            tx.mutate(f"DELETE FROM {self._table} WHERE id=?", (self.id,))
             tx.mutate(
-                f'DELETE FROM {self._table} WHERE id=?',
-                (self.id,)
-            )
-            tx.mutate(
-                f'DELETE FROM {self._flex_table} WHERE entity_id=?',
-                (self.id,)
+                f"DELETE FROM {self._flex_table} WHERE entity_id=?", (self.id,)
             )
 
     def add(self, db=None):
@@ -592,9 +571,7 @@ class Model:
         self._check_db(False)
 
         with self._db.transaction() as tx:
-            new_id = tx.mutate(
-                f'INSERT INTO {self._table} DEFAULT VALUES'
-            )
+            new_id = tx.mutate(f"INSERT INTO {self._table} DEFAULT VALUES")
             self.id = new_id
             self.added = time.time()
 
@@ -622,35 +599,36 @@ class Model:
         # Perform substitution.
         if isinstance(template, str):
             template = functemplate.template(template)
-        return template.substitute(self.formatted(for_path=for_path),
-                                   self._template_funcs())
+        return template.substitute(
+            self.formatted(for_path=for_path), self._template_funcs()
+        )
 
     # Parsing.
 
     @classmethod
     def _parse(cls, key, string):
-        """Parse a string as a value for the given key.
-        """
+        """Parse a string as a value for the given key."""
         if not isinstance(string, str):
             raise TypeError("_parse() argument must be a string")
 
         return cls._type(key).parse(string)
 
     def set_parse(self, key, string):
-        """Set the object's key to a value represented by a string.
-        """
+        """Set the object's key to a value represented by a string."""
         self[key] = self._parse(key, string)
 
 
 # Database controller and supporting interfaces.
+
 
 class Results:
     """An item query result set. Iterating over the collection lazily
     constructs LibModel objects that reflect database rows.
     """
 
-    def __init__(self, model_class, rows, db, flex_rows,
-                 query=None, sort=None):
+    def __init__(
+        self, model_class, rows, db, flex_rows, query=None, sort=None
+    ):
         """Create a result set that will construct objects of type
         `model_class`.
 
@@ -708,7 +686,7 @@ class Results:
             else:
                 while self._rows:
                     row = self._rows.pop(0)
-                    obj = self._make_model(row, flex_attrs.get(row['id'], {}))
+                    obj = self._make_model(row, flex_attrs.get(row["id"], {}))
                     # If there is a slow-query predicate, ensurer that the
                     # object passes it.
                     if not self.query or self.query.match(obj):
@@ -731,31 +709,27 @@ class Results:
             return self._get_objects()
 
     def _get_indexed_flex_attrs(self):
-        """ Index flexible attributes by the entity id they belong to
-        """
+        """Index flexible attributes by the entity id they belong to"""
         flex_values = {}
         for row in self.flex_rows:
-            if row['entity_id'] not in flex_values:
-                flex_values[row['entity_id']] = {}
+            if row["entity_id"] not in flex_values:
+                flex_values[row["entity_id"]] = {}
 
-            flex_values[row['entity_id']][row['key']] = row['value']
+            flex_values[row["entity_id"]][row["key"]] = row["value"]
 
         return flex_values
 
     def _make_model(self, row, flex_values={}):
-        """ Create a Model object for the given row
-        """
+        """Create a Model object for the given row"""
         cols = dict(row)
-        values = {k: v for (k, v) in cols.items()
-                  if not k[:4] == 'flex'}
+        values = {k: v for (k, v) in cols.items() if not k[:4] == "flex"}
 
         # Construct the Python object
         obj = self.model_class._awaken(self.db, values, flex_values)
         return obj
 
     def __len__(self):
-        """Get the number of matching objects.
-        """
+        """Get the number of matching objects."""
         if not self._rows:
             # Fully materialized. Just count the objects.
             return len(self._objects)
@@ -772,13 +746,11 @@ class Results:
             return self._row_count
 
     def __nonzero__(self):
-        """Does this result contain any objects?
-        """
+        """Does this result contain any objects?"""
         return self.__bool__()
 
     def __bool__(self):
-        """Does this result contain any objects?
-        """
+        """Does this result contain any objects?"""
         return bool(len(self))
 
     def __getitem__(self, n):
@@ -796,7 +768,7 @@ class Results:
                 next(it)
             return next(it)
         except StopIteration:
-            raise IndexError(f'result index {n} out of range')
+            raise IndexError(f"result index {n} out of range")
 
     def get(self):
         """Return the first matching object, or None if no objects
@@ -868,8 +840,10 @@ class Transaction:
             # In two specific cases, SQLite reports an error while accessing
             # the underlying database file. We surface these exceptions as
             # DBAccessError so the application can abort.
-            if e.args[0] in ("attempt to write a readonly database",
-                             "unable to open database file"):
+            if e.args[0] in (
+                "attempt to write a readonly database",
+                "unable to open database file",
+            ):
                 raise DBAccessError(e.args[0])
             else:
                 raise
@@ -893,7 +867,7 @@ class Database:
     """The Model subclasses representing tables in this database.
     """
 
-    supports_extensions = hasattr(sqlite3.Connection, 'enable_load_extension')
+    supports_extensions = hasattr(sqlite3.Connection, "enable_load_extension")
     """Whether or not the current version of SQLite supports extensions"""
 
     revision = 0
@@ -953,9 +927,7 @@ class Database:
         # Make a new connection. The `sqlite3` module can't use
         # bytestring paths here on Python 3, so we need to
         # provide a `str` using `py3_path`.
-        conn = sqlite3.connect(
-            py3_path(self.path), timeout=self.timeout
-        )
+        conn = sqlite3.connect(py3_path(self.path), timeout=self.timeout)
 
         if self.supports_extensions:
             conn.enable_load_extension(True)
@@ -996,7 +968,8 @@ class Database:
         """Load an SQLite extension into all open connections."""
         if not self.supports_extensions:
             raise ValueError(
-                'this sqlite3 installation does not support extensions')
+                "this sqlite3 installation does not support extensions"
+            )
 
         self._extensions.append(path)
 
@@ -1012,7 +985,7 @@ class Database:
         """
         # Get current schema.
         with self.transaction() as tx:
-            rows = tx.query('PRAGMA table_info(%s)' % table)
+            rows = tx.query("PRAGMA table_info(%s)" % table)
         current_fields = {row[1] for row in rows}
 
         field_names = set(fields.keys())
@@ -1024,17 +997,18 @@ class Database:
             # No table exists.
             columns = []
             for name, typ in fields.items():
-                columns.append(f'{name} {typ.sql}')
-            setup_sql = 'CREATE TABLE {} ({});\n'.format(table,
-                                                         ', '.join(columns))
+                columns.append(f"{name} {typ.sql}")
+            setup_sql = "CREATE TABLE {} ({});\n".format(
+                table, ", ".join(columns)
+            )
 
         else:
             # Table exists does not match the field set.
-            setup_sql = ''
+            setup_sql = ""
             for name, typ in fields.items():
                 if name in current_fields:
                     continue
-                setup_sql += 'ALTER TABLE {} ADD COLUMN {} {};\n'.format(
+                setup_sql += "ALTER TABLE {} ADD COLUMN {} {};\n".format(
                     table, name, typ.sql
                 )
 
@@ -1046,7 +1020,8 @@ class Database:
         for the given entity (if they don't exist).
         """
         with self.transaction() as tx:
-            tx.script("""
+            tx.script(
+                """
                 CREATE TABLE IF NOT EXISTS {0} (
                     id INTEGER PRIMARY KEY,
                     entity_id INTEGER,
@@ -1055,7 +1030,10 @@ class Database:
                     UNIQUE(entity_id, key) ON CONFLICT REPLACE);
                 CREATE INDEX IF NOT EXISTS {0}_by_entity
                     ON {0} (entity_id);
-                """.format(flex_table))
+                """.format(
+                    flex_table
+                )
+            )
 
     # Querying.
 
@@ -1072,21 +1050,18 @@ class Database:
 
         sql = ("SELECT * FROM {} WHERE {} {}").format(
             model_cls._table,
-            where or '1',
-            f"ORDER BY {order_by}" if order_by else '',
+            where or "1",
+            f"ORDER BY {order_by}" if order_by else "",
         )
 
         # Fetch flexible attributes for items matching the main query.
         # Doing the per-item filtering in python is faster than issuing
         # one query per item to sqlite.
-        flex_sql = ("""
+        flex_sql = """
             SELECT * FROM {} WHERE entity_id IN
                 (SELECT id FROM {} WHERE {});
             """.format(
-            model_cls._flex_table,
-            model_cls._table,
-            where or '1',
-        )
+            model_cls._flex_table, model_cls._table, where or "1",
         )
 
         with self.transaction() as tx:
@@ -1094,7 +1069,10 @@ class Database:
             flex_rows = tx.query(flex_sql, subvals)
 
         return Results(
-            model_cls, rows, self, flex_rows,
+            model_cls,
+            rows,
+            self,
+            flex_rows,
             None if where else query,  # Slow query component.
             sort if sort.is_slow() else None,  # Slow sort component.
         )
@@ -1103,4 +1081,4 @@ class Database:
         """Get a Model object by its id or None if the id does not
         exist.
         """
-        return self._fetch(model_cls, MatchQuery('id', id)).get()
+        return self._fetch(model_cls, MatchQuery("id", id)).get()

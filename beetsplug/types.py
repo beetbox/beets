@@ -20,7 +20,6 @@ from beets import library
 
 
 class TypesPlugin(BeetsPlugin):
-
     @property
     def item_types(self):
         return self._types()
@@ -35,16 +34,16 @@ class TypesPlugin(BeetsPlugin):
 
         mytypes = {}
         for key, value in self.config.items():
-            if value.get() == 'int':
+            if value.get() == "int":
                 mytypes[key] = types.INTEGER
-            elif value.get() == 'float':
+            elif value.get() == "float":
                 mytypes[key] = types.FLOAT
-            elif value.get() == 'bool':
+            elif value.get() == "bool":
                 mytypes[key] = types.BOOLEAN
-            elif value.get() == 'date':
+            elif value.get() == "date":
                 mytypes[key] = library.DateType()
             else:
                 raise ConfigValueError(
-                    "unknown type '{}' for the '{}' field"
-                    .format(value, key))
+                    "unknown type '{}' for the '{}' field".format(value, key)
+                )
         return mytypes
