@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
-
 """Tests for the 'zero' plugin"""
 
-from __future__ import division, absolute_import, print_function
 
 import unittest
 from test.helper import TestHelper, control_stdin
@@ -31,8 +28,8 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.config['zero']['fields'] = ['comments', 'month']
 
         item = self.add_item_fixture(
-            comments=u'test comment',
-            title=u'Title',
+            comments='test comment',
+            title='Title',
             month=1,
             year=2000,
         )
@@ -44,14 +41,14 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         mf = MediaFile(syspath(item.path))
         self.assertIsNone(mf.comments)
         self.assertIsNone(mf.month)
-        self.assertEqual(mf.title, u'Title')
+        self.assertEqual(mf.title, 'Title')
         self.assertEqual(mf.year, 2000)
 
     def test_pattern_match(self):
         self.config['zero']['fields'] = ['comments']
-        self.config['zero']['comments'] = [u'encoded by']
+        self.config['zero']['comments'] = ['encoded by']
 
-        item = self.add_item_fixture(comments=u'encoded by encoder')
+        item = self.add_item_fixture(comments='encoded by encoder')
         item.write()
 
         self.load_plugins('zero')
@@ -62,16 +59,16 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
 
     def test_pattern_nomatch(self):
         self.config['zero']['fields'] = ['comments']
-        self.config['zero']['comments'] = [u'encoded by']
+        self.config['zero']['comments'] = ['encoded by']
 
-        item = self.add_item_fixture(comments=u'recorded at place')
+        item = self.add_item_fixture(comments='recorded at place')
         item.write()
 
         self.load_plugins('zero')
         item.write()
 
         mf = MediaFile(syspath(item.path))
-        self.assertEqual(mf.comments, u'recorded at place')
+        self.assertEqual(mf.comments, 'recorded at place')
 
     def test_do_not_change_database(self):
         self.config['zero']['fields'] = ['year']
@@ -126,7 +123,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
             year=2016,
             day=13,
             month=3,
-            comments=u'test comment'
+            comments='test comment'
         )
         item.write()
         item_id = item.id
@@ -144,14 +141,14 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(item['year'], 2016)
         self.assertEqual(mf.year, 2016)
         self.assertEqual(mf.comments, None)
-        self.assertEqual(item['comments'], u'')
+        self.assertEqual(item['comments'], '')
 
     def test_subcommand_update_database_false(self):
         item = self.add_item_fixture(
             year=2016,
             day=13,
             month=3,
-            comments=u'test comment'
+            comments='test comment'
         )
         item.write()
         item_id = item.id
@@ -169,7 +166,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
 
         self.assertEqual(item['year'], 2016)
         self.assertEqual(mf.year, 2016)
-        self.assertEqual(item['comments'], u'test comment')
+        self.assertEqual(item['comments'], 'test comment')
         self.assertEqual(mf.comments, None)
 
     def test_subcommand_query_include(self):
@@ -177,7 +174,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
             year=2016,
             day=13,
             month=3,
-            comments=u'test comment'
+            comments='test comment'
         )
 
         item.write()
@@ -199,7 +196,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
             year=2016,
             day=13,
             month=3,
-            comments=u'test comment'
+            comments='test comment'
         )
 
         item.write()
@@ -214,7 +211,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         mf = MediaFile(syspath(item.path))
 
         self.assertEqual(mf.year, 2016)
-        self.assertEqual(mf.comments, u'test comment')
+        self.assertEqual(mf.comments, 'test comment')
 
     def test_no_fields(self):
         item = self.add_item_fixture(year=2016)
@@ -240,8 +237,8 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(mf.year, 2016)
 
         item_id = item.id
-        self.config['zero']['fields'] = [u'year']
-        self.config['zero']['keep_fields'] = [u'comments']
+        self.config['zero']['fields'] = ['year']
+        self.config['zero']['keep_fields'] = ['comments']
 
         self.load_plugins('zero')
         with control_stdin('y'):
@@ -253,13 +250,13 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(mf.year, 2016)
 
     def test_keep_fields(self):
-        item = self.add_item_fixture(year=2016, comments=u'test comment')
-        self.config['zero']['keep_fields'] = [u'year']
+        item = self.add_item_fixture(year=2016, comments='test comment')
+        self.config['zero']['keep_fields'] = ['year']
         self.config['zero']['fields'] = None
         self.config['zero']['update_database'] = True
 
         tags = {
-            'comments': u'test comment',
+            'comments': 'test comment',
             'year': 2016,
         }
         self.load_plugins('zero')
@@ -270,7 +267,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(tags['year'], 2016)
 
     def test_keep_fields_removes_preserved_tags(self):
-        self.config['zero']['keep_fields'] = [u'year']
+        self.config['zero']['keep_fields'] = ['year']
         self.config['zero']['fields'] = None
         self.config['zero']['update_database'] = True
 
@@ -279,7 +276,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.assertNotIn('id', z.fields_to_progs)
 
     def test_fields_removes_preserved_tags(self):
-        self.config['zero']['fields'] = [u'year id']
+        self.config['zero']['fields'] = ['year id']
         self.config['zero']['update_database'] = True
 
         z = ZeroPlugin()
@@ -291,7 +288,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
             year=2016,
             day=13,
             month=3,
-            comments=u'test comment'
+            comments='test comment'
         )
         item.write()
         item_id = item.id
@@ -308,8 +305,8 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
 
         self.assertEqual(item['year'], 2016)
         self.assertEqual(mf.year, 2016)
-        self.assertEqual(mf.comments, u'test comment')
-        self.assertEqual(item['comments'], u'test comment')
+        self.assertEqual(mf.comments, 'test comment')
+        self.assertEqual(item['comments'], 'test comment')
 
 
 def suite():

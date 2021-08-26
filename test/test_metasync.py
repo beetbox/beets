@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Tom Jaspers.
 #
@@ -13,7 +12,6 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
 
 import os
 import platform
@@ -72,12 +70,12 @@ class MetaSyncTest(_common.TestCase, TestHelper):
 
         if _is_windows():
             items[0].path = \
-                u'G:\\Music\\Alt-J\\An Awesome Wave\\03 Tessellate.mp3'
+                'G:\\Music\\Alt-J\\An Awesome Wave\\03 Tessellate.mp3'
             items[1].path = \
-                u'G:\\Music\\Alt-J\\An Awesome Wave\\04 Breezeblocks.mp3'
+                'G:\\Music\\Alt-J\\An Awesome Wave\\04 Breezeblocks.mp3'
         else:
-            items[0].path = u'/Music/Alt-J/An Awesome Wave/03 Tessellate.mp3'
-            items[1].path = u'/Music/Alt-J/An Awesome Wave/04 Breezeblocks.mp3'
+            items[0].path = '/Music/Alt-J/An Awesome Wave/03 Tessellate.mp3'
+            items[1].path = '/Music/Alt-J/An Awesome Wave/04 Breezeblocks.mp3'
 
         for item in items:
             self.lib.add(item)

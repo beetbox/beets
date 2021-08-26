@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Thomas Scholtes.
 #
@@ -13,7 +12,6 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
 
 import fnmatch
 import sys
@@ -45,12 +43,12 @@ class TestHelper(helper.TestHelper):
         `tag` to the copy.
         """
         if re.search('[^a-zA-Z0-9]', tag):
-            raise ValueError(u"tag '{0}' must only contain letters and digits"
+            raise ValueError("tag '{}' must only contain letters and digits"
                              .format(tag))
 
         # A Python script that copies the file and appends a tag.
         stub = os.path.join(_common.RSRC, b'convert_stub.py').decode('utf-8')
-        return u"{} {} $source $dest {}".format(shell_quote(sys.executable),
+        return "{} {} $source $dest {}".format(shell_quote(sys.executable),
                                                 shell_quote(stub), tag)
 
     def assertFileTag(self, path, tag):  # noqa
@@ -59,12 +57,12 @@ class TestHelper(helper.TestHelper):
         display_tag = tag
         tag = tag.encode('utf-8')
         self.assertTrue(os.path.isfile(path),
-                        u'{0} is not a file'.format(
+                        '{} is not a file'.format(
                             util.displayable_path(path)))
         with open(path, 'rb') as f:
             f.seek(-len(display_tag), os.SEEK_END)
             self.assertEqual(f.read(), tag,
-                             u'{0} is not tagged with {1}'
+                             '{} is not tagged with {}'
                              .format(
                                  util.displayable_path(path),
                                  display_tag))
@@ -76,12 +74,12 @@ class TestHelper(helper.TestHelper):
         display_tag = tag
         tag = tag.encode('utf-8')
         self.assertTrue(os.path.isfile(path),
-                        u'{0} is not a file'.format(
+                        '{} is not a file'.format(
                             util.displayable_path(path)))
         with open(path, 'rb') as f:
             f.seek(-len(tag), os.SEEK_END)
             self.assertNotEqual(f.read(), tag,
-                                u'{0} is unexpectedly tagged with {1}'
+                                '{} is unexpectedly tagged with {}'
                                 .format(
                                     util.displayable_path(path),
                                     display_tag))
@@ -116,7 +114,7 @@ class ImportConvertTest(unittest.TestCase, TestHelper):
     @unittest.skipIf(sys.platform, 'win32')  # FIXME: fails on windows
     def test_import_original_on_convert_error(self):
         # `false` exits with non-zero code
-        self.config['convert']['command'] = u'false'
+        self.config['convert']['command'] = 'false'
         self.importer.run()
 
         item = self.lib.items().get()
@@ -129,11 +127,11 @@ class ImportConvertTest(unittest.TestCase, TestHelper):
         for path in self.importer.paths:
             for root, dirnames, filenames in os.walk(path):
                 self.assertTrue(len(fnmatch.filter(filenames, '*.mp3')) == 0,
-                                u'Non-empty import directory {0}'
+                                'Non-empty import directory {}'
                                 .format(util.displayable_path(path)))
 
 
-class ConvertCommand(object):
+class ConvertCommand:
     """A mixin providing a utility method to run the `convert`command
     in tests.
     """
@@ -230,7 +228,7 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
         converted = os.path.join(self.convert_dest, b'converted.mp3')
         self.touch(converted, content='XXX')
         self.run_convert('--yes')
-        with open(converted, 'r') as f:
+        with open(converted) as f:
             self.assertEqual(f.read(), 'XXX')
 
     def test_pretend(self):
@@ -241,7 +239,7 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
     def test_empty_query(self):
         with capture_log('beets.convert') as logs:
             self.run_convert('An impossible query')
-        self.assertEqual(logs[0], u'convert: Empty query result.')
+        self.assertEqual(logs[0], 'convert: Empty query result.')
 
 
 @_common.slow_test()

@@ -1,13 +1,10 @@
-# -*- coding: utf-8 -*-
-
 """Tests for the 'permissions' plugin.
 """
-from __future__ import division, absolute_import, print_function
 
 import os
 import platform
 import unittest
-from mock import patch, Mock
+from unittest.mock import patch, Mock
 
 from test.helper import TestHelper
 from beets.util import displayable_path
@@ -68,7 +65,7 @@ class PermissionsPluginTest(unittest.TestCase, TestHelper):
     def assertPerms(self, path, typ, expect_success):  # noqa
         for x in [(True, self.exp_perms[expect_success][typ], '!='),
                   (False, self.exp_perms[not expect_success][typ], '==')]:
-            msg = u'{} : {} {} {}'.format(
+            msg = '{} : {} {} {}'.format(
                 displayable_path(path),
                 oct(os.stat(path).st_mode),
                 x[2],

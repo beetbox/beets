@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -15,7 +14,6 @@
 
 """Tests for BPD's implementation of the MPD protocol.
 """
-from __future__ import division, absolute_import, print_function
 
 import unittest
 from test.helper import TestHelper
@@ -36,7 +34,7 @@ import confuse
 
 
 # Mock GstPlayer so that the forked process doesn't attempt to import gi:
-import mock
+from unittest import mock
 import imp
 gstplayer = imp.new_module("beetsplug.bpd.gstplayer")
 def _gstplayer_play(*_):  # noqa: 42
@@ -63,45 +61,45 @@ class CommandParseTest(unittest.TestCase):
     def test_no_args(self):
         s = r'command'
         c = bpd.Command(s)
-        self.assertEqual(c.name, u'command')
+        self.assertEqual(c.name, 'command')
         self.assertEqual(c.args, [])
 
     def test_one_unquoted_arg(self):
         s = r'command hello'
         c = bpd.Command(s)
-        self.assertEqual(c.name, u'command')
-        self.assertEqual(c.args, [u'hello'])
+        self.assertEqual(c.name, 'command')
+        self.assertEqual(c.args, ['hello'])
 
     def test_two_unquoted_args(self):
         s = r'command hello there'
         c = bpd.Command(s)
-        self.assertEqual(c.name, u'command')
-        self.assertEqual(c.args, [u'hello', u'there'])
+        self.assertEqual(c.name, 'command')
+        self.assertEqual(c.args, ['hello', 'there'])
 
     def test_one_quoted_arg(self):
         s = r'command "hello there"'
         c = bpd.Command(s)
-        self.assertEqual(c.name, u'command')
-        self.assertEqual(c.args, [u'hello there'])
+        self.assertEqual(c.name, 'command')
+        self.assertEqual(c.args, ['hello there'])
 
     def test_heterogenous_args(self):
         s = r'command "hello there" sir'
         c = bpd.Command(s)
-        self.assertEqual(c.name, u'command')
-        self.assertEqual(c.args, [u'hello there', u'sir'])
+        self.assertEqual(c.name, 'command')
+        self.assertEqual(c.args, ['hello there', 'sir'])
 
     def test_quote_in_arg(self):
         s = r'command "hello \" there"'
         c = bpd.Command(s)
-        self.assertEqual(c.args, [u'hello " there'])
+        self.assertEqual(c.args, ['hello " there'])
 
     def test_backslash_in_arg(self):
         s = r'command "hello \\ there"'
         c = bpd.Command(s)
-        self.assertEqual(c.args, [u'hello \\ there'])
+        self.assertEqual(c.args, ['hello \\ there'])
 
 
-class MPCResponse(object):
+class MPCResponse:
     def __init__(self, raw_response):
         body = b'\n'.join(raw_response.split(b'\n')[:-2]).decode('utf-8')
         self.data = self._parse_body(body)
@@ -119,7 +117,7 @@ class MPCResponse(object):
             cmd, rest = rest[2:].split('}')
             return False, (int(code), int(pos), cmd, rest[1:])
         else:
-            raise RuntimeError('Unexpected status: {!r}'.format(status))
+            raise RuntimeError(f'Unexpected status: {status!r}')
 
     def _parse_body(self, body):
         """ Messages are generally in the format "header: content".
@@ -132,7 +130,7 @@ class MPCResponse(object):
             if not line:
                 continue
             if ':' not in line:
-                raise RuntimeError('Unexpected line: {!r}'.format(line))
+                raise RuntimeError(f'Unexpected line: {line!r}')
             header, content = line.split(':', 1)
             content = content.lstrip()
             if header in repeated_headers:
@@ -145,7 +143,7 @@ class MPCResponse(object):
         return data
 
 
-class MPCClient(object):
+class MPCClient:
     def __init__(self, sock, do_hello=True):
         self.sock = sock
         self.buf = b''
@@ -178,7 +176,7 @@ class MPCClient(object):
                 responses.append(MPCResponse(response))
                 response = b''
             elif not line:
-                raise RuntimeError('Unexpected response: {!r}'.format(line))
+                raise RuntimeError(f'Unexpected response: {line!r}')
 
     def serialise_command(self, command, *args):
         cmd = [command.encode('utf-8')]

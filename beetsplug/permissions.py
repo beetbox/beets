@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import division, absolute_import, print_function
-
 """Fixes file permissions after the file gets written on import. Put something
 like the following in your config.yaml to configure:
 
@@ -21,8 +17,8 @@ def convert_perm(perm):
     Or, if `perm` is an integer, reinterpret it as an octal number that
     has been "misinterpreted" as decimal.
     """
-    if isinstance(perm, six.integer_types):
-        perm = six.text_type(perm)
+    if isinstance(perm, int):
+        perm = str(perm)
     return int(perm, 8)
 
 
@@ -40,11 +36,11 @@ def assert_permissions(path, permission, log):
     """
     if not check_permissions(util.syspath(path), permission):
         log.warning(
-            u'could not set permissions on {}',
+            'could not set permissions on {}',
             util.displayable_path(path),
         )
         log.debug(
-            u'set permissions to {}, but permissions are now {}',
+            'set permissions to {}, but permissions are now {}',
             permission,
             os.stat(util.syspath(path)).st_mode & 0o777,
         )
@@ -60,12 +56,12 @@ def dirs_in_library(library, item):
 
 class Permissions(BeetsPlugin):
     def __init__(self):
-        super(Permissions, self).__init__()
+        super().__init__()
 
         # Adding defaults.
         self.config.add({
-            u'file': '644',
-            u'dir': '755',
+            'file': '644',
+            'dir': '755',
         })
 
         self.register_listener('item_imported', self.fix)
@@ -97,7 +93,7 @@ class Permissions(BeetsPlugin):
         for path in file_chmod_queue:
             # Changing permissions on the destination file.
             self._log.debug(
-                u'setting file permissions on {}',
+                'setting file permissions on {}',
                 util.displayable_path(path),
             )
             os.chmod(util.syspath(path), file_perm)
@@ -114,7 +110,7 @@ class Permissions(BeetsPlugin):
         for path in dir_chmod_queue:
             # Chaning permissions on the destination directory.
             self._log.debug(
-                u'setting directory permissions on {}',
+                'setting directory permissions on {}',
                 util.displayable_path(path),
             )
             os.chmod(util.syspath(path), dir_perm)

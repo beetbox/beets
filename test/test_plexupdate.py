@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import division, absolute_import, print_function
-
 from test.helper import TestHelper
 from beetsplug.plexupdate import get_music_section, update_plex
 import unittest
@@ -76,8 +72,8 @@ class PlexUpdateTest(unittest.TestCase, TestHelper):
         self.load_plugins('plexupdate')
 
         self.config['plex'] = {
-            u'host': u'localhost',
-            u'port': 32400}
+            'host': 'localhost',
+            'port': 32400}
 
     def tearDown(self):
         self.teardown_beets()

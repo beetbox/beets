@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Jakob Schnitzer.
 #
@@ -15,7 +14,6 @@
 
 """Converts tracks or albums to external directory
 """
-from __future__ import division, absolute_import, print_function
 from beets.util import par_map, decode_commandline_path, arg_encoding
 
 import os
@@ -38,8 +36,8 @@ _temp_files = []  # Keep track of temporary transcoded files for deletion.
 
 # Some convenient alternate names for formats.
 ALIASES = {
-    u'wma': u'windows media',
-    u'vorbis': u'ogg',
+    'wma': 'windows media',
+    'vorbis': 'ogg',
 }
 
 LOSSLESS_FORMATS = ['ape', 'flac', 'alac', 'wav', 'aiff']
@@ -67,7 +65,7 @@ def get_format(fmt=None):
         extension = format_info.get('extension', fmt)
     except KeyError:
         raise ui.UserError(
-            u'convert: format {0} needs the "command" field'
+            'convert: format {} needs the "command" field'
             .format(fmt)
         )
     except ConfigTypeError:
@@ -80,7 +78,7 @@ def get_format(fmt=None):
         command = config['convert']['command'].as_str()
     elif 'opts' in keys:
         # Undocumented option for backwards compatibility with < 1.3.1.
-        command = u'ffmpeg -i $source -y {0} $dest'.format(
+        command = 'ffmpeg -i $source -y {} $dest'.format(
             config['convert']['opts'].as_str()
         )
     if 'extension' in keys:
@@ -109,72 +107,72 @@ def should_transcode(item, fmt):
 
 class ConvertPlugin(BeetsPlugin):
     def __init__(self):
-        super(ConvertPlugin, self).__init__()
+        super().__init__()
         self.config.add({
-            u'dest': None,
-            u'pretend': False,
-            u'link': False,
-            u'hardlink': False,
-            u'threads': util.cpu_count(),
-            u'format': u'mp3',
-            u'id3v23': u'inherit',
-            u'formats': {
-                u'aac': {
-                    u'command': u'ffmpeg -i $source -y -vn -acodec aac '
-                                u'-aq 1 $dest',
-                    u'extension': u'm4a',
+            'dest': None,
+            'pretend': False,
+            'link': False,
+            'hardlink': False,
+            'threads': util.cpu_count(),
+            'format': 'mp3',
+            'id3v23': 'inherit',
+            'formats': {
+                'aac': {
+                    'command': 'ffmpeg -i $source -y -vn -acodec aac '
+                                '-aq 1 $dest',
+                    'extension': 'm4a',
                 },
-                u'alac': {
-                    u'command': u'ffmpeg -i $source -y -vn -acodec alac $dest',
-                    u'extension': u'm4a',
+                'alac': {
+                    'command': 'ffmpeg -i $source -y -vn -acodec alac $dest',
+                    'extension': 'm4a',
                 },
-                u'flac': u'ffmpeg -i $source -y -vn -acodec flac $dest',
-                u'mp3': u'ffmpeg -i $source -y -vn -aq 2 $dest',
-                u'opus':
-                    u'ffmpeg -i $source -y -vn -acodec libopus -ab 96k $dest',
-                u'ogg':
-                    u'ffmpeg -i $source -y -vn -acodec libvorbis -aq 3 $dest',
-                u'wma':
-                    u'ffmpeg -i $source -y -vn -acodec wmav2 -vn $dest',
+                'flac': 'ffmpeg -i $source -y -vn -acodec flac $dest',
+                'mp3': 'ffmpeg -i $source -y -vn -aq 2 $dest',
+                'opus':
+                    'ffmpeg -i $source -y -vn -acodec libopus -ab 96k $dest',
+                'ogg':
+                    'ffmpeg -i $source -y -vn -acodec libvorbis -aq 3 $dest',
+                'wma':
+                    'ffmpeg -i $source -y -vn -acodec wmav2 -vn $dest',
             },
-            u'max_bitrate': 500,
-            u'auto': False,
-            u'tmpdir': None,
-            u'quiet': False,
-            u'embed': True,
-            u'paths': {},
-            u'no_convert': u'',
-            u'never_convert_lossy_files': False,
-            u'copy_album_art': False,
-            u'album_art_maxwidth': 0,
-            u'delete_originals': False,
+            'max_bitrate': 500,
+            'auto': False,
+            'tmpdir': None,
+            'quiet': False,
+            'embed': True,
+            'paths': {},
+            'no_convert': '',
+            'never_convert_lossy_files': False,
+            'copy_album_art': False,
+            'album_art_maxwidth': 0,
+            'delete_originals': False,
         })
         self.early_import_stages = [self.auto_convert]
 
         self.register_listener('import_task_files', self._cleanup)
 
     def commands(self):
-        cmd = ui.Subcommand('convert', help=u'convert to external location')
+        cmd = ui.Subcommand('convert', help='convert to external location')
         cmd.parser.add_option('-p', '--pretend', action='store_true',
-                              help=u'show actions but do nothing')
+                              help='show actions but do nothing')
         cmd.parser.add_option('-t', '--threads', action='store', type='int',
-                              help=u'change the number of threads, \
+                              help='change the number of threads, \
                               defaults to maximum available processors')
         cmd.parser.add_option('-k', '--keep-new', action='store_true',
-                              dest='keep_new', help=u'keep only the converted \
+                              dest='keep_new', help='keep only the converted \
                               and move the old files')
         cmd.parser.add_option('-d', '--dest', action='store',
-                              help=u'set the destination directory')
+                              help='set the destination directory')
         cmd.parser.add_option('-f', '--format', action='store', dest='format',
-                              help=u'set the target format of the tracks')
+                              help='set the target format of the tracks')
         cmd.parser.add_option('-y', '--yes', action='store_true', dest='yes',
-                              help=u'do not ask for confirmation')
+                              help='do not ask for confirmation')
         cmd.parser.add_option('-l', '--link', action='store_true', dest='link',
-                              help=u'symlink files that do not \
+                              help='symlink files that do not \
                               need transcoding.')
         cmd.parser.add_option('-H', '--hardlink', action='store_true',
                               dest='hardlink',
-                              help=u'hardlink files that do not \
+                              help='hardlink files that do not \
                               need transcoding. Overrides --link.')
         cmd.parser.add_album_option()
         cmd.func = self.convert_func
@@ -201,7 +199,7 @@ class ConvertPlugin(BeetsPlugin):
         quiet = self.config['quiet'].get(bool)
 
         if not quiet and not pretend:
-            self._log.info(u'Encoding {0}', util.displayable_path(source))
+            self._log.info('Encoding {0}', util.displayable_path(source))
 
         command = command.decode(arg_encoding(), 'surrogateescape')
         source = decode_commandline_path(source)
@@ -218,16 +216,16 @@ class ConvertPlugin(BeetsPlugin):
             encode_cmd.append(args[i].encode(util.arg_encoding()))
 
         if pretend:
-            self._log.info(u'{0}', u' '.join(ui.decargs(args)))
+            self._log.info('{0}', ' '.join(ui.decargs(args)))
             return
 
         try:
             util.command_output(encode_cmd)
         except subprocess.CalledProcessError as exc:
             # Something went wrong (probably Ctrl+C), remove temporary files
-            self._log.info(u'Encoding {0} failed. Cleaning up...',
+            self._log.info('Encoding {0} failed. Cleaning up...',
                            util.displayable_path(source))
-            self._log.debug(u'Command {0} exited with status {1}: {2}',
+            self._log.debug('Command {0} exited with status {1}: {2}',
                             args,
                             exc.returncode,
                             exc.output)
@@ -236,13 +234,13 @@ class ConvertPlugin(BeetsPlugin):
             raise
         except OSError as exc:
             raise ui.UserError(
-                u"convert: couldn't invoke '{0}': {1}".format(
-                    u' '.join(ui.decargs(args)), exc
+                "convert: couldn't invoke '{}': {}".format(
+                    ' '.join(ui.decargs(args)), exc
                 )
             )
 
         if not quiet and not pretend:
-            self._log.info(u'Finished encoding {0}',
+            self._log.info('Finished encoding {0}',
                            util.displayable_path(source))
 
     def convert_item(self, dest_dir, keep_new, path_formats, fmt,
@@ -279,17 +277,17 @@ class ConvertPlugin(BeetsPlugin):
                     util.mkdirall(dest)
 
             if os.path.exists(util.syspath(dest)):
-                self._log.info(u'Skipping {0} (target file exists)',
+                self._log.info('Skipping {0} (target file exists)',
                                util.displayable_path(item.path))
                 continue
 
             if keep_new:
                 if pretend:
-                    self._log.info(u'mv {0} {1}',
+                    self._log.info('mv {0} {1}',
                                    util.displayable_path(item.path),
                                    util.displayable_path(original))
                 else:
-                    self._log.info(u'Moving to {0}',
+                    self._log.info('Moving to {0}',
                                    util.displayable_path(original))
                     util.move(item.path, original)
 
@@ -304,7 +302,7 @@ class ConvertPlugin(BeetsPlugin):
                 if pretend:
                     msg = 'ln' if hardlink else ('ln -s' if link else 'cp')
 
-                    self._log.info(u'{2} {0} {1}',
+                    self._log.info('{2} {0} {1}',
                                    util.displayable_path(original),
                                    util.displayable_path(converted),
                                    msg)
@@ -313,7 +311,7 @@ class ConvertPlugin(BeetsPlugin):
                     msg = 'Hardlinking' if hardlink \
                         else ('Linking' if link else 'Copying')
 
-                    self._log.info(u'{1} {0}',
+                    self._log.info('{1} {0}',
                                    util.displayable_path(item.path),
                                    msg)
 
@@ -344,7 +342,7 @@ class ConvertPlugin(BeetsPlugin):
             if self.config['embed'] and not linked:
                 album = item._cached_album
                 if album and album.artpath:
-                    self._log.debug(u'embedding album art from {}',
+                    self._log.debug('embedding album art from {}',
                                     util.displayable_path(album.artpath))
                     art.embed_item(self._log, item, album.artpath,
                                    itempath=converted, id3v23=id3v23)
@@ -385,7 +383,7 @@ class ConvertPlugin(BeetsPlugin):
             util.mkdirall(dest)
 
         if os.path.exists(util.syspath(dest)):
-            self._log.info(u'Skipping {0} (target file exists)',
+            self._log.info('Skipping {0} (target file exists)',
                            util.displayable_path(album.artpath))
             return
 
@@ -399,12 +397,12 @@ class ConvertPlugin(BeetsPlugin):
             if size:
                 resize = size[0] > maxwidth
             else:
-                self._log.warning(u'Could not get size of image (please see '
-                                  u'documentation for dependencies).')
+                self._log.warning('Could not get size of image (please see '
+                                  'documentation for dependencies).')
 
         # Either copy or resize (while copying) the image.
         if resize:
-            self._log.info(u'Resizing cover art from {0} to {1}',
+            self._log.info('Resizing cover art from {0} to {1}',
                            util.displayable_path(album.artpath),
                            util.displayable_path(dest))
             if not pretend:
@@ -413,7 +411,7 @@ class ConvertPlugin(BeetsPlugin):
             if pretend:
                 msg = 'ln' if hardlink else ('ln -s' if link else 'cp')
 
-                self._log.info(u'{2} {0} {1}',
+                self._log.info('{2} {0} {1}',
                                util.displayable_path(album.artpath),
                                util.displayable_path(dest),
                                msg)
@@ -421,7 +419,7 @@ class ConvertPlugin(BeetsPlugin):
                 msg = 'Hardlinking' if hardlink \
                     else ('Linking' if link else 'Copying')
 
-                self._log.info(u'{2} cover art from {0} to {1}',
+                self._log.info('{2} cover art from {0} to {1}',
                                util.displayable_path(album.artpath),
                                util.displayable_path(dest),
                                msg)
@@ -435,7 +433,7 @@ class ConvertPlugin(BeetsPlugin):
     def convert_func(self, lib, opts, args):
         dest = opts.dest or self.config['dest'].get()
         if not dest:
-            raise ui.UserError(u'no convert destination set')
+            raise ui.UserError('no convert destination set')
         dest = util.bytestring_path(dest)
 
         threads = opts.threads or self.config['threads'].get(int)
@@ -464,17 +462,17 @@ class ConvertPlugin(BeetsPlugin):
             items = [i for a in albums for i in a.items()]
             if not pretend:
                 for a in albums:
-                    ui.print_(format(a, u''))
+                    ui.print_(format(a, ''))
         else:
             items = list(lib.items(ui.decargs(args)))
             if not pretend:
                 for i in items:
-                    ui.print_(format(i, u''))
+                    ui.print_(format(i, ''))
 
         if not items:
-            self._log.error(u'Empty query result.')
+            self._log.error('Empty query result.')
             return
-        if not (pretend or opts.yes or ui.input_yn(u"Convert? (Y/n)")):
+        if not (pretend or opts.yes or ui.input_yn("Convert? (Y/n)")):
             return
 
         if opts.album and self.config['copy_album_art']:
@@ -525,7 +523,7 @@ class ConvertPlugin(BeetsPlugin):
             item.store()
 
             if self.config['delete_originals']:
-                self._log.info(u'Removing original file {0}', source_path)
+                self._log.info('Removing original file {0}', source_path)
                 util.remove(source_path, False)
 
     def _cleanup(self, task, session):

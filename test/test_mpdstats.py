@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016
 #
@@ -13,10 +12,9 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
 
 import unittest
-from mock import Mock, patch, call, ANY
+from unittest.mock import Mock, patch, call, ANY
 from test.helper import TestHelper
 
 from beets.library import Item
@@ -34,7 +32,7 @@ class MPDStatsTest(unittest.TestCase, TestHelper):
         self.unload_plugins()
 
     def test_update_rating(self):
-        item = Item(title=u'title', path='', id=1)
+        item = Item(title='title', path='', id=1)
         item.add(self.lib)
 
         log = Mock()
@@ -45,7 +43,7 @@ class MPDStatsTest(unittest.TestCase, TestHelper):
 
     def test_get_item(self):
         item_path = util.normpath('/foo/bar.flac')
-        item = Item(title=u'title', path=item_path, id=1)
+        item = Item(title='title', path=item_path, id=1)
         item.add(self.lib)
 
         log = Mock()
@@ -53,13 +51,13 @@ class MPDStatsTest(unittest.TestCase, TestHelper):
 
         self.assertEqual(str(mpdstats.get_item(item_path)), str(item))
         self.assertIsNone(mpdstats.get_item('/some/non-existing/path'))
-        self.assertIn(u'item not found:', log.info.call_args[0][0])
+        self.assertIn('item not found:', log.info.call_args[0][0])
 
     FAKE_UNKNOWN_STATE = 'some-unknown-one'
     STATUSES = [{'state': FAKE_UNKNOWN_STATE},
-                {'state': u'pause'},
-                {'state': u'play', 'songid': 1, 'time': u'0:1'},
-                {'state': u'stop'}]
+                {'state': 'pause'},
+                {'state': 'play', 'songid': 1, 'time': '0:1'},
+                {'state': 'stop'}]
     EVENTS = [["player"]] * (len(STATUSES) - 1) + [KeyboardInterrupt]
     item_path = util.normpath('/foo/bar.flac')
     songid = 1
@@ -68,7 +66,7 @@ class MPDStatsTest(unittest.TestCase, TestHelper):
         "events.side_effect": EVENTS, "status.side_effect": STATUSES,
         "currentsong.return_value": (item_path, songid)}))
     def test_run_mpdstats(self, mpd_mock):
-        item = Item(title=u'title', path=self.item_path, id=1)
+        item = Item(title='title', path=self.item_path, id=1)
         item.add(self.lib)
 
         log = Mock()
@@ -78,9 +76,9 @@ class MPDStatsTest(unittest.TestCase, TestHelper):
             pass
 
         log.debug.assert_has_calls(
-            [call(u'unhandled status "{0}"', ANY)])
+            [call('unhandled status "{0}"', ANY)])
         log.info.assert_has_calls(
-            [call(u'pause'), call(u'playing {0}', ANY), call(u'stop')])
+            [call('pause'), call('playing {0}', ANY), call('stop')])
 
 
 def suite():

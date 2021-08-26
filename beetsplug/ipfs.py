@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
@@ -15,7 +14,6 @@
 """Adds support for ipfs. Requires go-ipfs and a running ipfs daemon
 """
 
-from __future__ import division, absolute_import, print_function
 
 from beets import ui, util, library, config
 from beets.plugins import BeetsPlugin
@@ -29,7 +27,7 @@ import tempfile
 class IPFSPlugin(BeetsPlugin):
 
     def __init__(self):
-        super(IPFSPlugin, self).__init__()
+        super().__init__()
         self.config.add({
             'auto': True,
             'nocopy': False,
@@ -125,7 +123,7 @@ class IPFSPlugin(BeetsPlugin):
         try:
             output = util.command_output(cmd).stdout.split()
         except (OSError, subprocess.CalledProcessError) as exc:
-            self._log.error(u'Failed to add {0}, error: {1}', album_dir, exc)
+            self._log.error('Failed to add {0}, error: {1}', album_dir, exc)
             return False
         length = len(output)
 
@@ -187,7 +185,7 @@ class IPFSPlugin(BeetsPlugin):
                 cmd.append(tmp.name)
                 output = util.command_output(cmd).stdout
             except (OSError, subprocess.CalledProcessError) as err:
-                msg = "Failed to publish library. Error: {0}".format(err)
+                msg = f"Failed to publish library. Error: {err}"
                 self._log.error(msg)
                 return False
             self._log.info("hash of library: {0}", output)
@@ -204,17 +202,17 @@ class IPFSPlugin(BeetsPlugin):
             try:
                 os.makedirs(remote_libs)
             except OSError as e:
-                msg = "Could not create {0}. Error: {1}".format(remote_libs, e)
+                msg = f"Could not create {remote_libs}. Error: {e}"
                 self._log.error(msg)
                 return False
         path = os.path.join(remote_libs, lib_name.encode() + b".db")
         if not os.path.exists(path):
-            cmd = "ipfs get {0} -o".format(_hash).split()
+            cmd = f"ipfs get {_hash} -o".split()
             cmd.append(path)
             try:
                 util.command_output(cmd)
             except (OSError, subprocess.CalledProcessError):
-                self._log.error("Could not import {0}".format(_hash))
+                self._log.error(f"Could not import {_hash}")
                 return False
 
         # add all albums from remotes into a combined library
@@ -241,7 +239,7 @@ class IPFSPlugin(BeetsPlugin):
         fmt = config['format_album'].get()
         try:
             albums = self.query(lib, args)
-        except IOError:
+        except OSError:
             ui.print_("No imported libraries yet.")
             return
 
@@ -258,7 +256,7 @@ class IPFSPlugin(BeetsPlugin):
         remote_libs = os.path.join(lib_root, b"remotes")
         path = os.path.join(remote_libs, b"joined.db")
         if not os.path.isfile(path):
-            raise IOError
+            raise OSError
         return library.Library(path)
 
     def ipfs_added_albums(self, rlib, tmpname):
@@ -285,7 +283,7 @@ class IPFSPlugin(BeetsPlugin):
                 util._fsencoding(), 'ignore'
             )
             # Clear current path from item
-            item.path = '/ipfs/{0}/{1}'.format(album.ipfs, item_path)
+            item.path = f'/ipfs/{album.ipfs}/{item_path}'
 
             item.id = None
             items.append(item)

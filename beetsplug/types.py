@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Thomas Scholtes.
 #
@@ -13,7 +12,6 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets.dbcore import types
@@ -47,6 +45,6 @@ class TypesPlugin(BeetsPlugin):
                 mytypes[key] = library.DateType()
             else:
                 raise ConfigValueError(
-                    u"unknown type '{0}' for the '{1}' field"
+                    "unknown type '{}' for the '{}' field"
                     .format(value, key))
         return mytypes
