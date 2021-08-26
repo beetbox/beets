@@ -116,9 +116,7 @@ setup(
         ],
         'lint': [
             'flake8',
-            'flake8-coding',
             'flake8-docstrings',
-            'flake8-future-import',
             'pep8-naming',
         ],
 
