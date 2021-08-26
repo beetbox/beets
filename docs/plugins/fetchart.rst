@@ -87,8 +87,8 @@ file. The available options are:
   resolution it can find (warning: image files can sometimes reach >20MB).
   Default: ``no``.
 - **deinterlace**: If enabled, `Pillow`_ or `ImageMagick`_ backends are
-  instructed to store cover art as non-progressive. This might be preferred for
-  DAPs that don't support progressive images.
+  instructed to store cover art as non-progressive JPEG. You might need this if
+  you use DAPs that don't support progressive images.
   Default: ``no``.
 
 Note: ``maxwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
