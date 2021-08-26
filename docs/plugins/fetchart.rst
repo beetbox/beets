@@ -87,9 +87,12 @@ file. The available options are:
   resolution it can find (warning: image files can sometimes reach >20MB).
   Default: ``no``.
 - **deinterlace**: If enabled, convert images to non-progressive/baseline.
+- **deinterlace**: If enabled, `Pillow`_ or `ImageMagick`_ backends are
+  instructed to store cover art as non-progressive. This might be preferred for
+  DAPs that don't support progressive images.
   Default: ``no``.
 
-Note: ``maxwidth``, ``enforce_ratio`` and ``deinterlace`` options require either `ImageMagick`_
+Note: ``maxwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
 or `Pillow`_.
 
 .. note::
