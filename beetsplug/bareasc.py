@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Philippe Mongeau.
 # Copyright 2021, Graham R. Cobb.
@@ -19,7 +18,6 @@
 
 """Provides a bare-ASCII matching query."""
 
-from __future__ import division, absolute_import, print_function
 
 from beets import ui
 from beets.ui import print_, decargs
@@ -50,7 +48,7 @@ class BareascPlugin(BeetsPlugin):
     """Plugin to provide bare-ASCII option for beets matching."""
     def __init__(self):
         """Default prefix for selecting bare-ASCII matching is #."""
-        super(BareascPlugin, self).__init__()
+        super().__init__()
         self.config.add({
             'prefix': '#',
         })
@@ -64,8 +62,8 @@ class BareascPlugin(BeetsPlugin):
         """Add bareasc command as unidecode version of 'list'."""
         cmd = ui.Subcommand('bareasc',
                             help='unidecode version of beet list command')
-        cmd.parser.usage += u"\n" \
-            u'Example: %prog -f \'$album: $title\' artist:beatles'
+        cmd.parser.usage += "\n" \
+            'Example: %prog -f \'$album: $title\' artist:beatles'
         cmd.parser.add_all_common_options()
         cmd.func = self.unidecode_list
         return [cmd]

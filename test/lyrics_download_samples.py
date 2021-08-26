@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Fabrice Laporte
 #
@@ -13,7 +12,6 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
 
 import os
 import sys
@@ -44,7 +42,7 @@ def main(argv=None):
     """
     if argv is None:
         argv = sys.argv
-    print(u'Fetching samples from:')
+    print('Fetching samples from:')
     for s in test_lyrics.GOOGLE_SOURCES + test_lyrics.DEFAULT_SOURCES:
         print(s['url'])
         url = s['url'] + s['path']

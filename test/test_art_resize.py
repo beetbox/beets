@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2020, David Swarbrick.
 #
@@ -15,7 +14,6 @@
 
 """Tests for image resizing based on filesize."""
 
-from __future__ import division, absolute_import, print_function
 
 
 import unittest

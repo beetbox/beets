@@ -1,10 +1,6 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import division, absolute_import, print_function
-
 import os
 import yaml
-from mock import patch
+from unittest.mock import patch
 from tempfile import mkdtemp
 from shutil import rmtree
 import unittest
@@ -116,8 +112,8 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
                 execlp.side_effect = OSError('here is problem')
                 self.run_command('config', '-e')
         self.assertIn('Could not edit configuration',
-                      six.text_type(user_error.exception))
-        self.assertIn('here is problem', six.text_type(user_error.exception))
+                      str(user_error.exception))
+        self.assertIn('here is problem', str(user_error.exception))
 
     def test_edit_invalid_config_file(self):
         with open(self.config_path, 'w') as file:

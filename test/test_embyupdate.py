@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import division, absolute_import, print_function
-
 from test.helper import TestHelper
 from beetsplug import embyupdate
 import unittest
@@ -14,10 +10,10 @@ class EmbyUpdateTest(unittest.TestCase, TestHelper):
         self.load_plugins('embyupdate')
 
         self.config['emby'] = {
-            u'host': u'localhost',
-            u'port': 8096,
-            u'username': u'username',
-            u'password': u'password'
+            'host': 'localhost',
+            'port': 8096,
+            'username': 'username',
+            'password': 'password'
         }
 
     def tearDown(self):
@@ -34,7 +30,7 @@ class EmbyUpdateTest(unittest.TestCase, TestHelper):
 
     def test_api_url_http(self):
         self.assertEqual(
-            embyupdate.api_url(u'http://localhost',
+            embyupdate.api_url('http://localhost',
                                self.config['emby']['port'].get(),
                                '/Library/Refresh'),
             'http://localhost:8096/Library/Refresh?format=json'
@@ -42,7 +38,7 @@ class EmbyUpdateTest(unittest.TestCase, TestHelper):
 
     def test_api_url_https(self):
         self.assertEqual(
-            embyupdate.api_url(u'https://localhost',
+            embyupdate.api_url('https://localhost',
                                self.config['emby']['port'].get(),
                                '/Library/Refresh'),
             'https://localhost:8096/Library/Refresh?format=json'

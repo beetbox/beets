@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2019, Rahul Ahuja.
 #
@@ -16,7 +15,6 @@
 """Adds Spotify release and track search support to the autotagger, along with
 Spotify playlist construction.
 """
-from __future__ import division, absolute_import, print_function
 
 import re
 import json
@@ -53,7 +51,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
     }
 
     def __init__(self):
-        super(SpotifyPlugin, self).__init__()
+        super().__init__()
         self.config.add(
             {
                 'mode': 'list',
@@ -81,7 +79,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         try:
             with open(self.tokenfile) as f:
                 token_data = json.load(f)
-        except IOError:
+        except OSError:
             self._authenticate()
         else:
             self.access_token = token_data['access_token']
@@ -109,7 +107,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             response.raise_for_status()
         except requests.exceptions.HTTPError as e:
             raise ui.UserError(
-                u'Spotify authorization failed: {}\n{}'.format(
+                'Spotify authorization failed: {}\n{}'.format(
                     e, response.text
                 )
             )
@@ -117,7 +115,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
 
         # Save the token for later use.
         self._log.debug(
-            u'{} access token: {}', self.data_source, self.access_token
+            '{} access token: {}', self.data_source, self.access_token
         )
         with open(self.tokenfile, 'w') as f:
             json.dump({'access_token': self.access_token}, f)
@@ -138,11 +136,11 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         """
         response = request_type(
             url,
-            headers={'Authorization': 'Bearer {}'.format(self.access_token)},
+            headers={'Authorization': f'Bearer {self.access_token}'},
             params=params,
         )
         if response.status_code != 200:
-            if u'token expired' in response.text:
+            if 'token expired' in response.text:
                 self._log.debug(
                     '{} access token has expired. Reauthenticating.',
                     self.data_source,
@@ -151,7 +149,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 return self._handle_response(request_type, url, params=params)
             else:
                 raise ui.UserError(
-                    u'{} API error:\n{}\nURL:\n{}\nparams:\n{}'.format(
+                    '{} API error:\n{}\nURL:\n{}\nparams:\n{}'.format(
                         self.data_source, response.text, url, params
                     )
                 )
@@ -191,8 +189,8 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             day = None
         else:
             raise ui.UserError(
-                u"Invalid `release_date_precision` returned "
-                u"by {} API: '{}'".format(
+                "Invalid `release_date_precision` returned "
+                "by {} API: '{}'".format(
                     self.data_source, release_date_precision
                 )
             )
@@ -303,7 +301,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             ' '.join(':'.join((k, v)) for k, v in filters.items()),
         ]
         query = ' '.join([q for q in query_components if q])
-        if not isinstance(query, six.text_type):
+        if not isinstance(query, str):
             query = query.decode('utf8')
         return unidecode.unidecode(query)
 
@@ -328,7 +326,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         if not query:
             return None
         self._log.debug(
-            u"Searching {} for '{}'".format(self.data_source, query)
+            f"Searching {self.data_source} for '{query}'"
         )
         response_data = (
             self._handle_response(
@@ -340,7 +338,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             .get('items', [])
         )
         self._log.debug(
-            u"Found {} result(s) from {} for '{}'",
+            "Found {} result(s) from {} for '{}'",
             len(response_data),
             self.data_source,
             query,
@@ -355,21 +353,21 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 self._output_match_results(results)
 
         spotify_cmd = ui.Subcommand(
-            'spotify', help=u'build a {} playlist'.format(self.data_source)
+            'spotify', help=f'build a {self.data_source} playlist'
         )
         spotify_cmd.parser.add_option(
-            u'-m',
-            u'--mode',
+            '-m',
+            '--mode',
             action='store',
-            help=u'"open" to open {} with playlist, '
-            u'"list" to print (default)'.format(self.data_source),
+            help='"open" to open {} with playlist, '
+            '"list" to print (default)'.format(self.data_source),
         )
         spotify_cmd.parser.add_option(
-            u'-f',
-            u'--show-failures',
+            '-f',
+            '--show-failures',
             action='store_true',
             dest='show_failures',
-            help=u'list tracks that did not match a {} ID'.format(
+            help='list tracks that did not match a {} ID'.format(
                 self.data_source
             ),
         )
@@ -385,7 +383,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
 
         if self.config['mode'].get() not in ['list', 'open']:
             self._log.warning(
-                u'{0} is not a valid mode', self.config['mode'].get()
+                '{0} is not a valid mode', self.config['mode'].get()
             )
             return False
 
@@ -411,12 +409,12 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
 
         if not items:
             self._log.debug(
-                u'Your beets query returned no items, skipping {}.',
+                'Your beets query returned no items, skipping {}.',
                 self.data_source,
             )
             return
 
-        self._log.info(u'Processing {} tracks...', len(items))
+        self._log.info('Processing {} tracks...', len(items))
 
         for item in items:
             # Apply regex transformations if provided
@@ -464,7 +462,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 or self.config['tiebreak'].get() == 'first'
             ):
                 self._log.debug(
-                    u'{} track(s) found, count: {}',
+                    '{} track(s) found, count: {}',
                     self.data_source,
                     len(response_data_tracks),
                 )
@@ -472,7 +470,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             else:
                 # Use the popularity filter
                 self._log.debug(
-                    u'Most popular track chosen, count: {}',
+                    'Most popular track chosen, count: {}',
                     len(response_data_tracks),
                 )
                 chosen_result = max(
@@ -484,17 +482,17 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         if failure_count > 0:
             if self.config['show_failures'].get():
                 self._log.info(
-                    u'{} track(s) did not match a {} ID:',
+                    '{} track(s) did not match a {} ID:',
                     failure_count,
                     self.data_source,
                 )
                 for track in failures:
-                    self._log.info(u'track: {}', track)
-                self._log.info(u'')
+                    self._log.info('track: {}', track)
+                self._log.info('')
             else:
                 self._log.warning(
-                    u'{} track(s) did not match a {} ID:\n'
-                    u'use --show-failures to display',
+                    '{} track(s) did not match a {} ID:\n'
+                    'use --show-failures to display',
                     failure_count,
                     self.data_source,
                 )
@@ -513,7 +511,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             spotify_ids = [track_data['id'] for track_data in results]
             if self.config['mode'].get() == 'open':
                 self._log.info(
-                    u'Attempting to open {} with playlist'.format(
+                    'Attempting to open {} with playlist'.format(
                         self.data_source
                     )
                 )
@@ -526,5 +524,5 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                     print(self.open_track_url + spotify_id)
         else:
             self._log.warning(
-                u'No {} tracks found from beets query'.format(self.data_source)
+                f'No {self.data_source} tracks found from beets query'
             )

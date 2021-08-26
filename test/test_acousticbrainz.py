@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Nathan Dwek.
 #
@@ -16,7 +15,6 @@
 """Tests for the 'acousticbrainz' plugin.
 """
 
-from __future__ import division, absolute_import, print_function
 
 import json
 import os.path

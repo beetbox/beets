@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Fabrice Laporte.
 #
@@ -13,7 +12,6 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
 
 """Write paths of imported files in various formats to ease later import in a
 music player. Also allow printing the new file locations to stdout in case
@@ -54,11 +52,11 @@ def _write_m3u(m3u_path, items_paths):
 
 class ImportFeedsPlugin(BeetsPlugin):
     def __init__(self):
-        super(ImportFeedsPlugin, self).__init__()
+        super().__init__()
 
         self.config.add({
             'formats': [],
-            'm3u_name': u'imported.m3u',
+            'm3u_name': 'imported.m3u',
             'dir': None,
             'relative_to': None,
             'absolute_path': False,
@@ -118,9 +116,9 @@ class ImportFeedsPlugin(BeetsPlugin):
                     link(path, dest)
 
         if 'echo' in formats:
-            self._log.info(u"Location of imported music:")
+            self._log.info("Location of imported music:")
             for path in paths:
-                self._log.info(u"  {0}", path)
+                self._log.info("  {0}", path)
 
     def album_imported(self, lib, album):
         self._record_items(lib, album.album, album.items())
