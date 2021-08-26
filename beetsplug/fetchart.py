@@ -172,8 +172,7 @@ class Candidate(object):
                                          max_filesize=plugin.max_filesize,
                                          deinterlace=plugin.deinterlace)
         elif self.check == self.CANDIDATE_DEINTERLACE:
-            self.path = \
-                    ArtResizer.shared.deinterlace(self.path)
+            self.path = ArtResizer.shared.deinterlace(self.path)
 
 
 def _logged_get(log, *args, **kwargs):
