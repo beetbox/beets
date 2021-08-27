@@ -317,10 +317,7 @@ class GetTest(DummyDataTestCase):
             dbcore.query.RegexpQuery('year', '199(')
         exception_text = str(raised.exception)
         self.assertIn('not a regular expression', exception_text)
-        if sys.version_info >= (3, 5):
-            self.assertIn('unterminated subpattern', exception_text)
-        else:
-            self.assertIn('unbalanced parenthesis', exception_text)
+        self.assertIn('unterminated subpattern', exception_text)
         self.assertIsInstance(raised.exception, ParsingError)
 
 
@@ -803,6 +800,7 @@ class NotQueryMatchTest(_common.TestCase):
     cases and assertions as on `MatchTest`, plus assertion on the negated
     queries (ie. assertTrue(q) -> assertFalse(NotQuery(q))).
     """
+
     def setUp(self):
         super().setUp()
         self.item = _common.item()
@@ -867,6 +865,7 @@ class NotQueryTest(DummyDataTestCase):
     - `test_type_xxx`: tests for the negation of a particular XxxQuery class.
     - `test_get_yyy`: tests on query strings (similar to `GetTest`)
     """
+
     def assertNegationProperties(self, q):  # noqa
         """Given a Query `q`, assert that:
         - q OR not(q) == all items

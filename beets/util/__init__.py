@@ -35,7 +35,6 @@ from enum import Enum
 
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = '\\\\?\\'
-SNI_SUPPORTED = sys.version_info >= (2, 7, 9)
 
 
 class HumanReadableException(Exception):
@@ -1043,16 +1042,10 @@ def par_map(transform, items):
     The parallelism uses threads (not processes), so this is only useful
     for IO-bound `transform`s.
     """
-    if sys.version_info[0] < 3:
-        # multiprocessing.pool.ThreadPool does not seem to work on
-        # Python 2. We could consider switching to futures instead.
-        for item in items:
-            transform(item)
-    else:
-        pool = ThreadPool()
-        pool.map(transform, items)
-        pool.close()
-        pool.join()
+    pool = ThreadPool()
+    pool.map(transform, items)
+    pool.close()
+    pool.join()
 
 
 def lazy_property(func):

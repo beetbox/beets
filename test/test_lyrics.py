@@ -18,7 +18,6 @@
 import itertools
 import os
 import re
-import sys
 import unittest
 
 import confuse
@@ -240,6 +239,7 @@ def is_lyrics_content_ok(title, text):
     words = {x.strip(".?, ") for x in text.lower().split()}
     return keywords <= words
 
+
 LYRICS_ROOT_DIR = os.path.join(_common.RSRC, b'lyrics')
 yaml_path = os.path.join(_common.RSRC, b'lyricstext.yaml')
 LYRICS_TEXTS = confuse.load_yaml(yaml_path)
@@ -253,8 +253,6 @@ class LyricsGoogleBaseTest(unittest.TestCase):
             __import__('bs4')
         except ImportError:
             self.skipTest('Beautiful Soup 4 not available')
-        if sys.version_info[:3] < (2, 7, 3):
-            self.skipTest("Python's built-in HTML parser is not good enough")
 
 
 class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
@@ -429,8 +427,6 @@ class GeniusBaseTest(unittest.TestCase):
             __import__('bs4')
         except ImportError:
             self.skipTest('Beautiful Soup 4 not available')
-        if sys.version_info[:3] < (2, 7, 3):
-            self.skipTest("Python's built-in HTML parser is not good enough")
 
 
 class GeniusScrapeLyricsFromHtmlTest(GeniusBaseTest):
@@ -480,17 +476,17 @@ class GeniusFetchTest(GeniusBaseTest):
                             "result": {
                                 "primary_artist": {
                                     "name": "\u200Bblackbear",
-                                    },
+                                },
                                 "url": "blackbear_url"
-                                }
+                            }
                         },
                         {
                             "result": {
                                 "primary_artist": {
                                     "name": "El\u002Dp"
-                                    },
+                                },
                                 "url": "El-p_url"
-                                }
+                            }
                         }
                     ]
                 }
@@ -551,6 +547,7 @@ class SlugTests(unittest.TestCase):
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')

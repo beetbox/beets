@@ -84,12 +84,8 @@ class CAAHelper():
     GROUP_URL = 'coverartarchive.org/release-group/{}' \
                 .format(MBID_GROUP)
 
-    if util.SNI_SUPPORTED:
-        RELEASE_URL = "https://" + RELEASE_URL
-        GROUP_URL = "https://" + GROUP_URL
-    else:
-        RELEASE_URL = "http://" + RELEASE_URL
-        GROUP_URL = "http://" + GROUP_URL
+    RELEASE_URL = "https://" + RELEASE_URL
+    GROUP_URL = "https://" + GROUP_URL
 
     RESPONSE_RELEASE = """{
     "images": [
