@@ -41,8 +41,14 @@ VERSION_LOCS = [
     (
         os.path.join(BASE, "docs", "conf.py"),
         [
-            (r'version\s*=\s*[\'"]([0-9\.]+)[\'"]', "version = '{minor}'",),
-            (r'release\s*=\s*[\'"]([0-9\.]+)[\'"]', "release = '{version}'",),
+            (
+                r'version\s*=\s*[\'"]([0-9\.]+)[\'"]',
+                "version = '{minor}'",
+            ),
+            (
+                r'release\s*=\s*[\'"]([0-9\.]+)[\'"]',
+                "release = '{version}'",
+            ),
         ],
     ),
     (
@@ -89,7 +95,9 @@ def bump_version(version):
                         # Insert the new version.
                         out_lines.append(
                             template.format(
-                                version=version, major=major, minor=minor,
+                                version=version,
+                                major=major,
+                                minor=minor,
                             )
                             + "\n"
                         )

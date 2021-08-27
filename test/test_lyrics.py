@@ -18,7 +18,6 @@
 import itertools
 import os
 import re
-import sys
 import unittest
 
 import confuse
