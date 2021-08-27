@@ -81,18 +81,33 @@ class UtilTest(unittest.TestCase):
 
     def test_sanitize_with_custom_replace_overrides_built_in_sub(self):
         with _common.platform_posix():
-            p = util.sanitize_path("a/.?/b", [(re.compile(r"foo"), "bar"),],)
+            p = util.sanitize_path(
+                "a/.?/b",
+                [
+                    (re.compile(r"foo"), "bar"),
+                ],
+            )
         self.assertEqual(p, "a/.?/b")
 
     def test_sanitize_with_custom_replace_adds_replacements(self):
         with _common.platform_posix():
-            p = util.sanitize_path("foo/bar", [(re.compile(r"foo"), "bar"),],)
+            p = util.sanitize_path(
+                "foo/bar",
+                [
+                    (re.compile(r"foo"), "bar"),
+                ],
+            )
         self.assertEqual(p, "bar/bar")
 
     @unittest.skip("unimplemented: #359")
     def test_sanitize_empty_component(self):
         with _common.platform_posix():
-            p = util.sanitize_path("foo//bar", [(re.compile(r"^$"), "_"),],)
+            p = util.sanitize_path(
+                "foo//bar",
+                [
+                    (re.compile(r"^$"), "_"),
+                ],
+            )
         self.assertEqual(p, "foo/_/bar")
 
     def test_convert_command_args_keeps_undecodeable_bytes(self):

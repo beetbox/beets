@@ -504,7 +504,10 @@ def _summary_judgment(rec):
             return importer.action.APPLY
         else:
             action = config["import"]["quiet_fallback"].as_choice(
-                {"skip": importer.action.SKIP, "asis": importer.action.ASIS,}
+                {
+                    "skip": importer.action.SKIP,
+                    "asis": importer.action.ASIS,
+                }
             )
     elif config["import"]["timid"]:
         return None
@@ -651,7 +654,12 @@ def choose_candidate(
 
         # Ask for confirmation.
         default = config["import"]["default_action"].as_choice(
-            {"apply": "a", "skip": "s", "asis": "u", "none": None,}
+            {
+                "apply": "a",
+                "skip": "s",
+                "asis": "u",
+                "none": None,
+            }
         )
         if default is None:
             require = True
@@ -855,7 +863,10 @@ class TerminalImportSession(importer.ImportSession):
 
             print_(
                 "New: "
-                + summarize_items(task.imported_items(), not task.is_album,)
+                + summarize_items(
+                    task.imported_items(),
+                    not task.is_album,
+                )
             )
 
             sel = ui.input_options(
@@ -930,7 +941,11 @@ class TerminalImportSession(importer.ImportSession):
         # Add a "dummy" choice for the other baked-in option, for
         # duplicate checking.
         all_choices = (
-            [PromptChoice("a", "Apply", None),] + choices + extra_choices
+            [
+                PromptChoice("a", "Apply", None),
+            ]
+            + choices
+            + extra_choices
         )
 
         # Check for conflicts.
@@ -1339,7 +1354,12 @@ def update_func(lib, opts, args):
 
 
 update_cmd = ui.Subcommand(
-    "update", help="update the library", aliases=("upd", "up",),
+    "update",
+    help="update the library",
+    aliases=(
+        "upd",
+        "up",
+    ),
 )
 update_cmd.parser.add_album_option()
 update_cmd.parser.add_format_option()

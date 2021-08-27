@@ -175,7 +175,9 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         super().__init__()
 
         self.config.add(
-            {"auto": True,}
+            {
+                "auto": True,
+            }
         )
         config["acoustid"]["apikey"].redact = True
 

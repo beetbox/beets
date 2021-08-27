@@ -75,7 +75,11 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         super().__init__()
 
         self.config.add(
-            {"auto": True, "drop": False, "format": "feat. {0}",}
+            {
+                "auto": True,
+                "drop": False,
+                "format": "feat. {0}",
+            }
         )
 
         self._command = ui.Subcommand(

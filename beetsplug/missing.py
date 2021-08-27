@@ -94,7 +94,11 @@ class MissingPlugin(BeetsPlugin):
         super().__init__()
 
         self.config.add(
-            {"count": False, "total": False, "album": False,}
+            {
+                "count": False,
+                "total": False,
+                "album": False,
+            }
         )
 
         self.album_template_fields["missing"] = _missing_count

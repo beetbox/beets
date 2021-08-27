@@ -226,7 +226,10 @@ class StageDecoratorTest(unittest.TestCase):
             item[key] = True
 
         pl = pipeline.Pipeline(
-            [iter([{"x": False}, {"a": False}]), setkey("x"),]
+            [
+                iter([{"x": False}, {"a": False}]),
+                setkey("x"),
+            ]
         )
         self.assertEqual(
             list(pl.pull()), [{"x": True}, {"a": False, "x": True}]

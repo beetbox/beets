@@ -371,12 +371,8 @@ class CoverArtArchive(RemoteArtSource):
     VALID_MATCHING_CRITERIA = ["release", "releasegroup"]
     VALID_THUMBNAIL_SIZES = [250, 500, 1200]
 
-    if util.SNI_SUPPORTED:
-        URL = "https://coverartarchive.org/release/{mbid}"
-        GROUP_URL = "https://coverartarchive.org/release-group/{mbid}"
-    else:
-        URL = "http://coverartarchive.org/release/{mbid}"
-        GROUP_URL = "http://coverartarchive.org/release-group/{mbid}"
+    URL = "https://coverartarchive.org/release/{mbid}"
+    GROUP_URL = "https://coverartarchive.org/release-group/{mbid}"
 
     def get(self, album, plugin, paths):
         """Return the Cover Art Archive and Cover Art Archive release group URLs
@@ -436,10 +432,7 @@ class CoverArtArchive(RemoteArtSource):
 
 class Amazon(RemoteArtSource):
     NAME = "Amazon"
-    if util.SNI_SUPPORTED:
-        URL = "https://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg"
-    else:
-        URL = "http://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg"
+    URL = "https://images.amazon.com/images/P/%s.%02i.LZZZZZZZ.jpg"
     INDICES = (1, 2)
 
     def get(self, album, plugin, paths):
@@ -454,10 +447,7 @@ class Amazon(RemoteArtSource):
 
 class AlbumArtOrg(RemoteArtSource):
     NAME = "AlbumArt.org scraper"
-    if util.SNI_SUPPORTED:
-        URL = "https://www.albumart.org/index_detail.php"
-    else:
-        URL = "http://www.albumart.org/index_detail.php"
+    URL = "https://www.albumart.org/index_detail.php"
     PAT = r'href\s*=\s*"([^>"]*)"[^>]*title\s*=\s*"View larger image"'
 
     def get(self, album, plugin, paths):
@@ -916,10 +906,7 @@ class LastFM(RemoteArtSource):
         ]
     )
 
-    if util.SNI_SUPPORTED:
-        API_URL = "https://ws.audioscrobbler.com/2.0"
-    else:
-        API_URL = "http://ws.audioscrobbler.com/2.0"
+    API_URL = "https://ws.audioscrobbler.com/2.0"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

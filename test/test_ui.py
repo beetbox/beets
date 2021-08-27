@@ -864,7 +864,11 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         replacements = self.test_cmd.lib.replacements
         repls = [(p.pattern, s) for p, s in replacements]
         self.assertEqual(
-            repls, [("[xy]", "z"), ("foo", "bar"),],
+            repls,
+            [
+                ("[xy]", "z"),
+                ("foo", "bar"),
+            ],
         )
 
     def test_cli_config_option(self):

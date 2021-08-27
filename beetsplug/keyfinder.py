@@ -28,7 +28,11 @@ class KeyFinderPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
         self.config.add(
-            {"bin": "KeyFinder", "auto": True, "overwrite": False,}
+            {
+                "bin": "KeyFinder",
+                "auto": True,
+                "overwrite": False,
+            }
         )
 
         if self.config["auto"].get(bool):

@@ -37,7 +37,10 @@ class FuzzyPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
         self.config.add(
-            {"prefix": "~", "threshold": 0.7,}
+            {
+                "prefix": "~",
+                "threshold": 0.7,
+            }
         )
 
     def queries(self):

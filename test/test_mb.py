@@ -233,7 +233,10 @@ class MBAlbumInfoTest(_common.TestCase):
             }
         ]
         release["medium-list"].append(
-            {"position": "2", "track-list": second_track_list,}
+            {
+                "position": "2",
+                "track-list": second_track_list,
+            }
         )
 
         d = mb.album_info(release)
@@ -547,7 +550,10 @@ class ParseIDTest(_common.TestCase):
 class ArtistFlatteningTest(_common.TestCase):
     def _credit_dict(self, suffix=""):
         return {
-            "artist": {"name": "NAME" + suffix, "sort-name": "SORT" + suffix,},
+            "artist": {
+                "name": "NAME" + suffix,
+                "sort-name": "SORT" + suffix,
+            },
             "name": "CREDIT" + suffix,
         }
 
@@ -623,7 +629,11 @@ class MBLibraryTest(unittest.TestCase):
         with mock.patch("musicbrainzngs.search_recordings") as p:
             p.return_value = {
                 "recording-list": [
-                    {"title": "foo", "id": "bar", "length": 42,}
+                    {
+                        "title": "foo",
+                        "id": "bar",
+                        "length": 42,
+                    }
                 ],
             }
             ti = list(mb.match_track("hello", "there"))[0]
@@ -636,7 +646,11 @@ class MBLibraryTest(unittest.TestCase):
         mbid = "d2a6f856-b553-40a0-ac54-a321e8e2da99"
         with mock.patch("musicbrainzngs.search_releases") as sp:
             sp.return_value = {
-                "release-list": [{"id": mbid,}],
+                "release-list": [
+                    {
+                        "id": mbid,
+                    }
+                ],
             }
             with mock.patch("musicbrainzngs.get_release_by_id") as gp:
                 gp.return_value = {
@@ -668,7 +682,9 @@ class MBLibraryTest(unittest.TestCase):
                                 },
                             }
                         ],
-                        "release-group": {"id": "another-id",},
+                        "release-group": {
+                            "id": "another-id",
+                        },
                     }
                 }
 

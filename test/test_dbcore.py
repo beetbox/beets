@@ -607,7 +607,10 @@ class QueryFromStringsTest(unittest.TestCase):
 
 class SortFromStringsTest(unittest.TestCase):
     def sfs(self, strings):
-        return dbcore.queryparse.sort_from_strings(ModelFixture1, strings,)
+        return dbcore.queryparse.sort_from_strings(
+            ModelFixture1,
+            strings,
+        )
 
     def test_zero_parts(self):
         s = self.sfs([])
@@ -640,7 +643,10 @@ class SortFromStringsTest(unittest.TestCase):
 
 class ParseSortedQueryTest(unittest.TestCase):
     def psq(self, parts):
-        return dbcore.parse_sorted_query(ModelFixture1, parts.split(),)
+        return dbcore.parse_sorted_query(
+            ModelFixture1,
+            parts.split(),
+        )
 
     def test_and_query(self):
         q, s = self.psq("foo bar")

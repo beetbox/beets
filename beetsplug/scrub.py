@@ -49,7 +49,9 @@ class ScrubPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
         self.config.add(
-            {"auto": True,}
+            {
+                "auto": True,
+            }
         )
 
         if self.config["auto"]:

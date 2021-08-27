@@ -450,7 +450,11 @@ class BPDTest(BPDTestHelper):
 
 
 class BPDQueryTest(BPDTestHelper):
-    test_implements_query = implements({"clearerror",})
+    test_implements_query = implements(
+        {
+            "clearerror",
+        }
+    )
 
     def test_cmd_currentsong(self):
         with self.run_bpd() as client:
@@ -565,7 +569,11 @@ class BPDQueryTest(BPDTestHelper):
 
 
 class BPDPlaybackTest(BPDTestHelper):
-    test_implements_playback = implements({"random",})
+    test_implements_playback = implements(
+        {
+            "random",
+        }
+    )
 
     def test_cmd_consume(self):
         with self.run_bpd() as client:
@@ -757,7 +765,12 @@ class BPDPlaybackTest(BPDTestHelper):
 
 class BPDControlTest(BPDTestHelper):
     test_implements_control = implements(
-        {"seek", "seekid", "seekcur",}, expectedFailure=True,
+        {
+            "seek",
+            "seekid",
+            "seekcur",
+        },
+        expectedFailure=True,
     )
 
     def test_cmd_play(self):
@@ -1041,17 +1054,32 @@ class BPDDatabaseTest(BPDTestHelper):
 
 class BPDMountsTest(BPDTestHelper):
     test_implements_mounts = implements(
-        {"mount", "unmount", "listmounts", "listneighbors",},
+        {
+            "mount",
+            "unmount",
+            "listmounts",
+            "listneighbors",
+        },
         expectedFailure=True,
     )
 
 
 class BPDStickerTest(BPDTestHelper):
-    test_implements_stickers = implements({"sticker",}, expectedFailure=True,)
+    test_implements_stickers = implements(
+        {
+            "sticker",
+        },
+        expectedFailure=True,
+    )
 
 
 class BPDConnectionTest(BPDTestHelper):
-    test_implements_connection = implements({"close", "kill",})
+    test_implements_connection = implements(
+        {
+            "close",
+            "kill",
+        }
+    )
 
     ALL_MPD_TAGTYPES = {
         "Artist",
@@ -1119,20 +1147,35 @@ class BPDConnectionTest(BPDTestHelper):
 
 class BPDPartitionTest(BPDTestHelper):
     test_implements_partitions = implements(
-        {"partition", "listpartitions", "newpartition",}, expectedFailure=True,
+        {
+            "partition",
+            "listpartitions",
+            "newpartition",
+        },
+        expectedFailure=True,
     )
 
 
 class BPDDeviceTest(BPDTestHelper):
     test_implements_devices = implements(
-        {"disableoutput", "enableoutput", "toggleoutput", "outputs",},
+        {
+            "disableoutput",
+            "enableoutput",
+            "toggleoutput",
+            "outputs",
+        },
         expectedFailure=True,
     )
 
 
 class BPDReflectionTest(BPDTestHelper):
     test_implements_reflection = implements(
-        {"config", "commands", "notcommands", "urlhandlers",},
+        {
+            "config",
+            "commands",
+            "notcommands",
+            "urlhandlers",
+        },
         expectedFailure=True,
     )
 

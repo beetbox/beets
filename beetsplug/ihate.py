@@ -43,7 +43,10 @@ class IHatePlugin(BeetsPlugin):
             "import_task_choice", self.import_task_choice_event
         )
         self.config.add(
-            {"warn": [], "skip": [],}
+            {
+                "warn": [],
+                "skip": [],
+            }
         )
 
     @classmethod
@@ -54,7 +57,8 @@ class IHatePlugin(BeetsPlugin):
         if action_patterns:
             for query_string in action_patterns:
                 query, _ = parse_query_string(
-                    query_string, Album if task.is_album else Item,
+                    query_string,
+                    Album if task.is_album else Item,
                 )
                 if any(query.match(item) for item in task.imported_items()):
                     return True

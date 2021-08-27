@@ -31,7 +31,8 @@ class PlaylistQuery(beets.dbcore.Query):
             pattern,
             os.path.abspath(
                 os.path.join(
-                    config["playlist_dir"].as_filename(), f"{pattern}.m3u",
+                    config["playlist_dir"].as_filename(),
+                    f"{pattern}.m3u",
                 )
             ),
         )

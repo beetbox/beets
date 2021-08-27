@@ -72,26 +72,7 @@ def ex_literal(val):
     """An int, float, long, bool, string, or None literal with the given
     value.
     """
-    if sys.version_info[:2] < (3, 4):
-        if val is None:
-            return ast.Name("None", ast.Load())
-        elif isinstance(val, int):
-            return ast.Num(val)
-        elif isinstance(val, bool):
-            return ast.Name(bytes(val), ast.Load())
-        elif isinstance(val, str):
-            return ast.Str(val)
-        raise TypeError("no literal for {}".format(type(val)))
-    elif sys.version_info[:2] < (3, 6):
-        if val in [None, True, False]:
-            return ast.NameConstant(val)
-        elif isinstance(val, int):
-            return ast.Num(val)
-        elif isinstance(val, str):
-            return ast.Str(val)
-        raise TypeError("no literal for {}".format(type(val)))
-    else:
-        return ast.Constant(val)
+    return ast.Constant(val)
 
 
 def ex_varassign(name, expr):
@@ -116,10 +97,7 @@ def ex_call(func, args):
         if not isinstance(args[i], ast.expr):
             args[i] = ex_literal(args[i])
 
-    if sys.version_info[:2] < (3, 5):
-        return ast.Call(func, args, [], None, None)
-    else:
-        return ast.Call(func, args, [])
+    return ast.Call(func, args, [])
 
 
 def compile_func(arg_names, statements, name="_the_func", debug=False):
@@ -138,7 +116,10 @@ def compile_func(arg_names, statements, name="_the_func", debug=False):
     args = ast.arguments(**args_fields)
 
     func_def = ast.FunctionDef(
-        name=name, args=args, body=statements, decorator_list=[],
+        name=name,
+        args=args,
+        body=statements,
+        decorator_list=[],
     )
 
     # The ast.Module signature changed in 3.8 to accept a list of types to
@@ -624,7 +605,8 @@ class Template:
             argnames.append(FUNCTION_PREFIX + funcname)
 
         func = compile_func(
-            argnames, [ast.Return(ast.List(expressions, ast.Load()))],
+            argnames,
+            [ast.Return(ast.List(expressions, ast.Load()))],
         )
 
         def wrapper_func(values={}, functions={}):

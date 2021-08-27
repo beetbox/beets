@@ -45,7 +45,12 @@ class DGAlbumInfoTest(_common.TestCase):
             ],
             "styles": ["STYLE1", "STYLE2"],
             "genres": ["GENRE1", "GENRE2"],
-            "labels": [{"name": "LABEL NAME", "catno": "CATALOG NUMBER",}],
+            "labels": [
+                {
+                    "name": "LABEL NAME",
+                    "catno": "CATALOG NUMBER",
+                }
+            ],
             "tracklist": [],
         }
 

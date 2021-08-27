@@ -274,7 +274,11 @@ class Backend:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 r = requests.get(
-                    url, verify=False, headers={"User-Agent": USER_AGENT,},
+                    url,
+                    verify=False,
+                    headers={
+                        "User-Agent": USER_AGENT,
+                    },
                 )
         except requests.RequestException as exc:
             self._log.debug("lyrics request failed: {0}", exc)

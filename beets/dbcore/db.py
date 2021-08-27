@@ -1061,7 +1061,9 @@ class Database:
             SELECT * FROM {} WHERE entity_id IN
                 (SELECT id FROM {} WHERE {});
             """.format(
-            model_cls._flex_table, model_cls._table, where or "1",
+            model_cls._flex_table,
+            model_cls._table,
+            where or "1",
         )
 
         with self.transaction() as tx:

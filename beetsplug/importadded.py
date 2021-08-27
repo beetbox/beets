@@ -15,7 +15,10 @@ class ImportAddedPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
         self.config.add(
-            {"preserve_mtimes": False, "preserve_write_mtimes": False,}
+            {
+                "preserve_mtimes": False,
+                "preserve_write_mtimes": False,
+            }
         )
 
         # item.id for new items that were reimported

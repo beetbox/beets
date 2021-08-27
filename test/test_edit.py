@@ -195,7 +195,8 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
         )
 
         self.assertCounts(
-            mock_write, write_call_count=1,
+            mock_write,
+            write_call_count=1,
         )
         # No changes except on last item.
         self.assertItemFieldsModified(

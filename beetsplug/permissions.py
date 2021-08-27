@@ -35,7 +35,8 @@ def assert_permissions(path, permission, log):
     """
     if not check_permissions(util.syspath(path), permission):
         log.warning(
-            "could not set permissions on {}", util.displayable_path(path),
+            "could not set permissions on {}",
+            util.displayable_path(path),
         )
         log.debug(
             "set permissions to {}, but permissions are now {}",
@@ -57,7 +58,10 @@ class Permissions(BeetsPlugin):
 
         # Adding defaults.
         self.config.add(
-            {"file": "644", "dir": "755",}
+            {
+                "file": "644",
+                "dir": "755",
+            }
         )
 
         self.register_listener("item_imported", self.fix)
@@ -88,7 +92,8 @@ class Permissions(BeetsPlugin):
         for path in file_chmod_queue:
             # Changing permissions on the destination file.
             self._log.debug(
-                "setting file permissions on {}", util.displayable_path(path),
+                "setting file permissions on {}",
+                util.displayable_path(path),
             )
             os.chmod(util.syspath(path), file_perm)
 

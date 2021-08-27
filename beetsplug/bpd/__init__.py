@@ -1315,7 +1315,10 @@ class Server(BaseServer):
 
             (pos, total) = self.player.time()
             yield (
-                "time: {}:{}".format(str(int(pos)), str(int(total)),),
+                "time: {}:{}".format(
+                    str(int(pos)),
+                    str(int(total)),
+                ),
                 "elapsed: " + f"{pos:.3f}",
                 "duration: " + f"{total:.3f}",
             )

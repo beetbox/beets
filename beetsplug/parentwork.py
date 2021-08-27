@@ -74,7 +74,10 @@ class ParentWorkPlugin(BeetsPlugin):
         super().__init__()
 
         self.config.add(
-            {"auto": False, "force": False,}
+            {
+                "auto": False,
+                "force": False,
+            }
         )
 
         if self.config["auto"]:

@@ -1233,7 +1233,11 @@ class InferAlbumDataTest(_common.TestCase):
 
 def test_album_info(*args, **kwargs):
     """Create an AlbumInfo object for testing."""
-    track_info = TrackInfo(title="new title", track_id="trackid", index=0,)
+    track_info = TrackInfo(
+        title="new title",
+        track_id="trackid",
+        index=0,
+    )
     album_info = AlbumInfo(
         artist="artist",
         album="album",
@@ -1930,9 +1934,16 @@ def mocked_get_release_by_id(
                 }
             ],
             "artist-credit": [
-                {"artist": {"name": releases[id_][1], "id": "some-id",},}
+                {
+                    "artist": {
+                        "name": releases[id_][1],
+                        "id": "some-id",
+                    },
+                }
             ],
-            "release-group": {"id": "another-id",},
+            "release-group": {
+                "id": "another-id",
+            },
         }
     }
 
@@ -1962,7 +1973,12 @@ def mocked_get_recording_by_id(
             "id": id_,
             "length": 59,
             "artist-credit": [
-                {"artist": {"name": releases[id_][1], "id": "some-id",},}
+                {
+                    "artist": {
+                        "name": releases[id_][1],
+                        "id": "some-id",
+                    },
+                }
             ],
         }
     }

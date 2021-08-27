@@ -44,7 +44,11 @@ class ThumbnailsPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
         self.config.add(
-            {"auto": True, "force": False, "dolphin": False,}
+            {
+                "auto": True,
+                "force": False,
+                "dolphin": False,
+            }
         )
 
         self.write_metadata = None

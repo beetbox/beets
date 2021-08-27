@@ -1607,7 +1607,9 @@ def manipulate_files(session, task):
             operation = None
 
         task.manipulate_files(
-            operation, write=session.config["write"], session=session,
+            operation,
+            write=session.config["write"],
+            session=session,
         )
 
     # Progress, cleanup, and event.

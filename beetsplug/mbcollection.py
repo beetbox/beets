@@ -58,7 +58,11 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
             config["musicbrainz"]["pass"].as_str(),
         )
         self.config.add(
-            {"auto": False, "collection": "", "remove": False,}
+            {
+                "auto": False,
+                "collection": "",
+                "remove": False,
+            }
         )
         if self.config["auto"]:
             self.import_stages = [self.imported]

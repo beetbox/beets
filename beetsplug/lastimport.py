@@ -28,11 +28,17 @@ class LastImportPlugin(plugins.BeetsPlugin):
     def __init__(self):
         super().__init__()
         config["lastfm"].add(
-            {"user": "", "api_key": plugins.LASTFM_KEY,}
+            {
+                "user": "",
+                "api_key": plugins.LASTFM_KEY,
+            }
         )
         config["lastfm"]["api_key"].redact = True
         self.config.add(
-            {"per_page": 500, "retry_limit": 3,}
+            {
+                "per_page": 500,
+                "retry_limit": 3,
+            }
         )
         self.item_types = {
             "play_count": types.INTEGER,

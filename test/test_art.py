@@ -89,12 +89,8 @@ class CAAHelper:
     RELEASE_URL = "coverartarchive.org/release/{}".format(MBID_RELASE)
     GROUP_URL = "coverartarchive.org/release-group/{}".format(MBID_GROUP)
 
-    if util.SNI_SUPPORTED:
-        RELEASE_URL = "https://" + RELEASE_URL
-        GROUP_URL = "https://" + GROUP_URL
-    else:
-        RELEASE_URL = "http://" + RELEASE_URL
-        GROUP_URL = "http://" + GROUP_URL
+    RELEASE_URL = "https://" + RELEASE_URL
+    GROUP_URL = "https://" + GROUP_URL
 
     RESPONSE_RELEASE = """{
     "images": [
@@ -254,8 +250,8 @@ class FSArtTest(UseThePlugin):
 class CombinedTest(FetchImageHelper, UseThePlugin, CAAHelper):
     ASIN = "xxxx"
     MBID = "releaseid"
-    AMAZON_URL = "https://images.amazon.com/images/P/{}.01.LZZZZZZZ.jpg".format(
-        ASIN
+    AMAZON_URL = (
+        "https://images.amazon.com/images/P/{}.01.LZZZZZZZ.jpg".format(ASIN)
     )
     AAO_URL = "https://www.albumart.org/index_detail.php?asin={}".format(ASIN)
 

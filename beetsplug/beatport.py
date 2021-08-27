@@ -220,7 +220,9 @@ class BeatportRelease(BeatportObject):
         else:
             artist_str = "Various Artists"
         return "<BeatportRelease: {} - {} ({})>".format(
-            artist_str, self.name, self.catalog_number,
+            artist_str,
+            self.name,
+            self.catalog_number,
         )
 
     def __repr__(self):

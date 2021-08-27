@@ -77,7 +77,11 @@ setup(
         "beetsplug.lastgenre",
         "beetsplug.metasync",
     ],
-    entry_points={"console_scripts": ["beet = beets.ui:main",],},
+    entry_points={
+        "console_scripts": [
+            "beet = beets.ui:main",
+        ],
+    },
     install_requires=[
         "unidecode",
         "musicbrainzngs>=0.4",
@@ -113,9 +117,7 @@ setup(
         "lint": [
             "black",
             "flake8",
-            "flake8-coding",
             "flake8-docstrings",
-            "flake8-future-import",
             "pep8-naming",
             "pre-commit",
         ],

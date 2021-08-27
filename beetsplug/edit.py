@@ -56,7 +56,9 @@ def edit(filename, log):
 def dump(arg):
     """Dump a sequence of dictionaries as YAML for editing."""
     return yaml.safe_dump_all(
-        arg, allow_unicode=True, default_flow_style=False,
+        arg,
+        allow_unicode=True,
+        default_flow_style=False,
     )
 
 
@@ -170,7 +172,10 @@ class EditPlugin(plugins.BeetsPlugin):
             help="edit this field also",
         )
         edit_command.parser.add_option(
-            "--all", action="store_true", dest="all", help="edit all fields",
+            "--all",
+            action="store_true",
+            dest="all",
+            help="edit all fields",
         )
         edit_command.parser.add_album_option()
         edit_command.func = self._edit_command

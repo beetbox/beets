@@ -117,7 +117,12 @@ class DummyDataTestCase(_common.TestCase, AssertsMixin):
 
     def assert_items_matched_all(self, results):
         self.assert_items_matched(
-            results, ["foo bar", "baz qux", "beets 4 eva",],
+            results,
+            [
+                "foo bar",
+                "baz qux",
+                "beets 4 eva",
+            ],
         )
 
 
@@ -191,14 +196,22 @@ class GetTest(DummyDataTestCase):
         q = "baz"
         results = self.lib.items(q)
         self.assert_items_matched(
-            results, ["foo bar", "baz qux",],
+            results,
+            [
+                "foo bar",
+                "baz qux",
+            ],
         )
 
     def test_unkeyed_regexp_matches_multiple_columns(self):
         q = ":z$"
         results = self.lib.items(q)
         self.assert_items_matched(
-            results, ["foo bar", "baz qux",],
+            results,
+            [
+                "foo bar",
+                "baz qux",
+            ],
         )
 
     def test_keyed_term_matches_only_one_column(self):
@@ -210,14 +223,20 @@ class GetTest(DummyDataTestCase):
         q = "title::baz"
         results = self.lib.items(q)
         self.assert_items_matched(
-            results, ["baz qux",],
+            results,
+            [
+                "baz qux",
+            ],
         )
 
     def test_multiple_terms_narrow_search(self):
         q = "qux baz"
         results = self.lib.items(q)
         self.assert_items_matched(
-            results, ["baz qux",],
+            results,
+            [
+                "baz qux",
+            ],
         )
 
     def test_multiple_regexps_narrow_search(self):
@@ -239,7 +258,11 @@ class GetTest(DummyDataTestCase):
         q = "year:2000..2002"
         results = self.lib.items(q)
         self.assert_items_matched(
-            results, ["foo bar", "baz qux",],
+            results,
+            [
+                "foo bar",
+                "baz qux",
+            ],
         )
 
     def test_singleton_true(self):
@@ -306,7 +329,11 @@ class GetTest(DummyDataTestCase):
         q = "albumflex:foo"
         results = self.lib.items(q)
         self.assert_items_matched(
-            results, ["foo bar", "baz qux",],
+            results,
+            [
+                "foo bar",
+                "baz qux",
+            ],
         )
 
     def test_invalid_query(self):
@@ -318,10 +345,7 @@ class GetTest(DummyDataTestCase):
             dbcore.query.RegexpQuery("year", "199(")
         exception_text = str(raised.exception)
         self.assertIn("not a regular expression", exception_text)
-        if sys.version_info >= (3, 5):
-            self.assertIn("unterminated subpattern", exception_text)
-        else:
-            self.assertIn("unbalanced parenthesis", exception_text)
+        self.assertIn("unterminated subpattern", exception_text)
         self.assertIsInstance(raised.exception, ParsingError)
 
 

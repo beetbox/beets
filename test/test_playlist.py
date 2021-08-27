@@ -34,7 +34,12 @@ class PlaylistTestHelper(helper.TestHelper):
 
         i1 = _common.item()
         i1.path = beets.util.normpath(
-            os.path.join(self.music_dir, "a", "b", "c.mp3",)
+            os.path.join(
+                self.music_dir,
+                "a",
+                "b",
+                "c.mp3",
+            )
         )
         i1.title = "some item"
         i1.album = "some album"
@@ -43,7 +48,12 @@ class PlaylistTestHelper(helper.TestHelper):
 
         i2 = _common.item()
         i2.path = beets.util.normpath(
-            os.path.join(self.music_dir, "d", "e", "f.mp3",)
+            os.path.join(
+                self.music_dir,
+                "d",
+                "e",
+                "f.mp3",
+            )
         )
         i2.title = "another item"
         i2.album = "another album"
@@ -52,7 +62,12 @@ class PlaylistTestHelper(helper.TestHelper):
 
         i3 = _common.item()
         i3.path = beets.util.normpath(
-            os.path.join(self.music_dir, "x", "y", "z.mp3",)
+            os.path.join(
+                self.music_dir,
+                "x",
+                "y",
+                "z.mp3",
+            )
         )
         i3.title = "yet another item"
         i3.album = "yet another album"
@@ -80,32 +95,58 @@ class PlaylistQueryTestHelper(PlaylistTestHelper):
         q = "playlist:absolute"
         results = self.lib.items(q)
         self.assertEqual(
-            {i.title for i in results}, {"some item", "another item",},
+            {i.title for i in results},
+            {
+                "some item",
+                "another item",
+            },
         )
 
     def test_path_query_with_absolute_paths_in_playlist(self):
         q = "playlist:{}".format(
-            quote(os.path.join(self.playlist_dir, "absolute.m3u",))
+            quote(
+                os.path.join(
+                    self.playlist_dir,
+                    "absolute.m3u",
+                )
+            )
         )
         results = self.lib.items(q)
         self.assertEqual(
-            {i.title for i in results}, {"some item", "another item",},
+            {i.title for i in results},
+            {
+                "some item",
+                "another item",
+            },
         )
 
     def test_name_query_with_relative_paths_in_playlist(self):
         q = "playlist:relative"
         results = self.lib.items(q)
         self.assertEqual(
-            {i.title for i in results}, {"some item", "another item",},
+            {i.title for i in results},
+            {
+                "some item",
+                "another item",
+            },
         )
 
     def test_path_query_with_relative_paths_in_playlist(self):
         q = "playlist:{}".format(
-            quote(os.path.join(self.playlist_dir, "relative.m3u",))
+            quote(
+                os.path.join(
+                    self.playlist_dir,
+                    "relative.m3u",
+                )
+            )
         )
         results = self.lib.items(q)
         self.assertEqual(
-            {i.title for i in results}, {"some item", "another item",},
+            {i.title for i in results},
+            {
+                "some item",
+                "another item",
+            },
         )
 
     def test_name_query_with_nonexisting_playlist(self):
@@ -117,7 +158,9 @@ class PlaylistQueryTestHelper(PlaylistTestHelper):
         q = "playlist:{}".format(
             quote(
                 os.path.join(
-                    self.playlist_dir, self.playlist_dir, "nonexisting.m3u",
+                    self.playlist_dir,
+                    self.playlist_dir,
+                    "nonexisting.m3u",
                 )
             )
         )
@@ -340,7 +383,11 @@ class PlaylistTestItemRemoved(PlaylistUpdateTestHelper, unittest.TestCase):
             lines = [line.strip() for line in f.readlines()]
 
         self.assertEqual(
-            lines, [os.path.join("a", "b", "c.mp3"), "nonexisting.mp3",],
+            lines,
+            [
+                os.path.join("a", "b", "c.mp3"),
+                "nonexisting.mp3",
+            ],
         )
 
 

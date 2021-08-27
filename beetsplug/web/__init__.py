@@ -427,7 +427,10 @@ def stats():
         item_rows = tx.query("SELECT COUNT(*) FROM items")
         album_rows = tx.query("SELECT COUNT(*) FROM albums")
     return flask.jsonify(
-        {"items": item_rows[0][0], "albums": album_rows[0][0],}
+        {
+            "items": item_rows[0][0],
+            "albums": album_rows[0][0],
+        }
     )
 
 

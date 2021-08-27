@@ -47,7 +47,10 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         """Test resizing based on file size, given a resize_func."""
         # Check quality setting unaffected by new parameter
         im_95_qual = resize_func(
-            225, self.IMG_225x225, quality=95, max_filesize=0,
+            225,
+            self.IMG_225x225,
+            quality=95,
+            max_filesize=0,
         )
         # check valid path returned - max_filesize hasn't broken resize command
         self.assertExists(im_95_qual)
@@ -68,7 +71,10 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
 
         # Attempt with lower initial quality
         im_75_qual = resize_func(
-            225, self.IMG_225x225, quality=75, max_filesize=0,
+            225,
+            self.IMG_225x225,
+            quality=75,
+            max_filesize=0,
         )
         self.assertExists(im_75_qual)
 

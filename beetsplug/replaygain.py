@@ -177,7 +177,10 @@ class FfmpegBackend(Backend):
         for item in items:
             gains.append(
                 self._analyse_item(
-                    item, target_level, peak, count_blocks=False,
+                    item,
+                    target_level,
+                    peak,
+                    count_blocks=False,
                 )[
                     0
                 ]  # take only the gain, discarding number of gating blocks
@@ -286,7 +289,13 @@ class FfmpegBackend(Backend):
                 step_size=-1,
             )
             peak = self._parse_float(
-                output[self._find_line(output, b"    Peak:", line_peak,)]
+                output[
+                    self._find_line(
+                        output,
+                        b"    Peak:",
+                        line_peak,
+                    )
+                ]
             )
             # convert TPFS -> part of FS
             peak = 10 ** (peak / 20)
@@ -299,7 +308,11 @@ class FfmpegBackend(Backend):
         )
         gain = self._parse_float(
             output[
-                self._find_line(output, b"    I:", line_integrated_loudness,)
+                self._find_line(
+                    output,
+                    b"    I:",
+                    line_integrated_loudness,
+                )
             ]
         )
         # convert LUFS -> LU from target level
@@ -383,7 +396,10 @@ class CommandBackend(Backend):
     def __init__(self, config, log):
         super().__init__(config, log)
         config.add(
-            {"command": "", "noclip": True,}
+            {
+                "command": "",
+                "noclip": True,
+            }
         )
 
         self.command = config["command"].as_str()

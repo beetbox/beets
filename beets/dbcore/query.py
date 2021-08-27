@@ -885,7 +885,9 @@ class FieldSort(Sort):
 
     def __repr__(self):
         return "<{}: {}{}>".format(
-            type(self).__name__, self.field, "+" if self.ascending else "-",
+            type(self).__name__,
+            self.field,
+            "+" if self.ascending else "-",
         )
 
     def __hash__(self):

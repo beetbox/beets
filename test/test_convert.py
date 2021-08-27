@@ -28,14 +28,9 @@ from beets import util
 
 
 def shell_quote(text):
-    if sys.version_info[0] < 3:
-        import pipes
+    import shlex
 
-        return pipes.quote(text)
-    else:
-        import shlex
-
-        return shlex.quote(text)
+    return shlex.quote(text)
 
 
 class TestHelper(helper.TestHelper):
@@ -268,7 +263,9 @@ class NeverConvertLossyFilesTest(
             "paths": {"default": "converted"},
             "never_convert_lossy_files": True,
             "format": "mp3",
-            "formats": {"mp3": self.tagged_copy_cmd("mp3"),},
+            "formats": {
+                "mp3": self.tagged_copy_cmd("mp3"),
+            },
         }
 
     def tearDown(self):

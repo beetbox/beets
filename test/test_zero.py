@@ -28,7 +28,10 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.config["zero"]["fields"] = ["comments", "month"]
 
         item = self.add_item_fixture(
-            comments="test comment", title="Title", month=1, year=2000,
+            comments="test comment",
+            title="Title",
+            month=1,
+            year=2000,
         )
         item.write()
 

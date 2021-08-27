@@ -246,7 +246,10 @@ class ConvertPlugin(BeetsPlugin):
         encode_cmd = []
         for i, arg in enumerate(args):
             args[i] = Template(arg).safe_substitute(
-                {"source": source, "dest": dest,}
+                {
+                    "source": source,
+                    "dest": dest,
+                }
             )
             encode_cmd.append(args[i].encode(util.arg_encoding()))
 

@@ -144,10 +144,13 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
         # Extract command.
         extract_cmd = ui.Subcommand(
-            "extractart", help="extract an image from file metadata",
+            "extractart",
+            help="extract an image from file metadata",
         )
         extract_cmd.parser.add_option(
-            "-o", dest="outpath", help="image output file",
+            "-o",
+            dest="outpath",
+            help="image output file",
         )
         extract_cmd.parser.add_option(
             "-n",
@@ -188,7 +191,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
         # Clear command.
         clear_cmd = ui.Subcommand(
-            "clearart", help="remove images from file metadata",
+            "clearart",
+            help="remove images from file metadata",
         )
         clear_cmd.parser.add_option(
             "-y", "--yes", action="store_true", help="skip confirmation"

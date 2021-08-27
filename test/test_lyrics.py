@@ -239,8 +239,6 @@ class LyricsGoogleBaseTest(unittest.TestCase):
             __import__("bs4")
         except ImportError:
             self.skipTest("Beautiful Soup 4 not available")
-        if sys.version_info[:3] < (2, 7, 3):
-            self.skipTest("Python's built-in HTML parser is not good enough")
 
 
 class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
@@ -457,8 +455,6 @@ class GeniusBaseTest(unittest.TestCase):
             __import__("bs4")
         except ImportError:
             self.skipTest("Beautiful Soup 4 not available")
-        if sys.version_info[:3] < (2, 7, 3):
-            self.skipTest("Python's built-in HTML parser is not good enough")
 
 
 class GeniusScrapeLyricsFromHtmlTest(GeniusBaseTest):
@@ -508,7 +504,9 @@ class GeniusFetchTest(GeniusBaseTest):
                     "hits": [
                         {
                             "result": {
-                                "primary_artist": {"name": "\u200Bblackbear",},
+                                "primary_artist": {
+                                    "name": "\u200Bblackbear",
+                                },
                                 "url": "blackbear_url",
                             }
                         },

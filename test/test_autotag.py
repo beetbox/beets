@@ -573,7 +573,11 @@ class AssignmentTest(unittest.TestCase):
         self.assertEqual(extra_items, [])
         self.assertEqual(extra_tracks, [trackinfo[1]])
         self.assertEqual(
-            mapping, {items[0]: trackinfo[0], items[1]: trackinfo[2],},
+            mapping,
+            {
+                items[0]: trackinfo[0],
+                items[1]: trackinfo[2],
+            },
         )
 
     def test_order_works_with_extra_tracks(self):
@@ -590,7 +594,11 @@ class AssignmentTest(unittest.TestCase):
         self.assertEqual(extra_items, [items[1]])
         self.assertEqual(extra_tracks, [])
         self.assertEqual(
-            mapping, {items[0]: trackinfo[0], items[2]: trackinfo[1],},
+            mapping,
+            {
+                items[0]: trackinfo[0],
+                items[2]: trackinfo[1],
+            },
         )
 
     def test_order_works_when_track_names_are_entirely_wrong(self):

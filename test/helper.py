@@ -604,7 +604,10 @@ def generate_track_info(track_id="track info", values={}):
     The `track_id` field is set to the corresponding argument. All other
     string fields are set to "track info".
     """
-    track = TrackInfo(title="track info", track_id=track_id,)
+    track = TrackInfo(
+        title="track info",
+        track_id=track_id,
+    )
     for field in TRACK_INFO_FIELDS:
         setattr(track, field, "track info")
     for field, value in values.items():
