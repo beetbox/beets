@@ -118,6 +118,7 @@ setup(
             "black",
             "flake8",
             "flake8-docstrings",
+            "isort",
             "pep8-naming",
             "pre-commit",
         ],
