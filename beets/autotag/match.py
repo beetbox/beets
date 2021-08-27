@@ -19,14 +19,13 @@ releases and tracks.
 
 import datetime
 import re
-from munkres import Munkres
 from collections import namedtuple
 
-from beets import logging
-from beets import plugins
-from beets import config
-from beets.util import plurality
+from munkres import Munkres
+
+from beets import config, logging, plugins
 from beets.autotag import hooks
+from beets.util import plurality
 from beets.util.enumeration import OrderedEnum
 
 # Artist signals that indicate "various artists". These are used at the

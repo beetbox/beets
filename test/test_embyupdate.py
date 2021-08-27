@@ -1,7 +1,9 @@
-from test.helper import TestHelper
-from beetsplug import embyupdate
 import unittest
+from test.helper import TestHelper
+
 import responses
+
+from beetsplug import embyupdate
 
 
 class EmbyUpdateTest(unittest.TestCase, TestHelper):

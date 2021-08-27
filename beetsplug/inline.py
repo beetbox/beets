@@ -15,11 +15,11 @@
 """Allows inline path template customization code in the config file.
 """
 
-import traceback
 import itertools
+import traceback
 
-from beets.plugins import BeetsPlugin
 from beets import config
+from beets.plugins import BeetsPlugin
 
 FUNC_NAME = "__INLINE_FUNC__"
 

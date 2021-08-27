@@ -13,9 +13,9 @@
 # included in all copies or substantial portions of the Software.
 
 
-import confuse
-
 import warnings
+
+import confuse
 
 warnings.warn("beets.util.confit is deprecated; use confuse instead")
 

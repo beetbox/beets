@@ -16,8 +16,8 @@
 """
 
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, decargs, print_
 from beets.random import random_objs
+from beets.ui import Subcommand, decargs, print_
 
 
 def random_func(lib, opts, args):

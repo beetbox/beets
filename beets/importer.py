@@ -17,28 +17,30 @@
 autotagging music files.
 """
 
-import os
-import re
-import pickle
 import itertools
-from collections import defaultdict
-from tempfile import mkdtemp
-from bisect import insort, bisect_left
-from contextlib import contextmanager
+import os
+import pickle
+import re
 import shutil
 import time
-
-from beets import logging
-from beets import autotag
-from beets import library
-from beets import dbcore
-from beets import plugins
-from beets import util
-from beets import config
-from beets.util import pipeline, sorted_walk, ancestry, MoveOperation
-from beets.util import syspath, normpath, displayable_path
+from bisect import bisect_left, insort
+from collections import defaultdict
+from contextlib import contextmanager
 from enum import Enum
+from tempfile import mkdtemp
+
 import mediafile
+
+from beets import autotag, config, dbcore, library, logging, plugins, util
+from beets.util import (
+    MoveOperation,
+    ancestry,
+    displayable_path,
+    normpath,
+    pipeline,
+    sorted_walk,
+    syspath,
+)
 
 action = Enum("action", ["SKIP", "ASIS", "TRACKS", "APPLY", "ALBUMS", "RETAG"])
 # The RETAG action represents "don't apply any match, but do record
@@ -1075,20 +1077,20 @@ class ArchiveImportTask(SentinelImportTask):
         """
         if not hasattr(cls, "_handlers"):
             cls._handlers = []
-            from zipfile import is_zipfile, ZipFile
+            from zipfile import ZipFile, is_zipfile
 
             cls._handlers.append((is_zipfile, ZipFile))
             import tarfile
 
             cls._handlers.append((tarfile.is_tarfile, tarfile.open))
             try:
-                from rarfile import is_rarfile, RarFile
+                from rarfile import RarFile, is_rarfile
             except ImportError:
                 pass
             else:
                 cls._handlers.append((is_rarfile, RarFile))
             try:
-                from py7zr import is_7zfile, SevenZipFile
+                from py7zr import SevenZipFile, is_7zfile
             except ImportError:
                 pass
             else:

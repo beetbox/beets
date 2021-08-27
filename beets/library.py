@@ -16,29 +16,27 @@
 """
 
 import os
-import sys
-import unicodedata
-import time
 import re
-import string
 import shlex
+import string
+import sys
+import time
+import unicodedata
 
-from beets import logging
 from mediafile import MediaFile, UnreadableFileError
-from beets import plugins
-from beets import util
+
+import beets
+from beets import dbcore, logging, plugins, util
+from beets.dbcore import types
 from beets.util import (
+    MoveOperation,
     bytestring_path,
-    syspath,
+    lazy_property,
     normpath,
     samefile,
-    MoveOperation,
-    lazy_property,
+    syspath,
 )
-from beets.util.functemplate import template, Template
-from beets import dbcore
-from beets.dbcore import types
-import beets
+from beets.util.functemplate import Template, template
 
 # To use the SQLite "blob" type, it doesn't suffice to provide a byte
 # string; SQLite treats that as encoded text. Wrapping it in a

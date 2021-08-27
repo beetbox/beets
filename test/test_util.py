@@ -14,15 +14,14 @@
 """Tests for base utils from the beets.util package.
 """
 
-import sys
-import re
 import os
+import re
 import subprocess
+import sys
 import unittest
-
-from unittest.mock import patch, Mock
-
 from test import _common
+from unittest.mock import Mock, patch
+
 from beets import util
 
 

@@ -21,9 +21,9 @@ import datetime
 import os
 import re
 
-from beets.plugins import BeetsPlugin
-from beets.util import mkdirall, normpath, syspath, bytestring_path, link
 from beets import config
+from beets.plugins import BeetsPlugin
+from beets.util import bytestring_path, link, mkdirall, normpath, syspath
 
 M3U_DEFAULT_NAME = "imported.m3u"
 

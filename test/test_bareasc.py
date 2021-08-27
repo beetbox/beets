@@ -5,8 +5,7 @@
 
 
 import unittest
-
-from test.helper import capture_stdout, TestHelper
+from test.helper import TestHelper, capture_stdout
 
 from beets import logging
 

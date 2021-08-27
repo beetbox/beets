@@ -17,12 +17,11 @@ automatically whenever tags are written.
 """
 
 
-from beets.plugins import BeetsPlugin
-from beets import ui
-from beets import util
-from beets import config
 import mediafile
 import mutagen
+
+from beets import config, ui, util
+from beets.plugins import BeetsPlugin
 
 _MUTAGEN_FORMATS = {
     "asf": "ASF",

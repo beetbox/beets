@@ -27,12 +27,12 @@ engine like Jinja2 or Mustache.
 """
 
 
-import re
 import ast
 import dis
-import types
-import sys
 import functools
+import re
+import sys
+import types
 
 SYMBOL_DELIM = "$"
 FUNC_DELIM = "%"

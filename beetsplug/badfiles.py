@@ -16,18 +16,18 @@
 """
 
 
-from subprocess import check_output, CalledProcessError, list2cmdline, STDOUT
-
-import shlex
-import os
 import errno
+import os
+import shlex
 import sys
+from subprocess import STDOUT, CalledProcessError, check_output, list2cmdline
+
 import confuse
+
+from beets import importer, ui
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets.util import displayable_path, par_map
-from beets import ui
-from beets import importer
 
 
 class CheckerCommandException(Exception):

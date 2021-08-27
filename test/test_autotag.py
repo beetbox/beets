@@ -17,15 +17,13 @@
 
 import re
 import unittest
-
 from test import _common
-from beets import autotag
-from beets.autotag import match
+
+from beets import autotag, config
+from beets.autotag import AlbumInfo, TrackInfo, match
 from beets.autotag.hooks import Distance, string_dist
 from beets.library import Item
 from beets.util import plurality
-from beets.autotag import AlbumInfo, TrackInfo
-from beets import config
 
 
 class PluralityTest(_common.TestCase):

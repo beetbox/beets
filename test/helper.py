@@ -30,29 +30,27 @@ information or mock the environment.
 """
 
 
-import sys
 import os
 import os.path
 import shutil
 import subprocess
-from tempfile import mkdtemp, mkstemp
+import sys
 from contextlib import contextmanager
-from six import StringIO
 from enum import Enum
-
-import beets
-from beets import logging
-from beets import config
-import beets.plugins
-from beets.library import Library, Item, Album
-from beets import importer
-from beets.autotag.hooks import AlbumInfo, TrackInfo
-from mediafile import MediaFile, Image
-from beets import util
-from beets.util import MoveOperation
+from tempfile import mkdtemp, mkstemp
 
 # TODO Move AutotagMock here
 from test import _common
+
+from mediafile import Image, MediaFile
+from six import StringIO
+
+import beets
+import beets.plugins
+from beets import config, importer, logging, util
+from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.library import Album, Item, Library
+from beets.util import MoveOperation
 
 
 class LogCapture(logging.Handler):

@@ -15,8 +15,8 @@
 """Update library's tags using Beatport.
 """
 
-from beets.plugins import BeetsPlugin, apply_item_changes
 from beets import autotag, library, ui, util
+from beets.plugins import BeetsPlugin, apply_item_changes
 
 from .beatport import BeatportPlugin
 

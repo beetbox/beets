@@ -16,12 +16,12 @@
 """
 
 
+import json
+import re  # used to test csv format
 import unittest
 from test.helper import TestHelper
-import re  # used to test csv format
-import json
-from xml.etree.ElementTree import Element
 from xml.etree import ElementTree
+from xml.etree.ElementTree import Element
 
 
 class ExportPluginTest(unittest.TestCase, TestHelper):

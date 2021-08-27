@@ -6,8 +6,7 @@ Reimported albums and items are skipped.
 
 import os
 
-from beets import util
-from beets import importer
+from beets import importer, util
 from beets.plugins import BeetsPlugin
 
 

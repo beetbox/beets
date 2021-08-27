@@ -16,6 +16,7 @@
 
 
 import re
+
 from beets.plugins import BeetsPlugin
 
 __author__ = "baobab@heresiarch.info"

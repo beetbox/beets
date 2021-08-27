@@ -12,17 +12,15 @@
 # included in all copies or substantial portions of the Software.
 
 
-from unittest.mock import patch, Mock
-
-from beets import library
-from beets.util import bytestring_path, _fsencoding
-from beetsplug.ipfs import IPFSPlugin
-
-import unittest
 import os
-
+import unittest
 from test import _common
 from test.helper import TestHelper
+from unittest.mock import Mock, patch
+
+from beets import library
+from beets.util import _fsencoding, bytestring_path
+from beetsplug.ipfs import IPFSPlugin
 
 
 @patch("beets.util.command_output", Mock())

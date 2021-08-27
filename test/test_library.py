@@ -17,24 +17,23 @@
 
 import os
 import os.path
-import stat
-import shutil
 import re
-import unicodedata
+import shutil
+import stat
 import sys
 import time
+import unicodedata
 import unittest
-
 from test import _common
 from test._common import item
-import beets.library
-import beets.dbcore.query
-from beets import util
-from beets import plugins
-from beets import config
-from mediafile import MediaFile, UnreadableFileError
-from beets.util import syspath, bytestring_path
 from test.helper import TestHelper
+
+from mediafile import MediaFile, UnreadableFileError
+
+import beets.dbcore.query
+import beets.library
+from beets import config, plugins, util
+from beets.util import bytestring_path, syspath
 
 # Shortcut to path normalization.
 np = util.normpath

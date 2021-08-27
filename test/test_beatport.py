@@ -16,12 +16,12 @@
 """
 
 import unittest
+from datetime import timedelta
 from test import _common
 from test.helper import TestHelper
-from datetime import timedelta
 
-from beetsplug import beatport
 from beets import library
+from beetsplug import beatport
 
 
 class BeatportTest(_common.TestCase, TestHelper):

@@ -15,9 +15,9 @@
 """Representation of type information for DBCore model fields.
 """
 
-from . import query
 from beets.util import str2bool
 
+from . import query
 
 # Abstract base.
 

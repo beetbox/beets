@@ -16,16 +16,13 @@
 """
 
 
-from beets.plugins import BeetsPlugin
-from beets import ui
-from beets import vfs
-from beets import library
-from beets.util.functemplate import Template
-from beets.autotag import match
-from beets import plugins
-from beets import importer
 import cProfile
 import timeit
+
+from beets import importer, library, plugins, ui, vfs
+from beets.autotag import match
+from beets.plugins import BeetsPlugin
+from beets.util.functemplate import Template
 
 
 def aunique_benchmark(lib, prof):

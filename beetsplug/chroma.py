@@ -16,16 +16,15 @@
 autotagger. Requires the pyacoustid library.
 """
 
-from beets import plugins
-from beets import ui
-from beets import util
-from beets import config
-from beets.autotag import hooks
-import confuse
-import acoustid
+import re
 from collections import defaultdict
 from functools import partial
-import re
+
+import acoustid
+import confuse
+
+from beets import config, plugins, ui, util
+from beets.autotag import hooks
 
 API_KEY = "1vOwZtEn"
 SCORE_THRESH = 0.5

@@ -13,12 +13,12 @@
 # included in all copies or substantial portions of the Software.
 
 
-from unittest.mock import patch
 import unittest
 from test.helper import TestHelper
+from unittest.mock import patch
 
-from beets.library import Item
 from beets import util
+from beets.library import Item
 
 
 @patch("beets.util.command_output")

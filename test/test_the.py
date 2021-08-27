@@ -3,8 +3,9 @@
 
 import unittest
 from test import _common
+
 from beets import config
-from beetsplug.the import ThePlugin, PATTERN_A, PATTERN_THE, FORMAT
+from beetsplug.the import FORMAT, PATTERN_A, PATTERN_THE, ThePlugin
 
 
 class ThePluginTest(_common.TestCase):

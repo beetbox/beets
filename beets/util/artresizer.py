@@ -16,13 +16,13 @@
 public resizing proxy if neither is available.
 """
 
-import subprocess
 import os
 import re
+import subprocess
 from tempfile import NamedTemporaryFile
 from urllib.parse import urlencode
-from beets import logging
-from beets import util
+
+from beets import logging, util
 
 # Resizing methods
 PIL = 1

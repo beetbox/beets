@@ -14,9 +14,8 @@
 
 
 import time
-from datetime import datetime
 import unittest
-
+from datetime import datetime
 from test.helper import TestHelper
 
 from confuse import ConfigValueError

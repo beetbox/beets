@@ -16,8 +16,8 @@
 
 import unittest
 from test import _common
-from beets import library
-from beets import vfs
+
+from beets import library, vfs
 
 
 class VFSTest(_common.TestCase):

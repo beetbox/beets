@@ -20,14 +20,15 @@ import difflib
 import errno
 import itertools
 import json
-import struct
 import os.path
 import re
-import requests
+import struct
 import unicodedata
-from unidecode import unidecode
-import warnings
 import urllib
+import warnings
+
+import requests
+from unidecode import unidecode
 
 try:
     import bs4
@@ -55,9 +56,8 @@ except ImportError:
         pass
 
 
-from beets import plugins
-from beets import ui
 import beets
+from beets import plugins, ui
 
 DIV_RE = re.compile(r"<(/?)div>?", re.I)
 COMMENT_RE = re.compile(r"<!--.*-->", re.S)

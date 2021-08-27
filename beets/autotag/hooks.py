@@ -14,17 +14,16 @@
 
 """Glue between metadata sources and the matching logic."""
 
+import re
 from collections import namedtuple
 from functools import total_ordering
-import re
 
-from beets import logging
-from beets import plugins
-from beets import config
-from beets.util import as_string
-from beets.autotag import mb
 from jellyfish import levenshtein_distance
 from unidecode import unidecode
+
+from beets import config, logging, plugins
+from beets.autotag import mb
+from beets.util import as_string
 
 log = logging.getLogger("beets")
 

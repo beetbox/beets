@@ -13,28 +13,28 @@
 # included in all copies or substantial portions of the Software.
 
 
-import os
-from unittest.mock import patch, Mock, ANY
-import shutil
 import itertools
+import os
+import shutil
 import unittest
+from test import helper
+from test._common import RSRC
+from test.test_importer import AutotagStub, ImportHelper
+from test.test_ui_importer import TerminalImportSessionSetup
+from unittest.mock import ANY, Mock, patch
 
+from mediafile import MediaFile
+
+from beets import config, plugins, ui
+from beets.dbcore import types
 from beets.importer import (
-    SingletonImportTask,
-    SentinelImportTask,
     ArchiveImportTask,
+    SentinelImportTask,
+    SingletonImportTask,
     action,
 )
-from beets import plugins, config, ui
 from beets.library import Item
-from beets.dbcore import types
-from mediafile import MediaFile
-from beets.util import displayable_path, bytestring_path, syspath
-
-from test.test_importer import ImportHelper, AutotagStub
-from test.test_ui_importer import TerminalImportSessionSetup
-from test._common import RSRC
-from test import helper
+from beets.util import bytestring_path, displayable_path, syspath
 
 
 class TestHelper(helper.TestHelper):

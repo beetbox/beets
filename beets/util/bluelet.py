@@ -6,15 +6,14 @@ asyncore.
 Bluelet: easy concurrency without all the messy parallelism.
 """
 
-import socket
-import select
-import sys
-import types
-import errno
-import traceback
-import time
 import collections
-
+import errno
+import select
+import socket
+import sys
+import time
+import traceback
+import types
 
 # Basic events used for thread scheduling.
 

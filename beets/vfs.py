@@ -17,6 +17,7 @@ libraries.
 """
 
 from collections import namedtuple
+
 from beets import util
 
 Node = namedtuple("Node", ["files", "dirs"])

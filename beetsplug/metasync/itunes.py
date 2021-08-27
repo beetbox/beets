@@ -16,19 +16,19 @@
 """
 
 
-from contextlib import contextmanager
 import os
+import plistlib
 import shutil
 import tempfile
-import plistlib
-
-from urllib.parse import urlparse, unquote
+from contextlib import contextmanager
 from time import mktime
+from urllib.parse import unquote, urlparse
+
+from confuse import ConfigValueError
 
 from beets import util
 from beets.dbcore import types
 from beets.library import DateType
-from confuse import ConfigValueError
 from beetsplug.metasync import MetaSource
 
 

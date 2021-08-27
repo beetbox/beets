@@ -15,17 +15,15 @@
 """Searches for albums in the MusicBrainz database.
 """
 
-import musicbrainzngs
 import re
 import traceback
-
-from beets import logging
-from beets import plugins
-import beets.autotag.hooks
-import beets
-from beets import util
-from beets import config
 from urllib.parse import urljoin
+
+import musicbrainzngs
+
+import beets
+import beets.autotag.hooks
+from beets import config, logging, plugins, util
 
 VARIOUS_ARTISTS_ID = "89ad4ac3-39f7-470e-963a-56509c546377"
 

@@ -2,15 +2,16 @@
 
 
 import os
-import responses
 import unittest
-
 from test import _common
+from test.helper import TestHelper
+
+import responses
+from six.moves.urllib.parse import parse_qs, urlparse
+
 from beets import config
 from beets.library import Item
 from beetsplug import spotify
-from test.helper import TestHelper
-from six.moves.urllib.parse import parse_qs, urlparse
 
 
 class ArgumentsMock:

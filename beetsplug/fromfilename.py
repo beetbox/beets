@@ -16,11 +16,11 @@
 filename.
 """
 
-from beets import plugins
-from beets.util import displayable_path
 import os
 import re
 
+from beets import plugins
+from beets.util import displayable_path
 
 # Filename field extraction patterns.
 PATTERNS = [

@@ -16,13 +16,12 @@
 """
 
 
-from datetime import datetime
 import re
 import string
+from datetime import datetime
 from itertools import tee
 
 from beets import plugins, ui
-
 
 ASCII_DIGITS = string.digits + string.ascii_lowercase
 

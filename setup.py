@@ -16,9 +16,10 @@
 
 
 import os
-import sys
-import subprocess
 import shutil
+import subprocess
+import sys
+
 from setuptools import setup
 
 

@@ -16,16 +16,17 @@
 """List missing tracks.
 """
 
-import musicbrainzngs
-
-from musicbrainzngs.musicbrainz import MusicBrainzError
 from collections import defaultdict
+
+import musicbrainzngs
+from musicbrainzngs.musicbrainz import MusicBrainzError
+
+from beets import config
 from beets.autotag import hooks
+from beets.dbcore import types
 from beets.library import Item
 from beets.plugins import BeetsPlugin
-from beets.ui import decargs, print_, Subcommand
-from beets import config
-from beets.dbcore import types
+from beets.ui import Subcommand, decargs, print_
 
 
 def _missing_count(album):

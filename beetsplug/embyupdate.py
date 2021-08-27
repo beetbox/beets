@@ -9,9 +9,10 @@
 """
 
 import hashlib
+from urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit
+
 import requests
 
-from urllib.parse import urlencode, urljoin, parse_qs, urlsplit, urlunsplit
 from beets import config
 from beets.plugins import BeetsPlugin
 

@@ -15,34 +15,26 @@
 """An AURA server using Flask."""
 
 
-from mimetypes import guess_type
 import re
-from os.path import isfile, getsize
+from mimetypes import guess_type
+from os.path import getsize, isfile
 
-from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, _open_library
+from flask import Blueprint, Flask, current_app, make_response, request, send_file
+
 from beets import config
-from beets.util import py3_path
-from beets.library import Item, Album
 from beets.dbcore.query import (
-    MatchQuery,
-    NotQuery,
-    RegexpQuery,
     AndQuery,
     FixedFieldSort,
-    SlowFieldSort,
+    MatchQuery,
     MultipleSort,
+    NotQuery,
+    RegexpQuery,
+    SlowFieldSort,
 )
-
-from flask import (
-    Blueprint,
-    Flask,
-    current_app,
-    send_file,
-    make_response,
-    request,
-)
-
+from beets.library import Album, Item
+from beets.plugins import BeetsPlugin
+from beets.ui import Subcommand, _open_library
+from beets.util import py3_path
 
 # Constants
 

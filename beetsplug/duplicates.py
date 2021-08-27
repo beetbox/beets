@@ -17,18 +17,17 @@
 
 import shlex
 
+from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
-from beets.ui import decargs, print_, Subcommand, UserError
+from beets.ui import Subcommand, UserError, decargs, print_
 from beets.util import (
+    MoveOperation,
+    bytestring_path,
     command_output,
+    decode_commandline_path,
     displayable_path,
     subprocess,
-    bytestring_path,
-    MoveOperation,
-    decode_commandline_path,
 )
-from beets.library import Item, Album
-
 
 PLUGIN = "duplicates"
 

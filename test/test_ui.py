@@ -16,28 +16,23 @@
 """
 
 import os
-import shutil
-import re
-import subprocess
 import platform
+import re
+import shutil
+import subprocess
 import sys
 import unittest
-
-from unittest.mock import patch, Mock
 from test import _common
-from test.helper import capture_stdout, has_program, TestHelper, control_stdin
+from test.helper import TestHelper, capture_stdout, control_stdin, has_program
+from unittest.mock import Mock, patch
 
-from beets import library
-from beets import ui
-from beets.ui import commands
-from beets import autotag
-from beets.autotag.match import distance
-from mediafile import MediaFile
-from beets import config
-from beets import plugins
 from confuse import ConfigError
-from beets import util
-from beets.util import syspath, MoveOperation
+from mediafile import MediaFile
+
+from beets import autotag, config, library, plugins, ui, util
+from beets.autotag.match import distance
+from beets.ui import commands
+from beets.util import MoveOperation, syspath
 
 
 class ListTest(unittest.TestCase):

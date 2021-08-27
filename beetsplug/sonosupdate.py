@@ -16,8 +16,9 @@
 This is based on the Kodi Update plugin.
 """
 
-from beets.plugins import BeetsPlugin
 import soco
+
+from beets.plugins import BeetsPlugin
 
 
 class SonosUpdate(BeetsPlugin):

@@ -1,11 +1,11 @@
 import os
 import os.path
-import tempfile
 import shutil
+import tempfile
 import unittest
 
 from beets import config
-from beets.library import Item, Album, Library
+from beets.library import Album, Item, Library
 from beetsplug.importfeeds import ImportFeedsPlugin
 
 

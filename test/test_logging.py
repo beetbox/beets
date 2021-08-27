@@ -1,17 +1,17 @@
 """Stupid tests that ensure logging works as expected"""
 
+import logging as log
 import sys
 import threading
-import logging as log
-from six import StringIO
 import unittest
+from test import _common, helper
+from test._common import TestCase
+
+from six import StringIO
 
 import beets.logging as blog
-from beets import plugins, ui
 import beetsplug
-from test import _common
-from test._common import TestCase
-from test import helper
+from beets import plugins, ui
 
 
 class LoggingTest(TestCase):

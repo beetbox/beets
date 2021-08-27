@@ -18,28 +18,25 @@ CLI commands are implemented in the ui.commands module.
 """
 
 
-import optparse
-import textwrap
-import sys
-from difflib import SequenceMatcher
-import sqlite3
 import errno
-import re
-import struct
-import traceback
+import optparse
 import os.path
+import re
+import sqlite3
+import struct
+import sys
+import textwrap
+import traceback
+from difflib import SequenceMatcher
 
-from beets import logging
-from beets import library
-from beets import plugins
-from beets import util
-from beets.util.functemplate import template
-from beets import config
-from beets.util import as_string
-from beets.autotag import mb
-from beets.dbcore import query as db_query
-from beets.dbcore import db
 import confuse
+
+from beets import config, library, logging, plugins, util
+from beets.autotag import mb
+from beets.dbcore import db
+from beets.dbcore import query as db_query
+from beets.util import as_string
+from beets.util.functemplate import template
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
 if sys.platform == "win32":

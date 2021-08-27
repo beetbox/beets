@@ -18,22 +18,17 @@
 import os
 import shutil
 import unittest
-
-import responses
-from unittest.mock import patch
-
 from test import _common
 from test.helper import capture_log
-from beetsplug import fetchart
-from beets.autotag import AlbumInfo, AlbumMatch
-from beets import config
-from beets import library
-from beets import importer
-from beets import logging
-from beets import util
-from beets.util.artresizer import ArtResizer, WEBPROXY
-import confuse
+from unittest.mock import patch
 
+import confuse
+import responses
+
+from beets import config, importer, library, logging, util
+from beets.autotag import AlbumInfo, AlbumMatch
+from beets.util.artresizer import WEBPROXY, ArtResizer
+from beetsplug import fetchart
 
 logger = logging.getLogger("beets.test_art")
 

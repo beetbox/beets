@@ -15,17 +15,17 @@
 """
 
 
-import sys
 import codecs
-import json
 import csv
+import json
+import sys
+from datetime import date, datetime
 from xml.etree import ElementTree
 
-from datetime import datetime, date
-from beets.plugins import BeetsPlugin
-from beets import ui
-from beets import util
 import mediafile
+
+from beets import ui, util
+from beets.plugins import BeetsPlugin
 from beetsplug.info import library_data, tag_data
 
 

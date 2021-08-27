@@ -15,27 +15,26 @@
 """Tests for BPD's implementation of the MPD protocol.
 """
 
-import unittest
-from test.helper import TestHelper
-
-import os
-import sys
+import imp
 import multiprocessing as mp
-import threading
+import os
 import socket
-import time
-import yaml
+import sys
 import tempfile
+import threading
+import time
+import unittest
 from contextlib import contextmanager
-
-from beets.util import py3_path, bluelet
-from beetsplug import bpd
-import confuse
-
+from test.helper import TestHelper
 
 # Mock GstPlayer so that the forked process doesn't attempt to import gi:
 from unittest import mock
-import imp
+
+import confuse
+import yaml
+
+from beets.util import bluelet, py3_path
+from beetsplug import bpd
 
 gstplayer = imp.new_module("beetsplug.bpd.gstplayer")
 

@@ -2,12 +2,13 @@
 
 """A utility script for automating the beets release process.
 """
-import click
+import datetime
 import os
 import re
 import subprocess
 from contextlib import contextmanager
-import datetime
+
+import click
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CHANGELOG = os.path.join(BASE, "docs", "changelog.rst")

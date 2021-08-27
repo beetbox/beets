@@ -16,10 +16,11 @@
 """
 
 
-from beets.plugins import BeetsPlugin
-from beets.dbcore.query import StringFieldQuery
-from beets import config
 import difflib
+
+from beets import config
+from beets.dbcore.query import StringFieldQuery
+from beets.plugins import BeetsPlugin
 
 
 class FuzzyQuery(StringFieldQuery):

@@ -15,20 +15,20 @@
 """The central Model and Database constructs for DBCore.
 """
 
-import time
+import contextlib
 import os
 import re
-from collections import defaultdict
-import threading
 import sqlite3
-import contextlib
+import threading
+import time
+from collections import defaultdict
+from collections.abc import Mapping
 
 import beets
-from beets.util import functemplate
-from beets.util import py3_path
 from beets.dbcore import types
+from beets.util import functemplate, py3_path
+
 from .query import MatchQuery, NullSort, TrueQuery
-from collections.abc import Mapping
 
 
 class DBAccessError(Exception):

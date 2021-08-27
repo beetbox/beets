@@ -4,15 +4,11 @@
 import os
 import platform
 import unittest
-from unittest.mock import patch, Mock
-
 from test.helper import TestHelper
+from unittest.mock import Mock, patch
+
 from beets.util import displayable_path
-from beetsplug.permissions import (
-    check_permissions,
-    convert_perm,
-    dirs_in_library,
-)
+from beetsplug.permissions import check_permissions, convert_perm, dirs_in_library
 
 
 class PermissionsPluginTest(unittest.TestCase, TestHelper):

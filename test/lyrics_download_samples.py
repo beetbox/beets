@@ -15,8 +15,8 @@
 
 import os
 import sys
-import requests
 
+import requests
 import test_lyrics
 
 

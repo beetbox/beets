@@ -14,9 +14,9 @@
 
 """Allows custom commands to be run when an event is emitted by beets"""
 
+import shlex
 import string
 import subprocess
-import shlex
 
 from beets.plugins import BeetsPlugin
 from beets.util import arg_encoding

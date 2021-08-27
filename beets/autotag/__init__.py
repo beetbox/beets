@@ -16,19 +16,12 @@
 """
 
 
-from beets import logging
-from beets import config
+from beets import config, logging
 
 # Parts of external interface.
-from .hooks import (  # noqa
-    AlbumInfo,
-    TrackInfo,
-    AlbumMatch,
-    TrackMatch,
-    Distance,
-)
-from .match import tag_item, tag_album, Proposal  # noqa
-from .match import Recommendation  # noqa
+from .hooks import AlbumInfo, AlbumMatch, Distance, TrackInfo, TrackMatch  # noqa F401
+from .match import Recommendation  # noqa F401
+from .match import Proposal, tag_album, tag_item  # noqa F401
 
 # Global logger.
 log = logging.getLogger("beets")

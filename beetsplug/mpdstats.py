@@ -13,16 +13,14 @@
 # included in all copies or substantial portions of the Software.
 
 
-import mpd
-import time
 import os
+import time
 
-from beets import ui
-from beets import config
-from beets import plugins
-from beets import library
-from beets.util import displayable_path
+import mpd
+
+from beets import config, library, plugins, ui
 from beets.dbcore import types
+from beets.util import displayable_path
 
 # If we lose the connection, how many times do we want to retry and how
 # much time should we wait between retries?

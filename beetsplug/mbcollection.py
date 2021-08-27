@@ -13,13 +13,13 @@
 # included in all copies or substantial portions of the Software.
 
 
-from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand
-from beets import ui
-from beets import config
+import re
+
 import musicbrainzngs
 
-import re
+from beets import config, ui
+from beets.plugins import BeetsPlugin
+from beets.ui import Subcommand
 
 SUBMISSION_CHUNK_SIZE = 200
 FETCH_CHUNK_SIZE = 100

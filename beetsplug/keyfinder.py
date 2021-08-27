@@ -19,8 +19,7 @@
 import os.path
 import subprocess
 
-from beets import ui
-from beets import util
+from beets import ui, util
 from beets.plugins import BeetsPlugin
 
 

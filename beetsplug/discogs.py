@@ -16,24 +16,25 @@
 python3-discogs-client library.
 """
 
-import beets.ui
-from beets import config
-from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.plugins import MetadataSourcePlugin, BeetsPlugin, get_distance
-import confuse
-from discogs_client import Release, Master, Client
-from discogs_client.exceptions import DiscogsAPIError
-from requests.exceptions import ConnectionError
 import http.client
-import beets
-import re
-import time
 import json
-import socket
 import os
+import re
+import socket
+import time
 import traceback
 from string import ascii_lowercase
 
+import confuse
+from discogs_client import Client, Master, Release
+from discogs_client.exceptions import DiscogsAPIError
+from requests.exceptions import ConnectionError
+
+import beets
+import beets.ui
+from beets import config
+from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.plugins import BeetsPlugin, MetadataSourcePlugin, get_distance
 
 USER_AGENT = f"beets/{beets.__version__} +https://beets.io/"
 API_KEY = "rAzVUQYRaoFjeBjyWuWZ"

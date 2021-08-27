@@ -16,13 +16,13 @@
 """
 
 
-from abc import abstractmethod, ABCMeta
+from abc import ABCMeta, abstractmethod
 from importlib import import_module
 
 from confuse import ConfigValueError
+
 from beets import ui
 from beets.plugins import BeetsPlugin
-
 
 METASYNC_MODULE = "beetsplug.metasync"
 

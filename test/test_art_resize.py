@@ -15,18 +15,13 @@
 """Tests for image resizing based on filesize."""
 
 
-import unittest
 import os
-
+import unittest
 from test import _common
 from test.helper import TestHelper
+
 from beets.util import syspath
-from beets.util.artresizer import (
-    pil_resize,
-    im_resize,
-    get_im_version,
-    get_pil_version,
-)
+from beets.util.artresizer import get_im_version, get_pil_version, im_resize, pil_resize
 
 
 class ArtResizerFileSizeTest(_common.TestCase, TestHelper):

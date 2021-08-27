@@ -17,10 +17,8 @@ import os
 import shutil
 import tempfile
 import unittest
-
 from shlex import quote
-from test import _common
-from test import helper
+from test import _common, helper
 
 import beets
 

@@ -14,22 +14,20 @@
 
 """Converts tracks or albums to external directory
 """
-from beets.util import par_map, decode_commandline_path, arg_encoding
-
 import os
-import threading
+import shlex
 import subprocess
 import tempfile
-import shlex
+import threading
 from string import Template
 
-from beets import ui, util, plugins, config
-from beets.plugins import BeetsPlugin
 from confuse import ConfigTypeError
-from beets import art
+
+from beets import art, config, plugins, ui, util
+from beets.library import Item, parse_query_string
+from beets.plugins import BeetsPlugin
+from beets.util import arg_encoding, decode_commandline_path, par_map
 from beets.util.artresizer import ArtResizer
-from beets.library import parse_query_string
-from beets.library import Item
 
 _fs_lock = threading.Lock()
 _temp_files = []  # Keep track of temporary transcoded files for deletion.

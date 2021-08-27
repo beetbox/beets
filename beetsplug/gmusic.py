@@ -16,13 +16,13 @@
 
 import os.path
 
-from beets.plugins import BeetsPlugin
-from beets import ui
-from beets import config
-from beets.ui import Subcommand
-from gmusicapi import Musicmanager, Mobileclient
-from gmusicapi.exceptions import NotLoggedIn
 import gmusicapi.clients
+from gmusicapi import Mobileclient, Musicmanager
+from gmusicapi.exceptions import NotLoggedIn
+
+from beets import config, ui
+from beets.plugins import BeetsPlugin
+from beets.ui import Subcommand
 
 
 class Gmusic(BeetsPlugin):

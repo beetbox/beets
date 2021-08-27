@@ -15,18 +15,17 @@
 
 import os.path
 import shutil
-from unittest.mock import patch, MagicMock
 import tempfile
 import unittest
-
 from test import _common
 from test.helper import TestHelper
+from unittest.mock import MagicMock, patch
 
 from mediafile import MediaFile
-from beets import config, logging, ui
-from beets.util import syspath, displayable_path
+
+from beets import art, config, logging, ui
+from beets.util import displayable_path, syspath
 from beets.util.artresizer import ArtResizer
-from beets import art
 
 
 def require_artresizer_compare(test):

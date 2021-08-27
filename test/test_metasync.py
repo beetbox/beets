@@ -16,13 +16,13 @@
 import os
 import platform
 import time
-from datetime import datetime
-from beets.library import Item
-from beets.util import py3_path
 import unittest
-
+from datetime import datetime
 from test import _common
 from test.helper import TestHelper
+
+from beets.library import Item
+from beets.util import py3_path
 
 
 def _parsetime(s):

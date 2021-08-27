@@ -17,11 +17,12 @@
 
 import re
 
-from beets.plugins import BeetsPlugin
-from mediafile import MediaFile
-from beets.importer import action
-from beets.ui import Subcommand, decargs, input_yn
 import confuse
+from mediafile import MediaFile
+
+from beets.importer import action
+from beets.plugins import BeetsPlugin
+from beets.ui import Subcommand, decargs, input_yn
 
 __author__ = "baobab@heresiarch.info"
 

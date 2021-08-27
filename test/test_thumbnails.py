@@ -14,22 +14,21 @@
 
 
 import os.path
-from unittest.mock import Mock, patch, call
-from tempfile import mkdtemp
-from shutil import rmtree
 import unittest
-
+from shutil import rmtree
+from tempfile import mkdtemp
 from test.helper import TestHelper
+from unittest.mock import Mock, call, patch
 
 from beets.util import bytestring_path
 from beetsplug.thumbnails import (
-    ThumbnailsPlugin,
-    NORMAL_DIR,
     LARGE_DIR,
+    NORMAL_DIR,
+    GioURI,
+    PathlibURI,
+    ThumbnailsPlugin,
     write_metadata_im,
     write_metadata_pil,
-    PathlibURI,
-    GioURI,
 )
 
 

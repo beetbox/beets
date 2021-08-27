@@ -13,22 +13,20 @@
 # included in all copies or substantial portions of the Software.
 
 
-from os import path, remove
-from tempfile import mkdtemp
-from shutil import rmtree
 import unittest
-
-from unittest.mock import Mock, MagicMock
-
-from beetsplug.smartplaylist import SmartPlaylistPlugin
-from beets.library import Item, Album, parse_query_string
-from beets.dbcore import OrQuery
-from beets.dbcore.query import NullSort, MultipleSort, FixedFieldSort
-from beets.util import syspath, bytestring_path, py3_path, CHAR_REPLACE
-from beets.ui import UserError
-from beets import config
-
+from os import path, remove
+from shutil import rmtree
+from tempfile import mkdtemp
 from test.helper import TestHelper
+from unittest.mock import MagicMock, Mock
+
+from beets import config
+from beets.dbcore import OrQuery
+from beets.dbcore.query import FixedFieldSort, MultipleSort, NullSort
+from beets.library import Album, Item, parse_query_string
+from beets.ui import UserError
+from beets.util import CHAR_REPLACE, bytestring_path, py3_path, syspath
+from beetsplug.smartplaylist import SmartPlaylistPlugin
 
 
 class SmartPlaylistTest(unittest.TestCase):

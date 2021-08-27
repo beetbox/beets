@@ -32,10 +32,10 @@ is not supported, use password instead:
 import hashlib
 import random
 import string
+from binascii import hexlify
 
 import requests
 
-from binascii import hexlify
 from beets import config
 from beets.plugins import BeetsPlugin
 

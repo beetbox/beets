@@ -17,19 +17,19 @@ music player.
 """
 
 
+import _thread
+import copy
+import os
 import sys
 import time
-import _thread
-import os
-import copy
 import urllib
-from beets import ui
 
 import gi
 
+from beets import ui
+
 gi.require_version("Gst", "1.0")
 from gi.repository import GLib, Gst  # noqa: E402
-
 
 Gst.init(None)
 

@@ -14,18 +14,18 @@
 
 """A Web interface to beets."""
 
-from beets.plugins import BeetsPlugin
-from beets import ui
-from beets import util
-import beets.library
+import base64
+import json
+import os
+
 import flask
 from flask import g, jsonify
-from werkzeug.routing import BaseConverter, PathConverter
-import os
 from unidecode import unidecode
-import json
-import base64
+from werkzeug.routing import BaseConverter, PathConverter
 
+import beets.library
+from beets import ui, util
+from beets.plugins import BeetsPlugin
 
 # Utilities.
 

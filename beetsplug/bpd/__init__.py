@@ -18,24 +18,24 @@ use of the wide range of MPD clients.
 """
 
 
-import re
-import sys
-from string import Template
-import traceback
-import random
-import time
-import math
 import inspect
+import math
+import random
+import re
 import socket
+import sys
+import time
+import traceback
+from string import Template
+
+from mediafile import MediaFile
 
 import beets
-from beets.plugins import BeetsPlugin
 import beets.ui
-from beets import vfs
-from beets.util import bluelet
+from beets import dbcore, vfs
 from beets.library import Item
-from beets import dbcore
-from mediafile import MediaFile
+from beets.plugins import BeetsPlugin
+from beets.util import bluelet
 
 PROTOCOL_VERSION = "0.16.0"
 BUFSIZE = 1024

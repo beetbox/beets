@@ -16,8 +16,8 @@
 """
 
 import random
-from operator import attrgetter
 from itertools import groupby
+from operator import attrgetter
 
 
 def _length(obj, album):

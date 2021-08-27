@@ -18,28 +18,24 @@
 import os
 import re
 import shutil
-import unicodedata
-import sys
 import stat
-from six import StringIO
-from tempfile import mkstemp
-from zipfile import ZipFile
-from tarfile import TarFile
-from unittest.mock import patch, Mock
+import sys
+import unicodedata
 import unittest
-
+from tarfile import TarFile
+from tempfile import mkstemp
 from test import _common
-from beets.util import displayable_path, bytestring_path, py3_path
-from test.helper import TestHelper, has_program, capture_log
-from test.helper import ImportSessionFixture
-from beets import importer
-from beets.importer import albums_in_dir
+from test.helper import ImportSessionFixture, TestHelper, capture_log, has_program
+from unittest.mock import Mock, patch
+from zipfile import ZipFile
+
 from mediafile import MediaFile
-from beets import autotag
-from beets.autotag import AlbumInfo, TrackInfo, AlbumMatch
-from beets import config
-from beets import logging
-from beets import util
+from six import StringIO
+
+from beets import autotag, config, importer, logging, util
+from beets.autotag import AlbumInfo, AlbumMatch, TrackInfo
+from beets.importer import albums_in_dir
+from beets.util import bytestring_path, displayable_path, py3_path
 
 
 class AutotagStub:

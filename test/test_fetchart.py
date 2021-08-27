@@ -18,6 +18,7 @@ import os
 import sys
 import unittest
 from test.helper import TestHelper
+
 from beets import util
 
 

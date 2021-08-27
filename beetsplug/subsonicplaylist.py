@@ -15,9 +15,9 @@
 
 import random
 import string
-from xml.etree import ElementTree
 from hashlib import md5
 from urllib.parse import urlencode
+from xml.etree import ElementTree
 
 import requests
 

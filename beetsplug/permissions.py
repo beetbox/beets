@@ -6,6 +6,7 @@ like the following in your config.yaml to configure:
             dir: 755
 """
 import os
+
 from beets import config, util
 from beets.plugins import BeetsPlugin
 from beets.util import ancestry

@@ -21,20 +21,14 @@ import signal
 import subprocess
 import sys
 import warnings
-from multiprocessing.pool import ThreadPool, RUN
+from multiprocessing.pool import RUN, ThreadPool
+from threading import Event, Thread
+
 from six.moves import queue
-from threading import Thread, Event
 
 from beets import ui
 from beets.plugins import BeetsPlugin
-from beets.util import (
-    syspath,
-    command_output,
-    displayable_path,
-    py3_path,
-    cpu_count,
-)
-
+from beets.util import command_output, cpu_count, displayable_path, py3_path, syspath
 
 # Utilities.
 
@@ -599,7 +593,7 @@ class GStreamerBackend(Backend):
         except ValueError as e:
             raise FatalReplayGainError(f"Failed to load GStreamer 1.0: {e}")
 
-        from gi.repository import GObject, Gst, GLib
+        from gi.repository import GLib, GObject, Gst
 
         # Calling GObject.threads_init() is not needed for
         # PyGObject 3.10.2+

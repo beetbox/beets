@@ -13,9 +13,9 @@
 # included in all copies or substantial portions of the Software.
 
 
-import mediafile
-
 import warnings
+
+import mediafile
 
 warnings.warn("beets.mediafile is deprecated; use mediafile instead")
 

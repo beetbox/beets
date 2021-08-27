@@ -2,17 +2,15 @@
 
 
 import json
-import unittest
 import os.path
-import shutil
-
-from test import _common
-from beets.library import Item, Album
-from beetsplug import web
-
 import platform
+import shutil
+import unittest
+from test import _common
 
 from beets import logging
+from beets.library import Album, Item
+from beetsplug import web
 
 
 class WebPluginTest(_common.LibTestCase):

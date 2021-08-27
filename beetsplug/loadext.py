@@ -16,9 +16,10 @@
 """
 
 
+import sqlite3
+
 from beets.dbcore import Database
 from beets.plugins import BeetsPlugin
-import sqlite3
 
 
 class LoadExtPlugin(BeetsPlugin):

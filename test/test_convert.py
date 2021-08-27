@@ -14,16 +14,15 @@
 
 
 import fnmatch
-import sys
-import re
 import os.path
+import re
+import sys
 import unittest
-
-from test import _common
-from test import helper
-from test.helper import control_stdin, capture_log
+from test import _common, helper
+from test.helper import capture_log, control_stdin
 
 from mediafile import MediaFile
+
 from beets import util
 
 

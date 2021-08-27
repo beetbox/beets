@@ -16,11 +16,12 @@
 """
 
 import re
-from operator import mul
-from beets import util
-from datetime import datetime, timedelta
 import unicodedata
+from datetime import datetime, timedelta
 from functools import reduce
+from operator import mul
+
+from beets import util
 
 
 class ParsingError(ValueError):

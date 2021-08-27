@@ -21,18 +21,15 @@ and has been edited to remove some questionable entries.
 The scraper script used is available here:
 https://gist.github.com/1241307
 """
-import pylast
 import codecs
 import os
-import yaml
 import traceback
 
-from beets import plugins
-from beets import ui
-from beets import config
-from beets.util import normpath, plurality
-from beets import library
+import pylast
+import yaml
 
+from beets import config, library, plugins, ui
+from beets.util import normpath, plurality
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
 

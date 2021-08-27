@@ -4,8 +4,8 @@
 a specified text tag.
 """
 
-import sys
 import locale
+import sys
 
 
 # From `beets.util`.

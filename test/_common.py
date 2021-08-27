@@ -14,27 +14,26 @@
 
 """Some common functionality for beets' test cases."""
 
-import time
-import sys
 import os
-import tempfile
 import shutil
+import sys
+import tempfile
+import time
 import unittest
 from contextlib import contextmanager
 
 import reflink
 
-
 # Mangle the search path to include the beets sources.
 sys.path.insert(0, "..")
-import beets.library  # noqa: E402
-from beets import importer, logging  # noqa: E402
-from beets.ui import commands  # noqa: E402
-from beets import util  # noqa: E402
 import beets  # noqa: E402
+import beets.library  # noqa: E402
 
 # Make sure the development versions of the plugins are used
 import beetsplug  # noqa: E402
+from beets import util  # noqa: E402
+from beets import importer, logging  # noqa: E402
+from beets.ui import commands  # noqa: E402
 
 beetsplug.__path__ = [
     os.path.abspath(os.path.join(__file__, "..", "..", "beetsplug"))

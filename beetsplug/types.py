@@ -13,10 +13,11 @@
 # included in all copies or substantial portions of the Software.
 
 
-from beets.plugins import BeetsPlugin
-from beets.dbcore import types
 from confuse import ConfigValueError
+
 from beets import library
+from beets.dbcore import types
+from beets.plugins import BeetsPlugin
 
 
 class TypesPlugin(BeetsPlugin):

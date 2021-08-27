@@ -16,11 +16,10 @@
 """
 
 
-import unittest
-from test.helper import TestHelper
-
 import math
+import unittest
 from random import Random
+from test.helper import TestHelper
 
 from beets import random
 

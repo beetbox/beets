@@ -19,11 +19,12 @@
 """Provides a bare-ASCII matching query."""
 
 
-from beets import ui
-from beets.ui import print_, decargs
-from beets.plugins import BeetsPlugin
-from beets.dbcore.query import StringFieldQuery
 from unidecode import unidecode
+
+from beets import ui
+from beets.dbcore.query import StringFieldQuery
+from beets.plugins import BeetsPlugin
+from beets.ui import decargs, print_
 
 
 class BareascQuery(StringFieldQuery):

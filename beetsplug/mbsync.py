@@ -15,12 +15,12 @@
 """Update library's tags using MusicBrainz.
 """
 
-from beets.plugins import BeetsPlugin, apply_item_changes
-from beets import autotag, library, ui, util
-from beets.autotag import hooks
+import re
 from collections import defaultdict
 
-import re
+from beets import autotag, library, ui, util
+from beets.autotag import hooks
+from beets.plugins import BeetsPlugin, apply_item_changes
 
 MBID_REGEX = r"(\d|\w){8}-(\d|\w){4}-(\d|\w){4}-(\d|\w){4}-(\d|\w){12}"
 

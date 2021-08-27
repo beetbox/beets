@@ -19,10 +19,11 @@ import json
 import re
 from datetime import datetime, timedelta
 
+import confuse
 from requests_oauthlib import OAuth1Session
 from requests_oauthlib.oauth1_session import (
-    TokenRequestDenied,
     TokenMissing,
+    TokenRequestDenied,
     VerifierMissing,
 )
 
@@ -30,8 +31,6 @@ import beets
 import beets.ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin, get_distance
-import confuse
-
 
 AUTH_ERRORS = (TokenRequestDenied, TokenMissing, VerifierMissing)
 USER_AGENT = f"beets/{beets.__version__} +https://beets.io/"

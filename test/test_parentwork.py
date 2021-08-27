@@ -23,7 +23,6 @@ from unittest.mock import patch
 from beets.library import Item
 from beetsplug import parentwork
 
-
 work = {
     "work": {
         "id": "1",

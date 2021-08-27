@@ -18,10 +18,11 @@
 
 import os
 
-from beets.plugins import BeetsPlugin
-from beets import ui
 import mediafile
+
+from beets import ui
 from beets.library import Item
+from beets.plugins import BeetsPlugin
 from beets.util import displayable_path, normpath, syspath
 
 

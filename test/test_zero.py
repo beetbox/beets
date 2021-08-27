@@ -4,10 +4,11 @@
 import unittest
 from test.helper import TestHelper, control_stdin
 
-from beets.library import Item
-from beetsplug.zero import ZeroPlugin
 from mediafile import MediaFile
+
+from beets.library import Item
 from beets.util import syspath
+from beetsplug.zero import ZeroPlugin
 
 
 class ZeroPluginTest(unittest.TestCase, TestHelper):

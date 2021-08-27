@@ -13,8 +13,9 @@
 # included in all copies or substantial portions of the Software.
 
 
-import confuse
 from sys import stderr
+
+import confuse
 
 __version__ = "1.5.1"
 __author__ = "Adrian Sampson <adrian@radbox.org>"

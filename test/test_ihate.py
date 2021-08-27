@@ -2,6 +2,7 @@
 
 
 import unittest
+
 from beets import importer
 from beets.library import Item
 from beetsplug.ihate import IHatePlugin

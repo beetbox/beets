@@ -17,12 +17,12 @@
 
 import collections
 
-import unidecode
 import requests
+import unidecode
 
 from beets import ui
 from beets.autotag import AlbumInfo, TrackInfo
-from beets.plugins import MetadataSourcePlugin, BeetsPlugin
+from beets.plugins import BeetsPlugin, MetadataSourcePlugin
 
 
 class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):

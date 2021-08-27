@@ -16,20 +16,21 @@
 """
 
 
-from beets.plugins import BeetsPlugin
+import os
+
 from beets import ui
-from beets.util import (
-    mkdirall,
-    normpath,
-    sanitize_path,
-    syspath,
-    bytestring_path,
-    path_as_posix,
-)
-from beets.library import Item, Album, parse_query_string
 from beets.dbcore import OrQuery
 from beets.dbcore.query import MultipleSort, ParsingError
-import os
+from beets.library import Album, Item, parse_query_string
+from beets.plugins import BeetsPlugin
+from beets.util import (
+    bytestring_path,
+    mkdirall,
+    normpath,
+    path_as_posix,
+    sanitize_path,
+    syspath,
+)
 
 try:
     from urllib.request import pathname2url

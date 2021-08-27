@@ -1,14 +1,13 @@
 import os
-import yaml
-from unittest.mock import patch
-from tempfile import mkdtemp
-from shutil import rmtree
 import unittest
-
-from beets import ui
-from beets import config
-
+from shutil import rmtree
+from tempfile import mkdtemp
 from test.helper import TestHelper
+from unittest.mock import patch
+
+import yaml
+
+from beets import config, ui
 from beets.library import Library
 
 

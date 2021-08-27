@@ -17,10 +17,9 @@
 
 import os
 import unittest
+from test.test_importer import AutotagStub, ImportHelper
 
-from test.test_importer import ImportHelper, AutotagStub
-from beets import importer
-from beets import util
+from beets import importer, util
 from beetsplug.importadded import ImportAddedPlugin
 
 _listeners = ImportAddedPlugin.listeners

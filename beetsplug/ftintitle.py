@@ -17,8 +17,7 @@
 
 import re
 
-from beets import plugins
-from beets import ui
+from beets import plugins, ui
 from beets.util import displayable_path
 
 

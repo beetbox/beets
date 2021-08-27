@@ -15,18 +15,17 @@
 """Support for beets plugins."""
 
 
-import traceback
-import re
-import inspect
 import abc
+import inspect
+import re
+import traceback
 from collections import defaultdict
 from functools import wraps
 
+import mediafile
 
 import beets
 from beets import logging
-import mediafile
-
 
 PLUGIN_NAMESPACE = "beetsplug"
 

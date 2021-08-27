@@ -15,12 +15,9 @@
 
 """Warns you about things you hate (or even blocks import)."""
 
-from beets.plugins import BeetsPlugin
 from beets.importer import action
-from beets.library import parse_query_string
-from beets.library import Item
-from beets.library import Album
-
+from beets.library import Album, Item, parse_query_string
+from beets.plugins import BeetsPlugin
 
 __author__ = "baobab@heresiarch.info"
 __version__ = "2.0"

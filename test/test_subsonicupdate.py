@@ -1,14 +1,15 @@
 """Tests for the 'subsonic' plugin."""
 
 
-import responses
 import unittest
-
 from test import _common
-from beets import config
-from beetsplug import subsonicupdate
 from test.helper import TestHelper
 from urllib.parse import parse_qs, urlparse
+
+import responses
+
+from beets import config
+from beetsplug import subsonicupdate
 
 
 class ArgumentsMock:

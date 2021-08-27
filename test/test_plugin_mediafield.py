@@ -18,13 +18,13 @@
 import os
 import shutil
 import unittest
-
 from test import _common
-from beets.library import Item
+
 import mediafile
+
+from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import bytestring_path
-
 
 field_extension = mediafile.MediaField(
     mediafile.MP3DescStorageStyle("customtag"),

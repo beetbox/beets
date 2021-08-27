@@ -16,14 +16,14 @@
 """
 
 
-from os.path import basename
 from datetime import datetime
+from os.path import basename
 from time import mktime
 from xml.sax.saxutils import quoteattr
 
-from beets.util import displayable_path
 from beets.dbcore import types
 from beets.library import DateType
+from beets.util import displayable_path
 from beetsplug.metasync import MetaSource
 
 

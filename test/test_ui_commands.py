@@ -19,11 +19,9 @@
 import os
 import shutil
 import unittest
-
 from test import _common
 
-from beets import library
-from beets import ui
+from beets import library, ui
 from beets.ui import commands
 
 

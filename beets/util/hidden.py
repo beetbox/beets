@@ -14,10 +14,11 @@
 
 """Simple library to work out if a file is hidden on different platforms."""
 
+import ctypes
 import os
 import stat
-import ctypes
 import sys
+
 import beets.util
 
 

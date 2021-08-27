@@ -19,9 +19,8 @@ formats.
 import re
 from collections import defaultdict
 
+from beets import library, ui
 from beets.plugins import BeetsPlugin
-from beets import ui
-from beets import library
 
 
 def rewriter(field, rules):

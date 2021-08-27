@@ -15,16 +15,15 @@
 """Send the results of a query to the configured music player as a playlist.
 """
 
+import shlex
+import subprocess
+from os.path import relpath
+from tempfile import NamedTemporaryFile
+
+from beets import config, ui, util
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets.ui.commands import PromptChoice
-from beets import config
-from beets import ui
-from beets import util
-from os.path import relpath
-from tempfile import NamedTemporaryFile
-import subprocess
-import shlex
 
 # Indicate where arguments should be inserted into the command string.
 # If this is missing, they're placed at the end.

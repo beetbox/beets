@@ -8,9 +8,11 @@ Put something like the following in your config.yaml to configure:
         token: token
 """
 
-import requests
+from urllib.parse import urlencode, urljoin
 from xml.etree import ElementTree
-from urllib.parse import urljoin, urlencode
+
+import requests
+
 from beets import config
 from beets.plugins import BeetsPlugin
 

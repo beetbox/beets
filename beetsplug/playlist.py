@@ -12,9 +12,10 @@
 # included in all copies or substantial portions of the Software.
 
 
-import os
 import fnmatch
+import os
 import tempfile
+
 import beets
 from beets.util import path_as_posix
 

@@ -15,13 +15,13 @@
 """
 
 
-from beets import ui, util, library, config
-from beets.plugins import BeetsPlugin
-
-import subprocess
-import shutil
 import os
+import shutil
+import subprocess
 import tempfile
+
+from beets import config, library, ui, util
+from beets.plugins import BeetsPlugin
 
 
 class IPFSPlugin(BeetsPlugin):

@@ -15,8 +15,9 @@
 """Parsing of strings into DBCore queries.
 """
 
-import re
 import itertools
+import re
+
 from . import query
 
 PARSE_QUERY_PART_REGEX = re.compile(

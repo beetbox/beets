@@ -19,21 +19,20 @@ Spec: standards.freedesktop.org/thumbnail-spec/latest/index.html
 """
 
 
-from hashlib import md5
-import os
-import shutil
-from itertools import chain
-from pathlib import PurePosixPath
 import ctypes
 import ctypes.util
+import os
+import shutil
+from hashlib import md5
+from itertools import chain
+from pathlib import PurePosixPath
 
 from xdg import BaseDirectory
 
+from beets import util
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs
-from beets import util
 from beets.util.artresizer import ArtResizer, get_im_version, get_pil_version
-
 
 BASE_DIR = os.path.join(BaseDirectory.xdg_cache_home, "thumbnails")
 NORMAL_DIR = util.bytestring_path(os.path.join(BASE_DIR, "normal"))

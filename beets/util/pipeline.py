@@ -33,8 +33,8 @@ in place of any single coroutine.
 
 
 import queue
-from threading import Thread, Lock
 import sys
+from threading import Lock, Thread
 
 BUBBLE = "__PIPELINE_BUBBLE__"
 POISON = "__PIPELINE_POISON__"

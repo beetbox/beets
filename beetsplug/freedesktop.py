@@ -16,8 +16,8 @@
 """
 
 
-from beets.plugins import BeetsPlugin
 from beets import ui
+from beets.plugins import BeetsPlugin
 
 
 class FreedesktopPlugin(BeetsPlugin):

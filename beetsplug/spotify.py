@@ -16,19 +16,19 @@
 Spotify playlist construction.
 """
 
-import re
-import json
 import base64
-import webbrowser
 import collections
+import json
+import re
+import webbrowser
 
-import unidecode
-import requests
 import confuse
+import requests
+import unidecode
 
 from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.plugins import MetadataSourcePlugin, BeetsPlugin
+from beets.plugins import BeetsPlugin, MetadataSourcePlugin
 
 
 class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):

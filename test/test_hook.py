@@ -17,12 +17,10 @@ import os.path
 import sys
 import tempfile
 import unittest
-
 from test import _common
 from test.helper import TestHelper, capture_log
 
-from beets import config
-from beets import plugins
+from beets import config, plugins
 
 
 def get_temporary_path():

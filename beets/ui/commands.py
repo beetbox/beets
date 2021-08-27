@@ -19,29 +19,15 @@ interface.
 
 import os
 import re
-from platform import python_version
-from collections import namedtuple, Counter
+from collections import Counter, namedtuple
 from itertools import chain
+from platform import python_version
 
 import beets
-from beets import ui
-from beets.ui import print_, input_, decargs, show_path_changes
-from beets import autotag
-from beets.autotag import Recommendation
-from beets.autotag import hooks
-from beets import plugins
-from beets import importer
-from beets import util
-from beets.util import (
-    syspath,
-    normpath,
-    ancestry,
-    displayable_path,
-    MoveOperation,
-)
-from beets import library
-from beets import config
-from beets import logging
+from beets import autotag, config, importer, library, logging, plugins, ui, util
+from beets.autotag import Recommendation, hooks
+from beets.ui import decargs, input_, print_, show_path_changes
+from beets.util import MoveOperation, ancestry, displayable_path, normpath, syspath
 
 from . import _store_dict
 

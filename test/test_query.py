@@ -15,26 +15,19 @@
 """Various tests for querying the library database.
 """
 
-from functools import partial
-from unittest.mock import patch
 import os
+import platform
 import sys
 import unittest
-
-from test import _common
-from test import helper
+from functools import partial
+from test import _common, helper
+from unittest.mock import patch
 
 import beets.library
-from beets import dbcore
+from beets import dbcore, util
 from beets.dbcore import types
-from beets.dbcore.query import (
-    NoneQuery,
-    ParsingError,
-    InvalidQueryArgumentValueError,
-)
-from beets.library import Library, Item
-from beets import util
-import platform
+from beets.dbcore.query import InvalidQueryArgumentValueError, NoneQuery, ParsingError
+from beets.library import Item, Library
 
 
 class TestHelper(helper.TestHelper):

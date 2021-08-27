@@ -21,10 +21,10 @@ that when getLogger(name) instantiates a logger that logger uses
 """
 
 
-from copy import copy
-from logging import *  # noqa
 import subprocess
 import threading
+from copy import copy
+from logging import *  # noqa
 
 
 def logsafe(val):

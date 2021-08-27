@@ -22,13 +22,11 @@ import json
 import os
 import subprocess
 import tempfile
-
 from distutils.spawn import find_executable
+
 import requests
 
-from beets import plugins
-from beets import util
-from beets import ui
+from beets import plugins, ui, util
 
 # We use this field to check whether AcousticBrainz info is present.
 PROBE_FIELD = "mood_acoustic"

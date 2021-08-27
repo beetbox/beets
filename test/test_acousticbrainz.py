@@ -19,10 +19,9 @@
 import json
 import os.path
 import unittest
-
 from test._common import RSRC
 
-from beetsplug.acousticbrainz import AcousticPlugin, ABSCHEME
+from beetsplug.acousticbrainz import ABSCHEME, AcousticPlugin
 
 
 class MapDataToSchemeTest(unittest.TestCase):

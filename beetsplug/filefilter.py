@@ -17,10 +17,11 @@
 
 
 import re
+
 from beets import config
-from beets.util import bytestring_path
-from beets.plugins import BeetsPlugin
 from beets.importer import SingletonImportTask
+from beets.plugins import BeetsPlugin
+from beets.util import bytestring_path
 
 
 class FileFilterPlugin(BeetsPlugin):

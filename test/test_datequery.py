@@ -15,15 +15,16 @@
 """Test for dbcore's date-based queries.
 """
 
-from test import _common
-from datetime import datetime, timedelta
-import unittest
 import time
+import unittest
+from datetime import datetime, timedelta
+from test import _common
+
 from beets.dbcore.query import (
-    _parse_periods,
     DateInterval,
     DateQuery,
     InvalidQueryArgumentValueError,
+    _parse_periods,
 )
 
 

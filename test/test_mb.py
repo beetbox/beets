@@ -15,12 +15,12 @@
 """Tests for MusicBrainz API wrapper.
 """
 
-from test import _common
-from beets.autotag import mb
-from beets import config
-
 import unittest
+from test import _common
 from unittest import mock
+
+from beets import config
+from beets.autotag import mb
 
 
 class MBAlbumInfoTest(_common.TestCase):

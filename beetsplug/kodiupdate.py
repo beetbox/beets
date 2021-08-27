@@ -24,6 +24,7 @@ Put something like the following in your config.yaml to configure:
 """
 
 import requests
+
 from beets import config
 from beets.plugins import BeetsPlugin
 
