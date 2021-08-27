@@ -19,7 +19,14 @@ import re
 from mimetypes import guess_type
 from os.path import getsize, isfile
 
-from flask import Blueprint, Flask, current_app, make_response, request, send_file
+from flask import (
+    Blueprint,
+    Flask,
+    current_app,
+    make_response,
+    request,
+    send_file,
+)
 
 from beets import config
 from beets.dbcore.query import (

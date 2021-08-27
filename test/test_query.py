@@ -26,7 +26,11 @@ from unittest.mock import patch
 import beets.library
 from beets import dbcore, util
 from beets.dbcore import types
-from beets.dbcore.query import InvalidQueryArgumentValueError, NoneQuery, ParsingError
+from beets.dbcore.query import (
+    InvalidQueryArgumentValueError,
+    NoneQuery,
+    ParsingError,
+)
 from beets.library import Item, Library
 
 

@@ -21,7 +21,12 @@ from test import _common
 from test.helper import TestHelper
 
 from beets.util import syspath
-from beets.util.artresizer import get_im_version, get_pil_version, im_resize, pil_resize
+from beets.util.artresizer import (
+    get_im_version,
+    get_pil_version,
+    im_resize,
+    pil_resize,
+)
 
 
 class ArtResizerFileSizeTest(_common.TestCase, TestHelper):

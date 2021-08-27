@@ -28,7 +28,13 @@ from six.moves import queue
 
 from beets import ui
 from beets.plugins import BeetsPlugin
-from beets.util import command_output, cpu_count, displayable_path, py3_path, syspath
+from beets.util import (
+    command_output,
+    cpu_count,
+    displayable_path,
+    py3_path,
+    syspath,
+)
 
 # Utilities.
 

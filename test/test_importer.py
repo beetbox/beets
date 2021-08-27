@@ -25,7 +25,12 @@ import unittest
 from tarfile import TarFile
 from tempfile import mkstemp
 from test import _common
-from test.helper import ImportSessionFixture, TestHelper, capture_log, has_program
+from test.helper import (
+    ImportSessionFixture,
+    TestHelper,
+    capture_log,
+    has_program,
+)
 from unittest.mock import Mock, patch
 from zipfile import ZipFile
 

@@ -11,13 +11,8 @@ repos:
     rev: 3.9.2
     hooks:
       - id: flake8
+        language_version: python3
         additional_dependencies: [
         flake8-docstrings,
         pep8-naming,
         ]
-
-  - repo: https://github.com/pycqa/isort
-    rev: 5.6.4
-    hooks:
-      - id: isort
-        args: ["--profile", "black", "--filter-files"]

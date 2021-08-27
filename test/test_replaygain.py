@@ -19,7 +19,10 @@ from test.helper import TestHelper, has_program
 from mediafile import MediaFile
 
 from beets import config
-from beetsplug.replaygain import FatalGstreamerPluginReplayGainError, GStreamerBackend
+from beetsplug.replaygain import (
+    FatalGstreamerPluginReplayGainError,
+    GStreamerBackend,
+)
 
 try:
     import gi

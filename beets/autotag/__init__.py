@@ -19,7 +19,13 @@
 from beets import config, logging
 
 # Parts of external interface.
-from .hooks import AlbumInfo, AlbumMatch, Distance, TrackInfo, TrackMatch  # noqa F401
+from .hooks import (  # noqa F401
+    AlbumInfo,
+    AlbumMatch,
+    Distance,
+    TrackInfo,
+    TrackMatch,
+)
 from .match import Recommendation  # noqa F401
 from .match import Proposal, tag_album, tag_item  # noqa F401
 

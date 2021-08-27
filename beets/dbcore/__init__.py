@@ -16,9 +16,18 @@
 Library.
 """
 
-from .db import Database, Model
-from .query import AndQuery, FieldQuery, InvalidQueryError, MatchQuery, OrQuery, Query
-from .queryparse import parse_sorted_query, query_from_strings, sort_from_strings
-from .types import Type
-
-# flake8: noqa
+from .db import Database, Model  # noqa F401
+from .query import (  # noqa F401
+    AndQuery,
+    FieldQuery,
+    InvalidQueryError,
+    MatchQuery,
+    OrQuery,
+    Query,
+)
+from .queryparse import (  # noqa F401
+    parse_sorted_query,
+    query_from_strings,
+    sort_from_strings,
+)
+from .types import Type  # noqa F401

@@ -24,10 +24,25 @@ from itertools import chain
 from platform import python_version
 
 import beets
-from beets import autotag, config, importer, library, logging, plugins, ui, util
+from beets import (
+    autotag,
+    config,
+    importer,
+    library,
+    logging,
+    plugins,
+    ui,
+    util,
+)
 from beets.autotag import Recommendation, hooks
 from beets.ui import decargs, input_, print_, show_path_changes
-from beets.util import MoveOperation, ancestry, displayable_path, normpath, syspath
+from beets.util import (
+    MoveOperation,
+    ancestry,
+    displayable_path,
+    normpath,
+    syspath,
+)
 
 from . import _store_dict
 
