@@ -29,10 +29,7 @@ from urllib.parse import urljoin
 
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
 
-if util.SNI_SUPPORTED:
-    BASE_URL = 'https://musicbrainz.org/'
-else:
-    BASE_URL = 'http://musicbrainz.org/'
+BASE_URL = 'https://musicbrainz.org/'
 
 SKIPPED_TRACKS = ['[data track]']
 

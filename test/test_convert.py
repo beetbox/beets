@@ -28,12 +28,8 @@ from beets import util
 
 
 def shell_quote(text):
-    if sys.version_info[0] < 3:
-        import pipes
-        return pipes.quote(text)
-    else:
-        import shlex
-        return shlex.quote(text)
+    import shlex
+    return shlex.quote(text)
 
 
 class TestHelper(helper.TestHelper):
