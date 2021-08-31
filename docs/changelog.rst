@@ -27,6 +27,9 @@ Major new features:
 * :doc:`/plugins/albumtypes`: An accompanying plugin for formatting
   ``albumtypes``. Thanks to :user:`edgars-supe`.
 
+Other new things:
+
+* Permissions plugin now sets cover art permissions to the file permissions.
 
 1.5.0 (August 19, 2021)
 -----------------------
