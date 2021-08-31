@@ -81,7 +81,6 @@ class Permissions(BeetsPlugin):
             files.append(item.path)
             dirs.update(dirs_in_library(lib.directory, item.path))
         elif album:
-            files = []
             for album_item in album.items():
                 files.append(album_item.path)
                 dirs.update(dirs_in_library(lib.directory, album_item.path))
