@@ -86,11 +86,8 @@ def pil_resize(
             # Use PIL's default quality.
             quality = -1
 
-        if not deinterlace:
-            im.save(util.py3_path(path_out), quality=quality)
-        else:
-            im.save(util.py3_path(path_out), quality=quality,
-                    progressive=False)
+        im.save(util.py3_path(path_out), quality=quality,
+                progressive=not deinterlace)
 
         if max_filesize > 0:
             # If maximum filesize is set, we attempt to lower the quality of
@@ -113,12 +110,8 @@ def pil_resize(
                 if lower_qual < 10:
                     lower_qual = 10
                 # Use optimize flag to improve filesize decrease
-                if not deinterlace:
-                    im.save(util.py3_path(path_out), quality=lower_qual,
-                            optimize=True)
-                else:
-                    im.save(util.py3_path(path_out), quality=lower_qual,
-                            optimize=True, progressive=False)
+                im.save(util.py3_path(path_out), quality=lower_qual,
+                        optimize=True, progressive=not deinterlace)
             log.warning(u"PIL Failed to resize file to below {0}B",
                         max_filesize)
             return path_out
