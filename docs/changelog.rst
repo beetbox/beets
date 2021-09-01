@@ -10,6 +10,12 @@ This release now requires Python 3.6 or later (it removes support for Python
 * A new :doc:`/plugins/fetchart` option to store cover art as non-progressive
   image. Useful for DAPs that support progressive images. Set ``deinterlace:
   yes`` in your configuration to enable.
+For packagers:
+
+* We fixed a flaky test, named `test_album_art` in the `test_zero.py` file,
+  that some distributions had disabled. Disabling this test should no longer
+  be necessary.
+  :bug:`4037` :bug:`4038`
 
 
 1.5.0 (August 19, 2021)
