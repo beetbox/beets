@@ -7,6 +7,13 @@ Changelog
 This release now requires Python 3.6 or later (it removes support for Python
 2.7, 3.4, and 3.5).
 
+For packagers:
+
+* We fixed a flaky test, named `test_album_art` in the `test_zero.py` file,
+  that some distributions had disabled. Disabling this test should no longer
+  be necessary.
+  :bug:`4037` :bug:`4038`
+
 
 1.5.0 (August 19, 2021)
 -----------------------
