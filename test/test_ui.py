@@ -770,6 +770,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         os.makedirs(self.beetsdir)
 
         self._reset_config()
+        self.load_plugins()
 
     def tearDown(self):
         commands.default_commands.pop()
@@ -780,6 +781,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
             del os.environ['APPDATA']
         else:
             os.environ['APPDATA'] = self._old_appdata
+        self.unload_plugins()
         self.teardown_beets()
 
     def _make_test_cmd(self):
