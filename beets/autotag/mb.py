@@ -417,18 +417,17 @@ def album_info(release):
         if reltype:
             info.albumtype = reltype.lower()
 
-    # Log the new-style "primary" and "secondary" release types.
-    # Eventually, we'd like to actually store this data, but we just log
-    # it for now to help understand the differences.
+    # Set the new-style "primary" and "secondary" release types.
+    albumtypes = []
     if 'primary-type' in release['release-group']:
         rel_primarytype = release['release-group']['primary-type']
         if rel_primarytype:
-            log.debug('primary MB release type: ' + rel_primarytype.lower())
+            albumtypes.append(rel_primarytype.lower())
     if 'secondary-type-list' in release['release-group']:
         if release['release-group']['secondary-type-list']:
-            log.debug('secondary MB release type(s): ' + ', '.join(
-                [secondarytype.lower() for secondarytype in
-                    release['release-group']['secondary-type-list']]))
+            for sec_type in release['release-group']['secondary-type-list']:
+                albumtypes.append(sec_type.lower())
+    info.albumtypes = ','.join(albumtypes)
 
     # Release events.
     info.country, release_date = _preferred_release_event(release)
