@@ -14,6 +14,12 @@ For packagers:
   be necessary.
   :bug:`4037` :bug:`4038`
 
+Major new features:
+
+* Include the genre tags from the release group when the musicbrainz genre
+  option is set, and sort them by the number of votes.  Thanks to
+  :user:`aereaux`.
+
 
 1.5.0 (August 19, 2021)
 -----------------------
