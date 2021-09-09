@@ -20,6 +20,10 @@ Major new features:
   option is set, and sort them by the number of votes.  Thanks to
   :user:`aereaux`.
 
+* Primary and secondary release types from MusicBrainz are now stored in
+  ``albumtypes`` field. Thanks to :user:`edgars-supe`.
+  :bug:`2200`
+
 
 1.5.0 (August 19, 2021)
 -----------------------
