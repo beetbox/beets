@@ -24,6 +24,9 @@ Major new features:
   ``albumtypes`` field. Thanks to :user:`edgars-supe`.
   :bug:`2200`
 
+* :doc:`/plugins/albumtypes`: An accompanying plugin for formatting
+  ``albumtypes``. Thanks to :user:`edgars-supe`.
+
 
 1.5.0 (August 19, 2021)
 -----------------------
