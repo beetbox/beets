@@ -427,7 +427,7 @@ def album_info(release):
         if release['release-group']['secondary-type-list']:
             for sec_type in release['release-group']['secondary-type-list']:
                 albumtypes.append(sec_type.lower())
-    info.albumtypes = ','.join(albumtypes)
+    info.albumtypes = '; '.join(albumtypes)
 
     # Release events.
     info.country, release_date = _preferred_release_event(release)
