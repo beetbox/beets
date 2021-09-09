@@ -20,6 +20,7 @@ from __future__ import division, absolute_import, print_function
 import musicbrainzngs
 import re
 import traceback
+from collections import Counter
 from six.moves.urllib.parse import urljoin
 
 from beets import logging
@@ -458,9 +459,17 @@ def album_info(release):
         first_medium = release['medium-list'][0]
         info.media = first_medium.get('format')
 
-    genres = release.get('genre-list')
-    if config['musicbrainz']['genres'] and genres:
-        info.genre = ';'.join(g['name'] for g in genres)
+    if config['musicbrainz']['genres']:
+        sources = [
+                release['release-group'].get('genre-list', []),
+                release.get('genre-list', []),
+                ]
+        genres = Counter()
+        for source in sources:
+            for genreitem in source:
+                genres[genreitem['name']] += int(genreitem['count'])
+        info.genre = '; '.join(g[0] for g in sorted(genres.items(),
+                                                    key=lambda g: -g[1]))
 
     extra_albumdatas = plugins.send('mb_album_extract', data=release)
     for extra_albumdata in extra_albumdatas:
