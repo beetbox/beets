@@ -61,6 +61,7 @@ following to your configuration::
 
    absubmit
    acousticbrainz
+   albumtypes
    aura
    badfiles
    bareasc
