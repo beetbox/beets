@@ -307,6 +307,9 @@ Here are a few of the plugins written by the beets community:
 
 * `beets-ibroadcast`_ uploads tracks to the `iBroadcast`_ cloud service.
 
+* `beets-importreplace`_ lets you perform regex replacements on incoming
+  metadata.
+
 * `beets-mosaic`_ generates a montage of a mosaic from cover art.
 
 * `beets-noimport`_ adds and removes directories from the incremental import skip list.
@@ -348,6 +351,7 @@ Here are a few of the plugins written by the beets community:
 .. _beets-follow: https://github.com/nolsto/beets-follow
 .. _beets-ibroadcast: https://github.com/ctrueden/beets-ibroadcast
 .. _iBroadcast: https://ibroadcast.com/
+.. _beets-importreplace: https://github.com/edgars-supe/beets-importreplace
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
 .. _beets-noimport: https://gitlab.com/tiago.dias/beets-noimport
 .. _whatlastgenre: https://github.com/YetAnotherNerd/whatlastgenre/tree/master/plugin/beets
