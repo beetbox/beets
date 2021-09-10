@@ -44,14 +44,14 @@ With path formats configured like::
 
     paths:
         default: $albumartist/[$year]$atypes $album/...
-        albumtype:soundtrack Various Artists/$album [$year]$atypes)/...
+        albumtype:soundtrack Various Artists/$album [$year]$atypes/...
         comp: Various Artists/$album [$year]$atypes/...
 
 
 The default plugin configuration generates paths that look like this, for example::
 
     Aphex Twin/[1993][EP][Remix] On Remixes
-    Pink Flow/[1995][Live] p·u·l·s·e
+    Pink Floyd/[1995][Live] p·u·l·s·e
     Various Artists/20th Century Lullabies [1999]
     Various Artists/Ocean's Eleven [2001][OST]
 
