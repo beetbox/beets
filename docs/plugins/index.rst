@@ -61,6 +61,7 @@ following to your configuration::
 
    absubmit
    acousticbrainz
+   albumtypes
    aura
    badfiles
    bareasc
@@ -176,6 +177,7 @@ Metadata
 Path Formats
 ------------
 
+* :doc:`albumtypes`: Format album type in path formats.
 * :doc:`bucket`: Group your files into bucket directories that cover different
   field values ranges.
 * :doc:`inline`: Use Python snippets to customize path format strings.
