@@ -90,6 +90,17 @@ class AlbumTypesPluginTest(unittest.TestCase, TestHelper):
         result = subject._atypes(album)
         self.assertEqual('(OST)', result)
 
+    def test_respects_defaults(self):
+        """Tests if the plugin uses the default values if config not given."""
+        album = self._create_album(
+            album_types=['ep', 'single', 'soundtrack', 'live', 'compilation',
+                         'remix'],
+            artist_id=VARIOUS_ARTISTS_ID
+        )
+        subject = AlbumTypesPlugin()
+        result = subject._atypes(album)
+        self.assertEqual('[EP][Single][OST][Live][Remix]', result)
+
     def _set_config(self, types: [(str, str)], ignore_va: [str], bracket: str):
         self.config['albumtypes']['types'] = types
         self.config['albumtypes']['ignore_va'] = ignore_va

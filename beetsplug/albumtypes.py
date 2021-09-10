@@ -31,9 +31,16 @@ class AlbumTypesPlugin(BeetsPlugin):
         super(AlbumTypesPlugin, self).__init__()
         self.album_template_fields['atypes'] = self._atypes
         self.config.add({
-            'types': [],
-            'ignore_va': [],
-            'brackets': '[]'
+            'types': [
+                ('ep', 'EP'),
+                ('single', 'Single'),
+                ('soundtrack', 'OST'),
+                ('live', 'Live'),
+                ('compilation', 'Anthology'),
+                ('remix', 'Remix')
+            ],
+            'ignore_va': ['compilation'],
+            'bracket': '[]'
         })
 
     def _atypes(self, item: Album):

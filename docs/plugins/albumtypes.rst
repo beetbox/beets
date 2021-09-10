@@ -20,17 +20,12 @@ file. The available options are:
 - **types**: An ordered list of album type to format mappings. The order of the
   mappings determines their order in the output. If a mapping is missing or
   blank, it will not be in the output.
-  Default: ``[]``.
 - **ignore_va**: A list of types that should not be output for Various Artists
   albums. Useful for not adding redundant information - various artist albums
   are often compilations.
-  Default: ``[]``.
 - **bracket**: Defines the brackets to enclose each album type in the output.
-  Default: ``'[]'``
 
-Examples
---------
-Example config::
+The default configuration looks like this::
 
     albumtypes:
         types:
@@ -41,16 +36,22 @@ Example config::
             - compilation: 'Anthology'
             - remix: 'Remix'
         ignore_va: compilation
-        bracket: '()'
+        bracket: '[]'
+
+Examples
+--------
+With path formats configured like::
 
     paths:
-        default: $albumartist/($year)$atypes $album/...
-        albumtype:soundtrack Various Artists/$album ($year)$atypes)/...
-        comp: Various Artists/$album ($year)$atypes/...
+        default: $albumartist/[$year]$atypes $album/...
+        albumtype:soundtrack Various Artists/$album [$year]$atypes)/...
+        comp: Various Artists/$album [$year]$atypes/...
 
-This configuration generates paths that look like this, for example::
 
-    Aphex Twin/(1993)(EP)(Remix) On Remixes
-    Pink Flow/(1995)(Live) p·u·l·s·e
-    Various Artists/20th Century Lullabies (1999)
-    Various Artists/Ocean's Eleven (2001)(OST)
+The default plugin configuration generates paths that look like this, for example::
+
+    Aphex Twin/[1993][EP][Remix] On Remixes
+    Pink Flow/[1995][Live] p·u·l·s·e
+    Various Artists/20th Century Lullabies [1999]
+    Various Artists/Ocean's Eleven [2001][OST]
+
