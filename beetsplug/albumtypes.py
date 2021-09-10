@@ -30,13 +30,14 @@ class AlbumTypesPlugin(BeetsPlugin):
         """Init AlbumTypesPlugin."""
         super(AlbumTypesPlugin, self).__init__()
         self.album_template_fields['atypes'] = self._atypes
-
-    def _atypes(self, item: Album):
         self.config.add({
             'types': [],
             'ignore_va': [],
             'brackets': '[]'
         })
+
+    def _atypes(self, item: Album):
+        """Returns a formatted string based on album's types."""
         types = self.config['types'].as_pairs()
         ignore_va = self.config['ignore_va'].as_str_seq()
         bracket = self.config['bracket'].as_str()
@@ -54,7 +55,7 @@ class AlbumTypesPlugin(BeetsPlugin):
         is_va = item.mb_albumartistid == VARIOUS_ARTISTS_ID
         for type in types:
             if type[0] in albumtypes and type[1]:
-                if not is_va or (not type[0] in ignore_va and is_va):
-                    res += bracket_l + type[1] + bracket_r
+                if not is_va or (type[0] not in ignore_va and is_va):
+                    res += f'{bracket_l}{type[1]}{bracket_r}'
 
         return res
