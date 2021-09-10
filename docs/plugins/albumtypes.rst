@@ -2,14 +2,14 @@ AlbumTypes Plugin
 =================
 
 The ``albumtypes`` plugin adds the ability to format and output album types,
-such as "Album", "EP", "Single", etc. List of available type can be found
-`here`_.
+such as "Album", "EP", "Single", etc. For the list of available album types,
+see the `MusicBrainz documentation`_.
 
 To use the ``albumtypes`` plugin, enable it in your configuration
-(see :ref:`using-plugins`). Then, add ``$atypes`` to your path formats as
-desired.
+(see :ref:`using-plugins`). The plugin defines a new field ``$atypes``, which
+you can use in your path formats or elsewhere.
 
-.. _here: https://musicbrainz.org/doc/Release_Group/Type
+.. _MusicBrainz documentation: https://musicbrainz.org/doc/Release_Group/Type
 
 Configuration
 -------------
@@ -48,10 +48,9 @@ Example config::
         albumtype:soundtrack Various Artists/$album ($year)$atypes)/...
         comp: Various Artists/$album ($year)$atypes/...
 
-Example outputs::
+This configuration generates paths that look like this, for example::
 
     Aphex Twin/(1993)(EP)(Remix) On Remixes
     Pink Flow/(1995)(Live) p·u·l·s·e
     Various Artists/20th Century Lullabies (1999)
     Various Artists/Ocean's Eleven (2001)(OST)
-
