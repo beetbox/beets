@@ -96,16 +96,18 @@ def lufs_to_db(db):
 Gain = collections.namedtuple("Gain", "gain peak")
 
 
-ALL_PEAK_METHODS = ["true", "sample"]
-Peak = enum.Enum("Peak", ["none"] + ALL_PEAK_METHODS)
+class PeakMethod(enum.Enum):
+    true = 1
+    sample = 2
 
 
 class RgTask():
-    def __init__(self, items, album, target_level, peak, backend_name, log):
+    def __init__(self, items, album, target_level, peak_method, backend_name,
+                 log):
         self.items = items
         self.album = album
         self.target_level = target_level
-        self.peak = peak
+        self.peak_method = peak_method
         self.backend_name = backend_name
         self._log = log
         self.album_gain = None
@@ -171,6 +173,11 @@ class RgTask():
 
 
 class R128Task(RgTask):
+    def __init__(self, items, album, target_level, backend_name, log):
+        # R128_* tags do not store the track/album peak
+        super().__init__(items, album, target_level, None, backend_name,
+                         log)
+
     def _store_track_gain(self, item, track_gain):
         item.r128_track_gain = track_gain.gain
         item.store()
@@ -260,7 +267,7 @@ class FfmpegBackend(Backend):
                 self._analyse_item(
                     item,
                     task.target_level,
-                    task.peak,
+                    task.peak_method,
                     count_blocks=False,
                 )[0]  # take only the gain, discarding number of gating blocks
             )
@@ -285,7 +292,7 @@ class FfmpegBackend(Backend):
 
         for item in task.items:
             track_gain, track_n_blocks = self._analyse_item(
-                item, task.target_level, task.peak
+                item, task.target_level, task.peak_method
             )
             track_gains.append(track_gain)
 
@@ -338,13 +345,15 @@ class FfmpegBackend(Backend):
             "-map",
             "a:0",
             "-filter",
-            f"ebur128=peak={peak_method}",
+            "ebur128=peak={}".format(
+                "none" if peak_method is None else peak_method.name),
             "-f",
             "null",
             "-",
         ]
 
-    def _analyse_item(self, item, target_level, peak, count_blocks=True):
+    def _analyse_item(self, item, target_level, peak_method,
+                      count_blocks=True):
         """Analyse item. Return a pair of a Gain object and the number
         of gating blocks above the threshold.
 
@@ -352,7 +361,6 @@ class FfmpegBackend(Backend):
         will be 0.
         """
         target_level_lufs = db_to_lufs(target_level)
-        peak_method = peak.name
 
         # call ffmpeg
         self._log.debug(f"analyzing {item}")
@@ -364,12 +372,13 @@ class FfmpegBackend(Backend):
 
         # parse output
 
-        if peak == Peak.none:
+        if peak_method is None:
             peak = 0
         else:
             line_peak = self._find_line(
                 output,
-                f"  {peak_method.capitalize()} peak:".encode(),
+                # `peak_method` is non-`None` in this arm of the conditional
+                f"  {peak_method.name.capitalize()} peak:".encode(),
                 start_line=len(output) - 1, step_size=-1,
             )
             peak = self._parse_float(
@@ -1109,21 +1118,20 @@ class ReplayGainPlugin(BeetsPlugin):
                 )
             )
 
+        # FIXME: Consider renaming the configuration option to 'peak_method'
+        # and deprecating the old name 'peak'.
         peak_method = self.config["peak"].as_str()
-        if peak_method not in ALL_PEAK_METHODS:
+        if peak_method not in PeakMethod.__members__:
             raise ui.UserError(
                 "Selected ReplayGain peak method {} is not supported. "
                 "Please select one of: {}".format(
                     peak_method,
-                    ', '.join(ALL_PEAK_METHODS)
+                    ', '.join(PeakMethod.__members__)
                 )
             )
-
-        # The key in these dicts is the `use_r128` flag.
-        self.peak_methods = {
-            True: Peak.none,
-            False: Peak[peak_method]
-        }
+        # This only applies to plain old rg tags, r128 doesn't store peak
+        # values.
+        self.peak_method = PeakMethod[peak_method]
 
         # On-import analysis.
         if self.config['auto']:
@@ -1197,7 +1205,6 @@ class ReplayGainPlugin(BeetsPlugin):
             return R128Task(
                 items, album,
                 self.config["r128_targetlevel"].as_number(),
-                Peak.none,  # R128_* tags do not store the track/album peak
                 self.backend_instance.NAME,
                 self._log,
             )
@@ -1205,7 +1212,7 @@ class ReplayGainPlugin(BeetsPlugin):
             return RgTask(
                 items, album,
                 self.config["targetlevel"].as_number(),
-                self.peak_methods[use_r128],
+                self.peak_method,
                 self.backend_instance.NAME,
                 self._log,
             )
