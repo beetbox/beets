@@ -102,6 +102,15 @@ class PeakMethod(enum.Enum):
 
 
 class RgTask():
+    """State and methods for a single replaygain calculation (rg version).
+
+    Bundles the state (parameters and results) of a single replaygain
+    calculation (either for one item, one disk, or one full album).
+
+    This class provides methods to store the resulting gains and peaks as plain
+    old rg tags.
+    """
+
     def __init__(self, items, album, target_level, peak_method, backend_name,
                  log):
         self.items = items
@@ -114,6 +123,8 @@ class RgTask():
         self.track_gains = None
 
     def _store_track_gain(self, item, track_gain):
+        """Store track gain for a single item in the database.
+        """
         item.rg_track_gain = track_gain.gain
         item.rg_track_peak = track_gain.peak
         item.store()
@@ -121,7 +132,7 @@ class RgTask():
                         item.rg_track_gain, item.rg_track_peak)
 
     def _store_album_gain(self, item):
-        """
+        """Store album gain for a single item in the database.
 
         The caller needs to ensure that `self.album_gain is not None`.
         """
@@ -132,6 +143,8 @@ class RgTask():
                         item.rg_album_gain, item.rg_album_peak)
 
     def _store_track(self, write):
+        """Store track gain for the first track of the task in the database.
+        """
         item = self.items[0]
         if self.track_gains is None or len(self.track_gains) != 1:
             # In some cases, backends fail to produce a valid
@@ -148,6 +161,8 @@ class RgTask():
         self._log.debug('done analyzing {0}', item)
 
     def _store_album(self, write):
+        """Store track/album gains for all tracks of the task in the database.
+        """
         if (self.album_gain is None or self.track_gains is None
                 or len(self.track_gains) != len(self.items)):
             # In some cases, backends fail to produce a valid
@@ -166,6 +181,8 @@ class RgTask():
             self._log.debug('done analyzing {0}', item)
 
     def store(self, write):
+        """Store computed gains for the items of this task in the database.
+        """
         if self.album is not None:
             self._store_album(write)
         else:
@@ -173,6 +190,15 @@ class RgTask():
 
 
 class R128Task(RgTask):
+    """State and methods for a single replaygain calculation (r128 version).
+
+    Bundles the state (parameters and results) of a single replaygain
+    calculation (either for one item, one disk, or one full album).
+
+    This class provides methods to store the resulting gains and peaks as R128
+    tags.
+    """
+
     def __init__(self, items, album, target_level, backend_name, log):
         # R128_* tags do not store the track/album peak
         super().__init__(items, album, target_level, None, backend_name,
