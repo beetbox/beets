@@ -165,6 +165,10 @@ take place before applying the :ref:`replace` configuration and are roughly
 equivalent to wrapping all your path templates in the ``%asciify{}``
 :ref:`template function <template-functions>`.
 
+This uses the `unidecode module`_ which is language agnostic, so some 
+characters may be transliterated from a different language than expected. 
+For example, Japanese kanji will usually use their Chinese readings.
+
 Default: ``no``.
 
 .. _unidecode module: https://pypi.org/project/Unidecode
