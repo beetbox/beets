@@ -81,7 +81,7 @@ Starting with version 10.11 (El Capitan), macOS has a new security feature
 called `System Integrity Protection`_ (SIP) that prevents you from modifying
 some parts of the system. This means that some ``pip`` commands may fail with a
 permissions error. (You probably *won't* run into this if you've installed
-Python yourself with `Homebrew`_ or otherwise. You can also try `MacPorts`_)
+Python yourself with `Homebrew`_ or otherwise. You can also try `MacPorts`_.)
 
 If this happens, you can install beets for the current user only by typing
 ``pip install --user beets``. If you do that, you might want to add
