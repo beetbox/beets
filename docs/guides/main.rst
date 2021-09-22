@@ -12,11 +12,11 @@ Installing
 You will need Python.
 Beets works on Python 3.6 or later.
 
-* On **macOS**, there's a `MacPorts`_ port. macOS 11 (Big Sur) includes Python
-  3.8 out of the box and you may install it via ``pip``. You can opt for a more
-  recent Python installing it via `Homebrew`_: ``brew install python3`` for older
-  versions. There's also a MacPorts port. Just run ``port install beets`` or
-  ``port install beets-full`` to install it with a lot of 3rd party plugins.
+* **macOS** 11 (Big Sur) includes Python 3.8 out of the box.
+  You can opt for a more recent Python installing it via `Homebrew`_
+  (``brew install python3``).
+  There's also a `MacPorts`_ port. Run ``port install beets`` or
+   ``port install beets-full`` to include many third-party plugins.
 
 * On **Debian or Ubuntu**, depending on the version, beets is available as an
   official package (`Debian details`_, `Ubuntu details`_), so try typing:
@@ -74,7 +74,7 @@ new versions.
 
 .. _@b33ts: https://twitter.com/b33ts
 
-Installing by hand on macOS 10.11 and Higher
+Installing by Hand on macOS 10.11 and Higher
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Starting with version 10.11 (El Capitan), macOS has a new security feature
