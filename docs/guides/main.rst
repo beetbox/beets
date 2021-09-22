@@ -16,7 +16,7 @@ Beets works on Python 3.6 or later.
   You can opt for a more recent Python installing it via `Homebrew`_
   (``brew install python3``).
   There's also a `MacPorts`_ port. Run ``port install beets`` or
-   ``port install beets-full`` to include many third-party plugins.
+  ``port install beets-full`` to include many third-party plugins.
 
 * On **Debian or Ubuntu**, depending on the version, beets is available as an
   official package (`Debian details`_, `Ubuntu details`_), so try typing:
