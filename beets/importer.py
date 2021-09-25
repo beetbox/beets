@@ -767,7 +767,8 @@ class ImportTask(BaseImportTask):
     def add(self, lib):
         """Add the items as an album to the library and remove replaced items.
         """
-        self.align_album_level_fields()
+        if config['import']['autotag'] is True:
+            self.align_album_level_fields()
         with lib.transaction():
             self.record_replaced(lib)
             self.remove_replaced(lib)
