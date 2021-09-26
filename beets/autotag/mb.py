@@ -18,6 +18,8 @@
 import musicbrainzngs
 import re
 import traceback
+from collections import Counter
+from six.moves.urllib.parse import urljoin
 
 from beets import logging
 from beets import plugins
