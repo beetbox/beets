@@ -7,13 +7,6 @@ Changelog
 This release now requires Python 3.6 or later (it removes support for Python
 2.7, 3.4, and 3.5).
 
-* Primary and secondary release types from MusicBrainz are now stored in
-  ``albumtypes`` field. Thanks to :user:`edgars-supe`.
-  :bug:`2200`
-
-* :doc:`/plugins/albumtypes`: An accompanying plugin for formatting
-  ``albumtypes``. Thanks to :user:`edgars-supe`.
-
 For packagers:
 
 * We fixed a flaky test, named `test_album_art` in the `test_zero.py` file,
