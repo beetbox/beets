@@ -27,6 +27,13 @@ Major new features:
   option is set, and sort them by the number of votes.  Thanks to
   :user:`aereaux`.
 
+* Primary and secondary release types from MusicBrainz are now stored in
+  ``albumtypes`` field. Thanks to :user:`edgars-supe`.
+  :bug:`2200`
+
+* :doc:`/plugins/albumtypes`: An accompanying plugin for formatting
+  ``albumtypes``. Thanks to :user:`edgars-supe`.
+
 Other new things:
 
 * Permissions plugin now sets cover art permissions to the file permissions.
