@@ -94,9 +94,9 @@ Artist index:
 # The content for the base conf.py generated.
 REST_CONF_TEMPLATE = '''# -*- coding: utf-8 -*-
 master_doc = 'index'
-project = u'Lyrics'
-copyright = u'none'
-author = u'Various Authors'
+project = 'Lyrics'
+copyright = 'none'
+author = 'Various Authors'
 latex_documents = [
     (master_doc, 'Lyrics.tex', project,
      author, 'manual'),
