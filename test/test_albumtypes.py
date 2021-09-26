@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2021, Edgars Supe.
 #
@@ -14,6 +15,7 @@
 
 """Tests for the 'albumtypes' plugin."""
 
+from __future__ import division, absolute_import, print_function
 
 import unittest
 
