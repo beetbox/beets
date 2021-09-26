@@ -25,6 +25,7 @@ import beets.autotag.hooks
 import beets
 from beets import util
 from beets import config
+from collections import Counter
 from urllib.parse import urljoin
 
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
@@ -454,9 +455,17 @@ def album_info(release):
         first_medium = release['medium-list'][0]
         info.media = first_medium.get('format')
 
-    genres = release.get('genre-list')
-    if config['musicbrainz']['genres'] and genres:
-        info.genre = ';'.join(g['name'] for g in genres)
+    if config['musicbrainz']['genres']:
+        sources = [
+            release['release-group'].get('genre-list', []),
+            release.get('genre-list', []),
+        ]
+        genres = Counter()
+        for source in sources:
+            for genreitem in source:
+                genres[genreitem['name']] += int(genreitem['count'])
+        info.genre = '; '.join(g[0] for g in sorted(genres.items(),
+                                                    key=lambda g: -g[1]))
 
     extra_albumdatas = plugins.send('mb_album_extract', data=release)
     for extra_albumdata in extra_albumdatas:
