@@ -27,6 +27,10 @@ Major new features:
   option is set, and sort them by the number of votes.  Thanks to
   :user:`aereaux`.
 
+Other new things:
+
+* Permissions plugin now sets cover art permissions to the file permissions.
+
 1.5.0 (August 19, 2021)
 -----------------------
 
