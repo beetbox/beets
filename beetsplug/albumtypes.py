@@ -26,40 +26,42 @@ class AlbumTypesPlugin(BeetsPlugin):
     def __init__(self):
         """Init AlbumTypesPlugin."""
         super().__init__()
-        self.album_template_fields['atypes'] = self._atypes
-        self.config.add({
-            'types': [
-                ('ep', 'EP'),
-                ('single', 'Single'),
-                ('soundtrack', 'OST'),
-                ('live', 'Live'),
-                ('compilation', 'Anthology'),
-                ('remix', 'Remix')
-            ],
-            'ignore_va': ['compilation'],
-            'bracket': '[]'
-        })
+        self.album_template_fields["atypes"] = self._atypes
+        self.config.add(
+            {
+                "types": [
+                    ("ep", "EP"),
+                    ("single", "Single"),
+                    ("soundtrack", "OST"),
+                    ("live", "Live"),
+                    ("compilation", "Anthology"),
+                    ("remix", "Remix"),
+                ],
+                "ignore_va": ["compilation"],
+                "bracket": "[]",
+            }
+        )
 
     def _atypes(self, item: Album):
         """Returns a formatted string based on album's types."""
-        types = self.config['types'].as_pairs()
-        ignore_va = self.config['ignore_va'].as_str_seq()
-        bracket = self.config['bracket'].as_str()
+        types = self.config["types"].as_pairs()
+        ignore_va = self.config["ignore_va"].as_str_seq()
+        bracket = self.config["bracket"].as_str()
 
         # Assign a left and right bracket or leave blank if argument is empty.
         if len(bracket) == 2:
             bracket_l = bracket[0]
             bracket_r = bracket[1]
         else:
-            bracket_l = ''
-            bracket_r = ''
+            bracket_l = ""
+            bracket_r = ""
 
-        res = ''
-        albumtypes = item.albumtypes.split('; ')
+        res = ""
+        albumtypes = item.albumtypes.split("; ")
         is_va = item.mb_albumartistid == VARIOUS_ARTISTS_ID
         for type in types:
             if type[0] in albumtypes and type[1]:
                 if not is_va or (type[0] not in ignore_va and is_va):
-                    res += f'{bracket_l}{type[1]}{bracket_r}'
+                    res += f"{bracket_l}{type[1]}{bracket_r}"
 
         return res
