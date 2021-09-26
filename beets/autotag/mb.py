@@ -25,6 +25,7 @@ import beets.autotag.hooks
 import beets
 from beets import util
 from beets import config
+from collections import Counter
 from urllib.parse import urljoin
 
 VARIOUS_ARTISTS_ID = "89ad4ac3-39f7-470e-963a-56509c546377"
@@ -448,26 +449,17 @@ def album_info(release):
         if reltype:
             info.albumtype = reltype.lower()
 
-    # Log the new-style "primary" and "secondary" release types.
-    # Eventually, we'd like to actually store this data, but we just log
-    # it for now to help understand the differences.
+    # Set the new-style "primary" and "secondary" release types.
+    albumtypes = []
     if "primary-type" in release["release-group"]:
         rel_primarytype = release["release-group"]["primary-type"]
         if rel_primarytype:
-            log.debug("primary MB release type: " + rel_primarytype.lower())
+            albumtypes.append(rel_primarytype.lower())
     if "secondary-type-list" in release["release-group"]:
         if release["release-group"]["secondary-type-list"]:
-            log.debug(
-                "secondary MB release type(s): "
-                + ", ".join(
-                    [
-                        secondarytype.lower()
-                        for secondarytype in release["release-group"][
-                            "secondary-type-list"
-                        ]
-                    ]
-                )
-            )
+            for sec_type in release["release-group"]["secondary-type-list"]:
+                albumtypes.append(sec_type.lower())
+    info.albumtypes = "; ".join(albumtypes)
 
     # Release events.
     info.country, release_date = _preferred_release_event(release)
@@ -498,9 +490,18 @@ def album_info(release):
         first_medium = release["medium-list"][0]
         info.media = first_medium.get("format")
 
-    genres = release.get("genre-list")
-    if config["musicbrainz"]["genres"] and genres:
-        info.genre = ";".join(g["name"] for g in genres)
+    if config["musicbrainz"]["genres"]:
+        sources = [
+            release["release-group"].get("genre-list", []),
+            release.get("genre-list", []),
+        ]
+        genres = Counter()
+        for source in sources:
+            for genreitem in source:
+                genres[genreitem["name"]] += int(genreitem["count"])
+        info.genre = "; ".join(
+            g[0] for g in sorted(genres.items(), key=lambda g: -g[1])
+        )
 
     extra_albumdatas = plugins.send("mb_album_extract", data=release)
     for extra_albumdata in extra_albumdatas:

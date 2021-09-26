@@ -165,6 +165,10 @@ take place before applying the :ref:`replace` configuration and are roughly
 equivalent to wrapping all your path templates in the ``%asciify{}``
 :ref:`template function <template-functions>`.
 
+This uses the `unidecode module`_ which is language agnostic, so some 
+characters may be transliterated from a different language than expected. 
+For example, Japanese kanji will usually use their Chinese readings.
+
 Default: ``no``.
 
 .. _unidecode module: https://pypi.org/project/Unidecode
@@ -753,10 +757,10 @@ Default: ``[]``
 genres
 ~~~~~~
 
-Use MusicBrainz genre tags to populate the ``genre`` tag.  This will make it a
-semicolon-separated list of all the genres tagged for the release on
-MusicBrainz.
-
+Use MusicBrainz genre tags to populate (and replace if it's already set) the
+``genre`` tag.  This will make it a list of all the genres tagged for the
+release and the release-group on MusicBrainz, separated by "; " and sorted by
+the total number of votes.
 Default: ``no``
 
 .. _match-config:

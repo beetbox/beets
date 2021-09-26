@@ -66,9 +66,27 @@ class Permissions(BeetsPlugin):
 
         self.register_listener("item_imported", self.fix)
         self.register_listener("album_imported", self.fix)
+        self.register_listener("art_set", self.fix_art)
 
     def fix(self, lib, item=None, album=None):
         """Fix the permissions for an imported Item or Album."""
+        files = []
+        dirs = set()
+        if item:
+            files.append(item.path)
+            dirs.update(dirs_in_library(lib.directory, item.path))
+        elif album:
+            for album_item in album.items():
+                files.append(album_item.path)
+                dirs.update(dirs_in_library(lib.directory, album_item.path))
+        self.set_permissions(files=files, dirs=dirs)
+
+    def fix_art(self, album):
+        """Fix the permission for Album art file."""
+        if album.artpath:
+            self.set_permissions(files=[album.artpath])
+
+    def set_permissions(self, files=[], dirs=[]):
         # Get the configured permissions. The user can specify this either a
         # string (in YAML quotes) or, for convenience, as an integer so the
         # quotes can be omitted. In the latter case, we need to reinterpret the
@@ -78,18 +96,7 @@ class Permissions(BeetsPlugin):
         file_perm = convert_perm(file_perm)
         dir_perm = convert_perm(dir_perm)
 
-        # Create chmod_queue.
-        file_chmod_queue = []
-        if item:
-            file_chmod_queue.append(item.path)
-        elif album:
-            for album_item in album.items():
-                file_chmod_queue.append(album_item.path)
-
-        # A set of directories to change permissions for.
-        dir_chmod_queue = set()
-
-        for path in file_chmod_queue:
+        for path in files:
             # Changing permissions on the destination file.
             self._log.debug(
                 "setting file permissions on {}",
@@ -100,12 +107,9 @@ class Permissions(BeetsPlugin):
             # Checks if the destination path has the permissions configured.
             assert_permissions(path, file_perm, self._log)
 
-            # Adding directories to the directory chmod queue.
-            dir_chmod_queue.update(dirs_in_library(lib.directory, path))
-
         # Change permissions for the directories.
-        for path in dir_chmod_queue:
-            # Chaning permissions on the destination directory.
+        for path in dirs:
+            # Changing permissions on the destination directory.
             self._log.debug(
                 "setting directory permissions on {}",
                 util.displayable_path(path),

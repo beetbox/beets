@@ -13,8 +13,10 @@ You will need Python.
 Beets works on Python 3.6 or later.
 
 * **macOS** 11 (Big Sur) includes Python 3.8 out of the box.
-  You can opt for a more recent Python installing it via `Homebrew`_:
-  ``brew install python3``
+  You can opt for a more recent Python installing it via `Homebrew`_
+  (``brew install python3``).
+  There's also a `MacPorts`_ port. Run ``port install beets`` or
+  ``port install beets-full`` to include many third-party plugins.
 
 * On **Debian or Ubuntu**, depending on the version, beets is available as an
   official package (`Debian details`_, `Ubuntu details`_), so try typing:
@@ -55,6 +57,7 @@ Beets works on Python 3.6 or later.
 .. _OpenBSD: http://openports.se/audio/beets
 .. _Arch community: https://www.archlinux.org/packages/community/any/beets/
 .. _NixOS: https://github.com/NixOS/nixpkgs/tree/master/pkgs/tools/audio/beets
+.. _MacPorts: https://www.macports.org
 
 If you have `pip`_, just say ``pip install beets`` (or ``pip install --user
 beets`` if you run into permissions problems).
@@ -71,14 +74,14 @@ new versions.
 
 .. _@b33ts: https://twitter.com/b33ts
 
-Installing on macOS 10.11 and Higher
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Installing by Hand on macOS 10.11 and Higher
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Starting with version 10.11 (El Capitan), macOS has a new security feature
 called `System Integrity Protection`_ (SIP) that prevents you from modifying
-some parts of the system. This means that some ``pip`` commands may fail with
-a permissions error. (You probably *won't* run into this if you've installed
-Python yourself with `Homebrew`_ or otherwise.)
+some parts of the system. This means that some ``pip`` commands may fail with a
+permissions error. (You probably *won't* run into this if you've installed
+Python yourself with `Homebrew`_ or otherwise. You can also try `MacPorts`_.)
 
 If this happens, you can install beets for the current user only by typing
 ``pip install --user beets``. If you do that, you might want to add

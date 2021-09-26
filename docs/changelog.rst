@@ -7,6 +7,29 @@ Changelog
 This release now requires Python 3.6 or later (it removes support for Python
 2.7, 3.4, and 3.5).
 
+* Primary and secondary release types from MusicBrainz are now stored in
+  ``albumtypes`` field. Thanks to :user:`edgars-supe`.
+  :bug:`2200`
+
+* :doc:`/plugins/albumtypes`: An accompanying plugin for formatting
+  ``albumtypes``. Thanks to :user:`edgars-supe`.
+
+For packagers:
+
+* We fixed a flaky test, named `test_album_art` in the `test_zero.py` file,
+  that some distributions had disabled. Disabling this test should no longer
+  be necessary.
+  :bug:`4037` :bug:`4038`
+
+Major new features:
+
+* Include the genre tags from the release group when the musicbrainz genre
+  option is set, and sort them by the number of votes.  Thanks to
+  :user:`aereaux`.
+
+Other new things:
+
+* Permissions plugin now sets cover art permissions to the file permissions.
 
 1.5.0 (August 19, 2021)
 -----------------------

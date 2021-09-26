@@ -114,9 +114,10 @@ class PathQuery(dbcore.FieldQuery):
             query_part = "(BYTELOWER({0}) = BYTELOWER(?)) || \
                          (substr(BYTELOWER({0}), 1, ?) = BYTELOWER(?))"
 
-        return (
-            query_part.format(self.field),
-            (file_blob, len(dir_blob), dir_blob),
+        return query_part.format(self.field), (
+            file_blob,
+            len(dir_blob),
+            dir_blob,
         )
 
 
@@ -509,6 +510,7 @@ class Item(LibModel):
         "mb_releasetrackid": types.STRING,
         "trackdisambig": types.STRING,
         "albumtype": types.STRING,
+        "albumtypes": types.STRING,
         "label": types.STRING,
         "acoustid_fingerprint": types.STRING,
         "acoustid_id": types.STRING,
@@ -1087,6 +1089,7 @@ class Album(LibModel):
         "mb_albumid": types.STRING,
         "mb_albumartistid": types.STRING,
         "albumtype": types.STRING,
+        "albumtypes": types.STRING,
         "label": types.STRING,
         "mb_releasegroupid": types.STRING,
         "asin": types.STRING,
@@ -1136,6 +1139,7 @@ class Album(LibModel):
         "mb_albumid",
         "mb_albumartistid",
         "albumtype",
+        "albumtypes",
         "label",
         "mb_releasegroupid",
         "asin",
