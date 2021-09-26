@@ -875,7 +875,7 @@ class CommonOptionsParser(optparse.OptionParser):
         By default this affects both items and albums. If add_album_option()
         is used then the target will be autodetected.
 
-        Sets the format property to u'$path' on the options extracted from the
+        Sets the format property to '$path' on the options extracted from the
         CLI.
         """
         path = optparse.Option(*flags, nargs=0, action='callback',
