@@ -19,9 +19,6 @@ import musicbrainzngs
 import re
 import traceback
 
-from collections import Counter
-from urllib.parse import urljoin
-
 from beets import logging
 from beets import plugins
 import beets.autotag.hooks
