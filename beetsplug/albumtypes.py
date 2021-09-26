@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # This file is part of beets.
 # Copyright 2021, Edgars Supe.
 #
@@ -16,7 +14,6 @@
 
 """Adds an album template field for formatted album types."""
 
-from __future__ import division, absolute_import, print_function
 
 from beets.autotag.mb import VARIOUS_ARTISTS_ID
 from beets.library import Album
