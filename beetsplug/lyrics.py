@@ -760,7 +760,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
     def sanitize_bs_sources(self, sources):
         enabled_sources = []
         for source in sources:
-            if source.REQUIRES_BS:
+            if self.SOURCE_BACKENDS[source].REQUIRES_BS:
                 self._log.debug(u'To use the %s lyrics source, you must '
                                 u'install the beautifulsoup4 module. See '
                                 u'the documentation for further details.'
