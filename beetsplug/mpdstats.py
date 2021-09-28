@@ -55,7 +55,6 @@ class MPDClientWrapper:
         self._log.debug('music_directory: {0}', self.music_directory)
         self._log.debug('strip_path: {0}', self.strip_path)
 
-        # On Python 3, python-mpd2 always uses Unicode
         self.client = mpd.MPDClient()
 
     def connect(self):
