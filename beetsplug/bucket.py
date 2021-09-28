@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Fabrice Laporte.
 #
@@ -16,12 +15,10 @@
 """Provides the %bucket{} function for path formatting.
 """
 
-from __future__ import division, absolute_import, print_function
 
 from datetime import datetime
 import re
 import string
-from six.moves import zip
 from itertools import tee
 
 from beets import plugins, ui
@@ -49,7 +46,7 @@ def span_from_str(span_str):
         """Convert string to a 4 digits year
         """
         if yearfrom < 100:
-            raise BucketError(u"%d must be expressed on 4 digits" % yearfrom)
+            raise BucketError("%d must be expressed on 4 digits" % yearfrom)
 
         # if two digits only, pick closest year that ends by these two
         # digits starting from yearfrom
@@ -62,12 +59,12 @@ def span_from_str(span_str):
 
     years = [int(x) for x in re.findall(r'\d+', span_str)]
     if not years:
-        raise ui.UserError(u"invalid range defined for year bucket '%s': no "
-                           u"year found" % span_str)
+        raise ui.UserError("invalid range defined for year bucket '%s': no "
+                           "year found" % span_str)
     try:
         years = [normalize_year(x, years[0]) for x in years]
     except BucketError as exc:
-        raise ui.UserError(u"invalid range defined for year bucket '%s': %s" %
+        raise ui.UserError("invalid range defined for year bucket '%s': %s" %
                            (span_str, exc))
 
     res = {'from': years[0], 'str': span_str}
@@ -128,10 +125,10 @@ def str2fmt(s):
 
     res = {'fromnchars': len(m.group('fromyear')),
            'tonchars': len(m.group('toyear'))}
-    res['fmt'] = "%s%%s%s%s%s" % (m.group('bef'),
-                                  m.group('sep'),
-                                  '%s' if res['tonchars'] else '',
-                                  m.group('after'))
+    res['fmt'] = "{}%s{}{}{}".format(m.group('bef'),
+                                     m.group('sep'),
+                                     '%s' if res['tonchars'] else '',
+                                     m.group('after'))
     return res
 
 
@@ -170,8 +167,8 @@ def build_alpha_spans(alpha_spans_str, alpha_regexs):
                 begin_index = ASCII_DIGITS.index(bucket[0])
                 end_index = ASCII_DIGITS.index(bucket[-1])
             else:
-                raise ui.UserError(u"invalid range defined for alpha bucket "
-                                   u"'%s': no alphanumeric character found" %
+                raise ui.UserError("invalid range defined for alpha bucket "
+                                   "'%s': no alphanumeric character found" %
                                    elem)
             spans.append(
                 re.compile(
@@ -184,7 +181,7 @@ def build_alpha_spans(alpha_spans_str, alpha_regexs):
 
 class BucketPlugin(plugins.BeetsPlugin):
     def __init__(self):
-        super(BucketPlugin, self).__init__()
+        super().__init__()
         self.template_funcs['bucket'] = self._tmpl_bucket
 
         self.config.add({

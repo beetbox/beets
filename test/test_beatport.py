@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -15,12 +14,10 @@
 
 """Tests for the 'beatport' plugin.
 """
-from __future__ import division, absolute_import, print_function
 
 import unittest
 from test import _common
 from test.helper import TestHelper
-import six
 from datetime import timedelta
 
 from beetsplug import beatport
@@ -543,7 +540,7 @@ class BeatportTest(_common.TestCase, TestHelper):
         for track, test_track, id in zip(self.tracks, self.test_tracks, ids):
             self.assertEqual(
                 track.url, 'https://beatport.com/track/' +
-                test_track.url + '/' + six.text_type(id))
+                test_track.url + '/' + str(id))
 
     def test_bpm_applied(self):
         for track, test_track in zip(self.tracks, self.test_tracks):

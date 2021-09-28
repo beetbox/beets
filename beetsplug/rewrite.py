@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -16,7 +15,6 @@
 """Uses user-specified rewriting rules to canonicalize names for path
 formats.
 """
-from __future__ import division, absolute_import, print_function
 
 import re
 from collections import defaultdict
@@ -44,7 +42,7 @@ def rewriter(field, rules):
 
 class RewritePlugin(BeetsPlugin):
     def __init__(self):
-        super(RewritePlugin, self).__init__()
+        super().__init__()
 
         self.config.add({})
 
@@ -55,11 +53,11 @@ class RewritePlugin(BeetsPlugin):
             try:
                 fieldname, pattern = key.split(None, 1)
             except ValueError:
-                raise ui.UserError(u"invalid rewrite specification")
+                raise ui.UserError("invalid rewrite specification")
             if fieldname not in library.Item._fields:
-                raise ui.UserError(u"invalid field name (%s) in rewriter" %
+                raise ui.UserError("invalid field name (%s) in rewriter" %
                                    fieldname)
-            self._log.debug(u'adding template field {0}', key)
+            self._log.debug('adding template field {0}', key)
             pattern = re.compile(pattern.lower())
             rules[fieldname].append((pattern, value))
             if fieldname == 'artist':

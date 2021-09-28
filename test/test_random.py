@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2019, Carl Suster
 #
@@ -16,7 +15,6 @@
 """Test the beets.random utilities associated with the random plugin.
 """
 
-from __future__ import division, absolute_import, print_function
 
 import unittest
 from test.helper import TestHelper

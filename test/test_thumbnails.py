@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Bruno Cauet
 #
@@ -13,10 +12,9 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
 
 import os.path
-from mock import Mock, patch, call
+from unittest.mock import Mock, patch, call
 from tempfile import mkdtemp
 from shutil import rmtree
 import unittest
@@ -38,13 +36,13 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
 
     @patch('beetsplug.thumbnails.util')
     def test_write_metadata_im(self, mock_util):
-        metadata = {"a": u"A", "b": u"B"}
+        metadata = {"a": "A", "b": "B"}
         write_metadata_im("foo", metadata)
         try:
-            command = u"convert foo -set a A -set b B foo".split(' ')
+            command = "convert foo -set a A -set b B foo".split(' ')
             mock_util.command_output.assert_called_once_with(command)
         except AssertionError:
-            command = u"convert foo -set b B -set a A foo".split(' ')
+            command = "convert foo -set b B -set a A foo".split(' ')
             mock_util.command_output.assert_called_once_with(command)
 
     @patch('beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok')
@@ -60,7 +58,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         plugin.add_tags(album, b"/path/to/thumbnail")
 
         metadata = {"Thumb::URI": "COVER_URI",
-                    "Thumb::MTime": u"12345"}
+                    "Thumb::MTime": "12345"}
         plugin.write_metadata.assert_called_once_with(b"/path/to/thumbnail",
                                                       metadata)
         mock_stat.assert_called_once_with(album.artpath)
@@ -85,7 +83,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
                 return False
             if path == LARGE_DIR:
                 return True
-            raise ValueError(u"unexpected path {0!r}".format(path))
+            raise ValueError(f"unexpected path {path!r}")
         mock_os.path.exists = exists
         plugin = ThumbnailsPlugin()
         mock_os.makedirs.assert_called_once_with(NORMAL_DIR)
@@ -144,7 +142,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
             elif target == path_to_art:
                 return Mock(st_mtime=2)
             else:
-                raise ValueError(u"invalid target {0}".format(target))
+                raise ValueError(f"invalid target {target}")
         mock_os.stat.side_effect = os_stat
 
         plugin.make_cover_thumbnail(album, 12345, thumbnail_dir)
@@ -170,7 +168,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
             elif target == path_to_art:
                 return Mock(st_mtime=2)
             else:
-                raise ValueError(u"invalid target {0}".format(target))
+                raise ValueError(f"invalid target {target}")
         mock_os.stat.side_effect = os_stat
 
         plugin.make_cover_thumbnail(album, 12345, thumbnail_dir)
@@ -267,21 +265,21 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
     @patch('beetsplug.thumbnails.BaseDirectory')
     def test_thumbnail_file_name(self, mock_basedir):
         plug = ThumbnailsPlugin()
-        plug.get_uri = Mock(return_value=u"file:///my/uri")
+        plug.get_uri = Mock(return_value="file:///my/uri")
         self.assertEqual(plug.thumbnail_file_name(b'idontcare'),
                          b"9488f5797fbe12ffb316d607dfd93d04.png")
 
     def test_uri(self):
         gio = GioURI()
         if not gio.available:
-            self.skipTest(u"GIO library not found")
+            self.skipTest("GIO library not found")
 
-        self.assertEqual(gio.uri(u"/foo"), u"file:///")  # silent fail
-        self.assertEqual(gio.uri(b"/foo"), u"file:///foo")
-        self.assertEqual(gio.uri(b"/foo!"), u"file:///foo!")
+        self.assertEqual(gio.uri("/foo"), "file:///")  # silent fail
+        self.assertEqual(gio.uri(b"/foo"), "file:///foo")
+        self.assertEqual(gio.uri(b"/foo!"), "file:///foo!")
         self.assertEqual(
             gio.uri(b'/music/\xec\x8b\xb8\xec\x9d\xb4'),
-            u'file:///music/%EC%8B%B8%EC%9D%B4')
+            'file:///music/%EC%8B%B8%EC%9D%B4')
 
 
 class TestPathlibURI():

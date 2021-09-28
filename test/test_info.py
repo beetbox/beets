@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Thomas Scholtes.
 #
@@ -13,7 +12,6 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
 
 import unittest
 from test.helper import TestHelper
@@ -59,7 +57,7 @@ class InfoTest(unittest.TestCase, TestHelper):
 
         out = self.run_with_output('info', 'album:yyyy')
         self.assertIn(displayable_path(item1.path), out)
-        self.assertIn(u'album: xxxx', out)
+        self.assertIn('album: xxxx', out)
 
         self.assertNotIn(displayable_path(item2.path), out)
 
@@ -70,7 +68,7 @@ class InfoTest(unittest.TestCase, TestHelper):
 
         out = self.run_with_output('info', '--library', 'album:xxxx')
         self.assertIn(displayable_path(item.path), out)
-        self.assertIn(u'album: xxxx', out)
+        self.assertIn('album: xxxx', out)
 
     def test_collect_item_and_path(self):
         path = self.create_mediafile_fixture()
@@ -87,16 +85,16 @@ class InfoTest(unittest.TestCase, TestHelper):
         mediafile.save()
 
         out = self.run_with_output('info', '--summarize', 'album:AAA', path)
-        self.assertIn(u'album: AAA', out)
-        self.assertIn(u'tracktotal: 5', out)
-        self.assertIn(u'title: [various]', out)
+        self.assertIn('album: AAA', out)
+        self.assertIn('tracktotal: 5', out)
+        self.assertIn('title: [various]', out)
         self.remove_mediafile_fixtures()
 
     def test_custom_format(self):
         self.add_item_fixtures()
         out = self.run_with_output('info', '--library', '--format',
                                    '$track. $title - $artist ($length)')
-        self.assertEqual(u'02. tïtle 0 - the artist (0:01)\n', out)
+        self.assertEqual('02. tïtle 0 - the artist (0:01)\n', out)
 
 
 def suite():

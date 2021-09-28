@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Malte Ried.
 #
@@ -16,7 +15,6 @@
 """Tests for the `filefilter` plugin.
 """
 
-from __future__ import division, absolute_import, print_function
 
 import os
 import shutil

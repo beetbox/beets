@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -15,7 +14,6 @@
 
 """Test file manipulation functionality of Item.
 """
-from __future__ import division, absolute_import, print_function
 
 import shutil
 import os
@@ -32,7 +30,7 @@ from beets.util import MoveOperation
 
 class MoveTest(_common.TestCase):
     def setUp(self):
-        super(MoveTest, self).setUp()
+        super().setUp()
 
         # make a temporary file
         self.path = join(self.temp_dir, b'temp.mp3')
@@ -73,7 +71,7 @@ class MoveTest(_common.TestCase):
         old_path = self.i.path
         self.assertExists(old_path)
 
-        self.i.artist = u'newArtist'
+        self.i.artist = 'newArtist'
         self.i.move()
         self.assertNotExists(old_path)
         self.assertNotExists(os.path.dirname(old_path))
@@ -121,20 +119,20 @@ class MoveTest(_common.TestCase):
         self.assertEqual(self.i.path, old_path)
 
     def test_move_file_with_colon(self):
-        self.i.artist = u'C:DOS'
+        self.i.artist = 'C:DOS'
         self.i.move()
         self.assertIn('C_DOS', self.i.path.decode())
 
     def test_move_file_with_multiple_colons(self):
         print(beets.config['replace'])
-        self.i.artist = u'COM:DOS'
+        self.i.artist = 'COM:DOS'
         self.i.move()
         self.assertIn('COM_DOS', self.i.path.decode())
 
     def test_move_file_with_colon_alt_separator(self):
         old = beets.config['drive_sep_replace']
         beets.config["drive_sep_replace"] = '0'
-        self.i.artist = u'C:DOS'
+        self.i.artist = 'C:DOS'
         self.i.move()
         self.assertIn('C0DOS', self.i.path.decode())
         beets.config["drive_sep_replace"] = old
@@ -240,7 +238,7 @@ class HelperTest(_common.TestCase):
 
 class AlbumFileTest(_common.TestCase):
     def setUp(self):
-        super(AlbumFileTest, self).setUp()
+        super().setUp()
 
         # Make library and item.
         self.lib = beets.library.Library(':memory:')
@@ -259,7 +257,7 @@ class AlbumFileTest(_common.TestCase):
         self.otherdir = os.path.join(self.temp_dir, b'testotherdir')
 
     def test_albuminfo_move_changes_paths(self):
-        self.ai.album = u'newAlbumName'
+        self.ai.album = 'newAlbumName'
         self.ai.move()
         self.ai.store()
         self.i.load()
@@ -268,7 +266,7 @@ class AlbumFileTest(_common.TestCase):
 
     def test_albuminfo_move_moves_file(self):
         oldpath = self.i.path
-        self.ai.album = u'newAlbumName'
+        self.ai.album = 'newAlbumName'
         self.ai.move()
         self.ai.store()
         self.i.load()
@@ -278,7 +276,7 @@ class AlbumFileTest(_common.TestCase):
 
     def test_albuminfo_move_copies_file(self):
         oldpath = self.i.path
-        self.ai.album = u'newAlbumName'
+        self.ai.album = 'newAlbumName'
         self.ai.move(operation=MoveOperation.COPY)
         self.ai.store()
         self.i.load()
@@ -289,7 +287,7 @@ class AlbumFileTest(_common.TestCase):
     @unittest.skipUnless(_common.HAVE_REFLINK, "need reflink")
     def test_albuminfo_move_reflinks_file(self):
         oldpath = self.i.path
-        self.ai.album = u'newAlbumName'
+        self.ai.album = 'newAlbumName'
         self.ai.move(operation=MoveOperation.REFLINK)
         self.ai.store()
         self.i.load()
@@ -306,7 +304,7 @@ class AlbumFileTest(_common.TestCase):
 
 class ArtFileTest(_common.TestCase):
     def setUp(self):
-        super(ArtFileTest, self).setUp()
+        super().setUp()
 
         # Make library and item.
         self.lib = beets.library.Library(':memory:')
@@ -335,7 +333,7 @@ class ArtFileTest(_common.TestCase):
     def test_art_moves_with_album(self):
         self.assertTrue(os.path.exists(self.art))
         oldpath = self.i.path
-        self.ai.album = u'newAlbum'
+        self.ai.album = 'newAlbum'
         self.ai.move()
         self.i.load()
 
@@ -363,7 +361,7 @@ class ArtFileTest(_common.TestCase):
         touch(newart)
         i2 = item()
         i2.path = self.i.path
-        i2.artist = u'someArtist'
+        i2.artist = 'someArtist'
         ai = self.lib.add_album((i2,))
         i2.move(operation=MoveOperation.COPY)
 
@@ -379,7 +377,7 @@ class ArtFileTest(_common.TestCase):
         touch(newart)
         i2 = item()
         i2.path = self.i.path
-        i2.artist = u'someArtist'
+        i2.artist = 'someArtist'
         ai = self.lib.add_album((i2,))
         i2.move(operation=MoveOperation.COPY)
         ai.set_art(newart)
@@ -393,7 +391,7 @@ class ArtFileTest(_common.TestCase):
         touch(newart)
         i2 = item()
         i2.path = self.i.path
-        i2.artist = u'someArtist'
+        i2.artist = 'someArtist'
         ai = self.lib.add_album((i2,))
         i2.move(operation=MoveOperation.COPY)
 
@@ -410,7 +408,7 @@ class ArtFileTest(_common.TestCase):
         touch(newart)
         i2 = item()
         i2.path = self.i.path
-        i2.artist = u'someArtist'
+        i2.artist = 'someArtist'
         ai = self.lib.add_album((i2,))
         i2.move(operation=MoveOperation.COPY)
 
@@ -434,7 +432,7 @@ class ArtFileTest(_common.TestCase):
         try:
             i2 = item()
             i2.path = self.i.path
-            i2.artist = u'someArtist'
+            i2.artist = 'someArtist'
             ai = self.lib.add_album((i2,))
             i2.move(operation=MoveOperation.COPY)
             ai.set_art(newart)
@@ -452,7 +450,7 @@ class ArtFileTest(_common.TestCase):
         oldartpath = self.lib.albums()[0].artpath
         self.assertExists(oldartpath)
 
-        self.ai.album = u'different_album'
+        self.ai.album = 'different_album'
         self.ai.store()
         self.ai.items()[0].move()
 
@@ -469,7 +467,7 @@ class ArtFileTest(_common.TestCase):
         oldartpath = self.lib.albums()[0].artpath
         self.assertExists(oldartpath)
 
-        self.i.album = u'different_album'
+        self.i.album = 'different_album'
         self.i.album_id = None  # detach from album
         self.i.move()
 
@@ -481,7 +479,7 @@ class ArtFileTest(_common.TestCase):
 
 class RemoveTest(_common.TestCase):
     def setUp(self):
-        super(RemoveTest, self).setUp()
+        super().setUp()
 
         # Make library and item.
         self.lib = beets.library.Library(':memory:')
@@ -542,7 +540,7 @@ class RemoveTest(_common.TestCase):
 # Tests that we can "delete" nonexistent files.
 class SoftRemoveTest(_common.TestCase):
     def setUp(self):
-        super(SoftRemoveTest, self).setUp()
+        super().setUp()
 
         self.path = os.path.join(self.temp_dir, b'testfile')
         touch(self.path)
@@ -555,12 +553,12 @@ class SoftRemoveTest(_common.TestCase):
         try:
             util.remove(self.path + b'XXX', True)
         except OSError:
-            self.fail(u'OSError when removing path')
+            self.fail('OSError when removing path')
 
 
 class SafeMoveCopyTest(_common.TestCase):
     def setUp(self):
-        super(SafeMoveCopyTest, self).setUp()
+        super().setUp()
 
         self.path = os.path.join(self.temp_dir, b'testfile')
         touch(self.path)
@@ -608,7 +606,7 @@ class SafeMoveCopyTest(_common.TestCase):
 
 class PruneTest(_common.TestCase):
     def setUp(self):
-        super(PruneTest, self).setUp()
+        super().setUp()
 
         self.base = os.path.join(self.temp_dir, b'testdir')
         os.mkdir(self.base)
@@ -628,7 +626,7 @@ class PruneTest(_common.TestCase):
 
 class WalkTest(_common.TestCase):
     def setUp(self):
-        super(WalkTest, self).setUp()
+        super().setUp()
 
         self.base = os.path.join(self.temp_dir, b'testdir')
         os.mkdir(self.base)
@@ -668,7 +666,7 @@ class WalkTest(_common.TestCase):
 
 class UniquePathTest(_common.TestCase):
     def setUp(self):
-        super(UniquePathTest, self).setUp()
+        super().setUp()
 
         self.base = os.path.join(self.temp_dir, b'testdir')
         os.mkdir(self.base)
