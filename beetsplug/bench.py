@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -16,7 +15,6 @@
 """Some simple performance benchmarks for beets.
 """
 
-from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets import ui

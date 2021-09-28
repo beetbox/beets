@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -14,7 +13,6 @@
 # included in all copies or substantial portions of the Software.
 
 """Tests for the virtual filesystem builder.."""
-from __future__ import division, absolute_import, print_function
 
 import unittest
 from test import _common
@@ -24,10 +22,10 @@ from beets import vfs
 
 class VFSTest(_common.TestCase):
     def setUp(self):
-        super(VFSTest, self).setUp()
+        super().setUp()
         self.lib = library.Library(':memory:', path_formats=[
-            (u'default', u'albums/$album/$title'),
-            (u'singleton:true', u'tracks/$artist/$title'),
+            ('default', 'albums/$album/$title'),
+            ('singleton:true', 'tracks/$artist/$title'),
         ])
         self.lib.add(_common.item())
         self.lib.add_album([_common.item()])

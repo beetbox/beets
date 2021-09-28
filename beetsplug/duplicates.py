@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Pedro Silva.
 #
@@ -15,10 +14,8 @@
 
 """List duplicate tracks or albums.
 """
-from __future__ import division, absolute_import, print_function
 
 import shlex
-import six
 
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_, Subcommand, UserError
@@ -34,7 +31,7 @@ class DuplicatesPlugin(BeetsPlugin):
     """List duplicate tracks or albums
     """
     def __init__(self):
-        super(DuplicatesPlugin, self).__init__()
+        super().__init__()
 
         self.config.add({
             'album': False,
@@ -57,54 +54,54 @@ class DuplicatesPlugin(BeetsPlugin):
                                    help=__doc__,
                                    aliases=['dup'])
         self._command.parser.add_option(
-            u'-c', u'--count', dest='count',
+            '-c', '--count', dest='count',
             action='store_true',
-            help=u'show duplicate counts',
+            help='show duplicate counts',
         )
         self._command.parser.add_option(
-            u'-C', u'--checksum', dest='checksum',
+            '-C', '--checksum', dest='checksum',
             action='store', metavar='PROG',
-            help=u'report duplicates based on arbitrary command',
+            help='report duplicates based on arbitrary command',
         )
         self._command.parser.add_option(
-            u'-d', u'--delete', dest='delete',
+            '-d', '--delete', dest='delete',
             action='store_true',
-            help=u'delete items from library and disk',
+            help='delete items from library and disk',
         )
         self._command.parser.add_option(
-            u'-F', u'--full', dest='full',
+            '-F', '--full', dest='full',
             action='store_true',
-            help=u'show all versions of duplicate tracks or albums',
+            help='show all versions of duplicate tracks or albums',
         )
         self._command.parser.add_option(
-            u'-s', u'--strict', dest='strict',
+            '-s', '--strict', dest='strict',
             action='store_true',
-            help=u'report duplicates only if all attributes are set',
+            help='report duplicates only if all attributes are set',
         )
         self._command.parser.add_option(
-            u'-k', u'--key', dest='keys',
+            '-k', '--key', dest='keys',
             action='append', metavar='KEY',
-            help=u'report duplicates based on keys (use multiple times)',
+            help='report duplicates based on keys (use multiple times)',
         )
         self._command.parser.add_option(
-            u'-M', u'--merge', dest='merge',
+            '-M', '--merge', dest='merge',
             action='store_true',
-            help=u'merge duplicate items',
+            help='merge duplicate items',
         )
         self._command.parser.add_option(
-            u'-m', u'--move', dest='move',
+            '-m', '--move', dest='move',
             action='store', metavar='DEST',
-            help=u'move items to dest',
+            help='move items to dest',
         )
         self._command.parser.add_option(
-            u'-o', u'--copy', dest='copy',
+            '-o', '--copy', dest='copy',
             action='store', metavar='DEST',
-            help=u'copy items to dest',
+            help='copy items to dest',
         )
         self._command.parser.add_option(
-            u'-t', u'--tag', dest='tag',
+            '-t', '--tag', dest='tag',
             action='store',
-            help=u'tag matched items with \'k=v\' attribute',
+            help='tag matched items with \'k=v\' attribute',
         )
         self._command.parser.add_all_common_options()
 
@@ -142,15 +139,15 @@ class DuplicatesPlugin(BeetsPlugin):
                 return
 
             if path:
-                fmt = u'$path'
+                fmt = '$path'
 
             # Default format string for count mode.
             if count and not fmt:
                 if album:
-                    fmt = u'$albumartist - $album'
+                    fmt = '$albumartist - $album'
                 else:
-                    fmt = u'$albumartist - $album - $title'
-                fmt += u': {0}'
+                    fmt = '$albumartist - $album - $title'
+                fmt += ': {0}'
 
             if checksum:
                 for i in items:
@@ -176,7 +173,7 @@ class DuplicatesPlugin(BeetsPlugin):
         return [self._command]
 
     def _process_item(self, item, copy=False, move=False, delete=False,
-                      tag=False, fmt=u''):
+                      tag=False, fmt=''):
         """Process Item `item`.
         """
         print_(format(item, fmt))
@@ -193,7 +190,7 @@ class DuplicatesPlugin(BeetsPlugin):
                 k, v = tag.split('=')
             except Exception:
                 raise UserError(
-                    u"{}: can't parse k=v tag: {}".format(PLUGIN, tag)
+                    f"{PLUGIN}: can't parse k=v tag: {tag}"
                 )
             setattr(item, k, v)
             item.store()
@@ -208,21 +205,21 @@ class DuplicatesPlugin(BeetsPlugin):
         key = args[0]
         checksum = getattr(item, key, False)
         if not checksum:
-            self._log.debug(u'key {0} on item {1} not cached:'
-                            u'computing checksum',
+            self._log.debug('key {0} on item {1} not cached:'
+                            'computing checksum',
                             key, displayable_path(item.path))
             try:
                 checksum = command_output(args).stdout
                 setattr(item, key, checksum)
                 item.store()
-                self._log.debug(u'computed checksum for {0} using {1}',
+                self._log.debug('computed checksum for {0} using {1}',
                                 item.title, key)
             except subprocess.CalledProcessError as e:
-                self._log.debug(u'failed to checksum {0}: {1}',
+                self._log.debug('failed to checksum {0}: {1}',
                                 displayable_path(item.path), e)
         else:
-            self._log.debug(u'key {0} on item {1} cached:'
-                            u'not computing checksum',
+            self._log.debug('key {0} on item {1} cached:'
+                            'not computing checksum',
                             key, displayable_path(item.path))
         return key, checksum
 
@@ -238,12 +235,12 @@ class DuplicatesPlugin(BeetsPlugin):
             values = [getattr(obj, k, None) for k in keys]
             values = [v for v in values if v not in (None, '')]
             if strict and len(values) < len(keys):
-                self._log.debug(u'some keys {0} on item {1} are null or empty:'
-                                u' skipping',
+                self._log.debug('some keys {0} on item {1} are null or empty:'
+                                ' skipping',
                                 keys, displayable_path(obj.path))
             elif (not strict and not len(values)):
-                self._log.debug(u'all keys {0} on item {1} are null or empty:'
-                                u' skipping',
+                self._log.debug('all keys {0} on item {1} are null or empty:'
+                                ' skipping',
                                 keys, displayable_path(obj.path))
             else:
                 key = tuple(values)
@@ -271,7 +268,7 @@ class DuplicatesPlugin(BeetsPlugin):
                     # between a bytes object and the empty Unicode
                     # string ''.
                     return v is not None and \
-                        (v != '' if isinstance(v, six.text_type) else True)
+                        (v != '' if isinstance(v, str) else True)
                 fields = Item.all_keys()
                 key = lambda x: sum(1 for f in fields if truthy(getattr(x, f)))
             else:
@@ -291,8 +288,8 @@ class DuplicatesPlugin(BeetsPlugin):
                 if getattr(objs[0], f, None) in (None, ''):
                     value = getattr(o, f, None)
                     if value:
-                        self._log.debug(u'key {0} on item {1} is null '
-                                        u'or empty: setting from item {2}',
+                        self._log.debug('key {0} on item {1} is null '
+                                        'or empty: setting from item {2}',
                                         f, displayable_path(objs[0].path),
                                         displayable_path(o.path))
                         setattr(objs[0], f, value)
@@ -312,8 +309,8 @@ class DuplicatesPlugin(BeetsPlugin):
                     missing = Item.from_path(i.path)
                     missing.album_id = objs[0].id
                     missing.add(i._db)
-                    self._log.debug(u'item {0} missing from album {1}:'
-                                    u' merging from {2} into {3}',
+                    self._log.debug('item {0} missing from album {1}:'
+                                    ' merging from {2} into {3}',
                                     missing,
                                     objs[0],
                                     displayable_path(o.path),

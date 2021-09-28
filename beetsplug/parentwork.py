@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2017, Dorian Soergel.
 #
@@ -17,7 +16,6 @@
 and work composition date
 """
 
-from __future__ import division, absolute_import, print_function
 
 from beets import ui
 from beets.plugins import BeetsPlugin
@@ -71,7 +69,7 @@ def find_parentwork_info(mb_workid):
 
 class ParentWorkPlugin(BeetsPlugin):
     def __init__(self):
-        super(ParentWorkPlugin, self).__init__()
+        super().__init__()
 
         self.config.add({
             'auto': False,
@@ -96,12 +94,12 @@ class ParentWorkPlugin(BeetsPlugin):
                         item.try_write()
         command = ui.Subcommand(
             'parentwork',
-            help=u'fetch parent works, composers and dates')
+            help='fetch parent works, composers and dates')
 
         command.parser.add_option(
-            u'-f', u'--force', dest='force',
+            '-f', '--force', dest='force',
             action='store_true', default=None,
-            help=u're-fetch when parent work is already present')
+            help='re-fetch when parent work is already present')
 
         command.func = func
         return [command]
@@ -135,8 +133,8 @@ class ParentWorkPlugin(BeetsPlugin):
                     if 'end' in artist.keys():
                         parentwork_info["parentwork_date"] = artist['end']
 
-            parentwork_info['parent_composer'] = u', '.join(parent_composer)
-            parentwork_info['parent_composer_sort'] = u', '.join(
+            parentwork_info['parent_composer'] = ', '.join(parent_composer)
+            parentwork_info['parent_composer_sort'] = ', '.join(
                     parent_composer_sort)
 
         if not composer_exists:

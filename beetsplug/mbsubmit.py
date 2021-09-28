@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson and Diego Moreda.
 #
@@ -22,8 +21,6 @@ implemented by MusicBrainz yet.
 [1] https://wiki.musicbrainz.org/History:How_To_Parse_Track_Listings
 """
 
-from __future__ import division, absolute_import, print_function
-
 
 from beets.autotag import Recommendation
 from beets.plugins import BeetsPlugin
@@ -33,10 +30,10 @@ from beetsplug.info import print_data
 
 class MBSubmitPlugin(BeetsPlugin):
     def __init__(self):
-        super(MBSubmitPlugin, self).__init__()
+        super().__init__()
 
         self.config.add({
-            'format': u'$track. $title - $artist ($length)',
+            'format': '$track. $title - $artist ($length)',
             'threshold': 'medium',
         })
 
@@ -53,7 +50,7 @@ class MBSubmitPlugin(BeetsPlugin):
 
     def before_choose_candidate_event(self, session, task):
         if task.rec <= self.threshold:
-            return [PromptChoice(u'p', u'Print tracks', self.print_tracks)]
+            return [PromptChoice('p', 'Print tracks', self.print_tracks)]
 
     def print_tracks(self, session, task):
         for i in sorted(task.items, key=lambda i: i.track):

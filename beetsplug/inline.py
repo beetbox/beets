@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -15,25 +14,23 @@
 
 """Allows inline path template customization code in the config file.
 """
-from __future__ import division, absolute_import, print_function
 
 import traceback
 import itertools
 
 from beets.plugins import BeetsPlugin
 from beets import config
-import six
 
-FUNC_NAME = u'__INLINE_FUNC__'
+FUNC_NAME = '__INLINE_FUNC__'
 
 
 class InlineError(Exception):
     """Raised when a runtime error occurs in an inline expression.
     """
     def __init__(self, code, exc):
-        super(InlineError, self).__init__(
-            (u"error in inline path field code:\n"
-             u"%s\n%s: %s") % (code, type(exc).__name__, six.text_type(exc))
+        super().__init__(
+            ("error in inline path field code:\n"
+             "%s\n%s: %s") % (code, type(exc).__name__, str(exc))
         )
 
 
@@ -41,7 +38,7 @@ def _compile_func(body):
     """Given Python code for a function body, return a compiled
     callable that invokes that code.
     """
-    body = u'def {0}():\n    {1}'.format(
+    body = 'def {}():\n    {}'.format(
         FUNC_NAME,
         body.replace('\n', '\n    ')
     )
@@ -53,7 +50,7 @@ def _compile_func(body):
 
 class InlinePlugin(BeetsPlugin):
     def __init__(self):
-        super(InlinePlugin, self).__init__()
+        super().__init__()
 
         config.add({
             'pathfields': {},  # Legacy name.
@@ -64,14 +61,14 @@ class InlinePlugin(BeetsPlugin):
         # Item fields.
         for key, view in itertools.chain(config['item_fields'].items(),
                                          config['pathfields'].items()):
-            self._log.debug(u'adding item field {0}', key)
+            self._log.debug('adding item field {0}', key)
             func = self.compile_inline(view.as_str(), False)
             if func is not None:
                 self.template_fields[key] = func
 
         # Album fields.
         for key, view in config['album_fields'].items():
-            self._log.debug(u'adding album field {0}', key)
+            self._log.debug('adding album field {0}', key)
             func = self.compile_inline(view.as_str(), True)
             if func is not None:
                 self.album_template_fields[key] = func
@@ -84,14 +81,14 @@ class InlinePlugin(BeetsPlugin):
         """
         # First, try compiling as a single function.
         try:
-            code = compile(u'({0})'.format(python_code), 'inline', 'eval')
+            code = compile(f'({python_code})', 'inline', 'eval')
         except SyntaxError:
             # Fall back to a function body.
             try:
                 func = _compile_func(python_code)
             except SyntaxError:
-                self._log.error(u'syntax error in inline field definition:\n'
-                                u'{0}', traceback.format_exc())
+                self._log.error('syntax error in inline field definition:\n'
+                                '{0}', traceback.format_exc())
                 return
             else:
                 is_expr = False

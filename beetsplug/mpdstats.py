@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Peter Schnebel and Johann Klähn.
 #
@@ -13,12 +12,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
 
 import mpd
-import socket
-import select
-import sys
 import time
 import os
 
@@ -46,7 +41,7 @@ def is_url(path):
     return path.split('://', 1)[0] in ['http', 'https']
 
 
-class MPDClientWrapper(object):
+class MPDClientWrapper:
     def __init__(self, log):
         self._log = log
 
@@ -60,13 +55,7 @@ class MPDClientWrapper(object):
         self._log.debug('music_directory: {0}', self.music_directory)
         self._log.debug('strip_path: {0}', self.strip_path)
 
-        if sys.version_info < (3, 0):
-            # On Python 2, use_unicode will enable the utf-8 mode for
-            # python-mpd2
-            self.client = mpd.MPDClient(use_unicode=True)
-        else:
-            # On Python 3, python-mpd2 always uses Unicode
-            self.client = mpd.MPDClient()
+        self.client = mpd.MPDClient()
 
     def connect(self):
         """Connect to the MPD.
@@ -77,11 +66,11 @@ class MPDClientWrapper(object):
         if host[0] in ['/', '~']:
             host = os.path.expanduser(host)
 
-        self._log.info(u'connecting to {0}:{1}', host, port)
+        self._log.info('connecting to {0}:{1}', host, port)
         try:
             self.client.connect(host, port)
-        except socket.error as e:
-            raise ui.UserError(u'could not connect to MPD: {0}'.format(e))
+        except OSError as e:
+            raise ui.UserError(f'could not connect to MPD: {e}')
 
         password = mpd_config['password'].as_str()
         if password:
@@ -89,7 +78,7 @@ class MPDClientWrapper(object):
                 self.client.password(password)
             except mpd.CommandError as e:
                 raise ui.UserError(
-                    u'could not authenticate to MPD: {0}'.format(e)
+                    f'could not authenticate to MPD: {e}'
                 )
 
     def disconnect(self):
@@ -104,12 +93,12 @@ class MPDClientWrapper(object):
         """
         try:
             return getattr(self.client, command)()
-        except (select.error, mpd.ConnectionError) as err:
-            self._log.error(u'{0}', err)
+        except (OSError, mpd.ConnectionError) as err:
+            self._log.error('{0}', err)
 
         if retries <= 0:
             # if we exited without breaking, we couldn't reconnect in time :(
-            raise ui.UserError(u'communication with MPD server failed')
+            raise ui.UserError('communication with MPD server failed')
 
         time.sleep(RETRY_INTERVAL)
 
@@ -154,7 +143,7 @@ class MPDClientWrapper(object):
         return self.get('idle')
 
 
-class MPDStats(object):
+class MPDStats:
     def __init__(self, lib, log):
         self.lib = lib
         self._log = log
@@ -186,7 +175,7 @@ class MPDStats(object):
         if item:
             return item
         else:
-            self._log.info(u'item not found: {0}', displayable_path(path))
+            self._log.info('item not found: {0}', displayable_path(path))
 
     def update_item(self, item, attribute, value=None, increment=None):
         """Update the beets item. Set attribute to value or increment the value
@@ -204,7 +193,7 @@ class MPDStats(object):
             item[attribute] = value
             item.store()
 
-            self._log.debug(u'updated: {0} = {1} [{2}]',
+            self._log.debug('updated: {0} = {1} [{2}]',
                             attribute,
                             item[attribute],
                             displayable_path(item.path))
@@ -251,16 +240,16 @@ class MPDStats(object):
         """Updates the play count of a song.
         """
         self.update_item(song['beets_item'], 'play_count', increment=1)
-        self._log.info(u'played {0}', displayable_path(song['path']))
+        self._log.info('played {0}', displayable_path(song['path']))
 
     def handle_skipped(self, song):
         """Updates the skip count of a song.
         """
         self.update_item(song['beets_item'], 'skip_count', increment=1)
-        self._log.info(u'skipped {0}', displayable_path(song['path']))
+        self._log.info('skipped {0}', displayable_path(song['path']))
 
     def on_stop(self, status):
-        self._log.info(u'stop')
+        self._log.info('stop')
 
         # if the current song stays the same it means that we stopped on the
         # current track and should not record a skip.
@@ -270,7 +259,7 @@ class MPDStats(object):
         self.now_playing = None
 
     def on_pause(self, status):
-        self._log.info(u'pause')
+        self._log.info('pause')
         self.now_playing = None
 
     def on_play(self, status):
@@ -300,17 +289,17 @@ class MPDStats(object):
                     self.handle_song_change(self.now_playing)
 
         if is_url(path):
-            self._log.info(u'playing stream {0}', displayable_path(path))
+            self._log.info('playing stream {0}', displayable_path(path))
             self.now_playing = None
             return
 
-        self._log.info(u'playing {0}', displayable_path(path))
+        self._log.info('playing {0}', displayable_path(path))
 
         self.now_playing = {
-            'started':    time.time(),
-            'remaining':  remaining,
-            'path':       path,
-            'id':         songid,
+            'started': time.time(),
+            'remaining': remaining,
+            'path': path,
+            'id': songid,
             'beets_item': self.get_item(path),
         }
 
@@ -330,7 +319,7 @@ class MPDStats(object):
                 if handler:
                     handler(status)
                 else:
-                    self._log.debug(u'unhandled status "{0}"', status)
+                    self._log.debug('unhandled status "{0}"', status)
 
             events = self.mpd.events()
 
@@ -338,38 +327,38 @@ class MPDStats(object):
 class MPDStatsPlugin(plugins.BeetsPlugin):
 
     item_types = {
-        'play_count':  types.INTEGER,
-        'skip_count':  types.INTEGER,
+        'play_count': types.INTEGER,
+        'skip_count': types.INTEGER,
         'last_played': library.DateType(),
-        'rating':      types.FLOAT,
+        'rating': types.FLOAT,
     }
 
     def __init__(self):
-        super(MPDStatsPlugin, self).__init__()
+        super().__init__()
         mpd_config.add({
             'music_directory': config['directory'].as_filename(),
-            'strip_path':      u'',
-            'rating':          True,
-            'rating_mix':      0.75,
-            'host':            os.environ.get('MPD_HOST', u'localhost'),
-            'port':            int(os.environ.get('MPD_PORT', 6600)),
-            'password':        u'',
+            'strip_path': '',
+            'rating': True,
+            'rating_mix': 0.75,
+            'host': os.environ.get('MPD_HOST', 'localhost'),
+            'port': int(os.environ.get('MPD_PORT', 6600)),
+            'password': '',
         })
         mpd_config['password'].redact = True
 
     def commands(self):
         cmd = ui.Subcommand(
             'mpdstats',
-            help=u'run a MPD client to gather play statistics')
+            help='run a MPD client to gather play statistics')
         cmd.parser.add_option(
-            u'--host', dest='host', type='string',
-            help=u'set the hostname of the server to connect to')
+            '--host', dest='host', type='string',
+            help='set the hostname of the server to connect to')
         cmd.parser.add_option(
-            u'--port', dest='port', type='int',
-            help=u'set the port of the MPD server to connect to')
+            '--port', dest='port', type='int',
+            help='set the port of the MPD server to connect to')
         cmd.parser.add_option(
-            u'--password', dest='password', type='string',
-            help=u'set the password of the MPD server to connect to')
+            '--password', dest='password', type='string',
+            help='set the password of the MPD server to connect to')
 
         def func(lib, opts, args):
             mpd_config.set_args(opts)

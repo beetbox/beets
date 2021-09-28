@@ -1,14 +1,10 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import division, absolute_import, print_function
-
 from beets.plugins import BeetsPlugin
 from beets import ui
 
 
 class TestPlugin(BeetsPlugin):
     def __init__(self):
-        super(TestPlugin, self).__init__()
+        super().__init__()
         self.is_test_plugin = True
 
     def commands(self):
@@ -16,7 +12,7 @@ class TestPlugin(BeetsPlugin):
         test.func = lambda *args: None
 
         # Used in CompletionTest
-        test.parser.add_option(u'-o', u'--option', dest='my_opt')
+        test.parser.add_option('-o', '--option', dest='my_opt')
 
         plugin = ui.Subcommand('plugin')
         plugin.func = lambda *args: None

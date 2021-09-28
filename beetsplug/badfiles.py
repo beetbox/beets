@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, François-Xavier Thomas.
 #
@@ -16,7 +15,6 @@
 """Use command-line tools to check for audio file corruption.
 """
 
-from __future__ import division, absolute_import, print_function
 
 from subprocess import check_output, CalledProcessError, list2cmdline, STDOUT
 
@@ -24,7 +22,6 @@ import shlex
 import os
 import errno
 import sys
-import six
 import confuse
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
@@ -52,7 +49,7 @@ class CheckerCommandException(Exception):
 
 class BadFiles(BeetsPlugin):
     def __init__(self):
-        super(BadFiles, self).__init__()
+        super().__init__()
         self.verbose = False
 
         self.register_listener('import_task_start',
@@ -61,7 +58,7 @@ class BadFiles(BeetsPlugin):
                                self.on_import_task_before_choice)
 
     def run_command(self, cmd):
-        self._log.debug(u"running command: {}",
+        self._log.debug("running command: {}",
                         displayable_path(list2cmdline(cmd)))
         try:
             output = check_output(cmd, stderr=STDOUT)
@@ -110,52 +107,52 @@ class BadFiles(BeetsPlugin):
         # First, check whether the path exists. If not, the user
         # should probably run `beet update` to cleanup your library.
         dpath = displayable_path(item.path)
-        self._log.debug(u"checking path: {}", dpath)
+        self._log.debug("checking path: {}", dpath)
         if not os.path.exists(item.path):
-            ui.print_(u"{}: file does not exist".format(
+            ui.print_("{}: file does not exist".format(
                 ui.colorize('text_error', dpath)))
 
         # Run the checker against the file if one is found
         ext = os.path.splitext(item.path)[1][1:].decode('utf8', 'ignore')
         checker = self.get_checker(ext)
         if not checker:
-            self._log.error(u"no checker specified in the config for {}",
+            self._log.error("no checker specified in the config for {}",
                             ext)
             return []
         path = item.path
-        if not isinstance(path, six.text_type):
+        if not isinstance(path, str):
             path = item.path.decode(sys.getfilesystemencoding())
         try:
             status, errors, output = checker(path)
         except CheckerCommandException as e:
             if e.errno == errno.ENOENT:
                 self._log.error(
-                    u"command not found: {} when validating file: {}",
+                    "command not found: {} when validating file: {}",
                     e.checker,
                     e.path
                 )
             else:
-                self._log.error(u"error invoking {}: {}", e.checker, e.msg)
+                self._log.error("error invoking {}: {}", e.checker, e.msg)
             return []
 
         error_lines = []
 
         if status > 0:
             error_lines.append(
-                u"{}: checker exited with status {}"
+                "{}: checker exited with status {}"
                 .format(ui.colorize('text_error', dpath), status))
             for line in output:
-                error_lines.append(u"  {}".format(line))
+                error_lines.append(f"  {line}")
 
         elif errors > 0:
             error_lines.append(
-                    u"{}: checker found {} errors or warnings"
+                    "{}: checker found {} errors or warnings"
                     .format(ui.colorize('text_warning', dpath), errors))
             for line in output:
-                error_lines.append(u"  {}".format(line))
+                error_lines.append(f"  {line}")
         elif self.verbose:
             error_lines.append(
-                u"{}: ok".format(ui.colorize('text_success', dpath)))
+                "{}: ok".format(ui.colorize('text_success', dpath)))
 
         return error_lines
 
@@ -193,7 +190,7 @@ class BadFiles(BeetsPlugin):
             elif sel == 'b':
                 raise importer.ImportAbort()
             else:
-                raise Exception('Unexpected selection: {}'.format(sel))
+                raise Exception(f'Unexpected selection: {sel}')
 
     def command(self, lib, opts, args):
         # Get items from arguments
@@ -208,11 +205,11 @@ class BadFiles(BeetsPlugin):
 
     def commands(self):
         bad_command = Subcommand('bad',
-                                 help=u'check for corrupt or missing files')
+                                 help='check for corrupt or missing files')
         bad_command.parser.add_option(
-            u'-v', u'--verbose',
+            '-v', '--verbose',
             action='store_true', default=False, dest='verbose',
-            help=u'view results for both the bad and uncorrupted files'
+            help='view results for both the bad and uncorrupted files'
         )
         bad_command.func = self.command
         return [bad_command]

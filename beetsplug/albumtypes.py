@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # This file is part of beets.
 # Copyright 2021, Edgars Supe.
 #
@@ -16,7 +14,6 @@
 
 """Adds an album template field for formatted album types."""
 
-from __future__ import division, absolute_import, print_function
 
 from beets.autotag.mb import VARIOUS_ARTISTS_ID
 from beets.library import Album
@@ -28,7 +25,7 @@ class AlbumTypesPlugin(BeetsPlugin):
 
     def __init__(self):
         """Init AlbumTypesPlugin."""
-        super(AlbumTypesPlugin, self).__init__()
+        super().__init__()
         self.album_template_fields['atypes'] = self._atypes
         self.config.add({
             'types': [
@@ -54,8 +51,8 @@ class AlbumTypesPlugin(BeetsPlugin):
             bracket_l = bracket[0]
             bracket_r = bracket[1]
         else:
-            bracket_l = u''
-            bracket_r = u''
+            bracket_l = ''
+            bracket_r = ''
 
         res = ''
         albumtypes = item.albumtypes.split('; ')

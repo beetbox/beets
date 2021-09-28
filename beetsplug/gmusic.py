@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2017, Tigran Kostandyan.
 #
@@ -15,7 +14,6 @@
 
 """Upload files to Google Play Music and list songs in its library."""
 
-from __future__ import absolute_import, division, print_function
 import os.path
 
 from beets.plugins import BeetsPlugin
@@ -29,7 +27,7 @@ import gmusicapi.clients
 
 class Gmusic(BeetsPlugin):
     def __init__(self):
-        super(Gmusic, self).__init__()
+        super().__init__()
         self.m = Musicmanager()
 
         # OAUTH_FILEPATH was moved in gmusicapi 12.0.0.
@@ -39,22 +37,22 @@ class Gmusic(BeetsPlugin):
             oauth_file = gmusicapi.clients.OAUTH_FILEPATH
 
         self.config.add({
-            u'auto': False,
-            u'uploader_id': '',
-            u'uploader_name': '',
-            u'device_id': '',
-            u'oauth_file': oauth_file,
+            'auto': False,
+            'uploader_id': '',
+            'uploader_name': '',
+            'device_id': '',
+            'oauth_file': oauth_file,
         })
         if self.config['auto']:
             self.import_stages = [self.autoupload]
 
     def commands(self):
         gupload = Subcommand('gmusic-upload',
-                             help=u'upload your tracks to Google Play Music')
+                             help='upload your tracks to Google Play Music')
         gupload.func = self.upload
 
         search = Subcommand('gmusic-songs',
-                            help=u'list of songs in Google Play Music library')
+                            help='list of songs in Google Play Music library')
         search.parser.add_option('-t', '--track', dest='track',
                                  action='store_true',
                                  help='Search by track name')
@@ -83,17 +81,17 @@ class Gmusic(BeetsPlugin):
         items = lib.items(ui.decargs(args))
         files = self.getpaths(items)
         self.authenticate()
-        ui.print_(u'Uploading your files...')
+        ui.print_('Uploading your files...')
         self.m.upload(filepaths=files)
-        ui.print_(u'Your files were successfully added to library')
+        ui.print_('Your files were successfully added to library')
 
     def autoupload(self, session, task):
         items = task.imported_items()
         files = self.getpaths(items)
         self.authenticate()
-        self._log.info(u'Uploading files to Google Play Music...', files)
+        self._log.info('Uploading files to Google Play Music...', files)
         self.m.upload(filepaths=files)
-        self._log.info(u'Your files were successfully added to your '
+        self._log.info('Your files were successfully added to your '
                        + 'Google Play Music library')
 
     def getpaths(self, items):
@@ -117,7 +115,7 @@ class Gmusic(BeetsPlugin):
             files = mobile.get_all_songs()
         except NotLoggedIn:
             ui.print_(
-                u'Authentication error. Please check your email and password.'
+                'Authentication error. Please check your email and password.'
             )
             return
         if not args:

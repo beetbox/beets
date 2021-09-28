@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
@@ -15,7 +14,6 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
 
 import os
 import sys
@@ -87,7 +85,6 @@ setup(
     },
 
     install_requires=[
-        'six>=1.9',
         'unidecode',
         'musicbrainzngs>=0.4',
         'pyyaml',
@@ -119,9 +116,7 @@ setup(
         ],
         'lint': [
             'flake8',
-            'flake8-coding',
             'flake8-docstrings',
-            'flake8-future-import',
             'pep8-naming',
         ],
 
