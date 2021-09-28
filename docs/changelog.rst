@@ -9,10 +9,13 @@ This release now requires Python 3.6 or later (it removes support for Python
 
 For packagers:
 
+* As noted above, the minimum Python version is now 3.6.
 * We fixed a flaky test, named `test_album_art` in the `test_zero.py` file,
   that some distributions had disabled. Disabling this test should no longer
   be necessary.
   :bug:`4037` :bug:`4038`
+* This version of beets no longer depends on the `six`_ library.
+  :bug:`4030`
 
 Major new features:
 
