@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -15,10 +14,8 @@
 
 """Tests the facility that lets plugins add custom field to MediaFile.
 """
-from __future__ import division, absolute_import, print_function
 
 import os
-import six
 import shutil
 import unittest
 
@@ -30,7 +27,7 @@ from beets.util import bytestring_path
 
 
 field_extension = mediafile.MediaField(
-    mediafile.MP3DescStorageStyle(u'customtag'),
+    mediafile.MP3DescStorageStyle('customtag'),
     mediafile.MP4StorageStyle('----:com.apple.iTunes:customtag'),
     mediafile.StorageStyle('customtag'),
     mediafile.ASFStorageStyle('customtag'),
@@ -52,11 +49,11 @@ class ExtendedFieldTestMixin(_common.TestCase):
 
         try:
             mf = self._mediafile_fixture('empty')
-            mf.customtag = u'F#'
+            mf.customtag = 'F#'
             mf.save()
 
             mf = mediafile.MediaFile(mf.path)
-            self.assertEqual(mf.customtag, u'F#')
+            self.assertEqual(mf.customtag, 'F#')
 
         finally:
             delattr(mediafile.MediaFile, 'customtag')
@@ -70,10 +67,10 @@ class ExtendedFieldTestMixin(_common.TestCase):
             mf = self._mediafile_fixture('empty')
             self.assertIsNone(mf.customtag)
 
-            item = Item(path=mf.path, customtag=u'Gb')
+            item = Item(path=mf.path, customtag='Gb')
             item.write()
             mf = mediafile.MediaFile(mf.path)
-            self.assertEqual(mf.customtag, u'Gb')
+            self.assertEqual(mf.customtag, 'Gb')
 
         finally:
             delattr(mediafile.MediaFile, 'customtag')
@@ -85,11 +82,11 @@ class ExtendedFieldTestMixin(_common.TestCase):
 
         try:
             mf = self._mediafile_fixture('empty')
-            mf.update({'customtag': u'F#'})
+            mf.update({'customtag': 'F#'})
             mf.save()
 
             item = Item.from_path(mf.path)
-            self.assertEqual(item['customtag'], u'F#')
+            self.assertEqual(item['customtag'], 'F#')
 
         finally:
             delattr(mediafile.MediaFile, 'customtag')
@@ -98,14 +95,14 @@ class ExtendedFieldTestMixin(_common.TestCase):
     def test_invalid_descriptor(self):
         with self.assertRaises(ValueError) as cm:
             mediafile.MediaFile.add_field('somekey', True)
-        self.assertIn(u'must be an instance of MediaField',
-                      six.text_type(cm.exception))
+        self.assertIn('must be an instance of MediaField',
+                      str(cm.exception))
 
     def test_overwrite_property(self):
         with self.assertRaises(ValueError) as cm:
             mediafile.MediaFile.add_field('artist', mediafile.MediaField())
-        self.assertIn(u'property "artist" already exists',
-                      six.text_type(cm.exception))
+        self.assertIn('property "artist" already exists',
+                      str(cm.exception))
 
 
 def suite():

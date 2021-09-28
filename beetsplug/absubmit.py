@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Pieter Mulder.
 #
@@ -16,7 +15,6 @@
 """Calculate acoustic information and submit to AcousticBrainz.
 """
 
-from __future__ import division, absolute_import, print_function
 
 import errno
 import hashlib
@@ -49,17 +47,17 @@ def call(args):
         return util.command_output(args).stdout
     except subprocess.CalledProcessError as e:
         raise ABSubmitError(
-            u'{0} exited with status {1}'.format(args[0], e.returncode)
+            '{} exited with status {}'.format(args[0], e.returncode)
         )
 
 
 class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
 
     def __init__(self):
-        super(AcousticBrainzSubmitPlugin, self).__init__()
+        super().__init__()
 
         self.config.add({
-            'extractor': u'',
+            'extractor': '',
             'force': False,
             'pretend': False
         })
@@ -70,7 +68,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             # Expicit path to extractor
             if not os.path.isfile(self.extractor):
                 raise ui.UserError(
-                    u'Extractor command does not exist: {0}.'.
+                    'Extractor command does not exist: {0}.'.
                     format(self.extractor)
                 )
         else:
@@ -80,8 +78,8 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
                 call([self.extractor])
             except OSError:
                 raise ui.UserError(
-                    u'No extractor command found: please install the extractor'
-                    u' binary from https://acousticbrainz.org/download'
+                    'No extractor command found: please install the extractor'
+                    ' binary from https://acousticbrainz.org/download'
                 )
             except ABSubmitError:
                 # Extractor found, will exit with an error if not called with
@@ -103,17 +101,17 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand(
             'absubmit',
-            help=u'calculate and submit AcousticBrainz analysis'
+            help='calculate and submit AcousticBrainz analysis'
         )
         cmd.parser.add_option(
-            u'-f', u'--force', dest='force_refetch',
+            '-f', '--force', dest='force_refetch',
             action='store_true', default=False,
-            help=u're-download data when already present'
+            help='re-download data when already present'
         )
         cmd.parser.add_option(
-            u'-p', u'--pretend', dest='pretend_fetch',
+            '-p', '--pretend', dest='pretend_fetch',
             action='store_true', default=False,
-            help=u'pretend to perform action, but show \
+            help='pretend to perform action, but show \
 only files which would be processed'
         )
         cmd.func = self.command
@@ -140,12 +138,12 @@ only files which would be processed'
 
         # If file has no MBID, skip it.
         if not mbid:
-            self._log.info(u'Not analysing {}, missing '
-                           u'musicbrainz track id.', item)
+            self._log.info('Not analysing {}, missing '
+                           'musicbrainz track id.', item)
             return None
 
         if self.opts.pretend_fetch or self.config['pretend']:
-            self._log.info(u'pretend action - extract item: {}', item)
+            self._log.info('pretend action - extract item: {}', item)
             return None
 
         # Temporary file to save extractor output to, extractor only works
@@ -160,11 +158,11 @@ only files which would be processed'
                 call([self.extractor, util.syspath(item.path), filename])
             except ABSubmitError as e:
                 self._log.warning(
-                    u'Failed to analyse {item} for AcousticBrainz: {error}',
+                    'Failed to analyse {item} for AcousticBrainz: {error}',
                     item=item, error=e
                 )
                 return None
-            with open(filename, 'r') as tmp_file:
+            with open(filename) as tmp_file:
                 analysis = json.load(tmp_file)
             # Add the hash to the output.
             analysis['metadata']['version']['essentia_build_sha'] = \
@@ -188,11 +186,11 @@ only files which would be processed'
             try:
                 message = response.json()['message']
             except (ValueError, KeyError) as e:
-                message = u'unable to get error message: {}'.format(e)
+                message = f'unable to get error message: {e}'
             self._log.error(
-                u'Failed to submit AcousticBrainz analysis of {item}: '
-                u'{message}).', item=item, message=message
+                'Failed to submit AcousticBrainz analysis of {item}: '
+                '{message}).', item=item, message=message
             )
         else:
-            self._log.debug(u'Successfully submitted AcousticBrainz analysis '
-                            u'for {}.', item)
+            self._log.debug('Successfully submitted AcousticBrainz analysis '
+                            'for {}.', item)

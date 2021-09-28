@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Verrus, <github.com/Verrus/beets-plugin-featInTitle>
 #
@@ -15,7 +14,6 @@
 
 """Moves "featured" artists to the title from the artist field.
 """
-from __future__ import division, absolute_import, print_function
 
 import re
 
@@ -75,22 +73,22 @@ def find_feat_part(artist, albumartist):
 
 class FtInTitlePlugin(plugins.BeetsPlugin):
     def __init__(self):
-        super(FtInTitlePlugin, self).__init__()
+        super().__init__()
 
         self.config.add({
             'auto': True,
             'drop': False,
-            'format': u'feat. {0}',
+            'format': 'feat. {0}',
         })
 
         self._command = ui.Subcommand(
             'ftintitle',
-            help=u'move featured artists to the title field')
+            help='move featured artists to the title field')
 
         self._command.parser.add_option(
-            u'-d', u'--drop', dest='drop',
+            '-d', '--drop', dest='drop',
             action='store_true', default=None,
-            help=u'drop featuring from artists and ignore title update')
+            help='drop featuring from artists and ignore title update')
 
         if self.config['auto']:
             self.import_stages = [self.imported]
@@ -127,7 +125,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         remove it from the artist field.
         """
         # In all cases, update the artist fields.
-        self._log.info(u'artist: {0} -> {1}', item.artist, item.albumartist)
+        self._log.info('artist: {0} -> {1}', item.artist, item.albumartist)
         item.artist = item.albumartist
         if item.artist_sort:
             # Just strip the featured artist from the sort name.
@@ -138,8 +136,8 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         if not drop_feat and not contains_feat(item.title):
             feat_format = self.config['format'].as_str()
             new_format = feat_format.format(feat_part)
-            new_title = u"{0} {1}".format(item.title, new_format)
-            self._log.info(u'title: {0} -> {1}', item.title, new_title)
+            new_title = f"{item.title} {new_format}"
+            self._log.info('title: {0} -> {1}', item.title, new_title)
             item.title = new_title
 
     def ft_in_title(self, item, drop_feat):
@@ -165,4 +163,4 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             if feat_part:
                 self.update_metadata(item, feat_part, drop_feat)
             else:
-                self._log.info(u'no featuring artists found')
+                self._log.info('no featuring artists found')

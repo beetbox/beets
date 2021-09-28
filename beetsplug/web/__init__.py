@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -14,7 +13,6 @@
 # included in all copies or substantial portions of the Software.
 
 """A Web interface to beets."""
-from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets import ui
@@ -155,7 +153,7 @@ def resource(name, patchable=False):
             else:
                 return flask.abort(405)
 
-        responder.__name__ = 'get_{0}'.format(name)
+        responder.__name__ = f'get_{name}'
 
         return responder
     return make_responder
@@ -203,7 +201,7 @@ def resource_query(name, patchable=False):
             else:
                 return flask.abort(405)
 
-        responder.__name__ = 'query_{0}'.format(name)
+        responder.__name__ = f'query_{name}'
 
         return responder
 
@@ -220,7 +218,7 @@ def resource_list(name):
                 json_generator(list_all(), root=name, expand=is_expand()),
                 mimetype='application/json'
             )
-        responder.__name__ = 'all_{0}'.format(name)
+        responder.__name__ = f'all_{name}'
         return responder
     return make_responder
 
@@ -230,7 +228,7 @@ def _get_unique_table_field_values(model, field, sort_field):
     if field not in model.all_keys() or sort_field not in model.all_keys():
         raise KeyError
     with g.lib.transaction() as tx:
-        rows = tx.query('SELECT DISTINCT "{0}" FROM "{1}" ORDER BY "{2}"'
+        rows = tx.query('SELECT DISTINCT "{}" FROM "{}" ORDER BY "{}"'
                         .format(field, model._table, sort_field))
     return [row[0] for row in rows]
 
@@ -434,9 +432,9 @@ def home():
 
 class WebPlugin(BeetsPlugin):
     def __init__(self):
-        super(WebPlugin, self).__init__()
+        super().__init__()
         self.config.add({
-            'host': u'127.0.0.1',
+            'host': '127.0.0.1',
             'port': 8337,
             'cors': '',
             'cors_supports_credentials': False,
@@ -446,9 +444,9 @@ class WebPlugin(BeetsPlugin):
         })
 
     def commands(self):
-        cmd = ui.Subcommand('web', help=u'start a Web interface')
-        cmd.parser.add_option(u'-d', u'--debug', action='store_true',
-                              default=False, help=u'debug mode')
+        cmd = ui.Subcommand('web', help='start a Web interface')
+        cmd.parser.add_option('-d', '--debug', action='store_true',
+                              default=False, help='debug mode')
 
         def func(lib, opts, args):
             args = ui.decargs(args)
@@ -466,7 +464,7 @@ class WebPlugin(BeetsPlugin):
 
             # Enable CORS if required.
             if self.config['cors']:
-                self._log.info(u'Enabling CORS with origin: {0}',
+                self._log.info('Enabling CORS with origin: {0}',
                                self.config['cors'])
                 from flask_cors import CORS
                 app.config['CORS_ALLOW_HEADERS'] = "Content-Type"
@@ -492,7 +490,7 @@ class WebPlugin(BeetsPlugin):
         return [cmd]
 
 
-class ReverseProxied(object):
+class ReverseProxied:
     '''Wrap the application in this middleware and configure the
     front-end server to add these headers, to let you quietly bind
     this to a URL other than / and to an HTTP scheme that is

@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2021, Graham R. Cobb.
 
 """Tests for the 'bareasc' plugin."""
 
-from __future__ import division, absolute_import, print_function
 
 import unittest
 
@@ -20,55 +18,55 @@ class BareascPluginTest(unittest.TestCase, TestHelper):
         """Set up test environment for bare ASCII query matching."""
         self.setup_beets()
         self.log = logging.getLogger('beets.web')
-        self.config['bareasc']['prefix'] = u'#'
+        self.config['bareasc']['prefix'] = '#'
         self.load_plugins('bareasc')
 
         # Add library elements. Note that self.lib.add overrides any "id=<n>"
         # and assigns the next free id number.
-        self.add_item(title=u'with accents',
+        self.add_item(title='with accents',
                       album_id=2,
-                      artist=u'Antonín Dvořák')
-        self.add_item(title=u'without accents',
-                      artist=u'Antonín Dvorak')
-        self.add_item(title=u'with umlaut',
+                      artist='Antonín Dvořák')
+        self.add_item(title='without accents',
+                      artist='Antonín Dvorak')
+        self.add_item(title='with umlaut',
                       album_id=2,
-                      artist=u'Brüggen')
-        self.add_item(title=u'without umlaut or e',
-                      artist=u'Bruggen')
-        self.add_item(title=u'without umlaut with e',
-                      artist=u'Brueggen')
+                      artist='Brüggen')
+        self.add_item(title='without umlaut or e',
+                      artist='Bruggen')
+        self.add_item(title='without umlaut with e',
+                      artist='Brueggen')
 
     def test_search_normal_noaccent(self):
         """Normal search, no accents, not using bare-ASCII match.
 
         Finds just the unaccented entry.
         """
-        items = self.lib.items(u'dvorak')
+        items = self.lib.items('dvorak')
 
         self.assertEqual(len(items), 1)
-        self.assertEqual([items[0].title], [u'without accents'])
+        self.assertEqual([items[0].title], ['without accents'])
 
     def test_search_normal_accent(self):
         """Normal search, with accents, not using bare-ASCII match.
 
         Finds just the accented entry.
         """
-        items = self.lib.items(u'dvořák')
+        items = self.lib.items('dvořák')
 
         self.assertEqual(len(items), 1)
-        self.assertEqual([items[0].title], [u'with accents'])
+        self.assertEqual([items[0].title], ['with accents'])
 
     def test_search_bareasc_noaccent(self):
         """Bare-ASCII search, no accents.
 
         Finds both entries.
         """
-        items = self.lib.items(u'#dvorak')
+        items = self.lib.items('#dvorak')
 
         self.assertEqual(len(items), 2)
         self.assertEqual(
             {items[0].title, items[1].title},
-            {u'without accents', u'with accents'}
+            {'without accents', 'with accents'}
         )
 
     def test_search_bareasc_accent(self):
@@ -76,12 +74,12 @@ class BareascPluginTest(unittest.TestCase, TestHelper):
 
         Finds both entries.
         """
-        items = self.lib.items(u'#dvořák')
+        items = self.lib.items('#dvořák')
 
         self.assertEqual(len(items), 2)
         self.assertEqual(
             {items[0].title, items[1].title},
-            {u'without accents', u'with accents'}
+            {'without accents', 'with accents'}
         )
 
     def test_search_bareasc_wrong_accent(self):
@@ -89,12 +87,12 @@ class BareascPluginTest(unittest.TestCase, TestHelper):
 
         Finds both entries.
         """
-        items = self.lib.items(u'#dvořäk')
+        items = self.lib.items('#dvořäk')
 
         self.assertEqual(len(items), 2)
         self.assertEqual(
             {items[0].title, items[1].title},
-            {u'without accents', u'with accents'}
+            {'without accents', 'with accents'}
         )
 
     def test_search_bareasc_noumlaut(self):
@@ -105,12 +103,12 @@ class BareascPluginTest(unittest.TestCase, TestHelper):
 
         This is expected behaviour for this simple plugin.
         """
-        items = self.lib.items(u'#Bruggen')
+        items = self.lib.items('#Bruggen')
 
         self.assertEqual(len(items), 2)
         self.assertEqual(
             {items[0].title, items[1].title},
-            {u'without umlaut or e', u'with umlaut'}
+            {'without umlaut or e', 'with umlaut'}
         )
 
     def test_search_bareasc_umlaut(self):
@@ -121,12 +119,12 @@ class BareascPluginTest(unittest.TestCase, TestHelper):
 
         This is expected behaviour for this simple plugin.
         """
-        items = self.lib.items(u'#Brüggen')
+        items = self.lib.items('#Brüggen')
 
         self.assertEqual(len(items), 2)
         self.assertEqual(
             {items[0].title, items[1].title},
-            {u'without umlaut or e', u'with umlaut'}
+            {'without umlaut or e', 'with umlaut'}
         )
 
     def test_bareasc_list_output(self):

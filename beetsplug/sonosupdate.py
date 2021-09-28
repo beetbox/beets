@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2018, Tobias Sauerwein.
 #
@@ -16,7 +15,6 @@
 """Updates a Sonos library whenever the beets library is changed.
 This is based on the Kodi Update plugin.
 """
-from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 import soco
@@ -24,7 +22,7 @@ import soco
 
 class SonosUpdate(BeetsPlugin):
     def __init__(self):
-        super(SonosUpdate, self).__init__()
+        super().__init__()
         self.register_listener('database_change', self.listen_for_db_change)
 
     def listen_for_db_change(self, lib, model):
@@ -35,14 +33,14 @@ class SonosUpdate(BeetsPlugin):
         """When the client exists try to send refresh request to a Sonos
         controler.
         """
-        self._log.info(u'Requesting a Sonos library update...')
+        self._log.info('Requesting a Sonos library update...')
 
         device = soco.discovery.any_soco()
 
         if device:
             device.music_library.start_library_update()
         else:
-            self._log.warning(u'Could not find a Sonos device.')
+            self._log.warning('Could not find a Sonos device.')
             return
 
-        self._log.info(u'Sonos update triggered')
+        self._log.info('Sonos update triggered')

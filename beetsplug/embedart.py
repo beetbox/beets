@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -14,7 +13,6 @@
 # included in all copies or substantial portions of the Software.
 
 """Allows beets to embed album art into file metadata."""
-from __future__ import division, absolute_import, print_function
 
 import os.path
 
@@ -34,11 +32,11 @@ def _confirm(objs, album):
     `album` is a Boolean indicating whether these are albums (as opposed
     to items).
     """
-    noun = u'album' if album else u'file'
-    prompt = u'Modify artwork for {} {}{} (Y/n)?'.format(
+    noun = 'album' if album else 'file'
+    prompt = 'Modify artwork for {} {}{} (Y/n)?'.format(
         len(objs),
         noun,
-        u's' if len(objs) > 1 else u''
+        's' if len(objs) > 1 else ''
     )
 
     # Show all the items or albums.
@@ -53,7 +51,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
     """Allows albumart to be embedded into the actual files.
     """
     def __init__(self):
-        super(EmbedCoverArtPlugin, self).__init__()
+        super().__init__()
         self.config.add({
             'maxwidth': 0,
             'auto': True,
@@ -65,26 +63,26 @@ class EmbedCoverArtPlugin(BeetsPlugin):
 
         if self.config['maxwidth'].get(int) and not ArtResizer.shared.local:
             self.config['maxwidth'] = 0
-            self._log.warning(u"ImageMagick or PIL not found; "
-                              u"'maxwidth' option ignored")
+            self._log.warning("ImageMagick or PIL not found; "
+                              "'maxwidth' option ignored")
         if self.config['compare_threshold'].get(int) and not \
                 ArtResizer.shared.can_compare:
             self.config['compare_threshold'] = 0
-            self._log.warning(u"ImageMagick 6.8.7 or higher not installed; "
-                              u"'compare_threshold' option ignored")
+            self._log.warning("ImageMagick 6.8.7 or higher not installed; "
+                              "'compare_threshold' option ignored")
 
         self.register_listener('art_set', self.process_album)
 
     def commands(self):
         # Embed command.
         embed_cmd = ui.Subcommand(
-            'embedart', help=u'embed image files into file metadata'
+            'embedart', help='embed image files into file metadata'
         )
         embed_cmd.parser.add_option(
-            u'-f', u'--file', metavar='PATH', help=u'the image file to embed'
+            '-f', '--file', metavar='PATH', help='the image file to embed'
         )
         embed_cmd.parser.add_option(
-            u"-y", u"--yes", action="store_true", help=u"skip confirmation"
+            "-y", "--yes", action="store_true", help="skip confirmation"
         )
         maxwidth = self.config['maxwidth'].get(int)
         quality = self.config['quality'].get(int)
@@ -95,7 +93,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
             if opts.file:
                 imagepath = normpath(opts.file)
                 if not os.path.isfile(syspath(imagepath)):
-                    raise ui.UserError(u'image file {0} not found'.format(
+                    raise ui.UserError('image file {} not found'.format(
                         displayable_path(imagepath)
                     ))
 
@@ -127,15 +125,15 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         # Extract command.
         extract_cmd = ui.Subcommand(
             'extractart',
-            help=u'extract an image from file metadata',
+            help='extract an image from file metadata',
         )
         extract_cmd.parser.add_option(
-            u'-o', dest='outpath',
-            help=u'image output file',
+            '-o', dest='outpath',
+            help='image output file',
         )
         extract_cmd.parser.add_option(
-            u'-n', dest='filename',
-            help=u'image filename to create for all matched albums',
+            '-n', dest='filename',
+            help='image filename to create for all matched albums',
         )
         extract_cmd.parser.add_option(
             '-a', dest='associate', action='store_true',
@@ -151,7 +149,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                                            config['art_filename'].get())
                 if os.path.dirname(filename) != b'':
                     self._log.error(
-                        u"Only specify a name rather than a path for -n")
+                        "Only specify a name rather than a path for -n")
                     return
                 for album in lib.albums(decargs(args)):
                     artpath = normpath(os.path.join(album.path, filename))
@@ -165,10 +163,10 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         # Clear command.
         clear_cmd = ui.Subcommand(
             'clearart',
-            help=u'remove images from file metadata',
+            help='remove images from file metadata',
         )
         clear_cmd.parser.add_option(
-            u"-y", u"--yes", action="store_true", help=u"skip confirmation"
+            "-y", "--yes", action="store_true", help="skip confirmation"
         )
 
         def clear_func(lib, opts, args):
@@ -197,7 +195,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         """
         if self.config['remove_art_file'] and album.artpath:
             if os.path.isfile(album.artpath):
-                self._log.debug(u'Removing album art file for {0}', album)
+                self._log.debug('Removing album art file for {0}', album)
                 os.remove(album.artpath)
                 album.artpath = None
                 album.store()

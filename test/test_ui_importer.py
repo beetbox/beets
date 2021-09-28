@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -19,7 +18,6 @@ test_importer module. But here the test importer inherits from
 ``TerminalImportSession``. So we test this class, too.
 """
 
-from __future__ import division, absolute_import, print_function
 import unittest
 
 from test._common import DummyIO
@@ -27,14 +25,13 @@ from test import test_importer
 from beets.ui.commands import TerminalImportSession
 from beets import importer
 from beets import config
-import six
 
 
 class TerminalImportSessionFixture(TerminalImportSession):
 
     def __init__(self, *args, **kwargs):
         self.io = kwargs.pop('io')
-        super(TerminalImportSessionFixture, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._choices = []
 
     default_choice = importer.action.APPLY
@@ -47,11 +44,11 @@ class TerminalImportSessionFixture(TerminalImportSession):
 
     def choose_match(self, task):
         self._add_choice_input()
-        return super(TerminalImportSessionFixture, self).choose_match(task)
+        return super().choose_match(task)
 
     def choose_item(self, task):
         self._add_choice_input()
-        return super(TerminalImportSessionFixture, self).choose_item(task)
+        return super().choose_item(task)
 
     def _add_choice_input(self):
         try:
@@ -60,24 +57,24 @@ class TerminalImportSessionFixture(TerminalImportSession):
             choice = self.default_choice
 
         if choice == importer.action.APPLY:
-            self.io.addinput(u'A')
+            self.io.addinput('A')
         elif choice == importer.action.ASIS:
-            self.io.addinput(u'U')
+            self.io.addinput('U')
         elif choice == importer.action.ALBUMS:
-            self.io.addinput(u'G')
+            self.io.addinput('G')
         elif choice == importer.action.TRACKS:
-            self.io.addinput(u'T')
+            self.io.addinput('T')
         elif choice == importer.action.SKIP:
-            self.io.addinput(u'S')
+            self.io.addinput('S')
         elif isinstance(choice, int):
-            self.io.addinput(u'M')
-            self.io.addinput(six.text_type(choice))
+            self.io.addinput('M')
+            self.io.addinput(str(choice))
             self._add_choice_input()
         else:
-            raise Exception(u'Unknown choice %s' % choice)
+            raise Exception('Unknown choice %s' % choice)
 
 
-class TerminalImportSessionSetup(object):
+class TerminalImportSessionSetup:
     """Overwrites test_importer.ImportHelper to provide a terminal importer
     """
 
