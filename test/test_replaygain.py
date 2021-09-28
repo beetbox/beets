@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Thomas Scholtes
 #
@@ -14,9 +13,6 @@
 # included in all copies or substantial portions of the Software.
 
 
-from __future__ import division, absolute_import, print_function
-
-import six
 import unittest
 from mediafile import MediaFile
 
@@ -70,7 +66,7 @@ class ReplayGainCliTestBase(TestHelper):
                 # teardown operations may fail. In particular # {Item,Album}
                 # may not have the _original_types attribute in unload_plugins
                 pass
-            six.reraise(exc_info[1], None, exc_info[2])
+            raise None.with_traceback(exc_info[2])
 
         album = self.add_album_fixture(2)
         for item in album.items():
@@ -104,7 +100,7 @@ class ReplayGainCliTestBase(TestHelper):
         # that it could only happen if the decoder plugins are missing.
         if all(i.rg_track_peak is None and i.rg_track_gain is None
                for i in self.lib.items()):
-            self.skipTest(u'decoder plugins could not be loaded.')
+            self.skipTest('decoder plugins could not be loaded.')
 
         for item in self.lib.items():
             self.assertIsNotNone(item.rg_track_peak)
@@ -116,11 +112,11 @@ class ReplayGainCliTestBase(TestHelper):
                 mediafile.rg_track_gain, item.rg_track_gain, places=2)
 
     def test_cli_skips_calculated_tracks(self):
-        self.run_command(u'replaygain')
+        self.run_command('replaygain')
         item = self.lib.items()[0]
         peak = item.rg_track_peak
         item.rg_track_gain = 0.0
-        self.run_command(u'replaygain')
+        self.run_command('replaygain')
         self.assertEqual(item.rg_track_gain, 0.0)
         self.assertEqual(item.rg_track_peak, peak)
 
@@ -130,7 +126,7 @@ class ReplayGainCliTestBase(TestHelper):
             self.assertIsNone(mediafile.rg_album_peak)
             self.assertIsNone(mediafile.rg_album_gain)
 
-        self.run_command(u'replaygain', u'-a')
+        self.run_command('replaygain', '-a')
 
         peaks = []
         gains = []
@@ -155,7 +151,7 @@ class ReplayGainCliTestBase(TestHelper):
         for item in album.items():
             self._reset_replaygain(item)
 
-        self.run_command(u'replaygain', u'-a')
+        self.run_command('replaygain', '-a')
 
         for item in album.items():
             mediafile = MediaFile(item.path)
@@ -172,7 +168,7 @@ class ReplayGainCliTestBase(TestHelper):
         def analyse(target_level):
             self.config['replaygain']['targetlevel'] = target_level
             self._reset_replaygain(item)
-            self.run_command(u'replaygain', '-f')
+            self.run_command('replaygain', '-f')
             mediafile = MediaFile(item.path)
             return mediafile.rg_track_gain
 
@@ -186,9 +182,9 @@ class ReplayGainCliTestBase(TestHelper):
         self.assertNotEqual(gain_relative_to_84, gain_relative_to_89)
 
 
-@unittest.skipIf(not GST_AVAILABLE, u'gstreamer cannot be found')
+@unittest.skipIf(not GST_AVAILABLE, 'gstreamer cannot be found')
 class ReplayGainGstCliTest(ReplayGainCliTestBase, unittest.TestCase):
-    backend = u'gstreamer'
+    backend = 'gstreamer'
 
     def setUp(self):
         try:
@@ -200,21 +196,22 @@ class ReplayGainGstCliTest(ReplayGainCliTestBase, unittest.TestCase):
             # Skip the test if plugins could not be loaded.
             self.skipTest(str(e))
 
-        super(ReplayGainGstCliTest, self).setUp()
+        super().setUp()
 
 
-@unittest.skipIf(not GAIN_PROG_AVAILABLE, u'no *gain command found')
+@unittest.skipIf(not GAIN_PROG_AVAILABLE, 'no *gain command found')
 class ReplayGainCmdCliTest(ReplayGainCliTestBase, unittest.TestCase):
-    backend = u'command'
+    backend = 'command'
 
 
-@unittest.skipIf(not FFMPEG_AVAILABLE, u'ffmpeg cannot be found')
+@unittest.skipIf(not FFMPEG_AVAILABLE, 'ffmpeg cannot be found')
 class ReplayGainFfmpegTest(ReplayGainCliTestBase, unittest.TestCase):
-    backend = u'ffmpeg'
+    backend = 'ffmpeg'
 
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Updates an Plex library whenever the beets library is changed.
 
 Plex Home users enter the Plex Token to enable updating.
@@ -9,11 +7,10 @@ Put something like the following in your config.yaml to configure:
         port: 32400
         token: token
 """
-from __future__ import division, absolute_import, print_function
 
 import requests
 from xml.etree import ElementTree
-from six.moves.urllib.parse import urljoin, urlencode
+from urllib.parse import urljoin, urlencode
 from beets import config
 from beets.plugins import BeetsPlugin
 
@@ -23,7 +20,7 @@ def get_music_section(host, port, token, library_name, secure,
     """Getting the section key for the music library in Plex.
     """
     api_endpoint = append_token('library/sections', token)
-    url = urljoin('{0}://{1}:{2}'.format(get_protocol(secure), host,
+    url = urljoin('{}://{}:{}'.format(get_protocol(secure), host,
                   port), api_endpoint)
 
     # Sends request.
@@ -48,9 +45,9 @@ def update_plex(host, port, token, library_name, secure,
     # Getting section key and build url.
     section_key = get_music_section(host, port, token, library_name,
                                     secure, ignore_cert_errors)
-    api_endpoint = 'library/sections/{0}/refresh'.format(section_key)
+    api_endpoint = f'library/sections/{section_key}/refresh'
     api_endpoint = append_token(api_endpoint, token)
-    url = urljoin('{0}://{1}:{2}'.format(get_protocol(secure), host,
+    url = urljoin('{}://{}:{}'.format(get_protocol(secure), host,
                   port), api_endpoint)
 
     # Sends request and returns requests object.
@@ -75,16 +72,16 @@ def get_protocol(secure):
 
 class PlexUpdate(BeetsPlugin):
     def __init__(self):
-        super(PlexUpdate, self).__init__()
+        super().__init__()
 
         # Adding defaults.
         config['plex'].add({
-            u'host': u'localhost',
-            u'port': 32400,
-            u'token': u'',
-            u'library_name': u'Music',
-            u'secure': False,
-            u'ignore_cert_errors': False})
+            'host': 'localhost',
+            'port': 32400,
+            'token': '',
+            'library_name': 'Music',
+            'secure': False,
+            'ignore_cert_errors': False})
 
         config['plex']['token'].redact = True
         self.register_listener('database_change', self.listen_for_db_change)
@@ -96,7 +93,7 @@ class PlexUpdate(BeetsPlugin):
     def update(self, lib):
         """When the client exists try to send refresh request to Plex server.
         """
-        self._log.info(u'Updating Plex library...')
+        self._log.info('Updating Plex library...')
 
         # Try to send update request.
         try:
@@ -107,7 +104,7 @@ class PlexUpdate(BeetsPlugin):
                 config['plex']['library_name'].get(),
                 config['plex']['secure'].get(bool),
                 config['plex']['ignore_cert_errors'].get(bool))
-            self._log.info(u'... started.')
+            self._log.info('... started.')
 
         except requests.exceptions.RequestException:
-            self._log.warning(u'Update failed.')
+            self._log.warning('Update failed.')

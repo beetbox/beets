@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
-
 """Tests for the 'subsonic' plugin."""
 
-from __future__ import division, absolute_import, print_function
 
 import responses
 import unittest
@@ -11,11 +8,12 @@ from test import _common
 from beets import config
 from beetsplug import subsonicupdate
 from test.helper import TestHelper
-from six.moves.urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse
 
 
-class ArgumentsMock(object):
+class ArgumentsMock:
     """Argument mocks for tests."""
+
     def __init__(self, mode, show_failures):
         """Constructs ArgumentsMock."""
         self.mode = mode

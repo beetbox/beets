@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -32,12 +31,10 @@ To do so, pass an iterable of coroutines to the Pipeline constructor
 in place of any single coroutine.
 """
 
-from __future__ import division, absolute_import, print_function
 
-from six.moves import queue
+import queue
 from threading import Thread, Lock
 import sys
-import six
 
 BUBBLE = '__PIPELINE_BUBBLE__'
 POISON = '__PIPELINE_POISON__'
@@ -91,6 +88,7 @@ class CountedQueue(queue.Queue):
     still feeding into it. The queue is poisoned when all threads are
     finished with the queue.
     """
+
     def __init__(self, maxsize=0):
         queue.Queue.__init__(self, maxsize)
         self.nthreads = 0
@@ -135,10 +133,11 @@ class CountedQueue(queue.Queue):
                     _invalidate_queue(self, POISON, False)
 
 
-class MultiMessage(object):
+class MultiMessage:
     """A message yielded by a pipeline stage encapsulating multiple
     values to be sent to the next stage.
     """
+
     def __init__(self, messages):
         self.messages = messages
 
@@ -210,8 +209,9 @@ def _allmsgs(obj):
 
 class PipelineThread(Thread):
     """Abstract base class for pipeline-stage threads."""
+
     def __init__(self, all_threads):
-        super(PipelineThread, self).__init__()
+        super().__init__()
         self.abort_lock = Lock()
         self.abort_flag = False
         self.all_threads = all_threads
@@ -241,8 +241,9 @@ class FirstPipelineThread(PipelineThread):
     """The thread running the first stage in a parallel pipeline setup.
     The coroutine should just be a generator.
     """
+
     def __init__(self, coro, out_queue, all_threads):
-        super(FirstPipelineThread, self).__init__(all_threads)
+        super().__init__(all_threads)
         self.coro = coro
         self.out_queue = out_queue
         self.out_queue.acquire()
@@ -279,8 +280,9 @@ class MiddlePipelineThread(PipelineThread):
     """A thread running any stage in the pipeline except the first or
     last.
     """
+
     def __init__(self, coro, in_queue, out_queue, all_threads):
-        super(MiddlePipelineThread, self).__init__(all_threads)
+        super().__init__(all_threads)
         self.coro = coro
         self.in_queue = in_queue
         self.out_queue = out_queue
@@ -327,8 +329,9 @@ class LastPipelineThread(PipelineThread):
     """A thread running the last stage in a pipeline. The coroutine
     should yield nothing.
     """
+
     def __init__(self, coro, in_queue, all_threads):
-        super(LastPipelineThread, self).__init__(all_threads)
+        super().__init__(all_threads)
         self.coro = coro
         self.in_queue = in_queue
 
@@ -359,17 +362,18 @@ class LastPipelineThread(PipelineThread):
             return
 
 
-class Pipeline(object):
+class Pipeline:
     """Represents a staged pattern of work. Each stage in the pipeline
     is a coroutine that receives messages from the previous stage and
     yields messages to be sent to the next stage.
     """
+
     def __init__(self, stages):
         """Makes a new pipeline from a list of coroutines. There must
         be at least two stages.
         """
         if len(stages) < 2:
-            raise ValueError(u'pipeline must have at least two stages')
+            raise ValueError('pipeline must have at least two stages')
         self.stages = []
         for stage in stages:
             if isinstance(stage, (list, tuple)):
@@ -439,7 +443,7 @@ class Pipeline(object):
             exc_info = thread.exc_info
             if exc_info:
                 # Make the exception appear as it was raised originally.
-                six.reraise(exc_info[0], exc_info[1], exc_info[2])
+                raise exc_info[1].with_traceback(exc_info[2])
 
     def pull(self):
         """Yield elements from the end of the pipeline. Runs the stages
@@ -466,6 +470,7 @@ class Pipeline(object):
             for msg in msgs:
                 yield msg
 
+
 # Smoke test.
 if __name__ == '__main__':
     import time
@@ -474,14 +479,14 @@ if __name__ == '__main__':
     # in parallel.
     def produce():
         for i in range(5):
-            print(u'generating %i' % i)
+            print('generating %i' % i)
             time.sleep(1)
             yield i
 
     def work():
         num = yield
         while True:
-            print(u'processing %i' % num)
+            print('processing %i' % num)
             time.sleep(2)
             num = yield num * 2
 
@@ -489,7 +494,7 @@ if __name__ == '__main__':
         while True:
             num = yield
             time.sleep(1)
-            print(u'received %i' % num)
+            print('received %i' % num)
 
     ts_start = time.time()
     Pipeline([produce(), work(), consume()]).run_sequential()
@@ -498,22 +503,22 @@ if __name__ == '__main__':
     ts_par = time.time()
     Pipeline([produce(), (work(), work()), consume()]).run_parallel()
     ts_end = time.time()
-    print(u'Sequential time:', ts_seq - ts_start)
-    print(u'Parallel time:', ts_par - ts_seq)
-    print(u'Multiply-parallel time:', ts_end - ts_par)
+    print('Sequential time:', ts_seq - ts_start)
+    print('Parallel time:', ts_par - ts_seq)
+    print('Multiply-parallel time:', ts_end - ts_par)
     print()
 
     # Test a pipeline that raises an exception.
     def exc_produce():
         for i in range(10):
-            print(u'generating %i' % i)
+            print('generating %i' % i)
             time.sleep(1)
             yield i
 
     def exc_work():
         num = yield
         while True:
-            print(u'processing %i' % num)
+            print('processing %i' % num)
             time.sleep(3)
             if num == 3:
                 raise Exception()
@@ -522,6 +527,6 @@ if __name__ == '__main__':
     def exc_consume():
         while True:
             num = yield
-            print(u'received %i' % num)
+            print('received %i' % num)
 
     Pipeline([exc_produce(), exc_work(), exc_consume()]).run_parallel(1)

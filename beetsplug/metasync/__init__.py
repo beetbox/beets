@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Heinz Wiesinger.
 #
@@ -16,7 +15,6 @@
 """Synchronize information from music player libraries
 """
 
-from __future__ import division, absolute_import, print_function
 
 from abc import abstractmethod, ABCMeta
 from importlib import import_module
@@ -24,7 +22,6 @@ from importlib import import_module
 from confuse import ConfigValueError
 from beets import ui
 from beets.plugins import BeetsPlugin
-import six
 
 
 METASYNC_MODULE = 'beetsplug.metasync'
@@ -36,7 +33,7 @@ SOURCES = {
 }
 
 
-class MetaSource(six.with_metaclass(ABCMeta, object)):
+class MetaSource(metaclass=ABCMeta):
     def __init__(self, config, log):
         self.item_types = {}
         self.config = config
@@ -77,7 +74,7 @@ class MetaSyncPlugin(BeetsPlugin):
     item_types = load_item_types()
 
     def __init__(self):
-        super(MetaSyncPlugin, self).__init__()
+        super().__init__()
 
     def commands(self):
         cmd = ui.Subcommand('metasync',
@@ -108,7 +105,7 @@ class MetaSyncPlugin(BeetsPlugin):
 
         # Avoid needlessly instantiating meta sources (can be expensive)
         if not items:
-            self._log.info(u'No items found matching query')
+            self._log.info('No items found matching query')
             return
 
         # Instantiate the meta sources
@@ -116,18 +113,18 @@ class MetaSyncPlugin(BeetsPlugin):
             try:
                 cls = META_SOURCES[player]
             except KeyError:
-                self._log.error(u'Unknown metadata source \'{0}\''.format(
+                self._log.error('Unknown metadata source \'{}\''.format(
                     player))
 
             try:
                 meta_source_instances[player] = cls(self.config, self._log)
             except (ImportError, ConfigValueError) as e:
-                self._log.error(u'Failed to instantiate metadata source '
-                                u'\'{0}\': {1}'.format(player, e))
+                self._log.error('Failed to instantiate metadata source '
+                                '\'{}\': {}'.format(player, e))
 
         # Avoid needlessly iterating over items
         if not meta_source_instances:
-            self._log.error(u'No valid metadata sources found')
+            self._log.error('No valid metadata sources found')
             return
 
         # Sync the items with all of the meta sources

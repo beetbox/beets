@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
@@ -12,9 +11,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
 
-from mock import patch, Mock
+from unittest.mock import patch, Mock
 
 from beets import library
 from beets.util import bytestring_path, _fsencoding
@@ -53,8 +51,8 @@ class IPFSPluginTest(unittest.TestCase, TestHelper):
                     ipfs_item = os.path.basename(want_item.path).decode(
                         _fsencoding(),
                     )
-                    want_path = '/ipfs/{0}/{1}'.format(test_album.ipfs,
-                                                       ipfs_item)
+                    want_path = '/ipfs/{}/{}'.format(test_album.ipfs,
+                                                     ipfs_item)
                     want_path = bytestring_path(want_path)
                     self.assertEqual(check_item.path, want_path)
                     self.assertEqual(check_item.get('ipfs', with_album=False),
@@ -96,6 +94,7 @@ class IPFSPluginTest(unittest.TestCase, TestHelper):
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')

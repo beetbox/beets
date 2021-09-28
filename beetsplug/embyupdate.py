@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Updates the Emby Library whenever the beets library is changed.
 
     emby:
@@ -9,14 +7,11 @@
         apikey: apikey
         password: password
 """
-from __future__ import division, absolute_import, print_function
 
 import hashlib
 import requests
 
-from six.moves.urllib.parse import urlencode
-from six.moves.urllib.parse import urljoin, parse_qs, urlsplit, urlunsplit
-
+from urllib.parse import urlencode, urljoin, parse_qs, urlsplit, urlunsplit
 from beets import config
 from beets.plugins import BeetsPlugin
 
@@ -146,14 +141,14 @@ def get_user(host, port, username):
 
 class EmbyUpdate(BeetsPlugin):
     def __init__(self):
-        super(EmbyUpdate, self).__init__()
+        super().__init__()
 
         # Adding defaults.
         config['emby'].add({
-            u'host': u'http://localhost',
-            u'port': 8096,
-            u'apikey': None,
-            u'password': None,
+            'host': 'http://localhost',
+            'port': 8096,
+            'apikey': None,
+            'password': None,
         })
 
         self.register_listener('database_change', self.listen_for_db_change)
@@ -166,7 +161,7 @@ class EmbyUpdate(BeetsPlugin):
     def update(self, lib):
         """When the client exists try to send refresh request to Emby.
         """
-        self._log.info(u'Updating Emby library...')
+        self._log.info('Updating Emby library...')
 
         host = config['emby']['host'].get()
         port = config['emby']['port'].get()
@@ -176,13 +171,13 @@ class EmbyUpdate(BeetsPlugin):
 
         # Check if at least a apikey or password is given.
         if not any([password, token]):
-            self._log.warning(u'Provide at least Emby password or apikey.')
+            self._log.warning('Provide at least Emby password or apikey.')
             return
 
         # Get user information from the Emby API.
         user = get_user(host, port, username)
         if not user:
-            self._log.warning(u'User {0} could not be found.'.format(username))
+            self._log.warning(f'User {username} could not be found.')
             return
 
         if not token:
@@ -194,7 +189,7 @@ class EmbyUpdate(BeetsPlugin):
             token = get_token(host, port, headers, auth_data)
             if not token:
                 self._log.warning(
-                    u'Could not get token for user {0}', username
+                    'Could not get token for user {0}', username
                 )
                 return
 
@@ -205,6 +200,6 @@ class EmbyUpdate(BeetsPlugin):
         url = api_url(host, port, '/Library/Refresh')
         r = requests.post(url, headers=headers)
         if r.status_code != 204:
-            self._log.warning(u'Update could not be triggered')
+            self._log.warning('Update could not be triggered')
         else:
-            self._log.info(u'Update triggered.')
+            self._log.info('Update triggered.')

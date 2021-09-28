@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
-
 """Tests for the 'spotify' plugin"""
 
-from __future__ import division, absolute_import, print_function
 
 import os
 import responses
@@ -16,7 +13,7 @@ from test.helper import TestHelper
 from six.moves.urllib.parse import parse_qs, urlparse
 
 
-class ArgumentsMock(object):
+class ArgumentsMock:
     def __init__(self, mode, show_failures):
         self.mode = mode
         self.show_failures = show_failures
@@ -60,7 +57,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
 
     def test_empty_query(self):
         self.assertEqual(
-            None, self.spotify._match_library_tracks(self.lib, u"1=2")
+            None, self.spotify._match_library_tracks(self.lib, "1=2")
         )
 
     @responses.activate
@@ -79,21 +76,21 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
             content_type='application/json',
         )
         item = Item(
-            mb_trackid=u'01234',
-            album=u'lkajsdflakjsd',
-            albumartist=u'ujydfsuihse',
-            title=u'duifhjslkef',
+            mb_trackid='01234',
+            album='lkajsdflakjsd',
+            albumartist='ujydfsuihse',
+            title='duifhjslkef',
             length=10,
         )
         item.add(self.lib)
-        self.assertEqual([], self.spotify._match_library_tracks(self.lib, u""))
+        self.assertEqual([], self.spotify._match_library_tracks(self.lib, ""))
 
         params = _params(responses.calls[0].request.url)
         query = params['q'][0]
-        self.assertIn(u'duifhjslkef', query)
-        self.assertIn(u'artist:ujydfsuihse', query)
-        self.assertIn(u'album:lkajsdflakjsd', query)
-        self.assertEqual(params['type'], [u'track'])
+        self.assertIn('duifhjslkef', query)
+        self.assertIn('artist:ujydfsuihse', query)
+        self.assertIn('album:lkajsdflakjsd', query)
+        self.assertEqual(params['type'], ['track'])
 
     @responses.activate
     def test_track_request(self):
@@ -111,24 +108,24 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
             content_type='application/json',
         )
         item = Item(
-            mb_trackid=u'01234',
-            album=u'Despicable Me 2',
-            albumartist=u'Pharrell Williams',
-            title=u'Happy',
+            mb_trackid='01234',
+            album='Despicable Me 2',
+            albumartist='Pharrell Williams',
+            title='Happy',
             length=10,
         )
         item.add(self.lib)
-        results = self.spotify._match_library_tracks(self.lib, u"Happy")
+        results = self.spotify._match_library_tracks(self.lib, "Happy")
         self.assertEqual(1, len(results))
-        self.assertEqual(u"6NPVjNh8Jhru9xOmyQigds", results[0]['id'])
+        self.assertEqual("6NPVjNh8Jhru9xOmyQigds", results[0]['id'])
         self.spotify._output_match_results(results)
 
         params = _params(responses.calls[0].request.url)
         query = params['q'][0]
-        self.assertIn(u'Happy', query)
-        self.assertIn(u'artist:Pharrell Williams', query)
-        self.assertIn(u'album:Despicable Me 2', query)
-        self.assertEqual(params['type'], [u'track'])
+        self.assertIn('Happy', query)
+        self.assertIn('artist:Pharrell Williams', query)
+        self.assertIn('album:Despicable Me 2', query)
+        self.assertEqual(params['type'], ['track'])
 
 
 def suite():

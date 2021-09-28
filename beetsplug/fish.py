@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2015, winters jean-marie.
 # Copyright 2020, Justin Mayer <https://justinmayer.com>
@@ -23,7 +22,6 @@ by default but can be added via the `-e` / `--extravalues` flag. For example:
 `beet fish -e genre -e albumartist`
 """
 
-from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets import library, ui
