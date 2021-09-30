@@ -34,6 +34,11 @@ Other new things:
 
 * Permissions plugin now sets cover art permissions to the file permissions.
 
+Bug fixes:
+
+* :doc:`/plugins/lyrics`: Fix crash bug when beautifulsoup4 is not installed.
+  :bug:`4027`
+
 1.5.0 (August 19, 2021)
 -----------------------
 
