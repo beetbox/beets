@@ -40,9 +40,7 @@ Beets works on Python 3.6 or later.
 
 * For **Slackware**, there's a `SlackBuild`_ available.
 
-* On **Fedora** 22 or later, there is a `DNF package`_::
-
-      $ sudo dnf install beets beets-plugins beets-doc
+* On **Fedora** 22 or later, there's a `DNF package`_ you can install with ``sudo dnf install beets beets-plugins beets-doc``.
 
 * On **Solus**, run ``eopkg install beets``.
 
