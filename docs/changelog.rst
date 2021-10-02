@@ -39,7 +39,7 @@ Bug fixes:
 * :doc:`/plugins/lyrics`: Fix crash bug when beautifulsoup4 is not installed.
   :bug:`4027`
 
-* :doc:`/plugins/discogs`: Fix regex for new style of regex.
+* :doc:`/plugins/discogs`: Adapt regex to new URL format .
   :bug: `4080`
 
 1.5.0 (August 19, 2021)
