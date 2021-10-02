@@ -209,7 +209,8 @@ class DiscogsPlugin(BeetsPlugin):
         # of an input string as to avoid confusion with other metadata plugins.
         # An optional bracket can follow the integer, as this is how discogs
         # displays the release ID on its webpage.
-        # Issue #4080 highlighted that Discogs changed the way the URL is formed
+        # Issue #4080 highlighted that Discogs changed the way the URL
+        # is formed
         match = re.search(r'(^|[*r|discogs\.com/.+/release/])(\d+)($|)',
                           album_id)
 
