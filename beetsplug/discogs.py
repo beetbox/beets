@@ -208,8 +208,25 @@ class DiscogsPlugin(BeetsPlugin):
         # Discogs-IDs are simple integers. We only look for those at the end
         # of an input string or after the "/release/" keyword as to avoid
         # confusion with other metadata plugins.
+        # the following possible inputs can be used for a Discogs-ID,
+        # apart from the last one:
+        # http://www.discogs.com/G%C3%BCnther-Lause-Meru-Ep/release/4354798
+        # http://www.discogs.com/release/4354798-G%C3%BCnther-Lause-Meru-Ep
+        # http://www.discogs.com/G%C3%BCnther-4354798Lause-Meru-Ep/release/4354798
+        # http://www.discogs.com/release/4354798-G%C3%BCnther-4354798Lause-Meru-Ep/
+        # [r4354798]
+        # r4354798
+        # 4354798
+        # yet-another-metadata-provider.org/foo/12345
+        #
         # An optional bracket can follow the integer, as this is how discogs
         # displays the release ID on its webpage.
+        #
+        # These examples have come about from a number of Github items:
+        #  #291  Support for manually entered IDs in plugins
+        #  #4080 discogs: Parse IDs from new release URL format
+        #
+        # Regex has been tested here https://regex101.com/r/wyLdB4/1
         match = re.search(
             r"(^|\[*r|discogs\.com.*/release/)(\d+)(|\])", album_id)
 
