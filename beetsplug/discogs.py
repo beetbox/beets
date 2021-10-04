@@ -205,34 +205,28 @@ class DiscogsPlugin(BeetsPlugin):
             return
 
         self._log.debug('Searching for release {0}', album_id)
-        # Discogs-IDs are simple integers. We only look for those at the end
-        # of an input string or after the "/release/" keyword as to avoid
-        # confusion with other metadata plugins.
-        # the following possible inputs can be used for a Discogs-ID,
-        # apart from the last one:
-        # http://www.discogs.com/G%C3%BCnther-Lause-Meru-Ep/release/4354798
-        # http://www.discogs.com/release/4354798-G%C3%BCnther-Lause-Meru-Ep
-        # http://www.discogs.com/G%C3%BCnther-4354798Lause-Meru-Ep/release/4354798
-        # http://www.discogs.com/release/4354798-G%C3%BCnther-4354798Lause-Meru-Ep/
-        # [r4354798]
-        # r4354798
-        # 4354798
-        # yet-another-metadata-provider.org/foo/12345
-        #
-        # An optional bracket can follow the integer, as this is how discogs
-        # displays the release ID on its webpage.
-        #
-        # These examples have come about from a number of Github items:
-        #  #291  Support for manually entered IDs in plugins
-        #  #4080 discogs: Parse IDs from new release URL format
-        #
-        # Regex has been tested here https://regex101.com/r/wyLdB4/1
-        match = re.search(
-            r"(^|\[*r|discogs\.com.*/release/)(\d+)(|\])", album_id)
+        # Discogs-IDs are simple integers. In order to avoid confusion with
+        # other metadata plugins, we only look for very specific formats of the
+        # input string:
+        # - plain integer, optionally wrapped in brackets and prefixed by an
+        #   'r', as this is how discogs displays the release ID on its webpage.
+        # - legacy url format: discogs.com/<name of release>/release/<id>
+        # - current url format: discogs.com/release/<id>-<name of release>
+        # See #291, #4080 and #4085 for the discussions leading up to these
+        # patterns.
+        # Regex has been tested here https://regex101.com/r/wyLdB4/2
 
+        for pattern in [
+                r'^\[?r?(?P<id>\d+)\]?$',
+                r'discogs\.com/release/(?P<id>\d+)-',
+                r'discogs\.com/[^/]+/release/(?P<id>\d+)',
+        ]:
+            match = re.search(pattern, album_id)
+            if match:
+                break
         if not match:
             return None
-        result = Release(self.discogs_client, {'id': int(match.group(2))})
+        result = Release(self.discogs_client, {'id': int(match.group('id'))})
         # Try to obtain title to verify that we indeed have a valid Release
         try:
             getattr(result, 'title')
