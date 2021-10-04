@@ -28,6 +28,7 @@ linkcheck_ignore = [
     r'https://github.com/beetbox/beets/issues/',
     r'https://github.com/[^/]+$',  # ignore user pages
     r'.*localhost.*',
+    r'https?://127\.0\.0\.1',
     r'https://www.musixmatch.com/',  # blocks requests
     r'https://genius.com/',  # blocks requests
 ]
