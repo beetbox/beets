@@ -197,6 +197,31 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.debug('Connection error in album search', exc_info=True)
             return []
 
+    @staticmethod
+    def extract_release_id_regex(album_id):
+        """Returns the Discogs_id or None."""
+        # Discogs-IDs are simple integers. In order to avoid confusion with
+        # other metadata plugins, we only look for very specific formats of the
+        # input string:
+        # - plain integer, optionally wrapped in brackets and prefixed by an
+        #   'r', as this is how discogs displays the release ID on its webpage.
+        # - legacy url format: discogs.com/<name of release>/release/<id>
+        # - current url format: discogs.com/release/<id>-<name of release>
+        # See #291, #4080 and #4085 for the discussions leading up to these
+        # patterns.
+        # Regex has been tested here https://regex101.com/r/wyLdB4/2
+
+        for pattern in [
+                r'^\[?r?(?P<id>\d+)\]?$',
+                r'discogs\.com/release/(?P<id>\d+)-',
+                r'discogs\.com/[^/]+/release/(?P<id>\d+)',
+        ]:
+            match = re.search(pattern, album_id)
+            if match:
+                return int(match.group('id'))
+
+        return None
+
     def album_for_id(self, album_id):
         """Fetches an album by its Discogs ID and returns an AlbumInfo object
         or None if the album is not found.
@@ -205,15 +230,13 @@ class DiscogsPlugin(BeetsPlugin):
             return
 
         self._log.debug('Searching for release {0}', album_id)
-        # Discogs-IDs are simple integers. We only look for those at the end
-        # of an input string as to avoid confusion with other metadata plugins.
-        # An optional bracket can follow the integer, as this is how discogs
-        # displays the release ID on its webpage.
-        match = re.search(r'(^|\[*r|discogs\.com/.+/release/)(\d+)($|\])',
-                          album_id)
-        if not match:
+
+        discogs_id = self.extract_release_id_regex(album_id)
+
+        if not discogs_id:
             return None
-        result = Release(self.discogs_client, {'id': int(match.group(2))})
+
+        result = Release(self.discogs_client, {'id': discogs_id})
         # Try to obtain title to verify that we indeed have a valid Release
         try:
             getattr(result, 'title')
@@ -226,7 +249,8 @@ class DiscogsPlugin(BeetsPlugin):
                     return self.album_for_id(album_id)
             return None
         except CONNECTION_ERRORS:
-            self._log.debug('Connection error in album lookup', exc_info=True)
+            self._log.debug('Connection error in album lookup',
+                            exc_info=True)
             return None
         return self.get_album_info(result)
 
