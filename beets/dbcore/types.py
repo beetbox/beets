@@ -222,6 +222,30 @@ class Boolean(Type):
         return str2bool(string)
 
 
+class List(Type):
+    """A List type with a sub type."""
+    sql = None
+    null = []
+    model_type = list
+    value_type = None
+    split_re = '; ?'
+    separator = '; '
+
+    def __init__(self, value_type=String()):
+        self.value_type = value_type
+        self.sql = value_type.sql
+
+    def parse(self, string):
+        # XXX: the separator should be escapable
+        import re
+        return [self.value_type.parse(val)
+                for val in re.split(self.split_re, string)]
+
+    def format(self, values):
+        return self.separator.join([self.value_type.format(val)
+                                    for val in values])
+
+
 # Shared instances of common types.
 DEFAULT = Default()
 INTEGER = Integer()

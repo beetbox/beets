@@ -54,6 +54,14 @@ class ModelFixture1(dbcore.Model):
     _types = {
         'some_float_field': dbcore.types.FLOAT,
     }
+    _list_types = {
+        'strings': dbcore.types.List(dbcore.types.STRING),
+        'floats': dbcore.types.List(dbcore.types.FLOAT),
+    }
+    _list_tables = {
+        'strings': 'item_strings',
+        'floats': 'item_floats',
+    }
     _sorts = {
         'some_sort': SortFixture,
     }
@@ -413,6 +421,56 @@ class ModelTest(unittest.TestCase):
     def test_parse_nonstring(self):
         with self.assertRaisesRegex(TypeError, "must be a string"):
             dbcore.Model._parse(None, 42)
+
+    def test_store_and_retrieve_lists(self):
+        model = ModelFixture1()
+        model.add(self.db)
+        model.strings = ['foo', 'bar']
+        model.floats = [1.1, 2.2]
+        model.store()
+
+        other_model = self.db._get(ModelFixture1, model.id)
+        self.assertEqual(other_model.strings, ['foo', 'bar'])
+        self.assertEqual(other_model.floats, [1.1, 2.2])
+
+    def test_change_list(self):
+        model = ModelFixture1()
+        model.add(self.db)
+        model.strings = ['foo', 'bar']
+        model.store()
+        other_model = self.db._get(ModelFixture1, model.id)
+        self.assertEqual(other_model.strings, ['foo', 'bar'])
+        model.strings = ['foo', 'fizz']
+        model.store()
+        other_model = self.db._get(ModelFixture1, model.id)
+        self.assertEqual(other_model.strings, ['foo', 'fizz'])
+
+    def test_delete_list(self):
+        model = ModelFixture1()
+        model['strings'] = ['bar']
+        self.assertEqual(model.strings, ['bar'])
+        del model['strings']
+        self.assertEqual(model.strings, [])
+
+    def test_delete_list_via_dot(self):
+        model = ModelFixture1()
+        model['strings'] = ['bar']
+        self.assertEqual(model.strings, ['bar'])
+        del model.strings
+        self.assertEqual(model.strings, [])
+
+    def test_delete_list_persists(self):
+        model = ModelFixture1()
+        model.add(self.db)
+        model.strings = ['bar']
+        model.store()
+
+        model = self.db._get(ModelFixture1, model.id)
+        del model['strings']
+        model.store()
+
+        model = self.db._get(ModelFixture1, model.id)
+        self.assertFalse(model.strings, [])
 
 
 class FormatTest(unittest.TestCase):

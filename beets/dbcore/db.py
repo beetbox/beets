@@ -255,6 +255,16 @@ class Model:
     do not relate to any specific field.
     """
 
+    _list_tables = {}
+    """A mapping of "fixed" list fields on this type. The keys are field
+    names and the values are table names.
+    """
+
+    _list_types = {}
+    """A mapping of "fixed" list fields on this type. The keys are field
+    names and the values are `Type` objects.
+    """
+
     _always_dirty = False
     """By default, fields only become "dirty" when their value actually
     changes. Enabling this flag marks fields as dirty even when the new
@@ -291,13 +301,14 @@ class Model:
         self._dirty = set()
         self._values_fixed = LazyConvertDict(self)
         self._values_flex = LazyConvertDict(self)
+        self._values_list = LazyConvertDict(self)
 
         # Initial contents.
         self.update(values)
         self.clear_dirty()
 
     @classmethod
-    def _awaken(cls, db=None, fixed_values={}, flex_values={}):
+    def _awaken(cls, db=None, fixed_values={}, flex_values={}, list_values={}):
         """Create an object with values drawn from the database.
 
         This is a performance optimization: the checks involved with
@@ -307,6 +318,7 @@ class Model:
 
         obj._values_fixed.init(fixed_values)
         obj._values_flex.init(flex_values)
+        obj._values_list.init(list_values)
 
         return obj
 
@@ -348,6 +360,7 @@ class Model:
         new._db = self._db
         new._values_fixed = self._values_fixed.copy()
         new._values_flex = self._values_flex.copy()
+        new._values_list = self._values_list.copy()
         new._dirty = self._dirty.copy()
         return new
 
@@ -360,7 +373,8 @@ class Model:
         If the field has no explicit type, it is given the base `Type`,
         which does no conversion.
         """
-        return cls._fields.get(key) or cls._types.get(key) or types.DEFAULT
+        return cls._fields.get(key) or cls._types.get(key) or \
+            cls._list_types.get(key) or types.DEFAULT
 
     def _get(self, key, default=None, raise_=False):
         """Get the value for a field, or `default`. Alternatively,
@@ -372,6 +386,11 @@ class Model:
         elif key in self._fields:  # Fixed.
             if key in self._values_fixed:
                 return self._values_fixed[key]
+            else:
+                return self._type(key).null
+        elif key in self._list_tables:  # Lists.
+            if key in self._values_list:
+                return self._values_list[key]
             else:
                 return self._type(key).null
         elif key in self._values_flex:  # Flexible.
@@ -396,6 +415,8 @@ class Model:
         # Choose where to place the value.
         if key in self._fields:
             source = self._values_fixed
+        elif key in self._list_tables:
+            source = self._values_list
         else:
             source = self._values_flex
 
@@ -422,6 +443,8 @@ class Model:
         if key in self._values_flex:  # Flexible.
             del self._values_flex[key]
             self._dirty.add(key)  # Mark for dropping on store.
+        elif key in self._list_tables:  # List
+            setattr(self, key, self._type(key).null)
         elif key in self._fields:  # Fixed
             setattr(self, key, self._type(key).null)
         elif key in self._getters():  # Computed.
@@ -434,7 +457,8 @@ class Model:
         `computed` parameter controls whether computed (plugin-provided)
         fields are included in the key list.
         """
-        base_keys = list(self._fields) + list(self._values_flex.keys())
+        base_keys = list(self._fields) + list(self._values_flex.keys()) + \
+            list(self._values_list.keys())
         if computed:
             return base_keys + list(self._getters().keys())
         else:
@@ -527,6 +551,31 @@ class Model:
                 subvars.append(self.id)
                 tx.mutate(query, subvars)
 
+            # Lists
+            for key, name in self._list_tables.items():
+                if key in self._dirty:
+                    self._dirty.remove(key)
+
+                    tx.mutate(
+                        'DELETE FROM {} WHERE entity_id=?;'.format(name),
+                        (self.id,)
+                    )
+
+                    values = self._values_list[key]
+                    if isinstance(values, list) and len(values) > 0:
+                        args = []
+                        for val in values:
+                            args += [self.id, self._type(key).to_sql(val)]
+                        tx.mutate("""
+                            INSERT INTO {}
+                            (entity_id, value)
+                            VALUES {};
+                            """.format(
+                                name, ','.join(['(?,?)'] * len(values))
+                            ),
+                            args
+                        )
+
             # Modified/added flexible attributes.
             for key, value in self._values_flex.items():
                 if key in self._dirty:
@@ -562,6 +611,7 @@ class Model:
         assert stored_obj is not None, f"object {self.id} not in DB"
         self._values_fixed = LazyConvertDict(self)
         self._values_flex = LazyConvertDict(self)
+        self._values_list = LazyConvertDict(self)
         self.update(dict(stored_obj))
         self.clear_dirty()
 
@@ -649,7 +699,7 @@ class Results:
     constructs LibModel objects that reflect database rows.
     """
 
-    def __init__(self, model_class, rows, db, flex_rows,
+    def __init__(self, model_class, rows, db, flex_rows, list_rows,
                  query=None, sort=None):
         """Create a result set that will construct objects of type
         `model_class`.
@@ -671,6 +721,7 @@ class Results:
         self.query = query
         self.sort = sort
         self.flex_rows = flex_rows
+        self.list_rows = list_rows
 
         # We keep a queue of rows we haven't yet consumed for
         # materialization. We preserve the original total number of
@@ -695,6 +746,8 @@ class Results:
 
         # Index flexible attributes by the item ID, so we have easier access
         flex_attrs = self._get_indexed_flex_attrs()
+        # Index list attributes by the item ID, so we have easier access
+        list_attrs = self._get_indexed_list_attrs()
 
         index = 0  # Position in the materialized objects.
         while index < len(self._objects) or self._rows:
@@ -708,7 +761,8 @@ class Results:
             else:
                 while self._rows:
                     row = self._rows.pop(0)
-                    obj = self._make_model(row, flex_attrs.get(row['id'], {}))
+                    obj = self._make_model(row, flex_attrs.get(row['id'], {}),
+                                           list_attrs.get(row['id'], {}))
                     # If there is a slow-query predicate, ensurer that the
                     # object passes it.
                     if not self.query or self.query.match(obj):
@@ -742,7 +796,22 @@ class Results:
 
         return flex_values
 
-    def _make_model(self, row, flex_values={}):
+    def _get_indexed_list_attrs(self):
+        """ Index list attributes by the entity id they belong to
+        """
+        list_values = {}
+        for key, rows in self.list_rows.items():
+            for row in rows:
+                if row['entity_id'] not in list_values:
+                    list_values[row['entity_id']] = {}
+
+                list_values[row['entity_id']].setdefault(key, []).append(
+                    row['value']
+                )
+
+        return list_values
+
+    def _make_model(self, row, flex_values={}, list_values={}):
         """ Create a Model object for the given row
         """
         cols = dict(row)
@@ -750,7 +819,9 @@ class Results:
                   if not k[:4] == 'flex'}
 
         # Construct the Python object
-        obj = self.model_class._awaken(self.db, values, flex_values)
+        obj = self.model_class._awaken(
+            self.db, values, flex_values, list_values
+        )
         return obj
 
     def __len__(self):
@@ -927,6 +998,8 @@ class Database:
         for model_cls in self._models:
             self._make_table(model_cls._table, model_cls._fields)
             self._make_attribute_table(model_cls._flex_table)
+            self._make_list_tables(model_cls._list_tables,
+                                   model_cls._list_types)
 
     # Primitive access control: connections and transactions.
 
@@ -1057,6 +1130,20 @@ class Database:
                     ON {0} (entity_id);
                 """.format(flex_table))
 
+    def _make_list_tables(self, list_tables, list_types):
+        """Create tables for list types.
+        """
+        with self.transaction() as tx:
+            for key, name in list_tables.items():
+                tx.script(f"""
+                    CREATE TABLE IF NOT EXISTS {name} (
+                        id INTEGER PRIMARY KEY,
+                        entity_id INTEGER,
+                        value {list_types[key].sql});
+                    CREATE INDEX IF NOT EXISTS {name}_by_entity
+                        ON {name} (entity_id);
+                    """)
+
     # Querying.
 
     def _fetch(self, model_cls, query=None, sort=None):
@@ -1088,13 +1175,23 @@ class Database:
             where or '1',
         )
         )
+        list_sqls = {key: """
+            SELECT * FROM {} WHERE entity_id IN
+                (SELECT id FROM {} WHERE {});
+            """.format(
+            name,
+            model_cls._table,
+            where or '1',
+        ) for key, name in model_cls._list_tables.items()}
 
         with self.transaction() as tx:
             rows = tx.query(sql, subvals)
             flex_rows = tx.query(flex_sql, subvals)
+            list_rows = {key: tx.query(list_sql, subvals)
+                         for key, list_sql in list_sqls.items()}
 
         return Results(
-            model_cls, rows, self, flex_rows,
+            model_cls, rows, self, flex_rows, list_rows,
             None if where else query,  # Slow query component.
             sort if sort.is_slow() else None,  # Slow sort component.
         )
