@@ -539,8 +539,16 @@ class Item(LibModel):
         'data_source': types.STRING,
     }
 
+    _list_types = {
+        'artists': types.List(types.STRING),
+    }
+
+    _list_tables = {
+        'artists': 'item_artists',
+    }
+
     _media_fields = set(MediaFile.readable_fields()) \
-        .intersection(_fields.keys())
+        .intersection(list(_fields.keys()) + list(_list_tables.keys()))
     """Set of item fields that are backed by `MediaFile` fields.
 
     Any kind of field (fixed, flexible, and computed) may be a media
@@ -548,7 +556,8 @@ class Item(LibModel):
     `write`.
     """
 
-    _media_tag_fields = set(MediaFile.fields()).intersection(_fields.keys())
+    _media_tag_fields = set(MediaFile.fields()) \
+        .intersection(list(_fields.keys()) + list(_list_tables.keys()))
     """Set of item fields that are backed by *writable* `MediaFile` tag
     fields.
 
