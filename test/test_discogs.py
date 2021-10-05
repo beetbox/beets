@@ -368,7 +368,7 @@ class DGAlbumInfoTest(_common.TestCase):
                          ('005b84a0-ecd6-39f1-b2f6-6eb48756b268', ''),
                          ]
         for test_pattern, expected in test_patterns:
-            match = DiscogsPlugin().extract_release_id_regex(test_pattern)
+            match = DiscogsPlugin.extract_release_id_regex(test_pattern)
             if not match:
                 match = ''
             self.assertEqual(match, expected)

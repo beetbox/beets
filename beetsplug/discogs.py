@@ -218,10 +218,9 @@ class DiscogsPlugin(BeetsPlugin):
         ]:
             match = re.search(pattern, album_id)
             if match:
-                break
-        if not match:
-            return None
-        return int(match.group('id'))
+                return int(match.group('id'))
+
+        return None
 
     def album_for_id(self, album_id):
         """Fetches an album by its Discogs ID and returns an AlbumInfo object
