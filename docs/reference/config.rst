@@ -706,6 +706,9 @@ Here's an example::
 Other field/value pairs supplied via the ``--set`` option on the command-line
 override any settings here for fields with the same name.
 
+Values support the same template syntax as beets'
+:doc:`path formats <pathformat>`.
+
 Fields are set on both the album and each individual track of the album.
 Fields are persisted to the media files of each track.
 
