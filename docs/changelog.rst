@@ -32,7 +32,8 @@ Major new features:
 
 Other new things:
 
-* Permissions plugin now sets cover art permissions to the file permissions.
+* :doc:`/plugins/permissions`: Set cover art permissions to configured file
+  permission.
 * :doc:`/plugins/unimported`: Support excluding specific
   subdirectories in library.
 
