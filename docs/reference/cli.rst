@@ -263,6 +263,9 @@ artist="Tom Tom Club"`` will change the artist for the track "Genius of Love."
 To remove fields (which is only possible for flexible attributes), follow a
 field name with an exclamation point: ``field!``.
 
+Values support the same template syntax as beets'
+:doc:`path formats <pathformat>`.
+
 The ``-a`` switch operates on albums instead of individual tracks. Without
 this flag, the command will only change *track-level* data, even if all the
 tracks belong to the same album. If you want to change an *album-level* field,
