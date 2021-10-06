@@ -30,6 +30,10 @@ Major new features:
 * :doc:`/plugins/albumtypes`: An accompanying plugin for formatting
   ``albumtypes``. Thanks to :user:`edgars-supe`.
 
+* The :ref:`modify-cmd` and :ref:`import-cmd` can now use
+  :doc:`/reference/pathformat` formats when setting fields.
+  :bug:`488`
+
 Other new things:
 
 * :doc:`/plugins/permissions`: Set cover art permissions to configured file
