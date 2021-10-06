@@ -145,6 +145,8 @@ Optional command flags:
   Multiple IDs can be specified by simply repeating the option several times.
 
 * You can supply ``--set field=value`` to assign `field` to `value` on import.
+  Values support the same template syntax as beets'
+  :doc:`path formats <pathformat>`.
   These assignments will merge with (and possibly override) the
   :ref:`set_fields` configuration dictionary. You can use the option multiple
   times on the command line, like so::
