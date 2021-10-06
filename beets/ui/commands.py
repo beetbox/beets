@@ -1411,9 +1411,6 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
     # Parse key=value specifications into a dictionary.
     model_cls = library.Album if album else library.Item
 
-    for key, value in mods.items():
-        mods[key] = model_cls._parse(key, value)
-
     # Get the items to modify.
     items, albums = _do_query(lib, query, album, False)
     objs = albums if album else items
@@ -1424,7 +1421,9 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
            .format(len(objs), 'album' if album else 'item'))
     changed = []
     for obj in objs:
-        if print_and_modify(obj, mods, dels) and obj not in changed:
+        obj_mods = {key: model_cls._parse(key, format(obj, value))
+                    for key, value in mods.items()}
+        if print_and_modify(obj, obj_mods, dels) and obj not in changed:
             changed.append(obj)
 
     # Still something to do?
