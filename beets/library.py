@@ -938,7 +938,7 @@ class Item(LibModel):
     # Templating.
 
     def destination(self, fragment=False, basedir=None, platform=None,
-                    path_formats=None):
+                    path_formats=None, replacements=None):
         """Returns the path in the library directory designated for the
         item (i.e., where the file ought to be). fragment makes this
         method return just the path fragment underneath the root library
@@ -950,6 +950,8 @@ class Item(LibModel):
         platform = platform or sys.platform
         basedir = basedir or self._db.directory
         path_formats = path_formats or self._db.path_formats
+        if replacements is None:
+            replacements = self._db.replacements
 
         # Use a path format based on a query, falling back on the
         # default.
@@ -994,7 +996,7 @@ class Item(LibModel):
             maxlen = util.max_filename_length(self._db.directory)
 
         subpath, fellback = util.legalize_path(
-            subpath, self._db.replacements, maxlen,
+            subpath, replacements, maxlen,
             os.path.splitext(self.path)[1], fragment
         )
         if fellback:
