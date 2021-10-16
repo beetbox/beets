@@ -511,6 +511,7 @@ class Item(LibModel):
         'releasegroupdisambig': types.STRING,
         'disctitle': types.STRING,
         'encoder': types.STRING,
+        'popularity': types.INTEGER,
         'rg_track_gain': types.NULL_FLOAT,
         'rg_track_peak': types.NULL_FLOAT,
         'rg_album_gain': types.NULL_FLOAT,
