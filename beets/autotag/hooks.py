@@ -160,8 +160,8 @@ class TrackInfo(AttrDict):
                  artist_sort=None, disctitle=None, artist_credit=None,
                  data_source=None, data_url=None, media=None, lyricist=None,
                  composer=None, composer_sort=None, arranger=None,
-                 track_alt=None, work=None, mb_workid=None, 
-                 spotify_popularity=None, work_disambig=None, 
+                 track_alt=None, work=None, mb_workid=None,
+                 spotify_popularity=None, work_disambig=None,
                  bpm=None, initial_key=None, genre=None,
                  **kwargs):
         self.title = title
