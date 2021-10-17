@@ -285,6 +285,10 @@ use a path format like this::
     paths:
         default: $albumartist/$album%aunique{}/$disc-$track $title
 
+but note that this adds disc numbers to all tracks. To add disc numbers only
+to multi-disc tracks, use the :doc:`/plugins/inline` (in particular, see the
+``$disc_and_track`` example).
+
 When this option is off (the default), even "pregap" hidden tracks are
 numbered from one, not zero, so other track numbers may appear to be bumped up
 by one. When it is on, the pregap track for each disc can be numbered zero.
