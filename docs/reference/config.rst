@@ -547,6 +547,10 @@ Either ``yes`` or ``no`` (default), controlling whether existing metadata is
 discarded when a match is applied. This corresponds to the ``--from_scratch``
 flag to ``beet import``.
 
+Note that `from_scratch` only applies to fields that beets actually supports
+as columns in its database. The :doc:`/plugins/scrub` is responsible for
+removing metadata that beets does not support.
+
 .. _quiet:
 
 quiet
