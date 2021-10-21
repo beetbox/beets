@@ -44,6 +44,9 @@ Bug fixes:
 * :doc:`/plugins/discogs`: Adapt regex to new URL format .
   :bug: `4080`
 
+* :doc:`/plugins/discogs`: Remove requests ratel imit code from plugin in favor of discogs library built-in capability
+  :bug: `4108`
+
 1.5.0 (August 19, 2021)
 -----------------------
 
