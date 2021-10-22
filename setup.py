@@ -127,7 +127,7 @@ setup(
         'embyupdate': ['requests'],
         'chroma': ['pyacoustid'],
         'gmusic': ['gmusicapi'],
-        'discogs': ['python3-discogs-client'],
+        'discogs': ['python3-discogs-client>=2.3.10'],
         'beatport': ['requests-oauthlib>=0.6.1'],
         'kodiupdate': ['requests'],
         'lastgenre': ['pylast'],
