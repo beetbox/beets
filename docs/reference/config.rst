@@ -151,6 +151,19 @@ replaced as they don't match the typewriter quote (``"``). To also strip these
 special characters, you can either add them to the replacement list or use the
 :ref:`asciify-paths` configuration option below.
 
+.. _path-sep-replace:
+
+path_sep_replace
+~~~~~~~~~~~~~~~~
+
+A value that replaces the path separator in the filenames created by beets.
+On most systems, the path separator is the forward slash (``/``).
+
+Note that you should never use the actual path separator as the value for this option,
+otherwise it's very easy to mess up the structure of your music directory.
+
+Default: `_`.
+
 .. _asciify-paths:
 
 asciify_paths
