@@ -91,19 +91,27 @@ Setup Configuration
 -------
 
 **Mac**
+
 1. Open Terminal: If you haven't already, install Python with Homebrew by typing ``brew install python3``
+
+
 2. Install Beets by typing ``pip3 install beets``
+
 3. Next, type ``beet config -e`` to open the configuration file with your default text editor.
+
 4. Modify the configuration file. Put this in your config file...
-``
-  directory: /Users/[account_name]/Music/
-  library: /Users/[account[name]]/.config/beets/library.db
-  import:
-    copy: no
-``
-Directory refers to where you keep your music.
-Library refers to where you keep the database file.
-Import (copy:no) refers to, without copying, modifying the media you select in its original directory.
+
+```
+directory: /Users/[account_name]/Music/
+library: /Users/[account[name]]/.config/beets/library.db
+import:
+  copy: no
+```
+
+*Directory refers to where you keep your music.*
+*Library refers to where you keep the database file.*
+*Import (copy:no) refers to, without copying, modifying the media you select in its original directory.*
+
 5. Congratulations!
 
 *See configuration guide above for more ways to configure beets to behave in other ways)*
