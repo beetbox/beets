@@ -94,7 +94,6 @@ Setup Configuration
 
 1. Open Terminal: If you haven't already, install Python with Homebrew by typing ``brew install python3``
 
-
 2. Install Beets by typing ``pip3 install beets``
 
 3. Next, type ``beet config -e`` to open the configuration file with your default text editor.
@@ -109,7 +108,9 @@ import:
 ```
 
 *Directory refers to where you keep your music.*
+
 *Library refers to where you keep the database file.*
+
 *Import (copy:no) refers to, without copying, modifying the media you select in its original directory.*
 
 5. Congratulations!
