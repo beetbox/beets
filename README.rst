@@ -87,6 +87,38 @@ distributions. Check out the `Getting Started`_ guide for more information.
 .. _Getting Started: https://beets.readthedocs.org/page/guides/main.html
 .. _software repositories: https://repology.org/project/beets/versions
 
+Setup Configuration
+-------
+
+**Mac**
+1. Open Terminal: If you haven't already, install Python with Homebrew by typing ``brew install python3``
+2. Install Beets by typing ``pip3 install beets``
+3. Next, type ``beet config -e`` to open the configuration file with your default text editor.
+4. Modify the configuration file. Put this in your config file...
+``
+  directory: /Users/[account_name]/Music/
+  library: /Users/[account[name]]/.config/beets/library.db
+  import:
+    copy: no
+``
+Directory refers to where you keep your music.
+Library refers to where you keep the database file.
+Import (copy:no) refers to, without copying, modifying the media you select in its original directory.
+5. Congratulations!
+
+*See configuration guide above for more ways to configure beets to behave in other ways)*
+
+**Windows**
+1. If you haven't already, `install Python`_ (3.6 recommended).
+.. _install Python: https://www.python.org/downloads/
+2. Set your PATH environment variable to include Python.
+  - Open "My Computer" and select "Properties".
+  - Then, click on the "Advanced" tab and click the "Environment Variables" button. 
+  - Add ``;C:\Python36;C:\Python36\Scripts`` to the PATH variable I the table. *You may need to adjust these paths to point to your Python installation.*
+3. Install Beets by typing ``pip3 install beets`` in the command prompt
+4. Finish up by typing ``beet`` to make sure everything is working
+5. Congratulations!
+
 Contribute
 ----------
 
