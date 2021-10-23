@@ -119,6 +119,7 @@ Setup Configuration
 **Windows**
 
 1. If you haven't already, `install Python`_ (3.6 recommended).
+
 .. _install Python: https://www.python.org/downloads/
 
 2. Set your PATH environment variable to include Python.
