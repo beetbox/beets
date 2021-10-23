@@ -156,13 +156,19 @@ special characters, you can either add them to the replacement list or use the
 path_sep_replace
 ~~~~~~~~~~~~~~~~
 
-A value that replaces the path separator in the filenames created by beets.
-On most systems, the path separator is the forward slash (``/``).
+A string that replaces the path separator (for example, the forward slash
+``/`` on Linux and MacOS, and the backward slash ``\\`` on Windows) when
+generating filenames with beets.
+This option is related to ::red:`replace`, but is distict from it for
+technical reasons.
 
-Note that you should never use the actual path separator as the value for this option,
-otherwise it's very easy to mess up the structure of your music directory.
+.. warning::
+   Changing this option is potentially dangerous. For example, setting
+   it to the actual path separator could create directories in unexpected
+   locations. Use caution when changing it and always try it out on a small
+   number of files before applying it to your whole library.
 
-Default: `_`.
+Default: ``_``.
 
 .. _asciify-paths:
 
