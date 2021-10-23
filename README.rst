@@ -100,12 +100,11 @@ Setup Configuration
 
 4. Modify the configuration file. Put this in your config file...
 
-```
-  directory: /Users/[account_name]/Music/
-  library: /Users/[account[name]]/.config/beets/library.db
-  import:
-    copy: no
-```
+  ```directory: /Users/[account_name]/Music/```
+  ```library: /Users/[account[name]]/.config/beets/library.db```
+  ```import:```
+    ```copy: no```
+
   - *Directory refers to where you keep your music.*
   - *Library refers to where you keep the database file.*
   - *Import (copy:no) refers to, without copying, modifying the media you select in its original directory.*
