@@ -161,9 +161,8 @@ class TrackInfo(AttrDict):
                  data_source=None, data_url=None, media=None, lyricist=None,
                  composer=None, composer_sort=None, arranger=None,
                  track_alt=None, work=None, mb_workid=None,
-                 spotify_popularity=None, work_disambig=None,
-                 bpm=None, initial_key=None, genre=None,
-                 **kwargs):
+                 work_disambig=None, bpm=None, initial_key=None,
+                 genre=None, **kwargs):
         self.title = title
         self.track_id = track_id
         self.release_track_id = release_track_id
@@ -187,7 +186,6 @@ class TrackInfo(AttrDict):
         self.track_alt = track_alt
         self.work = work
         self.mb_workid = mb_workid
-        self.spotify_popularity = spotify_popularity
         self.work_disambig = work_disambig
         self.bpm = bpm
         self.initial_key = initial_key
