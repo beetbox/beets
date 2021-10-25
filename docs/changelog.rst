@@ -35,7 +35,7 @@ Other new things:
 * Permissions plugin now sets cover art permissions to the file permissions.
 * :doc:`/plugins/unimported`: Support excluding specific
   subdirectories in library.
-* Added spotify_popularity label.
+* :doc:`/plugins/spotify`: We now fetch a ``spotify_popularity`` field.
 
 Bug fixes:
 
