@@ -31,6 +31,8 @@ Additional command-line options include:
 
 * ``--library`` or ``-l``: Show data from the library database instead of the
   files' tags.
+* ``--album`` or ``-a``: Show data from albums instead of tracks (implies
+  ``--library``).
 * ``--summarize`` or ``-s``: Merge all the information from multiple files
   into a single list of values. If the tags differ across the files, print
   ``[various]``.
