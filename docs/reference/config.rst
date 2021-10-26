@@ -159,7 +159,7 @@ path_sep_replace
 A string that replaces the path separator (for example, the forward slash
 ``/`` on Linux and MacOS, and the backward slash ``\\`` on Windows) when
 generating filenames with beets.
-This option is related to ::ref:`replace`, but is distict from it for
+This option is related to :ref:`replace`, but is distict from it for
 technical reasons.
 
 .. warning::
