@@ -25,7 +25,7 @@ from beets.library import Item
 from beets.util import displayable_path, normpath, syspath
 
 
-def tag_data(lib, args):
+def tag_data(opts, lib, args):
     query = []
     for arg in args:
         path = normpath(arg)
@@ -69,8 +69,8 @@ def tag_data_emitter(path):
     return emitter
 
 
-def library_data(lib, args):
-    for item in lib.items(args):
+def library_data(opts, lib, args):
+    for item in lib.albums(args) if opts.album else lib.items(args):
         yield library_data_emitter(item)
 
 
@@ -157,6 +157,10 @@ class InfoPlugin(BeetsPlugin):
             help='show library fields instead of tags',
         )
         cmd.parser.add_option(
+            '-a', '--album', action='store_true',
+            help='show album fields instead of tracks (implies "--library")',
+        )
+        cmd.parser.add_option(
             '-s', '--summarize', action='store_true',
             help='summarize the tags of all files',
         )
@@ -186,7 +190,7 @@ class InfoPlugin(BeetsPlugin):
         dictionary and only prints that. If two files have different values
         for the same tag, the value is set to '[various]'
         """
-        if opts.library:
+        if opts.library or opts.album:
             data_collector = library_data
         else:
             data_collector = tag_data
@@ -199,7 +203,7 @@ class InfoPlugin(BeetsPlugin):
 
         first = True
         summary = {}
-        for data_emitter in data_collector(lib, ui.decargs(args)):
+        for data_emitter in data_collector(opts, lib, ui.decargs(args)):
             try:
                 data, item = data_emitter(included_keys or '*')
             except (mediafile.UnreadableFileError, OSError) as ex:
