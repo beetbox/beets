@@ -49,6 +49,8 @@ Bug fixes:
 * :doc:`/plugins/discogs`: Remove requests ratel imit code from plugin in favor of discogs library built-in capability
   :bug: `4108`
 
+* :doc:`/plugins/export`: Fix duplicated output.
+
 1.5.0 (August 19, 2021)
 -----------------------
 

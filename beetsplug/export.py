@@ -149,8 +149,6 @@ class ExportPlugin(BeetsPlugin):
                 if isinstance(value, bytes):
                     data[key] = util.displayable_path(value)
 
-            items += [data]
-
             if file_format_is_line_based:
                 export_format.export(data, **format_options)
             else:
