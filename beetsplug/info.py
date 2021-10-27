@@ -25,7 +25,7 @@ from beets.library import Item
 from beets.util import displayable_path, normpath, syspath
 
 
-def tag_data(opts, lib, args):
+def tag_data(lib, args, album=False):
     query = []
     for arg in args:
         path = normpath(arg)
@@ -69,8 +69,8 @@ def tag_data_emitter(path):
     return emitter
 
 
-def library_data(opts, lib, args):
-    for item in lib.albums(args) if opts.album else lib.items(args):
+def library_data(lib, args, album=False):
+    for item in lib.albums(args) if album else lib.items(args):
         yield library_data_emitter(item)
 
 
@@ -203,7 +203,10 @@ class InfoPlugin(BeetsPlugin):
 
         first = True
         summary = {}
-        for data_emitter in data_collector(opts, lib, ui.decargs(args)):
+        for data_emitter in data_collector(
+                lib, ui.decargs(args),
+                album=opts.album,
+        ):
             try:
                 data, item = data_emitter(included_keys or '*')
             except (mediafile.UnreadableFileError, OSError) as ex:
