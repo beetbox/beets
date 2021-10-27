@@ -36,6 +36,11 @@ Other new things:
 * :doc:`/plugins/unimported`: Support excluding specific
   subdirectories in library.
 
+For plugin developers:
+
+* :py:meth:`beets.library.Item.destination` now accepts a `replacements`
+  argument to be used in favor of the default.
+
 Bug fixes:
 
 * :doc:`/plugins/lyrics`: Fix crash bug when beautifulsoup4 is not installed.
