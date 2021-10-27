@@ -36,6 +36,7 @@ Other new things:
 * :doc:`/plugins/unimported`: Support excluding specific
   subdirectories in library.
 * :doc:`/plugins/info`: Support ``--album`` flag.
+* :doc:`/plugins/export`: Support ``--album`` flag.
 
 Bug fixes:
 
