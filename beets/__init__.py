@@ -14,6 +14,7 @@
 
 
 import confuse
+import os
 from sys import stderr
 
 __version__ = '1.5.1'
@@ -26,6 +27,11 @@ class IncludeLazyConfig(confuse.LazyConfig):
     """
     def read(self, user=True, defaults=True):
         super().read(user, defaults)
+
+        path = self.user_config_path()
+        if not os.path.isfile(path):
+            with open(path,'w+') as file:
+                file.write(self.dump())
 
         try:
             for view in self['include']:
