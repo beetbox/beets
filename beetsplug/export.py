@@ -88,6 +88,10 @@ class ExportPlugin(BeetsPlugin):
             help='show library fields instead of tags',
         )
         cmd.parser.add_option(
+            '-a', '--album', action='store_true',
+            help='show album fields instead of tracks (implies "--library")',
+        )
+        cmd.parser.add_option(
             '--append', action='store_true', default=False,
             help='if should append data to the file',
         )
@@ -121,14 +125,20 @@ class ExportPlugin(BeetsPlugin):
             }
         )
 
-        items = []
-        data_collector = library_data if opts.library else tag_data
+        if opts.library or opts.album:
+            data_collector = library_data
+        else:
+            data_collector = tag_data
 
         included_keys = []
         for keys in opts.included_keys:
             included_keys.extend(keys.split(','))
 
-        for data_emitter in data_collector(lib, ui.decargs(args)):
+        items = []
+        for data_emitter in data_collector(
+                lib, ui.decargs(args),
+                album=opts.album,
+        ):
             try:
                 data, item = data_emitter(included_keys or '*')
             except (mediafile.UnreadableFileError, OSError) as ex:
@@ -138,8 +148,6 @@ class ExportPlugin(BeetsPlugin):
             for key, value in data.items():
                 if isinstance(value, bytes):
                     data[key] = util.displayable_path(value)
-
-            items += [data]
 
             if file_format_is_line_based:
                 export_format.export(data, **format_options)

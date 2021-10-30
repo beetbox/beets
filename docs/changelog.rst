@@ -35,6 +35,8 @@ Other new things:
 * Permissions plugin now sets cover art permissions to the file permissions.
 * :doc:`/plugins/unimported`: Support excluding specific
   subdirectories in library.
+* :doc:`/plugins/info`: Support ``--album`` flag.
+* :doc:`/plugins/export`: Support ``--album`` flag.
 
 For plugin developers:
 
@@ -51,6 +53,8 @@ Bug fixes:
 
 * :doc:`/plugins/discogs`: Remove requests ratel imit code from plugin in favor of discogs library built-in capability
   :bug: `4108`
+
+* :doc:`/plugins/export`: Fix duplicated output.
 
 1.5.0 (August 19, 2021)
 -----------------------
