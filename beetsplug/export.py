@@ -79,8 +79,6 @@ class ExportPlugin(BeetsPlugin):
         })
 
     def commands(self):
-        # TODO: Add option to use albums
-
         cmd = ui.Subcommand('export', help='export data from beets')
         cmd.func = self.run
         cmd.parser.add_option(
