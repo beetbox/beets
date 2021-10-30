@@ -757,15 +757,21 @@ def show_path_changes(path_changes):
     if max_width > col_width:
         # Print every change over two lines
         for source, dest in zip(sources, destinations):
-            log.info('{0} \n  -> {1}', source, dest)
+            color_source, color_dest = colordiff(source, dest)
+            print_('{0} \n  -> {1}'.format(color_source, color_dest))
     else:
         # Print every change on a single line, and add a header
         title_pad = max_width - len('Source ') + len(' -> ')
 
-        log.info('Source {0} Destination', ' ' * title_pad)
+        print_('Source {0} Destination'.format(' ' * title_pad))
         for source, dest in zip(sources, destinations):
             pad = max_width - len(source)
-            log.info('{0} {1} -> {2}', source, ' ' * pad, dest)
+            color_source, color_dest = colordiff(source, dest)
+            print_('{0} {1} -> {2}'.format(
+                color_source,
+                ' ' * pad,
+                color_dest,
+            ))
 
 
 # Helper functions for option parsing.
