@@ -19,9 +19,11 @@ interface.
 
 import os
 import re
+import operator
 from platform import python_version
 from collections import namedtuple, Counter
 from itertools import chain
+from functools import reduce
 
 import beets
 from beets import ui
@@ -1702,8 +1704,10 @@ def config_func(lib, opts, args):
             print_(displayable_path(filename))
 
     # Open in editor.
-    elif opts.edit:
-        config_edit()
+    elif opts.open:
+        config_open()
+    elif opts.setting_path is not None:
+        config_edit(opts)
 
     # Dump configuration.
     else:
@@ -1714,7 +1718,70 @@ def config_func(lib, opts, args):
             print("Empty configuration")
 
 
-def config_edit():
+def get_from_dict(data_dict, map_list):
+    """Get a value from a dictionnary with map list.
+    For ["key1", "key2"] as map_list and
+    {"key1":{"key2":True}} as data_dict.
+    The function will output True.
+    """
+    return reduce(operator.getitem, map_list, data_dict)
+
+
+def set_in_dict(data_dict, map_list, value):
+    """Set a value in a dictionnary with map list.
+    For ["key1", "key2"] as map_list,
+    {"key1":{"key2":False}} as data_dict and True as value,
+    the function modify data_dict like this: {"key1":{"key2":True}}
+    """
+    get_from_dict(data_dict, map_list[:-1])[map_list[-1]] = value
+
+
+def config_edit(opts):
+    """Edit the configuration file, with the path of the setting
+    (ex. import.write) and the value.
+    """
+    if not opts.setting_value:
+        print("Config value not provided")
+        return
+
+    setting_path = opts.setting_path.split(".")
+
+    actual_value = None
+    try:
+        # Get the actual value of the modified settings
+        actual_value = get_from_dict(config, setting_path).get()
+    except KeyError as exc:
+        message = f"Could not edit configuration: {exc}"
+        raise ui.UserError(message)
+
+    value = None
+    try:
+        # Convert the string value to type of the setting
+        if isinstance(actual_value, bool):
+            value = util.str2bool(opts.setting_value)
+        elif isinstance(actual_value, str):
+            value = opts.setting_value
+        elif isinstance(actual_value, int):
+            value = int(opts.setting_value)
+        elif isinstance(actual_value, float):
+            value = float(opts.setting_value)
+        else:
+            print("This type of the setting is not supported")
+            return
+    except ValueError as exc:
+        message = f"Could not edit configuration: {exc}"
+        raise ui.UserError(message)
+
+    # Set the new value in config
+    set_in_dict(config, setting_path, value)
+
+    # Update the file
+    path = config.user_config_path()
+    with open(path, 'w+') as file:
+        file.write(config.dump(full=opts.defaults, redact=opts.redact))
+
+
+def config_open():
     """Open a program to edit the user configuration.
     An empty config file is created if no existing config file exists.
     """
@@ -1725,7 +1792,7 @@ def config_edit():
             open(path, 'w+').close()
         util.interactive_open([path], editor)
     except OSError as exc:
-        message = f"Could not edit configuration: {exc}"
+        message = f"Could not open configuration file: {exc}"
         if not editor:
             message += ". Please set the EDITOR environment variable"
         raise ui.UserError(message)
@@ -1738,8 +1805,18 @@ config_cmd.parser.add_option(
     help='show files that configuration was loaded from'
 )
 config_cmd.parser.add_option(
-    '-e', '--edit', action='store_true',
-    help='edit user configuration with $EDITOR'
+    '-e', '--edit', action='store',
+    help='edit a setting',
+    dest="setting_path"
+)
+config_cmd.parser.add_option(
+    '-v', '--value', action='store',
+    help='value of the setting provided by edit',
+    dest="setting_value"
+)
+config_cmd.parser.add_option(
+    '-o', '--open', action='store_true',
+    help='open user configuration with $EDITOR'
 )
 config_cmd.parser.add_option(
     '-d', '--defaults', action='store_true',
@@ -1750,6 +1827,7 @@ config_cmd.parser.add_option(
     dest='redact', default=True,
     help='do not redact sensitive fields'
 )
+
 config_cmd.func = config_func
 default_commands.append(config_cmd)
 

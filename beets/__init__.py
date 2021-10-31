@@ -30,7 +30,7 @@ class IncludeLazyConfig(confuse.LazyConfig):
 
         path = self.user_config_path()
         if not os.path.isfile(path):
-            with open(path,'w+') as file:
+            with open(path, 'w+') as file:
                 file.write(self.dump())
 
         try:
