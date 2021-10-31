@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -15,7 +14,6 @@
 
 """Parsing of strings into DBCore queries.
 """
-from __future__ import division, absolute_import, print_function
 
 import re
 import itertools
@@ -226,8 +224,8 @@ def parse_sorted_query(model_cls, parts, prefixes={},
     # Split up query in to comma-separated subqueries, each representing
     # an AndQuery, which need to be joined together in one OrQuery
     subquery_parts = []
-    for part in parts + [u',']:
-        if part.endswith(u','):
+    for part in parts + [',']:
+        if part.endswith(','):
             # Ensure we can catch "foo, bar" as well as "foo , bar"
             last_subquery_part = part[:-1]
             if last_subquery_part:
@@ -241,8 +239,8 @@ def parse_sorted_query(model_cls, parts, prefixes={},
         else:
             # Sort parts (1) end in + or -, (2) don't have a field, and
             # (3) consist of more than just the + or -.
-            if part.endswith((u'+', u'-')) \
-                    and u':' not in part \
+            if part.endswith(('+', '-')) \
+                    and ':' not in part \
                     and len(part) > 1:
                 sort_parts.append(part)
             else:

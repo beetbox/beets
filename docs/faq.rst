@@ -147,6 +147,12 @@ it's helpful to run on the "bleeding edge". To run the latest source:
       ``pip install -e git+https://github.com/beetbox/beets#egg=beets``
       to clone beets and install it, allowing you to modify the source
       in-place to try out changes.
+   -  Combine the previous two approaches, cloning the source yourself,
+      and then installing in editable mode:
+      ``git clone https://github.com/beetbox/beets.git`` then
+      ``pip install -e beets``. This approach lets you decide where the
+      source is stored, with any changes immediately reflected in your
+      environment.
 
 More details about the beets source are available on the :doc:`developer documentation </dev/index>`
 pages.

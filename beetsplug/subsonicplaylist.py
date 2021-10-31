@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2019, Joris Jensen
 #
@@ -13,7 +12,6 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import absolute_import, division, print_function
 
 import random
 import string
@@ -45,8 +43,8 @@ def filter_to_be_removed(items, keys):
         def to_be_removed(item):
             for artist, album, title in keys:
                 if artist == item['artist'] and\
-                           album == item['album'] and\
-                           title == item['title']:
+                        album == item['album'] and\
+                        title == item['title']:
                     return False
             return True
 
@@ -56,7 +54,7 @@ def filter_to_be_removed(items, keys):
 class SubsonicPlaylistPlugin(BeetsPlugin):
 
     def __init__(self):
-        super(SubsonicPlaylistPlugin, self).__init__()
+        super().__init__()
         self.config.add(
             {
                 'delete': False,
@@ -76,7 +74,7 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
                                   MatchQuery("title", query[2])])
                 items = lib.items(query)
                 if not items:
-                    self._log.warn(u"{} | track not found ({})", playlist_tag,
+                    self._log.warn("{} | track not found ({})", playlist_tag,
                                    query)
                     continue
                 for item in items:
@@ -130,13 +128,13 @@ class SubsonicPlaylistPlugin(BeetsPlugin):
             self.update_tags(playlist_dict, lib)
 
         subsonicplaylist_cmds = Subcommand(
-            'subsonicplaylist', help=u'import a subsonic playlist'
+            'subsonicplaylist', help='import a subsonic playlist'
         )
         subsonicplaylist_cmds.parser.add_option(
-            u'-d',
-            u'--delete',
+            '-d',
+            '--delete',
             action='store_true',
-            help=u'delete tag from items not in any playlist anymore',
+            help='delete tag from items not in any playlist anymore',
         )
         subsonicplaylist_cmds.func = build_playlist
         return [subsonicplaylist_cmds]

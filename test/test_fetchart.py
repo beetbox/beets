@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Thomas Scholtes.
 #
@@ -13,7 +12,6 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
 
 import ctypes
 import os
@@ -39,7 +37,7 @@ class FetchartCliTest(unittest.TestCase, TestHelper):
 
     def check_cover_is_stored(self):
         self.assertEqual(self.album['artpath'], self.cover_path)
-        with open(util.syspath(self.cover_path), 'r') as f:
+        with open(util.syspath(self.cover_path)) as f:
             self.assertEqual(f.read(), 'IMAGE')
 
     def hide_file_windows(self):

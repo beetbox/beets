@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -17,15 +16,13 @@
 music player.
 """
 
-from __future__ import division, absolute_import, print_function
 
-import six
 import sys
 import time
-from six.moves import _thread
+import _thread
 import os
 import copy
-from six.moves import urllib
+import urllib
 from beets import ui
 
 import gi
@@ -40,7 +37,7 @@ class QueryError(Exception):
     pass
 
 
-class GstPlayer(object):
+class GstPlayer:
     """A music player abstracting GStreamer's Playbin element.
 
     Create a player object, then call run() to start a thread with a
@@ -110,7 +107,7 @@ class GstPlayer(object):
             # error
             self.player.set_state(Gst.State.NULL)
             err, debug = message.parse_error()
-            print(u"Error: {0}".format(err))
+            print(f"Error: {err}")
             self.playing = False
 
     def _set_volume(self, volume):
@@ -130,7 +127,7 @@ class GstPlayer(object):
         path.
         """
         self.player.set_state(Gst.State.NULL)
-        if isinstance(path, six.text_type):
+        if isinstance(path, str):
             path = path.encode('utf-8')
         uri = 'file://' + urllib.parse.quote(path)
         self.player.set_property("uri", uri)

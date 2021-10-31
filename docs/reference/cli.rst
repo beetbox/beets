@@ -316,7 +316,7 @@ update
 
     beet update [-F] FIELD [-aM] QUERY
 
-Update the library (and, optionally, move files) to reflect out-of-band metadata
+Update the library (and, by default, move files) to reflect out-of-band metadata
 changes and file deletions.
 
 This will scan all the matched files and read their tags, populating the

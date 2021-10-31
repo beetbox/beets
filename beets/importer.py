@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -13,7 +12,6 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
 
 """Provides the basic, interface-agnostic workflow for importing and
 autotagging music files.
@@ -75,7 +73,7 @@ def _open_state():
         # unpickling, including ImportError. We use a catch-all
         # exception to avoid enumerating them all (the docs don't even have a
         # full list!).
-        log.debug(u'state file could not be read: {0}', exc)
+        log.debug('state file could not be read: {0}', exc)
         return {}
 
 
@@ -84,8 +82,8 @@ def _save_state(state):
     try:
         with open(config['statefile'].as_filename(), 'wb') as f:
             pickle.dump(state, f)
-    except IOError as exc:
-        log.error(u'state file could not be written: {0}', exc)
+    except OSError as exc:
+        log.error('state file could not be written: {0}', exc)
 
 
 # Utilities for reading and writing the beets progress file, which
@@ -174,10 +172,11 @@ def history_get():
 
 # Abstract session class.
 
-class ImportSession(object):
+class ImportSession:
     """Controls an import action. Subclasses should implement methods to
     communicate with the user or otherwise make decisions.
     """
+
     def __init__(self, lib, loghandler, paths, query):
         """Create a session. `lib` is a Library object. `loghandler` is a
         logging.Handler. Either `paths` or `query` is non-null and indicates
@@ -258,7 +257,7 @@ class ImportSession(object):
         """Log a message about a given album to the importer log. The status
         should reflect the reason the album couldn't be tagged.
         """
-        self.logger.info(u'{0} {1}', status, displayable_path(paths))
+        self.logger.info('{0} {1}', status, displayable_path(paths))
 
     def log_choice(self, task, duplicate=False):
         """Logs the task's current choice if it should be logged. If
@@ -269,17 +268,17 @@ class ImportSession(object):
         if duplicate:
             # Duplicate: log all three choices (skip, keep both, and trump).
             if task.should_remove_duplicates:
-                self.tag_log(u'duplicate-replace', paths)
+                self.tag_log('duplicate-replace', paths)
             elif task.choice_flag in (action.ASIS, action.APPLY):
-                self.tag_log(u'duplicate-keep', paths)
+                self.tag_log('duplicate-keep', paths)
             elif task.choice_flag is (action.SKIP):
-                self.tag_log(u'duplicate-skip', paths)
+                self.tag_log('duplicate-skip', paths)
         else:
             # Non-duplicate: log "skip" and "asis" choices.
             if task.choice_flag is action.ASIS:
-                self.tag_log(u'asis', paths)
+                self.tag_log('asis', paths)
             elif task.choice_flag is action.SKIP:
-                self.tag_log(u'skip', paths)
+                self.tag_log('skip', paths)
 
     def should_resume(self, path):
         raise NotImplementedError
@@ -296,7 +295,7 @@ class ImportSession(object):
     def run(self):
         """Run the import task.
         """
-        self.logger.info(u'import started {0}', time.asctime())
+        self.logger.info('import started {0}', time.asctime())
         self.set_config(config['import'])
 
         # Set up the pipeline.
@@ -380,8 +379,8 @@ class ImportSession(object):
         """Mark paths and directories as merged for future reimport tasks.
         """
         self._merged_items.update(paths)
-        dirs = set([os.path.dirname(path) if os.path.isfile(path) else path
-                    for path in paths])
+        dirs = {os.path.dirname(path) if os.path.isfile(path) else path
+                for path in paths}
         self._merged_dirs.update(dirs)
 
     def is_resuming(self, toppath):
@@ -401,7 +400,7 @@ class ImportSession(object):
             # Either accept immediately or prompt for input to decide.
             if self.want_resume is True or \
                self.should_resume(toppath):
-                log.warning(u'Resuming interrupted import of {0}',
+                log.warning('Resuming interrupted import of {0}',
                             util.displayable_path(toppath))
                 self._is_resuming[toppath] = True
             else:
@@ -411,11 +410,12 @@ class ImportSession(object):
 
 # The importer task class.
 
-class BaseImportTask(object):
+class BaseImportTask:
     """An abstract base class for importer tasks.
 
     Tasks flow through the importer pipeline. Each stage can update
     them.     """
+
     def __init__(self, toppath, paths, items):
         """Create a task. The primary fields that define a task are:
 
@@ -469,8 +469,9 @@ class ImportTask(BaseImportTask):
     * `finalize()` Update the import progress and cleanup the file
       system.
     """
+
     def __init__(self, toppath, paths, items):
-        super(ImportTask, self).__init__(toppath, paths, items)
+        super().__init__(toppath, paths, items)
         self.choice_flag = None
         self.cur_album = None
         self.cur_artist = None
@@ -562,11 +563,11 @@ class ImportTask(BaseImportTask):
 
     def remove_duplicates(self, lib):
         duplicate_items = self.duplicate_items(lib)
-        log.debug(u'removing {0} old duplicated items', len(duplicate_items))
+        log.debug('removing {0} old duplicated items', len(duplicate_items))
         for item in duplicate_items:
             item.remove()
             if lib.directory in util.ancestry(item.path):
-                log.debug(u'deleting duplicate {0}',
+                log.debug('deleting duplicate {0}',
                           util.displayable_path(item.path))
                 util.remove(item.path)
                 util.prune_dirs(os.path.dirname(item.path),
@@ -579,7 +580,7 @@ class ImportTask(BaseImportTask):
         items = self.imported_items()
         for field, view in config['import']['set_fields'].items():
             value = view.get()
-            log.debug(u'Set field {1}={2} for {0}',
+            log.debug('Set field {1}={2} for {0}',
                       displayable_path(self.paths),
                       field,
                       value)
@@ -673,7 +674,7 @@ class ImportTask(BaseImportTask):
             return []
 
         duplicates = []
-        task_paths = set(i.path for i in self.items if i)
+        task_paths = {i.path for i in self.items if i}
         duplicate_query = dbcore.AndQuery((
             dbcore.MatchQuery('albumartist', artist),
             dbcore.MatchQuery('album', album),
@@ -683,7 +684,7 @@ class ImportTask(BaseImportTask):
             # Check whether the album paths are all present in the task
             # i.e. album is being completely re-imported by the task,
             # in which case it is not a duplicate (will be replaced).
-            album_paths = set(i.path for i in album.items())
+            album_paths = {i.path for i in album.items()}
             if not (album_paths <= task_paths):
                 duplicates.append(album)
         return duplicates
@@ -809,8 +810,8 @@ class ImportTask(BaseImportTask):
                 self.album.artpath = replaced_album.artpath
                 self.album.store()
                 log.debug(
-                    u'Reimported album: added {0}, flexible '
-                    u'attributes {1} from album {2} for {3}',
+                    'Reimported album: added {0}, flexible '
+                    'attributes {1} from album {2} for {3}',
                     self.album.added,
                     replaced_album._values_flex.keys(),
                     replaced_album.id,
@@ -823,16 +824,16 @@ class ImportTask(BaseImportTask):
                 if dup_item.added and dup_item.added != item.added:
                     item.added = dup_item.added
                     log.debug(
-                        u'Reimported item added {0} '
-                        u'from item {1} for {2}',
+                        'Reimported item added {0} '
+                        'from item {1} for {2}',
                         item.added,
                         dup_item.id,
                         displayable_path(item.path)
                     )
                 item.update(dup_item._values_flex)
                 log.debug(
-                    u'Reimported item flexible attributes {0} '
-                    u'from item {1} for {2}',
+                    'Reimported item flexible attributes {0} '
+                    'from item {1} for {2}',
                     dup_item._values_flex.keys(),
                     dup_item.id,
                     displayable_path(item.path)
@@ -845,10 +846,10 @@ class ImportTask(BaseImportTask):
         """
         for item in self.imported_items():
             for dup_item in self.replaced_items[item]:
-                log.debug(u'Replacing item {0}: {1}',
+                log.debug('Replacing item {0}: {1}',
                           dup_item.id, displayable_path(item.path))
                 dup_item.remove()
-        log.debug(u'{0} of {1} items replaced',
+        log.debug('{0} of {1} items replaced',
                   sum(bool(l) for l in self.replaced_items.values()),
                   len(self.imported_items()))
 
@@ -886,7 +887,7 @@ class SingletonImportTask(ImportTask):
     """
 
     def __init__(self, toppath, item):
-        super(SingletonImportTask, self).__init__(toppath, [item.path], [item])
+        super().__init__(toppath, [item.path], [item])
         self.item = item
         self.is_album = False
         self.paths = [item.path]
@@ -958,7 +959,7 @@ class SingletonImportTask(ImportTask):
         """
         for field, view in config['import']['set_fields'].items():
             value = view.get()
-            log.debug(u'Set field {1}={2} for {0}',
+            log.debug('Set field {1}={2} for {0}',
                       displayable_path(self.paths),
                       field,
                       value)
@@ -979,7 +980,7 @@ class SentinelImportTask(ImportTask):
     """
 
     def __init__(self, toppath, paths):
-        super(SentinelImportTask, self).__init__(toppath, paths, ())
+        super().__init__(toppath, paths, ())
         # TODO Remove the remaining attributes eventually
         self.should_remove_duplicates = False
         self.is_album = True
@@ -1023,7 +1024,7 @@ class ArchiveImportTask(SentinelImportTask):
     """
 
     def __init__(self, toppath):
-        super(ArchiveImportTask, self).__init__(toppath, ())
+        super().__init__(toppath, ())
         self.extracted = False
 
     @classmethod
@@ -1073,7 +1074,7 @@ class ArchiveImportTask(SentinelImportTask):
         """Removes the temporary directory the archive was extracted to.
         """
         if self.extracted:
-            log.debug(u'Removing extracted directory: {0}',
+            log.debug('Removing extracted directory: {0}',
                       displayable_path(self.toppath))
             shutil.rmtree(self.toppath)
 
@@ -1095,10 +1096,11 @@ class ArchiveImportTask(SentinelImportTask):
         self.toppath = extract_to
 
 
-class ImportTaskFactory(object):
+class ImportTaskFactory:
     """Generate album and singleton import tasks for all media files
     indicated by a path.
     """
+
     def __init__(self, toppath, session):
         """Create a new task factory.
 
@@ -1136,14 +1138,12 @@ class ImportTaskFactory(object):
             if self.session.config['singletons']:
                 for path in paths:
                     tasks = self._create(self.singleton(path))
-                    for task in tasks:
-                        yield task
+                    yield from tasks
                 yield self.sentinel(dirs)
 
             else:
                 tasks = self._create(self.album(paths, dirs))
-                for task in tasks:
-                    yield task
+                yield from tasks
 
         # Produce the final sentinel for this toppath to indicate that
         # it is finished. This is usually just a SentinelImportTask, but
@@ -1191,7 +1191,7 @@ class ImportTaskFactory(object):
         """Return a `SingletonImportTask` for the music file.
         """
         if self.session.already_imported(self.toppath, [path]):
-            log.debug(u'Skipping previously-imported path: {0}',
+            log.debug('Skipping previously-imported path: {0}',
                       displayable_path(path))
             self.skipped += 1
             return None
@@ -1212,10 +1212,10 @@ class ImportTaskFactory(object):
             return None
 
         if dirs is None:
-            dirs = list(set(os.path.dirname(p) for p in paths))
+            dirs = list({os.path.dirname(p) for p in paths})
 
         if self.session.already_imported(self.toppath, dirs):
-            log.debug(u'Skipping previously-imported path: {0}',
+            log.debug('Skipping previously-imported path: {0}',
                       displayable_path(dirs))
             self.skipped += 1
             return None
@@ -1245,22 +1245,22 @@ class ImportTaskFactory(object):
 
         if not (self.session.config['move'] or
                 self.session.config['copy']):
-            log.warning(u"Archive importing requires either "
-                        u"'copy' or 'move' to be enabled.")
+            log.warning("Archive importing requires either "
+                        "'copy' or 'move' to be enabled.")
             return
 
-        log.debug(u'Extracting archive: {0}',
+        log.debug('Extracting archive: {0}',
                   displayable_path(self.toppath))
         archive_task = ArchiveImportTask(self.toppath)
         try:
             archive_task.extract()
         except Exception as exc:
-            log.error(u'extraction failed: {0}', exc)
+            log.error('extraction failed: {0}', exc)
             return
 
         # Now read albums from the extracted directory.
         self.toppath = archive_task.toppath
-        log.debug(u'Archive extracted to: {0}', self.toppath)
+        log.debug('Archive extracted to: {0}', self.toppath)
         return archive_task
 
     def read_item(self, path):
@@ -1276,9 +1276,9 @@ class ImportTaskFactory(object):
                 # Silently ignore non-music files.
                 pass
             elif isinstance(exc.reason, mediafile.UnreadableFileError):
-                log.warning(u'unreadable file: {0}', displayable_path(path))
+                log.warning('unreadable file: {0}', displayable_path(path))
             else:
-                log.error(u'error reading {0}: {1}',
+                log.error('error reading {0}: {1}',
                           displayable_path(path), exc)
 
 
@@ -1317,17 +1317,16 @@ def read_tasks(session):
 
         # Generate tasks.
         task_factory = ImportTaskFactory(toppath, session)
-        for t in task_factory.tasks():
-            yield t
+        yield from task_factory.tasks()
         skipped += task_factory.skipped
 
         if not task_factory.imported:
-            log.warning(u'No files imported from {0}',
+            log.warning('No files imported from {0}',
                         displayable_path(toppath))
 
     # Show skipped directories (due to incremental/resume).
     if skipped:
-        log.info(u'Skipped {0} paths.', skipped)
+        log.info('Skipped {0} paths.', skipped)
 
 
 def query_tasks(session):
@@ -1345,7 +1344,7 @@ def query_tasks(session):
     else:
         # Search for albums.
         for album in session.lib.albums(session.query):
-            log.debug(u'yielding album {0}: {1} - {2}',
+            log.debug('yielding album {0}: {1} - {2}',
                       album.id, album.albumartist, album.album)
             items = list(album.items())
             _freshen_items(items)
@@ -1368,7 +1367,7 @@ def lookup_candidates(session, task):
         return
 
     plugins.send('import_task_start', session=session, task=task)
-    log.debug(u'Looking up: {0}', displayable_path(task.paths))
+    log.debug('Looking up: {0}', displayable_path(task.paths))
 
     # Restrict the initial lookup to IDs specified by the user via the -m
     # option. Currently all the IDs are passed onto the tasks directly.
@@ -1407,8 +1406,7 @@ def user_query(session, task):
         def emitter(task):
             for item in task.items:
                 task = SingletonImportTask(task.toppath, item)
-                for new_task in task.handle_created(session):
-                    yield new_task
+                yield from task.handle_created(session)
             yield SentinelImportTask(task.toppath, task.paths)
 
         return _extend_pipeline(emitter(task),
@@ -1454,30 +1452,30 @@ def resolve_duplicates(session, task):
     if task.choice_flag in (action.ASIS, action.APPLY, action.RETAG):
         found_duplicates = task.find_duplicates(session.lib)
         if found_duplicates:
-            log.debug(u'found duplicates: {}'.format(
+            log.debug('found duplicates: {}'.format(
                 [o.id for o in found_duplicates]
             ))
 
             # Get the default action to follow from config.
             duplicate_action = config['import']['duplicate_action'].as_choice({
-                u'skip': u's',
-                u'keep': u'k',
-                u'remove': u'r',
-                u'merge': u'm',
-                u'ask': u'a',
+                'skip': 's',
+                'keep': 'k',
+                'remove': 'r',
+                'merge': 'm',
+                'ask': 'a',
             })
-            log.debug(u'default action for duplicates: {0}', duplicate_action)
+            log.debug('default action for duplicates: {0}', duplicate_action)
 
-            if duplicate_action == u's':
+            if duplicate_action == 's':
                 # Skip new.
                 task.set_choice(action.SKIP)
-            elif duplicate_action == u'k':
+            elif duplicate_action == 'k':
                 # Keep both. Do nothing; leave the choice intact.
                 pass
-            elif duplicate_action == u'r':
+            elif duplicate_action == 'r':
                 # Remove old.
                 task.should_remove_duplicates = True
-            elif duplicate_action == u'm':
+            elif duplicate_action == 'm':
                 # Merge duplicates together
                 task.should_merge_duplicates = True
             else:
@@ -1497,7 +1495,7 @@ def import_asis(session, task):
     if task.skip:
         return
 
-    log.info(u'{}', displayable_path(task.paths))
+    log.info('{}', displayable_path(task.paths))
     task.set_choice(action.ASIS)
     apply_choice(session, task)
 
@@ -1580,11 +1578,11 @@ def log_files(session, task):
     """A coroutine (pipeline stage) to log each file to be imported.
     """
     if isinstance(task, SingletonImportTask):
-        log.info(u'Singleton: {0}', displayable_path(task.item['path']))
+        log.info('Singleton: {0}', displayable_path(task.item['path']))
     elif task.items:
-        log.info(u'Album: {0}', displayable_path(task.paths[0]))
+        log.info('Album: {0}', displayable_path(task.paths[0]))
         for item in task.items:
-            log.info(u'  {0}', displayable_path(item['path']))
+            log.info('  {0}', displayable_path(item['path']))
 
 
 def group_albums(session):

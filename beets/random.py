@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Philippe Mongeau.
 #
@@ -15,7 +14,6 @@
 
 """Get a random song or album from the library.
 """
-from __future__ import division, absolute_import, print_function
 
 import random
 from operator import attrgetter

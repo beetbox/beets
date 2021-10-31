@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Fabrice Laporte
 #
@@ -16,26 +15,21 @@
 """Abstraction layer to resize images using PIL, ImageMagick, or a
 public resizing proxy if neither is available.
 """
-from __future__ import division, absolute_import, print_function
 
 import subprocess
 import os
 import re
 from tempfile import NamedTemporaryFile
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 from beets import logging
 from beets import util
-import six
 
 # Resizing methods
 PIL = 1
 IMAGEMAGICK = 2
 WEBPROXY = 3
 
-if util.SNI_SUPPORTED:
-    PROXY_URL = 'https://images.weserv.nl/'
-else:
-    PROXY_URL = 'http://images.weserv.nl/'
+PROXY_URL = 'https://images.weserv.nl/'
 
 log = logging.getLogger('beets')
 
@@ -52,7 +46,7 @@ def resize_url(url, maxwidth, quality=0):
     if quality > 0:
         params['q'] = quality
 
-    return '{0}?{1}'.format(PROXY_URL, urlencode(params))
+    return '{}?{}'.format(PROXY_URL, urlencode(params))
 
 
 def temp_file_for(path):
@@ -74,7 +68,7 @@ def pil_resize(
     path_out = path_out or temp_file_for(path_in)
     from PIL import Image
 
-    log.debug(u'artresizer: PIL resizing {0} to {1}',
+    log.debug('artresizer: PIL resizing {0} to {1}',
               util.displayable_path(path_in), util.displayable_path(path_out))
 
     try:
@@ -100,7 +94,7 @@ def pil_resize(
             for i in range(5):
                 # 5 attempts is an abitrary choice
                 filesize = os.stat(util.syspath(path_out)).st_size
-                log.debug(u"PIL Pass {0} : Output size: {1}B", i, filesize)
+                log.debug("PIL Pass {0} : Output size: {1}B", i, filesize)
                 if filesize <= max_filesize:
                     return path_out
                 # The relationship between filesize & quality will be
@@ -112,14 +106,14 @@ def pil_resize(
                 # Use optimize flag to improve filesize decrease
                 im.save(util.py3_path(path_out), quality=lower_qual,
                         optimize=True, progressive=not deinterlace)
-            log.warning(u"PIL Failed to resize file to below {0}B",
+            log.warning("PIL Failed to resize file to below {0}B",
                         max_filesize)
             return path_out
 
         else:
             return path_out
-    except IOError:
-        log.error(u"PIL cannot create thumbnail for '{0}'",
+    except OSError:
+        log.error("PIL cannot create thumbnail for '{0}'",
                   util.displayable_path(path_in))
         return path_in
 
@@ -132,7 +126,7 @@ def im_resize(maxwidth, path_in, path_out=None,
     the output path of resized image.
     """
     path_out = path_out or temp_file_for(path_in)
-    log.debug(u'artresizer: ImageMagick resizing {0} to {1}',
+    log.debug('artresizer: ImageMagick resizing {0} to {1}',
               util.displayable_path(path_in), util.displayable_path(path_out))
 
     # "-resize WIDTHx>" shrinks images with the width larger
@@ -140,16 +134,16 @@ def im_resize(maxwidth, path_in, path_out=None,
     # with regards to the height.
     cmd = ArtResizer.shared.im_convert_cmd + [
         util.syspath(path_in, prefix=False),
-        '-resize', '{0}x>'.format(maxwidth),
+        '-resize', f'{maxwidth}x>',
     ]
 
     if quality > 0:
-        cmd += ['-quality', '{0}'.format(quality)]
+        cmd += ['-quality', f'{quality}']
 
     # "-define jpeg:extent=SIZEb" sets the target filesize for imagemagick to
     # SIZE in bytes.
     if max_filesize > 0:
-        cmd += ['-define', 'jpeg:extent={0}b'.format(max_filesize)]
+        cmd += ['-define', f'jpeg:extent={max_filesize}b']
 
     if deinterlace:
         cmd += ['-interlace', 'none']
@@ -159,7 +153,7 @@ def im_resize(maxwidth, path_in, path_out=None,
     try:
         util.command_output(cmd)
     except subprocess.CalledProcessError:
-        log.warning(u'artresizer: IM convert failed for {0}',
+        log.warning('artresizer: IM convert failed for {0}',
                     util.displayable_path(path_in))
         return path_in
 
@@ -178,8 +172,8 @@ def pil_getsize(path_in):
     try:
         im = Image.open(util.syspath(path_in))
         return im.size
-    except IOError as exc:
-        log.error(u"PIL could not read file {}: {}",
+    except OSError as exc:
+        log.error("PIL could not read file {}: {}",
                   util.displayable_path(path_in), exc)
 
 
@@ -190,17 +184,17 @@ def im_getsize(path_in):
     try:
         out = util.command_output(cmd).stdout
     except subprocess.CalledProcessError as exc:
-        log.warning(u'ImageMagick size query failed')
+        log.warning('ImageMagick size query failed')
         log.debug(
-            u'`convert` exited with (status {}) when '
-            u'getting size with command {}:\n{}',
+            '`convert` exited with (status {}) when '
+            'getting size with command {}:\n{}',
             exc.returncode, cmd, exc.output.strip()
         )
         return
     try:
         return tuple(map(int, out.split(b' ')))
     except IndexError:
-        log.warning(u'Could not understand IM output: {0!r}', out)
+        log.warning('Could not understand IM output: {0!r}', out)
 
 
 BACKEND_GET_SIZE = {
@@ -251,7 +245,7 @@ class Shareable(type):
     """
 
     def __init__(cls, name, bases, dict):
-        super(Shareable, cls).__init__(name, bases, dict)
+        super().__init__(name, bases, dict)
         cls._instance = None
 
     @property
@@ -261,7 +255,7 @@ class Shareable(type):
         return cls._instance
 
 
-class ArtResizer(six.with_metaclass(Shareable, object)):
+class ArtResizer(metaclass=Shareable):
     """A singleton class that performs image resizes.
     """
 
@@ -269,7 +263,7 @@ class ArtResizer(six.with_metaclass(Shareable, object)):
         """Create a resizer object with an inferred method.
         """
         self.method = self._check_method()
-        log.debug(u"artresizer: method is {0}", self.method)
+        log.debug("artresizer: method is {0}", self.method)
         self.can_compare = self._can_compare()
 
         # Use ImageMagick's magick binary when it's available. If it's
@@ -374,7 +368,7 @@ def get_im_version():
         try:
             out = util.command_output(cmd).stdout
         except (subprocess.CalledProcessError, OSError) as exc:
-            log.debug(u'ImageMagick version check failed: {}', exc)
+            log.debug('ImageMagick version check failed: {}', exc)
         else:
             if b'imagemagick' in out.lower():
                 pattern = br".+ (\d+)\.(\d+)\.(\d+).*"
@@ -392,7 +386,7 @@ def get_pil_version():
     """Get the PIL/Pillow version, or None if it is unavailable.
     """
     try:
-        __import__('PIL', fromlist=[str('Image')])
+        __import__('PIL', fromlist=['Image'])
         return (0,)
     except ImportError:
         return None

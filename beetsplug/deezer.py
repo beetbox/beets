@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2019, Rahul Ahuja.
 #
@@ -15,11 +14,9 @@
 
 """Adds Deezer release and track search support to the autotagger
 """
-from __future__ import absolute_import, print_function, division
 
 import collections
 
-import six
 import unidecode
 import requests
 
@@ -43,7 +40,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
     }
 
     def __init__(self):
-        super(DeezerPlugin, self).__init__()
+        super().__init__()
 
     def album_for_id(self, album_id):
         """Fetch an album by its Deezer ID or URL and return an
@@ -76,8 +73,8 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             day = None
         else:
             raise ui.UserError(
-                u"Invalid `release_date` returned "
-                u"by {} API: '{}'".format(self.data_source, release_date)
+                "Invalid `release_date` returned "
+                "by {} API: '{}'".format(self.data_source, release_date)
             )
 
         tracks_data = requests.get(
@@ -188,10 +185,10 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         """
         query_components = [
             keywords,
-            ' '.join('{}:"{}"'.format(k, v) for k, v in filters.items()),
+            ' '.join(f'{k}:"{v}"' for k, v in filters.items()),
         ]
         query = ' '.join([q for q in query_components if q])
-        if not isinstance(query, six.text_type):
+        if not isinstance(query, str):
             query = query.decode('utf8')
         return unidecode.unidecode(query)
 
@@ -217,7 +214,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         if not query:
             return None
         self._log.debug(
-            u"Searching {} for '{}'".format(self.data_source, query)
+            f"Searching {self.data_source} for '{query}'"
         )
         response = requests.get(
             self.search_url + query_type, params={'q': query}
@@ -225,7 +222,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         response.raise_for_status()
         response_data = response.json().get('data', [])
         self._log.debug(
-            u"Found {} result(s) from {} for '{}'",
+            "Found {} result(s) from {} for '{}'",
             len(response_data),
             self.data_source,
             query,

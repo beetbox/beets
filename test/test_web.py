@@ -1,13 +1,9 @@
-# -*- coding: utf-8 -*-
-
 """Tests for the 'web' plugin"""
 
-from __future__ import division, absolute_import, print_function
 
 import json
 import unittest
 import os.path
-from six import assertCountEqual
 import shutil
 
 from test import _common
@@ -23,13 +19,13 @@ class WebPluginTest(_common.LibTestCase):
 
     def setUp(self):
 
-        super(WebPluginTest, self).setUp()
+        super().setUp()
         self.log = logging.getLogger('beets.web')
 
         if platform.system() == 'Windows':
-            self.path_prefix = u'C:'
+            self.path_prefix = 'C:'
         else:
-            self.path_prefix = u''
+            self.path_prefix = ''
 
         # Add fixtures
         for track in self.lib.items():
@@ -40,27 +36,27 @@ class WebPluginTest(_common.LibTestCase):
         # The following adds will create items #1, #2 and #3
         path1 = self.path_prefix + os.sep + \
             os.path.join(b'path_1').decode('utf-8')
-        self.lib.add(Item(title=u'title',
+        self.lib.add(Item(title='title',
                           path=path1,
                           album_id=2,
                           artist='AAA Singers'))
         path2 = self.path_prefix + os.sep + \
             os.path.join(b'somewhere', b'a').decode('utf-8')
-        self.lib.add(Item(title=u'another title',
+        self.lib.add(Item(title='another title',
                           path=path2,
                           artist='AAA Singers'))
         path3 = self.path_prefix + os.sep + \
             os.path.join(b'somewhere', b'abc').decode('utf-8')
-        self.lib.add(Item(title=u'and a third',
+        self.lib.add(Item(title='and a third',
                           testattr='ABC',
                           path=path3,
                           album_id=2))
         # The following adds will create albums #1 and #2
-        self.lib.add(Album(album=u'album',
+        self.lib.add(Album(album='album',
                            albumtest='xyz'))
         path4 = self.path_prefix + os.sep + \
             os.path.join(b'somewhere2', b'art_path_2').decode('utf-8')
-        self.lib.add(Album(album=u'other album',
+        self.lib.add(Album(album='other album',
                            artpath=path4))
 
         web.app.config['TESTING'] = True
@@ -122,7 +118,7 @@ class WebPluginTest(_common.LibTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(res_json['id'], 1)
-        self.assertEqual(res_json['title'], u'title')
+        self.assertEqual(res_json['title'], 'title')
 
     def test_get_multiple_items_by_id(self):
         response = self.client.get('/item/1,2')
@@ -131,7 +127,7 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(res_json['items']), 2)
         response_titles = {item['title'] for item in res_json['items']}
-        self.assertEqual(response_titles, {u'title', u'another title'})
+        self.assertEqual(response_titles, {'title', 'another title'})
 
     def test_get_single_item_not_found(self):
         response = self.client.get('/item/4')
@@ -144,7 +140,7 @@ class WebPluginTest(_common.LibTestCase):
         res_json = json.loads(response.data.decode('utf-8'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(res_json['title'], u'full')
+        self.assertEqual(res_json['title'], 'full')
 
     def test_get_single_item_by_path_not_found_if_not_in_library(self):
         data_path = os.path.join(_common.RSRC, b'full.mp3')
@@ -170,7 +166,7 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(res_json['results']), 1)
         self.assertEqual(res_json['results'][0]['title'],
-                         u'another title')
+                         'another title')
 
     def test_query_item_string(self):
         """ testing item query: testattr:ABC """
@@ -180,7 +176,7 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(res_json['results']), 1)
         self.assertEqual(res_json['results'][0]['title'],
-                         u'and a third')
+                         'and a third')
 
     def test_query_item_regex(self):
         """ testing item query: testattr::[A-C]+ """
@@ -190,7 +186,7 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(res_json['results']), 1)
         self.assertEqual(res_json['results'][0]['title'],
-                         u'and a third')
+                         'and a third')
 
     def test_query_item_regex_backslash(self):
         # """ testing item query: testattr::\w+ """
@@ -200,7 +196,7 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(res_json['results']), 1)
         self.assertEqual(res_json['results'][0]['title'],
-                         u'and a third')
+                         'and a third')
 
     def test_query_item_path(self):
         # """ testing item query: path:\somewhere\a """
@@ -216,7 +212,7 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(res_json['results']), 1)
         self.assertEqual(res_json['results'][0]['title'],
-                         u'another title')
+                         'another title')
 
     def test_get_all_albums(self):
         response = self.client.get('/album/')
@@ -224,7 +220,7 @@ class WebPluginTest(_common.LibTestCase):
 
         self.assertEqual(response.status_code, 200)
         response_albums = [album['album'] for album in res_json['albums']]
-        assertCountEqual(self, response_albums, [u'album', u'other album'])
+        self.assertCountEqual(response_albums, ['album', 'other album'])
 
     def test_get_single_album_by_id(self):
         response = self.client.get('/album/2')
@@ -232,7 +228,7 @@ class WebPluginTest(_common.LibTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(res_json['id'], 2)
-        self.assertEqual(res_json['album'], u'other album')
+        self.assertEqual(res_json['album'], 'other album')
 
     def test_get_multiple_albums_by_id(self):
         response = self.client.get('/album/1,2')
@@ -240,7 +236,7 @@ class WebPluginTest(_common.LibTestCase):
 
         self.assertEqual(response.status_code, 200)
         response_albums = [album['album'] for album in res_json['albums']]
-        assertCountEqual(self, response_albums, [u'album', u'other album'])
+        self.assertCountEqual(response_albums, ['album', 'other album'])
 
     def test_get_album_empty_query(self):
         response = self.client.get('/album/query/')
@@ -256,7 +252,7 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(res_json['results']), 1)
         self.assertEqual(res_json['results'][0]['album'],
-                         u'other album')
+                         'other album')
         self.assertEqual(res_json['results'][0]['id'], 2)
 
     def test_get_album_details(self):
@@ -266,11 +262,11 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(res_json['items']), 2)
         self.assertEqual(res_json['items'][0]['album'],
-                         u'other album')
+                         'other album')
         self.assertEqual(res_json['items'][1]['album'],
-                         u'other album')
+                         'other album')
         response_track_titles = {item['title'] for item in res_json['items']}
-        self.assertEqual(response_track_titles, {u'title', u'and a third'})
+        self.assertEqual(response_track_titles, {'title', 'and a third'})
 
     def test_query_album_string(self):
         """ testing query: albumtest:xy """
@@ -280,7 +276,7 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(res_json['results']), 1)
         self.assertEqual(res_json['results'][0]['album'],
-                         u'album')
+                         'album')
 
     def test_query_album_artpath_regex(self):
         """ testing query: artpath::art_ """
@@ -290,7 +286,7 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(res_json['results']), 1)
         self.assertEqual(res_json['results'][0]['album'],
-                         u'other album')
+                         'other album')
 
     def test_query_album_regex_backslash(self):
         # """ testing query: albumtest::\w+ """
@@ -300,7 +296,7 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(res_json['results']), 1)
         self.assertEqual(res_json['results'][0]['album'],
-                         u'album')
+                         'album')
 
     def test_get_stats(self):
         response = self.client.get('/stats')
@@ -315,7 +311,7 @@ class WebPluginTest(_common.LibTestCase):
         web.app.config['READONLY'] = False
 
         # Create a temporary item
-        item_id = self.lib.add(Item(title=u'test_delete_item_id',
+        item_id = self.lib.add(Item(title='test_delete_item_id',
                                     test_delete_item_id=1))
 
         # Check we can find the temporary item we just created
@@ -397,7 +393,7 @@ class WebPluginTest(_common.LibTestCase):
         web.app.config['READONLY'] = False
 
         # Create a temporary item
-        self.lib.add(Item(title=u'test_delete_item_query',
+        self.lib.add(Item(title='test_delete_item_query',
                           test_delete_item_query=1))
 
         # Check we can find the temporary item we just created
@@ -434,7 +430,7 @@ class WebPluginTest(_common.LibTestCase):
         web.app.config['READONLY'] = True
 
         # Create a temporary item
-        item_id = self.lib.add(Item(title=u'test_delete_item_id_ro',
+        item_id = self.lib.add(Item(title='test_delete_item_id_ro',
                                     test_delete_item_id_ro=1))
 
         # Check we can find the temporary item we just created
@@ -461,7 +457,7 @@ class WebPluginTest(_common.LibTestCase):
         web.app.config['READONLY'] = True
 
         # Create a temporary item
-        item_id = self.lib.add(Item(title=u'test_delete_item_q_ro',
+        item_id = self.lib.add(Item(title='test_delete_item_q_ro',
                                     test_delete_item_q_ro=1))
 
         # Check we can find the temporary item we just created
@@ -488,7 +484,7 @@ class WebPluginTest(_common.LibTestCase):
         web.app.config['READONLY'] = False
 
         # Create a temporary album
-        album_id = self.lib.add(Album(album=u'test_delete_album_id',
+        album_id = self.lib.add(Album(album='test_delete_album_id',
                                       test_delete_album_id=1))
 
         # Check we can find the temporary album we just created
@@ -513,7 +509,7 @@ class WebPluginTest(_common.LibTestCase):
         web.app.config['READONLY'] = False
 
         # Create a temporary album
-        self.lib.add(Album(album=u'test_delete_album_query',
+        self.lib.add(Album(album='test_delete_album_query',
                            test_delete_album_query=1))
 
         # Check we can find the temporary album we just created
@@ -550,7 +546,7 @@ class WebPluginTest(_common.LibTestCase):
         web.app.config['READONLY'] = True
 
         # Create a temporary album
-        album_id = self.lib.add(Album(album=u'test_delete_album_id_ro',
+        album_id = self.lib.add(Album(album='test_delete_album_id_ro',
                                       test_delete_album_id_ro=1))
 
         # Check we can find the temporary album we just created
@@ -577,7 +573,7 @@ class WebPluginTest(_common.LibTestCase):
         web.app.config['READONLY'] = True
 
         # Create a temporary album
-        album_id = self.lib.add(Album(album=u'test_delete_album_query_ro',
+        album_id = self.lib.add(Album(album='test_delete_album_query_ro',
                                       test_delete_album_query_ro=1))
 
         # Check we can find the temporary album we just created
@@ -607,7 +603,7 @@ class WebPluginTest(_common.LibTestCase):
         web.app.config['READONLY'] = False
 
         # Create a temporary item
-        item_id = self.lib.add(Item(title=u'test_patch_item_id',
+        item_id = self.lib.add(Item(title='test_patch_item_id',
                                     test_patch_f1=1,
                                     test_patch_f2="Old"))
 
@@ -649,7 +645,7 @@ class WebPluginTest(_common.LibTestCase):
         web.app.config['READONLY'] = True
 
         # Create a temporary item
-        item_id = self.lib.add(Item(title=u'test_patch_item_id_ro',
+        item_id = self.lib.add(Item(title='test_patch_item_id_ro',
                                     test_patch_f1=2,
                                     test_patch_f2="Old"))
 
@@ -674,6 +670,7 @@ class WebPluginTest(_common.LibTestCase):
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')

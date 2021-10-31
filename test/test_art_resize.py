@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2020, David Swarbrick.
 #
@@ -14,8 +13,6 @@
 # included in all copies or substantial portions of the Software.
 
 """Tests for image resizing based on filesize."""
-
-from __future__ import division, absolute_import, print_function
 
 
 import unittest
@@ -138,7 +135,7 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
             '-format', '%[interlace]', syspath(path, prefix=False),
         ]
         out = command_output(cmd).stdout
-        self.assertTrue(out == b'None')
+        self.assertTrue(out == 'None')
 
 
 def suite():

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -21,19 +20,17 @@ Put something like the following in your config.yaml to configure:
         port: 6600
         password: seekrit
 """
-from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 import os
 import socket
 from beets import config
-import six
 
 
 # No need to introduce a dependency on an MPD library for such a
 # simple use case. Here's a simple socket abstraction to make things
 # easier.
-class BufferedSocket(object):
+class BufferedSocket:
     """Socket abstraction that allows reading by line."""
     def __init__(self, host, port, sep=b'\n'):
         if host[0] in ['/', '~']:
@@ -66,11 +63,11 @@ class BufferedSocket(object):
 
 class MPDUpdatePlugin(BeetsPlugin):
     def __init__(self):
-        super(MPDUpdatePlugin, self).__init__()
+        super().__init__()
         config['mpd'].add({
-            'host':     os.environ.get('MPD_HOST', u'localhost'),
+            'host':     os.environ.get('MPD_HOST', 'localhost'),
             'port':     int(os.environ.get('MPD_PORT', 6600)),
-            'password': u'',
+            'password': '',
         })
         config['mpd']['password'].redact = True
 
@@ -100,21 +97,21 @@ class MPDUpdatePlugin(BeetsPlugin):
 
         try:
             s = BufferedSocket(host, port)
-        except socket.error as e:
-            self._log.warning(u'MPD connection failed: {0}',
-                              six.text_type(e.strerror))
+        except OSError as e:
+            self._log.warning('MPD connection failed: {0}',
+                              str(e.strerror))
             return
 
         resp = s.readline()
         if b'OK MPD' not in resp:
-            self._log.warning(u'MPD connection failed: {0!r}', resp)
+            self._log.warning('MPD connection failed: {0!r}', resp)
             return
 
         if password:
             s.send(b'password "%s"\n' % password.encode('utf8'))
             resp = s.readline()
             if b'OK' not in resp:
-                self._log.warning(u'Authentication failed: {0!r}', resp)
+                self._log.warning('Authentication failed: {0!r}', resp)
                 s.send(b'close\n')
                 s.close()
                 return
@@ -122,8 +119,8 @@ class MPDUpdatePlugin(BeetsPlugin):
         s.send(b'update\n')
         resp = s.readline()
         if b'updating_db' not in resp:
-            self._log.warning(u'Update failed: {0!r}', resp)
+            self._log.warning('Update failed: {0!r}', resp)
 
         s.send(b'close\n')
         s.close()
-        self._log.info(u'Database updated.')
+        self._log.info('Database updated.')

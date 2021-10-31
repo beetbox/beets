@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Pedro Silva.
 # Copyright 2017, Quentin Young.
@@ -16,7 +15,6 @@
 
 """List missing tracks.
 """
-from __future__ import division, absolute_import, print_function
 
 import musicbrainzngs
 
@@ -93,7 +91,7 @@ class MissingPlugin(BeetsPlugin):
     }
 
     def __init__(self):
-        super(MissingPlugin, self).__init__()
+        super().__init__()
 
         self.config.add({
             'count': False,
@@ -107,14 +105,14 @@ class MissingPlugin(BeetsPlugin):
                                    help=__doc__,
                                    aliases=['miss'])
         self._command.parser.add_option(
-            u'-c', u'--count', dest='count', action='store_true',
-            help=u'count missing tracks per album')
+            '-c', '--count', dest='count', action='store_true',
+            help='count missing tracks per album')
         self._command.parser.add_option(
-            u'-t', u'--total', dest='total', action='store_true',
-            help=u'count total of missing tracks')
+            '-t', '--total', dest='total', action='store_true',
+            help='count total of missing tracks')
         self._command.parser.add_option(
-            u'-a', u'--album', dest='album', action='store_true',
-            help=u'show missing albums for artist instead of tracks')
+            '-a', '--album', dest='album', action='store_true',
+            help='show missing albums for artist instead of tracks')
         self._command.parser.add_format_option()
 
     def commands(self):
@@ -173,10 +171,10 @@ class MissingPlugin(BeetsPlugin):
         # build dict mapping artist to list of all albums
         for artist, albums in albums_by_artist.items():
             if artist[1] is None or artist[1] == "":
-                albs_no_mbid = [u"'" + a['album'] + u"'" for a in albums]
+                albs_no_mbid = ["'" + a['album'] + "'" for a in albums]
                 self._log.info(
-                    u"No musicbrainz ID for artist '{}' found in album(s) {}; "
-                    "skipping", artist[0], u", ".join(albs_no_mbid)
+                    "No musicbrainz ID for artist '{}' found in album(s) {}; "
+                    "skipping", artist[0], ", ".join(albs_no_mbid)
                 )
                 continue
 
@@ -185,7 +183,7 @@ class MissingPlugin(BeetsPlugin):
                 release_groups = resp['release-group-list']
             except MusicBrainzError as err:
                 self._log.info(
-                    u"Couldn't fetch info for artist '{}' ({}) - '{}'",
+                    "Couldn't fetch info for artist '{}' ({}) - '{}'",
                     artist[0], artist[1], err
                 )
                 continue
@@ -207,7 +205,7 @@ class MissingPlugin(BeetsPlugin):
             missing_titles = {rg['title'] for rg in missing}
 
             for release_title in missing_titles:
-                print_(u"{} - {}".format(artist[0], release_title))
+                print_("{} - {}".format(artist[0], release_title))
 
         if total:
             print(total_missing)
@@ -223,6 +221,6 @@ class MissingPlugin(BeetsPlugin):
             for track_info in getattr(album_info, 'tracks', []):
                 if track_info.track_id not in item_mbids:
                     item = _item(track_info, album_info, album.id)
-                    self._log.debug(u'track {0} in album {1}',
+                    self._log.debug('track {0} in album {1}',
                                     track_info.track_id, album_info.album_id)
                     yield item

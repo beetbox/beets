@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson and Diego Moreda.
 #
@@ -13,11 +12,10 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
 import codecs
 import unittest
 
-from mock import patch
+from unittest.mock import patch
 from test import _common
 from test.helper import TestHelper, control_stdin
 from test.test_ui_importer import TerminalImportSessionSetup
@@ -27,7 +25,7 @@ from beets.library import Item
 from beetsplug.edit import EditPlugin
 
 
-class ModifyFileMocker(object):
+class ModifyFileMocker:
     """Helper for modifying a file, replacing or editing its contents. Used for
     mocking the calls to the external editor during testing.
     """
@@ -71,7 +69,7 @@ class ModifyFileMocker(object):
             f.write(contents)
 
 
-class EditMixin(object):
+class EditMixin:
     """Helper containing some common functionality used for the Edit tests."""
     def assertItemFieldsModified(self, library_items, items, fields=[],  # noqa
                                  allowed=['path']):
@@ -143,33 +141,33 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
     def test_title_edit_discard(self, mock_write):
         """Edit title for all items in the library, then discard changes."""
         # Edit track titles.
-        self.run_mocked_command({'replacements': {u't\u00eftle':
-                                                  u'modified t\u00eftle'}},
+        self.run_mocked_command({'replacements': {'t\u00eftle':
+                                                  'modified t\u00eftle'}},
                                 # Cancel.
                                 ['c'])
 
         self.assertCounts(mock_write, write_call_count=0,
-                          title_starts_with=u't\u00eftle')
+                          title_starts_with='t\u00eftle')
         self.assertItemFieldsModified(self.album.items(), self.items_orig, [])
 
     def test_title_edit_apply(self, mock_write):
         """Edit title for all items in the library, then apply changes."""
         # Edit track titles.
-        self.run_mocked_command({'replacements': {u't\u00eftle':
-                                                  u'modified t\u00eftle'}},
+        self.run_mocked_command({'replacements': {'t\u00eftle':
+                                                  'modified t\u00eftle'}},
                                 # Apply changes.
                                 ['a'])
 
         self.assertCounts(mock_write, write_call_count=self.TRACK_COUNT,
-                          title_starts_with=u'modified t\u00eftle')
+                          title_starts_with='modified t\u00eftle')
         self.assertItemFieldsModified(self.album.items(), self.items_orig,
                                       ['title', 'mtime'])
 
     def test_single_title_edit_apply(self, mock_write):
         """Edit title for one item in the library, then apply changes."""
         # Edit one track title.
-        self.run_mocked_command({'replacements': {u't\u00eftle 9':
-                                                  u'modified t\u00eftle 9'}},
+        self.run_mocked_command({'replacements': {'t\u00eftle 9':
+                                                  'modified t\u00eftle 9'}},
                                 # Apply changes.
                                 ['a'])
 
@@ -178,7 +176,7 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
         self.assertItemFieldsModified(list(self.album.items())[:-1],
                                       self.items_orig[:-1], [])
         self.assertEqual(list(self.album.items())[-1].title,
-                         u'modified t\u00eftle 9')
+                         'modified t\u00eftle 9')
 
     def test_noedit(self, mock_write):
         """Do not edit anything."""
@@ -188,7 +186,7 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
                                 [])
 
         self.assertCounts(mock_write, write_call_count=0,
-                          title_starts_with=u't\u00eftle')
+                          title_starts_with='t\u00eftle')
         self.assertItemFieldsModified(self.album.items(), self.items_orig, [])
 
     def test_album_edit_apply(self, mock_write):
@@ -196,8 +194,8 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
         By design, the album should not be updated.""
         """
         # Edit album.
-        self.run_mocked_command({'replacements': {u'\u00e4lbum':
-                                                  u'modified \u00e4lbum'}},
+        self.run_mocked_command({'replacements': {'\u00e4lbum':
+                                                  'modified \u00e4lbum'}},
                                 # Apply changes.
                                 ['a'])
 
@@ -206,50 +204,50 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
                                       ['album', 'mtime'])
         # Ensure album is *not* modified.
         self.album.load()
-        self.assertEqual(self.album.album, u'\u00e4lbum')
+        self.assertEqual(self.album.album, '\u00e4lbum')
 
     def test_single_edit_add_field(self, mock_write):
         """Edit the yaml file appending an extra field to the first item, then
         apply changes."""
         # Append "foo: bar" to item with id == 2. ("id: 1" would match both
         # "id: 1" and "id: 10")
-        self.run_mocked_command({'replacements': {u"id: 2":
-                                                  u"id: 2\nfoo: bar"}},
+        self.run_mocked_command({'replacements': {"id: 2":
+                                                  "id: 2\nfoo: bar"}},
                                 # Apply changes.
                                 ['a'])
 
-        self.assertEqual(self.lib.items(u'id:2')[0].foo, 'bar')
+        self.assertEqual(self.lib.items('id:2')[0].foo, 'bar')
         # Even though a flexible attribute was written (which is not directly
         # written to the tags), write should still be called since templates
         # might use it.
         self.assertCounts(mock_write, write_call_count=1,
-                          title_starts_with=u't\u00eftle')
+                          title_starts_with='t\u00eftle')
 
     def test_a_album_edit_apply(self, mock_write):
         """Album query (-a), edit album field, apply changes."""
-        self.run_mocked_command({'replacements': {u'\u00e4lbum':
-                                                  u'modified \u00e4lbum'}},
+        self.run_mocked_command({'replacements': {'\u00e4lbum':
+                                                  'modified \u00e4lbum'}},
                                 # Apply changes.
                                 ['a'],
                                 args=['-a'])
 
         self.album.load()
         self.assertCounts(mock_write, write_call_count=self.TRACK_COUNT)
-        self.assertEqual(self.album.album, u'modified \u00e4lbum')
+        self.assertEqual(self.album.album, 'modified \u00e4lbum')
         self.assertItemFieldsModified(self.album.items(), self.items_orig,
                                       ['album', 'mtime'])
 
     def test_a_albumartist_edit_apply(self, mock_write):
         """Album query (-a), edit albumartist field, apply changes."""
-        self.run_mocked_command({'replacements': {u'album artist':
-                                                  u'modified album artist'}},
+        self.run_mocked_command({'replacements': {'album artist':
+                                                  'modified album artist'}},
                                 # Apply changes.
                                 ['a'],
                                 args=['-a'])
 
         self.album.load()
         self.assertCounts(mock_write, write_call_count=self.TRACK_COUNT)
-        self.assertEqual(self.album.albumartist, u'the modified album artist')
+        self.assertEqual(self.album.albumartist, 'the modified album artist')
         self.assertItemFieldsModified(self.album.items(), self.items_orig,
                                       ['albumartist', 'mtime'])
 
@@ -262,18 +260,18 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
                                 ['n'])
 
         self.assertCounts(mock_write, write_call_count=0,
-                          title_starts_with=u't\u00eftle')
+                          title_starts_with='t\u00eftle')
 
     def test_invalid_yaml(self, mock_write):
         """Edit the yaml file incorrectly (resulting in a well-formed but
         invalid yaml document)."""
         # Edit the yaml file to an invalid but parseable file.
-        self.run_mocked_command({'contents': u'wellformed: yes, but invalid'},
+        self.run_mocked_command({'contents': 'wellformed: yes, but invalid'},
                                 # No stdin.
                                 [])
 
         self.assertCounts(mock_write, write_call_count=0,
-                          title_starts_with=u't\u00eftle')
+                          title_starts_with='t\u00eftle')
 
 
 @_common.slow_test()
@@ -305,8 +303,8 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
         """
         self._setup_import_session()
         # Edit track titles.
-        self.run_mocked_interpreter({'replacements': {u'Tag Title':
-                                                      u'Edited Title'}},
+        self.run_mocked_interpreter({'replacements': {'Tag Title':
+                                                      'Edited Title'}},
                                     # eDit, Apply changes.
                                     ['d', 'a'])
 
@@ -319,7 +317,7 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
                             for i in self.lib.items()))
 
         # Ensure album is *not* fetched from a candidate.
-        self.assertEqual(self.lib.albums()[0].mb_albumid, u'')
+        self.assertEqual(self.lib.albums()[0].mb_albumid, '')
 
     def test_edit_discard_asis(self):
         """Edit the album field for all items in the library, discard changes,
@@ -327,8 +325,8 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
         """
         self._setup_import_session()
         # Edit track titles.
-        self.run_mocked_interpreter({'replacements': {u'Tag Title':
-                                                      u'Edited Title'}},
+        self.run_mocked_interpreter({'replacements': {'Tag Title':
+                                                      'Edited Title'}},
                                     # eDit, Cancel, Use as-is.
                                     ['d', 'c', 'u'])
 
@@ -341,7 +339,7 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
                             for i in self.lib.items()))
 
         # Ensure album is *not* fetched from a candidate.
-        self.assertEqual(self.lib.albums()[0].mb_albumid, u'')
+        self.assertEqual(self.lib.albums()[0].mb_albumid, '')
 
     def test_edit_apply_candidate(self):
         """Edit the album field for all items in the library, apply changes,
@@ -349,8 +347,8 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
         """
         self._setup_import_session()
         # Edit track titles.
-        self.run_mocked_interpreter({'replacements': {u'Applied Title':
-                                                      u'Edited Title'}},
+        self.run_mocked_interpreter({'replacements': {'Applied Title':
+                                                      'Edited Title'}},
                                     # edit Candidates, 1, Apply changes.
                                     ['c', '1', 'a'])
 
@@ -377,8 +375,8 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
         # ids but not the db connections.
         self.importer.paths = []
         self.importer.query = TrueQuery()
-        self.run_mocked_interpreter({'replacements': {u'Applied Title':
-                                                      u'Edited Title'}},
+        self.run_mocked_interpreter({'replacements': {'Applied Title':
+                                                      'Edited Title'}},
                                     # eDit, Apply changes.
                                     ['d', 'a'])
 
@@ -398,8 +396,8 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
         """
         self._setup_import_session()
         # Edit track titles.
-        self.run_mocked_interpreter({'replacements': {u'Applied Title':
-                                                      u'Edited Title'}},
+        self.run_mocked_interpreter({'replacements': {'Applied Title':
+                                                      'Edited Title'}},
                                     # edit Candidates, 1, Apply changes.
                                     ['c', '1', 'a'])
 
@@ -419,8 +417,8 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
         """
         self._setup_import_session(singletons=True)
         # Edit track titles.
-        self.run_mocked_interpreter({'replacements': {u'Tag Title':
-                                                      u'Edited Title'}},
+        self.run_mocked_interpreter({'replacements': {'Tag Title':
+                                                      'Edited Title'}},
                                     # eDit, Apply changes, aBort.
                                     ['d', 'a', 'b'])
 
@@ -438,8 +436,8 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
         """
         self._setup_import_session()
         # Edit track titles.
-        self.run_mocked_interpreter({'replacements': {u'Applied Title':
-                                                      u'Edited Title'}},
+        self.run_mocked_interpreter({'replacements': {'Applied Title':
+                                                      'Edited Title'}},
                                     # edit Candidates, 1, Apply changes, aBort.
                                     ['c', '1', 'a', 'b'])
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -16,7 +15,6 @@
 """Test module for file ui/commands.py
 """
 
-from __future__ import division, absolute_import, print_function
 
 import os
 import shutil
@@ -31,7 +29,7 @@ from beets.ui import commands
 
 class QueryTest(_common.TestCase):
     def setUp(self):
-        super(QueryTest, self).setUp()
+        super().setUp()
 
         self.libdir = os.path.join(self.temp_dir, b'testlibdir')
         os.mkdir(self.libdir)
@@ -89,7 +87,7 @@ class QueryTest(_common.TestCase):
 
 class FieldsTest(_common.LibTestCase):
     def setUp(self):
-        super(FieldsTest, self).setUp()
+        super().setUp()
 
         self.io.install()
 
