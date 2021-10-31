@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
@@ -15,7 +14,6 @@
 """Exports data from beets
 """
 
-from __future__ import division, absolute_import, print_function
 
 import sys
 import codecs
@@ -42,7 +40,7 @@ class ExportEncoder(json.JSONEncoder):
 class ExportPlugin(BeetsPlugin):
 
     def __init__(self):
-        super(ExportPlugin, self).__init__()
+        super().__init__()
 
         self.config.add({
             'default_format': 'json',
@@ -81,30 +79,32 @@ class ExportPlugin(BeetsPlugin):
         })
 
     def commands(self):
-        # TODO: Add option to use albums
-
-        cmd = ui.Subcommand('export', help=u'export data from beets')
+        cmd = ui.Subcommand('export', help='export data from beets')
         cmd.func = self.run
         cmd.parser.add_option(
-            u'-l', u'--library', action='store_true',
-            help=u'show library fields instead of tags',
+            '-l', '--library', action='store_true',
+            help='show library fields instead of tags',
         )
         cmd.parser.add_option(
-            u'--append', action='store_true', default=False,
-            help=u'if should append data to the file',
+            '-a', '--album', action='store_true',
+            help='show album fields instead of tracks (implies "--library")',
         )
         cmd.parser.add_option(
-            u'-i', u'--include-keys', default=[],
+            '--append', action='store_true', default=False,
+            help='if should append data to the file',
+        )
+        cmd.parser.add_option(
+            '-i', '--include-keys', default=[],
             action='append', dest='included_keys',
-            help=u'comma separated list of keys to show',
+            help='comma separated list of keys to show',
         )
         cmd.parser.add_option(
-            u'-o', u'--output',
-            help=u'path for the output file. If not given, will print the data'
+            '-o', '--output',
+            help='path for the output file. If not given, will print the data'
         )
         cmd.parser.add_option(
-            u'-f', u'--format', default='json',
-            help=u"the output format: json (default), jsonlines, csv, or xml"
+            '-f', '--format', default='json',
+            help="the output format: json (default), jsonlines, csv, or xml"
         )
         return [cmd]
 
@@ -123,25 +123,29 @@ class ExportPlugin(BeetsPlugin):
             }
         )
 
-        items = []
-        data_collector = library_data if opts.library else tag_data
+        if opts.library or opts.album:
+            data_collector = library_data
+        else:
+            data_collector = tag_data
 
         included_keys = []
         for keys in opts.included_keys:
             included_keys.extend(keys.split(','))
 
-        for data_emitter in data_collector(lib, ui.decargs(args)):
+        items = []
+        for data_emitter in data_collector(
+                lib, ui.decargs(args),
+                album=opts.album,
+        ):
             try:
                 data, item = data_emitter(included_keys or '*')
-            except (mediafile.UnreadableFileError, IOError) as ex:
-                self._log.error(u'cannot read file: {0}', ex)
+            except (mediafile.UnreadableFileError, OSError) as ex:
+                self._log.error('cannot read file: {0}', ex)
                 continue
 
             for key, value in data.items():
                 if isinstance(value, bytes):
                     data[key] = util.displayable_path(value)
-
-            items += [data]
 
             if file_format_is_line_based:
                 export_format.export(data, **format_options)
@@ -152,9 +156,9 @@ class ExportPlugin(BeetsPlugin):
             export_format.export(items, **format_options)
 
 
-class ExportFormat(object):
+class ExportFormat:
     """The output format type"""
-    def __init__(self, file_path, file_mode=u'w', encoding=u'utf-8'):
+    def __init__(self, file_path, file_mode='w', encoding='utf-8'):
         self.path = file_path
         self.mode = file_mode
         self.encoding = encoding
@@ -179,8 +183,8 @@ class ExportFormat(object):
 
 class JsonFormat(ExportFormat):
     """Saves in a json file"""
-    def __init__(self, file_path, file_mode=u'w', encoding=u'utf-8'):
-        super(JsonFormat, self).__init__(file_path, file_mode, encoding)
+    def __init__(self, file_path, file_mode='w', encoding='utf-8'):
+        super().__init__(file_path, file_mode, encoding)
 
     def export(self, data, **kwargs):
         json.dump(data, self.out_stream, cls=ExportEncoder, **kwargs)
@@ -189,8 +193,8 @@ class JsonFormat(ExportFormat):
 
 class CSVFormat(ExportFormat):
     """Saves in a csv file"""
-    def __init__(self, file_path, file_mode=u'w', encoding=u'utf-8'):
-        super(CSVFormat, self).__init__(file_path, file_mode, encoding)
+    def __init__(self, file_path, file_mode='w', encoding='utf-8'):
+        super().__init__(file_path, file_mode, encoding)
 
     def export(self, data, **kwargs):
         header = list(data[0].keys()) if data else []
@@ -201,16 +205,16 @@ class CSVFormat(ExportFormat):
 
 class XMLFormat(ExportFormat):
     """Saves in a xml file"""
-    def __init__(self, file_path, file_mode=u'w', encoding=u'utf-8'):
-        super(XMLFormat, self).__init__(file_path, file_mode, encoding)
+    def __init__(self, file_path, file_mode='w', encoding='utf-8'):
+        super().__init__(file_path, file_mode, encoding)
 
     def export(self, data, **kwargs):
         # Creates the XML file structure.
-        library = ElementTree.Element(u'library')
-        tracks = ElementTree.SubElement(library, u'tracks')
+        library = ElementTree.Element('library')
+        tracks = ElementTree.SubElement(library, 'tracks')
         if data and isinstance(data[0], dict):
             for index, item in enumerate(data):
-                track = ElementTree.SubElement(tracks, u'track')
+                track = ElementTree.SubElement(tracks, 'track')
                 for key, value in item.items():
                     track_details = ElementTree.SubElement(track, key)
                     track_details.text = value

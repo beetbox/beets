@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, David Hamp-Gonsalves
 #
@@ -15,7 +14,6 @@
 
 """Send the results of a query to the configured music player as a playlist.
 """
-from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
@@ -40,8 +38,8 @@ def play(command_str, selection, paths, open_args, log, item_type='track',
     """
     # Print number of tracks or albums to be played, log command to be run.
     item_type += 's' if len(selection) > 1 else ''
-    ui.print_(u'Playing {0} {1}.'.format(len(selection), item_type))
-    log.debug(u'executing command: {} {!r}', command_str, open_args)
+    ui.print_('Playing {} {}.'.format(len(selection), item_type))
+    log.debug('executing command: {} {!r}', command_str, open_args)
 
     try:
         if keep_open:
@@ -52,13 +50,13 @@ def play(command_str, selection, paths, open_args, log, item_type='track',
             util.interactive_open(open_args, command_str)
     except OSError as exc:
         raise ui.UserError(
-            "Could not play the query: {0}".format(exc))
+            f"Could not play the query: {exc}")
 
 
 class PlayPlugin(BeetsPlugin):
 
     def __init__(self):
-        super(PlayPlugin, self).__init__()
+        super().__init__()
 
         config['play'].add({
             'command': None,
@@ -75,18 +73,18 @@ class PlayPlugin(BeetsPlugin):
     def commands(self):
         play_command = Subcommand(
             'play',
-            help=u'send music to a player as a playlist'
+            help='send music to a player as a playlist'
         )
         play_command.parser.add_album_option()
         play_command.parser.add_option(
-            u'-A', u'--args',
+            '-A', '--args',
             action='store',
-            help=u'add additional arguments to the command',
+            help='add additional arguments to the command',
         )
         play_command.parser.add_option(
-            u'-y', u'--yes',
+            '-y', '--yes',
             action="store_true",
-            help=u'skip the warning threshold',
+            help='skip the warning threshold',
         )
         play_command.func = self._play_command
         return [play_command]
@@ -125,7 +123,7 @@ class PlayPlugin(BeetsPlugin):
 
         if not selection:
             ui.print_(ui.colorize('text_warning',
-                                  u'No {0} to play.'.format(item_type)))
+                                  f'No {item_type} to play.'))
             return
 
         open_args = self._playlist_or_paths(paths)
@@ -149,7 +147,7 @@ class PlayPlugin(BeetsPlugin):
             if ARGS_MARKER in command_str:
                 return command_str.replace(ARGS_MARKER, args)
             else:
-                return u"{} {}".format(command_str, args)
+                return f"{command_str} {args}"
         else:
             # Don't include the marker in the command.
             return command_str.replace(" " + ARGS_MARKER, "")
@@ -176,10 +174,10 @@ class PlayPlugin(BeetsPlugin):
 
             ui.print_(ui.colorize(
                 'text_warning',
-                u'You are about to queue {0} {1}.'.format(
+                'You are about to queue {} {}.'.format(
                     len(selection), item_type)))
 
-            if ui.input_options((u'Continue', u'Abort')) == 'a':
+            if ui.input_options(('Continue', 'Abort')) == 'a':
                 return True
 
         return False

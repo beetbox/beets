@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -29,7 +28,6 @@ is not supported, use password instead:
         pass: password
         auth: pass
 """
-from __future__ import division, absolute_import, print_function
 
 import hashlib
 import random
@@ -46,7 +44,7 @@ __author__ = 'https://github.com/maffo999'
 
 class SubsonicUpdate(BeetsPlugin):
     def __init__(self):
-        super(SubsonicUpdate, self).__init__()
+        super().__init__()
         # Set default configuration values
         config['subsonic'].add({
             'user': 'admin',
@@ -94,16 +92,16 @@ class SubsonicUpdate(BeetsPlugin):
             context_path = config['subsonic']['contextpath'].as_str()
             if context_path == '/':
                 context_path = ''
-            url = "http://{}:{}{}".format(host, port, context_path)
+            url = f"http://{host}:{port}{context_path}"
 
-        return url + '/rest/{}'.format(endpoint)
+        return url + f'/rest/{endpoint}'
 
     def start_scan(self):
         user = config['subsonic']['user'].as_str()
         auth = config['subsonic']['auth'].as_str()
         url = self.__format_url("startScan")
-        self._log.debug(u'URL is {0}', url)
-        self._log.debug(u'auth type is {0}', config['subsonic']['auth'])
+        self._log.debug('URL is {0}', url)
+        self._log.debug('auth type is {0}', config['subsonic']['auth'])
 
         if auth == "token":
             salt, token = self.__create_token()
@@ -120,7 +118,7 @@ class SubsonicUpdate(BeetsPlugin):
             encpass = hexlify(password.encode()).decode()
             payload = {
                 'u': user,
-                'p': 'enc:{}'.format(encpass),
+                'p': f'enc:{encpass}',
                 'v': '1.12.0',
                 'c': 'beets',
                 'f': 'json'
@@ -135,12 +133,12 @@ class SubsonicUpdate(BeetsPlugin):
                     json['subsonic-response']['status'] == "ok":
                 count = json['subsonic-response']['scanStatus']['count']
                 self._log.info(
-                    u'Updating Subsonic; scanning {0} tracks'.format(count))
+                    f'Updating Subsonic; scanning {count} tracks')
             elif response.status_code == 200 and \
                     json['subsonic-response']['status'] == "failed":
                 error_message = json['subsonic-response']['error']['message']
-                self._log.error(u'Error: {0}'.format(error_message))
+                self._log.error(f'Error: {error_message}')
             else:
-                self._log.error(u'Error: {0}', json)
+                self._log.error('Error: {0}', json)
         except Exception as error:
-            self._log.error(u'Error: {0}'.format(error))
+            self._log.error(f'Error: {error}')

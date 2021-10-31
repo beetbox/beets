@@ -7,16 +7,57 @@ Changelog
 This release now requires Python 3.6 or later (it removes support for Python
 2.7, 3.4, and 3.5).
 
-* A new :doc:`/plugins/fetchart` option to store cover art as non-progressive
-  image. Useful for DAPs that support progressive images. Set ``deinterlace:
-  yes`` in your configuration to enable.
 For packagers:
 
+* As noted above, the minimum Python version is now 3.6.
 * We fixed a flaky test, named `test_album_art` in the `test_zero.py` file,
   that some distributions had disabled. Disabling this test should no longer
   be necessary.
   :bug:`4037` :bug:`4038`
+* This version of beets no longer depends on the `six`_ library.
+  :bug:`4030`
 
+Major new features:
+
+* Include the genre tags from the release group when the musicbrainz genre
+  option is set, and sort them by the number of votes.  Thanks to
+  :user:`aereaux`.
+
+* Primary and secondary release types from MusicBrainz are now stored in
+  ``albumtypes`` field. Thanks to :user:`edgars-supe`.
+  :bug:`2200`
+
+* :doc:`/plugins/albumtypes`: An accompanying plugin for formatting
+  ``albumtypes``. Thanks to :user:`edgars-supe`.
+
+Other new things:
+
+* Permissions plugin now sets cover art permissions to the file permissions.
+* :doc:`/plugins/unimported`: Support excluding specific
+  subdirectories in library.
+* :doc:`/plugins/info`: Support ``--album`` flag.
+* :doc:`/plugins/export`: Support ``--album`` flag.
+* :doc:`/plugins/fetchart`: A new option to store cover art as non-progressive
+  image. Useful for DAPs that support progressive images. Set ``deinterlace:
+  yes`` in your configuration to enable.
+
+For plugin developers:
+
+* :py:meth:`beets.library.Item.destination` now accepts a `replacements`
+  argument to be used in favor of the default.
+
+Bug fixes:
+
+* :doc:`/plugins/lyrics`: Fix crash bug when beautifulsoup4 is not installed.
+  :bug:`4027`
+
+* :doc:`/plugins/discogs`: Adapt regex to new URL format .
+  :bug: `4080`
+
+* :doc:`/plugins/discogs`: Remove requests ratel imit code from plugin in favor of discogs library built-in capability
+  :bug: `4108`
+
+* :doc:`/plugins/export`: Fix duplicated output.
 
 1.5.0 (August 19, 2021)
 -----------------------

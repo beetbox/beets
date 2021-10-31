@@ -1,15 +1,13 @@
-# -*- coding: utf-8 -*-
-
 """Tests for the 'permissions' plugin.
 """
-from __future__ import division, absolute_import, print_function
 
 import os
 import platform
 import unittest
-from mock import patch, Mock
+from unittest.mock import patch, Mock
 
 from test.helper import TestHelper
+from test._common import touch
 from beets.util import displayable_path
 from beetsplug.permissions import (check_permissions,
                                    convert_perm,
@@ -68,7 +66,7 @@ class PermissionsPluginTest(unittest.TestCase, TestHelper):
     def assertPerms(self, path, typ, expect_success):  # noqa
         for x in [(True, self.exp_perms[expect_success][typ], '!='),
                   (False, self.exp_perms[not expect_success][typ], '==')]:
-            msg = u'{} : {} {} {}'.format(
+            msg = '{} : {} {} {}'.format(
                 displayable_path(path),
                 oct(os.stat(path).st_mode),
                 x[2],
@@ -81,6 +79,25 @@ class PermissionsPluginTest(unittest.TestCase, TestHelper):
 
     def test_convert_perm_from_int(self):
         self.assertEqual(convert_perm(10), 8)
+
+    def test_permissions_on_set_art(self):
+        self.do_set_art(True)
+
+    @patch("os.chmod", Mock())
+    def test_failing_permissions_on_set_art(self):
+        self.do_set_art(False)
+
+    def do_set_art(self, expect_success):
+        if platform.system() == 'Windows':
+            self.skipTest('permissions not available on Windows')
+        self.importer = self.create_importer()
+        self.importer.run()
+        album = self.lib.albums().get()
+        artpath = os.path.join(self.temp_dir, b'cover.jpg')
+        touch(artpath)
+        album.set_art(artpath)
+        self.assertEqual(expect_success,
+                         check_permissions(album.artpath, 0o777))
 
 
 def suite():

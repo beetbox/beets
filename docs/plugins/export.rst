@@ -34,6 +34,9 @@ The ``export`` command has these command-line options:
 * ``--library`` or ``-l``: Show data from the library database instead of the
   files' tags.
 
+* ``--album`` or ``-a``: Show data from albums instead of tracks (implies
+  ``--library``).
+
 * ``--output`` or ``-o``: Path for an output file. If not informed, will print
   the data in the console.
 

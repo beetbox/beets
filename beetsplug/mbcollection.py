@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright (c) 2011, Jeffrey Aylesworth <mail@jeffrey.red>
 #
@@ -13,7 +12,6 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
@@ -34,11 +32,11 @@ def mb_call(func, *args, **kwargs):
     try:
         return func(*args, **kwargs)
     except musicbrainzngs.AuthenticationError:
-        raise ui.UserError(u'authentication with MusicBrainz failed')
+        raise ui.UserError('authentication with MusicBrainz failed')
     except (musicbrainzngs.ResponseError, musicbrainzngs.NetworkError) as exc:
-        raise ui.UserError(u'MusicBrainz API error: {0}'.format(exc))
+        raise ui.UserError(f'MusicBrainz API error: {exc}')
     except musicbrainzngs.UsageError:
-        raise ui.UserError(u'MusicBrainz credentials missing')
+        raise ui.UserError('MusicBrainz credentials missing')
 
 
 def submit_albums(collection_id, release_ids):
@@ -55,7 +53,7 @@ def submit_albums(collection_id, release_ids):
 
 class MusicBrainzCollectionPlugin(BeetsPlugin):
     def __init__(self):
-        super(MusicBrainzCollectionPlugin, self).__init__()
+        super().__init__()
         config['musicbrainz']['pass'].redact = True
         musicbrainzngs.auth(
             config['musicbrainz']['user'].as_str(),
@@ -63,7 +61,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         )
         self.config.add({
             'auto': False,
-            'collection': u'',
+            'collection': '',
             'remove': False,
         })
         if self.config['auto']:
@@ -72,18 +70,18 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
     def _get_collection(self):
         collections = mb_call(musicbrainzngs.get_collections)
         if not collections['collection-list']:
-            raise ui.UserError(u'no collections exist for user')
+            raise ui.UserError('no collections exist for user')
 
         # Get all collection IDs, avoiding event collections
         collection_ids = [x['id'] for x in collections['collection-list']]
         if not collection_ids:
-            raise ui.UserError(u'No collection found.')
+            raise ui.UserError('No collection found.')
 
         # Check that the collection exists so we can present a nice error
         collection = self.config['collection'].as_str()
         if collection:
             if collection not in collection_ids:
-                raise ui.UserError(u'invalid collection ID: {}'
+                raise ui.UserError('invalid collection ID: {}'
                                    .format(collection))
             return collection
 
@@ -110,7 +108,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
 
     def commands(self):
         mbupdate = Subcommand('mbupdate',
-                              help=u'Update MusicBrainz collection')
+                              help='Update MusicBrainz collection')
         mbupdate.parser.add_option('-r', '--remove',
                                    action='store_true',
                                    default=None,
@@ -120,7 +118,7 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
         return [mbupdate]
 
     def remove_missing(self, collection_id, lib_albums):
-        lib_ids = set([x.mb_albumid for x in lib_albums])
+        lib_ids = {x.mb_albumid for x in lib_albums}
         albums_in_collection = self._get_albums_in_collection(collection_id)
         remove_me = list(set(albums_in_collection) - lib_ids)
         for i in range(0, len(remove_me), FETCH_CHUNK_SIZE):
@@ -154,13 +152,13 @@ class MusicBrainzCollectionPlugin(BeetsPlugin):
                 if re.match(UUID_REGEX, aid):
                     album_ids.append(aid)
                 else:
-                    self._log.info(u'skipping invalid MBID: {0}', aid)
+                    self._log.info('skipping invalid MBID: {0}', aid)
 
         # Submit to MusicBrainz.
         self._log.info(
-            u'Updating MusicBrainz collection {0}...', collection_id
+            'Updating MusicBrainz collection {0}...', collection_id
         )
         submit_albums(collection_id, album_ids)
         if remove_missing:
             self.remove_missing(collection_id, lib.albums())
-        self._log.info(u'...MusicBrainz collection updated.')
+        self._log.info('...MusicBrainz collection updated.')

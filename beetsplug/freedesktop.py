@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Matt Lichtenberg.
 #
@@ -16,7 +15,6 @@
 """Creates freedesktop.org-compliant .directory files on an album level.
 """
 
-from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets import ui
@@ -26,12 +24,12 @@ class FreedesktopPlugin(BeetsPlugin):
     def commands(self):
         deprecated = ui.Subcommand(
             "freedesktop",
-            help=u"Print a message to redirect to thumbnails --dolphin")
+            help="Print a message to redirect to thumbnails --dolphin")
         deprecated.func = self.deprecation_message
         return [deprecated]
 
     def deprecation_message(self, lib, opts, args):
-        ui.print_(u"This plugin is deprecated. Its functionality is "
-                  u"superseded by the 'thumbnails' plugin")
-        ui.print_(u"'thumbnails --dolphin' replaces freedesktop. See doc & "
-                  u"changelog for more information")
+        ui.print_("This plugin is deprecated. Its functionality is "
+                  "superseded by the 'thumbnails' plugin")
+        ui.print_("'thumbnails --dolphin' replaces freedesktop. See doc & "
+                  "changelog for more information")

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -16,7 +15,6 @@
 """Test module for file ui/__init__.py
 """
 
-from __future__ import division, absolute_import, print_function
 
 import unittest
 from test import _common
@@ -26,7 +24,7 @@ from beets import ui
 
 class InputMethodsTest(_common.TestCase):
     def setUp(self):
-        super(InputMethodsTest, self).setUp()
+        super().setUp()
         self.io.install()
 
     def _print_helper(self, s):
@@ -86,7 +84,7 @@ class InputMethodsTest(_common.TestCase):
 
 class InitTest(_common.LibTestCase):
     def setUp(self):
-        super(InitTest, self).setUp()
+        super().setUp()
 
     def test_human_bytes(self):
         tests = [

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2019, Jack Wilsdon <jack.wilsdon@gmail.com>
 #
@@ -16,7 +15,6 @@
 """Load SQLite extensions.
 """
 
-from __future__ import division, absolute_import, print_function
 
 from beets.dbcore import Database
 from beets.plugins import BeetsPlugin
@@ -25,7 +23,7 @@ import sqlite3
 
 class LoadExtPlugin(BeetsPlugin):
     def __init__(self):
-        super(LoadExtPlugin, self).__init__()
+        super().__init__()
 
         if not Database.supports_extensions:
             self._log.warn('loadext is enabled but the current SQLite '
@@ -38,9 +36,9 @@ class LoadExtPlugin(BeetsPlugin):
         for v in self.config:
             ext = v.as_filename()
 
-            self._log.debug(u'loading extension {}', ext)
+            self._log.debug('loading extension {}', ext)
 
             try:
                 lib.load_extension(ext)
             except sqlite3.OperationalError as e:
-                self._log.error(u'failed to load extension {}: {}', ext, e)
+                self._log.error('failed to load extension {}: {}', ext, e)

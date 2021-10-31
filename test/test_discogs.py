@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -15,7 +14,6 @@
 
 """Tests for discogs plugin.
 """
-from __future__ import division, absolute_import, print_function
 
 import unittest
 from test import _common
@@ -174,16 +172,16 @@ class DGAlbumInfoTest(_common.TestCase):
         """Test the conversion of discogs `position` to medium, medium_index
         and subtrack_index."""
         # List of tuples (discogs_position, (medium, medium_index, subindex)
-        positions = [('1',       (None,   '1',  None)),
-                     ('A12',     ('A',    '12', None)),
-                     ('12-34',   ('12-',  '34', None)),
-                     ('CD1-1',   ('CD1-', '1',  None)),
-                     ('1.12',    (None,   '1',  '12')),
-                     ('12.a',    (None,   '12', 'A')),
-                     ('12.34',   (None,   '12', '34')),
-                     ('1ab',     (None,   '1',  'AB')),
+        positions = [('1', (None, '1', None)),
+                     ('A12', ('A', '12', None)),
+                     ('12-34', ('12-', '34', None)),
+                     ('CD1-1', ('CD1-', '1', None)),
+                     ('1.12', (None, '1', '12')),
+                     ('12.a', (None, '12', 'A')),
+                     ('12.34', (None, '12', '34')),
+                     ('1ab', (None, '1', 'AB')),
                      # Non-standard
-                     ('IV',      ('IV',   None, None)),
+                     ('IV', ('IV', None, None)),
                      ]
 
         d = DiscogsPlugin()
@@ -357,9 +355,28 @@ class DGAlbumInfoTest(_common.TestCase):
         self.assertEqual(d, None)
         self.assertIn('Release does not contain the required fields', logs[0])
 
+    def test_album_for_id(self):
+        """Test parsing for a valid Discogs release_id"""
+        test_patterns = [('http://www.discogs.com/G%C3%BCnther-Lause-Meru-Ep/release/4354798', 4354798),  # NOQA E501
+                         ('http://www.discogs.com/release/4354798-G%C3%BCnther-Lause-Meru-Ep', 4354798),  # NOQA E501
+                         ('http://www.discogs.com/G%C3%BCnther-4354798Lause-Meru-Ep/release/4354798', 4354798),  # NOQA E501
+                         ('http://www.discogs.com/release/4354798-G%C3%BCnther-4354798Lause-Meru-Ep/', 4354798),  # NOQA E501
+                         ('[r4354798]', 4354798),
+                         ('r4354798', 4354798),
+                         ('4354798', 4354798),
+                         ('yet-another-metadata-provider.org/foo/12345', ''),
+                         ('005b84a0-ecd6-39f1-b2f6-6eb48756b268', ''),
+                         ]
+        for test_pattern, expected in test_patterns:
+            match = DiscogsPlugin.extract_release_id_regex(test_pattern)
+            if not match:
+                match = ''
+            self.assertEqual(match, expected)
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')

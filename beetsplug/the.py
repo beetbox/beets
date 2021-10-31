@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Blemjhoo Tezoulbr <baobab@heresiarch.info>.
 #
@@ -15,7 +14,6 @@
 
 """Moves patterns in path formats (suitable for moving articles)."""
 
-from __future__ import division, absolute_import, print_function
 
 import re
 from beets.plugins import BeetsPlugin
@@ -23,9 +21,9 @@ from beets.plugins import BeetsPlugin
 __author__ = 'baobab@heresiarch.info'
 __version__ = '1.1'
 
-PATTERN_THE = u'^the\\s'
-PATTERN_A = u'^[a][n]?\\s'
-FORMAT = u'{0}, {1}'
+PATTERN_THE = '^the\\s'
+PATTERN_A = '^[a][n]?\\s'
+FORMAT = '{0}, {1}'
 
 
 class ThePlugin(BeetsPlugin):
@@ -33,14 +31,14 @@ class ThePlugin(BeetsPlugin):
     patterns = []
 
     def __init__(self):
-        super(ThePlugin, self).__init__()
+        super().__init__()
 
         self.template_funcs['the'] = self.the_template_func
 
         self.config.add({
             'the': True,
             'a': True,
-            'format': u'{0}, {1}',
+            'format': '{0}, {1}',
             'strip': False,
             'patterns': [],
         })
@@ -51,17 +49,17 @@ class ThePlugin(BeetsPlugin):
                 try:
                     re.compile(p)
                 except re.error:
-                    self._log.error(u'invalid pattern: {0}', p)
+                    self._log.error('invalid pattern: {0}', p)
                 else:
                     if not (p.startswith('^') or p.endswith('$')):
-                        self._log.warning(u'warning: \"{0}\" will not '
-                                          u'match string start/end', p)
+                        self._log.warning('warning: \"{0}\" will not '
+                                          'match string start/end', p)
         if self.config['a']:
             self.patterns = [PATTERN_A] + self.patterns
         if self.config['the']:
             self.patterns = [PATTERN_THE] + self.patterns
         if not self.patterns:
-            self._log.warning(u'no patterns defined!')
+            self._log.warning('no patterns defined!')
 
     def unthe(self, text, pattern):
         """Moves pattern in the path format string or strips it
@@ -84,7 +82,7 @@ class ThePlugin(BeetsPlugin):
                     fmt = self.config['format'].as_str()
                     return fmt.format(r, t.strip()).strip()
         else:
-            return u''
+            return ''
 
     def the_template_func(self, text):
         if not self.patterns:
@@ -93,8 +91,8 @@ class ThePlugin(BeetsPlugin):
             for p in self.patterns:
                 r = self.unthe(text, p)
                 if r != text:
-                    self._log.debug(u'\"{0}\" -> \"{1}\"', text, r)
+                    self._log.debug('\"{0}\" -> \"{1}\"', text, r)
                     break
             return r
         else:
-            return u''
+            return ''

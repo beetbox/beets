@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -21,13 +20,11 @@ that when getLogger(name) instantiates a logger that logger uses
 {}-style formatting.
 """
 
-from __future__ import division, absolute_import, print_function
 
 from copy import copy
 from logging import *  # noqa
 import subprocess
 import threading
-import six
 
 
 def logsafe(val):
@@ -43,7 +40,7 @@ def logsafe(val):
       example.
     """
     # Already Unicode.
-    if isinstance(val, six.text_type):
+    if isinstance(val, str):
         return val
 
     # Bytestring: needs decoding.
@@ -57,7 +54,7 @@ def logsafe(val):
     # A "problem" object: needs a workaround.
     elif isinstance(val, subprocess.CalledProcessError):
         try:
-            return six.text_type(val)
+            return str(val)
         except UnicodeDecodeError:
             # An object with a broken __unicode__ formatter. Use __str__
             # instead.
@@ -74,7 +71,7 @@ class StrFormatLogger(Logger):
     instead of %-style formatting.
     """
 
-    class _LogMessage(object):
+    class _LogMessage:
         def __init__(self, msg, args, kwargs):
             self.msg = msg
             self.args = args
@@ -82,22 +79,23 @@ class StrFormatLogger(Logger):
 
         def __str__(self):
             args = [logsafe(a) for a in self.args]
-            kwargs = dict((k, logsafe(v)) for (k, v) in self.kwargs.items())
+            kwargs = {k: logsafe(v) for (k, v) in self.kwargs.items()}
             return self.msg.format(*args, **kwargs)
 
     def _log(self, level, msg, args, exc_info=None, extra=None, **kwargs):
         """Log msg.format(*args, **kwargs)"""
         m = self._LogMessage(msg, args, kwargs)
-        return super(StrFormatLogger, self)._log(level, m, (), exc_info, extra)
+        return super()._log(level, m, (), exc_info, extra)
 
 
 class ThreadLocalLevelLogger(Logger):
     """A version of `Logger` whose level is thread-local instead of shared.
     """
+
     def __init__(self, name, level=NOTSET):
         self._thread_level = threading.local()
         self.default_level = NOTSET
-        super(ThreadLocalLevelLogger, self).__init__(name, level)
+        super().__init__(name, level)
 
     @property
     def level(self):

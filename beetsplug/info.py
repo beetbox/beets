@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -16,7 +15,6 @@
 """Shows file metadata.
 """
 
-from __future__ import division, absolute_import, print_function
 
 import os
 
@@ -27,7 +25,7 @@ from beets.library import Item
 from beets.util import displayable_path, normpath, syspath
 
 
-def tag_data(lib, args):
+def tag_data(lib, args, album=False):
     query = []
     for arg in args:
         path = normpath(arg)
@@ -71,8 +69,8 @@ def tag_data_emitter(path):
     return emitter
 
 
-def library_data(lib, args):
-    for item in lib.items(args):
+def library_data(lib, args, album=False):
+    for item in lib.albums(args) if album else lib.items(args):
         yield library_data_emitter(item)
 
 
@@ -110,7 +108,7 @@ def print_data(data, item=None, fmt=None):
     formatted = {}
     for key, value in data.items():
         if isinstance(value, list):
-            formatted[key] = u'; '.join(value)
+            formatted[key] = '; '.join(value)
         if value is not None:
             formatted[key] = value
 
@@ -118,7 +116,7 @@ def print_data(data, item=None, fmt=None):
         return
 
     maxwidth = max(len(key) for key in formatted)
-    lineformat = u'{{0:>{0}}}: {{1}}'.format(maxwidth)
+    lineformat = f'{{0:>{maxwidth}}}: {{1}}'
 
     if path:
         ui.print_(displayable_path(path))
@@ -126,7 +124,7 @@ def print_data(data, item=None, fmt=None):
     for field in sorted(formatted):
         value = formatted[field]
         if isinstance(value, list):
-            value = u'; '.join(value)
+            value = '; '.join(value)
         ui.print_(lineformat.format(field, value))
 
 
@@ -141,7 +139,7 @@ def print_data_keys(data, item=None):
     if len(formatted) == 0:
         return
 
-    line_format = u'{0}{{0}}'.format(u' ' * 4)
+    line_format = '{0}{{0}}'.format(' ' * 4)
     if path:
         ui.print_(displayable_path(path))
 
@@ -152,24 +150,28 @@ def print_data_keys(data, item=None):
 class InfoPlugin(BeetsPlugin):
 
     def commands(self):
-        cmd = ui.Subcommand('info', help=u'show file metadata')
+        cmd = ui.Subcommand('info', help='show file metadata')
         cmd.func = self.run
         cmd.parser.add_option(
-            u'-l', u'--library', action='store_true',
-            help=u'show library fields instead of tags',
+            '-l', '--library', action='store_true',
+            help='show library fields instead of tags',
         )
         cmd.parser.add_option(
-            u'-s', u'--summarize', action='store_true',
-            help=u'summarize the tags of all files',
+            '-a', '--album', action='store_true',
+            help='show album fields instead of tracks (implies "--library")',
         )
         cmd.parser.add_option(
-            u'-i', u'--include-keys', default=[],
+            '-s', '--summarize', action='store_true',
+            help='summarize the tags of all files',
+        )
+        cmd.parser.add_option(
+            '-i', '--include-keys', default=[],
             action='append', dest='included_keys',
-            help=u'comma separated list of keys to show',
+            help='comma separated list of keys to show',
         )
         cmd.parser.add_option(
-            u'-k', u'--keys-only', action='store_true',
-            help=u'show only the keys',
+            '-k', '--keys-only', action='store_true',
+            help='show only the keys',
         )
         cmd.parser.add_format_option(target='item')
         return [cmd]
@@ -188,7 +190,7 @@ class InfoPlugin(BeetsPlugin):
         dictionary and only prints that. If two files have different values
         for the same tag, the value is set to '[various]'
         """
-        if opts.library:
+        if opts.library or opts.album:
             data_collector = library_data
         else:
             data_collector = tag_data
@@ -201,11 +203,14 @@ class InfoPlugin(BeetsPlugin):
 
         first = True
         summary = {}
-        for data_emitter in data_collector(lib, ui.decargs(args)):
+        for data_emitter in data_collector(
+                lib, ui.decargs(args),
+                album=opts.album,
+        ):
             try:
                 data, item = data_emitter(included_keys or '*')
-            except (mediafile.UnreadableFileError, IOError) as ex:
-                self._log.error(u'cannot read file: {0}', ex)
+            except (mediafile.UnreadableFileError, OSError) as ex:
+                self._log.error('cannot read file: {0}', ex)
                 continue
 
             if opts.summarize:

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Blemjhoo Tezoulbr <baobab@heresiarch.info>.
 #
@@ -13,7 +12,6 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
 
 """Warns you about things you hate (or even blocks import)."""
 
@@ -33,14 +31,14 @@ def summary(task):
     object.
     """
     if task.is_album:
-        return u'{0} - {1}'.format(task.cur_artist, task.cur_album)
+        return f'{task.cur_artist} - {task.cur_album}'
     else:
-        return u'{0} - {1}'.format(task.item.artist, task.item.title)
+        return f'{task.item.artist} - {task.item.title}'
 
 
 class IHatePlugin(BeetsPlugin):
     def __init__(self):
-        super(IHatePlugin, self).__init__()
+        super().__init__()
         self.register_listener('import_task_choice',
                                self.import_task_choice_event)
         self.config.add({
@@ -69,14 +67,14 @@ class IHatePlugin(BeetsPlugin):
 
         if task.choice_flag == action.APPLY:
             if skip_queries or warn_queries:
-                self._log.debug(u'processing your hate')
+                self._log.debug('processing your hate')
                 if self.do_i_hate_this(task, skip_queries):
                     task.choice_flag = action.SKIP
-                    self._log.info(u'skipped: {0}', summary(task))
+                    self._log.info('skipped: {0}', summary(task))
                     return
                 if self.do_i_hate_this(task, warn_queries):
-                    self._log.info(u'you may hate this: {0}', summary(task))
+                    self._log.info('you may hate this: {0}', summary(task))
             else:
-                self._log.debug(u'nothing to do')
+                self._log.debug('nothing to do')
         else:
-            self._log.debug(u'user made a decision, nothing to do')
+            self._log.debug('user made a decision, nothing to do')

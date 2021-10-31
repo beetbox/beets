@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Heinz Wiesinger.
 #
@@ -16,7 +15,6 @@
 """Synchronize information from amarok's library via dbus
 """
 
-from __future__ import division, absolute_import, print_function
 
 from os.path import basename
 from datetime import datetime
@@ -49,14 +47,14 @@ class Amarok(MetaSource):
         'amarok_lastplayed':  DateType(),
     }
 
-    query_xml = u'<query version="1.0"> \
+    query_xml = '<query version="1.0"> \
                     <filters> \
                         <and><include field="filename" value=%s /></and> \
                     </filters> \
                 </query>'
 
     def __init__(self, config, log):
-        super(Amarok, self).__init__(config, log)
+        super().__init__(config, log)
 
         if not dbus:
             raise ImportError('failed to import dbus')
