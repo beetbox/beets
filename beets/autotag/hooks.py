@@ -79,7 +79,7 @@ class AlbumInfo(AttrDict):
                  original_day=None, data_source=None, data_url=None,
                  discogs_albumid=None, discogs_labelid=None,
                  discogs_artistid=None, vgmdb_album_id=None,
-                 vgmdb_artist_id=None, vgmdb_game=None, game=None, **kwargs):
+                 vgmdb_artist_id=None, vgmdb_game=None, **kwargs):
         self.album = album
         self.album_id = album_id
         self.artist = artist
