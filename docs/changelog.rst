@@ -16,6 +16,9 @@ For packagers:
   :bug:`4037` :bug:`4038`
 * This version of beets no longer depends on the `six`_ library.
   :bug:`4030`
+* The `gmusic` plugin was removed since Google Play Music has been shut down.
+  Thus, the optional dependency on `gmusicapi` does not exist anymore.
+  :bug:`4089`
 
 Major new features:
 
@@ -37,6 +40,12 @@ Other new things:
   subdirectories in library.
 * :doc:`/plugins/info`: Support ``--album`` flag.
 * :doc:`/plugins/export`: Support ``--album`` flag.
+* ``beet move`` path differences are now highlighted in color (when enabled).
+* When moving files and a direct rename of a file is not possible, beets now
+  copies to a temporary file in the target folder first instead of directly
+  using the target path. This gets us closer to always updating files
+  atomically. Thanks to :user:`catap`.
+  :bug:`4060`
 * :doc:`/plugins/fetchart`: A new option to store cover art as non-progressive
   image. Useful for DAPs that support progressive images. Set ``deinterlace:
   yes`` in your configuration to enable.
