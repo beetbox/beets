@@ -77,7 +77,10 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
             # Use PIL's default quality.
             quality = -1
 
-        im.save(util.py3_path(path_out), quality=quality)
+        # progressive=False only affects JPEGs and is the default,
+        # but we include it here for explicitness.
+        im.save(util.py3_path(path_out), quality=quality, progressive=False)
+
         if max_filesize > 0:
             # If maximum filesize is set, we attempt to lower the quality of
             # jpeg conversion by a proportional amount, up to 3 attempts
@@ -99,9 +102,8 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
                 if lower_qual < 10:
                     lower_qual = 10
                 # Use optimize flag to improve filesize decrease
-                im.save(
-                    util.py3_path(path_out), quality=lower_qual, optimize=True
-                )
+                im.save(util.py3_path(path_out), quality=lower_qual,
+                        optimize=True, progressive=False)
             log.warning("PIL Failed to resize file to below {0}B",
                         max_filesize)
             return path_out
@@ -127,9 +129,12 @@ def im_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
     # "-resize WIDTHx>" shrinks images with the width larger
     # than the given width while maintaining the aspect ratio
     # with regards to the height.
+    # ImageMagick already seems to default to no interlace, but we include it
+    # here for the sake of explicitness.
     cmd = ArtResizer.shared.im_convert_cmd + [
         util.syspath(path_in, prefix=False),
         '-resize', f'{maxwidth}x>',
+        '-interlace', 'none',
     ]
 
     if quality > 0:
@@ -195,6 +200,40 @@ BACKEND_GET_SIZE = {
 }
 
 
+def pil_deinterlace(path_in, path_out=None):
+    path_out = path_out or temp_file_for(path_in)
+    from PIL import Image
+
+    try:
+        im = Image.open(util.syspath(path_in))
+        im.save(util.py3_path(path_out), progressive=False)
+        return path_out
+    except IOError:
+        return path_in
+
+
+def im_deinterlace(path_in, path_out=None):
+    path_out = path_out or temp_file_for(path_in)
+
+    cmd = ArtResizer.shared.im_convert_cmd + [
+        util.syspath(path_in, prefix=False),
+        '-interlace', 'none',
+        util.syspath(path_out, prefix=False),
+    ]
+
+    try:
+        util.command_output(cmd)
+        return path_out
+    except subprocess.CalledProcessError:
+        return path_in
+
+
+DEINTERLACE_FUNCS = {
+    PIL: pil_deinterlace,
+    IMAGEMAGICK: im_deinterlace,
+}
+
+
 class Shareable(type):
     """A pseudo-singleton metaclass that allows both shared and
     non-shared instances. The ``MyClass.shared`` property holds a
@@ -248,6 +287,13 @@ class ArtResizer(metaclass=Shareable):
             func = BACKEND_FUNCS[self.method[0]]
             return func(maxwidth, path_in, path_out,
                         quality=quality, max_filesize=max_filesize)
+        else:
+            return path_in
+
+    def deinterlace(self, path_in, path_out=None):
+        if self.local:
+            func = DEINTERLACE_FUNCS[self.method[0]]
+            return func(path_in, path_out)
         else:
             return path_in
 

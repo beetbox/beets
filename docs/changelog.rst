@@ -46,6 +46,9 @@ Other new things:
   using the target path. This gets us closer to always updating files
   atomically. Thanks to :user:`catap`.
   :bug:`4060`
+* :doc:`/plugins/fetchart`: A new option to store cover art as non-progressive
+  image. Useful for DAPs that support progressive images. Set ``deinterlace:
+  yes`` in your configuration to enable.
 
 For plugin developers:
 
