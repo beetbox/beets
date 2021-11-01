@@ -77,8 +77,8 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
             # Use PIL's default quality.
             quality = -1
 
-        # progressive=False only affects JPEG writter and is the default
-        # leaving for explicitness
+        # progressive=False only affects JPEGs and is the default,
+        # but we include it here for explicitness.
         im.save(util.py3_path(path_out), quality=quality, progressive=False)
 
         if max_filesize > 0:
@@ -129,7 +129,8 @@ def im_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
     # "-resize WIDTHx>" shrinks images with the width larger
     # than the given width while maintaining the aspect ratio
     # with regards to the height.
-    # no interlace seems to be default, specify for explicitness
+    # ImageMagick already seems to default to no interlace, but we include it
+    # here for the sake of explicitness.
     cmd = ArtResizer.shared.im_convert_cmd + [
         util.syspath(path_in, prefix=False),
         '-resize', f'{maxwidth}x>',
