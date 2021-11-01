@@ -218,15 +218,17 @@ class VGMdbPlugin(BeetsPlugin):
         mediums = len(item["discs"])
         media = item["media_format"]
         if (len(games) == 1):
-            label = games[0]
+            game = games[0]
         else:
-            label = 'Compilations'
+            game = 'Compilations'
 
         data_url = item["vgmdb_link"]
 
         return AlbumInfo(album=album_name,
+                         vgmdb_album_id=int(album_id),
                          album_id=int(album_id),
                          artist=artist,
+                         vgmdb_artist_id=self.decod(artist_id),
                          artist_id=self.decod(artist_id),
                          artist_credit=artist_credit_list,
                          tracks=Tracks,
@@ -236,8 +238,7 @@ class VGMdbPlugin(BeetsPlugin):
                          year=int(year),
                          month=int(month),
                          day=int(day),
-                         label=label,
-                         game=label,
+                         vgmdb_game=game,
                          mediums=int(mediums),
                          media=self.decod(media),
                          data_source=self.decod('VGMdb'),

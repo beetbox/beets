@@ -468,6 +468,9 @@ class Item(LibModel):
         'discogs_albumid': types.INTEGER,
         'discogs_artistid': types.INTEGER,
         'discogs_labelid': types.INTEGER,
+        'vgmdb_album_id': types.INTEGER,
+        'vgmdb_artist_id': types.INTEGER,
+        'vgmdb_game': types.STRING,
         'lyricist': types.STRING,
         'composer': types.STRING,
         'composer_sort': types.STRING,
@@ -520,7 +523,6 @@ class Item(LibModel):
         'original_year': types.PaddedInt(4),
         'original_month': types.PaddedInt(2),
         'original_day': types.PaddedInt(2),
-        'game': types.STRING,
         'initial_key': MusicalKey(),
 
         'length': DurationType(),
@@ -1038,6 +1040,9 @@ class Album(LibModel):
         'discogs_albumid': types.INTEGER,
         'discogs_artistid': types.INTEGER,
         'discogs_labelid': types.INTEGER,
+        'vgmdb_album_id': types.INTEGER,
+        'vgmdb_artist_id': types.INTEGER,
+        'vgmdb_game': types.STRING,
         'year': types.PaddedInt(4),
         'month': types.PaddedInt(2),
         'day': types.PaddedInt(2),
@@ -1063,7 +1068,6 @@ class Album(LibModel):
         'original_year': types.PaddedInt(4),
         'original_month': types.PaddedInt(2),
         'original_day': types.PaddedInt(2),
-        'game': types.STRING,
     }
 
     _search_fields = ('album', 'albumartist', 'genre')
@@ -1089,6 +1093,9 @@ class Album(LibModel):
         'discogs_albumid',
         'discogs_artistid',
         'discogs_labelid',
+        'vgmdb_album_id',
+        'vgmdb_artist_id',
+        'vgmdb_game',
         'year',
         'month',
         'day',
@@ -1114,7 +1121,6 @@ class Album(LibModel):
         'original_year',
         'original_month',
         'original_day',
-        'game',
     ]
     """List of keys that are set on an album's items.
     """
