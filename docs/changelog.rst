@@ -16,6 +16,9 @@ For packagers:
   :bug:`4037` :bug:`4038`
 * This version of beets no longer depends on the `six`_ library.
   :bug:`4030`
+* The `gmusic` plugin was removed since Google Play Music has been shut down.
+  Thus, the optional dependency on `gmusicapi` does not exist anymore.
+  :bug:`4089`
 
 Major new features:
 
