@@ -73,6 +73,7 @@ class Candidate:
         Return `CANDIDATE_DOWNSCALE` if the file must be rescaled.
         Return `CANDIDATE_DOWNSIZE` if the file must be resized, and possibly
             also rescaled.
+        Return `CANDIDATE_DEINTERLACE` if the file must be deinterlaced.
         """
         if not self.path:
             return self.CANDIDATE_BAD
@@ -159,15 +160,13 @@ class Candidate:
             self.path = \
                 ArtResizer.shared.resize(plugin.maxwidth, self.path,
                                          quality=plugin.quality,
-                                         max_filesize=plugin.max_filesize,
-                                         deinterlace=plugin.deinterlace)
+                                         max_filesize=plugin.max_filesize)
         elif self.check == self.CANDIDATE_DOWNSIZE:
             # dimensions are correct, so maxwidth is set to maximum dimension
             self.path = \
                 ArtResizer.shared.resize(max(self.size), self.path,
                                          quality=plugin.quality,
-                                         max_filesize=plugin.max_filesize,
-                                         deinterlace=plugin.deinterlace)
+                                         max_filesize=plugin.max_filesize)
         elif self.check == self.CANDIDATE_DEINTERLACE:
             self.path = ArtResizer.shared.deinterlace(self.path)
 

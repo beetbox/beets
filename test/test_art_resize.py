@@ -90,17 +90,6 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         self.assertLess(os.stat(syspath(im_b)).st_size,
                         os.stat(syspath(im_75_qual)).st_size)
 
-        # check if new deinterlace parameter breaks resize
-        im_di = resize_func(
-            225,
-            self.IMG_225x225,
-            quality=95,
-            max_filesize=0,
-            deinterlace=True,
-        )
-        # check valid path returned - deinterlace hasn't broken resize command
-        self.assertExists(im_di)
-
     @unittest.skipUnless(get_pil_version(), "PIL not available")
     def test_pil_file_resize(self):
         """Test PIL resize function is lowering file size."""
@@ -135,7 +124,7 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
             '-format', '%[interlace]', syspath(path, prefix=False),
         ]
         out = command_output(cmd).stdout
-        self.assertTrue(out == 'None')
+        self.assertTrue(out == b'None')
 
 
 def suite():
