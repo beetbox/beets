@@ -520,6 +520,7 @@ class Item(LibModel):
         'original_year': types.PaddedInt(4),
         'original_month': types.PaddedInt(2),
         'original_day': types.PaddedInt(2),
+        'game': types.STRING,
         'initial_key': MusicalKey(),
 
         'length': DurationType(),
@@ -1062,6 +1063,7 @@ class Album(LibModel):
         'original_year': types.PaddedInt(4),
         'original_month': types.PaddedInt(2),
         'original_day': types.PaddedInt(2),
+        'game': types.STRING,
     }
 
     _search_fields = ('album', 'albumartist', 'genre')
@@ -1112,6 +1114,7 @@ class Album(LibModel):
         'original_year',
         'original_month',
         'original_day',
+        'game',
     ]
     """List of keys that are set on an album's items.
     """
