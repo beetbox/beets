@@ -40,6 +40,7 @@ Other new things:
   subdirectories in library.
 * :doc:`/plugins/info`: Support ``--album`` flag.
 * :doc:`/plugins/export`: Support ``--album`` flag.
+* ``beet move`` path differences are now highlighted in color (when enabled).
 
 For plugin developers:
 
