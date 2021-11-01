@@ -41,6 +41,11 @@ Other new things:
 * :doc:`/plugins/info`: Support ``--album`` flag.
 * :doc:`/plugins/export`: Support ``--album`` flag.
 * ``beet move`` path differences are now highlighted in color (when enabled).
+* When moving files and a direct rename of a file is not possible, beets now
+  copies to a temporary file in the target folder first instead of directly
+  using the target path. This gets us closer to always updating files
+  atomically. Thanks to :user:`catap`.
+  :bug:`4060`
 
 For plugin developers:
 
