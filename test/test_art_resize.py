@@ -20,12 +20,15 @@ import os
 
 from test import _common
 from test.helper import TestHelper
-from beets.util import syspath
+from beets.util import command_output, syspath
 from beets.util.artresizer import (
     pil_resize,
     im_resize,
     get_im_version,
     get_pil_version,
+    pil_deinterlace,
+    im_deinterlace,
+    ArtResizer,
 )
 
 
@@ -96,6 +99,32 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
     def test_im_file_resize(self):
         """Test IM resize function is lowering file size."""
         self._test_img_resize(im_resize)
+
+    @unittest.skipUnless(get_pil_version(), "PIL not available")
+    def test_pil_file_deinterlace(self):
+        """Test PIL deinterlace function.
+
+        Check if pil_deinterlace function returns images
+        that are non-progressive
+        """
+        path = pil_deinterlace(self.IMG_225x225)
+        from PIL import Image
+        with Image.open(path) as img:
+            self.assertFalse('progression' in img.info)
+
+    @unittest.skipUnless(get_im_version(), "ImageMagick not available")
+    def test_im_file_deinterlace(self):
+        """Test ImageMagick deinterlace function.
+
+        Check if im_deinterlace function returns images
+        that are non-progressive.
+        """
+        path = im_deinterlace(self.IMG_225x225)
+        cmd = ArtResizer.shared.im_identify_cmd + [
+            '-format', '%[interlace]', syspath(path, prefix=False),
+        ]
+        out = command_output(cmd).stdout
+        self.assertTrue(out == b'None')
 
 
 def suite():

@@ -86,6 +86,10 @@ file. The available options are:
 - **high_resolution**: If enabled, fetchart retrieves artwork in the highest
   resolution it can find (warning: image files can sometimes reach >20MB).
   Default: ``no``.
+- **deinterlace**: If enabled, `Pillow`_ or `ImageMagick`_ backends are
+  instructed to store cover art as non-progressive JPEG. You might need this if
+  you use DAPs that don't support progressive images.
+  Default: ``no``.
 
 Note: ``maxwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
 or `Pillow`_.
