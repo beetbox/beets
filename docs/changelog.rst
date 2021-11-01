@@ -30,6 +30,9 @@ Major new features:
 * :doc:`/plugins/albumtypes`: An accompanying plugin for formatting
   ``albumtypes``. Thanks to :user:`edgars-supe`.
 
+* Add new VGMdb source for match and fetchart
+  :user:`eldarock`.
+
 Other new things:
 
 * Permissions plugin now sets cover art permissions to the file permissions.
