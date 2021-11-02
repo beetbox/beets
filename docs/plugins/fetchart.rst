@@ -90,6 +90,10 @@ file. The available options are:
   instructed to store cover art as non-progressive JPEG. You might need this if
   you use DAPs that don't support progressive images.
   Default: ``no``.
+- **cover_format**: If enabled, forced the cover image into the specified
+  format. Most often, this will be either ``JPEG`` or ``PNG`` [#imgformats]_.
+  Also respects ``deinterlace``.
+  Default: None (leave unchanged).
 
 Note: ``maxwidth`` and ``enforce_ratio`` options require either `ImageMagick`_
 or `Pillow`_.
@@ -105,6 +109,12 @@ or `Pillow`_.
 .. _beets custom search engine: https://cse.google.com.au:443/cse/publicurl?cx=001442825323518660753:hrh5ch1gjzm
 .. _Pillow: https://github.com/python-pillow/Pillow
 .. _ImageMagick: https://www.imagemagick.org/
+.. [#imgformats] Other image formats are available, though the full list
+   depends on your system and what backend you are using. If you're using the
+   ImageMagick backend, you can use ``magick identify -list format`` to get a
+   full list of all supported formats, and you can use the Python function
+   PIL.features.pilinfo() to print a list of all supported formats in Pillow
+   (``python3 -c 'import PIL.features as f; f.pilinfo()'``).
 
 Here's an example that makes plugin select only images that contain ``front`` or
 ``back`` keywords in their filenames and prioritizes the iTunes source over
