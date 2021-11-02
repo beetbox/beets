@@ -18,6 +18,7 @@ public resizing proxy if neither is available.
 
 import subprocess
 import os
+import os.path
 import re
 from tempfile import NamedTemporaryFile
 from urllib.parse import urlencode
@@ -234,6 +235,72 @@ DEINTERLACE_FUNCS = {
 }
 
 
+def im_get_format(filepath):
+    cmd = ArtResizer.shared.im_identify_cmd + [
+        '-format', '%[magick]',
+        util.syspath(filepath)
+    ]
+
+    try:
+        return util.command_output(cmd).stdout
+    except subprocess.CalledProcessError:
+        return None
+
+
+def pil_get_format(filepath):
+    from PIL import Image, UnidentifiedImageError
+
+    try:
+        with Image.open(util.syspath(filepath)) as im:
+            return im.format
+    except (ValueError, TypeError, UnidentifiedImageError, FileNotFoundError):
+        log.exception("failed to detect image format for {}", filepath)
+        return None
+
+
+BACKEND_GET_FORMAT = {
+    PIL: pil_get_format,
+    IMAGEMAGICK: im_get_format,
+}
+
+
+def im_convert_format(source, target, deinterlaced):
+    cmd = ArtResizer.shared.im_convert_cmd + [
+        util.syspath(source),
+        *(["-interlace", "none"] if deinterlaced else []),
+        util.syspath(target),
+    ]
+
+    try:
+        subprocess.check_call(
+            cmd,
+            stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL
+        )
+        return target
+    except subprocess.CalledProcessError:
+        return source
+
+
+def pil_convert_format(source, target, deinterlaced):
+    from PIL import Image, UnidentifiedImageError
+
+    try:
+        with Image.open(util.syspath(source)) as im:
+            im.save(util.py3_path(target), progressive=not deinterlaced)
+            return target
+    except (ValueError, TypeError, UnidentifiedImageError, FileNotFoundError,
+            OSError):
+        log.exception("failed to convert image {} -> {}", source, target)
+        return source
+
+
+BACKEND_CONVERT_IMAGE_FORMAT = {
+    PIL: pil_convert_format,
+    IMAGEMAGICK: im_convert_format,
+}
+
+
 class Shareable(type):
     """A pseudo-singleton metaclass that allows both shared and
     non-shared instances. The ``MyClass.shared`` property holds a
@@ -318,11 +385,49 @@ class ArtResizer(metaclass=Shareable):
         """Return the size of an image file as an int couple (width, height)
         in pixels.
 
-        Only available locally
+        Only available locally.
         """
         if self.local:
             func = BACKEND_GET_SIZE[self.method[0]]
             return func(path_in)
+
+    def get_format(self, path_in):
+        """Returns the format of the image as a string.
+
+        Only available locally.
+        """
+        if self.local:
+            func = BACKEND_GET_FORMAT[self.method[0]]
+            return func(path_in)
+
+    def reformat(self, path_in, new_format, deinterlaced=True):
+        """Converts image to desired format, updating its extension, but
+        keeping the same filename.
+
+        Only available locally.
+        """
+        if not self.local:
+            return path_in
+
+        new_format = new_format.lower()
+        # A nonexhaustive map of image "types" to extensions overrides
+        new_format = {
+            'jpeg': 'jpg',
+        }.get(new_format, new_format)
+
+        fname, ext = os.path.splitext(path_in)
+        path_new = fname + b'.' + new_format.encode('utf8')
+        func = BACKEND_CONVERT_IMAGE_FORMAT[self.method[0]]
+
+        # allows the exception to propagate, while still making sure a changed
+        # file path was removed
+        result_path = path_in
+        try:
+            result_path = func(path_in, path_new, deinterlaced)
+        finally:
+            if result_path != path_in:
+                os.unlink(path_in)
+        return result_path
 
     def _can_compare(self):
         """A boolean indicating whether image comparison is available"""
