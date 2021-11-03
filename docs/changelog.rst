@@ -49,6 +49,8 @@ Other new things:
 * :doc:`/plugins/fetchart`: A new option to store cover art as non-progressive
   image. Useful for DAPs that support progressive images. Set ``deinterlace:
   yes`` in your configuration to enable.
+* :doc:`/plugins/fetchart`: A new option to change cover art format. Useful for
+  DAPs that do not support some image formats.
 
 For plugin developers:
 
