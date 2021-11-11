@@ -1690,7 +1690,9 @@ class DefaultTemplateFunctions:
         subqueries = []
         for key in keys:
             value = album.get(key, '')
-            subqueries.append(dbcore.MatchQuery(key, value))
+            # Use slow queries for flexible attributes.
+            fast = key in album.item_keys
+            subqueries.append(dbcore.MatchQuery(key, value, fast))
         albums = self.lib.albums(dbcore.AndQuery(subqueries))
 
         # If there's only one album to matching these details, then do
