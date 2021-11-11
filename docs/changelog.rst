@@ -70,6 +70,9 @@ Bug fixes:
 
 * :doc:`/plugins/export`: Fix duplicated output.
 
+* :doc:`/dev/library`: Use slow queries for flexible attributes in aunique.
+  :bug:`2678` :bug:`3553`
+
 1.5.0 (August 19, 2021)
 -----------------------
 
