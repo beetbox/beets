@@ -791,6 +791,16 @@ class DisambiguationTest(_common.TestCase, PathFormattingMixin):
         self._setf('foo%aunique{albumartist album,year,}/$title')
         self._assert_dest(b'/base/foo 2001/the title', self.i1)
 
+    def test_key_flexible_attribute(self):
+        album1 = self.lib.get_album(self.i1)
+        album1.flex = 'flex1'
+        album2 = self.lib.get_album(self.i2)
+        album2.flex = 'flex2'
+        album1.store()
+        album2.store()
+        self._setf('foo%aunique{albumartist album flex,year}/$title')
+        self._assert_dest(b'/base/foo/the title', self.i1)
+
 
 class PluginDestinationTest(_common.TestCase):
     def setUp(self):
