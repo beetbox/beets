@@ -1129,7 +1129,6 @@ def _load_plugins(options, config):
         plugin_list = config['plugins'].as_str_seq()
 
     plugins.load_plugins(plugin_list)
-    plugins.send("pluginload")
     return plugins
 
 
@@ -1145,16 +1144,6 @@ def _setup(options, lib=None):
 
     plugins = _load_plugins(options, config)
 
-    # Get the default subcommands.
-    from beets.ui.commands import default_commands
-
-    subcommands = list(default_commands)
-    subcommands.extend(plugins.commands())
-
-    if lib is None:
-        lib = _open_library(config)
-        plugins.send("library_opened", lib=lib)
-
     # Add types and queries defined by plugins.
     plugin_types_album = plugins.types(library.Album)
     library.Album._types.update(plugin_types_album)
@@ -1165,6 +1154,18 @@ def _setup(options, lib=None):
 
     library.Item._queries.update(plugins.named_queries(library.Item))
     library.Album._queries.update(plugins.named_queries(library.Album))
+
+    plugins.send("pluginload")
+
+    # Get the default subcommands.
+    from beets.ui.commands import default_commands
+
+    subcommands = list(default_commands)
+    subcommands.extend(plugins.commands())
+
+    if lib is None:
+        lib = _open_library(config)
+        plugins.send("library_opened", lib=lib)
 
     return subcommands, plugins, lib
 
