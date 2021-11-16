@@ -73,6 +73,9 @@ Bug fixes:
 * :doc:`/dev/library`: Use slow queries for flexible attributes in aunique.
   :bug:`2678` :bug:`3553`
 
+* :doc:`/reference/query`: Use short-circuit evaluation in AndQuery and OrQuery
+  :bug:`4145`
+
 1.5.0 (August 19, 2021)
 -----------------------
 
