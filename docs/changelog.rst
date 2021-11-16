@@ -56,6 +56,7 @@ For plugin developers:
 
 * :py:meth:`beets.library.Item.destination` now accepts a `replacements`
   argument to be used in favor of the default.
+* Send the `pluginload` event after plugin types and queries are available, not before.
 
 Bug fixes:
 
