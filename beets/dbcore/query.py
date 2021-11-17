@@ -443,7 +443,7 @@ class AndQuery(MutableCollectionQuery):
         return self.clause_with_joiner('and')
 
     def match(self, item):
-        return all([q.match(item) for q in self.subqueries])
+        return all(q.match(item) for q in self.subqueries)
 
 
 class OrQuery(MutableCollectionQuery):
@@ -453,7 +453,7 @@ class OrQuery(MutableCollectionQuery):
         return self.clause_with_joiner('or')
 
     def match(self, item):
-        return any([q.match(item) for q in self.subqueries])
+        return any(q.match(item) for q in self.subqueries)
 
 
 class NotQuery(Query):
