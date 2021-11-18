@@ -189,6 +189,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
         self.assertEqual(1, len(results))
         self.assertEqual("6NPVjNh8Jhru9xOmyQigds", results[0]['id'])
 
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
