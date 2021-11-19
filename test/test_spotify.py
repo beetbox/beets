@@ -127,6 +127,68 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
         self.assertIn('album:Despicable Me 2', query)
         self.assertEqual(params['type'], ['track'])
 
+    @responses.activate
+    def test_track_for_id(self):
+        """Tests if plugin is able to fetch a track by its Spotify ID"""
+
+        # Mock the Spotify 'Get Track' call
+        json_file = os.path.join(
+            _common.RSRC, b'spotify', b'track_info.json'
+        )
+        with open(json_file, 'rb') as f:
+            response_body = f.read()
+
+        responses.add(
+            responses.GET,
+            spotify.SpotifyPlugin.track_url + '6NPVjNh8Jhru9xOmyQigds',
+            body=response_body,
+            status=200,
+            content_type='application/json',
+        )
+
+        # Mock the Spotify 'Get Album' call
+        json_file = os.path.join(
+            _common.RSRC, b'spotify', b'album_info.json'
+        )
+        with open(json_file, 'rb') as f:
+            response_body = f.read()
+
+        responses.add(
+            responses.GET,
+            spotify.SpotifyPlugin.album_url + '5l3zEmMrOhOzG8d8s83GOL',
+            body=response_body,
+            status=200,
+            content_type='application/json',
+        )
+
+        # Mock the Spotify 'Search' call
+        json_file = os.path.join(
+            _common.RSRC, b'spotify', b'track_request.json'
+        )
+        with open(json_file, 'rb') as f:
+            response_body = f.read()
+
+        responses.add(
+            responses.GET,
+            spotify.SpotifyPlugin.search_url,
+            body=response_body,
+            status=200,
+            content_type='application/json',
+        )
+
+        track_info = self.spotify.track_for_id('6NPVjNh8Jhru9xOmyQigds')
+        item = Item(
+            mb_trackid=track_info.track_id,
+            albumartist=track_info.artist,
+            title=track_info.title,
+            length=track_info.length
+        )
+        item.add(self.lib)
+
+        results = self.spotify._match_library_tracks(self.lib, "Happy")
+        self.assertEqual(1, len(results))
+        self.assertEqual("6NPVjNh8Jhru9xOmyQigds", results[0]['id'])
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
