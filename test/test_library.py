@@ -148,7 +148,10 @@ class GetSetTest(_common.TestCase):
 class DestinationTest(_common.TestCase):
     def setUp(self):
         super().setUp()
-        self.lib = beets.library.Library(':memory:')
+        # default directory is ~/Music and the only reason why it was switched
+        # to ~/.Music is to confirm that tests works well when path to
+        # temporary directory contains .
+        self.lib = beets.library.Library(':memory:', '~/.Music')
         self.i = item(self.lib)
 
     def tearDown(self):
@@ -224,7 +227,7 @@ class DestinationTest(_common.TestCase):
         self.i.album = '.something'
         dest = self.i.destination()
         self.assertTrue(b'something' in dest)
-        self.assertFalse(b'/.' in dest)
+        self.assertFalse(b'/.something' in dest)
 
     def test_destination_preserves_legitimate_slashes(self):
         self.i.artist = 'one'
