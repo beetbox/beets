@@ -1,0 +1,766 @@
+{
+    "album_type": "compilation",
+    "artists": [
+      {
+        "external_urls": {
+          "spotify": "https://open.spotify.com/artist/0LyfQWJT6nXafLPZqxe9Of"
+        },
+        "href": "https://api.spotify.com/v1/artists/0LyfQWJT6nXafLPZqxe9Of",
+        "id": "0LyfQWJT6nXafLPZqxe9Of",
+        "name": "Various Artists",
+        "type": "artist",
+        "uri": "spotify:artist:0LyfQWJT6nXafLPZqxe9Of"
+      }
+    ],
+    "available_markets": [],
+    "copyrights": [
+      {
+        "text": "2013 Back Lot Music",
+        "type": "C"
+      },
+      {
+        "text": "2013 Back Lot Music",
+        "type": "P"
+      }
+    ],
+    "external_ids": {
+      "upc": "857970002363"
+    },
+    "external_urls": {
+      "spotify": "https://open.spotify.com/album/5l3zEmMrOhOzG8d8s83GOL"
+    },
+    "genres": [],
+    "href": "https://api.spotify.com/v1/albums/5l3zEmMrOhOzG8d8s83GOL",
+    "id": "5l3zEmMrOhOzG8d8s83GOL",
+    "images": [
+      {
+        "height": 640,
+        "url": "https://i.scdn.co/image/ab67616d0000b27399140a62d43aec760f6172a2",
+        "width": 640
+      },
+      {
+        "height": 300,
+        "url": "https://i.scdn.co/image/ab67616d00001e0299140a62d43aec760f6172a2",
+        "width": 300
+      },
+      {
+        "height": 64,
+        "url": "https://i.scdn.co/image/ab67616d0000485199140a62d43aec760f6172a2",
+        "width": 64
+      }
+    ],
+    "label": "Back Lot Music",
+    "name": "Despicable Me 2 (Original Motion Picture Soundtrack)",
+    "popularity": 0,
+    "release_date": "2013-06-18",
+    "release_date_precision": "day",
+    "total_tracks": 24,
+    "tracks": {
+      "href": "https://api.spotify.com/v1/albums/5l3zEmMrOhOzG8d8s83GOL/tracks?offset=0&limit=50",
+      "items": [
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/5nLYd9ST4Cnwy6NHaCxbj8"
+              },
+              "href": "https://api.spotify.com/v1/artists/5nLYd9ST4Cnwy6NHaCxbj8",
+              "id": "5nLYd9ST4Cnwy6NHaCxbj8",
+              "name": "CeeLo Green",
+              "type": "artist",
+              "uri": "spotify:artist:5nLYd9ST4Cnwy6NHaCxbj8"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 221805,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/3EiEbQAR44icEkz3rsMI0N"
+          },
+          "href": "https://api.spotify.com/v1/tracks/3EiEbQAR44icEkz3rsMI0N",
+          "id": "3EiEbQAR44icEkz3rsMI0N",
+          "is_local": false,
+          "name": "Scream",
+          "preview_url": null,
+          "track_number": 1,
+          "type": "track",
+          "uri": "spotify:track:3EiEbQAR44icEkz3rsMI0N"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/3NVrWkcHOtmPbMSvgHmijZ"
+              },
+              "href": "https://api.spotify.com/v1/artists/3NVrWkcHOtmPbMSvgHmijZ",
+              "id": "3NVrWkcHOtmPbMSvgHmijZ",
+              "name": "The Minions",
+              "type": "artist",
+              "uri": "spotify:artist:3NVrWkcHOtmPbMSvgHmijZ"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 39065,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/1G4Z91vvEGTYd2ZgOD0MuN"
+          },
+          "href": "https://api.spotify.com/v1/tracks/1G4Z91vvEGTYd2ZgOD0MuN",
+          "id": "1G4Z91vvEGTYd2ZgOD0MuN",
+          "is_local": false,
+          "name": "Another Irish Drinking Song",
+          "preview_url": null,
+          "track_number": 2,
+          "type": "track",
+          "uri": "spotify:track:1G4Z91vvEGTYd2ZgOD0MuN"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/2RdwBSPQiwcmiDo9kixcl8"
+              },
+              "href": "https://api.spotify.com/v1/artists/2RdwBSPQiwcmiDo9kixcl8",
+              "id": "2RdwBSPQiwcmiDo9kixcl8",
+              "name": "Pharrell Williams",
+              "type": "artist",
+              "uri": "spotify:artist:2RdwBSPQiwcmiDo9kixcl8"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 176078,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/7DKqhn3Aa0NT9N9GAcagda"
+          },
+          "href": "https://api.spotify.com/v1/tracks/7DKqhn3Aa0NT9N9GAcagda",
+          "id": "7DKqhn3Aa0NT9N9GAcagda",
+          "is_local": false,
+          "name": "Just a Cloud Away",
+          "preview_url": null,
+          "track_number": 3,
+          "type": "track",
+          "uri": "spotify:track:7DKqhn3Aa0NT9N9GAcagda"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/2RdwBSPQiwcmiDo9kixcl8"
+              },
+              "href": "https://api.spotify.com/v1/artists/2RdwBSPQiwcmiDo9kixcl8",
+              "id": "2RdwBSPQiwcmiDo9kixcl8",
+              "name": "Pharrell Williams",
+              "type": "artist",
+              "uri": "spotify:artist:2RdwBSPQiwcmiDo9kixcl8"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 233305,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/6NPVjNh8Jhru9xOmyQigds"
+          },
+          "href": "https://api.spotify.com/v1/tracks/6NPVjNh8Jhru9xOmyQigds",
+          "id": "6NPVjNh8Jhru9xOmyQigds",
+          "is_local": false,
+          "name": "Happy",
+          "preview_url": null,
+          "track_number": 4,
+          "type": "track",
+          "uri": "spotify:track:6NPVjNh8Jhru9xOmyQigds"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/3NVrWkcHOtmPbMSvgHmijZ"
+              },
+              "href": "https://api.spotify.com/v1/artists/3NVrWkcHOtmPbMSvgHmijZ",
+              "id": "3NVrWkcHOtmPbMSvgHmijZ",
+              "name": "The Minions",
+              "type": "artist",
+              "uri": "spotify:artist:3NVrWkcHOtmPbMSvgHmijZ"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 98211,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/5HSqCeDCn2EEGR5ORwaHA0"
+          },
+          "href": "https://api.spotify.com/v1/tracks/5HSqCeDCn2EEGR5ORwaHA0",
+          "id": "5HSqCeDCn2EEGR5ORwaHA0",
+          "is_local": false,
+          "name": "I Swear",
+          "preview_url": null,
+          "track_number": 5,
+          "type": "track",
+          "uri": "spotify:track:5HSqCeDCn2EEGR5ORwaHA0"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/3NVrWkcHOtmPbMSvgHmijZ"
+              },
+              "href": "https://api.spotify.com/v1/artists/3NVrWkcHOtmPbMSvgHmijZ",
+              "id": "3NVrWkcHOtmPbMSvgHmijZ",
+              "name": "The Minions",
+              "type": "artist",
+              "uri": "spotify:artist:3NVrWkcHOtmPbMSvgHmijZ"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 175291,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/2Ls4QknWvBoGSeAlNKw0Xj"
+          },
+          "href": "https://api.spotify.com/v1/tracks/2Ls4QknWvBoGSeAlNKw0Xj",
+          "id": "2Ls4QknWvBoGSeAlNKw0Xj",
+          "is_local": false,
+          "name": "Y.M.C.A.",
+          "preview_url": null,
+          "track_number": 6,
+          "type": "track",
+          "uri": "spotify:track:2Ls4QknWvBoGSeAlNKw0Xj"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/2RdwBSPQiwcmiDo9kixcl8"
+              },
+              "href": "https://api.spotify.com/v1/artists/2RdwBSPQiwcmiDo9kixcl8",
+              "id": "2RdwBSPQiwcmiDo9kixcl8",
+              "name": "Pharrell Williams",
+              "type": "artist",
+              "uri": "spotify:artist:2RdwBSPQiwcmiDo9kixcl8"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 206105,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/1XkUmKLbm1tzVtrkdj2Ou8"
+          },
+          "href": "https://api.spotify.com/v1/tracks/1XkUmKLbm1tzVtrkdj2Ou8",
+          "id": "1XkUmKLbm1tzVtrkdj2Ou8",
+          "is_local": false,
+          "name": "Fun, Fun, Fun",
+          "preview_url": null,
+          "track_number": 7,
+          "type": "track",
+          "uri": "spotify:track:1XkUmKLbm1tzVtrkdj2Ou8"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/2RdwBSPQiwcmiDo9kixcl8"
+              },
+              "href": "https://api.spotify.com/v1/artists/2RdwBSPQiwcmiDo9kixcl8",
+              "id": "2RdwBSPQiwcmiDo9kixcl8",
+              "name": "Pharrell Williams",
+              "type": "artist",
+              "uri": "spotify:artist:2RdwBSPQiwcmiDo9kixcl8"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 254705,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/42lHGtAZd6xVLC789afLWt"
+          },
+          "href": "https://api.spotify.com/v1/tracks/42lHGtAZd6xVLC789afLWt",
+          "id": "42lHGtAZd6xVLC789afLWt",
+          "is_local": false,
+          "name": "Despicable Me",
+          "preview_url": null,
+          "track_number": 8,
+          "type": "track",
+          "uri": "spotify:track:42lHGtAZd6xVLC789afLWt"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/2RaHCHhZWBXn460JpMaicz"
+              },
+              "href": "https://api.spotify.com/v1/artists/2RaHCHhZWBXn460JpMaicz",
+              "id": "2RaHCHhZWBXn460JpMaicz",
+              "name": "Heitor Pereira",
+              "type": "artist",
+              "uri": "spotify:artist:2RaHCHhZWBXn460JpMaicz"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 126825,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/7uAC260NViRKyYW4st4vri"
+          },
+          "href": "https://api.spotify.com/v1/tracks/7uAC260NViRKyYW4st4vri",
+          "id": "7uAC260NViRKyYW4st4vri",
+          "is_local": false,
+          "name": "PX-41 Labs",
+          "preview_url": null,
+          "track_number": 9,
+          "type": "track",
+          "uri": "spotify:track:7uAC260NViRKyYW4st4vri"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/2RaHCHhZWBXn460JpMaicz"
+              },
+              "href": "https://api.spotify.com/v1/artists/2RaHCHhZWBXn460JpMaicz",
+              "id": "2RaHCHhZWBXn460JpMaicz",
+              "name": "Heitor Pereira",
+              "type": "artist",
+              "uri": "spotify:artist:2RaHCHhZWBXn460JpMaicz"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 87118,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/6YLmc6yT7OGiNwbShHuEN2"
+          },
+          "href": "https://api.spotify.com/v1/tracks/6YLmc6yT7OGiNwbShHuEN2",
+          "id": "6YLmc6yT7OGiNwbShHuEN2",
+          "is_local": false,
+          "name": "The Fairy Party",
+          "preview_url": null,
+          "track_number": 10,
+          "type": "track",
+          "uri": "spotify:track:6YLmc6yT7OGiNwbShHuEN2"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/2RaHCHhZWBXn460JpMaicz"
+              },
+              "href": "https://api.spotify.com/v1/artists/2RaHCHhZWBXn460JpMaicz",
+              "id": "2RaHCHhZWBXn460JpMaicz",
+              "name": "Heitor Pereira",
+              "type": "artist",
+              "uri": "spotify:artist:2RaHCHhZWBXn460JpMaicz"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 339478,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/5lwsXhSXKFoxoGOFLZdQX6"
+          },
+          "href": "https://api.spotify.com/v1/tracks/5lwsXhSXKFoxoGOFLZdQX6",
+          "id": "5lwsXhSXKFoxoGOFLZdQX6",
+          "is_local": false,
+          "name": "Lucy And The AVL",
+          "preview_url": null,
+          "track_number": 11,
+          "type": "track",
+          "uri": "spotify:track:5lwsXhSXKFoxoGOFLZdQX6"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/2RaHCHhZWBXn460JpMaicz"
+              },
+              "href": "https://api.spotify.com/v1/artists/2RaHCHhZWBXn460JpMaicz",
+              "id": "2RaHCHhZWBXn460JpMaicz",
+              "name": "Heitor Pereira",
+              "type": "artist",
+              "uri": "spotify:artist:2RaHCHhZWBXn460JpMaicz"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 87478,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/2FlWtPuBMGo0a0X7LGETyk"
+          },
+          "href": "https://api.spotify.com/v1/tracks/2FlWtPuBMGo0a0X7LGETyk",
+          "id": "2FlWtPuBMGo0a0X7LGETyk",
+          "is_local": false,
+          "name": "Goodbye Nefario",
+          "preview_url": null,
+          "track_number": 12,
+          "type": "track",
+          "uri": "spotify:track:2FlWtPuBMGo0a0X7LGETyk"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/2RaHCHhZWBXn460JpMaicz"
+              },
+              "href": "https://api.spotify.com/v1/artists/2RaHCHhZWBXn460JpMaicz",
+              "id": "2RaHCHhZWBXn460JpMaicz",
+              "name": "Heitor Pereira",
+              "type": "artist",
+              "uri": "spotify:artist:2RaHCHhZWBXn460JpMaicz"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 86998,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/3YnhGNADeUaoBTjB1uGUjh"
+          },
+          "href": "https://api.spotify.com/v1/tracks/3YnhGNADeUaoBTjB1uGUjh",
+          "id": "3YnhGNADeUaoBTjB1uGUjh",
+          "is_local": false,
+          "name": "Time for Bed",
+          "preview_url": null,
+          "track_number": 13,
+          "type": "track",
+          "uri": "spotify:track:3YnhGNADeUaoBTjB1uGUjh"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/2RaHCHhZWBXn460JpMaicz"
+              },
+              "href": "https://api.spotify.com/v1/artists/2RaHCHhZWBXn460JpMaicz",
+              "id": "2RaHCHhZWBXn460JpMaicz",
+              "name": "Heitor Pereira",
+              "type": "artist",
+              "uri": "spotify:artist:2RaHCHhZWBXn460JpMaicz"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 180265,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/6npUKThV4XI20VLW5ryr5O"
+          },
+          "href": "https://api.spotify.com/v1/tracks/6npUKThV4XI20VLW5ryr5O",
+          "id": "6npUKThV4XI20VLW5ryr5O",
+          "is_local": false,
+          "name": "Break-In",
+          "preview_url": null,
+          "track_number": 14,
+          "type": "track",
+          "uri": "spotify:track:6npUKThV4XI20VLW5ryr5O"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/2RaHCHhZWBXn460JpMaicz"
+              },
+              "href": "https://api.spotify.com/v1/artists/2RaHCHhZWBXn460JpMaicz",
+              "id": "2RaHCHhZWBXn460JpMaicz",
+              "name": "Heitor Pereira",
+              "type": "artist",
+              "uri": "spotify:artist:2RaHCHhZWBXn460JpMaicz"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 95011,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/1qyFlqVfbgyiM7tQ2Jy9vC"
+          },
+          "href": "https://api.spotify.com/v1/tracks/1qyFlqVfbgyiM7tQ2Jy9vC",
+          "id": "1qyFlqVfbgyiM7tQ2Jy9vC",
+          "is_local": false,
+          "name": "Stalking Floyd Eaglesan",
+          "preview_url": null,
+          "track_number": 15,
+          "type": "track",
+          "uri": "spotify:track:1qyFlqVfbgyiM7tQ2Jy9vC"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/2RaHCHhZWBXn460JpMaicz"
+              },
+              "href": "https://api.spotify.com/v1/artists/2RaHCHhZWBXn460JpMaicz",
+              "id": "2RaHCHhZWBXn460JpMaicz",
+              "name": "Heitor Pereira",
+              "type": "artist",
+              "uri": "spotify:artist:2RaHCHhZWBXn460JpMaicz"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 189771,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/4DRQctGiqjJkbFa7iTK4pb"
+          },
+          "href": "https://api.spotify.com/v1/tracks/4DRQctGiqjJkbFa7iTK4pb",
+          "id": "4DRQctGiqjJkbFa7iTK4pb",
+          "is_local": false,
+          "name": "Moving to Australia",
+          "preview_url": null,
+          "track_number": 16,
+          "type": "track",
+          "uri": "spotify:track:4DRQctGiqjJkbFa7iTK4pb"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/2RaHCHhZWBXn460JpMaicz"
+              },
+              "href": "https://api.spotify.com/v1/artists/2RaHCHhZWBXn460JpMaicz",
+              "id": "2RaHCHhZWBXn460JpMaicz",
+              "name": "Heitor Pereira",
+              "type": "artist",
+              "uri": "spotify:artist:2RaHCHhZWBXn460JpMaicz"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 85878,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/1TSjM9GY2oN6RO6aYGN25n"
+          },
+          "href": "https://api.spotify.com/v1/tracks/1TSjM9GY2oN6RO6aYGN25n",
+          "id": "1TSjM9GY2oN6RO6aYGN25n",
+          "is_local": false,
+          "name": "Going to Save the World",
+          "preview_url": null,
+          "track_number": 17,
+          "type": "track",
+          "uri": "spotify:track:1TSjM9GY2oN6RO6aYGN25n"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/2RaHCHhZWBXn460JpMaicz"
+              },
+              "href": "https://api.spotify.com/v1/artists/2RaHCHhZWBXn460JpMaicz",
+              "id": "2RaHCHhZWBXn460JpMaicz",
+              "name": "Heitor Pereira",
+              "type": "artist",
+              "uri": "spotify:artist:2RaHCHhZWBXn460JpMaicz"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 87158,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/3AEMuoglM1myQ8ouIyh8LG"
+          },
+          "href": "https://api.spotify.com/v1/tracks/3AEMuoglM1myQ8ouIyh8LG",
+          "id": "3AEMuoglM1myQ8ouIyh8LG",
+          "is_local": false,
+          "name": "El Macho",
+          "preview_url": null,
+          "track_number": 18,
+          "type": "track",
+          "uri": "spotify:track:3AEMuoglM1myQ8ouIyh8LG"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/2RaHCHhZWBXn460JpMaicz"
+              },
+              "href": "https://api.spotify.com/v1/artists/2RaHCHhZWBXn460JpMaicz",
+              "id": "2RaHCHhZWBXn460JpMaicz",
+              "name": "Heitor Pereira",
+              "type": "artist",
+              "uri": "spotify:artist:2RaHCHhZWBXn460JpMaicz"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 47438,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/2d7fEVYdZnjlya3MPEma21"
+          },
+          "href": "https://api.spotify.com/v1/tracks/2d7fEVYdZnjlya3MPEma21",
+          "id": "2d7fEVYdZnjlya3MPEma21",
+          "is_local": false,
+          "name": "Jillian",
+          "preview_url": null,
+          "track_number": 19,
+          "type": "track",
+          "uri": "spotify:track:2d7fEVYdZnjlya3MPEma21"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/2RaHCHhZWBXn460JpMaicz"
+              },
+              "href": "https://api.spotify.com/v1/artists/2RaHCHhZWBXn460JpMaicz",
+              "id": "2RaHCHhZWBXn460JpMaicz",
+              "name": "Heitor Pereira",
+              "type": "artist",
+              "uri": "spotify:artist:2RaHCHhZWBXn460JpMaicz"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 89398,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/7h8WnOo4Fh6NvfTUnR7nOa"
+          },
+          "href": "https://api.spotify.com/v1/tracks/7h8WnOo4Fh6NvfTUnR7nOa",
+          "id": "7h8WnOo4Fh6NvfTUnR7nOa",
+          "is_local": false,
+          "name": "Take Her Home",
+          "preview_url": null,
+          "track_number": 20,
+          "type": "track",
+          "uri": "spotify:track:7h8WnOo4Fh6NvfTUnR7nOa"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/2RaHCHhZWBXn460JpMaicz"
+              },
+              "href": "https://api.spotify.com/v1/artists/2RaHCHhZWBXn460JpMaicz",
+              "id": "2RaHCHhZWBXn460JpMaicz",
+              "name": "Heitor Pereira",
+              "type": "artist",
+              "uri": "spotify:artist:2RaHCHhZWBXn460JpMaicz"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 212691,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/25A9ZlegjJ0z2fI1PgTqy2"
+          },
+          "href": "https://api.spotify.com/v1/tracks/25A9ZlegjJ0z2fI1PgTqy2",
+          "id": "25A9ZlegjJ0z2fI1PgTqy2",
+          "is_local": false,
+          "name": "El Macho's Lair",
+          "preview_url": null,
+          "track_number": 21,
+          "type": "track",
+          "uri": "spotify:track:25A9ZlegjJ0z2fI1PgTqy2"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/2RaHCHhZWBXn460JpMaicz"
+              },
+              "href": "https://api.spotify.com/v1/artists/2RaHCHhZWBXn460JpMaicz",
+              "id": "2RaHCHhZWBXn460JpMaicz",
+              "name": "Heitor Pereira",
+              "type": "artist",
+              "uri": "spotify:artist:2RaHCHhZWBXn460JpMaicz"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 117745,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/48GwOCuPhWKDktq3efmfRg"
+          },
+          "href": "https://api.spotify.com/v1/tracks/48GwOCuPhWKDktq3efmfRg",
+          "id": "48GwOCuPhWKDktq3efmfRg",
+          "is_local": false,
+          "name": "Home Invasion",
+          "preview_url": null,
+          "track_number": 22,
+          "type": "track",
+          "uri": "spotify:track:48GwOCuPhWKDktq3efmfRg"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/2RaHCHhZWBXn460JpMaicz"
+              },
+              "href": "https://api.spotify.com/v1/artists/2RaHCHhZWBXn460JpMaicz",
+              "id": "2RaHCHhZWBXn460JpMaicz",
+              "name": "Heitor Pereira",
+              "type": "artist",
+              "uri": "spotify:artist:2RaHCHhZWBXn460JpMaicz"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 443251,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/6dZkl2egcKVm8rO9W7pPWa"
+          },
+          "href": "https://api.spotify.com/v1/tracks/6dZkl2egcKVm8rO9W7pPWa",
+          "id": "6dZkl2egcKVm8rO9W7pPWa",
+          "is_local": false,
+          "name": "The Big Battle",
+          "preview_url": null,
+          "track_number": 23,
+          "type": "track",
+          "uri": "spotify:track:6dZkl2egcKVm8rO9W7pPWa"
+        },
+        {
+          "artists": [
+            {
+              "external_urls": {
+                "spotify": "https://open.spotify.com/artist/3NVrWkcHOtmPbMSvgHmijZ"
+              },
+              "href": "https://api.spotify.com/v1/artists/3NVrWkcHOtmPbMSvgHmijZ",
+              "id": "3NVrWkcHOtmPbMSvgHmijZ",
+              "name": "The Minions",
+              "type": "artist",
+              "uri": "spotify:artist:3NVrWkcHOtmPbMSvgHmijZ"
+            }
+          ],
+          "available_markets": [],
+          "disc_number": 1,
+          "duration_ms": 13886,
+          "explicit": false,
+          "external_urls": {
+            "spotify": "https://open.spotify.com/track/2L0OyiAepqAbKvUZfWovOJ"
+          },
+          "href": "https://api.spotify.com/v1/tracks/2L0OyiAepqAbKvUZfWovOJ",
+          "id": "2L0OyiAepqAbKvUZfWovOJ",
+          "is_local": false,
+          "name": "Ba Do Bleep",
+          "preview_url": null,
+          "track_number": 24,
+          "type": "track",
+          "uri": "spotify:track:2L0OyiAepqAbKvUZfWovOJ"
+        }
+      ],
+      "limit": 50,
+      "next": null,
+      "offset": 0,
+      "previous": null,
+      "total": 24
+    },
+    "type": "album",
+    "uri": "spotify:album:5l3zEmMrOhOzG8d8s83GOL"
+}

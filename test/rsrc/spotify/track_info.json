@@ -1,0 +1,77 @@
+{
+    "album": {
+      "album_type": "compilation",
+      "artists": [
+        {
+          "external_urls": {
+            "spotify": "https://open.spotify.com/artist/0LyfQWJT6nXafLPZqxe9Of"
+          },
+          "href": "https://api.spotify.com/v1/artists/0LyfQWJT6nXafLPZqxe9Of",
+          "id": "0LyfQWJT6nXafLPZqxe9Of",
+          "name": "Various Artists",
+          "type": "artist",
+          "uri": "spotify:artist:0LyfQWJT6nXafLPZqxe9Of"
+        }
+      ],
+      "available_markets": [],
+      "external_urls": {
+        "spotify": "https://open.spotify.com/album/5l3zEmMrOhOzG8d8s83GOL"
+      },
+      "href": "https://api.spotify.com/v1/albums/5l3zEmMrOhOzG8d8s83GOL",
+      "id": "5l3zEmMrOhOzG8d8s83GOL",
+      "images": [
+        {
+          "height": 640,
+          "url": "https://i.scdn.co/image/ab67616d0000b27399140a62d43aec760f6172a2",
+          "width": 640
+        },
+        {
+          "height": 300,
+          "url": "https://i.scdn.co/image/ab67616d00001e0299140a62d43aec760f6172a2",
+          "width": 300
+        },
+        {
+          "height": 64,
+          "url": "https://i.scdn.co/image/ab67616d0000485199140a62d43aec760f6172a2",
+          "width": 64
+        }
+      ],
+      "name": "Despicable Me 2 (Original Motion Picture Soundtrack)",
+      "release_date": "2013-06-18",
+      "release_date_precision": "day",
+      "total_tracks": 24,
+      "type": "album",
+      "uri": "spotify:album:5l3zEmMrOhOzG8d8s83GOL"
+    },
+    "artists": [
+      {
+        "external_urls": {
+          "spotify": "https://open.spotify.com/artist/2RdwBSPQiwcmiDo9kixcl8"
+        },
+        "href": "https://api.spotify.com/v1/artists/2RdwBSPQiwcmiDo9kixcl8",
+        "id": "2RdwBSPQiwcmiDo9kixcl8",
+        "name": "Pharrell Williams",
+        "type": "artist",
+        "uri": "spotify:artist:2RdwBSPQiwcmiDo9kixcl8"
+      }
+    ],
+    "available_markets": [],
+    "disc_number": 1,
+    "duration_ms": 233305,
+    "explicit": false,
+    "external_ids": {
+      "isrc": "USQ4E1300686"
+    },
+    "external_urls": {
+      "spotify": "https://open.spotify.com/track/6NPVjNh8Jhru9xOmyQigds"
+    },
+    "href": "https://api.spotify.com/v1/tracks/6NPVjNh8Jhru9xOmyQigds",
+    "id": "6NPVjNh8Jhru9xOmyQigds",
+    "is_local": false,
+    "name": "Happy",
+    "popularity": 1,
+    "preview_url": null,
+    "track_number": 4,
+    "type": "track",
+    "uri": "spotify:track:6NPVjNh8Jhru9xOmyQigds"
+}
