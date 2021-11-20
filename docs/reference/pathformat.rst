@@ -235,6 +235,9 @@ Audio information:
 
 * length (in seconds)
 * bitrate (in kilobits per second, with units: e.g., "192kbps")
+* bitrate_mode (eg. "CBR", "VBR" or "ABR", only available for the MP3 format)
+* encoder_info (eg. "LAME 3.97.0", only available for some formats)
+* encoder_settings (eg. "-V2", only available for the MP3 format)
 * format (e.g., "MP3" or "FLAC")
 * channels
 * bitdepth (only available for some formats)
