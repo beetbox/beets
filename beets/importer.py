@@ -533,6 +533,17 @@ class ImportTask(BaseImportTask):
         elif self.choice_flag is action.APPLY:
             return (self.match.info.artist, self.match.info.album)
 
+    def chosen_info(self):
+        """Returns a dictionnary of metadata about the current choice.
+        May only be called when the choice flag is ASIS or RETAG
+        (in which case the data comes from the files' current metadata)
+        or APPLY (in which case the data comes from the choice).
+        """
+        if self.choice_flag in (action.ASIS, action.RETAG):
+            return self.cur_info
+        elif self.choice_flag is action.APPLY:
+            return self.match.info
+
     def imported_items(self):
         """Return a list of Items that should be added to the library.
 
@@ -656,6 +667,8 @@ class ImportTask(BaseImportTask):
         candidate IDs are stored in self.search_ids: if present, the
         initial lookup is restricted to only those IDs.
         """
+        likelies, consensus = autotag.current_metadata(self.items)
+        self.cur_info = likelies
         artist, album, prop = \
             autotag.tag_album(self.items, search_ids=self.search_ids)
         self.cur_artist = artist
@@ -675,10 +688,11 @@ class ImportTask(BaseImportTask):
 
         duplicates = []
         task_paths = {i.path for i in self.items if i}
-        duplicate_query = dbcore.AndQuery((
-            dbcore.MatchQuery('albumartist', artist),
-            dbcore.MatchQuery('album', album),
-        ))
+        keys = config['import']['duplicate_keys'].as_str().split()
+        info = self.chosen_info().copy()
+        info['albumartist'] = artist
+        subqueries = [ dbcore.MatchQuery(k, info.get(k)) for k in keys ]
+        duplicate_query = dbcore.AndQuery(subqueries)
 
         for album in lib.albums(duplicate_query):
             # Check whether the album paths are all present in the task
