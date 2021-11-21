@@ -135,7 +135,7 @@ setup(
         'mpdstats': ['python-mpd2>=0.4.2'],
         'plexupdate': ['requests'],
         'web': ['flask', 'flask-cors'],
-        'import': ['rarfile'],
+        'import': ['rarfile', 'py7zr'],
         'thumbnails': ['pyxdg', 'Pillow'],
         'metasync': ['dbus-python'],
         'sonosupdate': ['soco'],
