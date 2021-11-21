@@ -670,6 +670,16 @@ with the ``-a`` flag to the :ref:`import-cmd` command.)
 
 Default: ``yes``.
 
+.. _duplicate_keys:
+
+duplicate_keys
+~~~~~~~~~~~~~~
+
+The fields used to find duplicates in import task.
+If several items have the same value for each key, they will be considered duplicates.
+
+Default: ``albumartist album``
+
 .. _duplicate_action:
 
 duplicate_action

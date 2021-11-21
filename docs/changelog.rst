@@ -11,6 +11,7 @@ New features:
 * :doc:`/plugins/kodiupdate`: Now supports multiple kodi instances
   :bug:`4101`
 * Add the item fields ``bitrate_mode``, ``encoder_info`` and ``encoder_settings``.
+* Allow to configure which fields are used to find duplicates
 
 Bug fixes:
 
