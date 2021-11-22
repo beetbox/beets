@@ -51,6 +51,8 @@ Other new things:
   yes`` in your configuration to enable.
 * :doc:`/plugins/fetchart`: A new option to change cover art format. Useful for
   DAPs that do not support some image formats.
+* New plugin event: ``album_removed``. Called when an album is removed from the
+  library (even when its file is not deleted from disk).
 
 For plugin developers:
 

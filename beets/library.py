@@ -878,6 +878,7 @@ class Item(LibModel):
             album = self.get_album()
             if album and not album.items():
                 album.remove(delete, False)
+                plugins.send('album_removed', album=album)
 
         # Send a 'item_removed' signal to plugins
         plugins.send('item_removed', item=self)
