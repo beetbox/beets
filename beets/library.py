@@ -878,7 +878,6 @@ class Item(LibModel):
             album = self.get_album()
             if album and not album.items():
                 album.remove(delete, False)
-                plugins.send('album_removed', album=album)
 
         # Send a 'item_removed' signal to plugins
         plugins.send('item_removed', item=self)
@@ -1142,6 +1141,9 @@ class Album(LibModel):
         Set with_items to False to avoid removing the album's items.
         """
         super().remove()
+
+        # Send a 'album_removed' signal to plugins
+        plugins.send('album_removed', album=self)
 
         # Delete art file.
         if delete:
