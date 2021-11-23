@@ -1142,6 +1142,9 @@ class Album(LibModel):
         """
         super().remove()
 
+        # Send a 'album_removed' signal to plugins
+        plugins.send('album_removed', album=self)
+
         # Delete art file.
         if delete:
             artpath = self.artpath
