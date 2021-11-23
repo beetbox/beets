@@ -143,6 +143,9 @@ The events currently available are:
   command finishes adding an album to the library. Parameters: ``lib``,
   ``album``
 
+* `album_removed`: called with an ``Album`` object every time an album is
+  removed from the library (even when its file is not deleted from disk).
+
 * `item_copied`: called with an ``Item`` object whenever its file is copied.
   Parameters: ``item``, ``source`` path, ``destination`` path
 
