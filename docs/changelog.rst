@@ -79,6 +79,11 @@ Bug fixes:
 * :doc:`/reference/query`: Use short-circuit evaluation in AndQuery and OrQuery
   :bug:`4145`
 
+Fixes:
+
+* :doc:`/plugins/aura`: Fix a potential security hole when serving image
+  files. :bug:`4160`
+
 1.5.0 (August 19, 2021)
 -----------------------
 
