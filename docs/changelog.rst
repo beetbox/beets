@@ -4,64 +4,81 @@ Changelog
 1.6.0 (in development)
 ----------------------
 
-This release now requires Python 3.6 or later (it removes support for Python
-2.7, 3.4, and 3.5).
+This release is our first experiment with time-based releases! We are aiming
+to publish a new release of beets every 3 months. We therefore have a healthy
+but not dizzyingly long list of new features and fixes.
+
+With this release, beets now requires Python 3.6 or later (it removes support
+for Python 2.7, 3.4, and 3.5). There are also a few other dependency
+changes---if you're a maintainer of a beets package for a package manager,
+thank you for your ongoing efforts, and please see the list of notes below.
 
 Major new features:
 
-* Include the genre tags from the release group when the musicbrainz genre
-  option is set, and sort them by the number of votes.  Thanks to
-  :user:`aereaux`.
-* Primary and secondary release types from MusicBrainz are now stored in
-  ``albumtypes`` field. Thanks to :user:`edgars-supe`.
+* When fetching genres from MusicBrainz, we now include genres from the
+  release group (in addition to the release). We also prioritize genres based
+  on the number of votes.
+  Thanks to :user:`aereaux`.
+* Primary and secondary release types from MusicBrainz are now stored in a new
+  ``albumtypes`` field.
+  Thanks to :user:`edgars-supe`.
   :bug:`2200`
-* :doc:`/plugins/albumtypes`: An accompanying plugin for formatting
-  ``albumtypes``. Thanks to :user:`edgars-supe`.
+* An accompanying new :doc:`/plugins/albumtypes` includes some options for
+  formatting this new ``albumtypes`` field.
+  Thanks to :user:`edgars-supe`.
 
 Other new things:
 
-* Permissions plugin now sets cover art permissions to the file permissions.
-* :doc:`/plugins/unimported`: Support excluding specific
-  subdirectories in library.
-* :doc:`/plugins/info`: Support ``--album`` flag.
-* :doc:`/plugins/export`: Support ``--album`` flag.
-* ``beet move`` path differences are now highlighted in color (when enabled).
-* When moving files and a direct rename of a file is not possible, beets now
-  copies to a temporary file in the target folder first instead of directly
-  using the target path. This gets us closer to always updating files
-  atomically. Thanks to :user:`catap`.
+* :doc:`/plugins/permissions`: The plugin now sets cover art permissions to
+  match the audio file permissions.
+* :doc:`/plugins/unimported`: A new configuration option supports excluding
+  specific subdirectories in library.
+* :doc:`/plugins/info`: Add support for an ``--album`` flag.
+* :doc:`/plugins/export`: Similarly add support for an ``--album`` flag.
+* ``beet move`` now highlights path differences in color (when enabled).
+* When moving files and a direct rename of a file is not possible (for
+  example, when crossing filesystems), beets now copies to a temporary file in
+  the target folder first and then moves to the destination instead of
+  directly copying the target path. This gets us closer to always updating
+  files atomically.
+  Thanks to :user:`catap`.
   :bug:`4060`
-* :doc:`/plugins/fetchart`: A new option to store cover art as non-progressive
-  image. Useful for DAPs that support progressive images. Set ``deinterlace:
-  yes`` in your configuration to enable.
-* :doc:`/plugins/fetchart`: A new option to change cover art format. Useful for
-  DAPs that do not support some image formats.
-* New plugin event: ``album_removed``. Called when an album is removed from the
-  library (even when its file is not deleted from disk).
+* :doc:`/plugins/fetchart`: Add a new option to store cover art as
+  non-progressive image. This is useful for DAPs that do not support
+  progressive images. Set ``deinterlace: yes`` in your configuration to enable
+  this conversion.
+* :doc:`/plugins/fetchart`: Add a new option to change the file format of
+  cover art images. This may also be useful for DAPs that only support some
+  image formats.
+* Support flexible attributes in ``%aunique``.
+  :bug:`2678` :bug:`3553`
+* Make ``%aunique`` faster, especially when using inline fields.
+  :bug:`4145`
 
 Bug fixes:
 
-* :doc:`/plugins/lyrics`: Fix crash bug when beautifulsoup4 is not installed.
+* :doc:`/plugins/lyrics`: Fix a crash when Beautiful Soup is not installed.
   :bug:`4027`
-* :doc:`/plugins/discogs`: Adapt regex to new URL format .
-  :bug: `4080`
-* :doc:`/plugins/discogs`: Remove requests ratel imit code from plugin in favor of discogs library built-in capability
+* :doc:`/plugins/discogs`: Support a new Discogs URL format for IDs.
+  :bug:`4080`
+* :doc:`/plugins/discogs`: Remove built-in rate-limiting because the Discogs
+  Python library we use now has its own rate-limiting.
   :bug: `4108`
-* :doc:`/plugins/export`: Fix duplicated output.
-* :doc:`/dev/library`: Use slow queries for flexible attributes in aunique.
-  :bug:`2678` :bug:`3553`
-* :doc:`/reference/query`: Use short-circuit evaluation in AndQuery and OrQuery
-  :bug:`4145`
+* :doc:`/plugins/export`: Fix some duplicated output.
 * :doc:`/plugins/aura`: Fix a potential security hole when serving image
-  files. :bug:`4160`
+  files.
+  :bug:`4160`
 
 For plugin developers:
 
 * :py:meth:`beets.library.Item.destination` now accepts a `replacements`
   argument to be used in favor of the default.
-* Send the `pluginload` event after plugin types and queries are available, not before.
+* The `pluginload` event is now sent after plugin types and queries are
+  available, not before.
+* A new plugin event, `album_removed`, is called when an album is removed from
+  the library (even when its file is not deleted from disk).
 
-For packagers:
+Here are some notes for packagers:
 
 * As noted above, the minimum Python version is now 3.6.
 * We fixed a flaky test, named `test_album_art` in the `test_zero.py` file,
