@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.5.1 (in development)
+1.6.0 (in development)
 ----------------------
 
 This release now requires Python 3.6 or later (it removes support for Python
