@@ -1224,6 +1224,7 @@ def test_album_info(*args, **kwargs):
         tracks=[track_info],
         album_id='albumid',
         artist_id='artistid',
+        flex='flex',
     )
     return iter([album_info])
 
@@ -1241,6 +1242,7 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper,
         # Create import session
         self.importer = self.create_importer()
         config['import']['autotag'] = True
+        config['import']['duplicate_keys'] = 'albumartist album'
 
     def tearDown(self):
         self.teardown_beets()
@@ -1309,6 +1311,24 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper,
 
     def test_twice_in_import_dir(self):
         self.skipTest('write me')
+    
+    def test_keep_when_extra_key_is_different(self):
+        config['import']['duplicate_keys'] = 'albumartist album flex'
+
+        item = self.lib.items().get()
+        import_file = MediaFile(os.path.join(
+            self.importer.paths[0], b'album 0', b'track 0.mp3'))
+        import_file.artist = item['artist']
+        import_file.albumartist = item['artist']
+        import_file.album = item['album']
+        import_file.title = item['title']
+        import_file.flex = 'different'
+
+        self.importer.default_resolution = self.importer.Resolution.SKIP
+        self.importer.run()
+
+        self.assertEqual(len(self.lib.albums()), 2)
+        self.assertEqual(len(self.lib.items()), 2)
 
     def add_album_fixture(self, **kwargs):
         # TODO move this into upstream

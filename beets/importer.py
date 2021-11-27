@@ -691,7 +691,12 @@ class ImportTask(BaseImportTask):
         keys = config['import']['duplicate_keys'].as_str().split()
         info = self.chosen_info().copy()
         info['albumartist'] = artist
-        subqueries = [ dbcore.MatchQuery(k, info.get(k)) for k in keys ]
+        album = library.Album(None, **info)
+        subqueries = []
+        for key in keys:
+            value = album.get(key)
+            fast = key in library.Album.item_keys
+            subqueries.append(dbcore.MatchQuery(key, value, fast))
         duplicate_query = dbcore.AndQuery(subqueries)
 
         for album in lib.albums(duplicate_query):
