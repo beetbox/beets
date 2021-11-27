@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.6.0 (in development)
-----------------------
+1.6.0 (November 27, 2021)
+-------------------------
 
 This release is our first experiment with time-based releases! We are aiming
 to publish a new release of beets every 3 months. We therefore have a healthy
