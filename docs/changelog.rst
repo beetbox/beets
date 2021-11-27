@@ -1,6 +1,12 @@
 Changelog
 =========
 
+1.6.1 (in development)
+----------------------
+
+Changelog goes here!
+
+
 1.6.0 (November 27, 2021)
 -------------------------
 
