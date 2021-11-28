@@ -89,7 +89,7 @@ setup(
         'musicbrainzngs>=0.4',
         'pyyaml',
         'mediafile>=0.2.0',
-        'confuse>=1.0.0',
+        'confuse>=1.5.0',
         'munkres>=1.0.0',
         'jellyfish',
     ] + (
