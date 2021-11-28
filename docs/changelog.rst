@@ -6,6 +6,11 @@ Changelog
 
 Changelog goes here!
 
+For packagers:
+
+* We fixed a version for the dependency on the `Confuse`_ library.
+  :bug:`4167`
+
 
 1.6.0 (November 27, 2021)
 -------------------------
@@ -69,7 +74,7 @@ Bug fixes:
   :bug:`4080`
 * :doc:`/plugins/discogs`: Remove built-in rate-limiting because the Discogs
   Python library we use now has its own rate-limiting.
-  :bug: `4108`
+  :bug:`4108`
 * :doc:`/plugins/export`: Fix some duplicated output.
 * :doc:`/plugins/aura`: Fix a potential security hole when serving image
   files.
