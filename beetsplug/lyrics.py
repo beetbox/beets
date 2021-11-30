@@ -377,7 +377,7 @@ class Genius(Backend):
         data = {'q': title + " " + artist.lower()}
         try:
             response = requests.get(
-                search_url, data=data, headers=self.headers)
+                search_url, params=data, headers=self.headers)
         except requests.RequestException as exc:
             self._log.debug('Genius API request failed: {0}', exc)
             return None
