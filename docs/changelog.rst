@@ -6,6 +6,10 @@ Changelog
 
 Changelog goes here!
 
+Bug fixes:
+
+* :doc:`/plugins/lyrics`: Fix Genius search by using query params instead of body.
+
 For packagers:
 
 * We fixed a version for the dependency on the `Confuse`_ library.
