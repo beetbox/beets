@@ -49,10 +49,12 @@ def rewriter(field, rules, og_templ_funcs):
         return value
     return fieldfunc
 
+
 def og_getters(prev_templs, new_getters):
     def blankfield(item):
         return ""
-    return { k: prev_templs.get(k, blankfield) for k in new_getters.keys() }
+    return {k: prev_templs.get(k, blankfield) for k in new_getters.keys()}
+
 
 class RewritePlugin(BeetsPlugin):
     def __init__(self):
