@@ -22,23 +22,37 @@ from collections import defaultdict
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets import library
+from beets import plugins
+from beets.library import DefaultTemplateFunctions
+from beets.util.functemplate import template
 
 
-def rewriter(field, rules):
+def rewriter(field, rules, og_templ_funcs):
     """Create a template field function that rewrites the given field
-    with the given rewriting rules. ``rules`` must be a list of
-    (pattern, replacement) pairs.
+    with the given rewriting rules.
+
+    - ``rules`` must be a list of (pattern, replacement) pairs.
+    - ``og_plugin_funcs`` must not include any templates from this plugin,
+      to avoid infinite loops.
     """
     def fieldfunc(item):
         value = item._values_fixed[field]
         for pattern, replacement in rules:
             if pattern.match(value.lower()):
                 # Rewrite activated.
-                return replacement
+                templ = template(replacement)
+                funcs = DefaultTemplateFunctions(item, item._db).functions()
+                funcs.update(og_templ_funcs)
+                return templ.substitute(item.formatted(for_path=False),
+                                        og_templ_funcs)
         # Not activated; return original value.
         return value
     return fieldfunc
 
+def og_getters(prev_templs, new_getters):
+    def blankfield(item):
+        return ""
+    return { k: prev_templs.get(k, blankfield) for k in new_getters.keys() }
 
 class RewritePlugin(BeetsPlugin):
     def __init__(self):
@@ -66,8 +80,11 @@ class RewritePlugin(BeetsPlugin):
                 rules['albumartist'].append((pattern, value))
 
         # Replace each template field with the new rewriter function.
+        og_item_getters = og_getters(plugins.item_field_getters(), rules)
+        og_album_getters = og_getters(plugins.album_field_getters(), rules)
         for fieldname, fieldrules in rules.items():
-            getter = rewriter(fieldname, fieldrules)
+            getter = rewriter(fieldname, fieldrules, og_item_getters)
             self.template_fields[fieldname] = getter
             if fieldname in library.Album._fields:
+                getter = rewriter(fieldname, fieldrules, og_album_getters)
                 self.album_template_fields[fieldname] = getter
