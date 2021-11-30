@@ -60,10 +60,11 @@ class RewritePlugin(BeetsPlugin):
             self._log.debug('adding template field {0}', key)
             pattern = re.compile(pattern.lower())
             rules[fieldname].append((pattern, value))
-            if fieldname == 'artist':
-                # Special case for the artist field: apply the same
-                # rewrite for "albumartist" as well.
-                rules['albumartist'].append((pattern, value))
+
+        # Special case for the "artist" field: apply the same rewrite for
+        # "albumartist" as well (only if no other "albumartist" rule matches)
+        if 'artist' in rules:
+            rules['albumartist'] += rules['artist']
 
         # Replace each template field with the new rewriter function.
         for fieldname, fieldrules in rules.items():
