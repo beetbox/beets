@@ -9,8 +9,8 @@ Changelog goes here!
 Bug fixes:
 
 * :doc:`/plugins/lyrics`: Fix Genius search by using query params instead of body.
-* :doc:`/plugins/unimported`: The new configuration option added in 1.6.0 now has
-  a default value if it hasn't been set.
+* :doc:`/plugins/unimported`: The new ``ignore_subdirectories`` configuration
+  option added in 1.6.0 now has a default value if it hasn't been set.
 
 For packagers:
 
