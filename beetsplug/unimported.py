@@ -32,7 +32,8 @@ class Unimported(BeetsPlugin):
         super().__init__()
         self.config.add(
             {
-                'ignore_extensions': []
+                'ignore_extensions': [],
+                'ignore_subdirectories': []
             }
         )
 
