@@ -98,7 +98,7 @@ Setup Configuration
 
 3. Next, type ``beet config -e`` to open the configuration file with your default text editor.
 
-4. Modify the configuration file. Put this in your config file...
+4. Modify the configuration file. Here is a good place to start with your blank configure file...
 
   ``directory: /Users/[account_name]/Music/``
 
@@ -112,9 +112,7 @@ Setup Configuration
   - *Library refers to where you keep the database file.*
   - *Import (copy:no) refers to, without copying, modifying the media you select in its original directory.*
 
-5. Congratulations!
-
-*See configuration guide above for more ways to configure beets to behave in other ways)*
+5. Congratulations! *(See configuration guide above for more ways to configure beets to behave in other ways)*
 
 **Windows**
 
@@ -128,8 +126,82 @@ Setup Configuration
   - Add ``;C:\Python36;C:\Python36\Scripts`` to the PATH variable I the table. *You may need to adjust these paths to point to your Python installation.*
 
 3. Install Beets by typing ``pip3 install beets`` in the command prompt
+
 4. Finish up by typing ``beet`` to make sure everything is working
-5. Congratulations!
+
+5. Next, to inorder to configure beets, create a file called config.yaml
+
+6. Type ``beet config -e`` to check the path of the file
+
+7. Modify the configuration file. Here is a good place to start with your blank configure file...
+
+  ``directory: ~/music``
+
+  ``library: ~/data/musiclibrary.db``
+
+  ``import:``
+
+    ``copy: no``
+
+  - *Directory refers to where you keep your music.*
+  - *Library refers to where you keep the database file.*
+  - *Import (copy:no) refers to, without copying, modifying the media you select in its original directory.*
+
+8. Congratulations! *(See configuration guide above for more ways to configure beets to behave in other ways)*
+
+**Ubuntu**
+
+1. To ensure you are getting the latest version of Beets, run ``apt-get install python-dev python-pip``
+
+2. Install Beets by typing ``apt-get install beets`` in the shell
+
+3. Finish up by typing ``apt list beet`` to make sure everything is working
+
+4. Next, to inorder to configure beets, create a file called config.yaml
+
+5. Type ``beet config -e`` to check the path of the file
+
+6. Modify the configuration file. Here is a good place to start with your blank configure file...
+
+  ``directory: ~/music``
+
+  ``library: ~/data/musiclibrary.db``
+
+  ``import:``
+
+    ``copy: no``
+
+  - *Directory refers to where you keep your music.*
+  - *Library refers to where you keep the database file.*
+  - *Import (copy:no) refers to, without copying, modifying the media you select in its original directory.*
+
+7. Congratulations! *(See configuration guide above for more ways to configure beets to behave in other ways)*
+
+**Arch Linux**
+
+1. Install Beets by typing ``pacman -S beets`` in the shell
+
+2. Finish up by typing ``pacman -Qi beet`` to make sure everything is working
+
+3. Next, to inorder to configure beets, create a file called config.yaml
+
+4. Type ``beet config -e`` to check the path of the file
+
+5. Modify the configuration file. Here is a good place to start with your blank configure file...
+
+  ``directory: ~/music``
+
+  ``library: ~/data/musiclibrary.db``
+
+  ``import:``
+
+    ``copy: no``
+
+  - *Directory refers to where you keep your music.*
+  - *Library refers to where you keep the database file.*
+  - *Import (copy:no) refers to, without copying, modifying the media you select in its original directory.*
+
+6. Congratulations! *(See configuration guide above for more ways to configure beets to behave in other ways)*
 
 Contribute
 ----------
