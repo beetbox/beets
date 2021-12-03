@@ -263,11 +263,11 @@ artist="Tom Tom Club"`` will change the artist for the track "Genius of Love."
 To remove fields (which is only possible for flexible attributes), follow a
 field name with an exclamation point: ``field!``.
 
-The ``-a`` switch operates on albums instead of individual tracks. Without
-this flag, the command will only change *track-level* data, even if all the
-tracks belong to the same album. If you want to change an *album-level* field,
-such as ``year`` or ``albumartist``, you'll want to use the ``-a`` flag to
-avoid a confusing situation where the data for individual tracks conflicts
+The ``-a`` switch also operates on albums in addition to the individual tracks.
+Without this flag, the command will only change *track-level* data, even if all
+the tracks belong to the same album. If you want to change an *album-level*
+field, such as ``year`` or ``albumartist``, you'll want to use the ``-a`` flag
+to avoid a confusing situation where the data for individual tracks conflicts
 with the data for the whole album.
 
 Items will automatically be moved around when necessary if they're in your
