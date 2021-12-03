@@ -28,6 +28,9 @@ Bug fixes:
   ``r128_album_gain`` fields was changed from integer to float to fix loss of
   precision due to truncation.
   :bug:`4169`
+* :doc:`plugins/web`: Fix handling of "query" requests. Previously queries
+  consisting of more than one token (separated by a slash) always returned an
+  empty result.
 
 For packagers:
 
