@@ -17,6 +17,10 @@ For packagers:
 * We fixed a version for the dependency on the `Confuse`_ library.
   :bug:`4167`
 
+Other new things:
+
+* :doc:`/plugins/limit`: Limit query results to head or tail (``lslimit`` 
+  command only)
 
 1.6.0 (November 27, 2021)
 -------------------------
