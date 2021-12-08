@@ -53,7 +53,7 @@ class PathQuery(dbcore.FieldQuery):
     """
 
     def __init__(self, field, pattern, fast=True, case_sensitive=None):
-        """Creates a path query. 
+        """Creates a path query.
 
         `pattern` must be a path, either to a file or a directory.
 
@@ -141,9 +141,9 @@ class DateType(types.Float):
 
 
 class PathType(types.Type):
-    """A dbcore type for filesystem paths. 
+    """A dbcore type for filesystem paths.
 
-    These are represented as `bytes` objects, in keeping with 
+    These are represented as `bytes` objects, in keeping with
     the Unix filesystem abstraction.
     """
 
@@ -152,7 +152,7 @@ class PathType(types.Type):
     model_type = bytes
 
     def __init__(self, nullable=False):
-        """Creates a path type object. 
+        """Creates a path type object.
 
         `nullable` controls whether the type may be missing, i.e., None.
         """
@@ -301,9 +301,9 @@ class FileOperationError(Exception):
         self.reason = reason
 
     def text(self):
-        """Gets a string representing the error. 
+        """Gets a string representing the error.
 
-        Describes both the underlying reason and the file path 
+        Describes both the underlying reason and the file path
         in question.
         """
         return '{}: {}'.format(
@@ -426,9 +426,9 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
             raise KeyError(key)
 
     def __getitem__(self, key):
-        """Gets the value for a key. 
+        """Gets the value for a key.
 
-        `artist` and `albumartist` are fallback values for each other 
+        `artist` and `albumartist` are fallback values for each other
         when not set.
         """
         value = self._get(key)
@@ -622,7 +622,7 @@ class Item(LibModel):
 
     def __getitem__(self, key):
         """Gets the value for a field, falling back to the album if
-        necessary. 
+        necessary.
 
         Raises a KeyError if the field is not available.
         """
@@ -644,7 +644,7 @@ class Item(LibModel):
         )
 
     def keys(self, computed=False, with_album=True):
-        """Gets a list of available field names. 
+        """Gets a list of available field names.
 
         `with_album` controls whether the album's fields are included.
         """
@@ -657,7 +657,7 @@ class Item(LibModel):
 
     def get(self, key, default=None, with_album=True):
         """Gets the value for a given key or `default` if it does not
-        exist. 
+        exist.
 
         Set `with_album` to false to skip album fallback.
         """
@@ -669,7 +669,7 @@ class Item(LibModel):
             return default
 
     def update(self, values):
-        """Sets all key/value pairs in the mapping. 
+        """Sets all key/value pairs in the mapping.
 
         If mtime is specified, it is not reset (as it might otherwise be).
         """
@@ -874,11 +874,11 @@ class Item(LibModel):
     # Model methods.
 
     def remove(self, delete=False, with_album=True):
-        """Removes the item. 
+        """Removes the item.
 
-        If `delete`, then the associated file is removed from disk. 
+        If `delete`, then the associated file is removed from disk.
 
-        If `with_album`, then the item's album (if any) is removed 
+        If `with_album`, then the item's album (if any) is removed
         if the item was the last in the album.
         """
         super().remove()
@@ -902,9 +902,9 @@ class Item(LibModel):
     def move(self, operation=MoveOperation.MOVE, basedir=None,
              with_album=True, store=True):
         """Moves the item to its designated location within the library
-        directory (provided by destination()). 
+        directory (provided by destination()).
 
-        Subdirectories are created as needed. If the operation succeeds, 
+        Subdirectories are created as needed. If the operation succeeds,
         the item's path field is updated to reflect the new location.
 
         Instead of moving the item it can also be copied, linked or hardlinked
@@ -951,12 +951,12 @@ class Item(LibModel):
     def destination(self, fragment=False, basedir=None, platform=None,
                     path_formats=None, replacements=None):
         """Returns the path in the library directory designated for the
-        item (i.e., where the file ought to be). 
+        item (i.e., where the file ought to be).
 
-        fragment makes this method return just the path fragment underneath 
-        the root library directory; the path is also returned as Unicode instead 
-        of encoded as a bytestring. basedir can override the library's base
-        directory for the destination.
+        fragment makes this method return just the path fragment underneath
+        the root library directory; the path is also returned as Unicode
+        instead of encoded as a bytestring. basedir can override the library's
+        base directory for the destination.
         """
         self._check_db()
         platform = platform or sys.platform
@@ -1029,7 +1029,7 @@ class Item(LibModel):
 
 class Album(LibModel):
     """Provides access to information about albums stored in a
-    library. 
+    library.
 
     Reflects the library's "albums" table, including album art.
     """
@@ -1147,10 +1147,10 @@ class Album(LibModel):
 
     def remove(self, delete=False, with_items=True):
         """Removes this album and all its associated items from the
-        library. 
+        library.
 
-        If delete, then the items' files are also deleted from disk, 
-        along with any album art. The directories containing the album are 
+        If delete, then the items' files are also deleted from disk,
+        along with any album art. The directories containing the album are
         also removed (recursively) if empty.
 
         Set with_items to False to avoid removing the album's items.
@@ -1275,7 +1275,7 @@ class Album(LibModel):
 
     def art_destination(self, image, item_dir=None):
         """Returns a path to the destination for the album art image
-        for the album. 
+        for the album.
 
         `image` is the path of the image that will be
         moved there (used for its extension).
@@ -1306,7 +1306,7 @@ class Album(LibModel):
 
     def set_art(self, path, copy=True):
         """Sets the album's cover art to the image at the given path.
-        
+
         The image is copied (or moved) into place, replacing any
         existing art.
 
@@ -1337,11 +1337,11 @@ class Album(LibModel):
         plugins.send('art_set', album=self)
 
     def store(self, fields=None):
-        """Updates the database with the album information. 
+        """Updates the database with the album information.
 
         The album's tracks are also updated.
 
-        `fields` represents the fields to be stored. If not specified, 
+        `fields` represents the fields to be stored. If not specified,
         all fields will be.
         """
         # Get modified track fields.
@@ -1464,7 +1464,7 @@ class Library(dbcore.Database):
 
     def add(self, obj):
         """Adds the :class:`Item` or :class:`Album` object to the library
-        database. 
+        database.
 
         Returns the object's new id.
         """
@@ -1547,7 +1547,7 @@ class Library(dbcore.Database):
     # Convenience accessors.
 
     def get_item(self, id):
-        """Fetches a :class:`Item` by its ID. 
+        """Fetches a :class:`Item` by its ID.
 
         Returns `None` if no match is found.
         """
@@ -1555,7 +1555,7 @@ class Library(dbcore.Database):
 
     def get_album(self, item_or_id):
         """Given an album ID or an item associated with an album, returns
-        a :class:`Album` object for the album. 
+        a :class:`Album` object for the album.
 
         If no such album exists, returns `None`.
         """
@@ -1572,7 +1572,7 @@ class Library(dbcore.Database):
 
 def _int_arg(s):
     """Converts a string argument to an integer for use in a template
-    function.  
+    function.
 
     May raise a ValueError.
     """
@@ -1581,7 +1581,7 @@ def _int_arg(s):
 
 class DefaultTemplateFunctions:
     """A container class for the default functions provided to path
-    templates. 
+    templates.
 
     These functions are contained in an object to provide
     additional context to the functions -- specifically, the Item being
@@ -1590,9 +1590,9 @@ class DefaultTemplateFunctions:
     _prefix = 'tmpl_'
 
     def __init__(self, item=None, lib=None):
-        """Parametrizes the functions. 
+        """Parametrizes the functions.
 
-        If `item` or `lib` is None, then some functions (namely, ``aunique``) 
+        If `item` or `lib` is None, then some functions (namely, ``aunique``)
         will always evaluate to the empty string.
         """
         self.item = item
@@ -1600,7 +1600,7 @@ class DefaultTemplateFunctions:
 
     def functions(self):
         """Returns a dictionary containing the functions defined in this
-        object. 
+        object.
 
         The keys are function names (as exposed in templates)
         and the values are Python functions.
@@ -1666,7 +1666,7 @@ class DefaultTemplateFunctions:
 
     def tmpl_aunique(self, keys=None, disam=None, bracket=None):
         """Generates a string that is guaranteed to be unique among all
-        albums in the library who share the same set of keys. 
+        albums in the library who share the same set of keys.
 
         A fields from "disam" is used in the string if one is sufficient to
         disambiguate the albums. Otherwise, a fallback opaque value is
@@ -1761,7 +1761,7 @@ class DefaultTemplateFunctions:
     def tmpl_first(s, count=1, skip=0, sep='; ', join_str='; '):
         """ Gets the item(s) from x to y in a string separated by something
         and joins then with something.
-        
+
         Args:
             s: the string
             count: The number of items included
@@ -1776,12 +1776,12 @@ class DefaultTemplateFunctions:
     def tmpl_ifdef(self, field, trueval='', falseval=''):
         """ If field exists returns trueval or the field (default)
         otherwise, emits return falseval (if provided).
-        
+
         Args:
             field: The name of the field
             trueval: The string if the condition is true
             falseval: The string if the condition is false
-        
+
         Returns:
             The string, based on condition.
         """
