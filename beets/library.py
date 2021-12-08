@@ -1526,40 +1526,38 @@ class Library(dbcore.Database):
 
     @staticmethod
     def get_default_album_sort():
-        """Gets a :class:`Sort` object for albums from the config option.
-        """
+        """Gets a :class:`Sort` object for albums from the config option."""
         return dbcore.sort_from_strings(
             Album, beets.config['sort_album'].as_str_seq())
 
     @staticmethod
     def get_default_item_sort():
-        """Gets a :class:`Sort` object for items from the config option.
-        """
+        """Gets a :class:`Sort` object for items from the config option."""
         return dbcore.sort_from_strings(
             Item, beets.config['sort_item'].as_str_seq())
 
     def albums(self, query=None, sort=None):
-        """Gets :class:`Album` objects matching the query.
-        """
+        """Gets :class:`Album` objects matching the query."""
         return self._fetch(Album, query, sort or self.get_default_album_sort())
 
     def items(self, query=None, sort=None):
-        """Gets :class:`Item` objects matching the query.
-        """
+        """Gets :class:`Item` objects matching the query."""
         return self._fetch(Item, query, sort or self.get_default_item_sort())
 
     # Convenience accessors.
 
     def get_item(self, id):
-        """Fetches a :class:`Item` by its ID. Returns `None` if no match is
-        found.
+        """Fetches a :class:`Item` by its ID. 
+
+        Returns `None` if no match is found.
         """
         return self._get(Item, id)
 
     def get_album(self, item_or_id):
         """Given an album ID or an item associated with an album, returns
-        a :class:`Album` object for the album. If no such album exists,
-        returns `None`.
+        a :class:`Album` object for the album. 
+
+        If no such album exists, returns `None`.
         """
         if isinstance(item_or_id, int):
             album_id = item_or_id
@@ -1583,7 +1581,9 @@ def _int_arg(s):
 
 class DefaultTemplateFunctions:
     """A container class for the default functions provided to path
-    templates. These functions are contained in an object to provide
+    templates. 
+
+    These functions are contained in an object to provide
     additional context to the functions -- specifically, the Item being
     evaluated.
     """
@@ -1655,8 +1655,7 @@ class DefaultTemplateFunctions:
 
     @staticmethod
     def tmpl_asciify(s):
-        """Translates non-ASCII characters to their ASCII equivalents.
-        """
+        """Translates non-ASCII characters to their ASCII equivalents."""
         return util.asciify_path(s, beets.config['path_sep_replace'].as_str())
 
     @staticmethod
