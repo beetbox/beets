@@ -495,9 +495,10 @@ def move(path, dest, replace=False):
     try:
         os.replace(path, dest)
     except OSError:
-        tmp = tempfile.mktemp(suffix='.beets',
-                              prefix=py3_path(b'.' + os.path.basename(dest)),
-                              dir=py3_path(os.path.dirname(dest)))
+        suffix = py3_path('.beets')
+        prefix = py3_path('.') + os.path.basename(py3_path(dest))
+        dir = os.path.dirname(py3_path(dest))
+        tmp = tempfile.mktemp(suffix=suffix, prefix=prefix, dir=dir)
         tmp = syspath(tmp)
         try:
             shutil.copyfile(path, tmp)
