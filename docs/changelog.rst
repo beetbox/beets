@@ -11,6 +11,9 @@ Bug fixes:
 * :doc:`/plugins/lyrics`: Fix Genius search by using query params instead of body.
 * :doc:`/plugins/unimported`: The new ``ignore_subdirectories`` configuration
   option added in 1.6.0 now has a default value if it hasn't been set.
+* :doc:`/plugins/deezer`: Tolerate missing fields when searching for singleton
+  tracks
+  :bug:`4116`
 
 For packagers:
 
