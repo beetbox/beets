@@ -128,9 +128,9 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             artist=artist,
             artist_id=artist_id,
             length=track_data['duration'],
-            index=track_data['track_position'],
-            medium=track_data['disk_number'],
-            medium_index=track_data['track_position'],
+            index=track_data.get('track_position'),
+            medium=track_data.get('disk_number'),
+            medium_index=track_data.get('track_position'),
             data_source=self.data_source,
             data_url=track_data['link'],
         )

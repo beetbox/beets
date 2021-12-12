@@ -16,6 +16,9 @@ Bug fixes:
 * :doc:`/plugins/lyrics`: Fix Genius search by using query params instead of body.
 * :doc:`/plugins/unimported`: The new ``ignore_subdirectories`` configuration
   option added in 1.6.0 now has a default value if it hasn't been set.
+* :doc:`/plugins/deezer`: Tolerate missing fields when searching for singleton
+  tracks
+  :bug:`4116`
 * :doc:`/plugins/replaygain`: The type of the internal ``r128_track_gain`` and
   ``r128_album_gain`` fields was changed from integer to float to fix loss of
   precision due to truncation.
