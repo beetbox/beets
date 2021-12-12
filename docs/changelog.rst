@@ -6,6 +6,11 @@ Changelog
 
 Changelog goes here!
 
+New features:
+
+* :doc:`/plugins/kodiupdate`: Now supports multiple kodi instances
+  :bug:`4101`
+
 Bug fixes:
 
 * :doc:`/plugins/lyrics`: Fix Genius search by using query params instead of body.
@@ -14,6 +19,10 @@ Bug fixes:
 * :doc:`/plugins/deezer`: Tolerate missing fields when searching for singleton
   tracks
   :bug:`4116`
+* :doc:`/plugins/replaygain`: The type of the internal ``r128_track_gain`` and
+  ``r128_album_gain`` fields was changed from integer to float to fix loss of
+  precision due to truncation.
+  :bug:`4169`
 
 For packagers:
 
