@@ -6,6 +6,11 @@ Changelog
 
 Changelog goes here!
 
+New features:
+
+* :doc:`/plugins/kodiupdate`: Now supports multiple kodi instances
+  :bug:`4101`
+
 Bug fixes:
 
 * :doc:`/plugins/lyrics`: Fix Genius search by using query params instead of body.
