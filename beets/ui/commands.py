@@ -17,6 +17,7 @@ interface.
 """
 
 
+from optparse import Option
 import os
 import re
 import operator
@@ -40,7 +41,7 @@ from beets import library
 from beets import config
 from beets import logging
 
-from . import _store_dict
+from . import CommonOptionsParser, _store_dict
 
 VARIOUS_ARTISTS = 'Various Artists'
 PromptChoice = namedtuple('PromptChoice', ['short', 'long', 'callback'])
@@ -1704,10 +1705,10 @@ def config_func(lib, opts, args):
             print_(displayable_path(filename))
 
     # Open in editor.
-    elif opts.open:
-        config_open()
-    elif opts.setting_path is not None:
-        config_edit(opts)
+    elif opts.edit:
+        config_edit()
+    elif opts.set is not None:
+        config_set(opts)
 
     # Dump configuration.
     else:
@@ -1736,15 +1737,15 @@ def set_in_dict(data_dict, map_list, value):
     get_from_dict(data_dict, map_list[:-1])[map_list[-1]] = value
 
 
-def config_edit(opts):
+def config_set(opts):
     """Edit the configuration file, with the path of the setting
     (ex. import.write) and the value.
     """
-    if not opts.setting_value:
+    if not opts.set:
         print("Config value not provided")
         return
 
-    setting_path = opts.setting_path.split(".")
+    setting_path = opts.set["field"].split(".")
 
     actual_value = None
     try:
@@ -1758,13 +1759,13 @@ def config_edit(opts):
     try:
         # Convert the string value to type of the setting
         if isinstance(actual_value, bool):
-            value = util.str2bool(opts.setting_value)
+            value = util.str2bool(opts.set["value"])
         elif isinstance(actual_value, str):
-            value = opts.setting_value
+            value = opts.set["value"]
         elif isinstance(actual_value, int):
-            value = int(opts.setting_value)
+            value = int(opts.set["value"])
         elif isinstance(actual_value, float):
-            value = float(opts.setting_value)
+            value = float(opts.set["value"])
         else:
             print("This type of the setting is not supported")
             return
@@ -1781,7 +1782,7 @@ def config_edit(opts):
         file.write(config.dump(full=opts.defaults, redact=opts.redact))
 
 
-def config_open():
+def config_edit():
     """Open a program to edit the user configuration.
     An empty config file is created if no existing config file exists.
     """
@@ -1797,17 +1798,35 @@ def config_open():
             message += ". Please set the EDITOR environment variable"
         raise ui.UserError(message)
 
+class SetOption(Option):
+    ACTIONS = Option.ACTIONS + ("extend",)
+    STORE_ACTIONS = Option.STORE_ACTIONS + ("extend",)
+    TYPED_ACTIONS = Option.TYPED_ACTIONS + ("extend",)
+    ALWAYS_TYPED_ACTIONS = Option.ALWAYS_TYPED_ACTIONS + ("extend",)
+
+    def take_action(self, action, dest, opt, value, values, parser):
+        if action == "extend":
+            if "=" in value:
+                value = value.strip().split("=")
+                d = {"field": value[0],
+                     "value": value[1]}
+                values.ensure_value(dest, {}).update(d)
+                return
+
+            print("Missing field or value")
+        else:
+            super.take_action(self, action, dest, opt, value, values, parser)
 
 config_cmd = ui.Subcommand('config',
-                           help='show or edit the user configuration')
+                           help='show or edit the user configuration', parser=CommonOptionsParser(option_class=SetOption))
 config_cmd.parser.add_option(
     '-p', '--paths', action='store_true',
     help='show files that configuration was loaded from'
 )
 config_cmd.parser.add_option(
-    '-e', '--edit', action='store',
+    '-s', '--set', action='extend',
     help='edit a setting',
-    dest="setting_path"
+    dest="set"
 )
 config_cmd.parser.add_option(
     '-v', '--value', action='store',
@@ -1815,7 +1834,7 @@ config_cmd.parser.add_option(
     dest="setting_value"
 )
 config_cmd.parser.add_option(
-    '-o', '--open', action='store_true',
+    '-e', '--edit', action='store_true',
     help='open user configuration with $EDITOR'
 )
 config_cmd.parser.add_option(

@@ -1253,7 +1253,7 @@ def _raw_main(args, lib=None):
     # that an invalid configuration does not prevent the editor from
     # starting.
     if subargs and subargs[0] == 'config' \
-       and ('-o' in subargs or '--open' in subargs):
+       and ('-e' in subargs or '--edit' in subargs):
         from beets.ui.commands import config_open
         return config_open()
 
