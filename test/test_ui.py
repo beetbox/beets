@@ -288,11 +288,16 @@ class ModifyTest(unittest.TestCase, TestHelper):
         self.assertEqual(len(list(new_items)), 7)
 
     def test_modify_formatted(self):
-        item = self.lib.items().get()
-        orig_title = item.title
+        for i in range(0, 3):
+            self.add_item_fixture(title=f"title{i}",
+                                  artist="artist",
+                                  album="album")
+        items = list(self.lib.items())
         self.modify("title=${title} - append")
-        item.load()
-        self.assertEqual(item.title, f"{orig_title} - append")
+        for item in items:
+            orig_title = item.title
+            item.load()
+            self.assertEqual(item.title, f"{orig_title} - append")
 
     # Album Tests
 
