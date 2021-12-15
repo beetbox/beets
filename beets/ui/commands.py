@@ -33,7 +33,7 @@ from beets import plugins
 from beets import importer
 from beets import util
 from beets.util import syspath, normpath, ancestry, displayable_path, \
-    MoveOperation
+    MoveOperation, functemplate
 from beets import library
 from beets import config
 from beets import logging
@@ -1420,9 +1420,10 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
     print_('Modifying {} {}s.'
            .format(len(objs), 'album' if album else 'item'))
     changed = []
+    templates = {key: functemplate.template(value) for key, value in mods.items()}
     for obj in objs:
-        obj_mods = {key: model_cls._parse(key, format(obj, value))
-                    for key, value in mods.items()}
+        obj_mods = {key: model_cls._parse(key, obj.evaluate_template(templates[key]))
+                    for key in mods.keys()}
         if print_and_modify(obj, obj_mods, dels) and obj not in changed:
             changed.append(obj)
 
