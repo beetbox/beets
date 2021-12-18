@@ -77,11 +77,16 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
                 "by {} API: '{}'".format(self.data_source, release_date)
             )
 
-        tracks_data = requests.get(
+        tracks_obj = requests.get(
             self.album_url + deezer_id + '/tracks'
-        ).json()['data']
+        ).json()
+        tracks_data = tracks_obj['data']
         if not tracks_data:
             return None
+        while "next" in tracks_obj:
+            tracks_obj = requests.get(tracks_obj['next']).json()
+            tracks_data.extend(tracks_obj['data'])
+
         tracks = []
         medium_totals = collections.defaultdict(int)
         for i, track_data in enumerate(tracks_data, start=1):

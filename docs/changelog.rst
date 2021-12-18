@@ -12,7 +12,8 @@ New features:
   :bug:`4101`
 
 Bug fixes:
-
+* :doc:`/plugins/deezer`: Fix auto tagger pagination issues (fetch beyond the
+  first 25 tracks of a release).
 * :doc:`/plugins/lyrics`: Fix Genius search by using query params instead of body.
 * :doc:`/plugins/unimported`: The new ``ignore_subdirectories`` configuration
   option added in 1.6.0 now has a default value if it hasn't been set.
