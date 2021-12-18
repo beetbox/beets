@@ -531,6 +531,9 @@ class Item(LibModel):
 
         'length': DurationType(),
         'bitrate': types.ScaledInt(1000, 'kbps'),
+        'bitrate_mode': types.STRING,
+        'encoder_info': types.STRING,
+        'encoder_settings': types.STRING,
         'format': types.STRING,
         'samplerate': types.ScaledInt(1000, 'kHz'),
         'bitdepth': types.INTEGER,
