@@ -10,6 +10,7 @@ New features:
 
 * :doc:`/plugins/kodiupdate`: Now supports multiple kodi instances
   :bug:`4101`
+* Add the item fields ``bitrate_mode``, ``encoder_info`` and ``encoder_settings``.
 
 Bug fixes:
 
@@ -28,6 +29,7 @@ For packagers:
 
 * We fixed a version for the dependency on the `Confuse`_ library.
   :bug:`4167`
+* The minimum required version of :pypi:`mediafile` is now 0.9.0.
 
 
 1.6.0 (November 27, 2021)
