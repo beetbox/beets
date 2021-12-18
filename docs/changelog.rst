@@ -13,6 +13,8 @@ New features:
 
 Bug fixes:
 
+* :doc:`/plugins/spotify`: Fix auto tagger pagination issues (fetch beyond the
+  first 50 tracks of a release).
 * :doc:`/plugins/lyrics`: Fix Genius search by using query params instead of body.
 * :doc:`/plugins/unimported`: The new ``ignore_subdirectories`` configuration
   option added in 1.6.0 now has a default value if it hasn't been set.
