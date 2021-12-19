@@ -12,6 +12,7 @@ New features:
   :bug:`4101`
 
 Bug fixes:
+
 * :doc:`/plugins/deezer`: Fix auto tagger pagination issues (fetch beyond the
   first 25 tracks of a release).
 * :doc:`/plugins/lyrics`: Fix Genius search by using query params instead of body.
