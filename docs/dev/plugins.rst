@@ -36,7 +36,8 @@ found therein. Here's a skeleton of a plugin file::
 Once you have your ``BeetsPlugin`` subclass, there's a variety of things your
 plugin can do. (Read on!)
 
-To use your new plugin, make sure your ``beetsplug`` directory is in the Python
+To use your new plugin, make sure the directory that contains your
+``beetsplug`` directory is in the Python
 path (using ``PYTHONPATH`` or by installing in a `virtualenv`_, for example).
 Then, as described above, edit your ``config.yaml`` to include
 ``plugins: myawesomeplugin`` (substituting the name of the Python module
