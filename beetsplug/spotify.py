@@ -194,9 +194,16 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 )
             )
 
+        tracks_data = album_data['tracks']
+        tracks_items = tracks_data['items']
+        while tracks_data['next']:
+            tracks_data = self._handle_response(requests.get,
+                                                tracks_data['next'])
+            tracks_items.extend(tracks_data['items'])
+
         tracks = []
         medium_totals = collections.defaultdict(int)
-        for i, track_data in enumerate(album_data['tracks']['items'], start=1):
+        for i, track_data in enumerate(tracks_items, start=1):
             track = self._get_track(track_data)
             track.index = i
             medium_totals[track.medium] += 1
