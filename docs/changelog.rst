@@ -14,6 +14,8 @@ New features:
 
 Bug fixes:
 
+* :doc:`/plugins/deezer`: Fix auto tagger pagination issues (fetch beyond the
+  first 25 tracks of a release).
 * :doc:`/plugins/spotify`: Fix auto tagger pagination issues (fetch beyond the
   first 50 tracks of a release).
 * :doc:`/plugins/lyrics`: Fix Genius search by using query params instead of body.
