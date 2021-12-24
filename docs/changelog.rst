@@ -11,6 +11,7 @@ New features:
 * :doc:`/plugins/kodiupdate`: Now supports multiple kodi instances
   :bug:`4101`
 * Add the item fields ``bitrate_mode``, ``encoder_info`` and ``encoder_settings``.
+* Add the ``--nomove`` flag to invert the ``move`` command on import :bug:`2657`
 
 Bug fixes:
 

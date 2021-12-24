@@ -48,7 +48,7 @@ import
 ``````
 ::
 
-    beet import [-CWAPRqst] [-l LOGPATH] PATH...
+    beet import [-CMWAPRqst] [-l LOGPATH] PATH...
     beet import [options] -L QUERY
 
 Add music to your library, attempting to get correct tags for it from
@@ -74,9 +74,9 @@ Optional command flags:
 * By default, the command copies files to your library directory and
   updates the ID3 tags on your music. In order to move the files, instead of
   copying, use the ``-m`` (move) option. If you'd like to leave your music
-  files untouched, try the ``-C`` (don't copy) and ``-W`` (don't write tags)
-  options. You can also disable this behavior by default in the
-  configuration file (below).
+  files untouched, try the ``-C`` (don't copy), ``-W`` (don't write tags)
+  and ``-M`` (don't move) options. You can also disable this behavior by
+  default in the configuration file (below).
 
 * Also, you can disable the autotagging behavior entirely using ``-A``
   (don't autotag)---then your music will be imported with its existing
