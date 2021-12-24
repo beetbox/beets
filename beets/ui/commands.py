@@ -989,7 +989,7 @@ import_cmd.parser.add_option(
     help="move tracks into the library (overrides -c)"
 )
 import_cmd.parser.add_option(
-    '-M', '--nomove', action='store_false', dest='nomove',
+    '-M', '--nomove', action='store_true', dest='nomove',
     help="don't move tracks into the library (opposite of -m)"
 )
 import_cmd.parser.add_option(
