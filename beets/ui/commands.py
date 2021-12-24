@@ -949,9 +949,9 @@ def import_files(lib, paths, query):
 def import_func(lib, opts, args):
     config['import'].set_args(opts)
 
-    # Special case: --copy flag suppresses import_move (which would
-    # otherwise take precedence).
-    if opts.copy:
+    # Special case: --copy and --nomove flags suppress
+    # import_move (which would otherwise take precedence).
+    if opts.copy || opts.nomove:
         config['import']['move'] = False
 
     if opts.library:
@@ -987,6 +987,10 @@ import_cmd.parser.add_option(
 import_cmd.parser.add_option(
     '-m', '--move', action='store_true', dest='move',
     help="move tracks into the library (overrides -c)"
+)
+import_cmd.parser.add_option(
+    '-M', '--nomove', action='store_false', dest='nomove',
+    help="don't move tracks into the library (opposite of -m)"
 )
 import_cmd.parser.add_option(
     '-w', '--write', action='store_true', default=None,
