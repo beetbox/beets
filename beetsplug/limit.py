@@ -20,43 +20,42 @@ from itertools import islice
 
 def lslimit(lib, opts, args):
     """Query command with head/tail"""
-    
-    head = opts.head
-    tail = opts.tail
 
-    if head and tail:
-        raise RuntimeError("Only use one of --head and --tail")
-    
+    if (opts.head is not None) and (opts.tail is not None):
+        raise ValueError("Only use one of --head and --tail")
+    if (opts.head or opts.tail or 0) < 0:
+        raise ValueError("Limit value must be non-negative")
+
     query = decargs(args)
     if opts.album:
         objs = lib.albums(query)
     else:
         objs = lib.items(query)
-    
-    if head:
-        objs = islice(objs, head)
-    elif tail:
-        objs = deque(objs, tail)
+
+    if opts.head is not None:
+        objs = islice(objs, opts.head)
+    elif opts.tail is not None:
+        objs = deque(objs, opts.tail)
 
     for obj in objs:
         print_(format(obj))
 
 
 lslimit_cmd = Subcommand(
-    "lslimit", 
+    "lslimit",
     help="query with optional head or tail"
 )
 
 lslimit_cmd.parser.add_option(
-    '--head', 
-    action='store', 
+    '--head',
+    action='store',
     type="int",
     default=None
 )
 
 lslimit_cmd.parser.add_option(
     '--tail',
-    action='store', 
+    action='store',
     type="int",
     default=None
 )
@@ -65,31 +64,32 @@ lslimit_cmd.parser.add_all_common_options()
 lslimit_cmd.func = lslimit
 
 
-class LsLimitPlugin(BeetsPlugin):
+class LimitPlugin(BeetsPlugin):
+    """Query limit functionality via command and query prefix
+    """
+
     def commands(self):
         return [lslimit_cmd]
 
-
-class HeadPlugin(BeetsPlugin):
-    """Head of an arbitrary query.
-    
-    This allows a user to limit the results of any query to the first
-    `pattern` rows. Example usage: return first 10 tracks `beet ls '<10'`.
-    """
-    
     def queries(self):
 
         class HeadQuery(FieldQuery):
-            """Singleton query implementation that tracks result count."""
+            """This inner class pattern allows the query to track state
+            """
             n = 0
-            include = True
+            N = None
+
             @classmethod
             def value_match(cls, pattern, value):
+
+                if cls.N is None:
+                    cls.N = int(pattern)
+                    if cls.N < 0:
+                        raise ValueError("Limit value must be non-negative")
+
                 cls.n += 1
-                if cls.include:
-                    cls.include = cls.n <= int(pattern)
-                return cls.include
-        
+                return cls.n <= cls.N
+
         return {
             "<": HeadQuery
         }
