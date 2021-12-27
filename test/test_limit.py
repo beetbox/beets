@@ -15,10 +15,6 @@
 
 import unittest
 
-from test import _common
-from beetsplug import limit
-from beets import config
-
 from test.helper import TestHelper
 
 
@@ -29,11 +25,12 @@ class LsLimitPluginTest(unittest.TestCase, TestHelper):
         self.load_plugins("limit")
         self.num_test_items = 10
         assert self.num_test_items % 2 == 0
-        self.num_limit = self.num_test_items / 2
+        self.num_limit = self.num_test_items // 2
         self.num_limit_prefix = "'<" + str(self.num_limit) + "'"
         self.track_head_range = "track:.." + str(self.num_limit)
         self.track_tail_range = "track:" + str(self.num_limit + 1) + ".."
-        for item_no, item in enumerate(self.add_item_fixtures(count=self.num_test_items)):
+        for item_no, item in \
+                enumerate(self.add_item_fixtures(count=self.num_test_items)):
             item.track = item_no + 1
             item.store()
 
@@ -43,21 +40,23 @@ class LsLimitPluginTest(unittest.TestCase, TestHelper):
     def test_no_limit(self):
         result = self.run_with_output("lslimit")
         self.assertEqual(result.count("\n"), self.num_test_items)
-    
+
     def test_lslimit_head(self):
         result = self.run_with_output("lslimit", "--head", str(self.num_limit))
         self.assertEqual(result.count("\n"), self.num_limit)
-    
+
     def test_lslimit_tail(self):
         result = self.run_with_output("lslimit", "--tail", str(self.num_limit))
         self.assertEqual(result.count("\n"), self.num_limit)
-    
+
     def test_lslimit_head_invariant(self):
-        result = self.run_with_output("lslimit", "--head", str(self.num_limit), self.track_tail_range)
+        result = self.run_with_output(
+            "lslimit", "--head", str(self.num_limit), self.track_tail_range)
         self.assertEqual(result.count("\n"), self.num_limit)
-    
+
     def test_lslimit_tail_invariant(self):
-        result = self.run_with_output("lslimit", "--tail", str(self.num_limit), self.track_head_range)
+        result = self.run_with_output(
+            "lslimit", "--tail", str(self.num_limit), self.track_head_range)
         self.assertEqual(result.count("\n"), self.num_limit)
 
     def test_prefix(self):
@@ -65,16 +64,19 @@ class LsLimitPluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(result.count("\n"), self.num_limit)
 
     def test_prefix_when_correctly_ordered(self):
-        result = self.run_with_output("ls", self.track_tail_range, self.num_limit_prefix)
+        result = self.run_with_output(
+            "ls", self.track_tail_range, self.num_limit_prefix)
         self.assertEqual(result.count("\n"), self.num_limit)
 
     def test_prefix_when_incorrectly_ordred(self):
-        result = self.run_with_output("ls", self.num_limit_prefix, self.track_tail_range)
+        result = self.run_with_output(
+            "ls", self.num_limit_prefix, self.track_tail_range)
         self.assertEqual(result.count("\n"), 0)
 
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')
