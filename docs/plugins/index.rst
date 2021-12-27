@@ -98,6 +98,7 @@ following to your configuration::
    kodiupdate
    lastgenre
    lastimport
+   limit
    loadext
    lyrics
    mbcollection
