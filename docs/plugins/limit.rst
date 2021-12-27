@@ -27,9 +27,9 @@ singleton-based implementation.
 
 So why does the query prefix exist? Because it composes with any other 
 query-based API or plugin (see :doc:`/reference/query`). For example, 
-you can use the query prefix in ``smartplaylists`` (see :doc:`/plugins/
-smartplaylists`) to limit the number of tracks in a smart playlist for 
-applications like most played and recently added.
+you can use the query prefix in ``smartplaylists``
+(see :doc:`/plugins/smartplaylists`) to limit the number of tracks in a smart
+playlist for applications like most played and recently added.
 
 Configuration
 =============
