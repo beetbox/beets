@@ -11,6 +11,15 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+"""Adds head/tail functionality to list/ls.
+
+1. Implemented as `lslimit` command with `--head` and `--tail` options. This is
+   the idiomatic way to use this plugin.
+2. Implemented as query prefix `<` for head functionality only. This is the
+   composable way to use the plugin (plays nicely with anything that uses the
+   query language).
+"""
+
 from beets.dbcore import FieldQuery
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs, print_
