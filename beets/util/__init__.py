@@ -496,8 +496,9 @@ def move(path, dest, replace=False):
         os.replace(path, dest)
     except OSError:
         # Copy the file to a temporary destination.
+        base = os.path.basename(bytestring_path(dest))
         tmp = tempfile.NamedTemporaryFile(suffix=b'.beets',
-                                          prefix=b'.' + os.path.basename(dest),
+                                          prefix=b'.' + base,
                                           dir=os.path.dirname(dest),
                                           delete=False)
         try:
