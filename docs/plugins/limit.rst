@@ -3,7 +3,7 @@ Limit Query Plugin
 
 ``limit`` is a plugin to limit a query to the first or last set of 
 results. We also provide a query prefix ``'<n'`` to inline the same 
-behavior in the ``list`` command. They are analagous to piping results: 
+behavior in the ``list`` command. They are analagous to piping results:
 
     $ beet [list|ls] [QUERY] | [head|tail] -n n
 
@@ -34,7 +34,7 @@ applications like most played and recently added.
 Configuration
 =============
 
-Enable the ``last`` plugin in your configuration (see 
+Enable the ``limit`` plugin in your configuration (see
 :ref:`using-plugins`).
 
 Examples
@@ -46,7 +46,13 @@ First 10 tracks
     $ beet lslimit --head 10
     $ beet ls '<10'
 
+Last 10 tracks
+
+    $ beet ls | tail -n 10
+    $ beet lslimit --tail 10
+
 100 mostly recently released tracks
 
-    $ beet lslimit --tail 100 year+ month+ day+
+    $ beet lslimit --head 100 year- month- day-
     $ beet ls year- month- day- '<100'
+    $ beet lslimit --tail 100 year+ month+ day+
