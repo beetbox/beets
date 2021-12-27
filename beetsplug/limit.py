@@ -28,7 +28,7 @@ from itertools import islice
 
 
 def lslimit(lib, opts, args):
-    """Query command with head/tail"""
+    """Query command with head/tail."""
 
     if (opts.head is not None) and (opts.tail is not None):
         raise ValueError("Only use one of --head and --tail")
@@ -56,15 +56,15 @@ lslimit_cmd = Subcommand(
 )
 
 lslimit_cmd.parser.add_option(
-    '--head',
-    action='store',
+    "--head",
+    action="store",
     type="int",
     default=None
 )
 
 lslimit_cmd.parser.add_option(
-    '--tail',
-    action='store',
+    "--tail",
+    action="store",
     type="int",
     default=None
 )
@@ -74,28 +74,25 @@ lslimit_cmd.func = lslimit
 
 
 class LimitPlugin(BeetsPlugin):
-    """Query limit functionality via command and query prefix
-    """
+    """Query limit functionality via command and query prefix."""
 
     def commands(self):
+        """Expose `lslimit` subcommand."""
         return [lslimit_cmd]
 
     def queries(self):
 
         class HeadQuery(FieldQuery):
-            """This inner class pattern allows the query to track state
-            """
+            """This inner class pattern allows the query to track state."""
             n = 0
             N = None
 
             @classmethod
             def value_match(cls, pattern, value):
-
                 if cls.N is None:
                     cls.N = int(pattern)
                     if cls.N < 0:
                         raise ValueError("Limit value must be non-negative")
-
                 cls.n += 1
                 return cls.n <= cls.N
 
