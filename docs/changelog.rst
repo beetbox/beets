@@ -35,6 +35,10 @@ For packagers:
   :bug:`4167`
 * The minimum required version of :pypi:`mediafile` is now 0.9.0.
 
+Other new things:
+
+* :doc:`/plugins/limit`: Limit query results to head or tail (``lslimit`` 
+  command only)
 
 1.6.0 (November 27, 2021)
 -------------------------
