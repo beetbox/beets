@@ -1311,7 +1311,7 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper,
 
     def test_twice_in_import_dir(self):
         self.skipTest('write me')
-    
+
     def test_keep_when_extra_key_is_different(self):
         config['import']['duplicate_keys'] = 'albumartist album flex'
 

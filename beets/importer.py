@@ -521,28 +521,18 @@ class ImportTask(BaseImportTask):
 
     # Convenient data.
 
-    def chosen_ident(self):
-        """Returns identifying metadata about the current choice. For
-        albums, this is an (artist, album) pair. For items, this is
-        (artist, title). May only be called when the choice flag is ASIS
-        or RETAG (in which case the data comes from the files' current
-        metadata) or APPLY (data comes from the choice).
-        """
-        if self.choice_flag in (action.ASIS, action.RETAG):
-            return (self.cur_artist, self.cur_album)
-        elif self.choice_flag is action.APPLY:
-            return (self.match.info.artist, self.match.info.album)
-
     def chosen_info(self):
-        """Returns a dictionnary of metadata about the current choice.
+        """Return a dictionary of metadata about the current choice.
         May only be called when the choice flag is ASIS or RETAG
         (in which case the data comes from the files' current metadata)
         or APPLY (in which case the data comes from the choice).
         """
+        assert(self.choice_flag in (action.ASIS, action.RETAG, action.APPLY))
         if self.choice_flag in (action.ASIS, action.RETAG):
-            return self.cur_info
+            likelies, consensus = autotag.current_metadata(self.items)
+            return likelies
         elif self.choice_flag is action.APPLY:
-            return self.match.info
+            return self.match.info.copy()
 
     def imported_items(self):
         """Return a list of Items that should be added to the library.
@@ -667,8 +657,6 @@ class ImportTask(BaseImportTask):
         candidate IDs are stored in self.search_ids: if present, the
         initial lookup is restricted to only those IDs.
         """
-        likelies, consensus = autotag.current_metadata(self.items)
-        self.cur_info = likelies
         artist, album, prop = \
             autotag.tag_album(self.items, search_ids=self.search_ids)
         self.cur_artist = artist
@@ -680,26 +668,20 @@ class ImportTask(BaseImportTask):
         """Return a list of albums from `lib` with the same artist and
         album name as the task.
         """
-        artist, album = self.chosen_ident()
+        info = self.chosen_info()
 
-        if artist is None:
+        if info['artist'] is None:
             # As-is import with no artist. Skip check.
             return []
 
         duplicates = []
         task_paths = {i.path for i in self.items if i}
-        keys = config['import']['duplicate_keys'].as_str().split()
-        info = self.chosen_info().copy()
-        info['albumartist'] = artist
-        album = library.Album(None, **info)
-        subqueries = []
-        for key in keys:
-            value = album.get(key)
-            fast = key in library.Album.item_keys
-            subqueries.append(dbcore.MatchQuery(key, value, fast))
-        duplicate_query = dbcore.AndQuery(subqueries)
+        keys = config['import']['duplicate_keys'].as_str_seq()
+        info['albumartist'] = info['artist']
+        # Create an Album object so that flexible attributes can be used.
+        tmp_album = library.Album(lib, **info)
 
-        for album in lib.albums(duplicate_query):
+        for album in tmp_album.duplicates(*keys):
             # Check whether the album paths are all present in the task
             # i.e. album is being completely re-imported by the task,
             # in which case it is not a duplicate (will be replaced).
