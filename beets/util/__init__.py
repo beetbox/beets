@@ -486,32 +486,33 @@ def move(path, dest, replace=False):
                               (path, dest))
     if samefile(path, dest):
         return
-    path = syspath(path)
-    dest = syspath(dest)
-    if os.path.exists(dest) and not replace:
+    if os.path.exists(syspath(dest)) and not replace:
         raise FilesystemError('file exists', 'rename', (path, dest))
 
     # First, try renaming the file.
     try:
-        os.replace(path, dest)
+        os.replace(syspath(path), syspath(dest))
     except OSError:
         # Copy the file to a temporary destination.
-        base = os.path.basename(bytestring_path(dest))
-        tmp = tempfile.NamedTemporaryFile(suffix=b'.beets',
-                                          prefix=b'.' + base,
-                                          dir=os.path.dirname(dest),
-                                          delete=False)
+        basename = os.path.basename(bytestring_path(dest))
+        dirname = os.path.dirname(bytestring_path(dest))
+        tmp = tempfile.NamedTemporaryFile(
+            suffix=syspath(b'.beets', prefix=False),
+            prefix=syspath(b'.' + basename, prefix=False),
+            dir=syspath(dirname),
+            delete=False,
+        )
         try:
-            with open(path, 'rb') as f:
+            with open(syspath(path), 'rb') as f:
                 shutil.copyfileobj(f, tmp)
         finally:
             tmp.close()
 
         # Move the copied file into place.
         try:
-            os.replace(tmp.name, dest)
+            os.replace(tmp.name, syspath(dest))
             tmp = None
-            os.remove(path)
+            os.remove(syspath(path))
         except OSError as exc:
             raise FilesystemError(exc, 'move', (path, dest),
                                   traceback.format_exc())
