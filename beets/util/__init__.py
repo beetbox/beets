@@ -479,9 +479,9 @@ def move(path, dest, replace=False):
     instead, in which case metadata will *not* be preserved. Paths are
     translated to system paths.
     """
-    if os.path.isdir(path):
+    if os.path.isdir(syspath(path)):
         raise FilesystemError(u'source is directory', 'move', (path, dest))
-    if os.path.isdir(dest):
+    if os.path.isdir(syspath(dest)):
         raise FilesystemError(u'destination is directory', 'move',
                               (path, dest))
     if samefile(path, dest):
