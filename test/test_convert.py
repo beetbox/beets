@@ -122,9 +122,28 @@ class ImportConvertTest(unittest.TestCase, TestHelper):
         self.importer.run()
         for path in self.importer.paths:
             for root, dirnames, filenames in os.walk(path):
-                self.assertTrue(len(fnmatch.filter(filenames, '*.mp3')) == 0,
-                                'Non-empty import directory {}'
-                                .format(util.displayable_path(path)))
+                self.assertEqual(len(fnmatch.filter(filenames, '*.mp3')), 0,
+                                 'Non-empty import directory {}'
+                                 .format(util.displayable_path(path)))
+
+    def test_delete_originals_keeps_originals_when_pretend_enabled(self):
+        import_file_count = self.get_count_of_import_files()
+
+        self.config['convert']['delete_originals'] = True
+        self.config['convert']['pretend'] = True
+        self.importer.run()
+
+        self.assertEqual(self.get_count_of_import_files(), import_file_count,
+                         'Count of files differs after running import')
+
+    def get_count_of_import_files(self):
+        import_file_count = 0
+
+        for path in self.importer.paths:
+            for root, _, filenames in os.walk(path):
+                import_file_count += len(filenames)
+
+        return import_file_count
 
 
 class ConvertCommand:
@@ -264,7 +283,7 @@ class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper,
         self.unload_plugins()
         self.teardown_beets()
 
-    def test_transcode_from_lossles(self):
+    def test_transcode_from_lossless(self):
         [item] = self.add_item_fixtures(ext='flac')
         with control_stdin('y'):
             self.run_convert_path(item.path)
