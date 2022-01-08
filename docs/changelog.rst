@@ -28,6 +28,10 @@ Bug fixes:
   ``r128_album_gain`` fields was changed from integer to float to fix loss of
   precision due to truncation.
   :bug:`4169`
+* :doc:`/plugins/convert`: Files are no longer converted when running import in
+  ``--pretend`` mode.
+* :doc:`/plugins/convert`: Deleting the original files during conversion no
+  longer logs output when the ``quiet`` flag is enabled.
 
 For packagers:
 
