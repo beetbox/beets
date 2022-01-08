@@ -32,6 +32,9 @@ Bug fixes:
   ``--pretend`` mode.
 * :doc:`/plugins/convert`: Deleting the original files during conversion no
   longer logs output when the ``quiet`` flag is enabled.
+* :doc:`plugins/web`: Fix handling of "query" requests. Previously queries
+  consisting of more than one token (separated by a slash) always returned an
+  empty result.
 
 For packagers:
 
