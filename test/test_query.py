@@ -425,7 +425,8 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         results = self.lib.albums(q)
         self.assert_albums_matched(results, [])
 
-    @unittest.skipIf(sys.platform, 'win32')  # FIXME: fails on windows
+    # FIXME: fails on windows
+    @unittest.skipIf(sys.platform == 'win32', 'win32')
     def test_parent_directory_no_slash(self):
         q = 'path:/a'
         results = self.lib.items(q)
@@ -434,7 +435,8 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         results = self.lib.albums(q)
         self.assert_albums_matched(results, ['path album'])
 
-    @unittest.skipIf(sys.platform, 'win32')  # FIXME: fails on windows
+    # FIXME: fails on windows
+    @unittest.skipIf(sys.platform == 'win32', 'win32')
     def test_parent_directory_with_slash(self):
         q = 'path:/a/'
         results = self.lib.items(q)

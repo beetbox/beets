@@ -514,17 +514,23 @@ class ConvertPlugin(BeetsPlugin):
             except subprocess.CalledProcessError:
                 return
 
-            # Change the newly-imported database entry to point to the
-            # converted file.
-            source_path = item.path
-            item.path = dest
-            item.write()
-            item.read()  # Load new audio information data.
-            item.store()
+            pretend = self.config['pretend'].get(bool)
+            quiet = self.config['quiet'].get(bool)
 
-            if self.config['delete_originals']:
-                self._log.info('Removing original file {0}', source_path)
-                util.remove(source_path, False)
+            if not pretend:
+                # Change the newly-imported database entry to point to the
+                # converted file.
+                source_path = item.path
+                item.path = dest
+                item.write()
+                item.read()  # Load new audio information data.
+                item.store()
+
+                if self.config['delete_originals']:
+                    if not quiet:
+                        self._log.info('Removing original file {0}',
+                                       source_path)
+                    util.remove(source_path, False)
 
     def _cleanup(self, task, session):
         for path in task.old_paths:
