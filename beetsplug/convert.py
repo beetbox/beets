@@ -528,7 +528,8 @@ class ConvertPlugin(BeetsPlugin):
 
                 if self.config['delete_originals']:
                     if not quiet:
-                        self._log.info('Removing original file {0}', source_path)
+                        self._log.info('Removing original file {0}',
+                                       source_path)
                     util.remove(source_path, False)
 
     def _cleanup(self, task, session):
