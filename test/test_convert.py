@@ -107,7 +107,8 @@ class ImportConvertTest(unittest.TestCase, TestHelper):
         item = self.lib.items().get()
         self.assertFileTag(item.path, 'convert')
 
-    @unittest.skipIf(sys.platform, 'win32')  # FIXME: fails on windows
+    # FIXME: fails on windows
+    @unittest.skipIf(sys.platform == 'win32', 'win32')
     def test_import_original_on_convert_error(self):
         # `false` exits with non-zero code
         self.config['convert']['command'] = 'false'
