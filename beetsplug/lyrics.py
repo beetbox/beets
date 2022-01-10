@@ -419,10 +419,16 @@ class Genius(Backend):
             lyrics_div = verse_div.parent
             for br in lyrics_div.find_all("br"):
                 br.replace_with("\n")
+
             ads = lyrics_div.find_all("div",
                                       class_=re.compile("InreadAd__Container"))
             for ad in ads:
                 ad.replace_with("\n")
+
+            footers = lyrics_div.find_all("div",
+                                          class_=re.compile("Lyrics__Footer"))
+            for footer in footers:
+                footer.replace_with("")
 
         return lyrics_div.get_text()
 
