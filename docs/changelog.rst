@@ -35,8 +35,8 @@ Bug fixes:
 * :doc:`plugins/web`: Fix handling of "query" requests. Previously queries
   consisting of more than one token (separated by a slash) always returned an
   empty result.
-* :doc:`plugins/lyrics`: Fixed an issue with the Tekstowo.pl scraper where some
-  non-lyrics content got included in the lyrics
+* :doc:`plugins/lyrics`: Fixed issues with the Tekstowo.pl and Genius
+  backends where some non-lyrics content got included in the lyrics
 
 For packagers:
 
