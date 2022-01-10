@@ -488,11 +488,11 @@ class Tekstowo(Backend):
         if not soup:
             return None
 
-        lyrics_div = soup.find("div", class_="song-text")
+        lyrics_div = soup.select("div.song-text > div.inner-text")
         if not lyrics_div:
             return None
 
-        return lyrics_div.get_text()
+        return lyrics_div[0].get_text()
 
 
 def remove_credits(text):
