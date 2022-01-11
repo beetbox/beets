@@ -38,6 +38,8 @@ Bug fixes:
 * :doc:`/plugins/discogs`: Skip Discogs query on insufficiently tagged files
   (artist and album tags missing) to prevent arbitrary candidate results.
   :bug:`4227`
+* :doc:`plugins/lyrics`: Fixed issues with the Tekstowo.pl and Genius
+  backends where some non-lyrics content got included in the lyrics
 
 For packagers:
 
