@@ -479,31 +479,40 @@ def move(path, dest, replace=False):
     instead, in which case metadata will *not* be preserved. Paths are
     translated to system paths.
     """
-    if os.path.isdir(path):
+    if os.path.isdir(syspath(path)):
         raise FilesystemError(u'source is directory', 'move', (path, dest))
-    if os.path.isdir(dest):
+    if os.path.isdir(syspath(dest)):
         raise FilesystemError(u'destination is directory', 'move',
                               (path, dest))
     if samefile(path, dest):
         return
-    path = syspath(path)
-    dest = syspath(dest)
-    if os.path.exists(dest) and not replace:
+    if os.path.exists(syspath(dest)) and not replace:
         raise FilesystemError('file exists', 'rename', (path, dest))
 
     # First, try renaming the file.
     try:
-        os.replace(path, dest)
+        os.replace(syspath(path), syspath(dest))
     except OSError:
-        tmp = tempfile.mktemp(suffix='.beets',
-                              prefix=py3_path(b'.' + os.path.basename(dest)),
-                              dir=py3_path(os.path.dirname(dest)))
-        tmp = syspath(tmp)
+        # Copy the file to a temporary destination.
+        basename = os.path.basename(bytestring_path(dest))
+        dirname = os.path.dirname(bytestring_path(dest))
+        tmp = tempfile.NamedTemporaryFile(
+            suffix=syspath(b'.beets', prefix=False),
+            prefix=syspath(b'.' + basename, prefix=False),
+            dir=syspath(dirname),
+            delete=False,
+        )
         try:
-            shutil.copyfile(path, tmp)
-            os.replace(tmp, dest)
+            with open(syspath(path), 'rb') as f:
+                shutil.copyfileobj(f, tmp)
+        finally:
+            tmp.close()
+
+        # Move the copied file into place.
+        try:
+            os.replace(tmp.name, syspath(dest))
             tmp = None
-            os.remove(path)
+            os.remove(syspath(path))
         except OSError as exc:
             raise FilesystemError(exc, 'move', (path, dest),
                                   traceback.format_exc())
