@@ -22,7 +22,7 @@ Bug fixes:
 * :doc:`/plugins/unimported`: The new ``ignore_subdirectories`` configuration
   option added in 1.6.0 now has a default value if it hasn't been set.
 * :doc:`/plugins/deezer`: Tolerate missing fields when searching for singleton
-  tracks
+  tracks.
   :bug:`4116`
 * :doc:`/plugins/replaygain`: The type of the internal ``r128_track_gain`` and
   ``r128_album_gain`` fields was changed from integer to float to fix loss of
@@ -31,6 +31,18 @@ Bug fixes:
 * Fix a regression in the previous release that caused a `TypeError` when
   moving files across filesystems.
   :bug:`4168`
+* :doc:`/plugins/convert`: Files are no longer converted when running import in
+  ``--pretend`` mode.
+* :doc:`/plugins/convert`: Deleting the original files during conversion no
+  longer logs output when the ``quiet`` flag is enabled.
+* :doc:`plugins/web`: Fix handling of "query" requests. Previously queries
+  consisting of more than one token (separated by a slash) always returned an
+  empty result.
+* :doc:`/plugins/discogs`: Skip Discogs query on insufficiently tagged files
+  (artist and album tags missing) to prevent arbitrary candidate results.
+  :bug:`4227`
+* :doc:`plugins/lyrics`: Fixed issues with the Tekstowo.pl and Genius
+  backends where some non-lyrics content got included in the lyrics
 
 For packagers:
 
@@ -38,6 +50,10 @@ For packagers:
   :bug:`4167`
 * The minimum required version of :pypi:`mediafile` is now 0.9.0.
 
+Other new things:
+
+* :doc:`/plugins/limit`: Limit query results to head or tail (``lslimit`` 
+  command only)
 
 1.6.0 (November 27, 2021)
 -------------------------

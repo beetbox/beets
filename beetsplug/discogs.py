@@ -157,6 +157,11 @@ class DiscogsPlugin(BeetsPlugin):
         if not self.discogs_client:
             return
 
+        if not album and not artist:
+            self._log.debug('Skipping Discogs query. Files missing album and '
+                            'artist tags.')
+            return []
+
         if va_likely:
             query = album
         else:
