@@ -22,7 +22,7 @@ Bug fixes:
 * :doc:`/plugins/unimported`: The new ``ignore_subdirectories`` configuration
   option added in 1.6.0 now has a default value if it hasn't been set.
 * :doc:`/plugins/deezer`: Tolerate missing fields when searching for singleton
-  tracks
+  tracks.
   :bug:`4116`
 * :doc:`/plugins/replaygain`: The type of the internal ``r128_track_gain`` and
   ``r128_album_gain`` fields was changed from integer to float to fix loss of
@@ -35,6 +35,9 @@ Bug fixes:
 * :doc:`plugins/web`: Fix handling of "query" requests. Previously queries
   consisting of more than one token (separated by a slash) always returned an
   empty result.
+* :doc:`/plugins/discogs`: Skip Discogs query on insufficiently tagged files
+  (artist and album tags missing) to prevent arbitrary candidate results.
+  :bug:`4227`
 * :doc:`plugins/lyrics`: Fixed issues with the Tekstowo.pl and Genius
   backends where some non-lyrics content got included in the lyrics
 
