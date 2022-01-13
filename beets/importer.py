@@ -747,14 +747,14 @@ class ImportTask(BaseImportTask):
                 if (operation != MoveOperation.MOVE
                         and self.replaced_items[item]
                         and session.lib.directory in util.ancestry(old_path)):
-                    item.move()
-                    # We moved the item, so remove the
-                    # now-nonexistent file from old_paths.
-                    self.old_paths.remove(old_path)
+                    if item.try_move():
+                        # We moved the item, so remove the
+                        # now-nonexistent file from old_paths.
+                        self.old_paths.remove(old_path)
                 else:
                     # A normal import. Just copy files and keep track of
                     # old paths.
-                    item.move(operation)
+                    item.try_move(operation)
 
             if write and (self.apply or self.choice_flag == action.RETAG):
                 item.try_write()

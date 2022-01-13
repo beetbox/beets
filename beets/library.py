@@ -826,8 +826,12 @@ class Item(LibModel):
         if not util.samefile(self.path, dest):
             dest = util.unique_path(dest)
         if operation == MoveOperation.MOVE:
-            plugins.send("before_item_moved", item=self, source=self.path,
-                         destination=dest)
+            try:
+                plugins.send("before_item_moved", item=self, source=self.path,
+                             destination=dest)
+            except FileOperationError as exc:
+                log.error("{0}", exc)
+                return
             util.move(self.path, dest)
             plugins.send("item_moved", item=self, source=self.path,
                          destination=dest)
@@ -948,6 +952,19 @@ class Item(LibModel):
         # Prune vacated directory.
         if operation == MoveOperation.MOVE:
             util.prune_dirs(os.path.dirname(old_path), self._db.directory)
+
+    def try_move(self, *args, **kwargs):
+        """Call `move()` but catch and log `FileOperationError`
+        exceptions.
+
+        Return `False` an exception was caught and `True` otherwise.
+        """
+        try:
+            self.move(*args, **kwargs)
+            return True
+        except FileOperationError as exc:
+            log.error("{0}", exc)
+            return False
 
     # Templating.
 
@@ -1195,6 +1212,11 @@ class Album(LibModel):
         if new_art == old_art:
             return
 
+        try:
+            plugins.send('move_art', album=self)
+        except FileOperationError as exc:
+            log.error("{0}", exc)
+            return
         new_art = util.unique_path(new_art)
         log.debug('moving album art {0} to {1}',
                   util.displayable_path(old_art),
@@ -1239,8 +1261,8 @@ class Album(LibModel):
         # Move items.
         items = list(self.items())
         for item in items:
-            item.move(operation, basedir=basedir, with_album=False,
-                      store=store)
+            item.try_move(operation, basedir=basedir, with_album=False,
+                          store=store)
 
         # Move art.
         self.move_art(operation)
@@ -1327,6 +1349,11 @@ class Album(LibModel):
             self.artpath = path
             return
 
+        try:
+            plugins.send('art_set', album=self)
+        except FileOperationError as exc:
+            log.error("{0}", exc)
+            return
         # Normal operation.
         if oldart == artdest:
             util.remove(oldart)
@@ -1337,7 +1364,6 @@ class Album(LibModel):
             util.move(path, artdest)
         self.artpath = artdest
 
-        plugins.send('art_set', album=self)
 
     def store(self, fields=None):
         """Update the database with the album information.
