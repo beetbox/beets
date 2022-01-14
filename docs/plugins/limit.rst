@@ -32,13 +32,13 @@ you can use the query prefix in ``smartplaylist``
 playlist for applications like most played and recently added.
 
 Configuration
-=============
+-------------
 
 Enable the ``limit`` plugin in your configuration (see
 :ref:`using-plugins`).
 
 Examples
-========
+--------
 
 First 10 tracks
 
