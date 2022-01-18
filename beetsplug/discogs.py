@@ -58,6 +58,14 @@ class DiscogsPlugin(BeetsPlugin):
             'separator': ', ',
             'index_tracks': False,
             'append_style_genre': False,
+            'disctitle': {
+                'index_tracks': False,
+                'headings': True,
+            },
+            'title_prefix': {
+                'index_tracks': True,
+                'headings': False,
+            },
         })
         self.config['apikey'].redact = True
         self.config['apisecret'].redact = True
@@ -391,10 +399,12 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.error('uncaught exception in coalesce_tracks: {}', exc)
             clean_tracklist = tracklist
         tracks = []
-        index_tracks = {}
         index = 0
         # Distinct works and intra-work divisions, as defined by index tracks.
         divisions, next_divisions = [], []
+
+        disctitle = None
+
         for track in clean_tracklist:
             # Only real tracks have `position`. Otherwise, it's an index track.
             if track['position']:
@@ -406,16 +416,23 @@ class DiscogsPlugin(BeetsPlugin):
                     del next_divisions[:]
                 track_info = self.get_track_info(track, index, divisions)
                 track_info.track_alt = track['position']
+                if 'disctitle' in track:
+                    track_info.disctitle = track['disctitle']
+                elif disctitle:
+                    track_info.disctitle = disctitle
                 tracks.append(track_info)
             else:
-                next_divisions.append(track['title'])
-                # We expect new levels of division at the beginning of the
-                # tracklist (and possibly elsewhere).
-                try:
-                    divisions.pop()
-                except IndexError:
-                    pass
-                index_tracks[index + 1] = track['title']
+                if self._to_prefix(track):
+                    next_divisions.append(track['title'])
+
+                    # We expect new levels of division at the beginning of the
+                    # tracklist (and possibly elsewhere).
+                    try:
+                        divisions.pop()
+                    except IndexError:
+                        pass
+                if self._to_disctitle(track):
+                    disctitle = track['title']
 
         # Fix up medium and medium_index for each track. Discogs position is
         # unreliable, but tracks are in order.
@@ -462,17 +479,26 @@ class DiscogsPlugin(BeetsPlugin):
             medium_count = 1 if medium_count == 0 else medium_count
             track.medium, track.medium_index = medium_count, index_count
 
-        # Get `disctitle` from Discogs index tracks. Assume that an index track
-        # before the first track of each medium is a disc title.
-        for track in tracks:
-            if track.medium_index == 1:
-                if track.index in index_tracks:
-                    disctitle = index_tracks[track.index]
-                else:
-                    disctitle = None
-            track.disctitle = disctitle
-
         return tracks
+
+    def _to_prefix(self, index_or_heading):
+        if self.config['index_tracks']:
+            # Backwards compatibility with old configuration key
+            return True
+        elif index_or_heading['type_'] == 'index':
+            return self.config['title_prefix']['index_tracks']
+        elif index_or_heading['type_'] == 'heading':
+            return self.config['title_prefix']['headings']
+        else:
+            return False
+
+    def _to_disctitle(self, index_or_heading):
+        if index_or_heading['type_'] == 'index':
+            return self.config['disctitle']['index_tracks']
+        elif index_or_heading['type_'] == 'heading':
+            return self.config['disctitle']['headings']
+        else:
+            return False
 
     def coalesce_tracks(self, raw_tracklist):
         """Pre-process a tracklist, merging subtracks into a single track. The
@@ -496,19 +522,24 @@ class DiscogsPlugin(BeetsPlugin):
                     tracklist[-1]['position'] = position
                 else:
                     # Promote the subtracks to real tracks, discarding the
-                    # index track, assuming the subtracks are physical tracks.
-                    index_track = tracklist.pop()
-                    # Fix artists when they are specified on the index track.
-                    if index_track.get('artists'):
+                    # previous, assuming the subtracks are physical tracks.
+                    previous = tracklist.pop()
+                    # Fix artists when they are specified on the previous track
+                    if previous.get('artists'):
                         for subtrack in subtracks:
                             if not subtrack.get('artists'):
-                                subtrack['artists'] = index_track['artists']
+                                subtrack['artists'] = previous['artists']
+
                     # Concatenate index with track title when index_tracks
                     # option is set
-                    if self.config['index_tracks']:
+                    if self._to_prefix(previous):
                         for subtrack in subtracks:
                             subtrack['title'] = '{}: {}'.format(
-                                index_track['title'], subtrack['title'])
+                                previous['title'], subtrack['title']
+                            )
+                    if self._to_disctitle(previous):
+                        for subtrack in subtracks:
+                            subtrack['disctitle'] = previous['title']
                     tracklist.extend(subtracks)
             else:
                 # Merge the subtracks, pick a title, and append the new track.
@@ -559,10 +590,9 @@ class DiscogsPlugin(BeetsPlugin):
         """Returns a TrackInfo object for a discogs track.
         """
         title = track['title']
-        if self.config['index_tracks']:
-            prefix = ', '.join(divisions)
-            if prefix:
-                title = f'{prefix}: {title}'
+        prefix = ', '.join(divisions)
+        if prefix:
+            title = f'{prefix}: {title}'
         track_id = None
         medium, medium_index, _ = self.get_track_index(track['position'])
         artist, artist_id = MetadataSourcePlugin.get_artist(
