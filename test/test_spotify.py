@@ -10,7 +10,7 @@ from beets import config
 from beets.library import Item
 from beetsplug import spotify
 from test.helper import TestHelper
-from six.moves.urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse
 
 
 class ArgumentsMock:

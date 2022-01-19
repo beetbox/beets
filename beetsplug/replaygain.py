@@ -22,7 +22,7 @@ import subprocess
 import sys
 import warnings
 from multiprocessing.pool import ThreadPool, RUN
-from six.moves import queue
+import queue
 from threading import Thread, Event
 
 from beets import ui
