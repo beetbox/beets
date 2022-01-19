@@ -3,7 +3,7 @@
 import sys
 import threading
 import logging as log
-from six import StringIO
+from io import StringIO
 import unittest
 
 import beets.logging as blog
