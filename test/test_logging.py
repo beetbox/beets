@@ -175,7 +175,7 @@ class ConcurrentEventsTest(TestCase, helper.TestHelper):
             self.lock1 = threading.Lock()
             self.lock2 = threading.Lock()
             self.test_case = test_case
-            self.exc_info = None
+            self.exc = None
             self.t1_step = self.t2_step = 0
 
         def log_all(self, name):
@@ -190,9 +190,8 @@ class ConcurrentEventsTest(TestCase, helper.TestHelper):
                 self.lock1.acquire()
                 self.test_case.assertEqual(self._log.level, log.INFO)
                 self.t1_step = 2
-            except Exception:
-                import sys
-                self.exc_info = sys.exc_info()
+            except Exception as e:
+                self.exc = e
 
         def listener2(self):
             try:
@@ -201,9 +200,8 @@ class ConcurrentEventsTest(TestCase, helper.TestHelper):
                 self.lock2.acquire()
                 self.test_case.assertEqual(self._log.level, log.DEBUG)
                 self.t2_step = 2
-            except Exception:
-                import sys
-                self.exc_info = sys.exc_info()
+            except Exception as e:
+                self.exc = e
 
     def setUp(self):
         self.setup_beets(disk=True)
@@ -215,8 +213,8 @@ class ConcurrentEventsTest(TestCase, helper.TestHelper):
         dp = self.DummyPlugin(self)
 
         def check_dp_exc():
-            if dp.exc_info:
-                raise None.with_traceback(dp.exc_info[2])
+            if dp.exc:
+                raise dp.exc
 
         try:
             dp.lock1.acquire()
