@@ -94,16 +94,19 @@ class DummyDataTestCase(_common.TestCase, AssertsMixin):
         items[0].album = 'baz'
         items[0].year = 2001
         items[0].comp = True
+        items[0].genre = 'rock'
         items[1].title = 'baz qux'
         items[1].artist = 'two'
         items[1].album = 'baz'
         items[1].year = 2002
         items[1].comp = True
+        items[1].genre = 'Rock'
         items[2].title = 'beets 4 eva'
         items[2].artist = 'three'
         items[2].album = 'foo'
         items[2].year = 2003
         items[2].comp = False
+        items[2].genre = 'Hard Rock'
         for item in items:
             self.lib.add(item)
         self.album = self.lib.add_album(items[:2])
@@ -132,6 +135,22 @@ class GetTest(DummyDataTestCase):
         results = self.lib.items(q)
         self.assert_items_matched(results, ['baz qux'])
 
+    def test_get_one_keyed_exact(self):
+        q = 'genre:=rock'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ['foo bar'])
+        q = 'genre:=Rock'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ['baz qux'])
+        q = 'genre:="Hard Rock"'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ['beets 4 eva'])
+
+    def test_get_one_keyed_exact_nocase(self):
+        q = 'genre:~"hard rock"'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ['beets 4 eva'])
+
     def test_get_one_keyed_regexp(self):
         q = 'artist::t.+r'
         results = self.lib.items(q)
@@ -139,6 +158,16 @@ class GetTest(DummyDataTestCase):
 
     def test_get_one_unkeyed_term(self):
         q = 'three'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ['beets 4 eva'])
+
+    def test_get_one_unkeyed_exact(self):
+        q = '=rock'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ['foo bar'])
+
+    def test_get_one_unkeyed_exact_nocase(self):
+        q = '~"hard rock"'
         results = self.lib.items(q)
         self.assert_items_matched(results, ['beets 4 eva'])
 
@@ -157,6 +186,11 @@ class GetTest(DummyDataTestCase):
         results = self.lib.items(q)
         # Matches nothing since the flexattr is not present on the
         # objects.
+        self.assert_items_matched(results, [])
+
+    def test_get_no_matches_exact(self):
+        q = 'genre:="hard rock"'
+        results = self.lib.items(q)
         self.assert_items_matched(results, [])
 
     def test_term_case_insensitive(self):
@@ -181,6 +215,14 @@ class GetTest(DummyDataTestCase):
         q = 'ArTiST:three'
         results = self.lib.items(q)
         self.assert_items_matched(results, ['beets 4 eva'])
+
+    def test_keyed_matches_exact_nocase(self):
+        q = 'genre:~rock'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, [
+            'foo bar',
+            'baz qux',
+        ])
 
     def test_unkeyed_term_matches_multiple_columns(self):
         q = 'baz'
@@ -349,6 +391,16 @@ class MatchTest(_common.TestCase):
     def test_substring_match_non_string_value(self):
         q = dbcore.query.SubstringQuery('disc', '6')
         self.assertTrue(q.match(self.item))
+
+    def test_exact_match_nocase_positive(self):
+        q = dbcore.query.StringQuery('genre', 'the genre')
+        self.assertTrue(q.match(self.item))
+
+    def test_exact_match_nocase_negative(self):
+        q = dbcore.query.StringQuery('genre', 'genre')
+        self.assertFalse(q.match(self.item))
+        q = dbcore.query.StringQuery('genre', 'THE GENRE')
+        self.assertFalse(q.match(self.item))
 
     def test_year_match_positive(self):
         q = dbcore.query.NumericQuery('year', '1')
