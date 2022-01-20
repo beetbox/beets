@@ -21,7 +21,7 @@ import shutil
 import unicodedata
 import sys
 import stat
-from six import StringIO
+from io import StringIO
 from tempfile import mkstemp
 from zipfile import ZipFile
 from tarfile import TarFile
