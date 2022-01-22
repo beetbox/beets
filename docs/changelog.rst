@@ -44,6 +44,9 @@ Bug fixes:
 * :doc:`plugins/lyrics`: Fixed issues with the Tekstowo.pl and Genius
   backends where some non-lyrics content got included in the lyrics
 * :doc:`plugins/limit`: Better header formatting to improve index
+* :doc:`plugins/replaygain`: Correctly handle the ``overwrite`` config option,
+  which forces recomputing ReplayGain values on import even for tracks
+  that already have the tags.
 
 For packagers:
 
