@@ -27,7 +27,9 @@ import:
     group_albums: no
     pretend: false
     search_ids: []
-    duplicate_keys: albumartist album
+    duplicate_keys:
+        album: albumartist album
+        single: artist title
     duplicate_action: ask
     bell: no
     set_fields: {}

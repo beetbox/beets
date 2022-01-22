@@ -676,7 +676,7 @@ class ImportTask(BaseImportTask):
 
         duplicates = []
         task_paths = {i.path for i in self.items if i}
-        keys = config['import']['duplicate_keys'].as_str_seq()
+        keys = config['import']['duplicate_keys']['album'].as_str_seq()
         info['albumartist'] = info['artist']
         # Create an Album object so that flexible attributes can be used.
         tmp_album = library.Album(lib, **info)
@@ -893,12 +893,17 @@ class SingletonImportTask(ImportTask):
         self.is_album = False
         self.paths = [item.path]
 
-    def chosen_ident(self):
-        assert self.choice_flag in (action.ASIS, action.APPLY, action.RETAG)
+    def chosen_info(self):
+        """Return a dictionary of metadata about the current choice.
+        May only be called when the choice flag is ASIS or RETAG
+        (in which case the data comes from the files' current metadata)
+        or APPLY (in which case the data comes from the choice).
+        """
+        assert self.choice_flag in (action.ASIS, action.RETAG, action.APPLY)
         if self.choice_flag in (action.ASIS, action.RETAG):
-            return (self.item.artist, self.item.title)
+            return dict(self.item)
         elif self.choice_flag is action.APPLY:
-            return (self.match.info.artist, self.match.info.title)
+            return self.match.info.copy()
 
     def imported_items(self):
         return [self.item]
@@ -919,14 +924,14 @@ class SingletonImportTask(ImportTask):
         """Return a list of items from `lib` that have the same artist
         and title as the task.
         """
-        artist, title = self.chosen_ident()
+        info = self.chosen_info()
 
         found_items = []
-        query = dbcore.AndQuery((
-            dbcore.MatchQuery('artist', artist),
-            dbcore.MatchQuery('title', title),
-        ))
-        for other_item in lib.items(query):
+        keys = config['import']['duplicate_keys']['single'].as_str_seq()
+        # Create an Item object so that flexible attributes can be used.
+        tmp_item = library.Item(lib, **info)
+
+        for other_item in tmp_item.duplicates(*keys):
             # Existing items not considered duplicates.
             if other_item.path != self.item.path:
                 found_items.append(other_item)
