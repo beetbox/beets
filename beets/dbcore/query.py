@@ -191,7 +191,7 @@ class StringQuery(StringFieldQuery):
 
     @classmethod
     def string_match(cls, pattern, value):
-        return pattern == value
+        return pattern.lower() == value.lower()
 
 
 class SubstringQuery(StringFieldQuery):
