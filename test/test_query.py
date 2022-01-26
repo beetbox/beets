@@ -395,11 +395,11 @@ class MatchTest(_common.TestCase):
     def test_exact_match_nocase_positive(self):
         q = dbcore.query.StringQuery('genre', 'the genre')
         self.assertTrue(q.match(self.item))
+        q = dbcore.query.StringQuery('genre', 'THE GENRE')
+        self.assertTrue(q.match(self.item))
 
     def test_exact_match_nocase_negative(self):
         q = dbcore.query.StringQuery('genre', 'genre')
-        self.assertFalse(q.match(self.item))
-        q = dbcore.query.StringQuery('genre', 'THE GENRE')
         self.assertFalse(q.match(self.item))
 
     def test_year_match_positive(self):
