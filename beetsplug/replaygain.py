@@ -353,9 +353,9 @@ class FfmpegBackend(Backend):
         album_gain = target_level_lufs - album_gain
 
         self._log.debug(
-            "{}: gain {} LU, peak {}"
-            .format(task.items, album_gain, album_peak)
-            )
+            "{}: gain {} LU, peak {}",
+            task.album, album_gain, album_peak,
+        )
 
         task.album_gain = Gain(album_gain, album_peak)
         task.track_gains = track_gains
