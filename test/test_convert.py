@@ -127,16 +127,6 @@ class ImportConvertTest(unittest.TestCase, TestHelper):
                                  'Non-empty import directory {}'
                                  .format(util.displayable_path(path)))
 
-    def test_delete_originals_keeps_originals_when_pretend_enabled(self):
-        import_file_count = self.get_count_of_import_files()
-
-        self.config['convert']['delete_originals'] = True
-        self.config['convert']['pretend'] = True
-        self.importer.run()
-
-        self.assertEqual(self.get_count_of_import_files(), import_file_count,
-                         'Count of files differs after running import')
-
     def get_count_of_import_files(self):
         import_file_count = 0
 
