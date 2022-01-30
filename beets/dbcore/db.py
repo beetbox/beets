@@ -641,6 +641,15 @@ class Model:
         """
         self[key] = self._parse(key, string)
 
+    @classmethod
+    def construct_match_queries(cls, **info):
+        subqueries = []
+        for key, value in info.items():
+            # Use slow queries for flexible attributes.
+            fast = key in cls._fields
+            subqueries.append(MatchQuery(key, value, fast))
+        return subqueries
+
 
 # Database controller and supporting interfaces.
 

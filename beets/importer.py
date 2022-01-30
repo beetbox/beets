@@ -527,12 +527,12 @@ class ImportTask(BaseImportTask):
         (in which case the data comes from the files' current metadata)
         or APPLY (in which case the data comes from the choice).
         """
-        assert(self.choice_flag in (action.ASIS, action.RETAG, action.APPLY))
         if self.choice_flag in (action.ASIS, action.RETAG):
             likelies, consensus = autotag.current_metadata(self.items)
             return likelies
         elif self.choice_flag is action.APPLY:
             return self.match.info.copy()
+        assert False
 
     def imported_items(self):
         """Return a list of Items that should be added to the library.
