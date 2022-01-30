@@ -11,6 +11,7 @@ New features:
 * :doc:`/plugins/kodiupdate`: Now supports multiple kodi instances
   :bug:`4101`
 * Add the item fields ``bitrate_mode``, ``encoder_info`` and ``encoder_settings``.
+* Add query prefixes ``=`` and ``~``.
 * :doc:`/reference/config`: Allow to configure which fields are used to find duplicates
 
 Bug fixes:
@@ -32,8 +33,6 @@ Bug fixes:
 * Fix a regression in the previous release that caused a `TypeError` when
   moving files across filesystems.
   :bug:`4168`
-* :doc:`/plugins/convert`: Files are no longer converted when running import in
-  ``--pretend`` mode.
 * :doc:`/plugins/convert`: Deleting the original files during conversion no
   longer logs output when the ``quiet`` flag is enabled.
 * :doc:`plugins/web`: Fix handling of "query" requests. Previously queries
