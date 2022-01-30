@@ -258,6 +258,33 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
             self.run_convert('An impossible query')
         self.assertEqual(logs[0], 'convert: Empty query result.')
 
+    def test_no_prune_destination_directory(self):
+        self.config['convert']['prune'] = False
+        prune_path = os.path.join(self.convert_dest, b'keep.me')
+        self.touch(prune_path)
+        [item] = self.add_item_fixtures()
+        with control_stdin('y'):
+            self.run_convert_path(item.path)
+        self.assertTrue(os.path.exists(prune_path))
+
+    def test_prune_destination_directory_confirm_no(self):
+        self.config['convert']['prune'] = True
+        prune_path = os.path.join(self.convert_dest, b'keep.me')
+        self.touch(prune_path)
+        [item] = self.add_item_fixtures()
+        with control_stdin('\n'.join('yn')):
+            self.run_convert_path(item.path)
+        self.assertTrue(os.path.exists(prune_path))
+
+    def test_prune_destination_directory_confirm_yes(self):
+        self.config['convert']['prune'] = True
+        prune_path = os.path.join(self.convert_dest, b'remove.me')
+        self.touch(prune_path)
+        [item] = self.add_item_fixtures()
+        with control_stdin('\n'.join('yy')):
+            self.run_convert_path(item.path)
+        self.assertFalse(os.path.exists(prune_path))
+
 
 @_common.slow_test()
 class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper,

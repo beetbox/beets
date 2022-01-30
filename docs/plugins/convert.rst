@@ -54,6 +54,11 @@ instead, passing ``-H`` (``--hardlink``) creates hard links.
 Note that album art embedding is disabled for files that are linked.
 Refer to the ``link`` and ``hardlink`` options below.
 
+by default, any extra files in the destination directory are left untouched. To
+remove any files that have no matching library file after converting, use the
+``-P`` (``--prune``) option or the corresponding ``prune`` configuration
+option.
+
 
 Configuration
 -------------
@@ -112,6 +117,8 @@ file. The available options are:
   on the same filesystem as the library.
   Default: ``false``.
 - **delete_originals**: Transcoded files will be copied or moved to their destination, depending on the import configuration. By default, the original files are not modified by the plugin. This option deletes the original files after the transcoding step has completed.
+  Default: ``false``.
+- **prune**: Delete any extra files in the destination directory after converting.
   Default: ``false``.
 
 You can also configure the format to use for transcoding (see the next

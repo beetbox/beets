@@ -8,6 +8,7 @@ Changelog goes here!
 
 New features:
 
+* :doc:`/plugins/convert`: Add optional destination directory pruning.
 * :doc:`/plugins/kodiupdate`: Now supports multiple kodi instances
   :bug:`4101`
 * Add the item fields ``bitrate_mode``, ``encoder_info`` and ``encoder_settings``.

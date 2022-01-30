@@ -146,6 +146,7 @@ class ConvertPlugin(BeetsPlugin):
             'copy_album_art': False,
             'album_art_maxwidth': 0,
             'delete_originals': False,
+            'prune': False,
         })
         self.early_import_stages = [self.auto_convert]
 
@@ -174,6 +175,8 @@ class ConvertPlugin(BeetsPlugin):
                               dest='hardlink',
                               help='hardlink files that do not \
                               need transcoding. Overrides --link.')
+        cmd.parser.add_option('-P', '--prune', action='store_true', dest='prune',
+                              help=u'prune destination directory after converting')
         cmd.parser.add_album_option()
         cmd.func = self.convert_func
         return [cmd]
@@ -268,6 +271,10 @@ class ConvertPlugin(BeetsPlugin):
                 if should_transcode(item, fmt):
                     dest = replace_ext(dest, ext)
                 converted = dest
+
+            # Keep track of converted files, so we can prune the destination
+            # later.
+            self.converted_paths.add(util.normpath(converted))
 
             # Ensure that only one thread tries to create directories at a
             # time. (The existence check is not atomic with the directory
@@ -376,6 +383,10 @@ class ConvertPlugin(BeetsPlugin):
         dest = os.path.join(*util.components(dest)[:-1])
 
         dest = album.art_destination(album.artpath, item_dir=dest)
+
+        # Keep track of converted files, so we can prune the destination later.
+        self.converted_paths.add(util.normpath(dest))
+
         if album.artpath == dest:
             return
 
@@ -480,6 +491,7 @@ class ConvertPlugin(BeetsPlugin):
                 self.copy_album_art(album, dest, path_formats, pretend,
                                     link, hardlink)
 
+        self.converted_paths = set()
         convert = [self.convert_item(dest,
                                      opts.keep_new,
                                      path_formats,
@@ -490,6 +502,26 @@ class ConvertPlugin(BeetsPlugin):
                    for _ in range(threads)]
         pipe = util.pipeline.Pipeline([iter(items), convert])
         pipe.run_parallel()
+
+        if opts.prune or self.config['prune'].get():
+            remove_paths = []
+            for root, dirs, files in util.sorted_walk(dest):
+                for name in files:
+                    path = util.normpath(os.path.join(root, name))
+                    if not path in self.converted_paths:
+                        remove_paths.append(path)
+
+            if remove_paths:
+                for path in remove_paths:
+                    ui.print_(util.displayable_path(path))
+
+                if pretend or opts.yes or ui.input_yn("Remove? (Y/n)"):
+                    for path in remove_paths:
+                        if pretend:
+                            self._log.info('rm {0}', util.displayable_path(path))
+                        else:
+                            util.remove(path)
+                            util.prune_dirs(os.path.dirname(path), dest)
 
     def convert_on_import(self, lib, item):
         """Transcode a file automatically after it is imported into the
