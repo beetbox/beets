@@ -607,15 +607,6 @@ class Item(LibModel):
         i.mtime = i.current_mtime()  # Initial mtime.
         return i
 
-    @classmethod
-    def construct_match_queries(cls, **info):
-        subqueries = []
-        for (key, value) in info.items():
-            # Use slow queries for flexible attributes.
-            fast = key in cls._fields
-            subqueries.append(dbcore.MatchQuery(key, value, fast))
-        return subqueries
-
     def duplicates(self, *keys):
         info = {key: self.get(key) for key in keys}
         subqueries = self.construct_match_queries(**info)
@@ -1155,15 +1146,6 @@ class Album(LibModel):
         getters['path'] = Album.item_dir
         getters['albumtotal'] = Album._albumtotal
         return getters
-
-    @classmethod
-    def construct_match_queries(cls, **info):
-        subqueries = []
-        for (key, value) in info.items():
-            # Use slow queries for flexible attributes.
-            fast = key in cls._fields
-            subqueries.append(dbcore.MatchQuery(key, value, fast))
-        return subqueries
 
     def duplicates(self, *keys):
         info = {key: self.get(key) for key in keys}
