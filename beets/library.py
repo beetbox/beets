@@ -1395,7 +1395,11 @@ def parse_query_parts(parts, model_cls):
     special path query detection.
     """
     # Get query types and their prefix characters.
-    prefixes = {':': dbcore.query.RegexpQuery}
+    prefixes = {
+        ':': dbcore.query.RegexpQuery,
+        '~': dbcore.query.StringQuery,
+        '=': dbcore.query.MatchQuery,
+    }
     prefixes.update(plugins.queries())
 
     # Special-case path-like queries, which are non-field queries

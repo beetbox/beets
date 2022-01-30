@@ -22,6 +22,7 @@ import subprocess
 import tempfile
 import shlex
 from string import Template
+import logging
 
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
@@ -514,23 +515,21 @@ class ConvertPlugin(BeetsPlugin):
             except subprocess.CalledProcessError:
                 return
 
-            pretend = self.config['pretend'].get(bool)
-            quiet = self.config['quiet'].get(bool)
+            # Change the newly-imported database entry to point to the
+            # converted file.
+            source_path = item.path
+            item.path = dest
+            item.write()
+            item.read()  # Load new audio information data.
+            item.store()
 
-            if not pretend:
-                # Change the newly-imported database entry to point to the
-                # converted file.
-                source_path = item.path
-                item.path = dest
-                item.write()
-                item.read()  # Load new audio information data.
-                item.store()
-
-                if self.config['delete_originals']:
-                    if not quiet:
-                        self._log.info('Removing original file {0}',
-                                       source_path)
-                    util.remove(source_path, False)
+            if self.config['delete_originals']:
+                self._log.log(
+                    logging.DEBUG if self.config['quiet'] else logging.INFO,
+                    'Removing original file {0}',
+                    source_path,
+                )
+                util.remove(source_path, False)
 
     def _cleanup(self, task, session):
         for path in task.old_paths:
