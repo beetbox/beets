@@ -321,35 +321,33 @@ class FfmpegBackend(Backend):
         # list of track Gain objects
         track_gains = [tg for tg, _nb in track_results]
 
-        # maximum peak
-        album_peak = 0
-        # sum of BS.1770 gating block powers
-        sum_powers = 0
-        # total number of BS.1770 gating blocks
-        n_blocks = 0
+        # Album peak is maximum track peak
+        album_peak = max(tg.peak for tg in track_gains)
 
-        for (track_gain, track_n_blocks) in track_results:
-            # album peak is maximum track peak
-            album_peak = max(album_peak, track_gain.peak)
+        # Total number of BS.1770 gating blocks
+        n_blocks = sum(nb for _tg, nb in track_results)
 
-            # prepare album_gain calculation
-            # total number of blocks is sum of track blocks
-            n_blocks += track_n_blocks
-
+        def sum_of_track_powers(track_gain, track_n_blocks):
             # convert `LU to target_level` -> LUFS
-            track_loudness = target_level_lufs - track_gain.gain
+            loudness = target_level_lufs - track_gain
+
             # This reverses ITU-R BS.1770-4 p. 6 equation (5) to convert
             # from loudness to power. The result is the average gating
             # block power.
-            track_power = 10**((track_loudness + 0.691) / 10)
+            power = 10**((loudness + 0.691) / 10)
 
-            # Weight that average power by the number of gating blocks to
-            # get the sum of all their powers. Add that to the sum of all
-            # block powers in this album.
-            sum_powers += track_power * track_n_blocks
+            # Multiply that average power by the number of gating blocks to get
+            # the sum of all block powers in this track.
+            return track_n_blocks * power
 
         # calculate album gain
         if n_blocks > 0:
+            # Sum over all tracks to get the sum of BS.1770 gating block powers
+            # for the entire album.
+            sum_powers = sum(
+                sum_of_track_powers(tg, nb) for tg, nb in track_results
+            )
+
             # compare ITU-R BS.1770-4 p. 6 equation (5)
             # Album gain is the replaygain of the concatenation of all tracks.
             album_gain = -0.691 + 10 * math.log10(sum_powers / n_blocks)
@@ -365,6 +363,7 @@ class FfmpegBackend(Backend):
 
         task.album_gain = Gain(album_gain, album_peak)
         task.track_gains = track_gains
+
         return task
 
     def _construct_cmd(self, item, peak_method):
