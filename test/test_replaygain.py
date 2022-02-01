@@ -329,25 +329,13 @@ class ImportTest(TestHelper):
 
         self.setup_beets(disk=True)
         self.config['threaded'] = self.threaded
-        self.config['replaygain'] = {
-                'backend': self.backend,
-        }
+        self.config['replaygain']['backend'] = self.backend
 
         try:
             self.load_plugins('replaygain')
         except Exception:
-            import sys
-            # store exception info so an error in teardown does not swallow it
-            exc_info = sys.exc_info()
-            try:
-                self.teardown_beets()
-                self.unload_plugins()
-            except Exception:
-                # if load_plugins() failed then setup is incomplete and
-                # teardown operations may fail. In particular # {Item,Album}
-                # may not have the _original_types attribute in unload_plugins
-                pass
-            raise None.with_traceback(exc_info[2])
+            self.teardown_beets()
+            self.unload_plugins()
 
         self.importer = self.create_importer()
 
