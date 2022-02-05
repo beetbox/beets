@@ -93,14 +93,45 @@ backslashes are not part of beets' syntax; I'm just using the escaping
 functionality of my shell (bash or zsh, for instance) to pass ``the rebel`` as a
 single argument instead of two.
 
+Exact Matches
+-------------
+
+While ordinary queries perform *substring* matches, beets can also match whole
+strings by adding either ``=`` (case-sensitive) or ``~`` (ignore case) after the
+field name's colon and before the expression::
+
+    $ beet list artist:air
+    $ beet list artist:~air
+    $ beet list artist:=AIR
+
+The first query is a simple substring one that returns tracks by Air, AIR, and
+Air Supply.  The second query returns tracks by Air and AIR, since both are a
+case-insensitive match for the entire expression, but does not return anything
+by Air Supply.  The third query, which requires a case-sensitive exact match,
+returns tracks by AIR only.
+
+Exact matches may be performed on phrases as well::
+
+    $ beet list artist:~"dave matthews"
+    $ beet list artist:="Dave Matthews"
+
+Both of these queries return tracks by Dave Matthews, but not by Dave Matthews
+Band.
+
+To search for exact matches across *all* fields, just prefix the expression with
+a single ``=`` or ``~``::
+
+    $ beet list ~crash
+    $ beet list ="American Football"
+
 .. _regex:
 
 Regular Expressions
 -------------------
 
-While ordinary keywords perform simple substring matches, beets also supports
-regular expression matching for more advanced queries. To run a regex query, use
-an additional ``:`` between the field name and the expression::
+In addition to simple substring and exact matches, beets also supports regular
+expression matching for more advanced queries. To run a regex query, use an
+additional ``:`` between the field name and the expression::
 
     $ beet list "artist::Ann(a|ie)"
 

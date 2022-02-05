@@ -231,13 +231,24 @@ class MockFetchUrl:
         return content
 
 
-def is_lyrics_content_ok(title, text):
-    """Compare lyrics text to expected lyrics for given title."""
-    if not text:
-        return
-    keywords = set(LYRICS_TEXTS[google.slugify(title)].split())
-    words = {x.strip(".?, ") for x in text.lower().split()}
-    return keywords <= words
+class LyricsAssertions:
+    """A mixin with lyrics-specific assertions."""
+
+    def assertLyricsContentOk(self, title, text, msg=""):  # noqa: N802
+        """Compare lyrics text to expected lyrics for given title."""
+        if not text:
+            return
+
+        keywords = set(LYRICS_TEXTS[google.slugify(title)].split())
+        words = {x.strip(".?, ()") for x in text.lower().split()}
+
+        if not keywords <= words:
+            details = (
+                f"{keywords!r} is not a subset of {words!r}."
+                f" Words only in first {keywords - words!r},"
+                f" Words only in second {words - keywords!r}."
+            )
+            self.fail(f"{details} : {msg}")
 
 
 LYRICS_ROOT_DIR = os.path.join(_common.RSRC, b'lyrics')
@@ -255,7 +266,7 @@ class LyricsGoogleBaseTest(unittest.TestCase):
             self.skipTest('Beautiful Soup 4 not available')
 
 
-class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
+class LyricsPluginSourcesTest(LyricsGoogleBaseTest, LyricsAssertions):
     """Check that beets google custom search engine sources are correctly
        scraped.
     """
@@ -327,15 +338,13 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
     def test_backend_sources_ok(self):
         """Test default backends with songs known to exist in respective databases.
         """
-        errors = []
         # Don't test any sources marked as skipped.
         sources = [s for s in self.DEFAULT_SOURCES if not s.get("skip", False)]
         for s in sources:
-            res = s['backend'](self.plugin.config, self.plugin._log).fetch(
-                s['artist'], s['title'])
-            if not is_lyrics_content_ok(s['title'], res):
-                errors.append(s['backend'].__name__)
-        self.assertFalse(errors)
+            with self.subTest(s['backend'].__name__):
+                backend = s['backend'](self.plugin.config, self.plugin._log)
+                res = backend.fetch(s['artist'], s['title'])
+                self.assertLyricsContentOk(s['title'], res)
 
     @unittest.skipUnless(
         os.environ.get('INTEGRATION_TEST', '0') == '1',
@@ -351,10 +360,10 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest):
             res = lyrics.scrape_lyrics_from_html(
                 raw_backend.fetch_url(url))
             self.assertTrue(google.is_lyrics(res), url)
-            self.assertTrue(is_lyrics_content_ok(s['title'], res), url)
+            self.assertLyricsContentOk(s['title'], res, url)
 
 
-class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest):
+class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest, LyricsAssertions):
     """Test scraping heuristics on a fake html page.
     """
 
@@ -372,8 +381,7 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest):
         url = self.source['url'] + self.source['path']
         res = lyrics.scrape_lyrics_from_html(raw_backend.fetch_url(url))
         self.assertTrue(google.is_lyrics(res), url)
-        self.assertTrue(is_lyrics_content_ok(self.source['title'], res),
-                        url)
+        self.assertLyricsContentOk(self.source['title'], res, url)
 
     @patch.object(lyrics.Backend, 'fetch_url', MockFetchUrl())
     def test_is_page_candidate_exact_match(self):

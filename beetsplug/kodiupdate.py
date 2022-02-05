@@ -54,11 +54,12 @@ class KodiUpdate(BeetsPlugin):
         super().__init__()
 
         # Adding defaults.
-        config['kodi'].add({
+        config['kodi'].add([{
             'host': 'localhost',
             'port': 8080,
             'user': 'kodi',
-            'pwd': 'kodi'})
+            'pwd': 'kodi'
+        }])
 
         config['kodi']['pwd'].redact = True
         self.register_listener('database_change', self.listen_for_db_change)
@@ -72,24 +73,34 @@ class KodiUpdate(BeetsPlugin):
         """
         self._log.info('Requesting a Kodi library update...')
 
-        # Try to send update request.
-        try:
-            r = update_kodi(
-                config['kodi']['host'].get(),
-                config['kodi']['port'].get(),
-                config['kodi']['user'].get(),
-                config['kodi']['pwd'].get())
-            r.raise_for_status()
+        kodi = config['kodi'].get()
 
-        except requests.exceptions.RequestException as e:
-            self._log.warning('Kodi update failed: {0}',
-                              str(e))
-            return
+        # Backwards compatibility in case not configured as an array
+        if not isinstance(kodi, list):
+            kodi = [kodi]
 
-        json = r.json()
-        if json.get('result') != 'OK':
-            self._log.warning('Kodi update failed: JSON response was {0!r}',
-                              json)
-            return
+        for instance in kodi:
+            # Try to send update request.
+            try:
+                r = update_kodi(
+                    instance['host'],
+                    instance['port'],
+                    instance['user'],
+                    instance['pwd']
+                )
+                r.raise_for_status()
 
-        self._log.info('Kodi update triggered')
+                json = r.json()
+                if json.get('result') != 'OK':
+                    self._log.warning(
+                        'Kodi update failed: JSON response was {0!r}', json
+                    )
+                    continue
+
+                self._log.info(
+                    'Kodi update triggered for {0}:{1}',
+                    instance['host'], instance['port']
+                )
+            except requests.exceptions.RequestException as e:
+                self._log.warning('Kodi update failed: {0}', str(e))
+                continue

@@ -16,6 +16,19 @@ which looks like this::
         user: kodi
         pwd: kodi
 
+To update multiple Kodi instances, specify them as an array::
+
+    kodi:
+      - host: x.x.x.x
+        port: 8080
+        user: kodi
+        pwd: kodi
+      - host: y.y.y.y
+        port: 8081
+        user: kodi2
+        pwd: kodi2
+
+
 To use the ``kodiupdate`` plugin you need to install the `requests`_ library with::
 
     pip install requests

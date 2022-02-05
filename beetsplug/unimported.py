@@ -32,19 +32,30 @@ class Unimported(BeetsPlugin):
         super().__init__()
         self.config.add(
             {
-                'ignore_extensions': []
+                'ignore_extensions': [],
+                'ignore_subdirectories': []
             }
         )
 
     def commands(self):
         def print_unimported(lib, opts, args):
-            ignore_exts = [('.' + x).encode() for x
-                           in self.config['ignore_extensions'].as_str_seq()]
+            ignore_exts = [
+                ('.' + x).encode()
+                for x in self.config["ignore_extensions"].as_str_seq()
+            ]
+            ignore_dirs = [
+                os.path.join(lib.directory, x.encode())
+                for x in self.config["ignore_subdirectories"].as_str_seq()
+            ]
             in_folder = {
-                os.path.join(r, file) for r, d, f in os.walk(lib.directory)
-                for file in f if not any(
-                    [file.endswith(extension) for extension in
-                     ignore_exts])}
+                os.path.join(r, file)
+                for r, d, f in os.walk(lib.directory)
+                for file in f
+                if not any(
+                    [file.endswith(ext) for ext in ignore_exts]
+                    + [r in ignore_dirs]
+                )
+            }
             in_library = {x.path for x in lib.items()}
             art_files = {x.artpath for x in lib.albums()}
             for f in in_folder - in_library - art_files:

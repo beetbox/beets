@@ -19,7 +19,8 @@ authentication credentials via a personal access token or an OAuth2
 authorization.
 
 Matches from Discogs will now show up during import alongside matches from
-MusicBrainz.
+MusicBrainz. The search terms sent to the Discogs API are based on the artist
+and album tags of your tracks. If those are empty no query will be issued.
 
 If you have a Discogs ID for an album you want to tag, you can also enter it
 at the "enter Id" prompt in the importer.

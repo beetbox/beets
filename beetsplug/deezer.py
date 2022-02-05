@@ -77,11 +77,16 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
                 "by {} API: '{}'".format(self.data_source, release_date)
             )
 
-        tracks_data = requests.get(
+        tracks_obj = requests.get(
             self.album_url + deezer_id + '/tracks'
-        ).json()['data']
+        ).json()
+        tracks_data = tracks_obj['data']
         if not tracks_data:
             return None
+        while "next" in tracks_obj:
+            tracks_obj = requests.get(tracks_obj['next']).json()
+            tracks_data.extend(tracks_obj['data'])
+
         tracks = []
         medium_totals = collections.defaultdict(int)
         for i, track_data in enumerate(tracks_data, start=1):
@@ -128,9 +133,9 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             artist=artist,
             artist_id=artist_id,
             length=track_data['duration'],
-            index=track_data['track_position'],
-            medium=track_data['disk_number'],
-            medium_index=track_data['track_position'],
+            index=track_data.get('track_position'),
+            medium=track_data.get('disk_number'),
+            medium_index=track_data.get('track_position'),
             data_source=self.data_source,
             data_url=track_data['link'],
         )
