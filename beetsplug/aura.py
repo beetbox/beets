@@ -17,6 +17,7 @@
 
 from mimetypes import guess_type
 import re
+import os.path
 from os.path import isfile, getsize
 
 from beets.plugins import BeetsPlugin
@@ -595,6 +596,24 @@ class ArtistDocument(AURADocument):
         return self.single_resource_document(artist_resource)
 
 
+def safe_filename(fn):
+    """Check whether a string is a simple (non-path) filename.
+
+    For example, `foo.txt` is safe because it is a "plain" filename. But
+    `foo/bar.txt` and `../foo.txt` and `.` are all non-safe because they
+    can traverse to other directories other than the current one.
+    """
+    # Rule out any directories.
+    if os.path.basename(fn) != fn:
+        return False
+
+    # In single names, rule out Unix directory traversal names.
+    if fn in ('.', '..'):
+        return False
+
+    return True
+
+
 class ImageDocument(AURADocument):
     """Class for building documents for /images/(id) endpoints."""
 
@@ -616,6 +635,8 @@ class ImageDocument(AURADocument):
         parent_type = id_split[0]
         parent_id = id_split[1]
         img_filename = "-".join(id_split[2:])
+        if not safe_filename(img_filename):
+            return None
 
         # Get the path to the directory parent's images are in
         if parent_type == "album":
@@ -631,7 +652,7 @@ class ImageDocument(AURADocument):
             # Images for other resource types are not supported
             return None
 
-        img_path = dir_path + "/" + img_filename
+        img_path = os.path.join(dir_path, img_filename)
         # Check the image actually exists
         if isfile(img_path):
             return img_path

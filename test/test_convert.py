@@ -107,7 +107,8 @@ class ImportConvertTest(unittest.TestCase, TestHelper):
         item = self.lib.items().get()
         self.assertFileTag(item.path, 'convert')
 
-    @unittest.skipIf(sys.platform, 'win32')  # FIXME: fails on windows
+    # FIXME: fails on windows
+    @unittest.skipIf(sys.platform == 'win32', 'win32')
     def test_import_original_on_convert_error(self):
         # `false` exits with non-zero code
         self.config['convert']['command'] = 'false'
@@ -122,9 +123,18 @@ class ImportConvertTest(unittest.TestCase, TestHelper):
         self.importer.run()
         for path in self.importer.paths:
             for root, dirnames, filenames in os.walk(path):
-                self.assertTrue(len(fnmatch.filter(filenames, '*.mp3')) == 0,
-                                'Non-empty import directory {}'
-                                .format(util.displayable_path(path)))
+                self.assertEqual(len(fnmatch.filter(filenames, '*.mp3')), 0,
+                                 'Non-empty import directory {}'
+                                 .format(util.displayable_path(path)))
+
+    def get_count_of_import_files(self):
+        import_file_count = 0
+
+        for path in self.importer.paths:
+            for root, _, filenames in os.walk(path):
+                import_file_count += len(filenames)
+
+        return import_file_count
 
 
 class ConvertCommand:
@@ -264,7 +274,7 @@ class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper,
         self.unload_plugins()
         self.teardown_beets()
 
-    def test_transcode_from_lossles(self):
+    def test_transcode_from_lossless(self):
         [item] = self.add_item_fixtures(ext='flac')
         with control_stdin('y'):
             self.run_convert_path(item.path)

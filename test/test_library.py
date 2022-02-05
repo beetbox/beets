@@ -148,7 +148,10 @@ class GetSetTest(_common.TestCase):
 class DestinationTest(_common.TestCase):
     def setUp(self):
         super().setUp()
-        self.lib = beets.library.Library(':memory:')
+        # default directory is ~/Music and the only reason why it was switched
+        # to ~/.Music is to confirm that tests works well when path to
+        # temporary directory contains .
+        self.lib = beets.library.Library(':memory:', '~/.Music')
         self.i = item(self.lib)
 
     def tearDown(self):
@@ -224,7 +227,7 @@ class DestinationTest(_common.TestCase):
         self.i.album = '.something'
         dest = self.i.destination()
         self.assertTrue(b'something' in dest)
-        self.assertFalse(b'/.' in dest)
+        self.assertFalse(b'/.something' in dest)
 
     def test_destination_preserves_legitimate_slashes(self):
         self.i.artist = 'one'
@@ -447,6 +450,16 @@ class DestinationTest(_common.TestCase):
         self.i.title = 'foo'
         self.i.album = 'bar'
         self.assertEqual(self.i.destination(),
+                         np('base/ber/foo'))
+
+    def test_destination_with_replacements_argument(self):
+        self.lib.directory = b'base'
+        self.lib.replacements = [(re.compile(r'a'), 'f')]
+        self.lib.path_formats = [('default', '$album/$title')]
+        self.i.title = 'foo'
+        self.i.album = 'bar'
+        replacements = [(re.compile(r'a'), 'e')]
+        self.assertEqual(self.i.destination(replacements=replacements),
                          np('base/ber/foo'))
 
     @unittest.skip('unimplemented: #359')
@@ -780,6 +793,16 @@ class DisambiguationTest(_common.TestCase, PathFormattingMixin):
     def test_remove_brackets(self):
         self._setf('foo%aunique{albumartist album,year,}/$title')
         self._assert_dest(b'/base/foo 2001/the title', self.i1)
+
+    def test_key_flexible_attribute(self):
+        album1 = self.lib.get_album(self.i1)
+        album1.flex = 'flex1'
+        album2 = self.lib.get_album(self.i2)
+        album2.flex = 'flex2'
+        album1.store()
+        album2.store()
+        self._setf('foo%aunique{albumartist album flex,year}/$title')
+        self._assert_dest(b'/base/foo/the title', self.i1)
 
 
 class PluginDestinationTest(_common.TestCase):

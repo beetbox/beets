@@ -377,7 +377,7 @@ class Genius(Backend):
         data = {'q': title + " " + artist.lower()}
         try:
             response = requests.get(
-                search_url, data=data, headers=self.headers)
+                search_url, params=data, headers=self.headers)
         except requests.RequestException as exc:
             self._log.debug('Genius API request failed: {0}', exc)
             return None
@@ -419,10 +419,16 @@ class Genius(Backend):
             lyrics_div = verse_div.parent
             for br in lyrics_div.find_all("br"):
                 br.replace_with("\n")
+
             ads = lyrics_div.find_all("div",
                                       class_=re.compile("InreadAd__Container"))
             for ad in ads:
                 ad.replace_with("\n")
+
+            footers = lyrics_div.find_all("div",
+                                          class_=re.compile("Lyrics__Footer"))
+            for footer in footers:
+                footer.replace_with("")
 
         return lyrics_div.get_text()
 
@@ -488,11 +494,11 @@ class Tekstowo(Backend):
         if not soup:
             return None
 
-        lyrics_div = soup.find("div", class_="song-text")
+        lyrics_div = soup.select("div.song-text > div.inner-text")
         if not lyrics_div:
             return None
 
-        return lyrics_div.get_text()
+        return lyrics_div[0].get_text()
 
 
 def remove_credits(text):

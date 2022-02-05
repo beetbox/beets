@@ -22,6 +22,7 @@ import subprocess
 import tempfile
 import shlex
 from string import Template
+import logging
 
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
@@ -523,7 +524,11 @@ class ConvertPlugin(BeetsPlugin):
             item.store()
 
             if self.config['delete_originals']:
-                self._log.info('Removing original file {0}', source_path)
+                self._log.log(
+                    logging.DEBUG if self.config['quiet'] else logging.INFO,
+                    'Removing original file {0}',
+                    source_path,
+                )
                 util.remove(source_path, False)
 
     def _cleanup(self, task, session):

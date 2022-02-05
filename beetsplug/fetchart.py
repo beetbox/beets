@@ -49,6 +49,8 @@ class Candidate:
     CANDIDATE_EXACT = 1
     CANDIDATE_DOWNSCALE = 2
     CANDIDATE_DOWNSIZE = 3
+    CANDIDATE_DEINTERLACE = 4
+    CANDIDATE_REFORMAT = 5
 
     MATCH_EXACT = 0
     MATCH_FALLBACK = 1
@@ -72,12 +74,15 @@ class Candidate:
         Return `CANDIDATE_DOWNSCALE` if the file must be rescaled.
         Return `CANDIDATE_DOWNSIZE` if the file must be resized, and possibly
             also rescaled.
+        Return `CANDIDATE_DEINTERLACE` if the file must be deinterlaced.
+        Return `CANDIDATE_REFORMAT` if the file has to be converted.
         """
         if not self.path:
             return self.CANDIDATE_BAD
 
         if (not (plugin.enforce_ratio or plugin.minwidth or plugin.maxwidth
-                 or plugin.max_filesize)):
+                 or plugin.max_filesize or plugin.deinterlace
+                 or plugin.cover_format)):
             return self.CANDIDATE_EXACT
 
         # get_size returns None if no local imaging backend is available
@@ -140,10 +145,23 @@ class Candidate:
                                 filesize, plugin.max_filesize)
                 downsize = True
 
+        # Check image format
+        reformat = False
+        if plugin.cover_format:
+            fmt = ArtResizer.shared.get_format(self.path)
+            reformat = fmt != plugin.cover_format
+            if reformat:
+                self._log.debug('image needs reformatting: {} -> {}',
+                                fmt, plugin.cover_format)
+
         if downscale:
             return self.CANDIDATE_DOWNSCALE
         elif downsize:
             return self.CANDIDATE_DOWNSIZE
+        elif plugin.deinterlace:
+            return self.CANDIDATE_DEINTERLACE
+        elif reformat:
+            return self.CANDIDATE_REFORMAT
         else:
             return self.CANDIDATE_EXACT
 
@@ -163,6 +181,14 @@ class Candidate:
                 ArtResizer.shared.resize(max(self.size), self.path,
                                          quality=plugin.quality,
                                          max_filesize=plugin.max_filesize)
+        elif self.check == self.CANDIDATE_DEINTERLACE:
+            self.path = ArtResizer.shared.deinterlace(self.path)
+        elif self.check == self.CANDIDATE_REFORMAT:
+            self.path = ArtResizer.shared.reformat(
+               self.path,
+               plugin.cover_format,
+               deinterlaced=plugin.deinterlace,
+            )
 
 
 def _logged_get(log, *args, **kwargs):
@@ -916,6 +942,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'lastfm_key': None,
             'store_source': False,
             'high_resolution': False,
+            'deinterlace': False,
+            'cover_format': None,
         })
         self.config['google_key'].redact = True
         self.config['fanarttv_key'].redact = True
@@ -933,6 +961,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                            confuse.String(pattern=self.PAT_PERCENT)]))
         self.margin_px = None
         self.margin_percent = None
+        self.deinterlace = self.config['deinterlace'].get(bool)
         if type(self.enforce_ratio) is str:
             if self.enforce_ratio[-1] == '%':
                 self.margin_percent = float(self.enforce_ratio[:-1]) / 100
@@ -950,6 +979,10 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
 
         self.src_removed = (config['import']['delete'].get(bool) or
                             config['import']['move'].get(bool))
+
+        self.cover_format = self.config['cover_format'].get(
+            confuse.Optional(str)
+        )
 
         if self.config['auto']:
             # Enable two import hooks when fetching is enabled.
