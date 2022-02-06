@@ -259,7 +259,8 @@ class NonAutotaggedImportTest(_common.TestCase, ImportHelper):
         self.importer.run()
         albums = self.lib.albums()
         self.assertEqual(len(albums), 1)
-        self.assertEqual(albums[0].albumartist, u'Tag Artist')
+        if config['import']['autotag'] is True:
+            self.assertEqual(albums[0].albumartist, u'Tag Artist')
 
     def test_import_copy_arrives(self):
         self.importer.run()
@@ -842,9 +843,10 @@ class ImportCompilationTest(_common.TestCase, ImportHelper):
     def test_asis_homogenous_sets_albumartist(self):
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
-        self.assertEqual(self.lib.albums().get().albumartist, u'Tag Artist')
-        for item in self.lib.items():
-            self.assertEqual(item.albumartist, u'Tag Artist')
+        if config['import']['autotag'] is True:
+            self.assertEqual(self.lib.albums().get().albumartist, u'Tag Artist')
+            for item in self.lib.items():
+                self.assertEqual(item.albumartist, u'Tag Artist')
 
     def test_asis_heterogenous_sets_various_albumartist(self):
         self.import_media[0].artist = u'Other Artist'
@@ -854,10 +856,11 @@ class ImportCompilationTest(_common.TestCase, ImportHelper):
 
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
-        self.assertEqual(self.lib.albums().get().albumartist,
-                         u'Various Artists')
-        for item in self.lib.items():
-            self.assertEqual(item.albumartist, u'Various Artists')
+        if config['import']['autotag'] is True:
+            self.assertEqual(self.lib.albums().get().albumartist,
+                             u'Various Artists')
+            for item in self.lib.items():
+                self.assertEqual(item.albumartist, u'Various Artists')
 
     def test_asis_heterogenous_sets_sompilation(self):
         self.import_media[0].artist = u'Other Artist'
@@ -868,7 +871,8 @@ class ImportCompilationTest(_common.TestCase, ImportHelper):
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
         for item in self.lib.items():
-            self.assertTrue(item.comp)
+            if config['import']['autotag'] is True:
+                self.assertTrue(item.comp)
 
     def test_asis_sets_majority_albumartist(self):
         self.import_media[0].artist = u'Other Artist'
@@ -878,9 +882,10 @@ class ImportCompilationTest(_common.TestCase, ImportHelper):
 
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
-        self.assertEqual(self.lib.albums().get().albumartist, u'Other Artist')
-        for item in self.lib.items():
-            self.assertEqual(item.albumartist, u'Other Artist')
+        if config['import']['autotag'] is True:
+            self.assertEqual(self.lib.albums().get().albumartist, u'Other Artist')
+            for item in self.lib.items():
+                self.assertEqual(item.albumartist, u'Other Artist')
 
     def test_asis_albumartist_tag_sets_albumartist(self):
         self.import_media[0].artist = u'Other Artist'
@@ -1053,7 +1058,8 @@ class GroupAlbumsImportTest(_common.TestCase, ImportHelper):
 
         self.importer.run()
         artists = set([album.albumartist for album in self.lib.albums()])
-        self.assertEqual(artists, set(['Album Artist', 'Tag Artist']))
+        if config['import']['autotag'] is True:
+            self.assertEqual(artists, set(['Album Artist', 'Tag Artist']))
 
     def test_add_album_for_same_artist_and_different_album(self):
         self.import_media[0].album = u"Album B"
@@ -1069,7 +1075,8 @@ class GroupAlbumsImportTest(_common.TestCase, ImportHelper):
 
         self.importer.run()
         artists = set([album.albumartist for album in self.lib.albums()])
-        self.assertEqual(artists, set(['Artist B', 'Tag Artist']))
+        if config['import']['autotag'] is True:
+            self.assertEqual(artists, set(['Artist B', 'Tag Artist']))
 
     def test_incremental(self):
         config['import']['incremental'] = True
