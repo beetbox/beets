@@ -15,6 +15,8 @@ New features:
 
 Bug fixes:
 
+* :doc:`/plugins/convert`: Resize album art when embedding
+  :bug:`2116`
 * :doc:`/plugins/deezer`: Fix auto tagger pagination issues (fetch beyond the
   first 25 tracks of a release).
 * :doc:`/plugins/spotify`: Fix auto tagger pagination issues (fetch beyond the
