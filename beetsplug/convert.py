@@ -343,9 +343,10 @@ class ConvertPlugin(BeetsPlugin):
             if self.config['embed'] and not linked:
                 album = item._cached_album
                 if album and album.artpath:
+                    maxwidth = self._get_art_resize(album.artpath)
                     self._log.debug('embedding album art from {}',
                                     util.displayable_path(album.artpath))
-                    art.embed_item(self._log, item, album.artpath,
+                    art.embed_item(self._log, item, album.artpath, maxwidth,
                                    itempath=converted, id3v23=id3v23)
 
             if keep_new:
@@ -389,20 +390,10 @@ class ConvertPlugin(BeetsPlugin):
             return
 
         # Decide whether we need to resize the cover-art image.
-        resize = False
-        maxwidth = None
-        if self.config['album_art_maxwidth']:
-            maxwidth = self.config['album_art_maxwidth'].get(int)
-            size = ArtResizer.shared.get_size(album.artpath)
-            self._log.debug('image size: {}', size)
-            if size:
-                resize = size[0] > maxwidth
-            else:
-                self._log.warning('Could not get size of image (please see '
-                                  'documentation for dependencies).')
+        maxwidth = self._get_art_resize(album.artpath)
 
         # Either copy or resize (while copying) the image.
-        if resize:
+        if maxwidth is not None:
             self._log.info('Resizing cover art from {0} to {1}',
                            util.displayable_path(album.artpath),
                            util.displayable_path(dest))
@@ -530,6 +521,24 @@ class ConvertPlugin(BeetsPlugin):
                     source_path,
                 )
                 util.remove(source_path, False)
+
+    def _get_art_resize(self, artpath):
+        """For a given piece of album art, determine whether or not it needs
+        to be resized according to the user's settings. If so, returns the
+        new size. If not, returns None.
+        """
+        newwidth = None
+        if self.config['album_art_maxwidth']:
+            maxwidth = self.config['album_art_maxwidth'].get(int)
+            size = ArtResizer.shared.get_size(artpath)
+            self._log.debug('image size: {}', size)
+            if size:
+                if size[0] > maxwidth:
+                    newwidth = maxwidth
+            else:
+                self._log.warning('Could not get size of image (please see '
+                                  'documentation for dependencies).')
+        return newwidth
 
     def _cleanup(self, task, session):
         for path in task.old_paths:
