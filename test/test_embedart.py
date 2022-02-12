@@ -216,7 +216,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         self.assertEqual(mediafile.images[0].data, self.image_data)
 
 
-@patch('beets.art.subprocess')
+@patch('beets.util.artresizer.subprocess')
 @patch('beets.art.extract')
 class ArtSimilarityTest(unittest.TestCase):
     def setUp(self):
