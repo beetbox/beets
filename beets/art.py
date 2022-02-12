@@ -53,7 +53,12 @@ def embed_item(log, item, imagepath, maxwidth=None, itempath=None,
     """
     # Conditions.
     if compare_threshold:
-        if not check_art_similarity(log, item, imagepath, compare_threshold):
+        is_similar = check_art_similarity(
+            log, item, imagepath, compare_threshold)
+        if is_similar is None:
+            log.warning('Error while checking art similarity; skipping.')
+            return
+        elif not is_similar:
             log.info('Image not similar; skipping.')
             return
 
@@ -119,7 +124,8 @@ def resize_image(log, imagepath, maxwidth, quality):
 def check_art_similarity(log, item, imagepath, compare_threshold):
     """A boolean indicating if an image is similar to embedded item art.
 
-    If no embedded art exists, always return `True`.
+    If no embedded art exists, always return `True`. If the comparison fails
+    for some reason, the return value is `None`.
 
     This must only be called if `ArtResizer.shared.can_compare` is `True`.
     """
