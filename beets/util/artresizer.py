@@ -177,6 +177,7 @@ def pil_getsize(artresizer, path_in):
     except OSError as exc:
         log.error("PIL could not read file {}: {}",
                   displayable_path(path_in), exc)
+        return None
 
 
 def im_getsize(artresizer, path_in):
@@ -192,11 +193,12 @@ def im_getsize(artresizer, path_in):
             'getting size with command {}:\n{}',
             exc.returncode, cmd, exc.output.strip()
         )
-        return
+        return None
     try:
         return tuple(map(int, out.split(b' ')))
     except IndexError:
         log.warning('Could not understand IM output: {0!r}', out)
+        return None
 
 
 BACKEND_GET_SIZE = {
@@ -347,7 +349,7 @@ def im_compare(artresizer, im1, im2, compare_threshold):
             convert_proc.returncode,
             convert_stderr,
         )
-        return
+        return None
 
     # Check the compare output.
     stdout, stderr = compare_proc.communicate()
@@ -355,7 +357,7 @@ def im_compare(artresizer, im1, im2, compare_threshold):
         if compare_proc.returncode != 1:
             log.debug('ImageMagick compare failed: {0}, {1}',
                       displayable_path(im2), displayable_path(im1))
-            return
+            return None
         out_str = stderr
     else:
         out_str = stdout
@@ -364,7 +366,7 @@ def im_compare(artresizer, im1, im2, compare_threshold):
         phash_diff = float(out_str)
     except ValueError:
         log.debug('IM output is not a number: {0!r}', out_str)
-        return
+        return None
 
     log.debug('ImageMagick compare score: {0}', phash_diff)
     return phash_diff <= compare_threshold
@@ -471,6 +473,7 @@ class ArtResizer(metaclass=Shareable):
         if self.local:
             func = BACKEND_GET_SIZE[self.method[0]]
             return func(self, path_in)
+        return None
 
     def get_format(self, path_in):
         """Returns the format of the image as a string.
@@ -480,6 +483,7 @@ class ArtResizer(metaclass=Shareable):
         if self.local:
             func = BACKEND_GET_FORMAT[self.method[0]]
             return func(self, path_in)
+        return None
 
     def reformat(self, path_in, new_format, deinterlaced=True):
         """Converts image to desired format, updating its extension, but
@@ -524,6 +528,7 @@ class ArtResizer(metaclass=Shareable):
         if self.local:
             func = BACKEND_COMPARE[self.method[0]]
             return func(self, im1, im2, compare_threshold)
+        return None
 
     @staticmethod
     def _check_method():
