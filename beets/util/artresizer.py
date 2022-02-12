@@ -329,7 +329,6 @@ class ArtResizer(metaclass=Shareable):
         """
         self.method = self._check_method()
         log.debug("artresizer: method is {0}", self.method)
-        self.can_compare = self._can_compare()
 
         # Use ImageMagick's magick binary when it's available. If it's
         # not, fall back to the older, separate convert and identify
@@ -430,7 +429,8 @@ class ArtResizer(metaclass=Shareable):
                 os.unlink(path_in)
         return result_path
 
-    def _can_compare(self):
+    @property
+    def can_compare(self):
         """A boolean indicating whether image comparison is available"""
 
         return self.method[0] == IMAGEMAGICK and self.method[1] > (6, 8, 7)
