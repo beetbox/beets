@@ -310,10 +310,13 @@ def im_compare(im1, im2, compare_threshold):
     # to grayscale and then pipe them into the `compare` command.
     # On Windows, ImageMagick doesn't support the magic \\?\ prefix
     # on paths, so we pass `prefix=False` to `syspath`.
-    convert_cmd = ['convert', syspath(im2, prefix=False),
-                   syspath(im1, prefix=False),
-                   '-colorspace', 'gray', 'MIFF:-']
-    compare_cmd = ['compare', '-metric', 'PHASH', '-', 'null:']
+    convert_cmd = ArtResizer.shared.im_convert_cmd + [
+        syspath(im2, prefix=False), syspath(im1, prefix=False),
+        '-colorspace', 'gray', 'MIFF:-'
+    ]
+    compare_cmd = ArtResizer.shared.im_compare_cmd + [
+        '-metric', 'PHASH', '-', 'null:',
+    ]
     log.debug('comparing images with pipeline {} | {}',
               convert_cmd, compare_cmd)
     convert_proc = subprocess.Popen(
@@ -412,9 +415,11 @@ class ArtResizer(metaclass=Shareable):
             if self.im_legacy:
                 self.im_convert_cmd = ['convert']
                 self.im_identify_cmd = ['identify']
+                self.im_compare_cmd = ['compare']
             else:
                 self.im_convert_cmd = ['magick']
                 self.im_identify_cmd = ['magick', 'identify']
+                self.im_compare_cmd = ['magick', 'compare']
 
     def resize(
         self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0
