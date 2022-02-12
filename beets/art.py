@@ -17,8 +17,6 @@ music and items' embedded album art.
 """
 
 
-import subprocess
-import platform
 from tempfile import NamedTemporaryFile
 import os
 
@@ -121,70 +119,10 @@ def check_art_similarity(log, item, imagepath, compare_threshold):
     with NamedTemporaryFile(delete=True) as f:
         art = extract(log, f.name, item)
 
-        if art:
-            is_windows = platform.system() == "Windows"
+        if not art:
+            return True
 
-            # Converting images to grayscale tends to minimize the weight
-            # of colors in the diff score. So we first convert both images
-            # to grayscale and then pipe them into the `compare` command.
-            # On Windows, ImageMagick doesn't support the magic \\?\ prefix
-            # on paths, so we pass `prefix=False` to `syspath`.
-            convert_cmd = ['convert', syspath(imagepath, prefix=False),
-                           syspath(art, prefix=False),
-                           '-colorspace', 'gray', 'MIFF:-']
-            compare_cmd = ['compare', '-metric', 'PHASH', '-', 'null:']
-            log.debug('comparing images with pipeline {} | {}',
-                      convert_cmd, compare_cmd)
-            convert_proc = subprocess.Popen(
-                convert_cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                close_fds=not is_windows,
-            )
-            compare_proc = subprocess.Popen(
-                compare_cmd,
-                stdin=convert_proc.stdout,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                close_fds=not is_windows,
-            )
-
-            # Check the convert output. We're not interested in the
-            # standard output; that gets piped to the next stage.
-            convert_proc.stdout.close()
-            convert_stderr = convert_proc.stderr.read()
-            convert_proc.stderr.close()
-            convert_proc.wait()
-            if convert_proc.returncode:
-                log.debug(
-                    'ImageMagick convert failed with status {}: {!r}',
-                    convert_proc.returncode,
-                    convert_stderr,
-                )
-                return
-
-            # Check the compare output.
-            stdout, stderr = compare_proc.communicate()
-            if compare_proc.returncode:
-                if compare_proc.returncode != 1:
-                    log.debug('ImageMagick compare failed: {0}, {1}',
-                              displayable_path(imagepath),
-                              displayable_path(art))
-                    return
-                out_str = stderr
-            else:
-                out_str = stdout
-
-            try:
-                phash_diff = float(out_str)
-            except ValueError:
-                log.debug('IM output is not a number: {0!r}', out_str)
-                return
-
-            log.debug('ImageMagick compare score: {0}', phash_diff)
-            return phash_diff <= compare_threshold
-
-    return True
+        return ArtResizer.shared.compare(art, imagepath, compare_threshold)
 
 
 def extract(log, outpath, item):
