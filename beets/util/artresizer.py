@@ -61,7 +61,8 @@ def temp_file_for(path):
         return bytestring_path(f.name)
 
 
-def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
+def pil_resize(artresizer, maxwidth, path_in, path_out=None, quality=0,
+        max_filesize=0):
     """Resize using Python Imaging Library (PIL).  Return the output path
     of resized image.
     """
@@ -119,7 +120,8 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
         return path_in
 
 
-def im_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
+def im_resize(artresizer, maxwidth, path_in, path_out=None, quality=0,
+        max_filesize=0):
     """Resize using ImageMagick.
 
     Use the ``magick`` program or ``convert`` on older versions. Return
@@ -134,7 +136,7 @@ def im_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
     # with regards to the height.
     # ImageMagick already seems to default to no interlace, but we include it
     # here for the sake of explicitness.
-    cmd = ArtResizer.shared.im_convert_cmd + [
+    cmd = artresizer.im_convert_cmd + [
         syspath(path_in, prefix=False),
         '-resize', f'{maxwidth}x>',
         '-interlace', 'none',
@@ -166,7 +168,7 @@ BACKEND_FUNCS = {
 }
 
 
-def pil_getsize(path_in):
+def pil_getsize(artresizer, path_in):
     from PIL import Image
 
     try:
@@ -177,8 +179,8 @@ def pil_getsize(path_in):
                   displayable_path(path_in), exc)
 
 
-def im_getsize(path_in):
-    cmd = ArtResizer.shared.im_identify_cmd + \
+def im_getsize(artresizer, path_in):
+    cmd = artresizer.im_identify_cmd + \
         ['-format', '%w %h', syspath(path_in, prefix=False)]
 
     try:
@@ -203,7 +205,7 @@ BACKEND_GET_SIZE = {
 }
 
 
-def pil_deinterlace(path_in, path_out=None):
+def pil_deinterlace(artresizer, path_in, path_out=None):
     path_out = path_out or temp_file_for(path_in)
     from PIL import Image
 
@@ -215,10 +217,10 @@ def pil_deinterlace(path_in, path_out=None):
         return path_in
 
 
-def im_deinterlace(path_in, path_out=None):
+def im_deinterlace(artresizer, path_in, path_out=None):
     path_out = path_out or temp_file_for(path_in)
 
-    cmd = ArtResizer.shared.im_convert_cmd + [
+    cmd = artresizer.im_convert_cmd + [
         syspath(path_in, prefix=False),
         '-interlace', 'none',
         syspath(path_out, prefix=False),
@@ -237,8 +239,8 @@ DEINTERLACE_FUNCS = {
 }
 
 
-def im_get_format(filepath):
-    cmd = ArtResizer.shared.im_identify_cmd + [
+def im_get_format(artresizer, filepath):
+    cmd = artresizer.im_identify_cmd + [
         '-format', '%[magick]',
         syspath(filepath)
     ]
@@ -249,7 +251,7 @@ def im_get_format(filepath):
         return None
 
 
-def pil_get_format(filepath):
+def pil_get_format(artresizer, filepath):
     from PIL import Image, UnidentifiedImageError
 
     try:
@@ -266,8 +268,8 @@ BACKEND_GET_FORMAT = {
 }
 
 
-def im_convert_format(source, target, deinterlaced):
-    cmd = ArtResizer.shared.im_convert_cmd + [
+def im_convert_format(artresizer, source, target, deinterlaced):
+    cmd = artresizer.im_convert_cmd + [
         syspath(source),
         *(["-interlace", "none"] if deinterlaced else []),
         syspath(target),
@@ -284,7 +286,7 @@ def im_convert_format(source, target, deinterlaced):
         return source
 
 
-def pil_convert_format(source, target, deinterlaced):
+def pil_convert_format(artresizer, source, target, deinterlaced):
     from PIL import Image, UnidentifiedImageError
 
     try:
@@ -302,7 +304,7 @@ BACKEND_CONVERT_IMAGE_FORMAT = {
     IMAGEMAGICK: im_convert_format,
 }
 
-def im_compare(im1, im2, compare_threshold):
+def im_compare(artresizer, im1, im2, compare_threshold):
     is_windows = platform.system() == "Windows"
 
     # Converting images to grayscale tends to minimize the weight
@@ -310,11 +312,11 @@ def im_compare(im1, im2, compare_threshold):
     # to grayscale and then pipe them into the `compare` command.
     # On Windows, ImageMagick doesn't support the magic \\?\ prefix
     # on paths, so we pass `prefix=False` to `syspath`.
-    convert_cmd = ArtResizer.shared.im_convert_cmd + [
+    convert_cmd = artresizer.im_convert_cmd + [
         syspath(im2, prefix=False), syspath(im1, prefix=False),
         '-colorspace', 'gray', 'MIFF:-'
     ]
-    compare_cmd = ArtResizer.shared.im_compare_cmd + [
+    compare_cmd = artresizer.im_compare_cmd + [
         '-metric', 'PHASH', '-', 'null:',
     ]
     log.debug('comparing images with pipeline {} | {}',
@@ -368,7 +370,7 @@ def im_compare(im1, im2, compare_threshold):
     return phash_diff <= compare_threshold
 
 
-def pil_compare(im1, im2, compare_threshold):
+def pil_compare(artresizer, im1, im2, compare_threshold):
     # It is an error to call this when ArtResizer.can_compare is not True.
     raise NotImplementedError()
 
@@ -431,7 +433,7 @@ class ArtResizer(metaclass=Shareable):
         """
         if self.local:
             func = BACKEND_FUNCS[self.method[0]]
-            return func(maxwidth, path_in, path_out,
+            return func(self, maxwidth, path_in, path_out,
                         quality=quality, max_filesize=max_filesize)
         else:
             return path_in
@@ -439,7 +441,7 @@ class ArtResizer(metaclass=Shareable):
     def deinterlace(self, path_in, path_out=None):
         if self.local:
             func = DEINTERLACE_FUNCS[self.method[0]]
-            return func(path_in, path_out)
+            return func(self, path_in, path_out)
         else:
             return path_in
 
@@ -468,7 +470,7 @@ class ArtResizer(metaclass=Shareable):
         """
         if self.local:
             func = BACKEND_GET_SIZE[self.method[0]]
-            return func(path_in)
+            return func(self, path_in)
 
     def get_format(self, path_in):
         """Returns the format of the image as a string.
@@ -477,7 +479,7 @@ class ArtResizer(metaclass=Shareable):
         """
         if self.local:
             func = BACKEND_GET_FORMAT[self.method[0]]
-            return func(path_in)
+            return func(self, path_in)
 
     def reformat(self, path_in, new_format, deinterlaced=True):
         """Converts image to desired format, updating its extension, but
@@ -502,7 +504,7 @@ class ArtResizer(metaclass=Shareable):
         # file path was removed
         result_path = path_in
         try:
-            result_path = func(path_in, path_new, deinterlaced)
+            result_path = func(self, path_in, path_new, deinterlaced)
         finally:
             if result_path != path_in:
                 os.unlink(path_in)
@@ -521,7 +523,7 @@ class ArtResizer(metaclass=Shareable):
         """
         if self.local:
             func = BACKEND_COMPARE[self.method[0]]
-            return func(im1, im2, compare_threshold)
+            return func(self, im1, im2, compare_threshold)
 
     @staticmethod
     def _check_method():

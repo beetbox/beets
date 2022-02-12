@@ -50,6 +50,7 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         """Test resizing based on file size, given a resize_func."""
         # Check quality setting unaffected by new parameter
         im_95_qual = resize_func(
+            ArtResizer.shared,
             225,
             self.IMG_225x225,
             quality=95,
@@ -60,6 +61,7 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
 
         # Attempt a lower filesize with same quality
         im_a = resize_func(
+            ArtResizer.shared,
             225,
             self.IMG_225x225,
             quality=95,
@@ -72,6 +74,7 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
 
         # Attempt with lower initial quality
         im_75_qual = resize_func(
+            ArtResizer.shared,
             225,
             self.IMG_225x225,
             quality=75,
@@ -80,6 +83,7 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         self.assertExists(im_75_qual)
 
         im_b = resize_func(
+            ArtResizer.shared,
             225,
             self.IMG_225x225,
             quality=95,
@@ -107,7 +111,7 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         Check if pil_deinterlace function returns images
         that are non-progressive
         """
-        path = pil_deinterlace(self.IMG_225x225)
+        path = pil_deinterlace(ArtResizer.shared, self.IMG_225x225)
         from PIL import Image
         with Image.open(path) as img:
             self.assertFalse('progression' in img.info)
@@ -119,7 +123,7 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         Check if im_deinterlace function returns images
         that are non-progressive.
         """
-        path = im_deinterlace(self.IMG_225x225)
+        path = im_deinterlace(ArtResizer.shared, self.IMG_225x225)
         cmd = ArtResizer.shared.im_identify_cmd + [
             '-format', '%[interlace]', syspath(path, prefix=False),
         ]
