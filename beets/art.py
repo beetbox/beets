@@ -51,14 +51,17 @@ def embed_item(log, item, imagepath, maxwidth=None, itempath=None,
                quality=0):
     """Embed an image into the item's media file.
     """
-    # Conditions and filters.
+    # Conditions.
     if compare_threshold:
         if not check_art_similarity(log, item, imagepath, compare_threshold):
             log.info('Image not similar; skipping.')
             return
+
     if ifempty and get_art(log, item):
         log.info('media file already contained art')
         return
+
+    # Filters.
     if maxwidth and not as_album:
         imagepath = resize_image(log, imagepath, maxwidth, quality)
 
