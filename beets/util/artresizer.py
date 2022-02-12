@@ -62,7 +62,7 @@ def temp_file_for(path):
 
 
 def pil_resize(artresizer, maxwidth, path_in, path_out=None, quality=0,
-        max_filesize=0):
+               max_filesize=0):
     """Resize using Python Imaging Library (PIL).  Return the output path
     of resized image.
     """
@@ -121,7 +121,7 @@ def pil_resize(artresizer, maxwidth, path_in, path_out=None, quality=0,
 
 
 def im_resize(artresizer, maxwidth, path_in, path_out=None, quality=0,
-        max_filesize=0):
+              max_filesize=0):
     """Resize using ImageMagick.
 
     Use the ``magick`` program or ``convert`` on older versions. Return
@@ -305,6 +305,7 @@ BACKEND_CONVERT_IMAGE_FORMAT = {
     PIL: pil_convert_format,
     IMAGEMAGICK: im_convert_format,
 }
+
 
 def im_compare(artresizer, im1, im2, compare_threshold):
     is_windows = platform.system() == "Windows"
