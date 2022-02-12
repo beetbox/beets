@@ -115,6 +115,10 @@ def resize_image(log, imagepath, maxwidth, quality):
 
 def check_art_similarity(log, item, imagepath, compare_threshold):
     """A boolean indicating if an image is similar to embedded item art.
+
+    If no embedded art exists, always return `True`.
+
+    This must only be called if `ArtResizer.shared.can_compare` is `True`.
     """
     with NamedTemporaryFile(delete=True) as f:
         art = extract(log, f.name, item)
