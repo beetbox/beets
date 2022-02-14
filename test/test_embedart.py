@@ -24,7 +24,7 @@ from test.helper import TestHelper
 
 from mediafile import MediaFile
 from beets import config, logging, ui
-from beets.util import syspath, displayable_path
+from beets.util import artresizer, syspath, displayable_path
 from beets.util.artresizer import ArtResizer
 from beets import art
 
@@ -216,16 +216,31 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         self.assertEqual(mediafile.images[0].data, self.image_data)
 
 
+class DummyArtResizer(ArtResizer):
+    """An `ArtResizer` which pretends that ImageMagick is available, and has
+    a sufficiently recent version to support image comparison.
+    """
+    @staticmethod
+    def _check_method():
+        return artresizer.IMAGEMAGICK, (7, 0, 0), True
+
+
 @patch('beets.util.artresizer.subprocess')
 @patch('beets.art.extract')
 class ArtSimilarityTest(unittest.TestCase):
     def setUp(self):
         self.item = _common.item()
         self.log = logging.getLogger('beets.embedart')
+        self.artresizer = DummyArtResizer()
 
     def _similarity(self, threshold):
-        return art.check_art_similarity(self.log, self.item, b'path',
-                                        threshold)
+        return art.check_art_similarity(
+            self.log,
+            self.item,
+            b'path',
+            threshold,
+            artresizer=self.artresizer,
+        )
 
     def _popen(self, status=0, stdout="", stderr=""):
         """Create a mock `Popen` object."""
