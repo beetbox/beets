@@ -48,6 +48,9 @@ Bug fixes:
 * :doc:`plugins/replaygain`: Correctly handle the ``overwrite`` config option,
   which forces recomputing ReplayGain values on import even for tracks
   that already have the tags.
+* :doc:`plugins/embedart`: Fix a crash when using recent versions of
+  ImageMagick and the ``compare_threshold`` option.
+  :bug:`4272`
 
 For packagers:
 
