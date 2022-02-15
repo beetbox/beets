@@ -19,11 +19,13 @@ public resizing proxy if neither is available.
 import subprocess
 import os
 import os.path
+import platform
 import re
 from tempfile import NamedTemporaryFile
 from urllib.parse import urlencode
 from beets import logging
 from beets import util
+from beets.util import bytestring_path, displayable_path, py3_path, syspath
 
 # Resizing methods
 PIL = 1
@@ -55,11 +57,12 @@ def temp_file_for(path):
     specified path.
     """
     ext = os.path.splitext(path)[1]
-    with NamedTemporaryFile(suffix=util.py3_path(ext), delete=False) as f:
-        return util.bytestring_path(f.name)
+    with NamedTemporaryFile(suffix=py3_path(ext), delete=False) as f:
+        return bytestring_path(f.name)
 
 
-def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
+def pil_resize(artresizer, maxwidth, path_in, path_out=None, quality=0,
+               max_filesize=0):
     """Resize using Python Imaging Library (PIL).  Return the output path
     of resized image.
     """
@@ -67,10 +70,10 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
     from PIL import Image
 
     log.debug('artresizer: PIL resizing {0} to {1}',
-              util.displayable_path(path_in), util.displayable_path(path_out))
+              displayable_path(path_in), displayable_path(path_out))
 
     try:
-        im = Image.open(util.syspath(path_in))
+        im = Image.open(syspath(path_in))
         size = maxwidth, maxwidth
         im.thumbnail(size, Image.ANTIALIAS)
 
@@ -80,7 +83,7 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
 
         # progressive=False only affects JPEGs and is the default,
         # but we include it here for explicitness.
-        im.save(util.py3_path(path_out), quality=quality, progressive=False)
+        im.save(py3_path(path_out), quality=quality, progressive=False)
 
         if max_filesize > 0:
             # If maximum filesize is set, we attempt to lower the quality of
@@ -92,7 +95,7 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
                 lower_qual = 95
             for i in range(5):
                 # 5 attempts is an abitrary choice
-                filesize = os.stat(util.syspath(path_out)).st_size
+                filesize = os.stat(syspath(path_out)).st_size
                 log.debug("PIL Pass {0} : Output size: {1}B", i, filesize)
                 if filesize <= max_filesize:
                     return path_out
@@ -103,7 +106,7 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
                 if lower_qual < 10:
                     lower_qual = 10
                 # Use optimize flag to improve filesize decrease
-                im.save(util.py3_path(path_out), quality=lower_qual,
+                im.save(py3_path(path_out), quality=lower_qual,
                         optimize=True, progressive=False)
             log.warning("PIL Failed to resize file to below {0}B",
                         max_filesize)
@@ -113,11 +116,12 @@ def pil_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
             return path_out
     except OSError:
         log.error("PIL cannot create thumbnail for '{0}'",
-                  util.displayable_path(path_in))
+                  displayable_path(path_in))
         return path_in
 
 
-def im_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
+def im_resize(artresizer, maxwidth, path_in, path_out=None, quality=0,
+              max_filesize=0):
     """Resize using ImageMagick.
 
     Use the ``magick`` program or ``convert`` on older versions. Return
@@ -125,15 +129,15 @@ def im_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
     """
     path_out = path_out or temp_file_for(path_in)
     log.debug('artresizer: ImageMagick resizing {0} to {1}',
-              util.displayable_path(path_in), util.displayable_path(path_out))
+              displayable_path(path_in), displayable_path(path_out))
 
     # "-resize WIDTHx>" shrinks images with the width larger
     # than the given width while maintaining the aspect ratio
     # with regards to the height.
     # ImageMagick already seems to default to no interlace, but we include it
     # here for the sake of explicitness.
-    cmd = ArtResizer.shared.im_convert_cmd + [
-        util.syspath(path_in, prefix=False),
+    cmd = artresizer.im_convert_cmd + [
+        syspath(path_in, prefix=False),
         '-resize', f'{maxwidth}x>',
         '-interlace', 'none',
     ]
@@ -146,13 +150,13 @@ def im_resize(maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
     if max_filesize > 0:
         cmd += ['-define', f'jpeg:extent={max_filesize}b']
 
-    cmd.append(util.syspath(path_out, prefix=False))
+    cmd.append(syspath(path_out, prefix=False))
 
     try:
         util.command_output(cmd)
     except subprocess.CalledProcessError:
         log.warning('artresizer: IM convert failed for {0}',
-                    util.displayable_path(path_in))
+                    displayable_path(path_in))
         return path_in
 
     return path_out
@@ -164,20 +168,21 @@ BACKEND_FUNCS = {
 }
 
 
-def pil_getsize(path_in):
+def pil_getsize(artresizer, path_in):
     from PIL import Image
 
     try:
-        im = Image.open(util.syspath(path_in))
+        im = Image.open(syspath(path_in))
         return im.size
     except OSError as exc:
         log.error("PIL could not read file {}: {}",
-                  util.displayable_path(path_in), exc)
+                  displayable_path(path_in), exc)
+        return None
 
 
-def im_getsize(path_in):
-    cmd = ArtResizer.shared.im_identify_cmd + \
-        ['-format', '%w %h', util.syspath(path_in, prefix=False)]
+def im_getsize(artresizer, path_in):
+    cmd = artresizer.im_identify_cmd + \
+        ['-format', '%w %h', syspath(path_in, prefix=False)]
 
     try:
         out = util.command_output(cmd).stdout
@@ -188,11 +193,12 @@ def im_getsize(path_in):
             'getting size with command {}:\n{}',
             exc.returncode, cmd, exc.output.strip()
         )
-        return
+        return None
     try:
         return tuple(map(int, out.split(b' ')))
     except IndexError:
         log.warning('Could not understand IM output: {0!r}', out)
+        return None
 
 
 BACKEND_GET_SIZE = {
@@ -201,25 +207,25 @@ BACKEND_GET_SIZE = {
 }
 
 
-def pil_deinterlace(path_in, path_out=None):
+def pil_deinterlace(artresizer, path_in, path_out=None):
     path_out = path_out or temp_file_for(path_in)
     from PIL import Image
 
     try:
-        im = Image.open(util.syspath(path_in))
-        im.save(util.py3_path(path_out), progressive=False)
+        im = Image.open(syspath(path_in))
+        im.save(py3_path(path_out), progressive=False)
         return path_out
     except IOError:
         return path_in
 
 
-def im_deinterlace(path_in, path_out=None):
+def im_deinterlace(artresizer, path_in, path_out=None):
     path_out = path_out or temp_file_for(path_in)
 
-    cmd = ArtResizer.shared.im_convert_cmd + [
-        util.syspath(path_in, prefix=False),
+    cmd = artresizer.im_convert_cmd + [
+        syspath(path_in, prefix=False),
         '-interlace', 'none',
-        util.syspath(path_out, prefix=False),
+        syspath(path_out, prefix=False),
     ]
 
     try:
@@ -235,10 +241,10 @@ DEINTERLACE_FUNCS = {
 }
 
 
-def im_get_format(filepath):
-    cmd = ArtResizer.shared.im_identify_cmd + [
+def im_get_format(artresizer, filepath):
+    cmd = artresizer.im_identify_cmd + [
         '-format', '%[magick]',
-        util.syspath(filepath)
+        syspath(filepath)
     ]
 
     try:
@@ -247,11 +253,11 @@ def im_get_format(filepath):
         return None
 
 
-def pil_get_format(filepath):
+def pil_get_format(artresizer, filepath):
     from PIL import Image, UnidentifiedImageError
 
     try:
-        with Image.open(util.syspath(filepath)) as im:
+        with Image.open(syspath(filepath)) as im:
             return im.format
     except (ValueError, TypeError, UnidentifiedImageError, FileNotFoundError):
         log.exception("failed to detect image format for {}", filepath)
@@ -264,11 +270,11 @@ BACKEND_GET_FORMAT = {
 }
 
 
-def im_convert_format(source, target, deinterlaced):
-    cmd = ArtResizer.shared.im_convert_cmd + [
-        util.syspath(source),
+def im_convert_format(artresizer, source, target, deinterlaced):
+    cmd = artresizer.im_convert_cmd + [
+        syspath(source),
         *(["-interlace", "none"] if deinterlaced else []),
-        util.syspath(target),
+        syspath(target),
     ]
 
     try:
@@ -282,12 +288,12 @@ def im_convert_format(source, target, deinterlaced):
         return source
 
 
-def pil_convert_format(source, target, deinterlaced):
+def pil_convert_format(artresizer, source, target, deinterlaced):
     from PIL import Image, UnidentifiedImageError
 
     try:
-        with Image.open(util.syspath(source)) as im:
-            im.save(util.py3_path(target), progressive=not deinterlaced)
+        with Image.open(syspath(source)) as im:
+            im.save(py3_path(target), progressive=not deinterlaced)
             return target
     except (ValueError, TypeError, UnidentifiedImageError, FileNotFoundError,
             OSError):
@@ -298,6 +304,83 @@ def pil_convert_format(source, target, deinterlaced):
 BACKEND_CONVERT_IMAGE_FORMAT = {
     PIL: pil_convert_format,
     IMAGEMAGICK: im_convert_format,
+}
+
+
+def im_compare(artresizer, im1, im2, compare_threshold):
+    is_windows = platform.system() == "Windows"
+
+    # Converting images to grayscale tends to minimize the weight
+    # of colors in the diff score. So we first convert both images
+    # to grayscale and then pipe them into the `compare` command.
+    # On Windows, ImageMagick doesn't support the magic \\?\ prefix
+    # on paths, so we pass `prefix=False` to `syspath`.
+    convert_cmd = artresizer.im_convert_cmd + [
+        syspath(im2, prefix=False), syspath(im1, prefix=False),
+        '-colorspace', 'gray', 'MIFF:-'
+    ]
+    compare_cmd = artresizer.im_compare_cmd + [
+        '-metric', 'PHASH', '-', 'null:',
+    ]
+    log.debug('comparing images with pipeline {} | {}',
+              convert_cmd, compare_cmd)
+    convert_proc = subprocess.Popen(
+        convert_cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        close_fds=not is_windows,
+    )
+    compare_proc = subprocess.Popen(
+        compare_cmd,
+        stdin=convert_proc.stdout,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        close_fds=not is_windows,
+    )
+
+    # Check the convert output. We're not interested in the
+    # standard output; that gets piped to the next stage.
+    convert_proc.stdout.close()
+    convert_stderr = convert_proc.stderr.read()
+    convert_proc.stderr.close()
+    convert_proc.wait()
+    if convert_proc.returncode:
+        log.debug(
+            'ImageMagick convert failed with status {}: {!r}',
+            convert_proc.returncode,
+            convert_stderr,
+        )
+        return None
+
+    # Check the compare output.
+    stdout, stderr = compare_proc.communicate()
+    if compare_proc.returncode:
+        if compare_proc.returncode != 1:
+            log.debug('ImageMagick compare failed: {0}, {1}',
+                      displayable_path(im2), displayable_path(im1))
+            return None
+        out_str = stderr
+    else:
+        out_str = stdout
+
+    try:
+        phash_diff = float(out_str)
+    except ValueError:
+        log.debug('IM output is not a number: {0!r}', out_str)
+        return None
+
+    log.debug('ImageMagick compare score: {0}', phash_diff)
+    return phash_diff <= compare_threshold
+
+
+def pil_compare(artresizer, im1, im2, compare_threshold):
+    # It is an error to call this when ArtResizer.can_compare is not True.
+    raise NotImplementedError()
+
+
+BACKEND_COMPARE = {
+    PIL: pil_compare,
+    IMAGEMAGICK: im_compare,
 }
 
 
@@ -328,7 +411,6 @@ class ArtResizer(metaclass=Shareable):
         """
         self.method = self._check_method()
         log.debug("artresizer: method is {0}", self.method)
-        self.can_compare = self._can_compare()
 
         # Use ImageMagick's magick binary when it's available. If it's
         # not, fall back to the older, separate convert and identify
@@ -338,9 +420,11 @@ class ArtResizer(metaclass=Shareable):
             if self.im_legacy:
                 self.im_convert_cmd = ['convert']
                 self.im_identify_cmd = ['identify']
+                self.im_compare_cmd = ['compare']
             else:
                 self.im_convert_cmd = ['magick']
                 self.im_identify_cmd = ['magick', 'identify']
+                self.im_compare_cmd = ['magick', 'compare']
 
     def resize(
         self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0
@@ -352,7 +436,7 @@ class ArtResizer(metaclass=Shareable):
         """
         if self.local:
             func = BACKEND_FUNCS[self.method[0]]
-            return func(maxwidth, path_in, path_out,
+            return func(self, maxwidth, path_in, path_out,
                         quality=quality, max_filesize=max_filesize)
         else:
             return path_in
@@ -360,7 +444,7 @@ class ArtResizer(metaclass=Shareable):
     def deinterlace(self, path_in, path_out=None):
         if self.local:
             func = DEINTERLACE_FUNCS[self.method[0]]
-            return func(path_in, path_out)
+            return func(self, path_in, path_out)
         else:
             return path_in
 
@@ -389,7 +473,8 @@ class ArtResizer(metaclass=Shareable):
         """
         if self.local:
             func = BACKEND_GET_SIZE[self.method[0]]
-            return func(path_in)
+            return func(self, path_in)
+        return None
 
     def get_format(self, path_in):
         """Returns the format of the image as a string.
@@ -398,7 +483,8 @@ class ArtResizer(metaclass=Shareable):
         """
         if self.local:
             func = BACKEND_GET_FORMAT[self.method[0]]
-            return func(path_in)
+            return func(self, path_in)
+        return None
 
     def reformat(self, path_in, new_format, deinterlaced=True):
         """Converts image to desired format, updating its extension, but
@@ -423,16 +509,27 @@ class ArtResizer(metaclass=Shareable):
         # file path was removed
         result_path = path_in
         try:
-            result_path = func(path_in, path_new, deinterlaced)
+            result_path = func(self, path_in, path_new, deinterlaced)
         finally:
             if result_path != path_in:
                 os.unlink(path_in)
         return result_path
 
-    def _can_compare(self):
+    @property
+    def can_compare(self):
         """A boolean indicating whether image comparison is available"""
 
         return self.method[0] == IMAGEMAGICK and self.method[1] > (6, 8, 7)
+
+    def compare(self, im1, im2, compare_threshold):
+        """Return a boolean indicating whether two images are similar.
+
+        Only available locally.
+        """
+        if self.local:
+            func = BACKEND_COMPARE[self.method[0]]
+            return func(self, im1, im2, compare_threshold)
+        return None
 
     @staticmethod
     def _check_method():
