@@ -84,7 +84,7 @@ class FishPlugin(BeetsPlugin):
         cmd.parser.add_option(
             '-o',
             '--output',
-            default=None,
+            default='~/.config/fish/completions/beet.fish',
             help='save the script to a specific file, by default it will be'
                  'saved to ~/.config/fish/completions')
         return [cmd]
@@ -96,13 +96,8 @@ class FishPlugin(BeetsPlugin):
         # Make a giant string of all the above, formatted in a way that
         # allows Fish to do tab completion for the `beet` command.
 
-        completion_file_path = opts.output
-        if completion_file_path is not None:
-            completion_dir = os.path.dirname(completion_file_path)
-        else:
-            home_dir = os.path.expanduser("~")
-            completion_dir = os.path.join(home_dir, '.config/fish/completions')
-            completion_file_path = os.path.join(completion_dir, 'beet.fish')
+        completion_file_path = os.path.expanduser(opts.output)
+        completion_dir = os.path.dirname(completion_file_path)
 
         if completion_dir != '':
             os.makedirs(completion_dir, exist_ok=True)
