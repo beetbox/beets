@@ -81,6 +81,12 @@ class FishPlugin(BeetsPlugin):
             choices=library.Item.all_keys() +
             library.Album.all_keys(),
             help='include specified field *values* in completions')
+        cmd.parser.add_option(
+            '-o',
+            '--output',
+            default='~/.config/fish/completions/beet.fish',
+            help='save the script to a specific file, by default it will be'
+                 'saved to ~/.config/fish/completions')
         return [cmd]
 
     def run(self, lib, opts, args):
@@ -89,14 +95,13 @@ class FishPlugin(BeetsPlugin):
         # If specified, also collect the values for these fields.
         # Make a giant string of all the above, formatted in a way that
         # allows Fish to do tab completion for the `beet` command.
-        home_dir = os.path.expanduser("~")
-        completion_dir = os.path.join(home_dir, '.config/fish/completions')
-        try:
-            os.makedirs(completion_dir)
-        except OSError:
-            if not os.path.isdir(completion_dir):
-                raise
-        completion_file_path = os.path.join(completion_dir, 'beet.fish')
+
+        completion_file_path = os.path.expanduser(opts.output)
+        completion_dir = os.path.dirname(completion_file_path)
+
+        if completion_dir != '':
+            os.makedirs(completion_dir, exist_ok=True)
+
         nobasicfields = opts.noFields  # Do not complete for album/track fields
         extravalues = opts.extravalues  # e.g., Also complete artists names
         beetcmds = sorted(
