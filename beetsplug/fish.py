@@ -105,11 +105,7 @@ class FishPlugin(BeetsPlugin):
             completion_file_path = os.path.join(completion_dir, 'beet.fish')
 
         if completion_dir != '':
-            try:
-                os.makedirs(completion_dir)
-            except OSError:
-                if not os.path.isdir(completion_dir):
-                    raise
+            os.makedirs(completion_dir, exist_ok=True)
 
         nobasicfields = opts.noFields  # Do not complete for album/track fields
         extravalues = opts.extravalues  # e.g., Also complete artists names
