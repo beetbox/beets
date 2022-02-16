@@ -51,5 +51,5 @@ for example, very large numbers of genres/artists may result in higher memory
 utilization, completion latency, et cetera. This option is not meant to replace
 database queries altogether.
 
-By default the completion file will be generated at ``~/.config/fish/completions/``,
-if you want to save it somewhere else you can use the ``-o`` or ``--output``.
+By default the completion file will be generated at ``~/.config/fish/completions/``.
+If you want to save it somewhere else you can use the ``-o`` or ``--output``.
