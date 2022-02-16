@@ -85,8 +85,8 @@ class FishPlugin(BeetsPlugin):
             '-o',
             '--output',
             default='~/.config/fish/completions/beet.fish',
-            help='save the script to a specific file, by default it will be'
-                 'saved to ~/.config/fish/completions')
+            help='where to save the script. default: '
+                 '~/.config/fish/completions')
         return [cmd]
 
     def run(self, lib, opts, args):
