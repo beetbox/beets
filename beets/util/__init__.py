@@ -949,11 +949,20 @@ def interactive_open(targets, command):
     """
     assert command
 
-    # Split the command string into its arguments.
-    try:
-        args = shlex.split(command)
-    except ValueError:  # Malformed shell tokens.
-        args = [command]
+    if os.name == 'nt':
+        if command == 'start':
+            args = ['cmd.exe']
+            targets = ['/C start ' + targets[0]]
+        else:
+            args = [command]
+    else:
+        # Split the command string into its arguments.
+        try:
+            # Doesn't work well with Windows
+            # (removes all the '\' from path resulting in an invalid path)
+            args = shlex.split(command)
+        except ValueError:  # Malformed shell tokens.
+            args = [command]
 
     args.insert(0, args[0])  # for argv[0]
 
