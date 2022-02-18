@@ -15,6 +15,8 @@ New features:
 
 Bug fixes:
 
+* Fix error while opening config on Windows (with beet config -e command)
+  :bug:`2847`
 * :doc:`/plugins/convert`: Resize album art when embedding
   :bug:`2116`
 * :doc:`/plugins/deezer`: Fix auto tagger pagination issues (fetch beyond the
