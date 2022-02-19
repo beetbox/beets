@@ -29,7 +29,7 @@ from beets import util
 class UtilTest(unittest.TestCase):
     def test_open_anything(self):
         with _common.system_mock('Windows'):
-            self.assertEqual(util.open_anything(), 'start')
+            self.assertEqual(util.open_anything(), 'cmd.exe')
 
         with _common.system_mock('Darwin'):
             self.assertEqual(util.open_anything(), 'open')
