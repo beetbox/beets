@@ -19,6 +19,10 @@ New features:
 
 Bug fixes:
 
+* :doc:`/plugins/acousticbrainz`: Fix writing fetched data to media files.
+  Previously the docs stated that metadata is written to files but that was not
+  the case anymore.
+  :bug:`3928`
 * The Discogs release ID is now populated correctly to the discogs_albumid
   field again (it was no longer working after Discogs changed their release URL
   format).
