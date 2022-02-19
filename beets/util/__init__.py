@@ -921,7 +921,7 @@ def open_anything():
     if sys_name == 'Darwin':
         base_cmd = 'open'
     elif sys_name == 'Windows':
-        base_cmd = 'start'
+        base_cmd = 'cmd.exe'
     else:  # Assume Unix
         base_cmd = 'xdg-open'
     return base_cmd
@@ -950,11 +950,11 @@ def interactive_open(targets, command):
     assert command
 
     if os.name == 'nt':
-        if command == 'start':
-            args = ['cmd.exe']
+        args = [command]
+
+        if command == 'cmd.exe':
             targets = ['/C start ' + targets[0]]
-        else:
-            args = [command]
+
     else:
         # Split the command string into its arguments.
         try:
