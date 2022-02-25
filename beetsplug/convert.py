@@ -138,6 +138,7 @@ class ConvertPlugin(BeetsPlugin):
             },
             'max_bitrate': 500,
             'auto': False,
+            'auto_keep': False,
             'tmpdir': None,
             'quiet': False,
             'embed': True,
@@ -148,7 +149,7 @@ class ConvertPlugin(BeetsPlugin):
             'album_art_maxwidth': 0,
             'delete_originals': False,
         })
-        self.early_import_stages = [self.auto_convert]
+        self.early_import_stages = [self.auto_convert, self.auto_convert_keep]
 
         self.register_listener('import_task_files', self._cleanup)
 
@@ -183,6 +184,34 @@ class ConvertPlugin(BeetsPlugin):
         if self.config['auto']:
             par_map(lambda item: self.convert_on_import(config.lib, item),
                     task.imported_items())
+
+    def auto_convert_keep(self, config, task):
+        if self.config['auto_keep']:
+            fmt = self.config['format'].as_str().lower()
+
+            dest = self.config['dest'].get()
+            if not dest:
+                raise ui.UserError('no convert destination set')
+            dest = util.bytestring_path(dest)
+
+            path_formats = ui.get_path_formats(self.config['paths'] or None)
+
+            hardlink = self.config['hardlink'].get(bool)
+            link = self.config['link'].get(bool)
+
+            threads = self.config['threads'].get(int)
+
+            items = task.imported_items()
+            convert = [self.convert_item(dest,
+                                     False,
+                                     path_formats,
+                                     fmt,
+                                     False,
+                                     link,
+                                     hardlink)
+                   for _ in range(threads)]
+            pipe = util.pipeline.Pipeline([iter(items), convert])
+            pipe.run_parallel()
 
     # Utilities converted from functions to methods on logging overhaul
 
