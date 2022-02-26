@@ -753,9 +753,13 @@ class Item(LibModel):
             id3v23 = beets.config['id3v23'].get(bool)
 
         # Get the data to write to the file.
+        exclude = beets.config['import']['autotag_exclude_fields'].as_str_seq()
         item_tags = dict(self)
         item_tags = {k: v for k, v in item_tags.items()
-                     if k in self._media_fields}  # Only write media fields.
+                     if k in self._media_fields  # Only write media fields
+                     and not k in exclude}  # and respect excluded fields.
+
+        log.debug('Excluding tags from write: {0}', ' '.join(exclude))
         if tags is not None:
             item_tags.update(tags)
         plugins.send('write', item=self, path=path, tags=item_tags)

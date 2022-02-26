@@ -30,6 +30,7 @@ import:
     duplicate_action: ask
     bell: no
     set_fields: {}
+    autotag_exclude_fields: []
 
 clutter: ["Thumbs.DB", ".DS_Store"]
 ignore: [".*", "*~", "System Volume Information", "lost+found"]
