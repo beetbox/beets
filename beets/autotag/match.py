@@ -357,8 +357,8 @@ def _add_candidate(items, results, info):
         log.debug('No tracks.')
         return
 
-    # Don't duplicate.
-    if info.album_id in results:
+    # Prevent duplicates
+    if info.album_id and info.album_id in results:
         log.debug('Duplicate.')
         return
 
