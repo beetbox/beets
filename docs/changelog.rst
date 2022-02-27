@@ -15,7 +15,9 @@ New features:
 
 Bug fixes:
 
-* Fix autotagger marking all albums without a musicbrainz id as a duplicate
+* The autotagger no longer considers all matches without a MusicBrainz ID as
+  duplicates of each other.
+  :bug:`4299`
 * :doc:`/plugins/convert`: Resize album art when embedding
   :bug:`2116`
 * :doc:`/plugins/deezer`: Fix auto tagger pagination issues (fetch beyond the
