@@ -13,6 +13,7 @@ New features:
 * Add the item fields ``bitrate_mode``, ``encoder_info`` and ``encoder_settings``.
 * Add query prefixes ``=`` and ``~``.
 * :doc:`/plugins/discogs`: Permit appending style to genre
+* Add auto_keep option to convert.
 
 Bug fixes:
 
@@ -64,7 +65,7 @@ For packagers:
 
 Other new things:
 
-* :doc:`/plugins/limit`: Limit query results to head or tail (``lslimit`` 
+* :doc:`/plugins/limit`: Limit query results to head or tail (``lslimit``
   command only)
 * :doc:`/plugins/fish`: Add ``--output`` option.
 
