@@ -203,13 +203,13 @@ class ConvertPlugin(BeetsPlugin):
 
             items = task.imported_items()
             convert = [self.convert_item(dest,
-                                     False,
-                                     path_formats,
-                                     fmt,
-                                     False,
-                                     link,
-                                     hardlink)
-                   for _ in range(threads)]
+                                         False,
+                                         path_formats,
+                                         fmt,
+                                         False,
+                                         link,
+                                         hardlink)
+                       for _ in range(threads)]
             pipe = util.pipeline.Pipeline([iter(items), convert])
             pipe.run_parallel()
 
