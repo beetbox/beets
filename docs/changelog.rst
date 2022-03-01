@@ -16,6 +16,10 @@ New features:
 
 Bug fixes:
 
+* The Discogs release ID is now populated correctly to the discogs_albumid
+  field again (it was no longer working after Discogs changed their release URL
+  format).
+  :bug:`4225`
 * The autotagger no longer considers all matches without a MusicBrainz ID as
   duplicates of each other.
   :bug:`4299`
