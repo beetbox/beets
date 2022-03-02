@@ -194,16 +194,17 @@ class DiscogsPlugin(BeetsPlugin):
         # patterns.
         # Regex has been tested here https://regex101.com/r/wyLdB4/2
 
-        for pattern in [
-                r'^\[?r?(?P<id>\d+)\]?$',
-                r'discogs\.com/release/(?P<id>\d+)-',
-                r'discogs\.com/[^/]+/release/(?P<id>\d+)',
-        ]:
-            match = re.search(pattern, album_id)
-            if match:
-                return int(match.group('id'))
-
-        return None
+        if album_id:
+            for pattern in [
+                    r'^\[?r?(?P<id>\d+)\]?$',
+                    r'discogs\.com/release/(?P<id>\d+)-',
+                    r'discogs\.com/[^/]+/release/(?P<id>\d+)',
+            ]:
+                match = re.search(pattern, album_id)
+                if match:
+                    return int(match.group('id'))
+        else:
+            return None
 
     def album_for_id(self, album_id):
         """Fetches an album by its Discogs ID and returns an AlbumInfo object
