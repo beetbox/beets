@@ -12,6 +12,7 @@ New features:
   :bug:`4101`
 * Add the item fields ``bitrate_mode``, ``encoder_info`` and ``encoder_settings``.
 * Add query prefixes ``=`` and ``~``.
+* :doc:`/plugins/discogs`: Permit appending style to genre
 
 Bug fixes:
 
