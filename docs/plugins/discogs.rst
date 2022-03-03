@@ -79,7 +79,10 @@ This option is useful when importing classical music.
 Other configurations available under ``discogs:`` are:
 
 - **append_style_genre**: Appends the style (if found) to the genre tag, useful if you would like more granular genre styles added to music file tags
+  e.g. A release in Discogs has a genre of "Electronic" and a style of "Techno" - enabling this setting would set the genre to be "Electronic, Techno" (assuming default separator of ``", "``) instead of just "Electronic"
   Default: ``false``
+- **separator**: How to join genre and style responses from Discogs into a string
+  Default: ``", "``
 
 
 Troubleshooting
