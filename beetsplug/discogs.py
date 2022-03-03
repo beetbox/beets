@@ -319,12 +319,12 @@ class DiscogsPlugin(BeetsPlugin):
         country = result.data.get('country')
         data_url = result.data.get('uri')
         style = self.format(result.data.get('styles'))
+        base_genre = self.format(result.data.get('genres'))
 
         if self.config['append_style_genre'] and style:
-            genre = self.config['separator'].as_str() \
-                .join([self.format(result.data.get('genres')), style])
+            genre = self.config['separator'].as_str().join([base_genre, style])
         else:
-            genre = self.format(result.data.get('genres'))
+            genre = base_genre
 
         discogs_albumid = self.extract_release_id(result.data.get('uri'))
 
