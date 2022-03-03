@@ -20,6 +20,8 @@ from test import _common
 from test._common import Bag
 from test.helper import capture_log
 
+from beets import config
+
 from beetsplug.discogs import DiscogsPlugin
 
 
@@ -372,6 +374,33 @@ class DGAlbumInfoTest(_common.TestCase):
             if not match:
                 match = ''
             self.assertEqual(match, expected)
+
+    def test_default_genre_style_settings(self):
+        """Test genre default settings, genres to genre, styles to style"""
+        release = self._make_release_from_positions(['1', '2'])
+
+        d = DiscogsPlugin().get_album_info(release)
+        self.assertEqual(d.genre, 'GENRE1, GENRE2')
+        self.assertEqual(d.style, 'STYLE1, STYLE2')
+
+    def test_append_style_to_genre(self):
+        """Test appending style to genre if config enabled"""
+        config['discogs']['append_style_genre'] = True
+        release = self._make_release_from_positions(['1', '2'])
+
+        d = DiscogsPlugin().get_album_info(release)
+        self.assertEqual(d.genre, 'GENRE1, GENRE2, STYLE1, STYLE2')
+        self.assertEqual(d.style, 'STYLE1, STYLE2')
+
+    def test_append_style_to_genre_no_style(self):
+        """Test nothing appended to genre if style is empty"""
+        config['discogs']['append_style_genre'] = True
+        release = self._make_release_from_positions(['1', '2'])
+        release.data['styles'] = []
+
+        d = DiscogsPlugin().get_album_info(release)
+        self.assertEqual(d.genre, 'GENRE1, GENRE2')
+        self.assertEqual(d.style, None)
 
 
 def suite():
