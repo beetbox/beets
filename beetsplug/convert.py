@@ -187,31 +187,13 @@ class ConvertPlugin(BeetsPlugin):
 
     def auto_convert_keep(self, config, task):
         if self.config['auto_keep']:
-            fmt = self.config['format'].as_str().lower()
-
-            dest = self.config['dest'].get()
-            if not dest:
-                raise ui.UserError('no convert destination set')
-            dest = util.bytestring_path(dest)
-
-            path_formats = ui.get_path_formats(self.config['paths'] or None)
-
-            hardlink = self.config['hardlink'].get(bool)
-            link = self.config['link'].get(bool)
-
-            threads = self.config['threads'].get(int)
+            empty_opts = self.commands()[0].parser.get_default_values()
+            (dest, threads, path_formats, fmt,
+             pretend, hardlink, link) = self._get_opts_and_config(empty_opts)
 
             items = task.imported_items()
-            convert = [self.convert_item(dest,
-                                         False,
-                                         path_formats,
-                                         fmt,
-                                         False,
-                                         link,
-                                         hardlink)
-                       for _ in range(threads)]
-            pipe = util.pipeline.Pipeline([iter(items), convert])
-            pipe.run_parallel()
+            self._parallel_convert(dest, False, path_formats, fmt,
+                                   pretend, link, hardlink, threads, items)
 
     # Utilities converted from functions to methods on logging overhaul
 
@@ -452,31 +434,8 @@ class ConvertPlugin(BeetsPlugin):
                     util.copy(album.artpath, dest)
 
     def convert_func(self, lib, opts, args):
-        dest = opts.dest or self.config['dest'].get()
-        if not dest:
-            raise ui.UserError('no convert destination set')
-        dest = util.bytestring_path(dest)
-
-        threads = opts.threads or self.config['threads'].get(int)
-
-        path_formats = ui.get_path_formats(self.config['paths'] or None)
-
-        fmt = opts.format or self.config['format'].as_str().lower()
-
-        if opts.pretend is not None:
-            pretend = opts.pretend
-        else:
-            pretend = self.config['pretend'].get(bool)
-
-        if opts.hardlink is not None:
-            hardlink = opts.hardlink
-            link = False
-        elif opts.link is not None:
-            hardlink = False
-            link = opts.link
-        else:
-            hardlink = self.config['hardlink'].get(bool)
-            link = self.config['link'].get(bool)
+        (dest, threads, path_formats, fmt,
+         pretend, hardlink, link) = self._get_opts_and_config(opts)
 
         if opts.album:
             albums = lib.albums(ui.decargs(args))
@@ -501,16 +460,8 @@ class ConvertPlugin(BeetsPlugin):
                 self.copy_album_art(album, dest, path_formats, pretend,
                                     link, hardlink)
 
-        convert = [self.convert_item(dest,
-                                     opts.keep_new,
-                                     path_formats,
-                                     fmt,
-                                     pretend,
-                                     link,
-                                     hardlink)
-                   for _ in range(threads)]
-        pipe = util.pipeline.Pipeline([iter(items), convert])
-        pipe.run_parallel()
+        self._parallel_convert(dest, opts.keep_new, path_formats, fmt,
+                               pretend, link, hardlink, threads, items)
 
     def convert_on_import(self, lib, item):
         """Transcode a file automatically after it is imported into the
@@ -575,3 +526,45 @@ class ConvertPlugin(BeetsPlugin):
                 if os.path.isfile(path):
                     util.remove(path)
                 _temp_files.remove(path)
+
+    def _get_opts_and_config(self, opts):
+        dest = opts.dest or self.config['dest'].get()
+        if not dest:
+            raise ui.UserError('no convert destination set')
+        dest = util.bytestring_path(dest)
+
+        threads = opts.threads or self.config['threads'].get(int)
+
+        path_formats = ui.get_path_formats(self.config['paths'] or None)
+
+        fmt = opts.format or self.config['format'].as_str().lower()
+
+        if opts.pretend is not None:
+            pretend = opts.pretend
+        else:
+            pretend = self.config['pretend'].get(bool)
+
+        if opts.hardlink is not None:
+            hardlink = opts.hardlink
+            link = False
+        elif opts.link is not None:
+            hardlink = False
+            link = opts.link
+        else:
+            hardlink = self.config['hardlink'].get(bool)
+            link = self.config['link'].get(bool)
+
+        return (dest, threads, path_formats, fmt, pretend, hardlink, link)
+
+    def _parallel_convert(self, dest, keep_new, path_formats, fmt,
+                          pretend, link, hardlink, threads, items):
+        convert = [self.convert_item(dest,
+                                     keep_new,
+                                     path_formats,
+                                     fmt,
+                                     pretend,
+                                     link,
+                                     hardlink)
+                   for _ in range(threads)]
+        pipe = util.pipeline.Pipeline([iter(items), convert])
+        pipe.run_parallel()
