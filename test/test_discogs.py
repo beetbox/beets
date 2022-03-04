@@ -337,6 +337,7 @@ class DGAlbumInfoTest(_common.TestCase):
     def test_parse_minimal_release(self):
         """Test parsing of a release with the minimal amount of information."""
         data = {'id': 123,
+                'uri': 'https://www.discogs.com/release/123456-something',
                 'tracklist': [self._make_track('A', '1', '01:01')],
                 'artists': [{'name': 'ARTIST NAME', 'id': 321, 'join': ''}],
                 'title': 'TITLE'}

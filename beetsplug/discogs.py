@@ -326,7 +326,7 @@ class DiscogsPlugin(BeetsPlugin):
         else:
             genre = base_genre
 
-        discogs_albumid = self.extract_release_id(result.data.get('uri'))
+        discogs_albumid = self.extract_release_id_regex(result.data.get('uri'))
 
         # Extract information for the optional AlbumInfo fields that are
         # contained on nested discogs fields.
@@ -375,12 +375,6 @@ class DiscogsPlugin(BeetsPlugin):
         if classification:
             return self.config['separator'].as_str() \
                 .join(sorted(classification))
-        else:
-            return None
-
-    def extract_release_id(self, uri):
-        if uri:
-            return uri.split("/")[-1]
         else:
             return None
 
