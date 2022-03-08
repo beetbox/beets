@@ -21,6 +21,9 @@ import requests
 
 from beets import plugins, ui
 from beets.dbcore import types
+from mediafile import MediaField, StorageStyle, ASFStorageStyle
+from mediafile import MP3DescStorageStyle, MP4StorageStyle
+
 
 ACOUSTIC_BASE = "https://acousticbrainz.org/"
 LEVELS = ["/low-level", "/high-level"]
@@ -147,6 +150,219 @@ class AcousticPlugin(plugins.BeetsPlugin):
         if self.config['auto']:
             self.register_listener('import_task_files',
                                    self.import_task_files)
+
+        self.add_media_field('danceable', MediaField(
+            StorageStyle('ESSENTIA_AB_DANCEABLE', float_places=12),
+            MP3DescStorageStyle(u'Essentia_ab Danceable', float_places=12),
+            ASFStorageStyle('Essentia_ab/Danceable', float_places=12),
+            MP4StorageStyle(
+                '----:com.apple.iTunes:Essentia_ab Danceable',
+                float_places=12
+            ),
+            out_type=float
+        ))
+        self.add_media_field('gender', MediaField(
+            StorageStyle('ESSENTIA_AB_GENDER'),
+            MP3DescStorageStyle(u'Essentia_ab Gender'),
+            ASFStorageStyle('Essentia_ab/Gender'),
+            MP4StorageStyle('----:com.apple.iTunes:Essentia_ab Gender'),
+        ))
+        self.add_media_field('genre_rosamerica', MediaField(
+            StorageStyle('ESSENTIA_AB_GENRE_ROSAMERICA'),
+            MP3DescStorageStyle(u'Essentia_ab Genre Rosamerica'),
+            ASFStorageStyle(u'Essentia_ab/Genre Rosamerica'),
+            MP4StorageStyle(
+                '----:com.apple.iTunes:Essentia_ab Genre Rosamerica'
+            ),
+        ))
+        self.add_media_field('tonal', MediaField(
+            StorageStyle('ESSENTIA_AB_TONAL', float_places=12),
+            MP3DescStorageStyle(u'Essentia_ab Tonal', float_places=12),
+            ASFStorageStyle(u'Essentia_ab/Tonal', float_places=12),
+            MP4StorageStyle(
+                '----:com.apple.iTunes:Essentia_ab Tonal',
+                float_places=12
+            ),
+            out_type=float
+        ))
+        self.add_media_field('mood_acoustic', MediaField(
+            StorageStyle('ESSENTIA_AB_MOOD_ACOUSTIC', float_places=12),
+            MP3DescStorageStyle(u'Essentia_ab Mood Acoustic', float_places=12),
+            ASFStorageStyle(u'Essentia_ab/Mood Acoustic', float_places=12),
+            MP4StorageStyle(
+                '----:com.apple.iTunes:Essentia_ab Mood Acoustic',
+                float_places=12
+            ),
+            out_type=float
+        ))
+        self.add_media_field('mood_aggressive', MediaField(
+            StorageStyle('ESSENTIA_AB_MOOD_AGGRESSIVE', float_places=12),
+            MP3DescStorageStyle(
+                u'Essentia_ab Mood Aggressive', float_places=12
+            ),
+            ASFStorageStyle(
+                u'Essentia_ab/Mood Aggressive', float_places=12
+            ),
+            MP4StorageStyle(
+                '----:com.apple.iTunes:Essentia_ab Mood Aggressive',
+                float_places=12
+            ),
+            out_type=float
+        ))
+        self.add_media_field('mood_electronic', MediaField(
+            StorageStyle('ESSENTIA_AB_MOOD_ELECTRONIC', float_places=12),
+            MP3DescStorageStyle(
+                u'Essentia_ab Mood Electronic',
+                float_places=12
+            ),
+            ASFStorageStyle(
+                u'Essentia_ab/Mood Electronic',
+                float_places=12
+            ),
+            MP4StorageStyle(
+                '----:com.apple.iTunes:Essentia_ab Mood Electronic',
+                float_places=12
+            ),
+            out_type=float
+        ))
+        self.add_media_field('mood_happy', MediaField(
+            StorageStyle('ESSENTIA_AB_MOOD_HAPPY', float_places=12),
+            MP3DescStorageStyle(u'Essentia_ab Mood Happy', float_places=12),
+            ASFStorageStyle(u'Essentia_ab/Mood Happy', float_places=12),
+            MP4StorageStyle(
+                '----:com.apple.iTunes:Essentia_ab Mood Happy',
+                float_places=12
+            ),
+            out_type=float
+        ))
+        self.add_media_field('mood_party', MediaField(
+            StorageStyle('ESSENTIA_AB_MOOD_PARTY', float_places=12),
+            MP3DescStorageStyle(u'Essentia_ab Mood Party', float_places=12),
+            ASFStorageStyle(u'Essentia_ab/Mood Party', float_places=12),
+            MP4StorageStyle(
+                '----:com.apple.iTunes:Essentia_ab Mood Party',
+                float_places=12
+            ),
+            out_type=float
+        ))
+        self.add_media_field('mood_relaxed', MediaField(
+            StorageStyle('ESSENTIA_AB_MOOD_RELAXED', float_places=12),
+            MP3DescStorageStyle(u'Essentia_ab Mood Relaxed', float_places=12),
+            ASFStorageStyle(u'Essentia_ab/Mood Relaxed', float_places=12),
+            MP4StorageStyle(
+                '----:com.apple.iTunes:Essentia_ab Mood Relaxed',
+                float_places=12
+            ),
+            out_type=float
+        ))
+        self.add_media_field('mood_sad', MediaField(
+            StorageStyle('ESSENTIA_AB_MOOD_SAD', float_places=12),
+            MP3DescStorageStyle(u'Essentia_ab Mood Sad', float_places=12),
+            ASFStorageStyle(u'Essentia_ab/Mood Sad', float_places=12),
+            MP4StorageStyle(
+                '----:com.apple.iTunes:Essentia_ab Mood Sad',
+                float_places=12
+            ),
+            out_type=float
+        ))
+        self.add_media_field('moods_mirex', MediaField(
+            StorageStyle('ESSENTIA_AB_MOODS_MIREX'),
+            MP3DescStorageStyle(u'Essentia_ab Moods Mirex'),
+            ASFStorageStyle(u'Essentia_ab/Moods Mirex'),
+            MP4StorageStyle('----:com.apple.iTunes:Essentia_ab Moods Mirex'),
+        ))
+        self.add_media_field('rhythm', MediaField(
+            StorageStyle('ESSENTIA_AB_ISMIR04_RHYTHM'),
+            MP3DescStorageStyle(u'Essentia_ab Ismir04 Rhythm'),
+            ASFStorageStyle(u'Essentia_ab/Ismir04 Rhythm'),
+            MP4StorageStyle(
+                '----:com.apple.iTunes:Essentia_ab Ismir04 Rhythm'
+            ),
+        ))
+        self.add_media_field('timbre', MediaField(
+            StorageStyle('ESSENTIA_AB_TIMBRE'),
+            MP3DescStorageStyle(u'Essentia_ab Timbre'),
+            ASFStorageStyle(u'Essentia_ab/Timbre'),
+            MP4StorageStyle('----:com.apple.iTunes:Essentia_ab Timbre'),
+        ))
+        self.add_media_field('voice_instrumental', MediaField(
+            StorageStyle('ESSENTIA_AB_VOICE_INSTRUMENTAL'),
+            MP3DescStorageStyle(u'Essentia_ab Voice Instrumental'),
+            MP4StorageStyle(
+                '----:com.apple.iTunes:Essentia_ab Voice Instrumental'
+            ),
+        ))
+
+        # AcousticBrainz low-level fields.
+        self.add_media_field('average_loudness', MediaField(
+            StorageStyle('ESSENTIA_AB_AVERAGE_LOUDNESS', float_places=12),
+            MP3DescStorageStyle(
+                u'Essentia_ab Average Loudness', float_places=12
+            ),
+            ASFStorageStyle(
+                u'Essentia_ab/Average Loudness', float_places=12
+            ),
+            MP4StorageStyle(
+                '----:com.apple.iTunes:Essentia_ab Average Loudness',
+                float_places=12
+            ),
+            out_type=float
+        ))
+        self.add_media_field('chords_changes_rate', MediaField(
+            StorageStyle('ESSENTIA_AB_CHORDS_CHANGES_RATE', float_places=12),
+            MP3DescStorageStyle(
+                u'Essentia_ab Chords Changes Rate',
+                float_places=12
+            ),
+            ASFStorageStyle(
+                u'Essentia_ab/Chords Changes Rate',
+                float_places=12
+            ),
+            MP4StorageStyle(
+                '----:com.apple.iTunes:Essentia_ab Chords Changes Rate',
+                float_places=12
+            ),
+            out_type=float
+        ))
+        self.add_media_field('chords_key', MediaField(
+            StorageStyle('ESSENTIA_AB_CHORDS_KEY'),
+            MP3DescStorageStyle(u'Essentia_ab Chords Key'),
+            ASFStorageStyle(u'Essentia_ab/Chords Key'),
+            MP4StorageStyle('----:com.apple.iTunes:Essentia_ab Chords Key'),
+        ))
+        self.add_media_field('chords_number_rate', MediaField(
+            StorageStyle('ESSENTIA_AB_CHORDS_NUMBER_RATE', float_places=12),
+            MP3DescStorageStyle(
+                u'Essentia_ab Chords Number Rate',
+                float_places=12
+            ),
+            ASFStorageStyle(
+                u'Essentia_ab/Chords Number Rate',
+                float_places=12
+            ),
+            MP4StorageStyle(
+                '----:com.apple.iTunes:Essentia_ab Chords Number Rate',
+                float_places=12
+            ),
+            out_type=float
+        ))
+        self.add_media_field('chords_scale', MediaField(
+            StorageStyle('ESSENTIA_AB_CHORDS_SCALE'),
+            MP3DescStorageStyle(u'Essentia_ab Chords Scale'),
+            ASFStorageStyle(u'Essentia_ab/Chords Scale'),
+            MP4StorageStyle('----:com.apple.iTunes:Essentia_ab Chords Scale'),
+        ))
+        self.add_media_field('key_strength', MediaField(
+            StorageStyle('ESSENTIA_AB_KEY_STRENGTH', float_places=12),
+            MP3DescStorageStyle(u'Essentia_ab Key Strength', float_places=12),
+            ASFStorageStyle(u'Essentia_ab/Key Strength', float_places=12),
+            MP4StorageStyle(
+                '----:com.apple.iTunes:Essentia_ab Key Strength',
+                float_places=12,
+            ),
+            out_type=float
+        ))
+
 
     def commands(self):
         cmd = ui.Subcommand('acousticbrainz',
