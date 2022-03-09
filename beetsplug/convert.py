@@ -528,6 +528,10 @@ class ConvertPlugin(BeetsPlugin):
                 _temp_files.remove(path)
 
     def _get_opts_and_config(self, opts):
+        """Returns parameters needed for convert function.
+        Get parameters from command line if available,
+        default to config if not available.
+        """
         dest = opts.dest or self.config['dest'].get()
         if not dest:
             raise ui.UserError('no convert destination set')
@@ -554,10 +558,13 @@ class ConvertPlugin(BeetsPlugin):
             hardlink = self.config['hardlink'].get(bool)
             link = self.config['link'].get(bool)
 
-        return (dest, threads, path_formats, fmt, pretend, hardlink, link)
+        return dest, threads, path_formats, fmt, pretend, hardlink, link
 
     def _parallel_convert(self, dest, keep_new, path_formats, fmt,
                           pretend, link, hardlink, threads, items):
+        """Run the convert_item function for every items on as many thread as
+        defined in threads
+        """
         convert = [self.convert_item(dest,
                                      keep_new,
                                      path_formats,
