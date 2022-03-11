@@ -66,6 +66,10 @@ file. The available options are:
   default configuration) non-MP3 files over the maximum bitrate before adding
   them to your library.
   Default: ``no``.
+- **auto_keep**: Convert your files automatically on import to **dest** but
+  import the non transcoded version. It uses the default format you have
+  defined in your config file.
+  Default: ``no``.
 - **tmpdir**: The directory where temporary files will be stored during import.
   Default: none (system default),
 - **copy_album_art**: Copy album art when copying or transcoding albums matched
