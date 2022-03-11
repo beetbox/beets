@@ -13,7 +13,9 @@ New features:
 * Add the item fields ``bitrate_mode``, ``encoder_info`` and ``encoder_settings``.
 * Add query prefixes ``=`` and ``~``.
 * :doc:`/plugins/discogs`: Permit appending style to genre
-* Add auto_keep option to convert.
+* :doc:`/plugins/convert`: Add a new `auto_keep` option that automatically
+  converts files but keeps the *originals* in the library.
+  :bug:`1840` :bug:`4302`
 
 Bug fixes:
 
