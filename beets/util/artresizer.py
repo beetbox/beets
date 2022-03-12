@@ -456,6 +456,11 @@ class Shareable(type):
         return cls._instance
 
 
+BACKEND_CLASSES = [
+    IMBackend,
+    PILBackend,
+]
+
 class ArtResizer(metaclass=Shareable):
     """A singleton class that performs image resizes.
     """
@@ -463,11 +468,18 @@ class ArtResizer(metaclass=Shareable):
     def __init__(self):
         """Create a resizer object with an inferred method.
         """
-        self.local_method = self._check_method()
-        if self.local_method is None:
-            log.debug(f"artresizer: method is WEBPROXY")
+        # Check if a local backend is availabe, and store an instance of the
+        # backend class. Otherwise, fallback to the web proxy.
+        for backend_cls in BACKEND_CLASSES:
+            try:
+                self.local_method = backend_cls()
+                log.debug(f"artresizer: method is {self.local_method.NAME}")
+                break
+            except LocalBackendNotAvailableError:
+                continue
         else:
-            log.debug(f"artresizer: method is {self.local_method.NAME}")
+            log.debug("artresizer: method is WEBPROXY")
+            self.local_method = None
 
     def resize(
         self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0
@@ -585,19 +597,5 @@ class ArtResizer(metaclass=Shareable):
             return self.local_method.compare(im1, im2, compare_threshold)
         else:
             # FIXME: Should probably issue a warning?
-            return None
-
-    @staticmethod
-    def _check_method():
-        """Search availabe methods.
-
-        If a local backend is availabe, return an instance of the backend
-        class. Otherwise, when fallback to the web proxy is requird, return
-        None.
-        """
-        try:
-            return IMBackend()
-            return PILBackend()
-        except LocalBackendNotAvailableError:
             return None
 
