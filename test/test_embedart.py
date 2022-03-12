@@ -25,7 +25,7 @@ from test.test_art_resize import DummyIMBackend
 
 from mediafile import MediaFile
 from beets import config, logging, ui
-from beets.util import artresizer, syspath, displayable_path
+from beets.util import syspath, displayable_path
 from beets.util.artresizer import ArtResizer
 from beets import art
 
