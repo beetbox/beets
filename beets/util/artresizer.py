@@ -439,13 +439,19 @@ class ArtResizer(metaclass=Shareable):
             return func(self, maxwidth, path_in, path_out,
                         quality=quality, max_filesize=max_filesize)
         else:
+            # Handled by `proxy_url` already.
             return path_in
 
     def deinterlace(self, path_in, path_out=None):
+        """Deinterlace an image.
+
+        Only available locally.
+        """
         if self.local:
             func = DEINTERLACE_FUNCS[self.method[0]]
             return func(self, path_in, path_out)
         else:
+            # FIXME: Should probably issue a warning?
             return path_in
 
     def proxy_url(self, maxwidth, url, quality=0):
@@ -454,6 +460,7 @@ class ArtResizer(metaclass=Shareable):
         Otherwise, the URL is returned unmodified.
         """
         if self.local:
+            # Going to be handled by `resize()`.
             return url
         else:
             return resize_url(url, maxwidth, quality)
@@ -474,7 +481,9 @@ class ArtResizer(metaclass=Shareable):
         if self.local:
             func = BACKEND_GET_SIZE[self.method[0]]
             return func(self, path_in)
-        return None
+        else:
+            # FIXME: Should probably issue a warning?
+            return None
 
     def get_format(self, path_in):
         """Returns the format of the image as a string.
@@ -484,7 +493,9 @@ class ArtResizer(metaclass=Shareable):
         if self.local:
             func = BACKEND_GET_FORMAT[self.method[0]]
             return func(self, path_in)
-        return None
+        else:
+            # FIXME: Should probably issue a warning?
+            return None
 
     def reformat(self, path_in, new_format, deinterlaced=True):
         """Converts image to desired format, updating its extension, but
@@ -493,6 +504,7 @@ class ArtResizer(metaclass=Shareable):
         Only available locally.
         """
         if not self.local:
+            # FIXME: Should probably issue a warning?
             return path_in
 
         new_format = new_format.lower()
@@ -529,7 +541,9 @@ class ArtResizer(metaclass=Shareable):
         if self.local:
             func = BACKEND_COMPARE[self.method[0]]
             return func(self, im1, im2, compare_threshold)
-        return None
+        else:
+            # FIXME: Should probably issue a warning?
+            return None
 
     @staticmethod
     def _check_method():
