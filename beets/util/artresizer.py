@@ -61,7 +61,98 @@ def temp_file_for(path):
         return bytestring_path(f.name)
 
 
-def pil_resize(artresizer, maxwidth, path_in, path_out=None, quality=0,
+class LocalBackendNotAvailableError(Exception):
+    pass
+
+
+_NOT_AVAILABLE = object()
+
+
+class LocalBackend:
+    @classmethod
+    def available(cls):
+        try:
+            cls.version()
+            return True
+        except LocalBackendNotAvailableError:
+            return False
+
+
+class IMBackend(LocalBackend):
+    NAME="ImageMagick"
+    ID=IMAGEMAGICK
+    _version = None
+    _legacy = None
+
+    @classmethod
+    def version(cls):
+        """Obtain and cache ImageMagick version.
+
+        Raises `LocalBackendNotAvailableError` if not available.
+        """
+        if cls._version is None:
+            for cmd_name, legacy in (('magick', False), ('convert', True)):
+                try:
+                    out = util.command_output([cmd_name, "--version"]).stdout
+                except (subprocess.CalledProcessError, OSError) as exc:
+                    log.debug('ImageMagick version check failed: {}', exc)
+                    cls._version = _NOT_AVAILABLE
+                else:
+                    if b'imagemagick' in out.lower():
+                        pattern = br".+ (\d+)\.(\d+)\.(\d+).*"
+                        match = re.search(pattern, out)
+                        if match:
+                            cls._version = (int(match.group(1)),
+                                       int(match.group(2)),
+                                       int(match.group(3)))
+                            cls._legacy = legacy
+
+        if cls._version is _NOT_AVAILABLE:
+            raise LocalBackendNotAvailableError()
+        else:
+            return cls._version
+
+    def __init__(self):
+        """Initialize a wrapper around ImageMagick for local image operations.
+
+        Stores the ImageMagick version and legacy flag. If ImageMagick is not
+        available, raise an Exception.
+        """
+        self.version()
+
+        # Use ImageMagick's magick binary when it's available.
+        # If it's not, fall back to the older, separate convert
+        # and identify commands.
+        if self._legacy:
+            self.convert_cmd = ['convert']
+            self.identify_cmd = ['identify']
+            self.compare_cmd = ['compare']
+        else:
+            self.convert_cmd = ['magick']
+            self.identify_cmd = ['magick', 'identify']
+            self.compare_cmd = ['magick', 'compare']
+
+
+class PILBackend(LocalBackend):
+    NAME="PIL"
+    ID=PIL
+
+    @classmethod
+    def version(cls):
+        try:
+            __import__('PIL', fromlist=['Image'])
+        except ImportError:
+            raise LocalBackendNotAvailableError()
+
+    def __init__(self):
+        """Initialize a wrapper around PIL for local image operations.
+
+        If PIL is not available, raise an Exception.
+        """
+        self.version()
+
+
+def pil_resize(backend, maxwidth, path_in, path_out=None, quality=0,
                max_filesize=0):
     """Resize using Python Imaging Library (PIL).  Return the output path
     of resized image.
@@ -120,7 +211,7 @@ def pil_resize(artresizer, maxwidth, path_in, path_out=None, quality=0,
         return path_in
 
 
-def im_resize(artresizer, maxwidth, path_in, path_out=None, quality=0,
+def im_resize(backend, maxwidth, path_in, path_out=None, quality=0,
               max_filesize=0):
     """Resize using ImageMagick.
 
@@ -136,7 +227,7 @@ def im_resize(artresizer, maxwidth, path_in, path_out=None, quality=0,
     # with regards to the height.
     # ImageMagick already seems to default to no interlace, but we include it
     # here for the sake of explicitness.
-    cmd = artresizer.im_convert_cmd + [
+    cmd = backend.convert_cmd + [
         syspath(path_in, prefix=False),
         '-resize', f'{maxwidth}x>',
         '-interlace', 'none',
@@ -168,7 +259,7 @@ BACKEND_FUNCS = {
 }
 
 
-def pil_getsize(artresizer, path_in):
+def pil_getsize(backend, path_in):
     from PIL import Image
 
     try:
@@ -180,8 +271,8 @@ def pil_getsize(artresizer, path_in):
         return None
 
 
-def im_getsize(artresizer, path_in):
-    cmd = artresizer.im_identify_cmd + \
+def im_getsize(backend, path_in):
+    cmd = backend.identify_cmd + \
         ['-format', '%w %h', syspath(path_in, prefix=False)]
 
     try:
@@ -207,7 +298,7 @@ BACKEND_GET_SIZE = {
 }
 
 
-def pil_deinterlace(artresizer, path_in, path_out=None):
+def pil_deinterlace(backend, path_in, path_out=None):
     path_out = path_out or temp_file_for(path_in)
     from PIL import Image
 
@@ -219,10 +310,10 @@ def pil_deinterlace(artresizer, path_in, path_out=None):
         return path_in
 
 
-def im_deinterlace(artresizer, path_in, path_out=None):
+def im_deinterlace(backend, path_in, path_out=None):
     path_out = path_out or temp_file_for(path_in)
 
-    cmd = artresizer.im_convert_cmd + [
+    cmd = backend.convert_cmd + [
         syspath(path_in, prefix=False),
         '-interlace', 'none',
         syspath(path_out, prefix=False),
@@ -241,8 +332,8 @@ DEINTERLACE_FUNCS = {
 }
 
 
-def im_get_format(artresizer, filepath):
-    cmd = artresizer.im_identify_cmd + [
+def im_get_format(backend, filepath):
+    cmd = backend.identify_cmd + [
         '-format', '%[magick]',
         syspath(filepath)
     ]
@@ -253,7 +344,7 @@ def im_get_format(artresizer, filepath):
         return None
 
 
-def pil_get_format(artresizer, filepath):
+def pil_get_format(backend, filepath):
     from PIL import Image, UnidentifiedImageError
 
     try:
@@ -270,8 +361,8 @@ BACKEND_GET_FORMAT = {
 }
 
 
-def im_convert_format(artresizer, source, target, deinterlaced):
-    cmd = artresizer.im_convert_cmd + [
+def im_convert_format(backend, source, target, deinterlaced):
+    cmd = backend.convert_cmd + [
         syspath(source),
         *(["-interlace", "none"] if deinterlaced else []),
         syspath(target),
@@ -288,7 +379,7 @@ def im_convert_format(artresizer, source, target, deinterlaced):
         return source
 
 
-def pil_convert_format(artresizer, source, target, deinterlaced):
+def pil_convert_format(backend, source, target, deinterlaced):
     from PIL import Image, UnidentifiedImageError
 
     try:
@@ -307,7 +398,7 @@ BACKEND_CONVERT_IMAGE_FORMAT = {
 }
 
 
-def im_compare(artresizer, im1, im2, compare_threshold):
+def im_compare(backend, im1, im2, compare_threshold):
     is_windows = platform.system() == "Windows"
 
     # Converting images to grayscale tends to minimize the weight
@@ -315,11 +406,11 @@ def im_compare(artresizer, im1, im2, compare_threshold):
     # to grayscale and then pipe them into the `compare` command.
     # On Windows, ImageMagick doesn't support the magic \\?\ prefix
     # on paths, so we pass `prefix=False` to `syspath`.
-    convert_cmd = artresizer.im_convert_cmd + [
+    convert_cmd = backend.convert_cmd + [
         syspath(im2, prefix=False), syspath(im1, prefix=False),
         '-colorspace', 'gray', 'MIFF:-'
     ]
-    compare_cmd = artresizer.im_compare_cmd + [
+    compare_cmd = backend.compare_cmd + [
         '-metric', 'PHASH', '-', 'null:',
     ]
     log.debug('comparing images with pipeline {} | {}',
@@ -373,7 +464,7 @@ def im_compare(artresizer, im1, im2, compare_threshold):
     return phash_diff <= compare_threshold
 
 
-def pil_compare(artresizer, im1, im2, compare_threshold):
+def pil_compare(backend, im1, im2, compare_threshold):
     # It is an error to call this when ArtResizer.can_compare is not True.
     raise NotImplementedError()
 
@@ -409,22 +500,11 @@ class ArtResizer(metaclass=Shareable):
     def __init__(self):
         """Create a resizer object with an inferred method.
         """
-        self.method = self._check_method()
-        log.debug("artresizer: method is {0}", self.method)
-
-        # Use ImageMagick's magick binary when it's available. If it's
-        # not, fall back to the older, separate convert and identify
-        # commands.
-        if self.method[0] == IMAGEMAGICK:
-            self.im_legacy = self.method[2]
-            if self.im_legacy:
-                self.im_convert_cmd = ['convert']
-                self.im_identify_cmd = ['identify']
-                self.im_compare_cmd = ['compare']
-            else:
-                self.im_convert_cmd = ['magick']
-                self.im_identify_cmd = ['magick', 'identify']
-                self.im_compare_cmd = ['magick', 'compare']
+        self.local_method = self._check_method()
+        if self.local_method is None:
+            log.debug(f"artresizer: method is WEBPROXY")
+        else:
+            log.debug(f"artresizer: method is {self.local_method.NAME}")
 
     def resize(
         self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0
@@ -435,8 +515,8 @@ class ArtResizer(metaclass=Shareable):
         For WEBPROXY, returns `path_in` unmodified.
         """
         if self.local:
-            func = BACKEND_FUNCS[self.method[0]]
-            return func(self, maxwidth, path_in, path_out,
+            func = BACKEND_FUNCS[self.local_method]
+            return func(self.local_method, maxwidth, path_in, path_out,
                         quality=quality, max_filesize=max_filesize)
         else:
             # Handled by `proxy_url` already.
@@ -448,8 +528,8 @@ class ArtResizer(metaclass=Shareable):
         Only available locally.
         """
         if self.local:
-            func = DEINTERLACE_FUNCS[self.method[0]]
-            return func(self, path_in, path_out)
+            func = DEINTERLACE_FUNCS[self.local_method.ID]
+            return func(self.local_method, path_in, path_out)
         else:
             # FIXME: Should probably issue a warning?
             return path_in
@@ -470,7 +550,7 @@ class ArtResizer(metaclass=Shareable):
         """A boolean indicating whether the resizing method is performed
         locally (i.e., PIL or ImageMagick).
         """
-        return self.method[0] in BACKEND_FUNCS
+        return self.local_method is not None
 
     def get_size(self, path_in):
         """Return the size of an image file as an int couple (width, height)
@@ -479,11 +559,11 @@ class ArtResizer(metaclass=Shareable):
         Only available locally.
         """
         if self.local:
-            func = BACKEND_GET_SIZE[self.method[0]]
-            return func(self, path_in)
+            func = BACKEND_GET_SIZE[self.local_method.ID]
+            return func(self.local_method, path_in)
         else:
             # FIXME: Should probably issue a warning?
-            return None
+            return path_in
 
     def get_format(self, path_in):
         """Returns the format of the image as a string.
@@ -491,8 +571,8 @@ class ArtResizer(metaclass=Shareable):
         Only available locally.
         """
         if self.local:
-            func = BACKEND_GET_FORMAT[self.method[0]]
-            return func(self, path_in)
+            func = BACKEND_GET_FORMAT[self.local_method.ID]
+            return func(self.local_method, path_in)
         else:
             # FIXME: Should probably issue a warning?
             return None
@@ -503,7 +583,7 @@ class ArtResizer(metaclass=Shareable):
 
         Only available locally.
         """
-        if not self.local:
+        if self.local:
             # FIXME: Should probably issue a warning?
             return path_in
 
@@ -515,13 +595,13 @@ class ArtResizer(metaclass=Shareable):
 
         fname, ext = os.path.splitext(path_in)
         path_new = fname + b'.' + new_format.encode('utf8')
-        func = BACKEND_CONVERT_IMAGE_FORMAT[self.method[0]]
+        func = BACKEND_CONVERT_IMAGE_FORMAT[self.local_method.ID]
 
         # allows the exception to propagate, while still making sure a changed
         # file path was removed
         result_path = path_in
         try:
-            result_path = func(self, path_in, path_new, deinterlaced)
+            result_path = func(self.local_method, path_in, path_new, deinterlaced)
         finally:
             if result_path != path_in:
                 os.unlink(path_in)
@@ -531,7 +611,11 @@ class ArtResizer(metaclass=Shareable):
     def can_compare(self):
         """A boolean indicating whether image comparison is available"""
 
-        return self.method[0] == IMAGEMAGICK and self.method[1] > (6, 8, 7)
+        return (
+            self.local
+            and self.local_method.ID == IMAGEMAGICK
+            and self.local_method.version() > (6, 8, 7)
+        )
 
     def compare(self, im1, im2, compare_threshold):
         """Return a boolean indicating whether two images are similar.
@@ -539,65 +623,23 @@ class ArtResizer(metaclass=Shareable):
         Only available locally.
         """
         if self.local:
-            func = BACKEND_COMPARE[self.method[0]]
-            return func(self, im1, im2, compare_threshold)
+            func = BACKEND_COMPARE[self.local_method.ID]
+            return func(self.local_method, im1, im2, compare_threshold)
         else:
             # FIXME: Should probably issue a warning?
             return None
 
     @staticmethod
     def _check_method():
-        """Return a tuple indicating an available method and its version.
+        """Search availabe methods.
 
-        The result has at least two elements:
-        - The method, eitehr WEBPROXY, PIL, or IMAGEMAGICK.
-        - The version.
-
-        If the method is IMAGEMAGICK, there is also a third element: a
-        bool flag indicating whether to use the `magick` binary or
-        legacy single-purpose executables (`convert`, `identify`, etc.)
+        If a local backend is availabe, return an instance of the backend
+        class. Otherwise, when fallback to the web proxy is requird, return
+        None.
         """
-        version = get_im_version()
-        if version:
-            version, legacy = version
-            return IMAGEMAGICK, version, legacy
-
-        version = get_pil_version()
-        if version:
-            return PIL, version
-
-        return WEBPROXY, (0)
-
-
-def get_im_version():
-    """Get the ImageMagick version and legacy flag as a pair. Or return
-    None if ImageMagick is not available.
-    """
-    for cmd_name, legacy in ((['magick'], False), (['convert'], True)):
-        cmd = cmd_name + ['--version']
-
         try:
-            out = util.command_output(cmd).stdout
-        except (subprocess.CalledProcessError, OSError) as exc:
-            log.debug('ImageMagick version check failed: {}', exc)
-        else:
-            if b'imagemagick' in out.lower():
-                pattern = br".+ (\d+)\.(\d+)\.(\d+).*"
-                match = re.search(pattern, out)
-                if match:
-                    version = (int(match.group(1)),
-                               int(match.group(2)),
-                               int(match.group(3)))
-                    return version, legacy
+            return IMBackend()
+            return PILBackend()
+        except LocalBackendNotAvailableError:
+            return None
 
-    return None
-
-
-def get_pil_version():
-    """Get the PIL/Pillow version, or None if it is unavailable.
-    """
-    try:
-        __import__('PIL', fromlist=['Image'])
-        return (0,)
-    except ImportError:
-        return None
