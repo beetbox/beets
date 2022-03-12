@@ -210,6 +210,17 @@ class IMBackend(LocalBackend):
             # FIXME: add a warning
             return path_in
 
+    def get_format(self, filepath):
+        cmd = self.identify_cmd + [
+            '-format', '%[magick]',
+            syspath(filepath)
+        ]
+
+        try:
+            return util.command_output(cmd).stdout
+        except subprocess.CalledProcessError:
+            return None
+
 
 class PILBackend(LocalBackend):
     NAME="PIL"
@@ -309,34 +320,15 @@ class PILBackend(LocalBackend):
         except IOError:
             return path_in
 
+    def get_format(self, filepath):
+        from PIL import Image, UnidentifiedImageError
 
-def im_get_format(backend, filepath):
-    cmd = backend.identify_cmd + [
-        '-format', '%[magick]',
-        syspath(filepath)
-    ]
-
-    try:
-        return util.command_output(cmd).stdout
-    except subprocess.CalledProcessError:
-        return None
-
-
-def pil_get_format(backend, filepath):
-    from PIL import Image, UnidentifiedImageError
-
-    try:
-        with Image.open(syspath(filepath)) as im:
-            return im.format
-    except (ValueError, TypeError, UnidentifiedImageError, FileNotFoundError):
-        log.exception("failed to detect image format for {}", filepath)
-        return None
-
-
-BACKEND_GET_FORMAT = {
-    PIL: pil_get_format,
-    IMAGEMAGICK: im_get_format,
-}
+        try:
+            with Image.open(syspath(filepath)) as im:
+                return im.format
+        except (ValueError, TypeError, UnidentifiedImageError, FileNotFoundError):
+            log.exception("failed to detect image format for {}", filepath)
+            return None
 
 
 def im_convert_format(backend, source, target, deinterlaced):
@@ -546,8 +538,7 @@ class ArtResizer(metaclass=Shareable):
         Only available locally.
         """
         if self.local:
-            func = BACKEND_GET_FORMAT[self.local_method.ID]
-            return func(self.local_method, path_in)
+            return self.local_method.get_format(path_in)
         else:
             # FIXME: Should probably issue a warning?
             return None
