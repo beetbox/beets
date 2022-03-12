@@ -221,6 +221,23 @@ class IMBackend(LocalBackend):
         except subprocess.CalledProcessError:
             return None
 
+    def convert_format(self, source, target, deinterlaced):
+        cmd = self.convert_cmd + [
+            syspath(source),
+            *(["-interlace", "none"] if deinterlaced else []),
+            syspath(target),
+        ]
+
+        try:
+            subprocess.check_call(
+                cmd,
+                stderr=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL
+            )
+            return target
+        except subprocess.CalledProcessError:
+            return source
+
 
 class PILBackend(LocalBackend):
     NAME="PIL"
@@ -331,41 +348,17 @@ class PILBackend(LocalBackend):
             return None
 
 
-def im_convert_format(backend, source, target, deinterlaced):
-    cmd = backend.convert_cmd + [
-        syspath(source),
-        *(["-interlace", "none"] if deinterlaced else []),
-        syspath(target),
-    ]
+    def convert_format(self, source, target, deinterlaced):
+        from PIL import Image, UnidentifiedImageError
 
-    try:
-        subprocess.check_call(
-            cmd,
-            stderr=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL
-        )
-        return target
-    except subprocess.CalledProcessError:
-        return source
-
-
-def pil_convert_format(backend, source, target, deinterlaced):
-    from PIL import Image, UnidentifiedImageError
-
-    try:
-        with Image.open(syspath(source)) as im:
-            im.save(py3_path(target), progressive=not deinterlaced)
-            return target
-    except (ValueError, TypeError, UnidentifiedImageError, FileNotFoundError,
-            OSError):
-        log.exception("failed to convert image {} -> {}", source, target)
-        return source
-
-
-BACKEND_CONVERT_IMAGE_FORMAT = {
-    PIL: pil_convert_format,
-    IMAGEMAGICK: im_convert_format,
-}
+        try:
+            with Image.open(syspath(source)) as im:
+                im.save(py3_path(target), progressive=not deinterlaced)
+                return target
+        except (ValueError, TypeError, UnidentifiedImageError, FileNotFoundError,
+                OSError):
+            log.exception("failed to convert image {} -> {}", source, target)
+            return source
 
 
 def im_compare(backend, im1, im2, compare_threshold):
@@ -561,13 +554,14 @@ class ArtResizer(metaclass=Shareable):
 
         fname, ext = os.path.splitext(path_in)
         path_new = fname + b'.' + new_format.encode('utf8')
-        func = BACKEND_CONVERT_IMAGE_FORMAT[self.local_method.ID]
 
         # allows the exception to propagate, while still making sure a changed
         # file path was removed
         result_path = path_in
         try:
-            result_path = func(self.local_method, path_in, path_new, deinterlaced)
+            result_path = self.local_method.convert_format(
+                path_in, path_new, deinterlaced
+            )
         finally:
             if result_path != path_in:
                 os.unlink(path_in)
