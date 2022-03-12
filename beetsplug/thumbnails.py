@@ -32,7 +32,7 @@ from xdg import BaseDirectory
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs
 from beets import util
-from beets.util.artresizer import ArtResizer, get_im_version, get_pil_version
+from beets.util.artresizer import ArtResizer, IMBackend, PILBackend
 
 
 BASE_DIR = os.path.join(BaseDirectory.xdg_cache_home, "thumbnails")
@@ -90,14 +90,18 @@ class ThumbnailsPlugin(BeetsPlugin):
             if not os.path.exists(dir):
                 os.makedirs(dir)
 
-        if get_im_version():
+        # FIXME: Should we have our own backend instance?
+        self.backend = ArtResizer.shared.local_method
+        if isinstance(self.backend, IMBackend):
             self.write_metadata = write_metadata_im
-            tool = "IM"
-        else:
-            assert get_pil_version()  # since we're local
+        elif isinstance(self.backend, PILBackend):
             self.write_metadata = write_metadata_pil
-            tool = "PIL"
-        self._log.debug("using {0} to write metadata", tool)
+        else:
+            # since we're local
+            raise RuntimeError(
+                f"Thumbnails: Unexpected ArtResizer backend {self.backend!r}."
+            )
+        self._log.debug(f"using {self.backend.NAME} to write metadata")
 
         uri_getter = GioURI()
         if not uri_getter.available:
@@ -171,7 +175,7 @@ class ThumbnailsPlugin(BeetsPlugin):
         metadata = {"Thumb::URI": self.get_uri(album.artpath),
                     "Thumb::MTime": str(mtime)}
         try:
-            self.write_metadata(image_path, metadata)
+            self.write_metadata(self.backend, image_path, metadata)
         except Exception:
             self._log.exception("could not write metadata to {0}",
                                 util.displayable_path(image_path))
@@ -188,16 +192,16 @@ class ThumbnailsPlugin(BeetsPlugin):
         self._log.debug("Wrote file {0}", util.displayable_path(outfilename))
 
 
-def write_metadata_im(file, metadata):
+def write_metadata_im(im_backend, file, metadata):
     """Enrich the file metadata with `metadata` dict thanks to IM."""
-    command = ['convert', file] + \
+    command = im_backend.convert_cmd + [file] + \
         list(chain.from_iterable(('-set', k, v)
                                  for k, v in metadata.items())) + [file]
     util.command_output(command)
     return True
 
 
-def write_metadata_pil(file, metadata):
+def write_metadata_pil(pil_backend, file, metadata):
     """Enrich the file metadata with `metadata` dict thanks to PIL."""
     from PIL import Image, PngImagePlugin
     im = Image.open(file)
