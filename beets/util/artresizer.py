@@ -238,6 +238,10 @@ class IMBackend(LocalBackend):
         except subprocess.CalledProcessError:
             return source
 
+    @property
+    def can_compare(self):
+        return self.version() > (6, 8, 7)
+
     def compare(self, im1, im2, compare_threshold):
         is_windows = platform.system() == "Windows"
 
@@ -425,6 +429,10 @@ class PILBackend(LocalBackend):
             log.exception("failed to convert image {} -> {}", source, target)
             return source
 
+    @property
+    def can_compare(self):
+        return False
+
     def compare(self, im1, im2, compare_threshold):
         # It is an error to call this when ArtResizer.can_compare is not True.
         raise NotImplementedError()
@@ -563,11 +571,10 @@ class ArtResizer(metaclass=Shareable):
     def can_compare(self):
         """A boolean indicating whether image comparison is available"""
 
-        return (
-            self.local
-            and self.local_method.ID == IMAGEMAGICK
-            and self.local_method.version() > (6, 8, 7)
-        )
+        if self.local:
+            return self.local_method.can_compare
+        else:
+            return False
 
     def compare(self, im1, im2, compare_threshold):
         """Return a boolean indicating whether two images are similar.
