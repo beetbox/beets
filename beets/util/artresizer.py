@@ -173,6 +173,27 @@ class IMBackend(LocalBackend):
 
         return path_out
 
+    def get_size(self, path_in):
+        cmd = self.identify_cmd + [
+            '-format', '%w %h', syspath(path_in, prefix=False)
+        ]
+
+        try:
+            out = util.command_output(cmd).stdout
+        except subprocess.CalledProcessError as exc:
+            log.warning('ImageMagick size query failed')
+            log.debug(
+                '`convert` exited with (status {}) when '
+                'getting size with command {}:\n{}',
+                exc.returncode, cmd, exc.output.strip()
+            )
+            return None
+        try:
+            return tuple(map(int, out.split(b' ')))
+        except IndexError:
+            log.warning('Could not understand IM output: {0!r}', out)
+            return None
+
 
 class PILBackend(LocalBackend):
     NAME="PIL"
@@ -250,44 +271,16 @@ class PILBackend(LocalBackend):
                       displayable_path(path_in))
             return path_in
 
+    def get_size(self, path_in):
+        from PIL import Image
 
-def pil_getsize(backend, path_in):
-    from PIL import Image
-
-    try:
-        im = Image.open(syspath(path_in))
-        return im.size
-    except OSError as exc:
-        log.error("PIL could not read file {}: {}",
-                  displayable_path(path_in), exc)
-        return None
-
-
-def im_getsize(backend, path_in):
-    cmd = backend.identify_cmd + \
-        ['-format', '%w %h', syspath(path_in, prefix=False)]
-
-    try:
-        out = util.command_output(cmd).stdout
-    except subprocess.CalledProcessError as exc:
-        log.warning('ImageMagick size query failed')
-        log.debug(
-            '`convert` exited with (status {}) when '
-            'getting size with command {}:\n{}',
-            exc.returncode, cmd, exc.output.strip()
-        )
-        return None
-    try:
-        return tuple(map(int, out.split(b' ')))
-    except IndexError:
-        log.warning('Could not understand IM output: {0!r}', out)
-        return None
-
-
-BACKEND_GET_SIZE = {
-    PIL: pil_getsize,
-    IMAGEMAGICK: im_getsize,
-}
+        try:
+            im = Image.open(syspath(path_in))
+            return im.size
+        except OSError as exc:
+            log.error("PIL could not read file {}: {}",
+                      displayable_path(path_in), exc)
+            return None
 
 
 def pil_deinterlace(backend, path_in, path_out=None):
@@ -550,8 +543,7 @@ class ArtResizer(metaclass=Shareable):
         Only available locally.
         """
         if self.local:
-            func = BACKEND_GET_SIZE[self.local_method.ID]
-            return func(self.local_method, path_in)
+            return self.local_method.get_size(path_in)
         else:
             # FIXME: Should probably issue a warning?
             return path_in
