@@ -27,11 +27,6 @@ from beets import logging
 from beets import util
 from beets.util import bytestring_path, displayable_path, py3_path, syspath
 
-# Resizing methods
-PIL = 1
-IMAGEMAGICK = 2
-WEBPROXY = 3
-
 PROXY_URL = 'https://images.weserv.nl/'
 
 log = logging.getLogger('beets')
@@ -80,7 +75,6 @@ class LocalBackend:
 
 class IMBackend(LocalBackend):
     NAME="ImageMagick"
-    ID=IMAGEMAGICK
     _version = None
     _legacy = None
 
@@ -312,7 +306,6 @@ class IMBackend(LocalBackend):
 
 class PILBackend(LocalBackend):
     NAME="PIL"
-    ID=PIL
 
     @classmethod
     def version(cls):
