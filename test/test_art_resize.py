@@ -21,17 +21,17 @@ import os
 from test import _common
 from test.helper import TestHelper
 from beets.util import command_output, syspath
-from beets.util.artresizer import (
-    IMBackend,
-    PILBackend,
-)
+from beets.util.artresizer import IMBackend, PILBackend
 
 
 class DummyIMBackend(IMBackend):
-    """An `IMBackend` which pretends that ImageMagick is available, and has
-    a sufficiently recent version to support image comparison.
+    """An `IMBackend` which pretends that ImageMagick is available.
+
+    The version is sufficiently recent to support image comparison.
     """
+
     def __init__(self):
+        """Init a dummy backend class for mocked ImageMagick tests."""
         self.version = (7, 0, 0)
         self.legacy = False
         self.convert_cmd = ['magick']
@@ -40,9 +40,10 @@ class DummyIMBackend(IMBackend):
 
 
 class DummyPILBackend(PILBackend):
-    """An `PILBackend` which pretends that PIL is available.
-    """
+    """An `PILBackend` which pretends that PIL is available."""
+
     def __init__(self):
+        """Init a dummy backend class for mocked PIL tests."""
         pass
 
 

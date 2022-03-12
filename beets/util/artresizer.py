@@ -74,7 +74,7 @@ class LocalBackend:
 
 
 class IMBackend(LocalBackend):
-    NAME="ImageMagick"
+    NAME = "ImageMagick"
     _version = None
     _legacy = None
 
@@ -97,8 +97,8 @@ class IMBackend(LocalBackend):
                         match = re.search(pattern, out)
                         if match:
                             cls._version = (int(match.group(1)),
-                                       int(match.group(2)),
-                                       int(match.group(3)))
+                                            int(match.group(2)),
+                                            int(match.group(3)))
                             cls._legacy = legacy
 
         if cls._version is _NOT_AVAILABLE:
@@ -127,7 +127,7 @@ class IMBackend(LocalBackend):
             self.compare_cmd = ['magick', 'compare']
 
     def resize(self, maxwidth, path_in, path_out=None, quality=0,
-                  max_filesize=0):
+               max_filesize=0):
         """Resize using ImageMagick.
 
         Use the ``magick`` program or ``convert`` on older versions. Return
@@ -140,8 +140,8 @@ class IMBackend(LocalBackend):
         # "-resize WIDTHx>" shrinks images with the width larger
         # than the given width while maintaining the aspect ratio
         # with regards to the height.
-        # ImageMagick already seems to default to no interlace, but we include it
-        # here for the sake of explicitness.
+        # ImageMagick already seems to default to no interlace, but we include
+        # it here for the sake of explicitness.
         cmd = self.convert_cmd + [
             syspath(path_in, prefix=False),
             '-resize', f'{maxwidth}x>',
@@ -151,8 +151,8 @@ class IMBackend(LocalBackend):
         if quality > 0:
             cmd += ['-quality', f'{quality}']
 
-        # "-define jpeg:extent=SIZEb" sets the target filesize for imagemagick to
-        # SIZE in bytes.
+        # "-define jpeg:extent=SIZEb" sets the target filesize for imagemagick
+        # to SIZE in bytes.
         if max_filesize > 0:
             cmd += ['-define', f'jpeg:extent={max_filesize}b']
 
@@ -305,7 +305,7 @@ class IMBackend(LocalBackend):
 
 
 class PILBackend(LocalBackend):
-    NAME="PIL"
+    NAME = "PIL"
 
     @classmethod
     def version(cls):
@@ -322,7 +322,7 @@ class PILBackend(LocalBackend):
         self.version()
 
     def resize(self, maxwidth, path_in, path_out=None, quality=0,
-                   max_filesize=0):
+               max_filesize=0):
         """Resize using Python Imaging Library (PIL).  Return the output path
         of resized image.
         """
@@ -346,8 +346,8 @@ class PILBackend(LocalBackend):
             im.save(py3_path(path_out), quality=quality, progressive=False)
 
             if max_filesize > 0:
-                # If maximum filesize is set, we attempt to lower the quality of
-                # jpeg conversion by a proportional amount, up to 3 attempts
+                # If maximum filesize is set, we attempt to lower the quality
+                # of jpeg conversion by a proportional amount, up to 3 attempts
                 # First, set the maximum quality to either provided, or 95
                 if quality > 0:
                     lower_qual = quality
@@ -408,10 +408,10 @@ class PILBackend(LocalBackend):
         try:
             with Image.open(syspath(filepath)) as im:
                 return im.format
-        except (ValueError, TypeError, UnidentifiedImageError, FileNotFoundError):
+        except (ValueError, TypeError, UnidentifiedImageError,
+                FileNotFoundError):
             log.exception("failed to detect image format for {}", filepath)
             return None
-
 
     def convert_format(self, source, target, deinterlaced):
         from PIL import Image, UnidentifiedImageError
@@ -420,8 +420,8 @@ class PILBackend(LocalBackend):
             with Image.open(syspath(source)) as im:
                 im.save(py3_path(target), progressive=not deinterlaced)
                 return target
-        except (ValueError, TypeError, UnidentifiedImageError, FileNotFoundError,
-                OSError):
+        except (ValueError, TypeError, UnidentifiedImageError,
+                FileNotFoundError, OSError):
             log.exception("failed to convert image {} -> {}", source, target)
             return source
 
@@ -457,6 +457,7 @@ BACKEND_CLASSES = [
     PILBackend,
 ]
 
+
 class ArtResizer(metaclass=Shareable):
     """A singleton class that performs image resizes.
     """
@@ -486,8 +487,10 @@ class ArtResizer(metaclass=Shareable):
         For WEBPROXY, returns `path_in` unmodified.
         """
         if self.local:
-            return self.local_method.resize(maxwidth, path_in, path_out,
-                        quality=quality, max_filesize=max_filesize)
+            return self.local_method.resize(
+                maxwidth, path_in, path_out,
+                quality=quality, max_filesize=max_filesize
+            )
         else:
             # Handled by `proxy_url` already.
             return path_in
@@ -597,4 +600,3 @@ class ArtResizer(metaclass=Shareable):
         else:
             # FIXME: Should probably issue a warning?
             return None
-
