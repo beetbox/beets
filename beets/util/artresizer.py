@@ -16,6 +16,7 @@
 public resizing proxy if neither is available.
 """
 
+from itertools import chain
 import subprocess
 import os
 import os.path
@@ -303,6 +304,18 @@ class IMBackend(LocalBackend):
         log.debug('ImageMagick compare score: {0}', phash_diff)
         return phash_diff <= compare_threshold
 
+    @property
+    def can_write_metadata(self):
+        return True
+
+    def write_metadata(self, file, metadata):
+        assignments = list(chain.from_iterable(
+            ('-set', k, v) for k, v in metadata.items()
+        ))
+        command = self.convert_cmd + [file, *assignments, file]
+
+        util.command_output(command)
+
 
 class PILBackend(LocalBackend):
     NAME = "PIL"
@@ -433,6 +446,21 @@ class PILBackend(LocalBackend):
         # It is an error to call this when ArtResizer.can_compare is not True.
         raise NotImplementedError()
 
+    @property
+    def can_write_metadata(self):
+        return True
+
+    def write_metadata(self, file, metadata):
+        from PIL import Image, PngImagePlugin
+
+        # FIXME: Detect and handle other file types (currently, the only user
+        # is the thumbnails plugin, which generates PNG images).
+        im = Image.open(file)
+        meta = PngImagePlugin.PngInfo()
+        for k, v in metadata.items():
+            meta.add_text(k, v, 0)
+        im.save(file, "PNG", pnginfo=meta)
+
 
 class Shareable(type):
     """A pseudo-singleton metaclass that allows both shared and
@@ -477,6 +505,13 @@ class ArtResizer(metaclass=Shareable):
         else:
             log.debug("artresizer: method is WEBPROXY")
             self.local_method = None
+
+    @property
+    def method(self):
+        if self.local:
+            return self.local_method.NAME
+        else:
+            return "WEBPROXY"
 
     def resize(
         self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0
@@ -600,3 +635,23 @@ class ArtResizer(metaclass=Shareable):
         else:
             # FIXME: Should probably issue a warning?
             return None
+
+    @property
+    def can_write_metadata(self):
+        """A boolean indicating whether writing image metadata is supported."""
+
+        if self.local:
+            return self.local_method.can_write_metadata
+        else:
+            return False
+
+    def write_metadata(self, file, metadata):
+        """Write key-value metadata to the image file.
+
+        Only available locally. Currently, expects the image to be a PNG file.
+        """
+        if self.local:
+            self.local_method.write_metadata(file, metadata)
+        else:
+            # FIXME: Should probably issue a warning?
+            pass

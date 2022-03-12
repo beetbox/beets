@@ -16,6 +16,7 @@
 
 
 import unittest
+from unittest.mock import patch
 import os
 
 from test import _common
@@ -141,6 +142,19 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         ]
         out = command_output(cmd).stdout
         self.assertTrue(out == b'None')
+
+    @patch('beets.util.artresizer.util')
+    def test_write_metadata_im(self, mock_util):
+        """Test writing image metadata."""
+        metadata = {"a": "A", "b": "B"}
+        im = DummyIMBackend()
+        im.write_metadata("foo", metadata)
+        try:
+            command = im.convert_cmd + "foo -set a A -set b B foo".split()
+            mock_util.command_output.assert_called_once_with(command)
+        except AssertionError:
+            command = im.convert_cmd + "foo -set b B -set a A foo".split()
+            mock_util.command_output.assert_called_once_with(command)
 
 
 def suite():
