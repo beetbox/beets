@@ -194,6 +194,22 @@ class IMBackend(LocalBackend):
             log.warning('Could not understand IM output: {0!r}', out)
             return None
 
+    def deinterlace(self, path_in, path_out=None):
+        path_out = path_out or temp_file_for(path_in)
+
+        cmd = self.convert_cmd + [
+            syspath(path_in, prefix=False),
+            '-interlace', 'none',
+            syspath(path_out, prefix=False),
+        ]
+
+        try:
+            util.command_output(cmd)
+            return path_out
+        except subprocess.CalledProcessError:
+            # FIXME: add a warning
+            return path_in
+
 
 class PILBackend(LocalBackend):
     NAME="PIL"
@@ -282,39 +298,16 @@ class PILBackend(LocalBackend):
                       displayable_path(path_in), exc)
             return None
 
+    def deinterlace(self, path_in, path_out=None):
+        path_out = path_out or temp_file_for(path_in)
+        from PIL import Image
 
-def pil_deinterlace(backend, path_in, path_out=None):
-    path_out = path_out or temp_file_for(path_in)
-    from PIL import Image
-
-    try:
-        im = Image.open(syspath(path_in))
-        im.save(py3_path(path_out), progressive=False)
-        return path_out
-    except IOError:
-        return path_in
-
-
-def im_deinterlace(backend, path_in, path_out=None):
-    path_out = path_out or temp_file_for(path_in)
-
-    cmd = backend.convert_cmd + [
-        syspath(path_in, prefix=False),
-        '-interlace', 'none',
-        syspath(path_out, prefix=False),
-    ]
-
-    try:
-        util.command_output(cmd)
-        return path_out
-    except subprocess.CalledProcessError:
-        return path_in
-
-
-DEINTERLACE_FUNCS = {
-    PIL: pil_deinterlace,
-    IMAGEMAGICK: im_deinterlace,
-}
+        try:
+            im = Image.open(syspath(path_in))
+            im.save(py3_path(path_out), progressive=False)
+            return path_out
+        except IOError:
+            return path_in
 
 
 def im_get_format(backend, filepath):
@@ -512,8 +505,7 @@ class ArtResizer(metaclass=Shareable):
         Only available locally.
         """
         if self.local:
-            func = DEINTERLACE_FUNCS[self.local_method.ID]
-            return func(self.local_method, path_in, path_out)
+            return self.local_method.deinterlace(path_in, path_out)
         else:
             # FIXME: Should probably issue a warning?
             return path_in
