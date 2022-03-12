@@ -20,11 +20,9 @@ from shutil import rmtree
 import unittest
 
 from test.helper import TestHelper
-from test.test_art_resize import DummyIMBackend, DummyPILBackend
 
 from beets.util import bytestring_path
 from beetsplug.thumbnails import (ThumbnailsPlugin, NORMAL_DIR, LARGE_DIR,
-                                  write_metadata_im, write_metadata_pil,
                                   PathlibURI, GioURI)
 
 
@@ -35,25 +33,11 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
     def tearDown(self):
         self.teardown_beets()
 
-    @patch('beetsplug.thumbnails.util')
-    def test_write_metadata_im(self, mock_util):
-        metadata = {"a": "A", "b": "B"}
-        im = DummyIMBackend()
-        write_metadata_im(im, "foo", metadata)
-        try:
-            command = im.convert_cmd + "foo -set a A -set b B foo".split()
-            mock_util.command_output.assert_called_once_with(command)
-        except AssertionError:
-            command = im.convert_cmd + "foo -set b B -set a A foo".split()
-            mock_util.command_output.assert_called_once_with(command)
-
+    @patch('beetsplug.thumbnails.ArtResizer')
     @patch('beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok')
     @patch('beetsplug.thumbnails.os.stat')
-    def test_add_tags(self, mock_stat, _):
+    def test_add_tags(self, mock_stat, _, mock_artresizer):
         plugin = ThumbnailsPlugin()
-        # backend is not set due to _check_local_ok being mocked
-        plugin.backend = "DummyBackend"
-        plugin.write_metadata = Mock()
         plugin.get_uri = Mock(side_effect={b"/path/to/cover":
                                            "COVER_URI"}.__getitem__)
         album = Mock(artpath=b"/path/to/cover")
@@ -63,8 +47,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
 
         metadata = {"Thumb::URI": "COVER_URI",
                     "Thumb::MTime": "12345"}
-        plugin.write_metadata.assert_called_once_with(
-            plugin.backend,
+        mock_artresizer.shared.write_metadata.assert_called_once_with(
             b"/path/to/thumbnail",
             metadata,
         )
@@ -76,13 +59,13 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
     def test_check_local_ok(self, mock_giouri, mock_artresizer, mock_os):
         # test local resizing capability
         mock_artresizer.shared.local = False
-        mock_artresizer.shared.local_method = None
+        mock_artresizer.shared.can_write_metadata = False
         plugin = ThumbnailsPlugin()
         self.assertFalse(plugin._check_local_ok())
 
         # test dirs creation
         mock_artresizer.shared.local = True
-        mock_artresizer.shared.local_method = DummyIMBackend()
+        mock_artresizer.shared.can_write_metadata = True
 
         def exists(path):
             if path == NORMAL_DIR:
@@ -99,18 +82,12 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         mock_os.path.exists = lambda _: True
 
         mock_artresizer.shared.local = True
-        mock_artresizer.shared.local_method = None
+        mock_artresizer.shared.can_write_metadata = False
         with self.assertRaises(RuntimeError):
             ThumbnailsPlugin()
 
         mock_artresizer.shared.local = True
-        mock_artresizer.shared.local_method = DummyPILBackend()
-        self.assertEqual(ThumbnailsPlugin().write_metadata, write_metadata_pil)
-
-        mock_artresizer.shared.local = True
-        mock_artresizer.shared.local_method = DummyIMBackend()
-        self.assertEqual(ThumbnailsPlugin().write_metadata, write_metadata_im)
-
+        mock_artresizer.shared.can_write_metadata = True
         self.assertTrue(ThumbnailsPlugin()._check_local_ok())
 
         # test URI getter function
