@@ -207,7 +207,7 @@ class IMBackend(LocalBackend):
             util.command_output(cmd)
             return path_out
         except subprocess.CalledProcessError:
-            # FIXME: add a warning
+            # FIXME: Should probably issue a warning?
             return path_in
 
     def get_format(self, filepath):
@@ -219,6 +219,7 @@ class IMBackend(LocalBackend):
         try:
             return util.command_output(cmd).stdout
         except subprocess.CalledProcessError:
+            # FIXME: Should probably issue a warning?
             return None
 
     def convert_format(self, source, target, deinterlaced):
@@ -236,6 +237,7 @@ class IMBackend(LocalBackend):
             )
             return target
         except subprocess.CalledProcessError:
+            # FIXME: Should probably issue a warning?
             return source
 
     @property
@@ -404,6 +406,7 @@ class PILBackend(LocalBackend):
             im.save(py3_path(path_out), progressive=False)
             return path_out
         except IOError:
+            # FIXME: Should probably issue a warning?
             return path_in
 
     def get_format(self, filepath):
@@ -574,6 +577,9 @@ class ArtResizer(metaclass=Shareable):
             result_path = self.local_method.convert_format(
                 path_in, path_new, deinterlaced
             )
+        except Exception:
+            # FIXME: Should probably issue a warning?
+            pass
         finally:
             if result_path != path_in:
                 os.unlink(path_in)
