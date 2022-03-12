@@ -24,8 +24,6 @@ from beets.util import command_output, syspath
 from beets.util.artresizer import (
     IMBackend,
     PILBackend,
-    pil_deinterlace,
-    im_deinterlace,
 )
 
 
@@ -120,10 +118,10 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
     def test_pil_file_deinterlace(self):
         """Test PIL deinterlace function.
 
-        Check if pil_deinterlace function returns images
+        Check if the `PILBackend.deinterlace()` function returns images
         that are non-progressive
         """
-        path = pil_deinterlace(PILBackend(), self.IMG_225x225)
+        path = PILBackend().deinterlace(self.IMG_225x225)
         from PIL import Image
         with Image.open(path) as img:
             self.assertFalse('progression' in img.info)
@@ -132,11 +130,11 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
     def test_im_file_deinterlace(self):
         """Test ImageMagick deinterlace function.
 
-        Check if im_deinterlace function returns images
+        Check if the `IMBackend.deinterlace()` function returns images
         that are non-progressive.
         """
         im = IMBackend()
-        path = im_deinterlace(im, self.IMG_225x225)
+        path = im.deinterlace(self.IMG_225x225)
         cmd = im.identify_cmd + [
             '-format', '%[interlace]', syspath(path, prefix=False),
         ]
