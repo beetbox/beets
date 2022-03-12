@@ -35,3 +35,11 @@ Here's an example::
             - album:christmas
 
 The plugin trusts your decision in "as-is" imports.
+
+Interactive Usage
+-------------
+
+- When the music library you import contains a album or item in``skip`` list, the console will prompt a "skipped: item information" message
+and automatically skip the album or item. 
+- when the album or item you import is in ``warn`` list, the console will prompt a "you may hate this: item information" message to warn you 
+that you are probably importing a album or item that you hate.
