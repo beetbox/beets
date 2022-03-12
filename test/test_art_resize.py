@@ -24,8 +24,6 @@ from beets.util import command_output, syspath
 from beets.util.artresizer import (
     IMBackend,
     PILBackend,
-    pil_resize,
-    im_resize,
     pil_deinterlace,
     im_deinterlace,
 )
@@ -64,11 +62,10 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         """Called after each test, unloading all plugins."""
         self.teardown_beets()
 
-    def _test_img_resize(self, backend, resize_func):
+    def _test_img_resize(self, backend):
         """Test resizing based on file size, given a resize_func."""
         # Check quality setting unaffected by new parameter
-        im_95_qual = resize_func(
-            backend,
+        im_95_qual = backend.resize(
             225,
             self.IMG_225x225,
             quality=95,
@@ -78,8 +75,7 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         self.assertExists(im_95_qual)
 
         # Attempt a lower filesize with same quality
-        im_a = resize_func(
-            backend,
+        im_a = backend.resize(
             225,
             self.IMG_225x225,
             quality=95,
@@ -91,8 +87,7 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
                         os.stat(syspath(im_95_qual)).st_size)
 
         # Attempt with lower initial quality
-        im_75_qual = resize_func(
-            backend,
+        im_75_qual = backend.resize(
             225,
             self.IMG_225x225,
             quality=75,
@@ -100,8 +95,7 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         )
         self.assertExists(im_75_qual)
 
-        im_b = resize_func(
-            backend,
+        im_b = backend.resize(
             225,
             self.IMG_225x225,
             quality=95,
@@ -115,12 +109,12 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
     @unittest.skipUnless(PILBackend.available(), "PIL not available")
     def test_pil_file_resize(self):
         """Test PIL resize function is lowering file size."""
-        self._test_img_resize(PILBackend(), pil_resize)
+        self._test_img_resize(PILBackend())
 
     @unittest.skipUnless(IMBackend.available(), "ImageMagick not available")
     def test_im_file_resize(self):
         """Test IM resize function is lowering file size."""
-        self._test_img_resize(IMBackend(), im_resize)
+        self._test_img_resize(IMBackend())
 
     @unittest.skipUnless(PILBackend.available(), "PIL not available")
     def test_pil_file_deinterlace(self):

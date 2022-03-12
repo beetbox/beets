@@ -132,6 +132,47 @@ class IMBackend(LocalBackend):
             self.identify_cmd = ['magick', 'identify']
             self.compare_cmd = ['magick', 'compare']
 
+    def resize(self, maxwidth, path_in, path_out=None, quality=0,
+                  max_filesize=0):
+        """Resize using ImageMagick.
+
+        Use the ``magick`` program or ``convert`` on older versions. Return
+        the output path of resized image.
+        """
+        path_out = path_out or temp_file_for(path_in)
+        log.debug('artresizer: ImageMagick resizing {0} to {1}',
+                  displayable_path(path_in), displayable_path(path_out))
+
+        # "-resize WIDTHx>" shrinks images with the width larger
+        # than the given width while maintaining the aspect ratio
+        # with regards to the height.
+        # ImageMagick already seems to default to no interlace, but we include it
+        # here for the sake of explicitness.
+        cmd = self.convert_cmd + [
+            syspath(path_in, prefix=False),
+            '-resize', f'{maxwidth}x>',
+            '-interlace', 'none',
+        ]
+
+        if quality > 0:
+            cmd += ['-quality', f'{quality}']
+
+        # "-define jpeg:extent=SIZEb" sets the target filesize for imagemagick to
+        # SIZE in bytes.
+        if max_filesize > 0:
+            cmd += ['-define', f'jpeg:extent={max_filesize}b']
+
+        cmd.append(syspath(path_out, prefix=False))
+
+        try:
+            util.command_output(cmd)
+        except subprocess.CalledProcessError:
+            log.warning('artresizer: IM convert failed for {0}',
+                        displayable_path(path_in))
+            return path_in
+
+        return path_out
+
 
 class PILBackend(LocalBackend):
     NAME="PIL"
@@ -151,112 +192,63 @@ class PILBackend(LocalBackend):
         """
         self.version()
 
+    def resize(self, maxwidth, path_in, path_out=None, quality=0,
+                   max_filesize=0):
+        """Resize using Python Imaging Library (PIL).  Return the output path
+        of resized image.
+        """
+        path_out = path_out or temp_file_for(path_in)
+        from PIL import Image
 
-def pil_resize(backend, maxwidth, path_in, path_out=None, quality=0,
-               max_filesize=0):
-    """Resize using Python Imaging Library (PIL).  Return the output path
-    of resized image.
-    """
-    path_out = path_out or temp_file_for(path_in)
-    from PIL import Image
+        log.debug('artresizer: PIL resizing {0} to {1}',
+                  displayable_path(path_in), displayable_path(path_out))
 
-    log.debug('artresizer: PIL resizing {0} to {1}',
-              displayable_path(path_in), displayable_path(path_out))
+        try:
+            im = Image.open(syspath(path_in))
+            size = maxwidth, maxwidth
+            im.thumbnail(size, Image.ANTIALIAS)
 
-    try:
-        im = Image.open(syspath(path_in))
-        size = maxwidth, maxwidth
-        im.thumbnail(size, Image.ANTIALIAS)
+            if quality == 0:
+                # Use PIL's default quality.
+                quality = -1
 
-        if quality == 0:
-            # Use PIL's default quality.
-            quality = -1
+            # progressive=False only affects JPEGs and is the default,
+            # but we include it here for explicitness.
+            im.save(py3_path(path_out), quality=quality, progressive=False)
 
-        # progressive=False only affects JPEGs and is the default,
-        # but we include it here for explicitness.
-        im.save(py3_path(path_out), quality=quality, progressive=False)
+            if max_filesize > 0:
+                # If maximum filesize is set, we attempt to lower the quality of
+                # jpeg conversion by a proportional amount, up to 3 attempts
+                # First, set the maximum quality to either provided, or 95
+                if quality > 0:
+                    lower_qual = quality
+                else:
+                    lower_qual = 95
+                for i in range(5):
+                    # 5 attempts is an abitrary choice
+                    filesize = os.stat(syspath(path_out)).st_size
+                    log.debug("PIL Pass {0} : Output size: {1}B", i, filesize)
+                    if filesize <= max_filesize:
+                        return path_out
+                    # The relationship between filesize & quality will be
+                    # image dependent.
+                    lower_qual -= 10
+                    # Restrict quality dropping below 10
+                    if lower_qual < 10:
+                        lower_qual = 10
+                    # Use optimize flag to improve filesize decrease
+                    im.save(py3_path(path_out), quality=lower_qual,
+                            optimize=True, progressive=False)
+                log.warning("PIL Failed to resize file to below {0}B",
+                            max_filesize)
+                return path_out
 
-        if max_filesize > 0:
-            # If maximum filesize is set, we attempt to lower the quality of
-            # jpeg conversion by a proportional amount, up to 3 attempts
-            # First, set the maximum quality to either provided, or 95
-            if quality > 0:
-                lower_qual = quality
             else:
-                lower_qual = 95
-            for i in range(5):
-                # 5 attempts is an abitrary choice
-                filesize = os.stat(syspath(path_out)).st_size
-                log.debug("PIL Pass {0} : Output size: {1}B", i, filesize)
-                if filesize <= max_filesize:
-                    return path_out
-                # The relationship between filesize & quality will be
-                # image dependent.
-                lower_qual -= 10
-                # Restrict quality dropping below 10
-                if lower_qual < 10:
-                    lower_qual = 10
-                # Use optimize flag to improve filesize decrease
-                im.save(py3_path(path_out), quality=lower_qual,
-                        optimize=True, progressive=False)
-            log.warning("PIL Failed to resize file to below {0}B",
-                        max_filesize)
-            return path_out
-
-        else:
-            return path_out
-    except OSError:
-        log.error("PIL cannot create thumbnail for '{0}'",
-                  displayable_path(path_in))
-        return path_in
-
-
-def im_resize(backend, maxwidth, path_in, path_out=None, quality=0,
-              max_filesize=0):
-    """Resize using ImageMagick.
-
-    Use the ``magick`` program or ``convert`` on older versions. Return
-    the output path of resized image.
-    """
-    path_out = path_out or temp_file_for(path_in)
-    log.debug('artresizer: ImageMagick resizing {0} to {1}',
-              displayable_path(path_in), displayable_path(path_out))
-
-    # "-resize WIDTHx>" shrinks images with the width larger
-    # than the given width while maintaining the aspect ratio
-    # with regards to the height.
-    # ImageMagick already seems to default to no interlace, but we include it
-    # here for the sake of explicitness.
-    cmd = backend.convert_cmd + [
-        syspath(path_in, prefix=False),
-        '-resize', f'{maxwidth}x>',
-        '-interlace', 'none',
-    ]
-
-    if quality > 0:
-        cmd += ['-quality', f'{quality}']
-
-    # "-define jpeg:extent=SIZEb" sets the target filesize for imagemagick to
-    # SIZE in bytes.
-    if max_filesize > 0:
-        cmd += ['-define', f'jpeg:extent={max_filesize}b']
-
-    cmd.append(syspath(path_out, prefix=False))
-
-    try:
-        util.command_output(cmd)
-    except subprocess.CalledProcessError:
-        log.warning('artresizer: IM convert failed for {0}',
-                    displayable_path(path_in))
-        return path_in
-
-    return path_out
-
-
-BACKEND_FUNCS = {
-    PIL: pil_resize,
-    IMAGEMAGICK: im_resize,
-}
+                return path_out
+        except OSError:
+            log.error("PIL cannot create thumbnail for '{0}'",
+                      displayable_path(path_in))
+            return path_in
 
 
 def pil_getsize(backend, path_in):
@@ -515,8 +507,7 @@ class ArtResizer(metaclass=Shareable):
         For WEBPROXY, returns `path_in` unmodified.
         """
         if self.local:
-            func = BACKEND_FUNCS[self.local_method]
-            return func(self.local_method, maxwidth, path_in, path_out,
+            return self.local_method.resize(maxwidth, path_in, path_out,
                         quality=quality, max_filesize=max_filesize)
         else:
             # Handled by `proxy_url` already.
