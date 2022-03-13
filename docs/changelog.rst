@@ -68,6 +68,8 @@ For packagers:
 * We fixed a version for the dependency on the `Confuse`_ library.
   :bug:`4167`
 * The minimum required version of :pypi:`mediafile` is now 0.9.0.
+* We added a test function, named `test_summary` in the `test_ihate.py` file, that
+  increases the coverage of `test_iahate.py`.
 
 Other new things:
 
