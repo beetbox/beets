@@ -5,6 +5,7 @@ import unittest
 from beets import importer
 from beets.library import Item
 from beetsplug.ihate import IHatePlugin
+from beetsplug.ihate import summary
 
 
 class IHatePluginTest(unittest.TestCase):
@@ -42,6 +43,17 @@ class IHatePluginTest(unittest.TestCase):
         match_pattern = ["album:testalbum genre:testgenre",
                          "artist:testartist album:notthis"]
         self.assertTrue(IHatePlugin.do_i_hate_this(task, match_pattern))
+
+    def test_summary(self):
+
+        # Task is not album
+        test_item = Item(
+            artist='TestArtist',
+            title='TestTitle')
+        task = importer.SingletonImportTask(None, test_item)
+        self.assertEqual(
+            summary(task),
+            'TestArtist - TestTitle')
 
 
 def suite():
