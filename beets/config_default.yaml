@@ -108,6 +108,7 @@ musicbrainz:
     searchlimit: 5
     extra_tags: []
     genres: no
+    enabled: yes
 
 match:
     strong_rec_thresh: 0.04

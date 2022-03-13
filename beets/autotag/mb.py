@@ -482,6 +482,9 @@ def match_album(artist, album, tracks=None, extra_tags=None):
     The query consists of an artist name, an album name, and,
     optionally, a number of tracks on the album and any other extra tags.
     """
+    if not config["musicbrainz"]["enabled"].get(bool):
+        return None
+
     # Build search criteria.
     criteria = {'release': album.lower().strip()}
     if artist is not None:
@@ -558,6 +561,9 @@ def album_for_id(releaseid):
     object or None if the album is not found. May raise a
     MusicBrainzAPIError.
     """
+    if not config["musicbrainz"]["enabled"].get(bool):
+        return None
+
     log.debug('Requesting MusicBrainz release {}', releaseid)
     albumid = _parse_id(releaseid)
     if not albumid:
@@ -579,6 +585,9 @@ def track_for_id(releaseid):
     """Fetches a track by its MusicBrainz ID. Returns a TrackInfo object
     or None if no track is found. May raise a MusicBrainzAPIError.
     """
+    if not config["musicbrainz"]["enabled"].get(bool):
+        return None
+
     trackid = _parse_id(releaseid)
     if not trackid:
         log.debug('Invalid MBID ({0}).', releaseid)
