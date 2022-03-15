@@ -288,17 +288,16 @@ class FfmpegBackend(Backend):
         """Computes the track gain for the tracks belonging to `task`, and sets
         the `track_gains` attribute on the task. Returns `task`.
         """
-        gains = []
-        for item in task.items:
-            gains.append(
-                self._analyse_item(
-                    item,
-                    task.target_level,
-                    task.peak_method,
-                    count_blocks=False,
-                )[0]  # take only the gain, discarding number of gating blocks
-            )
-        task.track_gains = gains
+        task.track_gains = [
+            self._analyse_item(
+                item,
+                task.target_level,
+                task.peak_method,
+                count_blocks=False,
+            )[0]  # take only the gain, discarding number of gating blocks
+            for item in task.items
+        ]
+
         return task
 
     def compute_album_gain(self, task):
@@ -308,8 +307,20 @@ class FfmpegBackend(Backend):
         target_level_lufs = db_to_lufs(task.target_level)
 
         # analyse tracks
+        # Gives a list of tuples (track_gain, track_n_blocks)
+        track_results = [
+            self._analyse_item(
+                item,
+                task.target_level,
+                task.peak_method,
+                count_blocks=True,
+            )
+            for item in task.items
+        ]
+
         # list of track Gain objects
-        track_gains = []
+        track_gains = [tg for tg, _nb in track_results]
+
         # maximum peak
         album_peak = 0
         # sum of BS.1770 gating block powers
@@ -317,12 +328,7 @@ class FfmpegBackend(Backend):
         # total number of BS.1770 gating blocks
         n_blocks = 0
 
-        for item in task.items:
-            track_gain, track_n_blocks = self._analyse_item(
-                item, task.target_level, task.peak_method
-            )
-            track_gains.append(track_gain)
-
+        for (track_gain, track_n_blocks) in track_results:
             # album peak is maximum track peak
             album_peak = max(album_peak, track_gain.peak)
 
