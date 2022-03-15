@@ -728,7 +728,7 @@ Default configuration::
         extra_tags: []
         genres: no
 
-.. _enabled:
+.. _musicbrainz.enabled:
 
 enabled
 ~~~~~~~
