@@ -716,6 +716,39 @@ Default: ``{}`` (empty).
 MusicBrainz Options
 -------------------
 
+Default configuration::
+
+    musicbrainz:
+        enabled: yes
+        host: musicbrainz.org
+        https: no
+        ratelimit: 1
+        ratelimit_interval: 1.0
+        searchlimit: 5
+        extra_tags: []
+        genres: no
+
+.. _enabled:
+
+enabled
+~~~~~~~
+
+This option allows you to disable using MusicBrainz as a metadata source. This applies
+if you use plugins that fetch data from alternative sources and should make the import
+process quicker.
+
+Default: ``yes``.
+
+.. _host:
+
+host
+~~~~
+
+The ``host`` key, of course, controls the Web server hostname (and port,
+optionally) that will be contacted by beets.
+
+Default: ``musicbrainz.org``
+
 You can instruct beets to use `your own MusicBrainz database`_ instead of
 the `main server`_. Use the ``host``, ``https`` and ``ratelimit`` options
 under a ``musicbrainz:`` header, like so::
@@ -725,16 +758,27 @@ under a ``musicbrainz:`` header, like so::
         https: no
         ratelimit: 100
 
-The ``host`` key, of course, controls the Web server hostname (and port,
-optionally) that will be contacted by beets (default: musicbrainz.org).
+.. _https:
+
+https
+~~~~~
+
 The ``https`` key makes the client use HTTPS instead of HTTP. This setting applies
-only to custom servers. The official MusicBrainz server always uses HTTPS. (Default: no.)
+only to custom servers. The official MusicBrainz server always uses HTTPS.
 The server must have search indices enabled (see `Building search indexes`_).
 
-The ``ratelimit`` option, an integer, controls the number of Web service requests
-per second (default: 1). **Do not change the rate limit setting** if you're
-using the main MusicBrainz server---on this public server, you're `limited`_
-to one request per second.
+Default: ``no``
+
+.. _ratelimit and ratelimit_interval:
+
+ratelimit and ratelimit_interval
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``ratelimit`` many requests will be sent per ``ratelimit_interval`` by the Web service.
+**Do not change these settings** if you're using the main MusicBrainz
+server - on this public server, you're `limited`_ to one request per second.
+
+Default: ``1`` and ``1.0``
 
 .. _your own MusicBrainz database: https://musicbrainz.org/doc/MusicBrainz_Server/Setup
 .. _main server: https://musicbrainz.org/
@@ -780,6 +824,7 @@ Use MusicBrainz genre tags to populate (and replace if it's already set) the
 ``genre`` tag.  This will make it a list of all the genres tagged for the
 release and the release-group on MusicBrainz, separated by "; " and sorted by
 the total number of votes.
+
 Default: ``no``
 
 .. _match-config:
