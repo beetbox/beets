@@ -72,7 +72,7 @@ def current_metadata(items):
     consensus = {}
     fields = ['artist', 'album', 'albumartist', 'year', 'disctotal',
               'mb_albumid', 'label', 'catalognum', 'country', 'media',
-              'albumdisambig']
+              'albumdisambig', 'discogs_catalog']
     for field in fields:
         values = [item[field] for item in items if item]
         likelies[field], freq = plurality(values)
@@ -231,6 +231,11 @@ def distance(items, album_info, mapping):
     # Catalog number.
     if likelies['catalognum'] and album_info.catalognum:
         dist.add_string('catalognum', likelies['catalognum'],
+                        album_info.catalognum)
+
+    # Discogs Catalog number.
+    if likelies['discogs_catalog'] and album_info.catalognum:
+        dist.add_string('catalognum', likelies['discogs_catalog'],
                         album_info.catalognum)
 
     # Disambiguation.

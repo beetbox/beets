@@ -36,6 +36,7 @@ SKIPPED_TRACKS = ['[data track]']
 
 FIELDS_TO_MB_KEYS = {
     'catalognum': 'catno',
+    'discogs_catalog': 'catno',
     'country': 'country',
     'label': 'label',
     'media': 'format',
