@@ -70,6 +70,11 @@ file. The available options are:
   import the non transcoded version. It uses the default format you have
   defined in your config file.
   Default: ``no``.
+
+.. note:: **auto** and **auto_keep** are mutually exclusive. Use either one or
+  the other but not both at the same time if you don't want your files to be
+  converted twice on import.
+
 - **tmpdir**: The directory where temporary files will be stored during import.
   Default: none (system default),
 - **copy_album_art**: Copy album art when copying or transcoding albums matched
