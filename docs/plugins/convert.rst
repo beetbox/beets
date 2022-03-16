@@ -71,9 +71,9 @@ file. The available options are:
   defined in your config file.
   Default: ``no``.
 
-.. note:: **auto** and **auto_keep** are mutually exclusive. Use either one or
-  the other but not both at the same time if you don't want your files to be
-  converted twice on import.
+  .. note:: You probably want to use only one of the `auto` and `auto_keep`
+     options, not both. Enabling both will convert your files twice on import,
+     which you probably don't want.
 
 - **tmpdir**: The directory where temporary files will be stored during import.
   Default: none (system default),
