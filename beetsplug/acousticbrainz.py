@@ -432,7 +432,6 @@ class AcousticPlugin(plugins.BeetsPlugin):
             self._log.info('getting data for: {}', item)
             data = self._get_data(item.mb_trackid)
             if data:
-                tags_to_write = {}
                 for attr, val in self._map_data_to_scheme(data, ABSCHEME):
                     if not tags or attr in tags:
                         self._log.debug('attribute {} of {} set to {}',
@@ -440,7 +439,6 @@ class AcousticPlugin(plugins.BeetsPlugin):
                                         item,
                                         val)
                         setattr(item, attr, val)
-                        tags_to_write[attr] = val
                     else:
                         self._log.debug('skipping attribute {} of {}'
                                         ' (value {}) due to config',
@@ -449,7 +447,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
                                         val)
                 item.store()
                 if write:
-                    item.try_write(tags=tags_to_write)
+                    item.try_write()
 
     def _map_data_to_scheme(self, data, scheme):
         """Given `data` as a structure of nested dictionaries, and `scheme` as a
