@@ -598,7 +598,7 @@ def tracks_for_id(track_id):
             yield t
 
 
-def handle_exc(call_func, *args):
+def invoke_mb(call_func, *args):
     if not config["musicbrainz"]["enabled"]:
         return ()
 
@@ -622,11 +622,11 @@ def album_candidates(items, artist, album, va_likely, extra_tags):
     common_args = [album, len(items), extra_tags]
     # Base candidates if we have album and artist to match.
     if artist and album:
-        yield from handle_exc(mb.match_album, artist, *common_args)
+        yield from invoke_mb(mb.match_album, artist, *common_args)
 
     # Also add VA matches from MusicBrainz where appropriate.
     if va_likely and album:
-        yield from handle_exc(mb.match_album, None, *common_args)
+        yield from invoke_mb(mb.match_album, None, *common_args)
 
     # Candidates from plugins.
     yield from plugins.candidates(items, artist, album, va_likely, extra_tags)
@@ -641,7 +641,7 @@ def item_candidates(item, artist, title):
 
     # MusicBrainz candidates.
     if artist and title:
-        yield from handle_exc(mb.match_track, artist, title)
+        yield from invoke_mb(mb.match_track, artist, title)
 
     # Plugin candidates.
     yield from plugins.item_candidates(item, artist, title)
