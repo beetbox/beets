@@ -598,6 +598,16 @@ def tracks_for_id(track_id):
             yield t
 
 
+def handle_exc(call_func, *args):
+    if not config["musicbrainz"]["enabled"]:
+        return ()
+
+    try:
+        return call_func(*args)
+    except mb.MusicBrainzAPIError as exc:
+        exc.log(log)
+
+
 @plugins.notify_info_yielded('albuminfo_received')
 def album_candidates(items, artist, album, va_likely, extra_tags):
     """Search for album matches. ``items`` is a list of Item objects
@@ -609,25 +619,17 @@ def album_candidates(items, artist, album, va_likely, extra_tags):
     constrain the search.
     """
 
+    common_args = [album, len(items), extra_tags]
     # Base candidates if we have album and artist to match.
     if artist and album:
-        try:
-            yield from mb.match_album(artist, album, len(items),
-                                      extra_tags)
-        except mb.MusicBrainzAPIError as exc:
-            exc.log(log)
+        yield from handle_exc(mb.match_album, artist, *common_args)
 
     # Also add VA matches from MusicBrainz where appropriate.
     if va_likely and album:
-        try:
-            yield from mb.match_album(None, album, len(items),
-                                      extra_tags)
-        except mb.MusicBrainzAPIError as exc:
-            exc.log(log)
+        yield from handle_exc(mb.match_album, None, *common_args)
 
     # Candidates from plugins.
-    yield from plugins.candidates(items, artist, album, va_likely,
-                                  extra_tags)
+    yield from plugins.candidates(items, artist, album, va_likely, extra_tags)
 
 
 @plugins.notify_info_yielded('trackinfo_received')
@@ -639,10 +641,7 @@ def item_candidates(item, artist, title):
 
     # MusicBrainz candidates.
     if artist and title:
-        try:
-            yield from mb.match_track(artist, title)
-        except mb.MusicBrainzAPIError as exc:
-            exc.log(log)
+        yield from handle_exc(mb.match_track, artist, title)
 
     # Plugin candidates.
     yield from plugins.item_candidates(item, artist, title)
