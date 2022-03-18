@@ -44,30 +44,29 @@ these fields:
 * ``tonal``
 * ``voice_instrumental``
 
-The metadata written to files follows the tag naming scheme of MusicBrainz
-Picard's AcousticBrainz plugin. Here's an example:
+Here's an example of how the metadata will look like when written to mp3 files:
 
-    ab:lo:average_loudness=0.887623310089
-    ab:lo:tonal:chords_changes_rate=0.082755811512
-    ab:lo:tonal:chords_key=A#
-    ab:lo:tonal:chords_number_rate=0.002038320526
-    ab:lo:tonal:chords_scale=minor
-    ab:hi:danceability:danceable=0.000000000000
-    ab:hi:gender=female
-    ab:hi:genre_rosamerica=rhy
-    ab:lo:tonal:key_strength=0.654201686382
-    ab:hi:mood_acoustic:acoustic=0.081802986562
-    ab:hi:mood_aggressive:aggressive=0.000000000000
-    ab:hi:mood_electronic:electronic=0.979390621185
-    ab:hi:mood_happy:happy=0.085078120232
-    ab:hi:mood_party:party=0.000015778420
-    ab:hi:mood_relaxed:relaxed=0.808817088604
-    ab:hi:mood_sad:sad=0.109234951437
-    ab:hi:moods_mirex=Cluster5
-    ab:hi:ismir04_rhythm=ChaChaCha
-    ab:hi:timbre=dark
-    ab:hi:tonal_atonal:tonal=0.002889123978
-    ab:hi:voice_instrumental=instrumental
+   Essentia_ab Average Loudness=0.523903489113
+   Essentia_ab Chords Changes Rate=0.040707375854
+   Essentia_ab Chords Key=C
+   Essentia_ab Chords Number Rate=0.001668335055
+   Essentia_ab Chords Scale=minor
+   Essentia_ab Danceable=0.500000000000
+   Essentia_ab Gender=male
+   Essentia_ab Genre Rosamerica=rhy
+   Essentia_ab Ismir04 Rhythm=0.00
+   Essentia_ab Key Strength=0.677906572819
+   Essentia_ab Mood Acoustic=0.227068513632
+   Essentia_ab Mood Aggressive=0.074388481677
+   Essentia_ab Mood Electronic=0.938988804817
+   Essentia_ab Mood Happy=0.070650450885
+   Essentia_ab Mood Party=0.265368700027
+   Essentia_ab Mood Relaxed=0.943796038628
+   Essentia_ab Mood Sad=0.398043692112
+   Essentia_ab Moods Mirex=Cluster5
+   Essentia_ab Timbre=dark
+   Essentia_ab Tonal=0.506820321083
+   Essentia_ab Voice Instrumental=instrumental
 
 For musical key and BPM information the default metadata fields ``initial_key``
 and ``bpm`` are used.
