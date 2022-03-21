@@ -16,14 +16,12 @@
 """
 
 from collections import defaultdict
-
 import requests
 
 from beets import plugins, ui
 from beets.dbcore import types
 from mediafile import MediaField, StorageStyle, ASFStorageStyle
 from mediafile import MP3DescStorageStyle, MP4StorageStyle
-
 
 ACOUSTIC_BASE = "https://acousticbrainz.org/"
 LEVELS = ["/low-level", "/high-level"]
@@ -362,7 +360,6 @@ class AcousticPlugin(plugins.BeetsPlugin):
             ),
             out_type=float
         ))
-
 
     def commands(self):
         cmd = ui.Subcommand('acousticbrainz',

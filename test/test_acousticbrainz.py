@@ -15,7 +15,6 @@
 """Tests for the 'acousticbrainz' plugin.
 """
 
-
 import json
 import os.path
 import unittest
@@ -23,19 +22,34 @@ import unittest
 from test._common import RSRC
 
 from beetsplug.acousticbrainz import AcousticPlugin, ABSCHEME
+from mediafile import MediaFile
+from beets.library import Item
 
 
 class MapDataToSchemeTest(unittest.TestCase):
+    def setUp(self):
+        self.ab = AcousticPlugin()
+
+    def tearDown(self):
+        for abfield in [
+            'average_loudness', 'chords_changes_rate', 'chords_key',
+            'chords_number_rate', 'chords_scale', 'danceable', 'gender',
+            'genre_rosamerica', 'key_strength', 'mood_acoustic',
+            'mood_aggressive', 'mood_electronic', 'mood_happy', 'mood_party',
+            'mood_relaxed', 'mood_sad', 'moods_mirex', 'rhythm', 'timbre',
+            'tonal', 'voice_instrumental',
+        ]:
+            delattr(MediaFile, abfield)
+            Item._media_fields.remove(abfield)
+
     def test_basic(self):
-        ab = AcousticPlugin()
         data = {'key 1': 'value 1', 'key 2': 'value 2'}
         scheme = {'key 1': 'attribute 1', 'key 2': 'attribute 2'}
-        mapping = set(ab._map_data_to_scheme(data, scheme))
+        mapping = set(self.ab._map_data_to_scheme(data, scheme))
         self.assertEqual(mapping, {('attribute 1', 'value 1'),
                                    ('attribute 2', 'value 2')})
 
     def test_recurse(self):
-        ab = AcousticPlugin()
         data = {
             'key': 'value',
             'group': {
@@ -54,24 +68,22 @@ class MapDataToSchemeTest(unittest.TestCase):
                 }
             }
         }
-        mapping = set(ab._map_data_to_scheme(data, scheme))
+        mapping = set(self.ab._map_data_to_scheme(data, scheme))
         self.assertEqual(mapping, {('attribute 1', 'value'),
                                    ('attribute 2', 'subvalue'),
                                    ('attribute 3', 'subsubvalue')})
 
     def test_composite(self):
-        ab = AcousticPlugin()
         data = {'key 1': 'part 1', 'key 2': 'part 2'}
         scheme = {'key 1': ('attribute', 0), 'key 2': ('attribute', 1)}
-        mapping = set(ab._map_data_to_scheme(data, scheme))
+        mapping = set(self.ab._map_data_to_scheme(data, scheme))
         self.assertEqual(mapping, {('attribute', 'part 1 part 2')})
 
     def test_realistic(self):
-        ab = AcousticPlugin()
         data_path = os.path.join(RSRC, b'acousticbrainz/data.json')
         with open(data_path) as res:
             data = json.load(res)
-        mapping = set(ab._map_data_to_scheme(data, ABSCHEME))
+        mapping = set(self.ab._map_data_to_scheme(data, ABSCHEME))
         expected = {
             ('chords_key', 'A'),
             ('average_loudness', 0.815025985241),
