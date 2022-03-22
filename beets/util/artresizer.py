@@ -612,9 +612,6 @@ class ArtResizer(metaclass=Shareable):
             result_path = self.local_method.convert_format(
                 path_in, path_new, deinterlaced
             )
-        except Exception:
-            # FIXME: Should probably issue a warning?
-            pass
         finally:
             if result_path != path_in:
                 os.unlink(path_in)
