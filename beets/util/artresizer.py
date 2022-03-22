@@ -592,7 +592,7 @@ class ArtResizer(metaclass=Shareable):
 
         Only available locally.
         """
-        if self.local:
+        if not self.local:
             # FIXME: Should probably issue a warning?
             return path_in
 
