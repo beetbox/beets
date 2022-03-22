@@ -76,6 +76,10 @@ class LocalBackend:
 
 class IMBackend(LocalBackend):
     NAME = "ImageMagick"
+
+    # These fields are used as a cache for `version()`. `_legacy` indicates
+    # whether the modern `magick` binary is available or whether to fall back
+    # to the old-style `convert`, `identify`, etc. commands.
     _version = None
     _legacy = None
 
