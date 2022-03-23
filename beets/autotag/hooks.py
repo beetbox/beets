@@ -599,9 +599,6 @@ def tracks_for_id(track_id):
 
 
 def invoke_mb(call_func, *args):
-    if not config["musicbrainz"]["enabled"]:
-        return ()
-
     try:
         return call_func(*args)
     except mb.MusicBrainzAPIError as exc:
@@ -620,15 +617,16 @@ def album_candidates(items, artist, album, va_likely, extra_tags):
     constrain the search.
     """
 
-    # Base candidates if we have album and artist to match.
-    if artist and album:
-        yield from invoke_mb(mb.match_album, artist, album, len(items),
-                             extra_tags)
+    if config["musicbrainz"]["enabled"]:
+        # Base candidates if we have album and artist to match.
+        if artist and album:
+            yield from invoke_mb(mb.match_album, artist, album, len(items),
+                                 extra_tags)
 
-    # Also add VA matches from MusicBrainz where appropriate.
-    if va_likely and album:
-        yield from invoke_mb(mb.match_album, None, album, len(items),
-                             extra_tags)
+        # Also add VA matches from MusicBrainz where appropriate.
+        if va_likely and album:
+            yield from invoke_mb(mb.match_album, None, album, len(items),
+                                 extra_tags)
 
     # Candidates from plugins.
     yield from plugins.candidates(items, artist, album, va_likely, extra_tags)
@@ -642,7 +640,7 @@ def item_candidates(item, artist, title):
     """
 
     # MusicBrainz candidates.
-    if artist and title:
+    if config["musicbrainz"]["enabled"] and artist and title:
         yield from invoke_mb(mb.match_track, artist, title)
 
     # Plugin candidates.
