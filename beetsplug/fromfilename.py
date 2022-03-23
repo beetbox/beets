@@ -18,9 +18,11 @@ filename.
 
 from beets import plugins
 from beets.util import displayable_path
+from beets import logging
 import os
 import re
 
+log = logging.getLogger('beets')
 
 # Filename field extraction patterns.
 PATTERNS = [
@@ -113,6 +115,9 @@ def apply_matches(d):
         for item in d:
             if not item.artist:
                 item.artist = artist
+                log.debug(
+                    'fromfilename: Artist replaced with: {}'
+                    .format(item.artist))
 
     # No artist field: remaining field is the title.
     else:
@@ -122,8 +127,14 @@ def apply_matches(d):
     for item in d:
         if bad_title(item.title):
             item.title = str(d[item][title_field])
+            log.debug(
+                'fromfilename: Title replaced with: {}'
+                .format(item.title))
         if 'track' in d[item] and item.track == 0:
             item.track = int(d[item]['track'])
+            log.debug(
+                'fromfilename: Track replaced with: {}'
+                .format(item.track))
 
 
 # Plugin structure and hook into import process.
