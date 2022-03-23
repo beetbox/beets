@@ -101,6 +101,7 @@ paths:
 statefile: state.pickle
 
 musicbrainz:
+    enabled: yes
     host: musicbrainz.org
     https: no
     ratelimit: 1
