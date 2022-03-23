@@ -606,6 +606,7 @@ def invoke_mb(call_func, *args):
         return call_func(*args)
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
+        return ()
 
 
 @plugins.notify_info_yielded('albuminfo_received')
