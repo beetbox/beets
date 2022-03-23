@@ -8,6 +8,8 @@ Changelog goes here!
 
 New features:
 
+* :ref:`musicbrainz-config`: a new :ref:`musicbrainz.enabled` option allows disabling 
+  the MusicBrainz metadata source during the autotagging process
 * :doc:`/plugins/kodiupdate`: Now supports multiple kodi instances
   :bug:`4101`
 * Add the item fields ``bitrate_mode``, ``encoder_info`` and ``encoder_settings``.
