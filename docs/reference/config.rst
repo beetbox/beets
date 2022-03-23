@@ -716,17 +716,6 @@ Default: ``{}`` (empty).
 MusicBrainz Options
 -------------------
 
-.. _musicbrainz.enabled:
-
-enabled
-~~~~~~~
-
-This option allows you to disable using MusicBrainz as a metadata source. This applies
-if you use plugins that fetch data from alternative sources and should make the import
-process quicker.
-
-Default: ``yes``.
-
 You can instruct beets to use `your own MusicBrainz database`_ instead of
 the `main server`_. Use the ``host``, ``https`` and ``ratelimit`` options
 under a ``musicbrainz:`` header, like so::
@@ -751,6 +740,17 @@ to one request per second.
 .. _main server: https://musicbrainz.org/
 .. _limited: https://musicbrainz.org/doc/XML_Web_Service/Rate_Limiting
 .. _Building search indexes: https://musicbrainz.org/doc/Development/Search_server_setup
+
+.. _musicbrainz.enabled:
+
+enabled
+~~~~~~~
+
+This option allows you to disable using MusicBrainz as a metadata source. This applies
+if you use plugins that fetch data from alternative sources and should make the import
+process quicker.
+
+Default: ``yes``.
 
 .. _searchlimit:
 
