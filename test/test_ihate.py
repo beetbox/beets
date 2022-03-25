@@ -4,11 +4,11 @@
 import unittest
 from beets import importer
 from beets.library import Item
-from beetsplug.ihate import IHatePlugin
-from beetsplug.ihate import summary
+from beetsplug.ihate import IHatePlugin, summary
+from test import helper
 
 
-class IHatePluginTest(unittest.TestCase):
+class IHatePluginTest(unittest.TestCase, helper.TestHelper):
 
     def test_hate(self):
 
@@ -45,7 +45,6 @@ class IHatePluginTest(unittest.TestCase):
         self.assertTrue(IHatePlugin.do_i_hate_this(task, match_pattern))
 
     def test_summary(self):
-
         # Task is not album
         test_item = Item(
             artist='TestArtist',
@@ -53,7 +52,27 @@ class IHatePluginTest(unittest.TestCase):
         task = importer.SingletonImportTask(None, test_item)
         self.assertEqual(
             summary(task),
-            'TestArtist - TestTitle')
+            'TestArtist - TestTitle'
+        )
+
+    def test_import_task(self):
+        # Task choice is skip
+        match_pattern = {}
+        test_item = Item(
+            genre='TestGenre',
+            album='TestAlbum',
+            artist='TestArtist')
+        test_task = importer.SingletonImportTask(None, test_item)
+        match_pattern = ["album:testalbum genre:testgenre",
+                         "artist:testartist album:notthis"]
+        test_task.choice_flag = importer.action.APPLY
+        test_plugin = IHatePlugin()
+        test_plugin.config['skip'] = match_pattern
+        test_plugin.import_task_choice_event(test_plugin, test_task)
+        self.assertEqual(
+            test_task.choice_flag,
+            importer.action.SKIP
+        )
 
 
 def suite():
