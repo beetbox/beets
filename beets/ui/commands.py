@@ -1398,6 +1398,12 @@ version_cmd = ui.Subcommand(
 version_cmd.func = show_version
 default_commands.append(version_cmd)
 
+# database_location: return true if user wants to create the parent directories.
+def database_dir_creation(path):
+    # Ask the user for a choice.
+    return ui.input_yn("{} does not exist, create it (Y/n)?"
+                    .format(displayable_path(path)))
+
 
 # modify: Declaratively change metadata.
 
