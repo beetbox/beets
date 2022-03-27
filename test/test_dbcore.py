@@ -19,6 +19,8 @@ import os
 import shutil
 import sqlite3
 import unittest
+from random import random
+from unittest import mock
 
 from test import _common
 from beets import dbcore
@@ -760,8 +762,31 @@ class ResultsIteratorTest(unittest.TestCase):
             ModelFixture1, dbcore.query.FalseQuery()).get())
 
 
+class ParentalDirCreation(unittest.TestCase):
+    @mock.patch('builtins.input', side_effect=['y', ])
+    def test_create_yes(self, _):
+        non_exist_path = "ParentalDirCreationTest/nonexist/" + str(random())
+        try:
+            dbcore.Database(non_exist_path)
+        except OSError as e:
+            raise e
+        shutil.rmtree("ParentalDirCreationTest")
+
+    @mock.patch('builtins.input', side_effect=['n', ])
+    def test_create_no(self, _):
+        non_exist_path = "ParentalDirCreationTest/nonexist/" + str(random())
+        try:
+            dbcore.Database(non_exist_path)
+        except OSError as e:
+            raise e
+        if os.path.exists("ParentalDirCreationTest/nonexist/"):
+            shutil.rmtree("ParentalDirCreationTest")
+            raise OSError("Should not create dir")
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')
