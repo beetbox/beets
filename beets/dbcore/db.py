@@ -903,7 +903,9 @@ class Database:
     def _path_checker(self, path):
         newpath = os.path.dirname(path)
         if not os.path.isdir(newpath):
-            os.makedirs(newpath)
+            from beets.ui.commands import database_dir_creation
+            if database_dir_creation(newpath):
+                os.makedirs(newpath)
 
 
     def __init__(self, path, timeout=5.0):
