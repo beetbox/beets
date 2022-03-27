@@ -7,6 +7,7 @@ Changelog
 Changelog goes here!
 
 New features:
+* Create the parental directories for database if they do not exist.
 
 * :ref:`musicbrainz-config`: a new :ref:`musicbrainz.enabled` option allows disabling 
   the MusicBrainz metadata source during the autotagging process
