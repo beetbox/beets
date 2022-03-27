@@ -900,9 +900,15 @@ class Database:
     """The current revision of the database. To be increased whenever
     data is written in a transaction.
     """
+    def _path_checker(self, path):
+        newpath = os.path.dirname(path)
+        if not os.path.isdir(newpath):
+            os.makedirs(newpath)
+
 
     def __init__(self, path, timeout=5.0):
         self.path = path
+        self._path_checker(path)
         self.timeout = timeout
 
         self._connections = {}
