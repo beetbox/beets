@@ -903,6 +903,8 @@ class Database:
 
     # Check whether parental directories exist.
     def _path_checker(self, path):
+        if path == ":memory:": # For testing
+            return
         newpath = os.path.dirname(path)
         if not os.path.isdir(newpath):
             from beets.ui.commands import database_dir_creation
