@@ -903,7 +903,7 @@ class Database:
 
     # Check whether parental directories exist.
     def _path_checker(self, path):
-        if path == ":memory:":  # For testing
+        if not isinstance(path, bytes) and path == ':memory:':  # in memory db
             return
         newpath = os.path.dirname(path)
         if not os.path.isdir(newpath):
