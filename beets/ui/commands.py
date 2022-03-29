@@ -1404,7 +1404,7 @@ default_commands.append(version_cmd)
 
 def database_dir_creation(path):
     # Ask the user for a choice.
-    return ui.input_yn("{} does not exist, create it (Y/n)?"
+    return ui.input_yn("The database directory {} does not exists, create it (Y/n)?"
                        .format(displayable_path(path)))
 
 
