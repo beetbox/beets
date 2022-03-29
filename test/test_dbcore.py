@@ -762,25 +762,22 @@ class ResultsIteratorTest(unittest.TestCase):
             ModelFixture1, dbcore.query.FalseQuery()).get())
 
 
-class ParentalDirCreation(unittest.TestCase):
+class ParentalDirCreation(_common.TestCase):
     @mock.patch('builtins.input', side_effect=['y', ])
     def test_create_yes(self, _):
-        non_exist_path = "ParentalDirCreationTest/nonexist/" + str(random())
-        try:
-            dbcore.Database(non_exist_path)
-        except OSError as e:
-            raise e
-        shutil.rmtree("ParentalDirCreationTest")
+        non_exist_path = _common.util.py3_path(os.path.join(
+            self.temp_dir, b'nonexist', str(random()).encode()))
+        dbcore.Database(non_exist_path)
 
     @mock.patch('builtins.input', side_effect=['n', ])
     def test_create_no(self, _):
-        non_exist_path = "ParentalDirCreationTest/nonexist/" + str(random())
-        try:
-            dbcore.Database(non_exist_path)
-        except OSError as e:
-            raise e
-        if os.path.exists("ParentalDirCreationTest/nonexist/"):
-            shutil.rmtree("ParentalDirCreationTest")
+        non_exist_path_parent = _common.util.py3_path(
+            os.path.join(self.temp_dir, b'nonexist'))
+        non_exist_path = _common.util.py3_path(os.path.join(
+            non_exist_path_parent.encode(), str(random()).encode()))
+        dbcore.Database(non_exist_path)
+        if os.path.exists(non_exist_path_parent):
+            shutil.rmtree(non_exist_path_parent)
             raise OSError("Should not create dir")
 
 
