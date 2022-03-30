@@ -1402,13 +1402,6 @@ default_commands.append(version_cmd)
 # wants to create the parent directories.
 
 
-def database_dir_creation(path):
-    # Ask the user for a choice.
-    return ui.input_yn("The database directory {} does not \
-                       exists, create it (Y/n)?"
-                       .format(displayable_path(path)))
-
-
 # modify: Declaratively change metadata.
 
 def modify_items(lib, mods, dels, query, write, move, album, confirm):
