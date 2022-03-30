@@ -23,6 +23,7 @@ from random import random
 from unittest import mock
 
 from test import _common
+from test.helper import control_stdin
 from beets import dbcore
 from tempfile import mkstemp
 
@@ -763,19 +764,19 @@ class ResultsIteratorTest(unittest.TestCase):
 
 
 class ParentalDirCreation(_common.TestCase):
-    @mock.patch('builtins.input', side_effect=['y', ])
-    def test_create_yes(self, _):
+    def test_create_yes(self):
         non_exist_path = _common.util.py3_path(os.path.join(
             self.temp_dir, b'nonexist', str(random()).encode()))
-        dbcore.Database(non_exist_path)
+        with control_stdin('y'):
+            dbcore.Database(non_exist_path)
 
-    @mock.patch('builtins.input', side_effect=['n', ])
-    def test_create_no(self, _):
+    def test_create_no(self):
         non_exist_path_parent = _common.util.py3_path(
             os.path.join(self.temp_dir, b'nonexist'))
         non_exist_path = _common.util.py3_path(os.path.join(
             non_exist_path_parent.encode(), str(random()).encode()))
-        dbcore.Database(non_exist_path)
+        with control_stdin('n'):
+            dbcore.Database(non_exist_path)
         if os.path.exists(non_exist_path_parent):
             shutil.rmtree(non_exist_path_parent)
             raise OSError("Should not create dir")
