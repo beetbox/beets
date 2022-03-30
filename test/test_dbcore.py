@@ -19,11 +19,8 @@ import os
 import shutil
 import sqlite3
 import unittest
-from random import random
-from unittest import mock
 
 from test import _common
-from test.helper import control_stdin
 from beets import dbcore
 from tempfile import mkstemp
 
@@ -761,25 +758,6 @@ class ResultsIteratorTest(unittest.TestCase):
     def test_no_results(self):
         self.assertIsNone(self.db._fetch(
             ModelFixture1, dbcore.query.FalseQuery()).get())
-
-
-class ParentalDirCreation(_common.TestCase):
-    def test_create_yes(self):
-        non_exist_path = _common.util.py3_path(os.path.join(
-            self.temp_dir, b'nonexist', str(random()).encode()))
-        with control_stdin('y'):
-            dbcore.Database(non_exist_path)
-
-    def test_create_no(self):
-        non_exist_path_parent = _common.util.py3_path(
-            os.path.join(self.temp_dir, b'nonexist'))
-        non_exist_path = _common.util.py3_path(os.path.join(
-            non_exist_path_parent.encode(), str(random()).encode()))
-        with control_stdin('n'):
-            dbcore.Database(non_exist_path)
-        if os.path.exists(non_exist_path_parent):
-            shutil.rmtree(non_exist_path_parent)
-            raise OSError("Should not create dir")
 
 
 def suite():
