@@ -1206,11 +1206,24 @@ def _configure(options):
               util.displayable_path(config.config_dir()))
     return config
 
+# Check whether parental directories exist.
+
+
+def _check_db_directory_exists(path):
+    if path == b':memory:':  # in memory db
+        return
+    newpath = os.path.dirname(path)
+    if not os.path.isdir(newpath):
+        from beets.ui.commands import database_dir_creation
+        if database_dir_creation(newpath):
+            os.makedirs(newpath)
+
 
 def _open_library(config):
     """Create a new library instance from the configuration.
     """
     dbpath = util.bytestring_path(config['library'].as_filename())
+    _check_db_directory_exists(dbpath)
     try:
         lib = library.Library(
             dbpath,

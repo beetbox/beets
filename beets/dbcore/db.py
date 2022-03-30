@@ -901,19 +901,8 @@ class Database:
     data is written in a transaction.
     """
 
-    # Check whether parental directories exist.
-    def _path_checker(self, path):
-        if not isinstance(path, bytes) and path == ':memory:':  # in memory db
-            return
-        newpath = os.path.dirname(path)
-        if not os.path.isdir(newpath):
-            from beets.ui.commands import database_dir_creation
-            if database_dir_creation(newpath):
-                os.makedirs(newpath)
-
     def __init__(self, path, timeout=5.0):
         self.path = path
-        self._path_checker(path)
         self.timeout = timeout
 
         self._connections = {}
