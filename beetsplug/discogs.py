@@ -24,6 +24,7 @@ import confuse
 from discogs_client import Release, Master, Client
 from discogs_client.exceptions import DiscogsAPIError
 from requests.exceptions import ConnectionError
+import requests
 import http.client
 import beets
 import re
@@ -244,19 +245,19 @@ class DiscogsPlugin(BeetsPlugin):
         # cause a query to return no results, even if they match the artist or
         # album title. Use `re.UNICODE` flag to avoid stripping non-english
         # word characters.
-        query = re.sub(r'(?u)\W+', ' ', query)
+        query = re.sub(r'(?!\.)(?u)\W+', ' ', query)
         # Strip medium information from query, Things like "CD1" and "disk 1"
         # can also negate an otherwise positive result.
         query = re.sub(r'(?i)\b(CD|disc)\s*\d+', '', query)
 
         try:
-            releases = self.discogs_client.search(query,
-                                                  type='release').page(1)
+            releases = self.discogs_client.search(query).page(1)
 
         except CONNECTION_ERRORS:
             self._log.debug("Communication error while searching for {0!r}",
                             query, exc_info=True)
             return []
+
         return [album for album in map(self.get_album_info, releases[:5])
                 if album]
 
@@ -288,45 +289,57 @@ class DiscogsPlugin(BeetsPlugin):
         """
         # Explicitly reload the `Release` fields, as they might not be yet
         # present if the result is from a `discogs_client.search()`.
-        if not result.data.get('artists'):
-            result.refresh()
+        # if not result.data.get('artists'):
+        #     result.refresh()
+        # print(result.data)
+        if result.data['master_url'] is None:
+            url_result = self.discogs_client._get(result.data['resource_url'])
+        else:
+            url_result = self.discogs_client._get(result.data['master_url'])
+
+        # if it is not a main release, update to using the main release,
+        # but only if the main release exists
+        if 'main_release_url' in url_result.keys():
+            main_release = requests.get(url_result['main_release_url']).json()
+            if 'id' in main_release.keys():
+                url_result = main_release
 
         # Sanity check for required fields. The list of required fields is
         # defined at Guideline 1.3.1.a, but in practice some releases might be
         # lacking some of these fields. This function expects at least:
         # `artists` (>0), `title`, `id`, `tracklist` (>0)
         # https://www.discogs.com/help/doc/submission-guidelines-general-rules
-        if not all([result.data.get(k) for k in ['artists', 'title', 'id',
+        if not all([url_result.get(k) for k in ['artists', 'title', 'id',
                                                  'tracklist']]):
             self._log.warning("Release does not contain the required fields")
             return None
 
-        artist, artist_id = MetadataSourcePlugin.get_artist(
-            [a.data for a in result.artists]
-        )
-        album = re.sub(r' +', ' ', result.title)
-        album_id = result.data['id']
+        artist = url_result['artists'][0]['name']
+        artist_id = url_result['artists'][0]['id']
+
+        album = url_result['title']
+        album_id = None
         # Use `.data` to access the tracklist directly instead of the
         # convenient `.tracklist` property, which will strip out useful artist
         # information and leave us with skeleton `Artist` objects that will
         # each make an API call just to get the same data back.
-        tracks = self.get_tracks(result.data['tracklist'])
+        tracks = self.get_tracks(url_result['tracklist'])
 
         # Extract information for the optional AlbumInfo fields, if possible.
-        va = result.data['artists'][0].get('name', '').lower() == 'various'
-        year = result.data.get('year')
+        va = url_result['artists'][0].get('name', '').lower() == 'various'
+        year = url_result['year']
         mediums = [t.medium for t in tracks]
-        country = result.data.get('country')
-        data_url = result.data.get('uri')
-        style = self.format(result.data.get('styles'))
-        base_genre = self.format(result.data.get('genres'))
+        country = result.data['country']
+        data_url = url_result['uri']
+        style = self.format(url_result['styles'])
+        base_genre = self.format(url_result['genres'])
 
         if self.config['append_style_genre'] and style:
             genre = self.config['separator'].as_str().join([base_genre, style])
         else:
             genre = base_genre
 
-        discogs_albumid = self.extract_release_id_regex(result.data.get('uri'))
+        discogs_albumid = self.extract_release_id_regex(url_result['uri'])
 
         # Extract information for the optional AlbumInfo fields that are
         # contained on nested discogs fields.
