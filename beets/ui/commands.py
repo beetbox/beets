@@ -1398,9 +1398,6 @@ version_cmd = ui.Subcommand(
 version_cmd.func = show_version
 default_commands.append(version_cmd)
 
-# database_location: return true if user
-# wants to create the parent directories.
-
 
 # modify: Declaratively change metadata.
 
