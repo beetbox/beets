@@ -1206,22 +1206,15 @@ def _configure(options):
               util.displayable_path(config.config_dir()))
     return config
 
-# Check whether parental directories exist.
 
-
-def database_dir_creation(path):
-    # Ask the user for a choice.
-    return input_yn("The database directory {} does not \
-                       exists. Create it (Y/n)?"
-                    .format(util.displayable_path(path)))
-
-
-def _check_db_directory_exists(path):
+def _ensure_db_directory_exists(path):
     if path == b':memory:':  # in memory db
         return
     newpath = os.path.dirname(path)
     if not os.path.isdir(newpath):
-        if database_dir_creation(newpath):
+        if input_yn("The database directory {} does not \
+                       exist. Create it (Y/n)?"
+                    .format(util.displayable_path(newpath))):
             os.makedirs(newpath)
 
 
@@ -1229,7 +1222,7 @@ def _open_library(config):
     """Create a new library instance from the configuration.
     """
     dbpath = util.bytestring_path(config['library'].as_filename())
-    _check_db_directory_exists(dbpath)
+    _ensure_db_directory_exists(dbpath)
     try:
         lib = library.Library(
             dbpath,
