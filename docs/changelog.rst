@@ -8,6 +8,8 @@ Changelog goes here!
 
 New features:
 
+* Create the parental directories for database if they do not exist.
+  :bug:`3808` :bug:`4327`
 * :ref:`musicbrainz-config`: a new :ref:`musicbrainz.enabled` option allows disabling 
   the MusicBrainz metadata source during the autotagging process
 * :doc:`/plugins/kodiupdate`: Now supports multiple kodi instances

@@ -1207,10 +1207,22 @@ def _configure(options):
     return config
 
 
+def _ensure_db_directory_exists(path):
+    if path == b':memory:':  # in memory db
+        return
+    newpath = os.path.dirname(path)
+    if not os.path.isdir(newpath):
+        if input_yn("The database directory {} does not \
+                       exist. Create it (Y/n)?"
+                    .format(util.displayable_path(newpath))):
+            os.makedirs(newpath)
+
+
 def _open_library(config):
     """Create a new library instance from the configuration.
     """
     dbpath = util.bytestring_path(config['library'].as_filename())
+    _ensure_db_directory_exists(dbpath)
     try:
         lib = library.Library(
             dbpath,
