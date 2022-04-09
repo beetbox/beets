@@ -730,12 +730,12 @@ class GStreamerBackend(Backend):
         self.GLib = GLib
         self.Gst = Gst
 
-    def compute(self, files, target_level, album):
-        self._error = None
-        self._files = list(files)
-
-        if len(self._files) == 0:
+    def compute(self, items, target_level, album):
+        if len(items) == 0:
             return
+
+        self._error = None
+        self._files = [i.path for i in items]
 
         self._file_tags = collections.defaultdict(dict)
 
@@ -759,8 +759,8 @@ class GStreamerBackend(Backend):
 
         ret = []
         for item in task.items:
-            ret.append(Gain(self._file_tags[item]["TRACK_GAIN"],
-                            self._file_tags[item]["TRACK_PEAK"]))
+            ret.append(Gain(self._file_tags[item.path]["TRACK_GAIN"],
+                            self._file_tags[item.path]["TRACK_PEAK"]))
 
         task.track_gains = ret
         return task
@@ -778,14 +778,14 @@ class GStreamerBackend(Backend):
         track_gains = []
         for item in items:
             try:
-                gain = self._file_tags[item]["TRACK_GAIN"]
-                peak = self._file_tags[item]["TRACK_PEAK"]
+                gain = self._file_tags[item.path]["TRACK_GAIN"]
+                peak = self._file_tags[item.path]["TRACK_PEAK"]
             except KeyError:
                 raise ReplayGainError("results missing for track")
             track_gains.append(Gain(gain, peak))
 
         # Get album gain information from the last track.
-        last_tags = self._file_tags[items[-1]]
+        last_tags = self._file_tags[items[-1].path]
         try:
             gain = last_tags["ALBUM_GAIN"]
             peak = last_tags["ALBUM_PEAK"]
@@ -849,7 +849,7 @@ class GStreamerBackend(Backend):
 
         self._file = self._files.pop(0)
         self._pipe.set_state(self.Gst.State.NULL)
-        self._src.set_property("location", py3_path(syspath(self._file.path)))
+        self._src.set_property("location", py3_path(syspath(self._file)))
         self._pipe.set_state(self.Gst.State.PLAYING)
         return True
 
@@ -880,7 +880,7 @@ class GStreamerBackend(Backend):
         # Set a new file on the filesrc element, can only be done in the
         # READY state
         self._src.set_state(self.Gst.State.READY)
-        self._src.set_property("location", py3_path(syspath(self._file.path)))
+        self._src.set_property("location", py3_path(syspath(self._file)))
 
         self._decbin.link(self._conv)
         self._pipe.set_state(self.Gst.State.READY)
