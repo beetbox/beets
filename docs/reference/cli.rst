@@ -445,7 +445,7 @@ import ...``.
   specified, the plugin list in your configuration is ignored. The long form
   of this argument also allows specifying no plugins, effectively disabling
   all plugins: ``--plugins=``.
-* ``-x EXCLUDE``: specify a comma-separated list of plugins to disable in a
+* ``-P EXCLUDE``: specify a comma-separated list of plugins to disable in a
   specific beets run. If specified, it will exclude plugins from your configuration
   and/or plugins specified using the ``-p`` flag. To disable ALL plugins, use
   ``--plugins=`` instead.

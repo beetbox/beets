@@ -20,7 +20,7 @@ New features:
 * :doc:`/plugins/convert`: Add a new `auto_keep` option that automatically
   converts files but keeps the *originals* in the library.
   :bug:`1840` :bug:`4302`
-* Added a ``-x`` (or ``--exclude``) flag to specify one/multiple plugin(s) to be 
+* Added a ``-P`` (or ``--disable-plugin``) flag to specify one/multiple plugin(s) to be 
   disabled at startup.
 
 Bug fixes:
