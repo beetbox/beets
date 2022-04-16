@@ -404,8 +404,9 @@ class Genius(Backend):
 
         lyrics_div = soup.find("div", {"data-lyrics-container": True})
 
-        for br in lyrics_div.find_all("br"):
-            br.replace_with("\n")
+        if lyrics_div:
+            for br in lyrics_div.find_all("br"):
+                br.replace_with("\n")
 
         if not lyrics_div:
             self._log.debug('Received unusual song page html')
