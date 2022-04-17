@@ -1131,7 +1131,7 @@ def _load_plugins(options, config):
     # Exclude any plugins that were specified on the command line
     if options.exclude is not None:
         plugin_list = [p for p in plugin_list
-                      if p not in options.exclude.split(',')]
+                        if p not in options.exclude.split(',')]
 
     plugins.load_plugins(plugin_list)
     return plugins
@@ -1266,7 +1266,7 @@ def _raw_main(args, lib=None):
                       help='path to configuration file')
     parser.add_option('-p', '--plugins', dest='plugins',
                       help='a comma-separated list of plugins to load')
-    parser.add_option('-P', '--disable-plugin', dest='exclude',
+    parser.add_option('-P', '--disable-plugins', dest='exclude',
                       help='a comma-separated list of plugins to disable')
     parser.add_option('-h', '--help', dest='help', action='store_true',
                       help='show this help message and exit')
