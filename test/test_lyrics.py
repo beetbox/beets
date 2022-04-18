@@ -457,7 +457,7 @@ class GeniusScrapeLyricsFromHtmlTest(GeniusBaseTest):
 
     def test_good_lyrics(self):
         """Ensure we are able to scrape a page with lyrics"""
-        url = 'https://genius.com/Wu-tang-clan-cream-lyrics'
+        url = 'https://genius.com/Ttng-chinchilla-lyrics'
         mock = MockFetchUrl()
         self.assertIsNotNone(genius._scrape_lyrics_from_html(mock(url)))
 

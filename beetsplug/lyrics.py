@@ -387,6 +387,10 @@ class Genius(Backend):
         except ValueError:
             return None
 
+    def replace_br(self, lyrics_div):
+        for br in lyrics_div.find_all("br"):
+            br.replace_with("\n")
+
     def _scrape_lyrics_from_html(self, html):
         """Scrape lyrics from a given genius.com html"""
 
@@ -401,7 +405,12 @@ class Genius(Backend):
         # all of the lyrics can be found already correctly formatted
         # Sometimes, though, it packages the lyrics into separate divs, most
         # likely for easier ad placement
-        lyrics_div = soup.find("div", class_="lyrics")
+
+        lyrics_div = soup.find("div", {"data-lyrics-container": True})
+
+        if lyrics_div:
+            self.replace_br(lyrics_div)
+
         if not lyrics_div:
             self._log.debug('Received unusual song page html')
             verse_div = soup.find("div",
@@ -417,8 +426,7 @@ class Genius(Backend):
                     return None
 
             lyrics_div = verse_div.parent
-            for br in lyrics_div.find_all("br"):
-                br.replace_with("\n")
+            self.replace_br(lyrics_div)
 
             ads = lyrics_div.find_all("div",
                                       class_=re.compile("InreadAd__Container"))
@@ -429,7 +437,6 @@ class Genius(Backend):
                                           class_=re.compile("Lyrics__Footer"))
             for footer in footers:
                 footer.replace_with("")
-
         return lyrics_div.get_text()
 
 
