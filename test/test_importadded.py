@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Stig Inge Lea Bjornsen.
 #
@@ -13,7 +12,6 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
 
 """Tests for the `importadded` plugin."""
 
@@ -54,7 +52,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         self._create_import_dir(2)
         # Different mtimes on the files to be imported in order to test the
         # plugin
-        modify_mtimes((mfile.path for mfile in self.media_files))
+        modify_mtimes(mfile.path for mfile in self.media_files)
         self.min_mtime = min(os.path.getmtime(mfile.path)
                              for mfile in self.media_files)
         self.matcher = AutotagStub().install()
@@ -72,7 +70,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         for m in self.media_files:
             if m.title.replace('Tag', 'Applied') == item.title:
                 return m
-        raise AssertionError(u"No MediaFile found for Item " +
+        raise AssertionError("No MediaFile found for Item " +
                              util.displayable_path(item.path))
 
     def assertEqualTimes(self, first, second, msg=None):  # noqa
@@ -113,8 +111,8 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         self.importer.run()
         album = self.lib.albums().get()
         album_added_before = album.added
-        items_added_before = dict((item.path, item.added)
-                                  for item in album.items())
+        items_added_before = {item.path: item.added
+                              for item in album.items()}
         # Newer Item path mtimes as if Beets had modified them
         modify_mtimes(items_added_before.keys(), offset=10000)
         # Reimport
@@ -123,11 +121,11 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         # Verify the reimported items
         album = self.lib.albums().get()
         self.assertEqualTimes(album.added, album_added_before)
-        items_added_after = dict((item.path, item.added)
-                                 for item in album.items())
+        items_added_after = {item.path: item.added
+                             for item in album.items()}
         for item_path, added_after in items_added_after.items():
             self.assertEqualTimes(items_added_before[item_path], added_after,
-                                  u"reimport modified Item.added for " +
+                                  "reimport modified Item.added for " +
                                   util.displayable_path(item_path))
 
     def test_import_singletons_with_added_dates(self):
@@ -152,8 +150,8 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         self.config['import']['singletons'] = True
         # Import and record the original added dates
         self.importer.run()
-        items_added_before = dict((item.path, item.added)
-                                  for item in self.lib.items())
+        items_added_before = {item.path: item.added
+                              for item in self.lib.items()}
         # Newer Item path mtimes as if Beets had modified them
         modify_mtimes(items_added_before.keys(), offset=10000)
         # Reimport
@@ -161,16 +159,17 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         self._setup_import_session(import_dir=import_dir, singletons=True)
         self.importer.run()
         # Verify the reimported items
-        items_added_after = dict((item.path, item.added)
-                                 for item in self.lib.items())
+        items_added_after = {item.path: item.added
+                             for item in self.lib.items()}
         for item_path, added_after in items_added_after.items():
             self.assertEqualTimes(items_added_before[item_path], added_after,
-                                  u"reimport modified Item.added for " +
+                                  "reimport modified Item.added for " +
                                   util.displayable_path(item_path))
 
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')

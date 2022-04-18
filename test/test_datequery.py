@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -15,7 +14,6 @@
 
 """Test for dbcore's date-based queries.
 """
-from __future__ import division, absolute_import, print_function
 
 from test import _common
 from datetime import datetime, timedelta
@@ -135,7 +133,7 @@ def _parsetime(s):
 
 class DateQueryTest(_common.LibTestCase):
     def setUp(self):
-        super(DateQueryTest, self).setUp()
+        super().setUp()
         self.i.added = _parsetime('2013-03-30 22:21')
         self.i.store()
 
@@ -170,7 +168,7 @@ class DateQueryTest(_common.LibTestCase):
 
 class DateQueryTestRelative(_common.LibTestCase):
     def setUp(self):
-        super(DateQueryTestRelative, self).setUp()
+        super().setUp()
 
         # We pick a date near a month changeover, which can reveal some time
         # zone bugs.
@@ -213,7 +211,7 @@ class DateQueryTestRelative(_common.LibTestCase):
 
 class DateQueryTestRelativeMore(_common.LibTestCase):
     def setUp(self):
-        super(DateQueryTestRelativeMore, self).setUp()
+        super().setUp()
         self.i.added = _parsetime(datetime.now().strftime('%Y-%m-%d %H:%M'))
         self.i.store()
 

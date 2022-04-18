@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2017, Pauli Kettunen.
 #
@@ -23,18 +22,16 @@ Put something like the following in your config.yaml to configure:
         user: user
         pwd: secret
 """
-from __future__ import division, absolute_import, print_function
 
 import requests
 from beets import config
 from beets.plugins import BeetsPlugin
-import six
 
 
 def update_kodi(host, port, user, password):
     """Sends request to the Kodi api to start a library refresh.
     """
-    url = "http://{0}:{1}/jsonrpc".format(host, port)
+    url = f"http://{host}:{port}/jsonrpc"
 
     """Content-Type: application/json is mandatory
     according to the kodi jsonrpc documentation"""
@@ -54,14 +51,15 @@ def update_kodi(host, port, user, password):
 
 class KodiUpdate(BeetsPlugin):
     def __init__(self):
-        super(KodiUpdate, self).__init__()
+        super().__init__()
 
         # Adding defaults.
-        config['kodi'].add({
-            u'host': u'localhost',
-            u'port': 8080,
-            u'user': u'kodi',
-            u'pwd': u'kodi'})
+        config['kodi'].add([{
+            'host': 'localhost',
+            'port': 8080,
+            'user': 'kodi',
+            'pwd': 'kodi'
+        }])
 
         config['kodi']['pwd'].redact = True
         self.register_listener('database_change', self.listen_for_db_change)
@@ -73,26 +71,36 @@ class KodiUpdate(BeetsPlugin):
     def update(self, lib):
         """When the client exists try to send refresh request to Kodi server.
         """
-        self._log.info(u'Requesting a Kodi library update...')
+        self._log.info('Requesting a Kodi library update...')
 
-        # Try to send update request.
-        try:
-            r = update_kodi(
-                config['kodi']['host'].get(),
-                config['kodi']['port'].get(),
-                config['kodi']['user'].get(),
-                config['kodi']['pwd'].get())
-            r.raise_for_status()
+        kodi = config['kodi'].get()
 
-        except requests.exceptions.RequestException as e:
-            self._log.warning(u'Kodi update failed: {0}',
-                              six.text_type(e))
-            return
+        # Backwards compatibility in case not configured as an array
+        if not isinstance(kodi, list):
+            kodi = [kodi]
 
-        json = r.json()
-        if json.get('result') != 'OK':
-            self._log.warning(u'Kodi update failed: JSON response was {0!r}',
-                              json)
-            return
+        for instance in kodi:
+            # Try to send update request.
+            try:
+                r = update_kodi(
+                    instance['host'],
+                    instance['port'],
+                    instance['user'],
+                    instance['pwd']
+                )
+                r.raise_for_status()
 
-        self._log.info(u'Kodi update triggered')
+                json = r.json()
+                if json.get('result') != 'OK':
+                    self._log.warning(
+                        'Kodi update failed: JSON response was {0!r}', json
+                    )
+                    continue
+
+                self._log.info(
+                    'Kodi update triggered for {0}:{1}',
+                    instance['host'], instance['port']
+                )
+            except requests.exceptions.RequestException as e:
+                self._log.warning('Kodi update failed: {0}', str(e))
+                continue

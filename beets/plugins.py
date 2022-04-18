@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -15,7 +14,6 @@
 
 """Support for beets plugins."""
 
-from __future__ import division, absolute_import, print_function
 
 import traceback
 import re
@@ -28,7 +26,6 @@ from functools import wraps
 import beets
 from beets import logging
 import mediafile
-import six
 
 
 PLUGIN_NAMESPACE = 'beetsplug'
@@ -52,26 +49,28 @@ class PluginLogFilter(logging.Filter):
     """A logging filter that identifies the plugin that emitted a log
     message.
     """
+
     def __init__(self, plugin):
-        self.prefix = u'{0}: '.format(plugin.name)
+        self.prefix = f'{plugin.name}: '
 
     def filter(self, record):
         if hasattr(record.msg, 'msg') and isinstance(record.msg.msg,
-                                                     six.string_types):
+                                                     str):
             # A _LogMessage from our hacked-up Logging replacement.
             record.msg.msg = self.prefix + record.msg.msg
-        elif isinstance(record.msg, six.string_types):
+        elif isinstance(record.msg, str):
             record.msg = self.prefix + record.msg
         return True
 
 
 # Managing the plugins themselves.
 
-class BeetsPlugin(object):
+class BeetsPlugin:
     """The base class for all beets plugins. Plugins provide
     functionality by defining a subclass of BeetsPlugin and overriding
     the abstract methods defined here.
     """
+
     def __init__(self, name=None):
         """Perform one-time plugin setup.
         """
@@ -129,14 +128,7 @@ class BeetsPlugin(object):
         value after the function returns). Also determines which params may not
         be sent for backwards-compatibility.
         """
-        if six.PY2:
-            argspec = inspect.getargspec(func)
-            func_args = argspec.args
-            has_varkw = argspec.keywords is not None
-        else:
-            argspec = inspect.getfullargspec(func)
-            func_args = argspec.args
-            has_varkw = argspec.varkw is not None
+        argspec = inspect.getfullargspec(func)
 
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -145,9 +137,9 @@ class BeetsPlugin(object):
             verbosity = beets.config['verbose'].get(int)
             log_level = max(logging.DEBUG, base_log_level - 10 * verbosity)
             self._log.setLevel(log_level)
-            if not has_varkw:
-                kwargs = dict((k, v) for k, v in kwargs.items()
-                              if k in func_args)
+            if argspec.varkw is None:
+                kwargs = {k: v for k, v in kwargs.items()
+                          if k in argspec.args}
 
             try:
                 return func(*args, **kwargs)
@@ -270,14 +262,14 @@ def load_plugins(names=()):
     BeetsPlugin subclasses desired.
     """
     for name in names:
-        modname = '{0}.{1}'.format(PLUGIN_NAMESPACE, name)
+        modname = f'{PLUGIN_NAMESPACE}.{name}'
         try:
             try:
                 namespace = __import__(modname, None, None)
             except ImportError as exc:
                 # Again, this is hacky:
                 if exc.args[0].endswith(' ' + name):
-                    log.warning(u'** plugin {0} not found', name)
+                    log.warning('** plugin {0} not found', name)
                 else:
                     raise
             else:
@@ -288,7 +280,7 @@ def load_plugins(names=()):
 
         except Exception:
             log.warning(
-                u'** error loading plugin {}:\n{}',
+                '** error loading plugin {}:\n{}',
                 name,
                 traceback.format_exc(),
             )
@@ -340,16 +332,16 @@ def queries():
 
 def types(model_cls):
     # Gives us `item_types` and `album_types`
-    attr_name = '{0}_types'.format(model_cls.__name__.lower())
+    attr_name = f'{model_cls.__name__.lower()}_types'
     types = {}
     for plugin in find_plugins():
         plugin_types = getattr(plugin, attr_name, {})
         for field in plugin_types:
             if field in types and plugin_types[field] != types[field]:
                 raise PluginConflictException(
-                    u'Plugin {0} defines flexible field {1} '
-                    u'which has already been defined with '
-                    u'another type.'.format(plugin.name, field)
+                    'Plugin {} defines flexible field {} '
+                    'which has already been defined with '
+                    'another type.'.format(plugin.name, field)
                 )
         types.update(plugin_types)
     return types
@@ -357,7 +349,7 @@ def types(model_cls):
 
 def named_queries(model_cls):
     # Gather `item_queries` and `album_queries` from the plugins.
-    attr_name = '{0}_queries'.format(model_cls.__name__.lower())
+    attr_name = f'{model_cls.__name__.lower()}_queries'
     queries = {}
     for plugin in find_plugins():
         plugin_queries = getattr(plugin, attr_name, {})
@@ -389,17 +381,15 @@ def candidates(items, artist, album, va_likely, extra_tags=None):
     """Gets MusicBrainz candidates for an album from each plugin.
     """
     for plugin in find_plugins():
-        for candidate in plugin.candidates(items, artist, album, va_likely,
-                                           extra_tags):
-            yield candidate
+        yield from plugin.candidates(items, artist, album, va_likely,
+                                     extra_tags)
 
 
 def item_candidates(item, artist, title):
     """Gets MusicBrainz candidates for an item from the plugins.
     """
     for plugin in find_plugins():
-        for item_candidate in plugin.item_candidates(item, artist, title):
-            yield item_candidate
+        yield from plugin.item_candidates(item, artist, title)
 
 
 def album_for_id(album_id):
@@ -492,7 +482,7 @@ def send(event, **arguments):
 
     Return a list of non-None values returned from the handlers.
     """
-    log.debug(u'Sending event: {0}', event)
+    log.debug('Sending event: {0}', event)
     results = []
     for handler in event_handlers()[event]:
         result = handler(**arguments)
@@ -510,7 +500,7 @@ def feat_tokens(for_artist=True):
     feat_words = ['ft', 'featuring', 'feat', 'feat.', 'ft.']
     if for_artist:
         feat_words += ['with', 'vs', 'and', 'con', '&']
-    return r'(?<=\s)(?:{0})(?=\s)'.format(
+    return r'(?<=\s)(?:{})(?=\s)'.format(
         '|'.join(re.escape(x) for x in feat_words)
     )
 
@@ -627,10 +617,9 @@ def apply_item_changes(lib, item, move, pretend, write):
     item.store()
 
 
-@six.add_metaclass(abc.ABCMeta)
-class MetadataSourcePlugin(object):
+class MetadataSourcePlugin(metaclass=abc.ABCMeta):
     def __init__(self):
-        super(MetadataSourcePlugin, self).__init__()
+        super().__init__()
         self.config.add({'source_weight': 0.5})
 
     @abc.abstractproperty
@@ -712,7 +701,7 @@ class MetadataSourcePlugin(object):
         :rtype: str
         """
         self._log.debug(
-            u"Searching {} for {} '{}'", self.data_source, url_type, id_
+            "Searching {} for {} '{}'", self.data_source, url_type, id_
         )
         match = re.search(self.id_regex['pattern'].format(url_type), str(id_))
         if match:

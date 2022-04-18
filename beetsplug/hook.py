@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2015, Adrian Sampson.
 #
@@ -14,13 +13,13 @@
 # included in all copies or substantial portions of the Software.
 
 """Allows custom commands to be run when an event is emitted by beets"""
-from __future__ import division, absolute_import, print_function
 
 import string
 import subprocess
+import shlex
 
 from beets.plugins import BeetsPlugin
-from beets.util import shlex_split, arg_encoding
+from beets.util import arg_encoding
 
 
 class CodingFormatter(string.Formatter):
@@ -48,8 +47,8 @@ class CodingFormatter(string.Formatter):
         if isinstance(format_string, bytes):
             format_string = format_string.decode(self._coding)
 
-        return super(CodingFormatter, self).format(format_string, *args,
-                                                   **kwargs)
+        return super().format(format_string, *args,
+                              **kwargs)
 
     def convert_field(self, value, conversion):
         """Converts the provided value given a conversion type.
@@ -58,8 +57,8 @@ class CodingFormatter(string.Formatter):
 
         See string.Formatter.convert_field.
         """
-        converted = super(CodingFormatter, self).convert_field(value,
-                                                               conversion)
+        converted = super().convert_field(value,
+                                          conversion)
 
         if isinstance(converted, bytes):
             return converted.decode(self._coding)
@@ -69,8 +68,9 @@ class CodingFormatter(string.Formatter):
 
 class HookPlugin(BeetsPlugin):
     """Allows custom commands to be run when an event is emitted by beets"""
+
     def __init__(self):
-        super(HookPlugin, self).__init__()
+        super().__init__()
 
         self.config.add({
             'hooks': []
@@ -95,21 +95,21 @@ class HookPlugin(BeetsPlugin):
             # Use a string formatter that works on Unicode strings.
             formatter = CodingFormatter(arg_encoding())
 
-            command_pieces = shlex_split(command)
+            command_pieces = shlex.split(command)
 
             for i, piece in enumerate(command_pieces):
                 command_pieces[i] = formatter.format(piece, event=event,
                                                      **kwargs)
 
-            self._log.debug(u'running command "{0}" for event {1}',
-                            u' '.join(command_pieces), event)
+            self._log.debug('running command "{0}" for event {1}',
+                            ' '.join(command_pieces), event)
 
             try:
                 subprocess.check_call(command_pieces)
             except subprocess.CalledProcessError as exc:
-                self._log.error(u'hook for {0} exited with status {1}',
+                self._log.error('hook for {0} exited with status {1}',
                                 event, exc.returncode)
             except OSError as exc:
-                self._log.error(u'hook for {0} failed: {1}', event, exc)
+                self._log.error('hook for {0} failed: {1}', event, exc)
 
         self.register_listener(event, hook_function)

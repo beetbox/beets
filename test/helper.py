@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Thomas Scholtes.
 #
@@ -31,8 +30,6 @@ information or mock the environment.
 """
 
 
-from __future__ import division, absolute_import, print_function
-
 import sys
 import os
 import os.path
@@ -40,7 +37,7 @@ import shutil
 import subprocess
 from tempfile import mkdtemp, mkstemp
 from contextlib import contextmanager
-from six import StringIO
+from io import StringIO
 from enum import Enum
 
 import beets
@@ -56,7 +53,6 @@ from beets.util import MoveOperation
 
 # TODO Move AutotagMock here
 from test import _common
-import six
 
 
 class LogCapture(logging.Handler):
@@ -66,7 +62,7 @@ class LogCapture(logging.Handler):
         self.messages = []
 
     def emit(self, record):
-        self.messages.append(six.text_type(record.msg))
+        self.messages.append(str(record.msg))
 
 
 @contextmanager
@@ -90,8 +86,6 @@ def control_stdin(input=None):
     """
     org = sys.stdin
     sys.stdin = StringIO(input)
-    if six.PY2:  # StringIO encoding attr isn't writable in python >= 3
-        sys.stdin.encoding = 'utf-8'
     try:
         yield sys.stdin
     finally:
@@ -110,8 +104,6 @@ def capture_stdout():
     """
     org = sys.stdout
     sys.stdout = capture = StringIO()
-    if six.PY2:  # StringIO encoding attr isn't writable in python >= 3
-        sys.stdout.encoding = 'utf-8'
     try:
         yield sys.stdout
     finally:
@@ -124,12 +116,8 @@ def _convert_args(args):
        on Python 3.
     """
     for i, elem in enumerate(args):
-        if six.PY2:
-            if isinstance(elem, six.text_type):
-                args[i] = elem.encode(util.arg_encoding())
-        else:
-            if isinstance(elem, bytes):
-                args[i] = elem.decode(util.arg_encoding())
+        if isinstance(elem, bytes):
+            args[i] = elem.decode(util.arg_encoding())
 
     return args
 
@@ -150,7 +138,7 @@ def has_program(cmd, args=['--version']):
         return True
 
 
-class TestHelper(object):
+class TestHelper:
     """Helper mixin for high-level cli and plugin tests.
 
     This mixin provides methods to isolate beets' global state provide
@@ -259,7 +247,7 @@ class TestHelper(object):
 
         album_no = 0
         while album_count:
-            album = util.bytestring_path(u'album {0}'.format(album_no))
+            album = util.bytestring_path(f'album {album_no}')
             album_dir = os.path.join(import_dir, album)
             if os.path.exists(album_dir):
                 album_no += 1
@@ -270,9 +258,9 @@ class TestHelper(object):
             track_no = 0
             album_item_count = item_count
             while album_item_count:
-                title = u'track {0}'.format(track_no)
+                title = f'track {track_no}'
                 src = os.path.join(_common.RSRC, b'full.mp3')
-                title_file = util.bytestring_path('{0}.mp3'.format(title))
+                title_file = util.bytestring_path(f'{title}.mp3')
                 dest = os.path.join(album_dir, title_file)
                 if os.path.exists(dest):
                     track_no += 1
@@ -313,9 +301,9 @@ class TestHelper(object):
         """
         item_count = self._get_item_count()
         values_ = {
-            'title': u't\u00eftle {0}',
-            'artist': u'the \u00e4rtist',
-            'album': u'the \u00e4lbum',
+            'title': 't\u00eftle {0}',
+            'artist': 'the \u00e4rtist',
+            'album': 'the \u00e4lbum',
             'track': item_count,
             'format': 'MP3',
         }
@@ -375,8 +363,8 @@ class TestHelper(object):
         path = os.path.join(_common.RSRC, util.bytestring_path('full.' + ext))
         for i in range(count):
             item = Item.from_path(path)
-            item.album = u'\u00e4lbum {0}'.format(i)  # Check unicode paths
-            item.title = u't\u00eftle {0}'.format(i)
+            item.album = f'\u00e4lbum {i}'  # Check unicode paths
+            item.title = f't\u00eftle {i}'
             # mtime needs to be set last since other assignments reset it.
             item.mtime = 12345
             item.add(self.lib)
@@ -385,21 +373,23 @@ class TestHelper(object):
             items.append(item)
         return items
 
-    def add_album_fixture(self, track_count=1, ext='mp3'):
+    def add_album_fixture(self, track_count=1, ext='mp3', disc_count=1):
         """Add an album with files to the database.
         """
         items = []
         path = os.path.join(_common.RSRC, util.bytestring_path('full.' + ext))
-        for i in range(track_count):
-            item = Item.from_path(path)
-            item.album = u'\u00e4lbum'  # Check unicode paths
-            item.title = u't\u00eftle {0}'.format(i)
-            # mtime needs to be set last since other assignments reset it.
-            item.mtime = 12345
-            item.add(self.lib)
-            item.move(operation=MoveOperation.COPY)
-            item.store()
-            items.append(item)
+        for discnumber in range(1, disc_count + 1):
+            for i in range(track_count):
+                item = Item.from_path(path)
+                item.album = '\u00e4lbum'  # Check unicode paths
+                item.title = f't\u00eftle {i}'
+                item.disc = discnumber
+                # mtime needs to be set last since other assignments reset it.
+                item.mtime = 12345
+                item.add(self.lib)
+                item.move(operation=MoveOperation.COPY)
+                item.store()
+                items.append(item)
         return self.lib.add_album(items)
 
     def create_mediafile_fixture(self, ext='mp3', images=[]):
@@ -422,7 +412,7 @@ class TestHelper(object):
             mediafile = MediaFile(path)
             imgs = []
             for img_ext in images:
-                file = util.bytestring_path('image-2x3.{0}'.format(img_ext))
+                file = util.bytestring_path(f'image-2x3.{img_ext}')
                 img_path = os.path.join(_common.RSRC, file)
                 with open(img_path, 'rb') as f:
                     imgs.append(Image(f.read()))
@@ -517,7 +507,7 @@ class ImportSessionFixture(importer.ImportSession):
     """
 
     def __init__(self, *args, **kwargs):
-        super(ImportSessionFixture, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._choices = []
         self._resolutions = []
 
@@ -577,16 +567,17 @@ def generate_album_info(album_id, track_values):
     """
     tracks = [generate_track_info(id, values) for id, values in track_values]
     album = AlbumInfo(
-        album_id=u'album info',
-        album=u'album info',
-        artist=u'album info',
-        artist_id=u'album info',
+        album_id='album info',
+        album='album info',
+        artist='album info',
+        artist_id='album info',
         tracks=tracks,
     )
     for field in ALBUM_INFO_FIELDS:
-        setattr(album, field, u'album info')
+        setattr(album, field, 'album info')
 
     return album
+
 
 ALBUM_INFO_FIELDS = ['album', 'album_id', 'artist', 'artist_id',
                      'asin', 'albumtype', 'va', 'label',
@@ -603,14 +594,15 @@ def generate_track_info(track_id='track info', values={}):
     string fields are set to "track info".
     """
     track = TrackInfo(
-        title=u'track info',
+        title='track info',
         track_id=track_id,
     )
     for field in TRACK_INFO_FIELDS:
-        setattr(track, field, u'track info')
+        setattr(track, field, 'track info')
     for field, value in values.items():
         setattr(track, field, value)
     return track
+
 
 TRACK_INFO_FIELDS = ['artist', 'artist_id', 'artist_sort',
                      'disctitle', 'artist_credit', 'data_source',

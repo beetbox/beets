@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -14,7 +13,6 @@
 # included in all copies or substantial portions of the Software.
 """Tests for base utils from the beets.util package.
 """
-from __future__ import division, absolute_import, print_function
 
 import sys
 import re
@@ -22,11 +20,10 @@ import os
 import subprocess
 import unittest
 
-from mock import patch, Mock
+from unittest.mock import patch, Mock
 
 from test import _common
 from beets import util
-import six
 
 
 class UtilTest(unittest.TestCase):
@@ -43,69 +40,67 @@ class UtilTest(unittest.TestCase):
     @patch('os.execlp')
     @patch('beets.util.open_anything')
     def test_interactive_open(self, mock_open, mock_execlp):
-        mock_open.return_value = u'tagada'
+        mock_open.return_value = 'tagada'
         util.interactive_open(['foo'], util.open_anything())
-        mock_execlp.assert_called_once_with(u'tagada', u'tagada', u'foo')
+        mock_execlp.assert_called_once_with('tagada', 'tagada', 'foo')
         mock_execlp.reset_mock()
 
-        util.interactive_open(['foo'], u'bar')
-        mock_execlp.assert_called_once_with(u'bar', u'bar', u'foo')
+        util.interactive_open(['foo'], 'bar')
+        mock_execlp.assert_called_once_with('bar', 'bar', 'foo')
 
     def test_sanitize_unix_replaces_leading_dot(self):
         with _common.platform_posix():
-            p = util.sanitize_path(u'one/.two/three')
-        self.assertFalse(u'.' in p)
+            p = util.sanitize_path('one/.two/three')
+        self.assertFalse('.' in p)
 
     def test_sanitize_windows_replaces_trailing_dot(self):
         with _common.platform_windows():
-            p = util.sanitize_path(u'one/two./three')
-        self.assertFalse(u'.' in p)
+            p = util.sanitize_path('one/two./three')
+        self.assertFalse('.' in p)
 
     def test_sanitize_windows_replaces_illegal_chars(self):
         with _common.platform_windows():
-            p = util.sanitize_path(u':*?"<>|')
-        self.assertFalse(u':' in p)
-        self.assertFalse(u'*' in p)
-        self.assertFalse(u'?' in p)
-        self.assertFalse(u'"' in p)
-        self.assertFalse(u'<' in p)
-        self.assertFalse(u'>' in p)
-        self.assertFalse(u'|' in p)
+            p = util.sanitize_path(':*?"<>|')
+        self.assertFalse(':' in p)
+        self.assertFalse('*' in p)
+        self.assertFalse('?' in p)
+        self.assertFalse('"' in p)
+        self.assertFalse('<' in p)
+        self.assertFalse('>' in p)
+        self.assertFalse('|' in p)
 
     def test_sanitize_windows_replaces_trailing_space(self):
         with _common.platform_windows():
-            p = util.sanitize_path(u'one/two /three')
-        self.assertFalse(u' ' in p)
+            p = util.sanitize_path('one/two /three')
+        self.assertFalse(' ' in p)
 
     def test_sanitize_path_works_on_empty_string(self):
         with _common.platform_posix():
-            p = util.sanitize_path(u'')
-        self.assertEqual(p, u'')
+            p = util.sanitize_path('')
+        self.assertEqual(p, '')
 
     def test_sanitize_with_custom_replace_overrides_built_in_sub(self):
         with _common.platform_posix():
-            p = util.sanitize_path(u'a/.?/b', [
-                (re.compile(r'foo'), u'bar'),
+            p = util.sanitize_path('a/.?/b', [
+                (re.compile(r'foo'), 'bar'),
             ])
-        self.assertEqual(p, u'a/.?/b')
+        self.assertEqual(p, 'a/.?/b')
 
     def test_sanitize_with_custom_replace_adds_replacements(self):
         with _common.platform_posix():
-            p = util.sanitize_path(u'foo/bar', [
-                (re.compile(r'foo'), u'bar'),
+            p = util.sanitize_path('foo/bar', [
+                (re.compile(r'foo'), 'bar'),
             ])
-        self.assertEqual(p, u'bar/bar')
+        self.assertEqual(p, 'bar/bar')
 
-    @unittest.skip(u'unimplemented: #359')
+    @unittest.skip('unimplemented: #359')
     def test_sanitize_empty_component(self):
         with _common.platform_posix():
-            p = util.sanitize_path(u'foo//bar', [
-                (re.compile(r'^$'), u'_'),
+            p = util.sanitize_path('foo//bar', [
+                (re.compile(r'^$'), '_'),
             ])
-        self.assertEqual(p, u'foo/_/bar')
+        self.assertEqual(p, 'foo/_/bar')
 
-    @unittest.skipIf(six.PY2, 'surrogateescape error handler not available'
-                     'on Python 2')
     def test_convert_command_args_keeps_undecodeable_bytes(self):
         arg = b'\x82'  # non-ascii bytes
         cmd_args = util.convert_command_args([arg])
@@ -117,7 +112,7 @@ class UtilTest(unittest.TestCase):
     def test_command_output(self, mock_popen):
         def popen_fail(*args, **kwargs):
             m = Mock(returncode=1)
-            m.communicate.return_value = u'foo', u'bar'
+            m.communicate.return_value = 'foo', 'bar'
             return m
 
         mock_popen.side_effect = popen_fail
@@ -130,10 +125,10 @@ class UtilTest(unittest.TestCase):
 class PathConversionTest(_common.TestCase):
     def test_syspath_windows_format(self):
         with _common.platform_windows():
-            path = os.path.join(u'a', u'b', u'c')
+            path = os.path.join('a', 'b', 'c')
             outpath = util.syspath(path)
-        self.assertTrue(isinstance(outpath, six.text_type))
-        self.assertTrue(outpath.startswith(u'\\\\?\\'))
+        self.assertTrue(isinstance(outpath, str))
+        self.assertTrue(outpath.startswith('\\\\?\\'))
 
     def test_syspath_windows_format_unc_path(self):
         # The \\?\ prefix on Windows behaves differently with UNC
@@ -141,12 +136,12 @@ class PathConversionTest(_common.TestCase):
         path = '\\\\server\\share\\file.mp3'
         with _common.platform_windows():
             outpath = util.syspath(path)
-        self.assertTrue(isinstance(outpath, six.text_type))
-        self.assertEqual(outpath, u'\\\\?\\UNC\\server\\share\\file.mp3')
+        self.assertTrue(isinstance(outpath, str))
+        self.assertEqual(outpath, '\\\\?\\UNC\\server\\share\\file.mp3')
 
     def test_syspath_posix_unchanged(self):
         with _common.platform_posix():
-            path = os.path.join(u'a', u'b', u'c')
+            path = os.path.join('a', 'b', 'c')
             outpath = util.syspath(path)
         self.assertEqual(path, outpath)
 
@@ -160,14 +155,14 @@ class PathConversionTest(_common.TestCase):
             sys.getfilesystemencoding = old_gfse
 
     def test_bytestring_path_windows_encodes_utf8(self):
-        path = u'caf\xe9'
+        path = 'caf\xe9'
         outpath = self._windows_bytestring_path(path)
         self.assertEqual(path, outpath.decode('utf-8'))
 
     def test_bytesting_path_windows_removes_magic_prefix(self):
-        path = u'\\\\?\\C:\\caf\xe9'
+        path = '\\\\?\\C:\\caf\xe9'
         outpath = self._windows_bytestring_path(path)
-        self.assertEqual(outpath, u'C:\\caf\xe9'.encode('utf-8'))
+        self.assertEqual(outpath, 'C:\\caf\xe9'.encode())
 
 
 class PathTruncationTest(_common.TestCase):
@@ -178,13 +173,28 @@ class PathTruncationTest(_common.TestCase):
 
     def test_truncate_unicode(self):
         with _common.platform_posix():
-            p = util.truncate_path(u'abcde/fgh', 4)
-        self.assertEqual(p, u'abcd/fgh')
+            p = util.truncate_path('abcde/fgh', 4)
+        self.assertEqual(p, 'abcd/fgh')
 
     def test_truncate_preserves_extension(self):
         with _common.platform_posix():
-            p = util.truncate_path(u'abcde/fgh.ext', 5)
-        self.assertEqual(p, u'abcde/f.ext')
+            p = util.truncate_path('abcde/fgh.ext', 5)
+        self.assertEqual(p, 'abcde/f.ext')
+
+
+class ConfitDeprecationTest(_common.TestCase):
+    def test_confit_deprecattion_warning_origin(self):
+        """Test that importing `confit` raises a warning.
+
+        In addition, ensure that the warning originates from the actual
+        import statement, not the `confit` module.
+        """
+        # See https://github.com/beetbox/beets/discussions/4024
+        with self.assertWarns(UserWarning) as w:
+            import beets.util.confit  # noqa: F401
+
+        self.assertIn(__file__, w.filename)
+        self.assertNotIn("confit.py", w.filename)
 
 
 def suite():

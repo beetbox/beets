@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # This file is part of beets.
 # Copyright 2020, Callum Brown.
 #
@@ -16,10 +14,10 @@
 
 """An AURA server using Flask."""
 
-from __future__ import division, absolute_import, print_function
 
 from mimetypes import guess_type
 import re
+import os.path
 from os.path import isfile, getsize
 
 from beets.plugins import BeetsPlugin
@@ -215,7 +213,7 @@ class AURADocument:
             else:
                 # Increment page token by 1
                 next_url = request.url.replace(
-                    "page={}".format(page), "page={}".format(page + 1)
+                    f"page={page}", "page={}".format(page + 1)
                 )
         # Get only the items in the page range
         data = [self.resource_object(collection[i]) for i in range(start, end)]
@@ -265,7 +263,7 @@ class AURADocument:
                 image_id = identifier["id"]
                 included.append(ImageDocument.resource_object(image_id))
             else:
-                raise ValueError("Invalid resource type: {}".format(res_type))
+                raise ValueError(f"Invalid resource type: {res_type}")
         return included
 
     def all_resources(self):
@@ -462,7 +460,7 @@ class AlbumDocument(AURADocument):
         if album.artpath:
             path = py3_path(album.artpath)
             filename = path.split("/")[-1]
-            image_id = "album-{}-{}".format(album.id, filename)
+            image_id = f"album-{album.id}-{filename}"
             relationships["images"] = {
                 "data": [{"type": "image", "id": image_id}]
             }
@@ -598,6 +596,24 @@ class ArtistDocument(AURADocument):
         return self.single_resource_document(artist_resource)
 
 
+def safe_filename(fn):
+    """Check whether a string is a simple (non-path) filename.
+
+    For example, `foo.txt` is safe because it is a "plain" filename. But
+    `foo/bar.txt` and `../foo.txt` and `.` are all non-safe because they
+    can traverse to other directories other than the current one.
+    """
+    # Rule out any directories.
+    if os.path.basename(fn) != fn:
+        return False
+
+    # In single names, rule out Unix directory traversal names.
+    if fn in ('.', '..'):
+        return False
+
+    return True
+
+
 class ImageDocument(AURADocument):
     """Class for building documents for /images/(id) endpoints."""
 
@@ -619,6 +635,8 @@ class ImageDocument(AURADocument):
         parent_type = id_split[0]
         parent_id = id_split[1]
         img_filename = "-".join(id_split[2:])
+        if not safe_filename(img_filename):
+            return None
 
         # Get the path to the directory parent's images are in
         if parent_type == "album":
@@ -634,7 +652,7 @@ class ImageDocument(AURADocument):
             # Images for other resource types are not supported
             return None
 
-        img_path = dir_path + "/" + img_filename
+        img_path = os.path.join(dir_path, img_filename)
         # Check the image actually exists
         if isfile(img_path):
             return img_path
@@ -886,7 +904,7 @@ def create_app():
     """An application factory for use by a WSGI server."""
     config["aura"].add(
         {
-            "host": u"127.0.0.1",
+            "host": "127.0.0.1",
             "port": 8337,
             "cors": [],
             "cors_supports_credentials": False,
@@ -932,7 +950,7 @@ class AURAPlugin(BeetsPlugin):
 
     def __init__(self):
         """Add configuration options for the AURA plugin."""
-        super(AURAPlugin, self).__init__()
+        super().__init__()
 
     def commands(self):
         """Add subcommand used to run the AURA server."""
@@ -954,13 +972,13 @@ class AURAPlugin(BeetsPlugin):
                 threaded=True,
             )
 
-        run_aura_cmd = Subcommand("aura", help=u"run an AURA server")
+        run_aura_cmd = Subcommand("aura", help="run an AURA server")
         run_aura_cmd.parser.add_option(
-            u"-d",
-            u"--debug",
+            "-d",
+            "--debug",
             action="store_true",
             default=False,
-            help=u"use Flask debug mode",
+            help="use Flask debug mode",
         )
         run_aura_cmd.func = run_aura
         return [run_aura_cmd]

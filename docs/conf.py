@@ -1,8 +1,4 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import division, absolute_import, print_function
-
-AUTHOR = u'Adrian Sampson'
+AUTHOR = 'Adrian Sampson'
 
 # General configuration
 
@@ -12,11 +8,11 @@ exclude_patterns = ['_build']
 source_suffix = '.rst'
 master_doc = 'index'
 
-project = u'beets'
-copyright = u'2016, Adrian Sampson'
+project = 'beets'
+copyright = '2016, Adrian Sampson'
 
-version = '1.5'
-release = '1.5.0'
+version = '1.6'
+release = '1.6.1'
 
 pygments_style = 'sphinx'
 
@@ -32,6 +28,7 @@ linkcheck_ignore = [
     r'https://github.com/beetbox/beets/issues/',
     r'https://github.com/[^/]+$',  # ignore user pages
     r'.*localhost.*',
+    r'https?://127\.0\.0\.1',
     r'https://www.musixmatch.com/',  # blocks requests
     r'https://genius.com/',  # blocks requests
 ]
@@ -41,14 +38,14 @@ htmlhelp_basename = 'beetsdoc'
 
 # Options for LaTeX output
 latex_documents = [
-    ('index', 'beets.tex', u'beets Documentation',
+    ('index', 'beets.tex', 'beets Documentation',
      AUTHOR, 'manual'),
 ]
 
 # Options for manual page output
 man_pages = [
-    ('reference/cli', 'beet', u'music tagger and library organizer',
+    ('reference/cli', 'beet', 'music tagger and library organizer',
      [AUTHOR], 1),
-    ('reference/config', 'beetsconfig', u'beets configuration file',
+    ('reference/config', 'beetsconfig', 'beets configuration file',
      [AUTHOR], 5),
 ]

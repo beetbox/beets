@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -15,18 +14,15 @@
 
 """Tests for the DBCore database abstraction.
 """
-from __future__ import division, absolute_import, print_function
 
 import os
 import shutil
 import sqlite3
 import unittest
-from six import assertRaisesRegex
 
 from test import _common
 from beets import dbcore
 from tempfile import mkstemp
-import six
 
 
 # Fixture: concrete database and model classes. For migration tests, we
@@ -236,7 +232,7 @@ class TransactionTest(unittest.TestCase):
         old_rev = self.db.revision
         with self.db.transaction() as tx:
             tx.mutate(
-                'INSERT INTO {0} '
+                'INSERT INTO {} '
                 '(field_one) '
                 'VALUES (?);'.format(ModelFixture1._table),
                 (111,),
@@ -385,9 +381,9 @@ class ModelTest(unittest.TestCase):
         self.assertNotIn('flex_field', model2)
 
     def test_check_db_fails(self):
-        with assertRaisesRegex(self, ValueError, 'no database'):
+        with self.assertRaisesRegex(ValueError, 'no database'):
             dbcore.Model()._check_db()
-        with assertRaisesRegex(self, ValueError, 'no id'):
+        with self.assertRaisesRegex(ValueError, 'no id'):
             ModelFixture1(self.db)._check_db()
 
         dbcore.Model(self.db)._check_db(need_id=False)
@@ -399,7 +395,7 @@ class ModelTest(unittest.TestCase):
     def test_computed_field(self):
         model = ModelFixtureWithGetters()
         self.assertEqual(model.aComputedField, 'thing')
-        with assertRaisesRegex(self, KeyError, u'computed field .+ deleted'):
+        with self.assertRaisesRegex(KeyError, 'computed field .+ deleted'):
             del model.aComputedField
 
     def test_items(self):
@@ -415,7 +411,7 @@ class ModelTest(unittest.TestCase):
             model._db
 
     def test_parse_nonstring(self):
-        with assertRaisesRegex(self, TypeError, u"must be a string"):
+        with self.assertRaisesRegex(TypeError, "must be a string"):
             dbcore.Model._parse(None, 42)
 
 
@@ -424,7 +420,7 @@ class FormatTest(unittest.TestCase):
         model = ModelFixture1()
         model.field_one = 155
         value = model.formatted().get('field_one')
-        self.assertEqual(value, u'155')
+        self.assertEqual(value, '155')
 
     def test_format_fixed_field_integer_normalized(self):
         """The normalize method of the Integer class rounds floats
@@ -432,41 +428,41 @@ class FormatTest(unittest.TestCase):
         model = ModelFixture1()
         model.field_one = 142.432
         value = model.formatted().get('field_one')
-        self.assertEqual(value, u'142')
+        self.assertEqual(value, '142')
 
         model.field_one = 142.863
         value = model.formatted().get('field_one')
-        self.assertEqual(value, u'143')
+        self.assertEqual(value, '143')
 
     def test_format_fixed_field_string(self):
         model = ModelFixture1()
-        model.field_two = u'caf\xe9'
+        model.field_two = 'caf\xe9'
         value = model.formatted().get('field_two')
-        self.assertEqual(value, u'caf\xe9')
+        self.assertEqual(value, 'caf\xe9')
 
     def test_format_flex_field(self):
         model = ModelFixture1()
-        model.other_field = u'caf\xe9'
+        model.other_field = 'caf\xe9'
         value = model.formatted().get('other_field')
-        self.assertEqual(value, u'caf\xe9')
+        self.assertEqual(value, 'caf\xe9')
 
     def test_format_flex_field_bytes(self):
         model = ModelFixture1()
-        model.other_field = u'caf\xe9'.encode('utf-8')
+        model.other_field = 'caf\xe9'.encode()
         value = model.formatted().get('other_field')
-        self.assertTrue(isinstance(value, six.text_type))
-        self.assertEqual(value, u'caf\xe9')
+        self.assertTrue(isinstance(value, str))
+        self.assertEqual(value, 'caf\xe9')
 
     def test_format_unset_field(self):
         model = ModelFixture1()
         value = model.formatted().get('other_field')
-        self.assertEqual(value, u'')
+        self.assertEqual(value, '')
 
     def test_format_typed_flex_field(self):
         model = ModelFixture1()
         model.some_float_field = 3.14159265358979
         value = model.formatted().get('some_float_field')
-        self.assertEqual(value, u'3.1')
+        self.assertEqual(value, '3.1')
 
 
 class FormattedMappingTest(unittest.TestCase):
@@ -484,7 +480,7 @@ class FormattedMappingTest(unittest.TestCase):
     def test_get_method_with_default(self):
         model = ModelFixture1()
         formatted = model.formatted()
-        self.assertEqual(formatted.get('other_field'), u'')
+        self.assertEqual(formatted.get('other_field'), '')
 
     def test_get_method_with_specified_default(self):
         model = ModelFixture1()
@@ -494,18 +490,18 @@ class FormattedMappingTest(unittest.TestCase):
 
 class ParseTest(unittest.TestCase):
     def test_parse_fixed_field(self):
-        value = ModelFixture1._parse('field_one', u'2')
+        value = ModelFixture1._parse('field_one', '2')
         self.assertIsInstance(value, int)
         self.assertEqual(value, 2)
 
     def test_parse_flex_field(self):
-        value = ModelFixture1._parse('some_float_field', u'2')
+        value = ModelFixture1._parse('some_float_field', '2')
         self.assertIsInstance(value, float)
         self.assertEqual(value, 2.0)
 
     def test_parse_untyped_field(self):
-        value = ModelFixture1._parse('field_nine', u'2')
-        self.assertEqual(value, u'2')
+        value = ModelFixture1._parse('field_nine', '2')
+        self.assertEqual(value, '2')
 
 
 class QueryParseTest(unittest.TestCase):
@@ -766,6 +762,7 @@ class ResultsIteratorTest(unittest.TestCase):
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')

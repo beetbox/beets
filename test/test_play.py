@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Jesse Weinstein
 #
@@ -15,12 +14,12 @@
 
 """Tests for the play plugin"""
 
-from __future__ import division, absolute_import, print_function
 
 import os
+import sys
 
 import unittest
-from mock import patch, ANY
+from unittest.mock import patch, ANY
 
 from test.helper import TestHelper, control_stdin
 
@@ -33,7 +32,7 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.setup_beets()
         self.load_plugins('play')
-        self.item = self.add_item(album=u'a nice älbum', title=u'aNiceTitle')
+        self.item = self.add_item(album='a nice älbum', title='aNiceTitle')
         self.lib.add_album([self.item])
         self.config['play']['command'] = 'echo'
 
@@ -47,7 +46,7 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
 
         open_mock.assert_called_once_with(ANY, expected_cmd)
         expected_playlist = expected_playlist or self.item.path.decode('utf-8')
-        exp_playlist = expected_playlist + u'\n'
+        exp_playlist = expected_playlist + '\n'
         with open(open_mock.call_args[0][0][0], 'rb') as playlist:
             self.assertEqual(exp_playlist, playlist.read().decode('utf-8'))
 
@@ -55,24 +54,26 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
         self.run_and_assert(open_mock)
 
     def test_album_option(self, open_mock):
-        self.run_and_assert(open_mock, [u'-a', u'nice'])
+        self.run_and_assert(open_mock, ['-a', 'nice'])
 
     def test_args_option(self, open_mock):
         self.run_and_assert(
-            open_mock, [u'-A', u'foo', u'title:aNiceTitle'], u'echo foo')
+            open_mock, ['-A', 'foo', 'title:aNiceTitle'], 'echo foo')
 
     def test_args_option_in_middle(self, open_mock):
         self.config['play']['command'] = 'echo $args other'
 
         self.run_and_assert(
-            open_mock, [u'-A', u'foo', u'title:aNiceTitle'], u'echo foo other')
+            open_mock, ['-A', 'foo', 'title:aNiceTitle'], 'echo foo other')
 
     def test_unset_args_option_in_middle(self, open_mock):
         self.config['play']['command'] = 'echo $args other'
 
         self.run_and_assert(
-            open_mock, [u'title:aNiceTitle'], u'echo other')
+            open_mock, ['title:aNiceTitle'], 'echo other')
 
+    # FIXME: fails on windows
+    @unittest.skipIf(sys.platform == 'win32', 'win32')
     def test_relative_to(self, open_mock):
         self.config['play']['command'] = 'echo'
         self.config['play']['relative_to'] = '/something'
@@ -90,19 +91,19 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
         open_mock.assert_called_once_with(ANY, open_anything())
         with open(open_mock.call_args[0][0][0], 'rb') as f:
             playlist = f.read().decode('utf-8')
-        self.assertEqual(u'{}\n'.format(
+        self.assertEqual('{}\n'.format(
             os.path.dirname(self.item.path.decode('utf-8'))),
             playlist)
 
     def test_raw(self, open_mock):
         self.config['play']['raw'] = True
 
-        self.run_command(u'play', u'nice')
+        self.run_command('play', 'nice')
 
         open_mock.assert_called_once_with([self.item.path], 'echo')
 
     def test_not_found(self, open_mock):
-        self.run_command(u'play', u'not found')
+        self.run_command('play', 'not found')
 
         open_mock.assert_not_called()
 
@@ -111,7 +112,7 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
         self.add_item(title='another NiceTitle')
 
         with control_stdin("a"):
-            self.run_command(u'play', u'nice')
+            self.run_command('play', 'nice')
 
         open_mock.assert_not_called()
 
@@ -119,21 +120,21 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
         self.config['play']['warning_threshold'] = 1
         self.other_item = self.add_item(title='another NiceTitle')
 
-        expected_playlist = u'{0}\n{1}'.format(
+        expected_playlist = '{}\n{}'.format(
             self.item.path.decode('utf-8'),
             self.other_item.path.decode('utf-8'))
 
         with control_stdin("a"):
             self.run_and_assert(
                 open_mock,
-                [u'-y', u'NiceTitle'],
+                ['-y', 'NiceTitle'],
                 expected_playlist=expected_playlist)
 
     def test_command_failed(self, open_mock):
-        open_mock.side_effect = OSError(u"some reason")
+        open_mock.side_effect = OSError("some reason")
 
         with self.assertRaises(UserError):
-            self.run_command(u'play', u'title:aNiceTitle')
+            self.run_command('play', 'title:aNiceTitle')
 
 
 def suite():

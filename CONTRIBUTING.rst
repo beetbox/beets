@@ -102,8 +102,8 @@ Code Contribution Ideas
    places to think about performance optimization (see
    `Optimization <https://github.com/beetbox/beets/wiki/Optimization>`__).
 -  Not all of our code is up to our coding conventions. In particular,
-   the `API
-   documentation <https://beets.readthedocs.io/en/stable/dev/api.html>`__
+   the `library API
+   documentation <https://beets.readthedocs.io/en/stable/dev/library.html>`__
    are currently quite sparse. You can help by adding to the docstrings
    in the code and to the documentation pages themselves. beets follows
    `PEP-257 <https://www.python.org/dev/peps/pep-0257/>`__ for
@@ -159,9 +159,9 @@ documentation, and the changelog entry. Thank you for contributing!
 The Code
 ========
 
-The documentation has an `API
-section <https://beets.readthedocs.io/en/stable/dev/api.html>`__ that
-serves as an introduction to beets’ design.
+The documentation has a section on the
+`library API <https://beets.readthedocs.io/en/stable/dev/library.html>`__
+that serves as an introduction to beets’ design.
 
 Coding Conventions
 ==================
@@ -203,11 +203,10 @@ There are a few coding conventions we use in beets:
    instead. In particular, we have our own logging shim, so you’ll see
    ``from beets import logging`` in most files.
 
-   -  Always log Unicode strings (e.g., ``log.debug(u"hello world")``).
    -  The loggers use
       `str.format <http://docs.python.org/library/stdtypes.html#str.format>`__-style
       logging instead of ``%``-style, so you can type
-      ``log.debug(u"{0}", obj)`` to do your formatting.
+      ``log.debug("{0}", obj)`` to do your formatting.
 
 -  Exception handlers must use ``except A as B:`` instead of
    ``except A, B:``.

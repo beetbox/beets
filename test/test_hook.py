@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2015, Thomas Scholtes.
 #
@@ -13,9 +12,9 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
 
 import os.path
+import sys
 import tempfile
 import unittest
 
@@ -64,6 +63,8 @@ class HookTest(_common.TestCase, TestHelper):
 
         self.assertIn('hook: invalid command ""', logs)
 
+    # FIXME: fails on windows
+    @unittest.skipIf(sys.platform == 'win32', 'win32')
     def test_hook_non_zero_exit(self):
         self._add_hook('test_event', 'sh -c "exit 1"')
 
@@ -86,32 +87,36 @@ class HookTest(_common.TestCase, TestHelper):
             message.startswith("hook: hook for test_event failed: ")
             for message in logs))
 
+    # FIXME: fails on windows
+    @unittest.skipIf(sys.platform == 'win32', 'win32')
     def test_hook_no_arguments(self):
         temporary_paths = [
             get_temporary_path() for i in range(self.TEST_HOOK_COUNT)
         ]
 
         for index, path in enumerate(temporary_paths):
-            self._add_hook('test_no_argument_event_{0}'.format(index),
-                           'touch "{0}"'.format(path))
+            self._add_hook(f'test_no_argument_event_{index}',
+                           f'touch "{path}"')
 
         self.load_plugins('hook')
 
         for index in range(len(temporary_paths)):
-            plugins.send('test_no_argument_event_{0}'.format(index))
+            plugins.send(f'test_no_argument_event_{index}')
 
         for path in temporary_paths:
             self.assertTrue(os.path.isfile(path))
             os.remove(path)
 
+    # FIXME: fails on windows
+    @unittest.skipIf(sys.platform == 'win32', 'win32')
     def test_hook_event_substitution(self):
         temporary_directory = tempfile._get_default_tempdir()
-        event_names = ['test_event_event_{0}'.format(i) for i in
+        event_names = [f'test_event_event_{i}' for i in
                        range(self.TEST_HOOK_COUNT)]
 
         for event in event_names:
             self._add_hook(event,
-                           'touch "{0}/{{event}}"'.format(temporary_directory))
+                           f'touch "{temporary_directory}/{{event}}"')
 
         self.load_plugins('hook')
 
@@ -124,24 +129,28 @@ class HookTest(_common.TestCase, TestHelper):
             self.assertTrue(os.path.isfile(path))
             os.remove(path)
 
+    # FIXME: fails on windows
+    @unittest.skipIf(sys.platform == 'win32', 'win32')
     def test_hook_argument_substitution(self):
         temporary_paths = [
             get_temporary_path() for i in range(self.TEST_HOOK_COUNT)
         ]
 
         for index, path in enumerate(temporary_paths):
-            self._add_hook('test_argument_event_{0}'.format(index),
+            self._add_hook(f'test_argument_event_{index}',
                            'touch "{path}"')
 
         self.load_plugins('hook')
 
         for index, path in enumerate(temporary_paths):
-            plugins.send('test_argument_event_{0}'.format(index), path=path)
+            plugins.send(f'test_argument_event_{index}', path=path)
 
         for path in temporary_paths:
             self.assertTrue(os.path.isfile(path))
             os.remove(path)
 
+    # FIXME: fails on windows
+    @unittest.skipIf(sys.platform == 'win32', 'win32')
     def test_hook_bytes_interpolation(self):
         temporary_paths = [
             get_temporary_path().encode('utf-8')
@@ -149,13 +158,13 @@ class HookTest(_common.TestCase, TestHelper):
         ]
 
         for index, path in enumerate(temporary_paths):
-            self._add_hook('test_bytes_event_{0}'.format(index),
+            self._add_hook(f'test_bytes_event_{index}',
                            'touch "{path}"')
 
         self.load_plugins('hook')
 
         for index, path in enumerate(temporary_paths):
-            plugins.send('test_bytes_event_{0}'.format(index), path=path)
+            plugins.send(f'test_bytes_event_{index}', path=path)
 
         for path in temporary_paths:
             self.assertTrue(os.path.isfile(path))

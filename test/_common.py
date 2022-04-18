@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -14,14 +13,12 @@
 # included in all copies or substantial portions of the Software.
 
 """Some common functionality for beets' test cases."""
-from __future__ import division, absolute_import, print_function
 
 import time
 import sys
 import os
 import tempfile
 import shutil
-import six
 import unittest
 from contextlib import contextmanager
 
@@ -64,18 +61,18 @@ def item(lib=None):
     global _item_ident
     _item_ident += 1
     i = beets.library.Item(
-        title=u'the title',
-        artist=u'the artist',
-        albumartist=u'the album artist',
-        album=u'the album',
-        genre=u'the genre',
-        lyricist=u'the lyricist',
-        composer=u'the composer',
-        arranger=u'the arranger',
-        grouping=u'the grouping',
-        work=u'the work title',
-        mb_workid=u'the work musicbrainz id',
-        work_disambig=u'the work disambiguation',
+        title='the title',
+        artist='the artist',
+        albumartist='the album artist',
+        album='the album',
+        genre='the genre',
+        lyricist='the lyricist',
+        composer='the composer',
+        arranger='the arranger',
+        grouping='the grouping',
+        work='the work title',
+        mb_workid='the work musicbrainz id',
+        work_disambig='the work disambiguation',
         year=1,
         month=2,
         day=3,
@@ -83,11 +80,11 @@ def item(lib=None):
         tracktotal=5,
         disc=6,
         disctotal=7,
-        lyrics=u'the lyrics',
-        comments=u'the comments',
+        lyrics='the lyrics',
+        comments='the comments',
         bpm=8,
         comp=True,
-        path='somepath{0}'.format(_item_ident),
+        path=f'somepath{_item_ident}',
         length=60.0,
         bitrate=128000,
         format='FLAC',
@@ -111,11 +108,11 @@ def album(lib=None):
     _item_ident += 1
     i = beets.library.Album(
         artpath=None,
-        albumartist=u'some album artist',
-        albumartist_sort=u'some sort album artist',
-        albumartist_credit=u'some album artist credit',
-        album=u'the album',
-        genre=u'the genre',
+        albumartist='some album artist',
+        albumartist_sort='some sort album artist',
+        albumartist_credit='some album artist credit',
+        album='the album',
+        genre='the genre',
         year=2014,
         month=2,
         day=5,
@@ -136,21 +133,21 @@ def import_session(lib=None, loghandler=None, paths=[], query=[], cli=False):
     return cls(lib, loghandler, paths, query)
 
 
-class Assertions(object):
+class Assertions:
     """A mixin with additional unit test assertions."""
 
     def assertExists(self, path):  # noqa
         self.assertTrue(os.path.exists(util.syspath(path)),
-                        u'file does not exist: {!r}'.format(path))
+                        f'file does not exist: {path!r}')
 
     def assertNotExists(self, path):  # noqa
         self.assertFalse(os.path.exists(util.syspath(path)),
-                         u'file exists: {!r}'.format((path)))
+                         f'file exists: {path!r}')
 
     def assert_equal_path(self, a, b):
         """Check that two paths are equal."""
         self.assertEqual(util.normpath(a), util.normpath(b),
-                         u'paths are not equal: {!r} and {!r}'.format(a, b))
+                         f'paths are not equal: {a!r} and {b!r}')
 
 
 # A test harness for all beets tests.
@@ -203,18 +200,18 @@ class LibTestCase(TestCase):
     an item added to the library (`i`).
     """
     def setUp(self):
-        super(LibTestCase, self).setUp()
+        super().setUp()
         self.lib = beets.library.Library(':memory:')
         self.i = item(self.lib)
 
     def tearDown(self):
         self.lib._connection().close()
-        super(LibTestCase, self).tearDown()
+        super().tearDown()
 
 
 # Mock timing.
 
-class Timecop(object):
+class Timecop:
     """Mocks the timing system (namely time() and sleep()) for testing.
     Inspired by the Ruby timecop library.
     """
@@ -249,11 +246,11 @@ class InputException(Exception):
     def __str__(self):
         msg = "Attempt to read with no input provided."
         if self.output is not None:
-            msg += " Output: {!r}".format(self.output)
+            msg += f" Output: {self.output!r}"
         return msg
 
 
-class DummyOut(object):
+class DummyOut:
     encoding = 'utf-8'
 
     def __init__(self):
@@ -263,10 +260,7 @@ class DummyOut(object):
         self.buf.append(s)
 
     def get(self):
-        if six.PY2:
-            return b''.join(self.buf)
-        else:
-            return ''.join(self.buf)
+        return ''.join(self.buf)
 
     def flush(self):
         self.clear()
@@ -275,7 +269,7 @@ class DummyOut(object):
         self.buf = []
 
 
-class DummyIn(object):
+class DummyIn:
     encoding = 'utf-8'
 
     def __init__(self, out=None):
@@ -284,10 +278,7 @@ class DummyIn(object):
         self.out = out
 
     def add(self, s):
-        if six.PY2:
-            self.buf.append(s + b'\n')
-        else:
-            self.buf.append(s + '\n')
+        self.buf.append(s + '\n')
 
     def close(self):
         pass
@@ -302,7 +293,7 @@ class DummyIn(object):
         return self.buf.pop(0)
 
 
-class DummyIO(object):
+class DummyIO:
     """Mocks input and output streams for testing UI code."""
     def __init__(self):
         self.stdout = DummyOut()
@@ -334,7 +325,7 @@ def touch(path):
     open(path, 'a').close()
 
 
-class Bag(object):
+class Bag:
     """An object that exposes a set of fields given as keyword
     arguments. Any field not found in the dictionary appears to be None.
     Used for mocking Album objects and the like.
@@ -349,7 +340,7 @@ class Bag(object):
 # Convenience methods for setting up a temporary sandbox directory for tests
 # that need to interact with the filesystem.
 
-class TempDirMixin(object):
+class TempDirMixin:
     """Text mixin for creating and deleting a temporary directory.
     """
 
@@ -408,5 +399,5 @@ def slow_test(unused=None):
     def _id(obj):
         return obj
     if 'SKIP_SLOW_TESTS' in os.environ:
-        return unittest.skip(u'test is slow')
+        return unittest.skip('test is slow')
     return _id

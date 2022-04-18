@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Tom Jaspers.
 #
@@ -13,7 +12,6 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
 
 import os
 import platform
@@ -72,12 +70,12 @@ class MetaSyncTest(_common.TestCase, TestHelper):
 
         if _is_windows():
             items[0].path = \
-                u'G:\\Music\\Alt-J\\An Awesome Wave\\03 Tessellate.mp3'
+                'G:\\Music\\Alt-J\\An Awesome Wave\\03 Tessellate.mp3'
             items[1].path = \
-                u'G:\\Music\\Alt-J\\An Awesome Wave\\04 Breezeblocks.mp3'
+                'G:\\Music\\Alt-J\\An Awesome Wave\\04 Breezeblocks.mp3'
         else:
-            items[0].path = u'/Music/Alt-J/An Awesome Wave/03 Tessellate.mp3'
-            items[1].path = u'/Music/Alt-J/An Awesome Wave/04 Breezeblocks.mp3'
+            items[0].path = '/Music/Alt-J/An Awesome Wave/03 Tessellate.mp3'
+            items[1].path = '/Music/Alt-J/An Awesome Wave/04 Breezeblocks.mp3'
 
         for item in items:
             self.lib.add(item)
@@ -100,6 +98,7 @@ class MetaSyncTest(_common.TestCase, TestHelper):
         self.assertIn('itunes_skipcount: 3', out)
         self.assertIn('itunes_lastplayed: 2015-05-04 12:20:51', out)
         self.assertIn('itunes_lastskipped: 2015-02-05 15:41:04', out)
+        self.assertIn('itunes_dateadded: 2014-04-24 09:28:38', out)
         self.assertEqual(self.lib.items()[0].itunes_rating, 60)
 
     def test_sync_from_itunes(self):
@@ -111,12 +110,16 @@ class MetaSyncTest(_common.TestCase, TestHelper):
         self.assertFalse(hasattr(self.lib.items()[0], 'itunes_lastplayed'))
         self.assertEqual(self.lib.items()[0].itunes_lastskipped,
                          _parsetime('2015-02-05 15:41:04'))
+        self.assertEqual(self.lib.items()[0].itunes_dateadded,
+                         _parsetime('2014-04-24 09:28:38'))
 
         self.assertEqual(self.lib.items()[1].itunes_rating, 100)
         self.assertEqual(self.lib.items()[1].itunes_playcount, 31)
         self.assertEqual(self.lib.items()[1].itunes_skipcount, 0)
         self.assertEqual(self.lib.items()[1].itunes_lastplayed,
                          _parsetime('2015-05-04 12:20:51'))
+        self.assertEqual(self.lib.items()[1].itunes_dateadded,
+                         _parsetime('2014-04-24 09:28:38'))
         self.assertFalse(hasattr(self.lib.items()[1], 'itunes_lastskipped'))
 
 

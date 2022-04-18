@@ -151,6 +151,25 @@ replaced as they don't match the typewriter quote (``"``). To also strip these
 special characters, you can either add them to the replacement list or use the
 :ref:`asciify-paths` configuration option below.
 
+.. _path-sep-replace:
+
+path_sep_replace
+~~~~~~~~~~~~~~~~
+
+A string that replaces the path separator (for example, the forward slash
+``/`` on Linux and MacOS, and the backward slash ``\\`` on Windows) when
+generating filenames with beets.
+This option is related to :ref:`replace`, but is distict from it for
+technical reasons.
+
+.. warning::
+   Changing this option is potentially dangerous. For example, setting
+   it to the actual path separator could create directories in unexpected
+   locations. Use caution when changing it and always try it out on a small
+   number of files before applying it to your whole library.
+
+Default: ``_``.
+
 .. _asciify-paths:
 
 asciify_paths
@@ -164,6 +183,10 @@ then the track will be saved as ``singletons/Cafe.mp3``.  The changes
 take place before applying the :ref:`replace` configuration and are roughly
 equivalent to wrapping all your path templates in the ``%asciify{}``
 :ref:`template function <template-functions>`.
+
+This uses the `unidecode module`_ which is language agnostic, so some 
+characters may be transliterated from a different language than expected. 
+For example, Japanese kanji will usually use their Chinese readings.
 
 Default: ``no``.
 
@@ -683,6 +706,9 @@ Here's an example::
 Other field/value pairs supplied via the ``--set`` option on the command-line
 override any settings here for fields with the same name.
 
+Fields are set on both the album and each individual track of the album.
+Fields are persisted to the media files of each track.
+
 Default: ``{}`` (empty).
 
 .. _musicbrainz-config:
@@ -714,6 +740,17 @@ to one request per second.
 .. _main server: https://musicbrainz.org/
 .. _limited: https://musicbrainz.org/doc/XML_Web_Service/Rate_Limiting
 .. _Building search indexes: https://musicbrainz.org/doc/Development/Search_server_setup
+
+.. _musicbrainz.enabled:
+
+enabled
+~~~~~~~
+
+This option allows you to disable using MusicBrainz as a metadata source. This applies
+if you use plugins that fetch data from alternative sources and should make the import
+process quicker.
+
+Default: ``yes``.
 
 .. _searchlimit:
 
@@ -750,10 +787,10 @@ Default: ``[]``
 genres
 ~~~~~~
 
-Use MusicBrainz genre tags to populate the ``genre`` tag.  This will make it a
-semicolon-separated list of all the genres tagged for the release on
-MusicBrainz.
-
+Use MusicBrainz genre tags to populate (and replace if it's already set) the
+``genre`` tag.  This will make it a list of all the genres tagged for the
+release and the release-group on MusicBrainz, separated by "; " and sorted by
+the total number of votes.
 Default: ``no``
 
 .. _match-config:

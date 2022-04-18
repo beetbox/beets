@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -13,13 +12,12 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
 
 import confuse
 from sys import stderr
 
-__version__ = u'1.5.0'
-__author__ = u'Adrian Sampson <adrian@radbox.org>'
+__version__ = '1.6.0'
+__author__ = 'Adrian Sampson <adrian@radbox.org>'
 
 
 class IncludeLazyConfig(confuse.LazyConfig):
@@ -27,7 +25,7 @@ class IncludeLazyConfig(confuse.LazyConfig):
     YAML files specified in an `include` setting.
     """
     def read(self, user=True, defaults=True):
-        super(IncludeLazyConfig, self).read(user, defaults)
+        super().read(user, defaults)
 
         try:
             for view in self['include']:

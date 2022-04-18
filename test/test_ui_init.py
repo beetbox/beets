@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -16,17 +15,21 @@
 """Test module for file ui/__init__.py
 """
 
-from __future__ import division, absolute_import, print_function
-
+import os
+import shutil
 import unittest
-from test import _common
+from random import random
+from copy import deepcopy
 
 from beets import ui
+from test import _common
+from test.helper import control_stdin
+from beets import config
 
 
 class InputMethodsTest(_common.TestCase):
     def setUp(self):
-        super(InputMethodsTest, self).setUp()
+        super().setUp()
         self.io.install()
 
     def _print_helper(self, s):
@@ -86,7 +89,7 @@ class InputMethodsTest(_common.TestCase):
 
 class InitTest(_common.LibTestCase):
     def setUp(self):
-        super(InitTest, self).setUp()
+        super().setUp()
 
     def test_human_bytes(self):
         tests = [
@@ -123,8 +126,39 @@ class InitTest(_common.LibTestCase):
             self.assertEqual(h, ui.human_seconds(i))
 
 
+class ParentalDirCreation(_common.TestCase):
+    def test_create_yes(self):
+        non_exist_path = _common.util.py3_path(os.path.join(
+            self.temp_dir, b'nonexist', str(random()).encode()))
+        # Deepcopy instead of recovering because exceptions might
+        # occcur; wish I can use a golang defer here.
+        test_config = deepcopy(config)
+        test_config['library'] = non_exist_path
+        with control_stdin('y'):
+            ui._open_library(test_config)
+
+    def test_create_no(self):
+        non_exist_path_parent = _common.util.py3_path(
+            os.path.join(self.temp_dir, b'nonexist'))
+        non_exist_path = _common.util.py3_path(os.path.join(
+            non_exist_path_parent.encode(), str(random()).encode()))
+        test_config = deepcopy(config)
+        test_config['library'] = non_exist_path
+
+        with control_stdin('n'):
+            try:
+                ui._open_library(test_config)
+            except ui.UserError:
+                if os.path.exists(non_exist_path_parent):
+                    shutil.rmtree(non_exist_path_parent)
+                    raise OSError("Parent directories should not be created.")
+            else:
+                raise OSError("Parent directories should not be created.")
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')

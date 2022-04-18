@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016
 #
@@ -15,7 +14,6 @@
 
 """Open metadata information in a text editor to let the user edit it.
 """
-from __future__ import division, absolute_import, print_function
 
 from beets import plugins
 from beets import util
@@ -28,7 +26,7 @@ import subprocess
 import yaml
 from tempfile import NamedTemporaryFile
 import os
-import six
+import shlex
 
 
 # These "safe" types can avoid the format/parse cycle that most fields go
@@ -45,13 +43,13 @@ class ParseError(Exception):
 def edit(filename, log):
     """Open `filename` in a text editor.
     """
-    cmd = util.shlex_split(util.editor_command())
+    cmd = shlex.split(util.editor_command())
     cmd.append(filename)
-    log.debug(u'invoking editor command: {!r}', cmd)
+    log.debug('invoking editor command: {!r}', cmd)
     try:
         subprocess.call(cmd)
     except OSError as exc:
-        raise ui.UserError(u'could not run editor command {!r}: {}'.format(
+        raise ui.UserError('could not run editor command {!r}: {}'.format(
             cmd[0], exc
         ))
 
@@ -77,17 +75,17 @@ def load(s):
         for d in yaml.safe_load_all(s):
             if not isinstance(d, dict):
                 raise ParseError(
-                    u'each entry must be a dictionary; found {}'.format(
+                    'each entry must be a dictionary; found {}'.format(
                         type(d).__name__
                     )
                 )
 
             # Convert all keys to strings. They started out as strings,
             # but the user may have inadvertently messed this up.
-            out.append({six.text_type(k): v for k, v in d.items()})
+            out.append({str(k): v for k, v in d.items()})
 
     except yaml.YAMLError as e:
-        raise ParseError(u'invalid YAML: {}'.format(e))
+        raise ParseError(f'invalid YAML: {e}')
     return out
 
 
@@ -143,13 +141,13 @@ def apply_(obj, data):
         else:
             # Either the field was stringified originally or the user changed
             # it from a safe type to an unsafe one. Parse it as a string.
-            obj.set_parse(key, six.text_type(value))
+            obj.set_parse(key, str(value))
 
 
 class EditPlugin(plugins.BeetsPlugin):
 
     def __init__(self):
-        super(EditPlugin, self).__init__()
+        super().__init__()
 
         self.config.add({
             # The default fields to edit.
@@ -166,18 +164,18 @@ class EditPlugin(plugins.BeetsPlugin):
     def commands(self):
         edit_command = ui.Subcommand(
             'edit',
-            help=u'interactively edit metadata'
+            help='interactively edit metadata'
         )
         edit_command.parser.add_option(
-            u'-f', u'--field',
+            '-f', '--field',
             metavar='FIELD',
             action='append',
-            help=u'edit this field also',
+            help='edit this field also',
         )
         edit_command.parser.add_option(
-            u'--all',
+            '--all',
             action='store_true', dest='all',
-            help=u'edit all fields',
+            help='edit all fields',
         )
         edit_command.parser.add_album_option()
         edit_command.func = self._edit_command
@@ -191,7 +189,7 @@ class EditPlugin(plugins.BeetsPlugin):
         items, albums = _do_query(lib, query, opts.album, False)
         objs = albums if opts.album else items
         if not objs:
-            ui.print_(u'Nothing to edit.')
+            ui.print_('Nothing to edit.')
             return
 
         # Get the fields to edit.
@@ -244,15 +242,10 @@ class EditPlugin(plugins.BeetsPlugin):
         old_data = [flatten(o, fields) for o in objs]
 
         # Set up a temporary file with the initial data for editing.
-        if six.PY2:
-            new = NamedTemporaryFile(mode='w', suffix='.yaml', delete=False)
-        else:
-            new = NamedTemporaryFile(mode='w', suffix='.yaml', delete=False,
-                                     encoding='utf-8')
+        new = NamedTemporaryFile(mode='w', suffix='.yaml', delete=False,
+                                 encoding='utf-8')
         old_str = dump(old_data)
         new.write(old_str)
-        if six.PY2:
-            old_str = old_str.decode('utf-8')
         new.close()
 
         # Loop until we have parseable data and the user confirms.
@@ -266,15 +259,15 @@ class EditPlugin(plugins.BeetsPlugin):
                 with codecs.open(new.name, encoding='utf-8') as f:
                     new_str = f.read()
                 if new_str == old_str:
-                    ui.print_(u"No changes; aborting.")
+                    ui.print_("No changes; aborting.")
                     return False
 
                 # Parse the updated data.
                 try:
                     new_data = load(new_str)
                 except ParseError as e:
-                    ui.print_(u"Could not read data: {}".format(e))
-                    if ui.input_yn(u"Edit again to fix? (Y/n)", True):
+                    ui.print_(f"Could not read data: {e}")
+                    if ui.input_yn("Edit again to fix? (Y/n)", True):
                         continue
                     else:
                         return False
@@ -289,18 +282,18 @@ class EditPlugin(plugins.BeetsPlugin):
                 for obj, obj_old in zip(objs, objs_old):
                     changed |= ui.show_model_changes(obj, obj_old)
                 if not changed:
-                    ui.print_(u'No changes to apply.')
+                    ui.print_('No changes to apply.')
                     return False
 
                 # Confirm the changes.
                 choice = ui.input_options(
-                    (u'continue Editing', u'apply', u'cancel')
+                    ('continue Editing', 'apply', 'cancel')
                 )
-                if choice == u'a':  # Apply.
+                if choice == 'a':  # Apply.
                     return True
-                elif choice == u'c':  # Cancel.
+                elif choice == 'c':  # Cancel.
                     return False
-                elif choice == u'e':  # Keep editing.
+                elif choice == 'e':  # Keep editing.
                     # Reset the temporary changes to the objects. I we have a
                     # copy from above, use that, else reload from the database.
                     objs = [(old_obj or obj)
@@ -322,7 +315,7 @@ class EditPlugin(plugins.BeetsPlugin):
         are temporary.
         """
         if len(old_data) != len(new_data):
-            self._log.warning(u'number of objects changed from {} to {}',
+            self._log.warning('number of objects changed from {} to {}',
                               len(old_data), len(new_data))
 
         obj_by_id = {o.id: o for o in objs}
@@ -333,7 +326,7 @@ class EditPlugin(plugins.BeetsPlugin):
             forbidden = False
             for key in ignore_fields:
                 if old_dict.get(key) != new_dict.get(key):
-                    self._log.warning(u'ignoring object whose {} changed', key)
+                    self._log.warning('ignoring object whose {} changed', key)
                     forbidden = True
                     break
             if forbidden:
@@ -348,7 +341,7 @@ class EditPlugin(plugins.BeetsPlugin):
         # Save to the database and possibly write tags.
         for ob in objs:
             if ob._dirty:
-                self._log.debug(u'saving changes to {}', ob)
+                self._log.debug('saving changes to {}', ob)
                 ob.try_sync(ui.should_write(), ui.should_move())
 
     # Methods for interactive importer execution.

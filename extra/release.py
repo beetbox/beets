@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """A utility script for automating the beets release process.
 """
@@ -36,7 +35,7 @@ VERSION_LOCS = [
         [
             (
                 r'__version__\s*=\s*u[\'"]([0-9\.]+)[\'"]',
-                "__version__ = u'{version}'",
+                "__version__ = '{version}'",
             )
         ]
     ),
@@ -110,14 +109,14 @@ def bump_version(version):
                     out_lines.append(line)
 
             if not found:
-                print("No pattern found in {}".format(filename))
+                print(f"No pattern found in {filename}")
 
         # Write the file back.
         with open(filename, 'w') as f:
             f.write(''.join(out_lines))
 
     # Generate bits to insert into changelog.
-    header_line = '{} (in development)'.format(version)
+    header_line = f'{version} (in development)'
     header = '\n\n' + header_line + '\n' + '-' * len(header_line) + '\n\n'
     header += 'Changelog goes here!\n'
 
@@ -277,7 +276,7 @@ def prep():
     cur_version = get_version()
 
     # Tag.
-    subprocess.check_output(['git', 'tag', 'v{}'.format(cur_version)])
+    subprocess.check_call(['git', 'tag', f'v{cur_version}'])
 
     # Build.
     with chdir(BASE):
@@ -292,7 +291,7 @@ def prep():
     # FIXME It should be possible to specify this as an argument.
     version_parts = [int(n) for n in cur_version.split('.')]
     version_parts[-1] += 1
-    next_version = u'.'.join(map(str, version_parts))
+    next_version = '.'.join(map(str, version_parts))
     bump_version(next_version)
 
 
@@ -311,7 +310,7 @@ def publish():
         subprocess.check_call(['git', 'push', '--tags'])
 
     # Upload to PyPI.
-    path = os.path.join(BASE, 'dist', 'beets-{}.tar.gz'.format(version))
+    path = os.path.join(BASE, 'dist', f'beets-{version}.tar.gz')
     subprocess.check_call(['twine', 'upload', path])
 
 
@@ -335,12 +334,12 @@ def ghrelease():
         'github-release', 'release',
         '-u', GITHUB_USER, '-r', GITHUB_REPO,
         '--tag', tag,
-        '--name', '{} {}'.format(GITHUB_REPO, version),
+        '--name', f'{GITHUB_REPO} {version}',
         '--description', cl_md,
     ])
 
     # Attach the release tarball.
-    tarball = os.path.join(BASE, 'dist', 'beets-{}.tar.gz'.format(version))
+    tarball = os.path.join(BASE, 'dist', f'beets-{version}.tar.gz')
     subprocess.check_call([
         'github-release', 'upload',
         '-u', GITHUB_USER, '-r', GITHUB_REPO,

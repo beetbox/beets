@@ -61,6 +61,7 @@ following to your configuration::
 
    absubmit
    acousticbrainz
+   albumtypes
    aura
    badfiles
    bareasc
@@ -97,6 +98,7 @@ following to your configuration::
    kodiupdate
    lastgenre
    lastimport
+   limit
    loadext
    lyrics
    mbcollection
@@ -165,7 +167,7 @@ Metadata
 * :doc:`metasync`: Fetch metadata from local or remote sources
 * :doc:`mpdstats`: Connect to `MPD`_ and update the beets library with play
   statistics (last_played, play_count, skip_count, rating).
-* :doc:`parentwork`: Fetch work titles and works they are part of. 
+* :doc:`parentwork`: Fetch work titles and works they are part of.
 * :doc:`replaygain`: Calculate volume normalization for players that support it.
 * :doc:`scrub`: Clean extraneous metadata from music files.
 * :doc:`zero`: Nullify fields by pattern or unconditionally.
@@ -176,6 +178,7 @@ Metadata
 Path Formats
 ------------
 
+* :doc:`albumtypes`: Format album type in path formats.
 * :doc:`bucket`: Group your files into bucket directories that cover different
   field values ranges.
 * :doc:`inline`: Use Python snippets to customize path format strings.
@@ -229,7 +232,6 @@ Miscellaneous
 * :doc:`filefilter`: Automatically skip files during the import process based
   on regular expressions.
 * :doc:`fuzzy`: Search albums and tracks with fuzzy string matching.
-* :doc:`gmusic`: Search and upload files to Google Play Music.
 * :doc:`hook`: Run a command when an event is emitted by beets.
 * :doc:`ihate`: Automatically skip albums and tracks during the import process.
 * :doc:`info`: Print music files' tags to the console.
@@ -268,68 +270,74 @@ line in your config file.
 
 Here are a few of the plugins written by the beets community:
 
-* `beetFs`_ is a FUSE filesystem for browsing the music in your beets library.
-  (Might be out of date.)
+* `beets-alternatives`_ manages external files.
 
-* `A cmus plugin`_ integrates with the `cmus`_ console music player.
+* `beet-amazon`_ adds Amazon.com as a tagger data source.
 
 * `beets-artistcountry`_ fetches the artist's country of origin from
   MusicBrainz.
 
-* `dsedivec`_ has two plugins: ``edit`` and ``moveall``.
-
-* `beet-amazon`_ adds Amazon.com as a tagger data source.
-
-* `beets-copyartifacts`_ helps bring non-music files along during import.
-
-* `beets-check`_ automatically checksums your files to detect corruption.
-
-* `beets-alternatives`_ manages external files.
-
-* `beets-follow`_ lets you check for new albums from artists you like.
-
-* `beets-ibroadcast`_ uploads tracks to the `iBroadcast`_ cloud service.
-
-* `beets-setlister`_ generate playlists from the setlists of a given artist.
-
-* `beets-noimport`_ adds and removes directories from the incremental import skip list.
-
-* `whatlastgenre`_ fetches genres from various music sites.
-
-* `beets-usertag`_ lets you use keywords to tag and organize your music.
-
-* `beets-popularity`_ fetches popularity values from Spotify.
+* `beets-autofix`_ automates repetitive tasks to keep your library in order.
 
 * `beets-barcode`_ lets you scan or enter barcodes for physical media to
   search for their metadata.
 
-* `beets-ydl`_ downloads audio from youtube-dl sources and import into beets.
-
-* `beet-summarize`_ can compute lots of counts and statistics about your music
-  library.
-
-* `beets-mosaic`_ generates a montage of a mosaic from cover art.
-
-* `beets-goingrunning`_ generates playlists to go with your running sessions.
-
-* `beets-xtractor`_ extracts low- and high-level musical information from your songs.
-
-* `beets-yearfixer`_ attempts to fix all missing ``original_year`` and ``year`` fields.
-
-* `beets-autofix`_ automates repetitive tasks to keep your library in order.
-
-* `beets-describe`_ gives you the full picture of a single attribute of your library items.
+* `beetcamp`_ enables **bandcamp.com** autotagger with a fairly extensive amount of metadata.
 
 * `beets-bpmanalyser`_ analyses songs and calculates their tempo (BPM).
 
-* `beets-originquery`_ augments MusicBrainz queries with locally-sourced data
-  to improve autotagger results.
+* `beets-check`_ automatically checksums your files to detect corruption.
+
+* `A cmus plugin`_ integrates with the `cmus`_ console music player.
+
+* `beets-copyartifacts`_ helps bring non-music files along during import.
+
+* `beets-describe`_ gives you the full picture of a single attribute of your library items.
 
 * `drop2beets`_ automatically imports singles as soon as they are dropped in a
   folder (using Linux's ``inotify``). You can also set a sub-folders
   hierarchy to set flexible attributes by the way.
 
+* `dsedivec`_ has two plugins: ``edit`` and ``moveall``.
+
+* `beets-follow`_ lets you check for new albums from artists you like.
+
+* `beetFs`_ is a FUSE filesystem for browsing the music in your beets library.
+  (Might be out of date.)
+
+* `beets-goingrunning`_ generates playlists to go with your running sessions.
+
+* `beets-ibroadcast`_ uploads tracks to the `iBroadcast`_ cloud service.
+
+* `beets-importreplace`_ lets you perform regex replacements on incoming
+  metadata.
+
+* `beets-mosaic`_ generates a montage of a mosaic from cover art.
+
+* `beets-noimport`_ adds and removes directories from the incremental import skip list.
+
+* `beets-originquery`_ augments MusicBrainz queries with locally-sourced data
+  to improve autotagger results.
+
+* `beets-popularity`_ fetches popularity values from Spotify.
+
+* `beets-setlister`_ generate playlists from the setlists of a given artist.
+
+* `beet-summarize`_ can compute lots of counts and statistics about your music
+  library.
+
+* `beets-usertag`_ lets you use keywords to tag and organize your music.
+
+* `whatlastgenre`_ fetches genres from various music sites.
+
+* `beets-xtractor`_ extracts low- and high-level musical information from your songs.
+
+* `beets-ydl`_ downloads audio from youtube-dl sources and import into beets.
+
+* `beets-yearfixer`_ attempts to fix all missing ``original_year`` and ``year`` fields.
+
 .. _beets-barcode: https://github.com/8h2a/beets-barcode
+.. _beetcamp: https://github.com/snejus/beetcamp
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _beets-copyartifacts: https://github.com/adammillerio/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
@@ -345,6 +353,7 @@ Here are a few of the plugins written by the beets community:
 .. _beets-follow: https://github.com/nolsto/beets-follow
 .. _beets-ibroadcast: https://github.com/ctrueden/beets-ibroadcast
 .. _iBroadcast: https://ibroadcast.com/
+.. _beets-importreplace: https://github.com/edgars-supe/beets-importreplace
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
 .. _beets-noimport: https://gitlab.com/tiago.dias/beets-noimport
 .. _whatlastgenre: https://github.com/YetAnotherNerd/whatlastgenre/tree/master/plugin/beets

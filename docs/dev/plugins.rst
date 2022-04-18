@@ -36,7 +36,8 @@ found therein. Here's a skeleton of a plugin file::
 Once you have your ``BeetsPlugin`` subclass, there's a variety of things your
 plugin can do. (Read on!)
 
-To use your new plugin, make sure your ``beetsplug`` directory is in the Python
+To use your new plugin, make sure the directory that contains your
+``beetsplug`` directory is in the Python
 path (using ``PYTHONPATH`` or by installing in a `virtualenv`_, for example).
 Then, as described above, edit your ``config.yaml`` to include
 ``plugins: myawesomeplugin`` (substituting the name of the Python module
@@ -143,6 +144,9 @@ The events currently available are:
   command finishes adding an album to the library. Parameters: ``lib``,
   ``album``
 
+* `album_removed`: called with an ``Album`` object every time an album is
+  removed from the library (even when its file is not deleted from disk).
+
 * `item_copied`: called with an ``Item`` object whenever its file is copied.
   Parameters: ``item``, ``source`` path, ``destination`` path
 
@@ -245,6 +249,18 @@ The events currently available are:
   during a ``beet import`` interactive session. Plugins can use this event for
   :ref:`appending choices to the prompt <append_prompt_choices>` by returning a
   list of ``PromptChoices``. Parameters: ``task`` and ``session``.
+  
+* `mb_track_extract`: called after the metadata is obtained from
+  MusicBrainz. The parameter is a ``dict`` containing the tags retrieved from
+  MusicBrainz for a track. Plugins must return a new (potentially empty)
+  ``dict`` with additional ``field: value`` pairs, which the autotagger will
+  apply to the item, as flexible attributes if ``field`` is not a hardcoded
+  field. Fields already present on the track are overwritten. 
+  Parameter: ``data``
+
+* `mb_album_extract`: Like `mb_track_extract`, but for album tags. Overwrites
+  tags set at the track level, if they have the same ``field``.
+  Parameter: ``data``
 
 The included ``mpdupdate`` plugin provides an example use case for event listeners.
 

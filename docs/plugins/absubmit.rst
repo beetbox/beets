@@ -23,13 +23,12 @@ the plugin ``absubmit`` in your configuration (see :ref:`using-plugins`).
 Submitting Data
 ---------------
 
-Type::
+To run the analysis program and upload its results, type::
 
     beet absubmit [-f] [-d] [QUERY]
 
-To run the analysis program and upload its results. By default, the
-command will only look for AcousticBrainz data when the tracks
-doesn't already have it; the ``-f`` or ``--force`` switch makes it refetch
+By default, the command will only look for AcousticBrainz data when the tracks
+don't already have it; the ``-f`` or ``--force`` switch makes it refetch
 data even when it already exists. You can use the ``-d`` or ``--dry`` swtich
 to check which files will be analyzed, before you start a longer period
 of processing.

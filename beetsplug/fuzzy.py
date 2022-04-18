@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Philippe Mongeau.
 #
@@ -16,7 +15,6 @@
 """Provides a fuzzy matching query.
 """
 
-from __future__ import division, absolute_import, print_function
 
 from beets.plugins import BeetsPlugin
 from beets.dbcore.query import StringFieldQuery
@@ -37,7 +35,7 @@ class FuzzyQuery(StringFieldQuery):
 
 class FuzzyPlugin(BeetsPlugin):
     def __init__(self):
-        super(FuzzyPlugin, self).__init__()
+        super().__init__()
         self.config.add({
             'prefix': '~',
             'threshold': 0.7,

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Tom Jaspers.
 #
@@ -16,7 +15,6 @@
 """Synchronize information from iTunes's library
 """
 
-from __future__ import division, absolute_import, print_function
 
 from contextlib import contextmanager
 import os
@@ -24,8 +22,7 @@ import shutil
 import tempfile
 import plistlib
 
-import six
-from six.moves.urllib.parse import urlparse, unquote
+from urllib.parse import urlparse, unquote
 from time import mktime
 
 from beets import util
@@ -64,15 +61,16 @@ def _norm_itunes_path(path):
 class Itunes(MetaSource):
 
     item_types = {
-        'itunes_rating':      types.INTEGER,  # 0..100 scale
-        'itunes_playcount':   types.INTEGER,
-        'itunes_skipcount':   types.INTEGER,
-        'itunes_lastplayed':  DateType(),
+        'itunes_rating': types.INTEGER,  # 0..100 scale
+        'itunes_playcount': types.INTEGER,
+        'itunes_skipcount': types.INTEGER,
+        'itunes_lastplayed': DateType(),
         'itunes_lastskipped': DateType(),
+        'itunes_dateadded': DateType(),
     }
 
     def __init__(self, config, log):
-        super(Itunes, self).__init__(config, log)
+        super().__init__(config, log)
 
         config.add({'itunes': {
             'library': '~/Music/iTunes/iTunes Library.xml'
@@ -83,23 +81,20 @@ class Itunes(MetaSource):
 
         try:
             self._log.debug(
-                u'loading iTunes library from {0}'.format(library_path))
+                f'loading iTunes library from {library_path}')
             with create_temporary_copy(library_path) as library_copy:
-                if six.PY2:
-                    raw_library = plistlib.readPlist(library_copy)
-                else:
-                    with open(library_copy, 'rb') as library_copy_f:
-                        raw_library = plistlib.load(library_copy_f)
-        except IOError as e:
-            raise ConfigValueError(u'invalid iTunes library: ' + e.strerror)
+                with open(library_copy, 'rb') as library_copy_f:
+                    raw_library = plistlib.load(library_copy_f)
+        except OSError as e:
+            raise ConfigValueError('invalid iTunes library: ' + e.strerror)
         except Exception:
             # It's likely the user configured their '.itl' library (<> xml)
             if os.path.splitext(library_path)[1].lower() != '.xml':
-                hint = u': please ensure that the configured path' \
-                       u' points to the .XML library'
+                hint = ': please ensure that the configured path' \
+                       ' points to the .XML library'
             else:
                 hint = ''
-            raise ConfigValueError(u'invalid iTunes library' + hint)
+            raise ConfigValueError('invalid iTunes library' + hint)
 
         # Make the iTunes library queryable using the path
         self.collection = {_norm_itunes_path(track['Location']): track
@@ -110,7 +105,7 @@ class Itunes(MetaSource):
         result = self.collection.get(util.bytestring_path(item.path).lower())
 
         if not result:
-            self._log.warning(u'no iTunes match found for {0}'.format(item))
+            self._log.warning(f'no iTunes match found for {item}')
             return
 
         item.itunes_rating = result.get('Rating')
@@ -124,3 +119,7 @@ class Itunes(MetaSource):
         if result.get('Skip Date'):
             item.itunes_lastskipped = mktime(
                 result.get('Skip Date').timetuple())
+
+        if result.get('Date Added'):
+            item.itunes_dateadded = mktime(
+                result.get('Date Added').timetuple())

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -15,7 +14,6 @@
 
 """A namespace package for beets plugins."""
 
-from __future__ import division, absolute_import, print_function
 
 # Make this a namespace package.
 from pkgutil import extend_path

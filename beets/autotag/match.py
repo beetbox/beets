@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -17,7 +16,6 @@
 releases and tracks.
 """
 
-from __future__ import division, absolute_import, print_function
 
 import datetime
 import re
@@ -35,7 +33,7 @@ from beets.util.enumeration import OrderedEnum
 # album level to determine whether a given release is likely a VA
 # release and also on the track level to to remove the penalty for
 # differing artists.
-VA_ARTISTS = (u'', u'various artists', u'various', u'va', u'unknown')
+VA_ARTISTS = ('', 'various artists', 'various', 'va', 'unknown')
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -108,7 +106,7 @@ def assign_items(items, tracks):
     log.debug('...done.')
 
     # Produce the output matching.
-    mapping = dict((items[i], tracks[j]) for (i, j) in matching)
+    mapping = {items[i]: tracks[j] for (i, j) in matching}
     extra_items = list(set(items) - set(mapping.keys()))
     extra_items.sort(key=lambda i: (i.disc, i.track, i.title))
     extra_tracks = list(set(tracks) - set(mapping.values()))
@@ -276,16 +274,16 @@ def match_by_id(items):
     try:
         first = next(albumids)
     except StopIteration:
-        log.debug(u'No album ID found.')
+        log.debug('No album ID found.')
         return None
 
     # Is there a consensus on the MB album ID?
     for other in albumids:
         if other != first:
-            log.debug(u'No album ID consensus.')
+            log.debug('No album ID consensus.')
             return None
     # If all album IDs are equal, look up the album.
-    log.debug(u'Searching for discovered album ID: {0}', first)
+    log.debug('Searching for discovered album ID: {0}', first)
     return hooks.album_for_mbid(first)
 
 
@@ -351,23 +349,23 @@ def _add_candidate(items, results, info):
     checking the track count, ordering the items, checking for
     duplicates, and calculating the distance.
     """
-    log.debug(u'Candidate: {0} - {1} ({2})',
+    log.debug('Candidate: {0} - {1} ({2})',
               info.artist, info.album, info.album_id)
 
     # Discard albums with zero tracks.
     if not info.tracks:
-        log.debug(u'No tracks.')
+        log.debug('No tracks.')
         return
 
-    # Don't duplicate.
-    if info.album_id in results:
-        log.debug(u'Duplicate.')
+    # Prevent duplicates.
+    if info.album_id and info.album_id in results:
+        log.debug('Duplicate.')
         return
 
     # Discard matches without required tags.
     for req_tag in config['match']['required'].as_str_seq():
         if getattr(info, req_tag) is None:
-            log.debug(u'Ignored. Missing required tag: {0}', req_tag)
+            log.debug('Ignored. Missing required tag: {0}', req_tag)
             return
 
     # Find mapping between the items and the track info.
@@ -380,10 +378,10 @@ def _add_candidate(items, results, info):
     penalties = [key for key, _ in dist]
     for penalty in config['match']['ignored'].as_str_seq():
         if penalty in penalties:
-            log.debug(u'Ignored. Penalty: {0}', penalty)
+            log.debug('Ignored. Penalty: {0}', penalty)
             return
 
-    log.debug(u'Success. Distance: {0}', dist)
+    log.debug('Success. Distance: {0}', dist)
     results[info.album_id] = hooks.AlbumMatch(dist, info, mapping,
                                               extra_items, extra_tracks)
 
@@ -411,7 +409,7 @@ def tag_album(items, search_artist=None, search_album=None,
     likelies, consensus = current_metadata(items)
     cur_artist = likelies['artist']
     cur_album = likelies['album']
-    log.debug(u'Tagging {0} - {1}', cur_artist, cur_album)
+    log.debug('Tagging {0} - {1}', cur_artist, cur_album)
 
     # The output result (distance, AlbumInfo) tuples (keyed by MB album
     # ID).
@@ -420,7 +418,7 @@ def tag_album(items, search_artist=None, search_album=None,
     # Search by explicit ID.
     if search_ids:
         for search_id in search_ids:
-            log.debug(u'Searching for album ID: {0}', search_id)
+            log.debug('Searching for album ID: {0}', search_id)
             for id_candidate in hooks.albums_for_id(search_id):
                 _add_candidate(items, candidates, id_candidate)
 
@@ -431,13 +429,13 @@ def tag_album(items, search_artist=None, search_album=None,
         if id_info:
             _add_candidate(items, candidates, id_info)
             rec = _recommendation(list(candidates.values()))
-            log.debug(u'Album ID match recommendation is {0}', rec)
+            log.debug('Album ID match recommendation is {0}', rec)
             if candidates and not config['import']['timid']:
                 # If we have a very good MBID match, return immediately.
                 # Otherwise, this match will compete against metadata-based
                 # matches.
                 if rec == Recommendation.strong:
-                    log.debug(u'ID match.')
+                    log.debug('ID match.')
                     return cur_artist, cur_album, \
                         Proposal(list(candidates.values()), rec)
 
@@ -445,19 +443,19 @@ def tag_album(items, search_artist=None, search_album=None,
         if not (search_artist and search_album):
             # No explicit search terms -- use current metadata.
             search_artist, search_album = cur_artist, cur_album
-        log.debug(u'Search terms: {0} - {1}', search_artist, search_album)
+        log.debug('Search terms: {0} - {1}', search_artist, search_album)
 
         extra_tags = None
         if config['musicbrainz']['extra_tags']:
             tag_list = config['musicbrainz']['extra_tags'].get()
             extra_tags = {k: v for (k, v) in likelies.items() if k in tag_list}
-            log.debug(u'Additional search terms: {0}', extra_tags)
+            log.debug('Additional search terms: {0}', extra_tags)
 
         # Is this album likely to be a "various artist" release?
         va_likely = ((not consensus['artist']) or
                      (search_artist.lower() in VA_ARTISTS) or
                      any(item.comp for item in items))
-        log.debug(u'Album might be VA: {0}', va_likely)
+        log.debug('Album might be VA: {0}', va_likely)
 
         # Get the results from the data sources.
         for matched_candidate in hooks.album_candidates(items,
@@ -467,7 +465,7 @@ def tag_album(items, search_artist=None, search_album=None,
                                                         extra_tags):
             _add_candidate(items, candidates, matched_candidate)
 
-    log.debug(u'Evaluating {0} candidates.', len(candidates))
+    log.debug('Evaluating {0} candidates.', len(candidates))
     # Sort and get the recommendation.
     candidates = _sort_candidates(candidates.values())
     rec = _recommendation(candidates)
@@ -492,7 +490,7 @@ def tag_item(item, search_artist=None, search_title=None,
     trackids = search_ids or [t for t in [item.mb_trackid] if t]
     if trackids:
         for trackid in trackids:
-            log.debug(u'Searching for track ID: {0}', trackid)
+            log.debug('Searching for track ID: {0}', trackid)
             for track_info in hooks.tracks_for_id(trackid):
                 dist = track_distance(item, track_info, incl_artist=True)
                 candidates[track_info.track_id] = \
@@ -501,7 +499,7 @@ def tag_item(item, search_artist=None, search_title=None,
                 rec = _recommendation(_sort_candidates(candidates.values()))
                 if rec == Recommendation.strong and \
                         not config['import']['timid']:
-                    log.debug(u'Track ID match.')
+                    log.debug('Track ID match.')
                     return Proposal(_sort_candidates(candidates.values()), rec)
 
     # If we're searching by ID, don't proceed.
@@ -514,7 +512,7 @@ def tag_item(item, search_artist=None, search_title=None,
     # Search terms.
     if not (search_artist and search_title):
         search_artist, search_title = item.artist, item.title
-    log.debug(u'Item search terms: {0} - {1}', search_artist, search_title)
+    log.debug('Item search terms: {0} - {1}', search_artist, search_title)
 
     # Get and evaluate candidate metadata.
     for track_info in hooks.item_candidates(item, search_artist, search_title):
@@ -522,7 +520,7 @@ def tag_item(item, search_artist=None, search_title=None,
         candidates[track_info.track_id] = hooks.TrackMatch(dist, track_info)
 
     # Sort by distance and return with recommendation.
-    log.debug(u'Found {0} candidates.', len(candidates))
+    log.debug('Found {0} candidates.', len(candidates))
     candidates = _sort_candidates(candidates.values())
     rec = _recommendation(candidates)
     return Proposal(candidates, rec)

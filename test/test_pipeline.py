@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
 #
@@ -15,9 +14,7 @@
 
 """Test the "pipeline.py" restricted parallel programming library.
 """
-from __future__ import division, absolute_import, print_function
 
-import six
 import unittest
 
 from beets.util import pipeline
@@ -25,8 +22,7 @@ from beets.util import pipeline
 
 # Some simple pipeline stages for testing.
 def _produce(num=5):
-    for i in range(num):
-        yield i
+    yield from range(num)
 
 
 def _work():
@@ -112,7 +108,7 @@ class ParallelStageTest(unittest.TestCase):
     def test_run_parallel(self):
         self.pl.run_parallel()
         # Order possibly not preserved; use set equality.
-        self.assertEqual(set(self.l), set([0, 2, 4, 6, 8]))
+        self.assertEqual(set(self.l), {0, 2, 4, 6, 8})
 
     def test_pull(self):
         pl = pipeline.Pipeline((_produce(), (_work(), _work())))
@@ -136,10 +132,7 @@ class ExceptionTest(unittest.TestCase):
         pull = pl.pull()
         for i in range(3):
             next(pull)
-        if six.PY2:
-            self.assertRaises(ExceptionFixture, pull.next)
-        else:
-            self.assertRaises(ExceptionFixture, pull.__next__)
+        self.assertRaises(ExceptionFixture, pull.__next__)
 
 
 class ParallelExceptionTest(unittest.TestCase):
@@ -174,7 +167,7 @@ class ConstrainedThreadedPipelineTest(unittest.TestCase):
             _produce(1000), (_work(), _work()), _consume(l)
         ))
         pl.run_parallel(1)
-        self.assertEqual(set(l), set(i * 2 for i in range(1000)))
+        self.assertEqual(set(l), {i * 2 for i in range(1000)})
 
 
 class BubbleTest(unittest.TestCase):

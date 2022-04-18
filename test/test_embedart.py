@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Thomas Scholtes.
 #
@@ -13,16 +12,16 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-from __future__ import division, absolute_import, print_function
 
 import os.path
 import shutil
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 import tempfile
 import unittest
 
 from test import _common
 from test.helper import TestHelper
+from test.test_art_resize import DummyIMBackend
 
 from mediafile import MediaFile
 from beets import config, logging, ui
@@ -51,7 +50,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
     abbey_differentpath = os.path.join(_common.RSRC, b'abbey-different.jpg')
 
     def setUp(self):
-        super(EmbedartCliTest, self).setUp()
+        super().setUp()
         self.io.install()
         self.setup_beets()  # Converter is threaded
         self.load_plugins('embedart')
@@ -121,7 +120,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
 
         if os.path.isfile(tmp_path):
             os.remove(tmp_path)
-            self.fail(u'Artwork file {0} was not deleted'.format(tmp_path))
+            self.fail(f'Artwork file {tmp_path} was not deleted')
 
     def test_art_file_missing(self):
         self.add_album_fixture()
@@ -156,7 +155,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         mediafile = MediaFile(syspath(item.path))
 
         self.assertEqual(mediafile.images[0].data, self.image_data,
-                         u'Image written is not {0}'.format(
+                         'Image written is not {}'.format(
                          displayable_path(self.abbey_artpath)))
 
     @require_artresizer_compare
@@ -170,7 +169,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         mediafile = MediaFile(syspath(item.path))
 
         self.assertEqual(mediafile.images[0].data, self.image_data,
-                         u'Image written is not {0}'.format(
+                         'Image written is not {}'.format(
                          displayable_path(self.abbey_similarpath)))
 
     def test_non_ascii_album_path(self):
@@ -218,16 +217,30 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         self.assertEqual(mediafile.images[0].data, self.image_data)
 
 
-@patch('beets.art.subprocess')
+class DummyArtResizer(ArtResizer):
+    """An `ArtResizer` which pretends that ImageMagick is available, and has
+    a sufficiently recent version to support image comparison.
+    """
+    def __init__(self):
+        self.local_method = DummyIMBackend()
+
+
+@patch('beets.util.artresizer.subprocess')
 @patch('beets.art.extract')
 class ArtSimilarityTest(unittest.TestCase):
     def setUp(self):
         self.item = _common.item()
         self.log = logging.getLogger('beets.embedart')
+        self.artresizer = DummyArtResizer()
 
     def _similarity(self, threshold):
-        return art.check_art_similarity(self.log, self.item, b'path',
-                                        threshold)
+        return art.check_art_similarity(
+            self.log,
+            self.item,
+            b'path',
+            threshold,
+            artresizer=self.artresizer,
+        )
 
     def _popen(self, status=0, stdout="", stderr=""):
         """Create a mock `Popen` object."""

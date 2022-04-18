@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # This file is part of beets.
 # Copyright 2016, Fabrice Laporte.
 #
@@ -15,7 +14,6 @@
 
 """Tests for the 'bucket' plugin."""
 
-from __future__ import division, absolute_import, print_function
 
 import unittest
 from beetsplug import bucket
