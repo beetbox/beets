@@ -66,6 +66,8 @@ Bug fixes:
 * :doc:`plugins/embedart`: Fix a crash when using recent versions of
   ImageMagick and the ``compare_threshold`` option.
   :bug:`4272`
+* :doc:`plugins/lyrics`: Fixed issue with Genius header being included in lyrics,
+  added test case of up-to-date Genius html
 
 For packagers:
 
