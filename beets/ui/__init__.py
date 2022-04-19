@@ -1131,7 +1131,7 @@ def _load_plugins(options, config):
     # Exclude any plugins that were specified on the command line
     if options.exclude is not None:
         plugin_list = [p for p in plugin_list
-                        if p not in options.exclude.split(',')]
+                       if p not in options.exclude.split(',')]
 
     plugins.load_plugins(plugin_list)
     return plugins
