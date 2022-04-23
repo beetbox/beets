@@ -2,6 +2,7 @@
 comment: off
 
 # Sets non-blocking status checks
+# https://docs.codecov.com/docs/commit-status#informational
 coverage:
   status:
     project:
