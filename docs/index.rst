@@ -12,7 +12,7 @@ Then you can get a more detailed look at beets' features in the
 :doc:`/reference/cli/` and :doc:`/reference/config` references. You might also
 be interested in exploring the :doc:`plugins </plugins/index>`.
 
-If you still need help, your can drop by the ``#beets`` IRC channel on
+If you still need help, you can drop by the ``#beets`` IRC channel on
 Libera.Chat, drop by `the discussion board`_, send email to
 `the mailing list`_, or `file a bug`_ in the issue tracker. Please let us know
 where you think this documentation can be improved.
