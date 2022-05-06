@@ -11,6 +11,8 @@
 #
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
+#
+# urllib.parse added because of the better encoding handling
 
 """Adds Deezer release and track search support to the autotagger
 """
@@ -19,6 +21,9 @@ import collections
 
 import unidecode
 import requests
+
+import html
+import re
 
 from beets import ui
 from beets.autotag import AlbumInfo, TrackInfo
@@ -176,7 +181,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         return track
 
     @staticmethod
-    def _construct_search_query(filters=None, keywords=''):
+    def _construct_search_query(filters=None, keywords='', unidec=True):
         """Construct a query string with the specified filters and keywords to
         be provided to the Deezer Search API
         (https://developers.deezer.com/api/search).
@@ -195,7 +200,108 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         query = ' '.join([q for q in query_components if q])
         if not isinstance(query, str):
             query = query.decode('utf8')
-        return unidecode.unidecode(query)
+
+        if unidec == True:
+            query = unidecode.unidecode(query)
+
+        return query
+
+    def manipulate_query(self, query, query_type):
+        # The deezer API only handles HTML Unicode symols correctly
+        stdquery = query
+        #query = query.replace(" & ", " ").replace(" x ", " ")
+
+        q = html.escape(query, quote=False).encode(
+            'ascii', 'xmlcharrefreplace').decode()
+        query = "q=" + q
+
+        self._log.debug(
+            f"Fallback 1st norm/unidecode searching {self.data_source} for '{query}'"
+        )
+        response = requests.get(
+            self.search_url + query_type, params=query
+        )
+
+        self._log.debug(
+            f"Searching with url: '{response.url}'"
+        )
+        response.raise_for_status()
+        response_data = response.json().get('data', [])
+
+        # To enlight the matching process strip possible anoying featurings
+        # As less artists is less an issue but now usabale if artist field is there
+        if len(response_data) == 0 and "artist:" in query:
+            a = query.split("artist:")
+            albumquery = a[0]
+            artistquery = a[1]
+            if " & " in artistquery:
+                x = artistquery.split(" &amp; ")
+                artistquery = x[0] + '"'
+
+            if ", " in artistquery:
+                x = artistquery.split(", ")
+                artistquery = x[0] + '"'
+
+            if " x " in artistquery:
+                x = artistquery.split(" x ")
+                artistquery = x[0] + '"'
+
+            query = albumquery + "artist:" + artistquery
+
+            self._log.debug(
+                f"Fallback 2nd norm/unidecode searching {self.data_source} for '{query}'"
+            )
+            response = requests.get(
+                self.search_url + query_type, params=query
+            )
+
+            self._log.debug(
+                f"Seraching with url: '{response.url}'"
+            )
+            response.raise_for_status()
+            response_data = response.json().get('data', [])
+
+        # As in my case somehowe from one as an ep handled deezer handles it as an album
+        # Strip ep from album string
+        if len(response_data) == 0 and "artist:" in query:
+            a = query.split("artist:")
+            albumquery = a[0]
+            artistquery = a[1]
+            if " EP" in albumquery:
+                albumquery = albumquery.replace(" EP", "")
+
+            query = albumquery + "artist:" + artistquery
+
+            self._log.debug(
+                f"Fallback 3th norm/unidecode searching {self.data_source} for '{query}'"
+            )
+            response = requests.get(
+                self.search_url + query_type, params=query
+            )
+
+            self._log.debug(
+                f"Seraching with url: '{response.url}'"
+            )
+            response.raise_for_status()
+            response_data = response.json().get('data', [])
+
+        if len(response_data) == 0:
+            query = re.sub(' [\(\[].*?[\)\]]', '', query)
+
+            self._log.debug(
+                f"Fallback 4th norm/unidecode searching {self.data_source} for '{query}'"
+            )
+            response = requests.get(
+                self.search_url + query_type, params=query
+            )
+
+            self._log.debug(
+                f"Seraching with url: '{response.url}'"
+            )
+            response.raise_for_status()
+            response_data = response.json().get('data', [])
+
+        return response_data
 
     def _search_api(self, query_type, filters=None, keywords=''):
         """Query the Deezer Search API for the specified ``keywords``, applying
@@ -214,8 +320,11 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         :rtype: dict or None
         """
         query = self._construct_search_query(
-            keywords=keywords, filters=filters
+            keywords=keywords, filters=filters, unidec=True
         )
+        
+        query = query.replace("(","").replace(")","")
+
         if not query:
             return None
         self._log.debug(
@@ -224,8 +333,46 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         response = requests.get(
             self.search_url + query_type, params={'q': query}
         )
+
+        self._log.debug(
+            f"Seraching with url: '{response.url}'"
+        )
         response.raise_for_status()
         response_data = response.json().get('data', [])
+
+        if len(response_data) == 0:
+            response_data = self.manipulate_query(query, query_type)
+
+        # As my libary uses a lot of european namings unidecode causes a lot of trouble
+        # To get a better api response shutoff unideocde while creating the query
+        if len(response_data) == 0:
+            query = self._construct_search_query(
+                keywords=keywords, filters=filters, unidec=False
+            )
+
+            query = query.replace("(","").replace(")","")
+
+
+            if not query:
+                return None
+
+            self._log.debug(
+                f"Searching without unidecode {self.data_source} for '{query}'"
+            )
+
+            response = requests.get(
+                self.search_url + query_type, params={'q': query}
+            )
+
+            self._log.debug(
+                f"Seraching with url: '{response.url}'"
+            )
+            response.raise_for_status()
+            response_data = response.json().get('data', [])
+
+            if len(response_data) == 0:
+                response_data = self.manipulate_query(query, query_type)
+
         self._log.debug(
             "Found {} result(s) from {} for '{}'",
             len(response_data),
