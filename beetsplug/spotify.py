@@ -214,8 +214,10 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         return AlbumInfo(
             album=album_data['name'],
             album_id=spotify_id,
+            spotify_album_id=spotify_id,
             artist=artist,
             artist_id=artist_id,
+            spotify_artist_id=artist_id,
             tracks=tracks,
             albumtype=album_data['album_type'],
             va=len(album_data['artists']) == 1
@@ -242,8 +244,10 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         return TrackInfo(
             title=track_data['name'],
             track_id=track_data['id'],
+            spotify_track_id=track_data['id'],
             artist=artist,
             artist_id=artist_id,
+            spotify_artist_id=artist_id,
             length=track_data['duration_ms'] / 1000,
             index=track_data['track_number'],
             medium=track_data['disc_number'],

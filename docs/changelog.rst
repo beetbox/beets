@@ -8,9 +8,12 @@ Changelog goes here!
 
 New features:
 
+* :doc:`/plugins/spotify`: The plugin now records Spotify-specific IDs in the
+  `spotify_album_id`, `spotify_artist_id`, and `spotify_track_id` fields.
+  :bug:`4348`
 * Create the parental directories for database if they do not exist.
   :bug:`3808` :bug:`4327`
-* :ref:`musicbrainz-config`: a new :ref:`musicbrainz.enabled` option allows disabling 
+* :ref:`musicbrainz-config`: a new :ref:`musicbrainz.enabled` option allows disabling
   the MusicBrainz metadata source during the autotagging process
 * :doc:`/plugins/kodiupdate`: Now supports multiple kodi instances
   :bug:`4101`
@@ -20,7 +23,7 @@ New features:
 * :doc:`/plugins/convert`: Add a new `auto_keep` option that automatically
   converts files but keeps the *originals* in the library.
   :bug:`1840` :bug:`4302`
-* Added a ``-P`` (or ``--disable-plugins``) flag to specify one/multiple plugin(s) to be 
+* Added a ``-P`` (or ``--disable-plugins``) flag to specify one/multiple plugin(s) to be
   disabled at startup.
 
 Bug fixes:
