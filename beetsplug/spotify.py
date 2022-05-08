@@ -27,6 +27,7 @@ import requests
 import confuse
 
 from beets import ui
+from beets import config
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.plugins import MetadataSourcePlugin, BeetsPlugin
 
