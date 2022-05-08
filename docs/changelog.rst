@@ -8,7 +8,7 @@ Changelog goes here!
 
 New features:
 
-* Save Spotify `album_id`, `artist_id` and `track_id` information. Partial fix for `4347`.
+* Save Spotify `album_id`, `artist_id`, and `track_id` information
 * Create the parental directories for database if they do not exist.
   :bug:`3808` :bug:`4327`
 * :ref:`musicbrainz-config`: a new :ref:`musicbrainz.enabled` option allows disabling
