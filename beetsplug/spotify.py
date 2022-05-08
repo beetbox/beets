@@ -244,7 +244,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         return TrackInfo(
             title=track_data['name'],
             track_id=track_data['id'],
-            spotify_track_id=track_id,
+            spotify_track_id=track_data['id'],
             artist=artist,
             artist_id=artist_id,
             spotify_artist_id=artist_id,
