@@ -8,7 +8,9 @@ Changelog goes here!
 
 New features:
 
-* Save Spotify `album_id`, `artist_id`, and `track_id` information
+* :doc:`/pluings/spotify`: The plugin now records Spotify-specific IDs in the
+  `spotify_album_id`, `spotify_artist_id`, and `spotify_track_id` fields.
+  :bug:`4348`
 * Create the parental directories for database if they do not exist.
   :bug:`3808` :bug:`4327`
 * :ref:`musicbrainz-config`: a new :ref:`musicbrainz.enabled` option allows disabling
