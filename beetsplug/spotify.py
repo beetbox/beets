@@ -61,8 +61,8 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 'track_field': 'title',
                 'region_filter': None,
                 'regex': [],
-                'client_id': '4e414367a1d14c75a5c5129a627fcab8',
-                'client_secret': 'f82bdc09b2254f1a8286815d02fd46dc',
+                'client_id': config['spotify']['client_id'].as_str(),
+                'client_secret': config['spotify']['client_secret'].as_str(),
                 'tokenfile': 'spotify_token.json',
             }
         )
