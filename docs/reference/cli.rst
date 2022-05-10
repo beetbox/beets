@@ -445,6 +445,9 @@ import ...``.
   specified, the plugin list in your configuration is ignored. The long form
   of this argument also allows specifying no plugins, effectively disabling
   all plugins: ``--plugins=``.
+* ``-P plugins``: specify a comma-separated list of plugins to disable in a
+  specific beets run. This will overwrite ``-p`` if used with it. To disable all plugins, use
+  ``--plugins=`` instead.
 
 Beets also uses the ``BEETSDIR`` environment variable to look for
 configuration and data.

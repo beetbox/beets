@@ -741,6 +741,17 @@ to one request per second.
 .. _limited: https://musicbrainz.org/doc/XML_Web_Service/Rate_Limiting
 .. _Building search indexes: https://musicbrainz.org/doc/Development/Search_server_setup
 
+.. _musicbrainz.enabled:
+
+enabled
+~~~~~~~
+
+This option allows you to disable using MusicBrainz as a metadata source. This applies
+if you use plugins that fetch data from alternative sources and should make the import
+process quicker.
+
+Default: ``yes``.
+
 .. _searchlimit:
 
 searchlimit

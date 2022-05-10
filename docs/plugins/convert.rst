@@ -66,13 +66,23 @@ file. The available options are:
   default configuration) non-MP3 files over the maximum bitrate before adding
   them to your library.
   Default: ``no``.
+- **auto_keep**: Convert your files automatically on import to **dest** but
+  import the non transcoded version. It uses the default format you have
+  defined in your config file.
+  Default: ``no``.
+
+  .. note:: You probably want to use only one of the `auto` and `auto_keep`
+     options, not both. Enabling both will convert your files twice on import,
+     which you probably don't want.
+
 - **tmpdir**: The directory where temporary files will be stored during import.
   Default: none (system default),
 - **copy_album_art**: Copy album art when copying or transcoding albums matched
   using the ``-a`` option. Default: ``no``.
 - **album_art_maxwidth**: Downscale album art if it's too big. The resize
   operation reduces image width to at most ``maxwidth`` pixels while
-  preserving the aspect ratio.
+  preserving the aspect ratio. The specified image size will apply to both
+  embedded album art and external image files.
 - **dest**: The directory where the files will be converted (or copied) to.
   Default: none.
 - **embed**: Embed album art in converted items. Default: ``yes``.
