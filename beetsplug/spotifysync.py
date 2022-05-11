@@ -146,6 +146,7 @@ class SpotifySyncPlugin(BeetsPlugin):
                 self._log.debug('data = {}', data)
             else:
                 self._log.debug('skipping popularity')
+            item['spotify_track_popularity'] = data
             item.store()
             if write:
                 item.try_write()
