@@ -198,7 +198,7 @@ class SpotifySyncPlugin(BeetsPlugin):
         :return: TrackInfo object for track
         :rtype: beets.autotag.hooks.TrackInfo or None
         """
-        self._log.error('{}',item)
+        self._log.error('{}',track_id)
         spotify_id = self._get_id('track', spotify_track_id)
         if spotify_id is None:
             return None
