@@ -126,14 +126,14 @@ class SpotifySyncPlugin(MetadataSourcePlugin, BeetsPlugin):
         """Fetch popularity information from Spotify for the item.
         """
         for item in items:
-            self._log.error('getting data for: {}', item)
+            self._log.error('getting data for: {}', item.spotify_track_id)
             # If we're not forcing re-downloading for all tracks, check
             # whether the data is already present. We use one
             # representative field name to check for previously fetched
             # data.
             # We can only fetch data for tracks with MBIDs.
-            if not item.spotify_track_id:
-                continue
+            # if not item.spotify_track_id:
+            #     continue
 
             if not force:
                 spotify_track_popularity = item.get('spotify_track_popularity', '')
