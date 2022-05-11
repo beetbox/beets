@@ -31,7 +31,7 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.plugins import MetadataSourcePlugin, BeetsPlugin
 
 
-class SpotifySyncPlugin(MetadataSourcePlugin, BeetsPlugin):
+class SpotifySyncPlugin(plugins.BeetsPlugin):
     data_source = 'Spotify'
 
     # Base URLs for the Spotify API
