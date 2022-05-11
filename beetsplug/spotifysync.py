@@ -41,7 +41,6 @@ class SpotifySyncPlugin(BeetsPlugin):
     search_url = 'https://api.spotify.com/v1/search'
     album_url = 'https://api.spotify.com/v1/albums/'
     track_url = 'https://api.spotify.com/v1/tracks/'
-    track_url_new = 'https://api.spotify.com/v1/track/'
 
     def __init__(self):
         super().__init__()
@@ -201,7 +200,7 @@ class SpotifySyncPlugin(BeetsPlugin):
         """
         self._log.error('spotify_track_id: {}',track_id)
         track_data = self._handle_response(
-            requests.get, self.track_url_new + track_id
+            requests.get, self.track_url + track_id
         )
         self._log.error('track_data: {}',track_data)
         track = self._get_track(track_data)
