@@ -141,6 +141,7 @@ class SpotifySyncPlugin(BeetsPlugin):
 
             self._log.info('getting data for: {}', item)
             data = self.track_popularity(item.spotify_track_id)
+            self._log.info('data1: {}', data)
             if data:
                 self._log.debug('data = {}', data)
             else:
