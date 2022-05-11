@@ -184,7 +184,7 @@ class SpotifySyncPlugin(MetadataSourcePlugin, BeetsPlugin):
                 )
         return response.json()
 
-    def track_for_id(self, track_id=None, track_data=None):
+    def track_for_id(self, track_id=None):
         """Fetch a track by its Spotify ID or URL and return a
         TrackInfo object or None if the track is not found.
 
@@ -197,15 +197,15 @@ class SpotifySyncPlugin(MetadataSourcePlugin, BeetsPlugin):
         :return: TrackInfo object for track
         :rtype: beets.autotag.hooks.TrackInfo or None
         """
+        self._log.error('{}',item)
         if not item.spotify_track_id:
             continue
-        if track_data is None:
-            spotify_id = self._get_id('track', spotify_track_id)
-            if spotify_id is None:
-                return None
-            track_data = self._handle_response(
-                requests.get, self.track_url + spotify_id
-            )
+        spotify_id = self._get_id('track', spotify_track_id)
+        if spotify_id is None:
+            return None
+        track_data = self._handle_response(
+            requests.get, self.track_url + spotify_id
+        )
         track = self._get_track(track_data)
         return track
 
