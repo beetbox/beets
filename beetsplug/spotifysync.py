@@ -114,8 +114,6 @@ class SpotifySyncPlugin(BeetsPlugin):
 
         def func(lib, opts, args):
             items = lib.items(ui.decargs(args))
-            self._log.error('items {}, write {}, force {}', items, ui.should_write(),
-                             opts.force_refetch or self.config['force'])
             self._fetch_info(items, ui.should_write(),
                              opts.force_refetch or self.config['force'])
 
@@ -126,7 +124,7 @@ class SpotifySyncPlugin(BeetsPlugin):
         """Fetch popularity information from Spotify for the item.
         """
         for item in items:
-            self._log.error('getting data for: {}', item.spotify_track_id)
+            self._log.error('getting data for: {}', item)
             # If we're not forcing re-downloading for all tracks, check
             # whether the data is already present. We use one
             # representative field name to check for previously fetched
