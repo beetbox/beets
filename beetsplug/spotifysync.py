@@ -114,6 +114,8 @@ class SpotifySyncPlugin(MetadataSourcePlugin, BeetsPlugin):
 
         def func(lib, opts, args):
             items = lib.items(ui.decargs(args))
+            self._log.error('items {}, write {}, force {}', items, ui.should_write(),
+                             opts.force_refetch or self.config['force'])
             self._fetch_info(items, ui.should_write(),
                              opts.force_refetch or self.config['force'])
 
@@ -124,19 +126,20 @@ class SpotifySyncPlugin(MetadataSourcePlugin, BeetsPlugin):
         """Fetch popularity information from Spotify for the item.
         """
         for item in items:
+            self._log.error('getting data for: {}', item)
             # If we're not forcing re-downloading for all tracks, check
             # whether the data is already present. We use one
             # representative field name to check for previously fetched
             # data.
-            if not force:
-                spotify_track_popularity = item.get('spotify_track_popularity', '')
-                if spotify_track_popularity:
-                    self._log.info('data already present for: {}', item)
-                    continue
-
             # We can only fetch data for tracks with MBIDs.
             if not item.spotify_track_id:
                 continue
+
+            if not force:
+                spotify_track_popularity = item.get('spotify_track_popularity', '')
+                if spotify_track_popularity:
+                    self._log.error('data already present for: {}', item)
+                    continue
 
             self._log.info('getting data for: {}', item)
             data = self.track_for_id(item.spotify_track_id)
