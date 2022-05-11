@@ -132,8 +132,8 @@ class SpotifySyncPlugin(MetadataSourcePlugin, BeetsPlugin):
             # representative field name to check for previously fetched
             # data.
             # We can only fetch data for tracks with MBIDs.
-            # if not item.spotify_track_id:
-            #     continue
+            if not item.spotify_track_id:
+                continue
 
             if not force:
                 spotify_track_popularity = item.get('spotify_track_popularity', '')
@@ -201,8 +201,6 @@ class SpotifySyncPlugin(MetadataSourcePlugin, BeetsPlugin):
         :rtype: beets.autotag.hooks.TrackInfo or None
         """
         self._log.error('{}',item)
-        if not item.spotify_track_id:
-            continue
         spotify_id = self._get_id('track', spotify_track_id)
         if spotify_id is None:
             return None
