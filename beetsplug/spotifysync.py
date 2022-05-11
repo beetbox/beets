@@ -202,7 +202,7 @@ class SpotifySyncPlugin(BeetsPlugin):
         track_data = self._handle_response(
             requests.get, self.track_url + track_id
         )
-        self._log.error('track_data: {}',track_data)
+        self._log.error('track_data: {}',track_data['popularity'])
         track = self._get_track(track_data)
         return track
 
