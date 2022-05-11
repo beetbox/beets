@@ -140,7 +140,7 @@ class SpotifySyncPlugin(BeetsPlugin):
                     continue
 
             self._log.info('getting data for: {}', item)
-            data = self.track_for_id(item.spotify_track_id)
+            data = self.track_popularity(item.spotify_track_id)
             if data:
                 self._log.debug('data = {}', data)
             else:
@@ -185,7 +185,7 @@ class SpotifySyncPlugin(BeetsPlugin):
                 )
         return response.json()
 
-    def track_for_id(self, track_id=None):
+    def track_popularity(self, track_id=None):
         """Fetch a track by its Spotify ID or URL and return a
         TrackInfo object or None if the track is not found.
 
@@ -203,8 +203,8 @@ class SpotifySyncPlugin(BeetsPlugin):
             requests.get, self.track_url + track_id
         )
         self._log.error('track_data: {}',track_data['popularity'])
-        track = self._get_track(track_data)
-        return track
+        track_popularity=track_data['popularity']
+        return track_popularity
 
     def _get_track(self, track_data):
         """Convert a Spotify track object dict to a TrackInfo object.
