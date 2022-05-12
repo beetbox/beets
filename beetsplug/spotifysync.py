@@ -162,22 +162,7 @@ class SpotifySyncPlugin(BeetsPlugin):
                 for feature in audio_features.keys():
                     if feature in [ "analysis_url", "duration_ms", "id", "track_href", "type", "audio_features", "uri"]:
                         continue
-                    self._log.info('features: {}',feature)
-                    self._log.info('key: {}',SPOTIFY_AUDIO_FEATURES[feature][0])
-                    self._log.info('audio feature: {} for {}',audio_features[feature], item)
                     item[SPOTIFY_AUDIO_FEATURES[feature][0]] = audio_features[feature]
-                # item['spotify_track_acousticness'] = audio_features["acousticness"]
-                # item['spotify_track_danceability'] = audio_features["danceability"]
-                # item['spotify_track_energy'] = audio_features["energy"]
-                # item['spotify_track_instrumentalness'] = audio_features["instrumentalness"]
-                # item['spotify_track_key'] = audio_features["key"]
-                # item['spotify_track_liveness'] = audio_features["liveness"]
-                # item['spotify_track_loudness'] = audio_features["loudness"]
-                # item['spotify_track_mode'] = audio_features["mode"]
-                # item['spotify_track_speechiness'] = audio_features["speechiness"]
-                # item['spotify_track_tempo'] = audio_features["tempo"]
-                # item['spotify_track_time_sig'] = audio_features["time_signature"]
-                # item['spotify_track_valence'] = audio_features["valence"]
                 item.store()
                 if write:
                     item.try_write()
