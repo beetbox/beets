@@ -38,9 +38,8 @@ class SpotifySyncPlugin(BeetsPlugin):
     # Documentation: https://developer.spotify.com/web-api
     oauth_token_url = 'https://accounts.spotify.com/api/token'
     open_track_url = 'https://open.spotify.com/track/'
-    search_url = 'https://api.spotify.com/v1/search'
-    album_url = 'https://api.spotify.com/v1/albums/'
     track_url = 'https://api.spotify.com/v1/tracks/'
+    audio_features_url = 'https://api.spotify.com/v1/audio-features/'
 
     def __init__(self):
         super().__init__()
@@ -145,6 +144,19 @@ class SpotifySyncPlugin(BeetsPlugin):
                 else:
                     self._log.debug('skipping popularity')
                 item['spotify_track_popularity'] = data
+                audio_features = self.track_audio_features(item.spotify_track_id)
+                item['spotify_track_acousticness'] = audio_features["acousticness"]
+                item['spotify_track_danceability'] = audio_features["danceability"]
+                item['spotify_track_energy'] = audio_features["energy"]
+                item['spotify_track_instrumentalness'] = audio_features["instrumentalness"]
+                item['spotify_track_key'] = audio_features["key"]
+                item['spotify_track_liveness'] = audio_features["liveness"]
+                item['spotify_track_loudness'] = audio_features["loudness"]
+                item['spotify_track_mode'] = audio_features["mode"]
+                item['spotify_track_speechiness'] = audio_features["speechiness"]
+                item['spotify_track_tempo'] = audio_features["tempo"]
+                item['spotify_track_time_sig'] = audio_features["time_signature"]
+                item['spotify_track_valence'] = audio_features["valence"]
                 item.store()
                 if write:
                     item.try_write()
@@ -208,15 +220,22 @@ class SpotifySyncPlugin(BeetsPlugin):
         track_popularity=track_data['popularity']
         return track_popularity
 
-    def _get_track(self, track_data):
-        """Convert a Spotify track object dict to a TrackInfo object.
+    def track_audio_features(self, track_id=None):
+        """Fetch track features by its Spotify ID or URL and return a
+        TrackInfo object or None if the track is not found.
 
-        :param track_data: Simplified track object
-            (https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-simplified)
+        :param track_id: (Optional) Spotify ID or URL for the track. Either
+            ``track_id`` or ``track_data`` must be provided.
+        :type track_id: str
+        :param track_data: (Optional) Simplified track object dict. May be
+            provided instead of ``track_id`` to avoid unnecessary API calls.
         :type track_data: dict
         :return: TrackInfo object for track
-        :rtype: beets.autotag.hooks.TrackInfo
+        :rtype: beets.autotag.hooks.TrackInfo or None
         """
-        return TrackInfo(
-            spotify_track_popularity=track_data['popularity'],
+        track_data = self._handle_response(
+            requests.get, self.audio_features_url + track_id
         )
+        self._log.info('track_data: {}',track_data['acousticness'])
+        audio_features=track_data
+        return audio_features
