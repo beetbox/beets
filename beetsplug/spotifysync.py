@@ -16,16 +16,14 @@
 Spotify playlist construction.
 """
 
-import re
 import json
 import base64
 
-import unidecode
 import requests
 import confuse
 
 from beets import ui
-from beets.plugins import MetadataSourcePlugin, BeetsPlugin
+from beets.plugins import  BeetsPlugin
 
 class SpotifySyncPlugin(BeetsPlugin):
 
@@ -100,6 +98,7 @@ class SpotifySyncPlugin(BeetsPlugin):
             json.dump({'access_token': self.access_token}, f)
 
     def commands(self):
+        """Setup spotifysync command."""
         cmd = ui.Subcommand('spotifysync',
                             help="fetch track attributes from Spotify")
         cmd.parser.add_option(
@@ -117,6 +116,8 @@ class SpotifySyncPlugin(BeetsPlugin):
         return [cmd]
 
     def _fetch_info(self, items, write, force):
+        """Obtain track information from Spotify.
+        """
         SPOTIFY_AUDIO_FEATURES = {
             'acousticness': ['spotify_track_acousticness'],
             'danceability': ['spotify_track_danceability'],
