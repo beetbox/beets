@@ -142,9 +142,9 @@ class SpotifySyncPlugin(BeetsPlugin):
 
                 data = self.track_popularity(item.spotify_track_id)
                 if data:
-                    self._log.debug('data = {}', data)
+                    self._log.info('data = {}', data)
                 else:
-                    self._log.debug('skipping popularity')
+                    self._log.info('skipping popularity')
                 item['spotify_track_popularity'] = data
                 item.store()
                 if write:
