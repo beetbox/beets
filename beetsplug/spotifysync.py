@@ -121,27 +121,23 @@ class SpotifySyncPlugin(BeetsPlugin):
         return [cmd]
 
     def _fetch_info(self, items, write, force):
+        import time
         """Fetch popularity information from Spotify for the item.
         """
         for item in items:
-            self._log.error('getting data for: {}', item)
-            # If we're not forcing re-downloading for all tracks, check
-            # whether the data is already present. We use one
-            # representative field name to check for previously fetched
-            # data.
-            # We can only fetch data for tracks with MBIDs.
-            # if not item.spotify_track_id:
-            #     continue
+            time.sleep(.5)
+            self._log.info('getting data for: {}', item)
             try:
+                # If we're not forcing re-downloading for all tracks, check
+                # whether the popularity data is already present
                 if not force:
                     spotify_track_popularity = item.get('spotify_track_popularity', '')
                     if spotify_track_popularity:
-                        self._log.error('data already present for: {}', item)
+                        self._log.debug('data already present for: {}', item)
                         continue
 
                 self._log.info('getting data for: {}', item)
                 data = self.track_popularity(item.spotify_track_id)
-                self._log.info('data1: {}', data)
                 if data:
                     self._log.debug('data = {}', data)
                 else:
