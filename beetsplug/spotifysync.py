@@ -160,7 +160,7 @@ class SpotifySyncPlugin(BeetsPlugin):
                 audio_features = self.track_audio_features(item.spotify_track_id)
                 for key in audio_features.keys():
                     self._log.info('key: {}',SPOTIFY_AUDIO_FEATURES[key][0])
-                    self._log.info('audio feature: {}',audio_features[key])
+                    self._log.info('audio feature: {} for {}',audio_features[key], item)
                     item[SPOTIFY_AUDIO_FEATURES[key][0]] = audio_features[key]
                 # item['spotify_track_acousticness'] = audio_features["acousticness"]
                 # item['spotify_track_danceability'] = audio_features["danceability"]
