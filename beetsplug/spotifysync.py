@@ -160,9 +160,8 @@ class SpotifySyncPlugin(BeetsPlugin):
                 item['spotify_track_popularity'] = data
                 audio_features = self.track_audio_features(item.spotify_track_id)
                 for feature in audio_features.keys():
-                    if feature in [ "analysis_url", "duration_ms", "id", "track_href", "type", "audio_features", "uri"]:
-                        continue
-                    item[SPOTIFY_AUDIO_FEATURES[feature][0]] = audio_features[feature]
+                    if feature in SPOTIFY_AUDIO_FEATURES.keys():
+                        item[SPOTIFY_AUDIO_FEATURES[feature][0]] = audio_features[feature]
                 item.store()
                 if write:
                     item.try_write()
