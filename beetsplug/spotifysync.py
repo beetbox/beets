@@ -32,19 +32,6 @@ from beets.plugins import MetadataSourcePlugin, BeetsPlugin
 
 class SpotifySyncPlugin(BeetsPlugin):
 
-    SPOTIFY_AUDIO_FEATURES = {
-        'danceability': ['spotify_track_danceability'],
-        'energy': ['spotify_track_energy'],
-        'instrumentalness': ['spotify_track_instrumentalness'],
-        'key': ['spotify_track_key'],
-        'liveness': ['spotify_track_liveness'],
-        'loudness': ['spotify_track_loudness'],
-        'mode': ['spotify_track_mode'],
-        'speechiness': ['spotify_track_speechiness'],
-        'tempo': ['spotify_track_tempo'],
-        'time_signature': ['spotify_track_time_sig'],
-        'valence': ['spotify_track_valence'],
-    }
     data_source = 'Spotify'
 
     # Base URLs for the Spotify API
@@ -133,6 +120,19 @@ class SpotifySyncPlugin(BeetsPlugin):
         return [cmd]
 
     def _fetch_info(self, items, write, force):
+        SPOTIFY_AUDIO_FEATURES = {
+            'danceability': ['spotify_track_danceability'],
+            'energy': ['spotify_track_energy'],
+            'instrumentalness': ['spotify_track_instrumentalness'],
+            'key': ['spotify_track_key'],
+            'liveness': ['spotify_track_liveness'],
+            'loudness': ['spotify_track_loudness'],
+            'mode': ['spotify_track_mode'],
+            'speechiness': ['spotify_track_speechiness'],
+            'tempo': ['spotify_track_tempo'],
+            'time_signature': ['spotify_track_time_sig'],
+            'valence': ['spotify_track_valence'],
+        }
         import time
         """Fetch popularity information from Spotify for the item.
         """
