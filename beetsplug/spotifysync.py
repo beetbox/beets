@@ -159,10 +159,11 @@ class SpotifySyncPlugin(BeetsPlugin):
                     self._log.debug('skipping popularity')
                 item['spotify_track_popularity'] = data
                 audio_features = self.track_audio_features(item.spotify_track_id)
-                for key in audio_features.keys():
-                    self._log.info('key: {}',SPOTIFY_AUDIO_FEATURES[key][0])
-                    self._log.info('audio feature: {} for {}',audio_features[key], item)
-                    item[SPOTIFY_AUDIO_FEATURES[key][0]] = audio_features[key]
+                for feature in audio_features.keys():
+                    self._log.info('features: {}',feature)
+                    self._log.info('key: {}',SPOTIFY_AUDIO_FEATURES[feature][0])
+                    self._log.info('audio feature: {} for {}',audio_features[feature], item)
+                    item[SPOTIFY_AUDIO_FEATURES[feature][0]] = audio_features[feature]
                 # item['spotify_track_acousticness'] = audio_features["acousticness"]
                 # item['spotify_track_danceability'] = audio_features["danceability"]
                 # item['spotify_track_energy'] = audio_features["energy"]
