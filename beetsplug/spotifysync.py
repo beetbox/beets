@@ -30,8 +30,21 @@ from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.plugins import MetadataSourcePlugin, BeetsPlugin
 
-
 class SpotifySyncPlugin(BeetsPlugin):
+
+    SPOTIFY_AUDIO_FEATURES = {
+        'danceability': ['spotify_track_danceability'],
+        'energy': ['spotify_track_energy'],
+        'instrumentalness': ['spotify_track_instrumentalness'],
+        'key': ['spotify_track_key'],
+        'liveness': ['spotify_track_liveness'],
+        'loudness': ['spotify_track_loudness'],
+        'mode': ['spotify_track_mode'],
+        'speechiness': ['spotify_track_speechiness'],
+        'tempo': ['spotify_track_tempo'],
+        'time_signature': ['spotify_track_time_sig'],
+        'valence': ['spotify_track_valence'],
+    }
     data_source = 'Spotify'
 
     # Base URLs for the Spotify API
@@ -145,18 +158,21 @@ class SpotifySyncPlugin(BeetsPlugin):
                     self._log.debug('skipping popularity')
                 item['spotify_track_popularity'] = data
                 audio_features = self.track_audio_features(item.spotify_track_id)
-                item['spotify_track_acousticness'] = audio_features["acousticness"]
-                item['spotify_track_danceability'] = audio_features["danceability"]
-                item['spotify_track_energy'] = audio_features["energy"]
-                item['spotify_track_instrumentalness'] = audio_features["instrumentalness"]
-                item['spotify_track_key'] = audio_features["key"]
-                item['spotify_track_liveness'] = audio_features["liveness"]
-                item['spotify_track_loudness'] = audio_features["loudness"]
-                item['spotify_track_mode'] = audio_features["mode"]
-                item['spotify_track_speechiness'] = audio_features["speechiness"]
-                item['spotify_track_tempo'] = audio_features["tempo"]
-                item['spotify_track_time_sig'] = audio_features["time_signature"]
-                item['spotify_track_valence'] = audio_features["valence"]
+                for key in audio_features.keys():
+                    self._log.info('key: {}',SPOTIFY_AUDIO_FEATURES[key][0])
+                    item[SPOTIFY_AUDIO_FEATURES[key][0]] = audio_features[key]
+                # item['spotify_track_acousticness'] = audio_features["acousticness"]
+                # item['spotify_track_danceability'] = audio_features["danceability"]
+                # item['spotify_track_energy'] = audio_features["energy"]
+                # item['spotify_track_instrumentalness'] = audio_features["instrumentalness"]
+                # item['spotify_track_key'] = audio_features["key"]
+                # item['spotify_track_liveness'] = audio_features["liveness"]
+                # item['spotify_track_loudness'] = audio_features["loudness"]
+                # item['spotify_track_mode'] = audio_features["mode"]
+                # item['spotify_track_speechiness'] = audio_features["speechiness"]
+                # item['spotify_track_tempo'] = audio_features["tempo"]
+                # item['spotify_track_time_sig'] = audio_features["time_signature"]
+                # item['spotify_track_valence'] = audio_features["valence"]
                 item.store()
                 if write:
                     item.try_write()
