@@ -241,6 +241,5 @@ class SpotifySyncPlugin(BeetsPlugin):
         track_data = self._handle_response(
             requests.get, self.audio_features_url + track_id
         )
-        self._log.info('track_data: {}',track_data['acousticness'])
         audio_features=track_data
         return audio_features
