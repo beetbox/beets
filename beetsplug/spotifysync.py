@@ -168,6 +168,7 @@ class SpotifySyncPlugin(BeetsPlugin):
 
     def _handle_response(self, request_type, url, params=None):
         """Send a request, reauthenticating if necessary.
+        
         :param request_type: Type of :class:`Request` constructor,
             e.g. ``requests.get``, ``requests.post``, etc.
         :type request_type: function
