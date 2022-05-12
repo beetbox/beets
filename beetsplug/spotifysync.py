@@ -148,12 +148,13 @@ class SpotifySyncPlugin(BeetsPlugin):
                         item.get('spotify_track_popularity', '')
                     if spotify_track_popularity:
                         self._log.debug('Popularity already present for: {}',
-                        item)
+                                        item)
                         continue
 
                 popularity = self.track_popularity(item.spotify_track_id)
                 item['spotify_track_popularity'] = popularity
-                audio_features = self.track_audio_features(item.spotify_track_id)
+                audio_features = \
+                    self.track_audio_features(item.spotify_track_id)
                 for feature in audio_features.keys():
                     if feature in spotify_audio_features.keys():
                         item[spotify_audio_features[feature][0]] = \
