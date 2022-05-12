@@ -19,15 +19,12 @@ Spotify playlist construction.
 import re
 import json
 import base64
-import webbrowser
-import collections
 
 import unidecode
 import requests
 import confuse
 
 from beets import ui
-from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.plugins import MetadataSourcePlugin, BeetsPlugin
 
 class SpotifySyncPlugin(BeetsPlugin):
@@ -152,12 +149,8 @@ class SpotifySyncPlugin(BeetsPlugin):
                         self._log.debug('Popularity already present for: {}', item)
                         continue
 
-                data = self.track_popularity(item.spotify_track_id)
-                if data:
-                    self._log.debug('data = {}', data)
-                else:
-                    self._log.debug('skipping popularity')
-                item['spotify_track_popularity'] = data
+                popularity = self.track_popularity(item.spotify_track_id)
+                item['spotify_track_popularity'] = popularity
                 audio_features = self.track_audio_features(item.spotify_track_id)
                 for feature in audio_features.keys():
                     if feature in SPOTIFY_AUDIO_FEATURES.keys():
