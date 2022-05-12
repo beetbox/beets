@@ -12,9 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Adds Spotify sync function to import track popularity and audio features
-information.
-"""
+"""Adds Spotify sync function to import track features."""
 
 import json
 import base64
@@ -40,7 +38,6 @@ class SpotifySyncPlugin(BeetsPlugin):
 
     def __init__(self):
         """Initialize the SpotifySync Plugin."""
-
         super().__init__()
         self.config.add(
             {
@@ -57,7 +54,6 @@ class SpotifySyncPlugin(BeetsPlugin):
 
     def setup(self):
         """Retrieve previously saved OAuth token or generate a new one."""
-
         try:
             with open(self.tokenfile) as f:
                 token_data = json.load(f)
@@ -67,8 +63,7 @@ class SpotifySyncPlugin(BeetsPlugin):
             self.access_token = token_data['access_token']
 
     def _authenticate(self):
-        """Request an access token via the Client Credentials Flow. """
-
+        """Request an access token via the Client Credentials Flow."""
         headers = {
             'Authorization': 'Basic {}'.format(
                 base64.b64encode(
@@ -121,7 +116,6 @@ class SpotifySyncPlugin(BeetsPlugin):
 
     def _fetch_info(self, items, write, force):
         """Obtain track information from Spotify."""
-
         spotify_audio_features = {
             'acousticness': ['spotify_track_acousticness'],
             'danceability': ['spotify_track_danceability'],
@@ -144,7 +138,8 @@ class SpotifySyncPlugin(BeetsPlugin):
 
         for index, item in enumerate(items, start=1):
             time.sleep(.5)
-            self._log.info('Processing {}/{} tracks - {} ', index, no_items, item)
+            self._log.info('Processing {}/{} tracks - {} ',
+                            index, no_items, item)
             try:
                 # If we're not forcing re-downloading for all tracks, check
                 # whether the popularity data is already present
