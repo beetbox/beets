@@ -12,10 +12,6 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Adds Spotify release and track search support to the autotagger, along with
-Spotify playlist construction.
-"""
-
 import json
 import base64
 
@@ -23,9 +19,11 @@ import requests
 import confuse
 
 from beets import ui
-from beets.plugins import  BeetsPlugin
+from beets.plugins import BeetsPlugin
 
 class SpotifySyncPlugin(BeetsPlugin):
+    """Setup the SpotifySync Plugin."""
+
 
     data_source = 'Spotify'
 
@@ -62,9 +60,10 @@ class SpotifySyncPlugin(BeetsPlugin):
             self.access_token = token_data['access_token']
 
     def _authenticate(self):
-        """Request an access token via the Client Credentials Flow:
+        """Request an access token via the Client Credentials Flow.
         https://developer.spotify.com/documentation/general/guides/authorization-guide/#client-credentials-flow
         """
+
         headers = {
             'Authorization': 'Basic {}'.format(
                 base64.b64encode(
@@ -116,9 +115,9 @@ class SpotifySyncPlugin(BeetsPlugin):
         return [cmd]
 
     def _fetch_info(self, items, write, force):
-        """Obtain track information from Spotify.
-        """
-        SPOTIFY_AUDIO_FEATURES = {
+        """Obtain track information from Spotify."""
+
+        spotify_audio_features = {
             'acousticness': ['spotify_track_acousticness'],
             'danceability': ['spotify_track_danceability'],
             'energy': ['spotify_track_energy'],
@@ -133,8 +132,8 @@ class SpotifySyncPlugin(BeetsPlugin):
             'valence': ['spotify_track_valence'],
         }
         import time
-        """Fetch popularity information from Spotify for the item.
-        """
+        """Fetch popularity information from Spotify for the item."""
+
         no_items = len(items)
         self._log.info('Total {} tracks', no_items)
 
@@ -154,8 +153,8 @@ class SpotifySyncPlugin(BeetsPlugin):
                 item['spotify_track_popularity'] = popularity
                 audio_features = self.track_audio_features(item.spotify_track_id)
                 for feature in audio_features.keys():
-                    if feature in SPOTIFY_AUDIO_FEATURES.keys():
-                        item[SPOTIFY_AUDIO_FEATURES[feature][0]] = audio_features[feature]
+                    if feature in spotify_audio_features.keys():
+                        item[spotify_audio_features[feature][0]] = audio_features[feature]
                 item.store()
                 if write:
                     item.try_write()
