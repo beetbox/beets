@@ -130,26 +130,28 @@ class SpotifySyncPlugin(BeetsPlugin):
             # representative field name to check for previously fetched
             # data.
             # We can only fetch data for tracks with MBIDs.
-            if not item.spotify_track_id:
-                continue
+            # if not item.spotify_track_id:
+            #     continue
+            try:
+                if not force:
+                    spotify_track_popularity = item.get('spotify_track_popularity', '')
+                    if spotify_track_popularity:
+                        self._log.error('data already present for: {}', item)
+                        continue
 
-            if not force:
-                spotify_track_popularity = item.get('spotify_track_popularity', '')
-                if spotify_track_popularity:
-                    self._log.error('data already present for: {}', item)
-                    continue
-
-            self._log.info('getting data for: {}', item)
-            data = self.track_popularity(item.spotify_track_id)
-            self._log.info('data1: {}', data)
-            if data:
-                self._log.debug('data = {}', data)
-            else:
-                self._log.debug('skipping popularity')
-            item['spotify_track_popularity'] = data
-            item.store()
-            if write:
-                item.try_write()
+                self._log.info('getting data for: {}', item)
+                data = self.track_popularity(item.spotify_track_id)
+                self._log.info('data1: {}', data)
+                if data:
+                    self._log.debug('data = {}', data)
+                else:
+                    self._log.debug('skipping popularity')
+                item['spotify_track_popularity'] = data
+                item.store()
+                if write:
+                    item.try_write()
+            except AttributeError:
+                pass
 
 
     def _handle_response(self, request_type, url, params=None):
