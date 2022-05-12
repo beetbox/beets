@@ -121,6 +121,7 @@ class SpotifySyncPlugin(BeetsPlugin):
 
     def _fetch_info(self, items, write, force):
         SPOTIFY_AUDIO_FEATURES = {
+            'acousticness': ['spotify_track_acousticness'],
             'danceability': ['spotify_track_danceability'],
             'energy': ['spotify_track_energy'],
             'instrumentalness': ['spotify_track_instrumentalness'],
