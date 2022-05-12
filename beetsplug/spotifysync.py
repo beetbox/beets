@@ -133,7 +133,7 @@ class SpotifySyncPlugin(BeetsPlugin):
                 if not force:
                     spotify_track_popularity = item.get('spotify_track_popularity', '')
                     if spotify_track_popularity:
-                        self._log.debug('data already present for: {}', item)
+                        self._log.error('data already present for: {}', item)
                         continue
 
                 self._log.info('getting data for: {}', item)
