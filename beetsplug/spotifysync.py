@@ -216,7 +216,7 @@ class SpotifySyncPlugin(BeetsPlugin):
         track_data = self._handle_response(
             requests.get, self.track_url + track_id
         )
-        self._log.debug('track_data: {}', strack_data['popularity'])
+        self._log.debug('track_data: {}', track_data['popularity'])
         track_popularity = track_data['popularity']
         return track_popularity
 
