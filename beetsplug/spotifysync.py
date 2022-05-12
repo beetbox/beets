@@ -12,6 +12,10 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+"""Adds Spotify sync function to import track popularity and audio features
+information.
+"""
+
 import json
 import base64
 
@@ -21,9 +25,9 @@ import confuse
 from beets import ui
 from beets.plugins import BeetsPlugin
 
+
 class SpotifySyncPlugin(BeetsPlugin):
     """Setup the SpotifySync Plugin."""
-
 
     data_source = 'Spotify'
 
@@ -35,6 +39,8 @@ class SpotifySyncPlugin(BeetsPlugin):
     audio_features_url = 'https://api.spotify.com/v1/audio-features/'
 
     def __init__(self):
+        """Initialize the SpotifySync Plugin."""
+
         super().__init__()
         self.config.add(
             {
@@ -51,6 +57,7 @@ class SpotifySyncPlugin(BeetsPlugin):
 
     def setup(self):
         """Retrieve previously saved OAuth token or generate a new one."""
+
         try:
             with open(self.tokenfile) as f:
                 token_data = json.load(f)
@@ -60,9 +67,7 @@ class SpotifySyncPlugin(BeetsPlugin):
             self.access_token = token_data['access_token']
 
     def _authenticate(self):
-        """Request an access token via the Client Credentials Flow.
-        https://developer.spotify.com/documentation/general/guides/authorization-guide/#client-credentials-flow
-        """
+        """Request an access token via the Client Credentials Flow. """
 
         headers = {
             'Authorization': 'Basic {}'.format(
