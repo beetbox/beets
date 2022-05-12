@@ -168,7 +168,7 @@ class SpotifySyncPlugin(BeetsPlugin):
 
     def _handle_response(self, request_type, url, params=None):
         """Send a request, reauthenticating if necessary.
-        
+
         :param request_type: Type of :class:`Request` constructor,
             e.g. ``requests.get``, ``requests.post``, etc.
         :type request_type: function
@@ -202,8 +202,7 @@ class SpotifySyncPlugin(BeetsPlugin):
         return response.json()
 
     def track_popularity(self, track_id=None):
-        """Fetch a track by its Spotify ID or URL and return a
-        TrackInfo object or None if the track is not found.
+        """Fetch a track popularity by its Spotify ID.
 
         :param track_id: (Optional) Spotify ID or URL for the track. Either
             ``track_id`` or ``track_data`` must be provided.
