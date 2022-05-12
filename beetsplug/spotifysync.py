@@ -136,29 +136,32 @@ class SpotifySyncPlugin(BeetsPlugin):
         no_items = len(items)
         self._log.info('Total {} tracks', no_items)
 
-        for index, item in enumerate(items, start=1):
+        for (index, item) in enumerate(items, start=1):
             time.sleep(.5)
-            self._log.info('Processing {}/{} tracks - {} ',
-                           index, no_items, item)
+            self._log.info('Processing {}/{} tracks - {} ', index,
+                           no_items, item)
             try:
+
                 # If we're not forcing re-downloading for all tracks, check
                 # whether the popularity data is already present
+
                 if not force:
-                    spotify_track_popularity = (
-                      item.get('spotify_track_popularity', ''))
+                    spotify_track_popularity = \
+                        item.get('spotify_track_popularity', '')
                     if spotify_track_popularity:
-                        self._log.debug('Popularity already present for: {}',
-                        item)
+                        self._log.debug('Popularity already present for: {}'
+                                , item)
                         continue
 
-                popularity = self.track_popularity(item.spotify_track_id)
+                popularity = \
+                    self.track_popularity(item.spotify_track_id)
                 item['spotify_track_popularity'] = popularity
-                audio_features = self.track_audio_features(item.spotify_track_id)
+                audio_features = \
+                    self.track_audio_features(item.spotify_track_id)
                 for feature in audio_features.keys():
                     if feature in spotify_audio_features.keys():
-                        item[spotify_audio_features[feature][0]] =
-                        audio_features[feature]
-                item.store()
+                        item[spotify_audio_features[feature][0]] = \
+                            audio_features[feature]
                 if write:
                     item.try_write()
             except AttributeError:
