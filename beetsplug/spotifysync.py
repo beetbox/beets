@@ -166,7 +166,6 @@ class SpotifySyncPlugin(BeetsPlugin):
                 self._log.debug('No track_id present for: {}', item)
                 pass
 
-
     def _handle_response(self, request_type, url, params=None):
         """Send a request, reauthenticating if necessary.
         :param request_type: Type of :class:`Request` constructor,
