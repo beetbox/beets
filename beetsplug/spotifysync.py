@@ -126,14 +126,14 @@ class SpotifySyncPlugin(BeetsPlugin):
         """
         for item in items:
             time.sleep(.5)
-            self._log.info('getting data for: {}', item)
+            self._log.debug('getting data for: {}', item)
             try:
                 # If we're not forcing re-downloading for all tracks, check
                 # whether the popularity data is already present
                 if not force:
                     spotify_track_popularity = item.get('spotify_track_popularity', '')
                     if spotify_track_popularity:
-                        self._log.error('data already present for: {}', item)
+                        self._log.debug('data already present for: {}', item)
                         continue
 
                 self._log.info('getting data for: {}', item)
@@ -147,6 +147,7 @@ class SpotifySyncPlugin(BeetsPlugin):
                 if write:
                     item.try_write()
             except AttributeError:
+                self._log.debug('No track_id present for: {}', item)
                 pass
 
 
@@ -198,11 +199,10 @@ class SpotifySyncPlugin(BeetsPlugin):
         :return: TrackInfo object for track
         :rtype: beets.autotag.hooks.TrackInfo or None
         """
-        self._log.error('spotify_track_id: {}',track_id)
         track_data = self._handle_response(
             requests.get, self.track_url + track_id
         )
-        self._log.error('track_data: {}',track_data['popularity'])
+        self._log.debug('track_data: {}',track_data['popularity'])
         track_popularity=track_data['popularity']
         return track_popularity
 
