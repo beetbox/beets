@@ -124,9 +124,12 @@ class SpotifySyncPlugin(BeetsPlugin):
         import time
         """Fetch popularity information from Spotify for the item.
         """
-        for item in items:
+        no_items = len(items)
+        self._log.info('Total {} tracks', no_items)
+
+        for index, item in enumerate(items, start=1):
             time.sleep(.5)
-            self._log.info('getting data for: {}', item)
+            self._log.info('Processing {}/{} tracks', index, no_items)
             try:
                 # If we're not forcing re-downloading for all tracks, check
                 # whether the popularity data is already present
