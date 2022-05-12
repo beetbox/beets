@@ -216,13 +216,12 @@ class SpotifySyncPlugin(BeetsPlugin):
         track_data = self._handle_response(
             requests.get, self.track_url + track_id
         )
-        self._log.debug('track_data: {}',track_data['popularity'])
-        track_popularity=track_data['popularity']
+        self._log.debug('track_data: {}', strack_data['popularity'])
+        track_popularity = track_data['popularity']
         return track_popularity
 
     def track_audio_features(self, track_id=None):
-        """Fetch track features by its Spotify ID or URL and return a
-        TrackInfo object or None if the track is not found.
+        """Fetch track features by its Spotify ID.
 
         :param track_id: (Optional) Spotify ID or URL for the track. Either
             ``track_id`` or ``track_data`` must be provided.
@@ -236,5 +235,5 @@ class SpotifySyncPlugin(BeetsPlugin):
         track_data = self._handle_response(
             requests.get, self.audio_features_url + track_id
         )
-        audio_features=track_data
+        audio_features = track_data
         return audio_features
