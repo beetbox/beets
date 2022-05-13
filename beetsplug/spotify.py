@@ -597,8 +597,6 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                     self.track_audio_features(item.spotify_track_id)
                 for feature in audio_features.keys():
                     if feature in spotify_audio_features.keys():
-                        self._log.info('feature: {}',
-                                       audio_features[feature])
                         item[spotify_audio_features[feature][0]] = \
                             audio_features[feature]
                 item.store()
