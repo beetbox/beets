@@ -41,6 +41,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
     search_url = 'https://api.spotify.com/v1/search'
     album_url = 'https://api.spotify.com/v1/albums/'
     track_url = 'https://api.spotify.com/v1/tracks/'
+    audio_features_url = 'https://api.spotify.com/v1/audio-features/'
 
     # Spotify IDs consist of 22 alphanumeric characters
     # (zero-left-padded base62 representation of randomly generated UUID4)
