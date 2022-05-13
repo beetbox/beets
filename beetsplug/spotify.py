@@ -356,6 +356,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         return response_data
 
     def commands(self):
+        # autotagger import command
         def queries(lib, opts, args):
             success = self._parse_opts(opts)
             if success:
@@ -382,7 +383,23 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             ),
         )
         spotify_cmd.func = queries
-        return [spotify_cmd]
+
+        # spotifysync command
+        sync_cmd = ui.Subcommand('spotifysync',
+                                 help="fetch track attributes from Spotify")
+        sync_cmd.parser.add_option(
+            '-f', '--force', dest='force_refetch',
+            action='store_true', default=False,
+            help='re-download data when already present'
+        )
+
+        def func(lib, opts, args):
+            items = lib.items(ui.decargs(args))
+            self._fetch_info(items, ui.should_write(),
+                             opts.force_refetch or self.config['force'])
+
+        sync_cmd.func = func
+        return [spotify_cmd, sync_cmd]
 
     def _parse_opts(self, opts):
         if opts.mode:
@@ -536,3 +553,89 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             self._log.warning(
                 f'No {self.data_source} tracks found from beets query'
             )
+
+    def _fetch_info(self, items, write, force):
+        """Obtain track information from Spotify."""
+        spotify_audio_features = {
+            'acousticness': ['spotify_track_acousticness'],
+            'danceability': ['spotify_track_danceability'],
+            'energy': ['spotify_track_energy'],
+            'instrumentalness': ['spotify_track_instrumentalness'],
+            'key': ['spotify_track_key'],
+            'liveness': ['spotify_track_liveness'],
+            'loudness': ['spotify_track_loudness'],
+            'mode': ['spotify_track_mode'],
+            'speechiness': ['spotify_track_speechiness'],
+            'tempo': ['spotify_track_tempo'],
+            'time_signature': ['spotify_track_time_sig'],
+            'valence': ['spotify_track_valence'],
+        }
+        import time
+
+        no_items = len(items)
+        self._log.info('Total {} tracks', no_items)
+
+        for index, item in enumerate(items, start=1):
+            time.sleep(.5)
+            self._log.info('Processing {}/{} tracks - {} ',
+                           index, no_items, item)
+            try:
+                # If we're not forcing re-downloading for all tracks, check
+                # whether the popularity data is already present
+                if not force:
+                    spotify_track_popularity = \
+                        item.get('spotify_track_popularity', '')
+                    if spotify_track_popularity:
+                        self._log.debug('Popularity already present for: {}',
+                                        item)
+                        continue
+
+                popularity = self.track_popularity(item.spotify_track_id)
+                item['spotify_track_popularity'] = popularity
+                audio_features = \
+                    self.track_audio_features(item.spotify_track_id)
+                for feature in audio_features.keys():
+                    if feature in spotify_audio_features.keys():
+                        item[spotify_audio_features[feature][0]] = \
+                            audio_features[feature]
+                item.store()
+                if write:
+                    item.try_write()
+            except AttributeError:
+                self._log.debug('No track_id present for: {}', item)
+                pass
+
+    def track_popularity(self, track_id=None):
+        """Fetch a track popularity by its Spotify ID.
+        :param track_id: (Optional) Spotify ID or URL for the track. Either
+            ``track_id`` or ``track_data`` must be provided.
+        :type track_id: str
+        :param track_data: (Optional) Simplified track object dict. May be
+            provided instead of ``track_id`` to avoid unnecessary API calls.
+        :type track_data: dict
+        :return: TrackInfo object for track
+        :rtype: beets.autotag.hooks.TrackInfo or None
+        """
+        track_data = self._handle_response(
+            requests.get, self.track_url + track_id
+        )
+        self._log.debug('track_data: {}', track_data['popularity'])
+        track_popularity = track_data['popularity']
+        return track_popularity
+
+    def track_audio_features(self, track_id=None):
+        """Fetch track features by its Spotify ID.
+        :param track_id: (Optional) Spotify ID or URL for the track. Either
+            ``track_id`` or ``track_data`` must be provided.
+        :type track_id: str
+        :param track_data: (Optional) Simplified track object dict. May be
+            provided instead of ``track_id`` to avoid unnecessary API calls.
+        :type track_data: dict
+        :return: TrackInfo object for track
+        :rtype: beets.autotag.hooks.TrackInfo or None
+        """
+        track_data = self._handle_response(
+            requests.get, self.audio_features_url + track_id
+        )
+        audio_features = track_data
+        return audio_features
