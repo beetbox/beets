@@ -251,7 +251,6 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             artist=artist,
             artist_id=artist_id,
             spotify_artist_id=artist_id,
-            spotify_track_popularity=track_data['popularity'],
             length=track_data['duration_ms'] / 1000,
             index=track_data['track_number'],
             medium=track_data['disc_number'],
