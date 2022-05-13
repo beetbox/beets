@@ -606,16 +606,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 pass
 
     def track_popularity(self, track_id=None):
-        """Fetch a track popularity by its Spotify ID.
-        :param track_id: (Optional) Spotify ID or URL for the track. Either
-            ``track_id`` or ``track_data`` must be provided.
-        :type track_id: str
-        :param track_data: (Optional) Simplified track object dict. May be
-            provided instead of ``track_id`` to avoid unnecessary API calls.
-        :type track_data: dict
-        :return: TrackInfo object for track
-        :rtype: beets.autotag.hooks.TrackInfo or None
-        """
+        """Fetch a track popularity by its Spotify ID."""
         track_data = self._handle_response(
             requests.get, self.track_url + track_id
         )
@@ -624,16 +615,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         return track_popularity
 
     def track_audio_features(self, track_id=None):
-        """Fetch track features by its Spotify ID.
-        :param track_id: (Optional) Spotify ID or URL for the track. Either
-            ``track_id`` or ``track_data`` must be provided.
-        :type track_id: str
-        :param track_data: (Optional) Simplified track object dict. May be
-            provided instead of ``track_id`` to avoid unnecessary API calls.
-        :type track_data: dict
-        :return: TrackInfo object for track
-        :rtype: beets.autotag.hooks.TrackInfo or None
-        """
+        """Fetch track audio features by its Spotify ID."""
         track_data = self._handle_response(
             requests.get, self.audio_features_url + track_id
         )
