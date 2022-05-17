@@ -25,6 +25,7 @@ New features:
   :bug:`1840` :bug:`4302`
 * Added a ``-P`` (or ``--disable-plugins``) flag to specify one/multiple plugin(s) to be
   disabled at startup.
+* :doc:`/plugins/play`: Allow m3u extensions in the temporary playlist.
 
 Bug fixes:
 
