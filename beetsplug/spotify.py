@@ -586,9 +586,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 # If we're not forcing re-downloading for all tracks, check
                 # whether the popularity data is already present
                 if not force:
-                    spotify_track_popularity = \
-                        item.get('spotify_track_popularity', '')
-                    if spotify_track_popularity:
+                    if 'spotify_track_popularity' in item:
                         self._log.debug('Popularity already present for: {}',
                                         item)
                         continue
