@@ -121,4 +121,8 @@ these track attributes from Spotify:
 * ``beet spotifysync [-f]``: obtain popularity and audio features information
   for every track in the library. By default, ``spotifysync`` will skip tracks
   that already have this information populated. Using the ``-f`` or ``-force``
-  option will download the data even for tracks that already have it.
+  option will download the data even for tracks that already have it. Please
+  note that ``spotifysync`` works on tracks that have the Spotify track
+  identifiers. So run ``spotifysync`` only after importing your music, during
+  which Spotify identifiers will be added for tracks where Spotify is chosen as
+  the tag source.
