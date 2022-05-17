@@ -53,18 +53,18 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
     }
 
     spotify_audio_features = {
-        'acousticness': 'spotify_track_acousticness',
-        'danceability': 'spotify_track_danceability',
-        'energy': 'spotify_track_energy',
-        'instrumentalness': 'spotify_track_instrumentalness',
-        'key': 'spotify_track_key',
-        'liveness': 'spotify_track_liveness',
-        'loudness': 'spotify_track_loudness',
-        'mode': 'spotify_track_mode',
-        'speechiness': 'spotify_track_speechiness',
-        'tempo': 'spotify_track_tempo',
-        'time_signature': 'spotify_track_time_sig',
-        'valence': 'spotify_track_valence',
+        'acousticness': 'spotify_acousticness',
+        'danceability': 'spotify_danceability',
+        'energy': 'spotify_energy',
+        'instrumentalness': 'spotify_instrumentalness',
+        'key': 'spotify_key',
+        'liveness': 'spotify_liveness',
+        'loudness': 'spotify_loudness',
+        'mode': 'spotify_mode',
+        'speechiness': 'spotify_speechiness',
+        'tempo': 'spotify_tempo',
+        'time_signature': 'spotify_time_signature',
+        'valence': 'spotify_valence',
     }
 
     def __init__(self):
