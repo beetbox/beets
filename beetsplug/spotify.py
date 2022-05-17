@@ -20,6 +20,7 @@ Spotify playlist construction.
 import re
 import json
 import base64
+import time
 import webbrowser
 import collections
 
@@ -51,6 +52,21 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         'match_group': 2,
     }
 
+    spotify_audio_features = {
+        'acousticness': 'spotify_track_acousticness',
+        'danceability': 'spotify_track_danceability',
+        'energy': 'spotify_track_energy',
+        'instrumentalness': 'spotify_track_instrumentalness',
+        'key': 'spotify_track_key',
+        'liveness': 'spotify_track_liveness',
+        'loudness': 'spotify_track_loudness',
+        'mode': 'spotify_track_mode',
+        'speechiness': 'spotify_track_speechiness',
+        'tempo': 'spotify_track_tempo',
+        'time_signature': 'spotify_track_time_sig',
+        'valence': 'spotify_track_valence',
+    }
+
     def __init__(self):
         super().__init__()
         self.config.add(
@@ -66,7 +82,6 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 'client_id': '4e414367a1d14c75a5c5129a627fcab8',
                 'client_secret': 'f82bdc09b2254f1a8286815d02fd46dc',
                 'tokenfile': 'spotify_token.json',
-                'force': False,
             }
         )
         self.config['client_secret'].redact = True
@@ -559,45 +574,28 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
 
     def _fetch_info(self, items, write, force):
         """Obtain track information from Spotify."""
-        spotify_audio_features = {
-            'acousticness': ['spotify_track_acousticness'],
-            'danceability': ['spotify_track_danceability'],
-            'energy': ['spotify_track_energy'],
-            'instrumentalness': ['spotify_track_instrumentalness'],
-            'key': ['spotify_track_key'],
-            'liveness': ['spotify_track_liveness'],
-            'loudness': ['spotify_track_loudness'],
-            'mode': ['spotify_track_mode'],
-            'speechiness': ['spotify_track_speechiness'],
-            'tempo': ['spotify_track_tempo'],
-            'time_signature': ['spotify_track_time_sig'],
-            'valence': ['spotify_track_valence'],
-        }
-        import time
 
-        no_items = len(items)
-        self._log.info('Total {} tracks', no_items)
+        self._log.debug('Total {} tracks', len(items))
 
         for index, item in enumerate(items, start=1):
             time.sleep(.5)
             self._log.info('Processing {}/{} tracks - {} ',
-                           index, no_items, item)
+                           index, len(items), item)
+            # If we're not forcing re-downloading for all tracks, check
+            # whether the popularity data is already present
+            if not force:
+                if 'spotify_track_popularity' in item:
+                    self._log.debug('Popularity already present for: {}',
+                                    item)
+                    continue
             try:
-                # If we're not forcing re-downloading for all tracks, check
-                # whether the popularity data is already present
-                if not force:
-                    if 'spotify_track_popularity' in item:
-                        self._log.debug('Popularity already present for: {}',
-                                        item)
-                        continue
-
                 popularity = self.track_popularity(item.spotify_track_id)
                 item['spotify_track_popularity'] = popularity
                 audio_features = \
                     self.track_audio_features(item.spotify_track_id)
                 for feature in audio_features.keys():
-                    if feature in spotify_audio_features.keys():
-                        item[spotify_audio_features[feature][0]] = \
+                    if feature in self.spotify_audio_features.keys():
+                        item[self.spotify_audio_features[feature]] = \
                             audio_features[feature]
                 item.store()
                 if write:
