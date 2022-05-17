@@ -195,7 +195,7 @@ class PlayPlugin(BeetsPlugin):
 
         if extended_m3u:
             m3u.write(b'#EXTM3U\n')
-        
+
         for item in paths_list:
             m3u.write(item + b'\n')
         m3u.close()
