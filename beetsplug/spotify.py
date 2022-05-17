@@ -612,8 +612,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             requests.get, self.track_url + track_id
         )
         self._log.debug('track_data: {}', track_data['popularity'])
-        track_popularity = track_data['popularity']
-        return track_popularity
+        return track_data['popularity']
 
     def track_audio_features(self, track_id=None):
         """Fetch track audio features by its Spotify ID."""
