@@ -65,6 +65,9 @@ configuration file. The available options are:
 - **bom**: Set whether or not a UTF-8 Byte Order Mark should be emitted into
   the m3u file. If you're using foobar2000 or Winamp, this is needed.
   Default: ``no``.
+- **extended_m3u**: Set whether or not the plugin will add M3U extensions
+  (or comments) to the m3u file.
+  Default: ``yes``.
 
 Optional Arguments
 ------------------
