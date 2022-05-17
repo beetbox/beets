@@ -620,5 +620,4 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         track_data = self._handle_response(
             requests.get, self.audio_features_url + track_id
         )
-        audio_features = track_data
-        return audio_features
+        return track_data
