@@ -109,10 +109,11 @@ Here's an example::
 Obtaining Track Popularity and Audio Features from Spotify
 ----------------------------------------------------------
 
-Spotify provides track `popularity`_ and audio `features`_ that be used to
-create better playlists.
+Spotify provides information on track `popularity`_ and audio `features`_ that
+can be used for music discovery.
 
 .. _popularity: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-track
+
 .. _features: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-features
 
 The ``spotify`` plugin provides an additional command ``spotifysync`` to obtain
@@ -126,3 +127,19 @@ these track attributes from Spotify:
   identifiers. So run ``spotifysync`` only after importing your music, during
   which Spotify identifiers will be added for tracks where Spotify is chosen as
   the tag source.
+
+  In addition to ``popularity``, the command currently sets these audio features
+  for all tracks with a Spotify track ID:
+
+  * ``acousticness``
+  * ``danceability``
+  * ``energy``
+  * ``instrumentalness``
+  * ``key``
+  * ``liveness``
+  * ``loudness``
+  * ``mode``
+  * ``speechiness``
+  * ``tempo``
+  * ``time_signature``
+  * ``valence``
