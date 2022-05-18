@@ -413,8 +413,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
 
         def func(lib, opts, args):
             items = lib.items(ui.decargs(args))
-            self._fetch_info(items, ui.should_write(),
-                             opts.force_refetch or self.config['force'])
+            self._fetch_info(items, ui.should_write(), opts.force_refetch)
 
         sync_cmd.func = func
         return [spotify_cmd, sync_cmd]
