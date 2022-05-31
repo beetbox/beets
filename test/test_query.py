@@ -529,7 +529,6 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         results = self.lib.albums(q)
         self.assert_albums_matched(results, ['path album'])
 
-    @unittest.skip('unfixed (#1865)')
     def test_path_query_in_or_query(self):
         q = '/a/b , /a/b'
         results = self.lib.items(q)
