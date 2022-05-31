@@ -31,11 +31,11 @@ from beets.dbcore.query import (NoneQuery, ParsingError,
                                 InvalidQueryArgumentValueError)
 from beets.library import Library, Item
 from beets import util
-import platform
 
 # Because the absolute path begins with something like C:, we
 # can't disambiguate it from an ordinary query.
 WIN32_NO_IMPLICIT_PATHS = 'Implicit paths are not supported on Windows'
+
 
 class TestHelper(helper.TestHelper):
 
