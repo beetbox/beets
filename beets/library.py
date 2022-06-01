@@ -1394,7 +1394,7 @@ def parse_query_parts(parts, model_cls):
 
     # Special-case path-like queries, which are non-field queries
     # containing path separators (/).
-    parts = [f"path::{s}" if PathQuery.is_path_query(s) else s for s in parts]
+    parts = [f"path={s}" if PathQuery.is_path_query(s) else s for s in parts]
 
     case_insensitive = beets.config['sort_case_insensitive'].get(bool)
 
