@@ -8,6 +8,7 @@ Changelog goes here!
 
 New features:
 
+* :doc:`/guides/walkthrough`: Created a guided walkthrough for first time users.
 * :doc:`/plugins/spotify`: The plugin now records Spotify-specific IDs in the
   `spotify_album_id`, `spotify_artist_id`, and `spotify_track_id` fields.
   :bug:`4348`
