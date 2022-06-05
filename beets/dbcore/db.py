@@ -1078,7 +1078,7 @@ class Database:
 
     # Querying.
 
-    def _fetch(self, model_cls, query=None, sort=None):
+    def _fetch(self, model_cls, query=None, sort=None, limit=None):
         """Fetch the objects of type `model_cls` matching the given
         query. The query may be given as a string, string sequence, a
         Query object, or None (to fetch everything). `sort` is an
@@ -1089,10 +1089,11 @@ class Database:
         where, subvals = query.clause()
         order_by = sort.order_clause()
 
-        sql = ("SELECT * FROM {} WHERE {} {}").format(
+        sql = ("SELECT * FROM {} WHERE {} {} {}").format(
             model_cls._table,
             where or '1',
             f"ORDER BY {order_by}" if order_by else '',
+            f"LIMIT {limit}" if limit else '',
         )
 
         # Fetch flexible attributes for items matching the main query.

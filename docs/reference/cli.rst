@@ -198,7 +198,7 @@ list
 ````
 ::
 
-    beet list [-apf] QUERY
+    beet list [-apf] [-l LIMIT] QUERY
 
 :doc:`Queries <query>` the database for music.
 
@@ -212,6 +212,9 @@ In this case, the queries you use are restricted to album-level fields: for
 example, you can search for ``year:1969`` but query parts for item-level fields
 like ``title:foo`` will be ignored. Remember that ``artist`` is an item-level
 field; ``albumartist`` is the corresponding album field.
+
+Use the ``-l LIMIT`` (``--limit=LIMIT``) flag when you want to cap the maximum
+number of items that are returned.
 
 The ``-p`` option makes beets print out filenames of matched items, which might
 be useful for piping into other Unix commands (such as `xargs`_). Similarly, the

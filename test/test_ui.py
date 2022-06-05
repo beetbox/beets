@@ -47,10 +47,13 @@ class ListTest(unittest.TestCase):
         self.item.path = 'xxx/yyy'
         self.lib.add(self.item)
         self.lib.add_album([self.item])
+        self.another_item = _common.item()
+        self.another_item.path = "another/path"
+        self.lib.add(self.another_item)
 
-    def _run_list(self, query='', album=False, path=False, fmt=''):
+    def _run_list(self, query='', album=False, path=False, fmt='', limit=None):
         with capture_stdout() as stdout:
-            commands.list_items(self.lib, query, album, fmt)
+            commands.list_items(self.lib, query, album, limit, fmt)
         return stdout
 
     def test_list_outputs_item(self):
@@ -68,7 +71,7 @@ class ListTest(unittest.TestCase):
 
     def test_list_item_path(self):
         stdout = self._run_list(fmt='$path')
-        self.assertEqual(stdout.getvalue().strip(), 'xxx/yyy')
+        self.assertEqual(stdout.getvalue().strip().splitlines()[0], 'xxx/yyy')
 
     def test_list_album_outputs_something(self):
         stdout = self._run_list(album=True)
@@ -99,12 +102,18 @@ class ListTest(unittest.TestCase):
     def test_list_item_format_multiple(self):
         stdout = self._run_list(fmt='$artist - $album - $year')
         self.assertEqual('the artist - the album - 0001',
-                         stdout.getvalue().strip())
+                         stdout.getvalue().strip().splitlines()[0])
 
     def test_list_album_format(self):
         stdout = self._run_list(album=True, fmt='$genre')
         self.assertIn('the genre', stdout.getvalue())
         self.assertNotIn('the album', stdout.getvalue())
+
+    def test_limit_query_results(self):
+        stdout = self._run_list()
+        self.assertEqual(2, len(stdout.getvalue().strip().splitlines()))
+        stdout = self._run_list(limit=1)
+        self.assertEqual(1, len(stdout.getvalue().strip().splitlines()))
 
 
 class RemoveTest(_common.TestCase, TestHelper):

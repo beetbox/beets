@@ -11,6 +11,7 @@ for Python 3.6).
 
 New features:
 
+* :ref:`list-cmd` Add ``-l / --limit LIMIT`` flag to the ``list`` command to limit query results
 * Added additional error handling for `spotify` plugin.
   :bug:`4686`
 * We now import the remixer field from Musicbrainz into the library.
