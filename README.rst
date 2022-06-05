@@ -84,6 +84,9 @@ You can install beets by typing ``pip install beets``.
 Beets has also been packaged in the `software repositories`_ of several
 distributions. Check out the `Getting Started`_ guide for more information.
 
+For Windows users, take a look at this `tutorial video` for getting started with beets.
+
+.. _tutorial video: https://media.oregonstate.edu/media/t/1_ltkdlrz1
 .. _Getting Started: https://beets.readthedocs.org/page/guides/main.html
 .. _software repositories: https://repology.org/project/beets/versions
 
