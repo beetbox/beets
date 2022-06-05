@@ -18,6 +18,7 @@
 import re
 import itertools
 from . import query
+from .. import library
 
 PARSE_QUERY_PART_REGEX = re.compile(
     # Non-capturing optional segment for the keyword.
@@ -128,27 +129,20 @@ def construct_query_part(model_cls, prefixes, query_part):
     key, pattern, query_class, negate = \
         parse_query_part(query_part, query_classes, prefixes)
 
-    # If there's no key (field name) specified, this is a "match
-    # anything" query.
-    if key is None:
-        if issubclass(query_class, query.FieldQuery):
-            # The query type matches a specific field, but none was
-            # specified. So we use a version of the query that matches
-            # any field.
-            out_query = query.AnyFieldQuery(pattern, model_cls._search_fields,
-                                            query_class)
-        else:
-            # Non-field query type.
-            out_query = query_class(pattern)
-
-    # Field queries get constructed according to the name of the field
-    # they are querying.
+    if issubclass(query_class, query.FieldQuery) and key is None:
+        # The query type matches a specific field, but none was
+        # specified. So we use a version of the query that matches
+        # any field.
+        out_query = query.AnyFieldQuery(pattern, model_cls._search_fields,
+                                        query_class)
     elif issubclass(query_class, query.FieldQuery):
+        # Field queries get constructed according to the name of the field
+        # they are querying.
         key = key.lower()
-        out_query = query_class(key.lower(), pattern, key in model_cls._fields)
-
-    # Non-field (named) query.
+        fast = key in {*library.Item._fields, *library.Album._fields}
+        out_query = query_class(key, pattern, fast)
     else:
+        # Non-field (named) query.
         out_query = query_class(pattern)
 
     # Apply negation.

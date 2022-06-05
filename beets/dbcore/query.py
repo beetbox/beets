@@ -105,8 +105,12 @@ class FieldQuery(Query):
         if self.fast:
             return self.col_clause()
         else:
-            # Matching a flexattr. This is a slow query.
-            return None, ()
+            actual_field = self.field
+            self.field = "value"
+            clause, pattern = self.col_clause()
+            clause = f"(key = ? AND {clause})"
+            self.field = actual_field
+            return clause, (actual_field, *pattern),
 
     @classmethod
     def value_match(cls, pattern, value):
@@ -230,6 +234,9 @@ class RegexpQuery(StringFieldQuery):
             raise InvalidQueryArgumentValueError(pattern,
                                                  "a regular expression",
                                                  format(exc))
+
+    def col_clause(self):
+        return f" regexp({self.field}, ?)", [self.pattern.pattern]
 
     @staticmethod
     def _normalize(s):
@@ -417,7 +424,7 @@ class AnyFieldQuery(CollectionQuery):
 
         subqueries = []
         for field in self.fields:
-            subqueries.append(cls(field, pattern, True))
+            subqueries.append(cls(field, pattern))
         super().__init__(subqueries)
 
     def clause(self):

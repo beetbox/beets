@@ -28,6 +28,12 @@ from unidecode import unidecode
 
 class BareascQuery(StringFieldQuery):
     """Compare items using bare ASCII, without accents etc."""
+    def col_clause(self):
+        clause = f"unidecode({self.field})"
+        if self.pattern.islower():
+            clause = f"lower({clause})"
+        return rf"{clause} LIKE ? ESCAPE '\'", ['%' + unidecode(self.pattern) + '%']
+
     @classmethod
     def string_match(cls, pattern, val):
         """Convert both pattern and string to plain ASCII before matching.
