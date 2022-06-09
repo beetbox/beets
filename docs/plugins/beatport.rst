@@ -32,7 +32,7 @@ from MusicBrainz and other sources.
 
 If you have a Beatport ID or a URL for a release or track you want to tag, you
 can just enter one of the two at the "enter Id" prompt in the importer. You can
-also search for an id like so:
+also search for an id like so::
 
     beet import path/to/music/library --search-id id
 
