@@ -577,6 +577,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         self._log.debug('Total {} tracks', len(items))
 
         for index, item in enumerate(items, start=1):
+            # Added sleep to avoid API rate limit
             time.sleep(.5)
             self._log.info('Processing {}/{} tracks - {} ',
                            index, len(items), item)
