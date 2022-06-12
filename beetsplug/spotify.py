@@ -578,6 +578,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
 
         for index, item in enumerate(items, start=1):
             # Added sleep to avoid API rate limit
+            # https://developer.spotify.com/documentation/web-api/guides/rate-limits/
             time.sleep(.5)
             self._log.info('Processing {}/{} tracks - {} ',
                            index, len(items), item)
