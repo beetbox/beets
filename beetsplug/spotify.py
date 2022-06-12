@@ -164,6 +164,11 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 )
                 self._authenticate()
                 return self._handle_response(request_type, url, params=params)
+            elif response.status_code == 429:
+                seconds = response.headers['Retry-After']
+                time.sleep(int(seconds))
+                self._log.info('Too many API requests. Retrying after {} seconds.', seconds)
+                return self._handle_response(request_type, url, params=params)
             else:
                 raise ui.UserError(
                     '{} API error:\n{}\nURL:\n{}\nparams:\n{}'.format(
