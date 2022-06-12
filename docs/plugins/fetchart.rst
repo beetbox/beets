@@ -243,7 +243,7 @@ in your configuration.
 More detailed information can be found `on their Wiki`_. Specifically, the
 personal key will give you earlier access to new art.
 
-.. _on their blog: https://wiki.fanart.tv/General/personal%20api/
+.. _on their Wiki: https://wiki.fanart.tv/General/personal%20api/
 
 Last.fm
 '''''''
