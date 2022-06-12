@@ -46,7 +46,7 @@ Beets works on Python 3.6 or later.
 
 * On **NixOS**, there's a `package <NixOS_>`_ you can install with ``nix-env -i beets``.
 
-.. _DNF package: https://apps.fedoraproject.org/packages/beets
+.. _DNF package: https://packages.fedoraproject.org/pkgs/beets/
 .. _SlackBuild: https://slackbuilds.org/repository/14.2/multimedia/beets/
 .. _FreeBSD: http://portsmon.freebsd.org/portoverview.py?category=audio&portname=beets
 .. _AUR: https://aur.archlinux.org/packages/beets-git/
