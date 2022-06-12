@@ -590,20 +590,22 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                                     item)
                     continue
             try:
-                popularity = self.track_popularity(item.spotify_track_id)
-                item['spotify_track_popularity'] = popularity
-                audio_features = \
-                    self.track_audio_features(item.spotify_track_id)
-                for feature in audio_features.keys():
-                    if feature in self.spotify_audio_features.keys():
-                        item[self.spotify_audio_features[feature]] = \
-                            audio_features[feature]
-                item.store()
-                if write:
-                    item.try_write()
+                spotify_track_id = item.spotify_track_id
             except AttributeError:
                 self._log.debug('No track_id present for: {}', item)
-                pass
+                continue
+
+            popularity = self.track_popularity(spotify_track_id)
+            item['spotify_track_popularity'] = popularity
+            audio_features = \
+                self.track_audio_features(spotify_track_id)
+            for feature in audio_features.keys():
+                if feature in self.spotify_audio_features.keys():
+                    item[self.spotify_audio_features[feature]] = \
+                        audio_features[feature]
+            item.store()
+            if write:
+                item.try_write()
 
     def track_popularity(self, track_id=None):
         """Fetch a track popularity by its Spotify ID."""
