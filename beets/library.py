@@ -1382,7 +1382,7 @@ def parse_query_parts(parts, model_cls):
     `Query` and `Sort` they represent.
 
     Like `dbcore.parse_sorted_query`, with beets query prefixes and
-    special path query detection.
+    ensuring that implicit path queries are made explicit with 'path::<query>'
     """
     # Get query types and their prefix characters.
     prefixes = {
@@ -1394,27 +1394,13 @@ def parse_query_parts(parts, model_cls):
 
     # Special-case path-like queries, which are non-field queries
     # containing path separators (/).
-    path_parts = []
-    non_path_parts = []
-    for s in parts:
-        if PathQuery.is_path_query(s):
-            path_parts.append(s)
-        else:
-            non_path_parts.append(s)
+    parts = [f"path:{s}" if PathQuery.is_path_query(s) else s for s in parts]
 
     case_insensitive = beets.config['sort_case_insensitive'].get(bool)
 
-    query, sort = dbcore.parse_sorted_query(
-        model_cls, non_path_parts, prefixes, case_insensitive
+    return dbcore.parse_sorted_query(
+        model_cls, parts, prefixes, case_insensitive
     )
-
-    # Add path queries to aggregate query.
-    # Match field / flexattr depending on whether the model has the path field
-    fast_path_query = 'path' in model_cls._fields
-    query.subqueries += [PathQuery('path', s, fast_path_query)
-                         for s in path_parts]
-
-    return query, sort
 
 
 def parse_query_string(s, model_cls):

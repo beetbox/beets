@@ -31,7 +31,10 @@ from beets.dbcore.query import (NoneQuery, ParsingError,
                                 InvalidQueryArgumentValueError)
 from beets.library import Library, Item
 from beets import util
-import platform
+
+# Because the absolute path begins with something like C:, we
+# can't disambiguate it from an ordinary query.
+WIN32_NO_IMPLICIT_PATHS = 'Implicit paths are not supported on Windows'
 
 
 class TestHelper(helper.TestHelper):
@@ -521,6 +524,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         results = self.lib.albums(q)
         self.assert_albums_matched(results, ['path album'])
 
+    @unittest.skipIf(sys.platform == 'win32', WIN32_NO_IMPLICIT_PATHS)
     def test_slashed_query_matches_path(self):
         q = '/a/b'
         results = self.lib.items(q)
@@ -529,7 +533,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         results = self.lib.albums(q)
         self.assert_albums_matched(results, ['path album'])
 
-    @unittest.skip('unfixed (#1865)')
+    @unittest.skipIf(sys.platform == 'win32', WIN32_NO_IMPLICIT_PATHS)
     def test_path_query_in_or_query(self):
         q = '/a/b , /a/b'
         results = self.lib.items(q)
@@ -649,12 +653,8 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         self.assertFalse(is_path('foo:bar/'))
         self.assertFalse(is_path('foo:/bar'))
 
+    @unittest.skipIf(sys.platform == 'win32', WIN32_NO_IMPLICIT_PATHS)
     def test_detect_absolute_path(self):
-        if platform.system() == 'Windows':
-            # Because the absolute path begins with something like C:, we
-            # can't disambiguate it from an ordinary query.
-            self.skipTest('Windows absolute paths do not work as queries')
-
         # Don't patch `os.path.exists`; we'll actually create a file when
         # it exists.
         self.patcher_exists.stop()
