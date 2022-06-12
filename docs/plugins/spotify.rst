@@ -19,6 +19,7 @@ Why Use This Plugin?
 * You have playlists or albums you'd like to make available in Spotify from Beets without having to search for each artist/album/track.
 * You want to check which tracks in your library are available on Spotify.
 * You want to autotag music with metadata from the Spotify API.
+* You want to obtain track popularity and audio features (e.g., danceability)
 
 Basic Usage
 -----------
@@ -58,7 +59,7 @@ configuration options are provided.
 The default options should work as-is, but there are some options you can put
 in config.yaml under the ``spotify:`` section:
 
-- **mode**: One of the following:  
+- **mode**: One of the following:
 
    - ``list``: Print out the playlist as a list of links. This list can then
      be pasted in to a new or existing Spotify playlist.
@@ -105,3 +106,40 @@ Here's an example::
             }
         ]
 
+Obtaining Track Popularity and Audio Features from Spotify
+----------------------------------------------------------
+
+Spotify provides information on track `popularity`_ and audio `features`_ that
+can be used for music discovery.
+
+.. _popularity: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-track
+
+.. _features: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-audio-features
+
+The ``spotify`` plugin provides an additional command ``spotifysync`` to obtain
+these track attributes from Spotify:
+
+* ``beet spotifysync [-f]``: obtain popularity and audio features information
+  for every track in the library. By default, ``spotifysync`` will skip tracks
+  that already have this information populated. Using the ``-f`` or ``-force``
+  option will download the data even for tracks that already have it. Please
+  note that ``spotifysync`` works on tracks that have the Spotify track
+  identifiers. So run ``spotifysync`` only after importing your music, during
+  which Spotify identifiers will be added for tracks where Spotify is chosen as
+  the tag source.
+
+  In addition to ``popularity``, the command currently sets these audio features
+  for all tracks with a Spotify track ID:
+
+  * ``acousticness``
+  * ``danceability``
+  * ``energy``
+  * ``instrumentalness``
+  * ``key``
+  * ``liveness``
+  * ``loudness``
+  * ``mode``
+  * ``speechiness``
+  * ``tempo``
+  * ``time_signature``
+  * ``valence``
