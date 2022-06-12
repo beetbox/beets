@@ -8,9 +8,9 @@ Also, the plugin can use the Spotify `Album`_ and `Track`_ APIs to provide
 metadata matches for the importer.
 
 .. _Spotify: https://www.spotify.com/
-.. _Spotify Search API: https://developer.spotify.com/documentation/web-api/reference/#category-search
-.. _Album: https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-an-album
-.. _Track: https://developer.spotify.com/documentation/web-api/reference/#endpoint-get-track
+.. _Spotify Search API: https://developer.spotify.com/documentation/web-api/reference/#/operations/search
+.. _Album: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-an-album
+.. _Track: https://developer.spotify.com/documentation/web-api/reference/#/operations/get-track
 
 Why Use This Plugin?
 --------------------

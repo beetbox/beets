@@ -240,10 +240,10 @@ in your configuration.
 
 .. _registering a personal fanart.tv API key: https://fanart.tv/get-an-api-key/
 
-More detailed information can be found `on their blog`_. Specifically, the
+More detailed information can be found `on their Wiki`_. Specifically, the
 personal key will give you earlier access to new art.
 
-.. _on their blog: https://fanart.tv/2015/01/personal-api-keys/
+.. _on their blog: https://wiki.fanart.tv/General/personal%20api/
 
 Last.fm
 '''''''
