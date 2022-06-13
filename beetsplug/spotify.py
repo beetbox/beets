@@ -32,6 +32,7 @@ from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.plugins import MetadataSourcePlugin, BeetsPlugin
 
+DEFAULT_WAITING_TIME = 5
 
 class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
     data_source = 'Spotify'
@@ -165,10 +166,11 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 self._authenticate()
                 return self._handle_response(request_type, url, params=params)
             elif response.status_code == 429:
-                seconds = response.headers['Retry-After']
-                time.sleep(int(seconds))
-                self._log.info('Too many API requests. Retrying after {} \
+                seconds = response.headers.get('Retry-After',
+                                               DEFAULT_WAITING_TIME)
+                self._log.debug('Too many API requests. Retrying after {} \
                     seconds.', seconds)
+                time.sleep(int(seconds))
                 return self._handle_response(request_type, url, params=params)
             else:
                 raise ui.UserError(
