@@ -32,7 +32,9 @@ New features:
 
 Bug fixes:
 
-* Fix implicit paths OR queries (e.g. ``beet list /path/ , /other-path/``) 
+* Added Spotify 429 (too many requests) API error handling
+  :bug:`4370`
+* Fix implicit paths OR queries (e.g. ``beet list /path/ , /other-path/``)
   which have previously been returning the entire library.
   :bug:`1865`
 * The Discogs release ID is now populated correctly to the discogs_albumid
