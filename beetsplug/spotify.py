@@ -17,20 +17,19 @@
 Spotify playlist construction.
 """
 
-import re
-import json
 import base64
+import collections
+import json
+import re
 import time
 import webbrowser
-import collections
 
-import unidecode
-import requests
 import confuse
-
+import requests
+import unidecode
 from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.plugins import MetadataSourcePlugin, BeetsPlugin
+from beets.plugins import BeetsPlugin, MetadataSourcePlugin
 
 DEFAULT_WAITING_TIME = 5
 
