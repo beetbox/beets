@@ -170,7 +170,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                                                DEFAULT_WAITING_TIME)
                 self._log.debug('Too many API requests. Retrying after {} \
                     seconds.', seconds)
-                time.sleep(int(seconds))
+                time.sleep(int(seconds) + 1)
                 return self._handle_response(request_type, url, params=params)
             else:
                 raise ui.UserError(
