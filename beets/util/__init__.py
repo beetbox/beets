@@ -737,8 +737,7 @@ def legalize_path(path, replacements, length, extension, fragment):
 
 
 def py3_path(path):
-    """Convert a bytestring path to Unicode on Python 3 only. On Python
-    2, return the bytestring path unchanged.
+    """Convert a bytestring path to Unicode.
 
     This helps deal with APIs on Python 3 that *only* accept Unicode
     (i.e., `str` objects). I philosophically disagree with this
