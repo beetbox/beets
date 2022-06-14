@@ -21,6 +21,9 @@ that when getLogger(name) instantiates a logger that logger uses
 """
 
 
+# FIXME: Remove Python 2 leftovers.
+
+
 from copy import copy
 import subprocess
 import threading
