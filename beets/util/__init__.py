@@ -936,61 +936,52 @@ def interactive_open(targets, command):
     return os.execlp(*args)
 
 
-def _windows_long_path_name(short_path):
-    """Use Windows' `GetLongPathNameW` via ctypes to get the canonical,
-    long path given a short filename.
-    """
-    if not isinstance(short_path, str):
-        short_path = short_path.decode(_fsencoding())
-
-    import ctypes
-    buf = ctypes.create_unicode_buffer(260)
-    get_long_path_name_w = ctypes.windll.kernel32.GetLongPathNameW
-    return_value = get_long_path_name_w(short_path, buf, 260)
-
-    if return_value == 0 or return_value > 260:
-        # An error occurred
-        return short_path
-    else:
-        long_path = buf.value
-        # GetLongPathNameW does not change the case of the drive
-        # letter.
-        if len(long_path) > 1 and long_path[1] == ':':
-            long_path = long_path[0].upper() + long_path[1:]
-        return long_path
-
-
 def case_sensitive(path):
     """Check whether the filesystem at the given path is case sensitive.
 
     To work best, the path should point to a file or a directory. If the path
     does not exist, assume a case sensitive file system on every platform
     except Windows.
+
+    Currently only used for absolute paths by beets; may have a trailing
+    path separator.
     """
-    # A fallback in case the path does not exist.
-    if not os.path.exists(syspath(path)):
-        # By default, the case sensitivity depends on the platform.
-        return platform.system() != 'Windows'
+    # Look at parent paths until we find a path that actually exists, or
+    # reach the root.
+    while True:
+        head, tail = os.path.split(path)
+        if head == path:
+            # We have reached the root of the file system.
+            # By default, the case sensitivity depends on the platform.
+            return platform.system() != 'Windows'
 
-    # If an upper-case version of the path exists but a lower-case
-    # version does not, then the filesystem must be case-sensitive.
-    # (Otherwise, we have more work to do.)
-    if not (os.path.exists(syspath(path.lower())) and
-            os.path.exists(syspath(path.upper()))):
-        return True
+        # Trailing path separator, or path does not exist.
+        if not tail or not os.path.exists(path):
+            path = head
+            continue
 
-    # Both versions of the path exist on the file system. Check whether
-    # they refer to different files by their inodes. Alas,
-    # `os.path.samefile` is only available on Unix systems on Python 2.
-    if platform.system() != 'Windows':
-        return not os.path.samefile(syspath(path.lower()),
-                                    syspath(path.upper()))
+        upper_tail = tail.upper()
+        lower_tail = tail.lower()
 
-    # On Windows, we check whether the canonical, long filenames for the
-    # files are the same.
-    lower = _windows_long_path_name(path.lower())
-    upper = _windows_long_path_name(path.upper())
-    return lower != upper
+        # In case we can't tell from the given path name, look at the
+        # parent directory.
+        if upper_tail == lower_tail:
+            path = head
+            continue
+
+        upper_sys = syspath(os.path.join(head, upper_tail))
+        lower_sys = syspath(os.path.join(head, lower_tail))
+
+        # If either the upper-cased or lower-cased path does not exist, the
+        # filesystem must be case-sensitive.
+        # (Otherwise, we have more work to do.)
+        if not os.path.exists(upper_sys) or not os.path.exists(lower_sys):
+            return True
+
+        # Original and both upper- and lower-cased versions of the path
+        # exist on the file system. Check whether they refer to different
+        # files by their inodes (or an alternative method on Windows).
+        return not os.path.samefile(lower_sys, upper_sys)
 
 
 def raw_seconds_short(string):
