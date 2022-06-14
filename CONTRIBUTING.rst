@@ -347,7 +347,6 @@ others. See `unittest.mock`_ for more info.
    ``mock.patch``, as they require manual cleanup. Use the annotation or
    context manager forms instead.
 
-.. _Python unittest: https://docs.python.org/2/library/unittest.html
 .. _Codecov: https://codecov.io/github/beetbox/beets
 .. _pytest-random: https://github.com/klrmn/pytest-random
 .. _tox: https://tox.readthedocs.io/en/latest/
@@ -358,10 +357,9 @@ others. See `unittest.mock`_ for more info.
 .. _`https://github.com/beetbox/beets/blob/master/setup.py#L99`: https://github.com/beetbox/beets/blob/master/setup.py#L99
 .. _test: https://github.com/beetbox/beets/tree/master/test
 .. _`https://github.com/beetbox/beets/blob/master/test/test_template.py#L224`: https://github.com/beetbox/beets/blob/master/test/test_template.py#L224
-.. _unittest: https://docs.python.org/3.8/library/unittest.html
+.. _unittest: https://docs.python.org/3/library/unittest.html
 .. _integration test: https://github.com/beetbox/beets/actions?query=workflow%3A%22integration+tests%22
 .. _unittest.mock: https://docs.python.org/3/library/unittest.mock.html
-.. _Python unittest: https://docs.python.org/2/library/unittest.html
 .. _documentation: https://beets.readthedocs.io/en/stable/
 .. _pip: https://pip.pypa.io/en/stable/
 .. _vim: https://www.vim.org/
