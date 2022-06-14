@@ -6,6 +6,9 @@ Changelog
 
 Changelog goes here!
 
+With this release, beets now requires Python 3.7 or later (it removes support
+for Python 3.6).
+
 New features:
 
 * We now import the remixer field from Musicbrainz into the library.
@@ -125,6 +128,7 @@ Bug fixes:
 
 For packagers:
 
+* As noted above, the minimum Python version is now 3.7.
 * We fixed a version for the dependency on the `Confuse`_ library.
   :bug:`4167`
 * The minimum required version of :pypi:`mediafile` is now 0.9.0.

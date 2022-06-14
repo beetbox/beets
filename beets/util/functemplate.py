@@ -530,18 +530,7 @@ def _parse(template):
     return Expression(parts)
 
 
-def cached(func):
-    """Like the `functools.lru_cache` decorator, but works (as a no-op)
-    on Python < 3.2.
-    """
-    if hasattr(functools, 'lru_cache'):
-        return functools.lru_cache(maxsize=128)(func)
-    else:
-        # Do nothing when lru_cache is not available.
-        return func
-
-
-@cached
+@functools.lru_cache(maxsize=128)
 def template(fmt):
     return Template(fmt)
 

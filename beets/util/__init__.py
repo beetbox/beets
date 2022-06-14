@@ -868,10 +868,7 @@ def command_output(cmd, shell=False):
     """
     cmd = convert_command_args(cmd)
 
-    try:  # python >= 3.3
-        devnull = subprocess.DEVNULL
-    except AttributeError:
-        devnull = open(os.devnull, 'r+b')
+    devnull = subprocess.DEVNULL
 
     proc = subprocess.Popen(
         cmd,
@@ -1054,8 +1051,7 @@ def asciify_path(path, sep_replace):
 def par_map(transform, items):
     """Apply the function `transform` to all the elements in the
     iterable `items`, like `map(transform, items)` but with no return
-    value. The map *might* happen in parallel: it's parallel on Python 3
-    and sequential on Python 2.
+    value.
 
     The parallelism uses threads (not processes), so this is only useful
     for IO-bound `transform`s.
