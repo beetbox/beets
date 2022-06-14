@@ -532,10 +532,6 @@ def link(path, dest, replace=False):
         raise FilesystemError('OS does not support symbolic links.'
                               'link', (path, dest), traceback.format_exc())
     except OSError as exc:
-        # TODO: Windows version checks can be removed for python 3
-        if hasattr('sys', 'getwindowsversion'):
-            if sys.getwindowsversion()[0] < 6:  # is before Vista
-                exc = 'OS does not support symbolic links.'
         raise FilesystemError(exc, 'link', (path, dest),
                               traceback.format_exc())
 
