@@ -67,12 +67,6 @@ class KeyFinderPlugin(BeetsPlugin):
             except (subprocess.CalledProcessError, OSError) as exc:
                 self._log.error('execution failed: {0}', exc)
                 continue
-            except UnicodeEncodeError:
-                # Workaround for Python 2 Windows bug.
-                # https://bugs.python.org/issue1759845
-                self._log.error('execution failed for Unicode path: {0!r}',
-                                item.path)
-                continue
 
             try:
                 key_raw = output.rsplit(None, 1)[-1]
