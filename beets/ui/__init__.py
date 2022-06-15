@@ -790,9 +790,6 @@ def _store_dict(option, opt_str, value, parser):
         setattr(parser.values, dest, {})
         option_values = getattr(parser.values, dest)
 
-    # Decode the argument using the platform's argument encoding.
-    value = util.text_string(value, util.arg_encoding())
-
     try:
         key, value = value.split('=', 1)
         if not (key and value):

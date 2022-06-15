@@ -770,19 +770,6 @@ def as_string(value):
         return str(value)
 
 
-def text_string(value, encoding='utf-8'):
-    """Convert a string, which can either be bytes or unicode, to
-    unicode.
-
-    Text (unicode) is left untouched; bytes are decoded. This is useful
-    to convert from a "native string" (bytes on Python 2, str on Python
-    3) to a consistently unicode value.
-    """
-    if isinstance(value, bytes):
-        return value.decode(encoding)
-    return value
-
-
 def plurality(objs):
     """Given a sequence of hashble objects, returns the object that
     is most common in the set and the its number of appearance. The
