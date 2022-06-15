@@ -25,48 +25,28 @@ that when getLogger(name) instantiates a logger that logger uses
 
 
 from copy import copy
-import subprocess
 import threading
 import logging
 
 
 def logsafe(val):
-    """Coerce a potentially "problematic" value so it can be formatted
-    in a Unicode log string.
+    """Coerce `bytes` to `str` to avoid crashes solely due to logging.
 
-    This works around a number of pitfalls when logging objects in
-    Python 2:
-    - Logging path names, which must be byte strings, requires
-      conversion for output.
-    - Some objects, including some exceptions, will crash when you call
-      `unicode(v)` while `str(v)` works fine. CalledProcessError is an
-      example.
+    This is particularly relevant for bytestring paths. Much of our code
+    explicitly uses `displayable_path` for them, but better be safe and prevent
+    any crashes that are solely due to log formatting.
     """
-    # Already Unicode.
-    if isinstance(val, str):
-        return val
-
-    # Bytestring: needs decoding.
-    elif isinstance(val, bytes):
+    # Bytestring: Needs decoding to be safe for substitution in format strings.
+    if isinstance(val, bytes):
         # Blindly convert with UTF-8. Eventually, it would be nice to
         # (a) only do this for paths, if they can be given a distinct
         # type, and (b) warn the developer if they do this for other
         # bytestrings.
         return val.decode('utf-8', 'replace')
 
-    # A "problem" object: needs a workaround.
-    elif isinstance(val, subprocess.CalledProcessError):
-        try:
-            return str(val)
-        except UnicodeDecodeError:
-            # An object with a broken __unicode__ formatter. Use __str__
-            # instead.
-            return str(val).decode('utf-8', 'replace')
-
     # Other objects are used as-is so field access, etc., still works in
-    # the format string.
-    else:
-        return val
+    # the format string. Relies on a working __str__ implementation.
+    return val
 
 
 class StrFormatLogger(logging.Logger):
