@@ -12,19 +12,17 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""A drop-in replacement for the standard-library `logging` module that
-allows {}-style log formatting on Python 2 and 3.
+"""A drop-in replacement for the standard-library `logging` module.
 
-Provides everything the "logging" module does. The only difference is
-that when getLogger(name) instantiates a logger that logger uses
-{}-style formatting.
+Provides everything the "logging" module does. In addition, beets' logger
+(as obtained by `getLogger(name)`) supports thread-local levels, and messages
+use {}-style formatting and can interpolate keywords arguments to the logging
+calls (`debug`, `info`, etc).
 """
 
 
-# FIXME: Remove Python 2 leftovers.
-
-
 from copy import copy
+import sys
 import threading
 import logging
 
@@ -51,7 +49,14 @@ def logsafe(val):
 
 class StrFormatLogger(logging.Logger):
     """A version of `Logger` that uses `str.format`-style formatting
-    instead of %-style formatting.
+    instead of %-style formatting and supports keyword arguments.
+
+    We cannot easily get rid of this even in the Python 3 era: This custom
+    formatting supports substitution from `kwargs` into the message, which the
+    default `logging.Logger._log()` implementation does not.
+
+    Remark by @sampsyo: https://stackoverflow.com/a/24683360 might be a way to
+    achieve this with less code.
     """
 
     class _LogMessage:
@@ -65,10 +70,28 @@ class StrFormatLogger(logging.Logger):
             kwargs = {k: logsafe(v) for (k, v) in self.kwargs.items()}
             return self.msg.format(*args, **kwargs)
 
-    def _log(self, level, msg, args, exc_info=None, extra=None, **kwargs):
+    def _log(self, level, msg, args, exc_info=None, extra=None,
+             stack_info=False, **kwargs):
         """Log msg.format(*args, **kwargs)"""
         m = self._LogMessage(msg, args, kwargs)
-        return super()._log(level, m, (), exc_info, extra)
+
+        stacklevel = kwargs.pop("stacklevel", 1)
+        if sys.version_info >= (3, 8):
+            stacklevel = {"stacklevel": stacklevel}
+        else:
+            # Simply ignore this when not supported by current Python version.
+            # Can be dropped when we remove support for Python 3.7.
+            stacklevel = {}
+
+        return super()._log(
+          level,
+          m,
+          (),
+          exc_info=exc_info,
+          extra=extra,
+          stack_info=stack_info,
+          **stacklevel,
+        )
 
 
 class ThreadLocalLevelLogger(logging.Logger):
