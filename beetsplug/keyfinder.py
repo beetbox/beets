@@ -77,7 +77,7 @@ class KeyFinderPlugin(BeetsPlugin):
                 continue
 
             try:
-                key = util.text_string(key_raw)
+                key = key_raw.decode("utf-8")
             except UnicodeDecodeError:
                 self._log.error('output is invalid UTF-8')
                 continue
