@@ -149,6 +149,7 @@ class ConvertPlugin(BeetsPlugin):
             'copy_album_art': False,
             'album_art_maxwidth': 0,
             'delete_originals': False,
+            'playlist': '',
         })
         self.early_import_stages = [self.auto_convert, self.auto_convert_keep]
 
@@ -177,6 +178,8 @@ class ConvertPlugin(BeetsPlugin):
                               dest='hardlink',
                               help='hardlink files that do not \
                               need transcoding. Overrides --link.')
+        cmd.parser.add_option('-m', '--playlist', action='store',
+                              help='set the name of the playlist file to be created')
         cmd.parser.add_album_option()
         cmd.func = self.convert_func
         return [cmd]
@@ -257,7 +260,7 @@ class ConvertPlugin(BeetsPlugin):
                            util.displayable_path(source))
 
     def convert_item(self, dest_dir, keep_new, path_formats, fmt,
-                     pretend=False, link=False, hardlink=False):
+                     pretend=False, link=False, hardlink=False, playlist=''):
         """A pipeline thread that converts `Item` objects from a
         library.
         """
@@ -281,6 +284,13 @@ class ConvertPlugin(BeetsPlugin):
                 if should_transcode(item, fmt):
                     dest = replace_ext(dest, ext)
                 converted = dest
+
+            # Quick, dirty, playlist
+            # converted_filename = Path(str(converted)).name
+            converted_filename = os.path.basename(converted)
+            self._log.info("Appending to playlist file {0}".format(playlist))
+            with open(playlist, "ab") as playlist_file:
+                playlist_file.write(converted_filename + b"\n")
 
             # Ensure that only one thread tries to create directories at a
             # time. (The existence check is not atomic with the directory
@@ -436,7 +446,7 @@ class ConvertPlugin(BeetsPlugin):
 
     def convert_func(self, lib, opts, args):
         (dest, threads, path_formats, fmt,
-         pretend, hardlink, link) = self._get_opts_and_config(opts)
+         pretend, hardlink, link, playlist) = self._get_opts_and_config(opts)
 
         if opts.album:
             albums = lib.albums(ui.decargs(args))
@@ -461,8 +471,16 @@ class ConvertPlugin(BeetsPlugin):
                 self.copy_album_art(album, dest, path_formats, pretend,
                                     link, hardlink)
 
+        if playlist:
+            print("################")
+            print(f"Playlist: {playlist}")
+            print("################")
+            if not pretend:
+                with open(playlist, "w") as playlist_file:
+                    playlist_file.write("#EXTM3U" + "\n")
+
         self._parallel_convert(dest, opts.keep_new, path_formats, fmt,
-                               pretend, link, hardlink, threads, items)
+                               pretend, link, hardlink, threads, items, playlist)
 
     def convert_on_import(self, lib, item):
         """Transcode a file automatically after it is imported into the
@@ -544,6 +562,8 @@ class ConvertPlugin(BeetsPlugin):
 
         fmt = opts.format or self.config['format'].as_str().lower()
 
+        playlist = opts.playlist or self.config['playlist'].get()
+
         if opts.pretend is not None:
             pretend = opts.pretend
         else:
@@ -559,10 +579,11 @@ class ConvertPlugin(BeetsPlugin):
             hardlink = self.config['hardlink'].get(bool)
             link = self.config['link'].get(bool)
 
-        return dest, threads, path_formats, fmt, pretend, hardlink, link
+
+        return dest, threads, path_formats, fmt, pretend, hardlink, link, playlist
 
     def _parallel_convert(self, dest, keep_new, path_formats, fmt,
-                          pretend, link, hardlink, threads, items):
+                          pretend, link, hardlink, threads, items, playlist):
         """Run the convert_item function for every items on as many thread as
         defined in threads
         """
@@ -572,7 +593,8 @@ class ConvertPlugin(BeetsPlugin):
                                      fmt,
                                      pretend,
                                      link,
-                                     hardlink)
+                                     hardlink,
+                                     playlist)
                    for _ in range(threads)]
         pipe = util.pipeline.Pipeline([iter(items), convert])
         pipe.run_parallel()
