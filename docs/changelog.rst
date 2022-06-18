@@ -32,7 +32,7 @@ New features:
 
 Bug fixes:
 
-* Added Spotify 429 (too many requests) API error handling
+* We now respect the Spotify API's rate limiting, which avoids crashing when the API reports code 429 (too many requests).
   :bug:`4370`
 * Fix implicit paths OR queries (e.g. ``beet list /path/ , /other-path/``)
   which have previously been returning the entire library.
