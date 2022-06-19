@@ -17,20 +17,21 @@
 Spotify playlist construction.
 """
 
-import re
-import json
 import base64
+import collections
+import json
+import re
 import time
 import webbrowser
-import collections
 
-import unidecode
-import requests
 import confuse
-
+import requests
+import unidecode
 from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.plugins import MetadataSourcePlugin, BeetsPlugin
+from beets.plugins import BeetsPlugin, MetadataSourcePlugin
+
+DEFAULT_WAITING_TIME = 5
 
 
 class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
@@ -163,6 +164,13 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                     self.data_source,
                 )
                 self._authenticate()
+                return self._handle_response(request_type, url, params=params)
+            elif response.status_code == 429:
+                seconds = response.headers.get('Retry-After',
+                                               DEFAULT_WAITING_TIME)
+                self._log.debug('Too many API requests. Retrying after {} \
+                    seconds.', seconds)
+                time.sleep(int(seconds) + 1)
                 return self._handle_response(request_type, url, params=params)
             else:
                 raise ui.UserError(
@@ -577,9 +585,6 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         self._log.debug('Total {} tracks', len(items))
 
         for index, item in enumerate(items, start=1):
-            # Added sleep to avoid API rate limit
-            # https://developer.spotify.com/documentation/web-api/guides/rate-limits/
-            time.sleep(.5)
             self._log.info('Processing {}/{} tracks - {} ',
                            index, len(items), item)
             # If we're not forcing re-downloading for all tracks, check
