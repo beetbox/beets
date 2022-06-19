@@ -279,6 +279,9 @@ Here are a few of the plugins written by the beets community:
 
 * `beets-autofix`_ automates repetitive tasks to keep your library in order.
 
+* `beets-audible`_ adds Audible as a tagger data source and provides 
+  other features for managing audiobook collections.
+
 * `beets-barcode`_ lets you scan or enter barcodes for physical media to
   search for their metadata.
 
@@ -370,3 +373,4 @@ Here are a few of the plugins written by the beets community:
 .. _beets-bpmanalyser: https://github.com/adamjakab/BeetsPluginBpmAnalyser
 .. _beets-originquery: https://github.com/x1ppy/beets-originquery
 .. _drop2beets: https://github.com/martinkirch/drop2beets
+.. _beets-audible: https://github.com/Neurrone/beets-audible
