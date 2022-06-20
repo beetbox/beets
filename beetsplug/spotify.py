@@ -29,6 +29,7 @@ import requests
 import unidecode
 from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.dbcore import types
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin
 
 DEFAULT_WAITING_TIME = 5
