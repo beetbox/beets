@@ -37,6 +37,22 @@ DEFAULT_WAITING_TIME = 5
 class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
     data_source = 'Spotify'
 
+    item_types = {
+        'spotify_track_popularity': types.INTEGER,
+        'spotify_acousticness': types.FLOAT,
+        'spotify_danceability': types.FLOAT,
+        'spotify_energy': types.FLOAT,
+        'spotify_instrumentalness': types.FLOAT,
+        'spotify_key': types.FLOAT,
+        'spotify_liveness': types.FLOAT,
+        'spotify_loudness': types.FLOAT,
+        'spotify_mode': types.INTEGER,
+        'spotify_speechiness': types.FLOAT,
+        'spotify_tempo': types.FLOAT,
+        'spotify_time_signature': types.INTEGER,
+        'spotify_valence': types.FLOAT,
+    }
+
     # Base URLs for the Spotify API
     # Documentation: https://developer.spotify.com/web-api
     oauth_token_url = 'https://accounts.spotify.com/api/token'
