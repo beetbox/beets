@@ -8,6 +8,7 @@ Changelog goes here!
 
 New features:
 
+* :blog:`/_posts/2022-06-21-walkthrough.md` Create a guided walkthrough for getting started with beets
 * :doc:`/plugins/spotify`: The plugin now provides an additional command
   `spotifysync` that allows getting track popularity and audio features
   information from Spotify.
