@@ -301,6 +301,12 @@ import`` gives more specific help about the ``import`` command.
 Please let me know what you think of beets via `the discussion board`_ or
 `Twitter`_.
 
+Third-party Tutorials
+---------------------
+
+* **Beets Blog** `Guided walkthrough`_
+
 .. _the mailing list: https://groups.google.com/group/beets-users
 .. _the discussion board: https://discourse.beets.io
 .. _twitter: https://twitter.com/b33ts
+.. _Guided Walkthrough: https://beets.io/blog/walkthrough.html
