@@ -79,6 +79,26 @@ def _do_query(lib, query, album, also_items=True):
     return items, albums
 
 
+def _paths_from_logfile(path):
+    """Parse the logfile and yield skipped paths to pass to the `import`
+    command.
+    """
+    with open(path, mode="r", encoding="utf-8") as fp:
+        for line in fp:
+            verb, sep, paths = line.rstrip("\n").partition(" ")
+            if not sep:
+                raise ValueError("malformed line in logfile")
+
+            # Ignore informational lines that don't need to be re-imported.
+            if verb in {"import", "duplicate-keep", "duplicate-replace"}:
+                continue
+
+            if verb not in {"asis", "skip", "duplicate-skip"}:
+                raise ValueError(f"unknown verb {verb} found in logfile")
+
+            yield os.path.commonpath(paths.split("; "))
+
+
 # fields: Shows a list of available fields for queries and format strings.
 
 def _print_keys(query):
@@ -914,10 +934,29 @@ def import_files(lib, paths, query):
     query.
     """
     # Check the user-specified directories.
+    paths_to_import = []
     for path in paths:
-        if not os.path.exists(syspath(normpath(path))):
+        normalized_path = syspath(normpath(path))
+        if not os.path.exists(normalized_path):
             raise ui.UserError('no such file or directory: {}'.format(
                 displayable_path(path)))
+
+        # Read additional paths from logfile.
+        if os.path.isfile(normalized_path):
+            try:
+                paths_to_import.extend(list(
+                    _paths_from_logfile(normalized_path)))
+            except ValueError:
+                # We could raise an error here, but it's possible that the user
+                # tried to import a media file instead of a logfile. In that
+                # case, logging a warning would be confusing, so we skip this
+                # here.
+                pass
+            else:
+                # Don't re-add the log file to the list of paths to import.
+                continue
+
+        paths_to_import.append(paths)
 
     # Check parameter consistency.
     if config['import']['quiet'] and config['import']['timid']:
@@ -939,11 +978,11 @@ def import_files(lib, paths, query):
             config['import']['quiet']:
         config['import']['resume'] = False
 
-    session = TerminalImportSession(lib, loghandler, paths, query)
+    session = TerminalImportSession(lib, loghandler, paths_to_import, query)
     session.run()
 
     # Emit event.
-    plugins.send('import', lib=lib, paths=paths)
+    plugins.send('import', lib=lib, paths=paths_to_import)
 
 
 def import_func(lib, opts, args):
