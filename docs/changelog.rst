@@ -32,6 +32,8 @@ New features:
 
 Bug fixes:
 
+* Fix Spotify API error when tracks do not have audio-features.
+  :bug:`4385`
 * We now respect the Spotify API's rate limiting, which avoids crashing when the API reports code 429 (too many requests).
   :bug:`4370`
 * Fix implicit paths OR queries (e.g. ``beet list /path/ , /other-path/``)
