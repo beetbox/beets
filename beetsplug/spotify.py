@@ -190,7 +190,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 time.sleep(int(seconds) + 1)
                 return self._handle_response(request_type, url, params=params)
             elif 'analysis not found' in response.text:
-                self._log.debug('No analysis found')
+                self._log.debug('No audio analysis found')
                 return None
             else:
                 raise ui.UserError(
