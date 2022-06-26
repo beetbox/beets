@@ -189,6 +189,9 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                     seconds.', seconds)
                 time.sleep(int(seconds) + 1)
                 return self._handle_response(request_type, url, params=params)
+            elif 'analysis not found' in response.text:
+                self._log.debug('No analysis found')
+                return None
             else:
                 raise ui.UserError(
                     '{} API error:\n{}\nURL:\n{}\nparams:\n{}'.format(
@@ -621,6 +624,9 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             item['spotify_track_popularity'] = popularity
             audio_features = \
                 self.track_audio_features(spotify_track_id)
+            if audio_features is None:
+                self._log.debug('No audio features found for : {}', item)
+                continue
             for feature in audio_features.keys():
                 if feature in self.spotify_audio_features.keys():
                     item[self.spotify_audio_features[feature]] = \
