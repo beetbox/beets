@@ -933,31 +933,6 @@ def import_files(lib, paths, query):
     """Import the files in the given list of paths or matching the
     query.
     """
-    # Check the user-specified directories.
-    paths_to_import = []
-    for path in paths:
-        normalized_path = syspath(normpath(path))
-        if not os.path.exists(normalized_path):
-            raise ui.UserError('no such file or directory: {}'.format(
-                displayable_path(path)))
-
-        # Read additional paths from logfile.
-        if os.path.isfile(normalized_path):
-            try:
-                paths_to_import.extend(list(
-                    _paths_from_logfile(normalized_path)))
-            except ValueError:
-                # We could raise an error here, but it's possible that the user
-                # tried to import a media file instead of a logfile. In that
-                # case, logging a warning would be confusing, so we skip this
-                # here.
-                pass
-            else:
-                # Don't re-add the log file to the list of paths to import.
-                continue
-
-        paths_to_import.append(paths)
-
     # Check parameter consistency.
     if config['import']['quiet'] and config['import']['timid']:
         raise ui.UserError("can't be both quiet and timid")
@@ -978,11 +953,11 @@ def import_files(lib, paths, query):
             config['import']['quiet']:
         config['import']['resume'] = False
 
-    session = TerminalImportSession(lib, loghandler, paths_to_import, query)
+    session = TerminalImportSession(lib, loghandler, paths, query)
     session.run()
 
     # Emit event.
-    plugins.send('import', lib=lib, paths=paths_to_import)
+    plugins.send('import', lib=lib, paths=paths)
 
 
 def import_func(lib, opts, args):
@@ -999,7 +974,25 @@ def import_func(lib, opts, args):
     else:
         query = None
         paths = args
-        if not paths:
+
+        # The paths from the logfiles go into a separate list to allow handling
+        # errors differently from user-specified paths.
+        paths_from_logfiles = []
+        for logfile in opts.from_logfiles or []:
+            try:
+                paths_from_logfiles.extend(
+                    list(_paths_from_logfile(syspath(normpath(logfile))))
+                )
+            except ValueError as err:
+                raise ui.UserError('malformed logfile {}'.format(
+                    util.displayable_path(logfile),
+                )) from err
+            except IOError as err:
+                raise ui.UserError('unreadable logfile {}'.format(
+                    util.displayable_path(logfile),
+                )) from err
+
+        if not paths and not paths_from_logfiles:
             raise ui.UserError('no path specified')
 
         # On Python 2, we used to get filenames as raw bytes, which is
@@ -1008,6 +1001,31 @@ def import_func(lib, opts, args):
         # filename.
         paths = [p.encode(util.arg_encoding(), 'surrogateescape')
                  for p in paths]
+        paths_from_logfiles = [p.encode(util.arg_encoding(), 'surrogateescape')
+                               for p in paths_from_logfiles]
+
+        # Check the user-specified directories.
+        for path in paths:
+            if not os.path.exists(syspath(normpath(path))):
+                raise ui.UserError('no such file or directory: {}'.format(
+                    displayable_path(path)))
+
+        # Check the directories from the logfiles, but don't throw an error in
+        # case those paths don't exist. Maybe some of those paths have already
+        # been imported and moved separately, so logging a warning should
+        # suffice.
+        for path in paths_from_logfiles:
+            if not os.path.exists(syspath(normpath(path))):
+                log.warning('No such file or directory: {}'.format(
+                    displayable_path(path)))
+                continue
+
+            paths.append(path)
+
+        # If all paths were read from a logfile, and none of them exist, throw
+        # an error
+        if not paths:
+            raise ui.UserError('none of the paths are importable')
 
     import_files(lib, paths, query)
 
@@ -1099,6 +1117,11 @@ import_cmd.parser.add_option(
     '-S', '--search-id', dest='search_ids', action='append',
     metavar='ID',
     help='restrict matching to a specific metadata backend ID'
+)
+import_cmd.parser.add_option(
+    '--from-logfile', dest='from_logfiles', action='append',
+    metavar='PATH',
+    help='read skipped paths from an existing logfile'
 )
 import_cmd.parser.add_option(
     '--set', dest='set_fields', action='callback',
