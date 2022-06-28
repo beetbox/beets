@@ -39,7 +39,7 @@ Run `beet import {path to sample library}` to import the messy sample library an
 
 In my case the path to the sample library is also in my home folder, so I will run the command `beet import ~/sample-library`
 
-The autotagger starts work on Album 1, and the closest match is selection `1`, go ahead and enter that in the prompt.
+The autotagger starts work on Album 1, and the closest match is selection `1`. Go ahead and enter that in the prompt.
 
 ![](beets/_posts/2022-06-21-images/album1-find-tags.png)
 
