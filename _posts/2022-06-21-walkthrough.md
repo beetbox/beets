@@ -59,7 +59,7 @@ Album 3 doesn't have a matching release either, so we will enter one manually wi
 
 ![](beets/_posts/2022-06-21-images/album3-no-release.png)
 
-We've located the correct album, however we only have 11/48 tracks across a compilation of 3 CDs, hence the large output warning us of missing tracks.
+We've located the correct album; however, we only have 11/48 tracks across a compilation of 3 CDs, hence the large output warning us of missing tracks.
 
 ![](beets/_posts/2022-06-21-images/album3-correct-tags.png)
 
