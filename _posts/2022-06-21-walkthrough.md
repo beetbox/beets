@@ -26,7 +26,7 @@ library: ~/beets/data/musiclibrary.db
 plugins: web
 ```
 
-All I've done to support the above config is create the  `beets` directory inside my home folder, with empty child directories for `music` and `data` inside it. You can place your music library and data store wherever you like, and you don't need to create the `musiclibrary.db` file, it will be created for you.
+All I've done to support the above config is create the  `beets` directory inside my home folder, with empty child directories for `music` and `data` inside it. You can place your music library and data store wherever you like, and you don't need to create the `musiclibrary.db` file; it will be created for you.
 
 ## Importing the sample library
 First, download the .zip archive of the sample music library from [this](https://bit.ly/3EZb5ue) public google drive file, extract the contents and take note of the path to the sample library for later use.
