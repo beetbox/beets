@@ -89,7 +89,7 @@ We've made significant progress! Now let's correct some discrepencies that came 
 We can use the command `beet fields` to see all the metadata that can be updated for each track in the library, in our case we're interested in updating the `title` and `mb_trackid` fields to correct a series of mistakes in a couple of our albums.
 
 ### Mistake: Album 2 - Swapped track titles and metadata
-There are two tracks in our download of Moravec's Debussy album where the titles and metadata are swapped. "Children's Corner: Jimbo's Lullaby" and "Clair de lune" incorrectly refer to the opposite recording, let's change that with beets!
+There are two tracks in our download of Moravec's Debussy album where the titles and metadata are swapped. "Children's Corner: Jimbo's Lullaby" and "Clair de lune" incorrectly refer to the opposite recording. Let's change that with beets!
  
 1. Rename "Clair de lune" with the following command `beet modify Clair de lune title="Children's Corner Suite"`
 
