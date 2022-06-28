@@ -9,7 +9,7 @@ This is a step by step walkthrough for getting started with the beets CLI using 
 
 We will use this library in its messy/unaltered state to showcase the power of the beets CLI by correcting obscure metadata and organizing the music library with the auto-tagger (and a little manual input). Lastly, we will host the library locally using the beets web plugin to stream the audio once finished and admire our results. Let's get started!
 
-If desired, there are resources included below to help find additional recordings that are in the public domain if you'd like to grow your sample music library. Note: be sure the release you're looking to include has metadata in the MusicBrainz database for best results.
+If desired, there are resources included below to help find additional recordings that are in the public domain if you'd like to grow your sample music library. Note: be sure the release you're looking to include has metadata in [the MusicBrainz database](https://musicbrainz.org/) for best results.
 
 ## Installing and configuring beets
 Following are brief instructions for downloading and installing the beets CLI. For detailed instructions, head over to [the Getting Started guide](https://beets.readthedocs.io/en/stable/guides/main.html) in the official documentation.
