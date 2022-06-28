@@ -12,7 +12,7 @@ We will use this library in its messy/unaltered state to showcase the power of t
 If desired, there are resources included below to help find additional recordings that are in the public domain if you'd like to grow your sample music library. Note: be sure the release you're looking to include has metadata in the MusicBrainz database for best results.
 
 ## Installing and configuring beets
-Following are brief instructions for downloading and installing the beets CLI. For detailed instructions, head over to the official documentation here: [Getting Started](https://beets.readthedocs.io/en/stable/guides/main.html).
+Following are brief instructions for downloading and installing the beets CLI. For detailed instructions, head over to [the Getting Started guide](https://beets.readthedocs.io/en/stable/guides/main.html) in the official documentation.
 
 Download beets with `pip install beets`
 
