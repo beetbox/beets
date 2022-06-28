@@ -84,19 +84,36 @@ def _paths_from_logfile(path):
     command.
     """
     with open(path, mode="r", encoding="utf-8") as fp:
-        for line in fp:
+        for i, line in enumerate(fp, start=1):
             verb, sep, paths = line.rstrip("\n").partition(" ")
             if not sep:
-                raise ValueError("malformed line in logfile")
+                raise ValueError(f"line {i} is invalid")
 
             # Ignore informational lines that don't need to be re-imported.
             if verb in {"import", "duplicate-keep", "duplicate-replace"}:
                 continue
 
             if verb not in {"asis", "skip", "duplicate-skip"}:
-                raise ValueError(f"unknown verb {verb} found in logfile")
+                raise ValueError(f"line {i} contains unknown verb {verb}")
 
             yield os.path.commonpath(paths.split("; "))
+
+
+def _parse_logfiles(logfiles):
+    """Parse all `logfiles` and yield paths from it."""
+    for logfile in logfiles:
+        try:
+            yield from _paths_from_logfile(syspath(normpath(logfile)))
+        except ValueError as err:
+            raise ui.UserError('malformed logfile {}: {}'.format(
+                util.displayable_path(logfile),
+                str(err)
+            )) from err
+        except IOError as err:
+            raise ui.UserError('unreadable logfile {}: {}'.format(
+                util.displayable_path(logfile),
+                str(err)
+            )) from err
 
 
 # fields: Shows a list of available fields for queries and format strings.
@@ -977,20 +994,7 @@ def import_func(lib, opts, args):
 
         # The paths from the logfiles go into a separate list to allow handling
         # errors differently from user-specified paths.
-        paths_from_logfiles = []
-        for logfile in opts.from_logfiles or []:
-            try:
-                paths_from_logfiles.extend(
-                    list(_paths_from_logfile(syspath(normpath(logfile))))
-                )
-            except ValueError as err:
-                raise ui.UserError('malformed logfile {}'.format(
-                    util.displayable_path(logfile),
-                )) from err
-            except IOError as err:
-                raise ui.UserError('unreadable logfile {}'.format(
-                    util.displayable_path(logfile),
-                )) from err
+        paths_from_logfiles = list(_parse_logfiles(opts.from_logfiles or []))
 
         if not paths and not paths_from_logfiles:
             raise ui.UserError('no path specified')
