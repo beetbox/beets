@@ -189,9 +189,6 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                     seconds.', seconds)
                 time.sleep(int(seconds) + 1)
                 return self._handle_response(request_type, url, params=params)
-            elif 'analysis not found' in response.text:
-                self._log.debug('No audio analysis found')
-                return None
             else:
                 raise ui.UserError(
                     '{} API error:\n{}\nURL:\n{}\nparams:\n{}'.format(
@@ -645,7 +642,12 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
 
     def track_audio_features(self, track_id=None):
         """Fetch track audio features by its Spotify ID."""
-        track_data = self._handle_response(
-            requests.get, self.audio_features_url + track_id
-        )
+        try:
+            track_data = self._handle_response(
+                requests.get, self.audio_features_url + \
+                    track_id)
+            track_data.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            self._log.debug('Audio feature update failed: {0}', str(e))
+            track_data = None
         return track_data
