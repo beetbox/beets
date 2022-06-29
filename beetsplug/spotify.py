@@ -625,7 +625,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             audio_features = \
                 self.track_audio_features(spotify_track_id)
             if audio_features is None:
-                self._log.debug('No audio features found for : {}', item)
+                self._log.debug('No audio features found for: {}', item)
                 continue
             for feature in audio_features.keys():
                 if feature in self.spotify_audio_features.keys():
