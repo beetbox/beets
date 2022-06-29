@@ -85,6 +85,9 @@ Bug fixes:
   :bug:`4272`
 * :doc:`plugins/lyrics`: Fixed issue with Genius header being included in lyrics,
   added test case of up-to-date Genius html
+* :doc:`plugins/importadded`: Fix a bug with recently added reflink import option
+  that casues a crash when ImportAdded plugin enabled.
+  :bug:`4389`
 
 For packagers:
 
