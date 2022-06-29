@@ -29,6 +29,9 @@ New features:
   :bug:`1840` :bug:`4302`
 * Added a ``-P`` (or ``--disable-plugins``) flag to specify one/multiple plugin(s) to be
   disabled at startup.
+* :ref:`import-options`: Add support for re-running the importer on paths in
+  log files that were created with the ``-l`` (or ``--logfile``) argument.
+  :bug:`4379` :bug:`4387`
 
 Bug fixes:
 
