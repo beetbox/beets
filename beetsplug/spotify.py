@@ -644,8 +644,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         """Fetch track audio features by its Spotify ID."""
         try:
             track_data = self._handle_response(
-                requests.get, self.audio_features_url + \
-                    track_id)
+                requests.get, self.audio_features_url + track_id)
             track_data.raise_for_status()
         except requests.exceptions.RequestException as e:
             self._log.debug('Audio feature update failed: {0}', str(e))
