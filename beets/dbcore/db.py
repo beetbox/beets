@@ -20,7 +20,7 @@ import time
 import os
 import re
 from functools import reduce
-from itertools import groupby
+from itertools import chain
 from operator import add
 from collections import defaultdict
 import threading
@@ -34,6 +34,8 @@ from beets.util import py3_path
 from beets.dbcore import types
 from .query import MatchQuery, NullSort, TrueQuery
 from collections.abc import Mapping
+
+DEBUG = 0
 
 # converter to load json strings produced by the 'group_to_json' aggregate
 sqlite3.register_converter("json_str", json.loads)
@@ -657,7 +659,7 @@ class Results:
     constructs LibModel objects that reflect database rows.
     """
 
-    def __init__(self, model_class, rows, db, query=None, sort=None):
+    def __init__(self, model_class, rows, db, sort=None):
         """Create a result set that will construct objects of type
         `model_class`.
 
@@ -665,9 +667,7 @@ class Results:
         constructed. `rows` is a query result: a list of mappings. The
         new objects will be associated with the database `db`.
 
-        If `query` is provided, it is used as a predicate to filter the
-        results for a "slow query" that cannot be evaluated by the
-        database directly. If `sort` is provided, it is used to sort the
+        If `sort` is provided, it is used to sort the
         full list of results before returning. This means it is a "slow
         sort" and all objects must be built before returning the first
         one.
@@ -675,7 +675,6 @@ class Results:
         self.model_class = model_class
         self.rows = rows
         self.db = db
-        self.query = query
         self.sort = sort
 
         # We keep a queue of rows we haven't yet consumed for
@@ -744,16 +743,8 @@ class Results:
         if not self._rows:
             # Fully materialized. Just count the objects.
             return len(self._objects)
-
-        elif self.query:
-            # A slow query. Fall back to testing every object.
-            count = 0
-            for obj in self:
-                count += 1
-            return count
-
         else:
-            # A fast query. Just count the rows.
+            # Just count the rows.
             return self._row_count
 
     def __nonzero__(self):
@@ -1087,6 +1078,9 @@ class Database:
 
     @staticmethod
     def _get_fields(query):
+        """Return a list of (field, fast) tuples.
+        Nested queries are handled through recursion.
+        """
         if hasattr(query, "subqueries"):
             return reduce(add, map(Database._get_fields, query.subqueries))
         if hasattr(query, "subquery"):
@@ -1098,11 +1092,75 @@ class Database:
         else:
             return []
 
+    @staticmethod
+    def _relation_join(model):
+        """Given a model class, return a join between itself and the related
+        table if the relation exists.
+        For example for items and albums it would be
+            items JOIN albums ON items.album_id == albums.id
+        or
+            albums JOIN items ON albums.id == items.album_id
+        """
+        relation = getattr(model, "_relation", None)
+        if relation:
+            return "{0} LEFT JOIN {1} ON {0}.{2} == {1}.{3}".format(
+                model._table,
+                model._relation._table,
+                model._relation_id_field,
+                model._relation._relation_id_field,
+            )
+        return model._table
+
+    @staticmethod
+    def print_query(sql, subvals):
+        """If debugging, replace placeholders and print the query."""
+        if not DEBUG:
+            return
+        topr = sql
+        for val in subvals:
+            topr = topr.replace("?", str(val), 1)
+        print(topr)
+
+    def _get_matching_ids(self, model, where, subvals):
+        """Return ids of entities which match the given filter (`where` clause).
+        This function is called only if we filter by at least one flexible
+        attribute field.
+
+        Since we cannot tell which entity the flexible attributes belong to
+        (or even whether they exist), we must join the related entity and query
+        both flexible attribute tables.
+
+        Since these queries only return IDs of the entities _matching_
+        the filter, they are performed very quickly, regardless of which table
+        the queried fields belong to, or the size of the music library.
+
+        Attempts to achieve this using a single query resulted in significantly
+        slower performance, since the main query contains both GROUP BY
+        and ORDER BY clauses, and because the query asks for all data.
+        """
+
+        id_field = f"{model._table}.id"
+        join_tmpl = "LEFT JOIN {} ON {} = entity_id"
+        joins = [join_tmpl.format(model._flex_table, id_field)]
+
+        _from = self._relation_join(model)
+        if _from != model._table:
+            joins.append(join_tmpl.format(model._relation._flex_table,
+                                          f"{model._relation._table}.id"))
+
+        ids = set()
+        with self.transaction() as tx:
+            for join in joins:
+                sql = f"SELECT {id_field} FROM {_from} {join} WHERE {where}"
+                self.print_query(sql, subvals)
+                ids.update(chain.from_iterable(tx.query(sql, subvals)))
+
+        return ids
+
     def _fetch(self, model_cls, query=None, sort=None, limit=None):
         """Fetch the objects of type `model_cls` matching the given
-        query. The query may be given as a string, string sequence, a
-        Query object, or None (to fetch everything). `sort` is an
-        `Sort` object, `limit` is an integer or None.
+        query. `query` is a Query object, or None (to fetch everything).
+        `sort` is a `Sort` object while `limit` is an integer or None.
         """
         sort = sort or NullSort()
         order_by = sort.order_clause()
@@ -1110,28 +1168,33 @@ class Database:
         query = query or TrueQuery()
         where, subvals = query.clause()
 
+        fields = defaultdict(set)
+        for field, fast in self._get_fields(query):
+            fields[fast].add(field)
+
+        flex_fields, model_fields = fields[False], fields[True]
+        relation_fields = model_fields - set(model_cls._fields)
+
         table = model_cls._table
-
-        fields = {}
-        for fast, _fields in groupby(self._get_fields(query), lambda x: x[1]):
-            fields[fast] = {f[0] for f in _fields}
-
-        flex_fields = fields.get(False, set())
-        other_model_fields = fields.get(True, set()) - set(model_cls._fields)
-
         _from = table
-        select_columns = [f"{table}.*"]
-        if other_model_fields:
-            _from = "items JOIN albums ON items.album_id = albums.id"
-            select_columns += other_model_fields
-
+        # select all fields from the queried entity
+        select_fields = [f"{table}.*"]
         if flex_fields:
-            where = self._ids_predicate(model_cls, _from, where or 1, subvals)
+            # prefetch IDs of entities that match the filter which includes
+            # flexible attributes
+            ids = self._get_matching_ids(model_cls, where or 1, subvals)
+            where = f"{table}.id IN ({', '.join(map(str, ids))})"
             subvals = []
+        elif relation_fields:
+            # otherwise, if we are filtering by a related field, join
+            # the related entity table, and return the required fields,
+            # such as `items.path`
+            _from = self._relation_join(model_cls)
+            select_fields += relation_fields
 
         sql = f"""
         SELECT
-            {", ".join(select_columns)},
+            {", ".join(select_fields)},
             group_to_json(key, value) AS "flex_attrs [json_str]"
         FROM {_from}
         LEFT JOIN (
@@ -1142,36 +1205,28 @@ class Database:
         GROUP BY {table}.id
         """
         if order_by:
-            # wrap everything in a subquery to be able to use 'album'
-            # instead of 'items.album' avoiding ambiguous column names
+            # a field name in `order_by`, say `album`, would be ambiguous
+            # in the `sql` query since it may exist on both (joined) tables
+            # in `_from`, causing sqlite3.OperationalError.
+            # Since we know that `sql` selects unique fields, we wrap it in
+            # a subquery.
+            # This is also good for performance, since ordering is applied
+            # to the final (filtered) list of entities, staying away from the
+            # joins and the GROUP BY clause.
             sql = f"SELECT * FROM ({sql}) ORDER BY {order_by}"
         if limit:
+            # use the limit at the end ensuring that we limit sorted entities
             sql += f"\nLIMIT {limit}"
+
+        self.print_query(sql, subvals)
 
         with self.transaction() as tx:
             rows = tx.query(sql, subvals)
 
         return Results(
             model_cls, rows, self,
-            None if where else query,  # Slow query component.
             sort if sort.is_slow() else None,  # Slow sort component.
         )
-
-    def _ids_predicate(self, model, _from, where, subvals):
-        table = model._table
-        ajoin = "LEFT JOIN {} ON {} = entity_id"
-        joins = [ajoin.format(model._flex_table, f"{table}.id")]
-        if table == "items":
-            joins.append(ajoin.format("album_attributes", "items.album_id"))
-
-        ids = set()
-        with self.transaction() as tx:
-            for join in joins:
-                sql = f"SELECT {table}.id FROM {_from} {join} WHERE {where}"
-                # print("SQL: ", sql)
-                ids.update({str(t["id"]) for t in tx.query(sql, subvals)})
-
-        return f"{table}.id IN ({', '.join(ids)})"
 
     def _get(self, model_cls, id):
         """Get a Model object by its id or None if the id does not

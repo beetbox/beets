@@ -89,14 +89,27 @@ class FieldQuery(Query):
     """An abstract query that searches in a specific field for a
     pattern. Subclasses must provide a `value_match` class method, which
     determines whether a certain pattern string matches a certain value
-    string. Subclasses may also provide `col_clause` to implement the
-    same matching functionality in SQLite.
+    string.
+
+    Subclasses may provide `col_clause` to implement the same matching
+    functionality in SQLite. When the `table` name is given, `sql_field`
+    includes it, ensuring that the query is fit to handle joined tables.
+
+    If `fast` is False (the queried field is a flexible attribute), use
+    `sql_field` = 'value' which is the column that contains the value
+    in the corresponding flexible attributes table.
     """
 
-    def __init__(self, field, pattern, fast=True):
+    def __init__(self, field, pattern, fast=True, table=None):
         self.field = field
         self.pattern = pattern
         self.fast = fast
+        if table:
+            self.sql_field = f"{table}.{field}"
+        elif not fast:
+            self.sql_field = "value"
+        else:
+            self.sql_field = field
 
     def col_clause(self):
         return None, ()
@@ -105,12 +118,8 @@ class FieldQuery(Query):
         if self.fast:
             return self.col_clause()
         else:
-            actual_field = self.field
-            self.field = "value"
-            clause, pattern = self.col_clause()
-            clause = f"(key = ? AND {clause})"
-            self.field = actual_field
-            return clause, (actual_field, *pattern),
+            clause, subvals = self.col_clause()
+            return f"(key = ? AND {clause})", (self.field, *subvals),
 
     @classmethod
     def value_match(cls, pattern, value):
@@ -138,7 +147,7 @@ class MatchQuery(FieldQuery):
     """A query that looks for exact matches in an item field."""
 
     def col_clause(self):
-        return self.field + " = ?", [self.pattern]
+        return self.sql_field + " = ?", [self.pattern]
 
     @classmethod
     def value_match(cls, pattern, value):
@@ -148,11 +157,11 @@ class MatchQuery(FieldQuery):
 class NoneQuery(FieldQuery):
     """A query that checks whether a field is null."""
 
-    def __init__(self, field, fast=True):
-        super().__init__(field, None, fast)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, None, **kwargs)
 
     def col_clause(self):
-        return self.field + " IS NULL", ()
+        return self.sql_field + " IS NULL", ()
 
     def match(self, item):
         return item.get(self.field) is None
@@ -189,7 +198,7 @@ class StringQuery(StringFieldQuery):
                   .replace('\\', '\\\\')
                   .replace('%', '\\%')
                   .replace('_', '\\_'))
-        clause = self.field + " like ? escape '\\'"
+        clause = self.sql_field + " like ? escape '\\'"
         subvals = [search]
         return clause, subvals
 
@@ -207,7 +216,7 @@ class SubstringQuery(StringFieldQuery):
                    .replace('%', '\\%')
                    .replace('_', '\\_'))
         search = '%' + pattern + '%'
-        clause = self.field + " like ? escape '\\'"
+        clause = self.sql_field + " like ? escape '\\'"
         subvals = [search]
         return clause, subvals
 
@@ -224,9 +233,9 @@ class RegexpQuery(StringFieldQuery):
     expression.
     """
 
-    def __init__(self, field, pattern, fast=True):
-        super().__init__(field, pattern, fast)
-        pattern = self._normalize(pattern)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        pattern = self._normalize(self.pattern)
         try:
             self.pattern = re.compile(self.pattern)
         except re.error as exc:
@@ -236,7 +245,7 @@ class RegexpQuery(StringFieldQuery):
                                                  format(exc))
 
     def col_clause(self):
-        return f" regexp({self.field}, ?)", [self.pattern.pattern]
+        return f" regexp({self.sql_field}, ?)", [self.pattern.pattern]
 
     @staticmethod
     def _normalize(s):
@@ -255,10 +264,10 @@ class BooleanQuery(MatchQuery):
     string reflecting a boolean.
     """
 
-    def __init__(self, field, pattern, fast=True):
-        super().__init__(field, pattern, fast)
-        if isinstance(pattern, str):
-            self.pattern = util.str2bool(pattern)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if isinstance(self.pattern, str):
+            self.pattern = util.str2bool(self.pattern)
         self.pattern = int(self.pattern)
 
 
@@ -269,8 +278,8 @@ class BytesQuery(MatchQuery):
     `MatchQuery` when matching on BLOB values.
     """
 
-    def __init__(self, field, pattern):
-        super().__init__(field, pattern)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         # Use a buffer/memoryview representation of the pattern for SQLite
         # matching. This instructs SQLite to treat the blob as binary
@@ -284,7 +293,7 @@ class BytesQuery(MatchQuery):
             self.pattern = bytes(self.pattern)
 
     def col_clause(self):
-        return self.field + " = ?", [self.buf_pattern]
+        return self.sql_field + " = ?", [self.buf_pattern]
 
 
 class NumericQuery(FieldQuery):
@@ -313,10 +322,10 @@ class NumericQuery(FieldQuery):
             except ValueError:
                 raise InvalidQueryArgumentValueError(s, "an int or a float")
 
-    def __init__(self, field, pattern, fast=True):
-        super().__init__(field, pattern, fast)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-        parts = pattern.split('..', 1)
+        parts = self.pattern.split('..', 1)
         if len(parts) == 1:
             # No range.
             self.point = self._convert(parts[0])
@@ -346,15 +355,15 @@ class NumericQuery(FieldQuery):
 
     def col_clause(self):
         if self.point is not None:
-            return self.field + '=?', (self.point,)
+            return self.sql_field + '=?', (self.point,)
         else:
             if self.rangemin is not None and self.rangemax is not None:
-                return ('{0} >= ? AND {0} <= ?'.format(self.field),
+                return ('{0} >= ? AND {0} <= ?'.format(self.sql_field),
                         (self.rangemin, self.rangemax))
             elif self.rangemin is not None:
-                return f'{self.field} >= ?', (self.rangemin,)
+                return f'{self.sql_field} >= ?', (self.rangemin,)
             elif self.rangemax is not None:
-                return f'{self.field} <= ?', (self.rangemax,)
+                return f'{self.sql_field} <= ?', (self.rangemax,)
             else:
                 return '1', ()
 
@@ -417,14 +426,14 @@ class AnyFieldQuery(CollectionQuery):
     constructor.
     """
 
-    def __init__(self, pattern, fields, cls):
+    def __init__(self, pattern, fields, cls, table=None):
         self.pattern = pattern
         self.fields = fields
         self.query_class = cls
 
         subqueries = []
         for field in self.fields:
-            subqueries.append(cls(field, pattern))
+            subqueries.append(cls(field, pattern, fast=True, table=table))
         super().__init__(subqueries)
 
     def clause(self):
@@ -713,9 +722,9 @@ class DateQuery(FieldQuery):
     using an ellipsis interval syntax similar to that of NumericQuery.
     """
 
-    def __init__(self, field, pattern, fast=True):
-        super().__init__(field, pattern, fast)
-        start, end = _parse_periods(pattern)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        start, end = _parse_periods(self.pattern)
         self.interval = DateInterval.from_periods(start, end)
 
     def match(self, item):
@@ -732,11 +741,11 @@ class DateQuery(FieldQuery):
         subvals = []
 
         if self.interval.start:
-            clause_parts.append(self._clause_tmpl.format(self.field, ">="))
+            clause_parts.append(self._clause_tmpl.format(self.sql_field, ">="))
             subvals.append(_to_epoch_time(self.interval.start))
 
         if self.interval.end:
-            clause_parts.append(self._clause_tmpl.format(self.field, "<"))
+            clause_parts.append(self._clause_tmpl.format(self.sql_field, "<"))
             subvals.append(_to_epoch_time(self.interval.end))
 
         if clause_parts:

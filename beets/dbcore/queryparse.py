@@ -18,7 +18,6 @@
 import re
 import itertools
 from . import query
-from .. import library
 
 PARSE_QUERY_PART_REGEX = re.compile(
     # Non-capturing optional segment for the keyword.
@@ -134,13 +133,24 @@ def construct_query_part(model_cls, prefixes, query_part):
         # specified. So we use a version of the query that matches
         # any field.
         out_query = query.AnyFieldQuery(pattern, model_cls._search_fields,
-                                        query_class)
+                                        query_class, model_cls._table)
     elif issubclass(query_class, query.FieldQuery):
         # Field queries get constructed according to the name of the field
         # they are querying.
         key = key.lower()
-        fast = key in {*library.Item._fields, *library.Album._fields}
-        out_query = query_class(key, pattern, fast)
+        fast = True
+        # explicitly specify which table the field belongs to, prioritizing
+        # the entity we're querying for if the field also exists in
+        # the related table
+        relation = getattr(model_cls, "_relation", None)
+        if key in model_cls._fields:
+            table = model_cls._table
+        elif relation and key in relation._fields:
+            table = relation._table
+        else:
+            table = None
+            fast = False
+        out_query = query_class(key, pattern, fast, table)
     else:
         # Non-field (named) query.
         out_query = query_class(pattern)
