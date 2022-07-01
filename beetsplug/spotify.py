@@ -646,6 +646,6 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             track_data = self._handle_response(
                 requests.get, self.audio_features_url + track_id)
         except AttributeError:
-            self._log.debug('Audio feature update failed: {0}', str(e))
+            self._log.debug('Audio feature update failed: {}', str(track_id))
             track_data = None
         return track_data
