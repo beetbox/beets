@@ -32,6 +32,8 @@ New features:
 * :ref:`import-options`: Add support for re-running the importer on paths in
   log files that were created with the ``-l`` (or ``--logfile``) argument.
   :bug:`4379` :bug:`4387`
+* Preserve mtimes from archives
+  :bug:`4392`
 
 Bug fixes:
 

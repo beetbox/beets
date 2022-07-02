@@ -1090,6 +1090,19 @@ class ArchiveImportTask(SentinelImportTask):
         archive = handler_class(util.py3_path(self.toppath), mode='r')
         try:
             archive.extractall(extract_to)
+
+            # From here:
+            # https://stackoverflow.com/questions/9813243/extract-files-from-zip-file-and-retain-mod-date
+            # fixing #4392
+
+            for f in archive.infolist():
+                # path to this extracted f-item
+                fullpath = os.path.join(extract_to, f.filename)
+                # still need to adjust the dt o/w item will have the current dt
+                date_time = time.mktime(f.date_time + (0, 0, -1))
+                # update date_time
+                os.utime(fullpath, (date_time, date_time))
+
         finally:
             archive.close()
         self.extracted = True
