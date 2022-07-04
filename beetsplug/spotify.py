@@ -34,8 +34,10 @@ from beets.plugins import BeetsPlugin, MetadataSourcePlugin
 
 DEFAULT_WAITING_TIME = 5
 
+
 class SpotifyAPIError(Exception):
     pass
+
 
 class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
     data_source = 'Spotify'
