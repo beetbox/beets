@@ -194,7 +194,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 time.sleep(int(seconds) + 1)
                 return self._handle_response(request_type, url, params=params)
             elif 'analysis not found' in response.text:
-                raise SpotifyAPIError("API Error {0.status_code} for {}"
+                raise SpotifyAPIError("API Error {0.status_code} for {1}"
                 .format(response, url))
             else:
                 raise ui.UserError(
