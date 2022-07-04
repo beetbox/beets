@@ -149,7 +149,7 @@ class ConvertPlugin(BeetsPlugin):
             'copy_album_art': False,
             'album_art_maxwidth': 0,
             'delete_originals': False,
-            'playlist': '',
+            'playlist': None,
         })
         self.early_import_stages = [self.auto_convert, self.auto_convert_keep]
 
@@ -179,7 +179,14 @@ class ConvertPlugin(BeetsPlugin):
                               help='hardlink files that do not \
                               need transcoding. Overrides --link.')
         cmd.parser.add_option('-m', '--playlist', action='store',
-                              help='set the name of the playlist file to be created')
+                              help='''the name of an m3u8 playlist file to
+                              be created in the root of the destination folder.
+                              The m3u8 format ensures special characters
+                              support by using unicode to save media file
+                              paths. Relative paths are used to point to media
+                              files ensuring a working playlist when
+                              transferred to a different computer (eg. when
+                              opened from an external drive).''')
         cmd.parser.add_album_option()
         cmd.func = self.convert_func
         return [cmd]
@@ -260,7 +267,7 @@ class ConvertPlugin(BeetsPlugin):
                            util.displayable_path(source))
 
     def convert_item(self, dest_dir, keep_new, path_formats, fmt,
-                     pretend=False, link=False, hardlink=False, playlist=''):
+                     pretend=False, link=False, hardlink=False, playlist=None):
         """A pipeline thread that converts `Item` objects from a
         library.
         """
@@ -285,12 +292,18 @@ class ConvertPlugin(BeetsPlugin):
                     dest = replace_ext(dest, ext)
                 converted = dest
 
-            # Quick, dirty, playlist
-            # converted_filename = Path(str(converted)).name
-            converted_filename = os.path.basename(converted)
-            self._log.info("Appending to playlist file {0}".format(playlist))
-            with open(playlist, "ab") as playlist_file:
-                playlist_file.write(converted_filename + b"\n")
+            # When the playlist argument is passed, add the current filename to
+            # an m3u8 playlist file located in the destination folder.
+            if playlist:
+                self._log.debug(
+                    "Appending to playlist file {0}",
+                    util.displayable_path(playlist)
+                )
+                with open(playlist, "a") as playlist_file:
+                    # The classic m3u format doesn't support special characters
+                    # in media file paths, thus we use the m3u8 format which
+                    # requires media file paths to be unicode.
+                    playlist_file.write(util.displayable_path(dest) + "\n")
 
             # Ensure that only one thread tries to create directories at a
             # time. (The existence check is not atomic with the directory
@@ -472,11 +485,9 @@ class ConvertPlugin(BeetsPlugin):
                                     link, hardlink)
 
         if playlist:
-            print("################")
-            print(f"Playlist: {playlist}")
-            print("################")
+            self._log.info("Creating playlist file: {0}", playlist)
             if not pretend:
-                with open(playlist, "w") as playlist_file:
+                with open(os.path.join(dest, playlist), "w") as playlist_file:
                     playlist_file.write("#EXTM3U" + "\n")
 
         self._parallel_convert(dest, opts.keep_new, path_formats, fmt,
@@ -563,6 +574,8 @@ class ConvertPlugin(BeetsPlugin):
         fmt = opts.format or self.config['format'].as_str().lower()
 
         playlist = opts.playlist or self.config['playlist'].get()
+        if playlist is not None:
+            playlist = os.path.join(dest, util.bytestring_path(playlist))
 
         if opts.pretend is not None:
             pretend = opts.pretend
