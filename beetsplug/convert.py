@@ -299,11 +299,16 @@ class ConvertPlugin(BeetsPlugin):
                     "Appending to playlist file {0}",
                     util.displayable_path(playlist)
                 )
+                # The classic m3u format doesn't support special characters in
+                # media file paths, thus we use the m3u8 format which requires
+                # media file paths to be unicode. Additionally we use relative
+                # paths to ensure readability of the playlist on remote
+                # computers.
+                dest_relative = util.displayable_path(dest).replace(
+                    util.displayable_path(dest_dir) + os.sep, ""
+                )
                 with open(playlist, "a") as playlist_file:
-                    # The classic m3u format doesn't support special characters
-                    # in media file paths, thus we use the m3u8 format which
-                    # requires media file paths to be unicode.
-                    playlist_file.write(util.displayable_path(dest) + "\n")
+                    playlist_file.write(dest_relative + "\n")
 
             # Ensure that only one thread tries to create directories at a
             # time. (The existence check is not atomic with the directory
