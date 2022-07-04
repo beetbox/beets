@@ -34,6 +34,8 @@ from beets.plugins import BeetsPlugin, MetadataSourcePlugin
 
 DEFAULT_WAITING_TIME = 5
 
+class SpotifyAPIError(Exception):
+    pass
 
 class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
     data_source = 'Spotify'
@@ -189,6 +191,8 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                     seconds.', seconds)
                 time.sleep(int(seconds) + 1)
                 return self._handle_response(request_type, url, params=params)
+            elif 'analysis not found' in response.text:
+                raise SpotifyAPIError("Audio Analysis not found")
             else:
                 raise ui.UserError(
                     '{} API error:\n{}\nURL:\n{}\nparams:\n{}'.format(
@@ -645,7 +649,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         try:
             track_data = self._handle_response(
                 requests.get, self.audio_features_url + track_id)
-        except AttributeError:
-            self._log.debug('Audio feature update failed: {}', str(track_id))
+        except SpotifyAPIError as e:
+            self._log.debug('Spotify API error: {}', e)
             track_data = None
         return track_data
