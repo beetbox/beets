@@ -490,8 +490,8 @@ class ConvertPlugin(BeetsPlugin):
                 with open(os.path.join(dest, playlist), "w") as playlist_file:
                     playlist_file.write("#EXTM3U" + "\n")
 
-        self._parallel_convert(dest, opts.keep_new, path_formats, fmt,
-                               pretend, link, hardlink, threads, items, playlist)
+        self._parallel_convert(dest, opts.keep_new, path_formats, fmt, pretend,
+                               link, hardlink, threads, items, playlist)
 
     def convert_on_import(self, lib, item):
         """Transcode a file automatically after it is imported into the
@@ -592,8 +592,8 @@ class ConvertPlugin(BeetsPlugin):
             hardlink = self.config['hardlink'].get(bool)
             link = self.config['link'].get(bool)
 
-
-        return dest, threads, path_formats, fmt, pretend, hardlink, link, playlist
+        return (dest, threads, path_formats, fmt, pretend, hardlink, link,
+                playlist)
 
     def _parallel_convert(self, dest, keep_new, path_formats, fmt,
                           pretend, link, hardlink, threads, items, playlist):
