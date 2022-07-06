@@ -160,7 +160,7 @@ class TrackInfo(AttrDict):
                  artist_sort=None, disctitle=None, artist_credit=None,
                  data_source=None, data_url=None, media=None, lyricist=None,
                  composer=None, composer_sort=None, arranger=None,
-                 track_alt=None, work=None, mb_workid=None,
+                 track_alt=None, work=None, mb_workid=None,album=None,
                  work_disambig=None, bpm=None, initial_key=None, genre=None,
                  **kwargs):
         self.title = title
@@ -172,6 +172,7 @@ class TrackInfo(AttrDict):
         self.index = index
         self.media = media
         self.medium = medium
+        self.album=album
         self.medium_index = medium_index
         self.medium_total = medium_total
         self.artist_sort = artist_sort

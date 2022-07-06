@@ -291,11 +291,19 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         :rtype: beets.autotag.hooks.TrackInfo
         """
         artist, artist_id = self.get_artist(track_data['artists'])
+
+        # Get album information for spotify tracks
+        try:
+            album=track_data['album']['name']
+        except KeyError:
+            album=None
+            pass
         return TrackInfo(
             title=track_data['name'],
             track_id=track_data['id'],
             spotify_track_id=track_data['id'],
             artist=artist,
+            album=album,
             artist_id=artist_id,
             spotify_artist_id=artist_id,
             length=track_data['duration_ms'] / 1000,
