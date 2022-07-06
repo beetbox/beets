@@ -304,8 +304,10 @@ class ConvertPlugin(BeetsPlugin):
                 # media file paths to be unicode. Additionally we use relative
                 # paths to ensure readability of the playlist on remote
                 # computers.
-                dest_relative = util.displayable_path(dest).replace(
-                    util.displayable_path(dest_dir) + os.sep, ""
+                dest_relative = item.destination(
+                    basedir=dest_dir,
+                    path_formats=path_formats,
+                    fragment=True
                 )
                 with open(playlist, "a") as playlist_file:
                     playlist_file.write(dest_relative + "\n")
