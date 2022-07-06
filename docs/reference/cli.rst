@@ -86,7 +86,9 @@ Optional command flags:
   that weren't tagged successfully---either because they're not in the
   MusicBrainz database or because something's wrong with the files. Use the
   ``-l`` option to specify a filename to log every time you skip an album
-  or import it "as-is" or an album gets skipped as a duplicate.
+  or import it "as-is" or an album gets skipped as a duplicate. You can later
+  review the file manually or import skipped paths from the logfile
+  automatically by using the ``--from-logfile LOGFILE`` argument.
 
 * Relatedly, the ``-q`` (quiet) option can help with large imports by
   autotagging without ever bothering to ask for user input. Whenever the
