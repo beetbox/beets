@@ -193,7 +193,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                     seconds.', seconds)
                 time.sleep(int(seconds) + 1)
                 return self._handle_response(request_type, url, params=params)
-            elif response.status_code == 400:
+            elif response.status_code == 404:
                 raise SpotifyAPIError("API Error {0.status_code} for {1}"
                                       .format(response, url))
             else:
