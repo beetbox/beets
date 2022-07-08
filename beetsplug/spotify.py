@@ -35,6 +35,10 @@ from beets.plugins import BeetsPlugin, MetadataSourcePlugin
 DEFAULT_WAITING_TIME = 5
 
 
+class SpotifyAPIError(Exception):
+    pass
+
+
 class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
     data_source = 'Spotify'
 
@@ -189,6 +193,9 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                     seconds.', seconds)
                 time.sleep(int(seconds) + 1)
                 return self._handle_response(request_type, url, params=params)
+            elif response.status_code == 404:
+                raise SpotifyAPIError("API Error {0.status_code} for {1}"
+                                      .format(response, url))
             else:
                 raise ui.UserError(
                     '{} API error:\n{}\nURL:\n{}\nparams:\n{}'.format(
@@ -621,6 +628,9 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             item['spotify_track_popularity'] = popularity
             audio_features = \
                 self.track_audio_features(spotify_track_id)
+            if audio_features is None:
+                self._log.info('No audio features found for: {}', item)
+                continue
             for feature in audio_features.keys():
                 if feature in self.spotify_audio_features.keys():
                     item[self.spotify_audio_features[feature]] = \
@@ -639,7 +649,9 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
 
     def track_audio_features(self, track_id=None):
         """Fetch track audio features by its Spotify ID."""
-        track_data = self._handle_response(
-            requests.get, self.audio_features_url + track_id
-        )
-        return track_data
+        try:
+            return self._handle_response(
+                requests.get, self.audio_features_url + track_id)
+        except SpotifyAPIError as e:
+            self._log.debug('Spotify API error: {}', e)
+            return None
