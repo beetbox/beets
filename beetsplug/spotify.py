@@ -294,9 +294,9 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
 
         # Get album information for spotify tracks
         try:
-            album=track_data['album']['name']
+            album = track_data['album']['name']
         except KeyError:
-            album=None
+            album = None
             pass
         return TrackInfo(
             title=track_data['name'],
