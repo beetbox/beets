@@ -8,6 +8,8 @@ Changelog goes here!
 
 New features:
 
+* We now import and tag the `album` information when importing singletons using Spotify source.
+  :bug:`4398
 * :doc:`/plugins/spotify`: The plugin now provides an additional command
   `spotifysync` that allows getting track popularity and audio features
   information from Spotify.
