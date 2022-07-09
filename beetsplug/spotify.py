@@ -297,7 +297,6 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             album = track_data['album']['name']
         except KeyError:
             album = None
-            pass
         return TrackInfo(
             title=track_data['name'],
             track_id=track_data['id'],
