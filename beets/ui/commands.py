@@ -1139,26 +1139,28 @@ default_commands.append(import_cmd)
 
 # list: Query and show library contents.
 
-def list_items(lib, query, album, fmt=''):
+def list_items(lib, query, album, limit, fmt=''):
     """Print out items in lib matching query. If album, then search for
     albums instead of single items.
     """
     if album:
-        for album in lib.albums(query):
+        for album in lib.albums(query, limit=limit):
             ui.print_(format(album, fmt))
     else:
-        for item in lib.items(query):
+        for item in lib.items(query, limit=limit):
             ui.print_(format(item, fmt))
 
 
 def list_func(lib, opts, args):
-    list_items(lib, decargs(args), opts.album)
+    list_items(lib, decargs(args), opts.album, opts.limit)
 
 
 list_cmd = ui.Subcommand('list', help='query the library', aliases=('ls',))
-list_cmd.parser.usage += "\n" \
-    'Example: %prog -f \'$album: $title\' artist:beatles'
+list_cmd.parser.usage += """
+Example: %prog -f '$album: $title' artist:beatles"""
 list_cmd.parser.add_all_common_options()
+list_cmd.parser.add_option('-l', '--limit', type=int,
+                           help='limit query results')
 list_cmd.func = list_func
 default_commands.append(list_cmd)
 

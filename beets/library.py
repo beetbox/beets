@@ -44,6 +44,14 @@ log = logging.getLogger('beets')
 
 # Library-specific query types.
 
+class SingletonQuery(dbcore.FieldQuery):
+    def __new__(cls, field, value, *args, **kwargs):
+        query = dbcore.query.NoneQuery('album_id')
+        if util.str2bool(value):
+            return query
+        return dbcore.query.NotQuery(query)
+
+
 class PathQuery(dbcore.FieldQuery):
     """A query that matches all items under a given path.
 
@@ -110,7 +118,7 @@ class PathQuery(dbcore.FieldQuery):
             query_part = '(BYTELOWER({0}) = BYTELOWER(?)) || \
                          (substr(BYTELOWER({0}), 1, ?) = BYTELOWER(?))'
 
-        return query_part.format(self.field), \
+        return query_part.format(self.sql_field), \
             (file_blob, len(dir_blob), dir_blob)
 
 
@@ -335,6 +343,9 @@ class WriteError(FileOperationError):
 class LibModel(dbcore.Model):
     """Shared concrete functionality for Items and Albums."""
 
+    # Reference to the relation
+    _relation = None
+
     # Config key that specifies how an instance should be formatted.
     _format_config_key = None
 
@@ -453,10 +464,69 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
         return len(self.all_keys)
 
 
-class Item(LibModel):
-    """Represent a song or track."""
+class Table:
+    """Low-level definition of tables for an entity.
+    These settings are declared outside of the Model class to enable
+    specifying model relation through the `LibModel._relation` field.
+    """
+    _table = None
+    _flex_table = None
+    _relation_id_field = None
+    _fields = None
+
+
+class AlbumTable(Table):
+    """Settings for the albums SQL tables."""
+    _table = 'albums'
+    _flex_table = 'album_attributes'
+    _relation_id_field = 'id'
+    _fields = {
+        'id': types.PRIMARY_ID,
+        'artpath': PathType(True),
+        'added': DateType(),
+
+        'albumartist': types.STRING,
+        'albumartist_sort': types.STRING,
+        'albumartist_credit': types.STRING,
+        'album': types.STRING,
+        'genre': types.STRING,
+        'style': types.STRING,
+        'discogs_albumid': types.INTEGER,
+        'discogs_artistid': types.INTEGER,
+        'discogs_labelid': types.INTEGER,
+        'year': types.PaddedInt(4),
+        'month': types.PaddedInt(2),
+        'day': types.PaddedInt(2),
+        'disctotal': types.PaddedInt(2),
+        'comp': types.BOOLEAN,
+        'mb_albumid': types.STRING,
+        'mb_albumartistid': types.STRING,
+        'albumtype': types.STRING,
+        'albumtypes': types.STRING,
+        'label': types.STRING,
+        'mb_releasegroupid': types.STRING,
+        'asin': types.STRING,
+        'catalognum': types.STRING,
+        'script': types.STRING,
+        'language': types.STRING,
+        'country': types.STRING,
+        'albumstatus': types.STRING,
+        'albumdisambig': types.STRING,
+        'releasegroupdisambig': types.STRING,
+        'rg_album_gain': types.NULL_FLOAT,
+        'rg_album_peak': types.NULL_FLOAT,
+        'r128_album_gain': types.NULL_FLOAT,
+        'original_year': types.PaddedInt(4),
+        'original_month': types.PaddedInt(2),
+        'original_day': types.PaddedInt(2),
+    }
+
+
+class ItemTable(Table):
+    """Settings for the items SQL tables."""
     _table = 'items'
     _flex_table = 'item_attributes'
+    _relation_id_field = 'album_id'
     _fields = {
         'id': types.PRIMARY_ID,
         'path': PathType(),
@@ -542,6 +612,11 @@ class Item(LibModel):
         'added': DateType(),
     }
 
+
+class Item(ItemTable, LibModel):
+    """Represent a song or track."""
+    _relation = AlbumTable
+
     _search_fields = ('artist', 'title', 'comments',
                       'album', 'albumartist', 'genre')
 
@@ -554,17 +629,19 @@ class Item(LibModel):
     # field. Only these fields are read from disk in `read` and written in
     # `write`.
     _media_fields = set(MediaFile.readable_fields()) \
-        .intersection(_fields.keys())
+        .intersection(ItemTable._fields.keys())
 
-    # Set of item fields that are backed by *writable* `MediaFile` tag
-    # fields.
+    # Set of item fields that are backed by *writable* `MediaFile` tag fields.
     # This excludes fields that represent audio data, such as `bitrate` or
     # `length`.
-    _media_tag_fields = set(MediaFile.fields()).intersection(_fields.keys())
+    _media_tag_fields = set(MediaFile.fields()) \
+        .intersection(ItemTable._fields.keys())
 
     _formatter = FormattedItemMapping
 
     _sorts = {'artist': SmartArtistSort}
+
+    _queries = {'singleton': SingletonQuery}
 
     _format_config_key = 'format_item'
 
@@ -1030,55 +1107,14 @@ class Item(LibModel):
             return normpath(os.path.join(basedir, subpath))
 
 
-class Album(LibModel):
+class Album(AlbumTable, LibModel):
     """Provide access to information about albums stored in a
     library.
 
     Reflects the library's "albums" table, including album art.
     """
-    _table = 'albums'
-    _flex_table = 'album_attributes'
+    _relation = ItemTable
     _always_dirty = True
-    _fields = {
-        'id': types.PRIMARY_ID,
-        'artpath': PathType(True),
-        'added': DateType(),
-
-        'albumartist': types.STRING,
-        'albumartist_sort': types.STRING,
-        'albumartist_credit': types.STRING,
-        'album': types.STRING,
-        'genre': types.STRING,
-        'style': types.STRING,
-        'discogs_albumid': types.INTEGER,
-        'discogs_artistid': types.INTEGER,
-        'discogs_labelid': types.INTEGER,
-        'year': types.PaddedInt(4),
-        'month': types.PaddedInt(2),
-        'day': types.PaddedInt(2),
-        'disctotal': types.PaddedInt(2),
-        'comp': types.BOOLEAN,
-        'mb_albumid': types.STRING,
-        'mb_albumartistid': types.STRING,
-        'albumtype': types.STRING,
-        'albumtypes': types.STRING,
-        'label': types.STRING,
-        'mb_releasegroupid': types.STRING,
-        'asin': types.STRING,
-        'catalognum': types.STRING,
-        'script': types.STRING,
-        'language': types.STRING,
-        'country': types.STRING,
-        'albumstatus': types.STRING,
-        'albumdisambig': types.STRING,
-        'releasegroupdisambig': types.STRING,
-        'rg_album_gain': types.NULL_FLOAT,
-        'rg_album_peak': types.NULL_FLOAT,
-        'r128_album_gain': types.NULL_FLOAT,
-        'original_year': types.PaddedInt(4),
-        'original_month': types.PaddedInt(2),
-        'original_day': types.PaddedInt(2),
-    }
 
     _search_fields = ('album', 'albumartist', 'genre')
 
@@ -1495,7 +1531,7 @@ class Library(dbcore.Database):
 
     # Querying.
 
-    def _fetch(self, model_cls, query, sort=None):
+    def _fetch(self, model_cls, query, sort=None, limit=None):
         """Parse a query and fetch.
 
         If an order specification is present in the query string
@@ -1516,9 +1552,7 @@ class Library(dbcore.Database):
         if parsed_sort and not isinstance(parsed_sort, dbcore.query.NullSort):
             sort = parsed_sort
 
-        return super()._fetch(
-            model_cls, query, sort
-        )
+        return super()._fetch(model_cls, query, sort, limit)
 
     @staticmethod
     def get_default_album_sort():
@@ -1532,13 +1566,15 @@ class Library(dbcore.Database):
         return dbcore.sort_from_strings(
             Item, beets.config['sort_item'].as_str_seq())
 
-    def albums(self, query=None, sort=None):
+    def albums(self, query=None, sort=None, limit=None):
         """Get :class:`Album` objects matching the query."""
-        return self._fetch(Album, query, sort or self.get_default_album_sort())
+        sort = sort or self.get_default_album_sort()
+        return self._fetch(Album, query, sort, limit)
 
-    def items(self, query=None, sort=None):
+    def items(self, query=None, sort=None, limit=None):
         """Get :class:`Item` objects matching the query."""
-        return self._fetch(Item, query, sort or self.get_default_item_sort())
+        sort = sort or self.get_default_item_sort()
+        return self._fetch(Item, query, sort, limit)
 
     # Convenience accessors.
 
@@ -1713,9 +1749,9 @@ class DefaultTemplateFunctions:
         subqueries = []
         for key in keys:
             value = album.get(key, '')
-            # Use slow queries for flexible attributes.
             fast = key in album.item_keys
-            subqueries.append(dbcore.MatchQuery(key, value, fast))
+            table = "albums" if fast else None
+            subqueries.append(dbcore.MatchQuery(key, value, fast, table))
         albums = self.lib.albums(dbcore.AndQuery(subqueries))
 
         # If there's only one album to matching these details, then do

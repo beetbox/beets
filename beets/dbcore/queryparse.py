@@ -128,27 +128,31 @@ def construct_query_part(model_cls, prefixes, query_part):
     key, pattern, query_class, negate = \
         parse_query_part(query_part, query_classes, prefixes)
 
-    # If there's no key (field name) specified, this is a "match
-    # anything" query.
-    if key is None:
-        if issubclass(query_class, query.FieldQuery):
-            # The query type matches a specific field, but none was
-            # specified. So we use a version of the query that matches
-            # any field.
-            out_query = query.AnyFieldQuery(pattern, model_cls._search_fields,
-                                            query_class)
-        else:
-            # Non-field query type.
-            out_query = query_class(pattern)
-
-    # Field queries get constructed according to the name of the field
-    # they are querying.
+    if issubclass(query_class, query.FieldQuery) and key is None:
+        # The query type matches a specific field, but none was
+        # specified. So we use a version of the query that matches
+        # any field.
+        out_query = query.AnyFieldQuery(pattern, model_cls._search_fields,
+                                        query_class, model_cls._table)
     elif issubclass(query_class, query.FieldQuery):
+        # Field queries get constructed according to the name of the field
+        # they are querying.
         key = key.lower()
-        out_query = query_class(key.lower(), pattern, key in model_cls._fields)
-
-    # Non-field (named) query.
+        fast = True
+        # explicitly specify which table the field belongs to, prioritizing
+        # the entity we're querying for if the field also exists in
+        # the related table
+        relation = getattr(model_cls, "_relation", None)
+        if key in model_cls._fields:
+            table = model_cls._table
+        elif relation and key in relation._fields:
+            table = relation._table
+        else:
+            table = None
+            fast = False
+        out_query = query_class(key, pattern, fast, table)
     else:
+        # Non-field (named) query.
         out_query = query_class(pattern)
 
     # Apply negation.

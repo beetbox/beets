@@ -8,6 +8,7 @@ Changelog goes here!
 
 New features:
 
+* Add ``-l / --limit NUMBER`` flag to the ``list`` command to limit query results
 * :doc:`/plugins/spotify`: The plugin now provides an additional command
   `spotifysync` that allows getting track popularity and audio features
   information from Spotify.
