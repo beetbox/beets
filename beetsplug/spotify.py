@@ -195,7 +195,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 return self._handle_response(request_type, url, params=params)
             elif response.status_code == 404:
                 raise SpotifyAPIError("API Error {0.status_code} for {1} and \
-                    params = {2}".format(response, url, params=params))
+                    params = {2}".format(response, url, params))
             else:
                 raise ui.UserError(
                     '{} API error:\n{}\nURL:\n{}\nparams:\n{}'.format(
