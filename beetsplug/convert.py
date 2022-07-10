@@ -494,7 +494,7 @@ class ConvertPlugin(BeetsPlugin):
         if playlist:
             self._log.info("Creating playlist file: {0}", playlist)
             if not pretend:
-                with open(os.path.join(dest, playlist), "w") as playlist_file:
+                with open(playlist, "w") as playlist_file:
                     playlist_file.write("#EXTM3U" + "\n")
 
         self._parallel_convert(dest, opts.keep_new, path_formats, fmt, pretend,
