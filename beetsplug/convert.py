@@ -267,7 +267,7 @@ class ConvertPlugin(BeetsPlugin):
                            util.displayable_path(source))
 
     def convert_item(self, dest_dir, keep_new, path_formats, fmt,
-                     pretend=False, link=False, hardlink=False, playlist=None):
+                     pretend=False, link=False, hardlink=False):
         """A pipeline thread that converts `Item` objects from a
         library.
         """
@@ -291,26 +291,6 @@ class ConvertPlugin(BeetsPlugin):
                 if should_transcode(item, fmt):
                     dest = replace_ext(dest, ext)
                 converted = dest
-
-            # When the playlist argument is passed, add the current filename to
-            # an m3u8 playlist file located in the destination folder.
-            if playlist:
-                self._log.debug(
-                    "Appending to playlist file {0}",
-                    util.displayable_path(playlist)
-                )
-                # The classic m3u format doesn't support special characters in
-                # media file paths, thus we use the m3u8 format which requires
-                # media file paths to be unicode. Additionally we use relative
-                # paths to ensure readability of the playlist on remote
-                # computers.
-                dest_relative = item.destination(
-                    basedir=dest_dir,
-                    path_formats=path_formats,
-                    fragment=True
-                )
-                with open(playlist, "a") as playlist_file:
-                    playlist_file.write(dest_relative + "\n")
 
             # Ensure that only one thread tries to create directories at a
             # time. (The existence check is not atomic with the directory
@@ -492,13 +472,26 @@ class ConvertPlugin(BeetsPlugin):
                                     link, hardlink)
 
         if playlist:
+            # When playlist arg is passed create an m3u8 file in dest folder.
+            #
+            # The classic m3u format doesn't support special characters in
+            # media file paths, thus we use the m3u8 format which requires
+            # media file paths to be unicode. Additionally we use relative
+            # paths to ensure readability of the playlist on remote
+            # computers.
             self._log.info("Creating playlist file: {0}", playlist)
+            items_paths = [
+                item.destination(
+                    basedir=dest, path_formats=path_formats, fragment=True
+                ) for item in items
+            ]
+            items_paths = ["#EXTM3U"] + items_paths
             if not pretend:
                 with open(playlist, "w") as playlist_file:
-                    playlist_file.write("#EXTM3U" + "\n")
+                    playlist_file.writelines('\n'.join(items_paths))
 
         self._parallel_convert(dest, opts.keep_new, path_formats, fmt, pretend,
-                               link, hardlink, threads, items, playlist)
+                               link, hardlink, threads, items)
 
     def convert_on_import(self, lib, item):
         """Transcode a file automatically after it is imported into the
@@ -603,7 +596,7 @@ class ConvertPlugin(BeetsPlugin):
                 playlist)
 
     def _parallel_convert(self, dest, keep_new, path_formats, fmt,
-                          pretend, link, hardlink, threads, items, playlist):
+                          pretend, link, hardlink, threads, items):
         """Run the convert_item function for every items on as many thread as
         defined in threads
         """
@@ -613,8 +606,7 @@ class ConvertPlugin(BeetsPlugin):
                                      fmt,
                                      pretend,
                                      link,
-                                     hardlink,
-                                     playlist)
+                                     hardlink)
                    for _ in range(threads)]
         pipe = util.pipeline.Pipeline([iter(items), convert])
         pipe.run_parallel()
