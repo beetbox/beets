@@ -36,7 +36,7 @@ DEFAULT_WAITING_TIME = 5
 
 
 class SpotifyAPIError(Exception):
-    continue
+    pass
 
 
 class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
