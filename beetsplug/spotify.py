@@ -658,9 +658,8 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
     def track_audio_features(self, track_id=None):
         """Fetch track audio features by its Spotify ID."""
         try:
-            track_features = self._handle_response(
+            return self._handle_response(
                 requests.get, self.audio_features_url + track_id)
         except SpotifyAPIError as e:
             self._log.debug('Spotify API error: {}', e)
-            track_features = None
-        return track_features
+            return None
