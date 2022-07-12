@@ -99,6 +99,10 @@ synchronized (via load or store) with the database.
 
     .. automethod:: items
 
+    .. note::
+       The :py:meth:`Album.items` method is not inherited from
+       :py:meth:`LibModel.items` for historical reasons.
+
     .. automethod:: get
 
 Item
@@ -206,6 +210,8 @@ metadata field.
     .. automethod:: __init__
 
     .. automethod:: item_dir
+
+    .. automethod:: items
 
     Albums extend the normal model interface to also forward changes to their
     items:
