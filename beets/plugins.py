@@ -749,7 +749,10 @@ class MetadataSourcePlugin(metaclass=abc.ABCMeta):
         tracks = self._search_api(
             query_type='track', keywords=title, filters={'artist': artist}
         )
-        return [self.track_for_id(track_data=track) for track in tracks]
+        if tracks is not None:
+            return [self.track_for_id(track_data=track) for track in tracks]
+        else:
+            return None
 
     def album_distance(self, items, album_info, mapping):
         return get_distance(
