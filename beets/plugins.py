@@ -733,6 +733,8 @@ class MetadataSourcePlugin(metaclass=abc.ABCMeta):
         results = self._search_api(query_type='album', filters=query_filters)
         if results is not None:
             albums = [self.album_for_id(album_id=r['id']) for r in results]
+        else:
+            albums = None
         return [a for a in albums if a is not None]
 
     def item_candidates(self, item, artist, title):
