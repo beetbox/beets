@@ -384,7 +384,7 @@ def candidates(items, artist, album, va_likely, extra_tags=None):
         if plugin.candidates(items, artist, album, va_likely,
                              extra_tags) is not None:
             yield from plugin.candidates(items, artist, album, va_likely,
-                                     extra_tags)
+                                         extra_tags)
 
 
 def item_candidates(item, artist, title):
