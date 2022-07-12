@@ -389,7 +389,8 @@ def item_candidates(item, artist, title):
     """Gets MusicBrainz candidates for an item from the plugins.
     """
     for plugin in find_plugins():
-        yield from plugin.item_candidates(item, artist, title)
+        if plugin.item_candidates(item, artist, title) is not None:
+            yield from plugin.item_candidates(item, artist, title)
 
 
 def album_for_id(album_id):
