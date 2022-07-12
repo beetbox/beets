@@ -404,6 +404,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             )
         except SpotifyAPIError as e:
             self._log.debug('Spotify API error: {}', e)
+            return None
         response_data = (response
                          .get(query_type + 's', {})
                          .get('items', [])
