@@ -381,7 +381,9 @@ def candidates(items, artist, album, va_likely, extra_tags=None):
     """Gets MusicBrainz candidates for an album from each plugin.
     """
     for plugin in find_plugins():
-        yield from plugin.candidates(items, artist, album, va_likely,
+        if plugin.candidates(items, artist, album, va_likely,
+                             extra_tags) is not None:
+            yield from plugin.candidates(items, artist, album, va_likely,
                                      extra_tags)
 
 
