@@ -731,7 +731,8 @@ class MetadataSourcePlugin(metaclass=abc.ABCMeta):
         if not va_likely:
             query_filters['artist'] = artist
         results = self._search_api(query_type='album', filters=query_filters)
-        albums = [self.album_for_id(album_id=r['id']) for r in results]
+        if results is not None:
+            albums = [self.album_for_id(album_id=r['id']) for r in results]
         return [a for a in albums if a is not None]
 
     def item_candidates(self, item, artist, title):
