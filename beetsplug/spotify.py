@@ -396,15 +396,18 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         self._log.debug(
             f"Searching {self.data_source} for '{query}'"
         )
-        response_data = (
-            self._handle_response(
+        try:
+            response = self._handle_response(
                 requests.get,
                 self.search_url,
                 params={'q': query, 'type': query_type},
             )
-            .get(query_type + 's', {})
-            .get('items', [])
-        )
+        except SpotifyAPIError as e:
+            self._log.debug('Spotify API error: {}', e)
+        response_data = (response
+                         .get(query_type + 's', {})
+                         .get('items', [])
+                        )
         self._log.debug(
             "Found {} result(s) from {} for '{}'",
             len(response_data),
