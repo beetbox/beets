@@ -135,6 +135,56 @@ class MoveOperation(Enum):
     REFLINK_AUTO = 5
 
 
+class M3UFile():
+    def __init__(self, path):
+        """Reads and writes m3u or m3u8 playlist files.
+
+        ``path`` is the full path to the playlist file.
+
+        The playlist file type, m3u or m3u8 is determined by 1) the ending
+        being m3u8 and 2) the file paths contained in the list being utf-8
+        encoded. Since the list is passed from the outside, this is currently
+        out of control of this class.
+        """
+        self.path = path
+        self.extm3u = False
+        self.media_list = []
+
+    def load(self):
+        """Reads the m3u file from disk and sets the object's attributes.
+        """
+        with open(self.name, "r") as playlist_file:
+            raw_contents = playlist_file.readlines()
+        self.extm3u = True if raw_contents[0] == "#EXTM3U" else False
+        for line in raw_contents[1:]:
+            if line.startswith("#"):
+                # Some EXTM3U comment, do something. FIXME
+                continue
+            self.media_list.append(line)
+
+    def set_contents(self, media_files, extm3u=True):
+        """Sets self.media_files to a list of media file paths,
+
+        and sets additional flags, changing the final m3u-file's format.
+
+        ``media_files`` is a list of paths to media files that should be added
+        to the playlist (relative or absolute paths, that's the responsibility
+        of the caller). By default the ``extm3u`` flag is set, to ensure a
+        save-operation writes an m3u-extended playlist (comment "#EXTM3U" at
+        the top of the file).
+        """
+        self.media_files = media_files
+        self.extm3u = extm3u
+
+    def write(self):
+        """Writes the m3u file to disk."""
+        header = ["#EXTM3U"] if self.extm3u else []
+        contents = header + self.media_files
+        with open(self.path, "w") as playlist_file:
+            playlist_file.writelines('\n'.join(contents))
+            playlist_file.write('\n')  # Final linefeed to prevent noeol file.
+
+
 def normpath(path):
     """Provide the canonical form of the path suitable for storing in
     the database.

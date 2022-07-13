@@ -31,6 +31,7 @@ from beets import art
 from beets.util.artresizer import ArtResizer
 from beets.library import parse_query_string
 from beets.library import Item
+from beets.util import M3UFile
 
 _fs_lock = threading.Lock()
 _temp_files = []  # Keep track of temporary transcoded files for deletion.
@@ -485,10 +486,10 @@ class ConvertPlugin(BeetsPlugin):
                     basedir=dest, path_formats=path_formats, fragment=True
                 ) for item in items
             ]
-            items_paths = ["#EXTM3U"] + items_paths
             if not pretend:
-                with open(playlist, "w") as playlist_file:
-                    playlist_file.writelines('\n'.join(items_paths))
+                m3ufile = M3UFile(playlist)
+                m3ufile.set_contents(items_paths)
+                m3ufile.write()
 
         self._parallel_convert(dest, opts.keep_new, path_formats, fmt, pretend,
                                link, hardlink, threads, items)
