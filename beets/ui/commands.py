@@ -857,7 +857,7 @@ class TerminalImportSession(importer.ImportSession):
             ))
 
             sel = ui.input_options(
-                ('Skip new', 'Keep all', 'Remove old', 'Merge all')
+                ('Skip new', 'Keep all', 'Replace old', 'Merge all')
             )
 
         if sel == 's':
@@ -867,7 +867,7 @@ class TerminalImportSession(importer.ImportSession):
             # Keep both. Do nothing; leave the choice intact.
             pass
         elif sel == 'r':
-            # Remove old.
+            # Replace old.
             task.should_remove_duplicates = True
         elif sel == 'm':
             task.should_merge_duplicates = True

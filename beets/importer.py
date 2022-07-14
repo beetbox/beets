@@ -1473,7 +1473,7 @@ def resolve_duplicates(session, task):
                 # Keep both. Do nothing; leave the choice intact.
                 pass
             elif duplicate_action == 'r':
-                # Remove old.
+                # Replace old.
                 task.should_remove_duplicates = True
             elif duplicate_action == 'm':
                 # Merge duplicates together

@@ -102,6 +102,7 @@ Other new things:
 * :doc:`/plugins/limit`: Limit query results to head or tail (``lslimit``
   command only)
 * :doc:`/plugins/fish`: Add ``--output`` option.
+* Change ``Remove old`` to ``Replace old`` in the importer.
 
 1.6.0 (November 27, 2021)
 -------------------------
