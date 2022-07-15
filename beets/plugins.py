@@ -381,18 +381,15 @@ def candidates(items, artist, album, va_likely, extra_tags=None):
     """Gets MusicBrainz candidates for an album from each plugin.
     """
     for plugin in find_plugins():
-        if plugin.candidates(items, artist, album, va_likely,
-                             extra_tags) is not None:
-            yield from plugin.candidates(items, artist, album, va_likely,
-                                         extra_tags)
+        yield from plugin.candidates(items, artist, album, va_likely,
+                                     extra_tags)
 
 
 def item_candidates(item, artist, title):
     """Gets MusicBrainz candidates for an item from the plugins.
     """
     for plugin in find_plugins():
-        if plugin.item_candidates(item, artist, title) is not None:
-            yield from plugin.item_candidates(item, artist, title)
+        yield from plugin.item_candidates(item, artist, title)
 
 
 def album_for_id(album_id):
@@ -733,11 +730,8 @@ class MetadataSourcePlugin(metaclass=abc.ABCMeta):
         if not va_likely:
             query_filters['artist'] = artist
         results = self._search_api(query_type='album', filters=query_filters)
-        if results is not None:
-            albums = [self.album_for_id(album_id=r['id']) for r in results]
-            return [a for a in albums if a is not None]
-        else:
-            return None
+        albums = [self.album_for_id(album_id=r['id']) for r in results]
+        return [a for a in albums if a is not None]
 
     def item_candidates(self, item, artist, title):
         """Returns a list of TrackInfo objects for Search API results
@@ -755,10 +749,7 @@ class MetadataSourcePlugin(metaclass=abc.ABCMeta):
         tracks = self._search_api(
             query_type='track', keywords=title, filters={'artist': artist}
         )
-        if tracks is not None:
-            return [self.track_for_id(track_data=track) for track in tracks]
-        else:
-            return None
+        return [self.track_for_id(track_data=track) for track in tracks]
 
     def album_distance(self, items, album_info, mapping):
         return get_distance(
