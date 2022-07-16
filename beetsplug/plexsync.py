@@ -101,6 +101,9 @@ class PlexSync(BeetsPlugin):
                                     item)
                     continue
             plex_track = self.plex_track(item)
+            if plex_track is None:
+                self._log.info('No track found for: {}', item)
+                continue
             item.plex_key = plex_track.key
             item.plex_guid = plex_track.guid
             self._log.info('Rating: {}', plex_track.userRating)
@@ -115,6 +118,6 @@ class PlexSync(BeetsPlugin):
         tracks = self.music.search(year=item.year, filters={'album.title': item.album, 'track.title': item.title}, libtype='track')
         self._log.info('tracks: {}', len(tracks))
         if len(tracks) == 0:
-            continue
+            return None
         else:
             return tracks[0]
