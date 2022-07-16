@@ -15,7 +15,7 @@ from plexapi import exceptions
 from plexapi.server import PlexServer
 
 
-class PlexSync(MetadataSourcePlugin, BeetsPlugin):
+class PlexSync(BeetsPlugin):
     data_source = 'Plex'
 
     def __init__(self):
