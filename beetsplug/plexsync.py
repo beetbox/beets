@@ -32,7 +32,13 @@ class PlexSync(BeetsPlugin):
         self._log.info('Plex URL {}', config['plex']['baseurl'])
         plex = PlexServer(config['plex']['baseurl'].get(),
                           config['plex']['token'].get())
-        self.music = plex.library.section(config['plex']['library_name'].get())
+        self.music = plex.library.section(config['plex']['library_name']
+                                          .get())
+        self.register_listener('database_change', self.listen_for_db_change)
+
+    def listen_for_db_change(self, lib, model):
+        """Listens for beets db change and register the update for the end"""
+        self.register_listener('cli_exit', self._plexupdate)
 
     def commands(self):
         plexupdate_cmd = Subcommand(
