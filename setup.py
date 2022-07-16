@@ -133,7 +133,7 @@ setup(
         'lastimport': ['pylast'],
         'lyrics': ['requests', 'beautifulsoup4', 'langdetect'],
         'mpdstats': ['python-mpd2>=0.4.2'],
-        'plexupdate': ['requests'],
+        'plexupdate': ['requests', 'plexapi'],
         'web': ['flask', 'flask-cors'],
         'import': ['rarfile', 'py7zr'],
         'thumbnails': ['pyxdg', 'Pillow'],
