@@ -114,7 +114,7 @@ class PlexSync(BeetsPlugin):
         self._log.info('year: {}, album: {}, title: {}', item.year, item.album, item.title)
         tracks = self.music.search(year=item.year, filters={'album.title': item.album, 'track.title': item.title}, libtype='track')
         self._log.info('tracks: {}', len(tracks))
-        if len(tracks) = 0:
+        if len(tracks) == 0:
             continue
         else:
             return tracks[0]
