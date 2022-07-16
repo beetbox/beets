@@ -11,7 +11,6 @@ Put something like the following in your config.yaml to configure:
 import beets.ui
 from beets import config
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand
 from plexapi import exceptions
 from plexapi.server import PlexServer
 
@@ -42,7 +41,9 @@ class PlexSync(BeetsPlugin):
             self.music = plex.library.section(config['plex']['library_name']
                                               .get())
         except exceptions.NotFound:
-            raise beets.ui.UserError(f"Plex library {config['plex']['library_name']} not found")
+            raise beets.ui.UserError(f"Plex library
+                                     {config['plex']['library_name']} not
+                                     found")
         self.register_listener('database_change', self.listen_for_db_change)
 
     def listen_for_db_change(self, lib, model):
@@ -50,7 +51,7 @@ class PlexSync(BeetsPlugin):
         self.register_listener('cli_exit', self._plexupdate)
 
     def commands(self):
-        plexupdate_cmd = Subcommand(
+        plexupdate_cmd = beets.ui.Subcommand(
             'plexupdate', help=f'Update {self.data_source} library'
         )
 
