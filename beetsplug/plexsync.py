@@ -31,7 +31,6 @@ class PlexSync(BeetsPlugin):
             'ignore_cert_errors': False})
 
         config['plex']['token'].redact = True
-        self._log.info('Plex URL {}', config['plex']['baseurl'])
         try:
             plex = PlexServer(config['plex']['baseurl'].get(),
                           config['plex']['token'].get())
@@ -112,6 +111,7 @@ class PlexSync(BeetsPlugin):
 
     def plex_track(self, item):
         """Fetch the Plex track key."""
+        self._log.info('year: {}, album: {}, title: {}', item.year, item.album, item.title)
         tracks = self.music.search(year=item.year, filters={'album.title': item.album, 'track.title': item.title}, libtype='track')
         self._log.info('tracks: {}', len(tracks))
         return tracks[0]
