@@ -12,6 +12,7 @@ from beets import config
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from plexapi.server import PlexServer
+from plexapi import exceptions
 
 class PlexSync(BeetsPlugin):
     data_source = 'Plex'
@@ -33,10 +34,15 @@ class PlexSync(BeetsPlugin):
         try:
             plex = PlexServer(config['plex']['baseurl'].get(),
                           config['plex']['token'].get())
-        except plexapi.exceptions.Unauthorized:
+        except exceptions.Unauthorized:
             raise beets.ui.UserError('Plex token request failed')
-        self.music = plex.library.section(config['plex']['library_name']
-                                          .get())
+        try:
+            self.music = plex.library.section(config['plex']['library_name']
+                                              .get())
+        except exceptions.NotFound:
+            raise beets.ui.UserError('Plex library {} not found',
+                                     config['plex']['library_name']
+                                     .get())
         self.register_listener('database_change', self.listen_for_db_change)
 
     def listen_for_db_change(self, lib, model):
