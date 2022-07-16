@@ -109,6 +109,7 @@ class PlexSync(BeetsPlugin):
     def plex_track_key(self, item):
         """Fetch the Plex track key."""
         tracks = self.music.search(year=item.year, filters={'album.title': item.album, 'track.title': item.title}, libtype='track')
+        self._log.info('tracks: {}', tracks)
         plex_track_key = tracks[0].key
         self._log.info('track_key: {}', plex_track_key)
         return plex_track_key
