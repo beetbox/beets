@@ -8,11 +8,13 @@ Put something like the following in your config.yaml to configure:
         token: token
 """
 
+import beets.ui
 from beets import config
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
-from plexapi.server import PlexServer
 from plexapi import exceptions
+from plexapi.server import PlexServer
+
 
 class PlexSync(BeetsPlugin):
     data_source = 'Plex'
