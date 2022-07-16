@@ -21,7 +21,7 @@ class PlexSync(BeetsPlugin):
 
         # Adding defaults.
         config['plex'].add({
-            'host': 'localhost',
+            'baseurl': 'localhost',
             'port': 32400,
             'token': '',
             'library_name': 'Music',
@@ -29,7 +29,8 @@ class PlexSync(BeetsPlugin):
             'ignore_cert_errors': False})
 
         config['plex']['token'].redact = True
-        plex = PlexServer(config['plex']['host'], config['plex']['token'])
+        self._log.info('Plex URL {}', config['plex']['baseurl'])
+        plex = PlexServer(config['plex']['baseurl'], config['plex']['token'])
         self.music = plex.library.section(config['plex']['library_name'])
 
     def commands(self):
