@@ -49,4 +49,4 @@ class PlexSync(BeetsPlugin):
         """Update Plex music library."""
 
         self._log.info('Music section {}', music.key)
-        music.update()
+        self.music.update()
