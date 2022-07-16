@@ -59,8 +59,8 @@ class PlexSync(BeetsPlugin):
         plexupdate_cmd.func = func
 
         # plexsync command
-        sync_cmd = ui.Subcommand('plexsync',
-                                 help="fetch track attributes from Plex")
+        sync_cmd = beets.ui.Subcommand('plexsync', help="fetch track \
+            attributes from Plex")
         sync_cmd.parser.add_option(
             '-f', '--force', dest='force_refetch',
             action='store_true', default=False,
