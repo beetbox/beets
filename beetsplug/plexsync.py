@@ -59,8 +59,8 @@ class PlexSync(BeetsPlugin):
         plexupdate_cmd.func = func
 
         # plexsync command
-        sync_cmd = beets.ui.Subcommand('plexsync', help="fetch track \
-            attributes from Plex")
+        sync_cmd = beets.ui.Subcommand('plexsync',
+                                       help="fetch track attributes from Plex")
         sync_cmd.parser.add_option(
             '-f', '--force', dest='force_refetch',
             action='store_true', default=False,
@@ -68,7 +68,7 @@ class PlexSync(BeetsPlugin):
         )
 
         def func_sync(lib, opts, args):
-            items = lib.items(ui.decargs(args))
+            items = lib.items(beets.ui.decargs(args))
             self._fetch_plex_info(items, beets.ui.should_write(),
                                   opts.force_refetch)
 
@@ -89,7 +89,7 @@ class PlexSync(BeetsPlugin):
     def _fetch_plex_info(self, items, write, force):
         """Obtain track information from Plex."""
 
-        self._log.debug('Total {} tracks', len(items))
+        self._log.info('Total {} tracks', len(items))
 
         for index, item in enumerate(items, start=1):
             self._log.info('Processing {}/{} tracks - {} ',
