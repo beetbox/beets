@@ -69,11 +69,12 @@ class PlexSync(BeetsPlugin):
 
         def func_sync(lib, opts, args):
             items = lib.items(ui.decargs(args))
-            self._fetch_plex_info(items, ui.should_write(), opts.force_refetch)
+            self._fetch_plex_info(items, beets.ui.should_write(),
+                                  opts.force_refetch)
 
         sync_cmd.func = func_sync
 
-        return [plexupdate_cmd]
+        return [plexupdate_cmd, sync_cmd]
 
     def _plexupdate(self):
         """Update Plex music library."""
