@@ -104,7 +104,7 @@ class PlexSync(BeetsPlugin):
             plex_track = self.plex_track(item)
             item.plex_key = plex_track.key
             item.plex_guid = plex_track.guid
-            self._log.info('Rating: {}', vars(plex_track))
+            self._log.info('Rating: {}', plex_track.userRating)
             item.plex_userrating = plex_track.userRating
             item.store()
             if write:
