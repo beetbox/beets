@@ -42,8 +42,7 @@ class PlexSync(BeetsPlugin):
             self.music = plex.library.section(config['plex']['library_name']
                                               .get())
         except exceptions.NotFound:
-            raise beets.ui.UserError('Plex library {} not found',
-                                     config['plex']['library_name'])
+            raise beets.ui.UserError(f'Plex library {config['plex']['library_name']} not found')
         self.register_listener('database_change', self.listen_for_db_change)
 
     def listen_for_db_change(self, lib, model):
