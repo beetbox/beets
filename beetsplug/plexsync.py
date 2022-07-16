@@ -101,15 +101,16 @@ class PlexSync(BeetsPlugin):
                     self._log.debug('Plex rating already present for: {}',
                                     item)
                     continue
-            item.plex_key = self.plex_track_key(item)
+            plex_track = self.plex_track(item)
+            item.plex_key = plex_track.key
+            item.plexguid = plex_track.guid
+            item.plex_userrating = plex_track.userRating
             item.store()
             if write:
                 item.try_write()
 
-    def plex_track_key(self, item):
+    def plex_track(self, item):
         """Fetch the Plex track key."""
         tracks = self.music.search(year=item.year, filters={'album.title': item.album, 'track.title': item.title}, libtype='track')
         self._log.info('tracks: {}', len(tracks))
-        plex_track_key = tracks[0].key
-        self._log.info('track_key: {}, ', plex_track_key)
-        return plex_track_key
+        return tracks[0]
