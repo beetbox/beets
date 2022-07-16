@@ -29,13 +29,12 @@ class PlexSync(BeetsPlugin):
             'ignore_cert_errors': False})
 
         config['plex']['token'].redact = True
-        self.setup()
+        self.setup(config['plex']['baseurl'], config['plex']['token'])
 
-    def setup(self):
+    def setup(self, baseurl, token):
         """Retrieve previously saved OAuth token or generate a new one."""
-        self._log.info('Plex URL {}', config['plex']['baseurl'])
-        self.plex = PlexServer(self.config['plex']['baseurl'],
-                              self.config['plex']['token'])
+        self._log.info('Plex URL {}', token)
+        self.plex = PlexServer(baseurl, token)
         self.music = plex.library.section(self.config['plex']['library_name'])
 
     def commands(self):
