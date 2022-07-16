@@ -30,8 +30,8 @@ class PlexSync(BeetsPlugin):
 
         config['plex']['token'].redact = True
         self._log.info('Plex URL {}', config['plex']['baseurl'])
-        plex = PlexServer(str(config['plex']['baseurl']),
-                          str(config['plex']['token']))
+        plex = PlexServer(config['plex']['baseurl'].get(),
+                          config['plex']['token'].get())
         self.music = plex.library.section(str(config['plex']['library_name']))
 
     def commands(self):
