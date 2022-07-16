@@ -30,8 +30,11 @@ class PlexSync(BeetsPlugin):
 
         config['plex']['token'].redact = True
         self._log.info('Plex URL {}', config['plex']['baseurl'])
-        plex = PlexServer(config['plex']['baseurl'].get(),
+        try:
+            plex = PlexServer(config['plex']['baseurl'].get(),
                           config['plex']['token'].get())
+        except plexapi.exceptions.Unauthorized:
+            raise beets.ui.UserError('Plex token request failed')
         self.music = plex.library.section(config['plex']['library_name']
                                           .get())
         self.register_listener('database_change', self.listen_for_db_change)
@@ -54,5 +57,4 @@ class PlexSync(BeetsPlugin):
     def _plexupdate(self):
         """Update Plex music library."""
 
-        self._log.info('Music section {}', self.music.key)
         self.music.update()
