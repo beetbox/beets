@@ -34,7 +34,7 @@ class PlexSync(BeetsPlugin):
         self.music = plex.library.section(config['plex']['library_name'])
 
     def commands(self):
-        plexupdate_cmd = ui.Subcommand(
+        plexupdate_cmd = Subcommand(
             'plexupdate', help=f'Update {self.data_source} library'
         )
 
