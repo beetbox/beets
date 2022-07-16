@@ -40,7 +40,7 @@ class PlexSync(BeetsPlugin):
         )
 
         def func(lib, opts, args):
-            self._plexupdate(self)
+            self._plexupdate()
 
         plexupdate_cmd.func = func
         return [plexupdate_cmd]
