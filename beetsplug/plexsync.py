@@ -32,7 +32,7 @@ class PlexSync(BeetsPlugin):
         self._log.info('Plex URL {}', config['plex']['baseurl'])
         plex = PlexServer(config['plex']['baseurl'].get(),
                           config['plex']['token'].get())
-        self.music = plex.library.section(str(config['plex']['library_name']))
+        self.music = plex.library.section(config['plex']['library_name'].get())
 
     def commands(self):
         plexupdate_cmd = Subcommand(
@@ -40,7 +40,7 @@ class PlexSync(BeetsPlugin):
         )
 
         def func(lib, opts, args):
-            self._plexupdate(self)
+            self._plexupdate()
 
         plexupdate_cmd.func = func
         return [plexupdate_cmd]
