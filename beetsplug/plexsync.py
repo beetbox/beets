@@ -1,4 +1,4 @@
-"""Updates an Plex library and suwhenever the beets library is changed.
+"""Syncs Plex library and updates Plex library when  beets library is changed.
 
 Plex Home users enter the Plex Token to enable updating.
 Put something like the following in your config.yaml to configure:
