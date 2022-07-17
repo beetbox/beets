@@ -159,6 +159,7 @@ class PlexSync(BeetsPlugin):
         self._log.info('Processing {} tracks', len(items))
         newplst = []
         for item in items:
+            self._log.info('Adding {}', self.plex.fetchItem(item.plex_key))
             newplst.append(self.plex.fetchItem(item.plex_key))
         try:
             plst = self.plex.playlist(playlist)
