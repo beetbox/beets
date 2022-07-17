@@ -1,10 +1,9 @@
-"""Updates an Plex library whenever the beets library is changed.
+"""Updates an Plex library and suwhenever the beets library is changed.
 
 Plex Home users enter the Plex Token to enable updating.
 Put something like the following in your config.yaml to configure:
     plex:
         host: localhost
-        port: 32400
         token: token
 """
 
@@ -12,7 +11,7 @@ import os
 
 import beets.ui
 from beets import config
-from beets.plugins import BeetsPlugin, MetadataSourcePlugin
+from beets.plugins import BeetsPlugin
 from plexapi import exceptions
 from plexapi.server import PlexServer
 
@@ -133,11 +132,11 @@ class PlexSync(BeetsPlugin):
             return tracks[0]
 
     def get_plex_filename(self, track):
-        """Fetch the filename from Plex."""
+        """Fetch Plex filename."""
         return os.path.basename(track.media[0].parts[0].file)
 
     def compare_file_name(self, track, item):
-        """Compare file name."""
+        """Compare file names."""
         if get_plex_filename(track) == os.path.basename(item.path):
             return True
         else:
