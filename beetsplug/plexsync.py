@@ -73,20 +73,33 @@ class PlexSync(BeetsPlugin):
 
         sync_cmd.func = func_sync
 
-        # plexplaylist command
-        playlist_cmd = ui.Subcommand('plexplaylist',
+        # plexplaylistadd command
+        playlistadd_cmd = ui.Subcommand('plexplaylistadd',
                                      help="add tracks to Plex playlist")
 
-        playlist_cmd.parser.add_option('-p', '--playlist', default='Beets',
+        playlistadd_cmd.parser.add_option('-p', '--playlist', default='Beets',
                                        help='add playlist to Plex')
 
-        def func_playlist(lib, opts, args):
+        def func_playlist_add(lib, opts, args):
             items = lib.items(ui.decargs(args))
             self._plex_add_playlist_item(items, opts.playlist)
 
-        playlist_cmd.func = func_playlist
+        playlistadd_cmd.func = func_playlist_add
 
-        return [plexupdate_cmd, sync_cmd, playlist_cmd]
+        # plexplaylistremove command
+        playlistrem_cmd = ui.Subcommand('plexplaylistremove',
+                                     help="add tracks to Plex playlist")
+
+        playlistrem_cmd.parser.add_option('-p', '--playlist', default='Beets',
+                                       help='add playlist to Plex')
+
+        def func_playlist_rem(lib, opts, args):
+            items = lib.items(ui.decargs(args))
+            self._plex_remove_playlist_item(items, opts.playlist)
+
+        playlistrem_cmd.func = func_playlist_rem
+
+        return [plexupdate_cmd, sync_cmd, playlistadd_cmd, playlistrem_cmd]
 
     def _plexupdate(self):
         """Update Plex music library."""
@@ -156,7 +169,8 @@ class PlexSync(BeetsPlugin):
 
     def _plex_add_playlist_item(self, items, playlist):
         """Add items to Plex playlist."""
-        self._log.info('Processing {} tracks', len(items))
+        self._log.info('Adding {} tracks to {} playlist',
+                       len(items), playlist)
         try:
             plst = self.plex.playlist(playlist)
             playlist_set = set(plst.items())
@@ -171,3 +185,16 @@ class PlexSync(BeetsPlugin):
         else:
             plst.addItems(items = list(difference))
 
+    def _plex_remove_playlist_item(self, items, playlist):
+        """Remove items from Plex playlist."""
+        self._log.info('Removing {} tracks from {} playlist',
+                       len(items), playlist)
+        try:
+            plst = self.plex.playlist(playlist)
+            playlist_set = set(plst.items())
+        except exceptions.NotFound:
+            self._log.warning('{} playlist not found', playlist)
+            return
+        plex_set = {self.plex.fetchItem(item.plex_key) for item in items}
+        difference = plex_set - playlist_set
+        plst.removeItems(items = list(difference))
