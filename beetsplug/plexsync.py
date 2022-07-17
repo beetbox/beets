@@ -154,16 +154,15 @@ class PlexSync(BeetsPlugin):
         else:
             return False
 
-    def _plex_add_playlist_item(self, items, playlist):
+def _plex_add_playlist_item(self, items, playlist):
         """Add items to Plex playlist."""
         self._log.info('Processing {} tracks', len(items))
+        plstkeys = [x.ratingKey for x in self.plex.playlist(playlist).items()]
         newplst = []
         for item in items:
-            self._log.info('Adding {}', self.plex.fetchItem(item.plex_key))
-            newplst.append(self.plex.fetchItem(item.plex_key))
+            if item.plex_pley not in plstkeys:
+                self._log.info('Adding {}', self.plex.fetchItem(item.plex_key))
+                newplst.append(self.plex.fetchItem(item.plex_key))
         if self.plex.playlist(playlist) is None:
             self._log.info('{} playlist will be created', playlist)
             self.plex.createPlaylist(playlist, items = newplst)
-        else:
-            to_add = [x for x in newplst if x not in self.plex.playlist(playlist).items()]
-            self.plex.playlist(playlist).addItems(items = to_add)
