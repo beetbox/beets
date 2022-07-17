@@ -130,8 +130,10 @@ class PlexSync(BeetsPlugin):
                 continue
             item.plex_key = plex_track.key
             item.plex_guid = plex_track.guid
-            self._log.info('Rating: {}', plex_track.userRating)
+            item.plex_ratingkey = plex_track.ratingKey
             item.plex_userrating = plex_track.userRating
+            item.plex_skipcount - plex_track.skipCount
+            item.plex_viewcount - plex_track.viewCount
             item.store()
             if write:
                 item.try_write()
@@ -178,12 +180,12 @@ class PlexSync(BeetsPlugin):
             plst = None
             playlist_set = set()
         plex_set = {self.plex.fetchItem(item.plex_key) for item in items}
-        difference = plex_set - playlist_set
+        to_add = plex_set - playlist_set
         if plst is None:
             self._log.info('{} playlist will be created', playlist)
-            self.plex.createPlaylist(playlist, items = list(difference))
+            self.plex.createPlaylist(playlist, items = list(to_add))
         else:
-            plst.addItems(items = list(difference))
+            plst.addItems(items = list(to_add))
 
     def _plex_remove_playlist_item(self, items, playlist):
         """Remove items from Plex playlist."""
@@ -193,8 +195,8 @@ class PlexSync(BeetsPlugin):
             plst = self.plex.playlist(playlist)
             playlist_set = set(plst.items())
         except exceptions.NotFound:
-            self._log.warning('{} playlist not found', playlist)
+            self._log.error('{} playlist not found', playlist)
             return
         plex_set = {self.plex.fetchItem(item.plex_key) for item in items}
-        difference = plex_set.intersection(playlist_set)
-        plst.removeItems(items = list(difference))
+        to_remove = plex_set.intersection(playlist_set)
+        plst.removeItems(items = list(to_remove))
