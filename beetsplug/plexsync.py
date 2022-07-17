@@ -18,6 +18,15 @@ from plexapi.server import PlexServer
 class PlexSync(BeetsPlugin):
     data_source = 'Plex'
 
+    item_types = {
+        'plex_key': types.STRING,
+        'plex_guid': types.STRING,
+        'plex_ratingkey': types.INTEGER,
+        'plex_userrating': types.FLOAT,
+        'plex_skipcount': types.INTEGER,
+        'plex_viewcount': types.INTEGER,
+    }
+
     def __init__(self):
         super().__init__()
 
@@ -132,8 +141,8 @@ class PlexSync(BeetsPlugin):
             item.plex_guid = plex_track.guid
             item.plex_ratingkey = plex_track.ratingKey
             item.plex_userrating = plex_track.userRating
-            item.plex_skipcount - plex_track.skipCount
-            item.plex_viewcount - plex_track.viewCount
+            item.plex_skipcount = plex_track.skipCount
+            item.plex_viewcount = plex_track.viewCount
             item.store()
             if write:
                 item.try_write()
@@ -179,7 +188,7 @@ class PlexSync(BeetsPlugin):
         except exceptions.NotFound:
             plst = None
             playlist_set = set()
-        plex_set = {self.plex.fetchItem(item.plex_key) for item in items}
+        plex_set = {self.plex.fetchItem(item.plex_ratingkey) for item in items}
         to_add = plex_set - playlist_set
         if plst is None:
             self._log.info('{} playlist will be created', playlist)
@@ -197,6 +206,6 @@ class PlexSync(BeetsPlugin):
         except exceptions.NotFound:
             self._log.error('{} playlist not found', playlist)
             return
-        plex_set = {self.plex.fetchItem(item.plex_key) for item in items}
+        plex_set = {self.plex.fetchItem(item.plex_ratingkey) for item in items}
         to_remove = plex_set.intersection(playlist_set)
         plst.removeItems(items = list(to_remove))
