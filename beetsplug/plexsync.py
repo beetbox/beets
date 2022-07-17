@@ -8,6 +8,8 @@ Put something like the following in your config.yaml to configure:
         token: token
 """
 
+import os
+
 import beets.ui
 from beets import config
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin
@@ -119,5 +121,9 @@ class PlexSync(BeetsPlugin):
         self._log.info('tracks: {}', len(tracks))
         if len(tracks) == 0:
             return None
-        else:
+        elif len(tracks) == 1:
             return tracks[0]
+
+    def get_plex_filename(self, track):
+        """Fetch the filename from Plex."""
+        return os.path.basename(track.media[0].parts[0].file)
