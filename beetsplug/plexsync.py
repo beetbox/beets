@@ -10,6 +10,7 @@ Put something like the following in your config.yaml to configure:
 import os
 
 from beets import config, ui
+from beets.dbcore import types
 from beets.plugins import BeetsPlugin
 from plexapi import exceptions
 from plexapi.server import PlexServer
