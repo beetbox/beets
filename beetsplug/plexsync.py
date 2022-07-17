@@ -159,9 +159,10 @@ class PlexSync(BeetsPlugin):
         self._log.info('Processing {} tracks', len(items))
         try:
             plst = self.plex.playlist(playlist)
+            playlist_set = set(plst.items())
         except exceptions.NotFound:
             plst = None
-        playlist_set = set(plst.items())
+            playlist_set = set()
         plex_set = {self.plex.fetchItem(item.plex_key) for item in items}
         difference = playlist_set - plex_set
         if plst is None:
