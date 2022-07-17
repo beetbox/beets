@@ -167,7 +167,7 @@ class PlexSync(BeetsPlugin):
         difference = plex_set - playlist_set
         if plst is None:
             self._log.info('{} playlist will be created', playlist)
-            self.plex.createPlaylist(playlist, items = difference)
+            self.plex.createPlaylist(playlist, items = list(difference))
         else:
-            plst.addItems(items = difference)
+            plst.addItems(items = list(difference))
 
