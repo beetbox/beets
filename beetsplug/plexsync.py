@@ -196,5 +196,5 @@ class PlexSync(BeetsPlugin):
             self._log.warning('{} playlist not found', playlist)
             return
         plex_set = {self.plex.fetchItem(item.plex_key) for item in items}
-        difference = plex_set - playlist_set
+        difference = plex_set.intersection(playlist_set)
         plst.removeItems(items = list(difference))
