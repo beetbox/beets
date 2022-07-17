@@ -166,4 +166,4 @@ class PlexSync(BeetsPlugin):
             self.plex.createPlaylist(playlist, items = newplst)
         else:
             to_add = [x for x in newplst if x not in self.plex.playlist(playlist).items()]
-            self.plex.playlist(playlist).additems(items = to_add)
+            self.plex.playlist(playlist).addItems(items = to_add)
