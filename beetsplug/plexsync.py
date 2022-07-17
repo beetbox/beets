@@ -165,5 +165,5 @@ class PlexSync(BeetsPlugin):
             self._log.info('{} playlist will be created', playlist)
             self.plex.createPlaylist(playlist, items = newplst)
         if self.plex.playlist(playlist) is not None:
-            for item in [list for list in plex.playlist(playlist).items()]:
+            for item in [list for list in self.plex.playlist(playlist).items()]:
                 self._log.info('{} found', item)
