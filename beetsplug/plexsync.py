@@ -161,4 +161,4 @@ class PlexSync(BeetsPlugin):
         for item in items:
             self._log.info('Adding {}', self.plex.fetchItem(item.plex_key))
             newplst.append(self.plex.fetchItem(item.plex_key))
-        self.plex.createPlaylist(playlist, newplst)
+        self.plex.createPlaylist(playlist, items = newplst)
