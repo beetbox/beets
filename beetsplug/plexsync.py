@@ -32,7 +32,7 @@ class PlexSync(BeetsPlugin):
 
         config['plex']['token'].redact = True
         try:
-            self.plex = PlexServer(config['plex']['baseurl'].get(),
+            plex = PlexServer(config['plex']['baseurl'].get(),
                           config['plex']['token'].get())
         except exceptions.Unauthorized:
             raise ui.UserError('Plex authorization failed')
