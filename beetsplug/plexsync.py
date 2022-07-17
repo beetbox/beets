@@ -1,6 +1,6 @@
-"""Syncs Plex library and updates Plex library when  beets library is changed.
+"""Update and sync Plex music library.
 
-Plex Home users enter the Plex Token to enable updating.
+Plex users enter the Plex Token to enable updating.
 Put something like the following in your config.yaml to configure:
     plex:
         host: localhost
@@ -36,7 +36,7 @@ class PlexSync(BeetsPlugin):
             plex = PlexServer(config['plex']['baseurl'].get(),
                           config['plex']['token'].get())
         except exceptions.Unauthorized:
-            raise beets.ui.UserError('Plex token request failed')
+            raise beets.ui.UserError('Plex authorization failed')
         try:
             self.music = plex.library.section(config['plex']['library_name']
                                               .get())
@@ -64,7 +64,7 @@ class PlexSync(BeetsPlugin):
         sync_cmd.parser.add_option(
             '-f', '--force', dest='force_refetch',
             action='store_true', default=False,
-            help='re-download data when already present'
+            help='re-sync Plex data when already present'
         )
 
         def func_sync(lib, opts, args):
@@ -88,8 +88,6 @@ class PlexSync(BeetsPlugin):
 
     def _fetch_plex_info(self, items, write, force):
         """Obtain track information from Plex."""
-
-        self._log.info('Total {} tracks', len(items))
 
         for index, item in enumerate(items, start=1):
             self._log.info('Processing {}/{} tracks - {} ',
