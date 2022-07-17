@@ -162,7 +162,7 @@ class PlexSync(BeetsPlugin):
         except exceptions.NotFound:
             plst = None
         plstkeys = []
-        if plst is not None
+        if plst is not None:
             plstkeys = [x.key for x in plst.items()]
         newplst = []
         for item in items:
