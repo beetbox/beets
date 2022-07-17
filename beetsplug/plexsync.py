@@ -9,8 +9,7 @@ Put something like the following in your config.yaml to configure:
 
 import os
 
-import beets.ui
-from beets import config
+from beets import config, ui
 from beets.plugins import BeetsPlugin
 from plexapi import exceptions
 from plexapi.server import PlexServer
@@ -36,12 +35,12 @@ class PlexSync(BeetsPlugin):
             plex = PlexServer(config['plex']['baseurl'].get(),
                           config['plex']['token'].get())
         except exceptions.Unauthorized:
-            raise beets.ui.UserError('Plex authorization failed')
+            raise ui.UserError('Plex authorization failed')
         try:
             self.music = plex.library.section(config['plex']['library_name']
                                               .get())
         except exceptions.NotFound:
-            raise beets.ui.UserError(f"{config['plex']['library_name']} library not found")
+            raise ui.UserError(f"{config['plex']['library_name']} library not found")
         self.register_listener('database_change', self.listen_for_db_change)
 
     def listen_for_db_change(self, lib, model):
@@ -49,7 +48,7 @@ class PlexSync(BeetsPlugin):
         self.register_listener('cli_exit', self._plexupdate)
 
     def commands(self):
-        plexupdate_cmd = beets.ui.Subcommand(
+        plexupdate_cmd = ui.Subcommand(
             'plexupdate', help=f'Update {self.data_source} library'
         )
 
@@ -59,7 +58,7 @@ class PlexSync(BeetsPlugin):
         plexupdate_cmd.func = func
 
         # plexsync command
-        sync_cmd = beets.ui.Subcommand('plexsync',
+        sync_cmd = ui.Subcommand('plexsync',
                                        help="fetch track attributes from Plex")
         sync_cmd.parser.add_option(
             '-f', '--force', dest='force_refetch',
@@ -68,8 +67,8 @@ class PlexSync(BeetsPlugin):
         )
 
         def func_sync(lib, opts, args):
-            items = lib.items(beets.ui.decargs(args))
-            self._fetch_plex_info(items, beets.ui.should_write(),
+            items = lib.items(ui.decargs(args))
+            self._fetch_plex_info(items, ui.should_write(),
                                   opts.force_refetch)
 
         sync_cmd.func = func_sync
