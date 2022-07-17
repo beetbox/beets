@@ -47,8 +47,8 @@ class PlexSync(BeetsPlugin):
         except exceptions.Unauthorized:
             raise ui.UserError('Plex authorization failed')
         try:
-            self.music = self.plex.library.section(config['plex']['library_name']
-                                              .get())
+            self.music = self.plex.library.section(
+                config['plex']['library_name'].get())
         except exceptions.NotFound:
             raise ui.UserError(f"{config['plex']['library_name']} library not found")
         self.register_listener('database_change', self.listen_for_db_change)
@@ -87,8 +87,9 @@ class PlexSync(BeetsPlugin):
         playlistadd_cmd = ui.Subcommand('plexplaylistadd',
                                      help="add tracks to Plex playlist")
 
-        playlistadd_cmd.parser.add_option('-p', '--playlist', default='Beets',
-                                       help='add playlist to Plex')
+        playlistadd_cmd.parser.add_option('-p', '--playlist',
+                                          default='Beets',
+                                          help='add playlist to Plex')
 
         def func_playlist_add(lib, opts, args):
             items = lib.items(ui.decargs(args))
@@ -100,8 +101,9 @@ class PlexSync(BeetsPlugin):
         playlistrem_cmd = ui.Subcommand('plexplaylistremove',
                                      help="add tracks to Plex playlist")
 
-        playlistrem_cmd.parser.add_option('-p', '--playlist', default='Beets',
-                                       help='add playlist to Plex')
+        playlistrem_cmd.parser.add_option('-p', '--playlist',
+                                          default='Beets',
+                                          help='add playlist to Plex')
 
         def func_playlist_rem(lib, opts, args):
             items = lib.items(ui.decargs(args))
@@ -162,7 +164,6 @@ class PlexSync(BeetsPlugin):
                     return track
         else:
             return None
-        self._log.info('tracks: {}', len(tracks))
         if len(tracks) == 0:
             return None
         elif len(tracks) == 1:
@@ -189,7 +190,8 @@ class PlexSync(BeetsPlugin):
         except exceptions.NotFound:
             plst = None
             playlist_set = set()
-        plex_set = {self.plex.fetchItem(item.plex_ratingkey) for item in items}
+        plex_set = {self.plex.fetchItem(item.plex_ratingkey)
+                    for item in items}
         to_add = plex_set - playlist_set
         if plst is None:
             self._log.info('{} playlist will be created', playlist)
@@ -207,6 +209,7 @@ class PlexSync(BeetsPlugin):
         except exceptions.NotFound:
             self._log.error('{} playlist not found', playlist)
             return
-        plex_set = {self.plex.fetchItem(item.plex_ratingkey) for item in items}
+        plex_set = {self.plex.fetchItem(item.plex_ratingkey)
+                    for item in items}
         to_remove = plex_set.intersection(playlist_set)
         plst.removeItems(items = list(to_remove))
