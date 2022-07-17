@@ -156,7 +156,7 @@ class PlexSync(BeetsPlugin):
 
     def plex_add_playlist_item(self, items, playlist):
         """Add items to Plex playlist."""
-
+        self._log.info('Processing {} tracks', len(items))
         newplst = []
         for item in items:
             newplst.append(self.plex.fetchItem(item.plex_key))
