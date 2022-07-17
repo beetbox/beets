@@ -161,8 +161,4 @@ class PlexSync(BeetsPlugin):
         for item in items:
             self._log.info('Adding {}', self.plex.fetchItem(item.plex_key))
             newplst.append(self.plex.fetchItem(item.plex_key))
-        try:
-            plst = self.plex.playlist(playlist)
-        except exceptions.NotFound:
-            self._log.info('{} playlist will be created', playlist)
-            plst = self.plex.createPlaylist(playlist, newplst)
+        self.plex.createPlaylist(playlist, newplst)
