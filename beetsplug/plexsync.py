@@ -139,7 +139,7 @@ class PlexSync(BeetsPlugin):
 
     def compare_file_name(self, track, item):
         """Compare file names."""
-        if get_plex_filename(track) == os.path.basename(item.path):
+        if self.get_plex_filename(track) == os.path.basename(item.path):
             return True
         else:
             return False
