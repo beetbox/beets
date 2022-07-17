@@ -59,7 +59,7 @@ class PlexSync(BeetsPlugin):
 
         # plexsync command
         sync_cmd = ui.Subcommand('plexsync',
-                                       help="fetch track attributes from Plex")
+                                 help="fetch track attributes from Plex")
         sync_cmd.parser.add_option(
             '-f', '--force', dest='force_refetch',
             action='store_true', default=False,
@@ -73,7 +73,20 @@ class PlexSync(BeetsPlugin):
 
         sync_cmd.func = func_sync
 
-        return [plexupdate_cmd, sync_cmd]
+        # plexplaylist command
+        playlist_cmd = ui.Subcommand('plexplaylist',
+                                     help="add tracks to Plex playlist")
+
+        playlist_cmd.parser.add_option('-p', '--playlist', default='Beets',
+                                       help='add playlist to Plex')
+
+        def func_playlist(lib, opts, args):
+            items = lib.items(ui.decargs(args))
+            self.plex_add_playlist_item(items, opts.playlist)
+
+        playlist_cmd.func = func_playlist
+
+        return [plexupdate_cmd, sync_cmd, playlist_cmd]
 
     def _plexupdate(self):
         """Update Plex music library."""
@@ -140,3 +153,8 @@ class PlexSync(BeetsPlugin):
             return True
         else:
             return False
+
+    def plex_add_playlist_item(self, items, playlist):
+        """Add items to Plex playlist."""
+
+        plst = self.plex.playlist(playlist)
