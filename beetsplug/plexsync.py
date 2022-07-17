@@ -160,7 +160,7 @@ class PlexSync(BeetsPlugin):
         plstkeys = [x.ratingKey for x in self.plex.playlist(playlist).items()]
         newplst = []
         for item in items:
-            if item.plex_pley not in plstkeys:
+            if item.plex_key not in plstkeys:
                 self._log.info('Adding {}', self.plex.fetchItem(item.plex_key))
                 newplst.append(self.plex.fetchItem(item.plex_key))
         if self.plex.playlist(playlist) is None:
