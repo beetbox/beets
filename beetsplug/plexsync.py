@@ -118,7 +118,9 @@ class PlexSync(BeetsPlugin):
         tracks = self.music.searchTracks(
             **{'album.title': item.album, 'track.title': item.title})
         if len(tracks) == 1:
-            return tracks[0]
+            if self.compare_file_name(tracks[0], item):
+                return tracks[0]
+            #return tracks[0]
         elif len(tracks) > 1:
             for track in tracks:
                 if self.compare_file_name(track, item):
