@@ -116,12 +116,11 @@ class PlexSync(BeetsPlugin):
 
     def plex_track(self, item):
         """Fetch the Plex track key."""
-        self._log.info('year: {}, album: {}, title: {}', item.year, item.album, item.title)
+        self._log.info('Processing track - {} ', item)
         tracks = self.music.searchTracks(
             **{'album.title': item.album, 'track.title': item.title})
         if len(tracks) == 1:
-            if self.compare_file_name(tracks[0], item):
-                return tracks[0]
+            return tracks[0]
         elif len(tracks) > 1:
             for track in tracks:
                 if self.compare_file_name(track, item):
@@ -140,8 +139,6 @@ class PlexSync(BeetsPlugin):
 
     def compare_file_name(self, track, item):
         """Compare file name."""
-        self._log.info('Track file name: {}', os.path.basename(track.media[0].parts[0].file))
-        self._log.info('Item file name: {}', os.path.basename(item.path))
         if os.path.basename(track.media[0].parts[0].file) == os.path.basename(item.path):
             return True
         else:
