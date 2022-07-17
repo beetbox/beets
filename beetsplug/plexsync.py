@@ -157,4 +157,12 @@ class PlexSync(BeetsPlugin):
     def plex_add_playlist_item(self, items, playlist):
         """Add items to Plex playlist."""
 
-        plst = self.plex.playlist(playlist)
+        newplst = []
+        try:
+            plst = self.plex.playlist(playlist)
+        except exceptions.NotFound:
+            self._log.info('{} playlist will be created', playlist)
+            plst = self.plex.createPlaylist(playlist, newplst)
+        for item in items:
+            if item.plex_key not in plst:
+                plst.addItems(item)
