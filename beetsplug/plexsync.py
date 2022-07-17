@@ -32,13 +32,12 @@ class PlexSync(BeetsPlugin):
 
         config['plex']['token'].redact = True
         try:
-            plex = PlexServer(config['plex']['baseurl'].get(),
+            self.plex = PlexServer(config['plex']['baseurl'].get(),
                           config['plex']['token'].get())
-            self.plex = plex
         except exceptions.Unauthorized:
             raise ui.UserError('Plex authorization failed')
         try:
-            self.music = plex.library.section(config['plex']['library_name']
+            self.music = self.plex.library.section(config['plex']['library_name']
                                               .get())
         except exceptions.NotFound:
             raise ui.UserError(f"{config['plex']['library_name']} library not found")
