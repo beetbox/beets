@@ -134,7 +134,7 @@ setup(
         'lyrics': ['requests', 'beautifulsoup4', 'langdetect'],
         'mpdstats': ['python-mpd2>=0.4.2'],
         'plexupdate': ['requests'],
-        'plexsync': ['plexapi'],
+        'plexsync': ['plexapi>=4.11.2'],
         'web': ['flask', 'flask-cors'],
         'import': ['rarfile', 'py7zr'],
         'thumbnails': ['pyxdg', 'Pillow'],
