@@ -183,8 +183,6 @@ class PlexSync(BeetsPlugin):
 
     def _plex_add_playlist_item(self, items, playlist):
         """Add items to Plex playlist."""
-        self._log.info('Adding {} tracks to {} playlist',
-                       len(items), playlist)
         try:
             plst = self.plex.playlist(playlist)
             playlist_set = set(plst.items())
@@ -194,6 +192,8 @@ class PlexSync(BeetsPlugin):
         plex_set = {self.plex.fetchItem(item.plex_ratingkey)
                     for item in items}
         to_add = plex_set - playlist_set
+        self._log.info('Adding {} tracks to {} playlist',
+                       len(to_add), playlist)
         if plst is None:
             self._log.info('{} playlist will be created', playlist)
             self.plex.createPlaylist(playlist, items=list(to_add))
@@ -202,8 +202,6 @@ class PlexSync(BeetsPlugin):
 
     def _plex_remove_playlist_item(self, items, playlist):
         """Remove items from Plex playlist."""
-        self._log.info('Removing {} tracks from {} playlist',
-                       len(items), playlist)
         try:
             plst = self.plex.playlist(playlist)
             playlist_set = set(plst.items())
@@ -213,4 +211,6 @@ class PlexSync(BeetsPlugin):
         plex_set = {self.plex.fetchItem(item.plex_ratingkey)
                     for item in items}
         to_remove = plex_set.intersection(playlist_set)
+        self._log.info('Removing {} tracks from {} playlist',
+                       len(to_remove), playlist)
         plst.removeItems(items=list(to_remove))
