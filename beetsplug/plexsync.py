@@ -90,7 +90,7 @@ class PlexSync(BeetsPlugin):
 
         # plexplaylistadd command
         playlistadd_cmd = ui.Subcommand('plexplaylistadd',
-                                     help="add tracks to Plex playlist")
+                                        help="add tracks to Plex playlist")
 
         playlistadd_cmd.parser.add_option('-p', '--playlist',
                                           default='Beets',
