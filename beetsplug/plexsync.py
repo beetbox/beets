@@ -33,7 +33,7 @@ class PlexSync(BeetsPlugin):
 
         # Adding defaults.
         config['plex'].add({
-            'baseurl': 'localhost',
+            'host': 'localhost',
             'port': 32400,
             'token': '',
             'library_name': 'Music',
@@ -41,9 +41,11 @@ class PlexSync(BeetsPlugin):
             'ignore_cert_errors': False})
 
         config['plex']['token'].redact = True
+        baseurl = "http://" + config['plex']['host'] + ":" \
+            + config['plex']['port']
         try:
-            self.plex = PlexServer(config['plex']['baseurl'].get(),
-                          config['plex']['token'].get())
+            self.plex = PlexServer(baseurl,
+                                   config['plex']['token'].get())
         except exceptions.Unauthorized:
             raise ui.UserError('Plex authorization failed')
         try:
