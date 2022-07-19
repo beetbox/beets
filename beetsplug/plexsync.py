@@ -28,7 +28,6 @@ class PlexSync(BeetsPlugin):
         'plex_userrating': types.FLOAT,
         'plex_skipcount': types.INTEGER,
         'plex_viewcount': types.INTEGER,
-        'plex_skipcount': types.INTEGER,
         'plex_lastviewedat': DateType(),
         'plex_lastratedat': DateType(),
     }
@@ -153,7 +152,6 @@ class PlexSync(BeetsPlugin):
             item.plex_userrating = plex_track.userRating
             item.plex_skipcount = plex_track.skipCount
             item.plex_viewcount = plex_track.viewCount
-            item.plex_skipcount = plex_track.skipCount
             item.plex_lastviewedat = plex_track.lastViewedAt
             item.plex_lastratedat = plex_track.lastRatedAt
             item.store()
