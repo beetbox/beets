@@ -13,7 +13,7 @@ from beets import config, ui
 from beets.dbcore import types
 from beets.library import DateType
 from beets.plugins import BeetsPlugin
-from plexapi import exceptions, utils
+from plexapi import exceptions
 from plexapi.server import PlexServer
 
 
@@ -152,8 +152,8 @@ class PlexSync(BeetsPlugin):
             item.plex_userrating = plex_track.userRating
             item.plex_skipcount = plex_track.skipCount
             item.plex_viewcount = plex_track.viewCount
-            item.lastviewedat = utils.toDatetime(plex_track.lastViewedAt)
-            item.lastratedat = utils.toDatetime(plex_track.lastRatedAt)
+            item.lastviewedat = plex_track.lastViewedAt
+            item.lastratedat = plex_track.lastRatedAt
             item.store()
             if write:
                 item.try_write()
