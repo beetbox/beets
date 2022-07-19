@@ -152,8 +152,8 @@ class PlexSync(BeetsPlugin):
             item.plex_userrating = plex_track.userRating
             item.plex_skipcount = plex_track.skipCount
             item.plex_viewcount = plex_track.viewCount
-            item.lastviewedat = plex_track.lastViewedAt
-            item.lastratedat = plex_track.lastRatedAt
+            item.plex_lastviewedat = plex_track.lastViewedAt
+            item.plex_lastratedat = plex_track.lastRatedAt
             item.store()
             if write:
                 item.try_write()
