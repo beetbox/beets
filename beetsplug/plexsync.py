@@ -22,7 +22,6 @@ class PlexSync(BeetsPlugin):
     data_source = 'Plex'
 
     item_types = {
-        'plex_key': types.STRING,
         'plex_guid': types.STRING,
         'plex_ratingkey': types.INTEGER,
         'plex_userrating': types.FLOAT,
@@ -146,7 +145,6 @@ class PlexSync(BeetsPlugin):
             if plex_track is None:
                 self._log.info('No track found for: {}', item)
                 continue
-            item.plex_key = plex_track.key
             item.plex_guid = plex_track.guid
             item.plex_ratingkey = plex_track.ratingKey
             item.plex_userrating = plex_track.userRating
