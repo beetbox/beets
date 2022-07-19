@@ -11,6 +11,7 @@ import os
 
 from beets import config, ui
 from beets.dbcore import types
+from beets.library import DateType
 from beets.plugins import BeetsPlugin
 from plexapi import exceptions
 from plexapi.server import PlexServer
@@ -27,6 +28,8 @@ class PlexSync(BeetsPlugin):
         'plex_userrating': types.FLOAT,
         'plex_skipcount': types.INTEGER,
         'plex_viewcount': types.INTEGER,
+        'plex_lastviewedat': DateType(),
+        'plex_lastratedat': DateType(),
     }
 
     def __init__(self):
@@ -149,6 +152,8 @@ class PlexSync(BeetsPlugin):
             item.plex_userrating = plex_track.userRating
             item.plex_skipcount = plex_track.skipCount
             item.plex_viewcount = plex_track.viewCount
+            item.lastviewedat = plex_track.lastViewedAt
+            item.lastratedat = plex_track.lastRatedAt
             item.store()
             if write:
                 item.try_write()
