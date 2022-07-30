@@ -37,7 +37,7 @@ _temp_files = []  # Keep track of temporary transcoded files for deletion.
 
 # Some convenient alternate names for formats.
 ALIASES = {
-    'wma': 'windows media',
+    'windows media': 'wma',
     'vorbis': 'ogg',
 }
 
