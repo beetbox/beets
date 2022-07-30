@@ -228,14 +228,14 @@ class ImportHelper(TestHelper):
         )
 
     def assert_file_in_lib(self, *segments):
-        """Join the ``segments`` and assert that this path exists in the library
-        directory
+        """Join the ``segments`` and assert that this path exists in the
+        library directory.
         """
         self.assertExists(os.path.join(self.libdir, *segments))
 
     def assert_file_not_in_lib(self, *segments):
-        """Join the ``segments`` and assert that this path exists in the library
-        directory
+        """Join the ``segments`` and assert that this path does not
+        exist in the library directory.
         """
         self.assertNotExists(os.path.join(self.libdir, *segments))
 
@@ -462,8 +462,8 @@ class ImportPasswordRarTest(ImportZipTest):
 
 
 class ImportSingletonTest(_common.TestCase, ImportHelper):
-    """Test ``APPLY`` and ``ASIS`` choices for an import session with singletons
-    config set to True.
+    """Test ``APPLY`` and ``ASIS`` choices for an import session with
+    singletons config set to True.
     """
 
     def setUp(self):

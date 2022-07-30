@@ -233,9 +233,10 @@ class AcousticPlugin(plugins.BeetsPlugin):
                     item.try_write()
 
     def _map_data_to_scheme(self, data, scheme):
-        """Given `data` as a structure of nested dictionaries, and `scheme` as a
-        structure of nested dictionaries , `yield` tuples `(attr, val)` where
-        `attr` and `val` are corresponding leaf nodes in `scheme` and `data`.
+        """Given `data` as a structure of nested dictionaries, and
+        `scheme` as a structure of nested dictionaries , `yield` tuples
+        `(attr, val)` where `attr` and `val` are corresponding leaf
+        nodes in `scheme` and `data`.
 
         As its name indicates, `scheme` defines how the data is structured,
         so this function tries to find leaf nodes in `data` that correspond

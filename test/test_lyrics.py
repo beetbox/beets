@@ -336,7 +336,8 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest, LyricsAssertions):
         os.environ.get('INTEGRATION_TEST', '0') == '1',
         'integration testing not enabled')
     def test_backend_sources_ok(self):
-        """Test default backends with songs known to exist in respective databases.
+        """Test default backends with songs known to exist in respective
+        databases.
         """
         # Don't test any sources marked as skipped.
         sources = [s for s in self.DEFAULT_SOURCES if not s.get("skip", False)]

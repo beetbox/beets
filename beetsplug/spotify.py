@@ -374,8 +374,8 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         return unidecode.unidecode(query)
 
     def _search_api(self, query_type, filters=None, keywords=''):
-        """Query the Spotify Search API for the specified ``keywords``, applying
-        the provided ``filters``.
+        """Query the Spotify Search API for the specified ``keywords``,
+        applying the provided ``filters``.
 
         :param query_type: Item type to search across. Valid types are:
             'album', 'artist', 'playlist', and 'track'.
