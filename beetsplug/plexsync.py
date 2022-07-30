@@ -154,7 +154,7 @@ class PlexSync(BeetsPlugin):
             item.plex_viewcount = plex_track.viewCount
             item.plex_lastviewedat = plex_track.lastViewedAt
             item.plex_lastratedat = plex_track.lastRatedAt
-            item.plex_lastupdatedat = datetime.now()
+            item.plex_lastupdatedat = datetime.today()
             item.store()
             if write:
                 item.try_write()
