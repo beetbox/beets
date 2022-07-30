@@ -90,6 +90,7 @@ Bug fixes:
 * :doc:`plugins/importadded`: Fix a bug with recently added reflink import option
   that casues a crash when ImportAdded plugin enabled.
   :bug:`4389`
+* :doc:`plugins/convert`: Fix a bug with the `wma` format alias.
 
 For packagers:
 
