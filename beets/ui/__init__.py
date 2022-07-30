@@ -581,7 +581,7 @@ def _colordiff(a, b, highlight='text_highlight',
             a_out.append(colorize(color, a[a_start:a_end]))
             b_out.append(colorize(color, b[b_start:b_end]))
         else:
-            assert(False)
+            assert False
 
     return ''.join(a_out), ''.join(b_out)
 
