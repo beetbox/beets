@@ -19,6 +19,7 @@ Spotify playlist construction.
 
 import base64
 import collections
+import datetime
 import json
 import re
 import time
@@ -30,6 +31,7 @@ import unidecode
 from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.dbcore import types
+from beets.library import DateType
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin
 
 DEFAULT_WAITING_TIME = 5
@@ -56,6 +58,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         'spotify_tempo': types.FLOAT,
         'spotify_time_signature': types.INTEGER,
         'spotify_valence': types.FLOAT,
+        'spotify_lastupdatedat': DateType(),
     }
 
     # Base URLs for the Spotify API
@@ -645,6 +648,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 if feature in self.spotify_audio_features.keys():
                     item[self.spotify_audio_features[feature]] = \
                         audio_features[feature]
+            item['spotify_lastupdatedat'] = datetime.datetime.now()
             item.store()
             if write:
                 item.try_write()
