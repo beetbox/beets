@@ -7,7 +7,6 @@ Put something like the following in your config.yaml to configure:
         token: token
 """
 
-import os
 import datetime
 
 from beets import config, ui
@@ -167,8 +166,8 @@ class PlexSync(BeetsPlugin):
             return tracks[0]
         elif len(tracks) > 1:
             for track in tracks:
-                if track.parentTitle == item.album and \
-                    track.title == item.title:
+                if track.parentTitle == item.album \
+                   and track.title == item.title:
                     return track
         else:
             return None
