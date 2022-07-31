@@ -167,25 +167,11 @@ class PlexSync(BeetsPlugin):
             return tracks[0]
         elif len(tracks) > 1:
             for track in tracks:
-                if self.compare_file_name(track, item):
+                if track.parentTitle == item.album and \
+                    track.title == item.title:
                     return track
         else:
             return None
-        if len(tracks) == 0:
-            return None
-        elif len(tracks) == 1:
-            return tracks[0]
-
-    def get_plex_filename(self, track):
-        """Fetch Plex filename."""
-        return os.path.basename(track.media[0].parts[0].file)
-
-    def compare_file_name(self, track, item):
-        """Compare file names."""
-        if self.get_plex_filename(track) == os.path.basename(item.path):
-            return True
-        else:
-            return False
 
     def _plex_add_playlist_item(self, items, playlist):
         """Add items to Plex playlist."""
