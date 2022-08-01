@@ -165,7 +165,7 @@ command to use to transcode audio. The tokens ``$source`` and ``$dest`` in the
 command are replaced with the paths to the existing and new file.
 
 The plugin in comes with default commands for the most common audio
-formats: `mp3`, `alac`, `flac`, `aac`, `opus`, `ogg`, `wmv`. For
+formats: `mp3`, `alac`, `flac`, `aac`, `opus`, `ogg`, `wma`. For
 details have a look at the output of ``beet config -d``.
 
 For a one-command-fits-all solution use the ``convert.command`` and
