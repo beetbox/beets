@@ -29,7 +29,7 @@ class PlexSync(BeetsPlugin):
         'plex_viewcount': types.INTEGER,
         'plex_lastviewedat': DateType(),
         'plex_lastratedat': DateType(),
-        'plex_lastupdatedat': DateType(),
+        'plex_updated': DateType(),
     }
 
     def __init__(self):
@@ -153,7 +153,7 @@ class PlexSync(BeetsPlugin):
             item.plex_viewcount = plex_track.viewCount
             item.plex_lastviewedat = plex_track.lastViewedAt
             item.plex_lastratedat = plex_track.lastRatedAt
-            item.plex_lastupdatedat = datetime.datetime.now()
+            item.plex_updated = datetime.datetime.now()
             item.store()
             if write:
                 item.try_write()
