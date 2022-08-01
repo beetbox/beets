@@ -58,7 +58,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         'spotify_tempo': types.FLOAT,
         'spotify_time_signature': types.INTEGER,
         'spotify_valence': types.FLOAT,
-        'spotify_lastupdatedat': DateType(),
+        'spotify_updated': DateType(),
     }
 
     # Base URLs for the Spotify API
@@ -648,7 +648,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 if feature in self.spotify_audio_features.keys():
                     item[self.spotify_audio_features[feature]] = \
                         audio_features[feature]
-            item['spotify_lastupdatedat'] = datetime.datetime.now()
+            item['spotify_updated'] = datetime.datetime.now()
             item.store()
             if write:
                 item.try_write()

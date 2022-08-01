@@ -8,6 +8,7 @@ Changelog goes here!
 
 New features:
 
+* Added `spotify_updated` field to track when the information was last updated.
 * We now import and tag the `album` information when importing singletons using Spotify source.
   :bug:`4398`
 * :doc:`/plugins/spotify`: The plugin now provides an additional command
