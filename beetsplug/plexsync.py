@@ -180,8 +180,12 @@ class PlexSync(BeetsPlugin):
         except exceptions.NotFound:
             plst = None
             playlist_set = set()
-        plex_set = {self.plex.fetchItem(item.plex_ratingkey)
-                    for item in items}
+        try:
+            plex_set = {self.plex.fetchItem(item.plex_ratingkey)
+                        for item in items}
+        except exceptions.NotFound:
+            self._log.error('Plex library is not synced, please sync again')
+            return
         to_add = plex_set - playlist_set
         self._log.info('Adding {} tracks to {} playlist',
                        len(to_add), playlist)
@@ -199,8 +203,12 @@ class PlexSync(BeetsPlugin):
         except exceptions.NotFound:
             self._log.error('{} playlist not found', playlist)
             return
-        plex_set = {self.plex.fetchItem(item.plex_ratingkey)
-                    for item in items}
+        try:
+            plex_set = {self.plex.fetchItem(item.plex_ratingkey)
+                        for item in items}
+        except exceptions.NotFound:
+            self._log.error('Plex library is not synced, please sync again')
+            return
         to_remove = plex_set.intersection(playlist_set)
         self._log.info('Removing {} tracks from {} playlist',
                        len(to_remove), playlist)
