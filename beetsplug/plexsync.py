@@ -11,6 +11,7 @@ import datetime
 
 from beets import config, ui
 from beets.dbcore import types
+from beets.dbcore.query import MatchQuery
 from beets.library import DateType
 from beets.plugins import BeetsPlugin
 from plexapi import exceptions
@@ -119,7 +120,20 @@ class PlexSync(BeetsPlugin):
 
         playlistrem_cmd.func = func_playlist_rem
 
-        return [plexupdate_cmd, sync_cmd, playlistadd_cmd, playlistrem_cmd]
+        # plexsyncrecent command - instead of using the plexsync command which
+        # can be slow, we can use the plexsyncrecent command to update info
+        # for tracks played in the last 7 days.
+        syncrecent_cmd = ui.Subcommand('plexsyncrecent',
+                                        help="Sync recently played tracks")
+
+        def func_sync_recent(lib, opts, args):
+            self._update_recently_played(lib)
+
+        syncrecent_cmd.func = func_sync_recent
+
+        return [plexupdate_cmd, sync_cmd, playlistadd_cmd, playlistrem_cmd,
+                syncrecent_cmd]
+
 
     def _plexupdate(self):
         """Update Plex music library."""
@@ -213,3 +227,31 @@ class PlexSync(BeetsPlugin):
         self._log.info('Removing {} tracks from {} playlist',
                        len(to_remove), playlist)
         plst.removeItems(items=list(to_remove))
+
+    def _update_recently_played(self, lib):
+        """Fetch the Plex track key."""
+        tracks = self.music.search(
+            filters={'track.lastViewedAt>>': '7d'}, libtype='track')
+        self._log.info("Updating information for {} tracks", len(tracks))
+        with lib.transaction():
+            for track in tracks:
+                query = MatchQuery("plex_ratingkey", track.ratingKey,
+                                   fast=False)
+                items = lib.items(query)
+                if not items:
+                    self._log.debug("{} | track not found", query)
+                    continue
+                elif len(items) == 1:
+                    self._log.info("Updating information for {} ", items[0])
+                    items[0].plex_userrating = track.userRating
+                    items[0].plex_skipcount = track.skipCount
+                    items[0].plex_viewcount = track.viewCount
+                    items[0].plex_lastviewedat = track.lastViewedAt
+                    items[0].plex_lastratedat = track.lastRatedAt
+                    items[0].plex_updated = datetime.datetime.now()
+                    items[0].store()
+                    items[0].try_write()
+                else:
+                    self._log.debug("Please sync Plex library again")
+                    continue
+
