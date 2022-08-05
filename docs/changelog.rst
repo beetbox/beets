@@ -92,6 +92,7 @@ Bug fixes:
   that casues a crash when ImportAdded plugin enabled.
   :bug:`4389`
 * :doc:`plugins/convert`: Fix a bug with the `wma` format alias.
+* :doc:`/plugins/web`: Fix get file from item.
 
 For packagers:
 
