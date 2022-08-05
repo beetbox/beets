@@ -124,7 +124,7 @@ class PlexSync(BeetsPlugin):
         # can be slow, we can use the plexsyncrecent command to update info
         # for tracks played in the last 7 days.
         syncrecent_cmd = ui.Subcommand('plexsyncrecent',
-                                        help="Sync recently played tracks")
+                                       help="Sync recently played tracks")
 
         def func_sync_recent(lib, opts, args):
             self._update_recently_played(lib)
@@ -133,7 +133,6 @@ class PlexSync(BeetsPlugin):
 
         return [plexupdate_cmd, sync_cmd, playlistadd_cmd, playlistrem_cmd,
                 syncrecent_cmd]
-
 
     def _plexupdate(self):
         """Update Plex music library."""
@@ -254,4 +253,3 @@ class PlexSync(BeetsPlugin):
                 else:
                     self._log.debug("Please sync Plex library again")
                     continue
-
