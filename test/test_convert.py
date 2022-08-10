@@ -184,8 +184,9 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
         }
 
     def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
+        pass
+        #self.unload_plugins()
+        #self.teardown_beets()
 
     def test_convert(self):
         with control_stdin('y'):
@@ -292,6 +293,19 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
             self.run_convert()
         converted = os.path.join(self.convert_dest, b'converted.ogg')
         self.assertNoFileTag(converted, 'ogg')
+
+    def test_playlist(self):
+        with control_stdin('y'):
+            self.run_convert('--playlist', 'playlist.m3u8')
+            converted = os.path.join(self.convert_dest, b'converted.mp3')
+            self.assertFileTag(converted, 'mp3')
+            m3u_created = os.path.join(self.convert_dest, b'playlist.m3u8')
+        self.assertTrue(os.path.exists(m3u_created))
+
+    def test_playlist_pretend(self):
+        self.run_convert('--playlist', 'playlist.m3u8', '--pretend')
+        m3u_created = os.path.join(self.convert_dest, b'playlist.m3u8')
+        self.assertFalse(os.path.exists(m3u_created))
 
 
 @_common.slow_test()
