@@ -153,7 +153,7 @@ class M3UFile():
     def load(self):
         """Reads the m3u file from disk and sets the object's attributes.
         """
-        with open(self.name, "r") as playlist_file:
+        with open(self.path, "r") as playlist_file:
             raw_contents = playlist_file.readlines()
         self.extm3u = True if raw_contents[0] == "#EXTM3U" else False
         for line in raw_contents[1:]:
