@@ -1753,6 +1753,99 @@ class DefaultTemplateFunctions:
         self.lib._memotable[memokey] = res
         return res
 
+    def tmpl_sunique(self, keys=None, disam=None, bracket=None):
+        """Generate a string that is guaranteed to be unique among all
+        singletons in the library who share the same set of keys.
+
+        A fields from "disam" is used in the string if one is sufficient to
+        disambiguate the albums. Otherwise, a fallback opaque value is
+        used. Both "keys" and "disam" should be given as
+        whitespace-separated lists of field names, while "bracket" is a
+        pair of characters to be used as brackets surrounding the
+        disambiguator or empty to have no brackets.
+        """
+        # Fast paths: no album, no item or library, or memoized value.
+        if not self.item or not self.lib:
+            return ''
+
+        if isinstance(self.item, Item):
+            item_id = self.item.id
+            album_id = self.item.album_id
+        else:
+            raise NotImplementedError("sunique is only implemented for items")
+
+        if item_id is None:
+            return ''
+
+        memokey = ('sunique', keys, disam, item_id)
+        memoval = self.lib._memotable.get(memokey)
+        if memoval is not None:
+            return memoval
+
+        keys = keys or beets.config['sunique']['keys'].as_str()
+        disam = disam or beets.config['sunique']['disambiguators'].as_str()
+        if bracket is None:
+            bracket = beets.config['sunique']['bracket'].as_str()
+        keys = keys.split()
+        disam = disam.split()
+
+        # Assign a left and right bracket or leave blank if argument is empty.
+        if len(bracket) == 2:
+            bracket_l = bracket[0]
+            bracket_r = bracket[1]
+        else:
+            bracket_l = ''
+            bracket_r = ''
+
+        if album_id is not None:
+            # Do nothing for non singletons.
+            self.lib._memotable[memokey] = ''
+            return ''
+
+        # Find matching singletons to disambiguate with.
+        subqueries = [dbcore.query.NoneQuery('album_id', True)]
+        item_keys = Item.all_keys()
+        for key in keys:
+            value = self.item.get(key, '')
+            # Use slow queries for flexible attributes.
+            fast = key in item_keys
+            subqueries.append(dbcore.MatchQuery(key, value, fast))
+        singletons = self.lib.items(dbcore.AndQuery(subqueries))
+
+        # If there's only one singleton to matching these details, then do
+        # nothing.
+        if len(singletons) == 1:
+            self.lib._memotable[memokey] = ''
+            return ''
+
+        # Find the first disambiguator that distinguishes the singletons.
+        for disambiguator in disam:
+            # Get the value for each singleton for the current field.
+            disam_values = {s.get(disambiguator, '') for s in singletons}
+
+            # If the set of unique values is equal to the number of
+            # singletons in the disambiguation set, we're done -- this is
+            # sufficient disambiguation.
+            if len(disam_values) == len(singletons):
+                break
+        else:
+            # No disambiguator distinguished all fields.
+            res = f' {bracket_l}{item_id}{bracket_r}'
+            self.lib._memotable[memokey] = res
+            return res
+
+        # Flatten disambiguation value into a string.
+        disam_value = self.item.formatted(for_path=True).get(disambiguator)
+
+        # Return empty string if disambiguator is empty.
+        if disam_value:
+            res = f' {bracket_l}{disam_value}{bracket_r}'
+        else:
+            res = ''
+
+        self.lib._memotable[memokey] = res
+        return res
+
     @staticmethod
     def tmpl_first(s, count=1, skip=0, sep='; ', join_str='; '):
         """Get the item(s) from x to y in a string separated by something
