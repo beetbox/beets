@@ -124,6 +124,13 @@ class FilesystemError(HumanReadableException):
         return f'{self._reasonstr()} {clause}'
 
 
+class EmptyPlaylistError(Exception):
+    """An error that should be raised when a playlist file without media files
+    is saved or loaded.
+    """
+    pass
+
+
 class MoveOperation(Enum):
     """The file operations that e.g. various move functions can carry out.
     """
@@ -161,25 +168,29 @@ class M3UFile():
                 # Some EXTM3U comment, do something. FIXME
                 continue
             self.media_list.append(line)
+        if not self.media_list:
+            raise EmptyPlaylistError
 
-    def set_contents(self, media_files, extm3u=True):
-        """Sets self.media_files to a list of media file paths,
+    def set_contents(self, media_list, extm3u=True):
+        """Sets self.media_list to a list of media file paths,
 
         and sets additional flags, changing the final m3u-file's format.
 
-        ``media_files`` is a list of paths to media files that should be added
+        ``media_list`` is a list of paths to media files that should be added
         to the playlist (relative or absolute paths, that's the responsibility
         of the caller). By default the ``extm3u`` flag is set, to ensure a
         save-operation writes an m3u-extended playlist (comment "#EXTM3U" at
         the top of the file).
         """
-        self.media_files = media_files
+        self.media_list = media_list
         self.extm3u = extm3u
 
     def write(self):
         """Writes the m3u file to disk."""
         header = ["#EXTM3U"] if self.extm3u else []
-        contents = header + self.media_files
+        if not self.media_list:
+            raise EmptyPlaylistError
+        contents = header + self.media_list
         with open(self.path, "w") as playlist_file:
             playlist_file.writelines('\n'.join(contents))
             playlist_file.write('\n')  # Final linefeed to prevent noeol file.
