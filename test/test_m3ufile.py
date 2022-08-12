@@ -20,7 +20,7 @@ import unittest
 
 # from unittest.mock import Mock, MagicMock
 
-from beets.util import M3UFile
+from beets.util import M3UFile, EmptyPlaylistError
 from beets.util import syspath, bytestring_path, py3_path, CHAR_REPLACE
 from test._common import RSRC
 
@@ -30,8 +30,8 @@ class M3UFileTest(unittest.TestCase):
         tempdir = bytestring_path(mkdtemp())
         the_playlist_file = path.join(tempdir, b'playlist.m3u8')
         m3ufile = M3UFile(the_playlist_file)
-        m3ufile.write()
-        self.assertFalse(path.exists(the_playlist_file))
+        with self.assertRaises(EmptyPlaylistError):
+            m3ufile.write()
         rmtree(tempdir)
 
     def test_playlist_write(self):
