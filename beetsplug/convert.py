@@ -472,6 +472,9 @@ class ConvertPlugin(BeetsPlugin):
                 self.copy_album_art(album, dest, path_formats, pretend,
                                     link, hardlink)
 
+        self._parallel_convert(dest, opts.keep_new, path_formats, fmt, pretend,
+                               link, hardlink, threads, items)
+
         if playlist:
             # When playlist arg is passed create an m3u8 file in dest folder.
             #
@@ -490,9 +493,6 @@ class ConvertPlugin(BeetsPlugin):
                 m3ufile = M3UFile(playlist)
                 m3ufile.set_contents(items_paths)
                 m3ufile.write()
-
-        self._parallel_convert(dest, opts.keep_new, path_formats, fmt, pretend,
-                               link, hardlink, threads, items)
 
     def convert_on_import(self, lib, item):
         """Transcode a file automatically after it is imported into the
