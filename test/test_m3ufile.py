@@ -1,0 +1,81 @@
+# This file is part of beets.
+# Copyright 2016, Johannes Tiefenbacher.
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+
+
+from os import path, remove
+from tempfile import mkdtemp
+from shutil import rmtree
+import unittest
+
+# from unittest.mock import Mock, MagicMock
+
+from beets.util import M3UFile
+from beets.util import syspath, bytestring_path, py3_path, CHAR_REPLACE
+from test._common import RSRC
+
+
+class M3UFileTest(unittest.TestCase):
+    def test_playlist_write_empty(self):
+        tempdir = bytestring_path(mkdtemp())
+        the_playlist_file = path.join(tempdir, b'playlist.m3u8')
+        m3ufile = M3UFile(the_playlist_file)
+        m3ufile.write()
+        self.assertFalse(path.exists(the_playlist_file))
+        rmtree(tempdir)
+
+    def test_playlist_write(self):
+        tempdir = bytestring_path(mkdtemp())
+        the_playlist_file = path.join(tempdir, b'playlist.m3u')
+        m3ufile = M3UFile(the_playlist_file)
+        m3ufile.set_contents([
+            '/This/is/a/path/to_a_file.mp3',
+            '/This/is/another/path/to_a_file.mp3',
+        ])
+        m3ufile.write()
+        self.assertTrue(path.exists(the_playlist_file))
+        rmtree(tempdir)
+
+    def test_playlist_write_unicode(self):
+        tempdir = bytestring_path(mkdtemp())
+        the_playlist_file = path.join(tempdir, b'playlist.m3u8')
+        m3ufile = M3UFile(the_playlist_file)
+        m3ufile.set_contents([
+            '/This/is/å/path/to_a_file.mp3',
+            '/This/is/another/path/tö_a_file.mp3',
+        ])
+        m3ufile.write()
+        self.assertTrue(path.exists(the_playlist_file))
+        rmtree(tempdir)
+
+    def test_playlist_load_ascii(self):
+        the_playlist_file = path.join(RSRC, b'playlist.m3u')
+        m3ufile = M3UFile(the_playlist_file)
+        m3ufile.load()
+        self.assertEqual(m3ufile.media_list[0],
+                         '/This/is/a/path/to_a_file.mp3\n')
+
+    def test_playlist_load_unicode(self):
+        the_playlist_file = path.join(RSRC, b'playlist.m3u8')
+        m3ufile = M3UFile(the_playlist_file)
+        m3ufile.load()
+        self.assertEqual(m3ufile.media_list[0],
+                         '/This/is/å/path/to_a_file.mp3\n')
+
+
+def suite():
+    return unittest.TestLoader().loadTestsFromName(__name__)
+
+
+if __name__ == '__main__':
+    unittest.main(defaultTest='suite')
