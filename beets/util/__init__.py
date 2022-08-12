@@ -162,7 +162,7 @@ class M3UFile():
         """
         with open(self.path, "r") as playlist_file:
             raw_contents = playlist_file.readlines()
-        self.extm3u = True if raw_contents[0] == "#EXTM3U" else False
+        self.extm3u = True if raw_contents[0] == "#EXTM3U\n" else False
         for line in raw_contents[1:]:
             if line.startswith("#"):
                 # Some EXTM3U comment, do something. FIXME
