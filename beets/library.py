@@ -1683,75 +1683,17 @@ class DefaultTemplateFunctions:
         if album_id is None:
             return ''
 
-        memokey = ('aunique', keys, disam, album_id)
+        memokey = self._tmpl_unique_memokey('aunique', keys, disam, album_id)
         memoval = self.lib._memotable.get(memokey)
         if memoval is not None:
             return memoval
 
-        keys = keys or beets.config['aunique']['keys'].as_str()
-        disam = disam or beets.config['aunique']['disambiguators'].as_str()
-        if bracket is None:
-            bracket = beets.config['aunique']['bracket'].as_str()
-        keys = keys.split()
-        disam = disam.split()
-
-        # Assign a left and right bracket or leave blank if argument is empty.
-        if len(bracket) == 2:
-            bracket_l = bracket[0]
-            bracket_r = bracket[1]
-        else:
-            bracket_l = ''
-            bracket_r = ''
-
         album = self.lib.get_album(album_id)
-        if not album:
+
+        return self._tmpl_unique(
+            'aunique', keys, disam, bracket, album_id, album, album.item_keys,
             # Do nothing for singletons.
-            self.lib._memotable[memokey] = ''
-            return ''
-
-        # Find matching albums to disambiguate with.
-        subqueries = []
-        for key in keys:
-            value = album.get(key, '')
-            # Use slow queries for flexible attributes.
-            fast = key in album.item_keys
-            subqueries.append(dbcore.MatchQuery(key, value, fast))
-        albums = self.lib.albums(dbcore.AndQuery(subqueries))
-
-        # If there's only one album to matching these details, then do
-        # nothing.
-        if len(albums) == 1:
-            self.lib._memotable[memokey] = ''
-            return ''
-
-        # Find the first disambiguator that distinguishes the albums.
-        for disambiguator in disam:
-            # Get the value for each album for the current field.
-            disam_values = {a.get(disambiguator, '') for a in albums}
-
-            # If the set of unique values is equal to the number of
-            # albums in the disambiguation set, we're done -- this is
-            # sufficient disambiguation.
-            if len(disam_values) == len(albums):
-                break
-
-        else:
-            # No disambiguator distinguished all fields.
-            res = f' {bracket_l}{album.id}{bracket_r}'
-            self.lib._memotable[memokey] = res
-            return res
-
-        # Flatten disambiguation value into a string.
-        disam_value = album.formatted(for_path=True).get(disambiguator)
-
-        # Return empty string if disambiguator is empty.
-        if disam_value:
-            res = f' {bracket_l}{disam_value}{bracket_r}'
-        else:
-            res = ''
-
-        self.lib._memotable[memokey] = res
-        return res
+            lambda a: a is None)
 
     def tmpl_sunique(self, keys=None, disam=None, bracket=None):
         """Generate a string that is guaranteed to be unique among all
@@ -1770,22 +1712,60 @@ class DefaultTemplateFunctions:
 
         if isinstance(self.item, Item):
             item_id = self.item.id
-            album_id = self.item.album_id
         else:
             raise NotImplementedError("sunique is only implemented for items")
 
         if item_id is None:
             return ''
 
-        memokey = ('sunique', keys, disam, item_id)
+        return self._tmpl_unique(
+            'sunique', keys, disam, bracket, item_id, self.item,
+            Item.all_keys(),
+            # Do nothing for non singletons.
+            lambda i: i.album_id is not None,
+            initial_subqueries=[dbcore.query.NoneQuery('album_id', True)])
+
+    def _tmpl_unique_memokey(self, name, keys, disam, item_id):
+        """Get the memokey for the unique template named "name" for the
+        specific parameters.
+        """
+        return (name, keys, disam, item_id)
+
+    def _tmpl_unique(self, name, keys, disam, bracket, item_id, db_item,
+                     item_keys, skip_item, initial_subqueries=None):
+        """Generate a string that is guaranteed to be unique among all items of
+        the same type as "db_item" who share the same set of keys.
+
+        A field from "disam" is used in the string if one is sufficient to
+        disambiguate the items. Otherwise, a fallback opaque value is
+        used. Both "keys" and "disam" should be given as
+        whitespace-separated lists of field names, while "bracket" is a
+        pair of characters to be used as brackets surrounding the
+        disambiguator or empty to have no brackets.
+
+        "name" is the name of the templates. It is also the name of the
+        configuration section where the default values of the parameters
+        are stored.
+
+        "skip_item" is a function that must return True when the template
+        should return an empty string.
+
+        "initial_subqueries" is a list of subqueries that should be included
+        in the query to find the ambigous items.
+        """
+        memokey = self._tmpl_unique_memokey(name, keys, disam, item_id)
         memoval = self.lib._memotable.get(memokey)
         if memoval is not None:
             return memoval
 
-        keys = keys or beets.config['sunique']['keys'].as_str()
-        disam = disam or beets.config['sunique']['disambiguators'].as_str()
+        if skip_item(db_item):
+            self.lib._memotable[memokey] = ''
+            return ''
+
+        keys = keys or beets.config[name]['keys'].as_str()
+        disam = disam or beets.config[name]['disambiguators'].as_str()
         if bracket is None:
-            bracket = beets.config['sunique']['bracket'].as_str()
+            bracket = beets.config[name]['bracket'].as_str()
         keys = keys.split()
         disam = disam.split()
 
@@ -1797,36 +1777,35 @@ class DefaultTemplateFunctions:
             bracket_l = ''
             bracket_r = ''
 
-        if album_id is not None:
-            # Do nothing for non singletons.
-            self.lib._memotable[memokey] = ''
-            return ''
-
-        # Find matching singletons to disambiguate with.
-        subqueries = [dbcore.query.NoneQuery('album_id', True)]
-        item_keys = Item.all_keys()
+        # Find matching items to disambiguate with.
+        subqueries = []
+        if initial_subqueries is not None:
+            subqueries.extend(initial_subqueries)
         for key in keys:
-            value = self.item.get(key, '')
+            value = db_item.get(key, '')
             # Use slow queries for flexible attributes.
             fast = key in item_keys
             subqueries.append(dbcore.MatchQuery(key, value, fast))
-        singletons = self.lib.items(dbcore.AndQuery(subqueries))
+        query = dbcore.AndQuery(subqueries)
+        ambigous_items = (self.lib.items(query)
+                          if isinstance(db_item, Item)
+                          else self.lib.albums(query))
 
-        # If there's only one singleton to matching these details, then do
+        # If there's only one item to matching these details, then do
         # nothing.
-        if len(singletons) == 1:
+        if len(ambigous_items) == 1:
             self.lib._memotable[memokey] = ''
             return ''
 
-        # Find the first disambiguator that distinguishes the singletons.
+        # Find the first disambiguator that distinguishes the items.
         for disambiguator in disam:
-            # Get the value for each singleton for the current field.
-            disam_values = {s.get(disambiguator, '') for s in singletons}
+            # Get the value for each item for the current field.
+            disam_values = {s.get(disambiguator, '') for s in ambigous_items}
 
             # If the set of unique values is equal to the number of
-            # singletons in the disambiguation set, we're done -- this is
+            # items in the disambiguation set, we're done -- this is
             # sufficient disambiguation.
-            if len(disam_values) == len(singletons):
+            if len(disam_values) == len(ambigous_items):
                 break
         else:
             # No disambiguator distinguished all fields.
@@ -1835,7 +1814,7 @@ class DefaultTemplateFunctions:
             return res
 
         # Flatten disambiguation value into a string.
-        disam_value = self.item.formatted(for_path=True).get(disambiguator)
+        disam_value = db_item.formatted(for_path=True).get(disambiguator)
 
         # Return empty string if disambiguator is empty.
         if disam_value:
