@@ -35,6 +35,8 @@ New features:
 * :ref:`import-options`: Add support for re-running the importer on paths in
   log files that were created with the ``-l`` (or ``--logfile``) argument.
   :bug:`4379` :bug:`4387`
+* Add :ref:`%sunique{} <sunique>` template to disambiguate between singletons.
+  :bug:`4438`
 
 Bug fixes:
 
