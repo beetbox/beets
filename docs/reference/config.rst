@@ -326,13 +326,15 @@ The defaults look like this::
 
 See :ref:`aunique` for more details.
 
+
 .. _config-sunique:
 
 sunique
 ~~~~~~~
 
-These options are used to generate a string that is guaranteed to be unique
-among all singletons in the library who share the same set of keys.
+Like :ref:`config-aunique` above for albums, these options control the
+generation of a unique string to disambiguate *singletons* that share similar
+metadata.
 
 The defaults look like this::
 

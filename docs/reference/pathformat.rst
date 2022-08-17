@@ -73,7 +73,7 @@ These functions are built in to beets:
   option.
 * ``%aunique{identifiers,disambiguators,brackets}``: Provides a unique string
   to disambiguate similar albums in the database. See :ref:`aunique`, below.
-* ``%sunique{identifiers,disambiguators,brackets}``: Provides a unique string
+* ``%sunique{identifiers,disambiguators,brackets}``: Similarly, a unique string
   to disambiguate similar singletons in the database. See :ref:`sunique`, below.
 * ``%time{date_time,format}``: Return the date and time in any format accepted
   by `strftime`_. For example, to get the year some music was added to your
@@ -153,8 +153,8 @@ Singleton Disambiguation
 ------------------------
 
 It is also possible to have singleton tracks with the same name and the same
-artist. Beets provides the ``%sunique{}`` template to avoid having the same
-file path.
+artist. Beets provides the ``%sunique{}`` template to avoid giving these
+tracks the same file path.
 
 It has the same arguments as the :ref:`%aunique <aunique>` template, but the default
 values are different. The default identifiers are ``artist title`` and the
