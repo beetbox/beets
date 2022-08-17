@@ -170,7 +170,7 @@ class GetTest(DummyDataTestCase):
         self.assert_items_matched(results, ['foo bar'])
 
     def test_get_one_unkeyed_exact_nocase(self):
-        q = '~"hard rock"'
+        q = '=~"hard rock"'
         results = self.lib.items(q)
         self.assert_items_matched(results, ['beets 4 eva'])
 
