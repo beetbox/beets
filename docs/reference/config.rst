@@ -326,6 +326,23 @@ The defaults look like this::
 
 See :ref:`aunique` for more details.
 
+.. _config-sunique:
+
+sunique
+~~~~~~~
+
+These options are used to generate a string that is guaranteed to be unique
+among all singletons in the library who share the same set of keys.
+
+The defaults look like this::
+
+    sunique:
+        keys: artist title
+        disambiguators: year trackdisambig
+        bracket: '[]'
+
+See :ref:`sunique` for more details.
+
 
 .. _terminal_encoding:
 
