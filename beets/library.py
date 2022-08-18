@@ -1387,7 +1387,7 @@ def parse_query_parts(parts, model_cls):
     # Get query types and their prefix characters.
     prefixes = {
         ':': dbcore.query.RegexpQuery,
-        '~': dbcore.query.StringQuery,
+        '=~': dbcore.query.StringQuery,
         '=': dbcore.query.MatchQuery,
     }
     prefixes.update(plugins.queries())
