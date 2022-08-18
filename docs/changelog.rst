@@ -25,7 +25,9 @@ New features:
 * :doc:`/plugins/kodiupdate`: Now supports multiple kodi instances
   :bug:`4101`
 * Add the item fields ``bitrate_mode``, ``encoder_info`` and ``encoder_settings``.
-* Add query prefixes ``=`` and ``~``.
+* Add :ref:`exact match <exact-match>` queries, using the prefixes ``=`` and
+  ``=~``.
+  :bug:`4251`
 * :doc:`/plugins/discogs`: Permit appending style to genre
 * :doc:`/plugins/convert`: Add a new `auto_keep` option that automatically
   converts files but keeps the *originals* in the library.
