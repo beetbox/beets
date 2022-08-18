@@ -327,6 +327,25 @@ The defaults look like this::
 See :ref:`aunique` for more details.
 
 
+.. _config-sunique:
+
+sunique
+~~~~~~~
+
+Like :ref:`config-aunique` above for albums, these options control the
+generation of a unique string to disambiguate *singletons* that share similar
+metadata.
+
+The defaults look like this::
+
+    sunique:
+        keys: artist title
+        disambiguators: year trackdisambig
+        bracket: '[]'
+
+See :ref:`sunique` for more details.
+
+
 .. _terminal_encoding:
 
 terminal_encoding
