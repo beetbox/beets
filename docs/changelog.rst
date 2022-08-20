@@ -137,6 +137,8 @@ Major new features:
   Thanks to :user:`edgars-supe`.
 * The :ref:`modify-cmd` and :ref:`import-cmd` can now use
   :doc:`/reference/pathformat` formats when setting fields.
+  For example, you can now do ``beet modify title='$track $title'`` to put
+  track numbers into songs' titles.
   :bug:`488`
 
 Other new things:
