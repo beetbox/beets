@@ -726,8 +726,8 @@ class ImportTask(BaseImportTask):
             item.update(changes)
 
     def manipulate_files(self, operation=None, write=False, session=None):
-        """ Copy, move, link, hardlink or reflink (depending on `operation`) the files
-        as well as write metadata.
+        """ Copy, move, link, hardlink or reflink (depending on `operation`)
+        the files as well as write metadata.
 
         `operation` should be an instance of `util.MoveOperation`.
 

@@ -16,7 +16,13 @@
 import confuse
 
 import warnings
-warnings.warn("beets.util.confit is deprecated; use confuse instead")
+warnings.warn(
+    "beets.util.confit is deprecated; use confuse instead",
+    # Show the location of the `import confit` statement as the warning's
+    # source, rather than this file, such that the offending module can be
+    # identified easily.
+    stacklevel=2,
+)
 
 # Import everything from the confuse module into this module.
 for key, value in confuse.__dict__.items():

@@ -276,7 +276,7 @@ def prep():
     cur_version = get_version()
 
     # Tag.
-    subprocess.check_output(['git', 'tag', f'v{cur_version}'])
+    subprocess.check_call(['git', 'tag', f'v{cur_version}'])
 
     # Build.
     with chdir(BASE):

@@ -748,6 +748,40 @@ class ImportTest(_common.TestCase):
         self.assertRaises(ui.UserError, commands.import_files, None, [],
                           None)
 
+    def test_parse_paths_from_logfile(self):
+        if os.path.__name__ == 'ntpath':
+            logfile_content = (
+                "import started Wed Jun 15 23:08:26 2022\n"
+                "asis C:\\music\\Beatles, The\\The Beatles; C:\\music\\Beatles, The\\The Beatles\\CD 01; C:\\music\\Beatles, The\\The Beatles\\CD 02\n"  # noqa: E501
+                "duplicate-replace C:\\music\\Bill Evans\\Trio '65\n"
+                "skip C:\\music\\Michael Jackson\\Bad\n"
+                "skip C:\\music\\Soulwax\\Any Minute Now\n"
+            )
+            expected_paths = [
+                "C:\\music\\Beatles, The\\The Beatles",
+                "C:\\music\\Michael Jackson\\Bad",
+                "C:\\music\\Soulwax\\Any Minute Now",
+            ]
+        else:
+            logfile_content = (
+                "import started Wed Jun 15 23:08:26 2022\n"
+                "asis /music/Beatles, The/The Beatles; /music/Beatles, The/The Beatles/CD 01; /music/Beatles, The/The Beatles/CD 02\n"  # noqa: E501
+                "duplicate-replace /music/Bill Evans/Trio '65\n"
+                "skip /music/Michael Jackson/Bad\n"
+                "skip /music/Soulwax/Any Minute Now\n"
+            )
+            expected_paths = [
+                "/music/Beatles, The/The Beatles",
+                "/music/Michael Jackson/Bad",
+                "/music/Soulwax/Any Minute Now",
+            ]
+
+        logfile = os.path.join(self.temp_dir, b"logfile.log")
+        with open(logfile, mode="w") as fp:
+            fp.write(logfile_content)
+        actual_paths = list(commands._paths_from_logfile(logfile))
+        self.assertEqual(actual_paths, expected_paths)
+
 
 @_common.slow_test()
 class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
@@ -937,7 +971,8 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
 #                      '--config', cli_overwrite_config_path, 'test')
 #        self.assertEqual(config['anoption'].get(), 'cli overwrite')
 
-    @unittest.skipIf(sys.platform, 'win32')  # FIXME: fails on windows
+    # FIXME: fails on windows
+    @unittest.skipIf(sys.platform == 'win32', 'win32')
     def test_cli_config_paths_resolve_relative_to_user_dir(self):
         cli_config_path = os.path.join(self.temp_dir, b'config.yaml')
         with open(cli_config_path, 'w') as file:

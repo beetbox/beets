@@ -23,7 +23,6 @@ from test.helper import TestHelper
 
 from beets.util import bytestring_path
 from beetsplug.thumbnails import (ThumbnailsPlugin, NORMAL_DIR, LARGE_DIR,
-                                  write_metadata_im, write_metadata_pil,
                                   PathlibURI, GioURI)
 
 
@@ -34,22 +33,11 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
     def tearDown(self):
         self.teardown_beets()
 
-    @patch('beetsplug.thumbnails.util')
-    def test_write_metadata_im(self, mock_util):
-        metadata = {"a": "A", "b": "B"}
-        write_metadata_im("foo", metadata)
-        try:
-            command = "convert foo -set a A -set b B foo".split(' ')
-            mock_util.command_output.assert_called_once_with(command)
-        except AssertionError:
-            command = "convert foo -set b B -set a A foo".split(' ')
-            mock_util.command_output.assert_called_once_with(command)
-
+    @patch('beetsplug.thumbnails.ArtResizer')
     @patch('beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok')
     @patch('beetsplug.thumbnails.os.stat')
-    def test_add_tags(self, mock_stat, _):
+    def test_add_tags(self, mock_stat, _, mock_artresizer):
         plugin = ThumbnailsPlugin()
-        plugin.write_metadata = Mock()
         plugin.get_uri = Mock(side_effect={b"/path/to/cover":
                                            "COVER_URI"}.__getitem__)
         album = Mock(artpath=b"/path/to/cover")
@@ -59,24 +47,25 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
 
         metadata = {"Thumb::URI": "COVER_URI",
                     "Thumb::MTime": "12345"}
-        plugin.write_metadata.assert_called_once_with(b"/path/to/thumbnail",
-                                                      metadata)
+        mock_artresizer.shared.write_metadata.assert_called_once_with(
+            b"/path/to/thumbnail",
+            metadata,
+        )
         mock_stat.assert_called_once_with(album.artpath)
 
     @patch('beetsplug.thumbnails.os')
     @patch('beetsplug.thumbnails.ArtResizer')
-    @patch('beetsplug.thumbnails.get_im_version')
-    @patch('beetsplug.thumbnails.get_pil_version')
     @patch('beetsplug.thumbnails.GioURI')
-    def test_check_local_ok(self, mock_giouri, mock_pil, mock_im,
-                            mock_artresizer, mock_os):
+    def test_check_local_ok(self, mock_giouri, mock_artresizer, mock_os):
         # test local resizing capability
         mock_artresizer.shared.local = False
+        mock_artresizer.shared.can_write_metadata = False
         plugin = ThumbnailsPlugin()
         self.assertFalse(plugin._check_local_ok())
 
         # test dirs creation
         mock_artresizer.shared.local = True
+        mock_artresizer.shared.can_write_metadata = True
 
         def exists(path):
             if path == NORMAL_DIR:
@@ -91,20 +80,14 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
 
         # test metadata writer function
         mock_os.path.exists = lambda _: True
-        mock_pil.return_value = False
-        mock_im.return_value = False
-        with self.assertRaises(AssertionError):
+
+        mock_artresizer.shared.local = True
+        mock_artresizer.shared.can_write_metadata = False
+        with self.assertRaises(RuntimeError):
             ThumbnailsPlugin()
 
-        mock_pil.return_value = True
-        self.assertEqual(ThumbnailsPlugin().write_metadata, write_metadata_pil)
-
-        mock_im.return_value = True
-        self.assertEqual(ThumbnailsPlugin().write_metadata, write_metadata_im)
-
-        mock_pil.return_value = False
-        self.assertEqual(ThumbnailsPlugin().write_metadata, write_metadata_im)
-
+        mock_artresizer.shared.local = True
+        mock_artresizer.shared.can_write_metadata = True
         self.assertTrue(ThumbnailsPlugin()._check_local_ok())
 
         # test URI getter function

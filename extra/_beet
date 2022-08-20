@@ -151,7 +151,7 @@ _beet_subcmd_options() {
                 libfile=("$matchany" ':file:database file:{_files -g *.db}')
                 regex_words+=("$opt:$optdesc:\$libfile")
                 ;;
-            (DIR|DIRECTORY)
+            (DIR|DIRECTORY|DEST)
 		local -a dirs
 		dirs=("$matchany" ':dir:directory:_dirs')
                 regex_words+=("$opt:$optdesc:\$dirs")

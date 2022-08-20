@@ -203,11 +203,10 @@ There are a few coding conventions we use in beets:
    instead. In particular, we have our own logging shim, so you’ll see
    ``from beets import logging`` in most files.
 
-   -  Always log Unicode strings (e.g., ``log.debug(u"hello world")``).
    -  The loggers use
       `str.format <http://docs.python.org/library/stdtypes.html#str.format>`__-style
       logging instead of ``%``-style, so you can type
-      ``log.debug(u"{0}", obj)`` to do your formatting.
+      ``log.debug("{0}", obj)`` to do your formatting.
 
 -  Exception handlers must use ``except A as B:`` instead of
    ``except A, B:``.

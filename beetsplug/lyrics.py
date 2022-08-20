@@ -377,7 +377,7 @@ class Genius(Backend):
         data = {'q': title + " " + artist.lower()}
         try:
             response = requests.get(
-                search_url, data=data, headers=self.headers)
+                search_url, params=data, headers=self.headers)
         except requests.RequestException as exc:
             self._log.debug('Genius API request failed: {0}', exc)
             return None
@@ -386,6 +386,10 @@ class Genius(Backend):
             return response.json()
         except ValueError:
             return None
+
+    def replace_br(self, lyrics_div):
+        for br in lyrics_div.find_all("br"):
+            br.replace_with("\n")
 
     def _scrape_lyrics_from_html(self, html):
         """Scrape lyrics from a given genius.com html"""
@@ -401,7 +405,12 @@ class Genius(Backend):
         # all of the lyrics can be found already correctly formatted
         # Sometimes, though, it packages the lyrics into separate divs, most
         # likely for easier ad placement
-        lyrics_div = soup.find("div", class_="lyrics")
+
+        lyrics_div = soup.find("div", {"data-lyrics-container": True})
+
+        if lyrics_div:
+            self.replace_br(lyrics_div)
+
         if not lyrics_div:
             self._log.debug('Received unusual song page html')
             verse_div = soup.find("div",
@@ -417,13 +426,17 @@ class Genius(Backend):
                     return None
 
             lyrics_div = verse_div.parent
-            for br in lyrics_div.find_all("br"):
-                br.replace_with("\n")
+            self.replace_br(lyrics_div)
+
             ads = lyrics_div.find_all("div",
                                       class_=re.compile("InreadAd__Container"))
             for ad in ads:
                 ad.replace_with("\n")
 
+            footers = lyrics_div.find_all("div",
+                                          class_=re.compile("Lyrics__Footer"))
+            for footer in footers:
+                footer.replace_with("")
         return lyrics_div.get_text()
 
 
@@ -488,11 +501,11 @@ class Tekstowo(Backend):
         if not soup:
             return None
 
-        lyrics_div = soup.find("div", class_="song-text")
+        lyrics_div = soup.select("div.song-text > div.inner-text")
         if not lyrics_div:
             return None
 
-        return lyrics_div.get_text()
+        return lyrics_div[0].get_text()
 
 
 def remove_credits(text):

@@ -86,7 +86,9 @@ Optional command flags:
   that weren't tagged successfully---either because they're not in the
   MusicBrainz database or because something's wrong with the files. Use the
   ``-l`` option to specify a filename to log every time you skip an album
-  or import it "as-is" or an album gets skipped as a duplicate.
+  or import it "as-is" or an album gets skipped as a duplicate. You can later
+  review the file manually or import skipped paths from the logfile
+  automatically by using the ``--from-logfile LOGFILE`` argument.
 
 * Relatedly, the ``-q`` (quiet) option can help with large imports by
   autotagging without ever bothering to ask for user input. Whenever the
@@ -268,11 +270,11 @@ field name with an exclamation point: ``field!``.
 Values support the same template syntax as beets'
 :doc:`path formats <pathformat>`.
 
-The ``-a`` switch operates on albums instead of individual tracks. Without
-this flag, the command will only change *track-level* data, even if all the
-tracks belong to the same album. If you want to change an *album-level* field,
-such as ``year`` or ``albumartist``, you'll want to use the ``-a`` flag to
-avoid a confusing situation where the data for individual tracks conflicts
+The ``-a`` switch also operates on albums in addition to the individual tracks.
+Without this flag, the command will only change *track-level* data, even if all
+the tracks belong to the same album. If you want to change an *album-level*
+field, such as ``year`` or ``albumartist``, you'll want to use the ``-a`` flag
+to avoid a confusing situation where the data for individual tracks conflicts
 with the data for the whole album.
 
 Items will automatically be moved around when necessary if they're in your
@@ -450,6 +452,9 @@ import ...``.
   specified, the plugin list in your configuration is ignored. The long form
   of this argument also allows specifying no plugins, effectively disabling
   all plugins: ``--plugins=``.
+* ``-P plugins``: specify a comma-separated list of plugins to disable in a
+  specific beets run. This will overwrite ``-p`` if used with it. To disable all plugins, use
+  ``--plugins=`` instead.
 
 Beets also uses the ``BEETSDIR`` environment variable to look for
 configuration and data.

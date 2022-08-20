@@ -22,6 +22,7 @@ import subprocess
 import tempfile
 import shlex
 from string import Template
+import logging
 
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
@@ -36,7 +37,7 @@ _temp_files = []  # Keep track of temporary transcoded files for deletion.
 
 # Some convenient alternate names for formats.
 ALIASES = {
-    'wma': 'windows media',
+    'windows media': 'wma',
     'vorbis': 'ogg',
 }
 
@@ -137,6 +138,7 @@ class ConvertPlugin(BeetsPlugin):
             },
             'max_bitrate': 500,
             'auto': False,
+            'auto_keep': False,
             'tmpdir': None,
             'quiet': False,
             'embed': True,
@@ -147,7 +149,7 @@ class ConvertPlugin(BeetsPlugin):
             'album_art_maxwidth': 0,
             'delete_originals': False,
         })
-        self.early_import_stages = [self.auto_convert]
+        self.early_import_stages = [self.auto_convert, self.auto_convert_keep]
 
         self.register_listener('import_task_files', self._cleanup)
 
@@ -182,6 +184,16 @@ class ConvertPlugin(BeetsPlugin):
         if self.config['auto']:
             par_map(lambda item: self.convert_on_import(config.lib, item),
                     task.imported_items())
+
+    def auto_convert_keep(self, config, task):
+        if self.config['auto_keep']:
+            empty_opts = self.commands()[0].parser.get_default_values()
+            (dest, threads, path_formats, fmt,
+             pretend, hardlink, link) = self._get_opts_and_config(empty_opts)
+
+            items = task.imported_items()
+            self._parallel_convert(dest, False, path_formats, fmt,
+                                   pretend, link, hardlink, threads, items)
 
     # Utilities converted from functions to methods on logging overhaul
 
@@ -342,9 +354,10 @@ class ConvertPlugin(BeetsPlugin):
             if self.config['embed'] and not linked:
                 album = item._cached_album
                 if album and album.artpath:
+                    maxwidth = self._get_art_resize(album.artpath)
                     self._log.debug('embedding album art from {}',
                                     util.displayable_path(album.artpath))
-                    art.embed_item(self._log, item, album.artpath,
+                    art.embed_item(self._log, item, album.artpath, maxwidth,
                                    itempath=converted, id3v23=id3v23)
 
             if keep_new:
@@ -388,20 +401,10 @@ class ConvertPlugin(BeetsPlugin):
             return
 
         # Decide whether we need to resize the cover-art image.
-        resize = False
-        maxwidth = None
-        if self.config['album_art_maxwidth']:
-            maxwidth = self.config['album_art_maxwidth'].get(int)
-            size = ArtResizer.shared.get_size(album.artpath)
-            self._log.debug('image size: {}', size)
-            if size:
-                resize = size[0] > maxwidth
-            else:
-                self._log.warning('Could not get size of image (please see '
-                                  'documentation for dependencies).')
+        maxwidth = self._get_art_resize(album.artpath)
 
         # Either copy or resize (while copying) the image.
-        if resize:
+        if maxwidth is not None:
             self._log.info('Resizing cover art from {0} to {1}',
                            util.displayable_path(album.artpath),
                            util.displayable_path(dest))
@@ -431,31 +434,8 @@ class ConvertPlugin(BeetsPlugin):
                     util.copy(album.artpath, dest)
 
     def convert_func(self, lib, opts, args):
-        dest = opts.dest or self.config['dest'].get()
-        if not dest:
-            raise ui.UserError('no convert destination set')
-        dest = util.bytestring_path(dest)
-
-        threads = opts.threads or self.config['threads'].get(int)
-
-        path_formats = ui.get_path_formats(self.config['paths'] or None)
-
-        fmt = opts.format or self.config['format'].as_str().lower()
-
-        if opts.pretend is not None:
-            pretend = opts.pretend
-        else:
-            pretend = self.config['pretend'].get(bool)
-
-        if opts.hardlink is not None:
-            hardlink = opts.hardlink
-            link = False
-        elif opts.link is not None:
-            hardlink = False
-            link = opts.link
-        else:
-            hardlink = self.config['hardlink'].get(bool)
-            link = self.config['link'].get(bool)
+        (dest, threads, path_formats, fmt,
+         pretend, hardlink, link) = self._get_opts_and_config(opts)
 
         if opts.album:
             albums = lib.albums(ui.decargs(args))
@@ -480,16 +460,8 @@ class ConvertPlugin(BeetsPlugin):
                 self.copy_album_art(album, dest, path_formats, pretend,
                                     link, hardlink)
 
-        convert = [self.convert_item(dest,
-                                     opts.keep_new,
-                                     path_formats,
-                                     fmt,
-                                     pretend,
-                                     link,
-                                     hardlink)
-                   for _ in range(threads)]
-        pipe = util.pipeline.Pipeline([iter(items), convert])
-        pipe.run_parallel()
+        self._parallel_convert(dest, opts.keep_new, path_formats, fmt,
+                               pretend, link, hardlink, threads, items)
 
     def convert_on_import(self, lib, item):
         """Transcode a file automatically after it is imported into the
@@ -523,8 +495,30 @@ class ConvertPlugin(BeetsPlugin):
             item.store()
 
             if self.config['delete_originals']:
-                self._log.info('Removing original file {0}', source_path)
+                self._log.log(
+                    logging.DEBUG if self.config['quiet'] else logging.INFO,
+                    'Removing original file {0}',
+                    source_path,
+                )
                 util.remove(source_path, False)
+
+    def _get_art_resize(self, artpath):
+        """For a given piece of album art, determine whether or not it needs
+        to be resized according to the user's settings. If so, returns the
+        new size. If not, returns None.
+        """
+        newwidth = None
+        if self.config['album_art_maxwidth']:
+            maxwidth = self.config['album_art_maxwidth'].get(int)
+            size = ArtResizer.shared.get_size(artpath)
+            self._log.debug('image size: {}', size)
+            if size:
+                if size[0] > maxwidth:
+                    newwidth = maxwidth
+            else:
+                self._log.warning('Could not get size of image (please see '
+                                  'documentation for dependencies).')
+        return newwidth
 
     def _cleanup(self, task, session):
         for path in task.old_paths:
@@ -532,3 +526,52 @@ class ConvertPlugin(BeetsPlugin):
                 if os.path.isfile(path):
                     util.remove(path)
                 _temp_files.remove(path)
+
+    def _get_opts_and_config(self, opts):
+        """Returns parameters needed for convert function.
+        Get parameters from command line if available,
+        default to config if not available.
+        """
+        dest = opts.dest or self.config['dest'].get()
+        if not dest:
+            raise ui.UserError('no convert destination set')
+        dest = util.bytestring_path(dest)
+
+        threads = opts.threads or self.config['threads'].get(int)
+
+        path_formats = ui.get_path_formats(self.config['paths'] or None)
+
+        fmt = opts.format or self.config['format'].as_str().lower()
+
+        if opts.pretend is not None:
+            pretend = opts.pretend
+        else:
+            pretend = self.config['pretend'].get(bool)
+
+        if opts.hardlink is not None:
+            hardlink = opts.hardlink
+            link = False
+        elif opts.link is not None:
+            hardlink = False
+            link = opts.link
+        else:
+            hardlink = self.config['hardlink'].get(bool)
+            link = self.config['link'].get(bool)
+
+        return dest, threads, path_formats, fmt, pretend, hardlink, link
+
+    def _parallel_convert(self, dest, keep_new, path_formats, fmt,
+                          pretend, link, hardlink, threads, items):
+        """Run the convert_item function for every items on as many thread as
+        defined in threads
+        """
+        convert = [self.convert_item(dest,
+                                     keep_new,
+                                     path_formats,
+                                     fmt,
+                                     pretend,
+                                     link,
+                                     hardlink)
+                   for _ in range(threads)]
+        pipe = util.pipeline.Pipeline([iter(items), convert])
+        pipe.run_parallel()

@@ -327,6 +327,25 @@ The defaults look like this::
 See :ref:`aunique` for more details.
 
 
+.. _config-sunique:
+
+sunique
+~~~~~~~
+
+Like :ref:`config-aunique` above for albums, these options control the
+generation of a unique string to disambiguate *singletons* that share similar
+metadata.
+
+The defaults look like this::
+
+    sunique:
+        keys: artist title
+        disambiguators: year trackdisambig
+        bracket: '[]'
+
+See :ref:`sunique` for more details.
+
+
 .. _terminal_encoding:
 
 terminal_encoding
@@ -743,6 +762,17 @@ to one request per second.
 .. _main server: https://musicbrainz.org/
 .. _limited: https://musicbrainz.org/doc/XML_Web_Service/Rate_Limiting
 .. _Building search indexes: https://musicbrainz.org/doc/Development/Search_server_setup
+
+.. _musicbrainz.enabled:
+
+enabled
+~~~~~~~
+
+This option allows you to disable using MusicBrainz as a metadata source. This applies
+if you use plugins that fetch data from alternative sources and should make the import
+process quicker.
+
+Default: ``yes``.
 
 .. _searchlimit:
 
