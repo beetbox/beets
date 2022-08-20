@@ -55,6 +55,11 @@ aunique:
     disambiguators: albumtype year label catalognum albumdisambig releasegroupdisambig
     bracket: '[]'
 
+sunique:
+    keys: artist title
+    disambiguators: year trackdisambig
+    bracket: '[]'
+
 overwrite_null:
   album: []
   track: []
@@ -101,6 +106,7 @@ paths:
 statefile: state.pickle
 
 musicbrainz:
+    enabled: yes
     host: musicbrainz.org
     https: no
     ratelimit: 1

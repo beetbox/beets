@@ -581,7 +581,7 @@ def _colordiff(a, b, highlight='text_highlight',
             a_out.append(colorize(color, a[a_start:a_end]))
             b_out.append(colorize(color, b[b_start:b_end]))
         else:
-            assert(False)
+            assert False
 
     return ''.join(a_out), ''.join(b_out)
 
@@ -757,15 +757,21 @@ def show_path_changes(path_changes):
     if max_width > col_width:
         # Print every change over two lines
         for source, dest in zip(sources, destinations):
-            log.info('{0} \n  -> {1}', source, dest)
+            color_source, color_dest = colordiff(source, dest)
+            print_('{0} \n  -> {1}'.format(color_source, color_dest))
     else:
         # Print every change on a single line, and add a header
         title_pad = max_width - len('Source ') + len(' -> ')
 
-        log.info('Source {0} Destination', ' ' * title_pad)
+        print_('Source {0} Destination'.format(' ' * title_pad))
         for source, dest in zip(sources, destinations):
             pad = max_width - len(source)
-            log.info('{0} {1} -> {2}', source, ' ' * pad, dest)
+            color_source, color_dest = colordiff(source, dest)
+            print_('{0} {1} -> {2}'.format(
+                color_source,
+                ' ' * pad,
+                color_dest,
+            ))
 
 
 # Helper functions for option parsing.
@@ -1122,8 +1128,12 @@ def _load_plugins(options, config):
     else:
         plugin_list = config['plugins'].as_str_seq()
 
+    # Exclude any plugins that were specified on the command line
+    if options.exclude is not None:
+        plugin_list = [p for p in plugin_list
+                       if p not in options.exclude.split(',')]
+
     plugins.load_plugins(plugin_list)
-    plugins.send("pluginload")
     return plugins
 
 
@@ -1139,16 +1149,6 @@ def _setup(options, lib=None):
 
     plugins = _load_plugins(options, config)
 
-    # Get the default subcommands.
-    from beets.ui.commands import default_commands
-
-    subcommands = list(default_commands)
-    subcommands.extend(plugins.commands())
-
-    if lib is None:
-        lib = _open_library(config)
-        plugins.send("library_opened", lib=lib)
-
     # Add types and queries defined by plugins.
     plugin_types_album = plugins.types(library.Album)
     library.Album._types.update(plugin_types_album)
@@ -1159,6 +1159,18 @@ def _setup(options, lib=None):
 
     library.Item._queries.update(plugins.named_queries(library.Item))
     library.Album._queries.update(plugins.named_queries(library.Album))
+
+    plugins.send("pluginload")
+
+    # Get the default subcommands.
+    from beets.ui.commands import default_commands
+
+    subcommands = list(default_commands)
+    subcommands.extend(plugins.commands())
+
+    if lib is None:
+        lib = _open_library(config)
+        plugins.send("library_opened", lib=lib)
 
     return subcommands, plugins, lib
 
@@ -1200,10 +1212,22 @@ def _configure(options):
     return config
 
 
+def _ensure_db_directory_exists(path):
+    if path == b':memory:':  # in memory db
+        return
+    newpath = os.path.dirname(path)
+    if not os.path.isdir(newpath):
+        if input_yn("The database directory {} does not \
+                       exist. Create it (Y/n)?"
+                    .format(util.displayable_path(newpath))):
+            os.makedirs(newpath)
+
+
 def _open_library(config):
     """Create a new library instance from the configuration.
     """
     dbpath = util.bytestring_path(config['library'].as_filename())
+    _ensure_db_directory_exists(dbpath)
     try:
         lib = library.Library(
             dbpath,
@@ -1242,6 +1266,8 @@ def _raw_main(args, lib=None):
                       help='path to configuration file')
     parser.add_option('-p', '--plugins', dest='plugins',
                       help='a comma-separated list of plugins to load')
+    parser.add_option('-P', '--disable-plugins', dest='exclude',
+                      help='a comma-separated list of plugins to disable')
     parser.add_option('-h', '--help', dest='help', action='store_true',
                       help='show this help message and exit')
     parser.add_option('--version', dest='version', action='store_true',

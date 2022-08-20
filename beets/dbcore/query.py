@@ -177,6 +177,23 @@ class StringFieldQuery(FieldQuery):
         raise NotImplementedError()
 
 
+class StringQuery(StringFieldQuery):
+    """A query that matches a whole string in a specific item field."""
+
+    def col_clause(self):
+        search = (self.pattern
+                  .replace('\\', '\\\\')
+                  .replace('%', '\\%')
+                  .replace('_', '\\_'))
+        clause = self.field + " like ? escape '\\'"
+        subvals = [search]
+        return clause, subvals
+
+    @classmethod
+    def string_match(cls, pattern, value):
+        return pattern.lower() == value.lower()
+
+
 class SubstringQuery(StringFieldQuery):
     """A query that matches a substring in a specific item field."""
 
@@ -443,7 +460,7 @@ class AndQuery(MutableCollectionQuery):
         return self.clause_with_joiner('and')
 
     def match(self, item):
-        return all([q.match(item) for q in self.subqueries])
+        return all(q.match(item) for q in self.subqueries)
 
 
 class OrQuery(MutableCollectionQuery):
@@ -453,7 +470,7 @@ class OrQuery(MutableCollectionQuery):
         return self.clause_with_joiner('or')
 
     def match(self, item):
-        return any([q.match(item) for q in self.subqueries])
+        return any(q.match(item) for q in self.subqueries)
 
 
 class NotQuery(Query):

@@ -112,7 +112,10 @@ configuration file. The available options are:
 - **backend**: The analysis backend; either ``gstreamer``, ``command``, ``audiotools``
   or ``ffmpeg``.
   Default: ``command``.
-- **overwrite**: Re-analyze files that already have ReplayGain tags.
+- **overwrite**: On import, re-analyze files that already have ReplayGain tags.
+  Note that, for historical reasons, the name of this option is somewhat
+  unfortunate: It does not decide whether tags are written to the files (which
+  is controlled by the :ref:`import.write <config-import-write>` option).
   Default: ``no``.
 - **targetlevel**: A number of decibels for the target loudness level for files
   using ``REPLAYGAIN_`` tags.

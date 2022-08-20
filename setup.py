@@ -54,7 +54,7 @@ if 'sdist' in sys.argv:
 
 setup(
     name='beets',
-    version='1.5.1',
+    version='1.6.1',
     description='music tagger and library organizer',
     author='Adrian Sampson',
     author_email='adrian@radbox.org',
@@ -88,8 +88,8 @@ setup(
         'unidecode',
         'musicbrainzngs>=0.4',
         'pyyaml',
-        'mediafile>=0.2.0',
-        'confuse>=1.0.0',
+        'mediafile>=0.9.0',
+        'confuse>=1.5.0',
         'munkres>=1.0.0',
         'jellyfish',
     ] + (
@@ -126,7 +126,6 @@ setup(
         'embedart': ['Pillow'],
         'embyupdate': ['requests'],
         'chroma': ['pyacoustid'],
-        'gmusic': ['gmusicapi'],
         'discogs': ['python3-discogs-client>=2.3.10'],
         'beatport': ['requests-oauthlib>=0.6.1'],
         'kodiupdate': ['requests'],
@@ -136,7 +135,7 @@ setup(
         'mpdstats': ['python-mpd2>=0.4.2'],
         'plexupdate': ['requests'],
         'web': ['flask', 'flask-cors'],
-        'import': ['rarfile'],
+        'import': ['rarfile', 'py7zr'],
         'thumbnails': ['pyxdg', 'Pillow'],
         'metasync': ['dbus-python'],
         'sonosupdate': ['soco'],
