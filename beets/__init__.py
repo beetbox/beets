@@ -16,7 +16,7 @@
 import confuse
 from sys import stderr
 
-__version__ = '1.6.0'
+__version__ = '1.6.1'
 __author__ = 'Adrian Sampson <adrian@radbox.org>'
 
 
