@@ -287,6 +287,8 @@ Here are a few of the plugins written by the beets community:
 
 * `beetcamp`_ enables **bandcamp.com** autotagger with a fairly extensive amount of metadata.
 
+* `beetstream`_ is server implementation of the `SubSonic API`_ specification, allowing you to stream your music on a multitude of clients.
+
 * `beets-bpmanalyser`_ analyses songs and calculates their tempo (BPM).
 
 * `beets-check`_ automatically checksums your files to detect corruption.
@@ -341,6 +343,8 @@ Here are a few of the plugins written by the beets community:
 
 .. _beets-barcode: https://github.com/8h2a/beets-barcode
 .. _beetcamp: https://github.com/snejus/beetcamp
+.. _beetstream: https://github.com/BinaryBrain/Beetstream
+.. _SubSonic API: http://www.subsonic.org/pages/api.jsp
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _beets-copyartifacts: https://github.com/adammillerio/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
