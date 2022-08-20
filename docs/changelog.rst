@@ -135,17 +135,12 @@ Major new features:
 * An accompanying new :doc:`/plugins/albumtypes` includes some options for
   formatting this new ``albumtypes`` field.
   Thanks to :user:`edgars-supe`.
-
 * The :ref:`modify-cmd` and :ref:`import-cmd` can now use
   :doc:`/reference/pathformat` formats when setting fields.
   :bug:`488`
 
 Other new things:
 
-* :doc:`/plugins/permissions`: Set cover art permissions to configured file
-  permission.
-* :doc:`/plugins/unimported`: Support excluding specific
-  subdirectories in library.
 * :doc:`/plugins/permissions`: The plugin now sets cover art permissions to
   match the audio file permissions.
 * :doc:`/plugins/unimported`: A new configuration option supports excluding
