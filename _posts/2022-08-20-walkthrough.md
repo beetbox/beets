@@ -41,47 +41,47 @@ In my case the path to the sample library is also in my home folder, so I will r
 
 The autotagger starts work on Album 1, and the closest match is selection `1`. Go ahead and enter that in the prompt.
 
-![](beets/_posts/2022-06-21-images/album1-find-tags.png)
+![](walkthrough-images/album1-find-tags.png)
 
 Next, enter `a` to apply the changes found to Album 1.
 
-![](beets/_posts/2022-06-21-images/album1-correct-tags.png)
+![](walkthrough-images/album1-correct-tags.png)
 
 Album 2 doesn't have a matching release, so we will enter one manually by entering `i` and then the following MusicBrainz id `96581fca-a7b1-4c94-bb23-7b0df9f00507`
 
-![](beets/_posts/2022-06-21-images/album2-no-release.png)
+![](walkthrough-images/album2-no-release.png)
 
 Accept the changes for our manual match by selecting `a`
 
-![](beets/_posts/2022-06-21-images/album2-correct-tags.png)
+![](walkthrough-images/album2-correct-tags.png)
 
 Album 3 doesn't have a matching release either, so we will enter one manually with `i` and then the following MusicBrainz id `95440be5-cff3-4222-8ddc-5b7ecb99a351`
 
-![](beets/_posts/2022-06-21-images/album3-no-release.png)
+![](walkthrough-images/album3-no-release.png)
 
 We've located the correct album; however, we only have 11/48 tracks across a compilation of 3 CDs, hence the large output warning us of missing tracks.
 
-![](beets/_posts/2022-06-21-images/album3-correct-tags.png)
+![](walkthrough-images/album3-correct-tags.png)
 
 The autotagger has done a decent job, but it has incorrectly matched tracks 7, 10, and 11 due to similar titles in other tracks throughout the compilation. We'll use this opportunity to re-tag the offending tracks later in the next section.
 
 For now, accept the changes for our manual match by selecting `a`
 
-![](beets/_posts/2022-06-21-images/album3-apply.png)
+![](walkthrough-images/album3-apply.png)
 
 Album 4 is a series of singletons with a number of matches found by the autotagger.
 
 Accept these changes and import the tracks with the `t` flag for individual tracks
 
-![](beets/_posts/2022-06-21-images/album4-find-tags.png)
+![](walkthrough-images/album4-find-tags.png)
 
 The output should look like the following:
 
-![](beets/_posts/2022-06-21-images/album4-import-tracks.png)
+![](walkthrough-images/album4-import-tracks.png)
 
 Finally, let's check out our library in its current state with `beet list`
 
-![](beets/_posts/2022-06-21-images/beets-list.png)
+![](walkthrough-images/beets-list.png)
 
 We've made significant progress! Now let's correct some discrepencies that came up between the autotagger and our library.
 
@@ -97,11 +97,11 @@ Why not name this "Children's Corner: Jimbo's Lullaby"? Well, there's another mi
 
 When running the command above, it will attempt to modify more than one track (since another track has the term "clair de lune" within its title), so use the select flag `s` to systematically deny or approve the title update for multiple tracks one by one. This ensures that we only update the title for the track "Clair de lune".
 
-![](beets/_posts/2022-06-21-images/album2-correct-title1.png)
+![](walkthrough-images/album2-correct-title1.png)
 
 Next, update the MusicBrainz track id with the following command `beet modify Children\'s Corner Suite mb_trackid=9c7f4fc2-0d2b-42b6-99fd-6ac2cdf32123`
 
-![](beets/_posts/2022-06-21-images/album2-correct-id1.png)
+![](walkthrough-images/album2-correct-id1.png)
 
 This way our metadata for this track is correct. We will see a demonstration for why this is important later when we view our tracks with the web plugin.
 
@@ -109,7 +109,7 @@ This way our metadata for this track is correct. We will see a demonstration for
 
 Be sure to update the MusicBrainz track id for this track as well with `beet modify "Clair de lune" mb_trackid=9d6006ed-cb42-4227-945f-9e7f6766cc2c` and the `s` tag to select and update the correct track.
 
-![](beets/_posts/2022-06-21-images/album2-correct-title-id-2.png)
+![](walkthrough-images/album2-correct-title-id-2.png)
 
 ### Exercise - Mistake: Album 3 - Incorrect titles and metadata
 There are three tracks we need to correct in Album 3. Use your knowledge of beets' `modify` command from the previous mistake we corrected to update the `title` and `mb_trackid` fields for each of the tracks below.
