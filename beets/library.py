@@ -607,11 +607,6 @@ class Item(LibModel):
         i.mtime = i.current_mtime()  # Initial mtime.
         return i
 
-    def duplicates(self, *keys):
-        info = {key: self.get(key) for key in keys}
-        subqueries = self.construct_match_queries(**info)
-        return self._db.items(dbcore.AndQuery(subqueries))
-
     def __setitem__(self, key, value):
         """Set the item's value for a standard field or a flexattr."""
         # Encode unicode paths and read buffers.
@@ -1146,11 +1141,6 @@ class Album(LibModel):
         getters['path'] = Album.item_dir
         getters['albumtotal'] = Album._albumtotal
         return getters
-
-    def duplicates(self, *keys):
-        info = {key: self.get(key) for key in keys}
-        subqueries = self.construct_match_queries(**info)
-        return self._db.albums(dbcore.AndQuery(subqueries))
 
     def items(self):
         """Return an iterable over the items associated with this
