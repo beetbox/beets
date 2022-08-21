@@ -560,7 +560,8 @@ def scrape_lyrics_from_html(html):
     html = _scrape_merge_paragraphs(html)
 
     # extract all long text blocks that are not code
-    soup = try_parse_html(html, parse_only=SoupStrainer(text=is_text_notcode))
+    soup = try_parse_html(html,
+                          parse_only=SoupStrainer(string=is_text_notcode))
     if not soup:
         return None
 
