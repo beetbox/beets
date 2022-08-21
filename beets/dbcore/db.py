@@ -27,7 +27,7 @@ import beets
 from beets.util import functemplate
 from beets.util import py3_path
 from beets.dbcore import types
-from .query import MatchQuery, NullSort, TrueQuery
+from .query import MatchQuery, NullSort, TrueQuery, AndQuery
 from collections.abc import Mapping
 
 
@@ -641,14 +641,24 @@ class Model:
         """
         self[key] = self._parse(key, string)
 
+    # Convenient queries.
+
     @classmethod
-    def construct_match_queries(cls, **info):
-        subqueries = []
-        for key, value in info.items():
-            # Use slow queries for flexible attributes.
-            fast = key in cls._fields
-            subqueries.append(MatchQuery(key, value, fast))
-        return subqueries
+    def field_query(cls, field, pattern, query_cls=MatchQuery):
+        """Get a `FieldQuery` for this model."""
+        return query_cls(field, pattern, field in cls._fields)
+
+    @classmethod
+    def all_fields_query(cls, pats, query_cls=MatchQuery):
+        """Get a query that matches many fields with different patterns.
+
+        `pats` should be a mapping from field names to patterns. The
+        resulting query is a conjunction ("and") of per-field queries
+        for all of these field/pattern pairs.
+        """
+        subqueries = [cls.field_query(k, v, query_cls)
+                      for k, v in pats.items()]
+        return AndQuery(subqueries)
 
 
 # Database controller and supporting interfaces.

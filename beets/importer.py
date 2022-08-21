@@ -675,16 +675,20 @@ class ImportTask(BaseImportTask):
             # As-is import with no artist. Skip check.
             return []
 
-        # Create a temporary Album so computed fields are available for
-        # duplicate detection.
+        # Construct a query to find duplicates with this metadata. We
+        # use a temporary Album object to generate any computed fields.
         tmp_album = library.Album(lib, **info)
+        keys = config['import']['duplicate_keys']['album'].as_str_seq()
+        dup_query = library.Album.all_fields_query({
+            key: tmp_album.get(key)
+            for key in keys
+        })
 
         # Don't count albums with the same files as duplicates.
         task_paths = {i.path for i in self.items if i}
 
         duplicates = []
-        keys = config['import']['duplicate_keys']['album'].as_str_seq()
-        for album in tmp_album.duplicates(*keys):
+        for album in lib.albums(dup_query):
             # Check whether the album paths are all present in the task
             # i.e. album is being completely re-imported by the task,
             # in which case it is not a duplicate (will be replaced).
@@ -930,16 +934,20 @@ class SingletonImportTask(ImportTask):
         """
         info = self.chosen_info()
 
-        # Use a temporary Item to provide computed fields.
+        # Query for existing items using the same metadata. We use a
+        # temporary `Item` object to generate any computed fields.
         tmp_item = library.Item(lib, **info)
+        keys = config['import']['duplicate_keys']['single'].as_str_seq()
+        dup_query = library.Album.all_fields_query({
+            key: tmp_item.get(key)
+            for key in keys
+        })
 
         found_items = []
-        keys = config['import']['duplicate_keys']['single'].as_str_seq()
-        for other_item in tmp_item.duplicates(*keys):
+        for other_item in lib.items(dup_query):
             # Existing items not considered duplicates.
             if other_item.path != self.item.path:
                 found_items.append(other_item)
-
         return found_items
 
     duplicate_items = find_duplicates
