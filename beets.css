@@ -119,6 +119,7 @@ ul, ol {
 #blog img {
     display: block;
     margin: 0.5em auto;
+    max-width: 100%;
 }
 
 /* GitHub "fork me" banner */
