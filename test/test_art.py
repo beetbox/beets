@@ -336,8 +336,7 @@ class AAOTest(UseThePlugin):
         super().run(*args, **kwargs)
 
     def mock_response(self, url, body):
-        responses.add(responses.GET, url, body=body, content_type='text/html',
-                      match_querystring=True)
+        responses.add(responses.GET, url, body=body, content_type='text/html')
 
     def test_aao_scraper_finds_image(self):
         body = """
