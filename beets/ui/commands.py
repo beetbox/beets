@@ -33,7 +33,7 @@ from beets import plugins
 from beets import importer
 from beets import util
 from beets.util import syspath, normpath, ancestry, displayable_path, \
-    MoveOperation
+    MoveOperation, functemplate
 from beets import library
 from beets import config
 from beets import logging
@@ -1477,9 +1477,6 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
     # Parse key=value specifications into a dictionary.
     model_cls = library.Album if album else library.Item
 
-    for key, value in mods.items():
-        mods[key] = model_cls._parse(key, value)
-
     # Get the items to modify.
     items, albums = _do_query(lib, query, album, False)
     objs = albums if album else items
@@ -1489,8 +1486,14 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
     print_('Modifying {} {}s.'
            .format(len(objs), 'album' if album else 'item'))
     changed = []
+    templates = {key: functemplate.template(value)
+                 for key, value in mods.items()}
     for obj in objs:
-        if print_and_modify(obj, mods, dels) and obj not in changed:
+        obj_mods = {
+            key: model_cls._parse(key, obj.evaluate_template(templates[key]))
+            for key in mods.keys()
+        }
+        if print_and_modify(obj, obj_mods, dels) and obj not in changed:
             changed.append(obj)
 
     # Still something to do?

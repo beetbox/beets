@@ -584,9 +584,9 @@ class ImportTask(BaseImportTask):
                       displayable_path(self.paths),
                       field,
                       value)
-            self.album[field] = value
+            self.album.set_parse(field, format(self.album, value))
             for item in items:
-                item[field] = value
+                item.set_parse(field, format(item, value))
         with lib.transaction():
             for item in items:
                 item.store()
@@ -963,7 +963,7 @@ class SingletonImportTask(ImportTask):
                       displayable_path(self.paths),
                       field,
                       value)
-            self.item[field] = value
+            self.item.set_parse(field, format(self.item, value))
         self.item.store()
 
 
