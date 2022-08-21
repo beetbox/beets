@@ -669,18 +669,21 @@ class ImportTask(BaseImportTask):
         album name as the task.
         """
         info = self.chosen_info()
+        info['albumartist'] = info['artist']
 
         if info['artist'] is None:
             # As-is import with no artist. Skip check.
             return []
 
-        duplicates = []
-        task_paths = {i.path for i in self.items if i}
-        keys = config['import']['duplicate_keys']['album'].as_str_seq()
-        info['albumartist'] = info['artist']
-        # Create an Album object so that flexible attributes can be used.
+        # Create a temporary Album so computed fields are available for
+        # duplicate detection.
         tmp_album = library.Album(lib, **info)
 
+        # Don't count albums with the same files as duplicates.
+        task_paths = {i.path for i in self.items if i}
+
+        duplicates = []
+        keys = config['import']['duplicate_keys']['album'].as_str_seq()
         for album in tmp_album.duplicates(*keys):
             # Check whether the album paths are all present in the task
             # i.e. album is being completely re-imported by the task,
@@ -688,6 +691,7 @@ class ImportTask(BaseImportTask):
             album_paths = {i.path for i in album.items()}
             if not (album_paths <= task_paths):
                 duplicates.append(album)
+
         return duplicates
 
     def align_album_level_fields(self):
@@ -926,15 +930,16 @@ class SingletonImportTask(ImportTask):
         """
         info = self.chosen_info()
 
-        found_items = []
-        keys = config['import']['duplicate_keys']['single'].as_str_seq()
-        # Create an Item object so that flexible attributes can be used.
+        # Use a temporary Item to provide computed fields.
         tmp_item = library.Item(lib, **info)
 
+        found_items = []
+        keys = config['import']['duplicate_keys']['single'].as_str_seq()
         for other_item in tmp_item.duplicates(*keys):
             # Existing items not considered duplicates.
             if other_item.path != self.item.path:
                 found_items.append(other_item)
+
         return found_items
 
     duplicate_items = find_duplicates
