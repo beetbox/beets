@@ -1,5 +1,5 @@
 ---
-title: "Beets: A Guided Walkthrough"
+title: "a guided walkthrough"
 layout: main
 section: blog
 ---
