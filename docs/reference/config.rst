@@ -689,6 +689,22 @@ with the ``-a`` flag to the :ref:`import-cmd` command.)
 
 Default: ``yes``.
 
+.. _duplicate_keys:
+
+duplicate_keys
+~~~~~~~~~~~~~~
+
+The fields used to find duplicates when importing.
+There are two sub-values here: ``album`` and ``item``.
+Each one is a list of field names; if an existing object (album or item) in
+the library matches the new object on all of these fields, the importer will
+consider it a duplicate.
+
+Default::
+
+    album: albumartist album
+    item: artist title
+
 .. _duplicate_action:
 
 duplicate_action
