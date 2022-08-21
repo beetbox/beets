@@ -1,9 +1,17 @@
 # Don't post a comment on pull requests.
 comment: off
 
-# I think this disables commit statuses?
+# Sets non-blocking status checks
+# https://docs.codecov.com/docs/commit-status#informational
 coverage:
-    status:
-        project: no
-        patch: no
-        changes: no
+  status:
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
+    changes: no
+
+github_checks:
+  annotations: false

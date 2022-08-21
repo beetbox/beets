@@ -33,7 +33,7 @@ from beets import plugins
 from beets import importer
 from beets import util
 from beets.util import syspath, normpath, ancestry, displayable_path, \
-    MoveOperation
+    MoveOperation, functemplate
 from beets import library
 from beets import config
 from beets import logging
@@ -77,6 +77,43 @@ def _do_query(lib, query, album, also_items=True):
         raise ui.UserError('No matching items found.')
 
     return items, albums
+
+
+def _paths_from_logfile(path):
+    """Parse the logfile and yield skipped paths to pass to the `import`
+    command.
+    """
+    with open(path, mode="r", encoding="utf-8") as fp:
+        for i, line in enumerate(fp, start=1):
+            verb, sep, paths = line.rstrip("\n").partition(" ")
+            if not sep:
+                raise ValueError(f"line {i} is invalid")
+
+            # Ignore informational lines that don't need to be re-imported.
+            if verb in {"import", "duplicate-keep", "duplicate-replace"}:
+                continue
+
+            if verb not in {"asis", "skip", "duplicate-skip"}:
+                raise ValueError(f"line {i} contains unknown verb {verb}")
+
+            yield os.path.commonpath(paths.split("; "))
+
+
+def _parse_logfiles(logfiles):
+    """Parse all `logfiles` and yield paths from it."""
+    for logfile in logfiles:
+        try:
+            yield from _paths_from_logfile(syspath(normpath(logfile)))
+        except ValueError as err:
+            raise ui.UserError('malformed logfile {}: {}'.format(
+                util.displayable_path(logfile),
+                str(err)
+            )) from err
+        except IOError as err:
+            raise ui.UserError('unreadable logfile {}: {}'.format(
+                util.displayable_path(logfile),
+                str(err)
+            )) from err
 
 
 # fields: Shows a list of available fields for queries and format strings.
@@ -913,12 +950,6 @@ def import_files(lib, paths, query):
     """Import the files in the given list of paths or matching the
     query.
     """
-    # Check the user-specified directories.
-    for path in paths:
-        if not os.path.exists(syspath(normpath(path))):
-            raise ui.UserError('no such file or directory: {}'.format(
-                displayable_path(path)))
-
     # Check parameter consistency.
     if config['import']['quiet'] and config['import']['timid']:
         raise ui.UserError("can't be both quiet and timid")
@@ -960,7 +991,12 @@ def import_func(lib, opts, args):
     else:
         query = None
         paths = args
-        if not paths:
+
+        # The paths from the logfiles go into a separate list to allow handling
+        # errors differently from user-specified paths.
+        paths_from_logfiles = list(_parse_logfiles(opts.from_logfiles or []))
+
+        if not paths and not paths_from_logfiles:
             raise ui.UserError('no path specified')
 
         # On Python 2, we used to get filenames as raw bytes, which is
@@ -969,6 +1005,31 @@ def import_func(lib, opts, args):
         # filename.
         paths = [p.encode(util.arg_encoding(), 'surrogateescape')
                  for p in paths]
+        paths_from_logfiles = [p.encode(util.arg_encoding(), 'surrogateescape')
+                               for p in paths_from_logfiles]
+
+        # Check the user-specified directories.
+        for path in paths:
+            if not os.path.exists(syspath(normpath(path))):
+                raise ui.UserError('no such file or directory: {}'.format(
+                    displayable_path(path)))
+
+        # Check the directories from the logfiles, but don't throw an error in
+        # case those paths don't exist. Maybe some of those paths have already
+        # been imported and moved separately, so logging a warning should
+        # suffice.
+        for path in paths_from_logfiles:
+            if not os.path.exists(syspath(normpath(path))):
+                log.warning('No such file or directory: {}'.format(
+                    displayable_path(path)))
+                continue
+
+            paths.append(path)
+
+        # If all paths were read from a logfile, and none of them exist, throw
+        # an error
+        if not paths:
+            raise ui.UserError('none of the paths are importable')
 
     import_files(lib, paths, query)
 
@@ -1060,6 +1121,11 @@ import_cmd.parser.add_option(
     '-S', '--search-id', dest='search_ids', action='append',
     metavar='ID',
     help='restrict matching to a specific metadata backend ID'
+)
+import_cmd.parser.add_option(
+    '--from-logfile', dest='from_logfiles', action='append',
+    metavar='PATH',
+    help='read skipped paths from an existing logfile'
 )
 import_cmd.parser.add_option(
     '--set', dest='set_fields', action='callback',
@@ -1411,9 +1477,6 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
     # Parse key=value specifications into a dictionary.
     model_cls = library.Album if album else library.Item
 
-    for key, value in mods.items():
-        mods[key] = model_cls._parse(key, value)
-
     # Get the items to modify.
     items, albums = _do_query(lib, query, album, False)
     objs = albums if album else items
@@ -1423,8 +1486,14 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
     print_('Modifying {} {}s.'
            .format(len(objs), 'album' if album else 'item'))
     changed = []
+    templates = {key: functemplate.template(value)
+                 for key, value in mods.items()}
     for obj in objs:
-        if print_and_modify(obj, mods, dels) and obj not in changed:
+        obj_mods = {
+            key: model_cls._parse(key, obj.evaluate_template(templates[key]))
+            for key in mods.keys()
+        }
+        if print_and_modify(obj, obj_mods, dels) and obj not in changed:
             changed.append(obj)
 
     # Still something to do?

@@ -510,7 +510,7 @@ class BaseServer:
         """Remove the song at index from the playlist."""
         index = cast_arg(int, index)
         try:
-            del(self.playlist[index])
+            del self.playlist[index]
         except IndexError:
             raise ArgumentIndexError()
         self.playlist_version += 1

@@ -31,7 +31,7 @@ from beets import library
 from beets import importer
 from beets import logging
 from beets import util
-from beets.util.artresizer import ArtResizer, WEBPROXY
+from beets.util.artresizer import ArtResizer
 import confuse
 
 
@@ -787,7 +787,7 @@ class ArtForAlbumTest(UseThePlugin):
         """Skip the test if the art resizer doesn't have ImageMagick or
         PIL (so comparisons and measurements are unavailable).
         """
-        if ArtResizer.shared.method[0] == WEBPROXY:
+        if not ArtResizer.shared.local:
             self.skipTest("ArtResizer has no local imaging backend available")
 
     def test_respect_minwidth(self):

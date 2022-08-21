@@ -279,10 +279,15 @@ Here are a few of the plugins written by the beets community:
 
 * `beets-autofix`_ automates repetitive tasks to keep your library in order.
 
+* `beets-audible`_ adds Audible as a tagger data source and provides 
+  other features for managing audiobook collections.
+
 * `beets-barcode`_ lets you scan or enter barcodes for physical media to
   search for their metadata.
 
 * `beetcamp`_ enables **bandcamp.com** autotagger with a fairly extensive amount of metadata.
+
+* `beetstream`_ is server implementation of the `SubSonic API`_ specification, allowing you to stream your music on a multitude of clients.
 
 * `beets-bpmanalyser`_ analyses songs and calculates their tempo (BPM).
 
@@ -338,6 +343,8 @@ Here are a few of the plugins written by the beets community:
 
 .. _beets-barcode: https://github.com/8h2a/beets-barcode
 .. _beetcamp: https://github.com/snejus/beetcamp
+.. _beetstream: https://github.com/BinaryBrain/Beetstream
+.. _SubSonic API: http://www.subsonic.org/pages/api.jsp
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _beets-copyartifacts: https://github.com/adammillerio/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
@@ -370,3 +377,4 @@ Here are a few of the plugins written by the beets community:
 .. _beets-bpmanalyser: https://github.com/adamjakab/BeetsPluginBpmAnalyser
 .. _beets-originquery: https://github.com/x1ppy/beets-originquery
 .. _drop2beets: https://github.com/martinkirch/drop2beets
+.. _beets-audible: https://github.com/Neurrone/beets-audible

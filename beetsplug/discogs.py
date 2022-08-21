@@ -57,6 +57,7 @@ class DiscogsPlugin(BeetsPlugin):
             'user_token': '',
             'separator': ', ',
             'index_tracks': False,
+            'append_style_genre': False,
         })
         self.config['apikey'].redact = True
         self.config['apisecret'].redact = True
@@ -318,8 +319,14 @@ class DiscogsPlugin(BeetsPlugin):
         country = result.data.get('country')
         data_url = result.data.get('uri')
         style = self.format(result.data.get('styles'))
-        genre = self.format(result.data.get('genres'))
-        discogs_albumid = self.extract_release_id(result.data.get('uri'))
+        base_genre = self.format(result.data.get('genres'))
+
+        if self.config['append_style_genre'] and style:
+            genre = self.config['separator'].as_str().join([base_genre, style])
+        else:
+            genre = base_genre
+
+        discogs_albumid = self.extract_release_id_regex(result.data.get('uri'))
 
         # Extract information for the optional AlbumInfo fields that are
         # contained on nested discogs fields.
@@ -368,12 +375,6 @@ class DiscogsPlugin(BeetsPlugin):
         if classification:
             return self.config['separator'].as_str() \
                 .join(sorted(classification))
-        else:
-            return None
-
-    def extract_release_id(self, uri):
-        if uri:
-            return uri.split("/")[-1]
         else:
             return None
 

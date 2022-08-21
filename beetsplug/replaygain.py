@@ -904,14 +904,14 @@ class GStreamerBackend(Backend):
 
     def _on_pad_added(self, decbin, pad):
         sink_pad = self._conv.get_compatible_pad(pad, None)
-        assert(sink_pad is not None)
+        assert sink_pad is not None
         pad.link(sink_pad)
 
     def _on_pad_removed(self, decbin, pad):
         # Called when the decodebin element is disconnected from the
         # rest of the pipeline while switching input files
         peer = pad.get_peer()
-        assert(peer is None)
+        assert peer is None
 
 
 class AudioToolsBackend(Backend):

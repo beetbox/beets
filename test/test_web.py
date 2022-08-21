@@ -667,6 +667,16 @@ class WebPluginTest(_common.LibTestCase):
         # Remove the item
         self.lib.get_item(item_id).remove()
 
+    def test_get_item_file(self):
+        ipath = os.path.join(self.temp_dir, b'testfile2.mp3')
+        shutil.copy(os.path.join(_common.RSRC, b'full.mp3'), ipath)
+        self.assertTrue(os.path.exists(ipath))
+        item_id = self.lib.add(Item.from_path(ipath))
+
+        response = self.client.get('/item/' + str(item_id) + '/file')
+
+        self.assertEqual(response.status_code, 200)
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

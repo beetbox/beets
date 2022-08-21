@@ -51,7 +51,7 @@ This plugin can be configured like other metadata source plugins as described in
 
 There is one additional option in the ``discogs:`` section, ``index_tracks``.
 Index tracks (see the `Discogs guidelines
-<https://support.discogs.com/hc/en-us/articles/360005055373-Database-Guidelines-12-Tracklisting#12.13>`_),
+<https://support.discogs.com/hc/en-us/articles/360005055373-Database-Guidelines-12-Tracklisting#Index_Tracks_And_Headings>`_),
 along with headers, mark divisions between distinct works on the same release
 or within works. When ``index_tracks`` is enabled::
 
@@ -75,6 +75,15 @@ whereas with ``index_tracks`` disabled you'd get::
     Sinfonia
 
 This option is useful when importing classical music.
+
+Other configurations available under ``discogs:`` are:
+
+- **append_style_genre**: Appends the Discogs style (if found) to the genre tag. This can be useful if you want more granular genres to categorize your music.
+  For example, a release in Discogs might have a genre of "Electronic" and a style of "Techno": enabling this setting would set the genre to be "Electronic, Techno" (assuming default separator of ``", "``) instead of just "Electronic".
+  Default: ``false``
+- **separator**: How to join multiple genre and style values from Discogs into a string.
+  Default: ``", "``
+
 
 Troubleshooting
 ---------------
