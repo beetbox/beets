@@ -29,7 +29,7 @@ import:
     search_ids: []
     duplicate_keys:
         album: albumartist album
-        single: artist title
+        item: artist title
     duplicate_action: ask
     bell: no
     set_fields: {}
