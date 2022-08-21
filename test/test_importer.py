@@ -1359,7 +1359,7 @@ class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper,
         self.importer = self.create_importer()
         config['import']['autotag'] = True
         config['import']['singletons'] = True
-        config['import']['duplicate_keys']['single'] = 'artist title'
+        config['import']['duplicate_keys']['item'] = 'artist title'
 
     def tearDown(self):
         self.teardown_beets()
@@ -1397,7 +1397,7 @@ class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper,
         self.assertEqual(item.mb_trackid, 'old trackid')
 
     def test_keep_when_extra_key_is_different(self):
-        config['import']['duplicate_keys']['single'] = 'artist title flex'
+        config['import']['duplicate_keys']['item'] = 'artist title flex'
         item = self.lib.items().get()
         item.flex = 'different'
         item.store()

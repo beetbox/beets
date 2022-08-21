@@ -937,7 +937,7 @@ class SingletonImportTask(ImportTask):
         # Query for existing items using the same metadata. We use a
         # temporary `Item` object to generate any computed fields.
         tmp_item = library.Item(lib, **info)
-        keys = config['import']['duplicate_keys']['single'].as_str_seq()
+        keys = config['import']['duplicate_keys']['item'].as_str_seq()
         dup_query = library.Album.all_fields_query({
             key: tmp_item.get(key)
             for key in keys

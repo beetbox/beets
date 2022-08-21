@@ -675,10 +675,16 @@ Default: ``yes``.
 duplicate_keys
 ~~~~~~~~~~~~~~
 
-The fields used to find duplicates in import task.
-If several albums have the same value for each key, they will be considered duplicates.
+The fields used to find duplicates when importing.
+There are two sub-values here: ``album`` and ``item``.
+Each one is a list of field names; if an existing object (album or item) in
+the library matches the new object on all of these fields, the importer will
+consider it a duplicate.
 
-Default: ``albumartist album``
+Default::
+
+    album: albumartist album
+    item: artist title
 
 .. _duplicate_action:
 
