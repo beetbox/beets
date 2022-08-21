@@ -1146,8 +1146,10 @@ class Album(LibModel):
         """Return an iterable over the items associated with this
         album.
 
-        This method predates the :meth:`LibModel.items` method inherited
-        from :meth:`beets.dbcore.Model.items`.
+        This method conflicts with :meth:`LibModel.items`, which is
+        inherited from :meth:`beets.dbcore.Model.items`.
+        Since :meth:`Album.items` predates these methods, and is
+        likely to be used by plugins, we keep this interface as-is.
         """
         return self._db.items(dbcore.MatchQuery('album_id', self.id))
 
