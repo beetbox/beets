@@ -554,7 +554,8 @@ class ImportSingletonTest(_common.TestCase, ImportHelper):
 
         config['import']['set_fields'] = {
             'collection': collection,
-            'genre': genre
+            'genre': genre,
+            'title': "$title - formatted",
         }
 
         # As-is item import.
@@ -566,6 +567,7 @@ class ImportSingletonTest(_common.TestCase, ImportHelper):
             item.load()  # TODO: Not sure this is necessary.
             self.assertEqual(item.genre, genre)
             self.assertEqual(item.collection, collection)
+            self.assertEqual(item.title, "Tag Title 1 - formatted")
             # Remove item from library to test again with APPLY choice.
             item.remove()
 
@@ -579,6 +581,7 @@ class ImportSingletonTest(_common.TestCase, ImportHelper):
             item.load()
             self.assertEqual(item.genre, genre)
             self.assertEqual(item.collection, collection)
+            self.assertEqual(item.title, "Applied Title 1 - formatted")
 
 
 class ImportTest(_common.TestCase, ImportHelper):
@@ -743,7 +746,8 @@ class ImportTest(_common.TestCase, ImportHelper):
         config['import']['set_fields'] = {
             'genre': genre,
             'collection': collection,
-            'comments': comments
+            'comments': comments,
+            'album': "$album - formatted",
         }
 
         # As-is album import.
@@ -765,6 +769,9 @@ class ImportTest(_common.TestCase, ImportHelper):
                 self.assertEqual(
                         item.get("comments", with_album=False),
                         comments)
+                self.assertEqual(
+                        item.get("album", with_album=False),
+                        "Tag Album - formatted")
             # Remove album from library to test again with APPLY choice.
             album.remove()
 
@@ -788,6 +795,9 @@ class ImportTest(_common.TestCase, ImportHelper):
                 self.assertEqual(
                         item.get("comments", with_album=False),
                         comments)
+                self.assertEqual(
+                        item.get("album", with_album=False),
+                        "Applied Album - formatted")
 
 
 class ImportTracksTest(_common.TestCase, ImportHelper):

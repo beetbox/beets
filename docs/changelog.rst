@@ -135,6 +135,11 @@ Major new features:
 * An accompanying new :doc:`/plugins/albumtypes` includes some options for
   formatting this new ``albumtypes`` field.
   Thanks to :user:`edgars-supe`.
+* The :ref:`modify-cmd` and :ref:`import-cmd` can now use
+  :doc:`/reference/pathformat` formats when setting fields.
+  For example, you can now do ``beet modify title='$track $title'`` to put
+  track numbers into songs' titles.
+  :bug:`488`
 
 Other new things:
 
