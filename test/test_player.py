@@ -35,8 +35,10 @@ import confuse
 
 # Mock GstPlayer so that the forked process doesn't attempt to import gi:
 from unittest import mock
-import imp
-gstplayer = imp.new_module("beetsplug.bpd.gstplayer")
+import importlib.util
+gstplayer = importlib.util.module_from_spec(
+    importlib.util.find_spec("beetsplug.bpd.gstplayer")
+)
 def _gstplayer_play(*_):  # noqa: 42
     bpd.gstplayer._GstPlayer.playing = True
     return mock.DEFAULT
