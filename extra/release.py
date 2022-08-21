@@ -34,7 +34,7 @@ VERSION_LOCS = [
         os.path.join(BASE, 'beets', '__init__.py'),
         [
             (
-                r'__version__\s*=\s*u[\'"]([0-9\.]+)[\'"]',
+                r'__version__\s*=\s*[\'"]([0-9\.]+)[\'"]',
                 "__version__ = '{version}'",
             )
         ]

@@ -59,7 +59,7 @@ shockingly simple if you know a little Python.
 .. _writing your own plugin:
     https://beets.readthedocs.org/page/dev/plugins.html
 .. _HTML5 Audio:
-    http://www.w3.org/TR/html-markup/audio.html
+    https://html.spec.whatwg.org/multipage/media.html#the-audio-element
 .. _albums that are missing tracks:
     https://beets.readthedocs.org/page/plugins/missing.html
 .. _duplicate tracks and albums:

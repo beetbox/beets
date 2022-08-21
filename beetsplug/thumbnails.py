@@ -22,7 +22,6 @@ Spec: standards.freedesktop.org/thumbnail-spec/latest/index.html
 from hashlib import md5
 import os
 import shutil
-from itertools import chain
 from pathlib import PurePosixPath
 import ctypes
 import ctypes.util
@@ -32,7 +31,7 @@ from xdg import BaseDirectory
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs
 from beets import util
-from beets.util.artresizer import ArtResizer, get_im_version, get_pil_version
+from beets.util.artresizer import ArtResizer
 
 
 BASE_DIR = os.path.join(BaseDirectory.xdg_cache_home, "thumbnails")
@@ -49,7 +48,6 @@ class ThumbnailsPlugin(BeetsPlugin):
             'dolphin': False,
         })
 
-        self.write_metadata = None
         if self.config['auto'] and self._check_local_ok():
             self.register_listener('art_set', self.process_album)
 
@@ -90,14 +88,12 @@ class ThumbnailsPlugin(BeetsPlugin):
             if not os.path.exists(dir):
                 os.makedirs(dir)
 
-        if get_im_version():
-            self.write_metadata = write_metadata_im
-            tool = "IM"
-        else:
-            assert get_pil_version()  # since we're local
-            self.write_metadata = write_metadata_pil
-            tool = "PIL"
-        self._log.debug("using {0} to write metadata", tool)
+        if not ArtResizer.shared.can_write_metadata:
+            raise RuntimeError(
+                f"Thumbnails: ArtResizer backend {ArtResizer.shared.method}"
+                f" unexpectedly cannot write image metadata."
+            )
+        self._log.debug(f"using {ArtResizer.shared.method} to write metadata")
 
         uri_getter = GioURI()
         if not uri_getter.available:
@@ -171,7 +167,7 @@ class ThumbnailsPlugin(BeetsPlugin):
         metadata = {"Thumb::URI": self.get_uri(album.artpath),
                     "Thumb::MTime": str(mtime)}
         try:
-            self.write_metadata(image_path, metadata)
+            ArtResizer.shared.write_metadata(image_path, metadata)
         except Exception:
             self._log.exception("could not write metadata to {0}",
                                 util.displayable_path(image_path))
@@ -186,26 +182,6 @@ class ThumbnailsPlugin(BeetsPlugin):
             f.write('Icon=./{}'.format(artfile.decode('utf-8')))
             f.close()
         self._log.debug("Wrote file {0}", util.displayable_path(outfilename))
-
-
-def write_metadata_im(file, metadata):
-    """Enrich the file metadata with `metadata` dict thanks to IM."""
-    command = ['convert', file] + \
-        list(chain.from_iterable(('-set', k, v)
-                                 for k, v in metadata.items())) + [file]
-    util.command_output(command)
-    return True
-
-
-def write_metadata_pil(file, metadata):
-    """Enrich the file metadata with `metadata` dict thanks to PIL."""
-    from PIL import Image, PngImagePlugin
-    im = Image.open(file)
-    meta = PngImagePlugin.PngInfo()
-    for k, v in metadata.items():
-        meta.add_text(k, v, 0)
-    im.save(file, "PNG", pnginfo=meta)
-    return True
 
 
 class URIGetter:

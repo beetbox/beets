@@ -48,7 +48,8 @@ class TestHelper(helper.TestHelper):
                                                shell_quote(stub), tag)
 
     def assertFileTag(self, path, tag):  # noqa
-        """Assert that the path is a file and the files content ends with `tag`.
+        """Assert that the path is a file and the files content ends
+        with `tag`.
         """
         display_tag = tag
         tag = tag.encode('utf-8')

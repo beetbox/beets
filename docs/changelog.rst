@@ -8,14 +8,56 @@ Changelog goes here!
 
 New features:
 
+* Added `spotify_updated` field to track when the information was last updated.
+* We now import and tag the `album` information when importing singletons using Spotify source.
+  :bug:`4398`
+* :doc:`/plugins/spotify`: The plugin now provides an additional command
+  `spotifysync` that allows getting track popularity and audio features
+  information from Spotify.
+  :bug:`4094`
+* :doc:`/plugins/spotify`: The plugin now records Spotify-specific IDs in the
+  `spotify_album_id`, `spotify_artist_id`, and `spotify_track_id` fields.
+  :bug:`4348`
+* Create the parental directories for database if they do not exist.
+  :bug:`3808` :bug:`4327`
+* :ref:`musicbrainz-config`: a new :ref:`musicbrainz.enabled` option allows disabling
+  the MusicBrainz metadata source during the autotagging process
 * :doc:`/plugins/kodiupdate`: Now supports multiple kodi instances
   :bug:`4101`
 * Add the item fields ``bitrate_mode``, ``encoder_info`` and ``encoder_settings``.
 * Add query prefixes ``=`` and ``~``.
 * :doc:`/reference/config`: Allow to configure which fields are used to find duplicates
+* Add :ref:`exact match <exact-match>` queries, using the prefixes ``=`` and
+  ``=~``.
+  :bug:`4251`
+* :doc:`/plugins/discogs`: Permit appending style to genre
+* :doc:`/plugins/convert`: Add a new `auto_keep` option that automatically
+  converts files but keeps the *originals* in the library.
+  :bug:`1840` :bug:`4302`
+* Added a ``-P`` (or ``--disable-plugins``) flag to specify one/multiple plugin(s) to be
+  disabled at startup.
+* :ref:`import-options`: Add support for re-running the importer on paths in
+  log files that were created with the ``-l`` (or ``--logfile``) argument.
+  :bug:`4379` :bug:`4387`
+* Add :ref:`%sunique{} <sunique>` template to disambiguate between singletons.
+  :bug:`4438`
 
 Bug fixes:
 
+* We now respect the Spotify API's rate limiting, which avoids crashing when the API reports code 429 (too many requests).
+  :bug:`4370`
+* Fix implicit paths OR queries (e.g. ``beet list /path/ , /other-path/``)
+  which have previously been returning the entire library.
+  :bug:`1865`
+* The Discogs release ID is now populated correctly to the discogs_albumid
+  field again (it was no longer working after Discogs changed their release URL
+  format).
+  :bug:`4225`
+* The autotagger no longer considers all matches without a MusicBrainz ID as
+  duplicates of each other.
+  :bug:`4299`
+* :doc:`/plugins/convert`: Resize album art when embedding
+  :bug:`2116`
 * :doc:`/plugins/deezer`: Fix auto tagger pagination issues (fetch beyond the
   first 25 tracks of a release).
 * :doc:`/plugins/spotify`: Fix auto tagger pagination issues (fetch beyond the
@@ -47,6 +89,16 @@ Bug fixes:
 * :doc:`plugins/replaygain`: Correctly handle the ``overwrite`` config option,
   which forces recomputing ReplayGain values on import even for tracks
   that already have the tags.
+* :doc:`plugins/embedart`: Fix a crash when using recent versions of
+  ImageMagick and the ``compare_threshold`` option.
+  :bug:`4272`
+* :doc:`plugins/lyrics`: Fixed issue with Genius header being included in lyrics,
+  added test case of up-to-date Genius html
+* :doc:`plugins/importadded`: Fix a bug with recently added reflink import option
+  that casues a crash when ImportAdded plugin enabled.
+  :bug:`4389`
+* :doc:`plugins/convert`: Fix a bug with the `wma` format alias.
+* :doc:`/plugins/web`: Fix get file from item.
 
 For packagers:
 
@@ -56,8 +108,9 @@ For packagers:
 
 Other new things:
 
-* :doc:`/plugins/limit`: Limit query results to head or tail (``lslimit`` 
+* :doc:`/plugins/limit`: Limit query results to head or tail (``lslimit``
   command only)
+* :doc:`/plugins/fish`: Add ``--output`` option.
 
 1.6.0 (November 27, 2021)
 -------------------------
@@ -84,6 +137,11 @@ Major new features:
 * An accompanying new :doc:`/plugins/albumtypes` includes some options for
   formatting this new ``albumtypes`` field.
   Thanks to :user:`edgars-supe`.
+* The :ref:`modify-cmd` and :ref:`import-cmd` can now use
+  :doc:`/reference/pathformat` formats when setting fields.
+  For example, you can now do ``beet modify title='$track $title'`` to put
+  track numbers into songs' titles.
+  :bug:`488`
 
 Other new things:
 

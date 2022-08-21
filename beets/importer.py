@@ -585,9 +585,9 @@ class ImportTask(BaseImportTask):
                       displayable_path(self.paths),
                       field,
                       value)
-            self.album[field] = value
+            self.album.set_parse(field, format(self.album, value))
             for item in items:
-                item[field] = value
+                item.set_parse(field, format(item, value))
         with lib.transaction():
             for item in items:
                 item.store()
@@ -735,8 +735,8 @@ class ImportTask(BaseImportTask):
             item.update(changes)
 
     def manipulate_files(self, operation=None, write=False, session=None):
-        """ Copy, move, link, hardlink or reflink (depending on `operation`) the files
-        as well as write metadata.
+        """ Copy, move, link, hardlink or reflink (depending on `operation`)
+        the files as well as write metadata.
 
         `operation` should be an instance of `util.MoveOperation`.
 
@@ -982,7 +982,7 @@ class SingletonImportTask(ImportTask):
                       displayable_path(self.paths),
                       field,
                       value)
-            self.item[field] = value
+            self.item.set_parse(field, format(self.item, value))
         self.item.store()
 
 
