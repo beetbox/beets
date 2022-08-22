@@ -485,9 +485,9 @@ class ConvertPlugin(BeetsPlugin):
             # computers.
             self._log.info("Creating playlist file: {0}", playlist)
             items_paths = [
-                item.destination(
+                util.syspath(item.destination(
                     basedir=dest, path_formats=path_formats, fragment=True
-                ) for item in items
+                )) for item in items
             ]
             if not pretend:
                 m3ufile = M3UFile(playlist)
