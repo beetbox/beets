@@ -31,7 +31,7 @@ from beets import art
 from beets.util.artresizer import ArtResizer
 from beets.library import parse_query_string
 from beets.library import Item
-from beets.util import M3UFile
+from beets.util.m3u import M3UFile
 
 _fs_lock = threading.Lock()
 _temp_files = []  # Keep track of temporary transcoded files for deletion.
