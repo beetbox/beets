@@ -2,7 +2,8 @@ MusicBrainz Submit Plugin
 =========================
 
 The ``mbsubmit`` plugin provides an extra prompt choice during an import
-session and a ``mbsubmit`` command that prints the tracks of the current album in a format that is parseable by MusicBrainz's `track parser`_.
+session and a ``mbsubmit`` command that prints the tracks of the current
+album in a format that is parseable by MusicBrainz's `track parser`_.
 
 .. _track parser: https://wiki.musicbrainz.org/History:How_To_Parse_Track_Listings
 
