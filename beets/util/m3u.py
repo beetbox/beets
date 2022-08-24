@@ -12,25 +12,21 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Provides utilities to read, write an manipulate m3u playlist files.
-"""
+"""Provides utilities to read, write an manipulate m3u playlist files."""
 
 
 from beets.util import syspath
 
 
 class EmptyPlaylistError(Exception):
-    """An error that should be raised when a playlist file without media files
-    is saved or loaded.
-    """
+    """Raised when a playlist file without media files is saved or loaded."""
     pass
 
 
 class M3UFile():
+    """Reads and writes m3u or m3u8 playlist files."""
     def __init__(self, path):
-        """Reads and writes m3u or m3u8 playlist files.
-
-        ``path`` is the full path to the playlist file.
+        """``path`` is the absolute path to the playlist file.
 
         The playlist file type, m3u or m3u8 is determined by 1) the ending
         being m3u8 and 2) the file paths contained in the list being utf-8
@@ -42,8 +38,7 @@ class M3UFile():
         self.media_list = []
 
     def load(self):
-        """Reads the m3u file from disk and sets the object's attributes.
-        """
+        """Reads the m3u file from disk and sets the object's attributes."""
         with open(syspath(self.path), "r") as playlist_file:
             raw_contents = playlist_file.readlines()
         self.extm3u = True if raw_contents[0] == "#EXTM3U\n" else False
@@ -56,9 +51,9 @@ class M3UFile():
             raise EmptyPlaylistError
 
     def set_contents(self, media_list, extm3u=True):
-        """Sets self.media_list to a list of media file paths,
+        """Sets self.media_list to a list of media file paths.
 
-        and sets additional flags, changing the final m3u-file's format.
+        Also sets additional flags, changing the final m3u-file's format.
 
         ``media_list`` is a list of paths to media files that should be added
         to the playlist (relative or absolute paths, that's the responsibility
