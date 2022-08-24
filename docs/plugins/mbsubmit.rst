@@ -2,8 +2,7 @@ MusicBrainz Submit Plugin
 =========================
 
 The ``mbsubmit`` plugin provides an extra prompt choice during an import
-session that prints the tracks of the current album in a format that is
-parseable by MusicBrainz's `track parser`_.
+session and a ``mbsubmit`` command that prints the tracks of the current album in a format that is parseable by MusicBrainz's `track parser`_.
 
 .. _track parser: https://wiki.musicbrainz.org/History:How_To_Parse_Track_Listings
 
@@ -26,6 +25,13 @@ strong recommendations are found for the album::
     For help, see: https://beets.readthedocs.org/en/latest/faq.html#nomatch
     [U]se as-is, as Tracks, Group albums, Skip, Enter search, enter Id, aBort,
     Print tracks?
+
+You can also run ``beet mbsubmit QUERY`` to print the track information for any album::
+
+    $ beet mbsubmit album:"An Obscure Album".
+    01. An Obscure Track - An Obscure Artist (3:37)
+    02. Another Obscure Track - An Obscure Artist (2:05)
+    03. The Third Track - Another Obscure Artist (3:02)
 
 As MusicBrainz currently does not support submitting albums programmatically,
 the recommended workflow is to copy the output of the ``Print tracks`` choice
