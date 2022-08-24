@@ -59,7 +59,7 @@ class MBSubmitPlugin(BeetsPlugin):
             print_data(None, i, self.config['format'].as_str())
 
     def commands(self):
-        """Add beet UI commands to interact with Plex."""
+        """Add beet UI commands for mbsubmit."""
         mbsubmit_cmd = ui.Subcommand(
             'mbsubmit', help=f'Submit Tracks to MusicBrainz')
 
@@ -72,8 +72,6 @@ class MBSubmitPlugin(BeetsPlugin):
         return [mbsubmit_cmd]
 
     def _mbsubmit(self, items):
-        """Print track list to be submitted to MB."""
-        self._log.debug('Total {} tracks', len(items))
-
+        """Print track information to be submitted to MusicBrainz."""
         for i in sorted(items, key=lambda i: i.track):
             print_data(None, i, self.config['format'].as_str())
