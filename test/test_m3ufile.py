@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2016, Johannes Tiefenbacher.
+# Copyright 2016, J0J0 Todos.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -11,22 +11,23 @@
 #
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
+"""Testsuite for the M3UFile class."""
 
 
-from os import path, remove
+from os import path
 from tempfile import mkdtemp
 from shutil import rmtree
 import unittest
 
-# from unittest.mock import Mock, MagicMock
-
-from beets.util import M3UFile, EmptyPlaylistError
-from beets.util import syspath, bytestring_path, py3_path, CHAR_REPLACE
+from beets.util import bytestring_path
+from beets.util.m3u import M3UFile, EmptyPlaylistError
 from test._common import RSRC
 
 
 class M3UFileTest(unittest.TestCase):
+    """Tests the M3UFile class."""
     def test_playlist_write_empty(self):
+        """Test whether saving an empty playlist file raises an error."""
         tempdir = bytestring_path(mkdtemp())
         the_playlist_file = path.join(tempdir, b'playlist.m3u8')
         m3ufile = M3UFile(the_playlist_file)
@@ -35,6 +36,7 @@ class M3UFileTest(unittest.TestCase):
         rmtree(tempdir)
 
     def test_playlist_write(self):
+        """Test saving ascii paths to a playlist file."""
         tempdir = bytestring_path(mkdtemp())
         the_playlist_file = path.join(tempdir, b'playlist.m3u')
         m3ufile = M3UFile(the_playlist_file)
@@ -47,6 +49,7 @@ class M3UFileTest(unittest.TestCase):
         rmtree(tempdir)
 
     def test_playlist_write_unicode(self):
+        """Test saving unicode paths to a playlist file."""
         tempdir = bytestring_path(mkdtemp())
         the_playlist_file = path.join(tempdir, b'playlist.m3u8')
         m3ufile = M3UFile(the_playlist_file)
@@ -59,6 +62,7 @@ class M3UFileTest(unittest.TestCase):
         rmtree(tempdir)
 
     def test_playlist_load_ascii(self):
+        """Test loading ascii paths from a playlist file."""
         the_playlist_file = path.join(RSRC, b'playlist.m3u')
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.load()
@@ -66,6 +70,7 @@ class M3UFileTest(unittest.TestCase):
                          '/This/is/a/path/to_a_file.mp3\n')
 
     def test_playlist_load_unicode(self):
+        """Test loading unicode paths from a playlist file."""
         the_playlist_file = path.join(RSRC, b'playlist.m3u8')
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.load()
@@ -73,12 +78,14 @@ class M3UFileTest(unittest.TestCase):
                          '/This/is/å/path/to_a_file.mp3\n')
 
     def test_playlist_load_extm3u(self):
+        """Test loading a playlist with an #EXTM3U header."""
         the_playlist_file = path.join(RSRC, b'playlist.m3u')
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.load()
         self.assertTrue(m3ufile.extm3u)
 
     def test_playlist_load_non_extm3u(self):
+        """Test loading a playlist without an #EXTM3U header."""
         the_playlist_file = path.join(RSRC, b'playlist_non_ext.m3u')
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.load()
@@ -86,6 +93,7 @@ class M3UFileTest(unittest.TestCase):
 
 
 def suite():
+    """This testsuite's main function."""
     return unittest.TestLoader().loadTestsFromName(__name__)
 
 
