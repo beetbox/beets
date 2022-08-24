@@ -64,7 +64,8 @@ class MBSubmitPlugin(BeetsPlugin):
             'mbsubmit', help=f'Submit Tracks to MusicBrainz')
 
         def func(lib, opts, args):
-            self._mbsubmit()
+            items = lib.items(ui.decargs(args))
+            self._mbsubmit(items)
 
         mbsubmit_cmd.func = func
 
