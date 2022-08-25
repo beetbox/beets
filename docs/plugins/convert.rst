@@ -65,7 +65,7 @@ to the ``playlist`` option below.
 
 Note that the classic m3u format doesn't support special characters in media
 file paths, thus the m3u8 format which requires media file paths to be unicode,
-is used. Typically a playlist file would be named *.m3u8. The name of the file
+is used. Typically a playlist file would be named `*.m3u8`. The name of the file
 can be freely chosen by the user though. Since it is always ensured that paths
 to media files are written as defined by the ``path`` configuration, a
 generated playlist potentially could contain unicode characters no matter what
