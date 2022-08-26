@@ -187,18 +187,19 @@ class PlexSync(BeetsPlugin):
 
     def _plex_add_playlist_item(self, items, playlist):
         """Add items to Plex playlist."""
+        plex_set = set()
         try:
             plst = self.plex.playlist(playlist)
             playlist_set = set(plst.items())
         except exceptions.NotFound:
             plst = None
             playlist_set = set()
-        try:
-            plex_set = {self.plex.fetchItem(item.plex_ratingkey)
-                        for item in items}
-        except exceptions.NotFound:
-            self._log.error('Plex library is not synced, please sync again')
-            return
+        for item in items:
+            try:
+                plex_set.add(self.plex.fetchItem(item.plex_ratingkey))
+            except exceptions.NotFound:
+                self._log.warning('{} not found in Plex library', item)
+                continue
         to_add = plex_set - playlist_set
         self._log.info('Adding {} tracks to {} playlist',
                        len(to_add), playlist)
@@ -210,18 +211,19 @@ class PlexSync(BeetsPlugin):
 
     def _plex_remove_playlist_item(self, items, playlist):
         """Remove items from Plex playlist."""
+        plex_set = set()
         try:
             plst = self.plex.playlist(playlist)
             playlist_set = set(plst.items())
         except exceptions.NotFound:
             self._log.error('{} playlist not found', playlist)
             return
-        try:
-            plex_set = {self.plex.fetchItem(item.plex_ratingkey)
-                        for item in items}
-        except exceptions.NotFound:
-            self._log.error('Plex library is not synced, please sync again')
-            return
+        for item in items:
+            try:
+                plex_set.add(self.plex.fetchItem(item.plex_ratingkey))
+            except exceptions.NotFound:
+                self._log.warning('{} not found in Plex library', item)
+                continue
         to_remove = plex_set.intersection(playlist_set)
         self._log.info('Removing {} tracks from {} playlist',
                        len(to_remove), playlist)
