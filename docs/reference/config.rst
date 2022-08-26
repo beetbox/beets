@@ -3,7 +3,7 @@ Configuration
 
 Beets has an extensive configuration system that lets you customize nearly
 every aspect of its operation. To configure beets, you create a file called
-``config.yaml``. The location of the file depend on your platform (type ``beet
+``config.yaml``. The location of the file depends on your platform (type ``beet
 config -p`` to see the path on your system):
 
 * On Unix-like OSes, write ``~/.config/beets/config.yaml``.
