@@ -25,6 +25,10 @@ New features:
 * :doc:`/plugins/kodiupdate`: Now supports multiple kodi instances
   :bug:`4101`
 * Add the item fields ``bitrate_mode``, ``encoder_info`` and ``encoder_settings``.
+* Add query prefixes ``=`` and ``~``.
+* A new configuration option, :ref:`duplicate_keys`, lets you change which
+  fields the beets importer uses to identify duplicates.
+  :bug:`1133` :bug:`4199`
 * Add :ref:`exact match <exact-match>` queries, using the prefixes ``=`` and
   ``=~``.
   :bug:`4251`
