@@ -409,11 +409,17 @@ def syspath(path, prefix=True):
         # reported as the FS encoding by Windows. Try both.
         try:
             path = path.decode('utf-8')
+            print("syspath: this is path:")
+            print(path)
         except UnicodeError:
             # The encoding should always be MBCS, Windows' broken
             # Unicode representation.
             encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
             path = path.decode(encoding, 'replace')
+            print("syspath: this is encoding:")
+            print(encoding)
+            print("syspath: this is path:")
+            print(path)
 
     # Add the magic prefix if it isn't already there.
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
