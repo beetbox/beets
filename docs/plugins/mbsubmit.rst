@@ -29,7 +29,7 @@ strong recommendations are found for the album::
 
 You can also run ``beet mbsubmit QUERY`` to print the track information for any album::
 
-    $ beet mbsubmit album:"An Obscure Album".
+    $ beet mbsubmit album:"An Obscure Album"
     01. An Obscure Track - An Obscure Artist (3:37)
     02. Another Obscure Track - An Obscure Artist (2:05)
     03. The Third Track - Another Obscure Artist (3:02)
