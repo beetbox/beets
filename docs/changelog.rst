@@ -8,6 +8,8 @@ Changelog goes here!
 
 New features:
 
+* :doc:`/plugins/mbsubmit`: Added a new `mbsubmit` command to print track information to be submitted to MusicBrainz after initial import.
+  :bug:`4455`
 * Added `spotify_updated` field to track when the information was last updated.
 * We now import and tag the `album` information when importing singletons using Spotify source.
   :bug:`4398`
