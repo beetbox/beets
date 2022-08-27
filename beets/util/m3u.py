@@ -46,7 +46,7 @@ class M3UFile():
             if line.startswith("#"):
                 # Some EXTM3U comment, do something. FIXME
                 continue
-            self.media_list.append(line)
+            self.media_list.append(syspath(line))
         if not self.media_list:
             raise EmptyPlaylistError
 
