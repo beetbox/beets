@@ -62,6 +62,32 @@ class M3UFileTest(unittest.TestCase):
         self.assertTrue(path.exists(the_playlist_file))
         rmtree(tempdir)
 
+    @unittest.skipUnless(sys.platform == 'win32', 'win32')
+    def test_playlist_write_and_read_unicode_windows(self):
+        """Test saving unicode paths to a playlist file on Windows."""
+        tempdir = bytestring_path(mkdtemp())
+        the_playlist_file = path.join(tempdir,
+                                      b'playlist_write_and_read_windows.m3u8')
+        m3ufile = M3UFile(the_playlist_file)
+        m3ufile.set_contents([
+            r"x:\This\is\å\path\to_a_file.mp3",
+            r"x:\This\is\another\path\tö_a_file.mp3"
+        ])
+        m3ufile.write()
+        self.assertTrue(path.exists(the_playlist_file))
+        m3ufile_read = M3UFile(the_playlist_file)
+        m3ufile_read.load()
+        self.assertEquals(
+            m3ufile.media_list[0],
+            path.join('x:\\', 'This', 'is', 'å', 'path', 'to_a_file.mp3')
+        )
+        self.assertEquals(
+            m3ufile.media_list[1],
+            r"x:\This\is\another\path\tö_a_file.mp3",
+            path.join('x:\\', 'This', 'is', 'another', 'path', 'tö_a_file.mp3')
+        )
+        rmtree(tempdir)
+
     def test_playlist_load_ascii(self):
         """Test loading ascii paths from a playlist file."""
         the_playlist_file = path.join(RSRC, b'playlist.m3u')
