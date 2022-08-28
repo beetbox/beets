@@ -18,6 +18,7 @@ from os import path
 from tempfile import mkdtemp
 from shutil import rmtree
 import unittest
+import sys
 
 from beets.util import bytestring_path
 from beets.util.m3u import M3UFile, EmptyPlaylistError
@@ -69,6 +70,7 @@ class M3UFileTest(unittest.TestCase):
         self.assertEqual(m3ufile.media_list[0],
                          '/This/is/a/path/to_a_file.mp3\n')
 
+    @unittest.skipIf(sys.platform == 'win32', 'win32')
     def test_playlist_load_unicode(self):
         """Test loading unicode paths from a playlist file."""
         the_playlist_file = path.join(RSRC, b'playlist.m3u8')
@@ -76,6 +78,15 @@ class M3UFileTest(unittest.TestCase):
         m3ufile.load()
         self.assertEqual(m3ufile.media_list[0],
                          '/This/is/å/path/to_a_file.mp3\n')
+
+    @unittest.skipUnless(sys.platform == 'win32', 'win32')
+    def test_playlist_load_unicode_windows(self):
+        """Test loading unicode paths from a playlist file."""
+        the_playlist_file = path.join(RSRC, b'playlist_windows.m3u8')
+        m3ufile = M3UFile(the_playlist_file)
+        m3ufile.load()
+        self.assertEqual(m3ufile.media_list[0],
+                         '\\\\?\\/This/is/å/path/to_a_file.mp3\n')
 
     def test_playlist_load_extm3u(self):
         """Test loading a playlist with an #EXTM3U header."""
