@@ -86,7 +86,7 @@ class M3UFileTest(unittest.TestCase):
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.load()
         self.assertEqual(m3ufile.media_list[0],
-                         '\\\\?\\/This/is/å/path/to_a_file.mp3\n')
+                         'x:\This\is\å\path\to_a_file.mp3\n')
 
     def test_playlist_load_extm3u(self):
         """Test loading a playlist with an #EXTM3U header."""
