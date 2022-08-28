@@ -83,7 +83,7 @@ class M3UFileTest(unittest.TestCase):
     def test_playlist_load_unicode_windows(self):
         """Test loading unicode paths from a playlist file."""
         the_playlist_file = path.join(RSRC, b'playlist_windows.m3u8')
-        winpath = path.join('x:', 'This', 'is', 'å', 'path', 'to_a_file.mp3')
+        winpath = path.join('x:\\', 'This', 'is', 'å', 'path', 'to_a_file.mp3')
         print("this is winpath:")
         print(winpath)
         m3ufile = M3UFile(the_playlist_file)
