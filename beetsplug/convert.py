@@ -180,14 +180,14 @@ class ConvertPlugin(BeetsPlugin):
                               help='hardlink files that do not \
                               need transcoding. Overrides --link.')
         cmd.parser.add_option('-m', '--playlist', action='store',
-                              help='''the name of an m3u8 playlist file to
-                              be created in the root of the destination folder.
-                              The m3u8 format ensures special characters
-                              support by using unicode to save media file
-                              paths. Relative paths are used to point to media
-                              files ensuring a working playlist when
-                              transferred to a different computer (eg. when
-                              opened from an external drive).''')
+                              help='''create an m3u8 playlist file containing
+                              the converted files. The playlist file will be
+                              saved below the destination directory, thus
+                              PLAYLIST could be a file name or a relative path.
+                              To ensure a working playlist when transferred to
+                              a different computer, or opened from an external
+                              drive, relative paths pointing to media files
+                              will be used.''')
         cmd.parser.add_album_option()
         cmd.func = self.convert_func
         return [cmd]
