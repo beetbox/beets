@@ -206,13 +206,13 @@ class FSArtTest(UseThePlugin):
     def test_finds_jpg_in_directory(self):
         _common.touch(os.path.join(self.dpath, b'a.jpg'))
         candidate = next(self.source.get(None, self.settings, [self.dpath]))
-        self.assertEqual(candidate.path, os.path.join(self.dpath, b'a.jpg'))
+        self.assertEqual(candidate.original_path, os.path.join(self.dpath, b'a.jpg'))
 
     def test_appropriately_named_file_takes_precedence(self):
         _common.touch(os.path.join(self.dpath, b'a.jpg'))
         _common.touch(os.path.join(self.dpath, b'art.jpg'))
         candidate = next(self.source.get(None, self.settings, [self.dpath]))
-        self.assertEqual(candidate.path, os.path.join(self.dpath, b'art.jpg'))
+        self.assertEqual(candidate.original_path, os.path.join(self.dpath, b'art.jpg'))
 
     def test_non_image_file_not_identified(self):
         _common.touch(os.path.join(self.dpath, b'a.txt'))
@@ -235,7 +235,7 @@ class FSArtTest(UseThePlugin):
         for p in paths:
             _common.touch(p)
         self.settings.cover_names = ['cover', 'front', 'back']
-        candidates = [candidate.path for candidate in
+        candidates = [candidate.original_path for candidate in
                       self.source.get(None, self.settings, [self.dpath])]
         self.assertEqual(candidates, paths)
 
@@ -270,7 +270,7 @@ class CombinedTest(FetchImageHelper, UseThePlugin, CAAHelper):
         album = _common.Bag(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [self.dpath])
         self.assertIsNotNone(candidate)
-        self.assertEqual(candidate.path, os.path.join(self.dpath, b'art.jpg'))
+        self.assertEqual(candidate.original_path, os.path.join(self.dpath, b'art.jpg'))
 
     def test_main_interface_falls_back_to_amazon(self):
         self.mock_response(self.AMAZON_URL)
@@ -318,7 +318,7 @@ class CombinedTest(FetchImageHelper, UseThePlugin, CAAHelper):
         candidate = self.plugin.art_for_album(album, [self.dpath],
                                               local_only=True)
         self.assertIsNotNone(candidate)
-        self.assertEqual(candidate.path, os.path.join(self.dpath, b'art.jpg'))
+        self.assertEqual(candidate.original_path, os.path.join(self.dpath, b'art.jpg'))
         self.assertEqual(len(responses.calls), 0)
 
 
