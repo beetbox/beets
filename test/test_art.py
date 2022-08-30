@@ -675,7 +675,7 @@ class ArtImporterTest(UseThePlugin):
     def _fetch_art(self, should_exist):
         """Execute the fetch_art coroutine for the task and return the
         album's resulting artpath. ``should_exist`` specifies whether to
-        assert that art path was set (to the correct value) or or that
+        assert that art path was set (to the correct value) or that
         the path was not set.
         """
         # Execute the two relevant parts of the importer.
