@@ -59,7 +59,7 @@ class Candidate:
                  match=None, size=None):
         self._log = log
         self.path = path
-        self.original_path = None
+        self.original_path = path
         self.url = url
         self.source = source
         self.check = None
@@ -843,8 +843,7 @@ class FileSystem(LocalArtSource):
 
     def cleanup(self, candidate):
         if candidate.path \
-                and candidate.path.startswith(tempfile.gettempdir().encode('utf8')) \
-                and candidate.original_path:
+                and candidate.path.startswith(tempfile.gettempdir().encode('utf8')):
             try:
                 util.remove(path=candidate.path)
             except util.FilesystemError as exc:
@@ -1092,7 +1091,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             self._set_art(task.album, candidate, not src_removed)
 
             if src_removed:
-                if candidate.original_path:
+                if candidate.original_path != candidate.path:
                     util.remove(candidate.original_path)
                     task.prune(candidate.original_path)
                 task.prune(candidate.path)
