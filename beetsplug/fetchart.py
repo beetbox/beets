@@ -14,7 +14,7 @@
 
 """Fetches album art.
 """
-
+import tempfile
 from contextlib import closing
 import os
 import re
@@ -59,6 +59,7 @@ class Candidate:
                  match=None, size=None):
         self._log = log
         self.path = path
+        self.original_path = None
         self.url = url
         self.source = source
         self.check = None
@@ -822,8 +823,11 @@ class FileSystem(LocalArtSource):
                 if re.search(cover_pat, os.path.splitext(fn)[0], re.I):
                     self._log.debug('using well-named art file {0}',
                                     util.displayable_path(fn))
-                    yield self._candidate(path=os.path.join(path, fn),
-                                          match=Candidate.MATCH_EXACT)
+                    file_path = os.path.join(path, fn)
+                    work_path = self._make_temp_work_file(file_path)
+                    candidate = self._candidate(path=work_path, match=Candidate.MATCH_EXACT)
+                    candidate.original_path = file_path
+                    yield candidate
                 else:
                     remaining.append(fn)
 
@@ -831,8 +835,28 @@ class FileSystem(LocalArtSource):
             if remaining and not plugin.cautious:
                 self._log.debug('using fallback art file {0}',
                                 util.displayable_path(remaining[0]))
-                yield self._candidate(path=os.path.join(path, remaining[0]),
-                                      match=Candidate.MATCH_FALLBACK)
+                file_path = os.path.join(path, remaining[0])
+                work_path = self._make_temp_work_file(file_path)
+                candidate = self._candidate(path=work_path, match=Candidate.MATCH_EXACT)
+                candidate.original_path = file_path
+                yield candidate
+
+    def cleanup(self, candidate):
+        if candidate.path \
+                and candidate.path.startswith(tempfile.gettempdir().encode('utf8')) \
+                and candidate.original_path:
+            try:
+                util.remove(path=candidate.path)
+            except util.FilesystemError as exc:
+                self._log.debug('error cleaning up tmp art: {}', exc)
+
+    @staticmethod
+    def _make_temp_work_file(path):
+        temp_file = NamedTemporaryFile('wb', delete=False)
+        with open(path, 'rb') as file:
+            temp_file.write(file.read())
+        temp_file.close()
+        return temp_file.name.encode('utf8')
 
 
 class LastFM(RemoteArtSource):
@@ -1060,11 +1084,19 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         """Place the discovered art in the filesystem."""
         if task in self.art_candidates:
             candidate = self.art_candidates.pop(task)
+            #  if the config or the session specifies to copy, don't remove
+            if not self.src_removed or session.config['copy']:
+                src_removed = False
+            else:
+                src_removed = True
+            self._set_art(task.album, candidate, not src_removed)
 
-            self._set_art(task.album, candidate, not self.src_removed)
-
-            if self.src_removed:
+            if src_removed:
+                if candidate.original_path:
+                    util.remove(candidate.original_path)
+                    task.prune(candidate.original_path)
                 task.prune(candidate.path)
+
 
     # Manual album art fetching.
     def commands(self):
