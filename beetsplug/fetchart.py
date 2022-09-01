@@ -14,25 +14,20 @@
 
 """Fetches album art.
 """
-import tempfile
-from contextlib import closing
 import os
 import re
-from tempfile import NamedTemporaryFile
+import tempfile
 from collections import OrderedDict
+from contextlib import closing
+from tempfile import NamedTemporaryFile
 
-import requests
-
-from beets import plugins
-from beets import importer
-from beets import ui
-from beets import util
-from beets import config
-from mediafile import image_mime_type
-from beets.util.artresizer import ArtResizer
-from beets.util import sorted_walk
-from beets.util import syspath, bytestring_path, py3_path
 import confuse
+import requests
+from mediafile import image_mime_type
+
+from beets import config, importer, plugins, ui, util
+from beets.util import bytestring_path, py3_path, sorted_walk, syspath
+from beets.util.artresizer import ArtResizer
 
 CONTENT_TYPES = {
     'image/jpeg': [b'jpg', b'jpeg'],
@@ -825,7 +820,10 @@ class FileSystem(LocalArtSource):
                                     util.displayable_path(fn))
                     file_path = os.path.join(path, fn)
                     work_path = self._make_temp_work_file(file_path)
-                    candidate = self._candidate(path=work_path, match=Candidate.MATCH_EXACT)
+                    candidate = self._candidate(
+                        path=work_path,
+                        match=Candidate.MATCH_EXACT,
+                    )
                     candidate.original_path = file_path
                     yield candidate
                 else:
@@ -837,13 +835,17 @@ class FileSystem(LocalArtSource):
                                 util.displayable_path(remaining[0]))
                 file_path = os.path.join(path, remaining[0])
                 work_path = self._make_temp_work_file(file_path)
-                candidate = self._candidate(path=work_path, match=Candidate.MATCH_EXACT)
+                candidate = self._candidate(
+                    path=work_path,
+                    match=Candidate.MATCH_EXACT,
+                )
                 candidate.original_path = file_path
                 yield candidate
 
     def cleanup(self, candidate):
-        if candidate.path \
-                and candidate.path.startswith(tempfile.gettempdir().encode('utf8')):
+        if candidate.path and candidate.path.startswith(
+            tempfile.gettempdir().encode('utf8')
+        ):
             try:
                 util.remove(path=candidate.path)
             except util.FilesystemError as exc:
@@ -918,6 +920,7 @@ class LastFM(RemoteArtSource):
 
 # Try each source in turn.
 
+
 SOURCES_ALL = ['filesystem',
                'coverart', 'itunes', 'amazon', 'albumart',
                'wikipedia', 'google', 'fanarttv', 'lastfm']
@@ -986,7 +989,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         self.margin_px = None
         self.margin_percent = None
         self.deinterlace = self.config['deinterlace'].get(bool)
-        if type(self.enforce_ratio) is str:
+        if isinstance(self.enforce_ratio, str):
             if self.enforce_ratio[-1] == '%':
                 self.margin_percent = float(self.enforce_ratio[:-1]) / 100
             elif self.enforce_ratio[-2:] == 'px':
@@ -1096,8 +1099,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                     task.prune(candidate.original_path)
                 task.prune(candidate.path)
 
-
     # Manual album art fetching.
+
     def commands(self):
         cmd = ui.Subcommand('fetchart', help='download album art')
         cmd.parser.add_option(
