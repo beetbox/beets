@@ -16,6 +16,8 @@
 """Adds VGMdb search support to Beets
 """
 
+
+from pprint import pprint
 from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance, item_candidates
 from beets.dbcore.types import Id
 from beets.plugins import BeetsPlugin
@@ -33,7 +35,6 @@ class VGMdbPlugin(BeetsPlugin):
             'lang-priority': ['en', 'ja-latn', 'ja'],
             'prefer_original': True  # Only for Attack on Titan soundtracks
         })
-        self._log.debug('Querying VGMdb')
         self.source_weight = self.config['source_weight'].as_number()
         self.lang = self.config['lang-priority'].as_str_seq()
         self.prefer_original = self.config['prefer_original'].get(bool)
@@ -86,10 +87,11 @@ class VGMdbPlugin(BeetsPlugin):
         try:
             ret = self.get_albums(query, va_likely)
             for x in ret:
-               self._debug('Found album: %s ; id: %s ; artist: %s' % (x.album, x.album_id, x.artist))
+               self._log.debug('Found album: %s ; id: %s ; artist: %s' % (x.album, x.album_id, x.artist))
             return ret
-        except:
+        except Exception as e:
             self._log.debug('VGMdb Search Error: (query: %s)' % query)
+            self._log.error(e)
             return []
 
     def album_for_id(self, album_id):
@@ -129,7 +131,7 @@ class VGMdbPlugin(BeetsPlugin):
         # Decode Response's content
         try:
             items = r.json()
-        except:
+        except requests.JSONDecodeError:
             self._log.debug('VGMdb JSON Decode Error: (query: %s)' % query)
             return albums
 
@@ -160,6 +162,7 @@ class VGMdbPlugin(BeetsPlugin):
         country = None
         catalognum = item["catalog"]
 
+        #TODO(JojoXD): Can these comments be removed?
         # Get Artist information
         # if "performers" in item and len(item["performers"]) > 0:
         #    artist_type = "performers"
@@ -168,15 +171,19 @@ class VGMdbPlugin(BeetsPlugin):
         artist_type = "composers"
         artist_credit_list = []
         for artist_credit in item[artist_type]:
-            artist_credit_list.append(artist_credit['names']['en'])
+            artist_credit_list.append(self.lang_select(artist_credit['names']))
 
         arrangers_list = []
         for arranger in item['arrangers']:
-            arrangers_list.append(artist_credit['names']['en'])
+            arrangers_list.append(self.lang_select(arranger['names']))
 
         games = []
         for game in item['products']:
-            games.append(game['names']['en'])
+            games.append(self.lang_select(game['names']))
+
+        product = None
+        if len(item['products']) > 0:
+            product = self.lang_select(item['products'][0]['names'])
 
         artist = self.lang_select(item[artist_type][0]["names"])
         if "link" in item[artist_type][0]:
@@ -219,10 +226,21 @@ class VGMdbPlugin(BeetsPlugin):
                 Tracks.append(new_track)
 
         # Format Album release date
-        release_date = item["release_date"].split("-")
-        year = release_date[0]
-        month = release_date[1]
-        day = release_date[2]
+        year = None
+        month = None
+        day = None
+
+        if isinstance(item["release_date"], str):
+            release_date = item["release_date"].split("-")
+
+            if len(release_date) == 3:
+                day = int(release_date.pop(2))
+
+            if len(release_date) == 2:
+                month = int(release_date.pop(1))
+
+            if len(release_date) == 1:
+                year = int(release_date.pop(0))
 
         mediums = len(item["discs"])
         media = item["media_format"]
@@ -244,14 +262,15 @@ class VGMdbPlugin(BeetsPlugin):
                          asin=None,
                          albumtype=None,
                          va=False,
-                         year=int(year),
-                         month=int(month),
-                         day=int(day),
+                         year=year,
+                         month=month,
+                         day=day,
                          vgmdb_game=game,
                          mediums=int(mediums),
                          media=self.decode(media),
                          data_source=self.decode('VGMdb'),
                          data_url=self.decode(data_url),
                          country=self.decode(country),
-                         catalognum=self.decode(catalognum)
+                         catalognum=self.decode(catalognum),
+                         vgmdb_product=self.decode(product),
                          )
