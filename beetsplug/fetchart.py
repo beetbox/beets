@@ -722,7 +722,7 @@ class Wikipedia(RemoteArtSource):
         # This may be removed once the DBPedia issue is resolved, see:
         # https://github.com/dbpedia/extraction-framework/issues/396
         if ' .' in cover_filename and \
-                '.' not in cover_filename.split(' .')[-1]:
+            '.' not in cover_filename.split(' .')[-1]:
             self._log.debug(
                 'wikipedia: dbpedia provided incomplete cover_filename'
             )
