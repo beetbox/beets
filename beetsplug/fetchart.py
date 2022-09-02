@@ -434,15 +434,19 @@ class VGMdb(RemoteArtSource):
     INDICES = (1)
 
     def get(self, album, plugin, paths):
-        print("SLT")
-        print(album.vgmdb_album_id)
+        """Return album art URL from VGMdb using VGMdb album id.
+        """
         if album.vgmdb_album_id:
             try:
                 resp = self.request(self.URL % album.vgmdb_album_id)
                 url = resp.json()['picture_full']
+                self._log.debug('scraped VGMdb URL: {0}', url)
                 yield self._candidate(url=url, match=Candidate.MATCH_EXACT)
             except requests.RequestException:
-                self._log.debug('Error trying to contact vgmdb')
+                self._log.debug('Error trying to contact VGMdb')
+                return
+            except KeyError:
+                self._log.debug('Could not find album image from VGMdb')
                 return
 
 class AlbumArtOrg(RemoteArtSource):
@@ -956,7 +960,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'cautious': False,
             'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
             'sources': ['filesystem',
-                        'coverart', 'itunes', 'amazon', 'vgmdb', 'albumart'],
+                        'coverart', 'itunes', 'amazon', 'albumart'],
             'google_key': None,
             'google_engine': '001442825323518660753:hrh5ch1gjzm',
             'fanarttv_key': None,
