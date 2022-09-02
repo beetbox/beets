@@ -428,6 +428,23 @@ class Amazon(RemoteArtSource):
                                       match=Candidate.MATCH_EXACT)
 
 
+class VGMdb(RemoteArtSource):
+    NAME = "VGMdb"
+    URL = 'https://vgmdb.info/album/%s?format=json'
+    INDICES = (1)
+
+    def get(self, album, plugin, paths):
+        print("SLT")
+        print(album.vgmdb_album_id)
+        if album.vgmdb_album_id:
+            try:
+                resp = self.request(self.URL % album.vgmdb_album_id)
+                url = resp.json()['picture_full']
+                yield self._candidate(url=url, match=Candidate.MATCH_EXACT)
+            except requests.RequestException:
+                self._log.debug('Error trying to contact vgmdb')
+                return
+
 class AlbumArtOrg(RemoteArtSource):
     NAME = "AlbumArt.org scraper"
     URL = 'https://www.albumart.org/index_detail.php'
@@ -705,7 +722,7 @@ class Wikipedia(RemoteArtSource):
         # This may be removed once the DBPedia issue is resolved, see:
         # https://github.com/dbpedia/extraction-framework/issues/396
         if ' .' in cover_filename and \
-           '.' not in cover_filename.split(' .')[-1]:
+                '.' not in cover_filename.split(' .')[-1]:
             self._log.debug(
                 'wikipedia: dbpedia provided incomplete cover_filename'
             )
@@ -810,13 +827,13 @@ class FileSystem(LocalArtSource):
                     fn = bytestring_path(fn)
                     for ext in IMAGE_EXTENSIONS:
                         if fn.lower().endswith(b'.' + ext) and \
-                           os.path.isfile(syspath(os.path.join(path, fn))):
+                                os.path.isfile(syspath(os.path.join(path, fn))):
                             images.append(fn)
 
             # Look for "preferred" filenames.
             images = sorted(images,
                             key=lambda x:
-                                self.filename_priority(x, cover_names))
+                            self.filename_priority(x, cover_names))
             remaining = []
             for fn in images:
                 if re.search(cover_pat, os.path.splitext(fn)[0], re.I):
@@ -893,10 +910,11 @@ class LastFM(RemoteArtSource):
                             .format(response.text))
             return
 
+
 # Try each source in turn.
 
 SOURCES_ALL = ['filesystem',
-               'coverart', 'itunes', 'amazon', 'albumart',
+               'coverart', 'itunes', 'amazon', 'vgmdb', 'albumart',
                'wikipedia', 'google', 'fanarttv', 'lastfm']
 
 ART_SOURCES = {
@@ -905,12 +923,14 @@ ART_SOURCES = {
     'itunes': ITunesStore,
     'albumart': AlbumArtOrg,
     'amazon': Amazon,
+    'vgmdb': VGMdb,
     'wikipedia': Wikipedia,
     'google': GoogleImages,
     'fanarttv': FanartTV,
     'lastfm': LastFM,
 }
 SOURCE_NAMES = {v: k for k, v in ART_SOURCES.items()}
+
 
 # PLUGIN LOGIC ###############################################################
 
@@ -936,7 +956,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'cautious': False,
             'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
             'sources': ['filesystem',
-                        'coverart', 'itunes', 'amazon', 'albumart'],
+                        'coverart', 'itunes', 'amazon', 'vgmdb', 'albumart'],
             'google_key': None,
             'google_engine': '001442825323518660753:hrh5ch1gjzm',
             'fanarttv_key': None,
@@ -1083,6 +1103,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         def func(lib, opts, args):
             self.batch_fetch_art(lib, lib.albums(ui.decargs(args)), opts.force,
                                  opts.quiet)
+
         cmd.func = func
         return [cmd]
 
