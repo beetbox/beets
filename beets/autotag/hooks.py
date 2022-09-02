@@ -78,8 +78,7 @@ class AlbumInfo(AttrDict):
                  original_year=None, original_month=None,
                  original_day=None, data_source=None, data_url=None,
                  discogs_albumid=None, discogs_labelid=None,
-                 discogs_artistid=None, vgmdb_album_id=None,
-                 vgmdb_artist_id=None, vgmdb_game=None, **kwargs):
+                 discogs_artistid=None, **kwargs):
         self.album = album
         self.album_id = album_id
         self.artist = artist
@@ -114,9 +113,6 @@ class AlbumInfo(AttrDict):
         self.discogs_albumid = discogs_albumid
         self.discogs_labelid = discogs_labelid
         self.discogs_artistid = discogs_artistid,
-        self.vgmdb_album_id = vgmdb_album_id
-        self.vgmdb_game = vgmdb_game
-        self.vgmdb_artist_id = vgmdb_artist_id,
         self.update(kwargs)
 
     # Work around a bug in python-musicbrainz-ngs that causes some
