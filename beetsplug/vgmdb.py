@@ -1,32 +1,41 @@
-# update to python3
-# use lang priority everywhere
-# add prefer_original setting
+# This file is part of beets.
+# Copyright 2021, Eldarock.
+# Copyright 2022, JojoXD.
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
 
 """Adds VGMdb search support to Beets
 """
+
 from beets.autotag.hooks import AlbumInfo, TrackInfo, Distance, item_candidates
 from beets.dbcore.types import Id
 from beets.plugins import BeetsPlugin
 import json
-import logging
 import requests
 import re
-
-log = logging.getLogger('beets')
 
 
 class VGMdbPlugin(BeetsPlugin):
 
     def __init__(self):
-        super(VGMdbPlugin, self).__init__()
+        super().__init__()
         self.config.add({
             'source_weight': 1.0,
-            'lang-priority': 'en, ja-latn, ja',
+            'lang-priority': ['en', 'ja-latn', 'ja'],
             'prefer_original': True  # Only for Attack on Titan soundtracks
         })
-        log.debug('Querying VGMdb')
+        self._log.debug('Querying VGMdb')
         self.source_weight = self.config['source_weight'].as_number()
-        self.lang = self.config['lang-priority'].get().replace(' ', '').split(",")
+        self.lang = self.config['lang-priority'].as_str_seq()
         self.prefer_original = self.config['prefer_original'].get(bool)
 
     def lang_select(self, d):
@@ -77,18 +86,17 @@ class VGMdbPlugin(BeetsPlugin):
         try:
             ret = self.get_albums(query, va_likely)
             for x in ret:
-                msg = 'Found album: %s ; id: %s ; artist: %s' % (x.album, x.album_id, x.artist)
-                log.debug(msg)
+               self._debug('Found album: %s ; id: %s ; artist: %s' % (x.album, x.album_id, x.artist))
             return ret
         except:
-            log.debug('VGMdb Search Error: (query: %s)' % query)
+            self._log.debug('VGMdb Search Error: (query: %s)' % query)
             return []
 
     def album_for_id(self, album_id):
         """Fetches an album by its VGMdb ID and returns an AlbumInfo object
         or None if the album is not found.
         """
-        log.debug('Querying VGMdb for release %s' % str(album_id))
+        self._log.debug('Querying VGMdb for release %s' % str(album_id))
 
         # Get from VGMdb
         r = requests.get('http://vgmdb.info/album/%s?format=json' % str(album_id))
@@ -96,8 +104,8 @@ class VGMdbPlugin(BeetsPlugin):
         # Decode Response's content
         try:
             item = r.json()
-        except:
-            log.debug('VGMdb JSON Decode Error: (id: %s)' % album_id)
+        except requests.JSONDecodeError:
+            self._log.debug('VGMdb JSON Decode Error: (id: %s)' % album_id)
             return None
 
         return self.get_album_info(item, False)
@@ -122,19 +130,20 @@ class VGMdbPlugin(BeetsPlugin):
         try:
             items = r.json()
         except:
-            log.debug('VGMdb JSON Decode Error: (query: %s)' % query)
+            self._log.debug('VGMdb JSON Decode Error: (query: %s)' % query)
             return albums
 
         # Break up and get search results
         for item in items["results"]["albums"]:
-            album_id = str(self.decod(item["link"][6:]))
+            album_id = str(self.decode(item["link"][6:]))
             albums.append(self.album_for_id(album_id))
             if len(albums) >= 5:
                 break
-        log.debug('get_albums Querying VGMdb for release %s' % str(query))
+        self._log.debug('get_albums Querying VGMdb for release %s' % str(query))
         return albums
 
-    def decod(self, val, codec='utf8'):
+    # TODO(JojoXD): Check why this is needed
+    def decode(self, val, codec='utf8'):
         """Ensure that all string are coded to Unicode.
         """
         if isinstance(val, str):
@@ -228,8 +237,8 @@ class VGMdbPlugin(BeetsPlugin):
                          vgmdb_album_id=int(album_id),
                          album_id=int(album_id),
                          artist=artist,
-                         vgmdb_artist_id=self.decod(artist_id),
-                         artist_id=self.decod(artist_id),
+                         vgmdb_artist_id=self.decode(artist_id),
+                         artist_id=self.decode(artist_id),
                          artist_credit=artist_credit_list,
                          tracks=Tracks,
                          asin=None,
@@ -240,9 +249,9 @@ class VGMdbPlugin(BeetsPlugin):
                          day=int(day),
                          vgmdb_game=game,
                          mediums=int(mediums),
-                         media=self.decod(media),
-                         data_source=self.decod('VGMdb'),
-                         data_url=self.decod(data_url),
-                         country=self.decod(country),
-                         catalognum=self.decod(catalognum)
+                         media=self.decode(media),
+                         data_source=self.decode('VGMdb'),
+                         data_url=self.decode(data_url),
+                         country=self.decode(country),
+                         catalognum=self.decode(catalognum)
                          )
