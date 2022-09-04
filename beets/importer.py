@@ -170,6 +170,17 @@ def history_get():
     return state[HISTORY_KEY]
 
 
+def get_bitrate(item, is_album):
+    if isinstance(item, list):
+        pass
+    elif is_album:
+        item = list(item.items())
+    else:
+        item = [item]
+    total_bitrate = sum([i.bitrate for i in item])
+    return total_bitrate / len(item)
+
+
 # Abstract session class.
 
 class ImportSession:
@@ -1482,6 +1493,7 @@ def resolve_duplicates(session, task):
                 'remove': 'r',
                 'merge': 'm',
                 'ask': 'a',
+                'upgrade': 'u',
             })
             log.debug('default action for duplicates: {0}', duplicate_action)
 
@@ -1497,6 +1509,13 @@ def resolve_duplicates(session, task):
             elif duplicate_action == 'm':
                 # Merge duplicates together
                 task.should_merge_duplicates = True
+            elif duplicate_action == 'u':
+                existing = max([get_bitrate(d, task.is_album) for d in found_duplicates])
+                new_bitrate = get_bitrate(task.imported_items(), task.is_album)
+                if new_bitrate > existing:
+                    task.should_remove_duplicates = True
+                else:
+                    task.set_choice(action.SKIP)
             else:
                 # No default action set; ask the session.
                 session.resolve_duplicate(task, found_duplicates)
