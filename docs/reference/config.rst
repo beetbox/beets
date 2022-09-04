@@ -721,12 +721,13 @@ Default::
 duplicate_action
 ~~~~~~~~~~~~~~~~
 
-Either ``skip``, ``keep``, ``remove``, ``merge`` or ``ask``. 
+Either ``skip``, ``keep``, ``remove``, ``merge``, ``upgrade`` or ``ask``.
 Controls how duplicates are treated in import task. 
 "skip" means that new item(album or track) will be skipped; 
 "keep" means keep both old and new items; "remove" means remove old
 item; "merge" means merge into one album; "ask" means the user 
-should be prompted for the action each time. The default is ``ask``.
+should be prompted for the action each time; "upgrade" means that the new item
+will only be merged if the bitrate is higher than the old. The default is ``ask``.
 
 .. _bell:
 
