@@ -872,8 +872,14 @@ class TerminalImportSession(importer.ImportSession):
         elif sel == 'm':
             task.should_merge_duplicates = True
         elif sel == 'u':
-            existing = max([importer.get_bitrate(d, task.is_album) for d in found_duplicates])
-            new_bitrate = importer.get_bitrate(task.imported_items(), task.is_album)
+            existing = max(
+                [importer.get_bitrate(d, task.is_album)
+                 for d in found_duplicates],
+            )
+            new_bitrate = importer.get_bitrate(
+                task.imported_items(),
+                task.is_album,
+            )
             if new_bitrate > existing:
                 task.should_remove_duplicates = True
             else:

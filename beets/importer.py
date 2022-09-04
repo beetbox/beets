@@ -1510,7 +1510,9 @@ def resolve_duplicates(session, task):
                 # Merge duplicates together
                 task.should_merge_duplicates = True
             elif duplicate_action == 'u':
-                existing = max([get_bitrate(d, task.is_album) for d in found_duplicates])
+                existing = max(
+                    [get_bitrate(d, task.is_album) for d in found_duplicates],
+                )
                 new_bitrate = get_bitrate(task.imported_items(), task.is_album)
                 if new_bitrate > existing:
                     task.should_remove_duplicates = True
