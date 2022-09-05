@@ -27,6 +27,7 @@ from beets import util
 from beets import config
 from collections import Counter
 from urllib.parse import urljoin
+from beetsplug.discogs import extract_release_id_regex
 
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
 
@@ -68,7 +69,7 @@ log = logging.getLogger('beets')
 RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'labels', 'artist-credits', 'aliases',
                     'recording-level-rels', 'work-rels',
-                    'work-level-rels', 'artist-rels', 'isrcs']
+                    'work-level-rels', 'artist-rels', 'isrcs', 'url-rels']
 BROWSE_INCLUDES = ['artist-credits', 'work-rels',
                    'artist-rels', 'recording-rels', 'release-rels']
 if "work-level-rels" in musicbrainzngs.VALID_BROWSE_INCLUDES['recording']:
@@ -474,6 +475,22 @@ def album_info(release):
                 genres[genreitem['name']] += int(genreitem['count'])
         info.genre = '; '.join(g[0] for g in sorted(genres.items(),
                                                     key=lambda g: -g[1]))
+
+    # Additional online sources if MusicBrainz provides them.
+    if release.get('url-relation-list'):
+        d_release_url, d_master_url = None, None
+        for url in release['url-relation-list']:
+            if url['type'] == 'discogs':
+                if 'release' in url['target']:
+                    log.debug('Found a Discogs Release link.')
+                    d_release_url = url['target']
+                if 'master' in url['target']:
+                    log.debug('Found a Discogs Master link.')
+                    d_master_url = url['target']
+        # We prefer a Discogs Release URL, but a Master URL is better than
+        # nothing.
+        discogs_url = d_release_url if d_release_url else d_master_url
+        info.discogs_albumid = extract_release_id_regex(discogs_url)
 
     extra_albumdatas = plugins.send('mb_album_extract', data=release)
     for extra_albumdata in extra_albumdatas:
