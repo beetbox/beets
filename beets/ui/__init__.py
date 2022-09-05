@@ -18,6 +18,7 @@ CLI commands are implemented in the ui.commands module.
 """
 
 
+import logging
 import optparse
 import textwrap
 import sys
@@ -27,9 +28,9 @@ import errno
 import re
 import struct
 import traceback
-import os.path
+import os
 
-from beets import logging
+from rich.logging import RichHandler
 from beets import library
 from beets import plugins
 from beets import util
@@ -53,7 +54,9 @@ if sys.platform == 'win32':
 
 log = logging.getLogger('beets')
 if not log.handlers:
-    log.addHandler(logging.StreamHandler())
+    handler = RichHandler(show_path=False, show_level=False, omit_repeated_times=False, rich_tracebacks=True, keywords=["Sending event", "import"], markup=True)
+    handler.setFormatter(logging.Formatter("[b grey42]{name:<20}[/] {message}", datefmt="%T", style="{"))
+    log.addHandler(handler)
 log.propagate = False  # Don't propagate to root handler.
 
 
@@ -1304,7 +1307,12 @@ def main(args=None):
         _raw_main(args)
     except UserError as exc:
         message = exc.args[0] if exc.args else None
-        log.error('error: {0}', message)
+        if 'No matching' in message:
+            log.error('error: {0}', message)
+        else:
+            from rich.console import Console
+            console = Console(force_interactive=True, force_terminal=True, stderr=True)
+            console.print_exception(extra_lines=4, show_locals=True)
         sys.exit(1)
     except util.HumanReadableException as exc:
         exc.log(log)

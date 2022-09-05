@@ -17,11 +17,19 @@ interface.
 """
 
 
+import typing as t
 import os
 import re
+from math import floor
+import operator as op
+from typing import Dict, Any
+from time import localtime, strftime
 from platform import python_version
 from collections import namedtuple, Counter
 from itertools import chain
+from rich_tables.utils import new_table, make_difftext, border_panel, wrap
+from rich import print
+from rich import box
 
 import beets
 from beets import ui
@@ -33,18 +41,22 @@ from beets import plugins
 from beets import importer
 from beets import util
 from beets.util import syspath, normpath, ancestry, displayable_path, \
-    MoveOperation, functemplate
+    MoveOperation
 from beets import library
 from beets import config
-from beets import logging
+import logging
 
 from . import _store_dict
+from rich.console import Console
 
+JSONDict = Dict[str, Any]
+
+console = Console(force_terminal=True, force_interactive=True)
 VARIOUS_ARTISTS = 'Various Artists'
 PromptChoice = namedtuple('PromptChoice', ['short', 'long', 'callback'])
 
 # Global logger.
-log = logging.getLogger('beets')
+log = logging.getLogger(__name__)
 
 # The list of default subcommands. This is populated with Subcommand
 # objects that can be fed to a SubcommandsOptionParser.
@@ -77,43 +89,6 @@ def _do_query(lib, query, album, also_items=True):
         raise ui.UserError('No matching items found.')
 
     return items, albums
-
-
-def _paths_from_logfile(path):
-    """Parse the logfile and yield skipped paths to pass to the `import`
-    command.
-    """
-    with open(path, mode="r", encoding="utf-8") as fp:
-        for i, line in enumerate(fp, start=1):
-            verb, sep, paths = line.rstrip("\n").partition(" ")
-            if not sep:
-                raise ValueError(f"line {i} is invalid")
-
-            # Ignore informational lines that don't need to be re-imported.
-            if verb in {"import", "duplicate-keep", "duplicate-replace"}:
-                continue
-
-            if verb not in {"asis", "skip", "duplicate-skip"}:
-                raise ValueError(f"line {i} contains unknown verb {verb}")
-
-            yield os.path.commonpath(paths.split("; "))
-
-
-def _parse_logfiles(logfiles):
-    """Parse all `logfiles` and yield paths from it."""
-    for logfile in logfiles:
-        try:
-            yield from _paths_from_logfile(syspath(normpath(logfile)))
-        except ValueError as err:
-            raise ui.UserError('malformed logfile {}: {}'.format(
-                util.displayable_path(logfile),
-                str(err)
-            )) from err
-        except IOError as err:
-            raise ui.UserError('unreadable logfile {}: {}'.format(
-                util.displayable_path(logfile),
-                str(err)
-            )) from err
 
 
 # fields: Shows a list of available fields for queries and format strings.
@@ -184,16 +159,24 @@ default_commands.append(HelpCommand())
 
 # Importer utilities and support.
 
-def disambig_string(info):
+def disambig_string(info: t.Union[hooks.AlbumInfo, hooks.TrackInfo]) -> t.Optional[str]:
     """Generate a string for an AlbumInfo or TrackInfo object that
     provides context that helps disambiguate similar-looking albums and
     tracks.
     """
-    disambig = []
-    if info.data_source and info.data_source != 'MusicBrainz':
-        disambig.append(info.data_source)
+    disambig = [info.data_source]
 
     if isinstance(info, hooks.AlbumInfo):
+        if info.year:
+            disambig.append(str(info.year))
+        if info.country:
+            disambig.append(info.country)
+        if info.label:
+            disambig.append(info.label)
+        if info.albumtype:
+            disambig.append(info.albumtype)
+        if info.albumstatus:
+            disambig.append(info.albumstatus)
         if info.media:
             if info.mediums and info.mediums > 1:
                 disambig.append('{}x{}'.format(
@@ -201,12 +184,6 @@ def disambig_string(info):
                 ))
             else:
                 disambig.append(info.media)
-        if info.year:
-            disambig.append(str(info.year))
-        if info.country:
-            disambig.append(info.country)
-        if info.label:
-            disambig.append(info.label)
         if info.catalognum:
             disambig.append(info.catalognum)
         if info.albumdisambig:
@@ -214,9 +191,10 @@ def disambig_string(info):
 
     if disambig:
         return ', '.join(disambig)
+    return None
 
 
-def dist_string(dist):
+def dist_string(dist: hooks.Distance) -> str:
     """Formats a distance (a float) as a colorized similarity percentage
     string.
     """
@@ -231,6 +209,7 @@ def dist_string(dist):
 
 
 def penalty_string(distance, limit=None):
+    # type: (hooks.Distance, t.Optional[int]) -> t.Optional[str]
     """Returns a colorized string that indicates all the penalties
     applied to a distance object.
     """
@@ -243,23 +222,59 @@ def penalty_string(distance, limit=None):
     if penalties:
         if limit and len(penalties) > limit:
             penalties = penalties[:limit] + ['...']
-        return ui.colorize('text_warning', '(%s)' % ', '.join(penalties))
+        return ui.colorize('text_warning', "(" + ', '.join(penalties) + ")")
+    return None
 
 
-def show_change(cur_artist, cur_album, match):
+def print_match_info(match: t.Union[hooks.AlbumMatch, hooks.TrackMatch]) -> None:
+    info = []
+    info.append('(Similarity: {})'.format(dist_string(match.distance)))
+    disambig = disambig_string(match.info)
+    if disambig:
+        info.append(ui.colorize('text_highlight_minor', '(' + disambig + ')'))
+    penalties = penalty_string(match.distance)
+    if penalties:
+        info.append(penalties)
+    print_(' '.join(info))
+
+
+def get_diff(overwrite_fields, field, item_field, new, old) -> str:
+    after = new.get(field)
+    if after is None and field not in overwrite_fields:
+        return ""
+
+    after = str(after or "")
+    before = old.get(item_field)
+    if field == "va":
+        before = {1: True, 0: False}.get(before, before)
+    elif field == "length":
+        before = strftime("%M:%S", localtime(floor(float(before or 0))))
+        after = strftime("%M:%S", localtime(floor(float(after or 0))))
+    before = str(before or "")
+
+    return make_difftext(before, after) if before != after else ""
+
+
+keymap = {
+    "album_id": "mb_albumid",
+    "artist_id": "mb_artistid",
+    "track_id": "mb_trackid",
+    "va": "comp",
+    "index": "track",
+    "mediums": "disctotal",
+    "medium_total": "tracktotal",
+    "medium_index": "track",
+    "medium": "disc",
+    "releasegroup_id": "mb_releasegroupid",
+    "release_track_id": "mb_releasetrackid",
+}
+
+
+def show_change(cur_artist: str, cur_album: str, match: hooks.AlbumMatch) -> None:
     """Print out a representation of the changes that will be made if an
     album's tags are changed according to `match`, which must be an AlbumMatch
     object.
     """
-    def show_album(artist, album):
-        if artist:
-            album_description = f'    {artist} - {album}'
-        elif album:
-            album_description = '    %s' % album
-        else:
-            album_description = '    (unknown album)'
-        print_(album_description)
-
     def format_index(track_info):
         """Return a string representing the track index of the given
         TrackInfo or Item object.
@@ -282,195 +297,103 @@ def show_change(cur_artist, cur_album, match):
         else:
             return str(index)
 
-    # Identify the album in question.
-    if cur_artist != match.info.artist or \
-            (cur_album != match.info.album and
-             match.info.album != VARIOUS_ARTISTS):
-        artist_l, artist_r = cur_artist or '', match.info.artist
-        album_l, album_r = cur_album or '', match.info.album
-        if artist_r == VARIOUS_ARTISTS:
-            # Hide artists for VA releases.
-            artist_l, artist_r = '', ''
-
-        if config['artist_credit']:
-            artist_r = match.info.artist_credit
-
-        artist_l, artist_r = ui.colordiff(artist_l, artist_r)
-        album_l, album_r = ui.colordiff(album_l, album_r)
-
-        print_("Correcting tags from:")
-        show_album(artist_l, album_l)
-        print_("To:")
-        show_album(artist_r, album_r)
-    else:
-        print_("Tagging:\n    {0.artist} - {0.album}".format(match.info))
-
-    # Data URL.
-    if match.info.data_url:
-        print_('URL:\n    %s' % match.info.data_url)
-
-    # Info line.
-    info = []
-    # Similarity.
-    info.append('(Similarity: %s)' % dist_string(match.distance))
-    # Penalties.
-    penalties = penalty_string(match.distance)
-    if penalties:
-        info.append(penalties)
-    # Disambiguation.
-    disambig = disambig_string(match.info)
-    if disambig:
-        info.append(ui.colorize('text_highlight_minor', '(%s)' % disambig))
-    print_(' '.join(info))
-
-    # Tracks.
     pairs = list(match.mapping.items())
     pairs.sort(key=lambda item_and_track_info: item_and_track_info[1].index)
 
-    # Build up LHS and RHS for track difference display. The `lines` list
-    # contains ``(lhs, rhs, width)`` tuples where `width` is the length (in
-    # characters) of the uncolorized LHS.
-    lines = []
-    medium = disctitle = None
+    new = match.info.copy()
+    old = pairs[0][0].copy()
+    old["album"] = cur_album
+    new["albumartist"] = new["artist"]
+
+    print_match_info(match)
+    show_item_change(old, new, {"tracks", "data_url"})
+
+    fields = ["index", "artist", "title", "length"]
+    tracks_table = new_table(
+        *fields,
+        highlight=False,
+        box=box.HORIZONTALS,
+        border_style="white",
+    )
+
+    ow = config["overwrite_null"]["track"].as_str_seq()
+    skip = {"media", "data_source", "data_url", "artist_id", "track_id", "bandcamp_track_id"}
+
+    def _make_track_diff(old: library.Item, new: hooks.TrackInfo) -> JSONDict:
+        diffs: JSONDict = dict(zip(fields, map(lambda x: new.get(x) or "", fields)))
+        for field in sorted(set(list(new) + list(old)) - skip):
+            diff = get_diff(ow, field, keymap.get(field, field), new, old) or new.get(field)
+            if diff:
+                diffs[field] = diff
+                if field not in fields:
+                    tracks_table.add_column(field)
+                    fields.append(field)
+
+        return diffs
+
     for item, track_info in pairs:
+        data = _make_track_diff(item, track_info)
+        data["artist"] = data.get("artist") or cur_artist
+        data["index"] = str(data["index"])
 
-        # Medium number and title.
-        if medium != track_info.medium or disctitle != track_info.disctitle:
-            media = match.info.media or 'Media'
-            if match.info.mediums > 1 and track_info.disctitle:
-                lhs = '{} {}: {}'.format(media, track_info.medium,
-                                         track_info.disctitle)
-            elif match.info.mediums > 1:
-                lhs = f'{media} {track_info.medium}'
-            elif track_info.disctitle:
-                lhs = f'{media}: {track_info.disctitle}'
-            else:
-                lhs = None
-            if lhs:
-                lines.append((lhs, '', 0))
-            medium, disctitle = track_info.medium, track_info.disctitle
-
-        # Titles.
-        new_title = track_info.title
-        if not item.title.strip():
-            # If there's no title, we use the filename.
-            cur_title = displayable_path(os.path.basename(item.path))
-            lhs, rhs = cur_title, new_title
-        else:
-            cur_title = item.title.strip()
-            lhs, rhs = ui.colordiff(cur_title, new_title)
-        lhs_width = len(cur_title)
-
-        # Track number change.
-        cur_track, new_track = format_index(item), format_index(track_info)
-        if cur_track != new_track:
-            if item.track in (track_info.index, track_info.medium_index):
-                color = 'text_highlight_minor'
-            else:
-                color = 'text_highlight'
-            templ = ui.colorize(color, ' (#{0})')
-            lhs += templ.format(cur_track)
-            rhs += templ.format(new_track)
-            lhs_width += len(cur_track) + 4
-
-        # Length change.
-        if item.length and track_info.length and \
-                abs(item.length - track_info.length) > \
-                config['ui']['length_diff_thresh'].as_number():
-            cur_length = ui.human_seconds_short(item.length)
-            new_length = ui.human_seconds_short(track_info.length)
-            templ = ui.colorize('text_highlight', ' ({0})')
-            lhs += templ.format(cur_length)
-            rhs += templ.format(new_length)
-            lhs_width += len(cur_length) + 3
-
-        # Penalties.
-        penalties = penalty_string(match.distance.tracks[track_info])
-        if penalties:
-            rhs += ' %s' % penalties
-
-        if lhs != rhs:
-            lines.append((' * %s' % lhs, rhs, lhs_width))
-        elif config['import']['detail']:
-            lines.append((' * %s' % lhs, '', lhs_width))
-
-    # Print each track in two columns, or across two lines.
-    col_width = (ui.term_width() - len(''.join([' * ', ' -> ']))) // 2
-    if lines:
-        max_width = max(w for _, _, w in lines)
-        for lhs, rhs, lhs_width in lines:
-            if not rhs:
-                print_(lhs)
-            elif max_width > col_width:
-                print_(f'{lhs} ->\n   {rhs}')
-            else:
-                pad = max_width - lhs_width
-                print_('{}{} -> {}'.format(lhs, ' ' * pad, rhs))
+        tracks_table.add_row(*map(str, op.itemgetter(*fields)(data)))
+        tracks_table.rows[-1].style = "dim"
 
     # Missing and unmatched tracks.
-    if match.extra_tracks:
-        print_('Missing tracks ({}/{} - {:.1%}):'.format(
-               len(match.extra_tracks),
-               len(match.info.tracks),
-               len(match.extra_tracks) / len(match.info.tracks)
-               ))
-        pad_width = max(len(track_info.title) for track_info in
-                        match.extra_tracks)
-    for track_info in match.extra_tracks:
-        line = ' ! {0: <{width}} (#{1: >2})'.format(track_info.title,
-                                                    format_index(track_info),
-                                                    width=pad_width)
-        if track_info.length:
-            line += ' (%s)' % ui.human_seconds_short(track_info.length)
-        print_(ui.colorize('text_warning', line))
-    if match.extra_items:
-        print_('Unmatched tracks ({}):'.format(len(match.extra_items)))
-        pad_width = max(len(item.title) for item in match.extra_items)
-    for item in match.extra_items:
-        line = ' ! {0: <{width}} (#{1: >2})'.format(item.title,
-                                                    format_index(item),
-                                                    width=pad_width)
-        if item.length:
-            line += ' (%s)' % ui.human_seconds_short(item.length)
-        print_(ui.colorize('text_warning', line))
+    for n, tracks in [("Missing", match.extra_tracks), ("Unmatched", match.extra_items)]:
+        if tracks:
+            tracks_table.add_row(end_section=True)
+            tracks_table.add_row(f"[b]{n}[/]")
+            for track in tracks:
+                track = track.copy()
+                if track.length:
+                    track.length = strftime("%M:%S", localtime(floor(float(track.length))))
+
+                values = map(str, map(lambda x: track.get(x) or "", fields))
+                tracks_table.add_row(*values, style="b yellow")
+
+    title = wrap("Tracks", "b i cyan")
+    subtitle = wrap(f"Skipped fields: {', '.join(skip)}\n", "dim")
+    console.print(border_panel(tracks_table, title=title, subtitle=subtitle))
 
 
-def show_item_change(item, match):
+def show_item_change(
+    old: library.Item,
+    new: t.Union[autotag.AlbumInfo, autotag.TrackInfo],
+    skip: t.Set[str] = set(),
+) -> None:
     """Print out the change that would occur by tagging `item` with the
-    metadata from `match`, a TrackMatch object.
+    metadata from `match` - either an album or a track.
     """
-    cur_artist, new_artist = item.artist, match.info.artist
-    cur_title, new_title = item.title, match.info.title
+    new_meta = new_table()  # for all new metadata
+    upd_meta = new_table()  # for changes only
 
-    if cur_artist != new_artist or cur_title != new_title:
-        cur_artist, new_artist = ui.colordiff(cur_artist, new_artist)
-        cur_title, new_title = ui.colordiff(cur_title, new_title)
+    item_type = "album" if new.get("album_id") else "track"
+    ow = set(config["overwrite_null"][item_type].as_str_seq())
+    this_keymap = {**keymap}
+    # console.print("In old but not new", sorted(set(old) - set(new)))
+    # console.print("In new but not old", sorted(set(new) - set(old)))
+    if item_type == "album":
+        this_keymap.update(
+            artist="albumartist",
+            artist_id="mb_albumartistid",
+            artist_sort="albumartist_sort",
+            artist_credit="albumartist_credit",
+        )
+    for field in sorted(filter(lambda x: x not in skip, new.keys())):
+        new_meta.add_row(wrap(field, "b"), str(new.get(field)))
+        diff = get_diff(ow, field, this_keymap.get(field, field), new, old)
+        if diff:
+            upd_meta.add_row(wrap(field, "b"), diff)
 
-        print_("Correcting track tags from:")
-        print_(f"    {cur_artist} - {cur_title}")
-        print_("To:")
-        print_(f"    {new_artist} - {new_title}")
+    new_panel = border_panel(new_meta)
 
-    else:
-        print_(f"Tagging track: {cur_artist} - {cur_title}")
+    if new.data_url:
+        new_panel.subtitle = wrap(new.data_url, "b grey35")
+    console.print(new_panel)
 
-    # Data URL.
-    if match.info.data_url:
-        print_('URL:\n    %s' % match.info.data_url)
-
-    # Info line.
-    info = []
-    # Similarity.
-    info.append('(Similarity: %s)' % dist_string(match.distance))
-    # Penalties.
-    penalties = penalty_string(match.distance)
-    if penalties:
-        info.append(penalties)
-    # Disambiguation.
-    disambig = disambig_string(match.info)
-    if disambig:
-        info.append(ui.colorize('text_highlight_minor', '(%s)' % disambig))
-    print_(' '.join(info))
+    if upd_meta.row_count:
+        console.print(border_panel(upd_meta, title="Updates"))
 
 
 def summarize_items(items, singleton):
@@ -622,7 +545,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
                 ]
 
                 # Penalties.
-                penalties = penalty_string(match.distance, 3)
+                penalties = penalty_string(match.distance, 6)
                 if penalties:
                     line.append(penalties)
 
@@ -651,7 +574,7 @@ def choose_candidate(candidates, singleton, rec, cur_artist=None,
 
         # Show what we're about to do.
         if singleton:
-            show_item_change(item, match)
+            show_item_change(item, match.info, {"data_url"})
         else:
             show_change(cur_artist, cur_album, match)
 
@@ -950,6 +873,12 @@ def import_files(lib, paths, query):
     """Import the files in the given list of paths or matching the
     query.
     """
+    # Check the user-specified directories.
+    for path in paths:
+        if not os.path.exists(syspath(normpath(path))):
+            raise ui.UserError('no such file or directory: {}'.format(
+                displayable_path(path)))
+
     # Check parameter consistency.
     if config['import']['quiet'] and config['import']['timid']:
         raise ui.UserError("can't be both quiet and timid")
@@ -991,12 +920,7 @@ def import_func(lib, opts, args):
     else:
         query = None
         paths = args
-
-        # The paths from the logfiles go into a separate list to allow handling
-        # errors differently from user-specified paths.
-        paths_from_logfiles = list(_parse_logfiles(opts.from_logfiles or []))
-
-        if not paths and not paths_from_logfiles:
+        if not paths:
             raise ui.UserError('no path specified')
 
         # On Python 2, we used to get filenames as raw bytes, which is
@@ -1005,31 +929,6 @@ def import_func(lib, opts, args):
         # filename.
         paths = [p.encode(util.arg_encoding(), 'surrogateescape')
                  for p in paths]
-        paths_from_logfiles = [p.encode(util.arg_encoding(), 'surrogateescape')
-                               for p in paths_from_logfiles]
-
-        # Check the user-specified directories.
-        for path in paths:
-            if not os.path.exists(syspath(normpath(path))):
-                raise ui.UserError('no such file or directory: {}'.format(
-                    displayable_path(path)))
-
-        # Check the directories from the logfiles, but don't throw an error in
-        # case those paths don't exist. Maybe some of those paths have already
-        # been imported and moved separately, so logging a warning should
-        # suffice.
-        for path in paths_from_logfiles:
-            if not os.path.exists(syspath(normpath(path))):
-                log.warning('No such file or directory: {}'.format(
-                    displayable_path(path)))
-                continue
-
-            paths.append(path)
-
-        # If all paths were read from a logfile, and none of them exist, throw
-        # an error
-        if not paths:
-            raise ui.UserError('none of the paths are importable')
 
     import_files(lib, paths, query)
 
@@ -1123,11 +1022,6 @@ import_cmd.parser.add_option(
     help='restrict matching to a specific metadata backend ID'
 )
 import_cmd.parser.add_option(
-    '--from-logfile', dest='from_logfiles', action='append',
-    metavar='PATH',
-    help='read skipped paths from an existing logfile'
-)
-import_cmd.parser.add_option(
     '--set', dest='set_fields', action='callback',
     callback=_store_dict,
     metavar='FIELD=VALUE',
@@ -1201,8 +1095,7 @@ def update_items(lib, query, album, move, pretend, fields):
             try:
                 item.read()
             except library.ReadError as exc:
-                log.error('error reading {0}: {1}',
-                          displayable_path(item.path), exc)
+                log.error('error reading {0}: {1}', item.path, exc)
                 continue
 
             # Special-case album artist when it matches track artist. (Hacky
@@ -1477,6 +1370,9 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
     # Parse key=value specifications into a dictionary.
     model_cls = library.Album if album else library.Item
 
+    for key, value in mods.items():
+        mods[key] = model_cls._parse(key, value)
+
     # Get the items to modify.
     items, albums = _do_query(lib, query, album, False)
     objs = albums if album else items
@@ -1486,14 +1382,8 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
     print_('Modifying {} {}s.'
            .format(len(objs), 'album' if album else 'item'))
     changed = []
-    templates = {key: functemplate.template(value)
-                 for key, value in mods.items()}
     for obj in objs:
-        obj_mods = {
-            key: model_cls._parse(key, obj.evaluate_template(templates[key]))
-            for key in mods.keys()
-        }
-        if print_and_modify(obj, obj_mods, dels) and obj not in changed:
+        if print_and_modify(obj, mods, dels) and obj not in changed:
             changed.append(obj)
 
     # Still something to do?
@@ -1645,7 +1535,7 @@ def move_items(lib, dest, query, copy, album, pretend, confirm=False,
                     [(o.path, o.destination(basedir=dest))]))
 
         for obj in objs:
-            log.debug('moving: {0}', util.displayable_path(obj.path))
+            show_path_changes([(obj.path, obj.destination(basedir=dest))])
 
             if export:
                 # Copy without affecting the database.
