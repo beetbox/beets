@@ -29,6 +29,7 @@ from beets import util
 from beets import config
 from collections import Counter
 from urllib.parse import urljoin
+from beets.util.id_extractors import extract_discogs_id_regex
 
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
 
@@ -70,7 +71,7 @@ log = logging.getLogger('beets')
 RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'labels', 'artist-credits', 'aliases',
                     'recording-level-rels', 'work-rels',
-                    'work-level-rels', 'artist-rels', 'isrcs']
+                    'work-level-rels', 'artist-rels', 'isrcs', 'url-rels']
 BROWSE_INCLUDES = ['artist-credits', 'work-rels',
                    'artist-rels', 'recording-rels', 'release-rels']
 if "work-level-rels" in musicbrainzngs.VALID_BROWSE_INCLUDES['recording']:
@@ -510,6 +511,15 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
             genre for genre, _count
             in sorted(genres.items(), key=lambda g: -g[1])
         )
+
+    # We might find URLs to external sources (Discogs, Spotify, ...)
+    if release.get('url-relation-list'):
+        discogs_url = None
+        for url in release['url-relation-list']:
+            if url['type'] == 'discogs':
+                log.debug('Found link to Discogs release via MusicBrainz')
+                discogs_url = url['target']
+        info.discogs_albumid = extract_release_id_regex(discogs_url)
 
     extra_albumdatas = plugins.send('mb_album_extract', data=release)
     for extra_albumdata in extra_albumdatas:
