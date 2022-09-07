@@ -170,7 +170,7 @@ def history_get():
     return state[HISTORY_KEY]
 
 
-def get_bitrate(item, is_album):
+def calculate_quality_score(item, is_album):
     item = get_items_as_list(is_album, item)
     total_bitrate = sum([i.bitrate for i in item])
     return total_bitrate / len(item)
@@ -1516,9 +1516,9 @@ def resolve_duplicates(session, task):
                 task.should_merge_duplicates = True
             elif duplicate_action == 'u':
                 existing = max(
-                    [get_bitrate(d, task.is_album) for d in found_duplicates],
+                    [calculate_quality_score(d, task.is_album) for d in found_duplicates],
                 )
-                new_bitrate = get_bitrate(task.imported_items(), task.is_album)
+                new_bitrate = calculate_quality_score(task.imported_items(), task.is_album)
                 if new_bitrate > existing:
                     task.should_remove_duplicates = True
                 else:
