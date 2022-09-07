@@ -857,7 +857,7 @@ class TerminalImportSession(importer.ImportSession):
             ))
 
             sel = ui.input_options(
-                ('Skip new', 'Keep all', 'Remove old', 'Merge all', 'Upgrade')
+                ('Skip new', 'Keep all', 'Remove old', 'Merge all')
             )
 
         if sel == 's':
@@ -871,19 +871,6 @@ class TerminalImportSession(importer.ImportSession):
             task.should_remove_duplicates = True
         elif sel == 'm':
             task.should_merge_duplicates = True
-        elif sel == 'u':
-            existing = max(
-                [importer.get_bitrate(d, task.is_album)
-                 for d in found_duplicates],
-            )
-            new_bitrate = importer.get_bitrate(
-                task.imported_items(),
-                task.is_album,
-            )
-            if new_bitrate > existing:
-                task.should_remove_duplicates = True
-            else:
-                task.set_choice(importer.action.SKIP)
         else:
             assert False
 
