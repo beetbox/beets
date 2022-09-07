@@ -171,14 +171,19 @@ def history_get():
 
 
 def get_bitrate(item, is_album):
+    item = get_items_as_list(is_album, item)
+    total_bitrate = sum([i.bitrate for i in item])
+    return total_bitrate / len(item)
+
+
+def get_items_as_list(is_album, item):
     if isinstance(item, list):
         pass
     elif is_album:
         item = list(item.items())
     else:
         item = [item]
-    total_bitrate = sum([i.bitrate for i in item])
-    return total_bitrate / len(item)
+    return item
 
 
 # Abstract session class.
