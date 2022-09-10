@@ -1,5 +1,6 @@
 # This file is part of beets.
 # Copyright 2016, Adrian Sampson.
+# Copyright 2022, Szymon "Samik" Tarasiński.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -29,382 +30,373 @@ class BeatportTest(_common.TestCase, TestHelper):
         """Returns a dict that mimics a response from the beatport API.
 
         The results were retrieved from:
-        https://oauth-api.beatport.com/catalog/3/releases?id=1742984
+        https://api.beatport.com/v4/docs/catalog/releases/1742984/
         The list of elements on the returned dict is incomplete, including just
         those required for the tests on this class.
         """
-        results = {
-          "id": 1742984,
-          "type": "release",
-          "name": "Charade",
-          "slug": "charade",
-          "releaseDate": "2016-04-11",
-          "publishDate": "2016-04-11",
-          "audioFormat": "",
-          "category": "Release",
-          "currentStatus": "General Content",
-          "catalogNumber": "GR089",
-          "description": "",
-          "label": {
-            "id": 24539,
-            "name": "Gravitas Recordings",
-            "type": "label",
-            "slug": "gravitas-recordings"
-          },
-          "artists": [{
-            "id": 326158,
-            "name": "Supersillyus",
-            "slug": "supersillyus",
-            "type": "artist"
-          }],
-          "genres": [{
-            "id": 9,
-            "name": "Breaks",
-            "slug": "breaks",
-            "type": "genre"
-          }],
+        result = {
+            "artists": [
+                {
+                    "id": 326158,
+                    "name": "Supersillyus",
+                    "slug": "supersillyus",
+                }
+            ],
+            "catalog_number": "GR089",
+            "id": 1742984,
+            "label": {
+                "id": 24539,
+                "name": "Gravitas Recordings",
+                "slug": "gravitas-recordings"
+            },
+            "name": "Charade",
+            "new_release_date": "2016-04-11",
+            "publish_date": "2016-04-11",
+            "remixers": [],
+            "slug": "charade",
+            "track_count": 6,
+            "type": {
+                "id": 1,
+                "name": "Release"
+            },
         }
-        return results
+        return result
 
     def _make_tracks_response(self):
         """Return a list that mimics a response from the beatport API.
 
         The results were retrieved from:
-        https://oauth-api.beatport.com/catalog/3/tracks?releaseId=1742984
+        https://api.beatport.com/v4/docs/catalog/releases/1742984/tracks/
         The list of elements on the returned list is incomplete, including just
         those required for the tests on this class.
         """
-        results = [{
-          "id": 7817567,
-          "type": "track",
-          "sku": "track-7817567",
-          "name": "Mirage a Trois",
-          "trackNumber": 1,
-          "mixName": "Original Mix",
-          "title": "Mirage a Trois (Original Mix)",
-          "slug": "mirage-a-trois-original-mix",
-          "releaseDate": "2016-04-11",
-          "publishDate": "2016-04-11",
-          "currentStatus": "General Content",
-          "length": "7:05",
-          "lengthMs": 425421,
-          "bpm": 90,
-          "key": {
-            "standard": {
-              "letter": "G",
-              "sharp": False,
-              "flat": False,
-              "chord": "minor"
-            },
-            "shortName": "Gmin"
-          },
-          "artists": [{
-            "id": 326158,
-            "name": "Supersillyus",
-            "slug": "supersillyus",
-            "type": "artist"
-          }],
-          "genres": [{
-            "id": 9,
-            "name": "Breaks",
-            "slug": "breaks",
-            "type": "genre"
-          }],
-          "subGenres": [{
-            "id": 209,
-            "name": "Glitch Hop",
-            "slug": "glitch-hop",
-            "type": "subgenre"
-          }],
-          "release": {
-            "id": 1742984,
-            "name": "Charade",
-            "type": "release",
-            "slug": "charade"
-          },
-          "label": {
-            "id": 24539,
-            "name": "Gravitas Recordings",
-            "type": "label",
-            "slug": "gravitas-recordings",
-            "status": True
-          }
-        }, {
-          "id": 7817568,
-          "type": "track",
-          "sku": "track-7817568",
-          "name": "Aeon Bahamut",
-          "trackNumber": 2,
-          "mixName": "Original Mix",
-          "title": "Aeon Bahamut (Original Mix)",
-          "slug": "aeon-bahamut-original-mix",
-          "releaseDate": "2016-04-11",
-          "publishDate": "2016-04-11",
-          "currentStatus": "General Content",
-          "length": "7:38",
-          "lengthMs": 458000,
-          "bpm": 100,
-          "key": {
-            "standard": {
-              "letter": "G",
-              "sharp": False,
-              "flat": False,
-              "chord": "major"
-            },
-            "shortName": "Gmaj"
-          },
-          "artists": [{
-            "id": 326158,
-            "name": "Supersillyus",
-            "slug": "supersillyus",
-            "type": "artist"
-          }],
-          "genres": [{
-            "id": 9,
-            "name": "Breaks",
-            "slug": "breaks",
-            "type": "genre"
-          }],
-          "subGenres": [{
-            "id": 209,
-            "name": "Glitch Hop",
-            "slug": "glitch-hop",
-            "type": "subgenre"
-          }],
-          "release": {
-            "id": 1742984,
-            "name": "Charade",
-            "type": "release",
-            "slug": "charade"
-          },
-          "label": {
-            "id": 24539,
-            "name": "Gravitas Recordings",
-            "type": "label",
-            "slug": "gravitas-recordings",
-            "status": True
-          }
-        }, {
-          "id": 7817569,
-          "type": "track",
-          "sku": "track-7817569",
-          "name": "Trancendental Medication",
-          "trackNumber": 3,
-          "mixName": "Original Mix",
-          "title": "Trancendental Medication (Original Mix)",
-          "slug": "trancendental-medication-original-mix",
-          "releaseDate": "2016-04-11",
-          "publishDate": "2016-04-11",
-          "currentStatus": "General Content",
-          "length": "1:08",
-          "lengthMs": 68571,
-          "bpm": 141,
-          "key": {
-            "standard": {
-              "letter": "F",
-              "sharp": False,
-              "flat": False,
-              "chord": "major"
-            },
-            "shortName": "Fmaj"
-          },
-          "artists": [{
-            "id": 326158,
-            "name": "Supersillyus",
-            "slug": "supersillyus",
-            "type": "artist"
-          }],
-          "genres": [{
-            "id": 9,
-            "name": "Breaks",
-            "slug": "breaks",
-            "type": "genre"
-          }],
-          "subGenres": [{
-            "id": 209,
-            "name": "Glitch Hop",
-            "slug": "glitch-hop",
-            "type": "subgenre"
-          }],
-          "release": {
-            "id": 1742984,
-            "name": "Charade",
-            "type": "release",
-            "slug": "charade"
-          },
-          "label": {
-            "id": 24539,
-            "name": "Gravitas Recordings",
-            "type": "label",
-            "slug": "gravitas-recordings",
-            "status": True
-          }
-        }, {
-          "id": 7817570,
-          "type": "track",
-          "sku": "track-7817570",
-          "name": "A List of Instructions for When I'm Human",
-          "trackNumber": 4,
-          "mixName": "Original Mix",
-          "title": "A List of Instructions for When I'm Human (Original Mix)",
-          "slug": "a-list-of-instructions-for-when-im-human-original-mix",
-          "releaseDate": "2016-04-11",
-          "publishDate": "2016-04-11",
-          "currentStatus": "General Content",
-          "length": "6:57",
-          "lengthMs": 417913,
-          "bpm": 88,
-          "key": {
-            "standard": {
-              "letter": "A",
-              "sharp": False,
-              "flat": False,
-              "chord": "minor"
-            },
-            "shortName": "Amin"
-          },
-          "artists": [{
-            "id": 326158,
-            "name": "Supersillyus",
-            "slug": "supersillyus",
-            "type": "artist"
-          }],
-          "genres": [{
-            "id": 9,
-            "name": "Breaks",
-            "slug": "breaks",
-            "type": "genre"
-          }],
-          "subGenres": [{
-            "id": 209,
-            "name": "Glitch Hop",
-            "slug": "glitch-hop",
-            "type": "subgenre"
-          }],
-          "release": {
-            "id": 1742984,
-            "name": "Charade",
-            "type": "release",
-            "slug": "charade"
-          },
-          "label": {
-            "id": 24539,
-            "name": "Gravitas Recordings",
-            "type": "label",
-            "slug": "gravitas-recordings",
-            "status": True
-          }
-        }, {
-          "id": 7817571,
-          "type": "track",
-          "sku": "track-7817571",
-          "name": "The Great Shenanigan",
-          "trackNumber": 5,
-          "mixName": "Original Mix",
-          "title": "The Great Shenanigan (Original Mix)",
-          "slug": "the-great-shenanigan-original-mix",
-          "releaseDate": "2016-04-11",
-          "publishDate": "2016-04-11",
-          "currentStatus": "General Content",
-          "length": "9:49",
-          "lengthMs": 589875,
-          "bpm": 123,
-          "key": {
-            "standard": {
-              "letter": "E",
-              "sharp": False,
-              "flat": True,
-              "chord": "major"
-            },
-            "shortName": "E&#9837;maj"
-          },
-          "artists": [{
-            "id": 326158,
-            "name": "Supersillyus",
-            "slug": "supersillyus",
-            "type": "artist"
-          }],
-          "genres": [{
-            "id": 9,
-            "name": "Breaks",
-            "slug": "breaks",
-            "type": "genre"
-          }],
-          "subGenres": [{
-            "id": 209,
-            "name": "Glitch Hop",
-            "slug": "glitch-hop",
-            "type": "subgenre"
-          }],
-          "release": {
-            "id": 1742984,
-            "name": "Charade",
-            "type": "release",
-            "slug": "charade"
-          },
-          "label": {
-            "id": 24539,
-            "name": "Gravitas Recordings",
-            "type": "label",
-            "slug": "gravitas-recordings",
-            "status": True
-          }
-        }, {
-          "id": 7817572,
-          "type": "track",
-          "sku": "track-7817572",
-          "name": "Charade",
-          "trackNumber": 6,
-          "mixName": "Original Mix",
-          "title": "Charade (Original Mix)",
-          "slug": "charade-original-mix",
-          "releaseDate": "2016-04-11",
-          "publishDate": "2016-04-11",
-          "currentStatus": "General Content",
-          "length": "7:05",
-          "lengthMs": 425423,
-          "bpm": 123,
-          "key": {
-            "standard": {
-              "letter": "A",
-              "sharp": False,
-              "flat": False,
-              "chord": "major"
-            },
-            "shortName": "Amaj"
-          },
-          "artists": [{
-            "id": 326158,
-            "name": "Supersillyus",
-            "slug": "supersillyus",
-            "type": "artist"
-          }],
-          "genres": [{
-            "id": 9,
-            "name": "Breaks",
-            "slug": "breaks",
-            "type": "genre"
-          }],
-          "subGenres": [{
-            "id": 209,
-            "name": "Glitch Hop",
-            "slug": "glitch-hop",
-            "type": "subgenre"
-          }],
-          "release": {
-            "id": 1742984,
-            "name": "Charade",
-            "type": "release",
-            "slug": "charade"
-          },
-          "label": {
-            "id": 24539,
-            "name": "Gravitas Recordings",
-            "type": "label",
-            "slug": "gravitas-recordings",
-            "status": True
-          }
-        }]
+        results = {
+            "next": None,
+            "previous": None,
+            "count": 6,
+            "page": "1/1",
+            "per_page": 10,
+            "results": [
+                {
+                    "artists": [
+                        {
+                            "id": 326158,
+                            "name": "Supersillyus",
+                            "slug": "supersillyus",
+                        }
+                    ],
+                    "bpm": 90,
+                    "catalog_number": "GR089",
+                    "genre": {
+                        "id": 9,
+                        "name": "Breaks / Breakbeat / UK Bass",
+                        "slug": "breaks-breakbeat-uk-bass",
+                    },
+                    "id": 7817567,
+                    "key": {
+                        "camelot_number": 6,
+                        "camelot_letter": "A",
+                        "chord_type": {
+                            "id": 1,
+                            "name": "Minor",
+                        },
+                        "id": 6,
+                        "is_sharp": False,
+                        "is_flat": False,
+                        "letter": "G",
+                        "name": "G Minor",
+                    },
+                    "length": "7:05",
+                    "length_ms": 425421,
+                    "mix_name": "Original Mix",
+                    "name": "Mirage a Trois",
+                    "new_release_date": "2016-04-11",
+                    "publish_date": "2016-04-11",
+                    "release": {
+                        "id": 1742984,
+                        "name": "Charade",
+                        "label": {
+                            "id": 24539,
+                            "name": "Gravitas Recordings",
+                            "slug": "gravitas-recordings"
+                        },
+                        "slug": "charade"
+                    },
+                    "remixers": [],
+                    "slug": "mirage-a-trois",
+                    "sub_genre": {
+                        "id": 209,
+                        "name": "Glitch Hop",
+                        "slug": "glitch-hop",
+                    },
+                },
+                {
+                    "artists": [
+                        {
+                            "id": 326158,
+                            "name": "Supersillyus",
+                            "slug": "supersillyus",
+                        }
+                    ],
+                    "bpm": 100,
+                    "catalog_number": "GR089",
+                    "genre": {
+                        "id": 9,
+                        "name": "Breaks / Breakbeat / UK Bass",
+                        "slug": "breaks-breakbeat-uk-bass",
+                    },
+                    "id": 7817568,
+                    "key": {
+                        "camelot_number": 9,
+                        "camelot_letter": "B",
+                        "chord_type": {
+                            "id": 2,
+                            "name": "Major",
+                        },
+                        "id": 21,
+                        "is_sharp": False,
+                        "is_flat": False,
+                        "letter": "G",
+                        "name": "G Major",
+                    },
+                    "length": "7:38",
+                    "length_ms": 458000,
+                    "mix_name": "Original Mix",
+                    "name": "Aeon Bahamut",
+                    "new_release_date": "2016-04-11",
+                    "publish_date": "2016-04-11",
+                    "release": {
+                        "id": 1742984,
+                        "name": "Charade",
+                        "label": {
+                            "id": 24539,
+                            "name": "Gravitas Recordings",
+                            "slug": "gravitas-recordings"
+                        },
+                        "slug": "charade"
+                    },
+                    "remixers": [],
+                    "slug": "aeon-bahamut",
+                    "sub_genre": {
+                        "id": 209,
+                        "name": "Glitch Hop",
+                        "slug": "glitch-hop",
+                    },
+                },
+                {
+                    "artists": [
+                        {
+                            "id": 326158,
+                            "name": "Supersillyus",
+                            "slug": "supersillyus",
+                        }
+                    ],
+                    "bpm": 141,
+                    "catalog_number": "GR089",
+                    "genre": {
+                        "id": 9,
+                        "name": "Breaks / Breakbeat / UK Bass",
+                        "slug": "breaks-breakbeat-uk-bass",
+                    },
+                    "id": 7817569,
+                    "key": {
+                        "camelot_number": 7,
+                        "camelot_letter": "B",
+                        "chord_type": {
+                            "id": 2,
+                            "name": "Major",
+                        },
+                        "id": 19,
+                        "is_sharp": False,
+                        "is_flat": False,
+                        "letter": "F",
+                        "name": "F Major",
+                    },
+                    "length": "1:08",
+                    "length_ms": 68571,
+                    "mix_name": "Original Mix",
+                    "name": "Trancendental Medication",
+                    "new_release_date": "2016-04-11",
+                    "publish_date": "2016-04-11",
+                    "release": {
+                        "id": 1742984,
+                        "name": "Charade",
+                        "label": {
+                            "id": 24539,
+                            "name": "Gravitas Recordings",
+                            "slug": "gravitas-recordings"
+                        },
+                        "slug": "charade"
+                    },
+                    "remixers": [],
+                    "slug": "trancendental-medication",
+                    "sub_genre": {
+                        "id": 209,
+                        "name": "Glitch Hop",
+                        "slug": "glitch-hop",
+                    },
+                },
+                {
+                    "artists": [
+                        {
+                            "id": 326158,
+                            "name": "Supersillyus",
+                            "slug": "supersillyus",
+                        }
+                    ],
+                    "bpm": 88,
+                    "catalog_number": "GR089",
+                    "genre": {
+                        "id": 9,
+                        "name": "Breaks / Breakbeat / UK Bass",
+                        "slug": "breaks-breakbeat-uk-bass",
+                    },
+                    "id": 7817570,
+                    "key": {
+                        "camelot_number": 8,
+                        "camelot_letter": "A",
+                        "chord_type": {
+                            "id": 1,
+                            "name": "Minor",
+                        },
+                        "id": 8,
+                        "is_sharp": False,
+                        "is_flat": False,
+                        "letter": "A",
+                        "name": "A Minor",
+                    },
+                    "length": "6:57",
+                    "length_ms": 417913,
+                    "mix_name": "Original Mix",
+                    "name": "A List of Instructions for When I'm Human",
+                    "new_release_date": "2016-04-11",
+                    "publish_date": "2016-04-11",
+                    "release": {
+                        "id": 1742984,
+                        "name": "Charade",
+                        "label": {
+                            "id": 24539,
+                            "name": "Gravitas Recordings",
+                            "slug": "gravitas-recordings"
+                        },
+                        "slug": "charade"
+                    },
+                    "remixers": [],
+                    "slug": "a-list-of-instructions-for-when-im-human",
+                    "sub_genre": {
+                        "id": 209,
+                        "name": "Glitch Hop",
+                        "slug": "glitch-hop",
+                    },
+                },
+                {
+                    "artists": [
+                        {
+                            "id": 326158,
+                            "name": "Supersillyus",
+                            "slug": "supersillyus",
+                        }
+                    ],
+                    "bpm": 123,
+                    "catalog_number": "GR089",
+                    "genre": {
+                        "id": 9,
+                        "name": "Breaks / Breakbeat / UK Bass",
+                        "slug": "breaks-breakbeat-uk-bass",
+                    },
+                    "id": 7817571,
+                    "key": {
+                        "camelot_number": 5,
+                        "camelot_letter": "B",
+                        "chord_type": {
+                            "id": 2,
+                            "name": "Major",
+                        },
+                        "id": 17,
+                        "is_sharp": False,
+                        "is_flat": True,
+                        "letter": "E",
+                        "name": "Eb Major",
+                    },
+                    "length": "9:49",
+                    "length_ms": 589875,
+                    "mix_name": "Original Mix",
+                    "name": "The Great Shenanigan",
+                    "new_release_date": "2016-04-11",
+                    "publish_date": "2016-04-11",
+                    "release": {
+                        "id": 1742984,
+                        "name": "Charade",
+                        "label": {
+                            "id": 24539,
+                            "name": "Gravitas Recordings",
+                            "slug": "gravitas-recordings"
+                        },
+                        "slug": "charade"
+                    },
+                    "remixers": [],
+                    "slug": "the-great-shenanigan",
+                    "sub_genre": {
+                        "id": 209,
+                        "name": "Glitch Hop",
+                        "slug": "glitch-hop",
+                    },
+                },
+                {
+                    "artists": [
+                        {
+                            "id": 326158,
+                            "name": "Supersillyus",
+                            "slug": "supersillyus",
+                        }
+                    ],
+                    "bpm": 123,
+                    "catalog_number": "GR089",
+                    "genre": {
+                        "id": 9,
+                        "name": "Breaks / Breakbeat / UK Bass",
+                        "slug": "breaks-breakbeat-uk-bass",
+                    },
+                    "id": 7817572,
+                    "key": {
+                        "camelot_number": 11,
+                        "camelot_letter": "B",
+                        "chord_type": {
+                            "id": 2,
+                            "name": "Major",
+                        },
+                        "id": 23,
+                        "is_sharp": False,
+                        "is_flat": False,
+                        "letter": "A",
+                        "name": "A Major",
+                    },
+                    "length": "7:05",
+                    "length_ms": 425423,
+                    "mix_name": "Original Mix",
+                    "name": "Charade",
+                    "new_release_date": "2016-04-11",
+                    "publish_date": "2016-04-11",
+                    "release": {
+                        "id": 1742984,
+                        "name": "Charade",
+                        "label": {
+                            "id": 24539,
+                            "name": "Gravitas Recordings",
+                            "slug": "gravitas-recordings"
+                        },
+                        "slug": "charade"
+                    },
+                    "remixers": [],
+                    "slug": "charade",
+                    "sub_genre": {
+                        "id": 209,
+                        "name": "Glitch Hop",
+                        "slug": "glitch-hop",
+                    },
+                }
+            ]
+        }
         return results
 
     def setUp(self):
@@ -418,7 +410,8 @@ class BeatportTest(_common.TestCase, TestHelper):
 
         # Set up 'tracks'.
         response_tracks = self._make_tracks_response()
-        self.tracks = [beatport.BeatportTrack(t) for t in response_tracks]
+        self.tracks = [beatport.BeatportTrack(t)
+                       for t in response_tracks['results']]
 
         # Set up 'test_album'.
         self.test_album = self.mk_test_album()
@@ -460,12 +453,12 @@ class BeatportTest(_common.TestCase, TestHelper):
         items[4].length = timedelta(minutes=9, seconds=49).total_seconds()
         items[5].length = timedelta(minutes=7, seconds=5).total_seconds()
 
-        items[0].url = 'mirage-a-trois-original-mix'
-        items[1].url = 'aeon-bahamut-original-mix'
-        items[2].url = 'trancendental-medication-original-mix'
-        items[3].url = 'a-list-of-instructions-for-when-im-human-original-mix'
-        items[4].url = 'the-great-shenanigan-original-mix'
-        items[5].url = 'charade-original-mix'
+        items[0].url = 'mirage-a-trois'
+        items[1].url = 'aeon-bahamut'
+        items[2].url = 'trancendental-medication'
+        items[3].url = 'a-list-of-instructions-for-when-im-human'
+        items[4].url = 'the-great-shenanigan'
+        items[5].url = 'charade'
 
         counter = 0
         for item in items:
@@ -483,7 +476,7 @@ class BeatportTest(_common.TestCase, TestHelper):
         items[1].initial_key = 'Gmaj'
         items[2].initial_key = 'Fmaj'
         items[3].initial_key = 'Amin'
-        items[4].initial_key = 'E&#9837;maj'
+        items[4].initial_key = 'Ebmaj'
         items[5].initial_key = 'Amaj'
 
         for item in items:
@@ -503,10 +496,10 @@ class BeatportTest(_common.TestCase, TestHelper):
                          self.test_album['catalognum'])
 
     def test_label_applied(self):
-        self.assertEqual(self.album.label_name, self.test_album['label'])
+        self.assertEqual(self.album.label.name, self.test_album['label'])
 
     def test_category_applied(self):
-        self.assertEqual(self.album.category, 'Release')
+        self.assertEqual(self.album.type, 'Release')
 
     def test_album_url_applied(self):
         self.assertEqual(self.album.url,
@@ -540,7 +533,7 @@ class BeatportTest(_common.TestCase, TestHelper):
         for track, test_track, id in zip(self.tracks, self.test_tracks, ids):
             self.assertEqual(
                 track.url, 'https://beatport.com/track/' +
-                test_track.url + '/' + str(id))
+                           test_track.url + '/' + str(id))
 
     def test_bpm_applied(self):
         for track, test_track in zip(self.tracks, self.test_tracks):
@@ -557,22 +550,68 @@ class BeatportTest(_common.TestCase, TestHelper):
 
 class BeatportResponseEmptyTest(_common.TestCase, TestHelper):
     def _make_tracks_response(self):
-        results = [{
-            "id": 7817567,
-            "name": "Mirage a Trois",
-            "genres": [{
-              "id": 9,
-              "name": "Breaks",
-              "slug": "breaks",
-              "type": "genre"
-            }],
-            "subGenres": [{
-              "id": 209,
-              "name": "Glitch Hop",
-              "slug": "glitch-hop",
-              "type": "subgenre"
-            }],
-        }]
+        results = {
+            "next": None,
+            "previous": None,
+            "count": 1,
+            "page": "1/1",
+            "per_page": 10,
+            "results": [
+                {
+                    "artists": [
+                        {
+                            "id": 326158,
+                            "name": "Supersillyus",
+                            "slug": "supersillyus",
+                        }
+                    ],
+                    "bpm": 90,
+                    "catalog_number": "GR089",
+                    "genre": {
+                        "id": 9,
+                        "name": "Breaks / Breakbeat / UK Bass",
+                        "slug": "breaks-breakbeat-uk-bass",
+                    },
+                    "id": 7817567,
+                    "key": {
+                        "camelot_number": 6,
+                        "camelot_letter": "A",
+                        "chord_type": {
+                            "id": 1,
+                            "name": "Minor",
+                        },
+                        "id": 6,
+                        "is_sharp": False,
+                        "is_flat": False,
+                        "letter": "G",
+                        "name": "G Minor",
+                    },
+                    "length": "7:05",
+                    "length_ms": 425421,
+                    "mix_name": "Original Mix",
+                    "name": "Mirage a Trois",
+                    "new_release_date": "2016-04-11",
+                    "publish_date": "2016-04-11",
+                    "release": {
+                        "id": 1742984,
+                        "name": "Charade",
+                        "label": {
+                            "id": 24539,
+                            "name": "Gravitas Recordings",
+                            "slug": "gravitas-recordings"
+                        },
+                        "slug": "charade"
+                    },
+                    "remixers": [],
+                    "slug": "mirage-a-trois",
+                    "sub_genre": {
+                        "id": 209,
+                        "name": "Glitch Hop",
+                        "slug": "glitch-hop",
+                    },
+                },
+            ]
+        }
         return results
 
     def setUp(self):
@@ -582,7 +621,8 @@ class BeatportResponseEmptyTest(_common.TestCase, TestHelper):
 
         # Set up 'tracks'.
         self.response_tracks = self._make_tracks_response()
-        self.tracks = [beatport.BeatportTrack(t) for t in self.response_tracks]
+        self.tracks = [beatport.BeatportTrack(t)
+                       for t in self.response_tracks['results']]
 
         # Make alias to be congruent with class `BeatportTest`.
         self.test_tracks = self.response_tracks
@@ -599,24 +639,22 @@ class BeatportResponseEmptyTest(_common.TestCase, TestHelper):
     def test_sub_genre_empty_fallback(self):
         """No 'sub_genre' is provided. Test if fallback to 'genre' works.
         """
-        self.response_tracks[0]['subGenres'] = []
-        tracks = [beatport.BeatportTrack(t) for t in self.response_tracks]
-
-        self.test_tracks[0]['subGenres'] = []
+        del self.response_tracks['results'][0]['sub_genre']
+        tracks = [beatport.BeatportTrack(t)
+                  for t in self.response_tracks['results']]
 
         self.assertEqual(tracks[0].genre,
-                         self.test_tracks[0]['genres'][0]['name'])
+                         self.test_tracks['results'][0]['genre']['name'])
 
     def test_genre_empty(self):
         """No 'genre' is provided. Test if 'sub_genre' is applied.
         """
-        self.response_tracks[0]['genres'] = []
-        tracks = [beatport.BeatportTrack(t) for t in self.response_tracks]
-
-        self.test_tracks[0]['genres'] = []
+        del self.response_tracks['results'][0]['genre']
+        tracks = [beatport.BeatportTrack(t)
+                  for t in self.response_tracks['results']]
 
         self.assertEqual(tracks[0].genre,
-                         self.test_tracks[0]['subGenres'][0]['name'])
+                         self.test_tracks['results'][0]['sub_genre']['name'])
 
 
 def suite():

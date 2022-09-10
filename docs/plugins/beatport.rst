@@ -12,20 +12,33 @@ Installation
 ------------
 
 To use the ``beatport`` plugin, first enable it in your configuration (see
-:ref:`using-plugins`). Then, install the `requests`_ and `requests_oauthlib`_
-libraries (which we need for querying and authorizing with the Beatport API)
-by typing::
+:ref:`using-plugins`). Then, install the `requests`_ library
+(which we need for querying the Beatport API) by typing::
 
-    pip install requests requests_oauthlib
+    pip install requests
 
 You will also need to register for a `Beatport`_ account. The first time you
 run the :ref:`import-cmd` command after enabling the plugin, it will ask you
-to authorize with Beatport by visiting the site in a browser. On the site
-you will be asked to enter your username and password to authorize beets
-to query the Beatport API. You will then be displayed with a single line of
-text that you should paste as a whole into your terminal. This will store the
-authentication data for subsequent runs and you will not be required to repeat
-the above steps.
+to provide the Beatport API access token to authorize beets to query
+the Beatport API. User OAuth token structure looks like this:
+
+.. code-block:: json
+
+    {
+      "access_token": "XXX",
+      "expires_in": 36000,
+      "token_type": "Bearer",
+      "scope": "XXX",
+      "refresh_token": "XXX"
+    }
+
+Copy the whole JSON and paste it into the terminal (or directly into
+``beatport_token.json`` file in the directory next to your beets config).
+This will store the authentication data for subsequent runs,
+but after the token expires, you will have to repeat the above.
+
+Usage
+-----
 
 Matches from Beatport should now show up alongside matches
 from MusicBrainz and other sources.
@@ -38,9 +51,8 @@ also search for an id like so::
 
 Configuration
 -------------
-
-This plugin can be configured like other metadata source plugins as described in :ref:`metadata-source-plugin-configuration`.
+This plugin can be configured like other metadata source
+plugins as described in :ref:`metadata-source-plugin-configuration`.
 
 .. _requests: https://requests.readthedocs.io/en/master/
-.. _requests_oauthlib: https://github.com/requests/requests-oauthlib
 .. _Beatport: https://www.beatport.com/

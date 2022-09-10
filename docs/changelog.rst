@@ -52,6 +52,8 @@ New features:
 * :doc:`/plugins/fromfilename`:  Add debug log messages that inform when the
   plugin replaced bad (missing) artist, title or tracknumber metadata.
   :bug:`4561` :bug:`4600`
+* :doc:`/plugins/beatport` The plugin now supports Beatport API v4 using access token provided by the user
+  :bug:`3862`
 
 Bug fixes:
 
@@ -60,7 +62,7 @@ Bug fixes:
   base when the MetadataSourcePlugin abstract class was introduced in PR's
   #3335 and #3371.
   :bug:`4401`
-* :doc:`/plugins/convert`: Set default ``max_bitrate`` value to ``None`` to 
+* :doc:`/plugins/convert`: Set default ``max_bitrate`` value to ``None`` to
   avoid transcoding when this parameter is not set. :bug:`4472`
 * :doc:`/plugins/replaygain`: Avoid a crash when errors occur in the analysis
   backend.
