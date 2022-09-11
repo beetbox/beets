@@ -581,14 +581,27 @@ class ImportTask(BaseImportTask):
     def remove_duplicates(self, lib):
         duplicate_items = self.duplicate_items(lib)
         log.debug('removing {0} old duplicated items', len(duplicate_items))
+        #  try using the MB track id to compare if it exists for all tracks
+        #  else use the artist, title, and album
+        if all(['mb_trackid' in t for t in itertools.chain(duplicate_items)]):
+
+            def get_id(item):
+                return item.mb_trackid
+        else:
+
+            def get_id(item):
+                return str(item)
+
+        existing = {get_id(t) for t in self.items}
         for item in duplicate_items:
-            item.remove()
-            if lib.directory in util.ancestry(item.path):
-                log.debug('deleting duplicate {0}',
-                          util.displayable_path(item.path))
-                util.remove(item.path)
-                util.prune_dirs(os.path.dirname(item.path),
-                                lib.directory)
+            if get_id(item) in existing:
+                item.remove()
+                if lib.directory in util.ancestry(item.path):
+                    log.debug('deleting duplicate {0}',
+                              util.displayable_path(item.path))
+                    util.remove(item.path)
+                    util.prune_dirs(os.path.dirname(item.path),
+                                    lib.directory)
 
     def set_fields(self, lib):
         """Sets the fields given at CLI or configuration to the specified
