@@ -35,6 +35,7 @@ from beets import dbcore
 from beets import plugins
 from beets import util
 from beets import config
+from beets.library import Album
 from beets.util import pipeline, sorted_walk, ancestry, MoveOperation
 from beets.util import syspath, normpath, displayable_path
 from enum import Enum
@@ -170,20 +171,20 @@ def history_get():
     return state[HISTORY_KEY]
 
 
-def calculate_quality_score(item, is_album):
-    item = get_items_as_list(is_album, item)
+def quality_score(item):
+    item = get_items_as_list(item)
     total_bitrate = sum([i.bitrate for i in item])
     return total_bitrate / len(item)
 
 
-def get_items_as_list(is_album, item):
-    if isinstance(item, list):
+def get_items_as_list(obj):
+    if isinstance(obj, list):
         pass
-    elif is_album:
-        item = list(item.items())
+    elif isinstance(obj, Album):
+        obj = list(obj.items())
     else:
-        item = [item]
-    return item
+        obj = [obj]
+    return obj
 
 
 # Abstract session class.
@@ -1529,10 +1530,10 @@ def resolve_duplicates(session, task):
                 task.should_merge_duplicates = True
             elif duplicate_action == 'u':
                 existing = max(
-                    [calculate_quality_score(d, task.is_album) for d in found_duplicates],
+                    [quality_score(d) for d in found_duplicates],
                 )
-                new_bitrate = calculate_quality_score(task.imported_items(), task.is_album)
-                if new_bitrate > existing:
+                new_score = quality_score(task.imported_items())
+                if new_score > existing:
                     task.should_remove_duplicates = True
                 else:
                     task.set_choice(action.SKIP)
