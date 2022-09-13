@@ -172,12 +172,20 @@ def history_get():
 
 
 def quality_score(item):
+    """Take an item (album, track, or list of tracks) and compute a
+    quality score based on the track data
+    """
+    # TODO: use better statistics to compute score
+    # maybe range, LAME preset
     item = get_items_as_list(item)
     total_bitrate = sum([i.bitrate for i in item])
     return total_bitrate / len(item)
 
 
 def get_items_as_list(obj):
+    """Decompose an obj into items in a list, where obj is an album,
+    list, or single track
+    """
     if isinstance(obj, list):
         pass
     elif isinstance(obj, Album):
