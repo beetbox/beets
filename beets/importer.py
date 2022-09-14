@@ -597,9 +597,10 @@ class ImportTask(BaseImportTask):
             def get_id(item):
                 return item.mb_trackid
         else:
+            keys = config['import']['duplicate_keys']['item'].as_str_seq()
 
             def get_id(item):
-                return str(item)
+                return str({k: item.get(k) for k in keys})
 
         existing = {get_id(t) for t in self.items}
         for item in duplicate_items:
