@@ -1355,8 +1355,76 @@ def test_track_info(*args, **kwargs):
 
 
 @patch('beets.autotag.mb.match_track', Mock(side_effect=test_track_info))
-class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper,
-                                   _common.Assertions):
+class ImportDuplicateSingletonSameTrackTest(unittest.TestCase, TestHelper,
+                                            _common.Assertions):
+
+    def setUp(self):
+        self.setup_beets()
+
+        # Original file in library
+        self.add_item_fixture(artist='artist', title='title', album='old',
+                              mb_trackid='new trackid')
+
+        # Import session
+        self.importer = self.create_importer()
+        config['import']['autotag'] = True
+        config['import']['singletons'] = True
+        config['import']['duplicate_keys']['item'] = 'artist title'
+
+    def tearDown(self):
+        self.teardown_beets()
+
+    def test_remove_duplicate(self):
+        item = self.lib.items().get()
+        self.assertEqual(item.album, 'old')
+        self.assertExists(item.path)
+
+        self.importer.default_resolution = self.importer.Resolution.REMOVE
+        self.importer.run()
+
+        self.assertNotExists(item.path)
+        self.assertEqual(len(self.lib.items()), 1)
+        item = self.lib.items().get()
+        self.assertNotEqual(item.album, 'old')
+
+    def test_keep_duplicate(self):
+        self.assertEqual(len(self.lib.items()), 1)
+
+        self.importer.default_resolution = self.importer.Resolution.KEEPBOTH
+        self.importer.run()
+
+        self.assertEqual(len(self.lib.items()), 2)
+
+    def test_skip_duplicate(self):
+        item = self.lib.items().get()
+        self.assertEqual(item.album, 'old')
+
+        self.importer.default_resolution = self.importer.Resolution.SKIP
+        self.importer.run()
+
+        self.assertEqual(len(self.lib.items()), 1)
+        item = self.lib.items().get()
+        self.assertEqual(item.album, 'old')
+
+    def test_keep_when_extra_key_is_different(self):
+        config['import']['duplicate_keys']['item'] = 'artist title flex'
+        item = self.lib.items().get()
+        item.flex = 'different'
+        item.store()
+        self.assertEqual(len(self.lib.items()), 1)
+
+        self.importer.default_resolution = self.importer.Resolution.SKIP
+        self.importer.run()
+
+        self.assertEqual(len(self.lib.items()), 2)
+
+    def test_twice_in_import_dir(self):
+        self.skipTest('write me')
+
+
+@patch('beets.autotag.mb.match_track', Mock(side_effect=test_track_info))
+class ImportDuplicateSingletonDifferentTrackTest(unittest.TestCase, TestHelper,
+                                                 _common.Assertions):
 
     def setUp(self):
         self.setup_beets()
@@ -1382,10 +1450,8 @@ class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper,
         self.importer.default_resolution = self.importer.Resolution.REMOVE
         self.importer.run()
 
-        self.assertNotExists(item.path)
-        self.assertEqual(len(self.lib.items()), 1)
-        item = self.lib.items().get()
-        self.assertEqual(item.mb_trackid, 'new trackid')
+        self.assertExists(item.path)
+        self.assertEqual(len(self.lib.items()), 2)
 
     def test_keep_duplicate(self):
         self.assertEqual(len(self.lib.items()), 1)
@@ -1403,8 +1469,6 @@ class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper,
         self.importer.run()
 
         self.assertEqual(len(self.lib.items()), 1)
-        item = self.lib.items().get()
-        self.assertEqual(item.mb_trackid, 'old trackid')
 
     def test_keep_when_extra_key_is_different(self):
         config['import']['duplicate_keys']['item'] = 'artist title flex'
