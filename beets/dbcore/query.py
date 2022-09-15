@@ -18,13 +18,14 @@
 import re
 from operator import mul
 from typing import Union, Tuple, List, Optional, Pattern, Any, Type, Iterator, \
-    Collection, Mapping
+    Collection, Mapping, MutableMapping
 
 from beets import util
 from datetime import datetime, timedelta
 import unicodedata
 from functools import reduce
 
+from beets.dbcore import Model
 from beets.library import Item
 
 
@@ -120,7 +121,7 @@ class FieldQuery(Query):
         """
         raise NotImplementedError()
 
-    def match(self, item: Item):
+    def match(self, item: Model):
         return self.value_match(self.pattern, item.get(self.field))
 
     def __repr__(self) -> str:
@@ -465,6 +466,7 @@ class MutableCollectionQuery(CollectionQuery):
     """A collection query whose subqueries may be modified after the
     query is initialized.
     """
+    subqueries: MutableMapping
 
     def __setitem__(self, key, value):
         self.subqueries[key] = value
@@ -786,7 +788,7 @@ class Sort:
     the item database.
     """
 
-    def order_clause(self):
+    def order_clause(self) -> None:
         """Generates a SQL fragment to be used in a ORDER BY clause, or
         None if no fragment is used (i.e., this is a slow sort).
         """
