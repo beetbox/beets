@@ -17,7 +17,10 @@
 
 import re
 import itertools
-from . import query
+from typing import Dict, Type, Tuple, Optional, Mapping, Collection, List
+
+from . import query, Model
+from .query import Sort
 
 PARSE_QUERY_PART_REGEX = re.compile(
     # Non-capturing optional segment for the keyword.
@@ -34,8 +37,12 @@ PARSE_QUERY_PART_REGEX = re.compile(
 )
 
 
-def parse_query_part(part, query_classes={}, prefixes={},
-                     default_class=query.SubstringQuery):
+def parse_query_part(
+        part: str,
+        query_classes: Dict = {},
+        prefixes: Dict = {},
+        default_class: Type[query.SubstringQuery] = query.SubstringQuery,
+) -> Tuple[Optional[str], str, Type[query.Query], bool]:
     """Parse a single *query part*, which is a chunk of a complete query
     string representing a single criterion.
 
@@ -100,7 +107,11 @@ def parse_query_part(part, query_classes={}, prefixes={},
     return key, term, query_class, negate
 
 
-def construct_query_part(model_cls, prefixes, query_part):
+def construct_query_part(
+        model_cls: Type[Model],
+        prefixes: Mapping[str, Type[query.Query]],
+        query_part: str,
+) -> query.Query:
     """Parse a *query part* string and return a :class:`Query` object.
 
     :param model_cls: The :class:`Model` class that this is a query for.
@@ -158,7 +169,12 @@ def construct_query_part(model_cls, prefixes, query_part):
         return out_query
 
 
-def query_from_strings(query_cls, model_cls, prefixes, query_parts):
+def query_from_strings(
+        query_cls: Type[query.Query],
+        model_cls: Type[Model],
+        prefixes: Mapping[str, Type[query.Query]],
+        query_parts: Collection[str],
+) -> query.Query:
     """Creates a collection query of type `query_cls` from a list of
     strings in the format used by parse_query_part. `model_cls`
     determines how queries are constructed from strings.
@@ -171,7 +187,11 @@ def query_from_strings(query_cls, model_cls, prefixes, query_parts):
     return query_cls(subqueries)
 
 
-def construct_sort_part(model_cls, part, case_insensitive=True):
+def construct_sort_part(
+        model_cls: Type[Model],
+        part: str,
+        case_insensitive: bool = True,
+) -> Sort:
     """Create a `Sort` from a single string criterion.
 
     `model_cls` is the `Model` being queried. `part` is a single string
@@ -197,7 +217,11 @@ def construct_sort_part(model_cls, part, case_insensitive=True):
     return sort
 
 
-def sort_from_strings(model_cls, sort_parts, case_insensitive=True):
+def sort_from_strings(
+        model_cls: Type[Model],
+        sort_parts: Collection[str],
+        case_insensitive: bool = True,
+) -> Sort:
     """Create a `Sort` from a list of sort criteria (strings).
     """
     if not sort_parts:
@@ -212,8 +236,12 @@ def sort_from_strings(model_cls, sort_parts, case_insensitive=True):
     return sort
 
 
-def parse_sorted_query(model_cls, parts, prefixes={},
-                       case_insensitive=True):
+def parse_sorted_query(
+        model_cls: Type[Model],
+        parts: List[str],
+        prefixes: Mapping[str, Type[query.Query]] = {},
+        case_insensitive: bool = True,
+) -> Tuple[query.Query, Sort]:
     """Given a list of strings, create the `Query` and `Sort` that they
     represent.
     """
