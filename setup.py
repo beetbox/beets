@@ -119,6 +119,11 @@ setup(
             'flake8-docstrings',
             'pep8-naming',
         ],
+        'render_ui': [
+            'ansi2html',
+            'jinja2',
+            'pytest-reportlog',
+        ],
 
         # Plugin (optional) dependencies:
         'absubmit': ['requests'],
