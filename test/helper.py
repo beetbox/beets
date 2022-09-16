@@ -235,12 +235,6 @@ class TestHelper:
         Item._queries = Item._original_queries
         Album._queries = Album._original_queries
 
-    def add_item_fixture(self, **kwargs):
-        item = self.add_item_fixtures()[0]
-        item.update(kwargs)
-        item.store()
-        return item
-
     def create_importer(self, item_count=1, album_count=1):
         """Create files to import and return corresponding session.
 

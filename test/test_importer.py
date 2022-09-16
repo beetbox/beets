@@ -1421,6 +1421,12 @@ class ImportDuplicateSingletonSameTrackTest(unittest.TestCase, TestHelper,
     def test_twice_in_import_dir(self):
         self.skipTest('write me')
 
+    def add_item_fixture(self, **kwargs):
+        item = self.add_item_fixtures()[0]
+        item.update(kwargs)
+        item.store()
+        return item
+
 
 @patch('beets.autotag.mb.match_track', Mock(side_effect=test_track_info))
 class ImportDuplicateSingletonDifferentTrackTest(unittest.TestCase, TestHelper,
@@ -1484,6 +1490,12 @@ class ImportDuplicateSingletonDifferentTrackTest(unittest.TestCase, TestHelper,
 
     def test_twice_in_import_dir(self):
         self.skipTest('write me')
+
+    def add_item_fixture(self, **kwargs):
+        item = self.add_item_fixtures()[0]
+        item.update(kwargs)
+        item.store()
+        return item
 
 
 class TagLogTest(_common.TestCase):
