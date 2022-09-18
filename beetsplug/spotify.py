@@ -57,6 +57,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         'spotify_tempo': types.FLOAT,
         'spotify_time_signature': types.INTEGER,
         'spotify_valence': types.FLOAT,
+        'spotify_updated': DateType(),
     }
 
     # Base URLs for the Spotify API
