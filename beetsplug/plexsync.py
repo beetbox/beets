@@ -7,7 +7,7 @@ Put something like the following in your config.yaml to configure:
         token: token
 """
 
-import datetime
+import time
 
 from beets import config, ui
 from beets.dbcore import types
@@ -166,7 +166,7 @@ class PlexSync(BeetsPlugin):
             item.plex_viewcount = plex_track.viewCount
             item.plex_lastviewedat = plex_track.lastViewedAt
             item.plex_lastratedat = plex_track.lastRatedAt
-            item.plex_updated = datetime.datetime.now()
+            item.plex_updated = time.time()
             item.store()
             if write:
                 item.try_write()
@@ -249,7 +249,7 @@ class PlexSync(BeetsPlugin):
                     items[0].plex_viewcount = track.viewCount
                     items[0].plex_lastviewedat = track.lastViewedAt
                     items[0].plex_lastratedat = track.lastRatedAt
-                    items[0].plex_updated = datetime.datetime.now()
+                    items[0].plex_updated = time.time()
                     items[0].store()
                     items[0].try_write()
                 else:
