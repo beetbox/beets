@@ -8,7 +8,7 @@ Changelog goes here!
 
 New features:
 
-* :doc:`/guide/tagger`: Added an `upgrade` option for duplicates that chooses the file with the highest bitrate.
+* :doc:`/guides/tagger`: Added an `upgrade` option for duplicates that chooses the file with the highest bitrate.
 * :doc:`/plugins/mbsubmit`: Added a new `mbsubmit` command to print track information to be submitted to MusicBrainz after initial import.
   :bug:`4455`
 * Added `spotify_updated` field to track when the information was last updated.
