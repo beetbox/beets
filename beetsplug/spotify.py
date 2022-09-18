@@ -19,7 +19,6 @@ Spotify playlist construction.
 
 import base64
 import collections
-import datetime
 import json
 import re
 import time
@@ -648,7 +647,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 if feature in self.spotify_audio_features.keys():
                     item[self.spotify_audio_features[feature]] = \
                         audio_features[feature]
-            item['spotify_updated'] = datetime.datetime.now()
+            item['spotify_updated'] = time.time()
             item.store()
             if write:
                 item.try_write()
