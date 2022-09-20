@@ -17,7 +17,8 @@
 
 import re
 import itertools
-from typing import Dict, Type, Tuple, Optional, Mapping, Collection, List
+from typing import Dict, Type, Tuple, Optional, Mapping, Collection, List, \
+    Sequence
 
 from . import query, Model
 from .query import Sort
@@ -37,6 +38,8 @@ PARSE_QUERY_PART_REGEX = re.compile(
 )
 
 
+# TYPING ERROR
+# not sure what the query type should be
 def parse_query_part(
         part: str,
         query_classes: Dict = {},
@@ -109,7 +112,7 @@ def parse_query_part(
 
 def construct_query_part(
         model_cls: Type[Model],
-        prefixes: Mapping[str, Type[query.Query]],
+        prefixes: Dict,
         query_part: str,
 ) -> query.Query:
     """Parse a *query part* string and return a :class:`Query` object.
@@ -169,10 +172,11 @@ def construct_query_part(
         return out_query
 
 
+# TYPING ERROR
 def query_from_strings(
         query_cls: Type[query.Query],
         model_cls: Type[Model],
-        prefixes: Mapping[str, Type[query.Query]],
+        prefixes: Dict,
         query_parts: Collection[str],
 ) -> query.Query:
     """Creates a collection query of type `query_cls` from a list of
@@ -219,7 +223,7 @@ def construct_sort_part(
 
 def sort_from_strings(
         model_cls: Type[Model],
-        sort_parts: Collection[str],
+        sort_parts: Sequence[str],
         case_insensitive: bool = True,
 ) -> Sort:
     """Create a `Sort` from a list of sort criteria (strings).
@@ -239,7 +243,7 @@ def sort_from_strings(
 def parse_sorted_query(
         model_cls: Type[Model],
         parts: List[str],
-        prefixes: Mapping[str, Type[query.Query]] = {},
+        prefixes: Dict = {},
         case_insensitive: bool = True,
 ) -> Tuple[query.Query, Sort]:
     """Given a list of strings, create the `Query` and `Sort` that they

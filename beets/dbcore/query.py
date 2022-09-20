@@ -17,8 +17,8 @@
 
 import re
 from operator import mul
-from typing import Union, Tuple, List, Optional, Pattern, Any, Type, Iterator, \
-    Collection, Mapping, MutableMapping
+from typing import Union, Tuple, List, Optional, Pattern, Any, Type, Iterator,\
+    Collection, Mapping, MutableMapping, Sequence
 
 from beets import util
 from datetime import datetime, timedelta
@@ -66,7 +66,7 @@ class Query:
     """An abstract class representing a query into the item database.
     """
 
-    def clause(self) -> Union[None, Tuple]:
+    def clause(self) -> Tuple[None, Tuple]:
         """Generate an SQLite expression implementing the query.
 
         Return (clause, subvals) where clause is a valid sqlite
@@ -375,7 +375,7 @@ class CollectionQuery(Query):
     indexed like a list to access the sub-queries.
     """
 
-    def __init__(self, subqueries: Mapping = ()):
+    def __init__(self, subqueries: Sequence = ()):
         self.subqueries = subqueries
 
     # Act like a sequence.
@@ -439,6 +439,7 @@ class AnyFieldQuery(CollectionQuery):
         subqueries = []
         for field in self.fields:
             subqueries.append(cls(field, pattern, True))
+        # TYPING ERROR
         super().__init__(subqueries)
 
     def clause(self) -> Tuple[str | None, Collection]:
@@ -488,7 +489,7 @@ class AndQuery(MutableCollectionQuery):
 class OrQuery(MutableCollectionQuery):
     """A conjunction of a list of other queries."""
 
-    def clause(self) -> Tuple[str | None, Collection]:
+    def clause(self) -> Tuple[Union[str, None], Collection]:
         return self.clause_with_joiner('or')
 
     def match(self, item) -> bool:
@@ -845,6 +846,7 @@ class MultipleSort(Sort):
             order = sort.order_clause()
             order_strings.append(order)
 
+        # TYPING ERROR
         return ", ".join(order_strings)
 
     def is_slow(self) -> bool:
