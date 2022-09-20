@@ -16,6 +16,7 @@
 """
 
 from typing import Union, Any
+from typing import Type as TypingType
 from . import query
 from beets.util import str2bool
 
@@ -50,7 +51,7 @@ class Type:
         """
         return self.model_type()
 
-    def format(self, value: model_type) -> str:
+    def format(self, value: TypingType[model_type]) -> str:
         """Given a value of this type, produce a Unicode string
         representing the value. This is used in template evaluation.
         """
@@ -73,11 +74,12 @@ class Type:
         except ValueError:
             return self.null
 
-    def normalize(self, value: model_type) -> model_type:
+    def normalize(self, value: TypingType[model_type]) -> model_type:
         """Given a value that will be assigned into a field of this
         type, normalize the value to have the appropriate type. This
         base implementation only reinterprets `None`.
         """
+        # TYPING ERROR
         if value is None:
             return self.null
         else:
@@ -107,6 +109,7 @@ class Type:
         if isinstance(sql_value, str):
             return self.parse(sql_value)
         else:
+            # TYPING ERROR
             return self.normalize(sql_value)
 
     def to_sql(self, model_value: Any) -> Union[None, int, float, str, bytes]:
@@ -129,7 +132,7 @@ class Integer(Type):
     query = query.NumericQuery
     model_type = int
 
-    def normalize(self, value) -> Union[int, str]:
+    def normalize(self, value: str) -> Union[int, str]:
         try:
             return self.model_type(round(float(value)))
         except ValueError:
