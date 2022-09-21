@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2016, J0J0 Todos.
+# Copyright 2022, J0J0 Todos.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
