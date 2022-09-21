@@ -183,6 +183,7 @@ class PlexSync(BeetsPlugin):
                    and track.title == item.title:
                     return track
         else:
+            self._log.debug('Track {} not found in Plex library', item)
             return None
 
     def _plex_add_playlist_item(self, items, playlist):
@@ -195,11 +196,6 @@ class PlexSync(BeetsPlugin):
             plst = None
             playlist_set = set()
         for item in items:
-            try:
-                plex_track = item.plex_ratingkey
-            except AttributeError:
-                self._log.debug('No plex_ratingkey present for: {}', item)
-                continue
             try:
                 plex_set.add(self.plex.fetchItem(plex_track))
             except exceptions.NotFound:
