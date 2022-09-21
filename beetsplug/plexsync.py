@@ -195,9 +195,12 @@ class PlexSync(BeetsPlugin):
             plst = None
             playlist_set = set()
         for item in items:
+            if item.plex_ratingkey is None:
+                self._log.warning('{} not found in Plex library', item)
+                continue
             try:
                 plex_set.add(self.plex.fetchItem(item.plex_ratingkey))
-            except (exceptions.NotFound, KeyError):
+            except exceptions.NotFound:
                 self._log.warning('{} not found in Plex library', item)
                 continue
         to_add = plex_set - playlist_set
