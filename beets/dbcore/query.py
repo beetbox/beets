@@ -18,7 +18,7 @@
 import re
 from operator import mul
 from typing import Union, Tuple, List, Optional, Pattern, Any, Type, Iterator,\
-    Collection, Mapping, MutableMapping, Sequence
+    Collection, MutableMapping, Sequence
 
 from beets import util
 from datetime import datetime, timedelta

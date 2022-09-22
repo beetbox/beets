@@ -51,7 +51,7 @@ class Type:
         """
         return self.model_type()
 
-    def format(self, value: TypingType[model_type]) -> str:
+    def format(self, value: model_type) -> str:
         """Given a value of this type, produce a Unicode string
         representing the value. This is used in template evaluation.
         """
