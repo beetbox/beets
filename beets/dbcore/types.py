@@ -15,8 +15,7 @@
 """Representation of type information for DBCore model fields.
 """
 
-from typing import Union, Any
-from typing import Type as TypingType
+from typing import Union, Any, Callable
 from . import query
 from beets.util import str2bool
 
@@ -37,7 +36,7 @@ class Type:
     """The `Query` subclass to be used when querying the field.
     """
 
-    model_type = str
+    model_type: Callable[[Any], str] = str
     """The Python type that is used to represent the value in the model.
 
     The model is guaranteed to return a value of this type if the field
@@ -74,7 +73,7 @@ class Type:
         except ValueError:
             return self.null
 
-    def normalize(self, value: TypingType[model_type]) -> model_type:
+    def normalize(self, value: model_type) -> model_type:
         """Given a value that will be assigned into a field of this
         type, normalize the value to have the appropriate type. This
         base implementation only reinterprets `None`.
