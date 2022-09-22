@@ -182,7 +182,7 @@ class LazyConvertDict:
         for key, value in values.items():
             self[key] = value
 
-    def items(self) -> Generator[Tuple]:
+    def items(self) -> Generator[Tuple, None, None]:
         """Iterate over (key, value) pairs that this object contains.
         Computed fields are not included.
         """
@@ -745,7 +745,7 @@ class Results:
         # consumed.
         self._objects = []
 
-    def _get_objects(self) -> Generator[Model]:
+    def _get_objects(self) -> Generator[Model, None, None]:
         """Construct and generate Model objects for they query. The
         objects are returned in the order emitted from the database; no
         slow sort is applied.
@@ -1066,7 +1066,7 @@ class Database:
                 conn.close()
 
     @contextlib.contextmanager
-    def _tx_stack(self) -> Generator[List]:
+    def _tx_stack(self) -> Generator[List, None, None]:
         """A context manager providing access to the current thread's
         transaction stack. The context manager synchronizes access to
         the stack map. Transactions should never migrate across threads.
