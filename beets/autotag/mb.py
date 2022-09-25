@@ -29,7 +29,9 @@ from beets import util
 from beets import config
 from collections import Counter
 from urllib.parse import urljoin
-from beets.util.id_extractors import extract_discogs_id_regex
+from beets.util.id_extractors import extract_discogs_id_regex, \
+    spotify_id_regex, deezer_id_regex, beatport_id_regex
+from beets.plugins import MetadataSourcePlugin
 
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
 
@@ -512,14 +514,41 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
             in sorted(genres.items(), key=lambda g: -g[1])
         )
 
-    # We might find URLs to external sources (Discogs, Spotify, ...)
+    # We might find links to external sources (Discogs, Bandcamp, ...)
     if release.get('url-relation-list'):
-        discogs_url = None
+        discogs_url, bandcamp_url, spotify_url = None, None, None
+        deezer_url, beatport_url = None, None
+
         for url in release['url-relation-list']:
             if url['type'] == 'discogs':
                 log.debug('Found link to Discogs release via MusicBrainz')
                 discogs_url = url['target']
-        info.discogs_albumid = extract_release_id_regex(discogs_url)
+            if 'bandcamp.com' in url['target']:
+                log.debug('Found link to Bandcamp release via MusicBrainz')
+                bandcamp_url = url['target']
+            if 'spotify.com' in url['target']:
+                log.debug('Found link to Spotify album via MusicBrainz')
+                spotify_url = url['target']
+            if 'deezer.com' in url['target']:
+                log.debug('Found link to Deezer album via MusicBrainz')
+                deezer_url = url['target']
+            if 'beatport.com' in url['target']:
+                log.debug('Found link to Beatport release via MusicBrainz')
+                beatport_url = url['target']
+
+        if discogs_url:
+            info.discogs_albumid = extract_discogs_id_regex(discogs_url)
+        if bandcamp_url:
+            info.bandcamp_album_id = bandcamp_url
+        if spotify_url:
+            info.spotify_album_id = MetadataSourcePlugin._get_id(
+                'album', spotify_url, spotify_id_regex)
+        if deezer_url:
+            info.deezer_album_id = MetadataSourcePlugin._get_id(
+                'album', deezer_url, deezer_id_regex)
+        if beatport_url:
+            info.beatport_album_id = MetadataSourcePlugin._get_id(
+                'album', beatport_url, beatport_id_regex)
 
     extra_albumdatas = plugins.send('mb_album_extract', data=release)
     for extra_albumdata in extra_albumdatas:
