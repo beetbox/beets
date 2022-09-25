@@ -118,6 +118,10 @@ musicbrainz:
     searchlimit: 5
     extra_tags: []
     genres: no
+    url_rels:
+        discogs: no
+        spotify: no
+        bandcamp: no
 
 match:
     strong_rec_thresh: 0.04

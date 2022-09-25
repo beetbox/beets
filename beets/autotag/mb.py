@@ -69,7 +69,7 @@ log = logging.getLogger('beets')
 RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'labels', 'artist-credits', 'aliases',
                     'recording-level-rels', 'work-rels',
-                    'work-level-rels', 'artist-rels', 'isrcs', 'url-rels']
+                    'work-level-rels', 'artist-rels', 'isrcs']
 BROWSE_INCLUDES = ['artist-credits', 'work-rels',
                    'artist-rels', 'recording-rels', 'release-rels']
 if "work-level-rels" in musicbrainzngs.VALID_BROWSE_INCLUDES['recording']:
@@ -81,6 +81,10 @@ if 'work-level-rels' in musicbrainzngs.VALID_INCLUDES['recording']:
     TRACK_INCLUDES += ['work-level-rels', 'artist-rels']
 if 'genres' in musicbrainzngs.VALID_INCLUDES['recording']:
     RELEASE_INCLUDES += ['genres']
+if (config['musicbrainz']['url_rels']['discogs'].get()
+        or config['musicbrainz']['url_rels']['spotify'].get()
+        or config['musicbrainz']['url_rels']['bandcamp'].get()):
+    RELEASE_INCLUDES += ['url-rels']
 
 
 def track_url(trackid):
@@ -476,21 +480,42 @@ def album_info(release):
         info.genre = '; '.join(g[0] for g in sorted(genres.items(),
                                                     key=lambda g: -g[1]))
 
-    # Additional online sources if MusicBrainz provides them.
-    if release.get('url-relation-list'):
+    # Additional online sources if configured and MusicBrainz provides them.
+    # FIXME This check is always True because of config_default.yaml.
+    if ('url_rels' in config['musicbrainz'].keys() and
+            release.get('url-relation-list')):
         d_release_url, d_master_url = None, None
+        spotify_url, bandcamp_url = None, None
+        fetch_discogs, fetch_spotify, fetch_bandcamp = False, False, False
+        if config['musicbrainz']['url_rels']['discogs'].get():
+            fetch_discogs = True
+        if config['musicbrainz']['url_rels']['spotify'].get():
+            fetch_spotify = True
+
         for url in release['url-relation-list']:
-            if url['type'] == 'discogs':
+            if fetch_discogs and url['type'] == 'discogs':
                 if 'release' in url['target']:
-                    log.debug('Found a Discogs Release link.')
+                    log.debug('Found link to Discogs release via MusicBrainz')
                     d_release_url = url['target']
                 if 'master' in url['target']:
-                    log.debug('Found a Discogs Master link.')
+                    log.debug('Found link to Discogs Master release via '
+                              'MusicBrainz')
                     d_master_url = url['target']
+            if fetch_spotify and url['type'] == 'spotify':
+                log.debug('Found link to Spotify album via MusicBrainz')
+                spotify_url = url['target']
+            if fetch_bandcamp and url['type'] == 'spotify':
+                log.debug('Found link to Bandcamp release via MusicBrainz')
+                spotify_url = url['target']
         # We prefer a Discogs Release URL, but a Master URL is better than
-        # nothing.
+        # nothing. FIXME not sure if this is a good idea!
         discogs_url = d_release_url if d_release_url else d_master_url
-        info.discogs_albumid = util.extract_discogs_id_regex(discogs_url)
+        if discogs_url:
+            info.discogs_albumid = util.extract_discogs_id_regex(discogs_url)
+        if spotify_url:
+            info.spotify_albumid = "FIXME id extractor method?"
+        if bandcamp_url:
+            info.bandcamp_albumid = "FIXME id extractor method?"
 
     extra_albumdatas = plugins.send('mb_album_extract', data=release)
     for extra_albumdata in extra_albumdatas:
