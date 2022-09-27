@@ -28,7 +28,6 @@ from beets import config
 from collections import Counter
 from urllib.parse import urljoin
 
-
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
 
 BASE_URL = 'https://musicbrainz.org/'
@@ -491,6 +490,8 @@ def album_info(release):
             fetch_discogs = True
         if config['musicbrainz']['url_rels']['spotify'].get():
             fetch_spotify = True
+        if config['musicbrainz']['url_rels']['bandcamp'].get():
+            fetch_bandcamp = True
 
         for url in release['url-relation-list']:
             if fetch_discogs and url['type'] == 'discogs':
@@ -501,12 +502,13 @@ def album_info(release):
                     log.debug('Found link to Discogs Master release via '
                               'MusicBrainz')
                     d_master_url = url['target']
-            if fetch_spotify and url['type'] == 'spotify':
+            if (fetch_spotify and url['type'] == 'spotify'
+                    or 'spotify' in url['target']):
                 log.debug('Found link to Spotify album via MusicBrainz')
                 spotify_url = url['target']
-            if fetch_bandcamp and url['type'] == 'spotify':
+            if fetch_bandcamp and url['type'] == 'bandcamp':
                 log.debug('Found link to Bandcamp release via MusicBrainz')
-                spotify_url = url['target']
+                bandcamp_url = url['target']
         # We prefer a Discogs Release URL, but a Master URL is better than
         # nothing. FIXME not sure if this is a good idea!
         discogs_url = d_release_url if d_release_url else d_master_url
