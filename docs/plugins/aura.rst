@@ -49,6 +49,7 @@ then see :ref:`aura-external-server`.
 AURA is designed to separate the client and server functionality. This plugin
 provides the server but not the client, so unless you like looking at JSON you
 will need a separate client. Currently the only client is `AURA Web Client`_.
+In order to use a local browser client with ``file:///`` see :ref:`aura-cors`.
 
 By default the API is served under http://127.0.0.1:8337/aura/. For example
 information about the track with an id of 3 can be obtained at
@@ -97,11 +98,18 @@ For example::
             - http://www.example.com
             - https://aura.example.org
 
-Alternatively you can set it to ``'*'`` to enable access from all origins.
+In order to use the plugin with a local browser client accessed using
+``file:///`` you must inclue ``'null'`` in the list of allowed origins
+(including quote marks)::
+
+    aura:
+        cors:
+            - 'null'
+
+Alternatively you use ``'*'`` to enable access from all origins.
 Note that there are security implications if you set the origin to ``'*'``,
 so please research this before using it. Note the use of quote marks when
-allowing all origins. Quote marks are also required when the origin is
-``null``, for example when using ``file:///``.
+allowing all origins.
 
 If the server is behind a proxy that uses credentials, you might want to set
 the ``cors_supports_credentials`` configuration option to true to let
