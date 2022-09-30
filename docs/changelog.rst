@@ -48,6 +48,7 @@ New features:
 
 Bug fixes:
 
+* :doc:`/plugins/convert`: Set default ``max_bitrate`` value to ``None`` to avoid transcoding when this parameter is not set. :bug:`4472`
 * We now respect the Spotify API's rate limiting, which avoids crashing when the API reports code 429 (too many requests).
   :bug:`4370`
 * Fix implicit paths OR queries (e.g. ``beet list /path/ , /other-path/``)
