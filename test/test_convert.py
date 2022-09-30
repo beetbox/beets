@@ -171,6 +171,8 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
         )
         self.config['convert'] = {
             'dest': self.convert_dest,
+            # Enforce running convert
+            'max_bitrate': 1,
             'paths': {'default': 'converted'},
             'format': 'mp3',
             'formats': {
@@ -249,6 +251,13 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
             self.run_convert('An impossible query')
         self.assertEqual(logs[0], 'convert: Empty query result.')
 
+    def test_no_transcode_when_max_bitrate_set_to_none(self):
+        self.config['convert']['max_bitrate'] = None
+        with control_stdin('y'):
+            self.run_convert()
+        converted = os.path.join(self.convert_dest, b'converted.ogg')
+        self.assertNoFileTag(converted, 'mp3')
+
 
 @_common.slow_test()
 class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper,
@@ -263,6 +272,8 @@ class NeverConvertLossyFilesTest(unittest.TestCase, TestHelper,
         self.convert_dest = os.path.join(self.temp_dir, b'convert_dest')
         self.config['convert'] = {
             'dest': self.convert_dest,
+            # Enforce running convert
+            'max_bitrate': 1,
             'paths': {'default': 'converted'},
             'never_convert_lossy_files': True,
             'format': 'mp3',
