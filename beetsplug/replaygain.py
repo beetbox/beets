@@ -49,13 +49,14 @@ class FatalGstreamerPluginReplayGainError(FatalReplayGainError):
     loading the required plugins."""
 
 
-def call(args, **kwargs):
+def call(args, log, **kwargs):
     """Execute the command and return its output or raise a
     ReplayGainError on failure.
     """
     try:
         return command_output(args, **kwargs)
     except subprocess.CalledProcessError as e:
+        log.debug(e.output.decode('utf8', 'ignore'))
         raise ReplayGainError(
             "{} exited with status {}".format(args[0], e.returncode)
         )
@@ -261,7 +262,7 @@ class FfmpegBackend(Backend):
 
         # check that ffmpeg is installed
         try:
-            ffmpeg_version_out = call([self._ffmpeg_path, "-version"])
+            ffmpeg_version_out = call([self._ffmpeg_path, "-version"], log)
         except OSError:
             raise FatalReplayGainError(
                 f"could not find ffmpeg at {self._ffmpeg_path}"
@@ -394,7 +395,7 @@ class FfmpegBackend(Backend):
         self._log.debug(
             'executing {0}', ' '.join(map(displayable_path, cmd))
         )
-        output = call(cmd).stderr.splitlines()
+        output = call(cmd, self._log).stderr.splitlines()
 
         # parse output
 
@@ -525,7 +526,7 @@ class CommandBackend(Backend):
             # Check whether the program is in $PATH.
             for cmd in ('mp3gain', 'aacgain'):
                 try:
-                    call([cmd, '-v'])
+                    call([cmd, '-v'], self._log)
                     self.command = cmd
                 except OSError:
                     pass
@@ -605,7 +606,7 @@ class CommandBackend(Backend):
 
         self._log.debug('analyzing {0} files', len(items))
         self._log.debug("executing {0}", " ".join(map(displayable_path, cmd)))
-        output = call(cmd).stdout
+        output = call(cmd, self._log).stdout
         self._log.debug('analysis finished')
         return self.parse_tool_output(output,
                                       len(items) + (1 if is_album else 0))
