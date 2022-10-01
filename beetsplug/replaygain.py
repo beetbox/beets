@@ -1085,7 +1085,7 @@ class ExceptionWatcher(Thread):
             try:
                 exc = self._queue.get_nowait()
                 self._callback()
-                raise exc[1].with_traceback(exc[2])
+                raise exc
             except queue.Empty:
                 # No exceptions yet, loop back to check
                 #  whether `_stopevent` is set
@@ -1338,23 +1338,16 @@ class ReplayGainPlugin(BeetsPlugin):
 
     def _apply(self, func, args, kwds, callback):
         if self._has_pool():
-            def catch_exc(func, exc_queue, log):
-                """Wrapper to catch raised exceptions in threads
+            def handle_exc(exc):
+                """Handle exceptions in the async work.
                 """
-                def wfunc(*args, **kwargs):
-                    try:
-                        return func(*args, **kwargs)
-                    except ReplayGainError as e:
-                        log.info(e.args[0])  # log non-fatal exceptions
-                    except Exception:
-                        exc_queue.put(sys.exc_info())
-                return wfunc
+                if isinstance(exc, ReplayGainError):
+                    self._log.info(exc.args[0])  # Log non-fatal exceptions.
+                else:
+                    self.exc_queue.put(exc)
 
-            # Wrap function and callback to catch exceptions
-            func = catch_exc(func, self.exc_queue, self._log)
-            callback = catch_exc(callback, self.exc_queue, self._log)
-
-            self.pool.apply_async(func, args, kwds, callback)
+            self.pool.apply_async(func, args, kwds, callback,
+                                  error_callback=handle_exc)
         else:
             callback(func(*args, **kwds))
 
