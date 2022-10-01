@@ -48,6 +48,9 @@ New features:
 
 Bug fixes:
 
+* :doc:`/plugins/replaygain`: Avoid a crash when errors occur in the analysis
+  backend.
+  :bug:`4506`
 * We now respect the Spotify API's rate limiting, which avoids crashing when the API reports code 429 (too many requests).
   :bug:`4370`
 * Fix implicit paths OR queries (e.g. ``beet list /path/ , /other-path/``)
