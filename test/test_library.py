@@ -441,7 +441,7 @@ class DestinationTest(_common.TestCase):
         self.lib.directory = b'lib'
         self.lib.path_formats = [('default', '$title')]
         self.i.title = 'ab\xa2\xbdd'
-        self.assertEqual(self.i.destination(), np('lib/abC_ 1_2 d'))
+        self.assertEqual(self.i.destination(), np('lib/abC_ 1_2d'))
 
     def test_destination_with_replacements(self):
         self.lib.directory = b'base'
@@ -637,7 +637,7 @@ class DestinationFunctionTest(_common.TestCase, PathFormattingMixin):
 
     def test_asciify_variable(self):
         self._setf('%asciify{ab\xa2\xbdd}')
-        self._assert_dest(b'/base/abC_ 1_2 d')
+        self._assert_dest(b'/base/abC_ 1_2d')
 
     def test_left_variable(self):
         self._setf('%left{$title, 3}')
