@@ -16,11 +16,12 @@
 """
 
 import shlex
+import os
 
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_, Subcommand, UserError
 from beets.util import command_output, displayable_path, subprocess, \
-    bytestring_path, MoveOperation, decode_commandline_path
+    bytestring_path, MoveOperation
 from beets.library import Item, Album
 
 
@@ -200,7 +201,7 @@ class DuplicatesPlugin(BeetsPlugin):
         output as flexattr on a key that is the name of the program, and
         return the key, checksum tuple.
         """
-        args = [p.format(file=decode_commandline_path(item.path))
+        args = [p.format(file=os.fsdecode(item.path))
                 for p in shlex.split(prog)]
         key = args[0]
         checksum = getattr(item, key, False)
