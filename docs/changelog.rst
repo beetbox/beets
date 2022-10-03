@@ -45,6 +45,8 @@ New features:
   :bug:`4379` :bug:`4387`
 * Add :ref:`%sunique{} <sunique>` template to disambiguate between singletons.
   :bug:`4438`
+* Add a new ``import.ignored_alias_types`` config option to allow for
+  specific alias types to be skipped over when importing items/albums.
 
 Bug fixes:
 
