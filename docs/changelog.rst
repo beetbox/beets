@@ -114,6 +114,9 @@ Bug fixes:
   :bug:`4389`
 * :doc:`plugins/convert`: Fix a bug with the `wma` format alias.
 * :doc:`/plugins/web`: Fix get file from item.
+* :doc:`/plugins/lastgenre`: Fix a duplicated entry for trip hop in the
+  default genre list.
+  :bug:`4510`
 
 For packagers:
 
