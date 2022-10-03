@@ -26,7 +26,7 @@ import logging
 
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
-from confuse import ConfigTypeError
+from confuse import ConfigTypeError, Optional
 from beets import art
 from beets.util.artresizer import ArtResizer
 from beets.library import parse_query_string
@@ -101,7 +101,9 @@ def should_transcode(item, fmt):
     if config['convert']['never_convert_lossy_files'] and \
             not (item.format.lower() in LOSSLESS_FORMATS):
         return False
-    maxbr = config['convert']['max_bitrate'].get(int)
+    maxbr = config['convert']['max_bitrate'].get(Optional(int))
+    if maxbr is None:
+        return False
     return fmt.lower() != item.format.lower() or \
         item.bitrate >= 1000 * maxbr
 
@@ -136,7 +138,7 @@ class ConvertPlugin(BeetsPlugin):
                 'wma':
                     'ffmpeg -i $source -y -vn -acodec wmav2 -vn $dest',
             },
-            'max_bitrate': 500,
+            'max_bitrate': None,
             'auto': False,
             'auto_keep': False,
             'tmpdir': None,

@@ -50,6 +50,8 @@ New features:
 
 Bug fixes:
 
+* :doc:`/plugins/convert`: Set default ``max_bitrate`` value to ``None`` to 
+  avoid transcoding when this parameter is not set. :bug:`4472`
 * :doc:`/plugins/replaygain`: Avoid a crash when errors occur in the analysis
   backend.
   :bug:`4506`
