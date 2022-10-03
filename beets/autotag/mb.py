@@ -117,11 +117,20 @@ def _preferred_alias(aliases):
     # Only consider aliases that have locales set.
     aliases = [a for a in aliases if 'locale' in a]
 
+    # Get any ignored alias types and lower case them to prevent case issues
+    ignored_alias_types = config['import']['ignored_alias_types'].as_str_seq()
+    ignored_alias_types = [a.lower() for a in ignored_alias_types]
+
     # Search configured locales in order.
     for locale in config['import']['languages'].as_str_seq():
-        # Find matching primary aliases for this locale.
-        matches = [a for a in aliases
-                   if a['locale'] == locale and 'primary' in a]
+        # Find matching primary aliases for this locale that are not
+        # being ignored
+        matches = []
+        for a in aliases:
+            if a['locale'] == locale and 'primary' in a and \
+               a.get('type', '').lower() not in ignored_alias_types:
+                matches.append(a)
+
         # Skip to the next locale if we have no matches
         if not matches:
             continue
