@@ -652,6 +652,17 @@ MusicBrainz. You can use a space-separated list of language abbreviations, like
 ``en jp es``, to specify a preference order. Defaults to an empty list, meaning 
 that no language is preferred.
 
+.. _ignored_alias_types:
+
+ignored_alias_types
+~~~~~~~~~~~~~~~~~~~
+
+A list of alias types to be ignored when importing new items.
+
+See the `MusicBrainz Documentation` for more information on aliases.
+
+.._MusicBrainz Documentation: https://musicbrainz.org/doc/Aliases
+
 .. _detail:
 
 detail
