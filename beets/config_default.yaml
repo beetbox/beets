@@ -33,6 +33,7 @@ import:
     duplicate_action: ask
     bell: no
     set_fields: {}
+    ignored_alias_types: []
 
 clutter: ["Thumbs.DB", ".DS_Store"]
 ignore: [".*", "*~", "System Volume Information", "lost+found"]

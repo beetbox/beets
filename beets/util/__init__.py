@@ -17,7 +17,6 @@
 import os
 import sys
 import errno
-import locale
 import re
 import tempfile
 import shutil
@@ -332,12 +331,7 @@ def arg_encoding():
     """Get the encoding for command-line arguments (and other OS
     locale-sensitive strings).
     """
-    try:
-        return locale.getdefaultlocale()[1] or 'utf-8'
-    except ValueError:
-        # Invalid locale environment variable setting. To avoid
-        # failing entirely for no good reason, assume UTF-8.
-        return 'utf-8'
+    return sys.getfilesystemencoding()
 
 
 def _fsencoding():
@@ -837,13 +831,14 @@ def cpu_count():
 
 
 def convert_command_args(args):
-    """Convert command arguments to bytestrings on Python 2 and
-    surrogate-escaped strings on Python 3."""
+    """Convert command arguments, which may either be `bytes` or `str`
+    objects, to uniformly surrogate-escaped strings.
+    """
     assert isinstance(args, list)
 
     def convert(arg):
         if isinstance(arg, bytes):
-            arg = arg.decode(arg_encoding(), 'surrogateescape')
+            return os.fsdecode(arg)
         return arg
 
     return [convert(a) for a in args]
@@ -1092,21 +1087,3 @@ def lazy_property(func):
         return value
 
     return wrapper
-
-
-def decode_commandline_path(path):
-    """Prepare a path for substitution into commandline template.
-
-    On Python 3, we need to construct the subprocess commands to invoke as a
-    Unicode string. On Unix, this is a little unfortunate---the OS is
-    expecting bytes---so we use surrogate escaping and decode with the
-    argument encoding, which is the same encoding that will then be
-    *reversed* to recover the same bytes before invoking the OS. On
-    Windows, we want to preserve the Unicode filename "as is."
-    """
-    # On Python 3, the template is a Unicode string, which only supports
-    # substitution of Unicode variables.
-    if platform.system() == 'Windows':
-        return path.decode(_fsencoding())
-    else:
-        return path.decode(arg_encoding(), 'surrogateescape')

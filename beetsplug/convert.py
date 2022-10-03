@@ -14,7 +14,7 @@
 
 """Converts tracks or albums to external directory
 """
-from beets.util import par_map, decode_commandline_path, arg_encoding
+from beets.util import par_map, arg_encoding
 
 import os
 import threading
@@ -26,7 +26,7 @@ import logging
 
 from beets import ui, util, plugins, config
 from beets.plugins import BeetsPlugin
-from confuse import ConfigTypeError
+from confuse import ConfigTypeError, Optional
 from beets import art
 from beets.util.artresizer import ArtResizer
 from beets.library import parse_query_string
@@ -101,7 +101,9 @@ def should_transcode(item, fmt):
     if config['convert']['never_convert_lossy_files'] and \
             not (item.format.lower() in LOSSLESS_FORMATS):
         return False
-    maxbr = config['convert']['max_bitrate'].get(int)
+    maxbr = config['convert']['max_bitrate'].get(Optional(int))
+    if maxbr is None:
+        return False
     return fmt.lower() != item.format.lower() or \
         item.bitrate >= 1000 * maxbr
 
@@ -136,7 +138,7 @@ class ConvertPlugin(BeetsPlugin):
                 'wma':
                     'ffmpeg -i $source -y -vn -acodec wmav2 -vn $dest',
             },
-            'max_bitrate': 500,
+            'max_bitrate': None,
             'auto': False,
             'auto_keep': False,
             'tmpdir': None,
@@ -214,8 +216,8 @@ class ConvertPlugin(BeetsPlugin):
             self._log.info('Encoding {0}', util.displayable_path(source))
 
         command = command.decode(arg_encoding(), 'surrogateescape')
-        source = decode_commandline_path(source)
-        dest = decode_commandline_path(dest)
+        source = os.fsdecode(source)
+        dest = os.fsdecode(dest)
 
         # Substitute $source and $dest in the argument list.
         args = shlex.split(command)
