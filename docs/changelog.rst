@@ -8,6 +8,7 @@ Changelog goes here!
 
 New features:
 
+* Fixed ``mb_track_extract`` value overrides when called from ``album_info`` :bug:`4512`
 * :doc:`/plugins/mbsubmit`: Added a new `mbsubmit` command to print track information to be submitted to MusicBrainz after initial import.
   :bug:`4455`
 * Added `spotify_updated` field to track when the information was last updated.
@@ -50,7 +51,7 @@ New features:
 
 Bug fixes:
 
-* :doc:`/plugins/convert`: Set default ``max_bitrate`` value to ``None`` to 
+* :doc:`/plugins/convert`: Set default ``max_bitrate`` value to ``None`` to
   avoid transcoding when this parameter is not set. :bug:`4472`
 * :doc:`/plugins/replaygain`: Avoid a crash when errors occur in the analysis
   backend.
