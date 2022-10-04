@@ -203,7 +203,7 @@ def _flatten_artist_credit(credit):
 
 
 def track_info(recording, index=None, medium=None, medium_index=None,
-               medium_total=None):
+               medium_total=None, extract_hook=True):
     """Translates a MusicBrainz recording result dictionary into a beets
     ``TrackInfo`` object. Three parameters are optional and are used
     only for tracks that appear on releases (non-singletons): ``index``,
@@ -275,10 +275,16 @@ def track_info(recording, index=None, medium=None, medium_index=None,
     if arranger:
         info.arranger = ', '.join(arranger)
 
-    # Supplementary fields provided by plugins
-    extra_trackdatas = plugins.send('mb_track_extract', data=recording)
-    for extra_trackdata in extra_trackdatas:
-        info.update(extra_trackdata)
+    # When calling track_info from album_info, we must defer this hook
+    # since album_info performs a few extra assignments. Therefore,
+    # the argument extract_hook=False can be used to avoid processing
+    # the hook. For track-mode imports, the default (extract_hook=True)
+    # should be used.
+    if extract_hook:
+        # Supplementary fields provided by plugins
+        extra_trackdatas = plugins.send('mb_track_extract', data=recording)
+        for extra_trackdata in extra_trackdatas:
+            info.update(extra_trackdata)
 
     info.decode()
     return info
@@ -370,6 +376,7 @@ def album_info(release):
                 int(medium['position']),
                 int(track['position']),
                 track_count,
+                extract_hook=False,
             )
             ti.release_track_id = track['id']
             ti.disctitle = disctitle
@@ -386,6 +393,11 @@ def album_info(release):
                 ti.artist_id = track['artist-credit'][0]['artist']['id']
             if track.get('length'):
                 ti.length = int(track['length']) / (1000.0)
+
+            # Supplementary fields provided by plugins
+            extra_trackdatas = plugins.send('mb_track_extract', data=track)
+            for extra_trackdata in extra_trackdatas:
+                ti.update(extra_trackdata)
 
             track_infos.append(ti)
 

@@ -16,16 +16,17 @@
 """
 
 from test import _common
+from test.test_plugins import TestHelper as PluginsTestHelper
 from beets.autotag import mb
-from beets import config
+from beets import config, plugins
 
 import unittest
 from unittest import mock
 
 
-class MBAlbumInfoTest(_common.TestCase):
+class MBTestHelper():
     def _make_release(self, date_str='2009', tracks=None, track_length=None,
-                      track_artist=False, data_tracks=None,
+                      track_artist=False, track_title=None, data_tracks=None,
                       medium_format='FORMAT'):
         release = {
             'title': 'ALBUM TITLE',
@@ -72,6 +73,9 @@ class MBAlbumInfoTest(_common.TestCase):
                     'position': i,
                     'number': 'A1',
                 }
+                if track_title:
+                    # Tracks can have titles different from the recording title
+                    track['title'] = track_title
                 if track_length:
                     # Track lengths are distinct from recording lengths.
                     track['length'] = track_length
@@ -134,6 +138,8 @@ class MBAlbumInfoTest(_common.TestCase):
             track['disambiguation'] = disambiguation
         return track
 
+
+class MBAlbumInfoTest(_common.TestCase, MBTestHelper):
     def test_parse_release_with_year(self):
         release = self._make_release('1984')
         d = mb.album_info(release)
@@ -459,6 +465,74 @@ class MBAlbumInfoTest(_common.TestCase):
         self.assertEqual(t[1].trackdisambig, "SECOND TRACK")
 
 
+class MBHookTest(
+    unittest.TestCase,
+    PluginsTestHelper,
+    MBTestHelper,
+    _common.Assertions
+):
+    """Test musicbrainz extract hooks"""
+
+    def setUp(self):
+        self.setup_plugin_loader()
+        self.setup_beets()
+
+        class EventListenerPlugin(plugins.BeetsPlugin):
+            pass
+
+        self.event_listener_plugin = EventListenerPlugin()
+        self.register_plugin(EventListenerPlugin)
+
+    def tearDown(self):
+        self.teardown_plugin_loader()
+        self.teardown_beets()
+
+    def register_listener(self, event, func):
+        self.event_listener_plugin.register_listener(event, func)
+
+    def test_no_hooks_sanity(self):
+        track = self._make_track('RELEASE TITLE', 'id', 100.0 * 1000.0)
+        album = self._make_release(tracks=[track], track_title='track title')
+
+        track_info = mb.track_info(track)
+        self.assertEqual(track_info.title, 'RELEASE TITLE')
+
+        album_info = mb.album_info(album)
+        self.assertEqual(album_info.album, 'ALBUM TITLE')
+        # track_info (confusingly) operates at the unit of a
+        # "recording". album_info overrides certain properties
+        # of a release with properties of a "track" which may
+        # only be present in the response for an album request
+        self.assertEqual(album_info.tracks[0].title, 'track title')
+
+    def test_hooks_modify_results(self):
+        track_hook_calls = [0, 0]
+
+        def track_extract(data):
+            track_hook_calls[0] += 1
+            return {'title': 'new title'}
+        self.register_listener('mb_track_extract', track_extract)
+
+        def album_extract(data):
+            track_hook_calls[1] += 1
+            return {'album': 'new album'}
+        self.register_listener('mb_album_extract', album_extract)
+
+        track = self._make_track('TRACK TITLE', 'id', 100.0 * 1000.0)
+        album = self._make_release(tracks=[track], track_title='track title')
+
+        track_info = mb.track_info(track)
+        self.assertEqual(track_info.title, 'new title')
+
+        album_info = mb.album_info(album)
+        self.assertEqual(album_info.album, 'new album')
+        self.assertEqual(album_info.tracks[0].title, 'new title')
+
+        # track_extract is called once from mb.track_info and once from mb.album_info
+        # it should not be called twice from mb.album_info
+        self.assertEqual(track_hook_calls, [2, 1])
+
+
 class ParseIDTest(_common.TestCase):
     def test_parse_id_correct(self):
         id_string = "28e32c71-1450-463e-92bf-e0a46446fc11"
@@ -629,6 +703,7 @@ class MBLibraryTest(unittest.TestCase):
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
+
 
 if __name__ == '__main__':
     unittest.main(defaultTest='suite')
