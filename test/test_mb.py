@@ -492,7 +492,7 @@ class MBHookTest(
 
     def test_no_hooks_sanity(self):
         track = self._make_track('RELEASE TITLE', 'id', 100.0 * 1000.0)
-        album = self._make_release(tracks=[track], track_title='track title')
+        album = self._make_release(tracks=[track], track_title='HONORED')
 
         track_info = mb.track_info(track)
         self.assertEqual(track_info.title, 'RELEASE TITLE')
@@ -503,33 +503,33 @@ class MBHookTest(
         # "recording". album_info overrides certain properties
         # of a release with properties of a "track" which may
         # only be present in the response for an album request
-        self.assertEqual(album_info.tracks[0].title, 'track title')
+        self.assertEqual(album_info.tracks[0].title, 'HONORED')
 
     def test_hooks_modify_results(self):
         track_hook_calls = [0, 0]
 
         def track_extract(data):
             track_hook_calls[0] += 1
-            return {'title': 'new title'}
+            return {'title': 'new {}'.format(data['title'].lower())}
         self.register_listener('mb_track_extract', track_extract)
 
         def album_extract(data):
             track_hook_calls[1] += 1
-            return {'album': 'new album'}
+            return {'album': 'new {}'.format(data['title'].lower())}
         self.register_listener('mb_album_extract', album_extract)
 
         track = self._make_track('TRACK TITLE', 'id', 100.0 * 1000.0)
-        album = self._make_release(tracks=[track], track_title='track title')
+        album = self._make_release(tracks=[track], track_title='IGNORED')
 
         track_info = mb.track_info(track)
-        self.assertEqual(track_info.title, 'new title')
+        self.assertEqual(track_info.title, 'new track title')
 
         album_info = mb.album_info(album)
-        self.assertEqual(album_info.album, 'new album')
-        self.assertEqual(album_info.tracks[0].title, 'new title')
+        self.assertEqual(album_info.album, 'new album title')
+        self.assertEqual(album_info.tracks[0].title, 'new track title')
 
-        # track_extract is called once from mb.track_info and once from mb.album_info
-        # it should not be called twice from mb.album_info
+        # track_extract is called once from mb.track_info and once from
+        # mb.album_info it should not be called twice from mb.album_info
         self.assertEqual(track_hook_calls, [2, 1])
 
 

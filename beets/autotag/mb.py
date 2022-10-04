@@ -395,7 +395,8 @@ def album_info(release):
                 ti.length = int(track['length']) / (1000.0)
 
             # Supplementary fields provided by plugins
-            extra_trackdatas = plugins.send('mb_track_extract', data=track)
+            extra_trackdatas = plugins.send(
+                'mb_track_extract', data=track['recording'])
             for extra_trackdata in extra_trackdatas:
                 ti.update(extra_trackdata)
 
