@@ -52,6 +52,11 @@ New features:
 
 Bug fixes:
 
+* :doc:`/plugins/discogs`: Fix "Discogs plugin replacing Feat. or Ft. with
+  a comma" by fixing an oversight that removed a functionality from the code
+  base when the MetadataSourcePlugin abstract class was introduced in PR's
+  #3335 and #3371.
+  :bug:`4401`
 * :doc:`/plugins/convert`: Set default ``max_bitrate`` value to ``None`` to 
   avoid transcoding when this parameter is not set. :bug:`4472`
 * :doc:`/plugins/replaygain`: Avoid a crash when errors occur in the analysis
