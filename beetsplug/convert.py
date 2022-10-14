@@ -102,10 +102,9 @@ def should_transcode(item, fmt):
             not (item.format.lower() in LOSSLESS_FORMATS):
         return False
     maxbr = config['convert']['max_bitrate'].get(Optional(int))
-    if maxbr is None:
-        return False
-    return fmt.lower() != item.format.lower() or \
-        item.bitrate >= 1000 * maxbr
+    if maxbr is not None and item.bitrate >= 1000 * maxbr:
+        return True
+    return fmt.lower() != item.format.lower()
 
 
 class ConvertPlugin(BeetsPlugin):

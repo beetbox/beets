@@ -88,10 +88,11 @@ file. The available options are:
 - **embed**: Embed album art in converted items. Default: ``yes``.
 - **id3v23**: Can be used to override the global ``id3v23`` option. Default:
   ``inherit``.
-- **max_bitrate**: All lossy files with a higher bitrate will be
-  transcoded and those with a lower bitrate will simply be copied. Note that
-  this does not guarantee that all converted files will have a lower
-  bitrate---that depends on the encoder and its configuration.
+- **max_bitrate**: By default, the plugin does not transcode files that are
+  already in the destination format. This option instead also transcodes files
+  with high bitrates, even if they are already in the same format as the
+  output.  Note that this does not guarantee that all converted files will have
+  a lower bitrate---that depends on the encoder and its configuration.
   Default: none.
 - **no_convert**: Does not transcode items matching provided query string
   (see :doc:`/reference/query`). (i.e. ``format:AAC, format:WMA`` or
