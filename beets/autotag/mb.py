@@ -27,7 +27,7 @@ from beets import util
 from beets import config
 from collections import Counter
 from urllib.parse import urljoin
-from beetsplug.discogs import extract_release_id_regex
+
 
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
 
@@ -490,7 +490,7 @@ def album_info(release):
         # We prefer a Discogs Release URL, but a Master URL is better than
         # nothing.
         discogs_url = d_release_url if d_release_url else d_master_url
-        info.discogs_albumid = extract_release_id_regex(discogs_url)
+        info.discogs_albumid = util.extract_discogs_id_regex(discogs_url)
 
     extra_albumdatas = plugins.send('mb_album_extract', data=release)
     for extra_albumdata in extra_albumdatas:

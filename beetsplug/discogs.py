@@ -18,6 +18,7 @@ python3-discogs-client library.
 
 import beets.ui
 from beets import config
+from beets.util import extract_discogs_id_regex
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.plugins import MetadataSourcePlugin, BeetsPlugin, get_distance
 import confuse
@@ -43,30 +44,6 @@ API_SECRET = 'plxtUTqoCzwxZpqdPysCwGuBSmZNdZVy'
 CONNECTION_ERRORS = (ConnectionError, socket.error, http.client.HTTPException,
                      ValueError,  # JSON decoding raises a ValueError.
                      DiscogsAPIError)
-
-def extract_release_id_regex(album_id_or_url):
-    """Returns the Discogs_id or None."""
-    # Discogs-IDs are simple integers. In order to avoid confusion with
-    # other metadata plugins, we only look for very specific formats of the
-    # input string:
-    # - plain integer, optionally wrapped in brackets and prefixed by an
-    #   'r', as this is how discogs displays the release ID on its webpage.
-    # - legacy url format: discogs.com/<name of release>/release/<id>
-    # - current url format: discogs.com/release/<id>-<name of release>
-    # See #291, #4080 and #4085 for the discussions leading up to these
-    # patterns.
-    # Regex has been tested here https://regex101.com/r/wyLdB4/2
-
-    for pattern in [
-            r'^\[?r?(?P<id>\d+)\]?$',
-            r'discogs\.com/release/(?P<id>\d+)-',
-            r'discogs\.com/[^/]+/release/(?P<id>\d+)',
-    ]:
-        match = re.search(pattern, album_id_or_url)
-        if match:
-            return int(match.group('id'))
-
-    return None
 
 
 class DiscogsPlugin(BeetsPlugin):
@@ -204,31 +181,6 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.debug('Connection error in album search', exc_info=True)
             return []
 
-    @staticmethod
-    def extract_release_id_regex(album_id):
-        """Returns the Discogs_id or None."""
-        # Discogs-IDs are simple integers. In order to avoid confusion with
-        # other metadata plugins, we only look for very specific formats of the
-        # input string:
-        # - plain integer, optionally wrapped in brackets and prefixed by an
-        #   'r', as this is how discogs displays the release ID on its webpage.
-        # - legacy url format: discogs.com/<name of release>/release/<id>
-        # - current url format: discogs.com/release/<id>-<name of release>
-        # See #291, #4080 and #4085 for the discussions leading up to these
-        # patterns.
-        # Regex has been tested here https://regex101.com/r/wyLdB4/2
-
-        for pattern in [
-                r'^\[?r?(?P<id>\d+)\]?$',
-                r'discogs\.com/release/(?P<id>\d+)-',
-                r'discogs\.com/[^/]+/release/(?P<id>\d+)',
-        ]:
-            match = re.search(pattern, album_id)
-            if match:
-                return int(match.group('id'))
-
-        return None
-
     def album_for_id(self, album_id):
         """Fetches an album by its Discogs ID and returns an AlbumInfo object
         or None if the album is not found.
@@ -238,7 +190,7 @@ class DiscogsPlugin(BeetsPlugin):
 
         self._log.debug('Searching for release {0}', album_id)
 
-        discogs_id = self.extract_release_id_regex(album_id)
+        discogs_id = extract_discogs_id_regex(album_id)
 
         if not discogs_id:
             return None
@@ -350,7 +302,7 @@ class DiscogsPlugin(BeetsPlugin):
         else:
             genre = base_genre
 
-        discogs_albumid = self.extract_release_id_regex(result.data.get('uri'))
+        discogs_albumid = extract_discogs_id_regex(result.data.get('uri'))
 
         # Extract information for the optional AlbumInfo fields that are
         # contained on nested discogs fields.
