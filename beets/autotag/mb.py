@@ -24,7 +24,9 @@ from beets import plugins
 import beets.autotag.hooks
 import beets
 from beets import util
+from beets.util.id_extractors import spotify_id_regex
 from beets import config
+from beets.plugins import MetadataSourcePlugin
 from collections import Counter
 from urllib.parse import urljoin
 
@@ -515,7 +517,8 @@ def album_info(release):
         if discogs_url:
             info.discogs_albumid = util.extract_discogs_id_regex(discogs_url)
         if spotify_url:
-            info.spotify_albumid = "FIXME id extractor method?"
+            info.spotify_album_id = MetadataSourcePlugin._get_id(
+                'album', spotify_url, spotify_id_regex)
         if bandcamp_url:
             info.bandcamp_albumid = "FIXME id extractor method?"
 
