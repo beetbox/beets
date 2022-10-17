@@ -28,6 +28,11 @@ deezer_id_regex = {
     'match_group': 4,
 }
 
+beatport_id_regex = {
+    'pattern': r'(^|beatport\.com/release/.+/)(\d+)$',
+    'match_group': 2,
+}
+
 
 def extract_discogs_id_regex(album_id):
     """Returns the Discogs_id or None."""
