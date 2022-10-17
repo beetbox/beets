@@ -18,7 +18,7 @@ python3-discogs-client library.
 
 import beets.ui
 from beets import config
-from beets.util import extract_discogs_id_regex
+from beets.util.id_extractors import extract_discogs_id_regex
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.plugins import MetadataSourcePlugin, BeetsPlugin, get_distance
 import confuse

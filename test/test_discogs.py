@@ -21,7 +21,7 @@ from test._common import Bag
 from test.helper import capture_log
 
 from beets import config
-from beets.util import extract_discogs_id_regex
+from beets.util.id_extractors import extract_discogs_id_regex
 
 from beetsplug.discogs import DiscogsPlugin
 

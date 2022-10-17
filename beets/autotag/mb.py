@@ -25,6 +25,7 @@ import beets.autotag.hooks
 import beets
 from beets import util
 from beets.util.id_extractors import spotify_id_regex
+from beets.util.id_extractors import extract_discogs_id_regex
 from beets import config
 from beets.plugins import MetadataSourcePlugin
 from collections import Counter
@@ -515,7 +516,7 @@ def album_info(release):
         # nothing. FIXME not sure if this is a good idea!
         discogs_url = d_release_url if d_release_url else d_master_url
         if discogs_url:
-            info.discogs_albumid = util.extract_discogs_id_regex(discogs_url)
+            info.discogs_albumid = extract_discogs_id_regex(discogs_url)
         if spotify_url:
             info.spotify_album_id = MetadataSourcePlugin._get_id(
                 'album', spotify_url, spotify_id_regex)
