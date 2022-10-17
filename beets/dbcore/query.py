@@ -21,39 +21,7 @@ from beets import util
 from datetime import datetime, timedelta
 import unicodedata
 from functools import reduce
-
-
-class ParsingError(ValueError):
-    """Abstract class for any unparseable user-requested album/query
-    specification.
-    """
-
-
-class InvalidQueryError(ParsingError):
-    """Represent any kind of invalid query.
-
-    The query should be a unicode string or a list, which will be space-joined.
-    """
-
-    def __init__(self, query, explanation):
-        if isinstance(query, list):
-            query = " ".join(query)
-        message = f"'{query}': {explanation}"
-        super().__init__(message)
-
-
-class InvalidQueryArgumentValueError(ParsingError):
-    """Represent a query argument that could not be converted as expected.
-
-    It exists to be caught in upper stack levels so a meaningful (i.e. with the
-    query) InvalidQueryError can be raised.
-    """
-
-    def __init__(self, what, expected, detail=None):
-        message = f"'{what}' is not {expected}"
-        if detail:
-            message = f"{message}: {detail}"
-        super().__init__(message)
+from .dbcore_exceptions import InvalidQueryArgumentValueError
 
 
 class Query:
@@ -216,7 +184,7 @@ class RegexpQuery(StringFieldQuery):
     """A query that matches a regular expression in a specific item
     field.
 
-    Raises InvalidQueryError when the pattern is not a valid regular
+    Raises InvalidQueryArgumentValueError when the pattern is not a valid regular
     expression.
     """
 
@@ -285,7 +253,7 @@ class NumericQuery(FieldQuery):
     (``..``) lets users specify one- or two-sided ranges. For example,
     ``year:2001..`` finds music released since the turn of the century.
 
-    Raises InvalidQueryError when the pattern does not represent an int or
+    Raises InvalidQueryArgumentValueError when the pattern does not represent an int or
     a float.
     """
 
@@ -293,7 +261,7 @@ class NumericQuery(FieldQuery):
         """Convert a string to a numeric type (float or int).
 
         Return None if `s` is empty.
-        Raise an InvalidQueryError if the string cannot be converted.
+        Raise an InvalidQueryArgumentValueError if the string cannot be converted.
         """
         # This is really just a bit of fun premature optimization.
         if not s:
@@ -746,7 +714,7 @@ class DurationQuery(NumericQuery):
 
     Converts the range(s) to a float value, and delegates on NumericQuery.
 
-    Raises InvalidQueryError when the pattern does not represent an int, float
+    Raises InvalidQueryArgumentValueError when the pattern does not represent an int, float
     or M:SS time interval.
     """
 
@@ -754,7 +722,7 @@ class DurationQuery(NumericQuery):
         """Convert a M:SS or numeric string to a float.
 
         Return None if `s` is empty.
-        Raise an InvalidQueryError if the string cannot be converted.
+        Raise an InvalidQueryArgumentValueError if the string cannot be converted.
         """
         if not s:
             return None

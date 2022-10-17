@@ -1419,7 +1419,7 @@ def parse_query_string(s, model_cls):
     try:
         parts = shlex.split(s)
     except ValueError as exc:
-        raise dbcore.InvalidQueryError(s, exc)
+        raise dbcore.dbcore_exceptions.InvalidQueryError(s, exc)
     return parse_query_parts(parts, model_cls)
 
 
@@ -1513,8 +1513,8 @@ class Library(dbcore.Database):
                 query, parsed_sort = parse_query_string(query, model_cls)
             elif isinstance(query, (list, tuple)):
                 query, parsed_sort = parse_query_parts(query, model_cls)
-        except dbcore.query.InvalidQueryArgumentValueError as exc:
-            raise dbcore.InvalidQueryError(query, exc)
+        except dbcore.dbcore_exceptions.InvalidQueryArgumentValueError as exc:
+            raise dbcore.dbcore_exceptions.InvalidQueryError(query, exc)
 
         # Any non-null sort specified by the parsed query overrides the
         # provided sort.

@@ -29,15 +29,7 @@ from beets.util import py3_path
 from beets.dbcore import types
 from .query import MatchQuery, NullSort, TrueQuery, AndQuery
 from collections.abc import Mapping
-
-
-class DBAccessError(Exception):
-    """The SQLite database became inaccessible.
-
-    This can happen when trying to read or write the database when, for
-    example, the database file is deleted or otherwise disappears. There
-    is probably no way to recover from this error.
-    """
+from .dbcore_exceptions import DBAccessError
 
 
 class FormattedMapping(Mapping):

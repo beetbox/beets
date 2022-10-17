@@ -50,7 +50,7 @@ New features:
 
 Bug fixes:
 
-* :doc:`/plugins/convert`: Set default ``max_bitrate`` value to ``None`` to 
+* :doc:`/plugins/convert`: Set default ``max_bitrate`` value to ``None`` to
   avoid transcoding when this parameter is not set. :bug:`4472`
 * :doc:`/plugins/replaygain`: Avoid a crash when errors occur in the analysis
   backend.
@@ -123,6 +123,14 @@ For packagers:
 * We fixed a version for the dependency on the `Confuse`_ library.
   :bug:`4167`
 * The minimum required version of :pypi:`mediafile` is now 0.9.0.
+
+There are some changes for developers:
+
+* Refactored `beets/dbcore` files that contained exceptions and created
+  a new file `dbcore_exceptions.py` which is responsible for holding
+  all the exceptions related to `beets/dbcore`. A future refactor
+  should pull this file out to a common module area where all the remaining
+  exceptions persist with their respective namespace(s).
 
 Other new things:
 
