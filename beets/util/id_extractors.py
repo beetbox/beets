@@ -23,6 +23,11 @@ spotify_id_regex = {
     'match_group': 2,
 }
 
+deezer_id_regex = {
+    'pattern': r'(^|deezer\.com/)([a-z]*/)?({}/)?(\d+)',
+    'match_group': 4,
+}
+
 
 def extract_discogs_id_regex(album_id):
     """Returns the Discogs_id or None."""

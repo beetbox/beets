@@ -23,6 +23,7 @@ import requests
 from beets import ui
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.plugins import MetadataSourcePlugin, BeetsPlugin
+from betts.utils.id_extractors import deezer_id_regex
 
 
 class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
@@ -34,10 +35,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
     album_url = 'https://api.deezer.com/album/'
     track_url = 'https://api.deezer.com/track/'
 
-    id_regex = {
-        'pattern': r'(^|deezer\.com/)([a-z]*/)?({}/)?(\d+)',
-        'match_group': 4,
-    }
+    id_regex = deezer_id_regex
 
     def __init__(self):
         super().__init__()
@@ -51,7 +49,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         :return: AlbumInfo object for album.
         :rtype: beets.autotag.hooks.AlbumInfo or None
         """
-        deezer_id = self._get_id('album', album_id)
+        deezer_id = self._get_id('album', album_id, self.id_regex)
         if deezer_id is None:
             return None
 
@@ -154,7 +152,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         :rtype: beets.autotag.hooks.TrackInfo or None
         """
         if track_data is None:
-            deezer_id = self._get_id('track', track_id)
+            deezer_id = self._get_id('track', track_id, self.id_regex)
             if deezer_id is None:
                 return None
             track_data = requests.get(self.track_url + deezer_id).json()
