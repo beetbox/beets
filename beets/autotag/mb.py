@@ -24,7 +24,7 @@ from beets import plugins
 import beets.autotag.hooks
 import beets
 from beets import util
-from beets.util.id_extractors import spotify_id_regex
+from beets.util.id_extractors import spotify_id_regex, beatport_id_regex
 from beets.util.id_extractors import extract_discogs_id_regex
 from beets import config
 from beets.plugins import MetadataSourcePlugin
@@ -487,14 +487,17 @@ def album_info(release):
     if ('url_rels' in config['musicbrainz'].keys() and
             release.get('url-relation-list')):
         d_release_url, d_master_url = None, None
-        spotify_url, bandcamp_url = None, None
+        spotify_url, bandcamp_url, beatport_url = None, None, None
         fetch_discogs, fetch_spotify, fetch_bandcamp = False, False, False
+        fetch_beatport = False
         if config['musicbrainz']['url_rels']['discogs'].get():
             fetch_discogs = True
         if config['musicbrainz']['url_rels']['spotify'].get():
             fetch_spotify = True
         if config['musicbrainz']['url_rels']['bandcamp'].get():
             fetch_bandcamp = True
+        if config['musicbrainz']['url_rels']['beatport'].get():
+            fetch_beatport = True
 
         for url in release['url-relation-list']:
             if fetch_discogs and url['type'] == 'discogs':
@@ -512,6 +515,10 @@ def album_info(release):
             if fetch_bandcamp and url['type'] == 'bandcamp':
                 log.debug('Found link to Bandcamp album via MusicBrainz')
                 bandcamp_url = url['target']
+            if (fetch_beatport and url['type'] == 'beatport'
+                    or 'beatport.com' in url['target']):
+                log.debug('Found link to Beatport album via MusicBrainz')
+                beatport_url = url['target']
         # We prefer a Discogs Release URL, but a Master URL is better than
         # nothing. FIXME not sure if this is a good idea!
         discogs_url = d_release_url if d_release_url else d_master_url
@@ -523,6 +530,9 @@ def album_info(release):
         if bandcamp_url:
             # URL is used as the ID, see note in beets.util.id_extractors.
             info.bandcamp_albumid = bandcamp_url
+        if beatport_url:
+            info.beatport_album_id = MetadataSourcePlugin._get_id(
+                'album', beatport_url, beatport_id_regex)
 
     extra_albumdatas = plugins.send('mb_album_extract', data=release)
     for extra_albumdata in extra_albumdatas:

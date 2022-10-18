@@ -122,6 +122,7 @@ musicbrainz:
         discogs: no
         spotify: no
         bandcamp: no
+        beatport: no
 
 match:
     strong_rec_thresh: 0.04
