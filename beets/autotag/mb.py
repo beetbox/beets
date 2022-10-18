@@ -510,7 +510,7 @@ def album_info(release):
                 log.debug('Found link to Spotify album via MusicBrainz')
                 spotify_url = url['target']
             if fetch_bandcamp and url['type'] == 'bandcamp':
-                log.debug('Found link to Bandcamp release via MusicBrainz')
+                log.debug('Found link to Bandcamp album via MusicBrainz')
                 bandcamp_url = url['target']
         # We prefer a Discogs Release URL, but a Master URL is better than
         # nothing. FIXME not sure if this is a good idea!
@@ -521,7 +521,8 @@ def album_info(release):
             info.spotify_album_id = MetadataSourcePlugin._get_id(
                 'album', spotify_url, spotify_id_regex)
         if bandcamp_url:
-            info.bandcamp_albumid = "FIXME id extractor method?"
+            # URL is used as the ID, see note in beets.util.id_extractors.
+            info.bandcamp_albumid = bandcamp_url
 
     extra_albumdatas = plugins.send('mb_album_extract', data=release)
     for extra_albumdata in extra_albumdatas:
