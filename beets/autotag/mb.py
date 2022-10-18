@@ -71,7 +71,7 @@ log = logging.getLogger('beets')
 RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'labels', 'artist-credits', 'aliases',
                     'recording-level-rels', 'work-rels',
-                    'work-level-rels', 'artist-rels', 'isrcs']
+                    'work-level-rels', 'artist-rels', 'isrcs', 'url-rels']
 BROWSE_INCLUDES = ['artist-credits', 'work-rels',
                    'artist-rels', 'recording-rels', 'release-rels']
 if "work-level-rels" in musicbrainzngs.VALID_BROWSE_INCLUDES['recording']:
@@ -83,10 +83,6 @@ if 'work-level-rels' in musicbrainzngs.VALID_INCLUDES['recording']:
     TRACK_INCLUDES += ['work-level-rels', 'artist-rels']
 if 'genres' in musicbrainzngs.VALID_INCLUDES['recording']:
     RELEASE_INCLUDES += ['genres']
-if (config['musicbrainz']['url_rels']['discogs'].get()
-        or config['musicbrainz']['url_rels']['spotify'].get()
-        or config['musicbrainz']['url_rels']['bandcamp'].get()):
-    RELEASE_INCLUDES += ['url-rels']
 
 
 def track_url(trackid):
