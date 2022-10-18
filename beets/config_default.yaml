@@ -123,6 +123,7 @@ musicbrainz:
         spotify: no
         bandcamp: no
         beatport: no
+        deezer: no
 
 match:
     strong_rec_thresh: 0.04

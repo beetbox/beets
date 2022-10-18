@@ -25,7 +25,7 @@ import beets.autotag.hooks
 import beets
 from beets import util
 from beets.util.id_extractors import spotify_id_regex, beatport_id_regex
-from beets.util.id_extractors import extract_discogs_id_regex
+from beets.util.id_extractors import extract_discogs_id_regex, deezer_id_regex
 from beets import config
 from beets.plugins import MetadataSourcePlugin
 from collections import Counter
@@ -486,10 +486,10 @@ def album_info(release):
     # FIXME This check is always True because of config_default.yaml.
     if ('url_rels' in config['musicbrainz'].keys() and
             release.get('url-relation-list')):
-        discogs_url = None
+        discogs_url, deezer_url = None, None
         spotify_url, bandcamp_url, beatport_url = None, None, None
         fetch_discogs, fetch_spotify, fetch_bandcamp = False, False, False
-        fetch_beatport = False
+        fetch_beatport, fetch_deezer = False, False
         if config['musicbrainz']['url_rels']['discogs'].get():
             fetch_discogs = True
         if config['musicbrainz']['url_rels']['spotify'].get():
@@ -498,6 +498,8 @@ def album_info(release):
             fetch_bandcamp = True
         if config['musicbrainz']['url_rels']['beatport'].get():
             fetch_beatport = True
+        if config['musicbrainz']['url_rels']['deezer'].get():
+            fetch_deezer = True
 
         for url in release['url-relation-list']:
             if fetch_discogs and url['type'] == 'discogs':
@@ -514,6 +516,10 @@ def album_info(release):
                     or 'beatport.com' in url['target']):
                 log.debug('Found link to Beatport album via MusicBrainz')
                 beatport_url = url['target']
+            if (fetch_deezer and url['type'] == 'deezer'
+                    or 'deezer.com' in url['target']):
+                log.debug('Found link to Deezer album via MusicBrainz')
+                deezer_url = url['target']
         if discogs_url:
             info.discogs_albumid = extract_discogs_id_regex(discogs_url)
         if spotify_url:
@@ -525,6 +531,9 @@ def album_info(release):
         if beatport_url:
             info.beatport_album_id = MetadataSourcePlugin._get_id(
                 'album', beatport_url, beatport_id_regex)
+        if deezer_url:
+            info.deezer_album_id = MetadataSourcePlugin._get_id(
+                'album', deezer_url, deezer_id_regex)
 
     extra_albumdatas = plugins.send('mb_album_extract', data=release)
     for extra_albumdata in extra_albumdatas:
