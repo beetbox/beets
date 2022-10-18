@@ -486,7 +486,7 @@ def album_info(release):
     # FIXME This check is always True because of config_default.yaml.
     if ('url_rels' in config['musicbrainz'].keys() and
             release.get('url-relation-list')):
-        d_release_url, d_master_url = None, None
+        discogs_url = None
         spotify_url, bandcamp_url, beatport_url = None, None, None
         fetch_discogs, fetch_spotify, fetch_bandcamp = False, False, False
         fetch_beatport = False
@@ -501,13 +501,8 @@ def album_info(release):
 
         for url in release['url-relation-list']:
             if fetch_discogs and url['type'] == 'discogs':
-                if 'release' in url['target']:
-                    log.debug('Found link to Discogs release via MusicBrainz')
-                    d_release_url = url['target']
-                if 'master' in url['target']:
-                    log.debug('Found link to Discogs Master release via '
-                              'MusicBrainz')
-                    d_master_url = url['target']
+                log.debug('Found link to Discogs release via MusicBrainz')
+                discogs_url = url['target']
             if (fetch_spotify and url['type'] == 'spotify'
                     or 'spotify' in url['target']):
                 log.debug('Found link to Spotify album via MusicBrainz')
@@ -519,9 +514,6 @@ def album_info(release):
                     or 'beatport.com' in url['target']):
                 log.debug('Found link to Beatport album via MusicBrainz')
                 beatport_url = url['target']
-        # We prefer a Discogs Release URL, but a Master URL is better than
-        # nothing. FIXME not sure if this is a good idea!
-        discogs_url = d_release_url if d_release_url else d_master_url
         if discogs_url:
             info.discogs_albumid = extract_discogs_id_regex(discogs_url)
         if spotify_url:
