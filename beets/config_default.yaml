@@ -118,7 +118,7 @@ musicbrainz:
     searchlimit: 5
     extra_tags: []
     genres: no
-    url_rels:
+    external_ids:
         discogs: no
         spotify: no
         bandcamp: no

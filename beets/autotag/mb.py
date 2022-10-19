@@ -479,22 +479,21 @@ def album_info(release):
                                                     key=lambda g: -g[1]))
 
     # Additional online sources if configured and MusicBrainz provides them.
-    # FIXME This check is always True because of config_default.yaml.
-    if ('url_rels' in config['musicbrainz'].keys() and
-            release.get('url-relation-list')):
+    if (any(config['musicbrainz']['external_ids'].get().values())
+            and release.get('url-relation-list')):
         discogs_url, deezer_url = None, None
         spotify_url, bandcamp_url, beatport_url = None, None, None
         fetch_discogs, fetch_spotify, fetch_bandcamp = False, False, False
         fetch_beatport, fetch_deezer = False, False
-        if config['musicbrainz']['url_rels']['discogs'].get():
+        if config['musicbrainz']['external_ids']['discogs'].get():
             fetch_discogs = True
-        if config['musicbrainz']['url_rels']['spotify'].get():
+        if config['musicbrainz']['external_ids']['spotify'].get():
             fetch_spotify = True
-        if config['musicbrainz']['url_rels']['bandcamp'].get():
+        if config['musicbrainz']['external_ids']['bandcamp'].get():
             fetch_bandcamp = True
-        if config['musicbrainz']['url_rels']['beatport'].get():
+        if config['musicbrainz']['external_ids']['beatport'].get():
             fetch_beatport = True
-        if config['musicbrainz']['url_rels']['deezer'].get():
+        if config['musicbrainz']['external_ids']['deezer'].get():
             fetch_deezer = True
 
         for url in release['url-relation-list']:
