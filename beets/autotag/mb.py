@@ -500,19 +500,16 @@ def album_info(release):
             if fetch_discogs and url['type'] == 'discogs':
                 log.debug('Found link to Discogs release via MusicBrainz')
                 discogs_url = url['target']
-            if (fetch_spotify and url['type'] == 'spotify'
-                    or 'spotify' in url['target']):
+            if fetch_spotify and 'spotify.com' in url['target']:
                 log.debug('Found link to Spotify album via MusicBrainz')
                 spotify_url = url['target']
-            if fetch_bandcamp and url['type'] == 'bandcamp':
+            if fetch_bandcamp and 'bandcamp.com' in url['target']:
                 log.debug('Found link to Bandcamp album via MusicBrainz')
                 bandcamp_url = url['target']
-            if (fetch_beatport and url['type'] == 'beatport'
-                    or 'beatport.com' in url['target']):
+            if fetch_beatport and 'beatport.com' in url['target']:
                 log.debug('Found link to Beatport album via MusicBrainz')
                 beatport_url = url['target']
-            if (fetch_deezer and url['type'] == 'deezer'
-                    or 'deezer.com' in url['target']):
+            if fetch_deezer and 'deezer.com' in url['target']:
                 log.debug('Found link to Deezer album via MusicBrainz')
                 deezer_url = url['target']
         if discogs_url:
