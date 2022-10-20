@@ -28,7 +28,7 @@ import beets.library
 from beets import dbcore
 from beets.dbcore import types
 from beets.dbcore.query import NoneQuery
-from beets.dbcore.dbcore_exceptions import ParsingError, InvalidQueryArgumentValueError
+from beets.dbcore.exceptions import ParsingError, InvalidQueryArgumentValueError
 from beets.library import Library, Item
 from beets import util
 

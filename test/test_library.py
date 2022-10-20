@@ -29,7 +29,7 @@ from test import _common
 from test._common import item
 import beets.library
 import beets.dbcore.query
-import beets.dbcore.dbcore_exceptions
+import beets.dbcore.exceptions
 from beets import util
 from beets import plugins
 from beets import config
@@ -1333,10 +1333,10 @@ class FilesizeTest(unittest.TestCase, TestHelper):
 
 class ParseQueryTest(unittest.TestCase):
     def test_parse_invalid_query_string(self):
-        with self.assertRaises(beets.dbcore.dbcore_exceptions.InvalidQueryError) as raised:
+        with self.assertRaises(beets.dbcore.exceptions.InvalidQueryError) as raised:
             beets.library.parse_query_string('foo"', None)
         self.assertIsInstance(raised.exception,
-                              beets.dbcore.dbcore_exceptions.ParsingError)
+                              beets.dbcore.exceptions.ParsingError)
 
     def test_parse_bytes(self):
         with self.assertRaises(AssertionError):

@@ -21,7 +21,7 @@ from beets import util
 from datetime import datetime, timedelta
 import unicodedata
 from functools import reduce
-from .dbcore_exceptions import InvalidQueryArgumentValueError
+from .exceptions import InvalidQueryArgumentValueError
 
 
 class Query:

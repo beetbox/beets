@@ -29,7 +29,7 @@ from beets.util import py3_path
 from beets.dbcore import types
 from .query import MatchQuery, NullSort, TrueQuery, AndQuery
 from collections.abc import Mapping
-from .dbcore_exceptions import DBAccessError
+from .exceptions import DBAccessError
 
 
 class FormattedMapping(Mapping):

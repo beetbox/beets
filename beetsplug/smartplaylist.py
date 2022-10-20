@@ -23,7 +23,7 @@ from beets.util import (mkdirall, normpath, sanitize_path, syspath,
 from beets.library import Item, Album, parse_query_string
 from beets.dbcore import OrQuery
 from beets.dbcore.query import MultipleSort
-from beets.dbcore.dbcore_exceptions import ParsingError
+from beets.dbcore.exceptions import ParsingError
 import os
 
 try:

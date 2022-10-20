@@ -39,7 +39,7 @@ from beets.util import as_string
 from beets.autotag import mb
 from beets.dbcore import query as db_query
 from beets.dbcore import db
-from beets.dbcore import dbcore_exceptions
+from beets import dbcore
 import confuse
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
@@ -1319,7 +1319,7 @@ def main(args=None):
     except confuse.ConfigError as exc:
         log.error('configuration error: {0}', exc)
         sys.exit(1)
-    except dbcore_exceptions.InvalidQueryError as exc:
+    except dbcore.exceptions.InvalidQueryError as exc:
         log.error('invalid query: {0}', exc)
         sys.exit(1)
     except OSError as exc:
@@ -1331,7 +1331,7 @@ def main(args=None):
     except KeyboardInterrupt:
         # Silently ignore ^C except in verbose mode.
         log.debug('{}', traceback.format_exc())
-    except dbcore_exceptions.DBAccessError as exc:
+    except dbcore.exceptions.DBAccessError as exc:
         log.error(
             'database access error: {0}\n'
             'the library file might have a permissions problem',

@@ -22,6 +22,6 @@ from .types import Type
 from .queryparse import query_from_strings
 from .queryparse import sort_from_strings
 from .queryparse import parse_sorted_query
-from .dbcore_exceptions import InvalidQueryError
+from .exceptions import InvalidQueryError
 
 # flake8: noqa

@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 import unittest
 import time
 from beets.dbcore.query import _parse_periods, DateInterval, DateQuery
-from beets.dbcore.dbcore_exceptions import InvalidQueryArgumentValueError
+from beets.dbcore.exceptions import InvalidQueryArgumentValueError
 
 
 def _date(string):
