@@ -324,7 +324,7 @@ Here are a few of the plugins written by the beets community:
 * `beets-originquery`_ augments MusicBrainz queries with locally-sourced data
   to improve autotagger results.
 
-* `beets-popularity`_ fetches popularity values from Spotify.
+* `beets-popularity`_ fetches popularity values from Deezer.
 
 * `beets-setlister`_ generate playlists from the setlists of a given artist.
 
