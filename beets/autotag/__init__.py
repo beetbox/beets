@@ -48,7 +48,12 @@ SPECIAL_FIELDS = {
         'artist',
         'artist_credit',
         'artist_sort',
-        'data_url'
+        'data_url',
+        'discogs_albumid',
+        'spotify_album_id',
+        'bandcamp_album_id',
+        'beatport_album_id',
+        'deezer_album_id'
     ),
     'track': (
         'track_alt',
@@ -180,6 +185,40 @@ def apply_metadata(album_info, mapping):
 
         # Track alt.
         item.track_alt = track_info.track_alt
+
+        # External metadata sources IDs that could have been set by
+        # beets.autotag.mb.album_info()).
+        ext_id_force = config['musicbrainz']['external_ids_overwrite']
+        if album_info.get('discogs_albumid'):
+            if not item.get('discogs_albumid') or ext_id_force:
+                log.debug('Setting discogs_albumid: {} -> {}',
+                          item.get('discogs_albumid'),
+                          album_info.get('discogs_albumid'))
+                item.discogs_albumid = album_info.get('discogs_albumid')
+        if album_info.get('spotify_album_id'):
+            if not item.get('spotify_album_id') or ext_id_force:
+                log.debug('Setting spotify_album_id: {} -> {}',
+                          item.get('spotify_album_id'),
+                          album_info.get('spotify_album_id'))
+                item.spotify_album_id = album_info.get('spotify_album_id')
+        if album_info.get('bandcamp_album_id'):
+            if not item.get('bandcamp_album_id') or ext_id_force:
+                log.debug('Setting bandcamp_album_id: {} -> {}',
+                          item.get('bandcamp_album_id'),
+                          album_info.get('bandcamp_album_id'))
+                item.bandcamp_album_id = album_info.get('bandcamp_album_id')
+        if album_info.get('beatport_album_id'):
+            if not item.get('beatport_album_id') or ext_id_force:
+                log.debug('Setting beatport_album_id: {} -> {}',
+                          item.get('beatport_album_id'),
+                          album_info.get('beatport_album_id'))
+                item.beatport_album_id = album_info.get('beatport_album_id')
+        if album_info.get('deezer_album_id'):
+            if not item.get('deezer_album_id') or ext_id_force:
+                log.debug('Setting deezer_album_id: {} -> {}',
+                          item.get('deezer_album_id'),
+                          album_info.get('deezer_album_id'))
+                item.deezer_album_id = album_info.get('deezer_album_id')
 
         # Don't overwrite fields with empty values unless the
         # field is explicitly allowed to be overwritten
