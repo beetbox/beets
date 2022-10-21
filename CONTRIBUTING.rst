@@ -211,6 +211,23 @@ There are a few coding conventions we use in beets:
 -  Exception handlers must use ``except A as B:`` instead of
    ``except A, B:``.
 
+-  beets is very attached to unicode input and output.
+   For details and discussion on string and unicode literals see
+   `#1887 <https://github.com/beetbox/beets/pull/1887>`__.
+   When writing code you should follow these guidelines for usage of
+   string literals in beets source:
+
+   -  All outputs to logging module should be marked with ``u``.
+      ``log.debug/warn/info/etc(u'foo')``
+   -  Arguments to exceptions: Almost always ``u``. ``raise Exception(u'foo')``
+   -  ``print_`` and such: Always ``u``. ``print(u'foo')``
+   -  Methods ``__str__()`` and ``__repr__()`` should always return native
+      Python strings. ``return 'foo'``
+   -  URLs and data for HTTP requests: native strings. ``'foo'``
+   -  SQL Statements: native strings. ``'foo'``
+   -  Pieces of filenames: Always ``b``, unless it's in some parts of the
+      ``destination`` method before the path is encoded. ``b'foo.mp3'``
+
 Style
 -----
 
