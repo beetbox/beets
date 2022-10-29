@@ -40,14 +40,25 @@ ignore: [".*", "*~", "System Volume Information", "lost+found"]
 ignore_hidden: yes
 
 replace:
+    # Bad chars to _
+    # prohibited in many filesystem paths
+    '[<>:\?\*\|]': _
+    # double quotation mark "
+    "\"": _
+    # \ or /
     '[\\/]': _
+    # starting and closing periods
     '^\.': _
-    '[\x00-\x1f]': _
-    '[<>:"\?\*\|]': _
     '\.$': _
+    # control characters
+    '[\x00-\x1f]': _
+    # dash at the start of a filename (causes command line ambiguity)
+    # https://unix.stackexchange.com/questions/16357/usage-of-dash-in-place-of-a-filename
+    '^-': _
+    # Bad chars to nothing
+    # starting and closing whitespace
     '\s+$': ''
     '^\s+': ''
-    '^-': _
 path_sep_replace: _
 drive_sep_replace: _
 asciify_paths: false
