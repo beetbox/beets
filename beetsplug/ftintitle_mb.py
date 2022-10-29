@@ -11,20 +11,22 @@
 #
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
-
-"""Moves "featured" artists to the title from the artist field using MusicBrainz
-data for potentially better results.
+"""Moves "featured" artists to the title from the artist field.
+Uses MusicBrainz data for potentially better results.
 """
 
 from beets import plugins
-from beets import ui
-
 import musicbrainzngs
 
 mb_candidates = []
 
+
 class FtInTitleMBPlugin(plugins.BeetsPlugin):
+    """Class for ftintitle_mb plugin.
+    """
     def __init__(self):
+        """Initialize plugin.
+        """
         super().__init__()
 
         self.config.add({
@@ -37,34 +39,42 @@ class FtInTitleMBPlugin(plugins.BeetsPlugin):
         self.register_listener('mb_track_by_id_received', self.collect)
         self.register_listener('mb_track_by_search_received', self.collect)
 
-    # appends info to the array we will be checking later using find_mb_match
     def collect(self, info):
+        """Appends information to the array to be used later by find_mb_match.
+        """
         mb_candidates.append(info)
 
     # finds the "raw" MusicBrainz data for the user's selection by iterating
     # through an array of possible candidates until one is found that has an
     # identical ID to the Match object passed
     def find_mb_match(self, match):
+        """Finds "raw" MusicBrainz data for user's selection.
+        Looks for a matching ID between the Match and the raw data.
+        """
         found = {}
         # iterate through each possible match
         for candidate in mb_candidates:
-            # if it has the attribute "album_id", it is an album. check if 
-            if hasattr(match.info, "album_id") and (match.info.album_id == candidate['id']):
+            # if it has the attribute "album_id", it is an album.
+            if hasattr(match.info, "album_id") and \
+            (match.info.album_id == candidate['id']):
                 found = candidate
                 break
-            elif hasattr(match.info, "track_id") and (match.info.track_id == candidate['id']):
+            elif hasattr(match.info, "track_id") \
+            and(match.info.track_id == candidate['id']):
                 found = candidate
                 break
         # somehow beets saves results (even if they aren't used in the current
         # import) and will use them if a match comes up later. I have no idea
         # how they do that without using loads of memory, so we will just
-        # manually fetch the data if it ends up being a repeated result. in most
-        # cases this shouldn't be an issue
+        # manually fetch the data if it ends up being a repeated result. in
+        # most cases this shouldn't be an issue
         if not found:
             if hasattr(match.info, "album_id"):
-               found = musicbrainzngs.get_release_by_id(match.info.album_id, ['recordings', 'artist-credits'])['release']
+               found = musicbrainzngs.get_release_by_id(match.info.album_id, \
+               ['recordings', 'artist-credits'])['release']
             elif hasattr(match.info, "track_id"):
-                found = musicbrainzngs.get_recording_by_id(match.info.track_id, ['artist-credits'])['recording']
+                found = musicbrainzngs.get_recording_by_id( \
+                match.info.track_id, ['artist-credits'])['recording']
         # wipe array to save memory
         mb_candidates.clear()
         return found
@@ -94,8 +104,8 @@ class FtInTitleMBPlugin(plugins.BeetsPlugin):
         featureartists=[]
         multiartist = True
 
-        # iterate through each credit (can be artist, feat type, or feat artist)
-        # this will distribute items to their respective arrays
+        # iterate through each credit (can be artist, feat type, or feat
+        # artist) this will distribute items to their respective arrays
         for credit in mb_track['artist-credit']:
             if not isinstance(credit, str):
                 if multiartist:
@@ -127,7 +137,8 @@ class FtInTitleMBPlugin(plugins.BeetsPlugin):
         # if it is an album, make sure we iterate through bits of the data like
         # a track, rather than the whole thing
         if hasattr(match.info, "album_id"):
-            for track, mb_track in zip(match.info['tracks'], mb_match['medium-list'][0]['track-list']):
+            for track, mb_track in zip( \
+            match.info['tracks'], mb_match['medium-list'][0]['track-list']):
                 self.update_metadata(track, mb_track['recording'])
         else:
             self.update_metadata(match.info, mb_match)
