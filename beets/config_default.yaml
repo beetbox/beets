@@ -124,7 +124,6 @@ musicbrainz:
         bandcamp: no
         beatport: no
         deezer: no
-    external_ids_overwrite: no
 
 match:
     strong_rec_thresh: 0.04
