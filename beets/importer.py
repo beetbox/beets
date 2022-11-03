@@ -839,6 +839,19 @@ class ImportTask(BaseImportTask):
                         dup_item.id,
                         displayable_path(item.path)
                     )
+                # We exclude certain flexible attributes from the reimporting
+                # process since they might have been fetched from MusicBrainz
+                # and been set in beets.autotag.apply_metadata().
+                # discogs_albumid could also have been set but is not a
+                # flexible attribute, thus no exclude.
+                if item.get('spotify_album_id'):
+                    dup_item.spotify_album_id = item.spotify_album_id
+                if item.get('bandcamp_album_id'):
+                    dup_item.bandcamp_album_id = item.bandcamp_album_id
+                if item.get('beatport_album_id'):
+                    dup_item.beatport_album_id = item.beatport_album_id
+                if item.get('deezer_album_id'):
+                    dup_item.deezer_album_id = item.deezer_album_id
                 item.update(dup_item._values_flex)
                 log.debug(
                     'Reimported item flexible attributes {0} '
