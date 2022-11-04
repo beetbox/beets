@@ -47,6 +47,11 @@ New features:
   :bug:`4438`
 * Add a new ``import.ignored_alias_types`` config option to allow for
   specific alias types to be skipped over when importing items/albums.
+* :ref:`musicbrainz-config`: MusicBrainz release pages often link to
+  related metadata sources like Discogs, Spotify, Bandcamp, Beatport and
+  Deezer. When enabled via the :ref:`musicbrainz.external_ids` options, release
+  ID's will be extracted from those URL's and imported to the library.
+  :bug:`4220`
 
 Bug fixes:
 
