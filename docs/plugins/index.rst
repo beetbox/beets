@@ -129,6 +129,8 @@ following to your configuration::
    web
    zero
 
+.. _autotagger_extensions:
+
 Autotagger Extensions
 ---------------------
 
