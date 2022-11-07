@@ -49,6 +49,20 @@ Configuration
 
 This plugin can be configured like other metadata source plugins as described in :ref:`metadata-source-plugin-configuration`.
 
+The following configuration options are specific to the ``discogs`` plugin:
+
+- ``append_style_genre``: Appends the Discogs style (if found) to the genre tag. This can be useful if you want more granular genres to categorize your music.
+  For example, a release in Discogs might have a genre of "Electronic" and a style of "Techno": enabling this setting would set the genre to be "Electronic, Techno" (assuming default separator of ``", "``) instead of just "Electronic".
+  Default: ``false``
+- ``separator``: How to join multiple genre and style values from Discogs into a string.
+  Default: ``", "``
+- ``headings``: How headings should be handled
+  Default:
+- ``index_tracks``: How index tracks should be handled
+  Default:
+  For backwards compatibility, boolean values are also supported. When set to true, index tracks are used as a prefix (note that it doesn't make the distinction between index tracks and headings)
+
+
 There is one additional option in the ``discogs:`` section, ``index_tracks``.
 Index tracks (see the `Discogs guidelines
 <https://support.discogs.com/hc/en-us/articles/360005055373-Database-Guidelines-12-Tracklisting#Index_Tracks_And_Headings>`_),
@@ -77,12 +91,6 @@ whereas with ``index_tracks`` disabled you'd get::
 This option is useful when importing classical music.
 
 Other configurations available under ``discogs:`` are:
-
-- **append_style_genre**: Appends the Discogs style (if found) to the genre tag. This can be useful if you want more granular genres to categorize your music.
-  For example, a release in Discogs might have a genre of "Electronic" and a style of "Techno": enabling this setting would set the genre to be "Electronic, Techno" (assuming default separator of ``", "``) instead of just "Electronic".
-  Default: ``false``
-- **separator**: How to join multiple genre and style values from Discogs into a string.
-  Default: ``", "``
 
 
 Troubleshooting

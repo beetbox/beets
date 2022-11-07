@@ -47,6 +47,7 @@ New features:
   :bug:`4438`
 * Add a new ``import.ignored_alias_types`` config option to allow for
   specific alias types to be skipped over when importing items/albums.
+* :doc:`/plugins/discogs`: Handle index tracks and headings separately -- either can be used for the ``disctitle`` or as a title prefix.
 
 Bug fixes:
 

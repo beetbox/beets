@@ -515,6 +515,52 @@ class DGAlbumInfoTest(_common.TestCase):
         self.assertEqual(d.tracks[2].title, 'PREFIX HEADING 2: TRACK 2-1')
         self.assertEqual(len(d.tracks), 3)
 
+    def test_headings_index_tracks_defaults(self):
+        """Test for the default handling for headings & index tracks:
+        """
+        release = self._make_release_from_positions([
+            '', '', '1-1', '1-2', '1-3', '', '1-4', '1-5', '1-6', '', '3-1'
+        ])
+
+        release.data['tracklist'][0]['title'] = 'CD 1'
+        release.data['tracklist'][0]['type_'] = 'heading'
+        release.data['tracklist'][1]['title'] = 'PREFIX 1'
+        release.data['tracklist'][1]['type_'] = 'index'
+        release.data['tracklist'][2]['title'] = 'TRACK 1-1'
+        release.data['tracklist'][3]['title'] = 'TRACK 1-2'
+        release.data['tracklist'][4]['title'] = 'TRACK 1-3'
+
+        release.data['tracklist'][5]['title'] = 'PREFIX 2'
+        release.data['tracklist'][5]['type_'] = 'index'
+        release.data['tracklist'][6]['title'] = 'TRACK 2-1'
+        release.data['tracklist'][7]['title'] = 'TRACK 2-2'
+        release.data['tracklist'][8]['title'] = 'TRACK 2-3'
+
+        release.data['tracklist'][9]['title'] = 'CD 2'
+        release.data['tracklist'][9]['type_'] = 'heading'
+        release.data['tracklist'][10]['title'] = 'TRACK 3-1'
+
+        d = DiscogsPlugin().get_album_info(release)
+        self.assertEqual(d.mediums, 2)
+        self.assertEqual(len(d.tracks), 7)
+        self.assertEqual(d.tracks[0].title, 'PREFIX 1: TRACK 1-1')
+        self.assertEqual(d.tracks[0].disctitle, 'CD 1')
+        self.assertEqual(d.tracks[1].title, 'PREFIX 1: TRACK 1-2')
+        self.assertEqual(d.tracks[1].disctitle, 'CD 1')
+        self.assertEqual(d.tracks[2].title, 'PREFIX 1: TRACK 1-3')
+        self.assertEqual(d.tracks[2].disctitle, 'CD 1')
+        self.assertEqual(d.tracks[3].title, 'PREFIX 2: TRACK 2-1')
+        self.assertEqual(d.tracks[3].disctitle, 'CD 1')
+        self.assertEqual(d.tracks[4].title, 'PREFIX 2: TRACK 2-2')
+        self.assertEqual(d.tracks[4].disctitle, 'CD 1')
+        self.assertEqual(d.tracks[5].title, 'PREFIX 2: TRACK 2-3')
+        self.assertEqual(d.tracks[5].disctitle, 'CD 1')
+
+        # note that the prefix is retained
+        self.assertEqual(d.tracks[6].title, 'PREFIX 2: TRACK 3-1')
+        self.assertEqual(d.tracks[6].disctitle, 'CD 2')
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
