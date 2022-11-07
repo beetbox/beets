@@ -272,12 +272,17 @@ class DGAlbumInfoTest(_common.TestCase):
     def test_parse_tracklist_subtracks_indices(self):
         """Test parsing of subtracks that include index tracks."""
         release = self._make_release_from_positions(['', '', '1.1', '1.2'])
-        # Track 1: Index track with medium title
+        # Track 1: Heading with medium title
         release.data['tracklist'][0]['title'] = 'MEDIUM TITLE'
+        release.data['tracklist'][0]['type_'] = 'heading'
         # Track 2: Index track with track group title
         release.data['tracklist'][1]['title'] = 'TRACK GROUP TITLE'
+        release.data['tracklist'][1]['type_'] = 'index'
 
-        d = DiscogsPlugin().get_album_info(release)
+        plugin = DiscogsPlugin()
+        plugin.config["disctitle"]["index_tracks"] = True
+
+        d = plugin.get_album_info(release)
         self.assertEqual(d.mediums, 1)
         self.assertEqual(d.tracks[0].disctitle, 'MEDIUM TITLE')
         self.assertEqual(len(d.tracks), 1)
@@ -307,31 +312,74 @@ class DGAlbumInfoTest(_common.TestCase):
         release = self._make_release_from_positions(['1', '', '4'])
         # Track 2: Index track with track group title, and sub_tracks
         release.data['tracklist'][1]['title'] = 'TRACK GROUP TITLE'
+        release.data['tracklist'][1]['type_'] = 'index'
         release.data['tracklist'][1]['sub_tracks'] = [
             self._make_track('TITLE ONE', '2', '01:01'),
             self._make_track('TITLE TWO', '3', '02:02')
         ]
 
-        d = DiscogsPlugin().get_album_info(release)
+        plugin = DiscogsPlugin()
+        plugin.config["disctitle"]["index_tracks"] = True
+
+        d = plugin.get_album_info(release)
+
         self.assertEqual(d.mediums, 1)
         self.assertEqual(len(d.tracks), 4)
-        self.assertEqual(d.tracks[1].title, 'TITLE ONE')
-        self.assertEqual(d.tracks[2].title, 'TITLE TWO')
+        self.assertEqual(d.tracks[1].title, 'TRACK GROUP TITLE: TITLE ONE')
+        self.assertEqual(d.tracks[2].title, 'TRACK GROUP TITLE: TITLE TWO')
 
-    def test_parse_tracklist_disctitles(self):
+    def test_parse_tracklist_disctitles_index_tracks(self):
         """Test parsing of index tracks that act as disc titles."""
-        release = self._make_release_from_positions(['', '1-1', '1-2', '',
-                                                     '2-1'])
+        release = self._make_release_from_positions([
+            '', '', '1-1', '1-2', '', '', '2-1'
+        ])
         # Track 1: Index track with medium title (Cd1)
-        release.data['tracklist'][0]['title'] = 'MEDIUM TITLE CD1'
+        release.data['tracklist'][0]['title'] = 'MEDIUM TITLE CD1 HEADING'
+        release.data['tracklist'][0]['type_'] = 'heading'
+        release.data['tracklist'][1]['title'] = 'MEDIUM TITLE CD1 INDEX'
+        release.data['tracklist'][1]['type_'] = 'index'
         # Track 4: Index track with medium title (Cd2)
-        release.data['tracklist'][3]['title'] = 'MEDIUM TITLE CD2'
+        release.data['tracklist'][4]['title'] = 'MEDIUM TITLE CD2 HEADING'
+        release.data['tracklist'][4]['type_'] = 'heading'
+        release.data['tracklist'][5]['title'] = 'MEDIUM TITLE CD2 INDEX'
+        release.data['tracklist'][5]['type_'] = 'index'
 
-        d = DiscogsPlugin().get_album_info(release)
+        plugin = DiscogsPlugin()
+        plugin.config["disctitle"]["index_tracks"] = True
+        plugin.config["disctitle"]["headings"] = False
+
+        d = plugin.get_album_info(release)
         self.assertEqual(d.mediums, 2)
-        self.assertEqual(d.tracks[0].disctitle, 'MEDIUM TITLE CD1')
-        self.assertEqual(d.tracks[1].disctitle, 'MEDIUM TITLE CD1')
-        self.assertEqual(d.tracks[2].disctitle, 'MEDIUM TITLE CD2')
+        self.assertEqual(d.tracks[0].disctitle, 'MEDIUM TITLE CD1 INDEX')
+        self.assertEqual(d.tracks[1].disctitle, 'MEDIUM TITLE CD1 INDEX')
+        self.assertEqual(d.tracks[2].disctitle, 'MEDIUM TITLE CD2 INDEX')
+        self.assertEqual(len(d.tracks), 3)
+
+    def test_parse_tracklist_disctitles_headings(self):
+        """Test parsing of index tracks that act as disc titles."""
+        release = self._make_release_from_positions([
+            '', '', '1-1', '1-2', '', '', '2-1'
+        ])
+        # Track 1: Index track with medium title (Cd1)
+        release.data['tracklist'][0]['title'] = 'MEDIUM TITLE CD1 HEADING'
+        release.data['tracklist'][0]['type_'] = 'heading'
+        release.data['tracklist'][1]['title'] = 'MEDIUM TITLE CD1 INDEX'
+        release.data['tracklist'][1]['type_'] = 'index'
+        # Track 4: Index track with medium title (Cd2)
+        release.data['tracklist'][4]['title'] = 'MEDIUM TITLE CD2 HEADING'
+        release.data['tracklist'][4]['type_'] = 'heading'
+        release.data['tracklist'][5]['title'] = 'MEDIUM TITLE CD2 INDEX'
+        release.data['tracklist'][5]['type_'] = 'index'
+
+        plugin = DiscogsPlugin()
+        plugin.config["disctitle"]["index_tracks"] = False
+        plugin.config["disctitle"]["headings"] = True
+
+        d = plugin.get_album_info(release)
+        self.assertEqual(d.mediums, 2)
+        self.assertEqual(d.tracks[0].disctitle, 'MEDIUM TITLE CD1 HEADING')
+        self.assertEqual(d.tracks[1].disctitle, 'MEDIUM TITLE CD1 HEADING')
+        self.assertEqual(d.tracks[2].disctitle, 'MEDIUM TITLE CD2 HEADING')
         self.assertEqual(len(d.tracks), 3)
 
     def test_parse_minimal_release(self):
@@ -403,6 +451,69 @@ class DGAlbumInfoTest(_common.TestCase):
         self.assertEqual(d.genre, 'GENRE1, GENRE2')
         self.assertEqual(d.style, None)
 
+    def test_title_prefix_index_tracks(self):
+        """Test adding index track titles as prefix to contained tracks"""
+        release = self._make_release_from_positions([
+            '', '', '1-1', '1-2', '', '', '2-1'
+        ])
+        # Index track with medium title (Cd1)
+        release.data['tracklist'][0]['title'] = 'PREFIX HEADING 1'
+        release.data['tracklist'][0]['type_'] = 'heading'
+        release.data['tracklist'][1]['title'] = 'PREFIX INDEX 1'
+        release.data['tracklist'][1]['type_'] = 'index'
+        # Tracks
+        release.data['tracklist'][2]['title'] = 'TRACK 1-1'
+        release.data['tracklist'][3]['title'] = 'TRACK 1-2'
+        # Index track with medium title (Cd2)
+        release.data['tracklist'][4]['title'] = 'PREFIX HEADING 2'
+        release.data['tracklist'][4]['type_'] = 'heading'
+        release.data['tracklist'][5]['title'] = 'PREFIX INDEX 2'
+        release.data['tracklist'][5]['type_'] = 'index'
+        # Tracks
+        release.data['tracklist'][6]['title'] = 'TRACK 2-1'
+
+        plugin = DiscogsPlugin()
+        plugin.config["title_prefix"]["index_tracks"] = True
+        plugin.config["title_prefix"]["headings"] = False
+
+        d = plugin.get_album_info(release)
+        self.assertEqual(d.mediums, 2)
+        self.assertEqual(d.tracks[0].title, 'PREFIX INDEX 1: TRACK 1-1')
+        self.assertEqual(d.tracks[1].title, 'PREFIX INDEX 1: TRACK 1-2')
+        self.assertEqual(d.tracks[2].title, 'PREFIX INDEX 2: TRACK 2-1')
+        self.assertEqual(len(d.tracks), 3)
+
+    def test_title_prefix_headings(self):
+        """Test adding heading titles as prefix to contained tracks"""
+        release = self._make_release_from_positions([
+            '', '', '1-1', '1-2', '', '', '2-1'
+        ])
+        # Index track with medium title (Cd1)
+        release.data['tracklist'][0]['title'] = 'PREFIX HEADING 1'
+        release.data['tracklist'][0]['type_'] = 'heading'
+        release.data['tracklist'][1]['title'] = 'PREFIX INDEX 1'
+        release.data['tracklist'][1]['type_'] = 'index'
+        # Tracks
+        release.data['tracklist'][2]['title'] = 'TRACK 1-1'
+        release.data['tracklist'][3]['title'] = 'TRACK 1-2'
+        # Index track with medium title (Cd2)
+        release.data['tracklist'][4]['title'] = 'PREFIX HEADING 2'
+        release.data['tracklist'][4]['type_'] = 'heading'
+        release.data['tracklist'][5]['title'] = 'PREFIX HEADING 2'
+        release.data['tracklist'][5]['type_'] = 'index'
+        # Tracks
+        release.data['tracklist'][6]['title'] = 'TRACK 2-1'
+
+        plugin = DiscogsPlugin()
+        plugin.config["title_prefix"]["index_tracks"] = False
+        plugin.config["title_prefix"]["headings"] = True
+
+        d = plugin.get_album_info(release)
+        self.assertEqual(d.mediums, 2)
+        self.assertEqual(d.tracks[0].title, 'PREFIX HEADING 1: TRACK 1-1')
+        self.assertEqual(d.tracks[1].title, 'PREFIX HEADING 1: TRACK 1-2')
+        self.assertEqual(d.tracks[2].title, 'PREFIX HEADING 2: TRACK 2-1')
+        self.assertEqual(len(d.tracks), 3)
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
