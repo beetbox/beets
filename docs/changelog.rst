@@ -118,7 +118,7 @@ Bug fixes:
   default genre list.
   :bug:`4510`
 * :doc:`plugins/lyrics`: Fixed issue with Tekstowo backend not actually checking
-  if the found song actually matches.
+  if the found song matches.
   :bug:`4406`
 
 For packagers:
