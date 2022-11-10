@@ -598,7 +598,7 @@ class TekstowoParseSearchResultsTest(TekstowoBaseTest):
         self.assertEqual(tekstowo.parse_search_results(mock(url)), None)
 
 
-class TekstowoIntegrationTest(GeniusBaseTest, LyricsAssertions):
+class TekstowoIntegrationTest(TekstowoBaseTest, LyricsAssertions):
     """Tests Tekstowo lyric source with real requests"""
 
     def setUp(self):
