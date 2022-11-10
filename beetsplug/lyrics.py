@@ -51,6 +51,7 @@ except ImportError:
     class HTMLParseError(Exception):
         pass
 
+from beets.autotag.hooks import string_dist
 from beets import plugins
 from beets import ui
 import beets
@@ -461,7 +462,7 @@ class Tekstowo(Backend):
         if not song_page_html:
             return None
 
-        return self.extract_lyrics(song_page_html)
+        return self.extract_lyrics(song_page_html, artist, title)
 
     def parse_search_results(self, html):
         html = _scrape_strip_cruft(html)
@@ -493,12 +494,29 @@ class Tekstowo(Backend):
 
         return self.BASE_URL + link.get('href')
 
-    def extract_lyrics(self, html):
+    def extract_lyrics(self, html, artist, title):
         html = _scrape_strip_cruft(html)
         html = _scrape_merge_paragraphs(html)
 
         soup = try_parse_html(html)
         if not soup:
+            return None
+
+        info_div = soup.find("div", class_="col-auto")
+        if not info_div:
+            return None
+
+        info_elements = info_div.find_all("a")
+        if not info_elements:
+            return None
+
+        html_title = info_elements[-1].get_text()
+        html_artist = info_elements[-2].get_text()
+
+        title_dist = string_dist(html_title, title)
+        artist_dist = string_dist(html_artist, artist)
+
+        if title_dist > 0.1 or artist_dist > 0.1:
             return None
 
         lyrics_div = soup.select("div.song-text > div.inner-text")

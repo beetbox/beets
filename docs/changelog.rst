@@ -117,6 +117,9 @@ Bug fixes:
 * :doc:`/plugins/lastgenre`: Fix a duplicated entry for trip hop in the
   default genre list.
   :bug:`4510`
+* :doc:`plugins/lyrics`: Fixed issue with Tekstowo backend not actually checking
+  if the found song actually matches.
+  :bug:`4406`
 
 For packagers:
 
