@@ -207,6 +207,29 @@ class String(Type):
         else:
             return self.model_type(value)
 
+class DelimeteredString(String):
+    """A list of Unicode strings, represented in-database by a single string
+    containing delimiter-separated values.
+    """
+    model_type = list
+
+    def __init__(self, delim=','):
+        self.delim = delim
+
+    def to_sql(self, model_value):
+        return self.delim.join([str(elem) for elem in model_value])
+
+    def from_sql(self, sql_value):
+        if sql_value is None:
+            return self.null()
+        else:
+            return self.parse(sql_value)
+
+    def parse(self, string):
+        try:
+            return string.split(self.delim)
+        except:
+            return self.null
 
 class Boolean(Type):
     """A boolean type.
@@ -231,3 +254,4 @@ FLOAT = Float()
 NULL_FLOAT = NullFloat()
 STRING = String()
 BOOLEAN = Boolean()
+SEMICOLON_DSV = DelimeteredString(delim=';')
