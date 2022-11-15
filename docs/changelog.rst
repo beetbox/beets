@@ -8,6 +8,8 @@ Changelog goes here!
 
 New features:
 
+* We now import the remixer field from Musicbrainz into the library.
+  :bug:`4428`
 * :doc:`/plugins/mbsubmit`: Added a new `mbsubmit` command to print track information to be submitted to MusicBrainz after initial import.
   :bug:`4455`
 * Added `spotify_updated` field to track when the information was last updated.
