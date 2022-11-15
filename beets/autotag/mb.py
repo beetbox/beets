@@ -202,6 +202,19 @@ def _flatten_artist_credit(credit):
     )
 
 
+def _get_remixer_names(relations):
+    """ Given a list representing the artist relationships extract the names of
+    the remixers and concatenate them.
+    """
+    remixers = []
+
+    for relation in relations:
+        if relation['type'] == 'remixer':
+            remixers.append(relation['artist']['name'])
+
+    return ', '.join(remixers)
+
+
 def track_info(recording, index=None, medium=None, medium_index=None,
                medium_total=None):
     """Translates a MusicBrainz recording result dictionary into a beets
@@ -230,6 +243,9 @@ def track_info(recording, index=None, medium=None, medium_index=None,
         # Get the ID and sort name of the first artist.
         artist = recording['artist-credit'][0]['artist']
         info.artist_id = artist['id']
+
+    if recording.get('artist-relation-list'):
+        info.remixer = _get_remixer_names(recording['artist-relation-list'])
 
     if recording.get('length'):
         info.length = int(recording['length']) / (1000.0)
