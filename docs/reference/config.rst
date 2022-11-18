@@ -582,7 +582,7 @@ from_scratch
 ~~~~~~~~~~~~
 
 Either ``yes`` or ``no`` (default), controlling whether existing metadata is
-discarded when a match is applied. This corresponds to the ``--from_scratch``
+discarded when a match is applied. This corresponds to the ``--from-scratch``
 flag to ``beet import``.
 
 .. _quiet:
