@@ -202,17 +202,17 @@ def _flatten_artist_credit(credit):
     )
 
 
-def _get_remixer_names(relations):
-    """ Given a list representing the artist relationships extract the names of
+def _get_related_artist_names(relations, relation_type):
+    """Given a list representing the artist relationships extract the names of
     the remixers and concatenate them.
     """
-    remixers = []
+    related_artists = []
 
     for relation in relations:
-        if relation['type'] == 'remixer':
-            remixers.append(relation['artist']['name'])
+        if relation['type'] == relation_type:
+            related_artists.append(relation['artist']['name'])
 
-    return ', '.join(remixers)
+    return ', '.join(related_artists)
 
 
 def track_info(recording, index=None, medium=None, medium_index=None,
@@ -245,7 +245,10 @@ def track_info(recording, index=None, medium=None, medium_index=None,
         info.artist_id = artist['id']
 
     if recording.get('artist-relation-list'):
-        info.remixer = _get_remixer_names(recording['artist-relation-list'])
+        info.remixer = _get_related_artist_names(
+            recording['artist-relation-list'],
+            relation_type='remixer'
+        )
 
     if recording.get('length'):
         info.length = int(recording['length']) / (1000.0)
