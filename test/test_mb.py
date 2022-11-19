@@ -109,8 +109,8 @@ class MBAlbumInfoTest(_common.TestCase):
         })
         return release
 
-    def _make_track(self, title, tr_id, duration, artist=False, remixer=False,
-                    video=False, disambiguation=None):
+    def _make_track(self, title, tr_id, duration, artist=False,
+                    video=False, disambiguation=None, remixer=False):
         track = {
             'title': title,
             'id': tr_id,
@@ -135,7 +135,7 @@ class MBAlbumInfoTest(_common.TestCase):
                     'type-id': 'RELATION TYPE ID',
                     'target': 'RECORDING REMIXER ARTIST ID',
                     'direction': 'RECORDING RELATION DIRECTION',
-                    'artist': 
+                    'artist':
                         {
                             'id': 'RECORDING REMIXER ARTIST ID',
                             'type': 'RECORDING REMIXER ARTIST TYPE',
