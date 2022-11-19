@@ -466,6 +466,7 @@ class Item(LibModel):
         'artist': types.STRING,
         'artist_sort': types.STRING,
         'artist_credit': types.STRING,
+        'remixer': types.STRING,
         'album': types.STRING,
         'albumartist': types.STRING,
         'albumartist_sort': types.STRING,
