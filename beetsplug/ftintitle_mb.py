@@ -133,7 +133,7 @@ class FtInTitleMBPlugin(plugins.BeetsPlugin):
         match['artist'] = artistbuilder
 
     def ftintitle_mb(self, match):
-        """get MusicBrainz data for respective Match object"""
+        """Get MusicBrainz data for respective Match object."""
         mb_match = self.find_mb_match(match)
         # if it is an album, make sure we iterate through bits of the data like
         # a track, rather than the whole thing
