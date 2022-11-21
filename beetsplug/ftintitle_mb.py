@@ -54,11 +54,11 @@ class FtInTitleMBPlugin(plugins.BeetsPlugin):
         for candidate in mb_candidates:
             # if it has the attribute "album_id", it is an album.
             if hasattr(match.info, "album_id") and \
-            (match.info.album_id == candidate['id']):
+                        (match.info.album_id == candidate['id']):
                 found = candidate
                 break
             elif hasattr(match.info, "track_id") and \
-            (match.info.track_id == candidate['id']):
+                        (match.info.track_id == candidate['id']):
                 found = candidate
                 break
         # somehow beets saves results (even if they aren't used in the current
@@ -68,11 +68,12 @@ class FtInTitleMBPlugin(plugins.BeetsPlugin):
         # most cases this shouldn't be an issue
         if not found:
             if hasattr(match.info, "album_id"):
-                found = musicbrainzngs.get_release_by_id(match.info.album_id, \
-                ['recordings', 'artist-credits'])['release']
+                found = musicbrainzngs.get_release_by_id(
+                    match.info.album_id,
+                    ['recordings', 'artist-credits'])['release']
             elif hasattr(match.info, "track_id"):
-                found = musicbrainzngs.get_recording_by_id( \
-                match.info.track_id, ['artist-credits'])['recording']
+                found = musicbrainzngs.get_recording_by_id(
+                    match.info.track_id, ['artist-credits'])['recording']
         # wipe array to save memory
         mb_candidates.clear()
         return found
@@ -80,6 +81,7 @@ class FtInTitleMBPlugin(plugins.BeetsPlugin):
     # iterates through the `collab_cases` array to see if the current
     # featuretype is one of them
     def is_collab_case(self, featuretype):
+        """Check if current case is one of the collab cases."""
         for case in self.config['collab_cases'].as_str_seq():
             if featuretype == case:
                 return True
@@ -90,6 +92,7 @@ class FtInTitleMBPlugin(plugins.BeetsPlugin):
     # data into something that can be put into our Match object. later on the
     # Match object will create a file based on info stored in it.
     def update_metadata(self, match, mb_track):
+        """Update metadata for Match based on information found."""
         # initializing some variables:
         # artistbuilder: our artist building variable
         # featurebuilder: our feature building variable
@@ -123,20 +126,21 @@ class FtInTitleMBPlugin(plugins.BeetsPlugin):
             featurebuilder += featureartists[x]
         # we dont want to add a space and formatting if there is no feature!
         if len(featuretypes) > 0:
-            featurebuilder = \
-            " " + self.config['feat_format'].get(str).format(featurebuilder)
+            featurebuilder = " " + \
+                self.config['feat_format'].get(str).format(featurebuilder)
         # apply our changes to the Match object
         match['title'] = mb_track['title'] + featurebuilder
         match['artist'] = artistbuilder
 
     def ftintitle_mb(self, match):
-        # get MusicBrainz data for respective Match object
+        """get MusicBrainz data for respective Match object"""
         mb_match = self.find_mb_match(match)
         # if it is an album, make sure we iterate through bits of the data like
         # a track, rather than the whole thing
         if hasattr(match.info, "album_id"):
-            for track, mb_track in zip( \
-            match.info['tracks'], mb_match['medium-list'][0]['track-list']):
+            for track, mb_track \
+                              in zip(match.info['tracks'],
+                                     mb_match['medium-list'][0]['track-list']):
                 self.update_metadata(track, mb_track['recording'])
         else:
             self.update_metadata(match.info, mb_match)
