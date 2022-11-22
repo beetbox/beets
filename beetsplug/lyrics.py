@@ -234,6 +234,7 @@ class Backend:
 
     def __init__(self, config, log):
         self._log = log
+        self._config = config
 
     @staticmethod
     def _encode(s):
@@ -516,7 +517,8 @@ class Tekstowo(Backend):
         title_dist = string_dist(html_title, title)
         artist_dist = string_dist(html_artist, artist)
 
-        if title_dist > 0.1 or artist_dist > 0.1:
+        thresh = self._config['dist_thresh'].get(float)
+        if title_dist > thresh or artist_dist > thresh:
             return None
 
         lyrics_div = soup.select("div.song-text > div.inner-text")
@@ -742,6 +744,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
             'force': False,
             'local': False,
             'sources': self.SOURCES,
+            'dist_thresh': 0.1,
         })
         self.config['bing_client_secret'].redact = True
         self.config['google_API_key'].redact = True
