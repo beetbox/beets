@@ -542,6 +542,7 @@ class TekstowoExtractLyricsTest(TekstowoBaseTest):
         """Set up configuration"""
         TekstowoBaseTest.setUp(self)
         self.plugin = lyrics.LyricsPlugin()
+        tekstowo.config = self.plugin.config
 
     def test_good_lyrics(self):
         """Ensure we are able to scrape a page with lyrics"""
@@ -605,6 +606,7 @@ class TekstowoIntegrationTest(TekstowoBaseTest, LyricsAssertions):
         """Set up configuration"""
         TekstowoBaseTest.setUp(self)
         self.plugin = lyrics.LyricsPlugin()
+        tekstowo.config = self.plugin.config
 
     @unittest.skipUnless(
         os.environ.get('INTEGRATION_TEST', '0') == '1',
