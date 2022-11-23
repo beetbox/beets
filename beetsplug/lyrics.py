@@ -234,7 +234,7 @@ class Backend:
 
     def __init__(self, config, log):
         self._log = log
-        self._config = config
+        self.config = config
 
     @staticmethod
     def _encode(s):
@@ -517,7 +517,7 @@ class Tekstowo(Backend):
         title_dist = string_dist(html_title, title)
         artist_dist = string_dist(html_artist, artist)
 
-        thresh = self._config['dist_thresh'].get(float)
+        thresh = self.config['dist_thresh'].get(float)
         if title_dist > thresh or artist_dist > thresh:
             return None
 
