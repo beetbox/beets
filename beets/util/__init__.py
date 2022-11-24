@@ -29,12 +29,8 @@ import traceback
 import subprocess
 import platform
 import shlex
-<<<<<<< HEAD
-from typing import AnyStr, List
-=======
 from typing import Callable, List, Optional, Sequence, Pattern, \
-    Tuple, MutableSequence, AnyStr, TypeVar, Generator
->>>>>>> 4908d7fd (Add typing for path functions)
+    Tuple, MutableSequence, AnyStr, TypeVar, Generator, TypeAlias
 
 from beets.util import hidden
 from unidecode import unidecode
@@ -44,6 +40,7 @@ from enum import Enum
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = '\\\\?\\'
 T = TypeVar('T')
+Bytestring: TypeAlias = str | bytes
 
 
 class HumanReadableException(Exception):
@@ -144,7 +141,7 @@ class MoveOperation(Enum):
     REFLINK_AUTO = 5
 
 
-def normpath(path: bytes) -> bytes:
+def normpath(path: str) -> bytes:
     """Provide the canonical form of the path suitable for storing in
     the database.
     """
@@ -153,7 +150,7 @@ def normpath(path: bytes) -> bytes:
     return bytestring_path(path)
 
 
-def ancestry(path: AnyStr) -> List[bytes]:
+def ancestry(path: str) -> List[str]:
     """Return a list consisting of path's parent directory, its
     grandparent, and so on. For instance:
 
@@ -178,11 +175,11 @@ def ancestry(path: AnyStr) -> List[bytes]:
 
 
 def sorted_walk(
-        path: bytes,
+        path: AnyStr,
         ignore: Sequence = (),
         ignore_hidden: bool = False,
         logger: Optional[Logger] = None,
-) -> Generator[Tuple]:
+) -> Generator[Tuple, None, None]:
     """Like `os.walk`, but yields things in case-insensitive sorted,
     breadth-first order.  Directory and file names matching any glob
     pattern in `ignore` are skipped. If `logger` is provided, then
@@ -246,7 +243,7 @@ def path_as_posix(path: bytes) -> bytes:
     return path.replace(b'\\', b'/')
 
 
-def mkdirall(path: bytes):
+def mkdirall(path: str):
     """Make all the enclosing directories of path (like mkdir -p on the
     parent).
     """
@@ -275,8 +272,8 @@ def fnmatch_all(names: Sequence[bytes], patterns: Sequence[bytes]) -> bool:
 
 
 def prune_dirs(
-        path: bytes,
-        root: Optional[bytes] = None,
+        path: str,
+        root: Optional[Bytestring] = None,
         clutter: Sequence[str] = ('.DS_Store', 'Thumbs.db'),
 ):
     """If path is an empty directory, then remove it. Recursively remove
@@ -309,7 +306,7 @@ def prune_dirs(
         if not os.path.exists(directory):
             # Directory gone already.
             continue
-        clutter = [bytestring_path(c) for c in clutter]
+        clutter: List[bytes] = [bytestring_path(c) for c in clutter]
         match_paths = [bytestring_path(d) for d in os.listdir(directory)]
         try:
             if fnmatch_all(match_paths, clutter):
@@ -321,7 +318,7 @@ def prune_dirs(
             break
 
 
-def components(path: AnyStr) -> MutableSequence[bytes]:
+def components(path: str) -> MutableSequence[str]:
     """Return a list of the path components in path. For instance:
 
        >>> components('/a/b/c')
@@ -367,7 +364,7 @@ def _fsencoding() -> str:
     return encoding
 
 
-def bytestring_path(path: AnyStr) -> bytes:
+def bytestring_path(path: Bytestring) -> bytes:
     """Given a path, which is either a bytes or a unicode, returns a str
     path (ensuring that we never deal with Unicode pathnames).
     """
@@ -410,7 +407,7 @@ def displayable_path(path, separator: str = '; ') -> str:
         return path.decode('utf-8', 'ignore')
 
 
-def syspath(path: AnyStr, prefix: bool = True) -> str:
+def syspath(path: Bytestring, prefix: bool = True) -> Bytestring:
     """Convert a path for use by the operating system. In particular,
     paths on Windows must receive a magic prefix and must be converted
     to Unicode before they are sent to the OS. To disable the magic
@@ -430,6 +427,7 @@ def syspath(path: AnyStr, prefix: bool = True) -> str:
         except UnicodeError:
             # The encoding should always be MBCS, Windows' broken
             # Unicode representation.
+            assert isinstance(path, bytes)
             encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
             path = path.decode(encoding, 'replace')
 
@@ -444,7 +442,7 @@ def syspath(path: AnyStr, prefix: bool = True) -> str:
     return path
 
 
-def samefile(p1: AnyStr, p2: AnyStr) -> bool:
+def samefile(p1: Bytestring, p2: Bytestring) -> bool:
     """Safer equality for paths."""
     if p1 == p2:
         return True
@@ -483,7 +481,7 @@ def copy(path: AnyStr,  dest: AnyStr, replace: bool = False):
                               traceback.format_exc())
 
 
-def move(path: AnyStr, dest: AnyStr, replace: bool = False):
+def move(path: Bytestring, dest: Bytestring, replace: bool = False):
     """Rename a file. `dest` may not be a directory. If `dest` already
     exists, raises an OSError unless `replace` is True. Has no effect if
     `path` is the same as `dest`. If the paths are on different
@@ -612,7 +610,7 @@ def reflink(
                                   'link', (path, dest), traceback.format_exc())
 
 
-def unique_path(path: AnyStr) -> AnyStr:
+def unique_path(path: Bytestring) -> Bytestring:
     """Returns a version of ``path`` that does not exist on the
     filesystem. Specifically, if ``path` itself already exists, then
     something unique is appended to the path.
@@ -650,9 +648,9 @@ CHAR_REPLACE: List[Tuple[Pattern, str]] = [
 
 
 def sanitize_path(
-        path: AnyStr,
-        replacements: Sequence[Sequence[Pattern, str]] = None,
-) -> [str, bytes]:
+        path: Bytestring,
+        replacements: Optional[Sequence[Sequence[Pattern | str]]] = None,
+) -> str | bytes:
     """Takes a path (as a Unicode string) and makes sure that it is
     legal. Returns a new path. Only works with fragments; won't work
     reliably on Windows when a path begins with a drive letter. Path
@@ -673,7 +671,7 @@ def sanitize_path(
     return os.path.join(*comps)
 
 
-def truncate_path(path: AnyStr, length: int = MAX_FILENAME_LENGTH) -> bytes:
+def truncate_path(path: Bytestring, length: int = MAX_FILENAME_LENGTH) -> bytes:
     """Given a bytestring path or a Unicode path fragment, truncate the
     components to a legal length. In the last component, the extension
     is preserved.
@@ -691,11 +689,11 @@ def truncate_path(path: AnyStr, length: int = MAX_FILENAME_LENGTH) -> bytes:
 
 
 def _legalize_stage(
-        path: AnyStr,
-        replacements: Optional[Sequence[Sequence[Pattern, str]]],
+        path: Bytestring,
+        replacements: Optional[Sequence[Sequence[Pattern | str]]],
         length: int,
         extension: str,
-        fragment: Optional[str, bytes],
+        fragment: Optional[str | bytes],
 ) -> Tuple[bytes, bool]:
     """Perform a single round of path legalization steps
     (sanitation/replacement, encoding from Unicode to bytes,
@@ -722,11 +720,11 @@ def _legalize_stage(
 
 def legalize_path(
         path: AnyStr,
-        replacements: Optional[Sequence[Sequence[Pattern, str]]],
+        replacements: Optional[Sequence[Sequence[Pattern | str]]],
         length: int,
         extension: bytes,
         fragment: Optional[AnyStr],
-) -> Tuple[bytes, bool]:
+) -> Tuple[bytes | bool]:
     """Given a path-like Unicode string, produce a legal path. Return
     the path and a flag indicating whether some replacements had to be
     ignored (see below).
@@ -794,7 +792,7 @@ def str2bool(value: str) -> bool:
     return value.lower() in ('yes', '1', 'true', 't', 'y')
 
 
-def as_string(value: Optional[memoryview, bytes]) -> str:
+def as_string(value: Optional[memoryview | bytes]) -> str:
     """Convert a value to a Unicode object for matching with a query.
     None becomes the empty string. Bytestrings are silently decoded.
     """
@@ -867,7 +865,7 @@ def convert_command_args(args: List[bytes]) -> List[str]:
 CommandOutput = namedtuple("CommandOutput", ("stdout", "stderr"))
 
 
-def command_output(cmd: List[AnyStr], shell: bool = False) -> CommandOutput:
+def command_output(cmd: List[bytes], shell: bool = False) -> CommandOutput:
     """Runs the command and returns its output after it has exited.
 
     Returns a CommandOutput. The attributes ``stdout`` and ``stderr`` contain
@@ -1047,7 +1045,7 @@ def asciify_path(path: AnyStr, sep_replace: str) -> str:
     # if this platform has an os.altsep, change it to os.sep.
     if os.altsep:
         path = path.replace(os.altsep, os.sep)
-    path_components = path.split(os.sep)
+    path_components: List[Bytestring] = path.split(os.sep)
     for index, item in enumerate(path_components):
         path_components[index] = unidecode(item).replace(os.sep, sep_replace)
         if os.altsep:
