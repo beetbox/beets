@@ -648,9 +648,9 @@ CHAR_REPLACE: List[Tuple[Pattern, str]] = [
 
 
 def sanitize_path(
-        path: Bytestring,
+        path: str,
         replacements: Optional[Sequence[Sequence[Pattern | str]]] = None,
-) -> str | bytes:
+) -> str:
     """Takes a path (as a Unicode string) and makes sure that it is
     legal. Returns a new path. Only works with fragments; won't work
     reliably on Windows when a path begins with a drive letter. Path
@@ -689,7 +689,7 @@ def truncate_path(path: Bytestring, length: int = MAX_FILENAME_LENGTH) -> bytes:
 
 
 def _legalize_stage(
-        path: Bytestring,
+        path: str,
         replacements: Optional[Sequence[Sequence[Pattern | str]]],
         length: int,
         extension: str,
@@ -706,7 +706,7 @@ def _legalize_stage(
 
     # Encode for the filesystem.
     if not fragment:
-        path = bytestring_path(path)
+        path = bytestring_path(path)  # type: ignore
 
     # Preserve extension.
     path += extension.lower()
@@ -719,7 +719,7 @@ def _legalize_stage(
 
 
 def legalize_path(
-        path: AnyStr,
+        path: str,
         replacements: Optional[Sequence[Sequence[Pattern | str]]],
         length: int,
         extension: bytes,
