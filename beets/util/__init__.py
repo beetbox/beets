@@ -1056,7 +1056,7 @@ def asciify_path(path: AnyStr, sep_replace: str) -> str:
     return os.sep.join(path_components)
 
 
-def par_map(transform: Callable, items: Sequence):
+def par_map(transform: Callable, items: Iterable):
     """Apply the function `transform` to all the elements in the
     iterable `items`, like `map(transform, items)` but with no return
     value.
