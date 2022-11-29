@@ -25,14 +25,14 @@ name::
     $ beet ls playlist:anotherplaylist
 
 A playlist query will use the paths found in the playlist file to match items
-in the beets library. Since `playlist:` submits a regular beets query like any
-other query syntax (eg. `artist:`, `year:`, ...), the sorting order of either
-the configuartion setting `sort_item` or any sorting patterns submitted with
-the query command will be used::
+in the beets library. ``playlist:`` submits a regular beets
+:ref:`query<queries>` similar to a :ref:`specific fields query<fieldsquery>`.
+If you want the list in any particular order, you can use the standard beets
+query syntax for :ref:`sorting<query-sort>`::
 
     $ beet ls playlist:/path/to/someplaylist.m3u artist+ year+
 
-Currently retaining the original sort order of the playlist is not supported.
+Playlist queries do not reflect the original order in the m3u file.
 
 The plugin can also update playlists in the playlist directory automatically
 every time an item is moved or deleted. This can be controlled by the ``auto``
