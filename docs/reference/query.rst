@@ -1,3 +1,5 @@
+.. _queries:
+
 Queries
 =======
 
@@ -49,6 +51,8 @@ the command::
 will match both "The House of Tomorrow" by the Magnetic Fields, as well as
 "Yesterday" by The Beatles. Note that the comma has to be followed by a space
 (e.g., ``foo,bar`` will be treated as a single keyword, *not* as an OR-query).
+
+.. _fieldsquery:
 
 Specific Fields
 ---------------
