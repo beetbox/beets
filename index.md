@@ -51,5 +51,5 @@ shockingly simple if you know a little Python.
 You might then want to read the
 <a href="http://beets.readthedocs.org/page/guides/main.html">Getting
 Started</a> guide. Then follow
-<a href="http://twitter.com/b33ts">@b33ts</a>
-on Twitter for updates.</p>
+<a href="https://fosstodon.org/@beets">@beets</a>
+on <a href="https://fosstodon.org">Fosstodon</a> for updates.</p>

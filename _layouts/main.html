@@ -9,7 +9,7 @@
         <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" href="/beets.css">
         {% if page.section == 'main' %}
-        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/sampsyo/emfed@main/toots.css"> <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
         <script type="text/javascript" src="beets.js"></script>
         {% endif %}
 
@@ -58,7 +58,7 @@ This post was published on {{ page.date | date: '%B %-d, %Y' }}.
 Have comments or questions?
 Post on
 <a href="http://discourse.beets.io">the discussion board</a>,
-tweet at <a href="http://twitter.com/b33ts">@b33ts</a>,
+toot at <a href="https://fosstodon.org/@beets">@beets@fosstodon.org</a>,
 or <a href="http://news.ycombinator.com/submitlink?u={{ site.url | cgi_escape }}{{ page.url | cgi_escape }}&t={{ page.title | cgi_escape }}">discuss on Hacker News</a>.
 </p>
 {% endif %}
@@ -126,13 +126,12 @@ or <a href="http://news.ycombinator.com/submitlink?u={{ site.url | cgi_escape }}
 </section>
 <section>
 {% if page.section == 'main' %}
-<h3><a href="http://twitter.com/b33ts">News from @b33ts</a></h3>
-<a class="twitter-timeline" href="https://twitter.com/b33ts"
-    data-widget-id="374710568583573504"
-    height="300"
-    data-chrome="nofooter noheader noscrollbar"
-    data-tweet-limit="2"
-    >Tweets by @b33ts</a>
+<h3><a href="https://fosstodon.org/@beets">News from @beets</a></h3>
+<a class="mastodon-feed"
+   href="https://fosstodon.org/@beets"
+   data-toot-limit="2"
+   data-toot-account-id="109332607990239837"
+   >@beets@fosstodon.org</a>
 {% endif %}
 </section>
 <section>
@@ -150,12 +149,6 @@ or <a href="http://news.ycombinator.com/submitlink?u={{ site.url | cgi_escape }}
 </p>
 </section>
 <section class="flair">
-<!-- tweet button -->
-<a href="http://twitter.com/share" class="twitter-share-button"
-data-text="Beets: an awesome open-source music library manager and MusicBrainz tagger."
-data-count="none" data-via="b33ts"
-data-url="{{site.url}}/">tweet beets</a>
-
 <!-- flattr button -->
 <a class="FlattrButton" style="display:none;"
     rev="flattr;button:compact;" href="http://beets.radbox.org/"></a>
@@ -168,8 +161,8 @@ data-url="{{site.url}}/">tweet beets</a>
         <!-- "Fork me on GitHub" ribbon. -->
         <a id="fork-me" href="https://github.com/beetbox/beets">Fork me on GitHub</a>
 
-        <!-- Tweet button script. -->
-        <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+        <!-- Mastodon feed embed. -->
+        <script type="module" src="https://esm.sh/emfed"></script>
 
         <!-- Flattr button code -->
         <script type="text/javascript">
