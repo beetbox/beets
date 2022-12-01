@@ -53,7 +53,7 @@ class Unimported(BeetsPlugin):
                 for file in f
                 if not any(
                     [file.endswith(ext) for ext in ignore_exts]
-                    + [r in ignore_dirs]
+                    + [r.startswith(ignore_dir) for ignore_dir in ignore_dirs]
                 )
             }
             in_library = {x.path for x in lib.items()}

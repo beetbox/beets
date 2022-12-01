@@ -8,6 +8,7 @@ Changelog goes here!
 
 New features:
 
+* :doc:`/plugins/unimported`: Ignored subdirectories are now ignored recursively.
 * We now import the remixer field from Musicbrainz into the library.
   :bug:`4428`
 * :doc:`/plugins/mbsubmit`: Added a new `mbsubmit` command to print track information to be submitted to MusicBrainz after initial import.
