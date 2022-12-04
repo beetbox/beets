@@ -198,8 +198,9 @@ class PlexSync(BeetsPlugin):
         for item in items:
             try:
                 plex_set.add(self.plex.fetchItem(item.plex_ratingkey))
-            except (exceptions.NotFound, AttributeError):
-                self._log.warning('{} not found in Plex library', item)
+            except (exceptions.NotFound, AttributeError) as e:
+                self._log.warning('{} not found in Plex library. Error: {}',
+                                  item, e)
                 continue
         to_add = plex_set - playlist_set
         self._log.info('Adding {} tracks to {} playlist',
@@ -223,7 +224,8 @@ class PlexSync(BeetsPlugin):
             try:
                 plex_set.add(self.plex.fetchItem(item.plex_ratingkey))
             except exceptions.NotFound:
-                self._log.warning('{} not found in Plex library', item)
+                self._log.warning('{} not found in Plex library. Error: {}',
+                                  item, e)
                 continue
         to_remove = plex_set.intersection(playlist_set)
         self._log.info('Removing {} tracks from {} playlist',
