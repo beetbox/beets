@@ -174,7 +174,7 @@ class PlexSync(BeetsPlugin):
 
     def search_plex_track(self, item):
         """Fetch the Plex track key."""
-        tracks = self.plex.searchTracks(
+        tracks = self.music.searchTracks(
             **{'album.title': item.album, 'track.title': item.title})
         if len(tracks) == 1:
             return tracks[0]
