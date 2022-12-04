@@ -190,14 +190,14 @@ class PlexSync(BeetsPlugin):
         """Add items to Plex playlist."""
         plex_set = set()
         try:
-            plst = self.plex.playlist(playlist)
+            plst = self.music.playlist(playlist)
             playlist_set = set(plst.items())
         except exceptions.NotFound:
             plst = None
             playlist_set = set()
         for item in items:
             try:
-                plex_set.add(self.plex.fetchItem(item.plex_ratingkey))
+                plex_set.add(self.music.fetchItem(item.plex_ratingkey))
             except (exceptions.NotFound, AttributeError):
                 self._log.warning('{} not found in Plex library', item)
                 continue
@@ -206,7 +206,7 @@ class PlexSync(BeetsPlugin):
                        len(to_add), playlist)
         if plst is None:
             self._log.info('{} playlist will be created', playlist)
-            self.plex.createPlaylist(playlist, items=list(to_add))
+            self.music.createPlaylist(playlist, items=list(to_add))
         else:
             plst.addItems(items=list(to_add))
 
@@ -214,14 +214,14 @@ class PlexSync(BeetsPlugin):
         """Remove items from Plex playlist."""
         plex_set = set()
         try:
-            plst = self.plex.playlist(playlist)
+            plst = self.music.playlist(playlist)
             playlist_set = set(plst.items())
         except exceptions.NotFound:
             self._log.error('{} playlist not found', playlist)
             return
         for item in items:
             try:
-                plex_set.add(self.plex.fetchItem(item.plex_ratingkey))
+                plex_set.add(self.music.fetchItem(item.plex_ratingkey))
             except exceptions.NotFound:
                 self._log.warning('{} not found in Plex library', item)
                 continue
