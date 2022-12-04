@@ -9,13 +9,14 @@ Put something like the following in your config.yaml to configure:
 
 import time
 
+from plexapi import exceptions
+from plexapi.server import PlexServer
+
 from beets import config, ui
 from beets.dbcore import types
 from beets.dbcore.query import MatchQuery
 from beets.library import DateType
 from beets.plugins import BeetsPlugin
-from plexapi import exceptions
-from plexapi.server import PlexServer
 
 
 class PlexSync(BeetsPlugin):
@@ -223,7 +224,7 @@ class PlexSync(BeetsPlugin):
         for item in items:
             try:
                 plex_set.add(self.plex.fetchItem(item.plex_ratingkey))
-            except exceptions.NotFound:
+            except (exceptions.NotFound) as e:
                 self._log.warning('{} not found in Plex library. Error: {}',
                                   item, e)
                 continue
