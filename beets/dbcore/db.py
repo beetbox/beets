@@ -25,7 +25,7 @@ import contextlib
 from sqlite3 import Connection
 from types import TracebackType
 from typing import Iterable, Type, List, Tuple, NoReturn, Optional, Union, \
-    Dict, Any, Generator, Iterator
+    Dict, Any, Generator, Iterator, Callable
 
 from unidecode import unidecode
 
@@ -289,7 +289,7 @@ class Model:
         # gather the getter mapping every time.
         raise NotImplementedError()
 
-    def _template_funcs(self) -> NoReturn:
+    def _template_funcs(self) -> Mapping[str, Callable[[str], str]]:
         """Return a mapping from function names to text-transformer
         functions.
         """
