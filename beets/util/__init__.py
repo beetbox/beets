@@ -449,7 +449,7 @@ def samefile(p1: Bytestring, p2: Bytestring) -> bool:
     return shutil._samefile(syspath(p1), syspath(p2))
 
 
-def remove(path: AnyStr, soft: bool = True):
+def remove(path: bytes, soft: bool = True):
     """Remove the file. If `soft`, then no error will be raised if the
     file does not exist.
     """
@@ -462,7 +462,7 @@ def remove(path: AnyStr, soft: bool = True):
         raise FilesystemError(exc, 'delete', (path,), traceback.format_exc())
 
 
-def copy(path: AnyStr,  dest: AnyStr, replace: bool = False):
+def copy(path: bytes,  dest: bytes, replace: bool = False):
     """Copy a plain file. Permissions are not copied. If `dest` already
     exists, raises a FilesystemError unless `replace` is True. Has no
     effect if `path` is the same as `dest`. Paths are translated to
@@ -481,7 +481,7 @@ def copy(path: AnyStr,  dest: AnyStr, replace: bool = False):
                               traceback.format_exc())
 
 
-def move(path: Bytestring, dest: Bytestring, replace: bool = False):
+def move(path: bytes, dest: bytes, replace: bool = False):
     """Rename a file. `dest` may not be a directory. If `dest` already
     exists, raises an OSError unless `replace` is True. Has no effect if
     `path` is the same as `dest`. If the paths are on different
@@ -531,7 +531,7 @@ def move(path: Bytestring, dest: Bytestring, replace: bool = False):
                 os.remove(tmp)
 
 
-def link(path: AnyStr, dest: AnyStr, replace: bool = False):
+def link(path: bytes, dest: bytes, replace: bool = False):
     """Create a symbolic link from path to `dest`. Raises an OSError if
     `dest` already exists, unless `replace` is True. Does nothing if
     `path` == `dest`.
@@ -552,7 +552,7 @@ def link(path: AnyStr, dest: AnyStr, replace: bool = False):
                               traceback.format_exc())
 
 
-def hardlink(path: AnyStr, dest: AnyStr, replace: bool = False):
+def hardlink(path: bytes, dest: bytes, replace: bool = False):
     """Create a hard link from path to `dest`. Raises an OSError if
     `dest` already exists, unless `replace` is True. Does nothing if
     `path` == `dest`.
@@ -577,8 +577,8 @@ def hardlink(path: AnyStr, dest: AnyStr, replace: bool = False):
 
 
 def reflink(
-        path: AnyStr,
-        dest: AnyStr,
+        path: bytes,
+        dest: bytes,
         replace: bool = False,
         fallback: bool = False,
 ):
