@@ -8,6 +8,8 @@ Changelog goes here!
 
 New features:
 
+* Added `ftintitle_mb`: A plugin aimed at producing better results in
+  "feature splitting", specifically when utilizing data from MusicBrainz.
 * :doc:`/plugins/mbsubmit`: Added a new `mbsubmit` command to print track information to be submitted to MusicBrainz after initial import.
   :bug:`4455`
 * Added `spotify_updated` field to track when the information was last updated.
