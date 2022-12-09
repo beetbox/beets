@@ -30,7 +30,7 @@ import subprocess
 import platform
 import shlex
 from typing import Callable, List, Optional, Sequence, Pattern, \
-    Tuple, MutableSequence, AnyStr, TypeVar, Generator, TypeAlias
+    Tuple, MutableSequence, AnyStr, TypeVar, Generator, TypeAlias, Any
 
 from beets.util import hidden
 from unidecode import unidecode
@@ -792,7 +792,7 @@ def str2bool(value: str) -> bool:
     return value.lower() in ('yes', '1', 'true', 't', 'y')
 
 
-def as_string(value: Optional[memoryview | bytes]) -> str:
+def as_string(value: Any) -> str:
     """Convert a value to a Unicode object for matching with a query.
     None becomes the empty string. Bytestrings are silently decoded.
     """
