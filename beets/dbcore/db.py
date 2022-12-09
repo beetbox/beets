@@ -86,7 +86,7 @@ class FormattedMapping(Mapping):
         else:
             raise KeyError(key)
 
-    def __iter__(self) -> Iterable:
+    def __iter__(self) -> Iterable[str]:
         return iter(self.model_keys)
 
     def __len__(self) -> int:
@@ -161,7 +161,7 @@ class LazyConvertDict:
         if key in self.data:
             del self.data[key]
 
-    def keys(self) -> List:
+    def keys(self) -> List[str]:
         """Get a list of available field names for this object.
         """
         return list(self._converted.keys()) + list(self.data.keys())
@@ -203,7 +203,7 @@ class LazyConvertDict:
         """
         return key in self.keys()
 
-    def __iter__(self) -> Iterable:
+    def __iter__(self) -> Iterable[str]:
         """Iterate over the available field names (excluding computed
         fields).
         """
