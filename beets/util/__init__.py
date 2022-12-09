@@ -40,7 +40,7 @@ from enum import Enum
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = '\\\\?\\'
 T = TypeVar('T')
-Bytestring: TypeAlias = str | bytes
+Bytes_or_String: TypeAlias = str | bytes
 
 
 class HumanReadableException(Exception):
@@ -273,7 +273,7 @@ def fnmatch_all(names: Sequence[bytes], patterns: Sequence[bytes]) -> bool:
 
 def prune_dirs(
         path: str,
-        root: Optional[Bytestring] = None,
+        root: Optional[Bytes_or_String] = None,
         clutter: Sequence[str] = ('.DS_Store', 'Thumbs.db'),
 ):
     """If path is an empty directory, then remove it. Recursively remove
@@ -364,7 +364,7 @@ def _fsencoding() -> str:
     return encoding
 
 
-def bytestring_path(path: Bytestring) -> bytes:
+def bytestring_path(path: Bytes_or_String) -> bytes:
     """Given a path, which is either a bytes or a unicode, returns a str
     path (ensuring that we never deal with Unicode pathnames).
     """
@@ -407,7 +407,7 @@ def displayable_path(path: bytes, separator: str = '; ') -> str:
         return path.decode('utf-8', 'ignore')
 
 
-def syspath(path: bytes, prefix: bool = True) -> Bytestring:
+def syspath(path: bytes, prefix: bool = True) -> Bytes_or_String:
     """Convert a path for use by the operating system. In particular,
     paths on Windows must receive a magic prefix and must be converted
     to Unicode before they are sent to the OS. To disable the magic
@@ -442,7 +442,7 @@ def syspath(path: bytes, prefix: bool = True) -> Bytestring:
     return path
 
 
-def samefile(p1: Bytestring, p2: Bytestring) -> bool:
+def samefile(p1: Bytes_or_String, p2: Bytes_or_String) -> bool:
     """Safer equality for paths."""
     if p1 == p2:
         return True
@@ -610,7 +610,7 @@ def reflink(
                                   'link', (path, dest), traceback.format_exc())
 
 
-def unique_path(path: Bytestring) -> Bytestring:
+def unique_path(path: Bytes_or_String) -> Bytes_or_String:
     """Returns a version of ``path`` that does not exist on the
     filesystem. Specifically, if ``path` itself already exists, then
     something unique is appended to the path.
@@ -671,7 +671,7 @@ def sanitize_path(
     return os.path.join(*comps)
 
 
-def truncate_path(path: Bytestring, length: int = MAX_FILENAME_LENGTH) -> bytes:
+def truncate_path(path: Bytes_or_String, length: int = MAX_FILENAME_LENGTH) -> bytes:
     """Given a bytestring path or a Unicode path fragment, truncate the
     components to a legal length. In the last component, the extension
     is preserved.
@@ -1045,7 +1045,7 @@ def asciify_path(path: AnyStr, sep_replace: str) -> str:
     # if this platform has an os.altsep, change it to os.sep.
     if os.altsep:
         path = path.replace(os.altsep, os.sep)
-    path_components: List[Bytestring] = path.split(os.sep)
+    path_components: List[Bytes_or_String] = path.split(os.sep)
     for index, item in enumerate(path_components):
         path_components[index] = unidecode(item).replace(os.sep, sep_replace)
         if os.altsep:
