@@ -388,7 +388,7 @@ def bytestring_path(path: Bytestring) -> bytes:
 PATH_SEP: bytes = bytestring_path(os.sep)
 
 
-def displayable_path(path, separator: str = '; ') -> str:
+def displayable_path(path: bytes, separator: str = '; ') -> str:
     """Attempts to decode a bytestring path to a unicode object for the
     purpose of displaying it to the user. If the `path` argument is a
     list or a tuple, the elements are joined with `separator`.
@@ -407,7 +407,7 @@ def displayable_path(path, separator: str = '; ') -> str:
         return path.decode('utf-8', 'ignore')
 
 
-def syspath(path: Bytestring, prefix: bool = True) -> Bytestring:
+def syspath(path: bytes, prefix: bool = True) -> Bytestring:
     """Convert a path for use by the operating system. In particular,
     paths on Windows must receive a magic prefix and must be converted
     to Unicode before they are sent to the OS. To disable the magic
