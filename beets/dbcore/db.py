@@ -25,7 +25,7 @@ import contextlib
 from sqlite3 import Connection
 from types import TracebackType
 from typing import Iterable, Type, List, Tuple, NoReturn, Optional, Union, \
-    Dict, Any, Generator
+    Dict, Any, Generator, Iterator
 
 from unidecode import unidecode
 
@@ -182,7 +182,7 @@ class LazyConvertDict:
         for key, value in values.items():
             self[key] = value
 
-    def items(self) -> Generator[Tuple, None, None]:
+    def items(self) -> Iterable[Tuple[str, Any]]:
         """Iterate over (key, value) pairs that this object contains.
         Computed fields are not included.
         """
@@ -475,7 +475,7 @@ class Model:
         for key, value in values.items():
             self[key] = value
 
-    def items(self) -> Generator:
+    def items(self) -> Iterator[Tuple[str, Any]]:
         """Iterate over (key, value) pairs that this object contains.
         Computed fields are not included.
         """
@@ -487,7 +487,7 @@ class Model:
         """
         return key in self.keys(computed=True)
 
-    def __iter__(self) -> Iterable:
+    def __iter__(self) -> Iterable[str]:
         """Iterate over the available field names (excluding computed
         fields).
         """
@@ -656,7 +656,7 @@ class Model:
     # Parsing.
 
     @classmethod
-    def _parse(cls, key, string: str) -> types.Type:
+    def _parse(cls, key, string: str) -> Any:
         """Parse a string as a value for the given key.
         """
         if not isinstance(string, str):
@@ -745,7 +745,7 @@ class Results:
         # consumed.
         self._objects = []
 
-    def _get_objects(self) -> Generator[Model, None, None]:
+    def _get_objects(self) -> Iterable[Model]:
         """Construct and generate Model objects for they query. The
         objects are returned in the order emitted from the database; no
         slow sort is applied.
