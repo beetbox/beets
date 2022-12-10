@@ -15,19 +15,13 @@
 """Tests for the 'ftintitle_mb' plugin."""
 
 import unittest
-import musicbrainzngs
-from beets.autotag import AlbumInfo, TrackInfo, match
+from beets.autotag import AlbumInfo, AlbumMatch, TrackInfo
 from beetsplug import ftintitle_mb
 from test.helper import TestHelper
 
-# used for fetching data with musicbrainzngs
-RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
-                    'labels', 'artist-credits', 'aliases',
-                    'recording-level-rels', 'work-rels',
-                    'work-level-rels', 'artist-rels', 'isrcs']
-
 
 class FtInTitleMBPluginTest(unittest.TestCase, TestHelper):
+    """Testing class for ftintitle_mb"""
 
     def setUp(self):
         """Set up configuration"""
@@ -35,27 +29,42 @@ class FtInTitleMBPluginTest(unittest.TestCase, TestHelper):
         self.load_plugins('ftintitle_mb')
 
     def tearDown(self):
+        """Tear down configuration"""
         self.unload_plugins()
         self.teardown_beets()
 
     def ftmb_config(self):
+        """Set ftintitle_mb configuration for testing"""
         self.config['ftintitle_mb']['feat_format'] = "(feat. {0})"
         self.config['ftintitle_mb']['collab_cases'] = [" & "]
 
-    def ftmb_track(self, albumid, expected_title, expected_artist):
+    def ftmb_track(self, artistcredits, expected_title, expected_artist):
         """Test first track in an album"""
-        match_test = match.match_by_id([AlbumInfo(mb_albumid=albumid,
-                                        tracks=[TrackInfo()])])
-        raw_test = \
-            musicbrainzngs.get_release_by_id(albumid,
-                                             RELEASE_INCLUDES)['release']
+        match_test = AlbumMatch(0, AlbumInfo(tracks=[TrackInfo()]),
+                                set(), set(), set())
 
+        # this just creates test raw data, so that we don't need to
+        # use musicbrainzngs
+        raw_test = {
+            'medium-list': [{
+                'track-list': [{
+                    'recording': {
+                        'title': "ftmb!",
+                        'artist-credit': artistcredits
+                    }
+                }]
+            }]
+        }
+
+        # the meat and bones of the plugin, where it's actually used
         ftintitle_mb.FtInTitleMBPlugin().update_metadata(
-            match_test['tracks'][0],
+            match_test.info['tracks'][0],
             raw_test['medium-list'][0]['track-list'][0]['recording'])
-        self.assertEqual(match_test['tracks'][0]['title'],
+
+        # finally, verify that the result title and artist are correct
+        self.assertEqual(match_test.info['tracks'][0]['title'],
                          expected_title)
-        self.assertEqual(match_test['tracks'][0]['artist'],
+        self.assertEqual(match_test.info['tracks'][0]['artist'],
                          expected_artist)
 
     def test_ftintitle_mb(self):
@@ -66,19 +75,29 @@ class FtInTitleMBPluginTest(unittest.TestCase, TestHelper):
 
         # Test an artist with "&" in their name to show that it won't be
         # split like it would be using the normal ftintitle plugin.
-        self.ftmb_track('3b675b27-c087-49e9-9e50-1875d88bf78c',
-                        'Tompkins Square Park', 'Mumford & Sons')
+        test1_credits = [
+            {'artist': {'name': 'Foo & Bar'}}
+        ]
+        self.ftmb_track(test1_credits, "ftmb!", "Foo & Bar")
 
-        # TODO: Test an artist with & to show that it won't be split since we
-        # have that in our collab_cases.
-        #self.ftmb_track('3b675b27-c087-49e9-9e50-1875d88bf78c',
-        #                'Tompkins Square Park', 'Mumford & Sons')
+        # Test an artists with & between them to show that it won't be split
+        # since we have it in our collab_cases.
+        test2_credits = [
+            {'artist': {'name': 'Foo'}},
+            ' & ',
+            {'artist': {'name': 'Bar'}}
+        ]
+        self.ftmb_track(test2_credits, "ftmb!", "Foo & Bar")
 
         # Finally, test an artist with a feature type not listed in
         # collab_cases. This should move that artist to the title using
         # our selected format.
-        self.ftmb_track('71289422-f99c-47a9-ad2b-8f0969500dd0',
-                        'Dig (feat. Sonny Rollins)', 'Miles Davis')
+        test3_credits = [
+            {'artist': {'name': 'Foo'}},
+            ' featuring ',
+            {'artist': {'name': 'Bar'}}
+        ]
+        self.ftmb_track(test3_credits, "ftmb! (feat. Bar)", "Foo")
 
 
 def suite():
