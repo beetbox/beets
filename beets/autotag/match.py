@@ -19,14 +19,18 @@ releases and tracks.
 
 import datetime
 import re
+from typing import List, Dict, Tuple, Iterable, Union, Iterator, Optional
+
 from munkres import Munkres
 from collections import namedtuple
 
 from beets import logging
 from beets import plugins
 from beets import config
+from beets.library import Item
 from beets.util import plurality
-from beets.autotag import hooks
+from beets.autotag import hooks, TrackInfo, Distance, AlbumInfo, TrackMatch, \
+    AlbumMatch
 from beets.util.enumeration import OrderedEnum
 
 # Artist signals that indicate "various artists". These are used at the
@@ -85,7 +89,10 @@ def current_metadata(items):
     return likelies, consensus
 
 
-def assign_items(items, tracks):
+def assign_items(
+        items: List[Item],
+        tracks: List[TrackInfo],
+) -> Tuple[Dict, List[Item], List[TrackInfo]]:
     """Given a list of Items and a list of TrackInfo objects, find the
     best mapping between them. Returns a mapping from Items to TrackInfo
     objects, a set of extra Items, and a set of extra TrackInfo
@@ -114,14 +121,18 @@ def assign_items(items, tracks):
     return mapping, extra_items, extra_tracks
 
 
-def track_index_changed(item, track_info):
+def track_index_changed(item: Item, track_info: TrackInfo) -> bool:
     """Returns True if the item and track info index is different. Tolerates
     per disc and per release numbering.
     """
     return item.track not in (track_info.medium_index, track_info.index)
 
 
-def track_distance(item, track_info, incl_artist=False):
+def track_distance(
+        item: Item,
+        track_info: TrackInfo,
+        incl_artist: bool = False,
+) -> Distance:
     """Determines the significance of a track metadata change. Returns a
     Distance object. `incl_artist` indicates that a distance component should
     be included for the track artist (i.e., for various-artist releases).
@@ -157,7 +168,11 @@ def track_distance(item, track_info, incl_artist=False):
     return dist
 
 
-def distance(items, album_info, mapping):
+def distance(
+        items: Iterable[Item],
+        album_info: AlbumInfo,
+        mapping: Dict[Item, TrackInfo],
+) -> Distance:
     """Determines how "significant" an album metadata change would be.
     Returns a Distance object. `album_info` is an AlbumInfo object
     reflecting the album to be compared. `items` is a sequence of all
@@ -263,7 +278,7 @@ def distance(items, album_info, mapping):
     return dist
 
 
-def match_by_id(items):
+def match_by_id(items: Iterable[Item]):
     """If the items are tagged with a MusicBrainz album ID, returns an
     AlbumInfo object for the corresponding album. Otherwise, returns
     None.
@@ -287,7 +302,9 @@ def match_by_id(items):
     return hooks.album_for_mbid(first)
 
 
-def _recommendation(results):
+def _recommendation(
+        results: List[Union[AlbumMatch, TrackMatch]],
+) -> Recommendation:
     """Given a sorted list of AlbumMatch or TrackMatch objects, return a
     recommendation based on the results' distances.
 
@@ -338,12 +355,12 @@ def _recommendation(results):
     return rec
 
 
-def _sort_candidates(candidates):
+def _sort_candidates(candidates) -> Iterable:
     """Sort candidates by distance."""
     return sorted(candidates, key=lambda match: match.distance)
 
 
-def _add_candidate(items, results, info):
+def _add_candidate(items: Iterable[Item], results: Dict, info: AlbumInfo):
     """Given a candidate AlbumInfo object, attempt to add the candidate
     to the output dictionary of AlbumMatch objects. This involves
     checking the track count, ordering the items, checking for
@@ -386,8 +403,12 @@ def _add_candidate(items, results, info):
                                               extra_items, extra_tracks)
 
 
-def tag_album(items, search_artist=None, search_album=None,
-              search_ids=[]):
+def tag_album(
+        items,
+        search_artist: Optional[str] = None,
+        search_album: Optional[str] = None,
+        search_ids: List = [],
+) -> Tuple[str, str, Proposal]:
     """Return a tuple of the current artist name, the current album
     name, and a `Proposal` containing `AlbumMatch` candidates.
 
@@ -472,8 +493,12 @@ def tag_album(items, search_artist=None, search_album=None,
     return cur_artist, cur_album, Proposal(candidates, rec)
 
 
-def tag_item(item, search_artist=None, search_title=None,
-             search_ids=[]):
+def tag_item(
+        item,
+        search_artist: Optional[str] = None,
+        search_title: Optional[str] = None,
+        search_ids: List = [],
+) -> Proposal:
     """Find metadata for a single track. Return a `Proposal` consisting
     of `TrackMatch` objects.
 
