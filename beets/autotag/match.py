@@ -19,7 +19,7 @@ releases and tracks.
 
 import datetime
 import re
-from typing import List, Dict, Tuple, Iterable, Union, Iterator, Optional
+from typing import List, Dict, Tuple, Iterable, Union, Optional
 
 from munkres import Munkres
 from collections import namedtuple
@@ -64,7 +64,7 @@ Proposal = namedtuple('Proposal', ('candidates', 'recommendation'))
 
 # Primary matching functionality.
 
-def current_metadata(items):
+def current_metadata(items: List[Item]) -> Tuple[Dict, Dict]:
     """Extract the likely current metadata for an album given a list of its
     items. Return two dictionaries:
      - The most common value for each field.
