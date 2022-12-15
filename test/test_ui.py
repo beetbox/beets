@@ -701,6 +701,28 @@ class UpdateTest(_common.TestCase):
         item = self.lib.items().get()
         self.assertEqual(item.title, 'full')
 
+    @unittest.expectedFailure
+    def test_multivalued_albumtype_roundtrip(self):
+        # https://github.com/beetbox/beets/issues/4528
+
+        # albumtypes is empty for our test fixtures, so populate it first
+        album = self.album
+        # setting albumtypes does not set albumtype currently...
+        # FIXME: When actually fixing the issue 4528, consider whether this
+        # should be set to "album" or ["album"]
+        album.albumtype = "album"
+        album.albumtypes = "album"
+        album.try_sync(write=True, move=False)
+
+        album.load()
+        albumtype_before = album.albumtype
+        self.assertEqual(albumtype_before, "album")
+
+        self._update()
+
+        album.load()
+        self.assertEqual(albumtype_before, album.albumtype)
+
 
 class PrintTest(_common.TestCase):
     def setUp(self):
