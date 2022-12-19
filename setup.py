@@ -119,6 +119,15 @@ setup(
             'flake8-docstrings',
             'pep8-naming',
         ],
+        'mypy': [
+            'mypy',
+            'types-Pillow',
+            'types-urllib3',
+            'types-beautifulsoup4',
+            'types-PyYAML',
+            'types-requests',
+            'types-Flask-Cors',
+        ],
 
         # Plugin (optional) dependencies:
         'absubmit': ['requests'],
