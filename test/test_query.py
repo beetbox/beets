@@ -603,40 +603,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         results = self.lib.items(makeq(case_sensitive=False))
         self.assert_items_matched(results, ['path item', 'caps path'])
 
-        # Check for correct case sensitivity selection (this check
-        # only works on non-Windows OSes).
-        with _common.system_mock('Darwin'):
-            # exists = True and samefile = True => Case insensitive
-            q = makeq()
-            self.assertEqual(q.case_sensitive, False)
 
-            # exists = True and samefile = False => Case sensitive
-            self.patcher_samefile.stop()
-            self.patcher_samefile.start().return_value = False
-            try:
-                q = makeq()
-                self.assertEqual(q.case_sensitive, True)
-            finally:
-                self.patcher_samefile.stop()
-                self.patcher_samefile.start().return_value = True
-
-        # Test platform-aware default sensitivity when the library path
-        # does not exist. For the duration of this check, we change the
-        # `os.path.exists` mock to return False.
-        self.patcher_exists.stop()
-        self.patcher_exists.start().return_value = False
-        try:
-            with _common.system_mock('Darwin'):
-                q = makeq()
-                self.assertEqual(q.case_sensitive, True)
-
-            with _common.system_mock('Windows'):
-                q = makeq()
-                self.assertEqual(q.case_sensitive, False)
-        finally:
-            # Restore the `os.path.exists` mock to its original state.
-            self.patcher_exists.stop()
-            self.patcher_exists.start().return_value = True
 
     @patch('beets.library.os')
     def test_path_sep_detection(self, mock_os):
