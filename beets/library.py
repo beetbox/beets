@@ -51,6 +51,8 @@ class PathQuery(dbcore.FieldQuery):
     default, the behavior depends on the OS: case-insensitive on Windows
     and case-sensitive otherwise.
     """
+    # For tests
+    force_implicit_query_detection = False
 
     def __init__(self, field, pattern, fast=True, case_sensitive=None):
         """Create a path query.
@@ -90,11 +92,13 @@ class PathQuery(dbcore.FieldQuery):
 
         # Test both `sep` and `altsep` (i.e., both slash and backslash on
         # Windows).
-        return (
-            (os.sep in query_part or
-             (os.altsep and os.altsep in query_part)) and
-            os.path.exists(syspath(normpath(query_part)))
-        )
+        if not (os.sep in query_part
+                or (os.altsep and os.altsep in query_part)):
+            return False
+
+        if cls.force_implicit_query_detection:
+            return True
+        return os.path.exists(syspath(normpath(query_part)))
 
     def match(self, item):
         path = item.path if self.case_sensitive else item.path.lower()
