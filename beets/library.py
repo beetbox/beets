@@ -67,7 +67,7 @@ class PathQuery(dbcore.FieldQuery):
         # By default, the case sensitivity depends on the filesystem
         # that the query path is located on.
         if case_sensitive is None:
-            path = util.bytestring_path(util.normpath(pattern))
+            path = util.normpath(pattern)
             case_sensitive = beets.util.case_sensitive(path)
         self.case_sensitive = case_sensitive
 
@@ -76,9 +76,9 @@ class PathQuery(dbcore.FieldQuery):
             pattern = pattern.lower()
 
         # Match the path as a single file.
-        self.file_path = util.bytestring_path(util.normpath(pattern))
+        self.file_path = util.normpath(pattern)
         # As a directory (prefix).
-        self.dir_path = util.bytestring_path(os.path.join(self.file_path, b''))
+        self.dir_path = os.path.join(self.file_path, b'')
 
     @classmethod
     def is_path_query(cls, query_part):
