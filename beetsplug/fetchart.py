@@ -45,12 +45,6 @@ class Candidate:
     """Holds information about a matching artwork, deals with validation of
     dimension restrictions and resizing.
     """
-    CANDIDATE_BAD = 0
-    CANDIDATE_EXACT = 1
-    CANDIDATE_DOWNSCALE = 2
-    CANDIDATE_DOWNSIZE = 3
-    CANDIDATE_DEINTERLACE = 4
-    CANDIDATE_REFORMAT = 5
 
     MATCH_EXACT = 0
     MATCH_FALLBACK = 1
@@ -61,7 +55,9 @@ class Candidate:
         self.path = path
         self.url = url
         self.source = source
-        self.check = None
+        self.downscale = False
+        self.downsize = False
+        self.reformat = False
         self.match = match
         self.size = size
 
@@ -69,21 +65,15 @@ class Candidate:
         """Determine whether the candidate artwork is valid based on
         its dimensions (width and ratio).
 
-        Return `CANDIDATE_BAD` if the file is unusable.
-        Return `CANDIDATE_EXACT` if the file is usable as-is.
-        Return `CANDIDATE_DOWNSCALE` if the file must be rescaled.
-        Return `CANDIDATE_DOWNSIZE` if the file must be resized, and possibly
-            also rescaled.
-        Return `CANDIDATE_DEINTERLACE` if the file must be deinterlaced.
-        Return `CANDIDATE_REFORMAT` if the file has to be converted.
+        Return False if the file is unusable.
         """
         if not self.path:
-            return self.CANDIDATE_BAD
+            return False
 
         if (not (plugin.enforce_ratio or plugin.minwidth or plugin.maxwidth
                  or plugin.max_filesize or plugin.deinterlace
                  or plugin.cover_format)):
-            return self.CANDIDATE_EXACT
+            return True
 
         # get_size returns None if no local imaging backend is available
         if not self.size:
@@ -94,9 +84,9 @@ class Candidate:
             self._log.warning('Could not get size of image (please see '
                               'documentation for dependencies). '
                               'The configuration options `minwidth`, '
-                              '`enforce_ratio` and `max_filesize` '
+                              '`enforce_ratio`, `cover_format` and `max_filesize` '
                               'may be violated.')
-            return self.CANDIDATE_EXACT
+            return True
 
         short_edge = min(self.size)
         long_edge = max(self.size)
@@ -105,7 +95,7 @@ class Candidate:
         if plugin.minwidth and self.size[0] < plugin.minwidth:
             self._log.debug('image too small ({} < {})',
                             self.size[0], plugin.minwidth)
-            return self.CANDIDATE_BAD
+            return False
 
         # Check aspect ratio.
         edge_diff = long_edge - short_edge
@@ -115,75 +105,64 @@ class Candidate:
                     self._log.debug('image is not close enough to being '
                                     'square, ({} - {} > {})',
                                     long_edge, short_edge, plugin.margin_px)
-                    return self.CANDIDATE_BAD
+                    return False
             elif plugin.margin_percent:
                 margin_px = plugin.margin_percent * long_edge
                 if edge_diff > margin_px:
                     self._log.debug('image is not close enough to being '
                                     'square, ({} - {} > {})',
                                     long_edge, short_edge, margin_px)
-                    return self.CANDIDATE_BAD
+                    return False
             elif edge_diff:
                 # also reached for margin_px == 0 and margin_percent == 0.0
                 self._log.debug('image is not square ({} != {})',
                                 self.size[0], self.size[1])
-                return self.CANDIDATE_BAD
+                return False
 
         # Check maximum dimension.
-        downscale = False
         if plugin.maxwidth and self.size[0] > plugin.maxwidth:
             self._log.debug('image needs rescaling ({} > {})',
                             self.size[0], plugin.maxwidth)
-            downscale = True
+            self.downscale = True
 
         # Check filesize.
-        downsize = False
         if plugin.max_filesize:
             filesize = os.stat(syspath(self.path)).st_size
             if filesize > plugin.max_filesize:
                 self._log.debug('image needs resizing ({}B > {}B)',
                                 filesize, plugin.max_filesize)
-                downsize = True
+                self.downsize = True
 
         # Check image format
-        reformat = False
         if plugin.cover_format:
             fmt = ArtResizer.shared.get_format(self.path)
-            reformat = fmt != plugin.cover_format
-            if reformat:
+            self.reformat = fmt != plugin.cover_format
+            if self.reformat:
                 self._log.debug('image needs reformatting: {} -> {}',
                                 fmt, plugin.cover_format)
 
-        if downscale:
-            return self.CANDIDATE_DOWNSCALE
-        elif downsize:
-            return self.CANDIDATE_DOWNSIZE
-        elif plugin.deinterlace:
-            return self.CANDIDATE_DEINTERLACE
-        elif reformat:
-            return self.CANDIDATE_REFORMAT
-        else:
-            return self.CANDIDATE_EXACT
+        return True
 
     def validate(self, plugin):
         self.check = self._validate(plugin)
         return self.check
 
-    def resize(self, plugin):
-        if self.check == self.CANDIDATE_DOWNSCALE:
+    def adjust(self, plugin):
+        if self.downscale:
             self.path = \
                 ArtResizer.shared.resize(plugin.maxwidth, self.path,
                                          quality=plugin.quality,
                                          max_filesize=plugin.max_filesize)
-        elif self.check == self.CANDIDATE_DOWNSIZE:
+        if self.downsize:
             # dimensions are correct, so maxwidth is set to maximum dimension
             self.path = \
                 ArtResizer.shared.resize(max(self.size), self.path,
                                          quality=plugin.quality,
                                          max_filesize=plugin.max_filesize)
-        elif self.check == self.CANDIDATE_DEINTERLACE:
+        if self.check == plugin.deinterlace:
             self.path = ArtResizer.shared.deinterlace(self.path)
-        elif self.check == self.CANDIDATE_REFORMAT:
+
+        if self.reformat: 
             self.path = ArtResizer.shared.reformat(
                self.path,
                plugin.cover_format,
@@ -1121,7 +1100,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                     break
 
         if out:
-            out.resize(self)
+            out.adjust(self)
 
         return out
 
