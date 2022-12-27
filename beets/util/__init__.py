@@ -30,7 +30,8 @@ import subprocess
 import platform
 import shlex
 from typing import Callable, List, Optional, Sequence, Pattern, \
-    Tuple, MutableSequence, AnyStr, TypeVar, Generator, TypeAlias, Any
+    Tuple, MutableSequence, AnyStr, TypeVar, Generator, TypeAlias, Any, \
+    Iterable
 
 from beets.util import hidden
 from unidecode import unidecode
@@ -141,7 +142,7 @@ class MoveOperation(Enum):
     REFLINK_AUTO = 5
 
 
-def normpath(path: str) -> bytes:
+def normpath(path: bytes) -> bytes:
     """Provide the canonical form of the path suitable for storing in
     the database.
     """
@@ -150,11 +151,11 @@ def normpath(path: str) -> bytes:
     return bytestring_path(path)
 
 
-def ancestry(path: str) -> List[str]:
+def ancestry(path: bytes) -> List[str]:
     """Return a list consisting of path's parent directory, its
     grandparent, and so on. For instance:
 
-       >>> ancestry('/a/b/c')
+       >>> ancestry(b'/a/b/c')
        ['/', '/a', '/a/b']
 
     The argument should *not* be the result of a call to `syspath`.
@@ -243,7 +244,7 @@ def path_as_posix(path: bytes) -> bytes:
     return path.replace(b'\\', b'/')
 
 
-def mkdirall(path: str):
+def mkdirall(path: bytes):
     """Make all the enclosing directories of path (like mkdir -p on the
     parent).
     """
@@ -318,10 +319,10 @@ def prune_dirs(
             break
 
 
-def components(path: str) -> MutableSequence[str]:
+def components(path: AnyStr) -> MutableSequence[AnyStr]:
     """Return a list of the path components in path. For instance:
 
-       >>> components('/a/b/c')
+       >>> components(b'/a/b/c')
        ['a', 'b', 'c']
 
     The argument should *not* be the result of a call to `syspath`.
@@ -366,7 +367,8 @@ def _fsencoding() -> str:
 
 def bytestring_path(path: Bytes_or_String) -> bytes:
     """Given a path, which is either a bytes or a unicode, returns a str
-    path (ensuring that we never deal with Unicode pathnames).
+    path (ensuring that we never deal with Unicode pathnames). Path should be
+    bytes but has safeguards for strings to be converted.
     """
     # Pass through bytestrings.
     if isinstance(path, bytes):
@@ -442,7 +444,7 @@ def syspath(path: bytes, prefix: bool = True) -> Bytes_or_String:
     return path
 
 
-def samefile(p1: Bytes_or_String, p2: Bytes_or_String) -> bool:
+def samefile(p1: bytes, p2: bytes) -> bool:
     """Safer equality for paths."""
     if p1 == p2:
         return True
@@ -610,7 +612,7 @@ def reflink(
                                   'link', (path, dest), traceback.format_exc())
 
 
-def unique_path(path: Bytes_or_String) -> Bytes_or_String:
+def unique_path(path: bytes) -> bytes:
     """Returns a version of ``path`` that does not exist on the
     filesystem. Specifically, if ``path` itself already exists, then
     something unique is appended to the path.
@@ -671,7 +673,7 @@ def sanitize_path(
     return os.path.join(*comps)
 
 
-def truncate_path(path: Bytes_or_String, length: int = MAX_FILENAME_LENGTH) -> bytes:
+def truncate_path(path: AnyStr, length: int = MAX_FILENAME_LENGTH) -> AnyStr:
     """Given a bytestring path or a Unicode path fragment, truncate the
     components to a legal length. In the last component, the extension
     is preserved.
@@ -693,8 +695,8 @@ def _legalize_stage(
         replacements: Optional[Sequence[Sequence[Pattern | str]]],
         length: int,
         extension: str,
-        fragment: Optional[str | bytes],
-) -> Tuple[bytes, bool]:
+        fragment: bool,
+) -> Tuple[Bytes_or_String, bool]:
     """Perform a single round of path legalization steps
     (sanitation/replacement, encoding from Unicode to bytes,
     extension-appending, and truncation). Return the path (Unicode if
@@ -723,8 +725,8 @@ def legalize_path(
         replacements: Optional[Sequence[Sequence[Pattern | str]]],
         length: int,
         extension: bytes,
-        fragment: Optional[AnyStr],
-) -> Tuple[bytes | bool]:
+        fragment: bool,
+) -> Tuple[Bytes_or_String | bool]:
     """Given a path-like Unicode string, produce a legal path. Return
     the path and a flag indicating whether some replacements had to be
     ignored (see below).
@@ -865,7 +867,10 @@ def convert_command_args(args: List[bytes]) -> List[str]:
 CommandOutput = namedtuple("CommandOutput", ("stdout", "stderr"))
 
 
-def command_output(cmd: List[bytes], shell: bool = False) -> CommandOutput:
+def command_output(
+        cmd: List[Bytes_or_String],
+        shell: bool = False,
+) -> CommandOutput:
     """Runs the command and returns its output after it has exited.
 
     Returns a CommandOutput. The attributes ``stdout`` and ``stderr`` contain
@@ -971,7 +976,7 @@ def interactive_open(targets: Sequence[str], command: str):
     return os.execlp(*args)
 
 
-def case_sensitive(path: AnyStr) -> bool:
+def case_sensitive(path: bytes) -> bool:
     """Check whether the filesystem at the given path is case sensitive.
 
     To work best, the path should point to a file or a directory. If the path
@@ -1032,7 +1037,7 @@ def raw_seconds_short(string: str) -> float:
     return float(minutes * 60 + seconds)
 
 
-def asciify_path(path: AnyStr, sep_replace: str) -> str:
+def asciify_path(path: str, sep_replace: str) -> str:
     """Decodes all unicode characters in a path into ASCII equivalents.
 
     Substitutions are provided by the unidecode module. Path separators in the
@@ -1070,7 +1075,7 @@ def par_map(transform: Callable, items: Iterable):
     pool.join()
 
 
-def lazy_property(func: Callable):
+def lazy_property(func: Callable) -> Callable:
     """A decorator that creates a lazily evaluated property. On first access,
     the property is assigned the return value of `func`. This first value is
     stored, so that future accesses do not have to evaluate `func` again.
