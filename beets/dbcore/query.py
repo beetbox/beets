@@ -169,7 +169,7 @@ class StringFieldQuery(FieldQuery):
     """
 
     @classmethod
-    def value_match(cls: Type['StringFieldQuery'], pattern: str, value: Any):
+    def value_match(cls, pattern: str, value: Any):
         """Determine whether the value matches the pattern. The value
         may have any type.
         """
@@ -177,7 +177,7 @@ class StringFieldQuery(FieldQuery):
 
     @classmethod
     def string_match(
-        cls: Type['StringFieldQuery'],
+        cls,
         pattern: str,
         value: str,
     ) -> bool:
