@@ -38,8 +38,6 @@ PARSE_QUERY_PART_REGEX = re.compile(
 )
 
 
-# TYPING ERROR
-# not sure what the query type should be
 def parse_query_part(
         part: str,
         query_classes: Dict = {},

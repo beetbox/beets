@@ -73,7 +73,7 @@ class Type:
         except ValueError:
             return self.null
 
-    def normalize(self, value: model_type) -> model_type:
+    def normalize(self, value: Union[None, int, float, bytes]) -> model_type:
         """Given a value that will be assigned into a field of this
         type, normalize the value to have the appropriate type. This
         base implementation only reinterprets `None`.
@@ -108,7 +108,6 @@ class Type:
         if isinstance(sql_value, str):
             return self.parse(sql_value)
         else:
-            # TYPING ERROR
             return self.normalize(sql_value)
 
     def to_sql(self, model_value: Any) -> Union[None, int, float, str, bytes]:
