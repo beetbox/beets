@@ -30,10 +30,10 @@ PATTERNS = [
   r'^(?P<artist>.+)[\-_](?P<title>.+)$',
   r'^(?P<track>\d+)[\s.\-_]+(?P<artist>.+)[\-_](?P<title>.+)$',
   r'^(?P<track>\d+)[\s.\-_]+(?P<title>.+)$',
-  r'^(?P<title>.+)$',
   r'^(?P<track>\d+)\s+(?P<title>.+)$',
   r'^(?P<title>.+) by (?P<artist>.+)$',
   r'^(?P<track>\d+).*$',
+  r'^(?P<title>.+)$',
 ]
 
 # Titles considered "empty" and in need of replacement.
