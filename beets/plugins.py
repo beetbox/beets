@@ -684,9 +684,8 @@ class MetadataSourcePlugin(metaclass=abc.ABCMeta):
         :rtype: str
         """
         artist_id = None
-        artist_names = []
-        joined = False
-        for artist in artists:
+        artist_string = ""
+        for idx, artist in enumerate(artists):
             if not artist_id:
                 artist_id = artist[id_key]
             name = artist[name_key]
@@ -695,17 +694,14 @@ class MetadataSourcePlugin(metaclass=abc.ABCMeta):
             # Move articles to the front.
             name = re.sub(r'^(.*?), (a|an|the)$', r'\2 \1', name, flags=re.I)
             # Use a join keyword if requested and available.
-            if join_key and artist.get(join_key, None):
-                name += " " + artist[join_key]
-                joined = True
-            artist_names.append(name)
-        # Concat using spaces only if join_key was passed and the join_key was
-        # ever found. Otherwise join comma-separated.
-        if join_key and joined is True:
-            artist = ' '.join(artist_names) or None
-        else:
-            artist = ', '.join(artist_names).replace(' ,', ',') or None
-        return artist, artist_id
+            if idx < (len(artists) - 1):  # Skip joining on last.
+                if join_key and artist.get(join_key, None):
+                    name += f" {artist[join_key]} "
+                else:
+                    name += ', '
+            artist_string += name
+
+        return artist_string, artist_id
 
     def _get_id(self, url_type, id_):
         """Parse an ID from its URL if necessary.
