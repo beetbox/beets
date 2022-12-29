@@ -28,6 +28,8 @@ import traceback
 import subprocess
 import platform
 import shlex
+from typing import AnyStr, List
+
 from beets.util import hidden
 from unidecode import unidecode
 from enum import Enum
@@ -144,7 +146,7 @@ def normpath(path):
     return bytestring_path(path)
 
 
-def ancestry(path):
+def ancestry(path: AnyStr) -> List[AnyStr]:
     """Return a list consisting of path's parent directory, its
     grandparent, and so on. For instance:
 
@@ -870,7 +872,7 @@ def command_output(cmd, shell=False):
     return CommandOutput(stdout, stderr)
 
 
-def max_filename_length(path, limit=MAX_FILENAME_LENGTH):
+def max_filename_length(path: AnyStr, limit=MAX_FILENAME_LENGTH) -> int:
     """Attempt to determine the maximum filename length for the
     filesystem containing `path`. If the value is greater than `limit`,
     then `limit` is used instead (to prevent errors when a filesystem
