@@ -685,6 +685,8 @@ class MetadataSourcePlugin(metaclass=abc.ABCMeta):
         """
         artist_id = None
         artist_string = ""
+        artists = list(artists)  # In case a generator was passed.
+        total = len(artists)
         for idx, artist in enumerate(artists):
             if not artist_id:
                 artist_id = artist[id_key]
@@ -694,7 +696,7 @@ class MetadataSourcePlugin(metaclass=abc.ABCMeta):
             # Move articles to the front.
             name = re.sub(r'^(.*?), (a|an|the)$', r'\2 \1', name, flags=re.I)
             # Use a join keyword if requested and available.
-            if idx < (len(artists) - 1):  # Skip joining on last.
+            if idx < (total - 1):  # Skip joining on last.
                 if join_key and artist.get(join_key, None):
                     name += f" {artist[join_key]} "
                 else:
