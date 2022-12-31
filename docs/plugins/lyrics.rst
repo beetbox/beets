@@ -2,10 +2,9 @@ Lyrics Plugin
 =============
 
 The ``lyrics`` plugin fetches and stores song lyrics from databases on the Web.
-Namely, the current version of the plugin uses `Musixmatch`_, `Genius.com`_,
-`Tekstowo.pl`_, and, optionally, the Google custom search API.
+Namely, the current version of the plugin uses `Genius.com`_, `Tekstowo.pl`_,
+and, optionally, the Google custom search API.
 
-.. _Musixmatch: https://www.musixmatch.com/
 .. _Genius.com: https://genius.com/
 .. _Tekstowo.pl: https://www.tekstowo.pl/
 
@@ -59,9 +58,9 @@ configuration file. The available options are:
   sources known to be scrapeable.
 - **sources**: List of sources to search for lyrics. An asterisk ``*`` expands
   to all available sources.
-  Default: ``google musixmatch genius tekstowo``, i.e., all the
-  available sources. The ``google`` source will be automatically
-  deactivated if no ``google_API_key`` is setup.
+  Default: ``google genius tekstowo``, i.e., all the available sources. The
+  ``google`` source will be automatically deactivated if no ``google_API_key``
+  is setup.
   The ``google``, ``genius``, and ``tekstowo`` sources will only be enabled if
   BeautifulSoup is installed.
 
@@ -139,8 +138,7 @@ configuration option to your key.
 Then add ``google`` to the list of sources in your configuration (or use
 default list, which includes it as long as you have an API key).
 If you use default ``google_engine_ID``, we recommend limiting the sources to
-``musixmatch google`` as the other sources are already included in the Google
-results.
+``google`` as the other sources are already included in the Google results.
 
 .. _register for a Google API key: https://console.developers.google.com/
 
