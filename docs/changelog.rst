@@ -135,11 +135,14 @@ For packagers:
   :bug:`4167`
 * The minimum required version of :pypi:`mediafile` is now 0.9.0.
 
-Other new things:
+Other changes:
 
 * :doc:`/plugins/limit`: Limit query results to head or tail (``lslimit``
   command only)
 * :doc:`/plugins/fish`: Add ``--output`` option.
+* :doc:`/plugins/lyrics`: Remove Musixmatch from default enabled sources as
+  they are currently blocking requests from the beets user agent.
+  :bug:`4585`
 
 1.6.0 (November 27, 2021)
 -------------------------
