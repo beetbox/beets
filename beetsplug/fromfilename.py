@@ -21,7 +21,6 @@ from beets.util import displayable_path
 import os
 import re
 
-
 # Filename field extraction patterns.
 PATTERNS = [
   # Useful patterns.
@@ -29,11 +28,11 @@ PATTERNS = [
   r'^(?P<track>\d+)[\s.\-_]+(?P<artist>.+)[\-_](?P<title>.+)[\-_](?P<tag>.*)$',
   r'^(?P<artist>.+)[\-_](?P<title>.+)$',
   r'^(?P<track>\d+)[\s.\-_]+(?P<artist>.+)[\-_](?P<title>.+)$',
-  r'^(?P<title>.+)$',
   r'^(?P<track>\d+)[\s.\-_]+(?P<title>.+)$',
   r'^(?P<track>\d+)\s+(?P<title>.+)$',
   r'^(?P<title>.+) by (?P<artist>.+)$',
   r'^(?P<track>\d+).*$',
+  r'^(?P<title>.+)$',
 ]
 
 # Titles considered "empty" and in need of replacement.
@@ -85,7 +84,7 @@ def bad_title(title):
     return False
 
 
-def apply_matches(d):
+def apply_matches(d, log):
     """Given a mapping from items to field dicts, apply the fields to
     the objects.
     """
@@ -113,6 +112,7 @@ def apply_matches(d):
         for item in d:
             if not item.artist:
                 item.artist = artist
+                log.info('Artist replaced with: {}'.format(item.artist))
 
     # No artist field: remaining field is the title.
     else:
@@ -122,8 +122,11 @@ def apply_matches(d):
     for item in d:
         if bad_title(item.title):
             item.title = str(d[item][title_field])
+            log.info('Title replaced with: {}'.format(item.title))
+
         if 'track' in d[item] and item.track == 0:
             item.track = int(d[item]['track'])
+            log.info('Track replaced with: {}'.format(item.track))
 
 
 # Plugin structure and hook into import process.
@@ -131,32 +134,31 @@ def apply_matches(d):
 class FromFilenamePlugin(plugins.BeetsPlugin):
     def __init__(self):
         super().__init__()
-        self.register_listener('import_task_start', filename_task)
+        self.register_listener('import_task_start', self.filename_task)
 
+    def filename_task(self, task, session):
+        """Examine each item in the task to see if we can extract a title
+        from the filename. Try to match all filenames to a number of
+        regexps, starting with the most complex patterns and successively
+        trying less complex patterns. As soon as all filenames match the
+        same regex we can make an educated guess of which part of the
+        regex that contains the title.
+        """
+        items = task.items if task.is_album else [task.item]
 
-def filename_task(task, session):
-    """Examine each item in the task to see if we can extract a title
-    from the filename. Try to match all filenames to a number of
-    regexps, starting with the most complex patterns and successively
-    trying less complex patterns. As soon as all filenames match the
-    same regex we can make an educated guess of which part of the
-    regex that contains the title.
-    """
-    items = task.items if task.is_album else [task.item]
+        # Look for suspicious (empty or meaningless) titles.
+        missing_titles = sum(bad_title(i.title) for i in items)
 
-    # Look for suspicious (empty or meaningless) titles.
-    missing_titles = sum(bad_title(i.title) for i in items)
+        if missing_titles:
+            # Get the base filenames (no path or extension).
+            names = {}
+            for item in items:
+                path = displayable_path(item.path)
+                name, _ = os.path.splitext(os.path.basename(path))
+                names[item] = name
 
-    if missing_titles:
-        # Get the base filenames (no path or extension).
-        names = {}
-        for item in items:
-            path = displayable_path(item.path)
-            name, _ = os.path.splitext(os.path.basename(path))
-            names[item] = name
-
-        # Look for useful information in the filenames.
-        for pattern in PATTERNS:
-            d = all_matches(names, pattern)
-            if d:
-                apply_matches(d)
+            # Look for useful information in the filenames.
+            for pattern in PATTERNS:
+                d = all_matches(names, pattern)
+                if d:
+                    apply_matches(d, self._log)
