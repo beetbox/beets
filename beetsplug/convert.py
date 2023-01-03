@@ -41,7 +41,7 @@ ALIASES = {
     'vorbis': 'ogg',
 }
 
-LOSSLESS_FORMATS = ['ape', 'flac', 'alac', 'wav', 'aiff']
+LOSSLESS_FORMATS = ['ape', 'flac', 'alac', 'wav', 'wave', 'aiff']
 
 
 def replace_ext(path, ext):
