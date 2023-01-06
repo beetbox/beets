@@ -302,7 +302,8 @@ class DiscogsPlugin(BeetsPlugin):
             return None
 
         artist, artist_id = MetadataSourcePlugin.get_artist(
-            [a.data for a in result.artists]
+            [a.data for a in result.artists],
+            join_key='join'
         )
         album = re.sub(r' +', ' ', result.title)
         album_id = result.data['id']
@@ -566,7 +567,8 @@ class DiscogsPlugin(BeetsPlugin):
         track_id = None
         medium, medium_index, _ = self.get_track_index(track['position'])
         artist, artist_id = MetadataSourcePlugin.get_artist(
-            track.get('artists', [])
+            track.get('artists', []),
+            join_key='join'
         )
         length = self.get_track_length(track['duration'])
         return TrackInfo(title=title, track_id=track_id, artist=artist,
