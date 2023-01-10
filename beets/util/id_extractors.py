@@ -33,6 +33,11 @@ beatport_id_regex = {
     'match_group': 2,
 }
 
+# A note on Bandcamp: There is no such thing as a Bandcamp album or artist ID,
+# the URL can be used as the identifier. The Bandcamp metadata source plugin
+# works that way - https://github.com/unrblt/beets-bandcamp. Bandcamp album
+# URLs usually look like: https://nameofartist.bandcamp.com/album/nameofalbum
+
 
 def extract_discogs_id_regex(album_id):
     """Returns the Discogs_id or None."""
