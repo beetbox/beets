@@ -47,14 +47,15 @@ def extract_discogs_id_regex(album_id):
     # - plain integer, optionally wrapped in brackets and prefixed by an
     #   'r', as this is how discogs displays the release ID on its webpage.
     # - legacy url format: discogs.com/<name of release>/release/<id>
+    # - legacy url short format: discogs.com/release/<id>
     # - current url format: discogs.com/release/<id>-<name of release>
     # See #291, #4080 and #4085 for the discussions leading up to these
     # patterns.
-    # Regex has been tested here https://regex101.com/r/wyLdB4/2
+    # Regex has been tested here https://regex101.com/r/TOu7kw/1
 
     for pattern in [
             r'^\[?r?(?P<id>\d+)\]?$',
-            r'discogs\.com/release/(?P<id>\d+)-',
+            r'discogs\.com/release/(?P<id>\d+)-?',
             r'discogs\.com/[^/]+/release/(?P<id>\d+)',
     ]:
         match = re.search(pattern, album_id)
