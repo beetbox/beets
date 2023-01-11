@@ -705,22 +705,27 @@ class MetadataSourcePlugin(metaclass=abc.ABCMeta):
 
         return artist_string, artist_id
 
-    def _get_id(self, url_type, id_):
+    @staticmethod
+    def _get_id(url_type, id_, id_regex):
         """Parse an ID from its URL if necessary.
 
         :param url_type: Type of URL. Either 'album' or 'track'.
         :type url_type: str
         :param id_: Album/track ID or URL.
         :type id_: str
+        :param id_regex: A dictionary containing a regular expression
+            extracting an ID from an URL (if it's not an ID already) in
+            'pattern' and the number of the match group in 'match_group'.
+        :type id_regex: dict
         :return: Album/track ID.
         :rtype: str
         """
-        self._log.debug(
-            "Searching {} for {} '{}'", self.data_source, url_type, id_
+        log.debug(
+            "Extracting {} ID from '{}'", url_type, id_
         )
-        match = re.search(self.id_regex['pattern'].format(url_type), str(id_))
+        match = re.search(id_regex['pattern'].format(url_type), str(id_))
         if match:
-            id_ = match.group(self.id_regex['match_group'])
+            id_ = match.group(id_regex['match_group'])
             if id_:
                 return id_
         return None
