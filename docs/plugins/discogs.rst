@@ -3,8 +3,7 @@ Discogs Plugin
 
 The ``discogs`` plugin extends the autotagger's search capabilities to
 include matches from the `Discogs`_ database when importing albums.
-Note that matching of singleton tracks using the ``discogs`` plugin
-is not currently supported.
+(The plugin does not yet support matching singleton tracks.)
 
 .. _Discogs: https://discogs.com
 
@@ -101,9 +100,8 @@ Here are two things you can try:
 * Make sure that your system clock is accurate. The Discogs servers can reject
   your request if your clock is too out of sync.
 
-Furthermore, the plugin itself is limited to matching albums, so no
-Discogs matches will be reported when importing singletons using
-``-s``. One possible workaround is to use the ``--group-albums``
-option.
+The plugin can only match albums, so no Discogs matches will be
+reported when importing singletons using ``-s``. One possible
+workaround is to use the ``--group-albums`` option.
 
 .. _python3-discogs-client: https://github.com/joalla/discogs_client
