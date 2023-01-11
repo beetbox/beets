@@ -180,6 +180,55 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.debug('Connection error in album search', exc_info=True)
             return []
 
+    def item_candidates(self, item, artist, title):
+        """Returns a list of TrackInfo objects for Search API results
+        matching ``title`` and ``artist``.
+        :param item: Singleton item to be matched.
+        :type item: beets.library.Item
+        :param artist: The artist of the track to be matched.
+        :type artist: str
+        :param title: The title of the track to be matched.
+        :type title: str
+        :return: Candidate TrackInfo objects.
+        :rtype: list[beets.autotag.hooks.TrackInfo]
+        """
+        if not self.discogs_client:
+            return
+
+        query = f'{artist} {title}'
+        try:
+            albums = self.get_albums(query)
+        except DiscogsAPIError as e:
+            self._log.debug('API Error: {0} (query: {1})', e, query)
+            if e.status_code == 401:
+                self.reset_auth()
+                return self.item_candidates(item, artist, title)
+            else:
+                return []
+        except CONNECTION_ERRORS:
+            self._log.debug('Connection error in track search', exc_info=True)
+        candidates = []
+        for album_cur in albums:
+            self._log.debug(u'searching within album {0}', album_cur.album)
+            track_list = self.get_tracks_from_album(album_cur)
+            candidates += track_list
+        return candidates
+
+    def get_tracks_from_album(self, album_info):
+        """Return a list of tracks in the release
+        """
+        if not album_info: 
+            return []
+
+        result = []
+        for track_info in album_info.tracks:
+            # attach artist info if not provided
+            if not track_info['artist']:
+                track_info['artist'] = album_info.artist
+                track_info['artist_id'] = album_info.artist_id
+            result.append(track_info)
+        return result
+
     @staticmethod
     def extract_release_id_regex(album_id):
         """Returns the Discogs_id or None."""
