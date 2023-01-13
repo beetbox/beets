@@ -49,9 +49,17 @@ New features:
   :bug:`4438`
 * Add a new ``import.ignored_alias_types`` config option to allow for
   specific alias types to be skipped over when importing items/albums.
+* :doc:`/plugins/fromfilename`:  Add debug log messages that inform when the
+  plugin replaced bad (missing) artist, title or tracknumber metadata.
+  :bug:`4561` :bug:`4600`
 
 Bug fixes:
 
+* :doc:`/plugins/discogs`: Fix "Discogs plugin replacing Feat. or Ft. with
+  a comma" by fixing an oversight that removed a functionality from the code
+  base when the MetadataSourcePlugin abstract class was introduced in PR's
+  #3335 and #3371.
+  :bug:`4401`
 * :doc:`/plugins/convert`: Set default ``max_bitrate`` value to ``None`` to 
   avoid transcoding when this parameter is not set. :bug:`4472`
 * :doc:`/plugins/replaygain`: Avoid a crash when errors occur in the analysis
@@ -122,6 +130,9 @@ Bug fixes:
 * :doc:`plugins/lyrics`: Fixed issue with Tekstowo backend not actually checking
   if the found song matches.
   :bug:`4406`
+* :doc:`/plugins/fromfilename`: Fix failed detection of <track> <title>
+  filename patterns.
+  :bug:`4561` :bug:`4600`
 
 For packagers:
 
@@ -129,11 +140,14 @@ For packagers:
   :bug:`4167`
 * The minimum required version of :pypi:`mediafile` is now 0.9.0.
 
-Other new things:
+Other changes:
 
 * :doc:`/plugins/limit`: Limit query results to head or tail (``lslimit``
   command only)
 * :doc:`/plugins/fish`: Add ``--output`` option.
+* :doc:`/plugins/lyrics`: Remove Musixmatch from default enabled sources as
+  they are currently blocking requests from the beets user agent.
+  :bug:`4585`
 
 1.6.0 (November 27, 2021)
 -------------------------

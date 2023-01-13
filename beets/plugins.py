@@ -655,7 +655,7 @@ class MetadataSourcePlugin(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @staticmethod
-    def get_artist(artists, id_key='id', name_key='name'):
+    def get_artist(artists, id_key='id', name_key='name', join_key=None):
         """Returns an artist string (all artists) and an artist_id (the main
         artist) for a list of artist object dicts.
 
@@ -663,6 +663,8 @@ class MetadataSourcePlugin(metaclass=abc.ABCMeta):
         and 'the') to the front and strips trailing disambiguation numbers. It
         returns a tuple containing the comma-separated string of all
         normalized artists and the ``id`` of the main/first artist.
+        Alternatively a keyword can be used to combine artists together into a
+        single string by passing the join_key argument.
 
         :param artists: Iterable of artist dicts or lists returned by API.
         :type artists: list[dict] or list[list]
@@ -673,12 +675,19 @@ class MetadataSourcePlugin(metaclass=abc.ABCMeta):
             to concatenate for the artist string (containing all artists).
             Defaults to 'name'.
         :type name_key: str or int
+        :param join_key: Key or index corresponding to a field containing a
+            keyword to use for combining artists into a single string, for
+            example "Feat.", "Vs.", "And" or similar. The default is None
+            which keeps the default behaviour (comma-separated).
+        :type join_key: str or int
         :return: Normalized artist string.
         :rtype: str
         """
         artist_id = None
-        artist_names = []
-        for artist in artists:
+        artist_string = ""
+        artists = list(artists)  # In case a generator was passed.
+        total = len(artists)
+        for idx, artist in enumerate(artists):
             if not artist_id:
                 artist_id = artist[id_key]
             name = artist[name_key]
@@ -686,9 +695,15 @@ class MetadataSourcePlugin(metaclass=abc.ABCMeta):
             name = re.sub(r' \(\d+\)$', '', name)
             # Move articles to the front.
             name = re.sub(r'^(.*?), (a|an|the)$', r'\2 \1', name, flags=re.I)
-            artist_names.append(name)
-        artist = ', '.join(artist_names).replace(' ,', ',') or None
-        return artist, artist_id
+            # Use a join keyword if requested and available.
+            if idx < (total - 1):  # Skip joining on last.
+                if join_key and artist.get(join_key, None):
+                    name += f" {artist[join_key]} "
+                else:
+                    name += ', '
+            artist_string += name
+
+        return artist_string, artist_id
 
     def _get_id(self, url_type, id_):
         """Parse an ID from its URL if necessary.

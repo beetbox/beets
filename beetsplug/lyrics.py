@@ -743,7 +743,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
             'fallback': None,
             'force': False,
             'local': False,
-            'sources': self.SOURCES,
+            # Musixmatch is disabled by default as they are currently blocking
+            # requests with the beets user agent.
+            'sources': [s for s in self.SOURCES if s != "musixmatch"],
             'dist_thresh': 0.1,
         })
         self.config['bing_client_secret'].redact = True
