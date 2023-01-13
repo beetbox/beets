@@ -195,6 +195,10 @@ class DiscogsPlugin(BeetsPlugin):
         if not self.discogs_client:
             return
 
+        if not artist and not title:
+            self._log.debug('Skipping Discogs query. File missing artist and '
+                            'title tags.')
+
         query = f'{artist} {title}'
         try:
             albums = self.get_albums(query)
@@ -212,12 +216,14 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.debug(u'searching within album {0}', album_cur.album)
             track_list = self.get_tracks_from_album(album_cur)
             candidates += track_list
+        for candidate in candidates:
+            candidate.data_source = 'Discogs'
         return candidates
 
     def get_tracks_from_album(self, album_info):
         """Return a list of tracks in the release
         """
-        if not album_info: 
+        if not album_info:
             return []
 
         result = []
