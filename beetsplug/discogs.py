@@ -218,7 +218,8 @@ class DiscogsPlugin(BeetsPlugin):
             candidates += track_list
         for candidate in candidates:
             candidate.data_source = 'Discogs'
-        return candidates
+        # first 10 results, don't overwhelm with options
+        return candidates[:10] 
 
     def get_tracks_from_album(self, album_info):
         """Return a list of tracks in the release
