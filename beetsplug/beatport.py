@@ -296,7 +296,7 @@ class Beatport4Client:
         """
         try:
             response = self._get(f'/catalog/releases/{beatport_id}/tracks/',
-                                 perPage=100)
+                                 per_page=100)
         except BeatportAPIError as e:
             self._log.debug((str(e)))
             return []
