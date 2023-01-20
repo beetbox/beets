@@ -34,6 +34,11 @@ import langdetect
 import requests
 from bs4 import BeautifulSoup
 from unidecode import unidecode
+import warnings
+import urllib
+import tidalapi
+import datetime
+import confuse
 
 import beets
 from beets import plugins, ui
@@ -444,83 +449,412 @@ class MusiXmatch(Backend):
         # sometimes there are non-existent lyrics with some content
         if "Lyrics | Musixmatch" in lyrics:
             return None
-        return lyrics, url
+        return lyrics
 
 
-class Html:
-    collapse_space = partial(re.compile(r"(^| ) +", re.M).sub, r"\1")
-    expand_br = partial(re.compile(r"\s*<br[^>]*>\s*", re.I).sub, "\n")
-    #: two newlines between paragraphs on the same line (musica, letras.mus.br)
-    merge_blocks = partial(re.compile(r"(?<!>)</p><p[^>]*>").sub, "\n\n")
-    #: a single new line between paragraphs on separate lines
-    #: (paroles.net, sweetslyrics.com, lacoccinelle.net)
-    merge_lines = partial(re.compile(r"</p>\s+<p[^>]*>(?!___)").sub, "\n")
-    #: remove empty divs (lacoccinelle.net)
-    remove_empty_tags = partial(
-        re.compile(r"(<(div|span)[^>]*>\s*</\2>)").sub, ""
-    )
-    #: remove Google Ads tags (musica.com)
-    remove_aside = partial(re.compile("<aside .+?</aside>").sub, "")
-    #: remove adslot-Content_1 div from the lyrics text (paroles.net)
-    remove_adslot = partial(
-        re.compile(r"\n</div>[^\n]+-- Content_\d+ --.*?\n<div>", re.S).sub,
-        "\n",
-    )
-    #: remove text formatting (azlyrics.com, lacocinelle.net)
-    remove_formatting = partial(
-        re.compile(r" *</?(i|em|pre|strong)[^>]*>").sub, ""
-    )
+class Genius(Backend):
+    """Fetch lyrics from Genius via genius-api.
 
-    @classmethod
-    def normalize_space(cls, text: str) -> str:
-        text = unescape(text).replace("\r", "").replace("\xa0", " ")
-        return cls.collapse_space(cls.expand_br(text))
+    Simply adapted from
+    bigishdata.com/2016/09/27/getting-song-lyrics-from-geniuss-api-scraping/
+    """
 
-    @classmethod
-    def remove_ads(cls, text: str) -> str:
-        return cls.remove_adslot(cls.remove_aside(text))
+    REQUIRES_BS = True
 
-    @classmethod
-    def merge_paragraphs(cls, text: str) -> str:
-        return cls.merge_blocks(cls.merge_lines(cls.remove_empty_tags(text)))
+    base_url = "https://api.genius.com"
 
+    def __init__(self, config, log):
+        super().__init__(config, log)
+        self.api_key = config['genius_api_key'].as_str()
+        self.headers = {
+            'Authorization': "Bearer %s" % self.api_key,
+            'User-Agent': USER_AGENT,
+        }
 
-class SoupMixin:
-    @classmethod
-    def pre_process_html(cls, html: str) -> str:
-        """Pre-process the HTML content before scraping."""
-        return Html.normalize_space(html)
+    def fetch(self, artist, title):
+        """Fetch lyrics from genius.com
 
-    @classmethod
-    def get_soup(cls, html: str) -> BeautifulSoup:
-        return BeautifulSoup(cls.pre_process_html(html), "html.parser")
+        Because genius doesn't allow accesssing lyrics via the api,
+        we first query the api for a url matching our artist & title,
+        then attempt to scrape that url for the lyrics.
+        """
+        json = self._search(artist, title)
+        if not json:
+            self._log.debug('Genius API request returned invalid JSON')
+            return None
 
+        # find a matching artist in the json
+        for hit in json["response"]["hits"]:
+            hit_artist = hit["result"]["primary_artist"]["name"]
 
-class SearchResult(NamedTuple):
-    artist: str
-    title: str
-    url: str
+            if slug(hit_artist) == slug(artist):
+                html = self.fetch_url(hit["result"]["url"])
+                if not html:
+                    return None
+                return self._scrape_lyrics_from_html(html)
 
-    @property
-    def source(self) -> str:
-        return urlparse(self.url).netloc
+        self._log.debug('Genius failed to find a matching artist for \'{0}\'',
+                        artist)
+        return None
 
+    def _search(self, artist, title):
+        """Searches the genius api for a given artist and title
 
-class SearchBackend(SoupMixin, Backend):
-    @cached_property
-    def dist_thresh(self) -> float:
-        return self.config["dist_thresh"].get(float)
+        https://docs.genius.com/#search-h2
 
-    def check_match(
-        self, target_artist: str, target_title: str, result: SearchResult
-    ) -> bool:
-        """Check if the given search result is a 'good enough' match."""
-        max_dist = max(
-            string_dist(target_artist, result.artist),
-            string_dist(target_title, result.title),
+        :returns: json response
+        """
+        search_url = self.base_url + "/search"
+        data = {'q': title + " " + artist.lower()}
+        try:
+            response = requests.get(
+                search_url, params=data, headers=self.headers)
+        except requests.RequestException as exc:
+            self._log.debug('Genius API request failed: {0}', exc)
+            return None
+
+        try:
+            return response.json()
+        except ValueError:
+            return None
+
+    def replace_br(self, lyrics_div):
+        for br in lyrics_div.find_all("br"):
+            br.replace_with("\n")
+
+    def _scrape_lyrics_from_html(self, html):
+        """Scrape lyrics from a given genius.com html"""
+
+        soup = try_parse_html(html)
+        if not soup:
+            return
+
+        # Remove script tags that they put in the middle of the lyrics.
+        [h.extract() for h in soup('script')]
+
+        # Most of the time, the page contains a div with class="lyrics" where
+        # all of the lyrics can be found already correctly formatted
+        # Sometimes, though, it packages the lyrics into separate divs, most
+        # likely for easier ad placement
+
+        lyrics_div = soup.find("div", {"data-lyrics-container": True})
+
+        if lyrics_div:
+            self.replace_br(lyrics_div)
+
+        if not lyrics_div:
+            self._log.debug('Received unusual song page html')
+            verse_div = soup.find("div",
+                                  class_=re.compile("Lyrics__Container"))
+            if not verse_div:
+                if soup.find("div",
+                             class_=re.compile("LyricsPlaceholder__Message"),
+                             string="This song is an instrumental"):
+                    self._log.debug('Detected instrumental')
+                    return "[Instrumental]"
+                else:
+                    self._log.debug("Couldn't scrape page using known layouts")
+                    return None
+
+            lyrics_div = verse_div.parent
+            self.replace_br(lyrics_div)
+
+            ads = lyrics_div.find_all("div",
+                                      class_=re.compile("InreadAd__Container"))
+            for ad in ads:
+                ad.replace_with("\n")
+
+            footers = lyrics_div.find_all("div",
+                                          class_=re.compile("Lyrics__Footer"))
+            for footer in footers:
+                footer.replace_with("")
+        return lyrics_div.get_text()
+
+class Tidal(Backend):
+    REQUIRES_BS = False
+    
+    def __init__(self, config, log):
+        super().__init__(config, log)
+        self._log = log
+        
+        sessionfile = self.config["tidal_session_file"].get(
+            confuse.Filename(in_app_dir=True)
         )
 
-        if (max_dist := round(max_dist, 2)) <= self.dist_thresh:
+        self.session = self.load_session(sessionfile)
+        
+        if not self.session:
+            self._log.debug("JSON file corrupted or does not exist, performing simple OAuth login.")
+            self.session = tidalapi.Session()
+            self.session.login_oauth_simple()
+            self.save_session(sessionfile)
+        
+    def fetch(self, artist, title):
+        self._log.debug(f"Fetching lyrics for {title} from {artist}!")
+        
+        results = self.session.search(f"{artist} {title}", models = [tidalapi.media.Track], limit = 5)
+        top_hit = results["top_hit"]
+        self._log.debug(f"Top Hit result for query `{artist} {title}`: {top_hit.name} from {top_hit.artist.name} with ID {top_hit.id}")
+        
+        # This could be considered paranoid, but there is a chance that the Tidal top hit isn't what we're looking for.
+        if top_hit.artist.name.lower() != artist.lower():
+            self._log.warning(f"Tidal lyrics query returned artist {top_hit.artist.name}, but the file is under artist {artist}")
+        
+        elif top_hit.name.lower() != title.lower():
+            self._log.warning(f"Tidal lyrics query returned track {top_hit.name}, but the file is {title}")
+            
+        lyrics = top_hit.lyrics()
+        
+        if lyrics.subtitles:
+            return lyrics.subtitles
+        else:
+            self._log.warning(f"Timed lyrics not available... returning regular lyrics.")
+            return lyrics.text
+        
+        
+    def load_session(self, sfile):
+        self._log.debug(f"Loading tidal session from {sfile}")
+        s = tidalapi.Session()
+        
+        try:
+            with open(sfile, "r") as file:
+                data = json.load(file)
+                if s.load_oauth_session(data["token_type"], data["access_token"], data["refresh_token"], datetime.datetime.fromtimestamp(data["expiry_time"])):
+                    return s
+                else:
+                    return None
+        except FileNotFoundError:
+            return None
+            
+    def save_session(self, sfile):
+        self._log.debug(f"Saving tidal session to {sfile}")
+        with open(sfile, "w") as file:
+            json.dump({
+            "token_type": self.session.token_type,
+            "access_token": self.session.access_token,
+            "refresh_token": self.session.refresh_token,
+            "expiry_time": self.session.expiry_time.timestamp()}, file, indent = 2)
+        
+class Tekstowo(Backend):
+    # Fetch lyrics from Tekstowo.pl.
+    REQUIRES_BS = True
+
+    BASE_URL = 'http://www.tekstowo.pl'
+    URL_PATTERN = BASE_URL + '/wyszukaj.html?search-title=%s&search-artist=%s'
+
+    def fetch(self, artist, title):
+        url = self.build_url(title, artist)
+        search_results = self.fetch_url(url)
+        if not search_results:
+            return None
+
+        song_page_url = self.parse_search_results(search_results)
+        if not song_page_url:
+            return None
+
+        song_page_html = self.fetch_url(song_page_url)
+        if not song_page_html:
+            return None
+
+        return self.extract_lyrics(song_page_html, artist, title)
+
+    def parse_search_results(self, html):
+        html = _scrape_strip_cruft(html)
+        html = _scrape_merge_paragraphs(html)
+
+        soup = try_parse_html(html)
+        if not soup:
+            return None
+
+        content_div = soup.find("div", class_="content")
+        if not content_div:
+            return None
+
+        card_div = content_div.find("div", class_="card")
+        if not card_div:
+            return None
+
+        song_rows = card_div.find_all("div", class_="box-przeboje")
+        if not song_rows:
+            return None
+
+        song_row = song_rows[0]
+        if not song_row:
+            return None
+
+        link = song_row.find('a')
+        if not link:
+            return None
+
+        return self.BASE_URL + link.get('href')
+
+    def extract_lyrics(self, html, artist, title):
+        html = _scrape_strip_cruft(html)
+        html = _scrape_merge_paragraphs(html)
+
+        soup = try_parse_html(html)
+        if not soup:
+            return None
+
+        info_div = soup.find("div", class_="col-auto")
+        if not info_div:
+            return None
+
+        info_elements = info_div.find_all("a")
+        if not info_elements:
+            return None
+
+        html_title = info_elements[-1].get_text()
+        html_artist = info_elements[-2].get_text()
+
+        title_dist = string_dist(html_title, title)
+        artist_dist = string_dist(html_artist, artist)
+
+        thresh = self.config['dist_thresh'].get(float)
+        if title_dist > thresh or artist_dist > thresh:
+            return None
+
+        lyrics_div = soup.select("div.song-text > div.inner-text")
+        if not lyrics_div:
+            return None
+
+        return lyrics_div[0].get_text()
+
+
+def remove_credits(text):
+    """Remove first/last line of text if it contains the word 'lyrics'
+    eg 'Lyrics by songsdatabase.com'
+    """
+    textlines = text.split('\n')
+    credits = None
+    for i in (0, -1):
+        if textlines and 'lyrics' in textlines[i].lower():
+            credits = textlines.pop(i)
+    if credits:
+        text = '\n'.join(textlines)
+    return text
+
+
+def _scrape_strip_cruft(html, plain_text_out=False):
+    """Clean up HTML
+    """
+    html = unescape(html)
+
+    html = html.replace('\r', '\n')  # Normalize EOL.
+    html = re.sub(r' +', ' ', html)  # Whitespaces collapse.
+    html = BREAK_RE.sub('\n', html)  # <br> eats up surrounding '\n'.
+    html = re.sub(r'(?s)<(script).*?</\1>', '', html)  # Strip script tags.
+    html = re.sub('\u2005', " ", html)  # replace unicode with regular space
+
+    if plain_text_out:  # Strip remaining HTML tags
+        html = COMMENT_RE.sub('', html)
+        html = TAG_RE.sub('', html)
+
+    html = '\n'.join([x.strip() for x in html.strip().split('\n')])
+    html = re.sub(r'\n{3,}', r'\n\n', html)
+    return html
+
+
+def _scrape_merge_paragraphs(html):
+    html = re.sub(r'</p>\s*<p(\s*[^>]*)>', '\n', html)
+    return re.sub(r'<div .*>\s*</div>', '\n', html)
+
+
+def scrape_lyrics_from_html(html):
+    """Scrape lyrics from a URL. If no lyrics can be found, return None
+    instead.
+    """
+    def is_text_notcode(text):
+        length = len(text)
+        return (length > 20 and
+                text.count(' ') > length / 25 and
+                (text.find('{') == -1 or text.find(';') == -1))
+    html = _scrape_strip_cruft(html)
+    html = _scrape_merge_paragraphs(html)
+
+    # extract all long text blocks that are not code
+    soup = try_parse_html(html,
+                          parse_only=SoupStrainer(string=is_text_notcode))
+    if not soup:
+        return None
+
+    # Get the longest text element (if any).
+    strings = sorted(soup.stripped_strings, key=len, reverse=True)
+    if strings:
+        return strings[0]
+    else:
+        return None
+
+
+class Google(Backend):
+    """Fetch lyrics from Google search results."""
+
+    REQUIRES_BS = True
+
+    def __init__(self, config, log):
+        super().__init__(config, log)
+        self.api_key = config['google_API_key'].as_str()
+        self.engine_id = config['google_engine_ID'].as_str()
+
+    def is_lyrics(self, text, artist=None):
+        """Determine whether the text seems to be valid lyrics.
+        """
+        if not text:
+            return False
+        bad_triggers_occ = []
+        nb_lines = text.count('\n')
+        if nb_lines <= 1:
+            self._log.debug("Ignoring too short lyrics '{0}'", text)
+            return False
+        elif nb_lines < 5:
+            bad_triggers_occ.append('too_short')
+        else:
+            # Lyrics look legit, remove credits to avoid being penalized
+            # further down
+            text = remove_credits(text)
+
+        bad_triggers = ['lyrics', 'copyright', 'property', 'links']
+        if artist:
+            bad_triggers += [artist]
+
+        for item in bad_triggers:
+            bad_triggers_occ += [item] * len(re.findall(r'\W%s\W' % item,
+                                                        text, re.I))
+
+        if bad_triggers_occ:
+            self._log.debug('Bad triggers detected: {0}', bad_triggers_occ)
+        return len(bad_triggers_occ) < 2
+
+    def slugify(self, text):
+        """Normalize a string and remove non-alphanumeric characters.
+        """
+        text = re.sub(r"[-'_\s]", '_', text)
+        text = re.sub(r"_+", '_', text).strip('_')
+        pat = r"([^,\(]*)\((.*?)\)"  # Remove content within parentheses
+        text = re.sub(pat, r'\g<1>', text).strip()
+        try:
+            text = unicodedata.normalize('NFKD', text).encode('ascii',
+                                                              'ignore')
+            text = str(re.sub(r'[-\s]+', ' ', text.decode('utf-8')))
+        except UnicodeDecodeError:
+            self._log.exception("Failing to normalize '{0}'", text)
+        return text
+
+    BY_TRANS = ['by', 'par', 'de', 'von']
+    LYRICS_TRANS = ['lyrics', 'paroles', 'letras', 'liedtexte']
+
+    def is_page_candidate(self, url_link, url_title, title, artist):
+        """Return True if the URL title makes it a good candidate to be a
+        page that contains lyrics of title by artist.
+        """
+        title = self.slugify(title.lower())
+        artist = self.slugify(artist.lower())
+        sitename = re.search("//([^/]+)/.*",
+                             self.slugify(url_link.lower())).group(1)
+        url_title = self.slugify(url_title.lower())
+
+        # Check if URL title contains song title (exact match)
+        if url_title.find(title) != -1:
             return True
 
         if math.isclose(max_dist, self.dist_thresh, abs_tol=0.4):
@@ -597,172 +931,14 @@ class Genius(SearchBackend):
         return None
 
 
-class Tekstowo(SearchBackend):
-    """Fetch lyrics from Tekstowo.pl."""
-
-    BASE_URL = "https://www.tekstowo.pl"
-    SEARCH_URL = BASE_URL + "/szukaj,{}.html"
-
-    def build_url(self, artist, title):
-        artistitle = f"{artist.title()} {title.title()}"
-
-        return self.SEARCH_URL.format(quote_plus(unidecode(artistitle)))
-
-    def search(self, artist: str, title: str) -> Iterable[SearchResult]:
-        if html := self.fetch_text(self.build_url(title, artist)):
-            soup = self.get_soup(html)
-            for tag in soup.select("div[class=flex-group] > a[title*=' - ']"):
-                artist, title = str(tag["title"]).split(" - ", 1)
-                yield SearchResult(
-                    artist, title, f"{self.BASE_URL}{tag['href']}"
-                )
-
-        return None
-
-    @classmethod
-    def scrape(cls, html: str) -> str | None:
-        soup = cls.get_soup(html)
-
-        if lyrics_div := soup.select_one("div.song-text > div.inner-text"):
-            return lyrics_div.get_text()
-
-        return None
-
-
-class Google(SearchBackend):
-    """Fetch lyrics from Google search results."""
-
-    SEARCH_URL = "https://www.googleapis.com/customsearch/v1"
-
-    #: Exclude some letras.mus.br pages which do not contain lyrics.
-    EXCLUDE_PAGES = [
-        "significado.html",
-        "traduccion.html",
-        "traducao.html",
-        "significados.html",
-    ]
-
-    #: Regular expression to match noise in the URL title.
-    URL_TITLE_NOISE_RE = re.compile(
-        r"""
-\b
-(
-      paroles(\ et\ traduction|\ de\ chanson)?
-    | letras?(\ de)?
-    | liedtexte
-    | dainų\ žodžiai
-    | original\ song\ full\ text\.
-    | official
-    | 20[12]\d\ version
-    | (absolute\ |az)?lyrics(\ complete)?
-    | www\S+
-    | \S+\.(com|net|mus\.br)
-)
-([^\w.]|$)
-""",
-        re.IGNORECASE | re.VERBOSE,
-    )
-    #: Split cleaned up URL title into artist and title parts.
-    URL_TITLE_PARTS_RE = re.compile(r" +(?:[ :|-]+|par|by) +")
-
-    SOURCE_DIST_FACTOR = {"www.azlyrics.com": 0.5, "www.songlyrics.com": 0.6}
-
-    ignored_domains: set[str] = set()
-
-    @classmethod
-    def pre_process_html(cls, html: str) -> str:
-        """Pre-process the HTML content before scraping."""
-        html = Html.remove_ads(super().pre_process_html(html))
-        return Html.remove_formatting(Html.merge_paragraphs(html))
-
-    def fetch_text(self, *args, **kwargs) -> str:
-        """Handle an error so that we can continue with the next URL."""
-        kwargs.setdefault("allow_redirects", False)
-        with self.handle_request():
-            try:
-                return super().fetch_text(*args, **kwargs)
-            except CaptchaError:
-                self.ignored_domains.add(urlparse(args[0]).netloc)
-                raise
-
-    @staticmethod
-    def get_part_dist(artist: str, title: str, part: str) -> float:
-        """Return the distance between the given part and the artist and title.
-
-        A number between -1 and 1 is returned, where -1 means the part is
-        closer to the artist and 1 means it is closer to the title.
-        """
-        return string_dist(artist, part) - string_dist(title, part)
-
-    @classmethod
-    def make_search_result(
-        cls, artist: str, title: str, item: GoogleCustomSearchAPI.Item
-    ) -> SearchResult:
-        """Parse artist and title from the URL title and return a search result."""
-        url_title = (
-            # get full title from metatags if available
-            item.get("pagemap", {}).get("metatags", [{}])[0].get("og:title")
-            # default to the dispolay title
-            or item["title"]
-        )
-        clean_title = cls.URL_TITLE_NOISE_RE.sub("", url_title).strip(" .-|")
-        # split it into parts which may be part of the artist or the title
-        # `dict.fromkeys` removes duplicates keeping the order
-        parts = list(dict.fromkeys(cls.URL_TITLE_PARTS_RE.split(clean_title)))
-
-        if len(parts) == 1:
-            part = parts[0]
-            if m := re.search(rf"(?i)\W*({re.escape(title)})\W*", part):
-                # artist and title may not have a separator
-                result_title = m[1]
-                result_artist = part.replace(m[0], "")
-            else:
-                # assume that this is the title
-                result_artist, result_title = "", parts[0]
-        else:
-            # sort parts by their similarity to the artist
-            parts.sort(key=lambda p: cls.get_part_dist(artist, title, p))
-            result_artist, result_title = parts[0], " ".join(parts[1:])
-
-        return SearchResult(result_artist, result_title, item["link"])
-
-    def search(self, artist: str, title: str) -> Iterable[SearchResult]:
-        params = {
-            "key": self.config["google_API_key"].as_str(),
-            "cx": self.config["google_engine_ID"].as_str(),
-            "q": f"{artist} {title}",
-            "siteSearch": "www.musixmatch.com",
-            "siteSearchFilter": "e",
-            "excludeTerms": ", ".join(self.EXCLUDE_PAGES),
-        }
-
-        data: GoogleCustomSearchAPI.Response = self.fetch_json(
-            self.SEARCH_URL, params=params
-        )
-        for item in data.get("items", []):
-            yield self.make_search_result(artist, title, item)
-
-    def get_results(self, *args) -> Iterable[SearchResult]:
-        """Try results from preferred sources first."""
-        for result in sorted(
-            super().get_results(*args),
-            key=lambda r: self.SOURCE_DIST_FACTOR.get(r.source, 1),
-        ):
-            if result.source not in self.ignored_domains:
-                yield result
-
-    @classmethod
-    def scrape(cls, html: str) -> str | None:
-        # Get the longest text element (if any).
-        if strings := sorted(cls.get_soup(html).stripped_strings, key=len):
-            return strings[-1]
-
-        return None
-
-
-class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
-    BACKEND_BY_NAME = {
-        b.name: b for b in [LRCLib, Google, Genius, Tekstowo, MusiXmatch]
+class LyricsPlugin(plugins.BeetsPlugin):
+    SOURCES = ['google', 'musixmatch', 'genius', 'tekstowo', 'tidal']
+    SOURCE_BACKENDS = {
+        'google': Google,
+        'musixmatch': MusiXmatch,
+        'genius': Genius,
+        'tekstowo': Tekstowo,
+        'tidal': Tidal
     }
 
     @cached_property
@@ -779,34 +955,31 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
     def __init__(self):
         super().__init__()
         self.import_stages = [self.imported]
-        self.config.add(
-            {
-                "auto": True,
-                "bing_client_secret": None,
-                "bing_lang_from": [],
-                "bing_lang_to": None,
-                "dist_thresh": 0.11,
-                "google_API_key": None,
-                "google_engine_ID": "009217259823014548361:lndtuqkycfu",
-                "genius_api_key": (
-                    "Ryq93pUGm8bM6eUWwD_M3NOFFDAtp2yEE7W"
-                    "76V-uFL5jks5dNvcGCdarqFjDhP9c"
-                ),
-                "fallback": None,
-                "force": False,
-                "local": False,
-                "synced": False,
-                # Musixmatch is disabled by default as they are currently blocking
-                # requests with the beets user agent.
-                "sources": [
-                    n for n in self.BACKEND_BY_NAME if n != "musixmatch"
-                ],
-            }
-        )
-        self.config["bing_client_secret"].redact = True
-        self.config["google_API_key"].redact = True
-        self.config["google_engine_ID"].redact = True
-        self.config["genius_api_key"].redact = True
+        self.config.add({
+            'auto': True,
+            'bing_client_secret': None,
+            'bing_lang_from': [],
+            'bing_lang_to': None,
+            'google_API_key': None,
+            'google_engine_ID': '009217259823014548361:lndtuqkycfu',
+            'genius_api_key':
+                "Ryq93pUGm8bM6eUWwD_M3NOFFDAtp2yEE7W"
+                "76V-uFL5jks5dNvcGCdarqFjDhP9c",
+            'fallback': None,
+            'force': False,
+            'local': False,
+            # Musixmatch is disabled by default as they are currently blocking
+            # requests with the beets user agent.
+            #
+            # Tidal is disabled by default as it currently requires a paid account.
+            'sources': [s for s in self.SOURCES if s != "musixmatch" and s != "tidal"],
+            'dist_thresh': 0.1,
+            'tidal_session_file': 'tidal.json'
+        })
+        self.config['bing_client_secret'].redact = True
+        self.config['google_API_key'].redact = True
+        self.config['google_engine_ID'].redact = True
+        self.config['genius_api_key'].redact = True
 
         # State information for the ReST writer.
         # First, the current artist we're writing.

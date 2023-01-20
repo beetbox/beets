@@ -2,13 +2,12 @@ Lyrics Plugin
 =============
 
 The ``lyrics`` plugin fetches and stores song lyrics from databases on the Web.
-Namely, the current version of the plugin uses `Genius.com`_, `Tekstowo.pl`_,
-`LRCLIB`_ and, optionally, the Google Custom Search API.
+Namely, the current version of the plugin uses `Genius.com`_, `Tekstowo.pl`_, TIDAL,
+and, optionally, the Google custom search API.
 
 .. _Genius.com: https://genius.com/
 .. _Tekstowo.pl: https://www.tekstowo.pl/
-.. _LRCLIB: https://lrclib.net/
-
+.. _Tidal.com: https://tidal.com/
 
 Install
 -------
@@ -73,10 +72,21 @@ The available options are:
   Default: The `beets custom search engine`_, which gathers an updated list of
   sources known to be scrapeable.
 - **sources**: List of sources to search for lyrics. An asterisk ``*`` expands
-  to all available sources. The ``google`` source will be automatically
-  deactivated if no ``google_API_key`` is setup.
-- **synced**: Prefer synced lyrics over plain lyrics if a source offers them.
-  Currently ``lrclib`` is the only source that provides them.
+  to all available sources.
+  Default: ``google genius tekstowo``, i.e., all the available sources. The
+  ``google`` source will be automatically deactivated if no ``google_API_key``
+  is setup.
+  The ``google``, ``genius``, and ``tekstowo`` sources will only be enabled if
+  BeautifulSoup is installed.
+- **tidal_session_file**: Name of file the TIDAL access token is saved to under
+  the data directory.
+
+Here's an example of ``config.yaml``::
+
+    lyrics:
+      fallback: ''
+      google_API_key: AZERTYUIOPQSDFGHJKLMWXCVBN1234567890_ab
+      google_engine_ID: 009217259823014548361:lndtuqkycfu
 
 .. _beets custom search engine: https://www.google.com:443/cse/publicurl?cx=009217259823014548361:lndtuqkycfu
 
@@ -161,6 +171,18 @@ After that, the lyrics plugin will fall back on other declared data sources.
 
 
 .. _lyrics-translation:
+
+Activate TIDAL Lyrics
+--------------------------------------
+
+Using the TIDAL backend requires `tidalapi`_, which you can install using `pip`_ by typing::
+
+	pip install tidalapi
+	
+This backend is not enabled by default, as it requires a paid TIDAL account.
+
+Enabling this backend just requires adding it to the configuration,
+and to follow the link given upon first fetching TIDAL lyrics.
 
 Activate On-the-Fly Translation
 -------------------------------
