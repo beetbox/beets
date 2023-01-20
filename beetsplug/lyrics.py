@@ -28,6 +28,9 @@ import unicodedata
 from unidecode import unidecode
 import warnings
 import urllib
+import tidalapi
+import datetime
+import confuse
 
 try:
     import bs4
@@ -441,7 +444,71 @@ class Genius(Backend):
                 footer.replace_with("")
         return lyrics_div.get_text()
 
+class Tidal(Backend):
+    REQUIRES_BS = False
+    
+    def __init__(self, config, log):
+        super().__init__(config, log)
+        self._log = log
+        
+        sessionfile = self.config["tidal_session_file"].get(
+            confuse.Filename(in_app_dir=True)
+        )
 
+        self.session = self.load_session(sessionfile)
+        
+        if not self.session:
+            self._log.debug("JSON file corrupted or does not exist, performing simple OAuth login.")
+            self.session = tidalapi.Session()
+            self.session.login_oauth_simple()
+            self.save_session(sessionfile)
+        
+    def fetch(self, artist, title):
+        self._log.debug(f"Fetching lyrics for {title} from {artist}!")
+        
+        results = self.session.search(f"{artist} {title}", models = [tidalapi.media.Track], limit = 5)
+        top_hit = results["top_hit"]
+        self._log.debug(f"Top Hit result for query `{artist} {title}`: {top_hit.name} from {top_hit.artist.name} with ID {top_hit.id}")
+        
+        # This could be considered paranoid, but there is a chance that the Tidal top hit isn't what we're looking for.
+        if top_hit.artist.name.lower() != artist.lower():
+            self._log.warning(f"Tidal lyrics query returned artist {top_hit.artist.name}, but the file is under artist {artist}")
+        
+        elif top_hit.name.lower() != title.lower():
+            self._log.warning(f"Tidal lyrics query returned track {top_hit.name}, but the file is {title}")
+            
+        lyrics = top_hit.lyrics()
+        
+        if lyrics.subtitles:
+            return lyrics.subtitles
+        else:
+            self._log.warning(f"Timed lyrics not available... returning regular lyrics.")
+            return lyrics.text
+        
+        
+    def load_session(self, sfile):
+        self._log.debug(f"Loading tidal session from {sfile}")
+        s = tidalapi.Session()
+        
+        try:
+            with open(sfile, "r") as file:
+                data = json.load(file)
+                if s.load_oauth_session(data["token_type"], data["access_token"], data["refresh_token"], datetime.datetime.fromtimestamp(data["expiry_time"])):
+                    return s
+                else:
+                    return None
+        except FileNotFoundError:
+            return None
+            
+    def save_session(self, sfile):
+        self._log.debug(f"Saving tidal session to {sfile}")
+        with open(sfile, "w") as file:
+            json.dump({
+            "token_type": self.session.token_type,
+            "access_token": self.session.access_token,
+            "refresh_token": self.session.refresh_token,
+            "expiry_time": self.session.expiry_time.timestamp()}, file, indent = 2)
+        
 class Tekstowo(Backend):
     # Fetch lyrics from Tekstowo.pl.
     REQUIRES_BS = True
@@ -719,12 +786,13 @@ class Google(Backend):
 
 
 class LyricsPlugin(plugins.BeetsPlugin):
-    SOURCES = ['google', 'musixmatch', 'genius', 'tekstowo']
+    SOURCES = ['google', 'musixmatch', 'genius', 'tekstowo', 'tidal']
     SOURCE_BACKENDS = {
         'google': Google,
         'musixmatch': MusiXmatch,
         'genius': Genius,
         'tekstowo': Tekstowo,
+        'tidal': Tidal
     }
 
     def __init__(self):
@@ -745,8 +813,11 @@ class LyricsPlugin(plugins.BeetsPlugin):
             'local': False,
             # Musixmatch is disabled by default as they are currently blocking
             # requests with the beets user agent.
-            'sources': [s for s in self.SOURCES if s != "musixmatch"],
+            #
+            # Tidal is disabled by default as it currently requires a paid account.
+            'sources': [s for s in self.SOURCES if s != "musixmatch" and s != "tidal"],
             'dist_thresh': 0.1,
+            'tidal_session_file': 'tidal.json'
         })
         self.config['bing_client_secret'].redact = True
         self.config['google_API_key'].redact = True

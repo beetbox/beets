@@ -2,12 +2,12 @@ Lyrics Plugin
 =============
 
 The ``lyrics`` plugin fetches and stores song lyrics from databases on the Web.
-Namely, the current version of the plugin uses `Genius.com`_, `Tekstowo.pl`_,
+Namely, the current version of the plugin uses `Genius.com`_, `Tekstowo.pl`_, TIDAL,
 and, optionally, the Google custom search API.
 
 .. _Genius.com: https://genius.com/
 .. _Tekstowo.pl: https://www.tekstowo.pl/
-
+.. _Tidal.com: https://tidal.com/
 
 Fetch Lyrics During Import
 --------------------------
@@ -63,6 +63,8 @@ configuration file. The available options are:
   is setup.
   The ``google``, ``genius``, and ``tekstowo`` sources will only be enabled if
   BeautifulSoup is installed.
+- **tidal_session_file**: Name of file the TIDAL access token is saved to under
+  the data directory.
 
 Here's an example of ``config.yaml``::
 
@@ -165,6 +167,18 @@ you can install using `pip`_ by typing::
 These backends are enabled by default.
 
 .. _lyrics-translation:
+
+Activate TIDAL Lyrics
+--------------------------------------
+
+Using the TIDAL backend requires `tidalapi`_, which you can install using `pip`_ by typing::
+
+	pip install tidalapi
+	
+This backend is not enabled by default, as it requires a paid TIDAL account.
+
+Enabling this backend just requires adding it to the configuration,
+and to follow the link given upon first fetching TIDAL lyrics.
 
 Activate On-the-Fly Translation
 -------------------------------

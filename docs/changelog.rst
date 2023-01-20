@@ -8,6 +8,7 @@ Changelog goes here!
 
 New features:
 
+* :doc:`/plugins/lyrics`: The plugin now supports obtaining lyrics from TIDAL.
 * We now import the remixer field from Musicbrainz into the library.
   :bug:`4428`
 * :doc:`/plugins/mbsubmit`: Added a new `mbsubmit` command to print track information to be submitted to MusicBrainz after initial import.
