@@ -34,6 +34,7 @@ linkcheck_ignore = [
 ]
 
 # Options for HTML output
+html_theme = 'sphinx_rtd_theme'
 htmlhelp_basename = 'beetsdoc'
 
 # Options for LaTeX output
