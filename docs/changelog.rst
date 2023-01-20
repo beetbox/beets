@@ -8,6 +8,8 @@ Changelog goes here!
 
 New features:
 
+* Recolor the Sphinx documentation header to use the Beets' logo color
+* Configure Sphinx so that it uses ``sphinx_rtd_theme`` locally
 * We now import the remixer field from Musicbrainz into the library.
   :bug:`4428`
 * :doc:`/plugins/mbsubmit`: Added a new `mbsubmit` command to print track information to be submitted to MusicBrainz after initial import.
