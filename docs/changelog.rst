@@ -8,6 +8,7 @@ Changelog goes here!
 
 New features:
 
+* Add ``sphinx`` and ``sphinx_rtd_theme`` as dependencies for a new ``docs`` extra
 * We now import the remixer field from Musicbrainz into the library.
   :bug:`4428`
 * :doc:`/plugins/mbsubmit`: Added a new `mbsubmit` command to print track information to be submitted to MusicBrainz after initial import.
