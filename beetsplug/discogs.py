@@ -214,27 +214,11 @@ class DiscogsPlugin(BeetsPlugin):
         candidates = []
         for album_cur in albums:
             self._log.debug(u'searching within album {0}', album_cur.album)
-            track_list = self.get_tracks_from_album(album_cur)
-            candidates += track_list
+            candidates += album_cur.tracks
         for candidate in candidates:
             candidate.data_source = 'Discogs'
         # first 10 results, don't overwhelm with options
-        return candidates[:10] 
-
-    def get_tracks_from_album(self, album_info):
-        """Return a list of tracks in the release
-        """
-        if not album_info:
-            return []
-
-        result = []
-        for track_info in album_info.tracks:
-            # attach artist info if not provided
-            if not track_info['artist']:
-                track_info['artist'] = album_info.artist
-                track_info['artist_id'] = album_info.artist_id
-            result.append(track_info)
-        return result
+        return candidates[:10]
 
     @staticmethod
     def extract_release_id_regex(album_id):
@@ -407,9 +391,13 @@ class DiscogsPlugin(BeetsPlugin):
         for track in tracks:
             track.media = media
             track.medium_total = mediums.count(track.medium)
+            # artist info will be identical for all tracks until #3353 fixed
+            track.artist = artist
+            track.artist_id = artist_id
             # Discogs does not have track IDs. Invent our own IDs as proposed
             # in #2336.
             track.track_id = str(album_id) + "-" + track.track_alt
+            track.data_url = data_url
 
         # Retrieve master release id (returns None if there isn't one).
         master_id = result.data.get('master_id')
