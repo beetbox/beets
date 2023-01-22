@@ -36,7 +36,6 @@ from bs4 import BeautifulSoup
 from unidecode import unidecode
 import warnings
 import urllib
-import tidalapi
 import datetime
 import confuse
 
@@ -574,6 +573,8 @@ class Tidal(Backend):
     REQUIRES_BS = False
     
     def __init__(self, config, log):
+        import tidalapi
+
         super().__init__(config, log)
         self._log = log
         
