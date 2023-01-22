@@ -593,7 +593,14 @@ class Tidal(Backend):
         self._log.debug(f"Fetching lyrics for {title} from {artist}!")
         
         results = self.session.search(f"{artist} {title}", models = [tidalapi.media.Track], limit = 5)
-        top_hit = results["top_hit"]
+        if results["top_hit"]:
+                top_hit = results["top_hit"]
+        elif len(results["tracks"]) > 0:
+                self._log.debug("Top Hit result does not exist, using first result")
+                top_hit = results["tracks"][0]
+        else:
+                return None
+
         self._log.debug(f"Top Hit result for query `{artist} {title}`: {top_hit.name} from {top_hit.artist.name} with ID {top_hit.id}")
         
         # This could be considered paranoid, but there is a chance that the Tidal top hit isn't what we're looking for.
@@ -603,8 +610,14 @@ class Tidal(Backend):
         elif top_hit.name.lower() != title.lower():
             self._log.warning(f"Tidal lyrics query returned track {top_hit.name}, but the file is {title}")
             
-        lyrics = top_hit.lyrics()
-        
+        try:
+                lyrics = top_hit.lyrics()
+        except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 404:
+                        return None
+
+                raise e
+
         if lyrics.subtitles:
             return lyrics.subtitles
         else:
