@@ -182,7 +182,7 @@ Metadata
 
 :doc:`keyfinder <keyfinder>`
    Use the `KeyFinder`_ program to detect the musical
-  key from the audio.
+   key from the audio.
 
 :doc:`importadded <importadded>`
    Use file modification times for guessing the value for
