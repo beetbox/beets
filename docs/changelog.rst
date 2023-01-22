@@ -37,6 +37,7 @@ New features:
   ``=~``.
   :bug:`4251`
 * :doc:`/plugins/discogs`: Permit appending style to genre
+* :doc:`plugins/discogs`: Implement item_candidates for matching singletons
 * :doc:`/plugins/convert`: Add a new `auto_keep` option that automatically
   converts files but keeps the *originals* in the library.
   :bug:`1840` :bug:`4302`
