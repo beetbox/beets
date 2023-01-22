@@ -50,7 +50,7 @@ def resize_url(url: str, maxwidth: int, quality: int = 0) -> str:
     return '{}?{}'.format(PROXY_URL, urlencode(params))
 
 
-def temp_file_for(path: AnyStr):
+def temp_file_for(path: AnyStr) -> bytes:
     """Return an unused filename with the same extension as the
     specified path.
     """
@@ -68,7 +68,7 @@ _NOT_AVAILABLE = object()
 
 class LocalBackend:
     @classmethod
-    def available(cls):
+    def available(cls) -> bool:
         try:
             cls.version()
             return True
@@ -86,7 +86,7 @@ class IMBackend(LocalBackend):
     _legacy = None
 
     @classmethod
-    def version(cls):
+    def version(cls) -> Optional[Union[object, Tuple[int, int, int]]]:
         """Obtain and cache ImageMagick version.
 
         Raises `LocalBackendNotAvailableError` if not available.
@@ -201,7 +201,11 @@ class IMBackend(LocalBackend):
             log.warning('Could not understand IM output: {0!r}', out)
             return None
 
-    def deinterlace(self, path_in: AnyStr, path_out: Optional[AnyStr] = None) -> AnyStr:
+    def deinterlace(
+            self,
+            path_in: AnyStr,
+            path_out: Optional[AnyStr] = None,
+    ) -> AnyStr:
         path_out = path_out or temp_file_for(path_in)
 
         cmd = self.convert_cmd + [
@@ -562,7 +566,7 @@ class ArtResizer(metaclass=Shareable):
         path_out: Optional[AnyStr]=None,
         quality: int = 0,
         max_filesize: int = 0,
-    ):
+    ) -> AnyStr:
         """Manipulate an image file according to the method, returning a
         new path. For PIL or IMAGEMAGIC methods, resizes the image to a
         temporary file and encodes with the specified quality level.
@@ -592,7 +596,7 @@ class ArtResizer(metaclass=Shareable):
             # FIXME: Should probably issue a warning?
             return path_in
 
-    def proxy_url(self, maxwidth: int, url: str, quality: int = 0):
+    def proxy_url(self, maxwidth: int, url: str, quality: int = 0) -> str:
         """Modifies an image URL according the method, returning a new
         URL. For WEBPROXY, a URL on the proxy server is returned.
         Otherwise, the URL is returned unmodified.
