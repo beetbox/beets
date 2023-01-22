@@ -37,34 +37,15 @@ Configuration
 
 The available options under the ``plex:`` section are:
 
-``host``
-   The Plex server name.
-
-   Default: ``"localhost"``.
-
-``port``
-
-   The Plex server port.
-
-   Default: ``32400``.
-
-``token``
-   The Plex Home token.
-
-   Default: ``""``.
-
-``library_name``
-   The name of the Plex library to update.
-
-   Default: ``"Music"``
-
-``secure``
-   Use secure connections to the Plex server.
-
-   Default: ``False``
-
-``ignore_cert_errors``
-
-   Ignore TLS certificate errors when using secure connections.
-
-   Default: ``False``
+- **host**: The Plex server name.
+  Default: ``localhost``.
+- **port**: The Plex server port.
+  Default: 32400.
+- **token**: The Plex Home token.
+  Default: Empty.
+- **library_name**: The name of the Plex library to update.
+  Default: ``Music``
+- **secure**: Use secure connections to the Plex server.
+  Default: ``False``
+- **ignore_cert_errors**: Ignore TLS certificate errors when using secure connections.
+  Default: ``False``
