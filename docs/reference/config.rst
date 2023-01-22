@@ -135,7 +135,7 @@ unexpected behavior on all popular platforms::
 
 These substitutions remove forward and back slashes, leading dots, and
 control characters—all of which is a good idea on any OS. The fourth line
-removes the Windows "reserved characters" (useful even on Unix for for
+removes the Windows "reserved characters" (useful even on Unix for
 compatibility with Windows-influenced network filesystems like Samba).
 Trailing dots and trailing whitespace, which can cause problems on Windows
 clients, are also removed.
