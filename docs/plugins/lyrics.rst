@@ -80,6 +80,10 @@ The available options are:
   BeautifulSoup is installed.
 - **tidal_session_file**: Name of file the TIDAL access token is saved to under
   the data directory.
+- **tidal_attempts**: Number of times beets tries to fetch lyrics
+  when being rate limited by TIDAL.
+- **tidal_sleep_interval**: Minimum and maximum time interval used in between attempts 
+  when rate limited by TIDAL.
 
 Here's an example of ``config.yaml``::
 

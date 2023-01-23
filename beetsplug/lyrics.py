@@ -39,6 +39,8 @@ import urllib
 import tidalapi
 import datetime
 import confuse
+import time
+import random
 
 import beets
 from beets import plugins, ui
@@ -582,7 +584,10 @@ class Tidal(Backend):
         )
 
         self.session = self.load_session(sessionfile)
-        
+       
+        self.attempts = self.config["tidal_attempts"].get(int)
+        self.sleep_interval = self.config["tidal_sleep_interval"].get(list)
+ 
         if not self.session:
             self._log.debug("JSON file corrupted or does not exist, performing simple OAuth login.")
             self.session = tidalapi.Session()
@@ -610,13 +615,29 @@ class Tidal(Backend):
         elif top_hit.name.lower() != title.lower():
             self._log.warning(f"Tidal lyrics query returned track {top_hit.name}, but the file is {title}")
             
-        try:
-                lyrics = top_hit.lyrics()
-        except requests.exceptions.HTTPError as e:
-                if e.response.status_code == 404:
-                        return None
+        attempt = 0
 
-                raise e
+        while True:
+                try:
+                        lyrics = top_hit.lyrics()
+                        break
+                except requests.exceptions.HTTPError as e:
+                        if e.response.status_code == 404:
+                                return None
+                        elif e.response.status_code == 429:
+                                # We're going too fast
+                                if attempt > self.attempts:
+                                        self._log.warn(f"Tidal API failed to stop rate limiting after {self.attempts} attempts, skipping")
+                                        return None
+
+                                attempt+=1
+                                sleep_time = random.uniform(*self.sleep_interval)
+
+                                self._log.info(f"Tidal is rate limiting lyric queries, sleeping for {sleep_time} (Attempt {attempt}/{self.attempts})")
+                                time.sleep(sleep_time)
+                                continue
+
+                        raise e
 
         if lyrics.subtitles:
             return lyrics.subtitles
