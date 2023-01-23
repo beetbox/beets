@@ -1,0 +1,10 @@
+[tool.black]
+# line-length = 120
+
+[tool.isort]
+profile = "black"
+py_version = 36
+multi_line_output = 3
+# line_length = 120
+indent = 4
+
