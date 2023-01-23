@@ -52,6 +52,7 @@ New features:
 * :doc:`/plugins/fromfilename`:  Add debug log messages that inform when the
   plugin replaced bad (missing) artist, title or tracknumber metadata.
   :bug:`4561` :bug:`4600`
+* :doc:`/plugins/convert`: Add ``wave`` to the list of lossless formats.
 
 Bug fixes:
 
