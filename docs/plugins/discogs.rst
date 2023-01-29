@@ -99,7 +99,7 @@ Here are two things you can try:
 * Make sure that your system clock is accurate. The Discogs servers can reject
   your request if your clock is too out of sync.
 
-Support for matching singleton tracks using ``-s`` is in progress.
-If this is not working well, try the ``--group-albums`` option in album import mode.
+Matching tracks by Discogs ID is not yet supported. The ``--group-albums``
+option in album import mode provides an alternative to singleton mode for autotagging tracks that are not in album-related folders.
 
 .. _python3-discogs-client: https://github.com/joalla/discogs_client
