@@ -1355,9 +1355,12 @@ class Album(LibModel):
         """
         # Get modified track fields.
         track_updates = {}
-        for key in self.item_keys:
-            if key in self._dirty:
+        track_deletes = set()
+        for key in self._dirty:
+            if key in self.item_keys:
                 track_updates[key] = self[key]
+            elif key not in self:
+                track_deletes.add(key);
 
         with self._db.transaction():
             super().store(fields)
@@ -1365,6 +1368,12 @@ class Album(LibModel):
                 for item in self.items():
                     for key, value in track_updates.items():
                         item[key] = value
+                    item.store()
+            if track_deletes:
+                for item in self.items():
+                    for key in track_deletes:
+                        if key in item:
+                            del item[key]
                     item.store()
 
     def try_sync(self, write, move):
