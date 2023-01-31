@@ -180,6 +180,44 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.debug('Connection error in album search', exc_info=True)
             return []
 
+    def item_candidates(self, item, artist, title):
+        """Returns a list of TrackInfo objects for Search API results
+        matching ``title`` and ``artist``.
+        :param item: Singleton item to be matched.
+        :type item: beets.library.Item
+        :param artist: The artist of the track to be matched.
+        :type artist: str
+        :param title: The title of the track to be matched.
+        :type title: str
+        :return: Candidate TrackInfo objects.
+        :rtype: list[beets.autotag.hooks.TrackInfo]
+        """
+        if not self.discogs_client:
+            return
+
+        if not artist and not title:
+            self._log.debug('Skipping Discogs query. File missing artist and '
+                            'title tags.')
+
+        query = f'{artist} {title}'
+        try:
+            albums = self.get_albums(query)
+        except DiscogsAPIError as e:
+            self._log.debug('API Error: {0} (query: {1})', e, query)
+            if e.status_code == 401:
+                self.reset_auth()
+                return self.item_candidates(item, artist, title)
+            else:
+                return []
+        except CONNECTION_ERRORS:
+            self._log.debug('Connection error in track search', exc_info=True)
+        candidates = []
+        for album_cur in albums:
+            self._log.debug(u'searching within album {0}', album_cur.album)
+            candidates += album_cur.tracks
+        # first 10 results, don't overwhelm with options
+        return candidates[:10]
+
     @staticmethod
     def extract_release_id_regex(album_id):
         """Returns the Discogs_id or None."""
@@ -351,9 +389,15 @@ class DiscogsPlugin(BeetsPlugin):
         for track in tracks:
             track.media = media
             track.medium_total = mediums.count(track.medium)
+            if not track.artist:  # get_track_info often fails to find artist
+                track.artist = artist
+            if not track.artist_id:
+                track.artist_id = artist_id
             # Discogs does not have track IDs. Invent our own IDs as proposed
             # in #2336.
             track.track_id = str(album_id) + "-" + track.track_alt
+            track.data_url = data_url
+            track.data_source = 'Discogs'
 
         # Retrieve master release id (returns None if there isn't one).
         master_id = result.data.get('master_id')
