@@ -1360,7 +1360,7 @@ class Album(LibModel):
             if key in self.item_keys:
                 track_updates[key] = self[key]
             elif key not in self:
-                track_deletes.add(key);
+                track_deletes.add(key)
 
         with self._db.transaction():
             super().store(fields)
