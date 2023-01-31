@@ -103,7 +103,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         item.write()
 
         mf = MediaFile(syspath(path))
-        self.assertEqual(0, len(mf.images))
+        self.assertFalse(mf.images)
 
     def test_auto_false(self):
         self.config['zero']['fields'] = ['year']
