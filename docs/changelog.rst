@@ -133,6 +133,8 @@ Bug fixes:
 * :doc:`/plugins/fromfilename`: Fix failed detection of <track> <title>
   filename patterns.
   :bug:`4561` :bug:`4600`
+* Fix issue where deletion of flexible fields on an album doesn't cascade to items
+  :bug:`4662`
 
 For packagers:
 
