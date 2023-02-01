@@ -50,6 +50,10 @@ New features:
   :bug:`4438`
 * Add a new ``import.ignored_alias_types`` config option to allow for
   specific alias types to be skipped over when importing items/albums.
+* :doc:`/plugins/smartplaylist`: A new ``--pretend`` option lets the user see
+  what a new or changed smart playlist saved in the config is actually
+  returning.
+  :bug:`4573`
 * :doc:`/plugins/fromfilename`:  Add debug log messages that inform when the
   plugin replaced bad (missing) artist, title or tracknumber metadata.
   :bug:`4561` :bug:`4600`
