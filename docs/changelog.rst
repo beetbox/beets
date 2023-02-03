@@ -36,7 +36,8 @@ New features:
 * Add :ref:`exact match <exact-match>` queries, using the prefixes ``=`` and
   ``=~``.
   :bug:`4251`
-* :doc:`/plugins/discogs`: Permit appending style to genre
+* :doc:`/plugins/discogs`: Permit appending style to genre.
+* :doc:`plugins/discogs`: Implement item_candidates for matching singletons.
 * :doc:`/plugins/convert`: Add a new `auto_keep` option that automatically
   converts files but keeps the *originals* in the library.
   :bug:`1840` :bug:`4302`
@@ -49,6 +50,10 @@ New features:
   :bug:`4438`
 * Add a new ``import.ignored_alias_types`` config option to allow for
   specific alias types to be skipped over when importing items/albums.
+* :doc:`/plugins/smartplaylist`: A new ``--pretend`` option lets the user see
+  what a new or changed smart playlist saved in the config is actually
+  returning.
+  :bug:`4573`
 * :doc:`/plugins/fromfilename`:  Add debug log messages that inform when the
   plugin replaced bad (missing) artist, title or tracknumber metadata.
   :bug:`4561` :bug:`4600`
@@ -133,6 +138,8 @@ Bug fixes:
 * :doc:`/plugins/fromfilename`: Fix failed detection of <track> <title>
   filename patterns.
   :bug:`4561` :bug:`4600`
+* Fix issue where deletion of flexible fields on an album doesn't cascade to items
+  :bug:`4662`
 
 For packagers:
 
