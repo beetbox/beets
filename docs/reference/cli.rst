@@ -86,7 +86,9 @@ Optional command flags:
   that weren't tagged successfully---either because they're not in the
   MusicBrainz database or because something's wrong with the files. Use the
   ``-l`` option to specify a filename to log every time you skip an album
-  or import it "as-is" or an album gets skipped as a duplicate.
+  or import it "as-is" or an album gets skipped as a duplicate. You can later
+  review the file manually or import skipped paths from the logfile
+  automatically by using the ``--from-logfile LOGFILE`` argument.
 
 * Relatedly, the ``-q`` (quiet) option can help with large imports by
   autotagging without ever bothering to ask for user input. Whenever the
@@ -145,6 +147,8 @@ Optional command flags:
   Multiple IDs can be specified by simply repeating the option several times.
 
 * You can supply ``--set field=value`` to assign `field` to `value` on import.
+  Values support the same template syntax as beets'
+  :doc:`path formats <pathformat>`.
   These assignments will merge with (and possibly override) the
   :ref:`set_fields` configuration dictionary. You can use the option multiple
   times on the command line, like so::
@@ -262,6 +266,13 @@ series of ``field=value`` pairs. For example, ``beet modify genius of love
 artist="Tom Tom Club"`` will change the artist for the track "Genius of Love."
 To remove fields (which is only possible for flexible attributes), follow a
 field name with an exclamation point: ``field!``.
+
+Values can also be *templates*, using the same syntax as
+:doc:`path formats <pathformat>`.
+For example, ``beet modify artist='$artist_sort'`` will copy the artist sort
+name into the artist field for all your tracks,
+and ``beet modify title='$track $title'`` will add track numbers to their
+title metadata.
 
 The ``-a`` switch also operates on albums in addition to the individual tracks.
 Without this flag, the command will only change *track-level* data, even if all

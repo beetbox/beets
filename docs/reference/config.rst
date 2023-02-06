@@ -3,7 +3,7 @@ Configuration
 
 Beets has an extensive configuration system that lets you customize nearly
 every aspect of its operation. To configure beets, you create a file called
-``config.yaml``. The location of the file depend on your platform (type ``beet
+``config.yaml``. The location of the file depends on your platform (type ``beet
 config -p`` to see the path on your system):
 
 * On Unix-like OSes, write ``~/.config/beets/config.yaml``.
@@ -135,7 +135,7 @@ unexpected behavior on all popular platforms::
 
 These substitutions remove forward and back slashes, leading dots, and
 control characters—all of which is a good idea on any OS. The fourth line
-removes the Windows "reserved characters" (useful even on Unix for for
+removes the Windows "reserved characters" (useful even on Unix for
 compatibility with Windows-influenced network filesystems like Samba).
 Trailing dots and trailing whitespace, which can cause problems on Windows
 clients, are also removed.
@@ -325,6 +325,25 @@ The defaults look like this::
         bracket: '[]'
 
 See :ref:`aunique` for more details.
+
+
+.. _config-sunique:
+
+sunique
+~~~~~~~
+
+Like :ref:`config-aunique` above for albums, these options control the
+generation of a unique string to disambiguate *singletons* that share similar
+metadata.
+
+The defaults look like this::
+
+    sunique:
+        keys: artist title
+        disambiguators: year trackdisambig
+        bracket: '[]'
+
+See :ref:`sunique` for more details.
 
 
 .. _terminal_encoding:
@@ -563,7 +582,7 @@ from_scratch
 ~~~~~~~~~~~~
 
 Either ``yes`` or ``no`` (default), controlling whether existing metadata is
-discarded when a match is applied. This corresponds to the ``--from_scratch``
+discarded when a match is applied. This corresponds to the ``--from-scratch``
 flag to ``beet import``.
 
 .. _quiet:
@@ -633,6 +652,17 @@ MusicBrainz. You can use a space-separated list of language abbreviations, like
 ``en jp es``, to specify a preference order. Defaults to an empty list, meaning 
 that no language is preferred.
 
+.. _ignored_alias_types:
+
+ignored_alias_types
+~~~~~~~~~~~~~~~~~~~
+
+A list of alias types to be ignored when importing new items.
+
+See the `MusicBrainz Documentation` for more information on aliases.
+
+.._MusicBrainz Documentation: https://musicbrainz.org/doc/Aliases
+
 .. _detail:
 
 detail
@@ -670,6 +700,22 @@ with the ``-a`` flag to the :ref:`import-cmd` command.)
 
 Default: ``yes``.
 
+.. _duplicate_keys:
+
+duplicate_keys
+~~~~~~~~~~~~~~
+
+The fields used to find duplicates when importing.
+There are two sub-values here: ``album`` and ``item``.
+Each one is a list of field names; if an existing object (album or item) in
+the library matches the new object on all of these fields, the importer will
+consider it a duplicate.
+
+Default::
+
+    album: albumartist album
+    item: artist title
+
 .. _duplicate_action:
 
 duplicate_action
@@ -705,6 +751,9 @@ Here's an example::
 
 Other field/value pairs supplied via the ``--set`` option on the command-line
 override any settings here for fields with the same name.
+
+Values support the same template syntax as beets'
+:doc:`path formats <pathformat>`.
 
 Fields are set on both the album and each individual track of the album.
 Fields are persisted to the media files of each track.

@@ -77,6 +77,19 @@ class StoreTest(_common.LibTestCase):
         self.i.store()
         self.assertTrue('composer' not in self.i._dirty)
 
+    def test_store_album_cascades_flex_deletes(self):
+        album = _common.album()
+        album.flex1 = "Flex-1"
+        self.lib.add(album)
+        item = _common.item()
+        item.album_id = album.id
+        item.flex1 = "Flex-1"
+        self.lib.add(item)
+        del album.flex1
+        album.store()
+        self.assertNotIn('flex1', album)
+        self.assertNotIn('flex1', album.items()[0])
+
 
 class AddTest(_common.TestCase):
     def setUp(self):
@@ -441,7 +454,7 @@ class DestinationTest(_common.TestCase):
         self.lib.directory = b'lib'
         self.lib.path_formats = [('default', '$title')]
         self.i.title = 'ab\xa2\xbdd'
-        self.assertEqual(self.i.destination(), np('lib/abC_ 1_2 d'))
+        self.assertEqual(self.i.destination(), np('lib/abC_ 1_2d'))
 
     def test_destination_with_replacements(self):
         self.lib.directory = b'base'
@@ -637,7 +650,7 @@ class DestinationFunctionTest(_common.TestCase, PathFormattingMixin):
 
     def test_asciify_variable(self):
         self._setf('%asciify{ab\xa2\xbdd}')
-        self._assert_dest(b'/base/abC_ 1_2 d')
+        self._assert_dest(b'/base/abC_ 1_2d')
 
     def test_left_variable(self):
         self._setf('%left{$title, 3}')
@@ -802,6 +815,91 @@ class DisambiguationTest(_common.TestCase, PathFormattingMixin):
         album1.store()
         album2.store()
         self._setf('foo%aunique{albumartist album flex,year}/$title')
+        self._assert_dest(b'/base/foo/the title', self.i1)
+
+
+class SingletonDisambiguationTest(_common.TestCase, PathFormattingMixin):
+    def setUp(self):
+        super().setUp()
+        self.lib = beets.library.Library(':memory:')
+        self.lib.directory = b'/base'
+        self.lib.path_formats = [('default', 'path')]
+
+        self.i1 = item()
+        self.i1.year = 2001
+        self.lib.add(self.i1)
+        self.i2 = item()
+        self.i2.year = 2002
+        self.lib.add(self.i2)
+        self.lib._connection().commit()
+
+        self._setf('foo/$title%sunique{artist title,year}')
+
+    def tearDown(self):
+        super().tearDown()
+        self.lib._connection().close()
+
+    def test_sunique_expands_to_disambiguating_year(self):
+        self._assert_dest(b'/base/foo/the title [2001]', self.i1)
+
+    def test_sunique_with_default_arguments_uses_trackdisambig(self):
+        self.i1.trackdisambig = 'live version'
+        self.i1.year = self.i2.year
+        self.i1.store()
+        self._setf('foo/$title%sunique{}')
+        self._assert_dest(b'/base/foo/the title [live version]', self.i1)
+
+    def test_sunique_expands_to_nothing_for_distinct_singletons(self):
+        self.i2.title = 'different track'
+        self.i2.store()
+
+        self._assert_dest(b'/base/foo/the title', self.i1)
+
+    def test_sunique_does_not_match_album(self):
+        self.lib.add_album([self.i2])
+        self._assert_dest(b'/base/foo/the title', self.i1)
+
+    def test_sunique_use_fallback_numbers_when_identical(self):
+        self.i2.year = self.i1.year
+        self.i2.store()
+
+        self._assert_dest(b'/base/foo/the title [1]', self.i1)
+        self._assert_dest(b'/base/foo/the title [2]', self.i2)
+
+    def test_sunique_falls_back_to_second_distinguishing_field(self):
+        self._setf('foo/$title%sunique{albumartist album,month year}')
+        self._assert_dest(b'/base/foo/the title [2001]', self.i1)
+
+    def test_sunique_sanitized(self):
+        self.i2.year = self.i1.year
+        self.i1.trackdisambig = 'foo/bar'
+        self.i2.store()
+        self.i1.store()
+        self._setf('foo/$title%sunique{artist title,trackdisambig}')
+        self._assert_dest(b'/base/foo/the title [foo_bar]', self.i1)
+
+    def test_drop_empty_disambig_string(self):
+        self.i1.trackdisambig = None
+        self.i2.trackdisambig = 'foo'
+        self.i1.store()
+        self.i2.store()
+        self._setf('foo/$title%sunique{albumartist album,trackdisambig}')
+        self._assert_dest(b'/base/foo/the title', self.i1)
+
+    def test_change_brackets(self):
+        self._setf('foo/$title%sunique{artist title,year,()}')
+        self._assert_dest(b'/base/foo/the title (2001)', self.i1)
+
+    def test_remove_brackets(self):
+        self._setf('foo/$title%sunique{artist title,year,}')
+        self._assert_dest(b'/base/foo/the title 2001', self.i1)
+
+    def test_key_flexible_attribute(self):
+        self.i1.flex = 'flex1'
+        self.i2.flex = 'flex2'
+        self.i1.store()
+        self.i2.store()
+        self._setf('foo/$title%sunique{artist title flex,year}')
         self._assert_dest(b'/base/foo/the title', self.i1)
 
 

@@ -10,9 +10,11 @@ Installation
 ------------
 
 To use the ``discogs`` plugin, first enable it in your configuration (see
-:ref:`using-plugins`). Then, install the `python3-discogs-client`_ library by typing::
+:ref:`using-plugins`). Then, install the `python3-discogs-client`_ library by typing:
 
-    pip install python3-discogs-client
+.. code-block:: console
+
+    $ pip install python3-discogs-client
 
 You will also need to register for a `Discogs`_ account, and provide
 authentication credentials via a personal access token or an OAuth2
@@ -38,11 +40,19 @@ Authentication via Personal Access Token
 As an alternative to OAuth, you can get a token from Discogs and add it to
 your configuration.
 To get a personal access token (called a "user token" in the `python3-discogs-client`_
-documentation), login to `Discogs`_, and visit the
-`Developer settings page
-<https://www.discogs.com/settings/developers>`_. Press the ``Generate new
-token`` button, and place the generated token in your configuration, as the
-``user_token`` config option in the ``discogs`` section.
+documentation):
+
+#. login to `Discogs`_;
+#. visit the `Developer settings page <https://www.discogs.com/settings/developers>`_;
+#. press the *Generate new token* button;
+#. copy the generated token;
+#. place it in your configuration in the ``discogs`` section as the ``user_token`` option:
+
+   .. code-block:: yaml
+
+      discogs:
+          user_token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
 
 Configuration
 -------------
@@ -51,24 +61,32 @@ This plugin can be configured like other metadata source plugins as described in
 
 There is one additional option in the ``discogs:`` section, ``index_tracks``.
 Index tracks (see the `Discogs guidelines
-<https://support.discogs.com/hc/en-us/articles/360005055373-Database-Guidelines-12-Tracklisting#12.13>`_),
+<https://support.discogs.com/hc/en-us/articles/360005055373-Database-Guidelines-12-Tracklisting#Index_Tracks_And_Headings>`_),
 along with headers, mark divisions between distinct works on the same release
-or within works. When ``index_tracks`` is enabled::
+or within works. When ``index_tracks`` is enabled:
+
+.. code-block:: yaml
 
     discogs:
         index_tracks: yes
 
 beets will incorporate the names of the divisions containing each track into
-the imported track's title. For example, importing
+the imported track's title.
+
+For example, importing
 `this album
 <https://www.discogs.com/Handel-Sutherland-Kirkby-Kwella-Nelson-Watkinson-Bowman-Rolfe-Johnson-Elliott-Partridge-Thomas-The-A/release/2026070>`_
-would result in track names like::
+would result in track names like:
+
+.. code-block:: text
 
     Messiah, Part I: No.1: Sinfony
     Messiah, Part II: No.22: Chorus- Behold The Lamb Of God
     Athalia, Act I, Scene I: Sinfonia
 
-whereas with ``index_tracks`` disabled you'd get::
+whereas with ``index_tracks`` disabled you'd get:
+
+.. code-block:: text
 
     No.1: Sinfony
     No.22: Chorus- Behold The Lamb Of God
@@ -80,7 +98,7 @@ Other configurations available under ``discogs:`` are:
 
 - **append_style_genre**: Appends the Discogs style (if found) to the genre tag. This can be useful if you want more granular genres to categorize your music.
   For example, a release in Discogs might have a genre of "Electronic" and a style of "Techno": enabling this setting would set the genre to be "Electronic, Techno" (assuming default separator of ``", "``) instead of just "Electronic".
-  Default: ``false``
+  Default: ``False``
 - **separator**: How to join multiple genre and style values from Discogs into a string.
   Default: ``", "``
 
@@ -98,5 +116,8 @@ Here are two things you can try:
   default) to force re-authorization.
 * Make sure that your system clock is accurate. The Discogs servers can reject
   your request if your clock is too out of sync.
+
+Matching tracks by Discogs ID is not yet supported. The ``--group-albums``
+option in album import mode provides an alternative to singleton mode for autotagging tracks that are not in album-related folders.
 
 .. _python3-discogs-client: https://github.com/joalla/discogs_client

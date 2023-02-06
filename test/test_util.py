@@ -101,6 +101,7 @@ class UtilTest(unittest.TestCase):
             ])
         self.assertEqual(p, 'foo/_/bar')
 
+    @unittest.skipIf(sys.platform == 'win32', 'win32')
     def test_convert_command_args_keeps_undecodeable_bytes(self):
         arg = b'\x82'  # non-ascii bytes
         cmd_args = util.convert_command_args([arg])

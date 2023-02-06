@@ -362,8 +362,9 @@ class CoverArtArchive(RemoteArtSource):
     GROUP_URL = 'https://coverartarchive.org/release-group/{mbid}'
 
     def get(self, album, plugin, paths):
-        """Return the Cover Art Archive and Cover Art Archive release group URLs
-        using album MusicBrainz release ID and release group ID.
+        """Return the Cover Art Archive and Cover Art Archive release
+        group URLs using album MusicBrainz release ID and release group
+        ID.
         """
 
         def get_image_urls(url, size_suffix=None):

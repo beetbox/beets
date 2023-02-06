@@ -287,6 +287,18 @@ class ModifyTest(unittest.TestCase, TestHelper):
         self.assertEqual(len(list(original_items)), 3)
         self.assertEqual(len(list(new_items)), 7)
 
+    def test_modify_formatted(self):
+        for i in range(0, 3):
+            self.add_item_fixture(title=f"title{i}",
+                                  artist="artist",
+                                  album="album")
+        items = list(self.lib.items())
+        self.modify("title=${title} - append")
+        for item in items:
+            orig_title = item.title
+            item.load()
+            self.assertEqual(item.title, f"{orig_title} - append")
+
     # Album Tests
 
     def test_modify_album(self):
@@ -317,6 +329,13 @@ class ModifyTest(unittest.TestCase, TestHelper):
         item = self.lib.items().get()
         item.read()
         self.assertNotIn(b'newAlbum', item.path)
+
+    def test_modify_album_formatted(self):
+        item = self.lib.items().get()
+        orig_album = item.album
+        self.modify("--album", "album=${album} - append")
+        item.load()
+        self.assertEqual(item.album, f"{orig_album} - append")
 
     # Misc
 
@@ -682,6 +701,28 @@ class UpdateTest(_common.TestCase):
         item = self.lib.items().get()
         self.assertEqual(item.title, 'full')
 
+    @unittest.expectedFailure
+    def test_multivalued_albumtype_roundtrip(self):
+        # https://github.com/beetbox/beets/issues/4528
+
+        # albumtypes is empty for our test fixtures, so populate it first
+        album = self.album
+        # setting albumtypes does not set albumtype currently...
+        # FIXME: When actually fixing the issue 4528, consider whether this
+        # should be set to "album" or ["album"]
+        album.albumtype = "album"
+        album.albumtypes = "album"
+        album.try_sync(write=True, move=False)
+
+        album.load()
+        albumtype_before = album.albumtype
+        self.assertEqual(albumtype_before, "album")
+
+        self._update()
+
+        album.load()
+        self.assertEqual(albumtype_before, album.albumtype)
+
 
 class PrintTest(_common.TestCase):
     def setUp(self):
@@ -728,6 +769,40 @@ class ImportTest(_common.TestCase):
         config['import']['timid'] = True
         self.assertRaises(ui.UserError, commands.import_files, None, [],
                           None)
+
+    def test_parse_paths_from_logfile(self):
+        if os.path.__name__ == 'ntpath':
+            logfile_content = (
+                "import started Wed Jun 15 23:08:26 2022\n"
+                "asis C:\\music\\Beatles, The\\The Beatles; C:\\music\\Beatles, The\\The Beatles\\CD 01; C:\\music\\Beatles, The\\The Beatles\\CD 02\n"  # noqa: E501
+                "duplicate-replace C:\\music\\Bill Evans\\Trio '65\n"
+                "skip C:\\music\\Michael Jackson\\Bad\n"
+                "skip C:\\music\\Soulwax\\Any Minute Now\n"
+            )
+            expected_paths = [
+                "C:\\music\\Beatles, The\\The Beatles",
+                "C:\\music\\Michael Jackson\\Bad",
+                "C:\\music\\Soulwax\\Any Minute Now",
+            ]
+        else:
+            logfile_content = (
+                "import started Wed Jun 15 23:08:26 2022\n"
+                "asis /music/Beatles, The/The Beatles; /music/Beatles, The/The Beatles/CD 01; /music/Beatles, The/The Beatles/CD 02\n"  # noqa: E501
+                "duplicate-replace /music/Bill Evans/Trio '65\n"
+                "skip /music/Michael Jackson/Bad\n"
+                "skip /music/Soulwax/Any Minute Now\n"
+            )
+            expected_paths = [
+                "/music/Beatles, The/The Beatles",
+                "/music/Michael Jackson/Bad",
+                "/music/Soulwax/Any Minute Now",
+            ]
+
+        logfile = os.path.join(self.temp_dir, b"logfile.log")
+        with open(logfile, mode="w") as fp:
+            fp.write(logfile_content)
+        actual_paths = list(commands._paths_from_logfile(logfile))
+        self.assertEqual(actual_paths, expected_paths)
 
 
 @_common.slow_test()

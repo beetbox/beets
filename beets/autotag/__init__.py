@@ -27,7 +27,7 @@ from .hooks import (  # noqa
     TrackMatch,
     Distance,
 )
-from .match import tag_item, tag_album, Proposal  # noqa
+from .match import tag_item, tag_album, current_metadata, Proposal  # noqa
 from .match import Recommendation  # noqa
 
 # Global logger.

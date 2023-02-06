@@ -48,7 +48,8 @@ class TestHelper(helper.TestHelper):
                                                shell_quote(stub), tag)
 
     def assertFileTag(self, path, tag):  # noqa
-        """Assert that the path is a file and the files content ends with `tag`.
+        """Assert that the path is a file and the files content ends
+        with `tag`.
         """
         display_tag = tag
         tag = tag.encode('utf-8')
@@ -174,6 +175,7 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
             'format': 'mp3',
             'formats': {
                 'mp3': self.tagged_copy_cmd('mp3'),
+                'ogg': self.tagged_copy_cmd('ogg'),
                 'opus': {
                     'command': self.tagged_copy_cmd('opus'),
                     'extension': 'ops',
@@ -247,6 +249,49 @@ class ConvertCliTest(unittest.TestCase, TestHelper, ConvertCommand):
         with capture_log('beets.convert') as logs:
             self.run_convert('An impossible query')
         self.assertEqual(logs[0], 'convert: Empty query result.')
+
+    def test_no_transcode_when_maxbr_set_high_and_different_formats(self):
+        self.config['convert']['max_bitrate'] = 5000
+        with control_stdin('y'):
+            self.run_convert()
+        converted = os.path.join(self.convert_dest, b'converted.mp3')
+        self.assertFileTag(converted, 'mp3')
+
+    def test_transcode_when_maxbr_set_low_and_different_formats(self):
+        self.config['convert']['max_bitrate'] = 5
+        with control_stdin('y'):
+            self.run_convert()
+        converted = os.path.join(self.convert_dest, b'converted.mp3')
+        self.assertFileTag(converted, 'mp3')
+
+    def test_transcode_when_maxbr_set_to_none_and_different_formats(self):
+        with control_stdin('y'):
+            self.run_convert()
+        converted = os.path.join(self.convert_dest, b'converted.mp3')
+        self.assertFileTag(converted, 'mp3')
+
+    def test_no_transcode_when_maxbr_set_high_and_same_formats(self):
+        self.config['convert']['max_bitrate'] = 5000
+        self.config['convert']['format'] = 'ogg'
+        with control_stdin('y'):
+            self.run_convert()
+        converted = os.path.join(self.convert_dest, b'converted.ogg')
+        self.assertNoFileTag(converted, 'ogg')
+
+    def test_transcode_when_maxbr_set_low_and_same_formats(self):
+        self.config['convert']['max_bitrate'] = 5
+        self.config['convert']['format'] = 'ogg'
+        with control_stdin('y'):
+            self.run_convert()
+        converted = os.path.join(self.convert_dest, b'converted.ogg')
+        self.assertFileTag(converted, 'ogg')
+
+    def test_transcode_when_maxbr_set_to_none_and_same_formats(self):
+        self.config['convert']['format'] = 'ogg'
+        with control_stdin('y'):
+            self.run_convert()
+        converted = os.path.join(self.convert_dest, b'converted.ogg')
+        self.assertNoFileTag(converted, 'ogg')
 
 
 @_common.slow_test()

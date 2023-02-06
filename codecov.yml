@@ -12,3 +12,6 @@ coverage:
       default:
         informational: true
     changes: no
+
+github_checks:
+  annotations: false

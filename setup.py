@@ -85,7 +85,7 @@ setup(
     },
 
     install_requires=[
-        'unidecode',
+        'unidecode>=1.3.6',
         'musicbrainzngs>=0.4',
         'pyyaml',
         'mediafile>=0.9.0',
@@ -118,6 +118,15 @@ setup(
             'flake8',
             'flake8-docstrings',
             'pep8-naming',
+        ],
+        'mypy': [
+            'mypy',
+            'types-Pillow',
+            'types-urllib3',
+            'types-beautifulsoup4',
+            'types-PyYAML',
+            'types-requests',
+            'types-Flask-Cors',
         ],
 
         # Plugin (optional) dependencies:
