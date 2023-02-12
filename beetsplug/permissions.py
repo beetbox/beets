@@ -6,6 +6,7 @@ like the following in your config.yaml to configure:
             dir: 755
 """
 import os
+import stat
 from beets import config, util
 from beets.plugins import BeetsPlugin
 from beets.util import ancestry
@@ -25,7 +26,7 @@ def check_permissions(path, permission):
     """Check whether the file's permissions equal the given vector.
     Return a boolean.
     """
-    return oct(os.stat(path).st_mode & 0o777) == oct(permission)
+    return oct(stat.S_IMODE(os.stat(path).st_mode)) == oct(permission)
 
 
 def assert_permissions(path, permission, log):
@@ -103,7 +104,8 @@ class Permissions(BeetsPlugin):
                 'setting file permissions on {}',
                 util.displayable_path(path),
             )
-            os.chmod(util.syspath(path), file_perm)
+            if not check_permissions(util.syspath(path), file_perm):
+                os.chmod(util.syspath(path), file_perm)
 
             # Checks if the destination path has the permissions configured.
             assert_permissions(path, file_perm, self._log)
@@ -115,7 +117,8 @@ class Permissions(BeetsPlugin):
                 'setting directory permissions on {}',
                 util.displayable_path(path),
             )
-            os.chmod(util.syspath(path), dir_perm)
+            if not check_permissions(util.syspath(path), dir_perm):
+                os.chmod(util.syspath(path), dir_perm)
 
             # Checks if the destination path has the permissions configured.
             assert_permissions(path, dir_perm, self._log)
