@@ -7,9 +7,9 @@ like the following in your config.yaml to configure:
 """
 import os
 import stat
-from beets import config, util
+from beets import config
 from beets.plugins import BeetsPlugin
-from beets.util import ancestry
+from beets.util import ancestry, displayable_path, syspath
 
 
 def convert_perm(perm):
@@ -26,7 +26,7 @@ def check_permissions(path, permission):
     """Check whether the file's permissions equal the given vector.
     Return a boolean.
     """
-    return oct(stat.S_IMODE(os.stat(path).st_mode)) == oct(permission)
+    return oct(stat.S_IMODE(os.stat(syspath(path)).st_mode)) == oct(permission)
 
 
 def assert_permissions(path, permission, log):
@@ -34,15 +34,12 @@ def assert_permissions(path, permission, log):
     log a warning message. Return a boolean indicating the match, like
     `check_permissions`.
     """
-    if not check_permissions(util.syspath(path), permission):
-        log.warning(
-            'could not set permissions on {}',
-            util.displayable_path(path),
-        )
+    if not check_permissions(path, permission):
+        log.warning('could not set permissions on {}', displayable_path(path))
         log.debug(
             'set permissions to {}, but permissions are now {}',
             permission,
-            os.stat(util.syspath(path)).st_mode & 0o777,
+            os.stat(syspath(path)).st_mode & 0o777,
         )
 
 
@@ -102,10 +99,10 @@ class Permissions(BeetsPlugin):
             # Changing permissions on the destination file.
             self._log.debug(
                 'setting file permissions on {}',
-                util.displayable_path(path),
+                displayable_path(path),
             )
-            if not check_permissions(util.syspath(path), file_perm):
-                os.chmod(util.syspath(path), file_perm)
+            if not check_permissions(path, file_perm):
+                os.chmod(syspath(path), file_perm)
 
             # Checks if the destination path has the permissions configured.
             assert_permissions(path, file_perm, self._log)
@@ -115,10 +112,10 @@ class Permissions(BeetsPlugin):
             # Changing permissions on the destination directory.
             self._log.debug(
                 'setting directory permissions on {}',
-                util.displayable_path(path),
+                displayable_path(path),
             )
-            if not check_permissions(util.syspath(path), dir_perm):
-                os.chmod(util.syspath(path), dir_perm)
+            if not check_permissions(path, dir_perm):
+                os.chmod(syspath(path), dir_perm)
 
             # Checks if the destination path has the permissions configured.
             assert_permissions(path, dir_perm, self._log)
