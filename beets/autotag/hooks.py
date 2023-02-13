@@ -500,7 +500,7 @@ class Distance:
 
     # Adding components.
 
-    def _eq(self, value1: Union['Distance', Patterntype], value2) -> bool:
+    def _eq(self, value1: Any, value2: Any) -> bool:
         """Returns True if `value1` is equal to `value2`. `value1` may
         be a compiled regular expression, in which case it will be
         matched against `value2`.
@@ -551,7 +551,7 @@ class Distance:
         else:
             self.add(key, 0.0)
 
-    def add_number(self, key: str, number1: float, number2: float):
+    def add_number(self, key: str, number1: int, number2: int):
         """Adds a distance penalty of 1.0 for each number of difference
         between `number1` and `number2`, or 0.0 when there is no
         difference. Use this when there is no upper limit on the
@@ -587,7 +587,12 @@ class Distance:
             dist = 1.0
         self.add(key, dist)
 
-    def add_ratio(self, key: str, number1: float, number2: float):
+    def add_ratio(
+            self,
+            key: str,
+            number1: Union[int, float],
+            number2: Union[int, float],
+    ):
         """Adds a distance penalty for `number1` as a ratio of `number2`.
         `number1` is bound at 0 and `number2`.
         """
@@ -642,7 +647,7 @@ def track_for_mbid(recording_id: str) -> Optional[TrackInfo]:
         exc.log(log)
 
 
-def albums_for_id(album_id: str) -> Iterable[Union[None, AlbumInfo]]:
+def albums_for_id(album_id: str) -> Iterable[AlbumInfo]:
     """Get a list of albums for an ID."""
     a = album_for_mbid(album_id)
     if a:
@@ -653,7 +658,7 @@ def albums_for_id(album_id: str) -> Iterable[Union[None, AlbumInfo]]:
             yield a
 
 
-def tracks_for_id(track_id: str) -> Iterable[Union[None, TrackInfo]]:
+def tracks_for_id(track_id: str) -> Iterable[TrackInfo]:
     """Get a list of tracks for an ID."""
     t = track_for_mbid(track_id)
     if t:
