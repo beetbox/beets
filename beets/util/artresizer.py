@@ -23,12 +23,14 @@ import os.path
 import platform
 import re
 from tempfile import NamedTemporaryFile
-from typing import AnyStr, Tuple, Optional, Mapping, Union
-from PIL import Image
+from typing import AnyStr, Tuple, Optional, Mapping, Union, TYPE_CHECKING
 from urllib.parse import urlencode
 from beets import logging
 from beets import util
 from beets.util import bytestring_path, displayable_path, py3_path, syspath
+
+if TYPE_CHECKING:
+    from PIL import Image
 
 PROXY_URL = 'https://images.weserv.nl/'
 
