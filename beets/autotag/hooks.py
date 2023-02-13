@@ -17,7 +17,7 @@
 from collections import namedtuple
 from functools import total_ordering
 import re
-from typing import Dict, List, Tuple, Iterator, Union, NewType, Any, Optional, \
+from typing import Dict, List, Tuple, Iterator, Union, NewType, Any, Optional,\
     Iterable, Callable, TypeVar
 
 from beets import logging
@@ -40,6 +40,7 @@ except AttributeError:
     Patterntype = NewType('Patterntype', re.Pattern)
 
 T = TypeVar('T')
+
 
 # Classes used to represent candidate options.
 class AttrDict(dict):
