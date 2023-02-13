@@ -590,7 +590,7 @@ def match_track(
         yield track_info(recording)
 
 
-def _parse_id(s: str) -> Optional[Union[str, bytes]]:
+def _parse_id(s: str) -> Optional[str]:
     """Search for a MusicBrainz ID in the given string and return it. If
     no ID can be found, return None.
     """
