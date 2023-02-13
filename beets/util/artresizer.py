@@ -22,12 +22,14 @@ import platform
 import re
 import subprocess
 from itertools import chain
-from typing import AnyStr, Tuple, Optional, Mapping, Union
-from PIL import Image
+from typing import AnyStr, Tuple, Optional, Mapping, Union, TYPE_CHECKING
 from urllib.parse import urlencode
 
 from beets import logging, util
 from beets.util import displayable_path, get_temp_filename, syspath
+
+if TYPE_CHECKING:
+    from PIL import Image
 
 PROXY_URL = "https://images.weserv.nl/"
 
