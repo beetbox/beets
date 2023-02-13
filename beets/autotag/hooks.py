@@ -18,7 +18,7 @@ from collections import namedtuple
 from functools import total_ordering
 import re
 from typing import Dict, List, Tuple, Iterator, Union, NewType, Any, Optional, \
-    Iterable, Callable
+    Iterable, Callable, TypeVar
 
 from beets import logging
 from beets import plugins
@@ -39,6 +39,7 @@ except AttributeError:
     Pattern = re.Pattern
     Patterntype = NewType('Patterntype', re.Pattern)
 
+T = TypeVar('T')
 
 # Classes used to represent candidate options.
 class AttrDict(dict):
@@ -500,7 +501,7 @@ class Distance:
 
     # Adding components.
 
-    def _eq(self, value1: Any, value2: Any) -> bool:
+    def _eq(self, value1: T, value2: T) -> bool:
         """Returns True if `value1` is equal to `value2`. `value1` may
         be a compiled regular expression, in which case it will be
         matched against `value2`.
@@ -525,7 +526,7 @@ class Distance:
             self,
             key: str,
             value: Any,
-            options: Union[List, Tuple, Patterntype],
+            options: Union[List[T, ...], Tuple[T, ...], T],
     ):
         """Adds a distance penalty of 1.0 if `value` doesn't match any
         of the values in `options`. If an option is a compiled regular
@@ -568,7 +569,7 @@ class Distance:
             self,
             key: str,
             value: Any,
-            options: Union[List, Tuple, Patterntype],
+            options: Union[List[T, ...], Tuple[T, ...], T],
     ):
         """Adds a distance penalty that corresponds to the position at
         which `value` appears in `options`. A distance penalty of 0.0
