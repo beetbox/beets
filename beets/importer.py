@@ -35,6 +35,7 @@ from beets import dbcore
 from beets import plugins
 from beets import util
 from beets import config
+from beets.library import Album
 from beets.util import pipeline, sorted_walk, ancestry, MoveOperation
 from beets.util import syspath, normpath, displayable_path
 from enum import Enum
@@ -168,6 +169,30 @@ def history_get():
     if HISTORY_KEY not in state:
         return set()
     return state[HISTORY_KEY]
+
+
+def quality_score(item):
+    """Take an item (album, track, or list of tracks) and compute a
+    quality score based on the track data
+    """
+    # TODO: use better statistics to compute score
+    # maybe range, LAME preset
+    item = get_items_as_list(item)
+    total_bitrate = sum([i.bitrate for i in item])
+    return total_bitrate / len(item)
+
+
+def get_items_as_list(obj):
+    """Decompose an obj into items in a list, where obj is an album,
+    list, or single track
+    """
+    if isinstance(obj, list):
+        pass
+    elif isinstance(obj, Album):
+        obj = list(obj.items())
+    else:
+        obj = [obj]
+    return obj
 
 
 # Abstract session class.
@@ -565,14 +590,28 @@ class ImportTask(BaseImportTask):
     def remove_duplicates(self, lib):
         duplicate_items = self.duplicate_items(lib)
         log.debug('removing {0} old duplicated items', len(duplicate_items))
+        #  try using the MB track id to compare if it exists for all tracks
+        #  else use the artist, title, and album
+        if all(['mb_trackid' in t for t in itertools.chain(duplicate_items)]):
+
+            def get_id(item):
+                return item.mb_trackid
+        else:
+            keys = config['import']['duplicate_keys']['item'].as_str_seq()
+
+            def get_id(item):
+                return str({k: item.get(k) for k in keys})
+
+        existing = {get_id(t) for t in self.items}
         for item in duplicate_items:
-            item.remove()
-            if lib.directory in util.ancestry(item.path):
-                log.debug('deleting duplicate {0}',
-                          util.displayable_path(item.path))
-                util.remove(item.path)
-                util.prune_dirs(os.path.dirname(item.path),
-                                lib.directory)
+            if get_id(item) in existing:
+                item.remove()
+                if lib.directory in util.ancestry(item.path):
+                    log.debug('deleting duplicate {0}',
+                              util.displayable_path(item.path))
+                    util.remove(item.path)
+                    util.prune_dirs(os.path.dirname(item.path),
+                                    lib.directory)
 
     def set_fields(self, lib):
         """Sets the fields given at CLI or configuration to the specified
@@ -1482,6 +1521,7 @@ def resolve_duplicates(session, task):
                 'remove': 'r',
                 'merge': 'm',
                 'ask': 'a',
+                'upgrade': 'u',
             })
             log.debug('default action for duplicates: {0}', duplicate_action)
 
@@ -1497,6 +1537,15 @@ def resolve_duplicates(session, task):
             elif duplicate_action == 'm':
                 # Merge duplicates together
                 task.should_merge_duplicates = True
+            elif duplicate_action == 'u':
+                existing = max(
+                    [quality_score(d) for d in found_duplicates],
+                )
+                new_score = quality_score(task.imported_items())
+                if new_score > existing:
+                    task.should_remove_duplicates = True
+                else:
+                    task.set_choice(action.SKIP)
             else:
                 # No default action set; ask the session.
                 session.resolve_duplicate(task, found_duplicates)

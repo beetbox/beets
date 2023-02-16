@@ -240,12 +240,12 @@ one you're importing, you may see a prompt like this::
     [S]kip new, Keep all, Remove old, Merge all?
 
 Beets wants to keep you safe from duplicates, which can be a real pain, so you
-have four choices in this situation. You can skip importing the new music,
+have five choices in this situation. You can skip importing the new music,
 choosing to keep the stuff you already have in your library; you can keep both
 the old and the new music; you can remove the existing music and choose the
 new stuff; or you can merge all the new and old tracks into a single album.
-If you choose that "remove" option, any duplicates will be
-removed from your library database---and, if the corresponding files are located
+If you choose that "remove" option, any duplicates will be removed from your library
+database---and, if the corresponding files are located
 inside of your beets library directory, the files themselves will be deleted as
 well.
 

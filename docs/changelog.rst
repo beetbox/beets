@@ -8,8 +8,7 @@ Changelog goes here!
 
 New features:
 
-* We now import the remixer field from Musicbrainz into the library.
-  :bug:`4428`
+* :doc:`/guides/tagger`: Added an `upgrade` option for duplicates that chooses the file with the highest bitrate.
 * :doc:`/plugins/mbsubmit`: Added a new `mbsubmit` command to print track information to be submitted to MusicBrainz after initial import.
   :bug:`4455`
 * Added `spotify_updated` field to track when the information was last updated.
@@ -36,8 +35,7 @@ New features:
 * Add :ref:`exact match <exact-match>` queries, using the prefixes ``=`` and
   ``=~``.
   :bug:`4251`
-* :doc:`/plugins/discogs`: Permit appending style to genre.
-* :doc:`plugins/discogs`: Implement item_candidates for matching singletons.
+* :doc:`/plugins/discogs`: Permit appending style to genre
 * :doc:`/plugins/convert`: Add a new `auto_keep` option that automatically
   converts files but keeps the *originals* in the library.
   :bug:`1840` :bug:`4302`
@@ -50,21 +48,9 @@ New features:
   :bug:`4438`
 * Add a new ``import.ignored_alias_types`` config option to allow for
   specific alias types to be skipped over when importing items/albums.
-* :doc:`/plugins/smartplaylist`: A new ``--pretend`` option lets the user see
-  what a new or changed smart playlist saved in the config is actually
-  returning.
-  :bug:`4573`
-* :doc:`/plugins/fromfilename`:  Add debug log messages that inform when the
-  plugin replaced bad (missing) artist, title or tracknumber metadata.
-  :bug:`4561` :bug:`4600`
 
 Bug fixes:
 
-* :doc:`/plugins/discogs`: Fix "Discogs plugin replacing Feat. or Ft. with
-  a comma" by fixing an oversight that removed a functionality from the code
-  base when the MetadataSourcePlugin abstract class was introduced in PR's
-  #3335 and #3371.
-  :bug:`4401`
 * :doc:`/plugins/convert`: Set default ``max_bitrate`` value to ``None`` to 
   avoid transcoding when this parameter is not set. :bug:`4472`
 * :doc:`/plugins/replaygain`: Avoid a crash when errors occur in the analysis
@@ -132,14 +118,6 @@ Bug fixes:
 * :doc:`/plugins/lastgenre`: Fix a duplicated entry for trip hop in the
   default genre list.
   :bug:`4510`
-* :doc:`plugins/lyrics`: Fixed issue with Tekstowo backend not actually checking
-  if the found song matches.
-  :bug:`4406`
-* :doc:`/plugins/fromfilename`: Fix failed detection of <track> <title>
-  filename patterns.
-  :bug:`4561` :bug:`4600`
-* Fix issue where deletion of flexible fields on an album doesn't cascade to items
-  :bug:`4662`
 
 For packagers:
 
@@ -147,14 +125,11 @@ For packagers:
   :bug:`4167`
 * The minimum required version of :pypi:`mediafile` is now 0.9.0.
 
-Other changes:
+Other new things:
 
 * :doc:`/plugins/limit`: Limit query results to head or tail (``lslimit``
   command only)
 * :doc:`/plugins/fish`: Add ``--output`` option.
-* :doc:`/plugins/lyrics`: Remove Musixmatch from default enabled sources as
-  they are currently blocking requests from the beets user agent.
-  :bug:`4585`
 
 1.6.0 (November 27, 2021)
 -------------------------

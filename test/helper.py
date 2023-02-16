@@ -534,7 +534,7 @@ class ImportSessionFixture(importer.ImportSession):
 
     choose_item = choose_match
 
-    Resolution = Enum('Resolution', 'REMOVE SKIP KEEPBOTH MERGE')
+    Resolution = Enum('Resolution', 'REMOVE SKIP KEEPBOTH MERGE UPGRADE')
 
     default_resolution = 'REMOVE'
 
