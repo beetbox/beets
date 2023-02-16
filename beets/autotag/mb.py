@@ -14,6 +14,7 @@
 
 """Searches for albums in the MusicBrainz database.
 """
+from __future__ import annotations
 from typing import List, Tuple, Dict, Optional, Iterator
 
 import musicbrainzngs

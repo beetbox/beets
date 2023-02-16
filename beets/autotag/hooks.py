@@ -14,6 +14,7 @@
 
 """Glue between metadata sources and the matching logic."""
 
+from __future__ import annotations
 from collections import namedtuple
 from functools import total_ordering
 import re
