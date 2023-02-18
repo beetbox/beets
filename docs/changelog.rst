@@ -60,6 +60,8 @@ New features:
 
 Bug fixes:
 
+* :doc:`/plugins/fetchart`: Fix fetching from Cover Art Archive when the
+  `maxwidth` option is set to one of the supported Cover Art Archive widths.
 * :doc:`/plugins/discogs`: Fix "Discogs plugin replacing Feat. or Ft. with
   a comma" by fixing an oversight that removed a functionality from the code
   base when the MetadataSourcePlugin abstract class was introduced in PR's
