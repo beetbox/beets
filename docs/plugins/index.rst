@@ -156,7 +156,7 @@ Metadata
 --------
 
 :doc:`absubmit <absubmit>`
-   Analyse audio with the `streaming_extractor_music`_ program and submit the metadata to the AcousticBrainz server
+   Analyse audio with the `streaming_extractor_music`_ program and submit the metadata to an AcousticBrainz server
 
 :doc:`acousticbrainz <acousticbrainz>`
    Fetch various AcousticBrainz metadata

@@ -155,6 +155,12 @@ For packagers:
 
 Other changes:
 
+* :doc:`/plugins/absubmit`: Deprecate the ``absubmit`` plugin since
+  AcousticBrainz has stopped accepting new submissions.
+  :bug:`4627`
+* :doc:`/plugins/acousticbrainz`: Deprecate the ``acousticbrainz`` plugin
+  since the AcousticBrainz project has shut down.
+  :bug:`4627`
 * :doc:`/plugins/limit`: Limit query results to head or tail (``lslimit``
   command only)
 * :doc:`/plugins/fish`: Add ``--output`` option.
