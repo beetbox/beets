@@ -15,7 +15,7 @@
 """Searches for albums in the MusicBrainz database.
 """
 from __future__ import annotations
-from typing import List, Tuple, Dict, Optional, Iterator
+from typing import Any, List, Sequence, Tuple, Dict, Optional, Iterator, cast
 
 import musicbrainzngs
 import re
@@ -140,12 +140,13 @@ def _preferred_alias(aliases: List):
         return matches[0]
 
 
-def _preferred_release_event(release: Dict) -> Tuple[str, str]:
+def _preferred_release_event(release: Dict[str, Any]) -> Tuple[str, str]:
     """Given a release, select and return the user's preferred release
     event as a tuple of (country, release_date). Fall back to the
     default release event if a preferred event is not found.
     """
     countries = config['match']['preferred']['countries'].as_str_seq()
+    countries = cast(Sequence, countries)
 
     for country in countries:
         for event in release.get('release-event-list', {}):
@@ -155,7 +156,10 @@ def _preferred_release_event(release: Dict) -> Tuple[str, str]:
             except KeyError:
                 pass
 
-    return release.get('country'), release.get('date')
+    return (
+        cast(str, release.get('country')),
+        cast(str, release.get('date'))
+    )
 
 
 def _flatten_artist_credit(credit: List[Dict]) -> Tuple[str, str, str]:
@@ -258,7 +262,7 @@ def track_info(
         )
 
     if recording.get('length'):
-        info.length = int(recording['length']) / (1000.0)
+        info.length = int(recording['length']) / 1000.0
 
     info.trackdisambig = recording.get('disambiguation')
 
@@ -498,12 +502,14 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
             release['release-group'].get('genre-list', []),
             release.get('genre-list', []),
         ]
-        genres = Counter()
+        genres: Counter[str] = Counter()
         for source in sources:
             for genreitem in source:
                 genres[genreitem['name']] += int(genreitem['count'])
-        info.genre = '; '.join(g[0] for g in sorted(genres.items(),
-                                                    key=lambda g: -g[1]))
+        info.genre = '; '.join(
+            genre for genre, _count
+            in sorted(genres.items(), key=lambda g: -g[1])
+        )
 
     extra_albumdatas = plugins.send('mb_album_extract', data=release)
     for extra_albumdata in extra_albumdatas:
@@ -517,7 +523,7 @@ def match_album(
     artist: str,
     album: str,
     tracks: Optional[int] = None,
-    extra_tags: Dict = None,
+    extra_tags: Optional[Dict[str, Any]] = None,
 ) -> Iterator[beets.autotag.hooks.AlbumInfo]:
     """Searches for a single album ("release" in MusicBrainz parlance)
     and returns an iterator over AlbumInfo objects. May raise a
@@ -538,9 +544,9 @@ def match_album(
 
     # Additional search cues from existing metadata.
     if extra_tags:
-        for tag in extra_tags:
+        for tag, value in extra_tags.items():
             key = FIELDS_TO_MB_KEYS[tag]
-            value = str(extra_tags.get(tag, '')).lower().strip()
+            value = str(value).lower().strip()
             if key == 'catno':
                 value = value.replace(' ', '')
             if value:
@@ -596,8 +602,9 @@ def _parse_id(s: str) -> Optional[str]:
     """
     # Find the first thing that looks like a UUID/MBID.
     match = re.search('[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}', s)
-    if match:
-        return match.group()
+    if match is not None:
+        return match.group() if match else None
+    return None
 
 
 def album_for_id(releaseid: str) -> Optional[beets.autotag.hooks.AlbumInfo]:
@@ -609,7 +616,7 @@ def album_for_id(releaseid: str) -> Optional[beets.autotag.hooks.AlbumInfo]:
     albumid = _parse_id(releaseid)
     if not albumid:
         log.debug('Invalid MBID ({0}).', releaseid)
-        return
+        return None
     try:
         res = musicbrainzngs.get_release_by_id(albumid,
                                                RELEASE_INCLUDES)
@@ -629,7 +636,7 @@ def track_for_id(releaseid: str) -> Optional[beets.autotag.hooks.TrackInfo]:
     trackid = _parse_id(releaseid)
     if not trackid:
         log.debug('Invalid MBID ({0}).', releaseid)
-        return
+        return None
     try:
         res = musicbrainzngs.get_recording_by_id(trackid, TRACK_INCLUDES)
     except musicbrainzngs.ResponseError:
