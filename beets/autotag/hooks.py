@@ -18,8 +18,8 @@ from __future__ import annotations
 from collections import namedtuple
 from functools import total_ordering
 import re
-from typing import Dict, List, Tuple, Iterator, Union, NewType, Any, Optional,\
-    Iterable, Callable, TypeVar, cast
+from typing import Dict, List, Tuple, Iterator, Union, Any, Optional,\
+    Iterable, Callable, cast
 
 from beets import logging
 from beets import plugins
