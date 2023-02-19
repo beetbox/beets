@@ -298,9 +298,9 @@ You can always get help using the ``beet help`` command. The plain ``beet help``
 command lists all the available commands; then, for example, ``beet help
 import`` gives more specific help about the ``import`` command.
 
-Please let me know what you think of beets via `the discussion board`_ or
-`Twitter`_.
+Please let us know what you think of beets via `the discussion board`_ or
+`Mastodon`_.
 
 .. _the mailing list: https://groups.google.com/group/beets-users
-.. _the discussion board: https://discourse.beets.io
-.. _twitter: https://twitter.com/b33ts
+.. _the discussion board: https://github.com/beetbox/beets/discussions
+.. _mastodon: https://fosstodon.org/@beets
