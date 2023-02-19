@@ -391,7 +391,7 @@ class Distance:
         self._penalties = {}
 
     @LazyClassProperty
-    def _weights(cls) -> Dict:  # noqa: N805
+    def _weights(cls) -> Dict[str, float]:  # noqa: N805
         """A dictionary from keys to floating-point weights.
         """
         weights_view = config['match']['distance_weights']
