@@ -298,6 +298,9 @@ You can always get help using the ``beet help`` command. The plain ``beet help``
 command lists all the available commands; then, for example, ``beet help
 import`` gives more specific help about the ``import`` command.
 
+If you need more of a walkthrough, you can read an illustrated one `on the
+beets blog <https://beets.io/blog/walkthrough.html>`_.
+
 Please let us know what you think of beets via `the discussion board`_ or
 `Mastodon`_.
 
