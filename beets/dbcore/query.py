@@ -526,19 +526,6 @@ class FalseQuery(Query):
 
 # Time/date queries.
 
-def _to_epoch_time(date):
-    """Convert a `datetime` object to an integer number of seconds since
-    the (local) Unix epoch.
-    """
-    if hasattr(date, 'timestamp'):
-        # The `timestamp` method exists on Python 3.3+.
-        return int(date.timestamp())
-    else:
-        epoch = datetime.fromtimestamp(0)
-        delta = date - epoch
-        return int(delta.total_seconds())
-
-
 def _parse_periods(pattern):
     """Parse a string containing two dates separated by two dots (..).
     Return a pair of `Period` objects.
@@ -724,13 +711,15 @@ class DateQuery(FieldQuery):
         clause_parts = []
         subvals = []
 
+        # Convert the `datetime` objects to an integer number of seconds since
+        # the (local) Unix epoch using `datetime.timestamp()`.
         if self.interval.start:
             clause_parts.append(self._clause_tmpl.format(self.field, ">="))
-            subvals.append(_to_epoch_time(self.interval.start))
+            subvals.append(int(self.interval.start.timestamp()))
 
         if self.interval.end:
             clause_parts.append(self._clause_tmpl.format(self.field, "<"))
-            subvals.append(_to_epoch_time(self.interval.end))
+            subvals.append(int(self.interval.end.timestamp()))
 
         if clause_parts:
             # One- or two-sided interval.
