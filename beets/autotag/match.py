@@ -19,7 +19,18 @@ releases and tracks.
 
 import datetime
 import re
-from typing import Any, List, Dict, Sequence, Tuple, Iterable, TypeVar, Union, Optional, cast
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from munkres import Munkres
 from collections import namedtuple
@@ -64,7 +75,9 @@ Proposal = namedtuple('Proposal', ('candidates', 'recommendation'))
 
 # Primary matching functionality.
 
-def current_metadata(items: Iterable[Item]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+def current_metadata(
+    items: Iterable[Item],
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     """Extract the likely current metadata for an album given a list of its
     items. Return two dictionaries:
      - The most common value for each field.
@@ -141,10 +154,18 @@ def track_distance(
 
     # Length.
     if track_info.length:
-        diff = abs(cast(float, item.length) - track_info.length) - \
-            cast(Union[float, int], config['match']['track_length_grace'].as_number())
-        dist.add_ratio('track_length', diff,
-                       cast(Union[float, int], config['match']['track_length_max'].as_number()))
+        item_length = cast(float, item.length)
+        track_length_grace = cast(
+            Union[float, int],
+            config['match']['track_length_grace'].as_number(),
+        )
+        track_length_max = cast(
+            Union[float, int],
+            config['match']['track_length_max'].as_number(),
+        )
+
+        diff = abs(item_length - track_info.length) - track_length_grace
+        dist.add_ratio('track_length', diff, track_length_max)
 
     # Title.
     dist.add_string('track_title', item.title, track_info.title)
@@ -359,12 +380,17 @@ def _recommendation(
 
 AnyMatch = TypeVar("AnyMatch", TrackMatch, AlbumMatch)
 
+
 def _sort_candidates(candidates: Iterable[AnyMatch]) -> Sequence[AnyMatch]:
     """Sort candidates by distance."""
     return sorted(candidates, key=lambda match: match.distance)
 
 
-def _add_candidate(items: Sequence[Item], results: Dict[Any, AlbumMatch], info: AlbumInfo):
+def _add_candidate(
+    items: Sequence[Item],
+    results: Dict[Any, AlbumMatch],
+    info: AlbumInfo,
+):
     """Given a candidate AlbumInfo object, attempt to add the candidate
     to the output dictionary of AlbumMatch objects. This involves
     checking the track count, ordering the items, checking for
@@ -397,7 +423,8 @@ def _add_candidate(items: Sequence[Item], results: Dict[Any, AlbumMatch], info: 
 
     # Skip matches with ignored penalties.
     penalties = [key for key, _ in dist]
-    for penalty in cast(Sequence[str], config['match']['ignored'].as_str_seq()):
+    ignored = cast(Sequence[str], config['match']['ignored'].as_str_seq())
+    for penalty in ignored:
         if penalty in penalties:
             log.debug('Ignored. Penalty: {0}', penalty)
             return
