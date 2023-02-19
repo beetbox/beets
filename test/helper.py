@@ -453,7 +453,7 @@ class TestHelper:
     def run_with_output(self, *args):
         with capture_stdout() as out:
             self.run_command(*args)
-        return util.text_string(out.getvalue())
+        return out.getvalue()
 
     # Safe file operations
 
