@@ -19,7 +19,18 @@ releases and tracks.
 
 import datetime
 import re
-from typing import List, Dict, Tuple, Iterable, Union, Optional
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+    Union,
+    cast,
+)
 
 from munkres import Munkres
 from collections import namedtuple
@@ -64,7 +75,9 @@ Proposal = namedtuple('Proposal', ('candidates', 'recommendation'))
 
 # Primary matching functionality.
 
-def current_metadata(items: List[Item]) -> Tuple[Dict, Dict]:
+def current_metadata(
+    items: Iterable[Item],
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     """Extract the likely current metadata for an album given a list of its
     items. Return two dictionaries:
      - The most common value for each field.
@@ -90,9 +103,9 @@ def current_metadata(items: List[Item]) -> Tuple[Dict, Dict]:
 
 
 def assign_items(
-        items: List[Item],
-        tracks: List[TrackInfo],
-) -> Tuple[Dict, List[Item], List[TrackInfo]]:
+        items: Sequence[Item],
+        tracks: Sequence[TrackInfo],
+) -> Tuple[Dict[Item, TrackInfo], List[Item], List[TrackInfo]]:
     """Given a list of Items and a list of TrackInfo objects, find the
     best mapping between them. Returns a mapping from Items to TrackInfo
     objects, a set of extra Items, and a set of extra TrackInfo
@@ -100,10 +113,10 @@ def assign_items(
     of objects of the two types.
     """
     # Construct the cost matrix.
-    costs = []
+    costs: List[List[Distance]] = []
     for item in items:
         row = []
-        for i, track in enumerate(tracks):
+        for track in tracks:
             row.append(track_distance(item, track))
         costs.append(row)
 
@@ -141,10 +154,18 @@ def track_distance(
 
     # Length.
     if track_info.length:
-        diff = abs(item.length - track_info.length) - \
-            config['match']['track_length_grace'].as_number()
-        dist.add_ratio('track_length', diff,
-                       config['match']['track_length_max'].as_number())
+        item_length = cast(float, item.length)
+        track_length_grace = cast(
+            Union[float, int],
+            config['match']['track_length_grace'].as_number(),
+        )
+        track_length_max = cast(
+            Union[float, int],
+            config['match']['track_length_max'].as_number(),
+        )
+
+        diff = abs(item_length - track_info.length) - track_length_grace
+        dist.add_ratio('track_length', diff, track_length_max)
 
     # Title.
     dist.add_string('track_title', item.title, track_info.title)
@@ -169,7 +190,7 @@ def track_distance(
 
 
 def distance(
-        items: Iterable[Item],
+        items: Sequence[Item],
         album_info: AlbumInfo,
         mapping: Dict[Item, TrackInfo],
 ) -> Distance:
@@ -196,6 +217,7 @@ def distance(
     if album_info.media:
         # Preferred media options.
         patterns = config['match']['preferred']['media'].as_str_seq()
+        patterns = cast(Sequence, patterns)
         options = [re.compile(r'(\d+x)?(%s)' % pat, re.I) for pat in patterns]
         if options:
             dist.add_priority('media', album_info.media, options)
@@ -232,6 +254,7 @@ def distance(
 
     # Preferred countries.
     patterns = config['match']['preferred']['countries'].as_str_seq()
+    patterns = cast(Sequence, patterns)
     options = [re.compile(pat, re.I) for pat in patterns]
     if album_info.country and options:
         dist.add_priority('country', album_info.country, options)
@@ -265,11 +288,11 @@ def distance(
         dist.add('tracks', dist.tracks[track].distance)
 
     # Missing tracks.
-    for i in range(len(album_info.tracks) - len(mapping)):
+    for _ in range(len(album_info.tracks) - len(mapping)):
         dist.add('missing_tracks', 1.0)
 
     # Unmatched tracks.
-    for i in range(len(items) - len(mapping)):
+    for _ in range(len(items) - len(mapping)):
         dist.add('unmatched_tracks', 1.0)
 
     # Plugins.
@@ -303,7 +326,7 @@ def match_by_id(items: Iterable[Item]):
 
 
 def _recommendation(
-        results: List[Union[AlbumMatch, TrackMatch]],
+        results: Sequence[Union[AlbumMatch, TrackMatch]],
 ) -> Recommendation:
     """Given a sorted list of AlbumMatch or TrackMatch objects, return a
     recommendation based on the results' distances.
@@ -355,12 +378,19 @@ def _recommendation(
     return rec
 
 
-def _sort_candidates(candidates) -> Iterable:
+AnyMatch = TypeVar("AnyMatch", TrackMatch, AlbumMatch)
+
+
+def _sort_candidates(candidates: Iterable[AnyMatch]) -> Sequence[AnyMatch]:
     """Sort candidates by distance."""
     return sorted(candidates, key=lambda match: match.distance)
 
 
-def _add_candidate(items: Iterable[Item], results: Dict, info: AlbumInfo):
+def _add_candidate(
+    items: Sequence[Item],
+    results: Dict[Any, AlbumMatch],
+    info: AlbumInfo,
+):
     """Given a candidate AlbumInfo object, attempt to add the candidate
     to the output dictionary of AlbumMatch objects. This involves
     checking the track count, ordering the items, checking for
@@ -380,7 +410,7 @@ def _add_candidate(items: Iterable[Item], results: Dict, info: AlbumInfo):
         return
 
     # Discard matches without required tags.
-    for req_tag in config['match']['required'].as_str_seq():
+    for req_tag in cast(Sequence, config['match']['required'].as_str_seq()):
         if getattr(info, req_tag) is None:
             log.debug('Ignored. Missing required tag: {0}', req_tag)
             return
@@ -393,7 +423,8 @@ def _add_candidate(items: Iterable[Item], results: Dict, info: AlbumInfo):
 
     # Skip matches with ignored penalties.
     penalties = [key for key, _ in dist]
-    for penalty in config['match']['ignored'].as_str_seq():
+    ignored = cast(Sequence[str], config['match']['ignored'].as_str_seq())
+    for penalty in ignored:
         if penalty in penalties:
             log.debug('Ignored. Penalty: {0}', penalty)
             return
@@ -428,20 +459,19 @@ def tag_album(
     """
     # Get current metadata.
     likelies, consensus = current_metadata(items)
-    cur_artist = likelies['artist']
-    cur_album = likelies['album']
+    cur_artist = cast(str, likelies['artist'])
+    cur_album = cast(str, likelies['album'])
     log.debug('Tagging {0} - {1}', cur_artist, cur_album)
 
-    # The output result (distance, AlbumInfo) tuples (keyed by MB album
-    # ID).
-    candidates = {}
+    # The output result, keys are the MB album ID.
+    candidates: Dict[Any, AlbumMatch] = {}
 
     # Search by explicit ID.
     if search_ids:
         for search_id in search_ids:
             log.debug('Searching for album ID: {0}', search_id)
-            for id_candidate in hooks.albums_for_id(search_id):
-                _add_candidate(items, candidates, id_candidate)
+            for album_info_for_id in hooks.albums_for_id(search_id):
+                _add_candidate(items, candidates, album_info_for_id)
 
     # Use existing metadata or text search.
     else:
@@ -488,9 +518,9 @@ def tag_album(
 
     log.debug('Evaluating {0} candidates.', len(candidates))
     # Sort and get the recommendation.
-    candidates = _sort_candidates(candidates.values())
-    rec = _recommendation(candidates)
-    return cur_artist, cur_album, Proposal(candidates, rec)
+    candidates_sorted = _sort_candidates(candidates.values())
+    rec = _recommendation(candidates_sorted)
+    return cur_artist, cur_album, Proposal(candidates_sorted, rec)
 
 
 def tag_item(
@@ -510,6 +540,7 @@ def tag_item(
     # Holds candidates found so far: keys are MBIDs; values are
     # (distance, TrackInfo) pairs.
     candidates = {}
+    rec: Optional[Recommendation] = None
 
     # First, try matching by MusicBrainz ID.
     trackids = search_ids or [t for t in [item.mb_trackid] if t]
@@ -530,6 +561,7 @@ def tag_item(
     # If we're searching by ID, don't proceed.
     if search_ids:
         if candidates:
+            assert rec is not None
             return Proposal(_sort_candidates(candidates.values()), rec)
         else:
             return Proposal([], Recommendation.none)
@@ -546,6 +578,6 @@ def tag_item(
 
     # Sort by distance and return with recommendation.
     log.debug('Found {0} candidates.', len(candidates))
-    candidates = _sort_candidates(candidates.values())
-    rec = _recommendation(candidates)
-    return Proposal(candidates, rec)
+    candidates_sorted = _sort_candidates(candidates.values())
+    rec = _recommendation(candidates_sorted)
+    return Proposal(candidates_sorted, rec)
