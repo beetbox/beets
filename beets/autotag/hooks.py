@@ -19,7 +19,7 @@ from collections import namedtuple
 from functools import total_ordering
 import re
 from typing import Dict, List, Tuple, Iterator, Union, Any, Optional,\
-    Iterable, Callable, TypeVar
+    Iterable, Callable, cast
 
 from beets import logging
 from beets import plugins
@@ -31,9 +31,6 @@ from jellyfish import levenshtein_distance
 from unidecode import unidecode
 
 log = logging.getLogger('beets')
-
-
-T = TypeVar('T')
 
 
 # Classes used to represent candidate options.
@@ -51,7 +48,7 @@ class AttrDict(dict):
     def __setattr__(self, key, value):
         self.__setitem__(key, value)
 
-    def __hash__(self) -> int:
+    def __hash__(self):
         return id(self)
 
 
@@ -80,9 +77,9 @@ class AlbumInfo(AttrDict):
             asin: Optional[str] = None,
             albumtype: Optional[str] = None,
             va: bool = False,
-            year: Optional[str] = None,
-            month: Optional[str] = None,
-            day: Optional[str] = None,
+            year: Optional[int] = None,
+            month: Optional[int] = None,
+            day: Optional[int] = None,
             label: Optional[str] = None,
             mediums: Optional[int] = None,
             artist_sort: Optional[str] = None,
@@ -98,9 +95,9 @@ class AlbumInfo(AttrDict):
             albumdisambig: Optional[str] = None,
             releasegroupdisambig: Optional[str] = None,
             artist_credit: Optional[str] = None,
-            original_year: Optional[str] = None,
-            original_month: Optional[str] = None,
-            original_day: Optional[str] = None,
+            original_year: Optional[int] = None,
+            original_month: Optional[int] = None,
+            original_day: Optional[int] = None,
             data_source: Optional[str] = None,
             data_url: Optional[str] = None,
             discogs_albumid: Optional[str] = None,
@@ -191,7 +188,7 @@ class TrackInfo(AttrDict):
             release_track_id: Optional[str] = None,
             artist: Optional[str] = None,
             artist_id: Optional[str] = None,
-            length: Optional[str] = None,
+            length: Optional[float] = None,
             index: Optional[int] = None,
             medium: Optional[int] = None,
             medium_index: Optional[int] = None,
@@ -298,7 +295,7 @@ def _string_dist_basic(str1: str, str2: str) -> float:
     return levenshtein_distance(str1, str2) / float(max(len(str1), len(str2)))
 
 
-def string_dist(str1: str, str2: str) -> float:
+def string_dist(str1: Optional[str], str2: Optional[str]) -> float:
     """Gives an "intuitive" edit distance between two strings. This is
     an edit distance, normalized by the string length, with a number of
     tweaks that reflect intuition about text.
@@ -382,6 +379,7 @@ class Distance:
 
     def __init__(self):
         self._penalties = {}
+        self.tracks: Dict[TrackInfo, Distance] = {}
 
     @LazyClassProperty
     def _weights(cls) -> Dict[str, float]:  # noqa: N805
@@ -496,12 +494,13 @@ class Distance:
 
     # Adding components.
 
-    def _eq(self, value1: T, value2: T) -> bool:
+    def _eq(self, value1: Union[re.Pattern, Any], value2: Any) -> bool:
         """Returns True if `value1` is equal to `value2`. `value1` may
         be a compiled regular expression, in which case it will be
         matched against `value2`.
         """
         if isinstance(value1, re.Pattern):
+            value2 = cast(str, value2)
             return bool(value1.match(value2))
         return value1 == value2
 
@@ -521,7 +520,7 @@ class Distance:
             self,
             key: str,
             value: Any,
-            options: Union[List[T, ...], Tuple[T, ...], T],
+            options: Union[List[Any], Tuple[Any, ...], Any],
     ):
         """Adds a distance penalty of 1.0 if `value` doesn't match any
         of the values in `options`. If an option is a compiled regular
@@ -564,7 +563,7 @@ class Distance:
             self,
             key: str,
             value: Any,
-            options: Union[List[T, ...], Tuple[T, ...], T],
+            options: Union[List[Any], Tuple[Any, ...], Any],
     ):
         """Adds a distance penalty that corresponds to the position at
         which `value` appears in `options`. A distance penalty of 0.0
@@ -599,7 +598,7 @@ class Distance:
             dist = 0.0
         self.add(key, dist)
 
-    def add_string(self, key: str, str1: str, str2: str):
+    def add_string(self, key: str, str1: Optional[str], str2: Optional[str]):
         """Adds a distance penalty based on the edit distance between
         `str1` and `str2`.
         """
@@ -628,6 +627,7 @@ def album_for_mbid(release_id: str) -> Optional[AlbumInfo]:
         return album
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
+        return None
 
 
 def track_for_mbid(recording_id: str) -> Optional[TrackInfo]:
@@ -641,6 +641,7 @@ def track_for_mbid(recording_id: str) -> Optional[TrackInfo]:
         return track
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
+        return None
 
 
 def albums_for_id(album_id: str) -> Iterable[AlbumInfo]:
