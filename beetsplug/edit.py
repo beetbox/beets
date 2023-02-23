@@ -31,7 +31,7 @@ import shlex
 
 # These "safe" types can avoid the format/parse cycle that most fields go
 # through: they are safe to edit with native YAML types.
-SAFE_TYPES = (types.Float, types.Integer, types.Boolean)
+SAFE_TYPES = (types.BaseFloat, types.BaseInteger, types.Boolean)
 
 
 class ParseError(Exception):
