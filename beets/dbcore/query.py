@@ -16,10 +16,23 @@
 """
 
 from __future__ import annotations
+
+from abc import ABC, abstractmethod
 import re
 from operator import mul
-from typing import Union, Tuple, List, Optional, Pattern, Any, Type, Iterator,\
-    Collection, MutableMapping, Sequence
+from typing import (
+    Any,
+    Collection,
+    Iterator,
+    List,
+    MutableMapping,
+    Optional,
+    Pattern,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+)
 
 from beets import util
 from datetime import datetime, timedelta
@@ -67,24 +80,28 @@ class InvalidQueryArgumentValueError(ParsingError):
         super().__init__(message)
 
 
-class Query:
+class Query(ABC):
     """An abstract class representing a query into the item database.
     """
 
-    def clause(self) -> Tuple[None, Tuple]:
+    def clause(self) -> Tuple[Optional[str], Sequence[Any]]:
         """Generate an SQLite expression implementing the query.
 
         Return (clause, subvals) where clause is a valid sqlite
         WHERE clause implementing the query and subvals is a list of
         items to be substituted for ?s in the clause.
+
+        The default implementation returns None, falling back to a slow query
+        using `match()`.
         """
         return None, ()
 
+    @abstractmethod
     def match(self, item: Item):
         """Check whether this query matches a given Item. Can be used to
         perform queries on arbitrary sets of Items.
         """
-        raise NotImplementedError
+        ...
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"
@@ -93,7 +110,21 @@ class Query:
         return type(self) == type(other)
 
     def __hash__(self) -> int:
-        return 0
+        """Minimalistic default implementation of a hash.
+
+        Given the implementation if __eq__ above, this is
+        certainly correct.
+        """
+        return hash(type(self))
+
+
+class NamedQuery(Query):
+    """Non-field query, i.e. the query prefix is not a field but identifies the
+    query class.
+    """
+    @abstractmethod
+    def __init__(self, pattern):
+        ...
 
 
 class FieldQuery(Query):
@@ -104,12 +135,12 @@ class FieldQuery(Query):
     same matching functionality in SQLite.
     """
 
-    def __init__(self, field: str, pattern: Optional[str], fast: bool = True):
+    def __init__(self, field: str, pattern: str, fast: bool = True):
         self.field = field
         self.pattern = pattern
         self.fast = fast
 
-    def col_clause(self) -> Union[None, Tuple]:
+    def col_clause(self) -> Union[Optional[str], Sequence[Any]]:
         return None, ()
 
     def clause(self):
@@ -156,7 +187,7 @@ class NoneQuery(FieldQuery):
     """A query that checks whether a field is null."""
 
     def __init__(self, field, fast: bool = True):
-        super().__init__(field, None, fast)
+        super().__init__(field, "", fast)
 
     def col_clause(self) -> Tuple[str, Tuple]:
         return self.field + " IS NULL", ()

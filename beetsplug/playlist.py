@@ -19,7 +19,7 @@ import beets
 from beets.util import path_as_posix
 
 
-class PlaylistQuery(beets.dbcore.Query):
+class PlaylistQuery(beets.dbcore.NamedQuery):
     """Matches files listed by a playlist file.
     """
     def __init__(self, pattern):
