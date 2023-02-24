@@ -2,9 +2,13 @@ AcousticBrainz Plugin
 =====================
 
 The ``acousticbrainz`` plugin gets acoustic-analysis information from the
-`AcousticBrainz`_ project.
+`AcousticBrainz`_ project. This plugin is now deprecated since the
+AcousicBrainz project has been shut down.
+
+As an alternative the `beets-xtractor`_ plugin can be used.
 
 .. _AcousticBrainz: https://acousticbrainz.org/
+.. _beets-xtractor: https://github.com/adamjakab/BeetsPluginXtractor
 
 Enable the ``acousticbrainz`` plugin in your configuration (see :ref:`using-plugins`) and run it by typing::
 
@@ -44,6 +48,12 @@ these fields:
 * ``tonal``
 * ``voice_instrumental``
 
+Warning
+-------
+
+The AcousticBrainz project has shut down. To use this plugin you must set the
+``base_url`` configuration option to a server offering the AcousticBrainz API.
+
 Automatic Tagging
 -----------------
 
@@ -56,7 +66,7 @@ Configuration
 -------------
 
 To configure the plugin, make a ``acousticbrainz:`` section in your
-configuration file. There are three options:
+configuration file. The available options are:
 
 - **auto**: Enable AcousticBrainz during ``beet import``.
   Default: ``yes``.
@@ -64,4 +74,7 @@ configuration file. There are three options:
   it.
   Default: ``no``.
 - **tags**: Which tags from the list above to set on your files.
-  Default: [] (all)
+  Default: [] (all).
+- **base_url**: The base URL of the AcousticBrainz server. The plugin has no
+  function if this option is not set.
+  Default: None

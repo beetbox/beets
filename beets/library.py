@@ -51,6 +51,8 @@ class PathQuery(dbcore.FieldQuery):
     default, the behavior depends on the OS: case-insensitive on Windows
     and case-sensitive otherwise.
     """
+    # For tests
+    force_implicit_query_detection = False
 
     def __init__(self, field, pattern, fast=True, case_sensitive=None):
         """Create a path query.
@@ -62,21 +64,27 @@ class PathQuery(dbcore.FieldQuery):
         """
         super().__init__(field, pattern, fast)
 
+        path = util.normpath(pattern)
+
         # By default, the case sensitivity depends on the filesystem
         # that the query path is located on.
         if case_sensitive is None:
-            path = util.bytestring_path(util.normpath(pattern))
-            case_sensitive = beets.util.case_sensitive(path)
+            case_sensitive = util.case_sensitive(path)
         self.case_sensitive = case_sensitive
 
         # Use a normalized-case pattern for case-insensitive matches.
         if not case_sensitive:
-            pattern = pattern.lower()
+            # We need to lowercase the entire path, not just the pattern.
+            # In particular, on Windows, the drive letter is otherwise not
+            # lowercased.
+            # This also ensures that the `match()` method below and the SQL
+            # from `col_clause()` do the same thing.
+            path = path.lower()
 
         # Match the path as a single file.
-        self.file_path = util.bytestring_path(util.normpath(pattern))
+        self.file_path = path
         # As a directory (prefix).
-        self.dir_path = util.bytestring_path(os.path.join(self.file_path, b''))
+        self.dir_path = os.path.join(path, b'')
 
     @classmethod
     def is_path_query(cls, query_part):
@@ -90,11 +98,13 @@ class PathQuery(dbcore.FieldQuery):
 
         # Test both `sep` and `altsep` (i.e., both slash and backslash on
         # Windows).
-        return (
-            (os.sep in query_part or
-             (os.altsep and os.altsep in query_part)) and
-            os.path.exists(syspath(normpath(query_part)))
-        )
+        if not (os.sep in query_part
+                or (os.altsep and os.altsep in query_part)):
+            return False
+
+        if cls.force_implicit_query_detection:
+            return True
+        return os.path.exists(syspath(normpath(query_part)))
 
     def match(self, item):
         path = item.path if self.case_sensitive else item.path.lower()
@@ -300,34 +310,26 @@ class FileOperationError(Exception):
         self.path = path
         self.reason = reason
 
-    def text(self):
+    def __str__(self):
         """Get a string representing the error.
 
-        Describe both the underlying reason and the file path
-        in question.
+        Describe both the underlying reason and the file path in question.
         """
-        return '{}: {}'.format(
-            util.displayable_path(self.path),
-            str(self.reason)
-        )
-
-    # define __str__ as text to avoid infinite loop on super() calls
-    # with @six.python_2_unicode_compatible
-    __str__ = text
+        return f"{util.displayable_path(self.path)}: {self.reason}"
 
 
 class ReadError(FileOperationError):
     """An error while reading a file (i.e. in `Item.read`)."""
 
     def __str__(self):
-        return 'error reading ' + super().text()
+        return 'error reading ' + str(super())
 
 
 class WriteError(FileOperationError):
     """An error while writing a file (i.e. in `Item.write`)."""
 
     def __str__(self):
-        return 'error writing ' + super().text()
+        return 'error writing ' + str(super())
 
 
 # Item and Album model classes.

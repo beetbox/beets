@@ -24,12 +24,7 @@ from beets.library import Item, Album, parse_query_string
 from beets.dbcore import OrQuery
 from beets.dbcore.query import MultipleSort, ParsingError
 import os
-
-try:
-    from urllib.request import pathname2url
-except ImportError:
-    # python2 is a bit different
-    from urllib import pathname2url
+from urllib.request import pathname2url
 
 
 class SmartPlaylistPlugin(BeetsPlugin):

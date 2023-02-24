@@ -1778,7 +1778,7 @@ def config_func(lib, opts, args):
     else:
         config_out = config.dump(full=opts.defaults, redact=opts.redact)
         if config_out.strip() != '{}':
-            print_(util.text_string(config_out))
+            print_(config_out)
         else:
             print("Empty configuration")
 
@@ -1852,7 +1852,7 @@ def completion_script(commands):
     """
     base_script = os.path.join(os.path.dirname(__file__), 'completion_base.sh')
     with open(base_script) as base_script:
-        yield util.text_string(base_script.read())
+        yield base_script.read()
 
     options = {}
     aliases = {}

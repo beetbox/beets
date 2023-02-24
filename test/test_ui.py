@@ -1185,8 +1185,7 @@ class ShowChangeTest(_common.TestCase):
             cur_album,
             autotag.AlbumMatch(album_dist, info, mapping, set(), set()),
         )
-        # FIXME decoding shouldn't be done here
-        return util.text_string(self.io.getoutput().lower())
+        return self.io.getoutput().lower()
 
     def test_null_change(self):
         msg = self._show_change()
