@@ -106,6 +106,6 @@ class AlbumTypesPluginTest(unittest.TestCase, TestHelper):
 
     def _create_album(self, album_types: [str], artist_id: str = 0):
         return self.add_album(
-            albumtypes='; '.join(album_types),
+            albumtypes=album_types,
             mb_albumartistid=artist_id
         )
