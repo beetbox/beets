@@ -145,6 +145,9 @@ Bug fixes:
   :bug:`4561` :bug:`4600`
 * Fix issue where deletion of flexible fields on an album doesn't cascade to items
   :bug:`4662`
+* Store ``albumtypes`` multi-value field correctly in the DB and in files'
+  tags, stopping useless re-tagging of files on every ``beets write``.
+  :bug:`4528`
 
 For packagers:
 
