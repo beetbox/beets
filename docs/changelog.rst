@@ -11,6 +11,8 @@ for Python 3.6).
 
 New features:
 
+* Added additional error handling for `spotify` plugin.
+  :bug:`4686`
 * We now import the remixer field from Musicbrainz into the library.
   :bug:`4428`
 * :doc:`/plugins/mbsubmit`: Added a new `mbsubmit` command to print track information to be submitted to MusicBrainz after initial import.
@@ -70,7 +72,7 @@ Bug fixes:
   base when the MetadataSourcePlugin abstract class was introduced in PR's
   #3335 and #3371.
   :bug:`4401`
-* :doc:`/plugins/convert`: Set default ``max_bitrate`` value to ``None`` to 
+* :doc:`/plugins/convert`: Set default ``max_bitrate`` value to ``None`` to
   avoid transcoding when this parameter is not set. :bug:`4472`
 * :doc:`/plugins/replaygain`: Avoid a crash when errors occur in the analysis
   backend.
