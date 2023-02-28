@@ -295,10 +295,11 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         """
         artist, artist_id = self.get_artist(track_data['artists'])
 
+        self._log.debug("Track Data is {}", track_data)
         # Get album information for spotify tracks
         try:
             album = track_data['album']['name']
-        except KeyError:
+        except (KeyError, TypeError):
             album = None
         return TrackInfo(
             title=track_data['name'],
