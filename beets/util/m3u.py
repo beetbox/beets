@@ -15,7 +15,7 @@
 """Provides utilities to read, write an manipulate m3u playlist files."""
 
 
-from beets.util import syspath
+from beets.util import syspath, normpath
 
 
 class EmptyPlaylistError(Exception):
@@ -70,6 +70,6 @@ class M3UFile():
         if not self.media_list:
             raise EmptyPlaylistError
         contents = header + self.media_list
-        with open(syspath(self.path), "w", encoding="utf-8") as playlist_file:
+        with open(syspath(normpath(self.path)), "w", encoding="utf-8") as playlist_file:
             playlist_file.writelines('\n'.join(contents))
             playlist_file.write('\n')  # Final linefeed to prevent noeol file.
