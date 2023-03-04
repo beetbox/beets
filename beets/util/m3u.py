@@ -12,7 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Provides utilities to read, write an manipulate m3u playlist files."""
+"""Provides utilities to read, write and manipulate m3u playlist files."""
 
 
 from beets.util import syspath, normpath
