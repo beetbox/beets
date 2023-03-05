@@ -15,7 +15,7 @@
 """Provides utilities to read, write and manipulate m3u playlist files."""
 
 
-from beets.util import syspath, normpath
+from beets.util import syspath, normpath, mkdirall
 
 
 class EmptyPlaylistError(Exception):
@@ -65,11 +65,17 @@ class M3UFile():
         self.extm3u = extm3u
 
     def write(self):
-        """Writes the m3u file to disk."""
+        """Writes the m3u file to disk.
+
+        Handles the creation of potential parent directories.
+        """
         header = ["#EXTM3U"] if self.extm3u else []
         if not self.media_list:
             raise EmptyPlaylistError
         contents = header + self.media_list
-        with open(syspath(normpath(self.path)), "w", encoding="utf-8") as playlist_file:
+        pl_normpath = normpath(self.path)
+        mkdirall(pl_normpath)
+
+        with open(syspath(pl_normpath), "w", encoding="utf-8") as playlist_file:
             playlist_file.writelines('\n'.join(contents))
             playlist_file.write('\n')  # Final linefeed to prevent noeol file.
