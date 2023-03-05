@@ -14,8 +14,9 @@
 
 """Provides utilities to read, write and manipulate m3u playlist files."""
 
+import traceback
 
-from beets.util import syspath, normpath, mkdirall
+from beets.util import syspath, normpath, mkdirall, FilesystemError
 
 
 class EmptyPlaylistError(Exception):
@@ -39,8 +40,14 @@ class M3UFile():
 
     def load(self):
         """Reads the m3u file from disk and sets the object's attributes."""
-        with open(syspath(self.path), "r", encoding="utf-8") as playlist_file:
-            raw_contents = playlist_file.readlines()
+        pl_normpath = normpath(self.path)
+        try:
+            with open(syspath(pl_normpath), "r", encoding="utf-8") as pl_file:
+                raw_contents = pl_file.readlines()
+        except OSError as exc:
+            raise FilesystemError(exc, 'read', (pl_normpath, ),
+                                  traceback.format_exc())
+
         self.extm3u = True if raw_contents[0] == "#EXTM3U\n" else False
         for line in raw_contents[1:]:
             if line.startswith("#"):
@@ -76,6 +83,10 @@ class M3UFile():
         pl_normpath = normpath(self.path)
         mkdirall(pl_normpath)
 
-        with open(syspath(pl_normpath), "w", encoding="utf-8") as playlist_file:
-            playlist_file.writelines('\n'.join(contents))
-            playlist_file.write('\n')  # Final linefeed to prevent noeol file.
+        try:
+            with open(syspath(pl_normpath), "w", encoding="utf-8") as pl_file:
+                pl_file.writelines('\n'.join(contents))
+                pl_file.write('\n')  # Final linefeed to prevent noeol file.
+        except OSError as exc:
+            raise FilesystemError(exc, 'create', (pl_normpath, ),
+                                  traceback.format_exc())
