@@ -4,7 +4,7 @@ Changelog
 1.6.1 (in development)
 ----------------------
 
-Changelog goes here!
+Changelog goes here! Please add your entry to the bottom of one of the lists below!
 
 With this release, beets now requires Python 3.7 or later (it removes support
 for Python 3.6).
