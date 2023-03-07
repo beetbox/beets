@@ -468,6 +468,9 @@ Here are a few of the plugins written by the beets community:
    Augments MusicBrainz queries with locally-sourced data
    to improve autotagger results.
 
+`beets-plexsync`_
+   Allows you to sync your Plex library with your beets library, create smart playlists in Plex, and import online playlists (from services like Spotify) into Plex.
+
 `beets-popularity`_
    Fetches popularity values from Deezer.
 
