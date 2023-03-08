@@ -22,7 +22,6 @@ import requests
 from beets import plugins, ui
 from beets.dbcore import types
 
-ACOUSTIC_BASE = "https://acousticbrainz.org/"
 LEVELS = ["/low-level", "/high-level"]
 ABSCHEME = {
     'highlevel': {
@@ -138,11 +137,22 @@ class AcousticPlugin(plugins.BeetsPlugin):
     def __init__(self):
         super().__init__()
 
+        self._log.warning("This plugin is deprecated.")
+
         self.config.add({
             'auto': True,
             'force': False,
-            'tags': []
+            'tags': [],
+            'base_url': ''
         })
+
+        self.base_url = self.config['base_url'].as_str()
+        if self.base_url:
+            if not self.base_url.startswith('http'):
+                raise ui.UserError('AcousticBrainz server base URL must start '
+                                   'with an HTTP scheme')
+            elif self.base_url[-1] != '/':
+                self.base_url = self.base_url + '/'
 
         if self.config['auto']:
             self.register_listener('import_task_files',
@@ -171,8 +181,13 @@ class AcousticPlugin(plugins.BeetsPlugin):
         self._fetch_info(task.imported_items(), False, True)
 
     def _get_data(self, mbid):
+        if not self.base_url:
+            raise ui.UserError(
+                'This plugin is deprecated since AcousticBrainz has shut '
+                'down. See the base_url configuration option.'
+            )
         data = {}
-        for url in _generate_urls(mbid):
+        for url in _generate_urls(self.base_url, mbid):
             self._log.debug('fetching URL: {}', url)
 
             try:
@@ -328,8 +343,8 @@ class AcousticPlugin(plugins.BeetsPlugin):
                                 'because key {} was not found', subdata, v, k)
 
 
-def _generate_urls(mbid):
+def _generate_urls(base_url, mbid):
     """Generates AcousticBrainz end point urls for given `mbid`.
     """
     for level in LEVELS:
-        yield ACOUSTIC_BASE + mbid + level
+        yield base_url + mbid + level

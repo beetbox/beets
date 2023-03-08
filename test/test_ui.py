@@ -701,27 +701,30 @@ class UpdateTest(_common.TestCase):
         item = self.lib.items().get()
         self.assertEqual(item.title, 'full')
 
-    @unittest.expectedFailure
     def test_multivalued_albumtype_roundtrip(self):
         # https://github.com/beetbox/beets/issues/4528
 
         # albumtypes is empty for our test fixtures, so populate it first
         album = self.album
-        # setting albumtypes does not set albumtype currently...
-        # FIXME: When actually fixing the issue 4528, consider whether this
-        # should be set to "album" or ["album"]
-        album.albumtype = "album"
-        album.albumtypes = "album"
+        correct_albumtypes = ["album", "live"]
+
+        # Setting albumtypes does not set albumtype, currently.
+        # Using x[0] mirrors https://github.com/beetbox/mediafile/blob/057432ad53b3b84385e5582f69f44dc00d0a725d/mediafile.py#L1928  # noqa: E501
+        correct_albumtype = correct_albumtypes[0]
+
+        album.albumtype = correct_albumtype
+        album.albumtypes = correct_albumtypes
         album.try_sync(write=True, move=False)
 
         album.load()
-        albumtype_before = album.albumtype
-        self.assertEqual(albumtype_before, "album")
+        self.assertEqual(album.albumtype,  correct_albumtype)
+        self.assertEqual(album.albumtypes, correct_albumtypes)
 
         self._update()
 
         album.load()
-        self.assertEqual(albumtype_before, album.albumtype)
+        self.assertEqual(album.albumtype,  correct_albumtype)
+        self.assertEqual(album.albumtypes, correct_albumtypes)
 
 
 class PrintTest(_common.TestCase):
@@ -1185,8 +1188,7 @@ class ShowChangeTest(_common.TestCase):
             cur_album,
             autotag.AlbumMatch(album_dist, info, mapping, set(), set()),
         )
-        # FIXME decoding shouldn't be done here
-        return util.text_string(self.io.getoutput().lower())
+        return self.io.getoutput().lower()
 
     def test_null_change(self):
         msg = self._show_change()

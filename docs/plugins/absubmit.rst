@@ -1,8 +1,17 @@
 AcousticBrainz Submit Plugin
 ============================
 
-The ``absubmit`` plugin lets you submit acoustic analysis results to the
-`AcousticBrainz`_ server.
+The ``absubmit`` plugin lets you submit acoustic analysis results to an
+`AcousticBrainz`_ server. This plugin is now deprecated since the
+AcousicBrainz project has been shut down.
+
+As an alternative the `beets-xtractor`_ plugin can be used.
+
+Warning
+-------
+
+The AcousticBrainz project has shut down. To use this plugin you must set the
+``base_url`` configuration option to a server offering the AcousticBrainz API.
 
 Installation
 ------------
@@ -57,10 +66,14 @@ file. The available options are:
 - **pretend**: Do not analyze and submit of AcousticBrainz data but print out
   the items which would be processed.
   Default: ``no``.
+- **base_url**: The base URL of the AcousticBrainz server. The plugin has no
+  function if this option is not set.
+  Default: None
 
-.. _streaming_extractor_music: https://acousticbrainz.org/download
+.. _streaming_extractor_music: https://essentia.upf.edu/
 .. _FAQ: https://acousticbrainz.org/faq
 .. _pip: https://pip.pypa.io
 .. _requests: https://requests.readthedocs.io/en/master/
 .. _github: https://github.com/MTG/essentia
 .. _AcousticBrainz: https://acousticbrainz.org
+.. _beets-xtractor: https://github.com/adamjakab/BeetsPluginXtractor
