@@ -11,6 +11,11 @@ you can use in your path formats or elsewhere.
 
 .. _MusicBrainz documentation: https://musicbrainz.org/doc/Release_Group/Type
 
+A bug introduced in beets 1.6.0 could have possibly imported broken data into
+the ``albumtypes`` library field. Please follow the instructions `described
+here <https://github.com/beetbox/beets/pull/4582#issuecomment-1445023493>`_ for
+a sanity check and potential fix. :bug:`4528`
+
 Configuration
 -------------
 

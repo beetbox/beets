@@ -147,6 +147,13 @@ Bug fixes:
   :bug:`4561` :bug:`4600`
 * Fix issue where deletion of flexible fields on an album doesn't cascade to items
   :bug:`4662`
+* Fix issue where ``beet write`` continuosly retags the ``albumtypes`` metadata
+  field in files. Additionally broken data could have been added to the library
+  when the tag was read from file back into the library using ``beet update``.
+  It is required for all users to **check if such broken data is present in the
+  library**. Following the instructions `described here
+  <https://github.com/beetbox/beets/pull/4582#issuecomment-1445023493>`_, a
+  sanity check and potential fix is easily possible. :bug:`4528`
 
 For packagers:
 

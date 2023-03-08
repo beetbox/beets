@@ -55,7 +55,7 @@ class AlbumTypesPlugin(BeetsPlugin):
             bracket_r = ''
 
         res = ''
-        albumtypes = item.albumtypes.split('; ')
+        albumtypes = item.albumtypes
         is_va = item.mb_albumartistid == VARIOUS_ARTISTS_ID
         for type in types:
             if type[0] in albumtypes and type[1]:
