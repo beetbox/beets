@@ -164,6 +164,8 @@ For packagers:
 
 Other changes:
 
+* Add ``sphinx`` and ``sphinx_rtd_theme`` as dependencies for a new ``docs`` extra
+  :bug:`4643`
 * :doc:`/plugins/absubmit`: Deprecate the ``absubmit`` plugin since
   AcousticBrainz has stopped accepting new submissions.
   :bug:`4627`

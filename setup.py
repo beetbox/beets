@@ -128,6 +128,10 @@ setup(
             'types-requests',
             'types-Flask-Cors',
         ],
+        'docs': [
+            'sphinx',
+            'sphinx_rtd_theme',
+        ],
 
         # Plugin (optional) dependencies:
         'absubmit': ['requests'],
