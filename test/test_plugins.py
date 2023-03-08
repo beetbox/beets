@@ -603,6 +603,27 @@ class ParseDeezerIDTest(unittest.TestCase):
         self.assertEqual(out, id_string)
 
 
+class ParseBeatportIDTest(unittest.TestCase):
+    def test_parse_id_correct(self):
+        id_string = "3089651"
+        out = MetadataSourcePlugin._get_id(
+            "album", id_string, beatport_id_regex)
+        self.assertEqual(out, id_string)
+
+    def test_parse_id_non_id_returns_none(self):
+        id_string = "blah blah"
+        out = MetadataSourcePlugin._get_id(
+            "album", id_string, beatport_id_regex)
+        self.assertEqual(out, None)
+
+    def test_parse_id_url_finds_id(self):
+        id_string = "3089651"
+        id_url = "https://www.beatport.com/release/album-name/%s" % id_string
+        out = MetadataSourcePlugin._get_id(
+            "album", id_url, beatport_id_regex)
+        self.assertEqual(out, id_string)
+
+
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
