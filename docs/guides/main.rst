@@ -10,7 +10,7 @@ Installing
 ----------
 
 You will need Python.
-Beets works on Python 3.6 or later.
+Beets works on Python 3.7 or later.
 
 * **macOS** 11 (Big Sur) includes Python 3.8 out of the box.
   You can opt for a more recent Python installing it via `Homebrew`_
@@ -94,7 +94,7 @@ Installing on Windows
 Installing beets on Windows can be tricky. Following these steps might help you
 get it right:
 
-1. If you don't have it, `install Python`_ (you want at least Python 3.6). The
+1. If you don't have it, `install Python`_ (you want at least Python 3.7). The
    installer should give you the option to "add Python to PATH." Check this
    box. If you do that, you can skip the next step.
 
@@ -105,7 +105,7 @@ get it right:
    should open the "System Properties" screen, then select the "Advanced" tab, 
    then hit the "Environmental Variables..." button, and then look for the PATH 
    variable in the table. Add the following to the end of the variable's value: 
-   ``;C:\Python36;C:\Python36\Scripts``. You may need to adjust these paths to 
+   ``;C:\Python37;C:\Python37\Scripts``. You may need to adjust these paths to 
    point to your Python installation.
 
 3. Now install beets by running: ``pip install beets``
@@ -298,9 +298,12 @@ You can always get help using the ``beet help`` command. The plain ``beet help``
 command lists all the available commands; then, for example, ``beet help
 import`` gives more specific help about the ``import`` command.
 
-Please let me know what you think of beets via `the discussion board`_ or
-`Twitter`_.
+If you need more of a walkthrough, you can read an illustrated one `on the
+beets blog <https://beets.io/blog/walkthrough.html>`_.
+
+Please let us know what you think of beets via `the discussion board`_ or
+`Mastodon`_.
 
 .. _the mailing list: https://groups.google.com/group/beets-users
-.. _the discussion board: https://discourse.beets.io
-.. _twitter: https://twitter.com/b33ts
+.. _the discussion board: https://github.com/beetbox/beets/discussions
+.. _mastodon: https://fosstodon.org/@beets

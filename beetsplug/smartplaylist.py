@@ -19,17 +19,12 @@
 from beets.plugins import BeetsPlugin
 from beets import ui
 from beets.util import (mkdirall, normpath, sanitize_path, syspath,
-                        bytestring_path, path_as_posix)
+                        bytestring_path, path_as_posix, displayable_path)
 from beets.library import Item, Album, parse_query_string
 from beets.dbcore import OrQuery
 from beets.dbcore.query import MultipleSort, ParsingError
 import os
-
-try:
-    from urllib.request import pathname2url
-except ImportError:
-    # python2 is a bit different
-    from urllib import pathname2url
+from urllib.request import pathname2url
 
 
 class SmartPlaylistPlugin(BeetsPlugin):
@@ -44,6 +39,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
             'forward_slash': False,
             'prefix': '',
             'urlencode': False,
+            'pretend_paths': False,
         })
 
         self.config['prefix'].redact = True  # May contain username/password.
@@ -58,6 +54,10 @@ class SmartPlaylistPlugin(BeetsPlugin):
             'splupdate',
             help='update the smart playlists. Playlist names may be '
             'passed as arguments.'
+        )
+        spl_update.parser.add_option(
+            '-p', '--pretend', action='store_true',
+            help="display query results but don't write playlist files."
         )
         spl_update.func = self.update_cmd
         return [spl_update]
@@ -84,7 +84,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
         else:
             self._matched_playlists = self._unmatched_playlists
 
-        self.update_playlists(lib)
+        self.update_playlists(lib, opts.pretend)
 
     def build_queries(self):
         """
@@ -170,9 +170,13 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
         self._unmatched_playlists -= self._matched_playlists
 
-    def update_playlists(self, lib):
-        self._log.info("Updating {0} smart playlists...",
-                       len(self._matched_playlists))
+    def update_playlists(self, lib, pretend=False):
+        if pretend:
+            self._log.info("Showing query results for {0} smart playlists...",
+                           len(self._matched_playlists))
+        else:
+            self._log.info("Updating {0} smart playlists...",
+                           len(self._matched_playlists))
 
         playlist_dir = self.config['playlist_dir'].as_filename()
         playlist_dir = bytestring_path(playlist_dir)
@@ -185,7 +189,10 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
         for playlist in self._matched_playlists:
             name, (query, q_sort), (album_query, a_q_sort) = playlist
-            self._log.debug("Creating playlist {0}", name)
+            if pretend:
+                self._log.info('Results for playlist {}:', name)
+            else:
+                self._log.debug("Creating playlist {0}", name)
             items = []
 
             if query:
@@ -206,19 +213,29 @@ class SmartPlaylistPlugin(BeetsPlugin):
                     item_path = os.path.relpath(item.path, relative_to)
                 if item_path not in m3us[m3u_name]:
                     m3us[m3u_name].append(item_path)
+                    if pretend and self.config['pretend_paths']:
+                        print(displayable_path(item_path))
+                    elif pretend:
+                        print(item)
 
-        prefix = bytestring_path(self.config['prefix'].as_str())
-        # Write all of the accumulated track lists to files.
-        for m3u in m3us:
-            m3u_path = normpath(os.path.join(playlist_dir,
-                                bytestring_path(m3u)))
-            mkdirall(m3u_path)
-            with open(syspath(m3u_path), 'wb') as f:
-                for path in m3us[m3u]:
-                    if self.config['forward_slash'].get():
-                        path = path_as_posix(path)
-                    if self.config['urlencode']:
-                        path = bytestring_path(pathname2url(path))
-                    f.write(prefix + path + b'\n')
+        if not pretend:
+            prefix = bytestring_path(self.config['prefix'].as_str())
+            # Write all of the accumulated track lists to files.
+            for m3u in m3us:
+                m3u_path = normpath(os.path.join(playlist_dir,
+                                    bytestring_path(m3u)))
+                mkdirall(m3u_path)
+                with open(syspath(m3u_path), 'wb') as f:
+                    for path in m3us[m3u]:
+                        if self.config['forward_slash'].get():
+                            path = path_as_posix(path)
+                        if self.config['urlencode']:
+                            path = bytestring_path(pathname2url(path))
+                        f.write(prefix + path + b'\n')
 
-        self._log.info("{0} playlists updated", len(self._matched_playlists))
+        if pretend:
+            self._log.info("Displayed results for {0} playlists",
+                           len(self._matched_playlists))
+        else:
+            self._log.info("{0} playlists updated",
+                           len(self._matched_playlists))

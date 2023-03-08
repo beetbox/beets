@@ -77,6 +77,19 @@ class StoreTest(_common.LibTestCase):
         self.i.store()
         self.assertTrue('composer' not in self.i._dirty)
 
+    def test_store_album_cascades_flex_deletes(self):
+        album = _common.album()
+        album.flex1 = "Flex-1"
+        self.lib.add(album)
+        item = _common.item()
+        item.album_id = album.id
+        item.flex1 = "Flex-1"
+        self.lib.add(item)
+        del album.flex1
+        album.store()
+        self.assertNotIn('flex1', album)
+        self.assertNotIn('flex1', album.items()[0])
+
 
 class AddTest(_common.TestCase):
     def setUp(self):

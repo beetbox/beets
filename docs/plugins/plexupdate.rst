@@ -8,18 +8,22 @@ To use ``plexupdate`` plugin, enable it in your configuration
 (see :ref:`using-plugins`).
 Then, you'll probably want to configure the specifics of your Plex server.
 You can do that using an ``plex:`` section in your ``config.yaml``,
-which looks like this::
+which looks like this:
 
-    plex:
-        host: localhost
-        port: 32400
-        token: token
+.. code-block:: yaml
+
+   plex:
+       host: "localhost"
+       port: 32400
+       token: "TOKEN"
 
 The ``token`` key is optional: you'll need to use it when in a Plex Home (see Plex's own `documentation about tokens`_).
 
 To use the ``plexupdate`` plugin you need to install the `requests`_ library with:
 
-    pip install requests
+.. code-block:: console
+
+   $ pip install beets[plexupdate]
 
 With that all in place, you'll see beets send the "update" command to your Plex
 server every time you change your beets library.

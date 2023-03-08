@@ -26,39 +26,20 @@ class CodingFormatter(string.Formatter):
     """A variant of `string.Formatter` that converts everything to `unicode`
     strings.
 
-    This is necessary on Python 2, where formatting otherwise occurs on
-    bytestrings. It intercepts two points in the formatting process to decode
-    the format string and all fields using the specified encoding. If decoding
-    fails, the values are used as-is.
+    This was necessary on Python 2, in needs to be kept for backwards
+    compatibility.
     """
 
     def __init__(self, coding):
         """Creates a new coding formatter with the provided coding."""
         self._coding = coding
 
-    def format(self, format_string, *args, **kwargs):
-        """Formats the provided string using the provided arguments and keyword
-        arguments.
-
-        This method decodes the format string using the formatter's coding.
-
-        See str.format and string.Formatter.format.
-        """
-        if isinstance(format_string, bytes):
-            format_string = format_string.decode(self._coding)
-
-        return super().format(format_string, *args,
-                              **kwargs)
-
     def convert_field(self, value, conversion):
         """Converts the provided value given a conversion type.
 
         This method decodes the converted value using the formatter's coding.
-
-        See string.Formatter.convert_field.
         """
-        converted = super().convert_field(value,
-                                          conversion)
+        converted = super().convert_field(value, conversion)
 
         if isinstance(converted, bytes):
             return converted.decode(self._coding)
@@ -92,14 +73,13 @@ class HookPlugin(BeetsPlugin):
                 self._log.error('invalid command "{0}"', command)
                 return
 
-            # Use a string formatter that works on Unicode strings.
+            # For backwards compatibility, use a string formatter that decodes
+            # bytes (in particular, paths) to unicode strings.
             formatter = CodingFormatter(arg_encoding())
-
-            command_pieces = shlex.split(command)
-
-            for i, piece in enumerate(command_pieces):
-                command_pieces[i] = formatter.format(piece, event=event,
-                                                     **kwargs)
+            command_pieces = [
+                formatter.format(piece, event=event, **kwargs)
+                for piece in shlex.split(command)
+            ]
 
             self._log.debug('running command "{0}" for event {1}',
                             ' '.join(command_pieces), event)

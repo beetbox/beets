@@ -4,10 +4,15 @@ Changelog
 1.6.1 (in development)
 ----------------------
 
-Changelog goes here!
+Changelog goes here! Please add your entry to the bottom of one of the lists below!
+
+With this release, beets now requires Python 3.7 or later (it removes support
+for Python 3.6).
 
 New features:
 
+* Added additional error handling for `spotify` plugin.
+  :bug:`4686`
 * We now import the remixer field from Musicbrainz into the library.
   :bug:`4428`
 * :doc:`/plugins/mbsubmit`: Added a new `mbsubmit` command to print track information to be submitted to MusicBrainz after initial import.
@@ -36,7 +41,8 @@ New features:
 * Add :ref:`exact match <exact-match>` queries, using the prefixes ``=`` and
   ``=~``.
   :bug:`4251`
-* :doc:`/plugins/discogs`: Permit appending style to genre
+* :doc:`/plugins/discogs`: Permit appending style to genre.
+* :doc:`plugins/discogs`: Implement item_candidates for matching singletons.
 * :doc:`/plugins/convert`: Add a new `auto_keep` option that automatically
   converts files but keeps the *originals* in the library.
   :bug:`1840` :bug:`4302`
@@ -49,18 +55,24 @@ New features:
   :bug:`4438`
 * Add a new ``import.ignored_alias_types`` config option to allow for
   specific alias types to be skipped over when importing items/albums.
+* :doc:`/plugins/smartplaylist`: A new ``--pretend`` option lets the user see
+  what a new or changed smart playlist saved in the config is actually
+  returning.
+  :bug:`4573`
 * :doc:`/plugins/fromfilename`:  Add debug log messages that inform when the
   plugin replaced bad (missing) artist, title or tracknumber metadata.
   :bug:`4561` :bug:`4600`
 
 Bug fixes:
 
+* :doc:`/plugins/fetchart`: Fix fetching from Cover Art Archive when the
+  `maxwidth` option is set to one of the supported Cover Art Archive widths.
 * :doc:`/plugins/discogs`: Fix "Discogs plugin replacing Feat. or Ft. with
   a comma" by fixing an oversight that removed a functionality from the code
   base when the MetadataSourcePlugin abstract class was introduced in PR's
   #3335 and #3371.
   :bug:`4401`
-* :doc:`/plugins/convert`: Set default ``max_bitrate`` value to ``None`` to 
+* :doc:`/plugins/convert`: Set default ``max_bitrate`` value to ``None`` to
   avoid transcoding when this parameter is not set. :bug:`4472`
 * :doc:`/plugins/replaygain`: Avoid a crash when errors occur in the analysis
   backend.
@@ -133,9 +145,19 @@ Bug fixes:
 * :doc:`/plugins/fromfilename`: Fix failed detection of <track> <title>
   filename patterns.
   :bug:`4561` :bug:`4600`
+* Fix issue where deletion of flexible fields on an album doesn't cascade to items
+  :bug:`4662`
+* Fix issue where ``beet write`` continuosly retags the ``albumtypes`` metadata
+  field in files. Additionally broken data could have been added to the library
+  when the tag was read from file back into the library using ``beet update``.
+  It is required for all users to **check if such broken data is present in the
+  library**. Following the instructions `described here
+  <https://github.com/beetbox/beets/pull/4582#issuecomment-1445023493>`_, a
+  sanity check and potential fix is easily possible. :bug:`4528`
 
 For packagers:
 
+* As noted above, the minimum Python version is now 3.7.
 * We fixed a version for the dependency on the `Confuse`_ library.
   :bug:`4167`
 * The minimum required version of :pypi:`mediafile` is now 0.9.0.
@@ -143,6 +165,13 @@ For packagers:
 Other changes:
 
 * Add ``sphinx`` and ``sphinx_rtd_theme`` as dependencies for a new ``docs`` extra
+  :bug:`4643`
+* :doc:`/plugins/absubmit`: Deprecate the ``absubmit`` plugin since
+  AcousticBrainz has stopped accepting new submissions.
+  :bug:`4627`
+* :doc:`/plugins/acousticbrainz`: Deprecate the ``acousticbrainz`` plugin
+  since the AcousticBrainz project has shut down.
+  :bug:`4627`
 * :doc:`/plugins/limit`: Limit query results to head or tail (``lslimit``
   command only)
 * :doc:`/plugins/fish`: Add ``--output`` option.

@@ -82,6 +82,17 @@ automatically notify MPD of the playlist change, by adding ``mpdupdate`` to
 the ``plugins`` line in your config file *after* the ``smartplaylist``
 plugin.
 
+While changing existing playlists in the beets configuration it can help to use
+the ``--pretend`` option to find out if the edits work as expected. The results
+of the queries will be printed out instead of being written to the playlist
+file.
+
+    $ beet splupdate --pretend BeatlesUniverse.m3u
+
+The ``pretend_paths`` configuration option sets whether the items should be
+displayed as per the user's ``format_item`` setting or what the file
+paths as they would be written to the m3u file look like.
+
 Configuration
 -------------
 
@@ -105,3 +116,5 @@ other configuration options are:
   example, you could use the URL for a server where the music is stored.
   Default: empty string.
 - **urlencoded**: URL-encode all paths. Default: ``no``.
+- **pretend_paths**: When running with ``--pretend``, show the actual file
+  paths that will be written to the m3u file. Default: ``false``.

@@ -56,10 +56,13 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
     def __init__(self):
         super().__init__()
 
+        self._log.warning("This plugin is deprecated.")
+
         self.config.add({
             'extractor': '',
             'force': False,
-            'pretend': False
+            'pretend': False,
+            'base_url': ''
         })
 
         self.extractor = self.config['extractor'].as_str()
@@ -79,7 +82,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             except OSError:
                 raise ui.UserError(
                     'No extractor command found: please install the extractor'
-                    ' binary from https://acousticbrainz.org/download'
+                    ' binary from https://essentia.upf.edu/'
                 )
             except ABSubmitError:
                 # Extractor found, will exit with an error if not called with
@@ -96,7 +99,15 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
             self.extractor_sha.update(extractor.read())
         self.extractor_sha = self.extractor_sha.hexdigest()
 
-    base_url = 'https://acousticbrainz.org/api/v1/{mbid}/low-level'
+        self.url = ''
+        base_url = self.config['base_url'].as_str()
+        if base_url:
+            if not base_url.startswith('http'):
+                raise ui.UserError('AcousticBrainz server base URL must start '
+                                   'with an HTTP scheme')
+            elif base_url[-1] != '/':
+                base_url = base_url + '/'
+            self.url = base_url + '{mbid}/low-level'
 
     def commands(self):
         cmd = ui.Subcommand(
@@ -118,10 +129,17 @@ only files which would be processed'
         return [cmd]
 
     def command(self, lib, opts, args):
-        # Get items from arguments
-        items = lib.items(ui.decargs(args))
-        self.opts = opts
-        util.par_map(self.analyze_submit, items)
+        if not self.url:
+            raise ui.UserError(
+                'This plugin is deprecated since AcousticBrainz no longer '
+                'accepts new submissions. See the base_url configuration '
+                'option.'
+            )
+        else:
+            # Get items from arguments
+            items = lib.items(ui.decargs(args))
+            self.opts = opts
+            util.par_map(self.analyze_submit, items)
 
     def analyze_submit(self, item):
         analysis = self._get_analysis(item)
@@ -179,7 +197,7 @@ only files which would be processed'
     def _submit_data(self, item, data):
         mbid = item['mb_trackid']
         headers = {'Content-Type': 'application/json'}
-        response = requests.post(self.base_url.format(mbid=mbid),
+        response = requests.post(self.url.format(mbid=mbid),
                                  json=data, headers=headers)
         # Test that request was successful and raise an error on failure.
         if response.status_code != 200:
