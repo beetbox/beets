@@ -28,6 +28,7 @@ import beets.ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin, get_distance
 import confuse
+from beets.util.id_extractors import beatport_id_regex
 
 
 AUTH_ERRORS = (TokenRequestDenied, TokenMissing, VerifierMissing)
@@ -267,6 +268,7 @@ class BeatportTrack(BeatportObject):
 
 class BeatportPlugin(BeetsPlugin):
     data_source = 'Beatport'
+    id_regex = beatport_id_regex
 
     def __init__(self):
         super().__init__()
@@ -380,11 +382,13 @@ class BeatportPlugin(BeetsPlugin):
         or None if the query is not a valid ID or release is not found.
         """
         self._log.debug('Searching for release {0}', release_id)
-        match = re.search(r'(^|beatport\.com/release/.+/)(\d+)$', release_id)
-        if not match:
+
+        release_id = self._get_id('album', release_id, self.id_regex)
+        if release_id is None:
             self._log.debug('Not a valid Beatport release ID.')
             return None
-        release = self.client.get_release(match.group(2))
+
+        release = self.client.get_release(release_id)
         if release:
             return self._get_album_info(release)
         return None
