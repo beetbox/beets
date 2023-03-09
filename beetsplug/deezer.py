@@ -23,7 +23,7 @@ import requests
 from beets import ui
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.plugins import MetadataSourcePlugin, BeetsPlugin
-from betts.utils.id_extractors import deezer_id_regex
+from beets.utils.id_extractors import deezer_id_regex
 
 
 class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
