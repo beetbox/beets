@@ -69,9 +69,9 @@ class DiscogsPlugin(BeetsPlugin):
         self.register_listener('import_begin', self.setup)
 
     def check_discogs_client(self):
-        """Ensure python3-discogs-client version >= 2.3.10
+        """Ensure python3-discogs-client version >= 2.3.15
         """
-        dc_min_version = [2, 3, 10]
+        dc_min_version = [2, 3, 15]
         dc_version = [int(elem) for elem in dc_string.split('.')]
         min_len = min(len(dc_version), len(dc_min_version))
         gt_min = [(elem > elem_min) for elem, elem_min in
@@ -79,7 +79,7 @@ class DiscogsPlugin(BeetsPlugin):
                       dc_min_version[:min_len])]
         if True not in gt_min:
             self._log.warning(('python3-discogs-client version should be '
-                               '>= 2.3.10'))
+                               '>= 2.3.15'))
 
     def setup(self, session=None):
         """Create the `discogs_client` field. Authenticate if necessary.
