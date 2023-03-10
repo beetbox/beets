@@ -111,7 +111,7 @@ setup(
             'requests_oauthlib',
             'reflink',
             'rarfile',
-            'python3-discogs-client',
+            'python3-discogs-client>=2.3.15',
             'py7zr',
         ],
         'lint': [
@@ -139,7 +139,7 @@ setup(
         'embedart': ['Pillow'],
         'embyupdate': ['requests'],
         'chroma': ['pyacoustid'],
-        'discogs': ['python3-discogs-client>=2.3.10'],
+        'discogs': ['python3-discogs-client>=2.3.15'],
         'beatport': ['requests-oauthlib>=0.6.1'],
         'kodiupdate': ['requests'],
         'lastgenre': ['pylast'],
