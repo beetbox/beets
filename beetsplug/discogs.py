@@ -22,6 +22,7 @@ from beets.util.id_extractors import extract_discogs_id_regex
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.plugins import MetadataSourcePlugin, BeetsPlugin, get_distance
 import confuse
+from discogs_client import __version__ as dc_string
 from discogs_client import Release, Master, Client
 from discogs_client.exceptions import DiscogsAPIError
 from requests.exceptions import ConnectionError
@@ -50,6 +51,7 @@ class DiscogsPlugin(BeetsPlugin):
 
     def __init__(self):
         super().__init__()
+        self.check_discogs_client()
         self.config.add({
             'apikey': API_KEY,
             'apisecret': API_SECRET,
@@ -65,6 +67,19 @@ class DiscogsPlugin(BeetsPlugin):
         self.config['user_token'].redact = True
         self.discogs_client = None
         self.register_listener('import_begin', self.setup)
+
+    def check_discogs_client(self):
+        """Ensure python3-discogs-client version >= 2.3.15
+        """
+        dc_min_version = [2, 3, 15]
+        dc_version = [int(elem) for elem in dc_string.split('.')]
+        min_len = min(len(dc_version), len(dc_min_version))
+        gt_min = [(elem > elem_min) for elem, elem_min in
+                  zip(dc_version[:min_len],
+                      dc_min_version[:min_len])]
+        if True not in gt_min:
+            self._log.warning(('python3-discogs-client version should be '
+                               '>= 2.3.15'))
 
     def setup(self, session=None):
         """Create the `discogs_client` field. Authenticate if necessary.
