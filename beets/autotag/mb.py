@@ -515,24 +515,38 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
         )
 
     # We might find links to external sources (Discogs, Bandcamp, ...)
-    if release.get('url-relation-list'):
+    if (any(config['musicbrainz']['external_ids'].get().values())
+            and release.get('url-relation-list')):
         discogs_url, bandcamp_url, spotify_url = None, None, None
         deezer_url, beatport_url = None, None
+        fetch_discogs, fetch_bandcamp, fetch_spotify = False, False, False
+        fetch_deezer, fetch_beatport = False, False
+
+        if config['musicbrainz']['external_ids']['discogs'].get():
+            fetch_discogs = True
+        if config['musicbrainz']['external_ids']['bandcamp'].get():
+            fetch_bandcamp = True
+        if config['musicbrainz']['external_ids']['spotify'].get():
+            fetch_spotify = True
+        if config['musicbrainz']['external_ids']['deezer'].get():
+            fetch_deezer = True
+        if config['musicbrainz']['external_ids']['beatport'].get():
+            fetch_beatport = True
 
         for url in release['url-relation-list']:
-            if url['type'] == 'discogs':
+            if fetch_discogs and url['type'] == 'discogs':
                 log.debug('Found link to Discogs release via MusicBrainz')
                 discogs_url = url['target']
-            if 'bandcamp.com' in url['target']:
+            if fetch_bandcamp and 'bandcamp.com' in url['target']:
                 log.debug('Found link to Bandcamp release via MusicBrainz')
                 bandcamp_url = url['target']
-            if 'spotify.com' in url['target']:
+            if fetch_spotify and 'spotify.com' in url['target']:
                 log.debug('Found link to Spotify album via MusicBrainz')
                 spotify_url = url['target']
-            if 'deezer.com' in url['target']:
+            if fetch_deezer and 'deezer.com' in url['target']:
                 log.debug('Found link to Deezer album via MusicBrainz')
                 deezer_url = url['target']
-            if 'beatport.com' in url['target']:
+            if fetch_beatport and 'beatport.com' in url['target']:
                 log.debug('Found link to Beatport release via MusicBrainz')
                 beatport_url = url['target']
 
