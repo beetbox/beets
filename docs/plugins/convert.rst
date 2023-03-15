@@ -96,7 +96,7 @@ file. The available options are:
   Default: none.
 - **no_convert**: Does not transcode items matching the query string provided
   (see :doc:`/reference/query`). For example, to not convert AAC or WMA formats, you can use ``format:AAC, format:WMA`` or
-  ``path::\.(m4a|wma)$``. If you only want to transcode WMA format, you can use the query term negation to not convert all the other formats except wma, e.g., ``^path::\.(wma)$``.
+  ``path::\.(m4a|wma)$``. If you only want to transcode WMA format, you can use a negative query, e.g., ``^path::\.(wma)$``, to not convert any other format except WMA.
 - **never_convert_lossy_files**: Cross-conversions between lossy codecs---such
   as mp3, ogg vorbis, etc.---makes little sense as they will decrease quality
   even further. If set to ``yes``, lossy files are always copied.
