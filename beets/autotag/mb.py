@@ -73,7 +73,7 @@ log = logging.getLogger('beets')
 RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'labels', 'artist-credits', 'aliases',
                     'recording-level-rels', 'work-rels',
-                    'work-level-rels', 'artist-rels', 'isrcs', 'url-rels']
+                    'work-level-rels', 'artist-rels', 'isrcs', 'url-rels', 'release-rels']
 BROWSE_INCLUDES = ['artist-credits', 'work-rels',
                    'artist-rels', 'recording-rels', 'release-rels']
 if "work-level-rels" in musicbrainzngs.VALID_BROWSE_INCLUDES['recording']:
@@ -670,6 +670,61 @@ def _parse_id(s: str) -> Optional[str]:
     return None
 
 
+# this was defined within the function below but pep8 made me move it here
+_trans_key = 'transl-tracklisting'
+_is_trans = lambda r: r['type'] == _trans_key and r['direction'] == "backward"
+
+
+def _find_actual_release_from_pseudo_release(pseudo_rel: Dict)\
+      -> Optional[Dict]:
+    relations = pseudo_rel['release']["release-relation-list"]
+
+    # currently we only support trans(liter)ation's
+    actual_id = next(filter(_is_trans, relations), {'target': None})['target']
+
+    if actual_id is None:
+        return None
+
+    return musicbrainzngs.get_release_by_id(actual_id,
+                                            RELEASE_INCLUDES)
+
+
+def _merge_pseudo_and_actual_album(
+        pseudo: beets.autotag.hooks.AlbumInfo,
+        actual: beets.autotag.hooks.AlbumInfo
+        ) -> Optional[beets.autotag.hooks.AlbumInfo]:
+    """
+    Merges a pseudo release with its actual release.
+
+    This implementation is naive, it doesn't overwrite fields,
+    like status or ids.
+
+    According to the ticket PICARD-145, the main release id should be used.
+    But the ticket has been in limbo since over a decade now.
+    It also suggests the introduction of the tag `musicbrainz_pseudoreleaseid`,
+    but as of this field can't be found in any offical Picard docs,
+    hence why we did not implement that for now.
+    """
+    merged = pseudo.copy()
+    merged.update({
+        "media": actual.media,
+        "mediums": actual.mediums,
+        "country": actual.country,
+        "catalognum": actual.catalognum,
+        "year": actual.year,
+        "month": actual.month,
+        "day": actual.day,
+        "original_year": actual.original_year,
+        "original_month": actual.original_month,
+        "original_day": actual.original_day,
+        "label": actual.label,
+        "asin": actual.asin,
+        "style": actual.style,
+        "genre": actual.genre,
+    })
+    return merged
+
+
 def album_for_id(releaseid: str) -> Optional[beets.autotag.hooks.AlbumInfo]:
     """Fetches an album by its MusicBrainz ID and returns an AlbumInfo
     object or None if the album is not found. May raise a
@@ -683,13 +738,27 @@ def album_for_id(releaseid: str) -> Optional[beets.autotag.hooks.AlbumInfo]:
     try:
         res = musicbrainzngs.get_release_by_id(albumid,
                                                RELEASE_INCLUDES)
+
+        # resolve linked release relations
+        actual_res = None
+
+        if res['release']['status'] == 'Pseudo-Release':
+            actual_res = _find_actual_release_from_pseudo_release(res)
+
     except musicbrainzngs.ResponseError:
         log.debug('Album ID match failed.')
         return None
     except musicbrainzngs.MusicBrainzError as exc:
         raise MusicBrainzAPIError(exc, 'get release by ID', albumid,
                                   traceback.format_exc())
-    return album_info(res['release'])
+
+    release = album_info(res['release'])
+
+    if actual_res is not None:
+        actual_release = album_info(actual_res['release'])
+        return _merge_pseudo_and_actual_album(release, actual_release)
+    else:
+        return release
 
 
 def track_for_id(releaseid: str) -> Optional[beets.autotag.hooks.TrackInfo]:
