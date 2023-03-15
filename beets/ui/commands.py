@@ -211,6 +211,9 @@ def disambig_string(info):
             disambig.append(info.catalognum)
         if info.albumdisambig:
             disambig.append(info.albumdisambig)
+        # pseudo releases can't be differentiated from real release otherwise
+        if info.albumstatus == 'Pseudo-Release':
+            disambig.append(info.albumstatus)
 
     if disambig:
         return ', '.join(disambig)

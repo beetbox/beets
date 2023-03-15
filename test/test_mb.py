@@ -604,6 +604,7 @@ class MBLibraryTest(unittest.TestCase):
                     'release': {
                         'title': 'hi',
                         'id': mbid,
+                        'status': 'status',
                         'medium-list': [{
                             'track-list': [{
                                 'id': 'baz',
@@ -647,6 +648,164 @@ class MBLibraryTest(unittest.TestCase):
             ail = list(mb.match_album(' ', ' '))
             self.assertFalse(p.called)
             self.assertEqual(ail, [])
+
+    def test_follow_pseudo_releases(self):
+        side_effect = [
+            {
+                'release': {
+                    'title': 'pseudo',
+                    'id': 'd2a6f856-b553-40a0-ac54-a321e8e2da02',
+                    'status': 'Pseudo-Release',
+                    'medium-list': [{
+                        'track-list': [{
+                            'id': 'baz',
+                            'recording': {
+                                'title': 'translated title',
+                                'id': 'bar',
+                                'length': 42,
+                            },
+                            'position': 9,
+                            'number': 'A1',
+                        }],
+                        'position': 5,
+                    }],
+                    'artist-credit': [{
+                        'artist': {
+                            'name': 'some-artist',
+                            'id': 'some-id',
+                        },
+                    }],
+                    'release-group': {
+                        'id': 'another-id',
+                    },
+                    'release-relation-list': [
+                        {
+                            'type': 'transl-tracklisting',
+                            'target': 'd2a6f856-b553-40a0-ac54-a321e8e2da01',
+                            'direction': 'backward'
+                        }
+                    ]
+                }
+            },
+            {
+                    'release': {
+                        'title': 'actual',
+                        'id': 'd2a6f856-b553-40a0-ac54-a321e8e2da01',
+                        'status': 'Offical',
+                        'medium-list': [{
+                            'track-list': [{
+                                'id': 'baz',
+                                'recording': {
+                                    'title': 'original title',
+                                    'id': 'bar',
+                                    'length': 42,
+                                },
+                                'position': 9,
+                                'number': 'A1',
+                            }],
+                            'position': 5,
+                        }],
+                        'artist-credit': [{
+                            'artist': {
+                                'name': 'some-artist',
+                                'id': 'some-id',
+                            },
+                        }],
+                        'release-group': {
+                            'id': 'another-id',
+                        },
+                        'country': 'COUNTRY',
+                    }
+                }
+        ]
+
+        with mock.patch('musicbrainzngs.get_release_by_id') as gp:
+            gp.side_effect = side_effect
+            album = mb.album_for_id('d2a6f856-b553-40a0-ac54-a321e8e2da02')
+            self.assertEqual(album.country, 'COUNTRY')
+
+    def test_pseudo_releases_without_links(self):
+        side_effect = [{
+                    'release': {
+                        'title': 'pseudo',
+                        'id': 'd2a6f856-b553-40a0-ac54-a321e8e2da02',
+                        'status': 'Pseudo-Release',
+                        'medium-list': [{
+                            'track-list': [{
+                                'id': 'baz',
+                                'recording': {
+                                    'title': 'translated title',
+                                    'id': 'bar',
+                                    'length': 42,
+                                },
+                                'position': 9,
+                                'number': 'A1',
+                            }],
+                            'position': 5,
+                        }],
+                        'artist-credit': [{
+                            'artist': {
+                                'name': 'some-artist',
+                                'id': 'some-id',
+                            },
+                        }],
+                        'release-group': {
+                            'id': 'another-id',
+                        },
+                        'release-relation-list': []
+                    }
+                },
+        ]
+
+        with mock.patch('musicbrainzngs.get_release_by_id') as gp:
+            gp.side_effect = side_effect
+            album = mb.album_for_id('d2a6f856-b553-40a0-ac54-a321e8e2da02')
+            self.assertEqual(album.country, None)
+
+    def test_pseudo_releases_with_unsupported_links(self):
+        side_effect = [
+            {
+                'release': {
+                    'title': 'pseudo',
+                    'id': 'd2a6f856-b553-40a0-ac54-a321e8e2da02',
+                    'status': 'Pseudo-Release',
+                    'medium-list': [{
+                        'track-list': [{
+                            'id': 'baz',
+                            'recording': {
+                                'title': 'translated title',
+                                'id': 'bar',
+                                'length': 42,
+                            },
+                            'position': 9,
+                            'number': 'A1',
+                        }],
+                        'position': 5,
+                    }],
+                    'artist-credit': [{
+                        'artist': {
+                            'name': 'some-artist',
+                            'id': 'some-id',
+                        },
+                    }],
+                    'release-group': {
+                        'id': 'another-id',
+                    },
+                    'release-relation-list': [
+                        {
+                            'type': 'remaster',
+                            'target': 'd2a6f856-b553-40a0-ac54-a321e8e2da01',
+                            'direction': 'backward'
+                        }
+                    ]
+                }
+            },
+        ]
+
+        with mock.patch('musicbrainzngs.get_release_by_id') as gp:
+            gp.side_effect = side_effect
+            album = mb.album_for_id('d2a6f856-b553-40a0-ac54-a321e8e2da02')
+            self.assertEqual(album.country, None)
 
 
 def suite():
