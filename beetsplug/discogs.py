@@ -277,7 +277,7 @@ class DiscogsPlugin(BeetsPlugin):
         query = re.sub(r'(?u)\W+', ' ', query)
         # Strip medium information from query, Things like "CD1" and "disk 1"
         # can also negate an otherwise positive result.
-        query = re.sub(r'(?i)\b(CD|disc)\s*\d+', '', query)
+        query = re.sub(r'(?i)\b(CD|disc|vinyl)\s*\d+', '', query)
 
         try:
             releases = self.discogs_client.search(query,
