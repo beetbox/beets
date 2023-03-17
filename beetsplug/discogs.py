@@ -267,8 +267,7 @@ class DiscogsPlugin(BeetsPlugin):
             )
             if track_result:
                 candidates.append(track_result)
-        # first 10 results, don't overwhelm with options
-        return candidates[:10]
+        return candidates
 
     def album_for_id(self, album_id):
         """Fetches an album by its Discogs ID and returns an AlbumInfo object
