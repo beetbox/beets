@@ -3,10 +3,10 @@ Substitute Plugin
 
 The ``substitute`` plugin lets you easily substitute values in your templates and
 path formats. Specifically, it is intended to let you *canonicalize* names
-such as artists: for example, perhaps you want albums from The Jimi Hendrix
+such as artists: For example, perhaps you want albums from The Jimi Hendrix
 Experience to be sorted into the same folder as solo Hendrix albums.
 
-This plugin is intented as a replacement for the ``rewrite`` plugin. Indeed, while
+This plugin is intented as a replacement for the ``rewrite`` plugin. While
 the ``rewrite`` plugin modifies the metadata, this plugin does not.
 
 Enable the ``substitute`` plugin (see :ref:`using-plugins`), then make a ``substitute:`` section in your config file to contain your rules.
