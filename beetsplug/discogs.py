@@ -19,7 +19,8 @@ python3-discogs-client library.
 import beets.ui
 from beets import config
 from beets.util.id_extractors import extract_discogs_id_regex
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag.hooks import AlbumInfo, TrackInfo, TrackAlbumTuple, \
+    string_dist
 from beets.plugins import MetadataSourcePlugin, BeetsPlugin, get_distance
 import confuse
 from discogs_client import __version__ as dc_string
@@ -196,6 +197,35 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.debug('Connection error in album search', exc_info=True)
             return []
 
+    def get_track_from_album_by_title(self, album_info, title,
+                                      dist_threshold=0.3):
+        def compare_func(track_info):
+            track_title = getattr(track_info, "title", None)
+            dist = string_dist(track_title, title)
+            return (track_title and dist < dist_threshold)
+        return self.get_track_from_album(album_info, compare_func)
+
+    def get_track_from_album(self, album_info, compare_func):
+        """Return the first track of the release where `compare_func`
+        returns true.
+        """
+        if not album_info:
+            return None
+
+        for track_info in album_info.tracks:
+            # check for matching position
+            if not compare_func(track_info):
+                continue
+
+            # attach artist info if not provided
+            if not track_info['artist']:
+                track_info['artist'] = album_info.artist
+                track_info['artist_id'] = album_info.artist_id
+
+            return TrackAlbumTuple(track_info, album_info)
+
+        return None
+
     def item_candidates(self, item, artist, title):
         """Returns a list of TrackInfo objects for Search API results
         matching ``title`` and ``artist``.
@@ -205,8 +235,8 @@ class DiscogsPlugin(BeetsPlugin):
         :type artist: str
         :param title: The title of the track to be matched.
         :type title: str
-        :return: Candidate TrackInfo objects.
-        :rtype: list[beets.autotag.hooks.TrackInfo]
+        :return: Candidate TrackAlbumTuple objects (track_info, album_info).
+        :rtype: list[beets.autotag.hooks.TrackAlbumTuple]
         """
         if not self.discogs_client:
             return
@@ -227,10 +257,16 @@ class DiscogsPlugin(BeetsPlugin):
                 return []
         except CONNECTION_ERRORS:
             self._log.debug('Connection error in track search', exc_info=True)
+
         candidates = []
         for album_cur in albums:
             self._log.debug(u'searching within album {0}', album_cur.album)
-            candidates += album_cur.tracks
+            # candidates += track_result
+            track_result = self.get_track_from_album_by_title(
+                album_cur, item['title']
+            )
+            if track_result:
+                candidates.append(track_result)
         # first 10 results, don't overwhelm with options
         return candidates[:10]
 
@@ -286,7 +322,7 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.debug("Communication error while searching for {0!r}",
                             query, exc_info=True)
             return []
-        return [album for album in map(self.get_album_info, releases[:5])
+        return [album for album in map(self.get_album_info, releases[:10])
                 if album]
 
     def get_master_year(self, master_id):
