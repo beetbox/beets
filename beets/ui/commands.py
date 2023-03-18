@@ -215,6 +215,12 @@ def disambig_string(info):
         if info.albumstatus == 'Pseudo-Release':
             disambig.append(info.albumstatus)
 
+    if isinstance(info, hooks.TrackInfo):
+        if info.index:
+            disambig.append("Index {}".format(str(info.index)))
+        if info.track_alt:
+            disambig.append("Track {} ".format(info.track_alt))
+
     if disambig:
         return ', '.join(disambig)
 
