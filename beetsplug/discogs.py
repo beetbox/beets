@@ -214,6 +214,7 @@ class DiscogsPlugin(BeetsPlugin):
         if not artist and not title:
             self._log.debug('Skipping Discogs query. File missing artist and '
                             'title tags.')
+            return
 
         query = f'{artist} {title}'
         try:
