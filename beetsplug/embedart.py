@@ -86,7 +86,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         embed_cmd.parser.add_option("-y", "--yes", action="store_true",
                                     help="skip confirmation")
 
-        embed_cmd.parser.add_option('-u', '--url', action="store_true",
+        embed_cmd.parser.add_option('-u', '--url', metavar='URL',
                                     help='the URL of the image file to embed')
 
         maxwidth = self.config['maxwidth'].get(int)
