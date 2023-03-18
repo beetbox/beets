@@ -82,8 +82,10 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         )
         embed_cmd.parser.add_option('-f', '--file', metavar='PATH',
                                     help='the image file to embed')
+
         embed_cmd.parser.add_option("-y", "--yes", action="store_true",
                                     help="skip confirmation")
+
         embed_cmd.parser.add_option('-u', '--url', action="store_true",
                                     help='the URL of the image file to embed')
 
