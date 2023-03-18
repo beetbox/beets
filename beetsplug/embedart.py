@@ -119,6 +119,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     with open('temp.jpg', 'wb') as f:
                         f.write(response.content)
                     opts.file = 'temp.jpg'
+                    items = lib.items(decargs(args))
                     # Confirm with user.
                     if not opts.yes and not _confirm(items, not opts.url):
                         return
