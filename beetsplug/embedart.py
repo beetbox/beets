@@ -15,14 +15,16 @@
 """Allows beets to embed album art into file metadata."""
 
 import os.path
+from io import BytesIO
 
+import requests
+from PIL import Image
+
+from beets import art, config, ui
 from beets.plugins import BeetsPlugin
-from beets import ui
-from beets.ui import print_, decargs
-from beets.util import syspath, normpath, displayable_path, bytestring_path
+from beets.ui import decargs, print_
+from beets.util import bytestring_path, displayable_path, normpath, syspath
 from beets.util.artresizer import ArtResizer
-from beets import config
-from beets import art
 
 
 def _confirm(objs, album):
@@ -78,12 +80,13 @@ class EmbedCoverArtPlugin(BeetsPlugin):
         embed_cmd = ui.Subcommand(
             'embedart', help='embed image files into file metadata'
         )
-        embed_cmd.parser.add_option(
-            '-f', '--file', metavar='PATH', help='the image file to embed'
-        )
-        embed_cmd.parser.add_option(
-            "-y", "--yes", action="store_true", help="skip confirmation"
-        )
+        embed_cmd.parser.add_option('-f', '--file', metavar='PATH',
+                                    help='the image file to embed')
+        embed_cmd.parser.add_option("-y", "--yes", action="store_true",
+                                    help="skip confirmation")
+        embed_cmd.parser.add_option('-u', '--url', metavar='URL',
+                                    help='the URL of the image file to embed')
+
         maxwidth = self.config['maxwidth'].get(int)
         quality = self.config['quality'].get(int)
         compare_threshold = self.config['compare_threshold'].get(int)
@@ -107,13 +110,29 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     art.embed_item(self._log, item, imagepath, maxwidth,
                                    None, compare_threshold, ifempty,
                                    quality=quality)
+            elif opts.url:
+                response = requests.get(opts.url)
+                img = Image.open(BytesIO(response.content))
+                if img.format:
+                    with open('temp.jpg', 'wb') as f:
+                        f.write(response.content)
+                    opts.file = 'temp.jpg'
+                    # Confirm with user.
+                    if not opts.yes and not _confirm(items, not opts.url):
+                        return
+                    for item in items:
+                        art.embed_item(self._log, item, opts.file, maxwidth,
+                                       None, compare_threshold, ifempty,
+                                       quality=quality)
+                    os.remove(opts.file)
+                else:
+                    self._log.error('Invalid image file')
+                    return
             else:
                 albums = lib.albums(decargs(args))
-
                 # Confirm with user.
                 if not opts.yes and not _confirm(albums, not opts.file):
                     return
-
                 for album in albums:
                     art.embed_album(self._log, album, maxwidth,
                                     False, compare_threshold, ifempty,
