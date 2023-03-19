@@ -18,7 +18,6 @@ import os.path
 from io import BytesIO
 
 import requests
-from PIL import Image
 
 from beets import art, config, ui
 from beets.plugins import BeetsPlugin
@@ -113,6 +112,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                                    None, compare_threshold, ifempty,
                                    quality=quality)
             elif opts.url:
+                from PIL import Image
                 response = requests.get(opts.url)
                 img = Image.open(BytesIO(response.content))
                 if img.format:
