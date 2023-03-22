@@ -486,7 +486,7 @@ class ConvertPlugin(BeetsPlugin):
             self._log.info("Creating playlist file: {0}",
                            util.normpath(playlist))
             items_paths = [
-                util.syspath(item.destination(
+                util.bytestring_path(item.destination(
                     basedir=dest, path_formats=path_formats, fragment=True
                 )) for item in items
             ]

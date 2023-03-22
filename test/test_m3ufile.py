@@ -42,8 +42,8 @@ class M3UFileTest(unittest.TestCase):
         the_playlist_file = path.join(tempdir, b'playlist.m3u')
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.set_contents([
-            '/This/is/a/path/to_a_file.mp3',
-            '/This/is/another/path/to_a_file.mp3',
+            bytestring_path('/This/is/a/path/to_a_file.mp3'),
+            bytestring_path('/This/is/another/path/to_a_file.mp3')
         ])
         m3ufile.write()
         self.assertTrue(path.exists(the_playlist_file))
@@ -55,8 +55,8 @@ class M3UFileTest(unittest.TestCase):
         the_playlist_file = path.join(tempdir, b'playlist.m3u8')
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.set_contents([
-            '/This/is/å/path/to_a_file.mp3',
-            '/This/is/another/path/tö_a_file.mp3',
+            bytestring_path('/This/is/å/path/to_a_file.mp3'),
+            bytestring_path('/This/is/another/path/tö_a_file.mp3')
         ])
         m3ufile.write()
         self.assertTrue(path.exists(the_playlist_file))
@@ -70,8 +70,8 @@ class M3UFileTest(unittest.TestCase):
                                       b'playlist_write_and_read_windows.m3u8')
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.set_contents([
-            r"x:\This\is\å\path\to_a_file.mp3",
-            r"x:\This\is\another\path\tö_a_file.mp3"
+            bytestring_path(r"x:\This\is\å\path\to_a_file.mp3"),
+            bytestring_path(r"x:\This\is\another\path\tö_a_file.mp3")
         ])
         m3ufile.write()
         self.assertTrue(path.exists(the_playlist_file))
@@ -79,12 +79,14 @@ class M3UFileTest(unittest.TestCase):
         m3ufile_read.load()
         self.assertEquals(
             m3ufile.media_list[0],
-            path.join('x:\\', 'This', 'is', 'å', 'path', 'to_a_file.mp3')
+            bytestring_path(
+                path.join('x:\\', 'This', 'is', 'å', 'path', 'to_a_file.mp3'))
         )
         self.assertEquals(
             m3ufile.media_list[1],
-            r"x:\This\is\another\path\tö_a_file.mp3",
-            path.join('x:\\', 'This', 'is', 'another', 'path', 'tö_a_file.mp3')
+            bytestring_path(r"x:\This\is\another\path\tö_a_file.mp3"),
+            bytestring_path(path.join(
+                'x:\\', 'This', 'is', 'another', 'path', 'tö_a_file.mp3'))
         )
         rmtree(tempdir)
 

@@ -76,7 +76,7 @@ class M3UFile():
 
         Handles the creation of potential parent directories.
         """
-        header = ["#EXTM3U"] if self.extm3u else []
+        header = [b"#EXTM3U"] if self.extm3u else []
         if not self.media_list:
             raise EmptyPlaylistError
         contents = header + self.media_list
@@ -84,9 +84,10 @@ class M3UFile():
         mkdirall(pl_normpath)
 
         try:
-            with open(syspath(pl_normpath), "w", encoding="utf-8") as pl_file:
-                pl_file.writelines('\n'.join(contents))
-                pl_file.write('\n')  # Final linefeed to prevent noeol file.
+            with open(syspath(pl_normpath), "wb") as pl_file:
+                for line in contents:
+                    pl_file.write(line + b'\n')
+                pl_file.write(b'\n')  # Final linefeed to prevent noeol file.
         except OSError as exc:
             raise FilesystemError(exc, 'create', (pl_normpath, ),
                                   traceback.format_exc())
