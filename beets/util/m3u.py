@@ -42,18 +42,18 @@ class M3UFile():
         """Reads the m3u file from disk and sets the object's attributes."""
         pl_normpath = normpath(self.path)
         try:
-            with open(syspath(pl_normpath), "r", encoding="utf-8") as pl_file:
+            with open(syspath(pl_normpath), "rb") as pl_file:
                 raw_contents = pl_file.readlines()
         except OSError as exc:
             raise FilesystemError(exc, 'read', (pl_normpath, ),
                                   traceback.format_exc())
 
-        self.extm3u = True if raw_contents[0] == "#EXTM3U\n" else False
+        self.extm3u = True if raw_contents[0].rstrip() == b"#EXTM3U" else False
         for line in raw_contents[1:]:
-            if line.startswith("#"):
-                # Some EXTM3U comment, do something. FIXME
+            if line.startswith(b"#"):
+                # Support for specific EXTM3U comments could be added here.
                 continue
-            self.media_list.append(syspath(line, prefix=False))
+            self.media_list.append(normpath(line.rstrip()))
         if not self.media_list:
             raise EmptyPlaylistError
 

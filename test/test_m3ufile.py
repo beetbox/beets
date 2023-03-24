@@ -90,13 +90,14 @@ class M3UFileTest(unittest.TestCase):
         )
         rmtree(tempdir)
 
+    @unittest.skipIf(sys.platform == 'win32', 'win32')
     def test_playlist_load_ascii(self):
         """Test loading ascii paths from a playlist file."""
         the_playlist_file = path.join(RSRC, b'playlist.m3u')
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.load()
         self.assertEqual(m3ufile.media_list[0],
-                         '/This/is/a/path/to_a_file.mp3\n')
+                         bytestring_path('/This/is/a/path/to_a_file.mp3'))
 
     @unittest.skipIf(sys.platform == 'win32', 'win32')
     def test_playlist_load_unicode(self):
@@ -105,18 +106,19 @@ class M3UFileTest(unittest.TestCase):
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.load()
         self.assertEqual(m3ufile.media_list[0],
-                         '/This/is/å/path/to_a_file.mp3\n')
+                         bytestring_path('/This/is/å/path/to_a_file.mp3'))
 
     @unittest.skipUnless(sys.platform == 'win32', 'win32')
     def test_playlist_load_unicode_windows(self):
         """Test loading unicode paths from a playlist file."""
         the_playlist_file = path.join(RSRC, b'playlist_windows.m3u8')
-        winpath = path.join('x:\\', 'This', 'is', 'å', 'path', 'to_a_file.mp3')
+        winpath = bytestring_path(path.join(
+            'x:\\', 'This', 'is', 'å', 'path', 'to_a_file.mp3'))
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.load()
         self.assertEqual(
             m3ufile.media_list[0],
-            winpath + '\n'
+            winpath
         )
 
     def test_playlist_load_extm3u(self):
