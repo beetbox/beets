@@ -107,6 +107,13 @@ string, use ``$args`` to indicate where to insert them. For example:
 indicates that you need to insert extra arguments before specifying the
 playlist.
 
+The above example, however, does not work with current ``mpv`` because the
+``--playlist`` argument wants a different syntax. To satisfy this, the optional
+``$playlist`` can be used to meet that::
+
+    play:
+        command: mpv $args --playlist=$playlist
+
 The ``--yes`` (or ``-y``) flag to the ``play`` command will skip the warning
 message if you choose to play more items than the **warning_threshold** value
 usually allows.
