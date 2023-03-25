@@ -30,6 +30,11 @@ import shlex
 # If this is missing, they're placed at the end.
 ARGS_MARKER = '$args'
 
+# Indicate where the playlist file (with absolute path) should be inserted into
+# the command string. If this is missing, its placed at the end, but before
+# arguments.
+PLS_MARKER = '$playlist'
+
 
 def play(command_str, selection, paths, open_args, log, item_type='track',
          keep_open=False):
@@ -128,6 +133,15 @@ class PlayPlugin(BeetsPlugin):
 
         open_args = self._playlist_or_paths(paths)
         command_str = self._command_str(opts.args)
+
+        if PLS_MARKER in command_str:
+            if not config['play']['raw']:
+                ui.print_(ui.colorize('text_warning', 'DEBUG: ' + command_str))
+                command_str = command_str.replace(PLS_MARKER, ''.join(open_args))
+                ui.print_(ui.colorize('text_warning', 'DEBUG: ' + command_str))
+                open_args = []
+            else:
+                command_str = command_str.replace(PLS_MARKER, " ")
 
         # Check if the selection exceeds configured threshold. If True,
         # cancel, otherwise proceed with play command.
