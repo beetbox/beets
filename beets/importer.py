@@ -1091,16 +1091,19 @@ class ArchiveImportTask(SentinelImportTask):
         try:
             archive.extractall(extract_to)
 
-            # From here:
-            # https://stackoverflow.com/questions/9813243/extract-files-from-zip-file-and-retain-mod-date
-            # fixing #4392
+            # Adjust the files' mtimes to match the information from the archive. Inspired by:
+            # https://stackoverflow.com/q/9813243
 
             for f in archive.infolist():
-                # path to this extracted f-item
-                fullpath = os.path.join(extract_to, f.filename)
                 # still need to adjust the dt o/w item will have the current dt
-                date_time = time.mktime(f.date_time + (0, 0, -1))
                 # update date_time
+                # Can you give a clarification why you add (0, 0, -1) to the date_time?
+                # Is the current a second off?
+                # (0, 0, -1) is added because time.mktime expects a 9-element tuple.
+                # The -1 indicates that the DST flag is unknown.
+
+                date_time = time.mktime(f.date_time + (0, 0, -1))
+                fullpath = os.path.join(extract_to, f.filename)
                 os.utime(fullpath, (date_time, date_time))
 
         finally:
