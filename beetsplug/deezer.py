@@ -98,6 +98,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         return AlbumInfo(
             album=album_data['title'],
             album_id=deezer_id,
+            deezer_album_id=deezer_id,
             artist=artist,
             artist_credit=self.get_artist([album_data['artist']])[0],
             artist_id=artist_id,
