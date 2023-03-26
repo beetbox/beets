@@ -11,6 +11,8 @@ for Python 3.6).
 
 New features:
 
+* Added UTF-8 encoding enforcement to imported files in `beets/beets/ui/commands.py`.
+  :bug:`4693` 
 * Added additional error handling for `spotify` plugin.
   :bug:`4686`
 * We now import the remixer field from Musicbrainz into the library.
