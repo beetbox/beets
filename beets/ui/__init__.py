@@ -577,7 +577,7 @@ def _colorize(color, text):
     return escape + text + RESET_COLOR
 
 
-def colorize(color_name, text, whitespace=True):
+def colorize(color_name, text):
     """Colorize text if colored output is enabled. (Like _colorize but
     conditional.)
     """
@@ -613,13 +613,7 @@ def colorize(color_name, text, whitespace=True):
         if not color:
             log.debug("Invalid color_name: {0}", color_name)
             color = color_name
-        if whitespace:
-            # Colorize including whitespaces
-            return _colorize(color, text)
-        else:
-            # Split into words, then colorize individually
-            return " ".join(_colorize(color, word)
-                            for word in text.split())
+        return _colorize(color, text)
     else:
         return text
 
@@ -638,6 +632,43 @@ def uncolorize(colored_text):
     # Strip ANSI codes from `colored_text` using the regular expression.
     text = ansi_code_regex.sub("", colored_text)
     return text
+
+
+def color_split(colored_text, index):
+    ansi_code_regex = re.compile(r"(\x1b\[[;\d]*[A-Za-z])", re.VERBOSE)
+    length = 0
+    pre_split = ""
+    post_split = ""
+    found_color_code = None
+    found_split = False
+    for part in ansi_code_regex.split(colored_text):
+        # Count how many real letters we have passed
+        length += color_len(part)
+        if found_split:
+            post_split += part
+        else:
+            if ansi_code_regex.match(part):
+                # This is a color code
+                if part == RESET_COLOR:
+                    found_color_code = None
+                else:
+                    found_color_code = part
+                pre_split += part
+            else:
+                if index < length:
+                    # Found part with our split in.
+                    split_index = index - (length - color_len(part))
+                    found_split = True
+                    if found_color_code:
+                        pre_split += part[:split_index] + RESET_COLOR
+                        post_split += found_color_code + part[split_index:]
+                    else:
+                        pre_split += part[:split_index]
+                        post_split += part[split_index:]
+                else:
+                    # Not found, add this part to the pre split
+                    pre_split += part
+    return pre_split, post_split
 
 
 def color_len(colored_text):
@@ -682,15 +713,13 @@ def _colordiff(a, b):
             a_out.append(a[a_start:a_end])
             b_out.append(b[b_start:b_end])
         elif op == 'insert':
-            # Right only. Colorize whitespace if added.
+            # Right only.
             b_out.append(colorize("text_diff_added",
-                                  b[b_start:b_end],
-                                  whitespace=True))
+                                  b[b_start:b_end]))
         elif op == 'delete':
             # Left only.
             a_out.append(colorize("text_diff_removed",
-                                  a[a_start:a_end],
-                                  whitespace=False))
+                                  a[a_start:a_end]))
         elif op == 'replace':
             # Right and left differ. Colorise with second highlight if
             # it's just a case change.
@@ -700,11 +729,9 @@ def _colordiff(a, b):
             else:
                 a_color = b_color = "text_highlight_minor"
             a_out.append(colorize(a_color,
-                                  a[a_start:a_end],
-                                  whitespace=False))
+                                  a[a_start:a_end]))
             b_out.append(colorize(b_color,
-                                  b[b_start:b_end],
-                                  whitespace=False))
+                                  b[b_start:b_end]))
         else:
             assert False
 
@@ -784,28 +811,76 @@ def split_into_lines(string, width_tuple):
     """
     first_width, middle_width, last_width = width_tuple
     words = []
+    esc_text = re.compile(r"""(?P<pretext>[^\x1b]*)
+                            (?P<esc>(?:\x1b\[[;\d]*[A-Za-z])+)
+                            (?P<text>[^\x1b]+)(?P<reset>\x1b\[39;49;00m)
+                            (?P<posttext>[^\x1b]*)""",
+                          re.VERBOSE)
     if uncolorize(string) == string:
         # No colors in string
         words = string.split()
     else:
         # Use a regex to find escapes and the text within them.
-        esc_text = re.compile(r"(?P<esc>\x1b\[[;\d]*[A-Za-z])"
-                              r"(?P<text>[^\x1b]+)", re.VERBOSE)
         for m in esc_text.finditer(string):
-            # m contains two groups:
+            # m contains four groups:
+            # pretext - any text before escape sequence
             # esc - intitial escape sequence
             # text - text, no escape sequence, may contain spaces
+            # reset - ASCII colour reset
+            space_before_text = False
+            if m.group("pretext") != "":
+                # Some pretext found, let's handle it
+                # Add any words in the pretext
+                words += m.group("pretext").split()
+                if m.group("pretext")[-1] == " ":
+                    # Pretext ended on a space
+                    space_before_text = True
+                else:
+                    # Pretext ended mid-word, ensure next word
+                    pass
+            else:
+                # pretext empty, treat as if there is a space before
+                space_before_text = True
+            if m.group("text")[0] == " ":
+                # First character of the text is a space
+                space_before_text = True
+            # Now, handle the words in the main text:
             raw_words = m.group("text").split()
-            # Reconstruct colored words, without spaces.
-            words += [m.group("esc") + raw_word
-                      + RESET_COLOR for raw_word in raw_words]
+            if space_before_text:
+                # Colorize each word with pre/post escapes
+                # Reconstruct colored words
+                words += [m.group("esc") + raw_word
+                          + RESET_COLOR for raw_word in raw_words]
+            else:
+                # Pretext stops mid-word
+                if m.group("esc") != RESET_COLOR:
+                    # Add the rest of the current word, with a reset after it
+                    words[-1] += m.group("esc") + raw_words[0] + RESET_COLOR
+                    # Add the subsequent colored words:
+                    words += [m.group("esc") + raw_word
+                              + RESET_COLOR for raw_word in raw_words[1:]]
+                else:
+                    # Caught a mid-word escape sequence
+                    words[-1] += raw_words[0]
+                    words += raw_words[1:]
+            if (m.group("text")[-1] != " " and m.group("posttext") != ""
+               and m.group("posttext")[0] != " "):
+                # reset falls mid-word
+                post_text = m.group("posttext").split()
+                words[-1] += post_text[0]
+                words += post_text[1:]
+            else:
+                # Add any words after escape sequence
+                words += m.group("posttext").split()
     result = []
     next_substr = ""
     # Iterate over all words.
+    previous_fit = False
     for i in range(len(words)):
         if i == 0:
             pot_substr = words[i]
         else:
+            # (optimistically) add the next word to check the fit
             pot_substr = " ".join([next_substr, words[i]])
         # Find out if the pot(ential)_substr fits into the next substring.
         fits_first = (
@@ -815,10 +890,39 @@ def split_into_lines(string, width_tuple):
             len(result) != 0 and color_len(pot_substr) <= middle_width
         )
         if fits_first or fits_middle:
+            # Fitted(!) let's try and add another word before appending
             next_substr = pot_substr
-        else:
+            previous_fit = True
+        elif not fits_first and not fits_middle and previous_fit:
+            # Extra word didn't fit, append what we have
             result.append(next_substr)
             next_substr = words[i]
+            previous_fit = color_len(next_substr) <= middle_width
+        else:
+            # Didn't fit anywhere
+            if uncolorize(pot_substr) == pot_substr:
+                # Simple uncolored string, append a cropped word
+                if len(result) == 0:
+                    # Crop word by the first_width for the first line
+                    result.append(pot_substr[:first_width])
+                    # add rest of word to next line
+                    next_substr = pot_substr[first_width:]
+                else:
+                    result.append(pot_substr[:middle_width])
+                    next_substr = pot_substr[middle_width:]
+            else:
+                # Colored strings
+                if len(result) == 0:
+                    this_line, next_line = color_split(pot_substr, first_width)
+                    result.append(this_line)
+                    next_substr = next_line
+                else:
+                    this_line, next_line = color_split(pot_substr,
+                                                       middle_width)
+                    result.append(this_line)
+                    next_substr = next_line
+            previous_fit = color_len(next_substr) <= middle_width
+
     # We finished constructing the substrings, but the last substring
     # has not yet been added to the result.
     result.append(next_substr)
