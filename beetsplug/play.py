@@ -141,9 +141,8 @@ class PlayPlugin(BeetsPlugin):
 
         if PLS_MARKER in command_str:
             if not config['play']['raw']:
-                ui.print_(ui.colorize('text_warning', 'DEBUG: ' + command_str))
                 command_str = command_str.replace(PLS_MARKER, ''.join(open_args))
-                ui.print_(ui.colorize('text_warning', 'DEBUG: ' + command_str))
+                self._log.debug('command altered by PLS_MARKER to: {}', command_str)
                 open_args = []
             else:
                 command_str = command_str.replace(PLS_MARKER, " ")
