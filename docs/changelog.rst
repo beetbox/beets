@@ -11,6 +11,7 @@ for Python 3.6).
 
 New features:
 
+* :doc: `/plugins/play`: Added `$playlist` marker to precisely edit the playlist filepath into the command calling the player program.
 * Added additional error handling for `spotify` plugin.
   :bug:`4686`
 * We now import the remixer field from Musicbrainz into the library.
