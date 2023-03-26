@@ -811,18 +811,37 @@ class ImportTask(BaseImportTask):
         """For reimports, preserves metadata for reimported items and
         albums.
         """
+        # Album and item flex attrs that should not be preserved on reimports.
+        dont_preserve_album_flex = ['data_source']
+        dont_preserve_item_flex = ['data_source', 'bandcamp_album_id',
+                                   'spotify_album_id', 'deezer_album_id',
+                                   'beatport_album_id']
         if self.is_album:
             replaced_album = self.replaced_albums.get(self.album.path)
             if replaced_album:
                 self.album.added = replaced_album.added
-                self.album.update(replaced_album._values_flex)
+                preserved_album_attrs = dict(replaced_album._values_flex)
+
+                for attr in dont_preserve_album_flex:
+                    if self.album.get(attr):
+                        new_val = self.album.get(attr)
+                        old_val = replaced_album.get(attr)
+                        if new_val != old_val:
+                            preserved_album_attrs.pop(attr, None)
+                            log.debug(
+                                'Setting album flexible attribute '
+                                '{0}: {1} for {2}, {3}',
+                                attr, new_val, self.album.id,
+                                displayable_path(self.album.path))
+
+                self.album.update(preserved_album_attrs)
                 self.album.artpath = replaced_album.artpath
                 self.album.store()
                 log.debug(
                     'Reimported album: added {0}, flexible '
                     'attributes {1} from album {2} for {3}',
                     self.album.added,
-                    replaced_album._values_flex.keys(),
+                    list(preserved_album_attrs.keys()),
                     replaced_album.id,
                     displayable_path(self.album.path)
                 )
@@ -839,24 +858,24 @@ class ImportTask(BaseImportTask):
                         dup_item.id,
                         displayable_path(item.path)
                     )
-                # We exclude certain flexible attributes from the preserving
-                # process since they might have been fetched from MusicBrainz
-                # and been set in beets.autotag.apply_metadata().
-                # discogs_albumid might also have been set but is not a
-                # flexible attribute, thus no exclude is required.
-                if item.get('bandcamp_album_id'):
-                    dup_item.bandcamp_album_id = item.bandcamp_album_id
-                if item.get('spotify_album_id'):
-                    dup_item.spotify_album_id = item.spotify_album_id
-                if item.get('deezer_album_id'):
-                    dup_item.deezer_album_id = item.deezer_album_id
-                if item.get('beatport_album_id'):
-                    dup_item.beatport_album_id = item.beatport_album_id
-                item.update(dup_item._values_flex)
+
+                preserved_item_attrs = dict(dup_item._values_flex)
+                for attr in dont_preserve_item_flex:
+                    if item.get(attr):
+                        new_val = item.get(attr)
+                        old_val = dup_item.get(attr)
+                        if new_val != old_val:
+                            preserved_item_attrs.pop(attr)
+                            log.debug(
+                                'Setting item flexible attribute '
+                                '{0}: {1} for item {2}, {3}', attr, new_val,
+                                item.id, displayable_path(item.path))
+
+                item.update(preserved_item_attrs)
                 log.debug(
                     'Reimported item flexible attributes {0} '
                     'from item {1} for {2}',
-                    dup_item._values_flex.keys(),
+                    list(preserved_item_attrs.keys()),
                     dup_item.id,
                     displayable_path(item.path)
                 )
