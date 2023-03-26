@@ -1240,6 +1240,25 @@ class ShowChangeTest(_common.TestCase):
         self.assertTrue(u'caf\xe9.mp3' in msg or
                         u'caf.mp3' in msg)
 
+    def test_colorize(self):
+        self.assertEqual("test", ui.uncolorize("test"))
+        txt = ui.uncolorize("\x1b[31mtest\x1b[39;49;00m")
+        self.assertEqual("test", txt)
+        txt = ui.uncolorize("\x1b[31mtest\x1b[39;49;00m test")
+        self.assertEqual("test test", txt)
+        txt = ui.uncolorize("\x1b[31mtest\x1b[39;49;00mtest")
+        self.assertEqual("testtest", txt)
+        txt = ui.uncolorize("test \x1b[31mtest\x1b[39;49;00m test")
+        self.assertEqual("test test test", txt)
+
+    def test_color_split(self):
+        exp = ("test", "")
+        res = ui.color_split("test", 5)
+        self.assertEqual(exp, res)
+        exp = ("\x1b[31mtes\x1b[39;49;00m", "\x1b[31mt\x1b[39;49;00m")
+        res = ui.color_split("\x1b[31mtest\x1b[39;49;00m", 3)
+        self.assertEqual(exp, res)
+
     def test_split_into_lines(self):
         # Test uncolored text
         txt = ui.split_into_lines("test test test", [5, 5, 5])
@@ -1253,6 +1272,13 @@ class ShowChangeTest(_common.TestCase):
         self.assertEqual(txt, split_txt)
         # Test single color, multi space text
         colored_text = "\x1b[31m test test test \x1b[39;49;00m"
+        txt = ui.split_into_lines(colored_text, [5, 5, 5])
+        self.assertEqual(txt, split_txt)
+        # Test single color, different spacing
+        colored_text = "\x1b[31mtest\x1b[39;49;00mtest test test"
+        # ToDo: fix color_len to handle mid-text color escapes, and thus
+        # split colored texts over newlines (potentially with dashes?)
+        split_txt = ["\x1b[31mtest\x1b[39;49;00mt", "est", "test", "test"]
         txt = ui.split_into_lines(colored_text, [5, 5, 5])
         self.assertEqual(txt, split_txt)
 
