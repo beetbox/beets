@@ -1095,11 +1095,10 @@ class ArchiveImportTask(SentinelImportTask):
             # https://stackoverflow.com/q/9813243
 
             for f in archive.infolist():
-                # still need to adjust the dt o/w item will have the current dt
-                # update date_time
-                # Can you give a clarification why you add (0, 0, -1) to the date_time?
-                # Is the current a second off?
-                # (0, 0, -1) is added because time.mktime expects a 9-element tuple.
+                # The date_time will need to adjusted otherwise
+                # the item will have the current date_time of extraction.
+                # The (0, 0, -1) is added to date_time because the
+                # function time.mktime expects a 9-element tuple.
                 # The -1 indicates that the DST flag is unknown.
 
                 date_time = time.mktime(f.date_time + (0, 0, -1))
