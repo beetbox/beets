@@ -122,8 +122,12 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 except OSError as e:
                     self._log.error("Error: {}".format(e))
                 if img.format:
-                    with open('temp.jpg', 'wb') as f:
-                        f.write(response.content)
+                    try:
+                        with open('temp.jpg', 'wb') as f:
+                            f.write(response.content)
+                    except Exception as e:
+                        self._log.error(f"Error writing file: {e}"
+                                        )
                     opts.file = 'temp.jpg'
                     items = lib.items(decargs(args))
                     # Confirm with user.
