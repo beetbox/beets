@@ -440,7 +440,7 @@ class AnyFieldQuery(CollectionQuery):
         # TYPING ERROR
         super().__init__(subqueries)
 
-    def clause(self) -> Tuple[str | None, Collection]:
+    def clause(self) -> Tuple[Union[str, None], Collection]:
         return self.clause_with_joiner('or')
 
     def match(self, item: 'Item') -> bool:
@@ -477,7 +477,7 @@ class MutableCollectionQuery(CollectionQuery):
 class AndQuery(MutableCollectionQuery):
     """A conjunction of a list of other queries."""
 
-    def clause(self) -> Tuple[str | None, Collection]:
+    def clause(self) -> Tuple[Union[str, None], Collection]:
         return self.clause_with_joiner('and')
 
     def match(self, item) -> bool:
@@ -528,7 +528,7 @@ class NotQuery(Query):
 class TrueQuery(Query):
     """A query that always matches."""
 
-    def clause(self) -> Tuple[str | None, Collection]:
+    def clause(self) -> Tuple[Union[str, None], Collection]:
         return '1', ()
 
     def match(self, item) -> bool:
@@ -538,7 +538,7 @@ class TrueQuery(Query):
 class FalseQuery(Query):
     """A query that never matches."""
 
-    def clause(self) -> Tuple[str | None, Collection]:
+    def clause(self) -> Tuple[Union[str, None], Collection]:
         return '0', ()
 
     def match(self, item) -> bool:
@@ -729,7 +729,7 @@ class DateQuery(FieldQuery):
 
     _clause_tmpl = "{0} {1} ?"
 
-    def col_clause(self) -> Tuple[str | None, Collection]:
+    def col_clause(self) -> Tuple[Union[str, None], Collection]:
         clause_parts = []
         subvals = []
 
