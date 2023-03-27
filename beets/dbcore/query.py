@@ -25,8 +25,6 @@ from datetime import datetime, timedelta
 import unicodedata
 from functools import reduce
 
-from beets.dbcore import Model
-from beets.library import Item
 
 
 class ParsingError(ValueError):
@@ -75,7 +73,7 @@ class Query:
         """
         return None, ()
 
-    def match(self, item: Item):
+    def match(self, item: 'Item'):
         """Check whether this query matches a given Item. Can be used to
         perform queries on arbitrary sets of Items.
         """
@@ -121,7 +119,7 @@ class FieldQuery(Query):
         """
         raise NotImplementedError()
 
-    def match(self, item: Model):
+    def match(self, item: 'Model'):
         return self.value_match(self.pattern, item.get(self.field))
 
     def __repr__(self) -> str:
@@ -156,7 +154,7 @@ class NoneQuery(FieldQuery):
     def col_clause(self) -> Tuple[str, Tuple]:
         return self.field + " IS NULL", ()
 
-    def match(self, item: Item) -> bool:
+    def match(self, item: 'Item') -> bool:
         return item.get(self.field) is None
 
     def __repr__(self) -> str:
@@ -339,7 +337,7 @@ class NumericQuery(FieldQuery):
             self.rangemin = self._convert(parts[0])
             self.rangemax = self._convert(parts[1])
 
-    def match(self, item: Item) -> bool:
+    def match(self, item: 'Item') -> bool:
         if self.field not in item:
             return False
         value = item[self.field]
@@ -445,7 +443,7 @@ class AnyFieldQuery(CollectionQuery):
     def clause(self) -> Tuple[str | None, Collection]:
         return self.clause_with_joiner('or')
 
-    def match(self, item: Item) -> bool:
+    def match(self, item: 'Item') -> bool:
         for subq in self.subqueries:
             if subq.match(item):
                 return True
@@ -722,7 +720,7 @@ class DateQuery(FieldQuery):
         start, end = _parse_periods(pattern)
         self.interval = DateInterval.from_periods(start, end)
 
-    def match(self, item: Item) -> bool:
+    def match(self, item: 'Item') -> bool:
         if self.field not in item:
             return False
         timestamp = float(item[self.field])
@@ -902,7 +900,7 @@ class FieldSort(Sort):
         # comparisons with None fail. We should also support flexible
         # attributes with different types without falling over.
 
-        def key(item: Item):
+        def key(item: 'Item'):
             field_val = item.get(self.field, '')
             if self.case_insensitive and isinstance(field_val, str):
                 field_val = field_val.lower()
