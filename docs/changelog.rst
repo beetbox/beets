@@ -65,6 +65,11 @@ New features:
 * :doc:`/plugins/fromfilename`:  Add debug log messages that inform when the
   plugin replaced bad (missing) artist, title or tracknumber metadata.
   :bug:`4561` :bug:`4600`
+* :ref:`musicbrainz-config`: MusicBrainz release pages often link to related
+  metadata sources like Discogs, Bandcamp, Spotify, Deezer and Beatport. When
+  enabled via the :ref:`musicbrainz.external_ids` options, release ID's will be
+  extracted from those URL's and imported to the library.
+  :bug:`4220`
 
 Bug fixes:
 
