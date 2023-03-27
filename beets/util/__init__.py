@@ -30,8 +30,9 @@ import subprocess
 import platform
 import shlex
 from typing import Callable, List, Optional, Sequence, Pattern, \
-    Tuple, MutableSequence, AnyStr, TypeVar, Generator, TypeAlias, Any, \
-    Iterable
+    Tuple, MutableSequence, AnyStr, TypeVar, Generator, Any, \
+    Iterable, Union
+from typing_extensions import TypeAlias
 
 from beets.util import hidden
 from unidecode import unidecode
@@ -41,7 +42,7 @@ from enum import Enum
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = '\\\\?\\'
 T = TypeVar('T')
-Bytes_or_String: TypeAlias = str | bytes
+Bytes_or_String: TypeAlias = Union[str, bytes]
 
 
 class HumanReadableException(Exception):
@@ -651,7 +652,7 @@ CHAR_REPLACE: List[Tuple[Pattern, str]] = [
 
 def sanitize_path(
         path: str,
-        replacements: Optional[Sequence[Sequence[Pattern | str]]] = None,
+        replacements: Optional[Sequence[Sequence[Union[Pattern, str]]]] = None,
 ) -> str:
     """Takes a path (as a Unicode string) and makes sure that it is
     legal. Returns a new path. Only works with fragments; won't work
@@ -692,7 +693,7 @@ def truncate_path(path: AnyStr, length: int = MAX_FILENAME_LENGTH) -> AnyStr:
 
 def _legalize_stage(
         path: str,
-        replacements: Optional[Sequence[Sequence[Pattern | str]]],
+        replacements: Optional[Sequence[Sequence[Union[Pattern, str]]]],
         length: int,
         extension: str,
         fragment: bool,
@@ -722,11 +723,11 @@ def _legalize_stage(
 
 def legalize_path(
         path: str,
-        replacements: Optional[Sequence[Sequence[Pattern | str]]],
+        replacements: Optional[Sequence[Sequence[Union[Pattern, str]]]],
         length: int,
         extension: bytes,
         fragment: bool,
-) -> Tuple[Bytes_or_String | bool]:
+) -> Tuple[Union[Bytes_or_String, bool]]:
     """Given a path-like Unicode string, produce a legal path. Return
     the path and a flag indicating whether some replacements had to be
     ignored (see below).
