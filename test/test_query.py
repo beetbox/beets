@@ -670,8 +670,8 @@ class IntQueryTest(unittest.TestCase, TestHelper):
         Item._types = {}
 
     def test_exact_value_match(self):
-        item = self.add_item(bpm=120.123)
-        matched = self.lib.items('bpm:120.123').get()
+        item = self.add_item(bpm=120)
+        matched = self.lib.items('bpm:120').get()
         self.assertEqual(item.id, matched.id)
 
     def test_range_match(self):
