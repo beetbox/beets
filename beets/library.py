@@ -495,7 +495,7 @@ class Item(LibModel):
         'disctotal': types.PaddedInt(2),
         'lyrics': types.STRING,
         'comments': types.STRING,
-        'bpm': types.INTEGER,
+        'bpm': types.FLOAT,
         'comp': types.BOOLEAN,
         'mb_trackid': types.STRING,
         'mb_albumid': types.STRING,

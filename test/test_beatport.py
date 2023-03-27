@@ -88,7 +88,7 @@ class BeatportTest(_common.TestCase, TestHelper):
           "currentStatus": "General Content",
           "length": "7:05",
           "lengthMs": 425421,
-          "bpm": 90,
+          "bpm": 90.5,
           "key": {
             "standard": {
               "letter": "G",
@@ -472,7 +472,7 @@ class BeatportTest(_common.TestCase, TestHelper):
             counter += 1
             item.track_number = counter
 
-        items[0].bpm = 90
+        items[0].bpm = 90.5
         items[1].bpm = 100
         items[2].bpm = 141
         items[3].bpm = 88

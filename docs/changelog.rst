@@ -11,6 +11,8 @@ for Python 3.6).
 
 New features:
 
+* Modified `bpm` to support float type instead of integer type.
+  :bug:`4298`
 * Added additional error handling for `spotify` plugin.
   :bug:`4686`
 * We now import the remixer field from Musicbrainz into the library.

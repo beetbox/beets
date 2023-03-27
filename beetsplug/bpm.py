@@ -79,8 +79,8 @@ class BPMPlugin(BeetsPlugin):
 
         self._log.info('Press Enter {0} times to the rhythm or Ctrl-D '
                        'to exit', self.config['max_strokes'].get(int))
-        new_bpm = bpm(self.config['max_strokes'].get(int))
-        item['bpm'] = int(new_bpm)
+        new_bpm = bpm(self.config['max_strokes'].get(float))
+        item['bpm'] = float(new_bpm)
         if write:
             item.try_write()
         item.store()
