@@ -11,6 +11,8 @@ for Python 3.6).
 
 New features:
 
+* Added option to specify a URL in the `embedart` plugin.
+  :bug:`83`
 * Added additional error handling for `spotify` plugin.
   :bug:`4686`
 * We now import the remixer field from Musicbrainz into the library.
