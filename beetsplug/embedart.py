@@ -19,7 +19,7 @@ from io import BytesIO
 
 import requests
 
-from beets import art, config, ui
+from beets import art, config, ui, util
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_
 from beets.util import bytestring_path, displayable_path, normpath, syspath
@@ -125,9 +125,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     try:
                         with open('temp.jpg', 'wb') as f:
                             f.write(response.content)
-                    except Exception as e:
-                        self._log.error(f"Error writing file: {e}"
-                                        )
+                    except util.FilesystemError as exc:
+                        self._log.error('Error writing file: {}', exc)
                     opts.file = 'temp.jpg'
                     items = lib.items(decargs(args))
                     # Confirm with user.
