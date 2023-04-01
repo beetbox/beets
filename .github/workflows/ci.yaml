@@ -54,6 +54,15 @@ jobs:
         run: |
           tox -vv -e py-cov
 
+      - name: Test latest Python version with tox and mypy
+        if: matrix.python-version == '3.10'
+        # continue-on-error is not ideal since it doesn't give a visible
+        # warning, but there doesn't seem to be anything better:
+        # https://github.com/actions/toolkit/issues/399
+        continue-on-error: true
+        run: |
+          tox -vv -e py-mypy
+
       - name: Test nightly Python version with tox
         if: matrix.python-version == '3.11-dev'
         # continue-on-error is not ideal since it doesn't give a visible

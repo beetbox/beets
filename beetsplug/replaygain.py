@@ -49,13 +49,14 @@ class FatalGstreamerPluginReplayGainError(FatalReplayGainError):
     loading the required plugins."""
 
 
-def call(args, **kwargs):
+def call(args, log, **kwargs):
     """Execute the command and return its output or raise a
     ReplayGainError on failure.
     """
     try:
         return command_output(args, **kwargs)
     except subprocess.CalledProcessError as e:
+        log.debug(e.output.decode('utf8', 'ignore'))
         raise ReplayGainError(
             "{} exited with status {}".format(args[0], e.returncode)
         )
@@ -261,7 +262,7 @@ class FfmpegBackend(Backend):
 
         # check that ffmpeg is installed
         try:
-            ffmpeg_version_out = call([self._ffmpeg_path, "-version"])
+            ffmpeg_version_out = call([self._ffmpeg_path, "-version"], log)
         except OSError:
             raise FatalReplayGainError(
                 f"could not find ffmpeg at {self._ffmpeg_path}"
@@ -394,7 +395,7 @@ class FfmpegBackend(Backend):
         self._log.debug(
             'executing {0}', ' '.join(map(displayable_path, cmd))
         )
-        output = call(cmd).stderr.splitlines()
+        output = call(cmd, self._log).stderr.splitlines()
 
         # parse output
 
@@ -525,7 +526,7 @@ class CommandBackend(Backend):
             # Check whether the program is in $PATH.
             for cmd in ('mp3gain', 'aacgain'):
                 try:
-                    call([cmd, '-v'])
+                    call([cmd, '-v'], self._log)
                     self.command = cmd
                 except OSError:
                     pass
@@ -605,7 +606,7 @@ class CommandBackend(Backend):
 
         self._log.debug('analyzing {0} files', len(items))
         self._log.debug("executing {0}", " ".join(map(displayable_path, cmd)))
-        output = call(cmd).stdout
+        output = call(cmd, self._log).stdout
         self._log.debug('analysis finished')
         return self.parse_tool_output(output,
                                       len(items) + (1 if is_album else 0))
@@ -904,14 +905,14 @@ class GStreamerBackend(Backend):
 
     def _on_pad_added(self, decbin, pad):
         sink_pad = self._conv.get_compatible_pad(pad, None)
-        assert(sink_pad is not None)
+        assert sink_pad is not None
         pad.link(sink_pad)
 
     def _on_pad_removed(self, decbin, pad):
         # Called when the decodebin element is disconnected from the
         # rest of the pipeline while switching input files
         peer = pad.get_peer()
-        assert(peer is None)
+        assert peer is None
 
 
 class AudioToolsBackend(Backend):
@@ -1085,7 +1086,7 @@ class ExceptionWatcher(Thread):
             try:
                 exc = self._queue.get_nowait()
                 self._callback()
-                raise exc[1].with_traceback(exc[2])
+                raise exc
             except queue.Empty:
                 # No exceptions yet, loop back to check
                 #  whether `_stopevent` is set
@@ -1338,23 +1339,16 @@ class ReplayGainPlugin(BeetsPlugin):
 
     def _apply(self, func, args, kwds, callback):
         if self._has_pool():
-            def catch_exc(func, exc_queue, log):
-                """Wrapper to catch raised exceptions in threads
+            def handle_exc(exc):
+                """Handle exceptions in the async work.
                 """
-                def wfunc(*args, **kwargs):
-                    try:
-                        return func(*args, **kwargs)
-                    except ReplayGainError as e:
-                        log.info(e.args[0])  # log non-fatal exceptions
-                    except Exception:
-                        exc_queue.put(sys.exc_info())
-                return wfunc
+                if isinstance(exc, ReplayGainError):
+                    self._log.info(exc.args[0])  # Log non-fatal exceptions.
+                else:
+                    self.exc_queue.put(exc)
 
-            # Wrap function and callback to catch exceptions
-            func = catch_exc(func, self.exc_queue, self._log)
-            callback = catch_exc(callback, self.exc_queue, self._log)
-
-            self.pool.apply_async(func, args, kwds, callback)
+            self.pool.apply_async(func, args, kwds, callback,
+                                  error_callback=handle_exc)
         else:
             callback(func(*args, **kwds))
 

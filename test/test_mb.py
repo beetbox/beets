@@ -109,8 +109,8 @@ class MBAlbumInfoTest(_common.TestCase):
         })
         return release
 
-    def _make_track(self, title, tr_id, duration, artist=False, video=False,
-                    disambiguation=None):
+    def _make_track(self, title, tr_id, duration, artist=False,
+                    video=False, disambiguation=None, remixer=False):
         track = {
             'title': title,
             'id': tr_id,
@@ -126,6 +126,22 @@ class MBAlbumInfoTest(_common.TestCase):
                         'sort-name': 'RECORDING ARTIST SORT NAME',
                     },
                     'name': 'RECORDING ARTIST CREDIT',
+                }
+            ]
+        if remixer:
+            track['artist-relation-list'] = [
+                {
+                    'type': 'remixer',
+                    'type-id': 'RELATION TYPE ID',
+                    'target': 'RECORDING REMIXER ARTIST ID',
+                    'direction': 'RECORDING RELATION DIRECTION',
+                    'artist':
+                        {
+                            'id': 'RECORDING REMIXER ARTIST ID',
+                            'type': 'RECORDING REMIXER ARTIST TYPE',
+                            'name': 'RECORDING REMIXER ARTIST NAME',
+                            'sort-name': 'RECORDING REMIXER ARTIST SORT NAME'
+                        }
                 }
             ]
         if video:
@@ -338,6 +354,12 @@ class MBAlbumInfoTest(_common.TestCase):
         self.assertEqual(track.artist_id, 'TRACK ARTIST ID')
         self.assertEqual(track.artist_sort, 'TRACK ARTIST SORT NAME')
         self.assertEqual(track.artist_credit, 'TRACK ARTIST CREDIT')
+
+    def test_parse_recording_remixer(self):
+        tracks = [self._make_track('a', 'b', 1, remixer=True)]
+        release = self._make_release(None, tracks=tracks)
+        track = mb.album_info(release).tracks[0]
+        self.assertEqual(track.remixer, 'RECORDING REMIXER ARTIST NAME')
 
     def test_data_source(self):
         release = self._make_release()

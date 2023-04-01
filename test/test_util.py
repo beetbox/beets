@@ -14,10 +14,11 @@
 """Tests for base utils from the beets.util package.
 """
 
-import sys
-import re
 import os
+import platform
+import re
 import subprocess
+import sys
 import unittest
 
 from unittest.mock import patch, Mock
@@ -101,6 +102,7 @@ class UtilTest(unittest.TestCase):
             ])
         self.assertEqual(p, 'foo/_/bar')
 
+    @unittest.skipIf(sys.platform == 'win32', 'win32')
     def test_convert_command_args_keeps_undecodeable_bytes(self):
         arg = b'\x82'  # non-ascii bytes
         cmd_args = util.convert_command_args([arg])
@@ -120,6 +122,28 @@ class UtilTest(unittest.TestCase):
             util.command_output(['taga', '\xc3\xa9'])
         self.assertEqual(exc_context.exception.returncode, 1)
         self.assertEqual(exc_context.exception.cmd, 'taga \xc3\xa9')
+
+    def test_case_sensitive_default(self):
+        path = util.bytestring_path(util.normpath(
+            "/this/path/does/not/exist",
+        ))
+
+        self.assertEqual(
+            util.case_sensitive(path),
+            platform.system() != 'Windows',
+        )
+
+    @unittest.skipIf(sys.platform == 'win32', 'fs is not case sensitive')
+    def test_case_sensitive_detects_sensitive(self):
+        # FIXME: Add tests for more code paths of case_sensitive()
+        # when the filesystem on the test runner is not case sensitive
+        pass
+
+    @unittest.skipIf(sys.platform != 'win32', 'fs is case sensitive')
+    def test_case_sensitive_detects_insensitive(self):
+        # FIXME: Add tests for more code paths of case_sensitive()
+        # when the filesystem on the test runner is case sensitive
+        pass
 
 
 class PathConversionTest(_common.TestCase):

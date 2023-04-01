@@ -1,3 +1,5 @@
+.. _queries:
+
 Queries
 =======
 
@@ -50,6 +52,8 @@ will match both "The House of Tomorrow" by the Magnetic Fields, as well as
 "Yesterday" by The Beatles. Note that the comma has to be followed by a space
 (e.g., ``foo,bar`` will be treated as a single keyword, *not* as an OR-query).
 
+.. _fieldsquery:
+
 Specific Fields
 ---------------
 
@@ -93,15 +97,17 @@ backslashes are not part of beets' syntax; I'm just using the escaping
 functionality of my shell (bash or zsh, for instance) to pass ``the rebel`` as a
 single argument instead of two.
 
+.. _exact-match:
+
 Exact Matches
 -------------
 
 While ordinary queries perform *substring* matches, beets can also match whole
-strings by adding either ``=`` (case-sensitive) or ``~`` (ignore case) after the
-field name's colon and before the expression::
+strings by adding either ``=`` (case-sensitive) or ``=~`` (ignore case) after
+the field name's colon and before the expression::
 
     $ beet list artist:air
-    $ beet list artist:~air
+    $ beet list artist:=~air
     $ beet list artist:=AIR
 
 The first query is a simple substring one that returns tracks by Air, AIR, and
@@ -112,16 +118,16 @@ returns tracks by AIR only.
 
 Exact matches may be performed on phrases as well::
 
-    $ beet list artist:~"dave matthews"
+    $ beet list artist:=~"dave matthews"
     $ beet list artist:="Dave Matthews"
 
 Both of these queries return tracks by Dave Matthews, but not by Dave Matthews
 Band.
 
 To search for exact matches across *all* fields, just prefix the expression with
-a single ``=`` or ``~``::
+a single ``=`` or ``=~``::
 
-    $ beet list ~crash
+    $ beet list =~crash
     $ beet list ="American Football"
 
 .. _regex:

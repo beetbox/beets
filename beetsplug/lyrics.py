@@ -51,6 +51,7 @@ except ImportError:
     class HTMLParseError(Exception):
         pass
 
+from beets.autotag.hooks import string_dist
 from beets import plugins
 from beets import ui
 import beets
@@ -233,6 +234,7 @@ class Backend:
 
     def __init__(self, config, log):
         self._log = log
+        self.config = config
 
     @staticmethod
     def _encode(s):
@@ -461,7 +463,7 @@ class Tekstowo(Backend):
         if not song_page_html:
             return None
 
-        return self.extract_lyrics(song_page_html)
+        return self.extract_lyrics(song_page_html, artist, title)
 
     def parse_search_results(self, html):
         html = _scrape_strip_cruft(html)
@@ -493,12 +495,30 @@ class Tekstowo(Backend):
 
         return self.BASE_URL + link.get('href')
 
-    def extract_lyrics(self, html):
+    def extract_lyrics(self, html, artist, title):
         html = _scrape_strip_cruft(html)
         html = _scrape_merge_paragraphs(html)
 
         soup = try_parse_html(html)
         if not soup:
+            return None
+
+        info_div = soup.find("div", class_="col-auto")
+        if not info_div:
+            return None
+
+        info_elements = info_div.find_all("a")
+        if not info_elements:
+            return None
+
+        html_title = info_elements[-1].get_text()
+        html_artist = info_elements[-2].get_text()
+
+        title_dist = string_dist(html_title, title)
+        artist_dist = string_dist(html_artist, artist)
+
+        thresh = self.config['dist_thresh'].get(float)
+        if title_dist > thresh or artist_dist > thresh:
             return None
 
         lyrics_div = soup.select("div.song-text > div.inner-text")
@@ -560,7 +580,8 @@ def scrape_lyrics_from_html(html):
     html = _scrape_merge_paragraphs(html)
 
     # extract all long text blocks that are not code
-    soup = try_parse_html(html, parse_only=SoupStrainer(text=is_text_notcode))
+    soup = try_parse_html(html,
+                          parse_only=SoupStrainer(string=is_text_notcode))
     if not soup:
         return None
 
@@ -722,7 +743,10 @@ class LyricsPlugin(plugins.BeetsPlugin):
             'fallback': None,
             'force': False,
             'local': False,
-            'sources': self.SOURCES,
+            # Musixmatch is disabled by default as they are currently blocking
+            # requests with the beets user agent.
+            'sources': [s for s in self.SOURCES if s != "musixmatch"],
+            'dist_thresh': 0.1,
         })
         self.config['bing_client_secret'].redact = True
         self.config['google_API_key'].redact = True

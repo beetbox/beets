@@ -307,24 +307,29 @@ def item_file(item_id):
     else:
         item_path = util.py3_path(item.path)
 
-    try:
-        unicode_item_path = util.text_string(item.path)
-    except (UnicodeDecodeError, UnicodeEncodeError):
-        unicode_item_path = util.displayable_path(item.path)
+    base_filename = os.path.basename(item_path)
+    # FIXME: Arguably, this should just use `displayable_path`: The latter
+    # tries `_fsencoding()` first, but then falls back to `utf-8`, too.
+    if isinstance(base_filename, bytes):
+        try:
+            unicode_base_filename = base_filename.decode("utf-8")
+        except UnicodeError:
+            unicode_base_filename = util.displayable_path(base_filename)
+    else:
+        unicode_base_filename = base_filename
 
-    base_filename = os.path.basename(unicode_item_path)
     try:
         # Imitate http.server behaviour
         base_filename.encode("latin-1", "strict")
-    except UnicodeEncodeError:
+    except UnicodeError:
         safe_filename = unidecode(base_filename)
     else:
-        safe_filename = base_filename
+        safe_filename = unicode_base_filename
 
     response = flask.send_file(
         item_path,
         as_attachment=True,
-        attachment_filename=safe_filename
+        download_name=safe_filename
     )
     response.headers['Content-Length'] = os.path.getsize(item_path)
     return response

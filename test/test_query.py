@@ -15,8 +15,8 @@
 """Various tests for querying the library database.
 """
 
+from contextlib import contextmanager
 from functools import partial
-from unittest.mock import patch
 import os
 import sys
 import unittest
@@ -150,7 +150,7 @@ class GetTest(DummyDataTestCase):
         self.assert_items_matched(results, ['beets 4 eva'])
 
     def test_get_one_keyed_exact_nocase(self):
-        q = 'genre:~"hard rock"'
+        q = 'genre:=~"hard rock"'
         results = self.lib.items(q)
         self.assert_items_matched(results, ['beets 4 eva'])
 
@@ -170,7 +170,7 @@ class GetTest(DummyDataTestCase):
         self.assert_items_matched(results, ['foo bar'])
 
     def test_get_one_unkeyed_exact_nocase(self):
-        q = '~"hard rock"'
+        q = '=~"hard rock"'
         results = self.lib.items(q)
         self.assert_items_matched(results, ['beets 4 eva'])
 
@@ -220,7 +220,7 @@ class GetTest(DummyDataTestCase):
         self.assert_items_matched(results, ['beets 4 eva'])
 
     def test_keyed_matches_exact_nocase(self):
-        q = 'genre:~rock'
+        q = 'genre:=~rock'
         results = self.lib.items(q)
         self.assert_items_matched(results, [
             'foo bar',
@@ -454,23 +454,14 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         self.lib.add(i2)
         self.lib.add_album([i2])
 
+    @contextmanager
+    def force_implicit_query_detection(self):
         # Unadorned path queries with path separators in them are considered
         # path queries only when the path in question actually exists. So we
         # mock the existence check to return true.
-        self.patcher_exists = patch('beets.library.os.path.exists')
-        self.patcher_exists.start().return_value = True
-
-        # We have to create function samefile as it does not exist on
-        # Windows and python 2.7
-        self.patcher_samefile = patch('beets.library.os.path.samefile',
-                                      create=True)
-        self.patcher_samefile.start().return_value = True
-
-    def tearDown(self):
-        super().tearDown()
-
-        self.patcher_samefile.stop()
-        self.patcher_exists.stop()
+        beets.library.PathQuery.force_implicit_query_detection = True
+        yield
+        beets.library.PathQuery.force_implicit_query_detection = False
 
     def test_path_exact_match(self):
         q = 'path:/a/b/c.mp3'
@@ -526,31 +517,35 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
 
     @unittest.skipIf(sys.platform == 'win32', WIN32_NO_IMPLICIT_PATHS)
     def test_slashed_query_matches_path(self):
-        q = '/a/b'
-        results = self.lib.items(q)
-        self.assert_items_matched(results, ['path item'])
+        with self.force_implicit_query_detection():
+            q = '/a/b'
+            results = self.lib.items(q)
+            self.assert_items_matched(results, ['path item'])
 
-        results = self.lib.albums(q)
-        self.assert_albums_matched(results, ['path album'])
+            results = self.lib.albums(q)
+            self.assert_albums_matched(results, ['path album'])
 
     @unittest.skipIf(sys.platform == 'win32', WIN32_NO_IMPLICIT_PATHS)
     def test_path_query_in_or_query(self):
-        q = '/a/b , /a/b'
-        results = self.lib.items(q)
-        self.assert_items_matched(results, ['path item'])
+        with self.force_implicit_query_detection():
+            q = '/a/b , /a/b'
+            results = self.lib.items(q)
+            self.assert_items_matched(results, ['path item'])
 
     def test_non_slashed_does_not_match_path(self):
-        q = 'c.mp3'
-        results = self.lib.items(q)
-        self.assert_items_matched(results, [])
+        with self.force_implicit_query_detection():
+            q = 'c.mp3'
+            results = self.lib.items(q)
+            self.assert_items_matched(results, [])
 
-        results = self.lib.albums(q)
-        self.assert_albums_matched(results, [])
+            results = self.lib.albums(q)
+            self.assert_albums_matched(results, [])
 
     def test_slashes_in_explicit_field_does_not_match_path(self):
-        q = 'title:/a/b'
-        results = self.lib.items(q)
-        self.assert_items_matched(results, [])
+        with self.force_implicit_query_detection():
+            q = 'title:/a/b'
+            results = self.lib.items(q)
+            self.assert_items_matched(results, [])
 
     def test_path_item_regex(self):
         q = 'path::c\\.mp3$'
@@ -603,101 +598,67 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         results = self.lib.items(makeq(case_sensitive=False))
         self.assert_items_matched(results, ['path item', 'caps path'])
 
-        # Check for correct case sensitivity selection (this check
-        # only works on non-Windows OSes).
-        with _common.system_mock('Darwin'):
-            # exists = True and samefile = True => Case insensitive
-            q = makeq()
-            self.assertEqual(q.case_sensitive, False)
+    # FIXME: Also create a variant of this test for windows, which tests
+    # both os.sep and os.altsep
+    @unittest.skipIf(sys.platform == 'win32', 'win32')
+    def test_path_sep_detection(self):
+        is_path_query = beets.library.PathQuery.is_path_query
 
-            # exists = True and samefile = False => Case sensitive
-            self.patcher_samefile.stop()
-            self.patcher_samefile.start().return_value = False
-            try:
-                q = makeq()
-                self.assertEqual(q.case_sensitive, True)
-            finally:
-                self.patcher_samefile.stop()
-                self.patcher_samefile.start().return_value = True
+        with self.force_implicit_query_detection():
+            self.assertTrue(is_path_query('/foo/bar'))
+            self.assertTrue(is_path_query('foo/bar'))
+            self.assertTrue(is_path_query('foo/'))
+            self.assertFalse(is_path_query('foo'))
+            self.assertTrue(is_path_query('foo/:bar'))
+            self.assertFalse(is_path_query('foo:bar/'))
+            self.assertFalse(is_path_query('foo:/bar'))
 
-        # Test platform-aware default sensitivity when the library path
-        # does not exist. For the duration of this check, we change the
-        # `os.path.exists` mock to return False.
-        self.patcher_exists.stop()
-        self.patcher_exists.start().return_value = False
-        try:
-            with _common.system_mock('Darwin'):
-                q = makeq()
-                self.assertEqual(q.case_sensitive, True)
-
-            with _common.system_mock('Windows'):
-                q = makeq()
-                self.assertEqual(q.case_sensitive, False)
-        finally:
-            # Restore the `os.path.exists` mock to its original state.
-            self.patcher_exists.stop()
-            self.patcher_exists.start().return_value = True
-
-    @patch('beets.library.os')
-    def test_path_sep_detection(self, mock_os):
-        mock_os.sep = '/'
-        mock_os.altsep = None
-        mock_os.path.exists = lambda p: True
-        is_path = beets.library.PathQuery.is_path_query
-
-        self.assertTrue(is_path('/foo/bar'))
-        self.assertTrue(is_path('foo/bar'))
-        self.assertTrue(is_path('foo/'))
-        self.assertFalse(is_path('foo'))
-        self.assertTrue(is_path('foo/:bar'))
-        self.assertFalse(is_path('foo:bar/'))
-        self.assertFalse(is_path('foo:/bar'))
-
+    # FIXME: shouldn't this also work on windows?
     @unittest.skipIf(sys.platform == 'win32', WIN32_NO_IMPLICIT_PATHS)
     def test_detect_absolute_path(self):
-        # Don't patch `os.path.exists`; we'll actually create a file when
-        # it exists.
-        self.patcher_exists.stop()
-        is_path = beets.library.PathQuery.is_path_query
+        """Test detection of implicit path queries based on whether or
+        not the path actually exists, when using an absolute path query.
 
-        try:
-            path = self.touch(os.path.join(b'foo', b'bar'))
-            path = path.decode('utf-8')
+        Thus, don't use the `force_implicit_query_detection()`
+        contextmanager which would disable the existence check.
+        """
+        is_path_query = beets.library.PathQuery.is_path_query
 
-            # The file itself.
-            self.assertTrue(is_path(path))
+        path = self.touch(os.path.join(b'foo', b'bar'))
+        self.assertTrue(os.path.isabs(util.syspath(path)))
+        path_str = path.decode('utf-8')
 
-            # The parent directory.
-            parent = os.path.dirname(path)
-            self.assertTrue(is_path(parent))
+        # The file itself.
+        self.assertTrue(is_path_query(path_str))
 
-            # Some non-existent path.
-            self.assertFalse(is_path(path + 'baz'))
+        # The parent directory.
+        parent = os.path.dirname(path_str)
+        self.assertTrue(is_path_query(parent))
 
-        finally:
-            # Restart the `os.path.exists` patch.
-            self.patcher_exists.start()
+        # Some non-existent path.
+        self.assertFalse(is_path_query(path_str + 'baz'))
 
     def test_detect_relative_path(self):
-        self.patcher_exists.stop()
-        is_path = beets.library.PathQuery.is_path_query
+        """Test detection of implicit path queries based on whether or
+        not the path actually exists, when using a relative path query.
 
+        Thus, don't use the `force_implicit_query_detection()`
+        contextmanager which would disable the existence check.
+        """
+        is_path_query = beets.library.PathQuery.is_path_query
+
+        self.touch(os.path.join(b'foo', b'bar'))
+
+        # Temporarily change directory so relative paths work.
+        cur_dir = os.getcwd()
         try:
-            self.touch(os.path.join(b'foo', b'bar'))
-
-            # Temporarily change directory so relative paths work.
-            cur_dir = os.getcwd()
-            try:
-                os.chdir(self.temp_dir)
-                self.assertTrue(is_path('foo/'))
-                self.assertTrue(is_path('foo/bar'))
-                self.assertTrue(is_path('foo/bar:tagada'))
-                self.assertFalse(is_path('bar'))
-            finally:
-                os.chdir(cur_dir)
-
+            os.chdir(self.temp_dir)
+            self.assertTrue(is_path_query('foo/'))
+            self.assertTrue(is_path_query('foo/bar'))
+            self.assertTrue(is_path_query('foo/bar:tagada'))
+            self.assertFalse(is_path_query('bar'))
         finally:
-            self.patcher_exists.start()
+            os.chdir(cur_dir)
 
 
 class IntQueryTest(unittest.TestCase, TestHelper):
