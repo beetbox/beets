@@ -52,6 +52,8 @@ New features:
 * :ref:`import-options`: Add support for re-running the importer on paths in
   log files that were created with the ``-l`` (or ``--logfile``) argument.
   :bug:`4379` :bug:`4387`
+* Preserve mtimes from archives
+  :bug:`4392`
 * Add :ref:`%sunique{} <sunique>` template to disambiguate between singletons.
   :bug:`4438`
 * Add a new ``import.ignored_alias_types`` config option to allow for
