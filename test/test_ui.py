@@ -287,6 +287,18 @@ class ModifyTest(unittest.TestCase, TestHelper):
         self.assertEqual(len(list(original_items)), 3)
         self.assertEqual(len(list(new_items)), 7)
 
+    def test_modify_formatted(self):
+        for i in range(0, 3):
+            self.add_item_fixture(title=f"title{i}",
+                                  artist="artist",
+                                  album="album")
+        items = list(self.lib.items())
+        self.modify("title=${title} - append")
+        for item in items:
+            orig_title = item.title
+            item.load()
+            self.assertEqual(item.title, f"{orig_title} - append")
+
     # Album Tests
 
     def test_modify_album(self):
@@ -317,6 +329,13 @@ class ModifyTest(unittest.TestCase, TestHelper):
         item = self.lib.items().get()
         item.read()
         self.assertNotIn(b'newAlbum', item.path)
+
+    def test_modify_album_formatted(self):
+        item = self.lib.items().get()
+        orig_album = item.album
+        self.modify("--album", "album=${album} - append")
+        item.load()
+        self.assertEqual(item.album, f"{orig_album} - append")
 
     # Misc
 
@@ -681,6 +700,31 @@ class UpdateTest(_common.TestCase):
         self._update(reset_mtime=False)
         item = self.lib.items().get()
         self.assertEqual(item.title, 'full')
+
+    def test_multivalued_albumtype_roundtrip(self):
+        # https://github.com/beetbox/beets/issues/4528
+
+        # albumtypes is empty for our test fixtures, so populate it first
+        album = self.album
+        correct_albumtypes = ["album", "live"]
+
+        # Setting albumtypes does not set albumtype, currently.
+        # Using x[0] mirrors https://github.com/beetbox/mediafile/blob/057432ad53b3b84385e5582f69f44dc00d0a725d/mediafile.py#L1928  # noqa: E501
+        correct_albumtype = correct_albumtypes[0]
+
+        album.albumtype = correct_albumtype
+        album.albumtypes = correct_albumtypes
+        album.try_sync(write=True, move=False)
+
+        album.load()
+        self.assertEqual(album.albumtype,  correct_albumtype)
+        self.assertEqual(album.albumtypes, correct_albumtypes)
+
+        self._update()
+
+        album.load()
+        self.assertEqual(album.albumtype,  correct_albumtype)
+        self.assertEqual(album.albumtypes, correct_albumtypes)
 
 
 class PrintTest(_common.TestCase):
@@ -1144,8 +1188,7 @@ class ShowChangeTest(_common.TestCase):
             cur_album,
             autotag.AlbumMatch(album_dist, info, mapping, set(), set()),
         )
-        # FIXME decoding shouldn't be done here
-        return util.text_string(self.io.getoutput().lower())
+        return self.io.getoutput().lower()
 
     def test_null_change(self):
         msg = self._show_change()

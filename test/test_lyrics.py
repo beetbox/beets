@@ -34,6 +34,7 @@ log = logging.getLogger('beets.test_lyrics')
 raw_backend = lyrics.Backend({}, log)
 google = lyrics.Google(MagicMock(), log)
 genius = lyrics.Genius(MagicMock(), log)
+tekstowo = lyrics.Tekstowo(MagicMock(), log)
 
 
 class LyricsPluginTest(unittest.TestCase):
@@ -209,6 +210,7 @@ class LyricsPluginTest(unittest.TestCase):
 
 def url_to_filename(url):
     url = re.sub(r'https?://|www.', '', url)
+    url = re.sub(r'.html', '', url)
     fn = "".join(x for x in url if (x.isalnum() or x == '/'))
     fn = fn.split('/')
     fn = os.path.join(LYRICS_ROOT_DIR,
@@ -336,7 +338,8 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest, LyricsAssertions):
         os.environ.get('INTEGRATION_TEST', '0') == '1',
         'integration testing not enabled')
     def test_backend_sources_ok(self):
-        """Test default backends with songs known to exist in respective databases.
+        """Test default backends with songs known to exist in respective
+        databases.
         """
         # Don't test any sources marked as skipped.
         sources = [s for s in self.DEFAULT_SOURCES if not s.get("skip", False)]
@@ -519,6 +522,110 @@ class GeniusFetchTest(GeniusBaseTest):
             self.assertIsNone(genius.fetch('blackbear', 'Idfc'))
 
     # TODO: add integration test hitting real api
+
+
+# test Tekstowo
+
+class TekstowoBaseTest(unittest.TestCase):
+    def setUp(self):
+        """Set up configuration."""
+        try:
+            __import__('bs4')
+        except ImportError:
+            self.skipTest('Beautiful Soup 4 not available')
+
+
+class TekstowoExtractLyricsTest(TekstowoBaseTest):
+    """tests Tekstowo.extract_lyrics()"""
+
+    def setUp(self):
+        """Set up configuration"""
+        TekstowoBaseTest.setUp(self)
+        self.plugin = lyrics.LyricsPlugin()
+        tekstowo.config = self.plugin.config
+
+    def test_good_lyrics(self):
+        """Ensure we are able to scrape a page with lyrics"""
+        url = 'https://www.tekstowo.pl/piosenka,24kgoldn,city_of_angels_1.html'
+        mock = MockFetchUrl()
+        self.assertIsNotNone(tekstowo.extract_lyrics(mock(url),
+                             '24kGoldn', 'City of Angels'))
+
+    def test_no_lyrics(self):
+        """Ensure we don't crash when the scraping the html for a Tekstowo page
+        doesn't contain lyrics
+        """
+        url = 'https://www.tekstowo.pl/piosenka,beethoven,' \
+            'beethoven_piano_sonata_17_tempest_the_3rd_movement.html'
+        mock = MockFetchUrl()
+        self.assertEqual(tekstowo.extract_lyrics(mock(url), 'Beethoven',
+                                                 'Beethoven Piano Sonata 17'
+                                                 'Tempest The 3rd Movement'),
+                         None)
+
+    def test_song_no_match(self):
+        """Ensure we return None when a song does not match the search query"""
+        # https://github.com/beetbox/beets/issues/4406
+        # expected return value None
+        url = 'https://www.tekstowo.pl/piosenka,bailey_bigger' \
+            ',black_eyed_susan.html'
+        mock = MockFetchUrl()
+        self.assertEqual(tekstowo.extract_lyrics(mock(url), 'Kelly Bailey',
+                                                 'Black Mesa Inbound'), None)
+
+
+class TekstowoParseSearchResultsTest(TekstowoBaseTest):
+    """tests Tekstowo.parse_search_results()"""
+
+    def setUp(self):
+        """Set up configuration"""
+        TekstowoBaseTest.setUp(self)
+        self.plugin = lyrics.LyricsPlugin()
+
+    def test_multiple_results(self):
+        """Ensure we are able to scrape a page with multiple search results"""
+        url = 'https://www.tekstowo.pl/szukaj,wykonawca,juice+wrld' \
+            ',tytul,lucid+dreams.html'
+        mock = MockFetchUrl()
+        self.assertEqual(tekstowo.parse_search_results(mock(url)),
+                         'http://www.tekstowo.pl/piosenka,juice_wrld,'
+                         'lucid_dreams__remix__ft__lil_uzi_vert.html')
+
+    def test_no_results(self):
+        """Ensure we are able to scrape a page with no search results"""
+        url = 'https://www.tekstowo.pl/szukaj,wykonawca,' \
+            'agfdgja,tytul,agfdgafg.html'
+        mock = MockFetchUrl()
+        self.assertEqual(tekstowo.parse_search_results(mock(url)), None)
+
+
+class TekstowoIntegrationTest(TekstowoBaseTest, LyricsAssertions):
+    """Tests Tekstowo lyric source with real requests"""
+
+    def setUp(self):
+        """Set up configuration"""
+        TekstowoBaseTest.setUp(self)
+        self.plugin = lyrics.LyricsPlugin()
+        tekstowo.config = self.plugin.config
+
+    @unittest.skipUnless(
+        os.environ.get('INTEGRATION_TEST', '0') == '1',
+        'integration testing not enabled')
+    def test_normal(self):
+        """Ensure we can fetch a song's lyrics in the ordinary case"""
+        lyrics = tekstowo.fetch('Boy in Space', 'u n eye')
+        self.assertLyricsContentOk('u n eye', lyrics)
+
+    @unittest.skipUnless(
+        os.environ.get('INTEGRATION_TEST', '0') == '1',
+        'integration testing not enabled')
+    def test_no_matching_results(self):
+        """Ensure we fetch nothing if there are search results
+        returned but no matches"""
+        # https://github.com/beetbox/beets/issues/4406
+        # expected return value None
+        lyrics = tekstowo.fetch('Kelly Bailey', 'Black Mesa Inbound')
+        self.assertEqual(lyrics, None)
 
 
 # test utilties

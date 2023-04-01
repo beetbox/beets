@@ -18,10 +18,10 @@ pygments_style = 'sphinx'
 
 # External links to the bug tracker and other sites.
 extlinks = {
-    'bug': ('https://github.com/beetbox/beets/issues/%s', '#'),
-    'user': ('https://github.com/%s', ''),
-    'pypi': ('https://pypi.org/project/%s/', ''),
-    'stdlib': ('https://docs.python.org/3/library/%s.html', ''),
+    'bug': ('https://github.com/beetbox/beets/issues/%s', '#%s'),
+    'user': ('https://github.com/%s', '%s'),
+    'pypi': ('https://pypi.org/project/%s/', '%s'),
+    'stdlib': ('https://docs.python.org/3/library/%s.html', '%s'),
 }
 
 linkcheck_ignore = [

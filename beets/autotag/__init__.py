@@ -14,7 +14,9 @@
 
 """Facilities for automatically determining files' correct metadata.
 """
+from typing import Mapping
 
+from beets.library import Item
 
 from beets import logging
 from beets import config
@@ -27,7 +29,7 @@ from .hooks import (  # noqa
     TrackMatch,
     Distance,
 )
-from .match import tag_item, tag_album, Proposal  # noqa
+from .match import tag_item, tag_album, current_metadata, Proposal  # noqa
 from .match import Recommendation  # noqa
 
 # Global logger.
@@ -71,7 +73,7 @@ SPECIAL_FIELDS = {
 
 # Additional utilities for the main interface.
 
-def apply_item_metadata(item, track_info):
+def apply_item_metadata(item: Item, track_info: TrackInfo):
     """Set an item's metadata from its matched TrackInfo object.
     """
     item.artist = track_info.artist
@@ -95,7 +97,7 @@ def apply_item_metadata(item, track_info):
     # and track number). Perhaps these should be emptied?
 
 
-def apply_metadata(album_info, mapping):
+def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
     """Set the items' metadata to match an AlbumInfo object using a
     mapping from Items to TrackInfo objects.
     """

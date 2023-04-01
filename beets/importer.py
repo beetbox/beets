@@ -521,17 +521,18 @@ class ImportTask(BaseImportTask):
 
     # Convenient data.
 
-    def chosen_ident(self):
-        """Returns identifying metadata about the current choice. For
-        albums, this is an (artist, album) pair. For items, this is
-        (artist, title). May only be called when the choice flag is ASIS
-        or RETAG (in which case the data comes from the files' current
-        metadata) or APPLY (data comes from the choice).
+    def chosen_info(self):
+        """Return a dictionary of metadata about the current choice.
+        May only be called when the choice flag is ASIS or RETAG
+        (in which case the data comes from the files' current metadata)
+        or APPLY (in which case the data comes from the choice).
         """
         if self.choice_flag in (action.ASIS, action.RETAG):
-            return (self.cur_artist, self.cur_album)
+            likelies, consensus = autotag.current_metadata(self.items)
+            return likelies
         elif self.choice_flag is action.APPLY:
-            return (self.match.info.artist, self.match.info.album)
+            return self.match.info.copy()
+        assert False
 
     def imported_items(self):
         """Return a list of Items that should be added to the library.
@@ -584,9 +585,9 @@ class ImportTask(BaseImportTask):
                       displayable_path(self.paths),
                       field,
                       value)
-            self.album[field] = value
+            self.album.set_parse(field, format(self.album, value))
             for item in items:
-                item[field] = value
+                item.set_parse(field, format(item, value))
         with lib.transaction():
             for item in items:
                 item.store()
@@ -667,26 +668,34 @@ class ImportTask(BaseImportTask):
         """Return a list of albums from `lib` with the same artist and
         album name as the task.
         """
-        artist, album = self.chosen_ident()
+        info = self.chosen_info()
+        info['albumartist'] = info['artist']
 
-        if artist is None:
+        if info['artist'] is None:
             # As-is import with no artist. Skip check.
             return []
 
-        duplicates = []
-        task_paths = {i.path for i in self.items if i}
-        duplicate_query = dbcore.AndQuery((
-            dbcore.MatchQuery('albumartist', artist),
-            dbcore.MatchQuery('album', album),
-        ))
+        # Construct a query to find duplicates with this metadata. We
+        # use a temporary Album object to generate any computed fields.
+        tmp_album = library.Album(lib, **info)
+        keys = config['import']['duplicate_keys']['album'].as_str_seq()
+        dup_query = library.Album.all_fields_query({
+            key: tmp_album.get(key)
+            for key in keys
+        })
 
-        for album in lib.albums(duplicate_query):
+        # Don't count albums with the same files as duplicates.
+        task_paths = {i.path for i in self.items if i}
+
+        duplicates = []
+        for album in lib.albums(dup_query):
             # Check whether the album paths are all present in the task
             # i.e. album is being completely re-imported by the task,
             # in which case it is not a duplicate (will be replaced).
             album_paths = {i.path for i in album.items()}
             if not (album_paths <= task_paths):
                 duplicates.append(album)
+
         return duplicates
 
     def align_album_level_fields(self):
@@ -726,8 +735,8 @@ class ImportTask(BaseImportTask):
             item.update(changes)
 
     def manipulate_files(self, operation=None, write=False, session=None):
-        """ Copy, move, link, hardlink or reflink (depending on `operation`) the files
-        as well as write metadata.
+        """ Copy, move, link, hardlink or reflink (depending on `operation`)
+        the files as well as write metadata.
 
         `operation` should be an instance of `util.MoveOperation`.
 
@@ -830,6 +839,19 @@ class ImportTask(BaseImportTask):
                         dup_item.id,
                         displayable_path(item.path)
                     )
+                # We exclude certain flexible attributes from the preserving
+                # process since they might have been fetched from MusicBrainz
+                # and been set in beets.autotag.apply_metadata().
+                # discogs_albumid might also have been set but is not a
+                # flexible attribute, thus no exclude is required.
+                if item.get('bandcamp_album_id'):
+                    dup_item.bandcamp_album_id = item.bandcamp_album_id
+                if item.get('spotify_album_id'):
+                    dup_item.spotify_album_id = item.spotify_album_id
+                if item.get('deezer_album_id'):
+                    dup_item.deezer_album_id = item.deezer_album_id
+                if item.get('beatport_album_id'):
+                    dup_item.beatport_album_id = item.beatport_album_id
                 item.update(dup_item._values_flex)
                 log.debug(
                     'Reimported item flexible attributes {0} '
@@ -892,12 +914,17 @@ class SingletonImportTask(ImportTask):
         self.is_album = False
         self.paths = [item.path]
 
-    def chosen_ident(self):
-        assert self.choice_flag in (action.ASIS, action.APPLY, action.RETAG)
+    def chosen_info(self):
+        """Return a dictionary of metadata about the current choice.
+        May only be called when the choice flag is ASIS or RETAG
+        (in which case the data comes from the files' current metadata)
+        or APPLY (in which case the data comes from the choice).
+        """
+        assert self.choice_flag in (action.ASIS, action.RETAG, action.APPLY)
         if self.choice_flag in (action.ASIS, action.RETAG):
-            return (self.item.artist, self.item.title)
+            return dict(self.item)
         elif self.choice_flag is action.APPLY:
-            return (self.match.info.artist, self.match.info.title)
+            return self.match.info.copy()
 
     def imported_items(self):
         return [self.item]
@@ -918,14 +945,19 @@ class SingletonImportTask(ImportTask):
         """Return a list of items from `lib` that have the same artist
         and title as the task.
         """
-        artist, title = self.chosen_ident()
+        info = self.chosen_info()
+
+        # Query for existing items using the same metadata. We use a
+        # temporary `Item` object to generate any computed fields.
+        tmp_item = library.Item(lib, **info)
+        keys = config['import']['duplicate_keys']['item'].as_str_seq()
+        dup_query = library.Album.all_fields_query({
+            key: tmp_item.get(key)
+            for key in keys
+        })
 
         found_items = []
-        query = dbcore.AndQuery((
-            dbcore.MatchQuery('artist', artist),
-            dbcore.MatchQuery('title', title),
-        ))
-        for other_item in lib.items(query):
+        for other_item in lib.items(dup_query):
             # Existing items not considered duplicates.
             if other_item.path != self.item.path:
                 found_items.append(other_item)
@@ -963,7 +995,7 @@ class SingletonImportTask(ImportTask):
                       displayable_path(self.paths),
                       field,
                       value)
-            self.item[field] = value
+            self.item.set_parse(field, format(self.item, value))
         self.item.store()
 
 

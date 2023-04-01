@@ -80,7 +80,7 @@ shockingly simple if you know a little Python.
 Install
 -------
 
-You can install beets by typing ``pip install beets``.
+You can install beets by typing ``pip install beets`` or directly from Github (see details [here](https://beets.readthedocs.io/en/latest/faq.html#run-the-latest-source-version-of-beets)).
 Beets has also been packaged in the `software repositories`_ of several
 distributions. Check out the `Getting Started`_ guide for more information.
 

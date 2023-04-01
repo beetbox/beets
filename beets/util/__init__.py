@@ -17,7 +17,6 @@
 import os
 import sys
 import errno
-import locale
 import re
 import tempfile
 import shutil
@@ -332,12 +331,7 @@ def arg_encoding():
     """Get the encoding for command-line arguments (and other OS
     locale-sensitive strings).
     """
-    try:
-        return locale.getdefaultlocale()[1] or 'utf-8'
-    except ValueError:
-        # Invalid locale environment variable setting. To avoid
-        # failing entirely for no good reason, assume UTF-8.
-        return 'utf-8'
+    return sys.getfilesystemencoding()
 
 
 def _fsencoding():
@@ -538,10 +532,6 @@ def link(path, dest, replace=False):
         raise FilesystemError('OS does not support symbolic links.'
                               'link', (path, dest), traceback.format_exc())
     except OSError as exc:
-        # TODO: Windows version checks can be removed for python 3
-        if hasattr('sys', 'getwindowsversion'):
-            if sys.getwindowsversion()[0] < 6:  # is before Vista
-                exc = 'OS does not support symbolic links.'
         raise FilesystemError(exc, 'link', (path, dest),
                               traceback.format_exc())
 
@@ -747,8 +737,7 @@ def legalize_path(path, replacements, length, extension, fragment):
 
 
 def py3_path(path):
-    """Convert a bytestring path to Unicode on Python 3 only. On Python
-    2, return the bytestring path unchanged.
+    """Convert a bytestring path to Unicode.
 
     This helps deal with APIs on Python 3 that *only* accept Unicode
     (i.e., `str` objects). I philosophically disagree with this
@@ -779,19 +768,6 @@ def as_string(value):
         return value.decode('utf-8', 'ignore')
     else:
         return str(value)
-
-
-def text_string(value, encoding='utf-8'):
-    """Convert a string, which can either be bytes or unicode, to
-    unicode.
-
-    Text (unicode) is left untouched; bytes are decoded. This is useful
-    to convert from a "native string" (bytes on Python 2, str on Python
-    3) to a consistently unicode value.
-    """
-    if isinstance(value, bytes):
-        return value.decode(encoding)
-    return value
 
 
 def plurality(objs):
@@ -837,13 +813,14 @@ def cpu_count():
 
 
 def convert_command_args(args):
-    """Convert command arguments to bytestrings on Python 2 and
-    surrogate-escaped strings on Python 3."""
+    """Convert command arguments, which may either be `bytes` or `str`
+    objects, to uniformly surrogate-escaped strings.
+    """
     assert isinstance(args, list)
 
     def convert(arg):
         if isinstance(arg, bytes):
-            arg = arg.decode(arg_encoding(), 'surrogateescape')
+            return os.fsdecode(arg)
         return arg
 
     return [convert(a) for a in args]
@@ -873,10 +850,7 @@ def command_output(cmd, shell=False):
     """
     cmd = convert_command_args(cmd)
 
-    try:  # python >= 3.3
-        devnull = subprocess.DEVNULL
-    except AttributeError:
-        devnull = open(os.devnull, 'r+b')
+    devnull = subprocess.DEVNULL
 
     proc = subprocess.Popen(
         cmd,
@@ -962,61 +936,52 @@ def interactive_open(targets, command):
     return os.execlp(*args)
 
 
-def _windows_long_path_name(short_path):
-    """Use Windows' `GetLongPathNameW` via ctypes to get the canonical,
-    long path given a short filename.
-    """
-    if not isinstance(short_path, str):
-        short_path = short_path.decode(_fsencoding())
-
-    import ctypes
-    buf = ctypes.create_unicode_buffer(260)
-    get_long_path_name_w = ctypes.windll.kernel32.GetLongPathNameW
-    return_value = get_long_path_name_w(short_path, buf, 260)
-
-    if return_value == 0 or return_value > 260:
-        # An error occurred
-        return short_path
-    else:
-        long_path = buf.value
-        # GetLongPathNameW does not change the case of the drive
-        # letter.
-        if len(long_path) > 1 and long_path[1] == ':':
-            long_path = long_path[0].upper() + long_path[1:]
-        return long_path
-
-
 def case_sensitive(path):
     """Check whether the filesystem at the given path is case sensitive.
 
     To work best, the path should point to a file or a directory. If the path
     does not exist, assume a case sensitive file system on every platform
     except Windows.
+
+    Currently only used for absolute paths by beets; may have a trailing
+    path separator.
     """
-    # A fallback in case the path does not exist.
-    if not os.path.exists(syspath(path)):
-        # By default, the case sensitivity depends on the platform.
-        return platform.system() != 'Windows'
+    # Look at parent paths until we find a path that actually exists, or
+    # reach the root.
+    while True:
+        head, tail = os.path.split(path)
+        if head == path:
+            # We have reached the root of the file system.
+            # By default, the case sensitivity depends on the platform.
+            return platform.system() != 'Windows'
 
-    # If an upper-case version of the path exists but a lower-case
-    # version does not, then the filesystem must be case-sensitive.
-    # (Otherwise, we have more work to do.)
-    if not (os.path.exists(syspath(path.lower())) and
-            os.path.exists(syspath(path.upper()))):
-        return True
+        # Trailing path separator, or path does not exist.
+        if not tail or not os.path.exists(path):
+            path = head
+            continue
 
-    # Both versions of the path exist on the file system. Check whether
-    # they refer to different files by their inodes. Alas,
-    # `os.path.samefile` is only available on Unix systems on Python 2.
-    if platform.system() != 'Windows':
-        return not os.path.samefile(syspath(path.lower()),
-                                    syspath(path.upper()))
+        upper_tail = tail.upper()
+        lower_tail = tail.lower()
 
-    # On Windows, we check whether the canonical, long filenames for the
-    # files are the same.
-    lower = _windows_long_path_name(path.lower())
-    upper = _windows_long_path_name(path.upper())
-    return lower != upper
+        # In case we can't tell from the given path name, look at the
+        # parent directory.
+        if upper_tail == lower_tail:
+            path = head
+            continue
+
+        upper_sys = syspath(os.path.join(head, upper_tail))
+        lower_sys = syspath(os.path.join(head, lower_tail))
+
+        # If either the upper-cased or lower-cased path does not exist, the
+        # filesystem must be case-sensitive.
+        # (Otherwise, we have more work to do.)
+        if not os.path.exists(upper_sys) or not os.path.exists(lower_sys):
+            return True
+
+        # Original and both upper- and lower-cased versions of the path
+        # exist on the file system. Check whether they refer to different
+        # files by their inodes (or an alternative method on Windows).
+        return not os.path.samefile(lower_sys, upper_sys)
 
 
 def raw_seconds_short(string):
@@ -1059,8 +1024,7 @@ def asciify_path(path, sep_replace):
 def par_map(transform, items):
     """Apply the function `transform` to all the elements in the
     iterable `items`, like `map(transform, items)` but with no return
-    value. The map *might* happen in parallel: it's parallel on Python 3
-    and sequential on Python 2.
+    value.
 
     The parallelism uses threads (not processes), so this is only useful
     for IO-bound `transform`s.
@@ -1092,21 +1056,3 @@ def lazy_property(func):
         return value
 
     return wrapper
-
-
-def decode_commandline_path(path):
-    """Prepare a path for substitution into commandline template.
-
-    On Python 3, we need to construct the subprocess commands to invoke as a
-    Unicode string. On Unix, this is a little unfortunate---the OS is
-    expecting bytes---so we use surrogate escaping and decode with the
-    argument encoding, which is the same encoding that will then be
-    *reversed* to recover the same bytes before invoking the OS. On
-    Windows, we want to preserve the Unicode filename "as is."
-    """
-    # On Python 3, the template is a Unicode string, which only supports
-    # substitution of Unicode variables.
-    if platform.system() == 'Windows':
-        return path.decode(_fsencoding())
-    else:
-        return path.decode(arg_encoding(), 'surrogateescape')

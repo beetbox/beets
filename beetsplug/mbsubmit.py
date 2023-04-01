@@ -22,9 +22,11 @@ implemented by MusicBrainz yet.
 """
 
 
+from beets import ui
 from beets.autotag import Recommendation
 from beets.plugins import BeetsPlugin
 from beets.ui.commands import PromptChoice
+
 from beetsplug.info import print_data
 
 
@@ -54,4 +56,22 @@ class MBSubmitPlugin(BeetsPlugin):
 
     def print_tracks(self, session, task):
         for i in sorted(task.items, key=lambda i: i.track):
+            print_data(None, i, self.config['format'].as_str())
+
+    def commands(self):
+        """Add beet UI commands for mbsubmit."""
+        mbsubmit_cmd = ui.Subcommand(
+            'mbsubmit', help='Submit Tracks to MusicBrainz')
+
+        def func(lib, opts, args):
+            items = lib.items(ui.decargs(args))
+            self._mbsubmit(items)
+
+        mbsubmit_cmd.func = func
+
+        return [mbsubmit_cmd]
+
+    def _mbsubmit(self, items):
+        """Print track information to be submitted to MusicBrainz."""
+        for i in sorted(items, key=lambda i: i.track):
             print_data(None, i, self.config['format'].as_str())

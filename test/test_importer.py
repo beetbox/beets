@@ -228,14 +228,14 @@ class ImportHelper(TestHelper):
         )
 
     def assert_file_in_lib(self, *segments):
-        """Join the ``segments`` and assert that this path exists in the library
-        directory
+        """Join the ``segments`` and assert that this path exists in the
+        library directory.
         """
         self.assertExists(os.path.join(self.libdir, *segments))
 
     def assert_file_not_in_lib(self, *segments):
-        """Join the ``segments`` and assert that this path exists in the library
-        directory
+        """Join the ``segments`` and assert that this path does not
+        exist in the library directory.
         """
         self.assertNotExists(os.path.join(self.libdir, *segments))
 
@@ -462,8 +462,8 @@ class ImportPasswordRarTest(ImportZipTest):
 
 
 class ImportSingletonTest(_common.TestCase, ImportHelper):
-    """Test ``APPLY`` and ``ASIS`` choices for an import session with singletons
-    config set to True.
+    """Test ``APPLY`` and ``ASIS`` choices for an import session with
+    singletons config set to True.
     """
 
     def setUp(self):
@@ -554,7 +554,8 @@ class ImportSingletonTest(_common.TestCase, ImportHelper):
 
         config['import']['set_fields'] = {
             'collection': collection,
-            'genre': genre
+            'genre': genre,
+            'title': "$title - formatted",
         }
 
         # As-is item import.
@@ -566,6 +567,7 @@ class ImportSingletonTest(_common.TestCase, ImportHelper):
             item.load()  # TODO: Not sure this is necessary.
             self.assertEqual(item.genre, genre)
             self.assertEqual(item.collection, collection)
+            self.assertEqual(item.title, "Tag Title 1 - formatted")
             # Remove item from library to test again with APPLY choice.
             item.remove()
 
@@ -579,6 +581,7 @@ class ImportSingletonTest(_common.TestCase, ImportHelper):
             item.load()
             self.assertEqual(item.genre, genre)
             self.assertEqual(item.collection, collection)
+            self.assertEqual(item.title, "Applied Title 1 - formatted")
 
 
 class ImportTest(_common.TestCase, ImportHelper):
@@ -743,7 +746,8 @@ class ImportTest(_common.TestCase, ImportHelper):
         config['import']['set_fields'] = {
             'genre': genre,
             'collection': collection,
-            'comments': comments
+            'comments': comments,
+            'album': "$album - formatted",
         }
 
         # As-is album import.
@@ -765,6 +769,9 @@ class ImportTest(_common.TestCase, ImportHelper):
                 self.assertEqual(
                         item.get("comments", with_album=False),
                         comments)
+                self.assertEqual(
+                        item.get("album", with_album=False),
+                        "Tag Album - formatted")
             # Remove album from library to test again with APPLY choice.
             album.remove()
 
@@ -788,6 +795,9 @@ class ImportTest(_common.TestCase, ImportHelper):
                 self.assertEqual(
                         item.get("comments", with_album=False),
                         comments)
+                self.assertEqual(
+                        item.get("album", with_album=False),
+                        "Applied Album - formatted")
 
 
 class ImportTracksTest(_common.TestCase, ImportHelper):
@@ -1224,6 +1234,7 @@ def test_album_info(*args, **kwargs):
         tracks=[track_info],
         album_id='albumid',
         artist_id='artistid',
+        flex='flex',
     )
     return iter([album_info])
 
@@ -1241,6 +1252,7 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper,
         # Create import session
         self.importer = self.create_importer()
         config['import']['autotag'] = True
+        config['import']['duplicate_keys']['album'] = 'albumartist album'
 
     def tearDown(self):
         self.teardown_beets()
@@ -1310,6 +1322,24 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper,
     def test_twice_in_import_dir(self):
         self.skipTest('write me')
 
+    def test_keep_when_extra_key_is_different(self):
+        config['import']['duplicate_keys']['album'] = 'albumartist album flex'
+
+        item = self.lib.items().get()
+        import_file = MediaFile(os.path.join(
+            self.importer.paths[0], b'album 0', b'track 0.mp3'))
+        import_file.artist = item['artist']
+        import_file.albumartist = item['artist']
+        import_file.album = item['album']
+        import_file.title = item['title']
+        import_file.flex = 'different'
+
+        self.importer.default_resolution = self.importer.Resolution.SKIP
+        self.importer.run()
+
+        self.assertEqual(len(self.lib.albums()), 2)
+        self.assertEqual(len(self.lib.items()), 2)
+
     def add_album_fixture(self, **kwargs):
         # TODO move this into upstream
         album = super().add_album_fixture()
@@ -1339,6 +1369,7 @@ class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper,
         self.importer = self.create_importer()
         config['import']['autotag'] = True
         config['import']['singletons'] = True
+        config['import']['duplicate_keys']['item'] = 'artist title'
 
     def tearDown(self):
         self.teardown_beets()
@@ -1374,6 +1405,18 @@ class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper,
         self.assertEqual(len(self.lib.items()), 1)
         item = self.lib.items().get()
         self.assertEqual(item.mb_trackid, 'old trackid')
+
+    def test_keep_when_extra_key_is_different(self):
+        config['import']['duplicate_keys']['item'] = 'artist title flex'
+        item = self.lib.items().get()
+        item.flex = 'different'
+        item.store()
+        self.assertEqual(len(self.lib.items()), 1)
+
+        self.importer.default_resolution = self.importer.Resolution.SKIP
+        self.importer.run()
+
+        self.assertEqual(len(self.lib.items()), 2)
 
     def test_twice_in_import_dir(self):
         self.skipTest('write me')

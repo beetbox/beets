@@ -30,9 +30,15 @@ import unidecode
 from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.dbcore import types
+from beets.library import DateType
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin
+from beets.util.id_extractors import spotify_id_regex
 
 DEFAULT_WAITING_TIME = 5
+
+
+class SpotifyAPIError(Exception):
+    pass
 
 
 class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
@@ -52,6 +58,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         'spotify_tempo': types.FLOAT,
         'spotify_time_signature': types.INTEGER,
         'spotify_valence': types.FLOAT,
+        'spotify_updated': DateType(),
     }
 
     # Base URLs for the Spotify API
@@ -63,12 +70,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
     track_url = 'https://api.spotify.com/v1/tracks/'
     audio_features_url = 'https://api.spotify.com/v1/audio-features/'
 
-    # Spotify IDs consist of 22 alphanumeric characters
-    # (zero-left-padded base62 representation of randomly generated UUID4)
-    id_regex = {
-        'pattern': r'(^|open\.spotify\.com/{}/)([0-9A-Za-z]{{22}})',
-        'match_group': 2,
-    }
+    id_regex = spotify_id_regex
 
     spotify_audio_features = {
         'acousticness': 'spotify_acousticness',
@@ -189,6 +191,10 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                     seconds.', seconds)
                 time.sleep(int(seconds) + 1)
                 return self._handle_response(request_type, url, params=params)
+            elif response.status_code == 404:
+                raise SpotifyAPIError("API Error: {}\nURL: {}\nparams: {}".
+                                      format(response.status_code, url,
+                                             params))
             else:
                 raise ui.UserError(
                     '{} API error:\n{}\nURL:\n{}\nparams:\n{}'.format(
@@ -206,7 +212,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         :return: AlbumInfo object for album
         :rtype: beets.autotag.hooks.AlbumInfo or None
         """
-        spotify_id = self._get_id('album', album_id)
+        spotify_id = self._get_id('album', album_id, self.id_regex)
         if spotify_id is None:
             return None
 
@@ -284,11 +290,18 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         :rtype: beets.autotag.hooks.TrackInfo
         """
         artist, artist_id = self.get_artist(track_data['artists'])
+
+        # Get album information for spotify tracks
+        try:
+            album = track_data['album']['name']
+        except (KeyError, TypeError):
+            album = None
         return TrackInfo(
             title=track_data['name'],
             track_id=track_data['id'],
             spotify_track_id=track_data['id'],
             artist=artist,
+            album=album,
             artist_id=artist_id,
             spotify_artist_id=artist_id,
             length=track_data['duration_ms'] / 1000,
@@ -313,7 +326,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         :rtype: beets.autotag.hooks.TrackInfo or None
         """
         if track_data is None:
-            spotify_id = self._get_id('track', track_id)
+            spotify_id = self._get_id('track', track_id, self.id_regex)
             if spotify_id is None:
                 return None
             track_data = self._handle_response(
@@ -359,8 +372,8 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         return unidecode.unidecode(query)
 
     def _search_api(self, query_type, filters=None, keywords=''):
-        """Query the Spotify Search API for the specified ``keywords``, applying
-        the provided ``filters``.
+        """Query the Spotify Search API for the specified ``keywords``,
+        applying the provided ``filters``.
 
         :param query_type: Item type to search across. Valid types are:
             'album', 'artist', 'playlist', and 'track'.
@@ -381,15 +394,17 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         self._log.debug(
             f"Searching {self.data_source} for '{query}'"
         )
-        response_data = (
-            self._handle_response(
+        try:
+            response = self._handle_response(
                 requests.get,
                 self.search_url,
                 params={'q': query, 'type': query_type},
             )
-            .get(query_type + 's', {})
-            .get('items', [])
-        )
+        except SpotifyAPIError as e:
+            self._log.debug('Spotify API error: {}', e)
+            return []
+        response_data = (response.get(query_type + 's', {})
+                         .get('items', []))
         self._log.debug(
             "Found {} result(s) from {} for '{}'",
             len(response_data),
@@ -621,10 +636,14 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             item['spotify_track_popularity'] = popularity
             audio_features = \
                 self.track_audio_features(spotify_track_id)
+            if audio_features is None:
+                self._log.info('No audio features found for: {}', item)
+                continue
             for feature in audio_features.keys():
                 if feature in self.spotify_audio_features.keys():
                     item[self.spotify_audio_features[feature]] = \
                         audio_features[feature]
+            item['spotify_updated'] = time.time()
             item.store()
             if write:
                 item.try_write()
@@ -639,7 +658,9 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
 
     def track_audio_features(self, track_id=None):
         """Fetch track audio features by its Spotify ID."""
-        track_data = self._handle_response(
-            requests.get, self.audio_features_url + track_id
-        )
-        return track_data
+        try:
+            return self._handle_response(
+                requests.get, self.audio_features_url + track_id)
+        except SpotifyAPIError as e:
+            self._log.debug('Spotify API error: {}', e)
+            return None

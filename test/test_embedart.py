@@ -82,7 +82,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         self.run_command('embedart', '-f', self.small_artpath)
         mediafile = MediaFile(syspath(item.path))
         # make sure that images array is empty (nothing embedded)
-        self.assertEqual(len(mediafile.images), 0)
+        self.assertFalse(mediafile.images)
 
     def test_embed_art_from_file(self):
         self._setup_data()
@@ -203,7 +203,7 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         self.io.addinput('y')
         self.run_command('clearart')
         mediafile = MediaFile(syspath(item.path))
-        self.assertEqual(len(mediafile.images), 0)
+        self.assertFalse(mediafile.images)
 
     def test_clear_art_with_no_input(self):
         self._setup_data()

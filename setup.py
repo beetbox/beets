@@ -85,7 +85,7 @@ setup(
     },
 
     install_requires=[
-        'unidecode',
+        'unidecode>=1.3.6',
         'musicbrainzngs>=0.4',
         'pyyaml',
         'mediafile>=0.9.0',
@@ -111,13 +111,26 @@ setup(
             'requests_oauthlib',
             'reflink',
             'rarfile',
-            'python3-discogs-client',
+            'python3-discogs-client>=2.3.15',
             'py7zr',
         ],
         'lint': [
             'flake8',
             'flake8-docstrings',
             'pep8-naming',
+        ],
+        'mypy': [
+            'mypy',
+            'types-Pillow',
+            'types-urllib3',
+            'types-beautifulsoup4',
+            'types-PyYAML',
+            'types-requests',
+            'types-Flask-Cors',
+        ],
+        'docs': [
+            'sphinx',
+            'sphinx_rtd_theme',
         ],
 
         # Plugin (optional) dependencies:
@@ -126,7 +139,7 @@ setup(
         'embedart': ['Pillow'],
         'embyupdate': ['requests'],
         'chroma': ['pyacoustid'],
-        'discogs': ['python3-discogs-client>=2.3.10'],
+        'discogs': ['python3-discogs-client>=2.3.15'],
         'beatport': ['requests-oauthlib>=0.6.1'],
         'kodiupdate': ['requests'],
         'lastgenre': ['pylast'],
@@ -166,10 +179,10 @@ setup(
         'Environment :: Web Environment',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: Implementation :: CPython',
     ],
 )

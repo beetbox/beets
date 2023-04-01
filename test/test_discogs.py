@@ -21,6 +21,7 @@ from test._common import Bag
 from test.helper import capture_log
 
 from beets import config
+from beets.util.id_extractors import extract_discogs_id_regex
 
 from beetsplug.discogs import DiscogsPlugin
 
@@ -371,7 +372,7 @@ class DGAlbumInfoTest(_common.TestCase):
                          ('005b84a0-ecd6-39f1-b2f6-6eb48756b268', ''),
                          ]
         for test_pattern, expected in test_patterns:
-            match = DiscogsPlugin.extract_release_id_regex(test_pattern)
+            match = extract_discogs_id_regex(test_pattern)
             if not match:
                 match = ''
             self.assertEqual(match, expected)

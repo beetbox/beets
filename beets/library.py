@@ -51,6 +51,8 @@ class PathQuery(dbcore.FieldQuery):
     default, the behavior depends on the OS: case-insensitive on Windows
     and case-sensitive otherwise.
     """
+    # For tests
+    force_implicit_query_detection = False
 
     def __init__(self, field, pattern, fast=True, case_sensitive=None):
         """Create a path query.
@@ -62,21 +64,27 @@ class PathQuery(dbcore.FieldQuery):
         """
         super().__init__(field, pattern, fast)
 
+        path = util.normpath(pattern)
+
         # By default, the case sensitivity depends on the filesystem
         # that the query path is located on.
         if case_sensitive is None:
-            path = util.bytestring_path(util.normpath(pattern))
-            case_sensitive = beets.util.case_sensitive(path)
+            case_sensitive = util.case_sensitive(path)
         self.case_sensitive = case_sensitive
 
         # Use a normalized-case pattern for case-insensitive matches.
         if not case_sensitive:
-            pattern = pattern.lower()
+            # We need to lowercase the entire path, not just the pattern.
+            # In particular, on Windows, the drive letter is otherwise not
+            # lowercased.
+            # This also ensures that the `match()` method below and the SQL
+            # from `col_clause()` do the same thing.
+            path = path.lower()
 
         # Match the path as a single file.
-        self.file_path = util.bytestring_path(util.normpath(pattern))
+        self.file_path = path
         # As a directory (prefix).
-        self.dir_path = util.bytestring_path(os.path.join(self.file_path, b''))
+        self.dir_path = os.path.join(path, b'')
 
     @classmethod
     def is_path_query(cls, query_part):
@@ -90,11 +98,13 @@ class PathQuery(dbcore.FieldQuery):
 
         # Test both `sep` and `altsep` (i.e., both slash and backslash on
         # Windows).
-        return (
-            (os.sep in query_part or
-             (os.altsep and os.altsep in query_part)) and
-            os.path.exists(syspath(normpath(query_part)))
-        )
+        if not (os.sep in query_part
+                or (os.altsep and os.altsep in query_part)):
+            return False
+
+        if cls.force_implicit_query_detection:
+            return True
+        return os.path.exists(syspath(normpath(query_part)))
 
     def match(self, item):
         path = item.path if self.case_sensitive else item.path.lower()
@@ -300,34 +310,26 @@ class FileOperationError(Exception):
         self.path = path
         self.reason = reason
 
-    def text(self):
+    def __str__(self):
         """Get a string representing the error.
 
-        Describe both the underlying reason and the file path
-        in question.
+        Describe both the underlying reason and the file path in question.
         """
-        return '{}: {}'.format(
-            util.displayable_path(self.path),
-            str(self.reason)
-        )
-
-    # define __str__ as text to avoid infinite loop on super() calls
-    # with @six.python_2_unicode_compatible
-    __str__ = text
+        return f"{util.displayable_path(self.path)}: {self.reason}"
 
 
 class ReadError(FileOperationError):
     """An error while reading a file (i.e. in `Item.read`)."""
 
     def __str__(self):
-        return 'error reading ' + super().text()
+        return 'error reading ' + str(super())
 
 
 class WriteError(FileOperationError):
     """An error while writing a file (i.e. in `Item.write`)."""
 
     def __str__(self):
-        return 'error writing ' + super().text()
+        return 'error writing ' + str(super())
 
 
 # Item and Album model classes.
@@ -466,6 +468,7 @@ class Item(LibModel):
         'artist': types.STRING,
         'artist_sort': types.STRING,
         'artist_credit': types.STRING,
+        'remixer': types.STRING,
         'album': types.STRING,
         'albumartist': types.STRING,
         'albumartist_sort': types.STRING,
@@ -501,7 +504,7 @@ class Item(LibModel):
         'mb_releasetrackid': types.STRING,
         'trackdisambig': types.STRING,
         'albumtype': types.STRING,
-        'albumtypes': types.STRING,
+        'albumtypes': types.SEMICOLON_SPACE_DSV,
         'label': types.STRING,
         'acoustid_fingerprint': types.STRING,
         'acoustid_id': types.STRING,
@@ -1061,7 +1064,7 @@ class Album(LibModel):
         'mb_albumid': types.STRING,
         'mb_albumartistid': types.STRING,
         'albumtype': types.STRING,
-        'albumtypes': types.STRING,
+        'albumtypes': types.SEMICOLON_SPACE_DSV,
         'label': types.STRING,
         'mb_releasegroupid': types.STRING,
         'asin': types.STRING,
@@ -1145,6 +1148,11 @@ class Album(LibModel):
     def items(self):
         """Return an iterable over the items associated with this
         album.
+
+        This method conflicts with :meth:`LibModel.items`, which is
+        inherited from :meth:`beets.dbcore.Model.items`.
+        Since :meth:`Album.items` predates these methods, and is
+        likely to be used by plugins, we keep this interface as-is.
         """
         return self._db.items(dbcore.MatchQuery('album_id', self.id))
 
@@ -1349,9 +1357,12 @@ class Album(LibModel):
         """
         # Get modified track fields.
         track_updates = {}
-        for key in self.item_keys:
-            if key in self._dirty:
+        track_deletes = set()
+        for key in self._dirty:
+            if key in self.item_keys:
                 track_updates[key] = self[key]
+            elif key not in self:
+                track_deletes.add(key)
 
         with self._db.transaction():
             super().store(fields)
@@ -1359,6 +1370,12 @@ class Album(LibModel):
                 for item in self.items():
                     for key, value in track_updates.items():
                         item[key] = value
+                    item.store()
+            if track_deletes:
+                for item in self.items():
+                    for key in track_deletes:
+                        if key in item:
+                            del item[key]
                     item.store()
 
     def try_sync(self, write, move):
@@ -1387,7 +1404,7 @@ def parse_query_parts(parts, model_cls):
     # Get query types and their prefix characters.
     prefixes = {
         ':': dbcore.query.RegexpQuery,
-        '~': dbcore.query.StringQuery,
+        '=~': dbcore.query.StringQuery,
         '=': dbcore.query.MatchQuery,
     }
     prefixes.update(plugins.queries())
@@ -1683,15 +1700,89 @@ class DefaultTemplateFunctions:
         if album_id is None:
             return ''
 
-        memokey = ('aunique', keys, disam, album_id)
+        memokey = self._tmpl_unique_memokey('aunique', keys, disam, album_id)
         memoval = self.lib._memotable.get(memokey)
         if memoval is not None:
             return memoval
 
-        keys = keys or beets.config['aunique']['keys'].as_str()
-        disam = disam or beets.config['aunique']['disambiguators'].as_str()
+        album = self.lib.get_album(album_id)
+
+        return self._tmpl_unique(
+            'aunique', keys, disam, bracket, album_id, album, album.item_keys,
+            # Do nothing for singletons.
+            lambda a: a is None)
+
+    def tmpl_sunique(self, keys=None, disam=None, bracket=None):
+        """Generate a string that is guaranteed to be unique among all
+        singletons in the library who share the same set of keys.
+
+        A fields from "disam" is used in the string if one is sufficient to
+        disambiguate the albums. Otherwise, a fallback opaque value is
+        used. Both "keys" and "disam" should be given as
+        whitespace-separated lists of field names, while "bracket" is a
+        pair of characters to be used as brackets surrounding the
+        disambiguator or empty to have no brackets.
+        """
+        # Fast paths: no album, no item or library, or memoized value.
+        if not self.item or not self.lib:
+            return ''
+
+        if isinstance(self.item, Item):
+            item_id = self.item.id
+        else:
+            raise NotImplementedError("sunique is only implemented for items")
+
+        if item_id is None:
+            return ''
+
+        return self._tmpl_unique(
+            'sunique', keys, disam, bracket, item_id, self.item,
+            Item.all_keys(),
+            # Do nothing for non singletons.
+            lambda i: i.album_id is not None,
+            initial_subqueries=[dbcore.query.NoneQuery('album_id', True)])
+
+    def _tmpl_unique_memokey(self, name, keys, disam, item_id):
+        """Get the memokey for the unique template named "name" for the
+        specific parameters.
+        """
+        return (name, keys, disam, item_id)
+
+    def _tmpl_unique(self, name, keys, disam, bracket, item_id, db_item,
+                     item_keys, skip_item, initial_subqueries=None):
+        """Generate a string that is guaranteed to be unique among all items of
+        the same type as "db_item" who share the same set of keys.
+
+        A field from "disam" is used in the string if one is sufficient to
+        disambiguate the items. Otherwise, a fallback opaque value is
+        used. Both "keys" and "disam" should be given as
+        whitespace-separated lists of field names, while "bracket" is a
+        pair of characters to be used as brackets surrounding the
+        disambiguator or empty to have no brackets.
+
+        "name" is the name of the templates. It is also the name of the
+        configuration section where the default values of the parameters
+        are stored.
+
+        "skip_item" is a function that must return True when the template
+        should return an empty string.
+
+        "initial_subqueries" is a list of subqueries that should be included
+        in the query to find the ambigous items.
+        """
+        memokey = self._tmpl_unique_memokey(name, keys, disam, item_id)
+        memoval = self.lib._memotable.get(memokey)
+        if memoval is not None:
+            return memoval
+
+        if skip_item(db_item):
+            self.lib._memotable[memokey] = ''
+            return ''
+
+        keys = keys or beets.config[name]['keys'].as_str()
+        disam = disam or beets.config[name]['disambiguators'].as_str()
         if bracket is None:
-            bracket = beets.config['aunique']['bracket'].as_str()
+            bracket = beets.config[name]['bracket'].as_str()
         keys = keys.split()
         disam = disam.split()
 
@@ -1703,46 +1794,44 @@ class DefaultTemplateFunctions:
             bracket_l = ''
             bracket_r = ''
 
-        album = self.lib.get_album(album_id)
-        if not album:
-            # Do nothing for singletons.
-            self.lib._memotable[memokey] = ''
-            return ''
-
-        # Find matching albums to disambiguate with.
+        # Find matching items to disambiguate with.
         subqueries = []
+        if initial_subqueries is not None:
+            subqueries.extend(initial_subqueries)
         for key in keys:
-            value = album.get(key, '')
+            value = db_item.get(key, '')
             # Use slow queries for flexible attributes.
-            fast = key in album.item_keys
+            fast = key in item_keys
             subqueries.append(dbcore.MatchQuery(key, value, fast))
-        albums = self.lib.albums(dbcore.AndQuery(subqueries))
+        query = dbcore.AndQuery(subqueries)
+        ambigous_items = (self.lib.items(query)
+                          if isinstance(db_item, Item)
+                          else self.lib.albums(query))
 
-        # If there's only one album to matching these details, then do
+        # If there's only one item to matching these details, then do
         # nothing.
-        if len(albums) == 1:
+        if len(ambigous_items) == 1:
             self.lib._memotable[memokey] = ''
             return ''
 
-        # Find the first disambiguator that distinguishes the albums.
+        # Find the first disambiguator that distinguishes the items.
         for disambiguator in disam:
-            # Get the value for each album for the current field.
-            disam_values = {a.get(disambiguator, '') for a in albums}
+            # Get the value for each item for the current field.
+            disam_values = {s.get(disambiguator, '') for s in ambigous_items}
 
             # If the set of unique values is equal to the number of
-            # albums in the disambiguation set, we're done -- this is
+            # items in the disambiguation set, we're done -- this is
             # sufficient disambiguation.
-            if len(disam_values) == len(albums):
+            if len(disam_values) == len(ambigous_items):
                 break
-
         else:
             # No disambiguator distinguished all fields.
-            res = f' {bracket_l}{album.id}{bracket_r}'
+            res = f' {bracket_l}{item_id}{bracket_r}'
             self.lib._memotable[memokey] = res
             return res
 
         # Flatten disambiguation value into a string.
-        disam_value = album.formatted(for_path=True).get(disambiguator)
+        disam_value = db_item.formatted(for_path=True).get(disambiguator)
 
         # Return empty string if disambiguator is empty.
         if disam_value:

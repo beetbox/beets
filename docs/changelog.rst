@@ -4,10 +4,22 @@ Changelog
 1.6.1 (in development)
 ----------------------
 
-Changelog goes here!
+Changelog goes here! Please add your entry to the bottom of one of the lists below!
+
+With this release, beets now requires Python 3.7 or later (it removes support
+for Python 3.6).
 
 New features:
 
+* Added additional error handling for `spotify` plugin.
+  :bug:`4686`
+* We now import the remixer field from Musicbrainz into the library.
+  :bug:`4428`
+* :doc:`/plugins/mbsubmit`: Added a new `mbsubmit` command to print track information to be submitted to MusicBrainz after initial import.
+  :bug:`4455`
+* Added `spotify_updated` field to track when the information was last updated.
+* We now import and tag the `album` information when importing singletons using Spotify source.
+  :bug:`4398`
 * :doc:`/plugins/spotify`: The plugin now provides an additional command
   `spotifysync` that allows getting track popularity and audio features
   information from Spotify.
@@ -23,7 +35,15 @@ New features:
   :bug:`4101`
 * Add the item fields ``bitrate_mode``, ``encoder_info`` and ``encoder_settings``.
 * Add query prefixes ``=`` and ``~``.
-* :doc:`/plugins/discogs`: Permit appending style to genre
+* A new configuration option, :ref:`duplicate_keys`, lets you change which
+  fields the beets importer uses to identify duplicates.
+  :bug:`1133` :bug:`4199`
+* Add :ref:`exact match <exact-match>` queries, using the prefixes ``=`` and
+  ``=~``.
+  :bug:`4251`
+* :doc:`/plugins/discogs`: Permit appending style to genre.
+* :doc:`plugins/discogs`: Implement item_candidates for matching singletons.
+* :doc:`plugins/discogs`: Check for compliant discogs_client module.
 * :doc:`/plugins/convert`: Add a new `auto_keep` option that automatically
   converts files but keeps the *originals* in the library.
   :bug:`1840` :bug:`4302`
@@ -34,9 +54,41 @@ New features:
   :bug:`4379` :bug:`4387`
 * Preserve mtimes from archives
   :bug:`4392`
+* Add :ref:`%sunique{} <sunique>` template to disambiguate between singletons.
+  :bug:`4438`
+* Add a new ``import.ignored_alias_types`` config option to allow for
+  specific alias types to be skipped over when importing items/albums.
+* :doc:`/plugins/smartplaylist`: A new ``--pretend`` option lets the user see
+  what a new or changed smart playlist saved in the config is actually
+  returning.
+  :bug:`4573`
+* :doc:`/plugins/fromfilename`:  Add debug log messages that inform when the
+  plugin replaced bad (missing) artist, title or tracknumber metadata.
+  :bug:`4561` :bug:`4600`
+* :ref:`musicbrainz-config`: MusicBrainz release pages often link to related
+  metadata sources like Discogs, Bandcamp, Spotify, Deezer and Beatport. When
+  enabled via the :ref:`musicbrainz.external_ids` options, release ID's will be
+  extracted from those URL's and imported to the library.
+  :bug:`4220`
 
 Bug fixes:
 
+* :doc:`/plugins/fetchart`: Fix fetching from Cover Art Archive when the
+  `maxwidth` option is set to one of the supported Cover Art Archive widths.
+* :doc:`/plugins/discogs`: Fix "Discogs plugin replacing Feat. or Ft. with
+  a comma" by fixing an oversight that removed a functionality from the code
+  base when the MetadataSourcePlugin abstract class was introduced in PR's
+  #3335 and #3371.
+  :bug:`4401`
+* :doc:`/plugins/convert`: Set default ``max_bitrate`` value to ``None`` to
+  avoid transcoding when this parameter is not set. :bug:`4472`
+* :doc:`/plugins/replaygain`: Avoid a crash when errors occur in the analysis
+  backend.
+  :bug:`4506`
+* We now use Python's defaults for command-line argument encoding, which
+  should reduce the chance for errors and "file not found" failures when
+  invoking other command-line tools, especially on Windows.
+  :bug:`4507`
 * We now respect the Spotify API's rate limiting, which avoids crashing when the API reports code 429 (too many requests).
   :bug:`4370`
 * Fix implicit paths OR queries (e.g. ``beet list /path/ , /other-path/``)
@@ -90,18 +142,50 @@ Bug fixes:
 * :doc:`plugins/importadded`: Fix a bug with recently added reflink import option
   that casues a crash when ImportAdded plugin enabled.
   :bug:`4389`
+* :doc:`plugins/convert`: Fix a bug with the `wma` format alias.
+* :doc:`/plugins/web`: Fix get file from item.
+* :doc:`/plugins/lastgenre`: Fix a duplicated entry for trip hop in the
+  default genre list.
+  :bug:`4510`
+* :doc:`plugins/lyrics`: Fixed issue with Tekstowo backend not actually checking
+  if the found song matches.
+  :bug:`4406`
+* :doc:`/plugins/fromfilename`: Fix failed detection of <track> <title>
+  filename patterns.
+  :bug:`4561` :bug:`4600`
+* Fix issue where deletion of flexible fields on an album doesn't cascade to items
+  :bug:`4662`
+* Fix issue where ``beet write`` continuosly retags the ``albumtypes`` metadata
+  field in files. Additionally broken data could have been added to the library
+  when the tag was read from file back into the library using ``beet update``.
+  It is required for all users to **check if such broken data is present in the
+  library**. Following the instructions `described here
+  <https://github.com/beetbox/beets/pull/4582#issuecomment-1445023493>`_, a
+  sanity check and potential fix is easily possible. :bug:`4528`
 
 For packagers:
 
+* As noted above, the minimum Python version is now 3.7.
 * We fixed a version for the dependency on the `Confuse`_ library.
   :bug:`4167`
 * The minimum required version of :pypi:`mediafile` is now 0.9.0.
 
-Other new things:
+Other changes:
 
+* Add ``sphinx`` and ``sphinx_rtd_theme`` as dependencies for a new ``docs`` extra
+  :bug:`4643`
+* :doc:`/plugins/absubmit`: Deprecate the ``absubmit`` plugin since
+  AcousticBrainz has stopped accepting new submissions.
+  :bug:`4627`
+* :doc:`/plugins/acousticbrainz`: Deprecate the ``acousticbrainz`` plugin
+  since the AcousticBrainz project has shut down.
+  :bug:`4627`
 * :doc:`/plugins/limit`: Limit query results to head or tail (``lslimit``
   command only)
 * :doc:`/plugins/fish`: Add ``--output`` option.
+* :doc:`/plugins/lyrics`: Remove Musixmatch from default enabled sources as
+  they are currently blocking requests from the beets user agent.
+  :bug:`4585`
 
 1.6.0 (November 27, 2021)
 -------------------------
@@ -128,6 +212,11 @@ Major new features:
 * An accompanying new :doc:`/plugins/albumtypes` includes some options for
   formatting this new ``albumtypes`` field.
   Thanks to :user:`edgars-supe`.
+* The :ref:`modify-cmd` and :ref:`import-cmd` can now use
+  :doc:`/reference/pathformat` formats when setting fields.
+  For example, you can now do ``beet modify title='$track $title'`` to put
+  track numbers into songs' titles.
+  :bug:`488`
 
 Other new things:
 

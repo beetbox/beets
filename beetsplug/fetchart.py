@@ -362,11 +362,12 @@ class CoverArtArchive(RemoteArtSource):
     GROUP_URL = 'https://coverartarchive.org/release-group/{mbid}'
 
     def get(self, album, plugin, paths):
-        """Return the Cover Art Archive and Cover Art Archive release group URLs
-        using album MusicBrainz release ID and release group ID.
+        """Return the Cover Art Archive and Cover Art Archive release
+        group URLs using album MusicBrainz release ID and release group
+        ID.
         """
 
-        def get_image_urls(url, size_suffix=None):
+        def get_image_urls(url, preferred_width=None):
             try:
                 response = self.request(url)
             except requests.RequestException:
@@ -386,8 +387,8 @@ class CoverArtArchive(RemoteArtSource):
                     if 'Front' not in item['types']:
                         continue
 
-                    if size_suffix:
-                        yield item['thumbnails'][size_suffix]
+                    if preferred_width:
+                        yield item['thumbnails'][preferred_width]
                     else:
                         yield item['image']
                 except KeyError:
@@ -400,12 +401,12 @@ class CoverArtArchive(RemoteArtSource):
         # If the maxwidth config matches one of the already available sizes
         # fetch it directly intead of fetching the full sized image and
         # resizing it.
-        size_suffix = None
+        preferred_width = None
         if plugin.maxwidth in self.VALID_THUMBNAIL_SIZES:
-            size_suffix = "-" + str(plugin.maxwidth)
+            preferred_width = str(plugin.maxwidth)
 
         if 'release' in self.match_by and album.mb_albumid:
-            for url in get_image_urls(release_url, size_suffix):
+            for url in get_image_urls(release_url, preferred_width):
                 yield self._candidate(url=url, match=Candidate.MATCH_EXACT)
 
         if 'releasegroup' in self.match_by and album.mb_releasegroupid:
