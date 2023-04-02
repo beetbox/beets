@@ -57,19 +57,16 @@ Refer to the ``link`` and ``hardlink`` options below.
 
 The ``-m`` (or ``--playlist``) option enables the plugin to create an m3u8
 playlist file in the destination folder given by the ``-d`` (``--dest``) option
-or the ``dest`` configuration. Either a simple filename or a relative path plus
-a filename can be passed. The generated playlist will always use relative paths
-to the contained media files to ensure compatibility when read from external
-drives or on computers other than the one used for the conversion. Also refer
-to the ``playlist`` option below.
+or the ``dest`` configuration. The path to the playlist file can either be
+absolute or relative to the ``dest`` directory. The contents will always be
+relative paths to media files, which tries to ensure compatibility when read
+from external drives or on computers other than the one used for the
+conversion. There is one caveat though: A list generated on Unix/macOS can't be
+read on Windows and vice versa.
 
-Note that the classic m3u format doesn't support special characters in media
-file paths, thus the m3u8 format which requires media file paths to be unicode,
-is used. Typically a playlist file would be named `*.m3u8`. The name of the file
-can be freely chosen by the user though. Since it is always ensured that paths
-to media files are written as defined by the ``path`` configuration, a
-generated playlist potentially could contain unicode characters no matter what
-file ending was chosen.
+Depending on the beets user's settings a generated playlist potentially could
+contain unicode characters. This is supported, playlists are written in [m3u8
+format](https://en.wikipedia.org/wiki/M3U#M3U8).
 
 Configuration
 -------------
