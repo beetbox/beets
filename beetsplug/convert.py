@@ -476,16 +476,13 @@ class ConvertPlugin(BeetsPlugin):
                                link, hardlink, threads, items)
 
         if playlist:
-            # When playlist arg is passed create an m3u8 file in dest folder.
-            #
-            # The classic m3u format doesn't support special characters in
-            # media file paths, thus we use the m3u8 format which requires
-            # media file paths to be unicode. Additionally we use relative
-            # paths to ensure readability of the playlist on remote
-            # computers.
+            # Playlist paths are understood as relative to the dest directory.
             pl_normpath = util.normpath(playlist)
             pl_dir = os.path.dirname(pl_normpath)
             self._log.info("Creating playlist file {0}", pl_normpath)
+            # Generates a list of paths to media files, ensures the paths are
+            # relative to the playlist's location and translates the unicode
+            # strings we get from item.destination to bytes.
             items_paths = [
                 os.path.relpath(util.bytestring_path(item.destination(
                     basedir=dest, path_formats=path_formats, fragment=False
