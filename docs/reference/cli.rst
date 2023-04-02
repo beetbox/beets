@@ -172,7 +172,7 @@ Optional command flags:
 
     Just point the ``beet import`` command at a directory of files that are
     already catalogged in your library. Beets will automatically detect this
-    situation and avoid duplicating any items. A UTF-8 encoding will be enforced on your imported file. In this situation, the "copy
+    situation and avoid duplicating any items. In this situation, the "copy
     files" option (``-c``/``-C`` on the command line or ``copy`` in the
     config file) has slightly different behavior: it causes files to be *moved*,
     rather than duplicated, if they're already in your library. (The same is

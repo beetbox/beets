@@ -11,7 +11,7 @@ for Python 3.6).
 
 New features:
 
-* Added UTF-8 encoding enforcement to imported files in `beets/beets/ui/commands.py`.
+* --from-logfile now parses log files using a UTF-8 encoding in `beets/beets/ui/commands.py`.
   :bug:`4693` 
 * Added additional error handling for `spotify` plugin.
   :bug:`4686`
