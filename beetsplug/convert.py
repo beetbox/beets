@@ -483,12 +483,13 @@ class ConvertPlugin(BeetsPlugin):
             # media file paths to be unicode. Additionally we use relative
             # paths to ensure readability of the playlist on remote
             # computers.
-            self._log.info("Creating playlist file: {0}",
-                           util.normpath(playlist))
+            pl_normpath = util.normpath(playlist)
+            pl_dir = os.path.dirname(pl_normpath)
+            self._log.info("Creating playlist file {0}", pl_normpath)
             items_paths = [
-                util.bytestring_path(item.destination(
-                    basedir=dest, path_formats=path_formats, fragment=True
-                )) for item in items
+                os.path.relpath(util.bytestring_path(item.destination(
+                    basedir=dest, path_formats=path_formats, fragment=False
+                )), pl_dir) for item in items
             ]
             if not pretend:
                 m3ufile = M3UFile(playlist)
