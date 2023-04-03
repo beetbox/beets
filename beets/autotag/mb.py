@@ -133,7 +133,7 @@ def _preferred_alias(aliases: List):
         matches = []
         for a in aliases:
             if a['locale'] == locale and 'primary' in a and \
-               a.get('type', '').lower() not in ignored_alias_types:
+                    a.get('type', '').lower() not in ignored_alias_types:
                 matches.append(a)
 
         # Skip to the next locale if we have no matches
@@ -583,10 +583,10 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
 
 
 def match_album(
-    artist: str,
-    album: str,
-    tracks: Optional[int] = None,
-    extra_tags: Optional[Dict[str, Any]] = None,
+        artist: str,
+        album: str,
+        tracks: Optional[int] = None,
+        extra_tags: Optional[Dict[str, Any]] = None,
 ) -> Iterator[beets.autotag.hooks.AlbumInfo]:
     """Searches for a single album ("release" in MusicBrainz parlance)
     and returns an iterator over AlbumInfo objects. May raise a
@@ -670,20 +670,22 @@ def _parse_id(s: str) -> Optional[str]:
     return None
 
 
-# this was defined within the function below but pep8 made me move it here
-_trans_key = 'transl-tracklisting'
-_is_trans = lambda r: r['type'] == _trans_key and r['direction'] == "backward"
+def _is_translation(r):
+    _trans_key = 'transl-tracklisting'
+    return r['type'] == _trans_key and r['direction'] == "backward"
 
 
-def _find_actual_release_from_pseudo_release(pseudo_rel: Dict)\
-      -> Optional[Dict]:
+def _find_actual_release_from_pseudo_release(pseudo_rel: Dict) \
+        -> Optional[Dict]:
     relations = pseudo_rel['release']["release-relation-list"]
 
     # currently we only support trans(liter)ation's
-    actual_id = next(filter(_is_trans, relations), {'target': None})['target']
+    translations = [r for r in relations if _is_translation(r)]
 
-    if actual_id is None:
+    if not translations:
         return None
+
+    actual_id = translations[0]['target']
 
     return musicbrainzngs.get_release_by_id(actual_id,
                                             RELEASE_INCLUDES)
@@ -692,7 +694,7 @@ def _find_actual_release_from_pseudo_release(pseudo_rel: Dict)\
 def _merge_pseudo_and_actual_album(
         pseudo: beets.autotag.hooks.AlbumInfo,
         actual: beets.autotag.hooks.AlbumInfo
-        ) -> Optional[beets.autotag.hooks.AlbumInfo]:
+) -> Optional[beets.autotag.hooks.AlbumInfo]:
     """
     Merges a pseudo release with its actual release.
 
@@ -706,22 +708,23 @@ def _merge_pseudo_and_actual_album(
     hence why we did not implement that for now.
     """
     merged = pseudo.copy()
-    merged.update({
-        "media": actual.media,
-        "mediums": actual.mediums,
-        "country": actual.country,
-        "catalognum": actual.catalognum,
-        "year": actual.year,
-        "month": actual.month,
-        "day": actual.day,
-        "original_year": actual.original_year,
-        "original_month": actual.original_month,
-        "original_day": actual.original_day,
-        "label": actual.label,
-        "asin": actual.asin,
-        "style": actual.style,
-        "genre": actual.genre,
-    })
+    from_actual = {k: actual[k] for k in [
+        "media",
+        "mediums",
+        "country",
+        "catalognum",
+        "year",
+        "month",
+        "day",
+        "original_year",
+        "original_month",
+        "original_day",
+        "label",
+        "asin",
+        "style",
+        "genre"
+    ]}
+    merged.update(from_actual)
     return merged
 
 
@@ -752,8 +755,10 @@ def album_for_id(releaseid: str) -> Optional[beets.autotag.hooks.AlbumInfo]:
         raise MusicBrainzAPIError(exc, 'get release by ID', albumid,
                                   traceback.format_exc())
 
+    # release is potentially a pseudo release
     release = album_info(res['release'])
 
+    # should be None unless we're dealing with a pseudo release
     if actual_res is not None:
         actual_release = album_info(actual_res['release'])
         return _merge_pseudo_and_actual_album(release, actual_release)
