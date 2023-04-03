@@ -70,6 +70,9 @@ New features:
   enabled via the :ref:`musicbrainz.external_ids` options, release ID's will be
   extracted from those URL's and imported to the library.
   :bug:`4220`
+* :doc:`/plugins/convert`: Add support for generating m3u8 playlists together
+  with converted media files.
+  :bug:`4373`
 
 Bug fixes:
 
