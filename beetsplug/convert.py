@@ -31,6 +31,7 @@ from beets import art
 from beets.util.artresizer import ArtResizer
 from beets.library import parse_query_string
 from beets.library import Item
+from beets.util.m3u import M3UFile
 
 _fs_lock = threading.Lock()
 _temp_files = []  # Keep track of temporary transcoded files for deletion.
@@ -149,6 +150,7 @@ class ConvertPlugin(BeetsPlugin):
             'copy_album_art': False,
             'album_art_maxwidth': 0,
             'delete_originals': False,
+            'playlist': None,
         })
         self.early_import_stages = [self.auto_convert, self.auto_convert_keep]
 
@@ -177,6 +179,15 @@ class ConvertPlugin(BeetsPlugin):
                               dest='hardlink',
                               help='hardlink files that do not \
                               need transcoding. Overrides --link.')
+        cmd.parser.add_option('-m', '--playlist', action='store',
+                              help='''create an m3u8 playlist file containing
+                              the converted files. The playlist file will be
+                              saved below the destination directory, thus
+                              PLAYLIST could be a file name or a relative path.
+                              To ensure a working playlist when transferred to
+                              a different computer, or opened from an external
+                              drive, relative paths pointing to media files
+                              will be used.''')
         cmd.parser.add_album_option()
         cmd.func = self.convert_func
         return [cmd]
@@ -436,7 +447,7 @@ class ConvertPlugin(BeetsPlugin):
 
     def convert_func(self, lib, opts, args):
         (dest, threads, path_formats, fmt,
-         pretend, hardlink, link) = self._get_opts_and_config(opts)
+         pretend, hardlink, link, playlist) = self._get_opts_and_config(opts)
 
         if opts.album:
             albums = lib.albums(ui.decargs(args))
@@ -461,8 +472,26 @@ class ConvertPlugin(BeetsPlugin):
                 self.copy_album_art(album, dest, path_formats, pretend,
                                     link, hardlink)
 
-        self._parallel_convert(dest, opts.keep_new, path_formats, fmt,
-                               pretend, link, hardlink, threads, items)
+        self._parallel_convert(dest, opts.keep_new, path_formats, fmt, pretend,
+                               link, hardlink, threads, items)
+
+        if playlist:
+            # Playlist paths are understood as relative to the dest directory.
+            pl_normpath = util.normpath(playlist)
+            pl_dir = os.path.dirname(pl_normpath)
+            self._log.info("Creating playlist file {0}", pl_normpath)
+            # Generates a list of paths to media files, ensures the paths are
+            # relative to the playlist's location and translates the unicode
+            # strings we get from item.destination to bytes.
+            items_paths = [
+                os.path.relpath(util.bytestring_path(item.destination(
+                    basedir=dest, path_formats=path_formats, fragment=False
+                )), pl_dir) for item in items
+            ]
+            if not pretend:
+                m3ufile = M3UFile(playlist)
+                m3ufile.set_contents(items_paths)
+                m3ufile.write()
 
     def convert_on_import(self, lib, item):
         """Transcode a file automatically after it is imported into the
@@ -544,6 +573,10 @@ class ConvertPlugin(BeetsPlugin):
 
         fmt = opts.format or self.config['format'].as_str().lower()
 
+        playlist = opts.playlist or self.config['playlist'].get()
+        if playlist is not None:
+            playlist = os.path.join(dest, util.bytestring_path(playlist))
+
         if opts.pretend is not None:
             pretend = opts.pretend
         else:
@@ -559,7 +592,8 @@ class ConvertPlugin(BeetsPlugin):
             hardlink = self.config['hardlink'].get(bool)
             link = self.config['link'].get(bool)
 
-        return dest, threads, path_formats, fmt, pretend, hardlink, link
+        return (dest, threads, path_formats, fmt, pretend, hardlink, link,
+                playlist)
 
     def _parallel_convert(self, dest, keep_new, path_formats, fmt,
                           pretend, link, hardlink, threads, items):

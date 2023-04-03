@@ -4,7 +4,8 @@ Convert Plugin
 The ``convert`` plugin lets you convert parts of your collection to a
 directory of your choice, transcoding audio and embedding album art along the
 way. It can transcode to and from any format using a configurable command
-line.
+line. Optionally an m3u playlist file containing all the converted files can be
+saved to the destination path.
 
 
 Installation
@@ -54,6 +55,18 @@ instead, passing ``-H`` (``--hardlink``) creates hard links.
 Note that album art embedding is disabled for files that are linked.
 Refer to the ``link`` and ``hardlink`` options below.
 
+The ``-m`` (or ``--playlist``) option enables the plugin to create an m3u8
+playlist file in the destination folder given by the ``-d`` (``--dest``) option
+or the ``dest`` configuration. The path to the playlist file can either be
+absolute or relative to the ``dest`` directory. The contents will always be
+relative paths to media files, which tries to ensure compatibility when read
+from external drives or on computers other than the one used for the
+conversion. There is one caveat though: A list generated on Unix/macOS can't be
+read on Windows and vice versa.
+
+Depending on the beets user's settings a generated playlist potentially could
+contain unicode characters. This is supported, playlists are written in [m3u8
+format](https://en.wikipedia.org/wiki/M3U#M3U8).
 
 Configuration
 -------------
@@ -124,6 +137,12 @@ file. The available options are:
   Default: ``false``.
 - **delete_originals**: Transcoded files will be copied or moved to their destination, depending on the import configuration. By default, the original files are not modified by the plugin. This option deletes the original files after the transcoding step has completed.
   Default: ``false``.
+- **playlist**: The name of a playlist file that should be written on each run
+  of the plugin. A relative file path (e.g `playlists/mylist.m3u8`) is allowed
+  as well. The final destination of the playlist file will always be relative
+  to the destination path (``dest``, ``--dest``, ``-d``). This configuration is
+  overridden by the ``-m`` (``--playlist``) command line option.
+  Default: none.
 
 You can also configure the format to use for transcoding (see the next
 section):
