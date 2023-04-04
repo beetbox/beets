@@ -74,6 +74,8 @@ class AlbumInfo(AttrDict):
             album_id: Optional[str] = None,
             artist: Optional[str] = None,
             artist_id: Optional[str] = None,
+            artists: Optional[str] = None,
+            artists_ids: Optional[str] = None,
             asin: Optional[str] = None,
             albumtype: Optional[str] = None,
             va: bool = False,
@@ -109,6 +111,8 @@ class AlbumInfo(AttrDict):
         self.album_id = album_id
         self.artist = artist
         self.artist_id = artist_id
+        self.artists = artists
+        self.artists_ids = artists_ids
         self.tracks = tracks
         self.asin = asin
         self.albumtype = albumtype
@@ -188,6 +192,8 @@ class TrackInfo(AttrDict):
             release_track_id: Optional[str] = None,
             artist: Optional[str] = None,
             artist_id: Optional[str] = None,
+            artists: Optional[str] = None,
+            artists_ids: Optional[str] = None,
             length: Optional[float] = None,
             index: Optional[int] = None,
             medium: Optional[int] = None,
@@ -217,6 +223,8 @@ class TrackInfo(AttrDict):
         self.release_track_id = release_track_id
         self.artist = artist
         self.artist_id = artist_id
+        self.artists = artists
+        self.artists_ids = artists_ids
         self.length = length
         self.index = index
         self.media = media

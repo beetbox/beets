@@ -25,7 +25,7 @@ from unittest import mock
 
 class MBAlbumInfoTest(_common.TestCase):
     def _make_release(self, date_str='2009', tracks=None, track_length=None,
-                      track_artist=False, data_tracks=None,
+                      track_artist=False, multi_artist=False, data_tracks=None,
                       medium_format='FORMAT'):
         release = {
             'title': 'ALBUM TITLE',
@@ -61,6 +61,17 @@ class MBAlbumInfoTest(_common.TestCase):
             'country': 'COUNTRY',
             'status': 'STATUS',
         }
+
+        if multi_artist:
+            release['artist-credit'].append({
+                'artist': {
+                    'name': 'ARTIST MULTI NAME',
+                    'id': 'ARTIST MULTI ID',
+                    'sort-name': 'ARTIST MULTI SORT NAME',
+                },
+                'name': 'ARTIST MULTI CREDIT',
+            })
+
         i = 0
         track_list = []
         if tracks:
@@ -88,6 +99,19 @@ class MBAlbumInfoTest(_common.TestCase):
                             'name': 'TRACK ARTIST CREDIT',
                         }
                     ]
+
+                    if multi_artist:
+                        track['artist-credit'].append(
+                            {
+                                'artist': {
+                                    'name': 'TRACK ARTIST MULTI NAME',
+                                    'id': 'TRACK ARTIST MULTI ID',
+                                    'sort-name': 'TRACK ARTIST MULTI SORT NAME',
+                                },
+                                'name': 'TRACK ARTIST MULTI CREDIT',
+                            }
+                        )
+
                 track_list.append(track)
         data_track_list = []
         if data_tracks:
