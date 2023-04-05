@@ -32,6 +32,7 @@ from urllib.parse import urljoin
 from beets.util.id_extractors import extract_discogs_id_regex, \
     spotify_id_regex, deezer_id_regex, beatport_id_regex
 from beets.plugins import MetadataSourcePlugin
+from beets.util.separators import multi_to_str
 
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
 
@@ -165,9 +166,9 @@ def _preferred_release_event(release: Dict[str, Any]) -> Tuple[str, str]:
     )
 
 
-def _flatten_artist_credit(credit: List[Dict]) -> Tuple[str, str, str]:
-    """Given a list representing an ``artist-credit`` block, flatten the
-    data into a triple of joined artist name strings: canonical, sort, and
+def _multi_artist_credit(credit: List[Dict], include_join_phrase: bool) -> Tuple[List[str], List[str], List[str]]:
+    """Given a list representing an ``artist-credit`` block, accumulate
+    data into a triple of joined artist name lists: canonical, sort, and
     credit.
     """
     artist_parts = []
@@ -176,9 +177,10 @@ def _flatten_artist_credit(credit: List[Dict]) -> Tuple[str, str, str]:
     for el in credit:
         if isinstance(el, str):
             # Join phrase.
-            artist_parts.append(el)
-            artist_credit_parts.append(el)
-            artist_sort_parts.append(el)
+            if include_join_phrase:
+                artist_parts.append(el)
+                artist_credit_parts.append(el)
+                artist_sort_parts.append(el)
 
         else:
             alias = _preferred_alias(el['artist'].get('alias-list', ()))
@@ -205,10 +207,31 @@ def _flatten_artist_credit(credit: List[Dict]) -> Tuple[str, str, str]:
                 artist_credit_parts.append(cur_artist_name)
 
     return (
+        artist_parts,
+        artist_sort_parts,
+        artist_credit_parts,
+    )
+
+def _flatten_artist_credit(credit: List[Dict]) -> Tuple[str, str, str]:
+    """Given a list representing an ``artist-credit`` block, flatten the
+    data into a triple of joined artist name strings: canonical, sort, and
+    credit.
+    """
+    artist_parts, artist_sort_parts, artist_credit_parts = _multi_artist_credit(credit, include_join_phrase=True)
+    return (
         ''.join(artist_parts),
         ''.join(artist_sort_parts),
         ''.join(artist_credit_parts),
     )
+
+def _artist_ids(credit: List[Dict]) -> List[str]:
+    """Given a list representing an ``artist-credit``, return a list of artist IDs"""
+    artist_ids: List[str] = []
+    for el in credit:
+        if isinstance(el, dict):
+            artist_ids.append(el['artist']['id'])
+
+    return artist_ids
 
 
 def _get_related_artist_names(relations, relation_type):
@@ -349,6 +372,9 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
     artist_name, artist_sort_name, artist_credit_name = \
         _flatten_artist_credit(release['artist-credit'])
 
+    artists_names, artists_sort_names, artists_credit_names = \
+        _multi_artist_credit(release['artist-credit'], include_join_phrase=False)
+
     ntracks = sum(len(m['track-list']) for m in release['medium-list'])
 
     # The MusicBrainz API omits 'artist-relation-list' and 'work-relation-list'
@@ -426,15 +452,20 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
 
             track_infos.append(ti)
 
+    album_artist_ids = _artist_ids(release['artist-credit'])
     info = beets.autotag.hooks.AlbumInfo(
         album=release['title'],
         album_id=release['id'],
         artist=artist_name,
-        artist_id=release['artist-credit'][0]['artist']['id'],
+        artist_id=album_artist_ids[0],
+        artists=multi_to_str(artists_names),
+        artists_ids=multi_to_str(album_artist_ids),
         tracks=track_infos,
         mediums=len(release['medium-list']),
         artist_sort=artist_sort_name,
+        artists_sort=multi_to_str(artists_sort_names),
         artist_credit=artist_credit_name,
+        artists_credits=multi_to_str(artists_credit_names),
         data_source='MusicBrainz',
         data_url=album_url(release['id']),
     )
@@ -671,6 +702,7 @@ def album_for_id(releaseid: str) -> Optional[beets.autotag.hooks.AlbumInfo]:
         log.debug('Invalid MBID ({0}).', releaseid)
         return None
     try:
+        albumid = "b5d8ea9b-cc7b-45bd-bd57-c004a21e4d1e"  # TODO: DELETE!!!
         res = musicbrainzngs.get_release_by_id(albumid,
                                                RELEASE_INCLUDES)
     except musicbrainzngs.ResponseError:

@@ -1957,8 +1957,8 @@ def mocked_get_recording_by_id(id_, includes=[], release_status=[],
 
 @patch('musicbrainzngs.get_recording_by_id',
        Mock(side_effect=mocked_get_recording_by_id))
-@patch('musicbrainzngs.get_release_by_id',
-       Mock(side_effect=mocked_get_release_by_id))
+# @patch('musicbrainzngs.get_release_by_id',
+#        Mock(side_effect=mocked_get_release_by_id))
 class ImportMusicBrainzIdTest(_common.TestCase, ImportHelper):
     """Test the --musicbrainzid argument."""
 

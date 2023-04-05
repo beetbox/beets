@@ -85,6 +85,7 @@ class AlbumInfo(AttrDict):
             label: Optional[str] = None,
             mediums: Optional[int] = None,
             artist_sort: Optional[str] = None,
+            artists_sort: Optional[str] = None,
             releasegroup_id: Optional[str] = None,
             catalognum: Optional[str] = None,
             script: Optional[str] = None,
@@ -97,6 +98,7 @@ class AlbumInfo(AttrDict):
             albumdisambig: Optional[str] = None,
             releasegroupdisambig: Optional[str] = None,
             artist_credit: Optional[str] = None,
+            artists_credits: Optional[str] = None,
             original_year: Optional[int] = None,
             original_month: Optional[int] = None,
             original_day: Optional[int] = None,
@@ -123,6 +125,7 @@ class AlbumInfo(AttrDict):
         self.label = label
         self.mediums = mediums
         self.artist_sort = artist_sort
+        self.artists_sort = artists_sort
         self.releasegroup_id = releasegroup_id
         self.catalognum = catalognum
         self.script = script
@@ -135,6 +138,7 @@ class AlbumInfo(AttrDict):
         self.albumdisambig = albumdisambig
         self.releasegroupdisambig = releasegroupdisambig
         self.artist_credit = artist_credit
+        self.artists_credits = artists_credits
         self.original_year = original_year
         self.original_month = original_month
         self.original_day = original_day

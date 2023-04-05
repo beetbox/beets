@@ -114,8 +114,6 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
             item.artist = (track_info.artist or album_info.artist)
             item.albumartist = album_info.artist
 
-        item.albumartists = track_info
-
         # Album.
         item.album = album_info.album
 
