@@ -467,6 +467,7 @@ class Item(LibModel):
         'title': types.STRING,
         'artist': types.STRING,
         'artists': types.MULTI_VALUE_DSV,
+        'artists_ids': types.MULTI_VALUE_DSV,
         'artist_sort': types.STRING,
         'artists_sort': types.MULTI_VALUE_DSV,
         'artist_credit': types.STRING,

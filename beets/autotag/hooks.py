@@ -74,10 +74,11 @@ class AlbumInfo(AttrDict):
             album_id: Optional[str] = None,
             artist: Optional[str] = None,
             artist_id: Optional[str] = None,
-            artists: Optional[str] = None,
-            artists_ids: Optional[str] = None,
+            artists: Optional[List[str]] = None,
+            artists_ids: Optional[List[str]] = None,
             asin: Optional[str] = None,
             albumtype: Optional[str] = None,
+            albumtypes: Optional[List[str]] = None,
             va: bool = False,
             year: Optional[int] = None,
             month: Optional[int] = None,
@@ -85,7 +86,7 @@ class AlbumInfo(AttrDict):
             label: Optional[str] = None,
             mediums: Optional[int] = None,
             artist_sort: Optional[str] = None,
-            artists_sort: Optional[str] = None,
+            artists_sort: Optional[List[str]] = None,
             releasegroup_id: Optional[str] = None,
             catalognum: Optional[str] = None,
             script: Optional[str] = None,
@@ -98,7 +99,7 @@ class AlbumInfo(AttrDict):
             albumdisambig: Optional[str] = None,
             releasegroupdisambig: Optional[str] = None,
             artist_credit: Optional[str] = None,
-            artists_credits: Optional[str] = None,
+            artists_credits: Optional[List[str]] = None,
             original_year: Optional[int] = None,
             original_month: Optional[int] = None,
             original_day: Optional[int] = None,
@@ -113,11 +114,12 @@ class AlbumInfo(AttrDict):
         self.album_id = album_id
         self.artist = artist
         self.artist_id = artist_id
-        self.artists = artists
-        self.artists_ids = artists_ids
+        self.artists = artists or []
+        self.artists_ids = artists_ids or []
         self.tracks = tracks
         self.asin = asin
         self.albumtype = albumtype
+        self.albumtypes = albumtypes or []
         self.va = va
         self.year = year
         self.month = month
@@ -138,7 +140,7 @@ class AlbumInfo(AttrDict):
         self.albumdisambig = albumdisambig
         self.releasegroupdisambig = releasegroupdisambig
         self.artist_credit = artist_credit
-        self.artists_credits = artists_credits
+        self.artists_credits = artists_credits or []
         self.original_year = original_year
         self.original_month = original_month
         self.original_day = original_day

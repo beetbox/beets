@@ -30,7 +30,6 @@ from beets import config
 from collections import Counter
 from urllib.parse import urljoin
 
-from beets.dbcore.types import MULTI_VALUE_DSV
 from beets.util.id_extractors import extract_discogs_id_regex, \
     spotify_id_regex, deezer_id_regex, beatport_id_regex
 from beets.plugins import MetadataSourcePlugin
@@ -278,16 +277,11 @@ def track_info(
         info.artist, info.artist_sort, info.artist_credit = \
             _flatten_artist_credit(recording['artist-credit'])
 
-        artists_list, artists_sort_list, artists_credits_list = \
+        info.artists, info.artists_sort, info.artists_credits = \
             _multi_artist_credit(recording['artist-credit'], include_join_phrase=False)
-        artists_ids_list = _artist_ids(recording['artist-credit'])
 
-        info.artist_id = artists_ids_list[0]
-        info.artists_ids = MULTI_VALUE_DSV.format(artists_ids_list)
-
-        info.artists = MULTI_VALUE_DSV.format(artists_list)
-        info.artists_sort = MULTI_VALUE_DSV.format(artists_sort_list)
-        info.artists_credits = MULTI_VALUE_DSV.format(artists_credits_list)
+        info.artists_ids = _artist_ids(recording['artist-credit'])
+        info.artist_id = info.artists_ids[0]
 
     if recording.get('artist-relation-list'):
         info.remixer = _get_related_artist_names(
@@ -455,16 +449,11 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
                 ti.artist, ti.artist_sort, ti.artist_credit = \
                     _flatten_artist_credit(track['artist-credit'])
 
-                ti_artists_list, ti_artists_sort_list, ti_artists_credits_list = \
+                ti.artists, ti.artists_sort, ti.artists_credits = \
                     _multi_artist_credit(track['artist-credit'], include_join_phrase=False)
-                ti_artists_ids_list = _artist_ids(track['artist-credit'])
 
-                ti.artists = MULTI_VALUE_DSV.format(ti_artists_list)
-                ti.artists_sort = MULTI_VALUE_DSV.format(ti_artists_sort_list)
-                ti.artists_credits = MULTI_VALUE_DSV.format(ti_artists_credits_list)
-                ti.artists_ids = MULTI_VALUE_DSV.format(ti_artists_ids_list)
-
-                ti.artist_id = ti_artists_ids_list[0]
+                ti.artists_ids = _artist_ids(track['artist-credit'])
+                ti.artist_id = ti.artists_ids[0]
             if track.get('length'):
                 ti.length = int(track['length']) / (1000.0)
 
@@ -476,14 +465,14 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
         album_id=release['id'],
         artist=artist_name,
         artist_id=album_artist_ids[0],
-        artists=MULTI_VALUE_DSV.format(artists_names),
-        artists_ids=MULTI_VALUE_DSV.format(album_artist_ids),
+        artists=artists_names,
+        artists_ids=album_artist_ids,
         tracks=track_infos,
         mediums=len(release['medium-list']),
         artist_sort=artist_sort_name,
-        artists_sort=MULTI_VALUE_DSV.format(artists_sort_names),
+        artists_sort=artists_sort_names,
         artist_credit=artist_credit_name,
-        artists_credits=MULTI_VALUE_DSV.format(artists_credit_names),
+        artists_credits=artists_credit_names,
         data_source='MusicBrainz',
         data_url=album_url(release['id']),
     )

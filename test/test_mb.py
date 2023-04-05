@@ -393,10 +393,10 @@ class MBAlbumInfoTest(_common.TestCase):
         self.assertEqual(track.artist_sort, 'RECORDING ARTIST SORT NAME & RECORDING ARTIST 2 SORT NAME')
         self.assertEqual(track.artist_credit, 'RECORDING ARTIST CREDIT & RECORDING ARTIST 2 CREDIT')
 
-        self.assertEqual(track.artists, 'RECORDING ARTIST NAME\0RECORDING ARTIST 2 NAME')
-        self.assertEqual(track.artists_ids, 'RECORDING ARTIST ID\0RECORDING ARTIST 2 ID')
-        self.assertEqual(track.artists_sort, 'RECORDING ARTIST SORT NAME\0RECORDING ARTIST 2 SORT NAME')
-        self.assertEqual(track.artists_credits, 'RECORDING ARTIST CREDIT\0RECORDING ARTIST 2 CREDIT')
+        self.assertEqual(track.artists, ['RECORDING ARTIST NAME', 'RECORDING ARTIST 2 NAME'])
+        self.assertEqual(track.artists_ids, ['RECORDING ARTIST ID', 'RECORDING ARTIST 2 ID'])
+        self.assertEqual(track.artists_sort, ['RECORDING ARTIST SORT NAME', 'RECORDING ARTIST 2 SORT NAME'])
+        self.assertEqual(track.artists_credits, ['RECORDING ARTIST CREDIT', 'RECORDING ARTIST 2 CREDIT'])
 
     def test_track_artist_overrides_recording_artist(self):
         tracks = [self._make_track('a', 'b', 1, True)]
@@ -416,10 +416,10 @@ class MBAlbumInfoTest(_common.TestCase):
         self.assertEqual(track.artist_sort, 'TRACK ARTIST SORT NAME & TRACK ARTIST 2 SORT NAME')
         self.assertEqual(track.artist_credit, 'TRACK ARTIST CREDIT & TRACK ARTIST 2 CREDIT')
 
-        self.assertEqual(track.artists, 'TRACK ARTIST NAME\0TRACK ARTIST 2 NAME')
-        self.assertEqual(track.artists_ids, 'TRACK ARTIST ID\0TRACK ARTIST 2 ID')
-        self.assertEqual(track.artists_sort, 'TRACK ARTIST SORT NAME\0TRACK ARTIST 2 SORT NAME')
-        self.assertEqual(track.artists_credits, 'TRACK ARTIST CREDIT\0TRACK ARTIST 2 CREDIT')
+        self.assertEqual(track.artists, ['TRACK ARTIST NAME', 'TRACK ARTIST 2 NAME'])
+        self.assertEqual(track.artists_ids, ['TRACK ARTIST ID', 'TRACK ARTIST 2 ID'])
+        self.assertEqual(track.artists_sort, ['TRACK ARTIST SORT NAME', 'TRACK ARTIST 2 SORT NAME'])
+        self.assertEqual(track.artists_credits, ['TRACK ARTIST CREDIT', 'TRACK ARTIST 2 CREDIT'])
 
     def test_parse_recording_remixer(self):
         tracks = [self._make_track('a', 'b', 1, remixer=True)]
