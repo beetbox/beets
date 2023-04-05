@@ -94,18 +94,21 @@ class DummyDataTestCase(_common.TestCase, AssertsMixin):
         items = [_common.item() for _ in range(3)]
         items[0].title = 'foo bar'
         items[0].artist = 'one'
+        items[0].artists = ['one', 'eleven']
         items[0].album = 'baz'
         items[0].year = 2001
         items[0].comp = True
         items[0].genre = 'rock'
         items[1].title = 'baz qux'
         items[1].artist = 'two'
+        items[1].artists = ['two', 'twelve']
         items[1].album = 'baz'
         items[1].year = 2002
         items[1].comp = True
         items[1].genre = 'Rock'
         items[2].title = 'beets 4 eva'
         items[2].artist = 'three'
+        items[2].artists = ['three', 'one']
         items[2].album = 'foo'
         items[2].year = 2003
         items[2].comp = False
@@ -213,6 +216,16 @@ class GetTest(DummyDataTestCase):
         q = 'artist:thrEE'
         results = self.lib.items(q)
         self.assert_items_matched(results, ['beets 4 eva'])
+
+    def test_term_case_regex_with_multi_key_matches(self):
+        q = 'artists::eleven'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ['foo bar'])
+
+    def test_term_case_regex_with_multi_key_matches_multiple_columns(self):
+        q = 'artists::one'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ['foo bar', 'beets 4 eva'])
 
     def test_key_case_insensitive(self):
         q = 'ArTiST:three'

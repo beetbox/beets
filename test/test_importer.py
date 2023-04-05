@@ -907,7 +907,7 @@ class ImportCompilationTest(_common.TestCase, ImportHelper):
             self.assertEqual(item.albumartist, 'Album Artist')
             self.assertEqual(item.mb_albumartistid, 'Album Artist ID')
 
-    def test_asis_albumartists_tag_sets_albumartists(self):
+    def test_asis_albumartists_tag_sets_multi_albumartists(self):
         self.import_media[0].artist = 'Other Artist'
         self.import_media[0].artists = ['Other Artist', 'Other Artist 2']
         self.import_media[1].artist = 'Another Artist'
