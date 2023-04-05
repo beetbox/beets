@@ -446,7 +446,17 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
                 # Get the artist names.
                 ti.artist, ti.artist_sort, ti.artist_credit = \
                     _flatten_artist_credit(track['artist-credit'])
-                ti.artist_id = track['artist-credit'][0]['artist']['id']
+
+                ti_artists_list, ti_artists_sort_list, ti_artists_credits_list = \
+                    _multi_artist_credit(track['artist-credit'], include_join_phrase=False)
+                ti_artists_ids_list = _artist_ids(track['artist-credit'])
+
+                ti.artists = multi_to_str(ti_artists_list)
+                ti.artists_sort = multi_to_str(ti_artists_sort_list)
+                ti.artists_credits = multi_to_str(ti_artists_credits_list)
+                ti.artists_ids = multi_to_str(ti_artists_ids_list)
+
+                ti.artist_id = ti_artists_ids_list[0]
             if track.get('length'):
                 ti.length = int(track['length']) / (1000.0)
 
@@ -702,7 +712,7 @@ def album_for_id(releaseid: str) -> Optional[beets.autotag.hooks.AlbumInfo]:
         log.debug('Invalid MBID ({0}).', releaseid)
         return None
     try:
-        albumid = "b5d8ea9b-cc7b-45bd-bd57-c004a21e4d1e"  # TODO: DELETE!!!
+        # albumid = "b5d8ea9b-cc7b-45bd-bd57-c004a21e4d1e"  # TODO: DELETE!!!
         res = musicbrainzngs.get_release_by_id(albumid,
                                                RELEASE_INCLUDES)
     except musicbrainzngs.ResponseError:

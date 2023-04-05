@@ -204,8 +204,10 @@ class TrackInfo(AttrDict):
             medium_index: Optional[int] = None,
             medium_total: Optional[int] = None,
             artist_sort: Optional[str] = None,
+            artists_sort: Optional[str] = None,
             disctitle: Optional[str] = None,
             artist_credit: Optional[str] = None,
+            artists_credits: Optional[str] = None,
             data_source: Optional[str] = None,
             data_url: Optional[str] = None,
             media: Optional[str] = None,
@@ -236,8 +238,10 @@ class TrackInfo(AttrDict):
         self.medium_index = medium_index
         self.medium_total = medium_total
         self.artist_sort = artist_sort
+        self.artists_sort = artists_sort
         self.disctitle = disctitle
         self.artist_credit = artist_credit
+        self.artists_credits = artists_credits
         self.data_source = data_source
         self.data_url = data_url
         self.lyricist = lyricist
