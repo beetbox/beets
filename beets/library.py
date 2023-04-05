@@ -29,7 +29,6 @@ from beets import plugins
 from beets import util
 from beets.util import bytestring_path, syspath, normpath, samefile, \
     MoveOperation, lazy_property
-from beets.util.delimiters import str_to_multi
 from beets.util.functemplate import template, Template
 from beets import dbcore
 from beets.dbcore import types
