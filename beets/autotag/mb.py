@@ -32,7 +32,7 @@ from urllib.parse import urljoin
 from beets.util.id_extractors import extract_discogs_id_regex, \
     spotify_id_regex, deezer_id_regex, beatport_id_regex
 from beets.plugins import MetadataSourcePlugin
-from beets.util.separators import multi_to_str
+from beets.util.delimiters import multi_to_str
 
 VARIOUS_ARTISTS_ID = '89ad4ac3-39f7-470e-963a-56509c546377'
 

@@ -17,6 +17,7 @@
 
 from . import query
 from beets.util import str2bool
+from ..util.delimiters import MULTI_TAG_SEPARATOR
 
 
 # Abstract base.
@@ -253,3 +254,4 @@ NULL_FLOAT = NullFloat()
 STRING = String()
 BOOLEAN = Boolean()
 SEMICOLON_SPACE_DSV = DelimitedString(delimiter='; ')
+NULL_VALUE_DSV = DelimitedString(delimiter=MULTI_TAG_SEPARATOR)
