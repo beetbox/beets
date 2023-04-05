@@ -14,10 +14,10 @@
 
 """Representation of type information for DBCore model fields.
 """
+from typing import List
 
 from . import query
 from beets.util import str2bool
-from ..util.delimiters import MULTI_TAG_SEPARATOR
 
 
 # Abstract base.
@@ -215,18 +215,18 @@ class DelimitedString(String):
     """
     model_type = list
 
-    def __init__(self, delimiter):
+    def __init__(self, delimiter: str):
         self.delimiter = delimiter
 
-    def format(self, value):
+    def format(self, value: List[str]):
         return self.delimiter.join(value)
 
-    def parse(self, string):
+    def parse(self, string: str):
         if not string:
             return []
         return string.split(self.delimiter)
 
-    def to_sql(self, model_value):
+    def to_sql(self, model_value: List[str]):
         return self.delimiter.join(model_value)
 
 
@@ -254,4 +254,4 @@ NULL_FLOAT = NullFloat()
 STRING = String()
 BOOLEAN = Boolean()
 SEMICOLON_SPACE_DSV = DelimitedString(delimiter='; ')
-NULL_VALUE_DSV = DelimitedString(delimiter=MULTI_TAG_SEPARATOR)
+MULTI_VALUE_DSV = DelimitedString(delimiter='\0')

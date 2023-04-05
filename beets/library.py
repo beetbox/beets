@@ -29,6 +29,7 @@ from beets import plugins
 from beets import util
 from beets.util import bytestring_path, syspath, normpath, samefile, \
     MoveOperation, lazy_property
+from beets.util.delimiters import str_to_multi
 from beets.util.functemplate import template, Template
 from beets import dbcore
 from beets.dbcore import types
@@ -466,19 +467,19 @@ class Item(LibModel):
 
         'title': types.STRING,
         'artist': types.STRING,
-        'artists': types.NULL_VALUE_DSV,
+        'artists': types.MULTI_VALUE_DSV,
         'artist_sort': types.STRING,
-        'artists_sort': types.NULL_VALUE_DSV,
+        'artists_sort': types.MULTI_VALUE_DSV,
         'artist_credit': types.STRING,
-        'artists_credits': types.NULL_VALUE_DSV,
+        'artists_credits': types.MULTI_VALUE_DSV,
         'remixer': types.STRING,
         'album': types.STRING,
         'albumartist': types.STRING,
-        'albumartists': types.NULL_VALUE_DSV,
+        'albumartists': types.MULTI_VALUE_DSV,
         'albumartist_sort': types.STRING,
-        'albumartists_sort': types.NULL_VALUE_DSV,
+        'albumartists_sort': types.MULTI_VALUE_DSV,
         'albumartist_credit': types.STRING,
-        'albumartists_credits': types.NULL_VALUE_DSV,
+        'albumartists_credits': types.MULTI_VALUE_DSV,
         'genre': types.STRING,
         'style': types.STRING,
         'discogs_albumid': types.INTEGER,
@@ -1056,9 +1057,9 @@ class Album(LibModel):
         'albumartist': types.STRING,
         'albumartist_sort': types.STRING,
         'albumartist_credit': types.STRING,
-        'albumartists': types.NULL_VALUE_DSV,
-        'albumartists_sort': types.NULL_VALUE_DSV,
-        'albumartists_credits': types.NULL_VALUE_DSV,
+        'albumartists': types.MULTI_VALUE_DSV,
+        'albumartists_sort': types.MULTI_VALUE_DSV,
+        'albumartists_credits': types.MULTI_VALUE_DSV,
         'album': types.STRING,
         'genre': types.STRING,
         'style': types.STRING,
