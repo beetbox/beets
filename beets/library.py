@@ -1058,7 +1058,7 @@ class Album(LibModel):
         'albumartist_credit': types.STRING,
         'albumartists': types.NULL_VALUE_DSV,
         'albumartists_sort': types.NULL_VALUE_DSV,
-        'albumartists_credit': types.NULL_VALUE_DSV,
+        'albumartists_credits': types.NULL_VALUE_DSV,
         'album': types.STRING,
         'genre': types.STRING,
         'style': types.STRING,
