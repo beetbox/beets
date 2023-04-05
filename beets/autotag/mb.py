@@ -277,9 +277,16 @@ def track_info(
         info.artist, info.artist_sort, info.artist_credit = \
             _flatten_artist_credit(recording['artist-credit'])
 
-        # Get the ID and sort name of the first artist.
-        artist = recording['artist-credit'][0]['artist']
-        info.artist_id = artist['id']
+        artists_list, artists_sort_list, artists_credits_list = \
+            _multi_artist_credit(recording['artist-credit'], include_join_phrase=False)
+        artists_ids_list = _artist_ids(recording['artist-credit'])
+
+        info.artist_id = artists_ids_list[0]
+        info.artists_ids = multi_to_str(artists_ids_list)
+
+        info.artists = multi_to_str(artists_list)
+        info.artists_sort = multi_to_str(artists_sort_list)
+        info.artists_credits = multi_to_str(artists_credits_list)
 
     if recording.get('artist-relation-list'):
         info.remixer = _get_related_artist_names(
