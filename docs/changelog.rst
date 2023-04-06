@@ -11,6 +11,8 @@ for Python 3.6).
 
 New features:
 
+* Added support for ``artists`` and ``albumartists`` multi tags
+  :bug:`505`
 * Added additional error handling for `spotify` plugin.
   :bug:`4686`
 * We now import the remixer field from Musicbrainz into the library.
