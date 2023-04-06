@@ -819,32 +819,35 @@ class ImportTask(BaseImportTask):
         if self.is_album:
             replaced_album = self.replaced_albums.get(self.album.path)
             if replaced_album:
-                self.album.added = replaced_album.added
                 preserved_album_attrs = dict(replaced_album._values_flex)
 
                 for attr in dont_preserve_album_flex:
-                    if self.album.get(attr):
-                        new_val = self.album.get(attr)
-                        old_val = replaced_album.get(attr)
-                        if new_val != old_val:
-                            preserved_album_attrs.pop(attr, None)
-                            log.debug(
-                                'Setting album flexible attribute '
-                                '{0}: {1} for {2}, {3}',
-                                attr, new_val, self.album.id,
-                                displayable_path(self.album.path))
+                    if not self.album.get(attr):
+                        continue
+                    new_val = self.album.get(attr)
+                    old_val = replaced_album.get(attr)
+                    if new_val != old_val:
+                        preserved_album_attrs.pop(attr, None)
+                        log.debug(
+                            'Not reimported album {} flexible attribute: {}. '
+                            'New value: {}, Path: {}',
+                            self.album.id, attr, new_val,
+                            displayable_path(self.album.path))
 
+                self.album.added = replaced_album.added
                 self.album.update(preserved_album_attrs)
                 self.album.artpath = replaced_album.artpath
                 self.album.store()
                 log.debug(
-                    'Reimported album: added {0}, flexible '
-                    'attributes {1} from album {2} for {3}',
-                    self.album.added,
-                    list(preserved_album_attrs.keys()),
-                    replaced_album.id,
-                    displayable_path(self.album.path)
-                )
+                    "Reimported album {} attribute: ['added'] from album {}, "
+                    "Path: {}",
+                    self.album.id, replaced_album.id,
+                    displayable_path(self.album.path))
+                log.debug(
+                    'Reimported album {} flexible attributes: {} '
+                    'from album {}, Path:{}',
+                    self.album.id, list(preserved_album_attrs.keys()),
+                    replaced_album.id, displayable_path(self.album.path))
 
         for item in self.imported_items():
             dup_items = self.replaced_items[item]
@@ -852,33 +855,30 @@ class ImportTask(BaseImportTask):
                 if dup_item.added and dup_item.added != item.added:
                     item.added = dup_item.added
                     log.debug(
-                        'Reimported item added {0} '
-                        'from item {1} for {2}',
-                        item.added,
-                        dup_item.id,
-                        displayable_path(item.path)
-                    )
+                        "Reimported item {} attribute: ['added'] "
+                        "from item {}, Path: {}",
+                        item.id, dup_item.id, displayable_path(item.path))
 
                 preserved_item_attrs = dict(dup_item._values_flex)
                 for attr in dont_preserve_item_flex:
-                    if item.get(attr):
-                        new_val = item.get(attr)
-                        old_val = dup_item.get(attr)
-                        if new_val != old_val:
-                            preserved_item_attrs.pop(attr)
-                            log.debug(
-                                'Setting item flexible attribute '
-                                '{0}: {1} for item {2}, {3}', attr, new_val,
-                                item.id, displayable_path(item.path))
+                    if not item.get(attr):
+                        continue
+                    new_val = item.get(attr)
+                    old_val = dup_item.get(attr)
+                    if new_val != old_val:
+                        preserved_item_attrs.pop(attr)
+                        log.debug(
+                            'Not reimported item {} flexible attribute: {}'
+                            'New value: {}, Path: {}',
+                            item.id, attr, new_val,
+                            displayable_path(item.path))
 
                 item.update(preserved_item_attrs)
                 log.debug(
-                    'Reimported item flexible attributes {0} '
-                    'from item {1} for {2}',
-                    list(preserved_item_attrs.keys()),
-                    dup_item.id,
-                    displayable_path(item.path)
-                )
+                    'Reimported item {} flexible attributes: {} '
+                    'from item {}, Path: {}',
+                    item.id, list(preserved_item_attrs.keys()), dup_item.id,
+                    displayable_path(item.path))
                 item.store()
 
     def remove_replaced(self, lib):
