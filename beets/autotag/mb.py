@@ -166,7 +166,9 @@ def _preferred_release_event(release: Dict[str, Any]) -> Tuple[str, str]:
     )
 
 
-def _multi_artist_credit(credit: List[Dict], include_join_phrase: bool) -> Tuple[List[str], List[str], List[str]]:
+def _multi_artist_credit(
+        credit: List[Dict], include_join_phrase: bool
+) -> Tuple[List[str], List[str], List[str]]:
     """Given a list representing an ``artist-credit`` block, accumulate
     data into a triple of joined artist name lists: canonical, sort, and
     credit.
@@ -212,20 +214,29 @@ def _multi_artist_credit(credit: List[Dict], include_join_phrase: bool) -> Tuple
         artist_credit_parts,
     )
 
+
 def _flatten_artist_credit(credit: List[Dict]) -> Tuple[str, str, str]:
     """Given a list representing an ``artist-credit`` block, flatten the
     data into a triple of joined artist name strings: canonical, sort, and
     credit.
     """
-    artist_parts, artist_sort_parts, artist_credit_parts = _multi_artist_credit(credit, include_join_phrase=True)
+    artist_parts, artist_sort_parts, artist_credit_parts = \
+        _multi_artist_credit(
+            credit,
+            include_join_phrase=True
+        )
     return (
         ''.join(artist_parts),
         ''.join(artist_sort_parts),
         ''.join(artist_credit_parts),
     )
 
+
 def _artist_ids(credit: List[Dict]) -> List[str]:
-    """Given a list representing an ``artist-credit``, return a list of artist IDs"""
+    """
+    Given a list representing an ``artist-credit``,
+    return a list of artist IDs
+    """
     artist_ids: List[str] = []
     for el in credit:
         if isinstance(el, dict):
@@ -278,7 +289,9 @@ def track_info(
             _flatten_artist_credit(recording['artist-credit'])
 
         info.artists, info.artists_sort, info.artists_credits = \
-            _multi_artist_credit(recording['artist-credit'], include_join_phrase=False)
+            _multi_artist_credit(
+                recording['artist-credit'], include_join_phrase=False
+            )
 
         info.artists_ids = _artist_ids(recording['artist-credit'])
         info.artist_id = info.artists_ids[0]
@@ -375,7 +388,9 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
         _flatten_artist_credit(release['artist-credit'])
 
     artists_names, artists_sort_names, artists_credit_names = \
-        _multi_artist_credit(release['artist-credit'], include_join_phrase=False)
+        _multi_artist_credit(
+            release['artist-credit'], include_join_phrase=False
+        )
 
     ntracks = sum(len(m['track-list']) for m in release['medium-list'])
 
@@ -450,7 +465,9 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
                     _flatten_artist_credit(track['artist-credit'])
 
                 ti.artists, ti.artists_sort, ti.artists_credits = \
-                    _multi_artist_credit(track['artist-credit'], include_join_phrase=False)
+                    _multi_artist_credit(
+                        track['artist-credit'], include_join_phrase=False
+                    )
 
                 ti.artists_ids = _artist_ids(track['artist-credit'])
                 ti.artist_id = ti.artists_ids[0]

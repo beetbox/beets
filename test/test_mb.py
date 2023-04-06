@@ -24,9 +24,16 @@ from unittest import mock
 
 
 class MBAlbumInfoTest(_common.TestCase):
-    def _make_release(self, date_str='2009', tracks=None, track_length=None,
-                      track_artist=False, multi_artist_credit=False, data_tracks=None,
-                      medium_format='FORMAT'):
+    def _make_release(
+        self,
+        date_str='2009',
+        tracks=None,
+        track_length=None,
+        track_artist=False,
+        multi_artist_credit=False,
+        data_tracks=None,
+        medium_format='FORMAT'
+    ):
         release = {
             'title': 'ALBUM TITLE',
             'id': 'ALBUM ID',
@@ -135,8 +142,17 @@ class MBAlbumInfoTest(_common.TestCase):
         })
         return release
 
-    def _make_track(self, title, tr_id, duration, artist=False,
-                    video=False, disambiguation=None, remixer=False, multi_artist_credit=False):
+    def _make_track(
+        self,
+        title,
+        tr_id,
+        duration,
+        artist=False,
+        video=False,
+        disambiguation=None,
+        remixer=False,
+        multi_artist_credit=False
+    ):
         track = {
             'title': title,
             'id': tr_id,
@@ -385,18 +401,50 @@ class MBAlbumInfoTest(_common.TestCase):
         self.assertEqual(track.artist_credit, 'RECORDING ARTIST CREDIT')
 
     def test_parse_recording_artist_multi(self):
-        tracks = [self._make_track('a', 'b', 1, True, multi_artist_credit=True)]
+        tracks = [
+            self._make_track(
+                'a', 'b', 1, True, multi_artist_credit=True
+            )
+        ]
         release = self._make_release(None, tracks=tracks)
         track = mb.album_info(release).tracks[0]
-        self.assertEqual(track.artist, 'RECORDING ARTIST NAME & RECORDING ARTIST 2 NAME')
-        self.assertEqual(track.artist_id, 'RECORDING ARTIST ID')
-        self.assertEqual(track.artist_sort, 'RECORDING ARTIST SORT NAME & RECORDING ARTIST 2 SORT NAME')
-        self.assertEqual(track.artist_credit, 'RECORDING ARTIST CREDIT & RECORDING ARTIST 2 CREDIT')
+        self.assertEqual(
+            track.artist,
+            'RECORDING ARTIST NAME & RECORDING ARTIST 2 NAME'
+        )
+        self.assertEqual(
+            track.artist_id, 'RECORDING ARTIST ID'
+        )
+        self.assertEqual(
+            track.artist_sort,
+            'RECORDING ARTIST SORT NAME & RECORDING ARTIST 2 SORT NAME'
+        )
+        self.assertEqual(
+            track.artist_credit,
+            'RECORDING ARTIST CREDIT & RECORDING ARTIST 2 CREDIT'
+        )
 
-        self.assertEqual(track.artists, ['RECORDING ARTIST NAME', 'RECORDING ARTIST 2 NAME'])
-        self.assertEqual(track.artists_ids, ['RECORDING ARTIST ID', 'RECORDING ARTIST 2 ID'])
-        self.assertEqual(track.artists_sort, ['RECORDING ARTIST SORT NAME', 'RECORDING ARTIST 2 SORT NAME'])
-        self.assertEqual(track.artists_credits, ['RECORDING ARTIST CREDIT', 'RECORDING ARTIST 2 CREDIT'])
+        self.assertEqual(
+            track.artists,
+            ['RECORDING ARTIST NAME', 'RECORDING ARTIST 2 NAME']
+        )
+        self.assertEqual(
+            track.artists_ids, ['RECORDING ARTIST ID', 'RECORDING ARTIST 2 ID']
+        )
+        self.assertEqual(
+            track.artists_sort,
+            [
+                'RECORDING ARTIST SORT NAME',
+                'RECORDING ARTIST 2 SORT NAME'
+            ]
+        )
+        self.assertEqual(
+            track.artists_credits,
+            [
+                'RECORDING ARTIST CREDIT',
+                'RECORDING ARTIST 2 CREDIT'
+            ]
+        )
 
     def test_track_artist_overrides_recording_artist(self):
         tracks = [self._make_track('a', 'b', 1, True)]
@@ -408,18 +456,46 @@ class MBAlbumInfoTest(_common.TestCase):
         self.assertEqual(track.artist_credit, 'TRACK ARTIST CREDIT')
 
     def test_track_artist_overrides_recording_artist_multi(self):
-        tracks = [self._make_track('a', 'b', 1, True, multi_artist_credit=True)]
-        release = self._make_release(None, tracks=tracks, track_artist=True, multi_artist_credit=True)
+        tracks = [
+            self._make_track('a', 'b', 1, True, multi_artist_credit=True)
+        ]
+        release = self._make_release(
+            None,
+            tracks=tracks,
+            track_artist=True,
+            multi_artist_credit=True
+        )
         track = mb.album_info(release).tracks[0]
-        self.assertEqual(track.artist, 'TRACK ARTIST NAME & TRACK ARTIST 2 NAME')
+        self.assertEqual(
+            track.artist,
+            'TRACK ARTIST NAME & TRACK ARTIST 2 NAME'
+        )
         self.assertEqual(track.artist_id, 'TRACK ARTIST ID')
-        self.assertEqual(track.artist_sort, 'TRACK ARTIST SORT NAME & TRACK ARTIST 2 SORT NAME')
-        self.assertEqual(track.artist_credit, 'TRACK ARTIST CREDIT & TRACK ARTIST 2 CREDIT')
+        self.assertEqual(
+            track.artist_sort,
+            'TRACK ARTIST SORT NAME & TRACK ARTIST 2 SORT NAME'
+        )
+        self.assertEqual(
+            track.artist_credit,
+            'TRACK ARTIST CREDIT & TRACK ARTIST 2 CREDIT'
+        )
 
-        self.assertEqual(track.artists, ['TRACK ARTIST NAME', 'TRACK ARTIST 2 NAME'])
-        self.assertEqual(track.artists_ids, ['TRACK ARTIST ID', 'TRACK ARTIST 2 ID'])
-        self.assertEqual(track.artists_sort, ['TRACK ARTIST SORT NAME', 'TRACK ARTIST 2 SORT NAME'])
-        self.assertEqual(track.artists_credits, ['TRACK ARTIST CREDIT', 'TRACK ARTIST 2 CREDIT'])
+        self.assertEqual(
+            track.artists,
+            ['TRACK ARTIST NAME', 'TRACK ARTIST 2 NAME']
+        )
+        self.assertEqual(
+            track.artists_ids,
+            ['TRACK ARTIST ID', 'TRACK ARTIST 2 ID']
+        )
+        self.assertEqual(
+            track.artists_sort,
+            ['TRACK ARTIST SORT NAME', 'TRACK ARTIST 2 SORT NAME']
+        )
+        self.assertEqual(
+            track.artists_credits,
+            ['TRACK ARTIST CREDIT', 'TRACK ARTIST 2 CREDIT']
+        )
 
     def test_parse_recording_remixer(self):
         tracks = [self._make_track('a', 'b', 1, remixer=True)]

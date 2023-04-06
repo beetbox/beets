@@ -921,7 +921,10 @@ class ImportCompilationTest(_common.TestCase, ImportHelper):
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
         self.assertEqual(self.lib.albums().get().albumartist, 'Album Artist')
-        self.assertEqual(self.lib.albums().get().albumartists, ['Album Artist 1', 'Album Artist 2'])
+        self.assertEqual(
+            self.lib.albums().get().albumartists,
+            ['Album Artist 1', 'Album Artist 2']
+        )
         self.assertEqual(self.lib.albums().get().mb_albumartistid,
                          'Album Artist ID')
 
@@ -930,17 +933,27 @@ class ImportCompilationTest(_common.TestCase, ImportHelper):
         asserted_multi_artists_1 = False
         for item in self.lib.items():
             self.assertEqual(item.albumartist, 'Album Artist')
-            self.assertEqual(item.albumartists, ['Album Artist 1', 'Album Artist 2'])
+            self.assertEqual(
+                item.albumartists,
+                ['Album Artist 1', 'Album Artist 2']
+            )
             self.assertEqual(item.mb_albumartistid, 'Album Artist ID')
 
             if item.artist == "Other Artist":
                 asserted_multi_artists_0 = True
-                self.assertEqual(item.artists, ['Other Artist', 'Other Artist 2'])
+                self.assertEqual(
+                    item.artists,
+                    ['Other Artist', 'Other Artist 2']
+                )
             if item.artist == "Another Artist":
                 asserted_multi_artists_1 = True
-                self.assertEqual(item.artists, ['Another Artist', 'Another Artist 2'])
+                self.assertEqual(
+                    item.artists,
+                    ['Another Artist', 'Another Artist 2']
+                )
 
         self.assertTrue(asserted_multi_artists_0 and asserted_multi_artists_1)
+
 
 class ImportExistingTest(_common.TestCase, ImportHelper):
     """Test importing files that are already in the library directory.
