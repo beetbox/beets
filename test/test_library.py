@@ -1302,6 +1302,12 @@ class WriteTest(unittest.TestCase, TestHelper):
         self.assertNotEqual(item.artist, 'new artist')
         self.assertEqual(MediaFile(syspath(item.path)).artist, 'new artist')
 
+    def test_write_multi_tags(self):
+        item = self.add_item_fixture(artist='old artist')
+        item.write(tags={'artists': ['old artist', 'another artist']})
+
+        self.assertEqual(MediaFile(syspath(item.path)).artists, ['old artist', 'another artist'])
+
     def test_write_date_field(self):
         # Since `date` is not a MediaField, this should do nothing.
         item = self.add_item_fixture()
