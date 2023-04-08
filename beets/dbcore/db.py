@@ -1119,28 +1119,42 @@ class Database:
             where = f"{table}.id IN ({', '.join(map(str, ids))})"
             subvals = []
 
-        sql = ("SELECT * FROM {} WHERE {} {}").format(
-            table,
-            where or '1',
-            f"ORDER BY {order_by}" if order_by else '',
-        )
+        _from = table
+        select_fields = [f"{table}.*"]
+        relation_fields = query.model_fields - set(model_cls._fields)
+        if relation_fields:
+            if table == "items":
+                # filtering by unknown model field (most probably Album field)
+                _from = "items LEFT JOIN albums ON items.album_id = albums.id"
+            else:
+                # filtering by unknown model field (most probably Item field)
+                _from = "albums INNER JOIN items ON items.album_id = albums.id"
+            select_fields += relation_fields
+        sql = f"""
+        SELECT {', '.join(select_fields)}
+        FROM {_from}
+        WHERE {where}"""
 
-        # Fetch flexible attributes for items matching the main query.
-        # Doing the per-item filtering in python is faster than issuing
-        # one query per item to sqlite.
-        flex_sql = ("""
-            SELECT * FROM {} WHERE entity_id IN
-                (SELECT id FROM {} WHERE {});
-            """.format(
-            model_cls._flex_table,
-            model_cls._table,
-            where or '1',
-        )
-        )
+        if order_by:
+            # the sort field may exist in both 'items' and 'albums' tables
+            # (when they are joined), causing ambiguous column OperationalError
+            # if we try to order directly.
+            # Since the join is required only for filtering, we can filter in
+            # a subquery and order the result, which returns unique fields.
+            sql = f"SELECT * FROM ({sql}\n)\nORDER BY {order_by}"
 
         with self.transaction() as tx:
             rows = tx.query(sql, subvals)
-            flex_rows = tx.query(flex_sql, subvals)
+        # Fetch flexible attributes for items matching the main query.
+        # Doing the per-item filtering in python is faster than issuing
+        # one query per item to sqlite.
+        flex_sql = "SELECT * FROM {} WHERE entity_id IN ({})".format(
+            model_cls._flex_table,
+            ", ".join((str(id) for id, *_ in rows))
+        )
+
+        with self.transaction() as tx:
+            flex_rows = tx.query(flex_sql)
 
         return Results(
             model_cls, rows, self, flex_rows,
