@@ -44,6 +44,14 @@ log = logging.getLogger('beets')
 
 # Library-specific query types.
 
+class SingletonQuery(dbcore.FieldQuery):
+    def __new__(cls, field, value, *args, **kwargs):
+        query = dbcore.query.NoneQuery('album_id')
+        if util.str2bool(value):
+            return query
+        return dbcore.query.NotQuery(query)
+
+
 class PathQuery(dbcore.FieldQuery):
     """A query that matches all items under a given path.
 
@@ -568,6 +576,8 @@ class Item(LibModel):
     _formatter = FormattedItemMapping
 
     _sorts = {'artist': SmartArtistSort}
+
+    _queries = {'singleton': SingletonQuery}
 
     _format_config_key = 'format_item'
 
