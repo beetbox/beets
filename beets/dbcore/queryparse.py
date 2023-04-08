@@ -18,6 +18,7 @@ import itertools
 import re
 from typing import Collection, Dict, List, Optional, Sequence, Tuple, Type
 
+from .. import library
 from . import Model, query
 from .query import Sort
 
@@ -152,7 +153,9 @@ def construct_query_part(
     # Field queries get constructed according to the name of the field
     # they are querying.
     else:
-        out_query = query_class(key.lower(), pattern, key in model_cls._fields)
+        key = key.lower()
+        fast = key in {*library.Album._fields, *library.Item._fields}
+        out_query = query_class(key, pattern, fast)
 
     # Apply negation.
     if negate:

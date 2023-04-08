@@ -51,9 +51,8 @@ from typing import (
 from unidecode import unidecode
 
 import beets
-from beets.util import functemplate
 
-from ..util.functemplate import Template
+from ..util import cached_classproperty, functemplate
 from . import types
 from .query import (
     AndQuery,
@@ -322,6 +321,19 @@ class Model(ABC):
     """A revision number from when the model was loaded from or written
     to the database.
     """
+
+    @cached_classproperty
+    def _relation(cls) -> Type[Model]:
+        """The model that this model is closely related to."""
+        return cls
+
+    @cached_classproperty
+    def relation_join(cls) -> str:
+        """Return the join required to include the related table in the query.
+
+        This is intended to be used as a FROM clause in the SQL query.
+        """
+        return ""
 
     @classmethod
     def _getters(cls: Type["Model"]):
@@ -668,7 +680,7 @@ class Model(ABC):
 
     def evaluate_template(
         self,
-        template: Union[str, Template],
+        template: Union[str, functemplate.Template],
         for_path: bool = False,
     ) -> str:
         """Evaluate a template (a string or a `Template` object) using
@@ -1223,23 +1235,25 @@ class Database:
         where, subvals = query.clause()
         order_by = sort.order_clause()
 
-        sql = ("SELECT * FROM {} WHERE {} {}").format(
-            model_cls._table,
-            where or "1",
-            f"ORDER BY {order_by}" if order_by else "",
-        )
+        table = model_cls._table
+        _from = table
+        required_fields = query.field_names
+        if required_fields - model_cls._fields.keys():
+            _from += f" {model_cls.relation_join}"
 
+        sql = f"SELECT {table}.* FROM {_from} WHERE {where or 1} GROUP BY {table}.id"
         # Fetch flexible attributes for items matching the main query.
         # Doing the per-item filtering in python is faster than issuing
         # one query per item to sqlite.
-        flex_sql = """
-            SELECT * FROM {} WHERE entity_id IN
-                (SELECT id FROM {} WHERE {});
-            """.format(
-            model_cls._flex_table,
-            model_cls._table,
-            where or "1",
-        )
+        flex_sql = f"SELECT * FROM {model_cls._flex_table} WHERE entity_id IN (SELECT id FROM ({sql}))"
+
+        if order_by:
+            # the sort field may exist in both 'items' and 'albums' tables
+            # (when they are joined), causing ambiguous column OperationalError
+            # if we try to order directly.
+            # Since the join is required only for filtering, we can filter in
+            # a subquery and order the result, which returns unique fields.
+            sql = f"SELECT * FROM ({sql}) ORDER BY {order_by}"
 
         with self.transaction() as tx:
             rows = tx.query(sql, subvals)
