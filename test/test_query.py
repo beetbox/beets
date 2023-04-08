@@ -290,8 +290,18 @@ class GetTest(DummyDataTestCase):
         results = self.lib.items(q)
         self.assert_items_matched(results, ['beets 4 eva'])
 
+    def test_singleton_1(self):
+        q = 'singleton:1'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ['beets 4 eva'])
+
     def test_singleton_false(self):
         q = 'singleton:false'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ['foo bar', 'baz qux'])
+
+    def test_singleton_0(self):
+        q = 'singleton:0'
         results = self.lib.items(q)
         self.assert_items_matched(results, ['foo bar', 'baz qux'])
 
