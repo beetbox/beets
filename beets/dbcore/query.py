@@ -21,6 +21,8 @@ from beets import util
 from datetime import datetime, timedelta
 import unicodedata
 from functools import reduce
+from operator import or_
+from typing import Set, Tuple
 
 
 class ParsingError(ValueError):
@@ -60,6 +62,21 @@ class Query:
     """An abstract class representing a query into the item database.
     """
 
+    @property
+    def fields_info(self) -> Set[Tuple[str, bool]]:
+        """Return a set with (field, fast) tuples."""
+        return set()
+
+    @property
+    def model_fields(self) -> Set[str]:
+        """Return query fields that are (any) model attributes."""
+        return {f for f, fast in self.fields_info if fast}
+
+    @property
+    def flex_fields(self) -> Set[str]:
+        """Return query flexible fields."""
+        return {f for f, fast in self.fields_info if not fast}
+
     def clause(self):
         """Generate an SQLite expression implementing the query.
 
@@ -97,6 +114,10 @@ class FieldQuery(Query):
         self.field = field
         self.pattern = pattern
         self.fast = fast
+
+    @property
+    def fields_info(self) -> Set[Tuple[str, bool]]:
+        return {(self.field, self.fast)}
 
     def col_clause(self):
         return None, ()
@@ -363,6 +384,10 @@ class CollectionQuery(Query):
     def __init__(self, subqueries=()):
         self.subqueries = subqueries
 
+    @property
+    def fields_info(self) -> Set[Tuple[str, bool]]:
+        return reduce(or_, (sq.fields_info for sq in self.subqueries))
+
     # Act like a sequence.
 
     def __len__(self):
@@ -422,6 +447,10 @@ class AnyFieldQuery(CollectionQuery):
         for field in self.fields:
             subqueries.append(cls(field, pattern, True))
         super().__init__(subqueries)
+
+    @property
+    def fields_info(self) -> Set[Tuple[str, bool]]:
+        return {(f, True) for f in self.fields}
 
     def clause(self):
         return self.clause_with_joiner('or')
@@ -483,6 +512,10 @@ class NotQuery(Query):
 
     def __init__(self, subquery):
         self.subquery = subquery
+
+    @property
+    def fields_info(self) -> Set[Tuple[str, bool]]:
+        return self.subquery.fields_info
 
     def clause(self):
         clause, subvals = self.subquery.clause()
