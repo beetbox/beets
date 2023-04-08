@@ -21,7 +21,7 @@ import unicodedata
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from functools import reduce
-from operator import mul
+from operator import mul, or_
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -33,6 +33,7 @@ from typing import (
     Optional,
     Pattern,
     Sequence,
+    Set,
     Tuple,
     Type,
     TypeVar,
@@ -80,6 +81,11 @@ class InvalidQueryArgumentValueError(ParsingError):
 
 class Query(ABC):
     """An abstract class representing a query into the database."""
+
+    @property
+    def field_names(self) -> Set[str]:
+        """Return a set with field names that this query operates on."""
+        return set()
 
     def clause(self) -> Tuple[Optional[str], Sequence[Any]]:
         """Generate an SQLite expression implementing the query.
@@ -132,6 +138,11 @@ class FieldQuery(Query, Generic[P]):
         self.field = field
         self.pattern = pattern
         self.fast = fast
+
+    @property
+    def field_names(self) -> Set[str]:
+        """Return a set with field names that this query operates on."""
+        return {self.field}
 
     def col_clause(self) -> Tuple[Optional[str], Sequence[SQLiteType]]:
         return None, ()
@@ -446,6 +457,11 @@ class CollectionQuery(Query):
     def __init__(self, subqueries: Sequence = ()):
         self.subqueries = subqueries
 
+    @property
+    def field_names(self) -> Set[str]:
+        """Return a set with field names that this query operates on."""
+        return reduce(or_, (sq.field_names for sq in self.subqueries))
+
     # Act like a sequence.
 
     def __len__(self) -> int:
@@ -508,6 +524,10 @@ class AnyFieldQuery(CollectionQuery):
             subqueries.append(cls(field, pattern, True))
         # TYPING ERROR
         super().__init__(subqueries)
+
+    @property
+    def field_names(self) -> Set[str]:
+        return set(self.fields)
 
     def clause(self) -> Tuple[Optional[str], Sequence[SQLiteType]]:
         return self.clause_with_joiner("or")
@@ -572,6 +592,11 @@ class NotQuery(Query):
 
     def __init__(self, subquery):
         self.subquery = subquery
+
+    @property
+    def field_names(self) -> Set[str]:
+        """Return a set with field names that this query operates on."""
+        return self.subquery.field_names
 
     def clause(self) -> Tuple[Optional[str], Sequence[SQLiteType]]:
         clause, subvals = self.subquery.clause()
