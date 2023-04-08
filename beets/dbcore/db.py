@@ -33,6 +33,8 @@ from beets.dbcore import types
 from .query import MatchQuery, NullSort, TrueQuery
 from collections.abc import Mapping
 
+DEBUG = bool(os.getenv("DEBUG"))
+
 
 class DBAccessError(Exception):
     """The SQLite database became inaccessible.
@@ -1056,6 +1058,15 @@ class Database:
                 """.format(flex_table))
 
     # Querying.
+    @staticmethod
+    def print_query(sql, subvals):
+        """If debugging, replace placeholders and print the query."""
+        if DEBUG:
+            topr = sql
+            for val in subvals:
+                topr = topr.replace("?", str(val), 1)
+            print(topr)
+
     def _get_matching_ids(self, model, where, subvals):
         """Return ids of entities which match the given filter (`where` clause).
         This function is called only if we filter by at least one flexible
@@ -1080,6 +1091,7 @@ class Database:
         with self.transaction() as tx:
             for join in joins:
                 sql = f"SELECT {id_field} FROM {table} {join} WHERE {where}"
+                self.print_query(sql, subvals)
                 ids.update(chain.from_iterable(tx.query(sql, subvals)))
 
         return ids
@@ -1128,6 +1140,7 @@ class Database:
             # a subquery and order the result, which returns unique fields.
             sql = f"SELECT * FROM ({sql}\n)\nORDER BY {order_by}"
 
+        self.print_query(sql, subvals)
         with self.transaction() as tx:
             rows = tx.query(sql, subvals)
         # Fetch flexible attributes for items matching the main query.
@@ -1138,6 +1151,7 @@ class Database:
             ", ".join((str(id) for id, *_ in rows))
         )
 
+        self.print_query(flex_sql, subvals)
         with self.transaction() as tx:
             flex_rows = tx.query(flex_sql)
 
