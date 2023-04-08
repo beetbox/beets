@@ -146,7 +146,7 @@ def construct_query_part(model_cls, prefixes, query_part):
     # they are querying.
     elif issubclass(query_class, query.FieldQuery):
         key = key.lower()
-        fast = key in {*library.Item._fields, *library.Album._fields}
+        fast = key in library.Album.all_model_field_names
         out_query = query_class(key, pattern, fast)
     # Non-field (named) query.
     else:

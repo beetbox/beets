@@ -22,6 +22,7 @@ import time
 import re
 import string
 import shlex
+from typing import Any, Dict
 
 from beets import logging
 from mediafile import MediaFile, UnreadableFileError
@@ -38,6 +39,7 @@ import beets
 # string; SQLite treats that as encoded text. Wrapping it in a
 # `memoryview` tells it that we actually mean non-text data.
 BLOB_TYPE = memoryview
+JSONDict = Dict[str, Any]
 
 log = logging.getLogger('beets')
 
@@ -1152,6 +1154,7 @@ class Album(LibModel):
         'original_month',
         'original_day',
     ]
+    all_model_field_names = _fields.keys() | Item._fields.keys()
 
     _format_config_key = 'format_album'
 
@@ -1163,6 +1166,19 @@ class Album(LibModel):
         getters['path'] = Album.item_dir
         getters['albumtotal'] = Album._albumtotal
         return getters
+
+    @classmethod
+    def all_fields_query(cls, pats: JSONDict) -> dbcore.AndQuery:
+        """Get a query that matches many fields with different patterns.
+
+        `pats` should be a mapping from field names to patterns. The
+        resulting query is a conjunction ("and") of per-field queries
+        for all of these field/pattern pairs.
+        """
+        return dbcore.AndQuery([
+            dbcore.MatchQuery(k, v, k in cls.all_model_field_names)
+            for k, v in pats.items()
+        ])
 
     def items(self):
         """Return an iterable over the items associated with this
