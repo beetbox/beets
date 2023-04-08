@@ -727,8 +727,12 @@ class ImportTask(BaseImportTask):
             # item.
             if not self.items[0].albumartist:
                 changes['albumartist'] = self.items[0].artist
+            if not self.items[0].albumartists:
+                changes['albumartists'] = self.items[0].artists
             if not self.items[0].mb_albumartistid:
                 changes['mb_albumartistid'] = self.items[0].mb_artistid
+            if not self.items[0].mb_albumartistids:
+                changes['mb_albumartistids'] = self.items[0].mb_artistids
 
         # Apply new metadata.
         for item in self.items:

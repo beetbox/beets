@@ -84,6 +84,8 @@ def apply_item_metadata(item: Item, track_info: TrackInfo):
     item.mb_releasetrackid = track_info.release_track_id
     if track_info.artist_id:
         item.mb_artistid = track_info.artist_id
+    if track_info.artists_ids:
+        item.mb_artistids = track_info.artists_ids
 
     for field, value in track_info.items():
         # We only overwrite fields that are not already hardcoded.
@@ -174,7 +176,14 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
             item.mb_artistid = track_info.artist_id
         else:
             item.mb_artistid = album_info.artist_id
+
+        if track_info.artists_ids:
+            item.mb_artistids = track_info.artists_ids
+        else:
+            item.mb_artistids = album_info.artists_ids
+
         item.mb_albumartistid = album_info.artist_id
+        item.mb_albumartistids = album_info.artists_ids
         item.mb_releasegroupid = album_info.releasegroup_id
 
         # Compilation flag.
