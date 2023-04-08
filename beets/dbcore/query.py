@@ -122,12 +122,25 @@ class FieldQuery(Query):
     def col_clause(self):
         return None, ()
 
+    @property
+    def flex_col_clause(self) -> Tuple[str, Tuple]:
+        """Generate the clause for the flexible field.
+
+        We're setting self.field to 'value' just for the clause generation
+        since child classes use it directly. The attribute is afterwards
+        reset back to the original field name. This is very funky but helps
+        to avoid a big refactor at this point.
+
+        TODO: Incorporate a new attribute (@property, probably) named
+        'sql_field' or alike which handles field name for the clause.
+        """
+        flex_field, self.field = self.field, "value"
+        clause, subvals = self.col_clause()
+        self.field = flex_field
+        return f"(key = ? AND {clause})", (flex_field, *subvals),
+
     def clause(self):
-        if self.fast:
-            return self.col_clause()
-        else:
-            # Matching a flexattr. This is a slow query.
-            return None, ()
+        return self.col_clause() if self.fast else self.flex_col_clause
 
     @classmethod
     def value_match(cls, pattern, value):

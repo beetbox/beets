@@ -19,6 +19,7 @@ import time
 import os
 import re
 from collections import defaultdict
+from itertools import chain
 import threading
 import sqlite3
 import contextlib
@@ -1089,6 +1090,33 @@ class Database:
                 """.format(flex_table))
 
     # Querying.
+    def _get_matching_ids(self, model, where, subvals):
+        """Return ids of entities which match the given filter (`where` clause).
+        This function is called only if we filter by at least one flexible
+        attribute field.
+
+        Since we cannot tell which entity the flexible attributes belong to
+        (or even whether they exist), we must join the related entity and query
+        each flexible attribute tables separately.
+
+        Since these queries only return IDs of entities _matching_ the filter,
+        they are quick regardless of whether the field is a model or a flexible
+        attribute, and how big is user's music library.
+        """
+        table = model._table
+        id_field = f"{table}.id"
+        join_tmpl = "LEFT JOIN {} ON {} = entity_id"
+        joins = [join_tmpl.format(model._flex_table, id_field)]
+        if table == "items":
+            joins.append(join_tmpl.format("album_attributes", "items.album_id"))
+
+        ids = set()
+        with self.transaction() as tx:
+            for join in joins:
+                sql = f"SELECT {id_field} FROM {table} {join} WHERE {where}"
+                ids.update(chain.from_iterable(tx.query(sql, subvals)))
+
+        return ids
 
     def _fetch(self, model_cls, query=None, sort=None):
         """Fetch the objects of type `model_cls` matching the given
@@ -1101,8 +1129,17 @@ class Database:
         where, subvals = query.clause()
         order_by = sort.order_clause()
 
+        table = model_cls._table
+        if query.flex_fields:
+            # we have a flex field in the query. Filter each of the flex tables
+            # with our filter and get IDs of model_cls instances that match the
+            # query
+            ids = self._get_matching_ids(model_cls, where, subvals)
+            where = f"{table}.id IN ({', '.join(map(str, ids))})"
+            subvals = []
+
         sql = ("SELECT * FROM {} WHERE {} {}").format(
-            model_cls._table,
+            table,
             where or '1',
             f"ORDER BY {order_by}" if order_by else '',
         )

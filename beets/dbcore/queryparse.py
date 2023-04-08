@@ -18,6 +18,7 @@
 import re
 import itertools
 from . import query
+from .. import library
 
 PARSE_QUERY_PART_REGEX = re.compile(
     # Non-capturing optional segment for the keyword.
@@ -145,8 +146,8 @@ def construct_query_part(model_cls, prefixes, query_part):
     # they are querying.
     elif issubclass(query_class, query.FieldQuery):
         key = key.lower()
-        out_query = query_class(key.lower(), pattern, key in model_cls._fields)
-
+        fast = key in {*library.Item._fields, *library.Album._fields}
+        out_query = query_class(key, pattern, fast)
     # Non-field (named) query.
     else:
         out_query = query_class(pattern)
