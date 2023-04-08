@@ -958,7 +958,7 @@ def import_files(lib, paths, query):
     if config['import']['log'].get() is not None:
         logpath = syspath(config['import']['log'].as_filename())
         try:
-            loghandler = logging.FileHandler(logpath)
+            loghandler = logging.FileHandler(logpath, encoding='utf-8')
         except OSError:
             raise ui.UserError("could not open log file for writing: "
                                "{}".format(displayable_path(logpath)))

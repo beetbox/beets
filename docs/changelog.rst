@@ -13,6 +13,8 @@ New features:
 
 * Added support for ``artists`` and ``albumartists`` multi tags
   :bug:`505`
+* --from-logfile now parses log files using a UTF-8 encoding in `beets/beets/ui/commands.py`.
+  :bug:`4693`
 * Added additional error handling for `spotify` plugin.
   :bug:`4686`
 * We now import the remixer field from Musicbrainz into the library.
