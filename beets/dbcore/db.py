@@ -652,8 +652,7 @@ class Results:
     constructs LibModel objects that reflect database rows.
     """
 
-    def __init__(self, model_class, rows, db, flex_rows,
-                 query=None, sort=None):
+    def __init__(self, model_class, rows, db, flex_rows, sort=None):
         """Create a result set that will construct objects of type
         `model_class`.
 
@@ -661,9 +660,7 @@ class Results:
         constructed. `rows` is a query result: a list of mappings. The
         new objects will be associated with the database `db`.
 
-        If `query` is provided, it is used as a predicate to filter the
-        results for a "slow query" that cannot be evaluated by the
-        database directly. If `sort` is provided, it is used to sort the
+        If `sort` is provided, it is used to sort the
         full list of results before returning. This means it is a "slow
         sort" and all objects must be built before returning the first
         one.
@@ -671,7 +668,6 @@ class Results:
         self.model_class = model_class
         self.rows = rows
         self.db = db
-        self.query = query
         self.sort = sort
         self.flex_rows = flex_rows
 
@@ -712,13 +708,10 @@ class Results:
                 while self._rows:
                     row = self._rows.pop(0)
                     obj = self._make_model(row, flex_attrs.get(row['id'], {}))
-                    # If there is a slow-query predicate, ensurer that the
-                    # object passes it.
-                    if not self.query or self.query.match(obj):
-                        self._objects.append(obj)
-                        index += 1
-                        yield obj
-                        break
+                    self._objects.append(obj)
+                    index += 1
+                    yield obj
+                    break
 
     def __iter__(self):
         """Construct and generate Model objects for all matching
@@ -762,16 +755,8 @@ class Results:
         if not self._rows:
             # Fully materialized. Just count the objects.
             return len(self._objects)
-
-        elif self.query:
-            # A slow query. Fall back to testing every object.
-            count = 0
-            for obj in self:
-                count += 1
-            return count
-
         else:
-            # A fast query. Just count the rows.
+            # Just count the rows.
             return self._row_count
 
     def __nonzero__(self):
@@ -1158,7 +1143,6 @@ class Database:
 
         return Results(
             model_cls, rows, self, flex_rows,
-            None if where else query,  # Slow query component.
             sort if sort.is_slow() else None,  # Slow sort component.
         )
 

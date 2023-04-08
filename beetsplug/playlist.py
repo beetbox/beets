@@ -72,6 +72,9 @@ class PlaylistQuery(beets.dbcore.Query):
         clause = 'path IN ({})'.format(', '.join('?' for path in self.paths))
         return clause, (beets.library.BLOB_TYPE(p) for p in self.paths)
 
+    def clause(self):
+        return self.col_clause()
+
     def match(self, item):
         return item.path in self.paths
 
