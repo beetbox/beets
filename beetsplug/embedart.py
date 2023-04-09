@@ -136,8 +136,8 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     return
                 for item in items:
                     art.embed_item(self._log, item, tempimg, maxwidth,
-                                    None, compare_threshold, ifempty,
-                                    quality=quality)
+                                   None, compare_threshold, ifempty,
+                                   quality=quality)
                 os.remove(tempimg)
             else:
                 albums = lib.albums(decargs(args))
