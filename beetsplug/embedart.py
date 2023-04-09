@@ -123,7 +123,6 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     self._log.error('Invalid image file')
                     return
                 tempimg = f'image{extension}'
-                self._log.error(tempimg)
                 try:
                     with open(tempimg, 'wb') as f:
                         f.write(response.content)
