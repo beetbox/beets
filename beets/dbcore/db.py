@@ -23,6 +23,8 @@ import threading
 import sqlite3
 import contextlib
 
+from unidecode import unidecode
+
 import beets
 from beets.util import functemplate
 from beets.util import py3_path
@@ -975,6 +977,7 @@ class Database:
         conn = sqlite3.connect(
             py3_path(self.path), timeout=self.timeout
         )
+        self.add_functions(conn)
 
         if self.supports_extensions:
             conn.enable_load_extension(True)
@@ -986,6 +989,15 @@ class Database:
         # Access SELECT results like dictionaries.
         conn.row_factory = sqlite3.Row
         return conn
+
+    def add_functions(self, conn):
+        def regexp(value, pattern):
+            if isinstance(value, bytes):
+                value = value.decode()
+            return re.search(pattern, str(value)) is not None
+
+        conn.create_function("regexp", 2, regexp)
+        conn.create_function("unidecode", 1, unidecode)
 
     def _close(self):
         """Close the all connections to the underlying SQLite database

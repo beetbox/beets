@@ -42,6 +42,14 @@ class BareascQuery(StringFieldQuery):
         val = unidecode(val)
         return pattern in val
 
+    def col_clause(self):
+        """Compare ascii version of the pattern."""
+        clause = f"unidecode({self.field})"
+        if self.pattern.islower():
+            clause = f"lower({clause})"
+
+        return rf"{clause} LIKE ? ESCAPE '\'", [f"%{unidecode(self.pattern)}%"]
+
 
 class BareascPlugin(BeetsPlugin):
     """Plugin to provide bare-ASCII option for beets matching."""
