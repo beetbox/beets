@@ -44,6 +44,23 @@ log = logging.getLogger('beets')
 
 # Library-specific query types.
 
+class SingletonQuery(dbcore.FieldQuery):
+    """This query is responsible for the 'singleton' lookup.
+
+    It is based on the FieldQuery and constructs a SQL clause
+    'album_id is NULL' which yields the same result as the previous filter
+    in Python but is more performant since it's done in SQL.
+
+    Using util.str2bool ensures that lookups like singleton:true, singleton:1
+    and singleton:false, singleton:0 are handled consistently.
+    """
+    def __new__(cls, field, value, *args, **kwargs):
+        query = dbcore.query.NoneQuery('album_id')
+        if util.str2bool(value):
+            return query
+        return dbcore.query.NotQuery(query)
+
+
 class PathQuery(dbcore.FieldQuery):
     """A query that matches all items under a given path.
 
@@ -568,6 +585,8 @@ class Item(LibModel):
     _formatter = FormattedItemMapping
 
     _sorts = {'artist': SmartArtistSort}
+
+    _queries = {'singleton': SingletonQuery}
 
     _format_config_key = 'format_item'
 
