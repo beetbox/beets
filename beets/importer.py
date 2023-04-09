@@ -839,6 +839,19 @@ class ImportTask(BaseImportTask):
                         dup_item.id,
                         displayable_path(item.path)
                     )
+                # We exclude certain flexible attributes from the preserving
+                # process since they might have been fetched from MusicBrainz
+                # and been set in beets.autotag.apply_metadata().
+                # discogs_albumid might also have been set but is not a
+                # flexible attribute, thus no exclude is required.
+                if item.get('bandcamp_album_id'):
+                    dup_item.bandcamp_album_id = item.bandcamp_album_id
+                if item.get('spotify_album_id'):
+                    dup_item.spotify_album_id = item.spotify_album_id
+                if item.get('deezer_album_id'):
+                    dup_item.deezer_album_id = item.deezer_album_id
+                if item.get('beatport_album_id'):
+                    dup_item.beatport_album_id = item.beatport_album_id
                 item.update(dup_item._values_flex)
                 log.debug(
                     'Reimported item flexible attributes {0} '
@@ -1109,6 +1122,19 @@ class ArchiveImportTask(SentinelImportTask):
         archive = handler_class(util.py3_path(self.toppath), mode='r')
         try:
             archive.extractall(extract_to)
+
+            # Adjust the files' mtimes to match the information from the
+            # archive. Inspired by: https://stackoverflow.com/q/9813243
+            for f in archive.infolist():
+                # The date_time will need to adjusted otherwise
+                # the item will have the current date_time of extraction.
+                # The (0, 0, -1) is added to date_time because the
+                # function time.mktime expects a 9-element tuple.
+                # The -1 indicates that the DST flag is unknown.
+                date_time = time.mktime(f.date_time + (0, 0, -1))
+                fullpath = os.path.join(extract_to, f.filename)
+                os.utime(fullpath, (date_time, date_time))
+
         finally:
             archive.close()
         self.extracted = True

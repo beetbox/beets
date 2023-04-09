@@ -13,6 +13,8 @@ New features:
 
 * Added option to specify a URL in the `embedart` plugin.
   :bug:`83`
+* --from-logfile now parses log files using a UTF-8 encoding in `beets/beets/ui/commands.py`.
+  :bug:`4693`
 * Added additional error handling for `spotify` plugin.
   :bug:`4686`
 * We now import the remixer field from Musicbrainz into the library.
@@ -54,6 +56,8 @@ New features:
 * :ref:`import-options`: Add support for re-running the importer on paths in
   log files that were created with the ``-l`` (or ``--logfile``) argument.
   :bug:`4379` :bug:`4387`
+* Preserve mtimes from archives
+  :bug:`4392`
 * Add :ref:`%sunique{} <sunique>` template to disambiguate between singletons.
   :bug:`4438`
 * Add a new ``import.ignored_alias_types`` config option to allow for
@@ -65,6 +69,14 @@ New features:
 * :doc:`/plugins/fromfilename`:  Add debug log messages that inform when the
   plugin replaced bad (missing) artist, title or tracknumber metadata.
   :bug:`4561` :bug:`4600`
+* :ref:`musicbrainz-config`: MusicBrainz release pages often link to related
+  metadata sources like Discogs, Bandcamp, Spotify, Deezer and Beatport. When
+  enabled via the :ref:`musicbrainz.external_ids` options, release ID's will be
+  extracted from those URL's and imported to the library.
+  :bug:`4220`
+* :doc:`/plugins/convert`: Add support for generating m3u8 playlists together
+  with converted media files.
+  :bug:`4373`
 
 Bug fixes:
 

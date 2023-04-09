@@ -35,7 +35,7 @@ beatport_id_regex = {
 
 # A note on Bandcamp: There is no such thing as a Bandcamp album or artist ID,
 # the URL can be used as the identifier. The Bandcamp metadata source plugin
-# works that way - https://github.com/unrblt/beets-bandcamp. Bandcamp album
+# works that way - https://github.com/snejus/beetcamp. Bandcamp album
 # URLs usually look like: https://nameofartist.bandcamp.com/album/nameofalbum
 
 

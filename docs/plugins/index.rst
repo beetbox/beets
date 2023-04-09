@@ -129,6 +129,8 @@ following to your configuration::
    web
    zero
 
+.. _autotagger_extensions:
+
 Autotagger Extensions
 ---------------------
 
@@ -458,6 +460,9 @@ Here are a few of the plugins written by the beets community:
    Lets you perform regex replacements on incoming
    metadata.
 
+`beets-jiosaavn`_
+   Adds JioSaavn.com as a tagger data source..
+
 `beets-mosaic`_
    Generates a montage of a mosaic from cover art.
 
@@ -522,6 +527,7 @@ Here are a few of the plugins written by the beets community:
 .. _beets-usertag: https://github.com/igordertigor/beets-usertag
 .. _beets-popularity: https://github.com/abba23/beets-popularity
 .. _beets-plexsync: https://github.com/arsaboo/beets-plexsync
+.. _beets-jiosaavn: https://github.com/arsaboo/beets-jiosaavn
 .. _beets-ydl: https://github.com/vmassuchetto/beets-ydl
 .. _beet-summarize: https://github.com/steven-murray/beet-summarize
 .. _beets-mosaic: https://github.com/SusannaMaria/beets-mosaic
