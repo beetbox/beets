@@ -15,12 +15,11 @@
 """Allows beets to embed album art into file metadata."""
 
 import os.path
-import traceback
 from io import BytesIO
 
 import requests
 
-from beets import art, config, ui, util
+from beets import art, config, ui
 from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_
 from beets.util import bytestring_path, displayable_path, normpath, syspath
