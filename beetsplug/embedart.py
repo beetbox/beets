@@ -15,7 +15,7 @@
 """Allows beets to embed album art into file metadata."""
 
 import os.path
-from io import BytesIO
+from mimetypes import guess_extension
 
 import requests
 
@@ -111,37 +111,34 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                                    None, compare_threshold, ifempty,
                                    quality=quality)
             elif opts.url:
-                from PIL import Image
                 try:
                     response = requests.get(opts.url, timeout=5)
                     response.raise_for_status()
                 except requests.exceptions.RequestException as e:
                     self._log.error("Error: {}".format(e))
                     return
-                try:
-                    img = Image.open(BytesIO(response.content))
-                except OSError as e:
-                    self._log.error("Error: {}".format(e))
-                    return
-                if img.format:
-                    try:
-                        img.save('temp.png', format='PNG')
-                    except IOError as e:
-                        self._log.error("Cannot save image: {}".format(e))
-                        return
-                    tempimg = 'temp.png'
-                    items = lib.items(decargs(args))
-                    # Confirm with user.
-                    if not opts.yes and not _confirm(items, not opts.url):
-                        return
-                    for item in items:
-                        art.embed_item(self._log, item, tempimg, maxwidth,
-                                       None, compare_threshold, ifempty,
-                                       quality=quality)
-                    os.remove(tempimg)
-                else:
+                extension = guess_extension(response.headers
+                                            ['Content-Type'])
+                if extension is None:
                     self._log.error('Invalid image file')
                     return
+                tempimg = f'image{extension}'
+                self._log.error(tempimg)
+                try:
+                    with open(tempimg, 'wb') as f:
+                        f.write(response.content)
+                except Exception as e:
+                    self._log.error("Unable to save image: {}".format(e))
+                    return
+                items = lib.items(decargs(args))
+                # Confirm with user.
+                if not opts.yes and not _confirm(items, not opts.url):
+                    return
+                for item in items:
+                    art.embed_item(self._log, item, tempimg, maxwidth,
+                                    None, compare_threshold, ifempty,
+                                    quality=quality)
+                os.remove(tempimg)
             else:
                 albums = lib.albums(decargs(args))
                 # Confirm with user.
