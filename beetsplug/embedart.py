@@ -124,7 +124,11 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     self._log.error("Error: {}".format(e))
                     return
                 if img.format:
-                    img.save('temp.png', format='PNG')
+                    try:
+                        img.save('temp.png', format='PNG')
+                    except IOError as e:
+                        self._log.error("Cannot save image: {}".format(e))
+                        return
                     tempimg = 'temp.png'
                     items = lib.items(decargs(args))
                     # Confirm with user.
