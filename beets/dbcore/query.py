@@ -231,6 +231,9 @@ class RegexpQuery(StringFieldQuery):
                                                  "a regular expression",
                                                  format(exc))
 
+    def col_clause(self):
+        return f" regexp({self.field}, ?)", [self.pattern.pattern]
+
     @staticmethod
     def _normalize(s):
         """Normalize a Unicode string's representation (used on both
