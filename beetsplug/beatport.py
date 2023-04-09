@@ -432,6 +432,7 @@ class BeatportPlugin(BeetsPlugin):
         tracks = [self._get_track_info(x) for x in release.tracks]
 
         return AlbumInfo(album=release.name, album_id=release.beatport_id,
+                         beatport_album_id=release.beatport_id,
                          artist=artist, artist_id=artist_id, tracks=tracks,
                          albumtype=release.category, va=va,
                          year=release.release_date.year,

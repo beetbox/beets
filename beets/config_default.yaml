@@ -128,6 +128,12 @@ musicbrainz:
     searchlimit: 5
     extra_tags: []
     genres: no
+    external_ids:
+        discogs: no
+        bandcamp: no
+        spotify: no
+        deezer: no
+        beatport: no
 
 match:
     strong_rec_thresh: 0.04
