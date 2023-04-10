@@ -357,7 +357,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                         item_genres.append(item_genre)
                 if item_genres:
                     result, _ = plurality(item_genres)
-
+            print(f"Artist genre result: {result}")
             if result:
                 return result, 'artist'
         print(f"Genre: {obj.genre}")
