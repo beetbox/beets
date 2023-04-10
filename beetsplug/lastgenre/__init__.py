@@ -398,10 +398,15 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             if opts.album:
                 # Fetch genres for whole albums
                 for album in lib.albums(ui.decargs(args)):
-                    print(album.genre)
+
+                    orig_genre = ""
+                    if album.genre:
+                        orig_genre = album.genre
                     album.genre, src = self._get_genre(album)
                     self._log.info('genre for album {0} ({1}): {0.genre}',
                                    album, src)
+                    print(self.config['separator'].as_str().
+                          join(orig_genre, album.genre))
                     album.store()
 
                     for item in album.items():
