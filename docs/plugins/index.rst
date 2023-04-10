@@ -88,6 +88,7 @@ databases. They share the following configuration options:
     hook
     ihate
     importadded
+    importsource
     importfeeds
     info
     inline

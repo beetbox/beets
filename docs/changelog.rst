@@ -433,6 +433,7 @@ New features:
   ``beet list -a title:something`` or ``beet list artpath:cover``. Consequently
   album queries involving ``path`` field have been sped up, like ``beet list -a
   path:/path/``.
+- :doc:`plugins/importsource`: Added plugin
 - :doc:`plugins/ftintitle`: New ``keep_in_artist`` option for the plugin, which
   allows keeping the "feat." part in the artist metadata while still changing
   the title.
