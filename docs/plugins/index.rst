@@ -99,6 +99,7 @@ following to your configuration:
     hook
     ihate
     importadded
+    importhistory
     importfeeds
     info
     inline
