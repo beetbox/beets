@@ -409,7 +409,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     self._log.info('genre for album {0} ({1}): {0.genre}',
                                    album, src)
                     t = f"{orig_genre}{self.config['separator'].as_str()}{new_genre}"
-                    print(self._resolve_genres(t.split(self.config['separator'].as_str())))
+                    album.genre = self._resolve_genres(
+                        t.split(self.config['separator'].as_str()))
                     album.store()
 
                     for item in album.items():
