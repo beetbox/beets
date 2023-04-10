@@ -101,6 +101,7 @@ following to your configuration::
    limit
    loadext
    lyrics
+   markunmatched
    mbcollection
    mbsubmit
    mbsync
