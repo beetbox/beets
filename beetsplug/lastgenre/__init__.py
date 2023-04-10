@@ -333,6 +333,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Album genre.
         if 'album' in self.sources:
             result = self.fetch_album_genre(obj)
+            print(f"Album genre result: {result}")
             if result:
                 return result, 'album'
 
