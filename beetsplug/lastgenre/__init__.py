@@ -189,7 +189,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """Given a list of strings, return a genre by joining them into a
         single string and (optionally) canonicalizing each.
         """
-        print(tags)
         if not tags:
             return None
 
@@ -282,9 +281,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def fetch_album_genre(self, obj):
         """Return the album genre for this Item or Album.
         """
-        return self._last_lookup(
-            'album', LASTFM.get_album, obj.albumartist, obj.album
-        )
+        genre = self._last_lookup(
+            'album', LASTFM.get_album, obj.albumartist, obj.album)
+        print(f"Album genre: {genre}")
+        return genre
 
     def fetch_album_artist_genre(self, obj):
         """Return the album artist genre for this Item or Album.
@@ -399,19 +399,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             if opts.album:
                 # Fetch genres for whole albums
                 for album in lib.albums(ui.decargs(args)):
-
-                    orig_genre = ""
-                    if album.genre:
-                        orig_genre = album.genre
-                        print(f"{orig_genre}")
-                    new_genre, src = self._get_genre(album)
-                    print(f"{new_genre}")
+                    album.genre, src = self._get_genre(album)
+                    print(f"album.genre: {album.genre}")
                     self._log.info('genre for album {0} ({1}): {0.genre}',
                                    album, src)
-                    t = orig_genre + self.config['separator'].as_str() + \
-                        new_genre
-                    album.genre = self._resolve_genres(
-                        t.split(self.config['separator'].as_str().lower()))
                     album.store()
 
                     for item in album.items():
