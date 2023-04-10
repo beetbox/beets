@@ -189,6 +189,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """Given a list of strings, return a genre by joining them into a
         single string and (optionally) canonicalizing each.
         """
+        print(tags)
         if not tags:
             return None
 
