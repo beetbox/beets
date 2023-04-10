@@ -408,7 +408,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     print(f"{new_genre}")
                     self._log.info('genre for album {0} ({1}): {0.genre}',
                                    album, src)
-                    print(f"{orig_genre.append(new_genre)}")
+                    print(f"{orig_genre.append(self._resolve_genres(new_genre))}")
                     album.store()
 
                     for item in album.items():
