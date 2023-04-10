@@ -403,6 +403,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     if album.genre:
                         orig_genre = album.genre.split(
                             self.config['separator'].as_str())
+                        print(f"{orig_genre}")
                     new_genre, src = self._get_genre(album)
                     self._log.info('genre for album {0} ({1}): {0.genre}',
                                    album, src)
