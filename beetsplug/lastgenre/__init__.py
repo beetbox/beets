@@ -359,7 +359,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
             if result:
                 return result, 'artist'
-
+        print(f"Genre: {obj.genre}")
         # Filter the existing genre.
         if obj.genre:
             result = self._resolve_genres([obj.genre])
