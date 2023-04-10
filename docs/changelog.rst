@@ -17,6 +17,7 @@ Major new features:
 
 New features:
 
+* :doc:`plugins/importhistory`: Added plugin
 * :doc:`/plugins/listenbrainz`: Add initial support for importing history and playlists from `ListenBrainz`
   :bug:`1719`
 * :doc:`plugins/mbsubmit`: add new prompt choices helping further to submit unmatched tracks to MusicBrainz faster.
