@@ -15,6 +15,7 @@
 """The central Model and Database constructs for DBCore.
 """
 
+import json
 import time
 import os
 import re
@@ -965,8 +966,43 @@ class Database:
                 value = value.decode()
             return re.search(pattern, str(value)) is not None
 
+        class GroupToJSON:
+            """Re-implementation of the 'json_group_object' SQLite aggregate.
+
+            An aggregate function which accepts two values (key, val) and
+            groups all {key: val} pairs into a single object.
+
+            It is found in the json1 extension which is included in SQLite
+            by default since version 3.38.0 (2022-02-22). To ensure support
+            for older SQLite versions, we add our implementation.
+            It takes a different name to avoid naming conflicts in recent
+            SQLite versions where 'json_group_object' is available.
+
+            Consider the following table
+
+            id  key    val
+            1   plays  "10"
+            1   skips  "20"
+            2   city   "London"
+
+            SELECT id, group_to_json(key, val) GROUP BY id
+                1, '{"plays": "10", "skips": "20"}'
+                2, '{"city": "London"}'
+            """
+
+            def __init__(self):
+                self.flex = {}
+
+            def step(self, field, value):
+                if field:
+                    self.flex[field] = value
+
+            def finalize(self):
+                return json.dumps(self.flex)
+
         conn.create_function("regexp", 2, regexp)
         conn.create_function("unidecode", 1, unidecode)
+        conn.create_aggregate("group_to_json", 2, GroupToJSON)
 
     def _close(self):
         """Close the all connections to the underlying SQLite database
