@@ -104,6 +104,8 @@ class DummyDataTestCase(_common.TestCase, AssertsMixin):
         items[1].year = 2002
         items[1].comp = True
         items[1].genre = 'Rock'
+        items[1].flex_attr = 'something'
+        items[1].another_flex_attr = 'else'
         items[2].title = 'beets 4 eva'
         items[2].artist = 'three'
         items[2].album = 'foo'
@@ -113,6 +115,8 @@ class DummyDataTestCase(_common.TestCase, AssertsMixin):
         for item in items:
             self.lib.add(item)
         self.album = self.lib.add_album(items[:2])
+        self.album.artpath = 'some_art_path'
+        self.album.store()
 
     def assert_items_matched_all(self, results):
         self.assert_items_matched(results, [
@@ -1036,6 +1040,29 @@ class NotQueryTest(DummyDataTestCase):
 
     def test_get_mixed_terms(self):
         q = 'baz -title:bar'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ['baz qux'])
+
+
+class RelatedQueries(TestHelper, DummyDataTestCase):
+    """Test album-level queries with track-level filters and vice-versa."""
+    def test_get_albums_filter_by_track_field(self):
+        q = 'title:bar'
+        results = self.lib.albums(q)
+        self.assert_albums_matched(results, ['baz'])
+
+    def test_get_items_filter_by_album_field(self):
+        q = 'artpath:some'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ['foo bar', 'baz qux'])
+
+    def test_filter_by_flex(self):
+        q = 'flex_attr:some'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ['baz qux'])
+
+    def test_filter_by_many_flex(self):
+        q = 'flex_attr:some another_flex_attr:else'
         results = self.lib.items(q)
         self.assert_items_matched(results, ['baz qux'])
 
