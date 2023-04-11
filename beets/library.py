@@ -22,6 +22,7 @@ import time
 import re
 import string
 import shlex
+from typing import Dict, List, Union
 
 from beets import logging
 from mediafile import MediaFile, UnreadableFileError
@@ -498,6 +499,7 @@ class Item(LibModel):
         'albumartist_credit': types.STRING,
         'albumartists_credits': types.MULTI_VALUE_DSV,
         'genre': types.STRING,
+        'genres': types.MULTI_VALUE_DSV,
         'style': types.STRING,
         'discogs_albumid': types.INTEGER,
         'discogs_artistid': types.INTEGER,
@@ -569,6 +571,13 @@ class Item(LibModel):
         'channels': types.INTEGER,
         'mtime': DateType(),
         'added': DateType(),
+    }
+
+    # Mapping of item fields that have different names, but are written
+    # to `Mediafile` in the same field via `.single_field()`
+    _single_to_multi_fields = {
+        'albumtype': 'albumtypes',
+        'genre': 'genres',
     }
 
     _search_fields = ('artist', 'title', 'comments',
@@ -758,6 +767,31 @@ class Item(LibModel):
 
         self.path = read_path
 
+    def _multi_update(
+        self,
+        tags: Dict[str, Union[str, List[str]]]
+    ) -> Dict[str, Union[str, List[str]]]:
+        """
+        Read both the single/multi field variants, and return a dict that
+        contains the updates to the respective field in the form of a multi
+        """
+        multi_tags_to_update: Dict[str, Union[str, List[str]]] = {}
+
+        # For fields that have single/multi variants...
+        for single_field, multi_field in self._single_to_multi_fields.items():
+            # If a multi is present, always use that
+            if tags.get(multi_field):
+                multi_tags_to_update[multi_field] = tags[multi_field]
+                multi_tags_to_update[single_field] = tags[multi_field][0]
+
+            # If tags contains single field, but not multi, set the multi
+            # to the single field
+            if tags.get(single_field) and not tags.get(multi_field):
+                multi_tags_to_update[multi_field] = [tags[single_field]]
+                multi_tags_to_update[single_field] = single_field
+
+        return multi_tags_to_update
+
     def write(self, path=None, tags=None, id3v23=None):
         """Write the item's metadata to a media file.
 
@@ -787,8 +821,12 @@ class Item(LibModel):
         item_tags = dict(self)
         item_tags = {k: v for k, v in item_tags.items()
                      if k in self._media_fields}  # Only write media fields.
+
         if tags is not None:
+            tags = dict(tags, **self._multi_update(tags))
             item_tags.update(tags)
+
+        item_tags = dict(item_tags, **self._multi_update(item_tags))
         plugins.send('write', item=self, path=path, tags=item_tags)
 
         # Open the file.
@@ -798,7 +836,14 @@ class Item(LibModel):
             raise ReadError(path, exc)
 
         # Write the tags to the file.
-        mediafile.update(item_tags)
+        mediafile.update(
+            # Avoid writing the same single/multi variant field twice
+            # by only writing the multi variant
+            {
+                k: v for k, v in item_tags.items()
+                if k not in self._single_to_multi_fields
+            }
+        )
         try:
             mediafile.save()
         except UnreadableFileError as exc:
@@ -1083,6 +1128,7 @@ class Album(LibModel):
         'albumartists_credits': types.MULTI_VALUE_DSV,
         'album': types.STRING,
         'genre': types.STRING,
+        'genres': types.MULTI_VALUE_DSV,
         'style': types.STRING,
         'discogs_albumid': types.INTEGER,
         'discogs_artistid': types.INTEGER,
@@ -1137,6 +1183,7 @@ class Album(LibModel):
         'albumartists_credits',
         'album',
         'genre',
+        'genres',
         'style',
         'discogs_albumid',
         'discogs_artistid',

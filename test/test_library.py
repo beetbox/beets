@@ -715,13 +715,13 @@ class DestinationFunctionTest(_common.TestCase, PathFormattingMixin):
         self._assert_dest(b'/base/not_played')
 
     def test_first(self):
-        self.i.genres = "Pop; Rock; Classical Crossover"
-        self._setf('%first{$genres}')
+        self.i.sub_genres = "Pop; Rock; Classical Crossover"
+        self._setf('%first{$sub_genres}')
         self._assert_dest(b'/base/Pop')
 
     def test_first_skip(self):
-        self.i.genres = "Pop; Rock; Classical Crossover"
-        self._setf('%first{$genres,1,2}')
+        self.i.sub_genres = "Pop; Rock; Classical Crossover"
+        self._setf('%first{$sub_genres,1,2}')
         self._assert_dest(b'/base/Classical Crossover')
 
     def test_first_different_sep(self):
@@ -1321,6 +1321,35 @@ class WriteTest(unittest.TestCase, TestHelper):
         self.assertEqual(
             MediaFile(syspath(item.path)).artists,
             ['old artist/another artist']
+        )
+
+    def test_write_multi_genres(self):
+        item = self.add_item_fixture(genre='old genre')
+        item.write(
+            tags={'genres': ['g1', 'g2']},
+        )
+
+        # Ensure it reads all genres
+        self.assertEqual(
+            MediaFile(syspath(item.path)).genres,
+            ['g1', 'g2']
+        )
+
+        # Ensure reading single genre outputs the first of the genres
+        self.assertEqual(
+            MediaFile(syspath(item.path)).genre, 'g1'
+        )
+
+    def test_write_multi_genres_as_single(self):
+        item = self.add_item_fixture(genres=['old genre 1', 'old genre 2'])
+        item.write(
+            tags={'genre': 'g3'},
+        )
+        self.assertEqual(
+            MediaFile(syspath(item.path)).genre, 'g3'
+        )
+        self.assertEqual(
+            MediaFile(syspath(item.path)).genres, ['g3']
         )
 
     def test_write_date_field(self):

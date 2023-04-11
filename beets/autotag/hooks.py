@@ -18,8 +18,8 @@ from __future__ import annotations
 from collections import namedtuple
 from functools import total_ordering
 import re
-from typing import Dict, List, Tuple, Iterator, Union, Any, Optional,\
-    Iterable, Callable, cast
+from typing import Dict, List, Tuple, Iterator, Any, Optional,\
+    Iterable, Callable, cast, Union
 
 from beets import logging
 from beets import plugins
@@ -94,6 +94,7 @@ class AlbumInfo(AttrDict):
             country: Optional[str] = None,
             style: Optional[str] = None,
             genre: Optional[str] = None,
+            genres: Optional[List[str]] = None,
             albumstatus: Optional[str] = None,
             media: Optional[str] = None,
             albumdisambig: Optional[str] = None,
@@ -135,6 +136,7 @@ class AlbumInfo(AttrDict):
         self.country = country
         self.style = style
         self.genre = genre
+        self.genres = genres or []
         self.albumstatus = albumstatus
         self.media = media
         self.albumdisambig = albumdisambig
@@ -224,6 +226,7 @@ class TrackInfo(AttrDict):
             bpm: Optional[str] = None,
             initial_key: Optional[str] = None,
             genre: Optional[str] = None,
+            genres: Optional[List[str]] = None,
             **kwargs,
     ):
         self.title = title
@@ -257,6 +260,7 @@ class TrackInfo(AttrDict):
         self.bpm = bpm
         self.initial_key = initial_key
         self.genre = genre
+        self.genres = genres or []
         self.update(kwargs)
 
     # As above, work around a bug in python-musicbrainz-ngs.
