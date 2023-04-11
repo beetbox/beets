@@ -36,6 +36,9 @@ from collections.abc import Mapping
 
 DEBUG = bool(os.getenv("DEBUG"))
 
+# convert data under 'json_str' type name to Python dictionary automatically
+sqlite3.register_converter("json_str", json.loads)
+
 
 class DBAccessError(Exception):
     """The SQLite database became inaccessible.
@@ -655,7 +658,7 @@ class Results:
     constructs LibModel objects that reflect database rows.
     """
 
-    def __init__(self, model_class, rows, db, flex_rows, sort=None):
+    def __init__(self, model_class, rows, db, sort=None):
         """Create a result set that will construct objects of type
         `model_class`.
 
@@ -672,7 +675,6 @@ class Results:
         self.rows = rows
         self.db = db
         self.sort = sort
-        self.flex_rows = flex_rows
 
         # We keep a queue of rows we haven't yet consumed for
         # materialization. We preserve the original total number of
@@ -694,10 +696,6 @@ class Results:
         a `Results` object a second time should be much faster than the
         first.
         """
-
-        # Index flexible attributes by the item ID, so we have easier access
-        flex_attrs = self._get_indexed_flex_attrs()
-
         index = 0  # Position in the materialized objects.
         while index < len(self._objects) or self._rows:
             # Are there previously-materialized objects to produce?
@@ -710,7 +708,7 @@ class Results:
             else:
                 while self._rows:
                     row = self._rows.pop(0)
-                    obj = self._make_model(row, flex_attrs.get(row['id'], {}))
+                    obj = self._make_model(row)
                     self._objects.append(obj)
                     index += 1
                     yield obj
@@ -729,24 +727,11 @@ class Results:
             # Objects are pre-sorted (i.e., by the database).
             return self._get_objects()
 
-    def _get_indexed_flex_attrs(self):
-        """ Index flexible attributes by the entity id they belong to
-        """
-        flex_values = {}
-        for row in self.flex_rows:
-            if row['entity_id'] not in flex_values:
-                flex_values[row['entity_id']] = {}
-
-            flex_values[row['entity_id']][row['key']] = row['value']
-
-        return flex_values
-
-    def _make_model(self, row, flex_values={}):
+    def _make_model(self, row):
         """ Create a Model object for the given row
         """
-        cols = dict(row)
-        values = {k: v for (k, v) in cols.items()
-                  if not k[:4] == 'flex'}
+        values = dict(row)
+        flex_values = values.pop("flex_attrs") or {}
 
         # Construct the Python object
         obj = self.model_class._awaken(self.db, values, flex_values)
@@ -945,7 +930,10 @@ class Database:
         # bytestring paths here on Python 3, so we need to
         # provide a `str` using `py3_path`.
         conn = sqlite3.connect(
-            py3_path(self.path), timeout=self.timeout
+            py3_path(self.path),
+            timeout=self.timeout,
+            # enable type name "col [type]" conversion (`register_converter`)
+            detect_types=sqlite3.PARSE_COLNAMES,
         )
         self.add_functions(conn)
 
@@ -1163,20 +1151,9 @@ class Database:
         self.print_query(sql, subvals)
         with self.transaction() as tx:
             rows = tx.query(sql, subvals)
-        # Fetch flexible attributes for items matching the main query.
-        # Doing the per-item filtering in python is faster than issuing
-        # one query per item to sqlite.
-        flex_sql = "SELECT * FROM {} WHERE entity_id IN ({})".format(
-            model_cls._flex_table,
-            ", ".join((str(id) for id, *_ in rows))
-        )
-
-        self.print_query(flex_sql, subvals)
-        with self.transaction() as tx:
-            flex_rows = tx.query(flex_sql)
 
         return Results(
-            model_cls, rows, self, flex_rows,
+            model_cls, rows, self,
             sort if sort.is_slow() else None,  # Slow sort component.
         )
 
