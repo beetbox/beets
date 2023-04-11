@@ -133,11 +133,16 @@ class FieldQuery(Query):
 
         TODO: Incorporate a new attribute (@property, probably) named
         'sql_field' or alike which handles field name for the clause.
+
+        TODO: Define 'flex_attrs [json_str]' as dbcore.db.FLEX_ATTRS_COL_NAME
+        and import it here. To make it possible, we need to ensure that
+        dbcore.db does not import this module (dbcore.query) anymore.
         """
-        flex_field, self.field = self.field, "value"
+        field = self.field
+        self.field = f'json_extract_value("flex_attrs [json_str]", "{field}")'
         clause, subvals = self.col_clause()
-        self.field = flex_field
-        return f"(key = ? AND {clause})", (flex_field, *subvals),
+        self.field = field
+        return clause, subvals
 
     def clause(self):
         return self.col_clause() if self.fast else self.flex_col_clause

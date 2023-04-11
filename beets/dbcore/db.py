@@ -20,7 +20,7 @@ import time
 import os
 import re
 from collections import defaultdict
-from itertools import chain
+from typing import Optional
 import threading
 import sqlite3
 import contextlib
@@ -1000,9 +1000,19 @@ class Database:
             def finalize(self):
                 return json.dumps(self.flex)
 
+        def json_extract_value(json_str: str, key: str) -> Optional[str]:
+            """Simplified take on the 'json_extract' SQLite function.
+
+            The original implementation in SQLite allows traversing objects of
+            any depth. Here, we only ever deal with a flat dictionary, thus
+            we can simplify the implementation to a single 'get' call.
+            """
+            return json.loads(json_str).get(key) if json_str else ""
+
         conn.create_function("regexp", 2, regexp)
         conn.create_function("unidecode", 1, unidecode)
         conn.create_aggregate("group_to_json", 2, GroupToJSON)
+        conn.create_function("json_extract_value", 2, json_extract_value)
 
     def _close(self):
         """Close the all connections to the underlying SQLite database
@@ -1103,35 +1113,6 @@ class Database:
                 topr = topr.replace("?", str(val), 1)
             print(topr)
 
-    def _get_matching_ids(self, model, where, subvals):
-        """Return ids of entities which match the given filter (`where` clause).
-        This function is called only if we filter by at least one flexible
-        attribute field.
-
-        Since we cannot tell which entity the flexible attributes belong to
-        (or even whether they exist), we must join the related entity and query
-        each flexible attribute tables separately.
-
-        Since these queries only return IDs of entities _matching_ the filter,
-        they are quick regardless of whether the field is a model or a flexible
-        attribute, and how big is user's music library.
-        """
-        table = model._table
-        id_field = f"{table}.id"
-        join_tmpl = "LEFT JOIN {} ON {} = entity_id"
-        joins = [join_tmpl.format(model._flex_table, id_field)]
-        if table == "items":
-            joins.append(join_tmpl.format("album_attributes", "items.album_id"))
-
-        ids = set()
-        with self.transaction() as tx:
-            for join in joins:
-                sql = f"SELECT {id_field} FROM {table} {join} WHERE {where}"
-                self.print_query(sql, subvals)
-                ids.update(chain.from_iterable(tx.query(sql, subvals)))
-
-        return ids
-
     def _fetch(self, model_cls, query=None, sort=None):
         """Fetch the objects of type `model_cls` matching the given
         query. The query may be given as a string, string sequence, a
@@ -1144,14 +1125,6 @@ class Database:
         order_by = sort.order_clause()
 
         table = model_cls._table
-        if query.flex_fields:
-            # we have a flex field in the query. Filter each of the flex tables
-            # with our filter and get IDs of model_cls instances that match the
-            # query
-            ids = self._get_matching_ids(model_cls, where, subvals)
-            where = f"{table}.id IN ({', '.join(map(str, ids))})"
-            subvals = []
-
         _from = table
         select_fields = [f"{table}.*"]
         relation_fields = query.model_fields - set(model_cls._fields)
@@ -1163,10 +1136,21 @@ class Database:
                 # filtering by unknown model field (most probably Item field)
                 _from = "albums INNER JOIN items ON items.album_id = albums.id"
             select_fields += relation_fields
+
         sql = f"""
-        SELECT {', '.join(select_fields)}
+        SELECT
+            {', '.join(select_fields)},
+            "flex_attrs [json_str]"
         FROM {_from}
-        WHERE {where}"""
+        LEFT JOIN (
+            SELECT
+                entity_id,
+                group_to_json(key, value) AS "flex_attrs [json_str]"
+            FROM {model_cls._flex_table}
+            GROUP BY entity_id
+        ) ON {table}.id = entity_id
+        WHERE {where or 1}
+        GROUP BY {table}.id"""
 
         if order_by:
             # the sort field may exist in both 'items' and 'albums' tables
