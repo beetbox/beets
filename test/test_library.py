@@ -1352,6 +1352,23 @@ class WriteTest(unittest.TestCase, TestHelper):
             MediaFile(syspath(item.path)).genres, ['g3']
         )
 
+    def test_write_multi_genres_both_single_and_multi(self):
+        item = self.add_item_fixture(genre='old genre 1')
+        item.write(
+            tags={
+                'genre': 'single genre',
+                'genres': ['multi genre']
+            },
+        )
+
+        # Ensure the multi takes precedence
+        self.assertEqual(
+            MediaFile(syspath(item.path)).genre, 'multi genre'
+        )
+        self.assertEqual(
+            MediaFile(syspath(item.path)).genres, ['multi genre']
+        )
+
     def test_write_date_field(self):
         # Since `date` is not a MediaField, this should do nothing.
         item = self.add_item_fixture()
