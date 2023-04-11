@@ -50,6 +50,11 @@ QUEUE_SIZE = 128
 SINGLE_ARTIST_THRESH = 0.25
 PROGRESS_KEY = 'tagprogress'
 HISTORY_KEY = 'taghistory'
+# Album and item flexble attrbutes that should not be preserved on reimports.
+REIMPORT_FRESH_FIELDS_ALBUM = ['data_source']
+REIMPORT_FRESH_FIELDS_ITEM = ['data_source', 'bandcamp_album_id',
+                              'spotify_album_id', 'deezer_album_id',
+                              'beatport_album_id']
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -811,17 +816,12 @@ class ImportTask(BaseImportTask):
         """For reimports, preserves metadata for reimported items and
         albums.
         """
-        # Album and item flex attrs that should not be preserved on reimports.
-        dont_preserve_album_flex = ['data_source']
-        dont_preserve_item_flex = ['data_source', 'bandcamp_album_id',
-                                   'spotify_album_id', 'deezer_album_id',
-                                   'beatport_album_id']
         if self.is_album:
             replaced_album = self.replaced_albums.get(self.album.path)
             if replaced_album:
                 preserved_album_attrs = dict(replaced_album._values_flex)
 
-                for attr in dont_preserve_album_flex:
+                for attr in REIMPORT_FRESH_FIELDS_ALBUM:
                     if not self.album.get(attr):
                         continue
                     new_val = self.album.get(attr)
@@ -860,7 +860,7 @@ class ImportTask(BaseImportTask):
                         item.id, dup_item.id, displayable_path(item.path))
 
                 preserved_item_attrs = dict(dup_item._values_flex)
-                for attr in dont_preserve_item_flex:
+                for attr in REIMPORT_FRESH_FIELDS_ITEM:
                     if not item.get(attr):
                         continue
                     new_val = item.get(attr)
