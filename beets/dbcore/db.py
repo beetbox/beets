@@ -950,6 +950,8 @@ class Database:
 
     def add_functions(self, conn):
         def regexp(value, pattern):
+            if value is None:
+                return value
             if isinstance(value, bytes):
                 value = value.decode()
             return re.search(pattern, str(value)) is not None
@@ -995,7 +997,7 @@ class Database:
             any depth. Here, we only ever deal with a flat dictionary, thus
             we can simplify the implementation to a single 'get' call.
             """
-            return json.loads(json_str).get(key) if json_str else ""
+            return json.loads(json_str).get(key) if json_str else None
 
         conn.create_function("regexp", 2, regexp)
         conn.create_function("unidecode", 1, unidecode)

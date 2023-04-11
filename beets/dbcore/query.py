@@ -109,6 +109,7 @@ class FieldQuery(Query):
     string. Subclasses may also provide `col_clause` to implement the
     same matching functionality in SQLite.
     """
+    is_number = False
 
     def __init__(self, field, pattern, fast=True):
         self.field = field
@@ -131,6 +132,9 @@ class FieldQuery(Query):
         reset back to the original field name. This is very funky but helps
         to avoid a big refactor at this point.
 
+        Note: 'json_extract_value' returns a string, thus we need to explicitly
+        CAST it to number to ensure that numeric comparisons work.
+
         TODO: Incorporate a new attribute (@property, probably) named
         'sql_field' or alike which handles field name for the clause.
 
@@ -140,6 +144,9 @@ class FieldQuery(Query):
         """
         field = self.field
         self.field = f'json_extract_value("flex_attrs [json_str]", "{field}")'
+        if self.is_number:
+            self.field = f"CAST({self.field} AS number)"
+
         clause, subvals = self.col_clause()
         self.field = field
         return clause, subvals
@@ -285,7 +292,12 @@ class RegexpQuery(StringFieldQuery):
         return pattern.search(cls._normalize(value)) is not None
 
 
-class BooleanQuery(MatchQuery):
+class IntegerQuery(MatchQuery):
+    """A query targetting values with SQLite INTEGER Lite type."""
+    is_number = True
+
+
+class BooleanQuery(IntegerQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
     string reflecting a boolean.
     """
@@ -322,7 +334,7 @@ class BytesQuery(MatchQuery):
         return self.field + " = ?", [self.buf_pattern]
 
 
-class NumericQuery(FieldQuery):
+class NumericQuery(IntegerQuery):
     """Matches numeric fields. A syntax using Ruby-style range ellipses
     (``..``) lets users specify one- or two-sided ranges. For example,
     ``year:2001..`` finds music released since the turn of the century.
@@ -737,7 +749,7 @@ class DateInterval:
         return f'[{self.start}, {self.end})'
 
 
-class DateQuery(FieldQuery):
+class DateQuery(IntegerQuery, FieldQuery):
     """Matches date fields stored as seconds since Unix epoch time.
 
     Dates can be specified as ``year-month-day`` strings where only year
