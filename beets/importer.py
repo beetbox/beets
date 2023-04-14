@@ -816,26 +816,34 @@ class ImportTask(BaseImportTask):
         """For reimports, preserves metadata for reimported items and
         albums.
         """
+        def _reduce_and_log(new_obj, existing_fields, overwrite_keys):
+            """Some flexible attributes should be overwritten (and not
+            preserved) on reimports which this function handles. Copies
+            existing_fields, logs and removes entries that should not be
+            preserved and returns a dict containing those fields left to
+            actually be preserved
+            """
+            noun = 'album' if self.is_album else 'item'
+            existing_fields = dict(existing_fields)
+            overwritten_fields = [k for k in existing_fields
+                                  if k in overwrite_keys
+                                  and existing_fields.get(k) != new_obj.get(k)]
+            if overwritten_fields:
+                log.debug('Not preserving {} {} flexible attributes: {}. '
+                          'Path: {}', noun, new_obj.id, overwritten_fields,
+                          displayable_path(new_obj.path))
+                for key in overwritten_fields:
+                    del existing_fields[key]
+            return existing_fields
+
         if self.is_album:
             replaced_album = self.replaced_albums.get(self.album.path)
             if replaced_album:
-                preserved_album_attrs = dict(replaced_album._values_flex)
-
-                for attr in REIMPORT_FRESH_FIELDS_ALBUM:
-                    if not self.album.get(attr):
-                        continue
-                    new_val = self.album.get(attr)
-                    old_val = replaced_album.get(attr)
-                    if new_val != old_val:
-                        preserved_album_attrs.pop(attr, None)
-                        log.debug(
-                            'Not reimported album {} flexible attribute: {}. '
-                            'New value: {}, Path: {}',
-                            self.album.id, attr, new_val,
-                            displayable_path(self.album.path))
-
+                album_fields = _reduce_and_log(self.album,
+                                               replaced_album._values_flex,
+                                               REIMPORT_FRESH_FIELDS_ALBUM)
                 self.album.added = replaced_album.added
-                self.album.update(preserved_album_attrs)
+                self.album.update(album_fields)
                 self.album.artpath = replaced_album.artpath
                 self.album.store()
                 log.debug(
@@ -846,7 +854,7 @@ class ImportTask(BaseImportTask):
                 log.debug(
                     'Reimported album {} flexible attributes: {} '
                     'from album {}, Path:{}',
-                    self.album.id, list(preserved_album_attrs.keys()),
+                    self.album.id, list(album_fields.keys()),
                     replaced_album.id, displayable_path(self.album.path))
 
         for item in self.imported_items():
@@ -858,26 +866,13 @@ class ImportTask(BaseImportTask):
                         "Reimported item {} attribute: ['added'] "
                         "from item {}, Path: {}",
                         item.id, dup_item.id, displayable_path(item.path))
-
-                preserved_item_attrs = dict(dup_item._values_flex)
-                for attr in REIMPORT_FRESH_FIELDS_ITEM:
-                    if not item.get(attr):
-                        continue
-                    new_val = item.get(attr)
-                    old_val = dup_item.get(attr)
-                    if new_val != old_val:
-                        preserved_item_attrs.pop(attr)
-                        log.debug(
-                            'Not reimported item {} flexible attribute: {}'
-                            'New value: {}, Path: {}',
-                            item.id, attr, new_val,
-                            displayable_path(item.path))
-
-                item.update(preserved_item_attrs)
+                item_fields = _reduce_and_log(item, dup_item._values_flex,
+                                              REIMPORT_FRESH_FIELDS_ITEM)
+                item.update(item_fields)
                 log.debug(
                     'Reimported item {} flexible attributes: {} '
                     'from item {}, Path: {}',
-                    item.id, list(preserved_item_attrs.keys()), dup_item.id,
+                    item.id, list(item_fields.keys()), dup_item.id,
                     displayable_path(item.path))
                 item.store()
 
