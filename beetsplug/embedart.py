@@ -15,6 +15,7 @@
 """Allows beets to embed album art into file metadata."""
 
 import os.path
+import tempfile
 from mimetypes import guess_extension
 
 import requests
@@ -122,7 +123,9 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 if extension is None:
                     self._log.error('Invalid image file')
                     return
-                tempimg = f'image{extension}'
+                file = f'image{extension}'
+                tempimg = os.path.join(tempfile.gettempdir(), file)
+                print(tempimg)
                 try:
                     with open(tempimg, 'wb') as f:
                         f.write(response.content)
@@ -132,6 +135,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 items = lib.items(decargs(args))
                 # Confirm with user.
                 if not opts.yes and not _confirm(items, not opts.url):
+                    os.remove(tempimg)
                     return
                 for item in items:
                     art.embed_item(self._log, item, tempimg, maxwidth,
