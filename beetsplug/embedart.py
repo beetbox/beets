@@ -116,7 +116,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     response = requests.get(opts.url, timeout=5)
                     response.raise_for_status()
                 except requests.exceptions.RequestException as e:
-                    self._log.error("Error: {}".format(e))
+                    self._log.error("{}".format(e))
                     return
                 extension = guess_extension(response.headers
                                             ['Content-Type'])
