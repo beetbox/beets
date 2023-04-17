@@ -240,6 +240,10 @@ class Model:
     """The flex field SQLite table name.
     """
 
+    _relation_join = ""
+    """Join the relevant relation for filtering.
+    """
+
     _fields = {}
     """A mapping indicating available "fixed" fields on this type. The
     keys are field names and the values are `Type` objects.
@@ -1119,12 +1123,7 @@ class Database:
         select_fields = [f"{table}.*"]
         relation_fields = query.model_fields - set(model_cls._fields)
         if relation_fields:
-            if table == "items":
-                # filtering by unknown model field (most probably Album field)
-                _from = "items LEFT JOIN albums ON items.album_id = albums.id"
-            else:
-                # filtering by unknown model field (most probably Item field)
-                _from = "albums INNER JOIN items ON items.album_id = albums.id"
+            _from = model_cls._relation_join
             select_fields += relation_fields
 
         sql = f"""

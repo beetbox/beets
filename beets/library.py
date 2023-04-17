@@ -39,6 +39,8 @@ import beets
 # string; SQLite treats that as encoded text. Wrapping it in a
 # `memoryview` tells it that we actually mean non-text data.
 BLOB_TYPE = memoryview
+ALBUMS_TABLE = "albums"
+ITEMS_TABLE = "items"
 JSONDict = Dict[str, Any]
 
 log = logging.getLogger('beets')
@@ -476,8 +478,12 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
 
 class Item(LibModel):
     """Represent a song or track."""
-    _table = 'items'
+    _table = ITEMS_TABLE
     _flex_table = 'item_attributes'
+    _relation_join = (
+        f"{ITEMS_TABLE} LEFT JOIN {ALBUMS_TABLE}"
+        f" ON {ITEMS_TABLE}.album_id = {ALBUMS_TABLE}.id"
+    )
     _fields = {
         'id': types.PRIMARY_ID,
         'path': PathType(),
@@ -1060,8 +1066,12 @@ class Album(LibModel):
 
     Reflects the library's "albums" table, including album art.
     """
-    _table = 'albums'
+    _table = ALBUMS_TABLE
     _flex_table = 'album_attributes'
+    _relation_join = (
+        f"{ALBUMS_TABLE} INNER JOIN {ITEMS_TABLE}"
+        f" ON {ITEMS_TABLE}.album_id = {ALBUMS_TABLE}.id"
+    )
     _always_dirty = True
     _fields = {
         'id': types.PRIMARY_ID,
