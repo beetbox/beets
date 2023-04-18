@@ -254,4 +254,6 @@ NULL_FLOAT = NullFloat()
 STRING = String()
 BOOLEAN = Boolean()
 SEMICOLON_SPACE_DSV = DelimitedString(delimiter='; ')
-MULTI_VALUE_DSV = DelimitedString(delimiter='\0')
+
+# Will set the proper null char in mediafile
+MULTI_VALUE_DSV = DelimitedString(delimiter='\\␀')
