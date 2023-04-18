@@ -822,7 +822,7 @@ class ImportTask(BaseImportTask):
             entries that should not be preserved and returns a dict containing
             those fields left to actually be preserved.
             """
-            noun = 'album' if self.is_album else 'item'
+            noun = 'album' if isinstance(new_obj, library.Album) else 'item'
             existing_fields = dict(existing_fields)
             overwritten_fields = [k for k in existing_fields
                                   if k in overwrite_keys
