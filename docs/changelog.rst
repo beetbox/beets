@@ -171,6 +171,9 @@ Bug fixes:
   library**. Following the instructions `described here
   <https://github.com/beetbox/beets/pull/4582#issuecomment-1445023493>`_, a
   sanity check and potential fix is easily possible. :bug:`4528`
+* Fix updating "data_source" on re-imports and improve logging when flexible
+  attributes are being re-imported.
+  :bug:`4726`
 
 For packagers:
 
