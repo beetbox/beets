@@ -125,7 +125,6 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     return
                 file = f'image{extension}'
                 tempimg = os.path.join(tempfile.gettempdir(), file)
-                print(tempimg)
                 try:
                     with open(tempimg, 'wb') as f:
                         f.write(response.content)
