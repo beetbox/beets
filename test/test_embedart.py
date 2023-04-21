@@ -75,42 +75,6 @@ class EmbedartCliTest(TestHelper, FetchImageHelper):
         mediafile = MediaFile(syspath(item.path))
         self.assertEqual(mediafile.images[0].data, self.image_data)
 
-    def test_embed_art_from_url_with_yes_input(self):
-        self._setup_data()
-        album = self.add_album_fixture()
-        item = album.items()[0]
-        self.mock_response('http://example.com/test.jpg', 'image/jpeg')
-        self.io.addinput('y')
-        self.run_command('embedart', '-u', 'http://example.com/test.jpg')
-        mediafile = MediaFile(syspath(item.path))
-        self.assertEqual(
-            mediafile.images[0].data,
-            self.IMAGEHEADER.get('image/jpeg').ljust(32, b'\x00')
-        )
-
-    def test_embed_art_png_from_file_with_yes_input(self):
-        self._setup_data()
-        album = self.add_album_fixture()
-        item = album.items()[0]
-        self.mock_response('http://example.com/test.png', 'image/png')
-        self.io.addinput('y')
-        self.run_command('embedart', '-u', 'http://example.com/test.png')
-        mediafile = MediaFile(syspath(item.path))
-        self.assertEqual(
-            mediafile.images[0].data,
-            self.IMAGEHEADER.get('image/png').ljust(32, b'\x00'))
-
-    # test embedart with url that does not have a valid image
-    def test_embed_art_from_url_with_yes_input_not_image(self):
-        self._setup_data()
-        album = self.add_album_fixture()
-        item = album.items()[0]
-        self.mock_response('http://example.com/test.txt', 'text/html')
-        self.io.addinput('y')
-        self.run_command('embedart', '-u', 'http://example.com/test.txt')
-        mediafile = MediaFile(syspath(item.path))
-        self.assertFalse(mediafile.images)
-
     def test_embed_art_from_file_with_no_input(self):
         self._setup_data()
         album = self.add_album_fixture()
@@ -252,6 +216,40 @@ class EmbedartCliTest(TestHelper, FetchImageHelper):
         self.run_command('clearart')
         mediafile = MediaFile(syspath(item.path))
         self.assertEqual(mediafile.images[0].data, self.image_data)
+
+    def test_embed_art_from_url_with_yes_input(self):
+        self._setup_data()
+        album = self.add_album_fixture()
+        item = album.items()[0]
+        self.mock_response('http://example.com/test.jpg', 'image/jpeg')
+        self.io.addinput('y')
+        self.run_command('embedart', '-u', 'http://example.com/test.jpg')
+        mediafile = MediaFile(syspath(item.path))
+        self.assertEqual(
+            mediafile.images[0].data,
+            self.IMAGEHEADER.get('image/jpeg').ljust(32, b'\x00')
+        )
+
+    def test_embed_art_from_url_png(self):
+        self._setup_data()
+        album = self.add_album_fixture()
+        item = album.items()[0]
+        self.mock_response('http://example.com/test.png', 'image/png')
+        self.run_command('embedart', '-y', '-u', 'http://example.com/test.png')
+        mediafile = MediaFile(syspath(item.path))
+        self.assertEqual(
+            mediafile.images[0].data,
+            self.IMAGEHEADER.get('image/png').ljust(32, b'\x00')
+        )
+
+    def test_embed_art_from_url_not_image(self):
+        self._setup_data()
+        album = self.add_album_fixture()
+        item = album.items()[0]
+        self.mock_response('http://example.com/test.txt', 'text/html')
+        self.run_command('embedart', '-y', '-u', 'http://example.com/test.txt')
+        mediafile = MediaFile(syspath(item.path))
+        self.assertFalse(mediafile.images)
 
 
 class DummyArtResizer(ArtResizer):
