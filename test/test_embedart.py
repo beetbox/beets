@@ -28,6 +28,7 @@ from beets import config, logging, ui
 from beets.util import syspath, displayable_path
 from beets.util.artresizer import ArtResizer
 from beets import art
+from test.test_art import FetchImageHelper
 
 
 def require_artresizer_compare(test):
@@ -42,7 +43,7 @@ def require_artresizer_compare(test):
     return wrapper
 
 
-class EmbedartCliTest(_common.TestCase, TestHelper):
+class EmbedartCliTest(TestHelper, FetchImageHelper):
 
     small_artpath = os.path.join(_common.RSRC, b'image-2x3.jpg')
     abbey_artpath = os.path.join(_common.RSRC, b'abbey.jpg')
@@ -215,6 +216,40 @@ class EmbedartCliTest(_common.TestCase, TestHelper):
         self.run_command('clearart')
         mediafile = MediaFile(syspath(item.path))
         self.assertEqual(mediafile.images[0].data, self.image_data)
+
+    def test_embed_art_from_url_with_yes_input(self):
+        self._setup_data()
+        album = self.add_album_fixture()
+        item = album.items()[0]
+        self.mock_response('http://example.com/test.jpg', 'image/jpeg')
+        self.io.addinput('y')
+        self.run_command('embedart', '-u', 'http://example.com/test.jpg')
+        mediafile = MediaFile(syspath(item.path))
+        self.assertEqual(
+            mediafile.images[0].data,
+            self.IMAGEHEADER.get('image/jpeg').ljust(32, b'\x00')
+        )
+
+    def test_embed_art_from_url_png(self):
+        self._setup_data()
+        album = self.add_album_fixture()
+        item = album.items()[0]
+        self.mock_response('http://example.com/test.png', 'image/png')
+        self.run_command('embedart', '-y', '-u', 'http://example.com/test.png')
+        mediafile = MediaFile(syspath(item.path))
+        self.assertEqual(
+            mediafile.images[0].data,
+            self.IMAGEHEADER.get('image/png').ljust(32, b'\x00')
+        )
+
+    def test_embed_art_from_url_not_image(self):
+        self._setup_data()
+        album = self.add_album_fixture()
+        item = album.items()[0]
+        self.mock_response('http://example.com/test.html', 'text/html')
+        self.run_command('embedart', '-y', '-u', 'http://example.com/test.txt')
+        mediafile = MediaFile(syspath(item.path))
+        self.assertFalse(mediafile.images)
 
 
 class DummyArtResizer(ArtResizer):
