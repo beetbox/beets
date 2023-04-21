@@ -65,8 +65,8 @@ conversion. There is one caveat though: A list generated on Unix/macOS can't be
 read on Windows and vice versa.
 
 Depending on the beets user's settings a generated playlist potentially could
-contain unicode characters. This is supported, playlists are written in [m3u8
-format](https://en.wikipedia.org/wiki/M3U#M3U8).
+contain unicode characters. This is supported, playlists are written in `M3U8
+format`_.
 
 Configuration
 -------------
@@ -225,3 +225,4 @@ options and a thorough discussion of MP3 encoding.
 .. _HydrogenAudio wiki: https://wiki.hydrogenaud.io/index.php?title=LAME
 .. _gapless: https://wiki.hydrogenaud.io/index.php?title=Gapless_playback
 .. _LAME: https://lame.sourceforge.io/index.php
+.. _M3U8 format: https://en.wikipedia.org/wiki/M3U#M3U8
