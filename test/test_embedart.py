@@ -88,6 +88,18 @@ class EmbedartCliTest(TestHelper, FetchImageHelper):
             self.IMAGEHEADER.get('image/jpeg').ljust(32, b'\x00')
         )
 
+    def test_embed_art_png_from_file_with_yes_input(self):
+        self._setup_data()
+        album = self.add_album_fixture()
+        item = album.items()[0]
+        self.mock_response('http://example.com/test.png', 'image/png')
+        self.io.addinput('y')
+        self.run_command('embedart', '-u', 'http://example.com/test.png')
+        mediafile = MediaFile(syspath(item.path))
+        self.assertEqual(
+            mediafile.images[0].data,
+            self.IMAGEHEADER.get('image/png').ljust(32, b'\x00'))
+
     def test_embed_art_from_file_with_no_input(self):
         self._setup_data()
         album = self.add_album_fixture()
