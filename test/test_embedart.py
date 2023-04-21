@@ -246,7 +246,7 @@ class EmbedartCliTest(TestHelper, FetchImageHelper):
         self._setup_data()
         album = self.add_album_fixture()
         item = album.items()[0]
-        self.mock_response('http://example.com/test.txt', 'text/html')
+        self.mock_response('http://example.com/test.html', 'text/html')
         self.run_command('embedart', '-y', '-u', 'http://example.com/test.txt')
         mediafile = MediaFile(syspath(item.path))
         self.assertFalse(mediafile.images)
