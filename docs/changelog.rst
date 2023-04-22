@@ -13,10 +13,12 @@ New features:
 
 * Added support for ``artists`` and ``albumartists`` multi tags
   :bug:`505`
+* Added option to specify a URL in the `embedart` plugin.
+  :bug:`83`
 * :ref:`list-cmd` `singleton:true` queries have been made faster
 * :ref:`list-cmd` `singleton:1` and `singleton:0` can now alternatively be used in queries, same as `comp`
 * --from-logfile now parses log files using a UTF-8 encoding in `beets/beets/ui/commands.py`.
-  :bug:`4693` 
+  :bug:`4693`
 * :doc:`/plugins/bareasc` lookups have been made faster
 * :ref:`list-cmd` lookups using the pattern operator `::` have been made faster
 * Added additional error handling for `spotify` plugin.
@@ -173,6 +175,9 @@ Bug fixes:
   library**. Following the instructions `described here
   <https://github.com/beetbox/beets/pull/4582#issuecomment-1445023493>`_, a
   sanity check and potential fix is easily possible. :bug:`4528`
+* Fix updating "data_source" on re-imports and improve logging when flexible
+  attributes are being re-imported.
+  :bug:`4726`
 
 For packagers:
 

@@ -139,7 +139,8 @@ class AutotagStub:
             va=False,
             album_id='albumid' + id,
             artist_id='artistid' + id,
-            albumtype='soundtrack'
+            albumtype='soundtrack',
+            data_source='match_source'
         )
 
 
@@ -1770,6 +1771,7 @@ class ReimportTest(unittest.TestCase, ImportHelper, _common.Assertions):
         album = self.add_album_fixture()
         album.added = 4242.0
         album.foo = 'bar'  # Some flexible attribute.
+        album.data_source = 'original_source'
         album.store()
         item = album.items().get()
         item.baz = 'qux'
@@ -1850,6 +1852,12 @@ class ReimportTest(unittest.TestCase, ImportHelper, _common.Assertions):
         self.assertExists(new_artpath)
         if new_artpath != old_artpath:
             self.assertNotExists(old_artpath)
+
+    def test_reimported_album_not_preserves_flexattr(self):
+        self._setup_session()
+        self.assertEqual(self._album().data_source, 'original_source')
+        self.importer.run()
+        self.assertEqual(self._album().data_source, 'match_source')
 
 
 class ImportPretendTest(_common.TestCase, ImportHelper):
