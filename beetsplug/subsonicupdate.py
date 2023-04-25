@@ -53,7 +53,14 @@ class SubsonicUpdate(BeetsPlugin):
             'auth': 'token',
         })
         config['subsonic']['pass'].redact = True
-        self.register_listener('import', self.start_scan)
+        self.register_listener('database_change', self.db_change)
+        self.register_listener('smartplaylist_update', self.spl_update)
+
+    def db_change(self, lib, model):
+        self.register_listener('cli_exit', self.start_scan)
+
+    def spl_update(self):
+        self.register_listener('cli_exit', self.start_scan)
 
     @staticmethod
     def __create_token():
