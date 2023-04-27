@@ -20,6 +20,7 @@ import os
 import re
 from tempfile import NamedTemporaryFile
 from collections import OrderedDict
+from bs4 import BeautifulSoup
 
 import requests
 
@@ -893,11 +894,37 @@ class LastFM(RemoteArtSource):
                             .format(response.text))
             return
 
+
+class Spotify(RemoteArtSource):
+    NAME = "Spotify"
+
+    SPOTIFY_ALBUM_URL = 'https://open.spotify.com/album/'
+
+    def get(self, album, plugin, paths):
+        if not len(album.mb_albumid) == 22 and \
+           not album.data_source == 'Spotify':
+            return
+        URL = self.SPOTIFY_ALBUM_URL + album.mb_albumid
+        try:
+            response = requests.get(URL)
+        except requests.RequestException:
+            self._log.debug('Spotify: error receiving response')
+            return
+        try:
+            html = response.text
+            soup = BeautifulSoup(html, 'html.parser')
+            image_url = soup.find('meta',
+                                  attrs={'property': 'og:image'})['content']
+            yield self._candidate(url=image_url,
+                                  match=Candidate.MATCH_EXACT)
+        except ValueError:
+            self._log.debug('Spotify: error loading response: {}'
+                            .format(response.text))
+            return
 # Try each source in turn.
 
-SOURCES_ALL = ['filesystem',
-               'coverart', 'itunes', 'amazon', 'albumart',
-               'wikipedia', 'google', 'fanarttv', 'lastfm']
+SOURCES_ALL = ['filesystem', 'coverart', 'itunes', 'amazon', 'albumart',
+               'wikipedia', 'google', 'fanarttv', 'lastfm', 'spotify']
 
 ART_SOURCES = {
     'filesystem': FileSystem,
@@ -909,6 +936,7 @@ ART_SOURCES = {
     'google': GoogleImages,
     'fanarttv': FanartTV,
     'lastfm': LastFM,
+    'spotify': Spotify,
 }
 SOURCE_NAMES = {v: k for k, v in ART_SOURCES.items()}
 
