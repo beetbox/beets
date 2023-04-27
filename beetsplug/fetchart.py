@@ -904,9 +904,9 @@ class Spotify(RemoteArtSource):
         if not len(album.mb_albumid) == 22 and \
            not album.data_source == 'Spotify':
             return
-        URL = self.SPOTIFY_ALBUM_URL + album.mb_albumid
+        url = self.SPOTIFY_ALBUM_URL + album.mb_albumid
         try:
-            response = requests.get(URL)
+            response = requests.get(url)
         except requests.RequestException:
             self._log.debug('Spotify: error receiving response')
             return
