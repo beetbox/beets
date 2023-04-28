@@ -1028,7 +1028,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             available_sources.remove('lastfm')
         if not HAS_BEAUTIFUL_SOUP and \
                 'spotify' in available_sources:
-            self._log.debug('To use Spotify as a album art source, '
+            self._log.debug('To use Spotify as an album art source, '
                             'you must install the beautifulsoup4 module. See '
                             'the documentation for further details.')
             available_sources.remove('spotify')
