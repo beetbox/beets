@@ -11,6 +11,7 @@ for Python 3.6).
 
 New features:
 
+* :doc:`/plugins/fetchart`: The plugin can now get album art from `spotify`.
 * Added option to specify a URL in the `embedart` plugin.
   :bug:`83`
 * :ref:`list-cmd` `singleton:true` queries have been made faster
