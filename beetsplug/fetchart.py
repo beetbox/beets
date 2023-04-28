@@ -906,7 +906,7 @@ class Spotify(RemoteArtSource):
         try:
             response = requests.get(url)
             response.raise_for_status()
-        except requests.exceptions.HTTPError as e:
+        except requests.RequestException as e:
             self._log.debug("Error: " + str(e))
             return
         try:
