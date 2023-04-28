@@ -15,25 +15,26 @@
 """Fetches album art.
 """
 
-from contextlib import closing
 import os
 import re
-from tempfile import NamedTemporaryFile
 from collections import OrderedDict
-from bs4 import BeautifulSoup
+from contextlib import closing
+from tempfile import NamedTemporaryFile
 
-import requests
-
-from beets import plugins
-from beets import importer
-from beets import ui
-from beets import util
-from beets import config
-from mediafile import image_mime_type
-from beets.util.artresizer import ArtResizer
-from beets.util import sorted_walk
-from beets.util import syspath, bytestring_path, py3_path
 import confuse
+import requests
+from mediafile import image_mime_type
+
+from beets import config, importer, plugins, ui, util
+from beets.util import bytestring_path, py3_path, sorted_walk, syspath
+from beets.util.artresizer import ArtResizer
+
+try:
+    from bs4 import BeautifulSoup
+    HAS_BEAUTIFUL_SOUP = True
+except ImportError:
+    HAS_BEAUTIFUL_SOUP = False
+
 
 CONTENT_TYPES = {
     'image/jpeg': [b'jpg', b'jpeg'],
@@ -1025,6 +1026,12 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         if not self.config['lastfm_key'].get() and \
                 'lastfm' in available_sources:
             available_sources.remove('lastfm')
+        if not HAS_BEAUTIFUL_SOUP and \
+                'spotify' in available_sources:
+            self._log.debug('To use Spotify as a album art source, '
+                            'you must install the beautifulsoup4 module. See '
+                            'the documentation for further details.')
+            available_sources.remove('spotify')
         available_sources = [(s, c)
                              for s in available_sources
                              for c in ART_SOURCES[s].VALID_MATCHING_CRITERIA]
