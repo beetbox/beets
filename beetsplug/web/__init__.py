@@ -265,6 +265,7 @@ class QueryConverter(PathConverter):
 
 
 class EverythingConverter(PathConverter):
+    part_isolating = False
     regex = '.*?'
 
 
