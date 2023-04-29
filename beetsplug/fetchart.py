@@ -837,7 +837,7 @@ class CoverArtUrl(RemoteArtSource):
 
     def get(self, album, plugin, paths):
         try:
-            url = album.item().get().cover_art_url
+            url = album.items().get().cover_art_url
             print(url)
         except ValueError:
             self._log.debug('Cover art URL not found for {0}', album)
