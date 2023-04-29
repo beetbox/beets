@@ -836,31 +836,17 @@ class CoverArtUrl(RemoteArtSource):
     NAME = "Cover Art URL"
 
     def get(self, album, plugin, paths):
+        image_url = None
         try:
-            url = album.items().get().cover_art_url
+            image_url = album.items().get().cover_art_url
         except ValueError:
             self._log.debug('Cover art URL not found for {0}', album)
             return
-        try:
-            response = requests.get(url, timeout=5)
-            response.raise_for_status()
-        except requests.RequestException as e:
-            self._log.error("{}".format(e))
+        if image_url:
+            yield self._candidate(url=image_url, match=Candidate.MATCH_EXACT)
+        else:
+            self._log.debug('Cover art URL not found for {0}', album)
             return
-        extension = guess_extension(response.headers
-                                    ['Content-Type'])
-        if extension is None:
-            self._log.error('Invalid image file')
-            return
-        file = f'image{extension}'
-        tempimg = os.path.join(tempfile.gettempdir(), file)
-        try:
-            with open(tempimg, 'wb') as f:
-                f.write(response.content)
-        except Exception as e:
-            self._log.error("Unable to save image: {}".format(e))
-            return
-        yield self._candidate(path=tempimg, match=Candidate.MATCH_EXACT)
 
 
 class LastFM(RemoteArtSource):
