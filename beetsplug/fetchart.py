@@ -838,7 +838,6 @@ class CoverArtUrl(RemoteArtSource):
     def get(self, album, plugin, paths):
         try:
             url = album.items().get().cover_art_url
-            print(url)
         except ValueError:
             self._log.debug('Cover art URL not found for {0}', album)
             return
@@ -855,7 +854,6 @@ class CoverArtUrl(RemoteArtSource):
             return
         file = f'image{extension}'
         tempimg = os.path.join(tempfile.gettempdir(), file)
-        print(tempimg)
         try:
             with open(tempimg, 'wb') as f:
                 f.write(response.content)
