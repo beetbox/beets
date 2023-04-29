@@ -926,7 +926,7 @@ class LastFM(RemoteArtSource):
 # Try each source in turn.
 
 SOURCES_ALL = ['filesystem', 'coverart', 'itunes', 'amazon', 'albumart',
-               'wikipedia', 'google', 'fanarttv', 'lastfm']
+               'wikipedia', 'google', 'fanarttv', 'lastfm', 'cover_art_url']
 
 ART_SOURCES = {
     'filesystem': FileSystem,
