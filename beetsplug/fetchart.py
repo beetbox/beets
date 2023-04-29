@@ -15,24 +15,21 @@
 """Fetches album art.
 """
 
-from contextlib import closing
 import os
 import re
-from tempfile import NamedTemporaryFile
+import tempfile
 from collections import OrderedDict
+from contextlib import closing
+from mimetypes import guess_extension
+from tempfile import NamedTemporaryFile
 
-import requests
-
-from beets import plugins
-from beets import importer
-from beets import ui
-from beets import util
-from beets import config
-from mediafile import image_mime_type
-from beets.util.artresizer import ArtResizer
-from beets.util import sorted_walk
-from beets.util import syspath, bytestring_path, py3_path
 import confuse
+import requests
+from mediafile import image_mime_type
+
+from beets import config, importer, plugins, ui, util
+from beets.util import bytestring_path, py3_path, sorted_walk, syspath
+from beets.util.artresizer import ArtResizer
 
 CONTENT_TYPES = {
     'image/jpeg': [b'jpg', b'jpeg'],
@@ -835,6 +832,39 @@ class FileSystem(LocalArtSource):
                                       match=Candidate.MATCH_FALLBACK)
 
 
+class CoverArtUrl(RemoteArtSource):
+    NAME = "Cover Art URL"
+
+    def get(self, album, plugin, paths):
+        try:
+            url = album.cover_art_url
+            print(url)
+        except ValueError:
+            self._log.debug('Cover art URL not found for {0}', album)
+            return
+        try:
+            response = requests.get(url, timeout=5)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            self._log.error("{}".format(e))
+            return
+        extension = guess_extension(response.headers
+                                    ['Content-Type'])
+        if extension is None:
+            self._log.error('Invalid image file')
+            return
+        file = f'image{extension}'
+        tempimg = os.path.join(tempfile.gettempdir(), file)
+        print(tempimg)
+        try:
+            with open(tempimg, 'wb') as f:
+                f.write(response.content)
+        except Exception as e:
+            self._log.error("Unable to save image: {}".format(e))
+            return
+        yield self._candidate(path=tempimg, match=Candidate.MATCH_EXACT)
+
+
 class LastFM(RemoteArtSource):
     NAME = "Last.fm"
 
@@ -895,8 +925,7 @@ class LastFM(RemoteArtSource):
 
 # Try each source in turn.
 
-SOURCES_ALL = ['filesystem',
-               'coverart', 'itunes', 'amazon', 'albumart',
+SOURCES_ALL = ['filesystem', 'coverart', 'itunes', 'amazon', 'albumart',
                'wikipedia', 'google', 'fanarttv', 'lastfm']
 
 ART_SOURCES = {
@@ -909,6 +938,7 @@ ART_SOURCES = {
     'google': GoogleImages,
     'fanarttv': FanartTV,
     'lastfm': LastFM,
+    'cover_art_url': CoverArtUrl,
 }
 SOURCE_NAMES = {v: k for k, v in ART_SOURCES.items()}
 
@@ -935,8 +965,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'enforce_ratio': False,
             'cautious': False,
             'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
-            'sources': ['filesystem',
-                        'coverart', 'itunes', 'amazon', 'albumart'],
+            'sources': ['filesystem', 'coverart', 'itunes', 'amazon',
+                        'albumart', 'cover_art_url'],
             'google_key': None,
             'google_engine': '001442825323518660753:hrh5ch1gjzm',
             'fanarttv_key': None,
