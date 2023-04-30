@@ -254,6 +254,10 @@ class ArtSource(RequestMixin):
         self._config = config
         self.match_by = match_by or self.VALID_MATCHING_CRITERIA
 
+    @staticmethod
+    def add_default_config(config):
+        pass
+
     @classmethod
     def available(cls, log, config):
         """Return whether or not all dependencies are met and the art source is
@@ -473,6 +477,14 @@ class GoogleImages(RemoteArtSource):
         self.key = self._config['google_key'].get(),
         self.cx = self._config['google_engine'].get(),
 
+    @staticmethod
+    def add_default_config(config):
+        config.add({
+            'google_key': None,
+            'google_engine': '001442825323518660753:hrh5ch1gjzm',
+        })
+        config['google_key'].redact = True
+
     @classmethod
     def available(cls, log, config):
         has_key = bool(config['google_key'].get())
@@ -528,6 +540,13 @@ class FanartTV(RemoteArtSource):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.client_key = self._config['fanarttv_key'].get()
+
+    @staticmethod
+    def add_default_config(config):
+        config.add({
+            'fanarttv_key': None,
+        })
+        config['fanarttv_key'].redact = True
 
     def get(self, album, plugin, paths):
         if not album.mb_releasegroupid:
@@ -869,6 +888,13 @@ class LastFM(RemoteArtSource):
         super().__init__(*args, **kwargs)
         self.key = self._config['lastfm_key'].get(),
 
+    @staticmethod
+    def add_default_config(config):
+        config.add({
+            'lastfm_key': None,
+        })
+        config['lastfm_key'].redact = True
+
     @classmethod
     def available(cls, log, config):
         has_key = bool(config['lastfm_key'].get())
@@ -990,18 +1016,13 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
             'sources': ['filesystem',
                         'coverart', 'itunes', 'amazon', 'albumart'],
-            'google_key': None,
-            'google_engine': '001442825323518660753:hrh5ch1gjzm',
-            'fanarttv_key': None,
-            'lastfm_key': None,
             'store_source': False,
             'high_resolution': False,
             'deinterlace': False,
             'cover_format': None,
         })
-        self.config['google_key'].redact = True
-        self.config['fanarttv_key'].redact = True
-        self.config['lastfm_key'].redact = True
+        for source in ART_SOURCES.values():
+            source.add_default_config(self.config)
 
         self.minwidth = self.config['minwidth'].get(int)
         self.maxwidth = self.config['maxwidth'].get(int)
