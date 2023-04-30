@@ -17,10 +17,8 @@
 
 import os
 import re
-import tempfile
 from collections import OrderedDict
 from contextlib import closing
-from mimetypes import guess_extension
 from tempfile import NamedTemporaryFile
 
 import confuse
@@ -30,6 +28,13 @@ from mediafile import image_mime_type
 from beets import config, importer, plugins, ui, util
 from beets.util import bytestring_path, py3_path, sorted_walk, syspath
 from beets.util.artresizer import ArtResizer
+
+try:
+    from bs4 import BeautifulSoup
+    HAS_BEAUTIFUL_SOUP = True
+except ImportError:
+    HAS_BEAUTIFUL_SOUP = False
+
 
 CONTENT_TYPES = {
     'image/jpeg': [b'jpg', b'jpeg'],
@@ -907,10 +912,35 @@ class LastFM(RemoteArtSource):
                             .format(response.text))
             return
 
+
+class Spotify(RemoteArtSource):
+    NAME = "Spotify"
+
+    SPOTIFY_ALBUM_URL = 'https://open.spotify.com/album/'
+
+    def get(self, album, plugin, paths):
+        url = self.SPOTIFY_ALBUM_URL + album.mb_albumid
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            self._log.debug("Error: " + str(e))
+            return
+        try:
+            html = response.text
+            soup = BeautifulSoup(html, 'html.parser')
+            image_url = soup.find('meta',
+                                  attrs={'property': 'og:image'})['content']
+            yield self._candidate(url=image_url,
+                                  match=Candidate.MATCH_EXACT)
+        except ValueError:
+            self._log.debug('Spotify: error loading response: {}'
+                            .format(response.text))
+            return
 # Try each source in turn.
 
 SOURCES_ALL = ['filesystem', 'coverart', 'itunes', 'amazon', 'albumart',
-               'wikipedia', 'google', 'fanarttv', 'lastfm', 'cover_art_url']
+               'spotify', 'wikipedia', 'google', 'fanarttv', 'lastfm', 'cover_art_url']
 
 ART_SOURCES = {
     'filesystem': FileSystem,
@@ -923,6 +953,7 @@ ART_SOURCES = {
     'fanarttv': FanartTV,
     'lastfm': LastFM,
     'cover_art_url': CoverArtUrl,
+    'spotify': Spotify,
 }
 SOURCE_NAMES = {v: k for k, v in ART_SOURCES.items()}
 
@@ -1011,6 +1042,12 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         if not self.config['lastfm_key'].get() and \
                 'lastfm' in available_sources:
             available_sources.remove('lastfm')
+        if not HAS_BEAUTIFUL_SOUP and \
+                'spotify' in available_sources:
+            self._log.debug('To use Spotify as an album art source, '
+                            'you must install the beautifulsoup4 module. See '
+                            'the documentation for further details.')
+            available_sources.remove('spotify')
         available_sources = [(s, c)
                              for s in available_sources
                              for c in ART_SOURCES[s].VALID_MATCHING_CRITERIA]
