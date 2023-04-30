@@ -135,7 +135,7 @@ setup(
 
         # Plugin (optional) dependencies:
         'absubmit': ['requests'],
-        'fetchart': ['requests', 'Pillow'],
+        'fetchart': ['requests', 'Pillow', 'beautifulsoup4'],
         'embedart': ['Pillow'],
         'embyupdate': ['requests'],
         'chroma': ['pyacoustid'],
