@@ -23,11 +23,10 @@ from tempfile import NamedTemporaryFile
 
 import confuse
 import requests
-from mediafile import image_mime_type
-
 from beets import config, importer, plugins, ui, util
 from beets.util import bytestring_path, py3_path, sorted_walk, syspath
 from beets.util.artresizer import ArtResizer
+from mediafile import image_mime_type
 
 try:
     from bs4 import BeautifulSoup
@@ -837,23 +836,6 @@ class FileSystem(LocalArtSource):
                                       match=Candidate.MATCH_FALLBACK)
 
 
-class CoverArtUrl(RemoteArtSource):
-    NAME = "Cover Art URL"
-
-    def get(self, album, plugin, paths):
-        image_url = None
-        try:
-            image_url = album.items().get().cover_art_url
-        except AttributeError:
-            self._log.debug('Cover art URL not found for {0}', album)
-            return
-        if image_url:
-            yield self._candidate(url=image_url, match=Candidate.MATCH_EXACT)
-        else:
-            self._log.debug('Cover art URL not found for {0}', album)
-            return
-
-
 class LastFM(RemoteArtSource):
     NAME = "Last.fm"
 
@@ -937,6 +919,25 @@ class Spotify(RemoteArtSource):
             self._log.debug('Spotify: error loading response: {}'
                             .format(response.text))
             return
+
+
+class CoverArtUrl(RemoteArtSource):
+    NAME = "Cover Art URL"
+
+    def get(self, album, plugin, paths):
+        image_url = None
+        try:
+            image_url = album.items().get().cover_art_url
+        except AttributeError:
+            self._log.debug('Cover art URL not found for {0}', album)
+            return
+        if image_url:
+            yield self._candidate(url=image_url, match=Candidate.MATCH_EXACT)
+        else:
+            self._log.debug('Cover art URL not found for {0}', album)
+            return
+
+
 # Try each source in turn.
 
 SOURCES_ALL = ['filesystem', 'coverart', 'itunes', 'amazon', 'albumart',
@@ -952,8 +953,8 @@ ART_SOURCES = {
     'google': GoogleImages,
     'fanarttv': FanartTV,
     'lastfm': LastFM,
-    'cover_art_url': CoverArtUrl,
     'spotify': Spotify,
+    'cover_art_url': CoverArtUrl,
 }
 SOURCE_NAMES = {v: k for k, v in ART_SOURCES.items()}
 
