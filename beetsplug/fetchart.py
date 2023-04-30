@@ -254,6 +254,13 @@ class ArtSource(RequestMixin):
         self._config = config
         self.match_by = match_by or self.VALID_MATCHING_CRITERIA
 
+    @classmethod
+    def available(cls, log, config):
+        """Return whether or not all dependencies are met and the art source is
+        in fact usable.
+        """
+        return True
+
     def get(self, album, plugin, paths):
         raise NotImplementedError()
 
@@ -465,6 +472,13 @@ class GoogleImages(RemoteArtSource):
         super().__init__(*args, **kwargs)
         self.key = self._config['google_key'].get(),
         self.cx = self._config['google_engine'].get(),
+
+    @classmethod
+    def available(cls, log, config):
+        has_key = bool(config['google_key'].get())
+        if not has_key:
+            log.debug("google: Disabling art source due to missing key")
+        return has_key
 
     def get(self, album, plugin, paths):
         """Return art URL from google custom search engine
@@ -855,6 +869,13 @@ class LastFM(RemoteArtSource):
         super().__init__(*args, **kwargs)
         self.key = self._config['lastfm_key'].get(),
 
+    @classmethod
+    def available(cls, log, config):
+        has_key = bool(config['lastfm_key'].get())
+        if not has_key:
+            log.debug("lastfm: Disabling art source due to missing key")
+        return has_key
+
     def get(self, album, plugin, paths):
         if not album.mb_albumid:
             return
@@ -901,6 +922,14 @@ class Spotify(RemoteArtSource):
 
     SPOTIFY_ALBUM_URL = 'https://open.spotify.com/album/'
 
+    @classmethod
+    def available(cls, log, config):
+        if not HAS_BEAUTIFUL_SOUP:
+            log.debug('To use Spotify as an album art source, '
+                      'you must install the beautifulsoup4 module. See '
+                      'the documentation for further details.')
+        return HAS_BEAUTIFUL_SOUP
+
     def get(self, album, plugin, paths):
         url = self.SPOTIFY_ALBUM_URL + album.mb_albumid
         try:
@@ -921,9 +950,6 @@ class Spotify(RemoteArtSource):
                             .format(response.text))
             return
 # Try each source in turn.
-
-SOURCES_ALL = ['filesystem', 'coverart', 'itunes', 'amazon', 'albumart',
-               'wikipedia', 'google', 'fanarttv', 'lastfm', 'spotify']
 
 ART_SOURCES = {
     'filesystem': FileSystem,
@@ -1017,22 +1043,10 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             self.import_stages = [self.fetch_art]
             self.register_listener('import_task_files', self.assign_art)
 
-        available_sources = list(SOURCES_ALL)
-        if not self.config['google_key'].get() and \
-                'google' in available_sources:
-            available_sources.remove('google')
-        if not self.config['lastfm_key'].get() and \
-                'lastfm' in available_sources:
-            available_sources.remove('lastfm')
-        if not HAS_BEAUTIFUL_SOUP and \
-                'spotify' in available_sources:
-            self._log.debug('To use Spotify as an album art source, '
-                            'you must install the beautifulsoup4 module. See '
-                            'the documentation for further details.')
-            available_sources.remove('spotify')
-        available_sources = [(s, c)
-                             for s in available_sources
-                             for c in ART_SOURCES[s].VALID_MATCHING_CRITERIA]
+        available_sources = [(s_name, c)
+                             for (s_name, s_cls) in ART_SOURCES.items()
+                             if s_cls.available(self._log, self.config)
+                             for c in s_cls.VALID_MATCHING_CRITERIA]
         sources = plugins.sanitize_pairs(
             self.config['sources'].as_pairs(default_value='*'),
             available_sources)
