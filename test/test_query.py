@@ -104,6 +104,8 @@ class DummyDataTestCase(_common.TestCase, AssertsMixin):
         items[1].year = 2002
         items[1].comp = True
         items[1].genre = 'Rock'
+        items[1].flex_attr = 'something'
+        items[1].another_flex_attr = 'else'
         items[2].title = 'beets 4 eva'
         items[2].artist = 'three'
         items[2].album = 'foo'
@@ -113,6 +115,8 @@ class DummyDataTestCase(_common.TestCase, AssertsMixin):
         for item in items:
             self.lib.add(item)
         self.album = self.lib.add_album(items[:2])
+        self.album.artpath = 'some_art_path'
+        self.album.store()
 
     def assert_items_matched_all(self, results):
         self.assert_items_matched(results, [
@@ -479,7 +483,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         self.assert_items_matched(results, ['path item'])
 
         results = self.lib.albums(q)
-        self.assert_albums_matched(results, [])
+        self.assert_albums_matched(results, ['path album'])
 
     # FIXME: fails on windows
     @unittest.skipIf(sys.platform == 'win32', 'win32')
@@ -561,6 +565,9 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         q = 'path::c\\.mp3$'
         results = self.lib.items(q)
         self.assert_items_matched(results, ['path item'])
+
+        results = self.lib.albums(q)
+        self.assert_albums_matched(results, ['path album'])
 
     def test_path_album_regex(self):
         q = 'path::b'
@@ -806,17 +813,17 @@ class NoneQueryTest(unittest.TestCase, TestHelper):
 
     def test_match_slow(self):
         item = self.add_item()
-        matched = self.lib.items(NoneQuery('rg_track_peak', fast=False))
+        matched = self.lib.items(NoneQuery('rg_track_peak'))
         self.assertInResult(item, matched)
 
     def test_match_slow_after_set_none(self):
         item = self.add_item(rg_track_gain=0)
-        matched = self.lib.items(NoneQuery('rg_track_gain', fast=False))
+        matched = self.lib.items(NoneQuery('rg_track_gain'))
         self.assertNotInResult(item, matched)
 
         item['rg_track_gain'] = None
         item.store()
-        matched = self.lib.items(NoneQuery('rg_track_gain', fast=False))
+        matched = self.lib.items(NoneQuery('rg_track_gain'))
         self.assertInResult(item, matched)
 
 
@@ -1036,32 +1043,28 @@ class NotQueryTest(DummyDataTestCase):
         results = self.lib.items(q)
         self.assert_items_matched(results, ['baz qux'])
 
-    def test_fast_vs_slow(self):
-        """Test that the results are the same regardless of the `fast` flag
-        for negated `FieldQuery`s.
 
-        TODO: investigate NoneQuery(fast=False), as it is raising
-        AttributeError: type object 'NoneQuery' has no attribute 'field'
-        at NoneQuery.match() (due to being @classmethod, and no self?)
-        """
-        classes = [(dbcore.query.DateQuery, ['added', '2001-01-01']),
-                   (dbcore.query.MatchQuery, ['artist', 'one']),
-                   # (dbcore.query.NoneQuery, ['rg_track_gain']),
-                   (dbcore.query.NumericQuery, ['year', '2002']),
-                   (dbcore.query.StringFieldQuery, ['year', '2001']),
-                   (dbcore.query.RegexpQuery, ['album', '^.a']),
-                   (dbcore.query.SubstringQuery, ['title', 'x'])]
+class RelatedQueries(TestHelper, DummyDataTestCase):
+    """Test album-level queries with track-level filters and vice-versa."""
+    def test_get_albums_filter_by_track_field(self):
+        q = 'title:bar'
+        results = self.lib.albums(q)
+        self.assert_albums_matched(results, ['baz'])
 
-        for klass, args in classes:
-            q_fast = dbcore.query.NotQuery(klass(*(args + [True])))
-            q_slow = dbcore.query.NotQuery(klass(*(args + [False])))
+    def test_get_items_filter_by_album_field(self):
+        q = 'artpath:some'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ['foo bar', 'baz qux'])
 
-            try:
-                self.assertEqual([i.title for i in self.lib.items(q_fast)],
-                                 [i.title for i in self.lib.items(q_slow)])
-            except NotImplementedError:
-                # ignore classes that do not provide `fast` implementation
-                pass
+    def test_filter_by_flex(self):
+        q = 'flex_attr:some'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ['baz qux'])
+
+    def test_filter_by_many_flex(self):
+        q = 'flex_attr:some another_flex_attr:else'
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ['baz qux'])
 
 
 def suite():

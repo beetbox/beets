@@ -21,6 +21,8 @@ from beets import util
 from datetime import datetime, timedelta
 import unicodedata
 from functools import reduce
+from operator import or_
+from typing import Set, Tuple
 
 
 class ParsingError(ValueError):
@@ -60,6 +62,21 @@ class Query:
     """An abstract class representing a query into the item database.
     """
 
+    @property
+    def fields_info(self) -> Set[Tuple[str, bool]]:
+        """Return a set with (field, fast) tuples."""
+        return set()
+
+    @property
+    def model_fields(self) -> Set[str]:
+        """Return query fields that are (any) model attributes."""
+        return {f for f, fast in self.fields_info if fast}
+
+    @property
+    def flex_fields(self) -> Set[str]:
+        """Return query flexible fields."""
+        return {f for f, fast in self.fields_info if not fast}
+
     def clause(self):
         """Generate an SQLite expression implementing the query.
 
@@ -92,21 +109,50 @@ class FieldQuery(Query):
     string. Subclasses may also provide `col_clause` to implement the
     same matching functionality in SQLite.
     """
+    is_number = False
 
     def __init__(self, field, pattern, fast=True):
         self.field = field
         self.pattern = pattern
         self.fast = fast
 
+    @property
+    def fields_info(self) -> Set[Tuple[str, bool]]:
+        return {(self.field, self.fast)}
+
     def col_clause(self):
         return None, ()
 
+    @property
+    def flex_col_clause(self) -> Tuple[str, Tuple]:
+        """Generate the clause for the flexible field.
+
+        We're setting self.field to 'value' just for the clause generation
+        since child classes use it directly. The attribute is afterwards
+        reset back to the original field name. This is very funky but helps
+        to avoid a big refactor at this point.
+
+        Note: 'json_extract_value' returns a string, thus we need to explicitly
+        CAST it to number to ensure that numeric comparisons work.
+
+        TODO: Incorporate a new attribute (@property, probably) named
+        'sql_field' or alike which handles field name for the clause.
+
+        TODO: Define 'flex_attrs [json_str]' as dbcore.db.FLEX_ATTRS_COL_NAME
+        and import it here. To make it possible, we need to ensure that
+        dbcore.db does not import this module (dbcore.query) anymore.
+        """
+        field = self.field
+        self.field = f'json_extract_value("flex_attrs [json_str]", "{field}")'
+        if self.is_number:
+            self.field = f"CAST({self.field} AS number)"
+
+        clause, subvals = self.col_clause()
+        self.field = field
+        return clause, subvals
+
     def clause(self):
-        if self.fast:
-            return self.col_clause()
-        else:
-            # Matching a flexattr. This is a slow query.
-            return None, ()
+        return self.col_clause() if self.fast else self.flex_col_clause
 
     @classmethod
     def value_match(cls, pattern, value):
@@ -246,7 +292,12 @@ class RegexpQuery(StringFieldQuery):
         return pattern.search(cls._normalize(value)) is not None
 
 
-class BooleanQuery(MatchQuery):
+class IntegerQuery(MatchQuery):
+    """A query targetting values with SQLite INTEGER Lite type."""
+    is_number = True
+
+
+class BooleanQuery(IntegerQuery):
     """Matches a boolean field. Pattern should either be a boolean or a
     string reflecting a boolean.
     """
@@ -283,7 +334,7 @@ class BytesQuery(MatchQuery):
         return self.field + " = ?", [self.buf_pattern]
 
 
-class NumericQuery(FieldQuery):
+class NumericQuery(IntegerQuery):
     """Matches numeric fields. A syntax using Ruby-style range ellipses
     (``..``) lets users specify one- or two-sided ranges. For example,
     ``year:2001..`` finds music released since the turn of the century.
@@ -363,6 +414,10 @@ class CollectionQuery(Query):
     def __init__(self, subqueries=()):
         self.subqueries = subqueries
 
+    @property
+    def fields_info(self) -> Set[Tuple[str, bool]]:
+        return reduce(or_, (sq.fields_info for sq in self.subqueries))
+
     # Act like a sequence.
 
     def __len__(self):
@@ -422,6 +477,10 @@ class AnyFieldQuery(CollectionQuery):
         for field in self.fields:
             subqueries.append(cls(field, pattern, True))
         super().__init__(subqueries)
+
+    @property
+    def fields_info(self) -> Set[Tuple[str, bool]]:
+        return {(f, True) for f in self.fields}
 
     def clause(self):
         return self.clause_with_joiner('or')
@@ -483,6 +542,10 @@ class NotQuery(Query):
 
     def __init__(self, subquery):
         self.subquery = subquery
+
+    @property
+    def fields_info(self) -> Set[Tuple[str, bool]]:
+        return self.subquery.fields_info
 
     def clause(self):
         clause, subvals = self.subquery.clause()
@@ -686,7 +749,7 @@ class DateInterval:
         return f'[{self.start}, {self.end})'
 
 
-class DateQuery(FieldQuery):
+class DateQuery(IntegerQuery, FieldQuery):
     """Matches date fields stored as seconds since Unix epoch time.
 
     Dates can be specified as ``year-month-day`` strings where only year

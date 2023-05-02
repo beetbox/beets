@@ -15,10 +15,12 @@
 """The central Model and Database constructs for DBCore.
 """
 
+import json
 import time
 import os
 import re
 from collections import defaultdict
+from typing import Optional
 import threading
 import sqlite3
 import contextlib
@@ -29,8 +31,13 @@ import beets
 from beets.util import functemplate
 from beets.util import py3_path
 from beets.dbcore import types
-from .query import MatchQuery, NullSort, TrueQuery, AndQuery
+from .query import MatchQuery, NullSort, TrueQuery
 from collections.abc import Mapping
+
+DEBUG = bool(os.getenv("DEBUG"))
+
+# convert data under 'json_str' type name to Python dictionary automatically
+sqlite3.register_converter("json_str", json.loads)
 
 
 class DBAccessError(Exception):
@@ -231,6 +238,10 @@ class Model:
 
     _flex_table = None
     """The flex field SQLite table name.
+    """
+
+    _relation_join = ""
+    """Join the relevant relation for filtering.
     """
 
     _fields = {}
@@ -643,25 +654,6 @@ class Model:
         """
         self[key] = self._parse(key, string)
 
-    # Convenient queries.
-
-    @classmethod
-    def field_query(cls, field, pattern, query_cls=MatchQuery):
-        """Get a `FieldQuery` for this model."""
-        return query_cls(field, pattern, field in cls._fields)
-
-    @classmethod
-    def all_fields_query(cls, pats, query_cls=MatchQuery):
-        """Get a query that matches many fields with different patterns.
-
-        `pats` should be a mapping from field names to patterns. The
-        resulting query is a conjunction ("and") of per-field queries
-        for all of these field/pattern pairs.
-        """
-        subqueries = [cls.field_query(k, v, query_cls)
-                      for k, v in pats.items()]
-        return AndQuery(subqueries)
-
 
 # Database controller and supporting interfaces.
 
@@ -670,8 +662,7 @@ class Results:
     constructs LibModel objects that reflect database rows.
     """
 
-    def __init__(self, model_class, rows, db, flex_rows,
-                 query=None, sort=None):
+    def __init__(self, model_class, rows, db, sort=None):
         """Create a result set that will construct objects of type
         `model_class`.
 
@@ -679,9 +670,7 @@ class Results:
         constructed. `rows` is a query result: a list of mappings. The
         new objects will be associated with the database `db`.
 
-        If `query` is provided, it is used as a predicate to filter the
-        results for a "slow query" that cannot be evaluated by the
-        database directly. If `sort` is provided, it is used to sort the
+        If `sort` is provided, it is used to sort the
         full list of results before returning. This means it is a "slow
         sort" and all objects must be built before returning the first
         one.
@@ -689,9 +678,7 @@ class Results:
         self.model_class = model_class
         self.rows = rows
         self.db = db
-        self.query = query
         self.sort = sort
-        self.flex_rows = flex_rows
 
         # We keep a queue of rows we haven't yet consumed for
         # materialization. We preserve the original total number of
@@ -713,10 +700,6 @@ class Results:
         a `Results` object a second time should be much faster than the
         first.
         """
-
-        # Index flexible attributes by the item ID, so we have easier access
-        flex_attrs = self._get_indexed_flex_attrs()
-
         index = 0  # Position in the materialized objects.
         while index < len(self._objects) or self._rows:
             # Are there previously-materialized objects to produce?
@@ -729,14 +712,11 @@ class Results:
             else:
                 while self._rows:
                     row = self._rows.pop(0)
-                    obj = self._make_model(row, flex_attrs.get(row['id'], {}))
-                    # If there is a slow-query predicate, ensurer that the
-                    # object passes it.
-                    if not self.query or self.query.match(obj):
-                        self._objects.append(obj)
-                        index += 1
-                        yield obj
-                        break
+                    obj = self._make_model(row)
+                    self._objects.append(obj)
+                    index += 1
+                    yield obj
+                    break
 
     def __iter__(self):
         """Construct and generate Model objects for all matching
@@ -751,24 +731,11 @@ class Results:
             # Objects are pre-sorted (i.e., by the database).
             return self._get_objects()
 
-    def _get_indexed_flex_attrs(self):
-        """ Index flexible attributes by the entity id they belong to
-        """
-        flex_values = {}
-        for row in self.flex_rows:
-            if row['entity_id'] not in flex_values:
-                flex_values[row['entity_id']] = {}
-
-            flex_values[row['entity_id']][row['key']] = row['value']
-
-        return flex_values
-
-    def _make_model(self, row, flex_values={}):
+    def _make_model(self, row):
         """ Create a Model object for the given row
         """
-        cols = dict(row)
-        values = {k: v for (k, v) in cols.items()
-                  if not k[:4] == 'flex'}
+        values = dict(row)
+        flex_values = values.pop("flex_attrs") or {}
 
         # Construct the Python object
         obj = self.model_class._awaken(self.db, values, flex_values)
@@ -780,16 +747,8 @@ class Results:
         if not self._rows:
             # Fully materialized. Just count the objects.
             return len(self._objects)
-
-        elif self.query:
-            # A slow query. Fall back to testing every object.
-            count = 0
-            for obj in self:
-                count += 1
-            return count
-
         else:
-            # A fast query. Just count the rows.
+            # Just count the rows.
             return self._row_count
 
     def __nonzero__(self):
@@ -975,7 +934,10 @@ class Database:
         # bytestring paths here on Python 3, so we need to
         # provide a `str` using `py3_path`.
         conn = sqlite3.connect(
-            py3_path(self.path), timeout=self.timeout
+            py3_path(self.path),
+            timeout=self.timeout,
+            # enable type name "col [type]" conversion (`register_converter`)
+            detect_types=sqlite3.PARSE_COLNAMES,
         )
         self.add_functions(conn)
 
@@ -992,12 +954,59 @@ class Database:
 
     def add_functions(self, conn):
         def regexp(value, pattern):
+            if value is None:
+                return value
             if isinstance(value, bytes):
                 value = value.decode()
             return re.search(pattern, str(value)) is not None
 
+        class GroupToJSON:
+            """Re-implementation of the 'json_group_object' SQLite aggregate.
+
+            An aggregate function which accepts two values (key, val) and
+            groups all {key: val} pairs into a single object.
+
+            It is found in the json1 extension which is included in SQLite
+            by default since version 3.38.0 (2022-02-22). To ensure support
+            for older SQLite versions, we add our implementation.
+            It takes a different name to avoid naming conflicts in recent
+            SQLite versions where 'json_group_object' is available.
+
+            Consider the following table
+
+            id  key    val
+            1   plays  "10"
+            1   skips  "20"
+            2   city   "London"
+
+            SELECT id, group_to_json(key, val) GROUP BY id
+                1, '{"plays": "10", "skips": "20"}'
+                2, '{"city": "London"}'
+            """
+
+            def __init__(self):
+                self.flex = {}
+
+            def step(self, field, value):
+                if field:
+                    self.flex[field] = value
+
+            def finalize(self):
+                return json.dumps(self.flex)
+
+        def json_extract_value(json_str: str, key: str) -> Optional[str]:
+            """Simplified take on the 'json_extract' SQLite function.
+
+            The original implementation in SQLite allows traversing objects of
+            any depth. Here, we only ever deal with a flat dictionary, thus
+            we can simplify the implementation to a single 'get' call.
+            """
+            return json.loads(json_str).get(key) if json_str else None
+
         conn.create_function("regexp", 2, regexp)
         conn.create_function("unidecode", 1, unidecode)
+        conn.create_aggregate("group_to_json", 2, GroupToJSON)
+        conn.create_function("json_extract_value", 2, json_extract_value)
 
     def _close(self):
         """Close the all connections to the underlying SQLite database
@@ -1089,6 +1098,14 @@ class Database:
                 """.format(flex_table))
 
     # Querying.
+    @staticmethod
+    def print_query(sql, subvals):
+        """If debugging, replace placeholders and print the query."""
+        if DEBUG:
+            topr = sql
+            for val in subvals:
+                topr = topr.replace("?", str(val), 1)
+            print(topr)
 
     def _fetch(self, model_cls, query=None, sort=None):
         """Fetch the objects of type `model_cls` matching the given
@@ -1101,32 +1118,43 @@ class Database:
         where, subvals = query.clause()
         order_by = sort.order_clause()
 
-        sql = ("SELECT * FROM {} WHERE {} {}").format(
-            model_cls._table,
-            where or '1',
-            f"ORDER BY {order_by}" if order_by else '',
-        )
+        table = model_cls._table
+        _from = table
+        select_fields = [f"{table}.*"]
+        relation_fields = query.model_fields - set(model_cls._fields)
+        if relation_fields:
+            _from = model_cls._relation_join
+            select_fields += relation_fields
 
-        # Fetch flexible attributes for items matching the main query.
-        # Doing the per-item filtering in python is faster than issuing
-        # one query per item to sqlite.
-        flex_sql = ("""
-            SELECT * FROM {} WHERE entity_id IN
-                (SELECT id FROM {} WHERE {});
-            """.format(
-            model_cls._flex_table,
-            model_cls._table,
-            where or '1',
-        )
-        )
+        sql = f"""
+        SELECT
+            {', '.join(select_fields)},
+            "flex_attrs [json_str]"
+        FROM {_from}
+        LEFT JOIN (
+            SELECT
+                entity_id,
+                group_to_json(key, value) AS "flex_attrs [json_str]"
+            FROM {model_cls._flex_table}
+            GROUP BY entity_id
+        ) ON {table}.id = entity_id
+        WHERE {where or 1}
+        GROUP BY {table}.id"""
 
+        if order_by:
+            # the sort field may exist in both 'items' and 'albums' tables
+            # (when they are joined), causing ambiguous column OperationalError
+            # if we try to order directly.
+            # Since the join is required only for filtering, we can filter in
+            # a subquery and order the result, which returns unique fields.
+            sql = f"SELECT * FROM ({sql}\n)\nORDER BY {order_by}"
+
+        self.print_query(sql, subvals)
         with self.transaction() as tx:
             rows = tx.query(sql, subvals)
-            flex_rows = tx.query(flex_sql, subvals)
 
         return Results(
-            model_cls, rows, self, flex_rows,
-            None if where else query,  # Slow query component.
+            model_cls, rows, self,
             sort if sort.is_slow() else None,  # Slow sort component.
         )
 
