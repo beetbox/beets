@@ -986,7 +986,7 @@ class CoverArtUrl(RemoteArtSource):
         image_url = None
         try:
             image_url = album.items().get().cover_art_url
-        except AttributeError:
+        except (AttributeError, TypeError):
             self._log.debug('Cover art URL not found for {0}', album)
             return
         if image_url:
