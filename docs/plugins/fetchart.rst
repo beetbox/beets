@@ -267,7 +267,7 @@ Spotify backend is enabled by default and will update album art if a valid Spoti
 .. _BeautifulSoup: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
 
 Cover Art URL
-'''''''
+'''''''''''''
 
 The `fetchart` plugin can also use a flexible attribute field ``cover_art_url`` where you can manually specify the image URL to be used as cover art. Any custom plugin can use this field to provide the cover art and ``fetchart`` will use it as a source. Just add ``cover_art_url`` to the list of sources in your configuration to enable this source.
 
