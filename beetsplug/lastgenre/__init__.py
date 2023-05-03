@@ -250,7 +250,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
         if genre is None:
             return False
-        if not self.whitelist or genre in self.whitelist:
+        if not self.whitelist or genre.lower() in self.whitelist:
             return True
         return False
 
@@ -315,8 +315,15 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
 
         # Shortcut to existing genre if not forcing.
-        if not self.config["force"] and self._is_allowed(obj.genre):
-            return obj.genre, "keep"
+        if not self.config["force"]:
+            genres = obj.genre.split(", ")
+            keep_allowed = []
+            for g in genres:
+                allowed = self._is_allowed(g)
+                if allowed:
+                    keep_allowed.append(g)
+            if keep_allowed:
+                return ", ".join(keep_allowed), "keep"
 
         # Track genre (for Items only).
         if isinstance(obj, library.Item):
