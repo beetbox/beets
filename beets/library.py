@@ -1385,6 +1385,8 @@ class Album(LibModel):
                 track_updates[key] = self[key]
             elif key not in self:
                 track_deletes.add(key)
+            else:  # Must be a flex attr
+                track_updates[key] = self[key]
 
         with self._db.transaction():
             super().store(fields)
