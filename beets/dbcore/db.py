@@ -975,7 +975,11 @@ class Database:
         # bytestring paths here on Python 3, so we need to
         # provide a `str` using `py3_path`.
         conn = sqlite3.connect(
-            py3_path(self.path), timeout=self.timeout
+            py3_path(self.path),
+            timeout=self.timeout,
+            # We have our own same-thread checks in _connection(), but need to
+            # call conn.close() in _close()
+            check_same_thread=False,
         )
         self.add_functions(conn)
 
@@ -1005,7 +1009,9 @@ class Database:
         unusable; new connections can still be opened on demand.
         """
         with self._shared_map_lock:
-            self._connections.clear()
+            while self._connections:
+                _thread_id, conn = self._connections.popitem()
+                conn.close()
 
     @contextlib.contextmanager
     def _tx_stack(self):
