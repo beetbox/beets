@@ -923,6 +923,11 @@ class Database:
     """
 
     def __init__(self, path, timeout=5.0):
+        if sqlite3.threadsafety == 0:
+            raise RuntimeError(
+                "sqlite3 must be compiled with multi-threading support"
+            )
+
         self.path = path
         self.timeout = timeout
 
