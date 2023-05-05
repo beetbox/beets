@@ -977,6 +977,12 @@ class Spotify(RemoteArtSource):
             return
 # Try each source in turn.
 
+# Note that SOURCES_ALL is redundant (and presently unused). However, we keep
+# it around nn order not break plugins that "register" (a.k.a. monkey-patch)
+# their own fetchart sources.
+SOURCES_ALL = ['filesystem', 'coverart', 'itunes', 'amazon', 'albumart',
+               'wikipedia', 'google', 'fanarttv', 'lastfm', 'spotify']
+
 ART_SOURCES = {
     'filesystem': FileSystem,
     'coverart': CoverArtArchive,
