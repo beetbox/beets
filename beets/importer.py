@@ -830,6 +830,7 @@ class ImportTask(BaseImportTask):
             existing_fields = dict(existing_fields)
             overwritten_fields = [k for k in existing_fields
                                   if k in overwrite_keys
+                                  and new_obj.get(k)
                                   and existing_fields.get(k) != new_obj.get(k)]
             if overwritten_fields:
                 log.debug(

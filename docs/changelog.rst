@@ -13,6 +13,7 @@ New features:
 
 * Added support for ``artists`` and ``albumartists`` multi tags
   :bug:`505`
+* :doc:`/plugins/fetchart`: The plugin can now get album art from `spotify`.
 * Added option to specify a URL in the `embedart` plugin.
   :bug:`83`
 * :ref:`list-cmd` `singleton:true` queries have been made faster
