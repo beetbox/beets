@@ -171,6 +171,7 @@ class MigrationTest(unittest.TestCase):
             'insert into test (field_one, field_two) values (4, 2)'
         )
         old_lib._connection().commit()
+        old_lib._connection().close()
         del old_lib
 
     @classmethod
@@ -190,6 +191,7 @@ class MigrationTest(unittest.TestCase):
         c = new_lib._connection().cursor()
         c.execute("select * from test")
         row = c.fetchone()
+        c.connection.close()
         self.assertEqual(len(row.keys()), len(ModelFixture2._fields))
 
     def test_open_with_new_field_adds_column(self):
@@ -197,6 +199,7 @@ class MigrationTest(unittest.TestCase):
         c = new_lib._connection().cursor()
         c.execute("select * from test")
         row = c.fetchone()
+        c.connection.close()
         self.assertEqual(len(row.keys()), len(ModelFixture3._fields))
 
     def test_open_with_fewer_fields_leaves_untouched(self):
@@ -204,6 +207,7 @@ class MigrationTest(unittest.TestCase):
         c = new_lib._connection().cursor()
         c.execute("select * from test")
         row = c.fetchone()
+        c.connection.close()
         self.assertEqual(len(row.keys()), len(ModelFixture2._fields))
 
     def test_open_with_multiple_new_fields(self):
@@ -211,12 +215,15 @@ class MigrationTest(unittest.TestCase):
         c = new_lib._connection().cursor()
         c.execute("select * from test")
         row = c.fetchone()
+        c.connection.close()
         self.assertEqual(len(row.keys()), len(ModelFixture4._fields))
 
     def test_extra_model_adds_table(self):
         new_lib = DatabaseFixtureTwoModels(self.libfile)
         try:
-            new_lib._connection().execute("select * from another")
+            c = new_lib._connection()
+            c.execute("select * from another")
+            c.close()
         except sqlite3.OperationalError:
             self.fail("select failed")
 
