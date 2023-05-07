@@ -77,12 +77,12 @@ class M3UFileTest(unittest.TestCase):
         self.assertTrue(path.exists(the_playlist_file))
         m3ufile_read = M3UFile(the_playlist_file)
         m3ufile_read.load()
-        self.assertEquals(
+        self.assertEqual(
             m3ufile.media_list[0],
             bytestring_path(
                 path.join('x:\\', 'This', 'is', 'å', 'path', 'to_a_file.mp3'))
         )
-        self.assertEquals(
+        self.assertEqual(
             m3ufile.media_list[1],
             bytestring_path(r"x:\This\is\another\path\tö_a_file.mp3"),
             bytestring_path(path.join(
