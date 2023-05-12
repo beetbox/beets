@@ -977,12 +977,21 @@ class Spotify(RemoteArtSource):
 
 
 class CoverArtUrl(RemoteArtSource):
+    # This source is intended to be used with the plugin that sets the
+    # cover_art_url field on albums or tracks. Users can also manually update
+    # the cover_art_url field using the "set" command. This source will then
+    # use that URL to fetch the image.
+
     NAME = "Cover Art URL"
 
     def get(self, album, plugin, paths):
         image_url = None
         try:
-            image_url = album.items().get().cover_art_url
+            # look for cover_art_url on album or first track
+            if album.cover_art_url:
+                image_url = album.cover_art_url
+            else:
+                image_url = album.items().get().cover_art_url
             self._log.debug(f'Cover art URL {image_url} found for {album}')
         except (AttributeError, TypeError):
             self._log.debug(f'Cover art URL not found for {album}')
