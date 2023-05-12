@@ -977,7 +977,7 @@ class Spotify(RemoteArtSource):
 
 
 class CoverArtUrl(RemoteArtSource):
-    # This source is intended to be used with the plugin that sets the
+    # This source is intended to be used with a plugin that sets the
     # cover_art_url field on albums or tracks. Users can also manually update
     # the cover_art_url field using the "set" command. This source will then
     # use that URL to fetch the image.
