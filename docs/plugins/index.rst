@@ -461,7 +461,7 @@ Here are a few of the plugins written by the beets community:
    metadata.
 
 `beets-jiosaavn`_
-   Adds JioSaavn.com as a tagger data source..
+   Adds JioSaavn.com as a tagger data source.
 
 `beets-mosaic`_
    Generates a montage of a mosaic from cover art.
@@ -501,6 +501,9 @@ Here are a few of the plugins written by the beets community:
 `beets-yearfixer`_
    Attempts to fix all missing ``original_year`` and ``year`` fields.
 
+`beets-youtube`_
+   Adds Youtube Music as a tagger data source.
+
 .. _beets-barcode: https://github.com/8h2a/beets-barcode
 .. _beetcamp: https://github.com/snejus/beetcamp
 .. _beetstream: https://github.com/BinaryBrain/Beetstream
@@ -528,6 +531,7 @@ Here are a few of the plugins written by the beets community:
 .. _beets-popularity: https://github.com/abba23/beets-popularity
 .. _beets-plexsync: https://github.com/arsaboo/beets-plexsync
 .. _beets-jiosaavn: https://github.com/arsaboo/beets-jiosaavn
+.. _beets-youtube: https://github.com/arsaboo/beets-youtube
 .. _beets-ydl: https://github.com/vmassuchetto/beets-ydl
 .. _beet-summarize: https://github.com/steven-murray/beet-summarize
 .. _beets-mosaic: https://github.com/SusannaMaria/beets-mosaic
