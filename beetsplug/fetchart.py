@@ -23,11 +23,10 @@ from tempfile import NamedTemporaryFile
 
 import confuse
 import requests
-from mediafile import image_mime_type
-
 from beets import config, importer, plugins, ui, util
 from beets.util import bytestring_path, py3_path, sorted_walk, syspath
 from beets.util.artresizer import ArtResizer
+from mediafile import image_mime_type
 
 try:
     from bs4 import BeautifulSoup
@@ -975,6 +974,35 @@ class Spotify(RemoteArtSource):
             self._log.debug('Spotify: error loading response: {}'
                             .format(response.text))
             return
+
+
+class CoverArtUrl(RemoteArtSource):
+    # This source is intended to be used with a plugin that sets the
+    # cover_art_url field on albums or tracks. Users can also manually update
+    # the cover_art_url field using the "set" command. This source will then
+    # use that URL to fetch the image.
+
+    NAME = "Cover Art URL"
+
+    def get(self, album, plugin, paths):
+        image_url = None
+        try:
+            # look for cover_art_url on album or first track
+            if album.cover_art_url:
+                image_url = album.cover_art_url
+            else:
+                image_url = album.items().get().cover_art_url
+            self._log.debug(f'Cover art URL {image_url} found for {album}')
+        except (AttributeError, TypeError):
+            self._log.debug(f'Cover art URL not found for {album}')
+            return
+        if image_url:
+            yield self._candidate(url=image_url, match=Candidate.MATCH_EXACT)
+        else:
+            self._log.debug(f'Cover art URL not found for {album}')
+            return
+
+
 # Try each source in turn.
 
 # Note that SOURCES_ALL is redundant (and presently unused). However, we keep
@@ -994,6 +1022,7 @@ ART_SOURCES = {
     'fanarttv': FanartTV,
     'lastfm': LastFM,
     'spotify': Spotify,
+    'cover_art_url': CoverArtUrl,
 }
 SOURCE_NAMES = {v: k for k, v in ART_SOURCES.items()}
 
@@ -1020,8 +1049,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'enforce_ratio': False,
             'cautious': False,
             'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
-            'sources': ['filesystem',
-                        'coverart', 'itunes', 'amazon', 'albumart'],
+            'sources': ['filesystem', 'coverart', 'itunes', 'amazon',
+                        'albumart', 'cover_art_url'],
             'store_source': False,
             'high_resolution': False,
             'deinterlace': False,

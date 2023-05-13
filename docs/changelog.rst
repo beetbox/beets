@@ -11,6 +11,8 @@ for Python 3.6).
 
 New features:
 
+* Added option use `cover_art_arl` as an album art source in the `fetchart` plugin.
+  :bug:`4707`
 * :doc:`/plugins/fetchart`: The plugin can now get album art from `spotify`.
 * Added option to specify a URL in the `embedart` plugin.
   :bug:`83`
