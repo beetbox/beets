@@ -502,7 +502,7 @@ Here are a few of the plugins written by the beets community:
    Attempts to fix all missing ``original_year`` and ``year`` fields.
 
 `beets-youtube`_
-   Adds Youtube Music as a tagger data source.
+   Adds YouTube Music as a tagger data source.
 
 .. _beets-barcode: https://github.com/8h2a/beets-barcode
 .. _beetcamp: https://github.com/snejus/beetcamp
