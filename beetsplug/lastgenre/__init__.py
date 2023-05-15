@@ -404,9 +404,15 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     print(f"last genre: {last_genre}")
                     # append last_genre to original_genre
                     if last_genre:
-                        album.genre = original_genre + ", " + last_genre
-                    
-                    album.genre, src = self._get_genre(album)
+                        all_genre = original_genre + self.config['separator'].as_str() + last_genre
+                    # convert all_genre to list using self.config['separator'].as_str() as separator
+                    all_genre = all_genre.split(self.config['separator'].as_str())
+                    # remove duplicates
+                    all_genre = list(set(all_genre))
+                    # convert back to string using self.config['separator'].as_str() as separator
+                    all_genre = self.config['separator'].as_str().join(all_genre)
+                    print(f"all genre: {all_genre}")
+                    album.genre = all_genre
                     self._log.info('genre for album {0} ({1}): {0.genre}',
                                    album, src)
                     album.store()
