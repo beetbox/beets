@@ -400,7 +400,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 for album in lib.albums(ui.decargs(args)):
                     original_genre = album.genre
                     print(f"original genre: {original_genre}")
-                    #last_genre, src = self._get_genre(album)
+                    last_genre, src = self._get_genre(album)
+                    print(f"last genre: {last_genre}")
+                    # append last_genre to original_genre
+                    if last_genre:
+                        album.genre = original_genre + ", " + last_genre
                     
                     album.genre, src = self._get_genre(album)
                     self._log.info('genre for album {0} ({1}): {0.genre}',
