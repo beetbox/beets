@@ -282,7 +282,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """Return the album genre for this Item or Album.
         """
         return self._last_lookup(
-            'album', LASTFM.get_album, obj.albumartist, obj.album
+            'album', LASTFM.get_album, obj.albumartist, obj.album, obj.genre
         )
 
     def fetch_album_artist_genre(self, obj):
