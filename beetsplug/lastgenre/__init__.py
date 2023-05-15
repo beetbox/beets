@@ -282,7 +282,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """Return the album genre for this Item or Album.
         """
         return self._last_lookup(
-            'album', LASTFM.get_album, obj.albumartist, obj.album, obj.genre
+            'album', LASTFM.get_album, obj.albumartist, obj.album
         )
 
     def fetch_album_artist_genre(self, obj):
@@ -398,6 +398,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             if opts.album:
                 # Fetch genres for whole albums
                 for album in lib.albums(ui.decargs(args)):
+                    original_genre = album.genre
+                    print(f"original genre: {original_genre}")
+                    #last_genre, src = self._get_genre(album)
+                    
                     album.genre, src = self._get_genre(album)
                     self._log.info('genre for album {0} ({1}): {0.genre}',
                                    album, src)
@@ -482,6 +486,5 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Get strings from tags.
         res = [el.item.get_name().lower() for el in res]
-        print(f"res: {res}")
 
         return res
