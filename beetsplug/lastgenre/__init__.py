@@ -482,6 +482,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Get strings from tags.
         res = [el.item.get_name().lower() for el in res]
-        print(f"res: {res} and {obj.genre}")
+        print(f"res: {res}")
 
         return res
