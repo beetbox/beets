@@ -15,24 +15,25 @@
 """Fetches album art.
 """
 
-from contextlib import closing
 import os
 import re
-from tempfile import NamedTemporaryFile
 from collections import OrderedDict
+from contextlib import closing
+from tempfile import NamedTemporaryFile
 
-import requests
-
-from beets import plugins
-from beets import importer
-from beets import ui
-from beets import util
-from beets import config
-from mediafile import image_mime_type
-from beets.util.artresizer import ArtResizer
-from beets.util import sorted_walk
-from beets.util import syspath, bytestring_path, py3_path
 import confuse
+import requests
+from beets import config, importer, plugins, ui, util
+from beets.util import bytestring_path, py3_path, sorted_walk, syspath
+from beets.util.artresizer import ArtResizer
+from mediafile import image_mime_type
+
+try:
+    from bs4 import BeautifulSoup
+    HAS_BEAUTIFUL_SOUP = True
+except ImportError:
+    HAS_BEAUTIFUL_SOUP = False
+
 
 CONTENT_TYPES = {
     'image/jpeg': [b'jpg', b'jpeg'],
@@ -252,6 +253,17 @@ class ArtSource(RequestMixin):
         self._config = config
         self.match_by = match_by or self.VALID_MATCHING_CRITERIA
 
+    @staticmethod
+    def add_default_config(config):
+        pass
+
+    @classmethod
+    def available(cls, log, config):
+        """Return whether or not all dependencies are met and the art source is
+        in fact usable.
+        """
+        return True
+
     def get(self, album, plugin, paths):
         raise NotImplementedError()
 
@@ -464,6 +476,21 @@ class GoogleImages(RemoteArtSource):
         self.key = self._config['google_key'].get(),
         self.cx = self._config['google_engine'].get(),
 
+    @staticmethod
+    def add_default_config(config):
+        config.add({
+            'google_key': None,
+            'google_engine': '001442825323518660753:hrh5ch1gjzm',
+        })
+        config['google_key'].redact = True
+
+    @classmethod
+    def available(cls, log, config):
+        has_key = bool(config['google_key'].get())
+        if not has_key:
+            log.debug("google: Disabling art source due to missing key")
+        return has_key
+
     def get(self, album, plugin, paths):
         """Return art URL from google custom search engine
         given an album title and interpreter.
@@ -512,6 +539,13 @@ class FanartTV(RemoteArtSource):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.client_key = self._config['fanarttv_key'].get()
+
+    @staticmethod
+    def add_default_config(config):
+        config.add({
+            'fanarttv_key': None,
+        })
+        config['fanarttv_key'].redact = True
 
     def get(self, album, plugin, paths):
         if not album.mb_releasegroupid:
@@ -853,6 +887,20 @@ class LastFM(RemoteArtSource):
         super().__init__(*args, **kwargs)
         self.key = self._config['lastfm_key'].get(),
 
+    @staticmethod
+    def add_default_config(config):
+        config.add({
+            'lastfm_key': None,
+        })
+        config['lastfm_key'].redact = True
+
+    @classmethod
+    def available(cls, log, config):
+        has_key = bool(config['lastfm_key'].get())
+        if not has_key:
+            log.debug("lastfm: Disabling art source due to missing key")
+        return has_key
+
     def get(self, album, plugin, paths):
         if not album.mb_albumid:
             return
@@ -893,11 +941,75 @@ class LastFM(RemoteArtSource):
                             .format(response.text))
             return
 
+
+class Spotify(RemoteArtSource):
+    NAME = "Spotify"
+
+    SPOTIFY_ALBUM_URL = 'https://open.spotify.com/album/'
+
+    @classmethod
+    def available(cls, log, config):
+        if not HAS_BEAUTIFUL_SOUP:
+            log.debug('To use Spotify as an album art source, '
+                      'you must install the beautifulsoup4 module. See '
+                      'the documentation for further details.')
+        return HAS_BEAUTIFUL_SOUP
+
+    def get(self, album, plugin, paths):
+        url = self.SPOTIFY_ALBUM_URL + album.mb_albumid
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            self._log.debug("Error: " + str(e))
+            return
+        try:
+            html = response.text
+            soup = BeautifulSoup(html, 'html.parser')
+            image_url = soup.find('meta',
+                                  attrs={'property': 'og:image'})['content']
+            yield self._candidate(url=image_url,
+                                  match=Candidate.MATCH_EXACT)
+        except ValueError:
+            self._log.debug('Spotify: error loading response: {}'
+                            .format(response.text))
+            return
+
+
+class CoverArtUrl(RemoteArtSource):
+    # This source is intended to be used with a plugin that sets the
+    # cover_art_url field on albums or tracks. Users can also manually update
+    # the cover_art_url field using the "set" command. This source will then
+    # use that URL to fetch the image.
+
+    NAME = "Cover Art URL"
+
+    def get(self, album, plugin, paths):
+        image_url = None
+        try:
+            # look for cover_art_url on album or first track
+            if album.cover_art_url:
+                image_url = album.cover_art_url
+            else:
+                image_url = album.items().get().cover_art_url
+            self._log.debug(f'Cover art URL {image_url} found for {album}')
+        except (AttributeError, TypeError):
+            self._log.debug(f'Cover art URL not found for {album}')
+            return
+        if image_url:
+            yield self._candidate(url=image_url, match=Candidate.MATCH_EXACT)
+        else:
+            self._log.debug(f'Cover art URL not found for {album}')
+            return
+
+
 # Try each source in turn.
 
-SOURCES_ALL = ['filesystem',
-               'coverart', 'itunes', 'amazon', 'albumart',
-               'wikipedia', 'google', 'fanarttv', 'lastfm']
+# Note that SOURCES_ALL is redundant (and presently unused). However, we keep
+# it around nn order not break plugins that "register" (a.k.a. monkey-patch)
+# their own fetchart sources.
+SOURCES_ALL = ['filesystem', 'coverart', 'itunes', 'amazon', 'albumart',
+               'wikipedia', 'google', 'fanarttv', 'lastfm', 'spotify']
 
 ART_SOURCES = {
     'filesystem': FileSystem,
@@ -909,6 +1021,8 @@ ART_SOURCES = {
     'google': GoogleImages,
     'fanarttv': FanartTV,
     'lastfm': LastFM,
+    'spotify': Spotify,
+    'cover_art_url': CoverArtUrl,
 }
 SOURCE_NAMES = {v: k for k, v in ART_SOURCES.items()}
 
@@ -935,20 +1049,15 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             'enforce_ratio': False,
             'cautious': False,
             'cover_names': ['cover', 'front', 'art', 'album', 'folder'],
-            'sources': ['filesystem',
-                        'coverart', 'itunes', 'amazon', 'albumart'],
-            'google_key': None,
-            'google_engine': '001442825323518660753:hrh5ch1gjzm',
-            'fanarttv_key': None,
-            'lastfm_key': None,
+            'sources': ['filesystem', 'coverart', 'itunes', 'amazon',
+                        'albumart', 'cover_art_url'],
             'store_source': False,
             'high_resolution': False,
             'deinterlace': False,
             'cover_format': None,
         })
-        self.config['google_key'].redact = True
-        self.config['fanarttv_key'].redact = True
-        self.config['lastfm_key'].redact = True
+        for source in ART_SOURCES.values():
+            source.add_default_config(self.config)
 
         self.minwidth = self.config['minwidth'].get(int)
         self.maxwidth = self.config['maxwidth'].get(int)
@@ -990,16 +1099,10 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             self.import_stages = [self.fetch_art]
             self.register_listener('import_task_files', self.assign_art)
 
-        available_sources = list(SOURCES_ALL)
-        if not self.config['google_key'].get() and \
-                'google' in available_sources:
-            available_sources.remove('google')
-        if not self.config['lastfm_key'].get() and \
-                'lastfm' in available_sources:
-            available_sources.remove('lastfm')
-        available_sources = [(s, c)
-                             for s in available_sources
-                             for c in ART_SOURCES[s].VALID_MATCHING_CRITERIA]
+        available_sources = [(s_name, c)
+                             for (s_name, s_cls) in ART_SOURCES.items()
+                             if s_cls.available(self._log, self.config)
+                             for c in s_cls.VALID_MATCHING_CRITERIA]
         sources = plugins.sanitize_pairs(
             self.config['sources'].as_pairs(default_value='*'),
             available_sources)

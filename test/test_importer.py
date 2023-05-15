@@ -139,7 +139,8 @@ class AutotagStub:
             va=False,
             album_id='albumid' + id,
             artist_id='artistid' + id,
-            albumtype='soundtrack'
+            albumtype='soundtrack',
+            data_source='match_source'
         )
 
 
@@ -1220,7 +1221,7 @@ class InferAlbumDataTest(_common.TestCase):
         self.assertFalse(self.items[0].comp)
 
 
-def test_album_info(*args, **kwargs):
+def match_album_mock(*args, **kwargs):
     """Create an AlbumInfo object for testing.
     """
     track_info = TrackInfo(
@@ -1239,7 +1240,7 @@ def test_album_info(*args, **kwargs):
     return iter([album_info])
 
 
-@patch('beets.autotag.mb.match_album', Mock(side_effect=test_album_info))
+@patch('beets.autotag.mb.match_album', Mock(side_effect=match_album_mock))
 class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper,
                                _common.Assertions):
 
@@ -1348,13 +1349,13 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper,
         return album
 
 
-def test_track_info(*args, **kwargs):
+def match_track_mock(*args, **kwargs):
     return iter([TrackInfo(
         artist='artist', title='title',
         track_id='new trackid', index=0,)])
 
 
-@patch('beets.autotag.mb.match_track', Mock(side_effect=test_track_info))
+@patch('beets.autotag.mb.match_track', Mock(side_effect=match_track_mock))
 class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper,
                                    _common.Assertions):
 
@@ -1723,6 +1724,7 @@ class ReimportTest(unittest.TestCase, ImportHelper, _common.Assertions):
         album = self.add_album_fixture()
         album.added = 4242.0
         album.foo = 'bar'  # Some flexible attribute.
+        album.data_source = 'original_source'
         album.store()
         item = album.items().get()
         item.baz = 'qux'
@@ -1803,6 +1805,12 @@ class ReimportTest(unittest.TestCase, ImportHelper, _common.Assertions):
         self.assertExists(new_artpath)
         if new_artpath != old_artpath:
             self.assertNotExists(old_artpath)
+
+    def test_reimported_album_not_preserves_flexattr(self):
+        self._setup_session()
+        self.assertEqual(self._album().data_source, 'original_source')
+        self.importer.run()
+        self.assertEqual(self._album().data_source, 'match_source')
 
 
 class ImportPretendTest(_common.TestCase, ImportHelper):

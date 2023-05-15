@@ -135,7 +135,8 @@ class ParentalDirCreation(_common.TestCase):
         test_config = deepcopy(config)
         test_config['library'] = non_exist_path
         with control_stdin('y'):
-            ui._open_library(test_config)
+            lib = ui._open_library(test_config)
+        lib._close()
 
     def test_create_no(self):
         non_exist_path_parent = _common.util.py3_path(
@@ -147,12 +148,14 @@ class ParentalDirCreation(_common.TestCase):
 
         with control_stdin('n'):
             try:
-                ui._open_library(test_config)
+                lib = ui._open_library(test_config)
             except ui.UserError:
                 if os.path.exists(non_exist_path_parent):
                     shutil.rmtree(non_exist_path_parent)
                     raise OSError("Parent directories should not be created.")
             else:
+                if lib:
+                    lib._close()
                 raise OSError("Parent directories should not be created.")
 
 

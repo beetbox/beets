@@ -50,7 +50,7 @@ file. The available options are:
   PIL defaults to 75.
   Default: 0 (disabled)
 - **max_filesize**: The maximum size of a target piece of cover art in bytes.
-  When using an ImageMagick backend this sets 
+  When using an ImageMagick backend this sets
   ``-define jpeg:extent=max_filesize``. Using PIL this will reduce JPG quality
   by up to 50% to attempt to reach the target filesize. Neither method is
   *guaranteed* to reach the target size, however in most cases it should
@@ -253,6 +253,23 @@ the ``lastfm_key`` configuration option to your API key, then add ``lastfm`` to
 the list of sources in your configutation.
 
 .. _register for a Last.fm API key: https://www.last.fm/api/account/create
+
+Spotify
+'''''''
+
+Spotify backend requires `BeautifulSoup`_, which you can install using `pip`_ by typing::
+
+    pip install beautifulsoup4
+
+Spotify backend is enabled by default and will update album art if a valid Spotify album id is found.
+
+.. _pip: https://pip.pypa.io
+.. _BeautifulSoup: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
+
+Cover Art URL
+'''''''''''''
+
+The `fetchart` plugin can also use a flexible attribute field ``cover_art_url`` where you can manually specify the image URL to be used as cover art. Any custom plugin can use this field to provide the cover art and ``fetchart`` will use it as a source.
 
 Storing the Artwork's Source
 ----------------------------
