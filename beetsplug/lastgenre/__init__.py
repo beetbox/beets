@@ -273,6 +273,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 for k, v in REPLACE.items():
                     arg = arg.replace(k, v)
                 args_replaced.append(arg)
+            print(f"args_replace: {args_replaced}")    
 
             genre = self.fetch_genre(method(*args_replaced))
             self._genre_cache[key] = genre
