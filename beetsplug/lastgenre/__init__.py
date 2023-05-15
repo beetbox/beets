@@ -233,8 +233,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """Return the genre for a pylast entity or None if no suitable genre
         can be found. Ex. 'Electronic, House, Dance'
         """
-        min_weight = self.config['min_weight'].get(int)
-        return self._resolve_genres(self._tags_for(lastfm_obj, min_weight))
+        min_weight = self.config['min_weight'].get(int)        
+        fetch_genre = self._resolve_genres(self._tags_for(lastfm_obj, min_weight))
+        print("fetch_genre: ", fetch_genre)
+        return fetch_genre
 
     def _is_allowed(self, genre):
         """Determine whether the genre is present in the whitelist,
@@ -273,6 +275,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
             genre = self.fetch_genre(method(*args_replaced))
             self._genre_cache[key] = genre
+            print("last lookup genre: ", genre)
             return genre
 
     def fetch_album_genre(self, obj):
