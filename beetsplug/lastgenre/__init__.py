@@ -209,7 +209,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                         len(tags_all) >= count):
                     break
             tags = tags_all
-
+        print(f"resolve genre tags: {tags}")
         tags = deduplicate(tags)
 
         # Sort the tags by specificity.
@@ -220,11 +220,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # the original tags list
         tags = [self._format_tag(x) for x in tags if self._is_allowed(x)]
 
-        _resolve_genres = self.config['separator'].as_str().join(
+        return self.config['separator'].as_str().join(
             tags[:self.config['count'].get(int)]
         )
-        print(f"_resolve_genres: {_resolve_genres}")
-        return _resolve_genres 
 
     def _format_tag(self, tag):
         if self.config["title_case"]:
@@ -295,7 +293,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
         fetch_album_artist = self._last_lookup(
             'artist', LASTFM.get_artist, obj.albumartist)
-        print(f"Fetch Album artist genre: {fetch_album_artist}")
+        print(f"FetchAlbum artist genre: {fetch_album_artist}")
         return fetch_album_artist
 
     def fetch_artist_genre(self, item):
