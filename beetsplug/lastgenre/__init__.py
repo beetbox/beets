@@ -21,15 +21,18 @@ and has been edited to remove some questionable entries.
 The scraper script used is available here:
 https://gist.github.com/1241307
 """
+import pylast
 import codecs
 import os
+import yaml
 import traceback
 
-import pylast
-import yaml
-
-from beets import config, library, plugins, ui
+from beets import plugins
+from beets import ui
+from beets import config
 from beets.util import normpath, plurality
+from beets import library
+
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
 
@@ -209,7 +212,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                         len(tags_all) >= count):
                     break
             tags = tags_all
-        print(f"resolve genre tags: {tags}")
+
         tags = deduplicate(tags)
 
         # Sort the tags by specificity.
@@ -233,10 +236,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """Return the genre for a pylast entity or None if no suitable genre
         can be found. Ex. 'Electronic, House, Dance'
         """
-        min_weight = self.config['min_weight'].get(int)        
-        fetch_genre = self._resolve_genres(self._tags_for(lastfm_obj, min_weight))
-        self._log.debug(f"fetch_genre: {fetch_genre}")
-        return fetch_genre
+        min_weight = self.config['min_weight'].get(int)
+        return self._resolve_genres(self._tags_for(lastfm_obj, min_weight))
 
     def _is_allowed(self, genre):
         """Determine whether the genre is present in the whitelist,
@@ -275,26 +276,21 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
             genre = self.fetch_genre(method(*args_replaced))
             self._genre_cache[key] = genre
-            print("last lookup genre: {genre}")
             return genre
 
     def fetch_album_genre(self, obj):
         """Return the album genre for this Item or Album.
         """
-        orig_genre = obj.genre
-        print(f"Original genre: {orig_genre}")
-        genre = self._last_lookup(
-            'album', LASTFM.get_album, obj.albumartist, obj.album)
-        print(f"Album genre: {genre}")
-        return genre
+        return self._last_lookup(
+            'album', LASTFM.get_album, obj.albumartist, obj.album
+        )
 
     def fetch_album_artist_genre(self, obj):
         """Return the album artist genre for this Item or Album.
         """
-        fetch_album_artist = self._last_lookup(
-            'artist', LASTFM.get_artist, obj.albumartist)
-        print(f"FetchAlbum artist genre: {fetch_album_artist}")
-        return fetch_album_artist
+        return self._last_lookup(
+            'artist', LASTFM.get_artist, obj.albumartist
+        )
 
     def fetch_artist_genre(self, item):
         """Returns the track artist genre for this Item.
@@ -336,7 +332,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Album genre.
         if 'album' in self.sources:
             result = self.fetch_album_genre(obj)
-            print(f"Album genre result: {result}")
             if result:
                 return result, 'album'
 
@@ -360,10 +355,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                         item_genres.append(item_genre)
                 if item_genres:
                     result, _ = plurality(item_genres)
-            print(f"Artist genre result: {result}")
+
             if result:
                 return result, 'artist'
-        print(f"Genre: {obj.genre}")
+
         # Filter the existing genre.
         if obj.genre:
             result = self._resolve_genres([obj.genre])
@@ -404,7 +399,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 # Fetch genres for whole albums
                 for album in lib.albums(ui.decargs(args)):
                     album.genre, src = self._get_genre(album)
-                    print(f"album.genre: {album.genre}")
                     self._log.info('genre for album {0} ({1}): {0.genre}',
                                    album, src)
                     album.store()
@@ -488,5 +482,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Get strings from tags.
         res = [el.item.get_name().lower() for el in res]
+        print(f"res: {res}")
 
         return res
