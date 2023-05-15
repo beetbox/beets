@@ -220,9 +220,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # the original tags list
         tags = [self._format_tag(x) for x in tags if self._is_allowed(x)]
 
-        return self.config['separator'].as_str().join(
+        _resolve_genres = self.config['separator'].as_str().join(
             tags[:self.config['count'].get(int)]
         )
+        print(f"_resolve_genres: {_resolve_genres}")
+        return _resolve_genres 
 
     def _format_tag(self, tag):
         if self.config["title_case"]:
