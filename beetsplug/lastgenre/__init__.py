@@ -235,7 +235,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
         min_weight = self.config['min_weight'].get(int)        
         fetch_genre = self._resolve_genres(self._tags_for(lastfm_obj, min_weight))
-        print("fetch_genre: ", fetch_genre)
+        self._log.debug(f"fetch_genre: {fetch_genre}")
         return fetch_genre
 
     def _is_allowed(self, genre):
@@ -275,7 +275,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
             genre = self.fetch_genre(method(*args_replaced))
             self._genre_cache[key] = genre
-            print("last lookup genre: ", genre)
+            print("last lookup genre: {genre}")
             return genre
 
     def fetch_album_genre(self, obj):
@@ -291,9 +291,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def fetch_album_artist_genre(self, obj):
         """Return the album artist genre for this Item or Album.
         """
-        return self._last_lookup(
-            'artist', LASTFM.get_artist, obj.albumartist
-        )
+        fetch_album_artist = self._last_lookup(
+            'artist', LASTFM.get_artist, obj.albumartist)
+        print(f"Fetch Album artist genre: {fetch_album_artist}")
+        return fetch_album_artist
 
     def fetch_artist_genre(self, item):
         """Returns the track artist genre for this Item.
