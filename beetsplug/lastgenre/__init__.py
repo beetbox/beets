@@ -21,18 +21,15 @@ and has been edited to remove some questionable entries.
 The scraper script used is available here:
 https://gist.github.com/1241307
 """
-import pylast
 import codecs
 import os
-import yaml
 import traceback
 
-from beets import plugins
-from beets import ui
-from beets import config
-from beets.util import normpath, plurality
-from beets import library
+import pylast
+import yaml
 
+from beets import config, library, plugins, ui
+from beets.util import normpath, plurality
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
 
@@ -400,6 +397,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             if opts.album:
                 # Fetch genres for whole albums
                 for album in lib.albums(ui.decargs(args)):
+                    orig = album.genre
+                    print(f"Original genre: {orig}")
                     album.genre, src = self._get_genre(album)
                     print(f"album.genre: {album.genre}")
                     self._log.info('genre for album {0} ({1}): {0.genre}',
