@@ -1,7 +1,30 @@
+# This file is part of beets.
+# Copyright 2023, Daniele Ferone.
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+
+"""Uses user-specified substitution rules to canonicalize names for path
+formats.
+"""
+
 from beets.plugins import BeetsPlugin
 import re
 
+
 class Substitute(BeetsPlugin):
+    """Create a template field function that subsitute the given field
+    with the given substitution rules. ``rules`` must be a list of
+    (pattern, replacement) pairs.
+    """
     def tmpl_substitute(self, text):
         if text:
             for pattern, replacement in self.substitute_rules:
@@ -11,7 +34,6 @@ class Substitute(BeetsPlugin):
         else:
             return u''
 
-    
     def __init__(self):
         super(Substitute, self).__init__()
         self.substitute_rules = []
@@ -21,4 +43,3 @@ class Substitute(BeetsPlugin):
             value = view.as_str()
             pattern = re.compile(key.lower())
             self.substitute_rules.append((pattern, value))
-
