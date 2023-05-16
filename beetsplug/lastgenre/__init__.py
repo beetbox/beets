@@ -199,10 +199,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         else:
             self.orig_genre = self.orig_genre.split(self.config['separator'].as_str())
 
-        print(f"orig_genre_resolve (self.orig_genre): {self.orig_genre}")
         if not self.orig_genre is None:
             tags = self.orig_genre + tags
-        print(f"tags_resolve (tags): {tags}")
         count = self.config['count'].get(int)
         if self.canonicalize:
             # Extend the list to consider tags parents in the c14n tree
@@ -223,16 +221,19 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                         len(tags_all) >= count):
                     break
             tags = tags_all
-
+        print(f"tags pre-dedup: {tags}")
         tags = deduplicate(tags)
+        print(f"tags post-dedup: {tags}")
 
         # Sort the tags by specificity.
         if self.config['prefer_specific']:
             tags = self._sort_by_depth(tags)
+        print(f"tags post-sort: {tags}")
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
         tags = [self._format_tag(x) for x in tags if self._is_allowed(x)]
+        print(f"tags post-allowed: {tags}")
 
         return self.config['separator'].as_str().join(
             tags[:self.config['count'].get(int)]
