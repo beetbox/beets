@@ -261,7 +261,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if genre is None:
             return False
         if not self.whitelist or genre in self.whitelist:
-            print(f"genre True: {genre}")
             return True
         return False
 
