@@ -124,6 +124,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Read the whitelist file if enabled.
         self.whitelist = set()
         wl_filename = self.config['whitelist'].get()
+        all_genre_fn = self.config['all_genres'].get()
         if wl_filename in (True, ''):  # Indicates the default whitelist.
             wl_filename = WHITELIST
         if wl_filename:
@@ -202,7 +203,18 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 )
             ]
         print(f"new tags: {tags}")
-
+        # write tags to all_genres.txt file saved in the all_genre_fn path. We need to check if the tag is already in the file and only add it if it is not in a new line
+        all_genre_fn = self.config['all_genres'].get()
+        if all_genre_fn:
+            all_genre_fn = normpath(all_genre_fn)
+            with open(all_genre_fn, 'a') as f:
+                # read all the lines in the file as a list
+                lines = f.readlines()
+                # check if tags is in the list and find tags that are not in the list
+                new_tags = [tag for tag in tags if tag not in lines]
+                # write new tags to the file
+                for tag in new_tags:
+                    f.write(tag + "\n")                
         if not self.orig_genre is None:
             tags = self.orig_genre + tags
         count = self.config['count'].get(int)
