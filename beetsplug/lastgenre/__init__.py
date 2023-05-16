@@ -185,7 +185,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         depth_tag_pairs.sort(reverse=True)
         return [p[1] for p in depth_tag_pairs]
 
-    def _resolve_genres(self, tags):
+    def _resolve_genres(self, tags, original_tags=None):
         """Given a list of strings, return a genre by joining them into a
         single string and (optionally) canonicalizing each.
         """
@@ -282,6 +282,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def fetch_album_genre(self, obj):
         """Return the album genre for this Item or Album.
         """
+        print(f"fetch_album_genre {obj.genre}")
         return self._last_lookup(
             'album', LASTFM.get_album, obj.albumartist, obj.album
         )
