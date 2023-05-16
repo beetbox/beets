@@ -275,7 +275,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     arg = arg.replace(k, v)
                 args_replaced.append(arg)
 
-            genre = self.fetch_genre(method(*args_replaced), original_tags)
+            genre = self.fetch_genre(method(*args_replaced))
             print(f"last_lookup genre {genre}")
             self._genre_cache[key] = genre
             return genre
