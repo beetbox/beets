@@ -201,7 +201,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         print(f"orig_genre_resolve (self.orig_genre): {self.orig_genre}")
         if not self.orig_genre is None:
-            tags.append(self.orig_genre)
+            tags = self.orig_genre + tags
         print(f"tags_resolve (tags): {tags}")
         count = self.config['count'].get(int)
         if self.canonicalize:
