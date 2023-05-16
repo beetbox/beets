@@ -133,7 +133,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     line = line.decode('utf-8').strip().lower()
                     if line and not line.startswith('#'):
                         self.whitelist.add(line)
-        print(f"whitelist: {self.whitelist}")
         # Read the genres tree for canonicalization if enabled.
         self.c14n_branches = []
         c14n_filename = self.config['canonical'].get()
@@ -232,6 +231,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
+        for tag in tags:
+            if not self._is_allowed(tag):
+                print(f"removing {tag} from tags")
+                #tags.remove(tag)
         tags = [self._format_tag(x) for x in tags if self._is_allowed(x)]
         print(f"tags post-allowed: {tags}")
 
