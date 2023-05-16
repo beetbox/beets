@@ -196,11 +196,16 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if self.orig_genre is None:
             self.orig_genre = ''
         else:
-            self.orig_genre = [
-                genre.lower() for genre in self.orig_genre.split(
-                    self.config['separator'].as_str()
-                )
-            ]
+            try:
+                self.orig_genre = [
+                    genre.lower() for genre in self.orig_genre.split(
+                        self.config['separator'].as_str()
+                    )
+                ]
+            except AttributeError:
+                self.orig_genre = [
+                    genre.lower() for genre in self.orig_genre
+                ]
         print(f"new tags: {tags}")
         # write tags to all_genres.txt file saved in the all_genre_fn path. We need to check if the tag is already in the file and only add it if it is not in a new line
         all_genre_fn = self.config['all_genres'].get()
