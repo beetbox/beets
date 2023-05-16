@@ -95,6 +95,7 @@ C14N_TREE = os.path.join(os.path.dirname(__file__), 'genres-tree.yaml')
 class LastGenrePlugin(plugins.BeetsPlugin):
     def __init__(self):
         super().__init__()
+        self.orig_genre = None
 
         self.config.add({
             'whitelist': True,
@@ -185,13 +186,17 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         depth_tag_pairs.sort(reverse=True)
         return [p[1] for p in depth_tag_pairs]
 
-    def _resolve_genres(self, tags, original_tags=None):
+    def _resolve_genres(self, tags):
         """Given a list of strings, return a genre by joining them into a
         single string and (optionally) canonicalizing each.
         """
         if not tags:
             return None
-        print(f"resolve_tags {tags}")
+        
+        print(f"orig_genre_resolve (self.orig_genre): {self.orig_genre}")
+        if not self.orig_genre is None:
+            tags.append(self.orig_genre)
+        print(f"tags_resolve (tags): {tags}")
         count = self.config['count'].get(int)
         if self.canonicalize:
             # Extend the list to consider tags parents in the c14n tree
@@ -232,13 +237,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return tag.title()
         return tag
 
-    def fetch_genre(self, lastfm_obj, original_tags):
+    def fetch_genre(self, lastfm_obj):
         """Return the genre for a pylast entity or None if no suitable genre
         can be found. Ex. 'Electronic, House, Dance'
         """
-        print(f"fetch genre original tags {original_tags}")
         min_weight = self.config['min_weight'].get(int)
-        return self._resolve_genres(self._tags_for(lastfm_obj, min_weight), original_tags)
+        return self._resolve_genres(self._tags_for(lastfm_obj, min_weight))
 
     def _is_allowed(self, genre):
         """Determine whether the genre is present in the whitelist,
@@ -252,7 +256,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     # Cached entity lookups.
 
-    def _last_lookup(self, entity, method, *args, original_tags = None):
+    def _last_lookup(self, entity, method, *args):
         """Get a genre based on the named entity using the callable `method`
         whose arguments are given in the sequence `args`. The genre lookup
         is cached based on the entity name and the arguments. Before the
@@ -275,17 +279,15 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     arg = arg.replace(k, v)
                 args_replaced.append(arg)
 
-            genre = self.fetch_genre(method(*args_replaced), original_tags)
-            print(f"last_lookup genre {genre}")
+            genre = self.fetch_genre(method(*args_replaced))
             self._genre_cache[key] = genre
             return genre
 
     def fetch_album_genre(self, obj):
         """Return the album genre for this Item or Album.
         """
-        original_tags = obj.genre
         return self._last_lookup(
-            'album', LASTFM.get_album, obj.albumartist, obj.album, original_tags
+            'album', LASTFM.get_album, obj.albumartist, obj.album
         )
 
     def fetch_album_artist_genre(self, obj):
@@ -401,6 +403,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             if opts.album:
                 # Fetch genres for whole albums
                 for album in lib.albums(ui.decargs(args)):
+                    self.orig_genre = album.genre
                     album.genre, src = self._get_genre(album)
                     self._log.info('genre for album {0} ({1}): {0.genre}',
                                    album, src)
