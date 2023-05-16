@@ -225,7 +225,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                         len(tags_all) >= count):
                     break
             tags = tags_all
-        print(f"tags pre-dedup: {tags}")
         tags = deduplicate(tags)
         print(f"tags post-dedup: {tags}")
 
@@ -238,7 +237,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # the original tags list
         for tag in tags:
             if not self._is_allowed(tag):
-                print(f"removing {tag} from tags")
                 #tags.remove(tag)
         tags = [self._format_tag(x) for x in tags if self._is_allowed(x)]
         print(f"tags post-allowed: {tags}")
@@ -420,7 +418,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 for album in lib.albums(ui.decargs(args)):
                     self.orig_genre = album.genre
                     album.genre, src = self._get_genre(album)
-                    self._log.info('genre for album {0} ({1}): {0.genre}',
+                    print(f"Processing album {album.album}")
+                    self._log.debug('genre for album {0} ({1}): {0.genre}',
                                    album, src)
                     # album.store()
 
