@@ -191,7 +191,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
         if not tags:
             return None
-
+        print(f"resolve_tags {tags}")
         count = self.config['count'].get(int)
         if self.canonicalize:
             # Extend the list to consider tags parents in the c14n tree
