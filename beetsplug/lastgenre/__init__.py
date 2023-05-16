@@ -192,7 +192,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if not tags:
             return None
         print(f"self.orig_genre_pre: {self.orig_genre}")
-        # split self.orig_genre into list using self.config['separator'].as_str() as separator
+        # split self.orig_genre into list using the separator
         if self.orig_genre is None:
             self.orig_genre = ''
         else:
