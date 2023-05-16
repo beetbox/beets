@@ -133,7 +133,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     line = line.decode('utf-8').strip().lower()
                     if line and not line.startswith('#'):
                         self.whitelist.add(line)
-
+        print(f"whitelist: {self.whitelist}")
         # Read the genres tree for canonicalization if enabled.
         self.c14n_branches = []
         c14n_filename = self.config['canonical'].get()
