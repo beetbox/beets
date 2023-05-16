@@ -273,9 +273,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 for k, v in REPLACE.items():
                     arg = arg.replace(k, v)
                 args_replaced.append(arg)
-            print(f"args_replace: {args_replaced}")    
 
             genre = self.fetch_genre(method(*args_replaced))
+            print(f"last_lookup genre {genre}")
             self._genre_cache[key] = genre
             return genre
 
@@ -399,23 +399,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             if opts.album:
                 # Fetch genres for whole albums
                 for album in lib.albums(ui.decargs(args)):
-                    original_genre = album.genre
-                    last_genre, src = self._get_genre(album)
-                    # append last_genre to original_genre
-                    if last_genre:
-                        if original_genre:
-                            all_genre = original_genre + \
-                                self.config['separator'].as_str() + last_genre
-                        else:
-                            all_genre = last_genre
-                    all_genre = all_genre.split(self.config['separator'].as_str())
-                    # remove duplicates and sort alphabetically
-                    all_genre = sorted(list(set(all_genre)))
-                    # convert back to string using self.config['separator'].as_str()
-                    # as separator
-                    all_genre = self.config['separator'].as_str().join(
-                        all_genre)
-                    album.genre = all_genre
+                    album.genre, src = self._get_genre(album)
                     self._log.info('genre for album {0} ({1}): {0.genre}',
                                    album, src)
                     album.store()
