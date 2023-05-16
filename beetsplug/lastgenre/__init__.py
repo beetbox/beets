@@ -208,11 +208,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             all_genre_fn = normpath(all_genre_fn)
             with open(all_genre_fn, 'r+') as f:
                 lines = f.readlines()
+                print(f"lines: {lines}")
                 # check if tags is in the list and find tags that are not in the list
                 new_tags = [tag for tag in tags if tag not in lines]
                 print(f"new tags: {new_tags}")
                 # remove duplicates
                 new_tags = deduplicate(new_tags)
+                # sort the list
+                new_tags.sort()
                 print(f"new tags dedup: {new_tags}")
                 # write new tags to the file
                 for tag in new_tags:
