@@ -217,7 +217,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                                if self._is_allowed(x)]
                 else:
                     parents = [find_parents(tag, self.c14n_branches)[-1]]
-
+                self._log.debug('Canonicalizing {0} to {1}', tag, parents)
                 tags_all += parents
                 # Stop if we have enough tags already, unless we need to find
                 # the most specific tag (instead of the most popular).
