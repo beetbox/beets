@@ -209,6 +209,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             with open(all_genre_fn, 'r+') as f:
                 lines = f.readlines()
                 print(f"lines: {lines}")
+                # remove the \n from the lines
+                lines = [line.strip() for line in lines]
                 # check if tags is in the list and find tags that are not in the list
                 new_tags = [tag for tag in tags if tag not in lines]
                 print(f"new tags: {new_tags}")
@@ -217,7 +219,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 # sort the list
                 new_tags.sort()
                 print(f"new tags dedup: {new_tags}")
-                # write new tags to the file
+                # write new tags to the file in a new line
                 for tag in new_tags:
                     f.write(tag + "\n")                
         if not self.orig_genre is None:
