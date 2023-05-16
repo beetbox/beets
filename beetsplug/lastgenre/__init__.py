@@ -192,11 +192,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if not tags:
             return None
         
-        # split self.orig_genre into list using self.config['separator'].as_str() as separator
+        # split self.orig_genre into list using self.config['separator'].as_str() as separator and convert them to lower case
         if self.orig_genre is None:
             self.orig_genre = ''
         else:
-            self.orig_genre = self.orig_genre.lower(split(self.config['separator'].as_str()))
+            self.orig_genre = [genre.lower() for genre in self.orig_genre.split(self.config['separator'].as_str())]
 
         if not self.orig_genre is None:
             tags = self.orig_genre + tags
