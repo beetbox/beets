@@ -193,6 +193,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if not tags:
             return None
         
+        # split self.orig_genre into list using self.config['separator'].as_str() as separator
+        if self.orig_genre is None:
+            self.orig_genre = ''
+        else:
+            self.orig_genre = self.orig_genre.split(self.config['separator'].as_str())
+
         print(f"orig_genre_resolve (self.orig_genre): {self.orig_genre}")
         if not self.orig_genre is None:
             tags.append(self.orig_genre)
