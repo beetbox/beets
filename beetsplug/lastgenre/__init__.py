@@ -208,12 +208,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if all_genre_fn:
             all_genre_fn = normpath(all_genre_fn)
             with open(all_genre_fn, 'r') as f:
-                # read all the lines in the file as a list
-                with open(all_genre_fn, 'r') as f:
-                    lines = f.readlines()
+                lines = f.readlines()
                 # check if tags is in the list and find tags that are not in the list
                 new_tags = [tag for tag in tags if tag not in lines]
                 # write new tags to the file
+            with open(all_genre_fn, 'a') as f:
                 for tag in new_tags:
                     f.write(tag + "\n")                
         if not self.orig_genre is None:
