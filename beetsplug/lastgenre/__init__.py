@@ -201,7 +201,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     self.config['separator'].as_str()
                 )
             ]
-        print(f"self.orig_genre: {self.orig_genre}")
+        print(f"new tags: {tags}")
 
         if not self.orig_genre is None:
             tags = self.orig_genre + tags
