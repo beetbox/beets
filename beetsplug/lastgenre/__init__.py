@@ -416,9 +416,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             if opts.album:
                 # Fetch genres for whole albums
                 for album in lib.albums(ui.decargs(args)):
+                    print(f"Processing album {album.album} ({album.year})")
                     self.orig_genre = album.genre
                     album.genre, src = self._get_genre(album)
-                    print(f"Processing album {album.album}")
+                    print(f"Final genre: {album.genre}")
                     self._log.debug('genre for album {0} ({1}): {0.genre}',
                                    album, src)
                     # album.store()
