@@ -124,7 +124,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Read the whitelist file if enabled.
         self.whitelist = set()
         wl_filename = self.config['whitelist'].get()
-        all_genre_fn = self.config['all_genres'].get()
         if wl_filename in (True, ''):  # Indicates the default whitelist.
             wl_filename = WHITELIST
         if wl_filename:
@@ -211,6 +210,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 lines = f.readlines()
                 # check if tags is in the list and find tags that are not in the list
                 new_tags = [tag for tag in tags if tag not in lines]
+                new_tags = deduplicate(new_tags)
                 # write new tags to the file
                 for tag in new_tags:
                     f.write(tag + "\n")                
