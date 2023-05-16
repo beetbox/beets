@@ -237,7 +237,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # the original tags list
         for tag in tags:
             if not self._is_allowed(tag):
-                #tags.remove(tag)
+                tags.remove(tag)
         tags = [self._format_tag(x) for x in tags if self._is_allowed(x)]
         print(f"tags post-allowed: {tags}")
 
