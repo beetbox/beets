@@ -641,10 +641,16 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self.info = AlbumInfo(
             tracks=trackinfo,
             artist='artistNew',
+            artists=['artistNew', 'artistNew2'],
             album='albumNew',
             album_id='7edb51cb-77d6-4416-a23c-3a8c2994a2c7',
             artist_id='a6623d39-2d8e-4f70-8242-0a9553b91e50',
+            artist_ids=[
+                'a6623d39-2d8e-4f70-8242-0a9553b91e50',
+                'a6623d39-2d8e-4f70-8242-0a9553b91e51'
+            ],
             artist_credit='albumArtistCredit',
+            artists_credits=['albumArtistCredit', 'albumArtistCredit2'],
             artist_sort='albumArtistSort',
             albumtype='album',
             va=False,
@@ -662,6 +668,11 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self.assertEqual(self.items[1].album, 'albumNew')
         self.assertEqual(self.items[0].artist, 'artistNew')
         self.assertEqual(self.items[1].artist, 'artistNew')
+
+    def test_multi_albumartists_applied_to_all(self):
+        self._apply()
+        self.assertEqual(self.items[0].albumartists, ['artistNew', 'artistNew2'])
+        self.assertEqual(self.items[1].albumartists, ['artistNew', 'artistNew2'])
 
     def test_track_index_applied(self):
         self._apply()
@@ -699,6 +710,8 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self.assertEqual(self.items[1].artist, 'albumArtistCredit')
         self.assertEqual(self.items[0].albumartist, 'albumArtistCredit')
         self.assertEqual(self.items[1].albumartist, 'albumArtistCredit')
+        self.assertEqual(self.items[0].albumartists, ['albumArtistCredit', 'albumArtistCredit2'])
+        self.assertEqual(self.items[1].albumartists, ['albumArtistCredit', 'albumArtistCredit2'])
 
     def test_artist_credit_prefers_artist_over_albumartist_credit(self):
         self.info.tracks[0].artist = 'oldArtist'
