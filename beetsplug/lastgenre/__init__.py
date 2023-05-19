@@ -153,6 +153,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             with codecs.open(c14n_filename, 'r', encoding='utf-8') as f:
                 genres_tree = yaml.safe_load(f)
             flatten_tree(genres_tree, [], self.c14n_branches)
+        print(self.c14n_branches)
 
     @property
     def sources(self):
