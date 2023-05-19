@@ -226,6 +226,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     f.write(tag + "\n")                
         if not self.orig_genre is None:
             tags = self.orig_genre + tags
+            print(f"all tags: {tags}")
         count = self.config['count'].get(int)
         if self.canonicalize:
             # Extend the list to consider tags parents in the c14n tree
