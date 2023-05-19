@@ -78,6 +78,7 @@ def find_parents(candidate, branches):
     the further parent.
     """
     for branch in branches:
+        branch = branch[0].split(' - ')
         try:
             idx = branch.index(candidate.lower())
             return list(reversed(branch[:idx + 1]))
@@ -225,7 +226,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 for tag in new_tags:
                     f.write(tag + "\n")                
         if not self.orig_genre is None:
-            tags = tags + self.orig_genre 
+            tags = self.orig_genre + tags
         count = self.config['count'].get(int)
         if self.canonicalize:
             # Extend the list to consider tags parents in the c14n tree
