@@ -80,6 +80,7 @@ def find_parents(candidate, branches):
     for branch in branches:
         try:
             idx = branch.index(candidate.lower())
+            print(f"idx: {idx}")
             return list(reversed(branch[:idx + 1]))
         except ValueError:
             continue
