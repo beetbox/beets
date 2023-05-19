@@ -78,10 +78,8 @@ def find_parents(candidate, branches):
     the further parent.
     """
     for branch in branches:
-        print(f"branch: {branch} and candidate: {candidate}")
         try:
             idx = branch.index(candidate.lower())
-            print(f"idx: {idx}")
             return list(reversed(branch[:idx + 1]))
         except ValueError:
             continue
