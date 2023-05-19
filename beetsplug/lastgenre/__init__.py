@@ -245,7 +245,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 # Stop if we have enough tags already, unless we need to find
                 # the most specific tag (instead of the most popular).
                 if (not self.config['prefer_specific'] and
-                        len(tags_all) >= count):
+                    len(tags_all) >= count):
                     break
             tags = tags_all
         tags = deduplicate(tags)
