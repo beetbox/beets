@@ -21,18 +21,16 @@ and has been edited to remove some questionable entries.
 The scraper script used is available here:
 https://gist.github.com/1241307
 """
-import pylast
 import codecs
 import os
-import yaml
 import traceback
 
-from beets import plugins
-from beets import ui
-from beets import config
-from beets.util import normpath, plurality
-from beets import library
+import discogs_client
+import pylast
+import yaml
 
+from beets import config, library, plugins, ui
+from beets.util import normpath, plurality
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
 
@@ -319,6 +317,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             self._genre_cache[key] = genre
             return genre
 
+
     def fetch_album_genre(self, obj):
         """Return the album genre for this Item or Album.
         """
@@ -443,6 +442,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     self.orig_genre = album.genre
                     album.genre, src = self._get_genre(album)
                     print(f"Final genre: {album.genre}")
+                    test = self._discogs_tags_for(album)
                     self._log.debug('genre for album {0} ({1}): {0.genre}',
                                    album, src)
                     # album.store()
@@ -528,3 +528,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         res = [el.item.get_name().lower() for el in res]
 
         return res
+
+    def _discogs_tags_for(self, obj):
+        from beetsplug.discogs import DiscogsPlugin
+        d = DiscogsPlugin().discogs_client
+        print(f"d: {d}")
