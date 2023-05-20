@@ -12,12 +12,11 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Uses user-specified substitution rules to canonicalize names for path
-formats.
+"""Uses user-specified substitution rules to canonicalize names for path formats.
 """
 
-from beets.plugins import BeetsPlugin
 import re
+from beets.plugins import BeetsPlugin
 
 
 class Substitute(BeetsPlugin):
