@@ -432,10 +432,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 # an album
                 for item in lib.items(ui.decargs(args)):
                     item.genre, src = self._get_genre(item)
-                    self._log.debug(
-                        "added last.fm item genre ({0}): {1}", src, item.genre
-                    )
                     item.store()
+                    self._log.info(
+                        "genre for track {0} ({1}): {0.genre}", item, src
+                    )
 
         lastgenre_cmd.func = lastgenre_func
         return [lastgenre_cmd]
