@@ -86,16 +86,11 @@ def apply_item_metadata(item: Item, track_info: TrackInfo):
     item.artist_credit = track_info.artist_credit
     item.title = track_info.title
 
-    fields = [('mb_trackid', 'track_info.track_id'),
-              ('mb_releasetrackid', 'track_info.release_track_id')]
-
-    for field, attr_name in fields:
-        attr_value = getattr(item, field)
-        if not re.match(MBID_REGEX, attr_value):
-            setattr(item, field, eval(attr_name))
-    if track_info.artist_id and not re.match(MBID_REGEX,
-                                             item.mb_artistid):
-        item.mb_artistid = track_info.artist_id
+    fields = [('mb_trackid', track_info.track_id),
+              ('mb_releasetrackid', track_info.release_track_id)]
+    for field, value in fields:
+        if re.match(MBID_REGEX, value) or item.get(field) is None:
+            item[field] = value
 
     for field, value in track_info.items():
         # We only overwrite fields that are not already hardcoded.
@@ -179,22 +174,14 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
         item.disctotal = album_info.mediums
 
         # MusicBrainz IDs.
-        fields = [('mb_trackid', 'track_info.track_id'),
-                  ('mb_releasetrackid', 'track_info.release_track_id'),
-                  ('mb_albumid', 'album_info.album_id'),
-                  ('mb_albumartistid', 'album_info.artist_id'),
-                  ('mb_releasegroupid', 'track_info.artist_id')]
-
-        for field, attr_name in fields:
-            attr_value = getattr(item, field)
-            if not re.match(MBID_REGEX, attr_value):
-                setattr(item, field, eval(attr_name))
-        if track_info.artist_id and not re.match(MBID_REGEX,
-                                                 item.mb_artistid):
-            item.mb_artistid = track_info.artist_id
-        else:
-            item.mb_artistid = album_info.artist_id
-
+        fields = [('mb_albumid', album_info.album_id),
+                  ('mb_trackid', track_info.track_id),
+                  ('mb_releasetrackid', track_info.release_track_id),
+                  ('mb_albumartistid', album_info.artist_id),
+                  ('mb_releasegroupid', track_info.artist_id)]
+        for field, value in fields:
+            if re.match(MBID_REGEX, value) or item.get(field) is None:
+                item[field] = value
         # Compilation flag.
         item.comp = album_info.va
 
