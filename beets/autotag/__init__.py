@@ -85,9 +85,16 @@ def apply_item_metadata(item: Item, track_info: TrackInfo):
     item.artist_sort = track_info.artist_sort
     item.artist_credit = track_info.artist_credit
     item.title = track_info.title
-    item.mb_trackid = track_info.track_id
-    item.mb_releasetrackid = track_info.release_track_id
-    if track_info.artist_id:
+
+    fields = [('mb_trackid', 'track_info.track_id'),
+                ('mb_releasetrackid', 'track_info.release_track_id')]
+
+    for field, attr_name in fields:
+        attr_value = getattr(item, field)
+        if not re.match(MBID_REGEX, attr_value):
+            setattr(item, field, eval(attr_name))
+    if track_info.artist_id and not re.match(MBID_REGEX,
+                                             item.mb_artistid):
         item.mb_artistid = track_info.artist_id
 
     for field, value in track_info.items():
@@ -172,8 +179,6 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
         item.disctotal = album_info.mediums
 
         # MusicBrainz IDs.
-        print(f"track_id: {item.mb_trackid}; album_id: {item.mb_albumid}; \
-              artist_id: {item.mb_artistid}")
         fields = [('mb_trackid', 'track_info.track_id'),
                   ('mb_releasetrackid', 'track_info.release_track_id'),
                   ('mb_albumid', 'album_info.album_id'),
@@ -184,7 +189,6 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
             attr_value = getattr(item, field)
             if not re.match(MBID_REGEX, attr_value):
                 setattr(item, field, eval(attr_name))
-                print(f"field: {field}; attr_name: {attr_name}")
         if track_info.artist_id and not re.match(MBID_REGEX,
                                                  item.mb_artistid):
             item.mb_artistid = track_info.artist_id
