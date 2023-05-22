@@ -87,7 +87,7 @@ def apply_item_metadata(item: Item, track_info: TrackInfo):
     item.title = track_info.title
 
     fields = [('mb_trackid', 'track_info.track_id'),
-                ('mb_releasetrackid', 'track_info.release_track_id')]
+              ('mb_releasetrackid', 'track_info.release_track_id')]
 
     for field, attr_name in fields:
         attr_value = getattr(item, field)
