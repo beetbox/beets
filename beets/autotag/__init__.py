@@ -14,23 +14,28 @@
 
 """Facilities for automatically determining files' correct metadata.
 """
+import re
 from typing import Mapping
 
+from beets import config, logging
 from beets.library import Item
-
-from beets import logging
-from beets import config
+from beetsplug.mbsync import MBID_REGEX
 
 # Parts of external interface.
 from .hooks import (  # noqa
     AlbumInfo,
-    TrackInfo,
     AlbumMatch,
-    TrackMatch,
     Distance,
+    TrackInfo,
+    TrackMatch,
 )
-from .match import tag_item, tag_album, current_metadata, Proposal  # noqa
-from .match import Recommendation  # noqa
+from .match import (  # noqa
+    Proposal,
+    Recommendation,  # noqa
+    current_metadata,
+    tag_album,
+    tag_item,
+)
 
 # Global logger.
 log = logging.getLogger('beets')
@@ -167,15 +172,24 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
         item.disctotal = album_info.mediums
 
         # MusicBrainz IDs.
-        item.mb_trackid = track_info.track_id
-        item.mb_releasetrackid = track_info.release_track_id
-        item.mb_albumid = album_info.album_id
-        if track_info.artist_id:
+        print(f"track_id: {item.mb_trackid}; album_id: {item.mb_albumid}; \
+              artist_id: {item.mb_artistid}")
+        fields = [('mb_trackid', 'track_info.track_id'),
+                  ('mb_releasetrackid', 'track_info.release_track_id'),
+                  ('mb_albumid', 'album_info.album_id'),
+                  ('mb_albumartistid', 'album_info.artist_id'),
+                  ('mb_releasegroupid', 'track_info.artist_id')]
+
+        for field, attr_name in fields:
+            attr_value = getattr(item, field)
+            if not re.match(MBID_REGEX, attr_value):
+                setattr(item, field, eval(attr_name))
+                print(f"field: {field}; attr_name: {attr_name}")
+        if track_info.artist_id and not re.match(MBID_REGEX,
+                                                 item.mb_artistid):
             item.mb_artistid = track_info.artist_id
         else:
             item.mb_artistid = album_info.artist_id
-        item.mb_albumartistid = album_info.artist_id
-        item.mb_releasegroupid = album_info.releasegroup_id
 
         # Compilation flag.
         item.comp = album_info.va
