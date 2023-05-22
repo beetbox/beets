@@ -476,9 +476,6 @@ Here are a few of the plugins written by the beets community:
 `beets-plexsync`_
    Allows you to sync your Plex library with your beets library, create smart playlists in Plex, and import online playlists (from services like Spotify) into Plex.
 
-`beets-popularity`_
-   Fetches popularity values from Deezer.
-
 `beets-setlister`_
    Generate playlists from the setlists of a given artist.
 
@@ -528,7 +525,6 @@ Here are a few of the plugins written by the beets community:
 .. _beets-noimport: https://gitlab.com/tiago.dias/beets-noimport
 .. _whatlastgenre: https://github.com/YetAnotherNerd/whatlastgenre/tree/master/plugin/beets
 .. _beets-usertag: https://github.com/igordertigor/beets-usertag
-.. _beets-popularity: https://github.com/abba23/beets-popularity
 .. _beets-plexsync: https://github.com/arsaboo/beets-plexsync
 .. _beets-jiosaavn: https://github.com/arsaboo/beets-jiosaavn
 .. _beets-youtube: https://github.com/arsaboo/beets-youtube
