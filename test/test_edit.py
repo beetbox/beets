@@ -348,9 +348,7 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
         self._setup_import_session()
         # Edit track titles.
         self.run_mocked_interpreter({'replacements': {'Applied Title':
-                                                      'Edited Title',
-                                                      'mb_trackid':
-                                                      'match 123'}},
+                                                      'Edited Title'}},
                                     # edit Candidates, 1, Apply changes.
                                     ['c', '1', 'a'])
 
@@ -378,9 +376,7 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
         self.importer.paths = []
         self.importer.query = TrueQuery()
         self.run_mocked_interpreter({'replacements': {'Applied Title':
-                                                      'Edited Title',
-                                                      'mb_trackid':
-                                                      'match 123'}},
+                                                      'Edited Title'}},
                                     # eDit, Apply changes.
                                     ['d', 'a'])
 
@@ -401,9 +397,7 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
         self._setup_import_session()
         # Edit track titles.
         self.run_mocked_interpreter({'replacements': {'Applied Title':
-                                                      'Edited Title',
-                                                      'mb_trackid':
-                                                      'match 123'}},
+                                                      'Edited Title'}},
                                     # edit Candidates, 1, Apply changes.
                                     ['c', '1', 'a'])
 
@@ -443,9 +437,7 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
         self._setup_import_session()
         # Edit track titles.
         self.run_mocked_interpreter({'replacements': {'Applied Title':
-                                                      'Edited Title',
-                                                      'mb_trackid':
-                                                      'match 123'}},
+                                                      'Edited Title'}},
                                     # edit Candidates, 1, Apply changes, aBort.
                                     ['c', '1', 'a', 'b'])
 
