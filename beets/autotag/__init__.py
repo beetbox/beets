@@ -89,7 +89,7 @@ def apply_item_metadata(item: Item, track_info: TrackInfo):
     fields = [('mb_trackid', track_info.track_id),
               ('mb_releasetrackid', track_info.release_track_id)]
     for field, value in fields:
-        if re.match(MBID_REGEX, value) or item.get(field) is None:
+        if re.match(MBID_REGEX, str(value)) or item.get(field) is None:
             item[field] = value
 
     for field, value in track_info.items():
@@ -180,7 +180,7 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
                   ('mb_albumartistid', album_info.artist_id),
                   ('mb_releasegroupid', track_info.artist_id)]
         for field, value in fields:
-            if re.match(MBID_REGEX, value) or item.get(field) is None:
+            if re.match(MBID_REGEX, str(value)) or item.get(field) is None:
                 item[field] = value
         # Compilation flag.
         item.comp = album_info.va
