@@ -350,7 +350,7 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
         self.run_mocked_interpreter({'replacements': {'Applied Title':
                                                       'Edited Title',
                                                       'mb_trackid':
-                                                      'match123'}},
+                                                      'match 123'}},
                                     # edit Candidates, 1, Apply changes.
                                     ['c', '1', 'a'])
 
@@ -380,7 +380,7 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
         self.run_mocked_interpreter({'replacements': {'Applied Title':
                                                       'Edited Title',
                                                       'mb_trackid':
-                                                      'match123'}},
+                                                      'match 123'}},
                                     # eDit, Apply changes.
                                     ['d', 'a'])
 
@@ -403,7 +403,7 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
         self.run_mocked_interpreter({'replacements': {'Applied Title':
                                                       'Edited Title',
                                                       'mb_trackid':
-                                                      'match123'}},
+                                                      'match 123'}},
                                     # edit Candidates, 1, Apply changes.
                                     ['c', '1', 'a'])
 
@@ -445,7 +445,7 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
         self.run_mocked_interpreter({'replacements': {'Applied Title':
                                                       'Edited Title',
                                                       'mb_trackid':
-                                                      'match123'}},
+                                                      'match 123'}},
                                     # edit Candidates, 1, Apply changes, aBort.
                                     ['c', '1', 'a', 'b'])
 
