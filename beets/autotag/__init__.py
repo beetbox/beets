@@ -89,7 +89,7 @@ def apply_item_metadata(item: Item, track_info: TrackInfo):
     item.artist_sort = track_info.artist_sort
     item.artists_sort = track_info.artists_sort
     item.artist_credit = track_info.artist_credit
-    item.artists_credit = track_info.artists_credits
+    item.artists_credits = track_info.artists_credits
     item.title = track_info.title
     item.mb_trackid = track_info.track_id
     item.mb_releasetrackid = track_info.release_track_id
