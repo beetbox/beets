@@ -219,6 +219,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         album_data = self._handle_response(
             requests.get, self.album_url + spotify_id
         )
+        self._log.debug('Album data: {}', album_data)
         artist, artist_id = self.get_artist(album_data['artists'])
 
         date_parts = [
