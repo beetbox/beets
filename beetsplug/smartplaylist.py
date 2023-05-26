@@ -192,7 +192,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
             if pretend:
                 self._log.info('Results for playlist {}:', name)
             else:
-                self._log.debug("Creating playlist {0}", name)
+                self._log.info("Creating playlist {0}", name)
             items = []
 
             if query:
