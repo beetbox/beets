@@ -219,6 +219,9 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         album_data = self._handle_response(
             requests.get, self.album_url + spotify_id
         )
+        if album_data['name'] == "":
+            self._log.debug("Album removed from Spotify: {}", album_id)
+            return None
         artist, artist_id = self.get_artist(album_data['artists'])
 
         date_parts = [
