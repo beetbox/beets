@@ -13,6 +13,8 @@ New features:
 
 * Added support for ``artists`` and ``albumartists`` multi tags
   :bug:`505`
+* Prevent reimporting album if it is permanently removed from Spotify
+  :bug:`4800`
 * Added option use `cover_art_arl` as an album art source in the `fetchart` plugin.
   :bug:`4707`
 * :doc:`/plugins/fetchart`: The plugin can now get album art from `spotify`.
