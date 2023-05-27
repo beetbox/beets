@@ -10,7 +10,7 @@ With this release, beets now requires Python 3.7 or later (it removes support
 for Python 3.6).
 
 New features:
-
+* Allow importing Tidal album id from MusicBrainz release page if the information is available. 
 * Prevent reimporting album if it is permanently removed from Spotify
   :bug:`4800`
 * Added option use `cover_art_arl` as an album art source in the `fetchart` plugin.
