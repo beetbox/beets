@@ -134,6 +134,7 @@ musicbrainz:
         spotify: no
         deezer: no
         beatport: no
+        tidal: no
 
 match:
     strong_rec_thresh: 0.04
