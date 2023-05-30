@@ -859,12 +859,13 @@ to the beets library.
             bandcamp: yes
             beatport: yes
             deezer: yes
+            tidal: yes
 
 
 The library fields of the corresponding :ref:`autotagger_extensions` are used
 to save the data (``discogs_albumid``, ``bandcamp_album_id``,
-``spotify_album_id``, ``beatport_album_id``, ``deezer_album_id``). On
-re-imports existing data will be overwritten.
+``spotify_album_id``, ``beatport_album_id``, ``deezer_album_id``,
+``tidal_album_id``). On re-imports existing data will be overwritten.
 
 The default of all options is ``no``.
 
