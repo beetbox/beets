@@ -596,6 +596,7 @@ def generate_track_info(track_id='track info', values={}):
     track = TrackInfo(
         title='track info',
         track_id=track_id,
+        mb_trackid='track id',
     )
     for field in TRACK_INFO_FIELDS:
         setattr(track, field, 'track info')
