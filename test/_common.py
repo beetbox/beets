@@ -22,8 +22,6 @@ import shutil
 import unittest
 from contextlib import contextmanager
 
-import reflink
-
 
 # Mangle the search path to include the beets sources.
 sys.path.insert(0, '..')
@@ -54,7 +52,12 @@ _item_ident = 0
 # OS feature test.
 HAVE_SYMLINK = sys.platform != 'win32'
 HAVE_HARDLINK = sys.platform != 'win32'
-HAVE_REFLINK = reflink.supported_at(tempfile.gettempdir())
+
+try:
+    import reflink
+    HAVE_REFLINK = reflink.supported_at(tempfile.gettempdir())
+except ImportError:
+    HAVE_REFLINK = False
 
 
 def item(lib=None):
