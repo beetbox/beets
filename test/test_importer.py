@@ -1352,7 +1352,7 @@ class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper,
 def match_track_mock(*args, **kwargs):
     return iter([TrackInfo(
         artist='artist', title='title',
-        track_id='new trackid', index=0,)])
+        track_id='7b562eab-840d-427a-8f3d-ad4389a5c1db', index=0,)])
 
 
 @patch('beets.autotag.mb.match_track', Mock(side_effect=match_track_mock))
@@ -1386,7 +1386,7 @@ class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper,
         self.assertNotExists(item.path)
         self.assertEqual(len(self.lib.items()), 1)
         item = self.lib.items().get()
-        self.assertEqual(item.mb_trackid, 'new trackid')
+        self.assertEqual(item.mb_trackid, '7b562eab-840d-427a-8f3d-ad4389a5c1db')
 
     def test_keep_duplicate(self):
         self.assertEqual(len(self.lib.items()), 1)
