@@ -50,7 +50,7 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
         album_item = Item(
             album='old title',
             mb_albumid='81ae60d4-5b75-38df-903a-db2cfa51c2c6',
-            mb_trackid='old track id',
+            mb_trackid='7b562eab-840d-427a-8f3d-ad4389a5c1db',
             mb_releasetrackid='release track id',
             path=''
         )
