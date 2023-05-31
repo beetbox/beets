@@ -351,9 +351,7 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
                                                       'Edited Title'}},
                                     # edit Candidates, 1, Apply changes.
                                     ['c', '1', 'a'])
-        # Add the 'match' prefix to the mb_trackid field of the items
-        for item in self.lib.items():
-            item.mb_trackid = 'match ' + item.mb_trackid
+
         # Check that 'title' field is modified, and other fields come from
         # the candidate.
         self.assertTrue(all('Edited Title ' in i.title
@@ -402,9 +400,7 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
                                                       'Edited Title'}},
                                     # edit Candidates, 1, Apply changes.
                                     ['c', '1', 'a'])
-        # Add the 'match' prefix to the mb_trackid field of the items
-        for item in self.lib.items():
-            item.mb_trackid = 'match ' + item.mb_trackid
+
         # Check that 'title' field is modified, and other fields come from
         # the candidate.
         self.assertTrue(all('Edited Title ' in i.title
@@ -444,9 +440,7 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
                                                       'Edited Title'}},
                                     # edit Candidates, 1, Apply changes, aBort.
                                     ['c', '1', 'a', 'b'])
-        # Add the 'match' prefix to the mb_trackid field of the items
-        for item in self.lib.items():
-            item.mb_trackid = 'match ' + item.mb_trackid
+
         # Check that 'title' field is modified, and other fields come from
         # the candidate.
         self.assertTrue(all('Edited Title ' in i.title
