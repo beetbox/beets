@@ -573,9 +573,9 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
     if (any(config['musicbrainz']['external_ids'].get().values())
             and release.get('url-relation-list')):
         discogs_url, bandcamp_url, spotify_url = None, None, None
-        deezer_url, beatport_url = None, None
+        deezer_url, beatport_url, tidal_url = None, None, None
         fetch_discogs, fetch_bandcamp, fetch_spotify = False, False, False
-        fetch_deezer, fetch_beatport = False, False
+        fetch_deezer, fetch_beatport, fetch_tidal = False, False, False
 
         if config['musicbrainz']['external_ids']['discogs'].get():
             fetch_discogs = True
@@ -587,6 +587,8 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
             fetch_deezer = True
         if config['musicbrainz']['external_ids']['beatport'].get():
             fetch_beatport = True
+        if config['musicbrainz']['external_ids']['tidal'].get():
+            fetch_tidal = True
 
         for url in release['url-relation-list']:
             if fetch_discogs and url['type'] == 'discogs':
@@ -604,6 +606,9 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
             if fetch_beatport and 'beatport.com' in url['target']:
                 log.debug('Found link to Beatport release via MusicBrainz')
                 beatport_url = url['target']
+            if fetch_tidal and 'tidal.com' in url['target']:
+                log.debug('Found link to Tidal release via MusicBrainz')
+                tidal_url = url['target']
 
         if discogs_url:
             info.discogs_albumid = extract_discogs_id_regex(discogs_url)
@@ -618,6 +623,8 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
         if beatport_url:
             info.beatport_album_id = MetadataSourcePlugin._get_id(
                 'album', beatport_url, beatport_id_regex)
+        if tidal_url:
+            info.tidal_album_id = tidal_url.split('/')[-1]
 
     extra_albumdatas = plugins.send('mb_album_extract', data=release)
     for extra_albumdata in extra_albumdatas:
