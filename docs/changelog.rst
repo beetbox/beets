@@ -88,6 +88,8 @@ New features:
 * :doc:`/plugins/convert`: Add support for generating m3u8 playlists together
   with converted media files.
   :bug:`4373`
+* Fetch the ``release_group_title`` field from MusicBrainz.
+  :bug: `4809`
 
 Bug fixes:
 

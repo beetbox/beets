@@ -445,6 +445,9 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
     info.releasegroup_id = release['release-group']['id']
     info.albumstatus = release.get('status')
 
+    if release['release-group'].get('title'):
+        info.release_group_title = release['release-group'].get('title')
+
     # Get the disambiguation strings at the release and release group level.
     if release['release-group'].get('disambiguation'):
         info.releasegroupdisambig = \
