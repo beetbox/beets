@@ -15,6 +15,7 @@
 """The Query type hierarchy for DBCore.
 """
 
+from __future__ import annotations
 import re
 from operator import mul
 from typing import Union, Tuple, List, Optional, Pattern, Any, Type, Iterator,\
@@ -25,6 +26,12 @@ from datetime import datetime, timedelta
 import unicodedata
 from functools import reduce
 
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from beets.library import Item
+    from beets.dbcore import Model
 
 
 class ParsingError(ValueError):
@@ -73,7 +80,7 @@ class Query:
         """
         return None, ()
 
-    def match(self, item: 'Item'):
+    def match(self, item: Item):
         """Check whether this query matches a given Item. Can be used to
         perform queries on arbitrary sets of Items.
         """
@@ -119,7 +126,7 @@ class FieldQuery(Query):
         """
         raise NotImplementedError()
 
-    def match(self, item: 'Model'):
+    def match(self, item: Model):
         return self.value_match(self.pattern, item.get(self.field))
 
     def __repr__(self) -> str:

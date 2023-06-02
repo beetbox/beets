@@ -38,6 +38,9 @@ from .query import MatchQuery, NullSort, TrueQuery, AndQuery, Query, \
     FieldQuery, Sort
 from collections.abc import Mapping
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from beets.library import LibModel
 from ..util.functemplate import Template
 
 
@@ -1193,7 +1196,7 @@ class Database:
             sort if sort.is_slow() else None,  # Slow sort component.
         )
 
-    def _get(self, model_cls: Union[Type[Model], Type['LibModel']], id) -> Model:
+    def _get(self, model_cls: Union[Type[Model], Type[LibModel]], id) -> Model:
         """Get a Model object by its id or None if the id does not
         exist.
         """
