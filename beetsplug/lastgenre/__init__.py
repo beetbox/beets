@@ -224,7 +224,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 # write new tags to the file in a new line
                 for tag in new_tags:
                     f.write(tag + "\n")                
-        if not self.orig_genre is None:
+        if self.orig_genre is not None:
             tags = self.orig_genre + tags
         count = self.config['count'].get(int)
         if self.canonicalize:
@@ -242,8 +242,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 tags_all += parents
                 # Stop if we have enough tags already, unless we need to find
                 # the most specific tag (instead of the most popular).
-                if (not self.config['prefer_specific'] and
-                    len(tags_all) >= count):
+                if (not self.config['prefer_specific'] and len(
+                    tags_all) >= count):
                     break
             tags = tags_all
         tags = deduplicate(tags)
