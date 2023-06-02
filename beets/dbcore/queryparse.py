@@ -17,7 +17,7 @@
 
 import re
 import itertools
-from typing import Dict, Type, Tuple, Optional, Mapping, Collection, List, \
+from typing import Dict, Type, Tuple, Optional, Collection, List, \
     Sequence
 
 from . import query, Model
