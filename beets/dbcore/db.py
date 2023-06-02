@@ -15,6 +15,7 @@
 """The central Model and Database constructs for DBCore.
 """
 
+from __future__ import annotations
 import time
 import os
 import re
@@ -24,7 +25,7 @@ import sqlite3
 import contextlib
 from sqlite3 import Connection
 from types import TracebackType
-from typing import Iterable, Type, List, Tuple, NoReturn, Optional, Union, \
+from typing import Iterable, Type, List, Tuple, Optional, Union, \
     Dict, Any, Generator, Iterator, Callable
 
 from unidecode import unidecode
@@ -37,7 +38,6 @@ from .query import MatchQuery, NullSort, TrueQuery, AndQuery, Query, \
     FieldQuery, Sort
 from collections.abc import Mapping
 
-from ..library import LibModel
 from ..util.functemplate import Template
 
 
@@ -707,7 +707,7 @@ class Results:
 
     def __init__(
             self,
-            model_class: Type[LibModel],
+            model_class: Type['LibModel'],
             rows: List[Mapping],
             db: 'Database',
             flex_rows,
@@ -1150,7 +1150,7 @@ class Database:
 
     def _fetch(
             self,
-            model_cls: Type[LibModel],
+            model_cls: Type['LibModel'],
             query: Optional[Query] = None,
             sort: Optional[Sort] = None,
     ) -> Results:
@@ -1193,7 +1193,7 @@ class Database:
             sort if sort.is_slow() else None,  # Slow sort component.
         )
 
-    def _get(self, model_cls: Union[Type[Model], Type[LibModel]], id) -> Model:
+    def _get(self, model_cls: Union[Type[Model], Type['LibModel']], id) -> Model:
         """Get a Model object by its id or None if the id does not
         exist.
         """
