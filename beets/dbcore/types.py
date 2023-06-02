@@ -15,6 +15,7 @@
 """Representation of type information for DBCore model fields.
 """
 
+from typing import Union, Any, Callable
 from . import query
 from beets.util import str2bool
 
@@ -35,7 +36,7 @@ class Type:
     """The `Query` subclass to be used when querying the field.
     """
 
-    model_type = str
+    model_type: Callable[[Any], str] = str
     """The Python type that is used to represent the value in the model.
 
     The model is guaranteed to return a value of this type if the field
@@ -44,12 +45,12 @@ class Type:
     """
 
     @property
-    def null(self):
+    def null(self) -> model_type:
         """The value to be exposed when the underlying value is None.
         """
         return self.model_type()
 
-    def format(self, value):
+    def format(self, value: model_type) -> str:
         """Given a value of this type, produce a Unicode string
         representing the value. This is used in template evaluation.
         """
@@ -63,7 +64,7 @@ class Type:
 
         return str(value)
 
-    def parse(self, string):
+    def parse(self, string: str) -> model_type:
         """Parse a (possibly human-written) string and return the
         indicated value of this type.
         """
@@ -72,11 +73,12 @@ class Type:
         except ValueError:
             return self.null
 
-    def normalize(self, value):
+    def normalize(self, value: Union[None, int, float, bytes]) -> model_type:
         """Given a value that will be assigned into a field of this
         type, normalize the value to have the appropriate type. This
         base implementation only reinterprets `None`.
         """
+        # TYPING ERROR
         if value is None:
             return self.null
         else:
@@ -84,7 +86,10 @@ class Type:
             # `self.model_type(value)`
             return value
 
-    def from_sql(self, sql_value):
+    def from_sql(
+        self,
+        sql_value: Union[None, int, float, str, bytes],
+    ) -> model_type:
         """Receives the value stored in the SQL backend and return the
         value to be stored in the model.
 
@@ -105,7 +110,7 @@ class Type:
         else:
             return self.normalize(sql_value)
 
-    def to_sql(self, model_value):
+    def to_sql(self, model_value: Any) -> Union[None, int, float, str, bytes]:
         """Convert a value as stored in the model object to a value used
         by the database adapter.
         """
@@ -125,7 +130,7 @@ class Integer(Type):
     query = query.NumericQuery
     model_type = int
 
-    def normalize(self, value):
+    def normalize(self, value: str) -> Union[int, str]:
         try:
             return self.model_type(round(float(value)))
         except ValueError:
@@ -138,10 +143,10 @@ class PaddedInt(Integer):
     """An integer field that is formatted with a given number of digits,
     padded with zeroes.
     """
-    def __init__(self, digits):
+    def __init__(self, digits: int):
         self.digits = digits
 
-    def format(self, value):
+    def format(self, value: int) -> str:
         return '{0:0{1}d}'.format(value or 0, self.digits)
 
 
@@ -155,11 +160,11 @@ class ScaledInt(Integer):
     """An integer whose formatting operation scales the number by a
     constant and adds a suffix. Good for units with large magnitudes.
     """
-    def __init__(self, unit, suffix=''):
+    def __init__(self, unit: int, suffix: str = ''):
         self.unit = unit
         self.suffix = suffix
 
-    def format(self, value):
+    def format(self, value: int) -> str:
         return '{}{}'.format((value or 0) // self.unit, self.suffix)
 
 
@@ -169,7 +174,7 @@ class Id(Integer):
     """
     null = None
 
-    def __init__(self, primary=True):
+    def __init__(self, primary: bool = True):
         if primary:
             self.sql = 'INTEGER PRIMARY KEY'
 
@@ -182,10 +187,10 @@ class Float(Type):
     query = query.NumericQuery
     model_type = float
 
-    def __init__(self, digits=1):
+    def __init__(self, digits: int = 1):
         self.digits = digits
 
-    def format(self, value):
+    def format(self, value: float) -> str:
         return '{0:.{1}f}'.format(value or 0, self.digits)
 
 
@@ -201,7 +206,7 @@ class String(Type):
     sql = 'TEXT'
     query = query.SubstringQuery
 
-    def normalize(self, value):
+    def normalize(self, value: str) -> str:
         if value is None:
             return self.null
         else:
@@ -236,10 +241,10 @@ class Boolean(Type):
     query = query.BooleanQuery
     model_type = bool
 
-    def format(self, value):
+    def format(self, value: bool) -> str:
         return str(bool(value))
 
-    def parse(self, string):
+    def parse(self, string: str) -> bool:
         return str2bool(string)
 
 

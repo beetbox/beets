@@ -92,6 +92,7 @@ setup(
         'confuse>=1.5.0',
         'munkres>=1.0.0',
         'jellyfish',
+        'typing_extensions',
     ] + (
         # Support for ANSI console colors on Windows.
         ['colorama'] if (sys.platform == 'win32') else []
