@@ -54,7 +54,7 @@ HISTORY_KEY = 'taghistory'
 REIMPORT_FRESH_FIELDS_ALBUM = ['data_source']
 REIMPORT_FRESH_FIELDS_ITEM = ['data_source', 'bandcamp_album_id',
                               'spotify_album_id', 'deezer_album_id',
-                              'beatport_album_id']
+                              'beatport_album_id', 'tidal_album_id']
 
 # Global logger.
 log = logging.getLogger('beets')
