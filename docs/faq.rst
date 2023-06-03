@@ -59,6 +59,12 @@ with the ``%if{}`` function to accomplish this::
     item_fields:
         multidisc: 1 if disctotal > 1 else 0
 
+Note that the ``paths`` specification above only contains the
+``default`` key and leaves the ``comp`` and ``singleton`` keys to their
+default values as documented in :ref:`path-format-config`. The spec above
+will therefore not create "Disc N" directories for compilations or singletons
+unless you override those respective keys as well.
+
 
 .. _multidisc:
 
@@ -138,7 +144,9 @@ it's helpful to run on the "bleeding edge". To run the latest source:
 2. Install from source. Choose one of these methods:
 
    -  Directly from GitHub using
-      ``python -m pip install git+https://github.com/beetbox/beets.git`` command. Depending on your system, you may need to use ``pip3`` and ``python3`` instead of ``pip`` and ``python`` respectively.
+      ``python -m pip install git+https://github.com/beetbox/beets.git``
+      command. Depending on your system, you may need to use ``pip3``
+      and ``python3`` instead of ``pip`` and ``python`` respectively.
    -  Use ``pip`` to install the latest snapshot tarball. Type:
       ``pip install https://github.com/beetbox/beets/tarball/master``
    -  Grab the source using git. First, clone the repository:
