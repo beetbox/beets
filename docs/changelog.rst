@@ -207,6 +207,8 @@ Other changes:
 * :doc:`/plugins/lyrics`: Remove Musixmatch from default enabled sources as
   they are currently blocking requests from the beets user agent.
   :bug:`4585`
+* :doc:`/faq`: :ref:`multidisc`: Elaborated the multi-disc FAQ :bug:`4806`
+* :doc:`/faq`: :ref:`src`: Removed some long lines.
 
 1.6.0 (November 27, 2021)
 -------------------------
