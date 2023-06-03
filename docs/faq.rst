@@ -59,11 +59,11 @@ with the ``%if{}`` function to accomplish this::
     item_fields:
         multidisc: 1 if disctotal > 1 else 0
 
-Note that the ``paths`` specification above only contains the
-``default`` key and leaves the ``comp`` and ``singleton`` keys to their
-default values as documented in :ref:`path-format-config`. The spec above
-will therefore not create "Disc N" directories for compilations or singletons
-unless you override those respective keys as well.
+This ``paths`` configuration only contains the
+``default`` key: it leaves the ``comp`` and ``singleton`` keys as their
+default values, as documented in :ref:`path-format-config`.
+To create "Disc N" directories for compilations and singletons, you will need
+to specify similar templates for those keys as well.
 
 
 .. _multidisc:
