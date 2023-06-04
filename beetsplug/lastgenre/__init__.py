@@ -25,7 +25,6 @@ import codecs
 import os
 import traceback
 
-import discogs_client
 import pylast
 import yaml
 
@@ -207,7 +206,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     genre.lower() for genre in self.orig_genre
                 ]
         print(f"new tags: {tags}")
-        # write tags to all_genres.txt file saved in the all_genre_fn path. We need to check if the tag is already in the file and only add it if it is not in a new line
+        # This part is only to see what genres (or their variants) are being
+        # used. We can then use this information to clean the tags in the
+        # genre-trees.yaml file.
         all_genre_fn = self.config['all_genres'].get()
         if all_genre_fn:
             all_genre_fn = normpath(all_genre_fn)
@@ -215,15 +216,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 lines = f.readlines()
                 # remove the \n from the lines
                 lines = [line.strip() for line in lines]
-                # check if tags is in the list and find tags that are not in the list
+                # find tags that are not in the list
                 new_tags = [tag for tag in tags if tag not in lines]
-                # remove duplicates
                 new_tags = deduplicate(new_tags)
-                # sort the list
                 new_tags.sort()
                 # write new tags to the file in a new line
                 for tag in new_tags:
-                    f.write(tag + "\n")                
+                    f.write(tag + "\n")
         if self.orig_genre is not None:
             tags = self.orig_genre + tags
         count = self.config['count'].get(int)
@@ -316,7 +315,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             genre = self.fetch_genre(method(*args_replaced))
             self._genre_cache[key] = genre
             return genre
-
 
     def fetch_album_genre(self, obj):
         """Return the album genre for this Item or Album.
@@ -442,9 +440,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     self.orig_genre = album.genre
                     album.genre, src = self._get_genre(album)
                     print(f"Final genre: {album.genre}")
-                    test = self._discogs_tags_for(album)
                     self._log.debug('genre for album {0} ({1}): {0.genre}',
-                                   album, src)
+                                    album, src)
+                    # This will be uncommented when I'm sure it works
                     # album.store()
 
                     for item in album.items():
@@ -456,7 +454,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                             self._log.info(
                                 'genre for track {0} ({1}): {0.genre}',
                                 item, src)
-
                         if write:
                             item.try_write()
             else:
