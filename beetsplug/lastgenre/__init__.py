@@ -239,10 +239,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     parents = [find_parents(tag, self.c14n_branches)[-1]]
                 self._log.debug('Canonicalizing {0} to {1}', tag, parents)
                 tags_all += parents
+                tagcount = len(tags_all)
                 # Stop if we have enough tags already, unless we need to find
                 # the most specific tag (instead of the most popular).
-                if (not self.config['prefer_specific'] and len(
-                    tags_all) >= count):
+                if not self.config['prefer_specific'] and tagcount >= count:
                     break
             tags = tags_all
         tags = deduplicate(tags)
