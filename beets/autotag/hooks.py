@@ -84,6 +84,7 @@ class AlbumInfo(AttrDict):
             mediums: Optional[int] = None,
             artist_sort: Optional[str] = None,
             releasegroup_id: Optional[str] = None,
+            release_group_title: Optional[str] = None,
             catalognum: Optional[str] = None,
             script: Optional[str] = None,
             language: Optional[str] = None,
@@ -120,6 +121,7 @@ class AlbumInfo(AttrDict):
         self.mediums = mediums
         self.artist_sort = artist_sort
         self.releasegroup_id = releasegroup_id
+        self.release_group_title = release_group_title
         self.catalognum = catalognum
         self.script = script
         self.language = language
