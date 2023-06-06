@@ -1147,6 +1147,7 @@ class Album(LibModel):
         'albumstatus',
         'albumdisambig',
         'releasegroupdisambig',
+        'release_group_title',
         'rg_album_gain',
         'rg_album_peak',
         'r128_album_gain',
