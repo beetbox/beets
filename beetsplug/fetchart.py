@@ -590,7 +590,7 @@ class FanartTV(RemoteArtSource):
                 self._log.debug('fanart.tv: unexpected mb_releasegroupid in '
                                 'response!')
 
-        matches.sort(key=lambda x: x['likes'], reverse=True)
+        matches.sort(key=lambda x: int(x['likes']), reverse=True)
         for item in matches:
             # fanart.tv has a strict size requirement for album art to be
             # uploaded
