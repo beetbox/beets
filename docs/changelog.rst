@@ -185,6 +185,8 @@ Bug fixes:
 * Fix updating "data_source" on re-imports and improve logging when flexible
   attributes are being re-imported.
   :bug:`4726`
+* :doc:`/plugins/fetchart`: Correctly select the cover art from fanart.tv with
+  the highest number of likes
 
 For packagers:
 
