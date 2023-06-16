@@ -1369,7 +1369,7 @@ class Album(LibModel):
 
         plugins.send('art_set', album=self)
 
-    def store(self, fields=None):
+    def store(self, fields=None, inherit=True):
         """Update the database with the album information.
 
         The album's tracks are also updated.
@@ -1381,11 +1381,11 @@ class Album(LibModel):
         track_updates = {}
         track_deletes = set()
         for key in self._dirty:
-            if key in self.item_keys:
+            if key in self.item_keys and inherit:
                 track_updates[key] = self[key]
-            elif key not in self:
+            elif key not in self and inherit:
                 track_deletes.add(key)
-            else:  # Must be a flex attr
+            elif inherit:  # Must be a flex attr
                 track_updates[key] = self[key]
 
         with self._db.transaction():
@@ -1402,7 +1402,7 @@ class Album(LibModel):
                             del item[key]
                     item.store()
 
-    def try_sync(self, write, move):
+    def try_sync(self, write, move, inherit=True):
         """Synchronize the album and its items with the database.
         Optionally, also write any new tags into the files and update
         their paths.
@@ -1411,7 +1411,7 @@ class Album(LibModel):
         `move` controls whether files (both audio and album art) are
         moved.
         """
-        self.store()
+        self.store(inherit=inherit)
         for item in self.items():
             item.try_sync(write, move)
 
