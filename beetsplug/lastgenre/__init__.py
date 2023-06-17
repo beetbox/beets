@@ -326,6 +326,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 if allowed:
                     keep_allowed.append(g)
             if keep_allowed:
+                keep_allowed = set(keep_allowed)
                 return ", ".join(keep_allowed), "keep"
 
         # Track genre (for Items only).
