@@ -1931,7 +1931,8 @@ def mocked_get_release_by_id(id_, includes=[], release_status=[],
             }],
             'release-group': {
                 'id': 'another-id',
-            }
+            },
+            'status': 'Official',
         }
     }
 
