@@ -200,8 +200,8 @@ class ConvertPlugin(BeetsPlugin):
     def auto_convert_keep(self, config, task):
         if self.config['auto_keep']:
             empty_opts = self.commands()[0].parser.get_default_values()
-            (dest, threads, path_formats, fmt,
-             pretend, hardlink, link) = self._get_opts_and_config(empty_opts)
+            (dest, threads, path_formats, fmt, pretend,
+             hardlink, link, playlist) = self._get_opts_and_config(empty_opts)
 
             items = task.imported_items()
             self._parallel_convert(dest, False, path_formats, fmt,
