@@ -15,6 +15,7 @@
 import os
 import fnmatch
 import tempfile
+from typing import Any, Optional, Sequence, Tuple
 import beets
 from beets.util import path_as_posix
 
@@ -65,7 +66,7 @@ class PlaylistQuery(beets.dbcore.NamedQuery):
             f.close()
             break
 
-    def col_clause(self):
+    def clause(self) -> Tuple[Optional[str], Sequence[Any]]:
         if not self.paths:
             # Playlist is empty
             return '0', ()
