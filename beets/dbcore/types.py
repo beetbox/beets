@@ -16,8 +16,9 @@
 """
 
 from abc import ABC
+import sys
 import typing
-from typing import Any, cast, Generic, List, TypeVar, Union
+from typing import Any, cast, Generic, List, TYPE_CHECKING, TypeVar, Union
 from .query import BooleanQuery, FieldQuery, NumericQuery, SubstringQuery
 from beets.util import str2bool
 
@@ -25,13 +26,18 @@ from beets.util import str2bool
 # Abstract base.
 
 
-class ModelType(Protocol):
-    """Protocol that specifies the required constructor for model types, i.e.
-    a function that takes any argument and attempts to parse it to the given
-    type.
-    """
-    def __init__(self, value: Any = None):
-        ...
+# FIXME: unconditionally define the Protocol once we drop Python 3.7
+if TYPE_CHECKING and sys.version_info >= (3, 8):
+    class ModelType(typing.Protocol):
+        """Protocol that specifies the required constructor for model types,
+        i.e. a function that takes any argument and attempts to parse it to the
+        given type.
+        """
+        def __init__(self, value: Any = None):
+            ...
+else:
+    # No structural subtyping in Python < 3.8...
+    ModelType = Any
 
 
 # Generic type variables, used for the value type T and null type N (if
