@@ -32,7 +32,7 @@ class SortFixture(dbcore.query.FieldSort):
     pass
 
 
-class QueryFixture(dbcore.query.Query):
+class QueryFixture(dbcore.query.NamedQuery):
     def __init__(self, pattern):
         self.pattern = pattern
 

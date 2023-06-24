@@ -128,6 +128,8 @@ def construct_query_part(
     if not query_part:
         return query.TrueQuery()
 
+    out_query: query.Query
+
     # Use `model_cls` to build up a map from field (or query) names to
     # `Query` classes.
     query_classes = {}
@@ -149,9 +151,11 @@ def construct_query_part(
             # any field.
             out_query = query.AnyFieldQuery(pattern, model_cls._search_fields,
                                             query_class)
-        else:
+        elif issubclass(query_class, query.NamedQuery):
             # Non-field query type.
             out_query = query_class(pattern)
+        else:
+            assert False, "Unexpected query type"
 
     # Field queries get constructed according to the name of the field
     # they are querying.
@@ -160,8 +164,10 @@ def construct_query_part(
         out_query = query_class(key.lower(), pattern, key in model_cls._fields)
 
     # Non-field (named) query.
-    else:
+    elif issubclass(query_class, query.NamedQuery):
         out_query = query_class(pattern)
+    else:
+        assert False, "Unexpected query type"
 
     # Apply negation.
     if negate:
@@ -172,7 +178,7 @@ def construct_query_part(
 
 # TYPING ERROR
 def query_from_strings(
-        query_cls: Type[query.Query],
+        query_cls: Type[query.CollectionQuery],
         model_cls: Type[Model],
         prefixes: Dict,
         query_parts: Collection[str],
@@ -227,15 +233,15 @@ def sort_from_strings(
     """Create a `Sort` from a list of sort criteria (strings).
     """
     if not sort_parts:
-        sort = query.NullSort()
+        return query.NullSort()
     elif len(sort_parts) == 1:
-        sort = construct_sort_part(model_cls, sort_parts[0], case_insensitive)
+        return construct_sort_part(model_cls, sort_parts[0], case_insensitive)
     else:
         sort = query.MultipleSort()
         for part in sort_parts:
             sort.add_sort(construct_sort_part(model_cls, part,
                                               case_insensitive))
-    return sort
+        return sort
 
 
 def parse_sorted_query(
