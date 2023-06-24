@@ -96,7 +96,7 @@ class Query(ABC):
         return None, ()
 
     @abstractmethod
-    def match(self, item: Item):
+    def match(self, obj: Model):
         """Check whether this query matches a given Model. Can be used to
         perform queries on arbitrary sets of Model.
         """
