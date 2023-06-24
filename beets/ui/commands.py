@@ -1828,20 +1828,20 @@ default_commands.append(config_cmd)
 def print_completion(*args):
     for line in completion_script(default_commands + plugins.commands()):
         print_(line, end='')
-    if not any(map(os.path.isfile, BASH_COMPLETION_PATHS)):
+    if not any(os.path.isfile(syspath(p)) for p in BASH_COMPLETION_PATHS):
         log.warning('Warning: Unable to find the bash-completion package. '
                     'Command line completion might not work.')
 
 
-BASH_COMPLETION_PATHS = map(syspath, [
-    '/etc/bash_completion',
-    '/usr/share/bash-completion/bash_completion',
-    '/usr/local/share/bash-completion/bash_completion',
+BASH_COMPLETION_PATHS = [
+    b'/etc/bash_completion',
+    b'/usr/share/bash-completion/bash_completion',
+    b'/usr/local/share/bash-completion/bash_completion',
     # SmartOS
-    '/opt/local/share/bash-completion/bash_completion',
+    b'/opt/local/share/bash-completion/bash_completion',
     # Homebrew (before bash-completion2)
-    '/usr/local/etc/bash_completion',
-])
+    b'/usr/local/etc/bash_completion',
+]
 
 
 def completion_script(commands):
