@@ -204,7 +204,7 @@ class LazyConvertDict:
     def __contains__(self, key) -> bool:
         """Determine whether `key` is an attribute on this object.
         """
-        return key in self.keys()
+        return key in self._converted.keys() or key in  self.data.keys()
 
     def __iter__(self) -> Iterable[str]:
         """Iterate over the available field names (excluding computed
