@@ -385,7 +385,7 @@ class Model:
         """
         return cls._fields.get(key) or cls._types.get(key) or types.DEFAULT
 
-    def _get(self, key, default: bool = None, raise_: bool = False):
+    def _get(self, key, default: Any = None, raise_: bool = False):
         """Get the value for a field, or `default`. Alternatively,
         raise a KeyError if the field is not available.
         """
