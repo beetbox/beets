@@ -265,15 +265,16 @@ class RegexpQuery(StringFieldQuery):
     """
 
     def __init__(self, field: str, pattern: str, fast: bool = True):
-        super().__init__(field, pattern, fast)
         pattern = self._normalize(pattern)
         try:
-            self.pattern = re.compile(self.pattern)
+            pattern_re = re.compile(pattern)
         except re.error as exc:
             # Invalid regular expression.
             raise InvalidQueryArgumentValueError(pattern,
                                                  "a regular expression",
                                                  format(exc))
+
+        super().__init__(field, pattern_re, fast)
 
     def col_clause(self):
         return f" regexp({self.field}, ?)", [self.pattern.pattern]
