@@ -11,6 +11,8 @@ for Python 3.6).
 
 New features:
 
+* resolve transl-tracklisting relations for pseudo releases and merge data with the actual release
+  :bug:`654`
 * Fetchart: Use the right field (`spotify_album_id`) to obtain the Spotify album id
   :bug:`4803`
 * Prevent reimporting album if it is permanently removed from Spotify
