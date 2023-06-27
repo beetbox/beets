@@ -13,6 +13,8 @@ New features:
 
 * Added support for ``artists`` and ``albumartists`` multi tags
   :bug:`505`
+* resolve transl-tracklisting relations for pseudo releases and merge data with the actual release
+  :bug:`654`
 * Fetchart: Use the right field (`spotify_album_id`) to obtain the Spotify album id
   :bug:`4803`
 * Prevent reimporting album if it is permanently removed from Spotify
@@ -90,6 +92,8 @@ New features:
 * :doc:`/plugins/convert`: Add support for generating m3u8 playlists together
   with converted media files.
   :bug:`4373`
+* Fetch the ``release_group_title`` field from MusicBrainz.
+  :bug: `4809`
 
 Bug fixes:
 
@@ -185,6 +189,8 @@ Bug fixes:
 * Fix updating "data_source" on re-imports and improve logging when flexible
   attributes are being re-imported.
   :bug:`4726`
+* :doc:`/plugins/fetchart`: Correctly select the cover art from fanart.tv with
+  the highest number of likes
 
 For packagers:
 
@@ -209,6 +215,8 @@ Other changes:
 * :doc:`/plugins/lyrics`: Remove Musixmatch from default enabled sources as
   they are currently blocking requests from the beets user agent.
   :bug:`4585`
+* :doc:`/faq`: :ref:`multidisc`: Elaborated the multi-disc FAQ :bug:`4806`
+* :doc:`/faq`: :ref:`src`: Removed some long lines.
 
 1.6.0 (November 27, 2021)
 -------------------------
