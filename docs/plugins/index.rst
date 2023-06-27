@@ -543,4 +543,4 @@ Here are a few of the plugins written by the beets community:
 .. _beets-originquery: https://github.com/x1ppy/beets-originquery
 .. _drop2beets: https://github.com/martinkirch/drop2beets
 .. _beets-audible: https://github.com/Neurrone/beets-audible
-.. _beets-more: https://forgejo.sny.sh/sun/beetsplug
+.. _beets-more: https://forgejo.sny.sh/sun/beetsplug/src/branch/main/more
