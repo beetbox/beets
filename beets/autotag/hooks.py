@@ -99,7 +99,7 @@ class AlbumInfo(AttrDict):
             albumdisambig: Optional[str] = None,
             releasegroupdisambig: Optional[str] = None,
             artist_credit: Optional[str] = None,
-            artists_credits: Optional[List[str]] = None,
+            artists_credit: Optional[List[str]] = None,
             original_year: Optional[int] = None,
             original_month: Optional[int] = None,
             original_day: Optional[int] = None,
@@ -140,7 +140,7 @@ class AlbumInfo(AttrDict):
         self.albumdisambig = albumdisambig
         self.releasegroupdisambig = releasegroupdisambig
         self.artist_credit = artist_credit
-        self.artists_credits = artists_credits or []
+        self.artists_credit = artists_credit or []
         self.original_year = original_year
         self.original_month = original_month
         self.original_day = original_day
@@ -209,7 +209,7 @@ class TrackInfo(AttrDict):
             artists_sort: Optional[List[str]] = None,
             disctitle: Optional[str] = None,
             artist_credit: Optional[str] = None,
-            artists_credits: Optional[List[str]] = None,
+            artists_credit: Optional[List[str]] = None,
             data_source: Optional[str] = None,
             data_url: Optional[str] = None,
             media: Optional[str] = None,
@@ -243,7 +243,7 @@ class TrackInfo(AttrDict):
         self.artists_sort = artists_sort or []
         self.disctitle = disctitle
         self.artist_credit = artist_credit
-        self.artists_credits = artists_credits or []
+        self.artists_credit = artists_credit or []
         self.data_source = data_source
         self.data_url = data_url
         self.lyricist = lyricist

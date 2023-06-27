@@ -288,7 +288,7 @@ def track_info(
         info.artist, info.artist_sort, info.artist_credit = \
             _flatten_artist_credit(recording['artist-credit'])
 
-        info.artists, info.artists_sort, info.artists_credits = \
+        info.artists, info.artists_sort, info.artists_credit = \
             _multi_artist_credit(
                 recording['artist-credit'], include_join_phrase=False
             )
@@ -464,7 +464,7 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
                 ti.artist, ti.artist_sort, ti.artist_credit = \
                     _flatten_artist_credit(track['artist-credit'])
 
-                ti.artists, ti.artists_sort, ti.artists_credits = \
+                ti.artists, ti.artists_sort, ti.artists_credit = \
                     _multi_artist_credit(
                         track['artist-credit'], include_join_phrase=False
                     )
@@ -489,7 +489,7 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
         artist_sort=artist_sort_name,
         artists_sort=artists_sort_names,
         artist_credit=artist_credit_name,
-        artists_credits=artists_credit_names,
+        artists_credit=artists_credit_names,
         data_source='MusicBrainz',
         data_url=album_url(release['id']),
     )

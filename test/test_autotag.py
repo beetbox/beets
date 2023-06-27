@@ -628,7 +628,7 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
             medium_total=1,
             index=1,
             artist_credit='trackArtistCredit',
-            artists_credits=['trackArtistCredit'],
+            artists_credit=['trackArtistCredit'],
             artist_sort='trackArtistSort',
             artists_sort=['trackArtistSort'],
         ))
@@ -652,7 +652,7 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
                 'a6623d39-2d8e-4f70-8242-0a9553b91e51'
             ],
             artist_credit='albumArtistCredit',
-            artists_credits=['albumArtistCredit', 'albumArtistCredit2'],
+            artists_credit=['albumArtistCredit', 'albumArtistCredit2'],
             artist_sort='albumArtistSort',
             artists_sort=['albumArtistSort', 'albumArtistSort2'],
             albumtype='album',
@@ -787,19 +787,19 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self._apply()
         self.assertEqual(self.items[0].albumartist_credit, 'albumArtistCredit')
         self.assertEqual(
-            self.items[0].albumartists_credits,
+            self.items[0].albumartists_credit,
             ['albumArtistCredit', 'albumArtistCredit2']
         )
         self.assertEqual(self.items[0].artist_credit, 'trackArtistCredit')
-        self.assertEqual(self.items[0].artists_credits, ['trackArtistCredit'])
+        self.assertEqual(self.items[0].artists_credit, ['trackArtistCredit'])
         self.assertEqual(self.items[1].albumartist_credit, 'albumArtistCredit')
         self.assertEqual(
-            self.items[1].albumartists_credits,
+            self.items[1].albumartists_credit,
             ['albumArtistCredit', 'albumArtistCredit2']
         )
         self.assertEqual(self.items[1].artist_credit, 'albumArtistCredit')
         self.assertEqual(
-            self.items[1].artists_credits,
+            self.items[1].artists_credit,
             ['albumArtistCredit', 'albumArtistCredit2']
         )
 

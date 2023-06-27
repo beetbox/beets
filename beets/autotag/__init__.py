@@ -51,7 +51,7 @@ SPECIAL_FIELDS = {
         'artist',
         'artists',
         'artist_credit',
-        'artists_credits',
+        'artists_credit',
         'artist_sort',
         'artists_sort',
         'data_url'
@@ -66,7 +66,7 @@ SPECIAL_FIELDS = {
         'medium_index',
         'title',
         'artist_credit',
-        'artists_credits',
+        'artists_credit',
         'artist_sort',
         'artists_sort',
         'artist',
@@ -89,7 +89,7 @@ def apply_item_metadata(item: Item, track_info: TrackInfo):
     item.artist_sort = track_info.artist_sort
     item.artists_sort = track_info.artists_sort
     item.artist_credit = track_info.artist_credit
-    item.artists_credits = track_info.artists_credits
+    item.artists_credit = track_info.artists_credit
     item.title = track_info.title
     item.mb_trackid = track_info.track_id
     item.mb_releasetrackid = track_info.release_track_id
@@ -121,13 +121,13 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
                            track_info.artist or
                            album_info.artist_credit or
                            album_info.artist)
-            item.artists = (track_info.artists_credits or
+            item.artists = (track_info.artists_credit or
                             track_info.artists or
-                            album_info.artists_credits or
+                            album_info.artists_credit or
                             album_info.artists)
             item.albumartist = (album_info.artist_credit or
                                 album_info.artist)
-            item.albumartists = (album_info.artists_credits or
+            item.albumartists = (album_info.artists_credit or
                                  album_info.artists)
         else:
             item.artist = (track_info.artist or album_info.artist)
@@ -143,12 +143,12 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
         item.artists_sort = track_info.artists_sort or album_info.artists_sort
         item.artist_credit = (track_info.artist_credit or
                               album_info.artist_credit)
-        item.artists_credits = (track_info.artists_credits or
-                                album_info.artists_credits)
+        item.artists_credit = (track_info.artists_credit or
+                                album_info.artists_credit)
         item.albumartist_sort = album_info.artist_sort
         item.albumartists_sort = album_info.artists_sort
         item.albumartist_credit = album_info.artist_credit
-        item.albumartists_credits = album_info.artists_credits
+        item.albumartists_credit = album_info.artists_credit
 
         # Release date.
         for prefix in '', 'original_':

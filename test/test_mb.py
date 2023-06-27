@@ -439,7 +439,7 @@ class MBAlbumInfoTest(_common.TestCase):
             ]
         )
         self.assertEqual(
-            track.artists_credits,
+            track.artists_credit,
             [
                 'RECORDING ARTIST CREDIT',
                 'RECORDING ARTIST 2 CREDIT'
@@ -493,7 +493,7 @@ class MBAlbumInfoTest(_common.TestCase):
             ['TRACK ARTIST SORT NAME', 'TRACK ARTIST 2 SORT NAME']
         )
         self.assertEqual(
-            track.artists_credits,
+            track.artists_credit,
             ['TRACK ARTIST CREDIT', 'TRACK ARTIST 2 CREDIT']
         )
 
