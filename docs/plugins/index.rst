@@ -463,6 +463,9 @@ Here are a few of the plugins written by the beets community:
 `beets-jiosaavn`_
    Adds JioSaavn.com as a tagger data source.
 
+`beets-more`_
+   Finds versions of indexed releases with more tracks, like deluxe and anniversary editions.
+
 `beets-mosaic`_
    Generates a montage of a mosaic from cover art.
 
@@ -540,3 +543,4 @@ Here are a few of the plugins written by the beets community:
 .. _beets-originquery: https://github.com/x1ppy/beets-originquery
 .. _drop2beets: https://github.com/martinkirch/drop2beets
 .. _beets-audible: https://github.com/Neurrone/beets-audible
+.. _beets-more: https://forgejo.sny.sh/sun/beetsplug/src/branch/main/more
