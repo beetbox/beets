@@ -746,7 +746,7 @@ def album_for_id(releaseid: str) -> Optional[beets.autotag.hooks.AlbumInfo]:
         # resolve linked release relations
         actual_res = None
 
-        if res['release']['status'] == 'Pseudo-Release':
+        if res['release'].get('status') == 'Pseudo-Release':
             actual_res = _find_actual_release_from_pseudo_release(res)
 
     except musicbrainzngs.ResponseError:
