@@ -678,7 +678,10 @@ def _is_translation(r):
 
 def _find_actual_release_from_pseudo_release(pseudo_rel: Dict) \
         -> Optional[Dict]:
-    relations = pseudo_rel['release']["release-relation-list"]
+    try:
+        relations = pseudo_rel['release']["release-relation-list"]
+    except KeyError:
+        return None
 
     # currently we only support trans(liter)ation's
     translations = [r for r in relations if _is_translation(r)]

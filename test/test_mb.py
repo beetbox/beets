@@ -724,7 +724,7 @@ class MBLibraryTest(unittest.TestCase):
             album = mb.album_for_id('d2a6f856-b553-40a0-ac54-a321e8e2da02')
             self.assertEqual(album.country, 'COUNTRY')
 
-    def test_pseudo_releases_without_links(self):
+    def test_pseudo_releases_with_empty_links(self):
         side_effect = [{
                     'release': {
                         'title': 'pseudo',
@@ -753,6 +753,43 @@ class MBLibraryTest(unittest.TestCase):
                             'id': 'another-id',
                         },
                         'release-relation-list': []
+                    }
+                },
+        ]
+
+        with mock.patch('musicbrainzngs.get_release_by_id') as gp:
+            gp.side_effect = side_effect
+            album = mb.album_for_id('d2a6f856-b553-40a0-ac54-a321e8e2da02')
+            self.assertEqual(album.country, None)
+
+    def test_pseudo_releases_without_links(self):
+        side_effect = [{
+                    'release': {
+                        'title': 'pseudo',
+                        'id': 'd2a6f856-b553-40a0-ac54-a321e8e2da02',
+                        'status': 'Pseudo-Release',
+                        'medium-list': [{
+                            'track-list': [{
+                                'id': 'baz',
+                                'recording': {
+                                    'title': 'translated title',
+                                    'id': 'bar',
+                                    'length': 42,
+                                },
+                                'position': 9,
+                                'number': 'A1',
+                            }],
+                            'position': 5,
+                        }],
+                        'artist-credit': [{
+                            'artist': {
+                                'name': 'some-artist',
+                                'id': 'some-id',
+                            },
+                        }],
+                        'release-group': {
+                            'id': 'another-id',
+                        },
                     }
                 },
         ]
