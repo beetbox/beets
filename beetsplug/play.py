@@ -181,7 +181,7 @@ class PlayPlugin(BeetsPlugin):
         if config["play"]["raw"]:
             return paths
         else:
-            return [self._create_tmp_playlist(paths)]
+            return [shlex.quote(self._create_tmp_playlist(paths))]
 
     def _exceeds_threshold(
         self, selection, command_str, open_args, item_type="track"
