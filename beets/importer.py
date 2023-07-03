@@ -50,7 +50,15 @@ QUEUE_SIZE = 128
 SINGLE_ARTIST_THRESH = 0.25
 PROGRESS_KEY = 'tagprogress'
 HISTORY_KEY = 'taghistory'
-# Album and item flexble attrbutes that should not be preserved on reimports.
+# Usually flexible attributes are preserved (i.e., not updated) during
+# reimports. The following two lists (globally) change this behaviour for
+# certain fields. To alter these lists only when a specific plugin is in use,
+# something like this can be used within that plugin's code:
+#
+# from beets import importer
+# def extend_reimport_fresh_fields_item():
+#     importer.REIMPORT_FRESH_FIELDS_ITEM.extend(['tidal_track_popularity']
+# )
 REIMPORT_FRESH_FIELDS_ALBUM = ['data_source']
 REIMPORT_FRESH_FIELDS_ITEM = ['data_source', 'bandcamp_album_id',
                               'spotify_album_id', 'deezer_album_id',
