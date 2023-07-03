@@ -144,7 +144,7 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
         item.artist_credit = (track_info.artist_credit or
                               album_info.artist_credit)
         item.artists_credit = (track_info.artists_credit or
-                                album_info.artists_credit)
+                               album_info.artists_credit)
         item.albumartist_sort = album_info.artist_sort
         item.albumartists_sort = album_info.artists_sort
         item.albumartist_credit = album_info.artist_credit
