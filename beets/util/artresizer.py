@@ -256,6 +256,7 @@ class IMBackend(LocalBackend):
             '-colorspace', 'gray', 'MIFF:-'
         ]
         compare_cmd = self.compare_cmd + [
+            '-define', 'phash:colorspaces=sRGB,HCLp',
             '-metric', 'PHASH', '-', 'null:',
         ]
         log.debug('comparing images with pipeline {} | {}',

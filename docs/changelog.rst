@@ -172,6 +172,8 @@ Bug fixes:
 * :doc:`plugins/lyrics`: Fixed issue with Tekstowo backend not actually checking
   if the found song matches.
   :bug:`4406`
+* :doc:`plugins/embedart`: Add support for ImageMagick 7.1.1-12
+  :bug:`4836`
 * :doc:`/plugins/fromfilename`: Fix failed detection of <track> <title>
   filename patterns.
   :bug:`4561` :bug:`4600`
