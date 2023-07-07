@@ -14,8 +14,6 @@
 
 """Representation of type information for DBCore model fields.
 """
-from typing import List
-
 from abc import ABC
 import sys
 import typing
