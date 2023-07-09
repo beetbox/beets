@@ -46,6 +46,19 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
     def __init__(self):
         super().__init__()
 
+    def commands(self):
+        """Add beet UI commands to interact with Deezer."""
+        deezer_update_cmd = ui.Subcommand(
+            'deezerupdate', help=f'Update {self.data_source} rank')
+
+        def func(lib, opts, args):
+            items = lib.items(ui.decargs(args))
+            self.deezerupdate(items, ui.should_write())
+
+        deezer_update_cmd.func = func
+
+        return [deezer_update_cmd]
+
     def album_for_id(self, album_id):
         """Fetch an album by its Deezer ID or URL and return an
         AlbumInfo object or None if the album is not found.
@@ -242,3 +255,26 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             query,
         )
         return response_data
+
+    def deezerupdate(self, items, write):
+        """Obtain rank information from Deezer."""
+        for index, item in enumerate(items, start=1):
+            self._log.info('Processing {}/{} tracks - {} ',
+                           index, len(items), item)
+            try:
+                deezer_track_id = item.deezer_track_id
+            except AttributeError:
+                self._log.debug('No deezer_track_id present for: {}', item)
+                continue
+            try:
+                rank = requests.get(
+                    self.track_url + deezer_track_id).json().get('rank')
+                self._log.debug('Deezer track: {} has {} rank',
+                                deezer_track_id, rank)
+            except Exception as e:
+                self._log.debug('Invalid Deezer track_id: {}', e)
+                continue
+            item.deezer_track_rank = int(rank)
+            item.store()
+            if write:
+                item.try_write()
