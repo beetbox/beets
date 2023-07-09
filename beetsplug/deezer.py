@@ -16,6 +16,7 @@
 """
 
 import collections
+import time
 
 import requests
 import unidecode
@@ -23,6 +24,7 @@ import unidecode
 from beets import ui
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.dbcore import types
+from beets.library import DateType
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin
 from beets.util.id_extractors import deezer_id_regex
 
@@ -33,6 +35,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
     item_types = {
         'deezer_track_rank': types.INTEGER,
         'deezer_track_id': types.INTEGER,
+        'deezer_updated': DateType(),
     }
 
     # Base URLs for the Deezer API
@@ -160,6 +163,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             medium_index=track_data.get('track_position'),
             data_source=self.data_source,
             data_url=track_data['link'],
+            deezer_updated=time.time(),
         )
 
     def track_for_id(self, track_id=None, track_data=None):
@@ -276,5 +280,6 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
                 continue
             item.deezer_track_rank = int(rank)
             item.store()
+            item.deezer_updated = time.time()
             if write:
                 item.try_write()
