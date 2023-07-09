@@ -119,7 +119,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             mediums=max(medium_totals.keys()),
             data_source=self.data_source,
             data_url=album_data['link'],
-            cover_art_url=album_data['cover_xl'],
+            cover_art_url=album_data.get('cover_xl'),
         )
 
     def _get_track(self, track_data):
