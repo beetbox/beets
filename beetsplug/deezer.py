@@ -268,7 +268,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
                 continue
             try:
                 rank = requests.get(
-                    self.track_url + deezer_track_id).json().get('rank')
+                    f"{self.track_url}{deezer_track_id}").json().get('rank')
                 self._log.debug('Deezer track: {} has {} rank',
                                 deezer_track_id, rank)
             except Exception as e:
