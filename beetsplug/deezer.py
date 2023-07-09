@@ -17,17 +17,23 @@
 
 import collections
 
-import unidecode
 import requests
+import unidecode
 
 from beets import ui
 from beets.autotag import AlbumInfo, TrackInfo
-from beets.plugins import MetadataSourcePlugin, BeetsPlugin
+from beets.dbcore import types
+from beets.plugins import BeetsPlugin, MetadataSourcePlugin
 from beets.util.id_extractors import deezer_id_regex
 
 
 class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
     data_source = 'Deezer'
+
+    item_types = {
+        'deezer_track_rank': types.INTEGER,
+        'deezer_track_id': types.INTEGER,
+    }
 
     # Base URLs for the Deezer API
     # Documentation: https://developers.deezer.com/api/
@@ -113,6 +119,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             mediums=max(medium_totals.keys()),
             data_source=self.data_source,
             data_url=album_data['link'],
+            cover_art_url=album_data['cover_xl'],
         )
 
     def _get_track(self, track_data):
@@ -129,11 +136,14 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         return TrackInfo(
             title=track_data['title'],
             track_id=track_data['id'],
+            deezer_track_id=track_data['id'],
+            isrc=track_data.get('isrc'),
             artist=artist,
             artist_id=artist_id,
             length=track_data['duration'],
             index=track_data.get('track_position'),
             medium=track_data.get('disk_number'),
+            deezer_track_rank=track_data.get('rank'),
             medium_index=track_data.get('track_position'),
             data_source=self.data_source,
             data_url=track_data['link'],
