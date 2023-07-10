@@ -16,7 +16,6 @@
 """
 
 import collections
-import re
 import time
 
 import requests
