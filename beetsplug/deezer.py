@@ -192,6 +192,10 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             if deezer_id is None:
                 return None
             track_data = requests.get(self.track_url + deezer_id).json()
+            if 'error' in track_data:
+                self._log.debug(f"Error fetching track {track_id}: "
+                                f"{track_data['error']['message']}")
+                return None
         track = self._get_track(track_data)
 
         # Get album's tracks to set `track.index` (position on the entire
