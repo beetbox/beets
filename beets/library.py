@@ -1385,7 +1385,7 @@ class Album(LibModel):
                 track_updates[key] = self[key]
             elif key not in self and inherit:
                 track_deletes.add(key)
-            elif inherit:  # Must be a flex attr
+            elif key != 'id' and inherit:  # Could be a flex attr or id
                 track_updates[key] = self[key]
 
         with self._db.transaction():
