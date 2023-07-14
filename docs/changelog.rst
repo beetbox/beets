@@ -11,6 +11,8 @@ for Python 3.6).
 
 New features:
 
+* :doc:`/plugins/deezer`: Import rank and other attributes from Deezer during import and add a function to update the rank of existing items.
+  :bug:`4841`
 * resolve transl-tracklisting relations for pseudo releases and merge data with the actual release
   :bug:`654`
 * Fetchart: Use the right field (`spotify_album_id`) to obtain the Spotify album id
@@ -95,6 +97,7 @@ New features:
 
 Bug fixes:
 
+* :doc:`/plugins/deezer`: Fixed the error where Deezer plugin would crash if non-Deezer id is passed during import.  
 * :doc:`/plugins/fetchart`: Fix fetching from Cover Art Archive when the
   `maxwidth` option is set to one of the supported Cover Art Archive widths.
 * :doc:`/plugins/discogs`: Fix "Discogs plugin replacing Feat. or Ft. with
