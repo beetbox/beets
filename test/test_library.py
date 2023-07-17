@@ -1022,10 +1022,17 @@ class AlbumInfoTest(_common.TestCase):
         self.assertEqual(i.albumartist, 'myNewArtist')
         self.assertNotEqual(i.artist, 'myNewArtist')
 
+    def test_albuminfo_change_artist_does_change_items(self):
+        ai = self.lib.get_album(self.i)
+        ai.artist = 'myNewArtist'
+        ai.store(inherit=True)
+        i = self.lib.items()[0]
+        self.assertEqual(i.artist, 'myNewArtist')
+
     def test_albuminfo_change_artist_does_not_change_items(self):
         ai = self.lib.get_album(self.i)
         ai.artist = 'myNewArtist'
-        ai.store()
+        ai.store(inherit=False)
         i = self.lib.items()[0]
         self.assertNotEqual(i.artist, 'myNewArtist')
 
