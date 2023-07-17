@@ -212,6 +212,7 @@ class TrackInfo(AttrDict):
             bpm: Optional[str] = None,
             initial_key: Optional[str] = None,
             genre: Optional[str] = None,
+            album: Optional[str] = None,
             **kwargs,
     ):
         self.title = title
@@ -241,6 +242,7 @@ class TrackInfo(AttrDict):
         self.bpm = bpm
         self.initial_key = initial_key
         self.genre = genre
+        self.album = album
         self.update(kwargs)
 
     # As above, work around a bug in python-musicbrainz-ngs.
