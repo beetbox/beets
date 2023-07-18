@@ -277,8 +277,8 @@ class AlbumFileTest(_common.TestCase):
         self.ai.store()
         self.i.load()
 
-        self.assertFalse(os.path.exists(syspath(oldpath)))
-        self.assertTrue(os.path.exists(syspath(self.i.path)))
+        self.assertNotExists(oldpath)
+        self.assertExists(self.i.path)
 
     def test_albuminfo_move_copies_file(self):
         oldpath = self.i.path
@@ -287,8 +287,8 @@ class AlbumFileTest(_common.TestCase):
         self.ai.store()
         self.i.load()
 
-        self.assertTrue(os.path.exists(syspath(oldpath)))
-        self.assertTrue(os.path.exists(syspath(self.i.path)))
+        self.assertExists(oldpath)
+        self.assertExists(self.i.path)
 
     @unittest.skipUnless(_common.HAVE_REFLINK, "need reflink")
     def test_albuminfo_move_reflinks_file(self):
@@ -332,21 +332,21 @@ class ArtFileTest(_common.TestCase):
         self.otherdir = os.path.join(self.temp_dir, b'testotherdir')
 
     def test_art_deleted_when_items_deleted(self):
-        self.assertTrue(os.path.exists(syspath(self.art)))
+        self.assertExists(self.art)
         self.ai.remove(True)
-        self.assertFalse(os.path.exists(syspath(self.art)))
+        self.assertNotExists(self.art)
 
     def test_art_moves_with_album(self):
-        self.assertTrue(os.path.exists(syspath(self.art)))
+        self.assertExists(self.art)
         oldpath = self.i.path
         self.ai.album = 'newAlbum'
         self.ai.move()
         self.i.load()
 
         self.assertNotEqual(self.i.path, oldpath)
-        self.assertFalse(os.path.exists(syspath(self.art)))
+        self.assertNotExists(self.art)
         newart = self.lib.get_album(self.i).art_destination(self.art)
-        self.assertTrue(os.path.exists(syspath(newart)))
+        self.assertExists(newart)
 
     def test_art_moves_with_album_to_custom_dir(self):
         # Move the album to another directory.
@@ -373,7 +373,7 @@ class ArtFileTest(_common.TestCase):
 
         self.assertEqual(ai.artpath, None)
         ai.set_art(newart)
-        self.assertTrue(os.path.exists(syspath(ai.artpath)))
+        self.assertExists(ai.artpath)
 
     def test_setart_to_existing_art_works(self):
         util.remove(self.art)
@@ -390,7 +390,7 @@ class ArtFileTest(_common.TestCase):
 
         # Set the art again.
         ai.set_art(ai.artpath)
-        self.assertTrue(os.path.exists(syspath(ai.artpath)))
+        self.assertExists(ai.artpath)
 
     def test_setart_to_existing_but_unset_art_works(self):
         newart = os.path.join(self.libdir, b'newart.jpg')
@@ -407,7 +407,7 @@ class ArtFileTest(_common.TestCase):
 
         # Set the art again.
         ai.set_art(artdest)
-        self.assertTrue(os.path.exists(syspath(ai.artpath)))
+        self.assertExists(ai.artpath)
 
     def test_setart_to_conflicting_file_gets_new_path(self):
         newart = os.path.join(self.libdir, b'newart.jpg')
@@ -702,16 +702,12 @@ class MkDirAllTest(_common.TestCase):
     def test_parent_exists(self):
         path = os.path.join(self.temp_dir, b'foo', b'bar', b'baz', b'qux.mp3')
         util.mkdirall(path)
-        self.assertTrue(os.path.isdir(syspath(
-            os.path.join(self.temp_dir, b'foo', b'bar', b'baz'),
-        )))
+        self.assertIsDir(os.path.join(self.temp_dir, b'foo', b'bar', b'baz'))
 
     def test_child_does_not_exist(self):
         path = os.path.join(self.temp_dir, b'foo', b'bar', b'baz', b'qux.mp3')
         util.mkdirall(path)
-        self.assertTrue(not os.path.exists(syspath(
-            os.path.join(self.temp_dir, b'foo', b'bar', b'baz', b'qux.mp3'),
-        )))
+        self.assertNotExists(path)
 
 
 def suite():
