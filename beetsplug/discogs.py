@@ -19,7 +19,7 @@ python3-discogs-client library.
 import beets.ui
 from beets import config
 from beets.util.id_extractors import extract_discogs_id_regex
-from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.autotag.hooks import AlbumInfo, TrackInfo, string_dist
 from beets.plugins import MetadataSourcePlugin, BeetsPlugin, get_distance
 import confuse
 from discogs_client import __version__ as dc_string
@@ -196,6 +196,40 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.debug('Connection error in album search', exc_info=True)
             return []
 
+    def get_track_from_album_by_title(self, album_info, title,
+                                      dist_threshold=0.3):
+        def compare_func(track_info):
+            track_title = getattr(track_info, "title", None)
+            dist = string_dist(track_title, title)
+            return (track_title and dist < dist_threshold)
+        return self.get_track_from_album(album_info, compare_func)
+
+    def get_track_from_album(self, album_info, compare_func):
+        """Return the first track of the release where `compare_func` returns
+        true.
+
+        :return: TrackInfo object.
+        :rtype: beets.autotag.hooks.TrackInfo
+        """
+        if not album_info:
+            return None
+
+        for track_info in album_info.tracks:
+            # check for matching position
+            if not compare_func(track_info):
+                continue
+
+            # attach artist info if not provided
+            if not track_info['artist']:
+                track_info['artist'] = album_info.artist
+                track_info['artist_id'] = album_info.artist_id
+            # attach album info
+            track_info['album'] = album_info.album
+
+            return track_info
+
+        return None
+
     def item_candidates(self, item, artist, title):
         """Returns a list of TrackInfo objects for Search API results
         matching ``title`` and ``artist``.
@@ -231,7 +265,11 @@ class DiscogsPlugin(BeetsPlugin):
         candidates = []
         for album_cur in albums:
             self._log.debug(u'searching within album {0}', album_cur.album)
-            candidates += album_cur.tracks
+            track_result = self.get_track_from_album_by_title(
+                album_cur, item['title']
+            )
+            if track_result:
+                candidates.append(track_result)
         # first 10 results, don't overwhelm with options
         return candidates[:10]
 
