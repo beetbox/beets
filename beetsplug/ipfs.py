@@ -17,6 +17,7 @@
 
 from beets import ui, util, library, config
 from beets.plugins import BeetsPlugin
+from beets.util import syspath
 
 import subprocess
 import shutil
@@ -172,7 +173,10 @@ class IPFSPlugin(BeetsPlugin):
         imp = ui.commands.TerminalImportSession(lib, loghandler=None,
                                                 query=None, paths=[_hash])
         imp.run()
-        shutil.rmtree(_hash)
+        # This uses a relative path, hence we cannot use util.syspath(_hash,
+        # prefix=True). However, that should be fine since the hash will not
+        # exceed MAX_PATH.
+        shutil.rmtree(syspath(_hash, prefix=False))
 
     def ipfs_publish(self, lib):
         with tempfile.NamedTemporaryFile() as tmp:
