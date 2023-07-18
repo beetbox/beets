@@ -4,6 +4,11 @@ Discogs Plugin
 The ``discogs`` plugin extends the autotagger's search capabilities to
 include matches from the `Discogs`_ database.
 
+Files can be imported as albums or as singletons. Since `Discogs`_ matches are
+always based on `Discogs`_ releases, the album tag is written even to
+singletons.  This enhances the importers results when reimporting as (full or
+partial) albums later on.
+
 .. _Discogs: https://discogs.com
 
 Installation
