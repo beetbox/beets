@@ -461,14 +461,17 @@ def show_item_change(item, match):
 
         print_("Correcting track tags from:")
         print_(f"    {cur_artist} - {cur_title}")
-        print_(f"    Album: {cur_album}") if cur_album else None
+        if cur_album:
+            print_(f"    Album: {cur_album}")
         print_("To:")
         print_(f"    {new_artist} - {new_title}")
-        print_(f"    Album: {new_album}") if new_album else None
+        if new_album:
+            print_(f"    Album: {new_album}")
 
     else:
         print_(f"Tagging track: {cur_artist} - {cur_title}")
-        print_(f"               Album: {new_album}") if cur_album else None
+        if cur_album:
+            print_(f"               Album: {new_album}")
 
     # Data URL.
     if match.info.data_url:
