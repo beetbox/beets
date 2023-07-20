@@ -760,6 +760,19 @@ Fields are persisted to the media files of each track.
 
 Default: ``{}`` (empty).
 
+.. _singleton_album_disambig:
+
+singleton_album_disambig
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+During singleton imports and if the metadata source provides it, album names
+are appended to the disambiguation string of matching track candidates. For
+example: ``The Artist - The Title (Discogs, Index 3, Track B1, [The Album]``.
+This feature is currently supported by the :doc:`/plugins/discogs` and the
+:doc:`/plugins/spotify`.
+
+Default: ``yes``.
+
 .. _musicbrainz-config:
 
 MusicBrainz Options
