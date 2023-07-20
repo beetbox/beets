@@ -220,6 +220,9 @@ def disambig_string(info):
             disambig.append("Index {}".format(str(info.index)))
         if info.track_alt:
             disambig.append("Track {}".format(info.track_alt))
+        if (config['import']['singleton_album_disambig'].get()
+                and info.get('album')):
+            disambig.append("[{}]".format(info.album))
 
     if disambig:
         return ', '.join(disambig)
