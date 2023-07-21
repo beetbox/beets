@@ -373,11 +373,20 @@ class TestHelper:
             items.append(item)
         return items
 
-    def add_album_fixture(self, track_count=1, ext='mp3', disc_count=1):
+    def add_album_fixture(
+        self,
+        track_count=1,
+        fname='full',
+        ext='mp3',
+        disc_count=1,
+    ):
         """Add an album with files to the database.
         """
         items = []
-        path = os.path.join(_common.RSRC, util.bytestring_path('full.' + ext))
+        path = os.path.join(
+            _common.RSRC,
+            util.bytestring_path(f'{fname}.{ext}'),
+        )
         for discnumber in range(1, disc_count + 1):
             for i in range(track_count):
                 item = Item.from_path(path)
