@@ -850,7 +850,7 @@ external_ids
 Set any of the ``external_ids`` options to ``yes`` to enable the MusicBrainz
 importer to look for links to related metadata sources. If such a link is
 available the release ID will be extracted from the URL provided and imported
-to the beets library.
+to the beets library::
 
     musicbrainz:
         external_ids:
