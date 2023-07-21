@@ -329,7 +329,7 @@ class FfmpegBackend(Backend):
 
         def sum_of_track_powers(track_gain, track_n_blocks):
             # convert `LU to target_level` -> LUFS
-            loudness = target_level_lufs - track_gain
+            loudness = target_level_lufs - track_gain.gain
 
             # This reverses ITU-R BS.1770-4 p. 6 equation (5) to convert
             # from loudness to power. The result is the average gating
@@ -586,7 +586,7 @@ class CommandBackend(Backend):
         When computing album gain, the last TrackGain object returned is
         the album gain
         """
-        if len(items) == 0:
+        if not items:
             self._log.debug('no supported tracks to analyze')
             return []
 
@@ -1375,7 +1375,7 @@ class ReplayGainPlugin(BeetsPlugin):
             pass
 
     def close_pool(self):
-        """Regularly lose the `ThreadPool` instance in `self.pool`.
+        """Regularly close the `ThreadPool` instance in `self.pool`.
         """
         if self.pool is not None:
             self.pool.close()
