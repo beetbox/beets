@@ -733,7 +733,10 @@ def _is_translation(r):
 
 def _find_actual_release_from_pseudo_release(pseudo_rel: Dict) \
         -> Optional[Dict]:
-    relations = pseudo_rel['release']["release-relation-list"]
+    try:
+        relations = pseudo_rel['release']["release-relation-list"]
+    except KeyError:
+        return None
 
     # currently we only support trans(liter)ation's
     translations = [r for r in relations if _is_translation(r)]
@@ -801,7 +804,7 @@ def album_for_id(releaseid: str) -> Optional[beets.autotag.hooks.AlbumInfo]:
         # resolve linked release relations
         actual_res = None
 
-        if res['release']['status'] == 'Pseudo-Release':
+        if res['release'].get('status') == 'Pseudo-Release':
             actual_res = _find_actual_release_from_pseudo_release(res)
 
     except musicbrainzngs.ResponseError:
