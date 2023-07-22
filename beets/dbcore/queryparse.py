@@ -21,7 +21,7 @@ from typing import Dict, Type, Tuple, Optional, Collection, List, \
     Sequence
 
 from . import query, Model
-from .query import Sort
+from .query import Query, Sort
 
 PARSE_QUERY_PART_REGEX = re.compile(
     # Non-capturing optional segment for the keyword.
@@ -132,7 +132,7 @@ def construct_query_part(
 
     # Use `model_cls` to build up a map from field (or query) names to
     # `Query` classes.
-    query_classes = {}
+    query_classes: Dict[str, Type[Query]] = {}
     for k, t in itertools.chain(model_cls._fields.items(),
                                 model_cls._types.items()):
         query_classes[k] = t.query
