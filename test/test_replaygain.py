@@ -85,6 +85,8 @@ class FfmpegBackendMixin():
 
 
 class ReplayGainCliTestBase(TestHelper):
+    FNAME: str
+
     def setUp(self):
         # Implemented by Mixins, see above. This may decide to skip the test.
         self.test_backend()
@@ -99,7 +101,8 @@ class ReplayGainCliTestBase(TestHelper):
             self.unload_plugins()
 
     def _add_album(self, *args, **kwargs):
-        album = self.add_album_fixture(*args, **kwargs)
+        # Use a file with non-zero volume (most test assets are total silence)
+        album = self.add_album_fixture(*args, fname=self.FNAME, **kwargs)
         for item in album.items():
             reset_replaygain(item)
 
@@ -305,19 +308,25 @@ class ReplayGainCliTestBase(TestHelper):
 @unittest.skipIf(not GST_AVAILABLE, 'gstreamer cannot be found')
 class ReplayGainGstCliTest(ReplayGainCliTestBase, unittest.TestCase,
                            GstBackendMixin):
-    pass
+    FNAME = "full"  # file contains only silence
 
 
 @unittest.skipIf(not GAIN_PROG_AVAILABLE, 'no *gain command found')
 class ReplayGainCmdCliTest(ReplayGainCliTestBase, unittest.TestCase,
                            CmdBackendMixin):
-    pass
+    FNAME = "full"  # file contains only silence
 
 
 @unittest.skipIf(not FFMPEG_AVAILABLE, 'ffmpeg cannot be found')
 class ReplayGainFfmpegCliTest(ReplayGainCliTestBase, unittest.TestCase,
                               FfmpegBackendMixin):
-    pass
+    FNAME = "full"  # file contains only silence
+
+
+@unittest.skipIf(not FFMPEG_AVAILABLE, 'ffmpeg cannot be found')
+class ReplayGainFfmpegNoiseCliTest(ReplayGainCliTestBase, unittest.TestCase,
+                                   FfmpegBackendMixin):
+    FNAME = "whitenoise"
 
 
 class ImportTest(TestHelper):
