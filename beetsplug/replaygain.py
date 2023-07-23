@@ -21,7 +21,7 @@ import signal
 import subprocess
 import sys
 import warnings
-from multiprocessing.pool import ThreadPool, RUN
+from multiprocessing.pool import ThreadPool
 import queue
 from threading import Thread, Event
 
@@ -288,17 +288,16 @@ class FfmpegBackend(Backend):
         """Computes the track gain for the tracks belonging to `task`, and sets
         the `track_gains` attribute on the task. Returns `task`.
         """
-        gains = []
-        for item in task.items:
-            gains.append(
-                self._analyse_item(
-                    item,
-                    task.target_level,
-                    task.peak_method,
-                    count_blocks=False,
-                )[0]  # take only the gain, discarding number of gating blocks
-            )
-        task.track_gains = gains
+        task.track_gains = [
+            self._analyse_item(
+                item,
+                task.target_level,
+                task.peak_method,
+                count_blocks=False,
+            )[0]  # take only the gain, discarding number of gating blocks
+            for item in task.items
+        ]
+
         return task
 
     def compute_album_gain(self, task):
@@ -308,42 +307,47 @@ class FfmpegBackend(Backend):
         target_level_lufs = db_to_lufs(task.target_level)
 
         # analyse tracks
-        # list of track Gain objects
-        track_gains = []
-        # maximum peak
-        album_peak = 0
-        # sum of BS.1770 gating block powers
-        sum_powers = 0
-        # total number of BS.1770 gating blocks
-        n_blocks = 0
-
-        for item in task.items:
-            track_gain, track_n_blocks = self._analyse_item(
-                item, task.target_level, task.peak_method
+        # Gives a list of tuples (track_gain, track_n_blocks)
+        track_results = [
+            self._analyse_item(
+                item,
+                task.target_level,
+                task.peak_method,
+                count_blocks=True,
             )
-            track_gains.append(track_gain)
+            for item in task.items
+        ]
 
-            # album peak is maximum track peak
-            album_peak = max(album_peak, track_gain.peak)
+        # list of track Gain objects
+        track_gains = [tg for tg, _nb in track_results]
 
-            # prepare album_gain calculation
-            # total number of blocks is sum of track blocks
-            n_blocks += track_n_blocks
+        # Album peak is maximum track peak
+        album_peak = max(tg.peak for tg in track_gains)
 
+        # Total number of BS.1770 gating blocks
+        n_blocks = sum(nb for _tg, nb in track_results)
+
+        def sum_of_track_powers(track_gain, track_n_blocks):
             # convert `LU to target_level` -> LUFS
-            track_loudness = target_level_lufs - track_gain.gain
+            loudness = target_level_lufs - track_gain.gain
+
             # This reverses ITU-R BS.1770-4 p. 6 equation (5) to convert
             # from loudness to power. The result is the average gating
             # block power.
-            track_power = 10**((track_loudness + 0.691) / 10)
+            power = 10**((loudness + 0.691) / 10)
 
-            # Weight that average power by the number of gating blocks to
-            # get the sum of all their powers. Add that to the sum of all
-            # block powers in this album.
-            sum_powers += track_power * track_n_blocks
+            # Multiply that average power by the number of gating blocks to get
+            # the sum of all block powers in this track.
+            return track_n_blocks * power
 
         # calculate album gain
         if n_blocks > 0:
+            # Sum over all tracks to get the sum of BS.1770 gating block powers
+            # for the entire album.
+            sum_powers = sum(
+                sum_of_track_powers(tg, nb) for tg, nb in track_results
+            )
+
             # compare ITU-R BS.1770-4 p. 6 equation (5)
             # Album gain is the replaygain of the concatenation of all tracks.
             album_gain = -0.691 + 10 * math.log10(sum_powers / n_blocks)
@@ -353,12 +357,13 @@ class FfmpegBackend(Backend):
         album_gain = target_level_lufs - album_gain
 
         self._log.debug(
-            "{}: gain {} LU, peak {}"
-            .format(task.items, album_gain, album_peak)
-            )
+            "{}: gain {} LU, peak {}",
+            task.album, album_gain, album_peak,
+        )
 
         task.album_gain = Gain(album_gain, album_peak)
         task.track_gains = track_gains
+
         return task
 
     def _construct_cmd(self, item, peak_method):
@@ -581,7 +586,7 @@ class CommandBackend(Backend):
         When computing album gain, the last TrackGain object returned is
         the album gain
         """
-        if len(items) == 0:
+        if not items:
             self._log.debug('no supported tracks to analyze')
             return []
 
@@ -725,12 +730,12 @@ class GStreamerBackend(Backend):
         self.GLib = GLib
         self.Gst = Gst
 
-    def compute(self, files, target_level, album):
-        self._error = None
-        self._files = list(files)
-
-        if len(self._files) == 0:
+    def compute(self, items, target_level, album):
+        if len(items) == 0:
             return
+
+        self._error = None
+        self._files = [i.path for i in items]
 
         self._file_tags = collections.defaultdict(dict)
 
@@ -754,8 +759,8 @@ class GStreamerBackend(Backend):
 
         ret = []
         for item in task.items:
-            ret.append(Gain(self._file_tags[item]["TRACK_GAIN"],
-                            self._file_tags[item]["TRACK_PEAK"]))
+            ret.append(Gain(self._file_tags[item.path]["TRACK_GAIN"],
+                            self._file_tags[item.path]["TRACK_PEAK"]))
 
         task.track_gains = ret
         return task
@@ -773,14 +778,14 @@ class GStreamerBackend(Backend):
         track_gains = []
         for item in items:
             try:
-                gain = self._file_tags[item]["TRACK_GAIN"]
-                peak = self._file_tags[item]["TRACK_PEAK"]
+                gain = self._file_tags[item.path]["TRACK_GAIN"]
+                peak = self._file_tags[item.path]["TRACK_PEAK"]
             except KeyError:
                 raise ReplayGainError("results missing for track")
             track_gains.append(Gain(gain, peak))
 
         # Get album gain information from the last track.
-        last_tags = self._file_tags[items[-1]]
+        last_tags = self._file_tags[items[-1].path]
         try:
             gain = last_tags["ALBUM_GAIN"]
             peak = last_tags["ALBUM_PEAK"]
@@ -844,7 +849,7 @@ class GStreamerBackend(Backend):
 
         self._file = self._files.pop(0)
         self._pipe.set_state(self.Gst.State.NULL)
-        self._src.set_property("location", py3_path(syspath(self._file.path)))
+        self._src.set_property("location", py3_path(syspath(self._file)))
         self._pipe.set_state(self.Gst.State.PLAYING)
         return True
 
@@ -875,7 +880,7 @@ class GStreamerBackend(Backend):
         # Set a new file on the filesrc element, can only be done in the
         # READY state
         self._src.set_state(self.Gst.State.READY)
-        self._src.set_property("location", py3_path(syspath(self._file.path)))
+        self._src.set_property("location", py3_path(syspath(self._file)))
 
         self._decbin.link(self._conv)
         self._pipe.set_state(self.Gst.State.READY)
@@ -1177,6 +1182,9 @@ class ReplayGainPlugin(BeetsPlugin):
             raise ui.UserError(
                 f'replaygain initialization failed: {e}')
 
+        # Start threadpool lazily.
+        self.pool = None
+
     def should_use_r128(self, item):
         """Checks the plugin setting to decide whether the calculation
         should be done using the EBU R128 standard and use R128_ tags instead.
@@ -1314,18 +1322,10 @@ class ReplayGainPlugin(BeetsPlugin):
         except FatalReplayGainError as e:
             raise ui.UserError(f"Fatal replay gain error: {e}")
 
-    def _has_pool(self):
-        """Check whether a `ThreadPool` is running instance in `self.pool`
-        """
-        if hasattr(self, 'pool'):
-            if isinstance(self.pool, ThreadPool) and self.pool._state == RUN:
-                return True
-        return False
-
     def open_pool(self, threads):
         """Open a `ThreadPool` instance in `self.pool`
         """
-        if not self._has_pool() and self.backend_instance.do_parallel:
+        if self.pool is None and self.backend_instance.do_parallel:
             self.pool = ThreadPool(threads)
             self.exc_queue = queue.Queue()
 
@@ -1338,7 +1338,7 @@ class ReplayGainPlugin(BeetsPlugin):
             self.exc_watcher.start()
 
     def _apply(self, func, args, kwds, callback):
-        if self._has_pool():
+        if self.pool is not None:
             def handle_exc(exc):
                 """Handle exceptions in the async work.
                 """
@@ -1353,15 +1353,17 @@ class ReplayGainPlugin(BeetsPlugin):
             callback(func(*args, **kwds))
 
     def terminate_pool(self):
-        """Terminate the `ThreadPool` instance in `self.pool`
-            (e.g. stop execution in case of exception)
+        """Forcibly terminate the `ThreadPool` instance in `self.pool`
+
+        Sends SIGTERM to all processes.
         """
-        # Don't call self._as_pool() here,
-        # self.pool._state may not be == RUN
-        if hasattr(self, 'pool') and isinstance(self.pool, ThreadPool):
+        if self.pool is not None:
             self.pool.terminate()
             self.pool.join()
+            # Terminating the processes leaves the ExceptionWatcher's queues
+            # in an unknown state, so don't wait for it.
             # self.exc_watcher.join()
+            self.pool = None
 
     def _interrupt(self, signal, frame):
         try:
@@ -1373,12 +1375,13 @@ class ReplayGainPlugin(BeetsPlugin):
             pass
 
     def close_pool(self):
-        """Close the `ThreadPool` instance in `self.pool` (if there is one)
+        """Regularly close the `ThreadPool` instance in `self.pool`.
         """
-        if self._has_pool():
+        if self.pool is not None:
             self.pool.close()
             self.pool.join()
             self.exc_watcher.join()
+            self.pool = None
 
     def import_begin(self, session):
         """Handle `import_begin` event -> open pool
