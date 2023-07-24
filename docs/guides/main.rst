@@ -28,9 +28,9 @@ Beets works on Python 3.7 or later.
 
 * On **containers** (Docker-compatible), there is an **unmaintained**
   install via Linuxserver.io. This can cause some
-  [compatibility issues](https://github.com/beetbox/beets/issues/4838)
+  `compatibility issues <https://github.com/beetbox/beets/issues/4838>`__
   and you should at least
-  [**change the config**](https://github.com/linuxserver/docker-beets/issues/94)
+  `change the config <https://github.com/linuxserver/docker-beets/issues/94>`__
   to match the beets default. See `Configuring`_, below.
 
 * On **Arch Linux**, `beets is in [community] <Arch community_>`_, so just run ``pacman -S
