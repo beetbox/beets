@@ -26,6 +26,13 @@ Beets works on Python 3.7 or later.
   as described below by running:
   ``apt-get install python-dev python-pip``
 
+* On **containers** (Docker-compatible), there is an **unmaintained**
+  install via Linuxserver.io. This can cause some
+  [compatibility issues](https://github.com/beetbox/beets/issues/4838)
+  and you should at least
+  [**change the config**](https://github.com/linuxserver/docker-beets/issues/94)
+  to match the beets default. See `Configuring`_, below.
+
 * On **Arch Linux**, `beets is in [community] <Arch community_>`_, so just run ``pacman -S
   beets``. (There's also a bleeding-edge `dev package <AUR_>`_ in the AUR, which will
   probably set your computer on fire.)
