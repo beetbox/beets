@@ -34,6 +34,7 @@ import:
     bell: no
     set_fields: {}
     ignored_alias_types: []
+    singleton_album_disambig: yes
 
 clutter: ["Thumbs.DB", ".DS_Store"]
 ignore: [".*", "*~", "System Volume Information", "lost+found"]

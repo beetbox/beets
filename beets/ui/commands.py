@@ -215,6 +215,15 @@ def disambig_string(info):
         if info.albumstatus == 'Pseudo-Release':
             disambig.append(info.albumstatus)
 
+    if isinstance(info, hooks.TrackInfo):
+        if info.index:
+            disambig.append("Index {}".format(str(info.index)))
+        if info.track_alt:
+            disambig.append("Track {}".format(info.track_alt))
+        if (config['import']['singleton_album_disambig'].get()
+                and info.get('album')):
+            disambig.append("[{}]".format(info.album))
+
     if disambig:
         return ', '.join(disambig)
 
@@ -444,18 +453,28 @@ def show_item_change(item, match):
     """
     cur_artist, new_artist = item.artist, match.info.artist
     cur_title, new_title = item.title, match.info.title
+    cur_album = item.album if item.album else ""
+    new_album = match.info.album if match.info.album else ""
 
-    if cur_artist != new_artist or cur_title != new_title:
+    if (cur_artist != new_artist or cur_title != new_title
+            or cur_album != new_album):
         cur_artist, new_artist = ui.colordiff(cur_artist, new_artist)
         cur_title, new_title = ui.colordiff(cur_title, new_title)
+        cur_album, new_album = ui.colordiff(cur_album, new_album)
 
         print_("Correcting track tags from:")
         print_(f"    {cur_artist} - {cur_title}")
+        if cur_album:
+            print_(f"    Album: {cur_album}")
         print_("To:")
         print_(f"    {new_artist} - {new_title}")
+        if new_album:
+            print_(f"    Album: {new_album}")
 
     else:
         print_(f"Tagging track: {cur_artist} - {cur_title}")
+        if cur_album:
+            print_(f"               Album: {new_album}")
 
     # Data URL.
     if match.info.data_url:
