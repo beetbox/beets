@@ -97,6 +97,10 @@ New features:
 * :doc:`plugins/discogs`: Add support for applying album information on
   singleton imports.
   :bug: `4716`
+* :doc:`/plugins/smartplaylist`: During explicit runs of the ``splupdate``
+  command, the log message "Creating playlist ..."" is now displayed instead of
+  hidden in the debug log, which states some form of progress through the UI.
+  :bug:`4861`
 
 Bug fixes:
 
