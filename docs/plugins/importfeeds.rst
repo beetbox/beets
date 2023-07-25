@@ -22,6 +22,9 @@ configuration file. The available options are:
    - **m3u**: Catalog the imports in a centralized playlist.
    - **m3u_multi**: Create a new playlist for each import (uniquely named by
      appending the date and track/album name).
+   - **m3u_session**: Create a new playlist for each import session. The file
+     is named as ``m3u_name`` appending the date and time the import session
+     was started.
    - **link**: Create a symlink for each imported item. This is the
      recommended setting to propagate beets imports to your iTunes library:
      just drag and drop the ``dir`` folder on the iTunes dock icon.
@@ -29,7 +32,8 @@ configuration file. The available options are:
      file paths to the terminal.
 
   Default: None.
-- **m3u_name**: Playlist name used by the ``m3u`` format.
+- **m3u_name**: Playlist name used by the ``m3u`` format and as a prefix used
+  by the ``m3u_session`` format.
   Default: ``imported.m3u``.
 - **relative_to**: Make the m3u paths relative to another
   folder than where the playlist is being written. If you're using importfeeds
