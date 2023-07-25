@@ -94,6 +94,9 @@ New features:
   :bug:`4373`
 * Fetch the ``release_group_title`` field from MusicBrainz.
   :bug: `4809`
+* :doc:`plugins/discogs`: Add support for applying album information on
+  singleton imports.
+  :bug: `4716`
 
 Bug fixes:
 
