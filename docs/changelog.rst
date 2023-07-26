@@ -101,6 +101,9 @@ New features:
   command, the log message "Creating playlist ..."" is now displayed instead of
   hidden in the debug log, which states some form of progress through the UI.
   :bug:`4861`
+* :doc:`plugins/subsonicupdate`: Updates are now triggered whenever either the
+  beets database is changed or a smart playlist is created/updated.
+  :bug: `4862`
 
 Bug fixes:
 
