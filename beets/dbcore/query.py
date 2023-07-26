@@ -334,9 +334,9 @@ class BytesQuery(FieldQuery[bytes]):
             else:
                 bytes_pattern = pattern
             self.buf_pattern = memoryview(bytes_pattern)
-        elif isinstance(self.pattern, memoryview):
-            self.buf_pattern = self.pattern
-            bytes_pattern = bytes(self.pattern)
+        elif isinstance(pattern, memoryview):
+            self.buf_pattern = pattern
+            bytes_pattern = bytes(pattern)
         else:
             raise ValueError("pattern must be bytes, str, or memoryview")
 
