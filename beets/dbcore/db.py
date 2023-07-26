@@ -1260,9 +1260,9 @@ class Database:
 
     def _get(
         self,
-        model_cls: Type[Model],
+        model_cls: Type[AnyModel],
         id,
-    ) -> Optional[Model]:
+    ) -> Optional[AnyModel]:
         """Get a Model object by its id or None if the id does not
         exist.
         """
