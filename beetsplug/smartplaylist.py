@@ -17,6 +17,7 @@
 
 
 from beets.plugins import BeetsPlugin
+from beets.plugins import send as send_event
 from beets import ui
 from beets.util import (mkdirall, normpath, sanitize_path, syspath,
                         bytestring_path, path_as_posix, displayable_path)
@@ -232,6 +233,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
                         if self.config['urlencode']:
                             path = bytestring_path(pathname2url(path))
                         f.write(prefix + path + b'\n')
+            # Send an event when playlists were updated.
+            send_event("smartplaylist_update")
 
         if pretend:
             self._log.info("Displayed results for {0} playlists",
