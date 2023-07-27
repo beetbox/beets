@@ -35,7 +35,7 @@ def _build_m3u_session_filename(basename):
     basename = re.sub(r"(\.m3u|\.M3U)", '', basename)
     path = normpath(os.path.join(
         config['importfeeds']['dir'].as_filename(),
-        basename + '_' + date + '.m3u'
+        f'{basename}_{date}.m3u'
     ))
     return path
 
