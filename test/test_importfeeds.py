@@ -3,6 +3,7 @@ import os.path
 import tempfile
 import shutil
 import unittest
+import datetime
 
 from beets import config
 from beets.library import Item, Album, Library
@@ -53,6 +54,23 @@ class ImportfeedsTestTest(unittest.TestCase):
         playlist_subdir = os.path.dirname(playlist)
         self.assertTrue(os.path.isdir(playlist_subdir))
         self.assertTrue(os.path.isfile(playlist))
+
+    def test_playlist_per_session(self):
+        config['importfeeds']['formats'] = 'm3u_session'
+        config['importfeeds']['m3u_name'] = 'imports.m3u'
+        album = Album(album='album/name', id=1)
+        item_path = os.path.join('path', 'to', 'item')
+        item = Item(title='song', album_id=1, path=item_path)
+        self.lib.add(album)
+        self.lib.add(item)
+
+        self.importfeeds.import_begin(self)
+        self.importfeeds.album_imported(self.lib, album)
+        date = datetime.datetime.now().strftime("%Y%m%d_%Hh%M")
+        playlist = os.path.join(self.feeds_dir, 'imports_' + date + '.m3u')
+        self.assertTrue(os.path.isfile(playlist))
+        with open(playlist) as playlist_contents:
+            self.assertIn(item_path, playlist_contents.read())
 
 
 def suite():
