@@ -67,7 +67,7 @@ class ImportfeedsTestTest(unittest.TestCase):
         self.importfeeds.import_begin(self)
         self.importfeeds.album_imported(self.lib, album)
         date = datetime.datetime.now().strftime("%Y%m%d_%Hh%M")
-        playlist = os.path.join(self.feeds_dir, 'imports_' + date + '.m3u')
+        playlist = os.path.join(self.feeds_dir, f'imports_{date}.m3u')
         self.assertTrue(os.path.isfile(playlist))
         with open(playlist) as playlist_contents:
             self.assertIn(item_path, playlist_contents.read())
