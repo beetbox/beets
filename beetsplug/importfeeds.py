@@ -28,10 +28,21 @@ from beets import config
 M3U_DEFAULT_NAME = 'imported.m3u'
 
 
+def _build_m3u_session_filename(basename):
+    """Builds unique m3u filename by putting current date between given
+    basename and file ending."""
+    date = datetime.datetime.now().strftime("%Y%m%d_%Hh%M")
+    basename = re.sub(r"(\.m3u|\.M3U)", '', basename)
+    path = normpath(os.path.join(
+        config['importfeeds']['dir'].as_filename(),
+        f'{basename}_{date}.m3u'
+    ))
+    return path
+
+
 def _build_m3u_filename(basename):
     """Builds unique m3u filename by appending given basename to current
     date."""
-
     basename = re.sub(r"[\s,/\\'\"]", '_', basename)
     date = datetime.datetime.now().strftime("%Y%m%d_%Hh%M")
     path = normpath(os.path.join(
@@ -70,6 +81,7 @@ class ImportFeedsPlugin(BeetsPlugin):
 
         self.register_listener('album_imported', self.album_imported)
         self.register_listener('item_imported', self.item_imported)
+        self.register_listener('import_begin', self.import_begin)
 
     def get_feeds_dir(self):
         feeds_dir = self.config['dir'].get()
@@ -105,6 +117,10 @@ class ImportFeedsPlugin(BeetsPlugin):
             m3u_path = os.path.join(feedsdir, m3u_basename)
             _write_m3u(m3u_path, paths)
 
+        if 'm3u_session' in formats:
+            m3u_path = os.path.join(feedsdir, self.m3u_session)
+            _write_m3u(m3u_path, paths)
+
         if 'm3u_multi' in formats:
             m3u_path = _build_m3u_filename(basename)
             _write_m3u(m3u_path, paths)
@@ -125,3 +141,9 @@ class ImportFeedsPlugin(BeetsPlugin):
 
     def item_imported(self, lib, item):
         self._record_items(lib, item.title, [item])
+
+    def import_begin(self, session):
+        formats = self.config['formats'].as_str_seq()
+        if 'm3u_session' in formats:
+            self.m3u_session = _build_m3u_session_filename(
+                self.config['m3u_name'].as_str())

@@ -104,6 +104,9 @@ New features:
 * :doc:`plugins/subsonicupdate`: Updates are now triggered whenever either the
   beets database is changed or a smart playlist is created/updated.
   :bug: `4862`
+* :doc:`plugins/importfeeds`: Add a new output format allowing to save a
+  playlist once per import session.
+  :bug: `4863`
 
 Bug fixes:
 
