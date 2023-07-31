@@ -1363,7 +1363,7 @@ def _freshen_items(items):
 
 def _extend_pipeline(tasks, *stages):
     # Return pipeline extension for stages with list of tasks
-    if type(tasks) is list:
+    if isinstance(tasks, list):
         task_iter = iter(tasks)
     else:
         task_iter = tasks
