@@ -323,11 +323,11 @@ class AcousticPlugin(plugins.BeetsPlugin):
         """
         for k, v in subscheme.items():
             if k in subdata:
-                if type(v) == dict:
+                if isinstance(v, dict):
                     yield from self._data_to_scheme_child(subdata[k],
                                                           v,
                                                           composites)
-                elif type(v) == tuple:
+                elif isinstance(v, tuple):
                     composite_attribute, part_number = v
                     attribute_parts = composites[composite_attribute]
                     # Parts are not guaranteed to be inserted in order

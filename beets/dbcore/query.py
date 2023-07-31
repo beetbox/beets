@@ -108,7 +108,7 @@ class Query(ABC):
         return f"{self.__class__.__name__}()"
 
     def __eq__(self, other) -> bool:
-        return type(self) == type(other)
+        return type(self) is type(other)
 
     def __hash__(self) -> int:
         """Minimalistic default implementation of a hash.
@@ -868,7 +868,7 @@ class Sort:
         return 0
 
     def __eq__(self, other) -> bool:
-        return type(self) == type(other)
+        return type(self) is type(other)
 
 
 class MultipleSort(Sort):
@@ -1014,7 +1014,7 @@ class NullSort(Sort):
         return False
 
     def __eq__(self, other) -> bool:
-        return type(self) == type(other) or other is None
+        return type(self) is type(other) or other is None
 
     def __hash__(self) -> int:
         return 0
