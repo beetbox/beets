@@ -16,7 +16,7 @@
 import unittest
 from unittest.mock import patch
 
-from test.helper import TestHelper,\
+from test.helper import TestHelper, \
     generate_album_info, \
     generate_track_info, \
     capture_log
