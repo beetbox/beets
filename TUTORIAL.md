@@ -61,5 +61,12 @@ Windows users may also want to install a context menu item for importing files i
 
 Because I don’t use Windows myself, I may have missed something. If you have trouble or you have more detail to contribute here, please direct it to the [mailing list](https://groups.google.com/g/beets-users?pli=1).
 
-## Configuring
-...
+## Step 1. Configuring
+You’ll want to set a few basic options before you start using beets. The [configuration](https://beets.readthedocs.io/en/stable/reference/config.html) is stored in a text file. You can show its location by `running beet config -p`, though it may not exist yet. Run beet `config -e to edit` the configuration in your favorite text editor. The file will start out empty, but here’s good place to start:
+
+```
+directory: ~/music
+library: ~/data/musiclibrary.db
+```
+
+
