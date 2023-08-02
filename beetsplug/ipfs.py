@@ -296,4 +296,4 @@ class IPFSPlugin(BeetsPlugin):
         self._log.info("Adding '{0}' to temporary library", album)
         new_album = tmplib.add_album(items)
         new_album.ipfs = album.ipfs
-        new_album.store()
+        new_album.store(inherit=False)
