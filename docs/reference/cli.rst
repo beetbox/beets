@@ -257,7 +257,7 @@ modify
 ``````
 ::
 
-    beet modify [-MWay] [-f FORMAT] QUERY [FIELD=VALUE...] [FIELD!...]
+    beet modify [-IMWay] [-f FORMAT] QUERY [FIELD=VALUE...] [FIELD!...]
 
 Change the metadata for items or albums in the database.
 
@@ -274,12 +274,16 @@ name into the artist field for all your tracks,
 and ``beet modify title='$track $title'`` will add track numbers to their
 title metadata.
 
-The ``-a`` switch also operates on albums in addition to the individual tracks.
+The ``-a`` option changes to querying album fields instead of track fields and
+also enables to operate on albums in addition to the individual tracks.
 Without this flag, the command will only change *track-level* data, even if all
 the tracks belong to the same album. If you want to change an *album-level*
 field, such as ``year`` or ``albumartist``, you'll want to use the ``-a`` flag
 to avoid a confusing situation where the data for individual tracks conflicts
 with the data for the whole album.
+
+Modifications issued using ``-a`` by default cascade to individual tracks. To
+prevent this behaviour, ``-I/--noinherit`` can be used.
 
 Items will automatically be moved around when necessary if they're in your
 library directory, but you can disable that with  ``-M``. Tags will be written
