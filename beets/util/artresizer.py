@@ -353,7 +353,7 @@ class PILBackend(LocalBackend):
         try:
             im = Image.open(syspath(path_in))
             size = maxwidth, maxwidth
-            im.thumbnail(size, Image.ANTIALIAS)
+            im.thumbnail(size, Image.Resampling.LANCZOS)
 
             if quality == 0:
                 # Use PIL's default quality.
