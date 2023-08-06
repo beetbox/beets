@@ -1372,20 +1372,22 @@ class Album(LibModel):
     def store(self, fields=None, inherit=True):
         """Update the database with the album information.
 
-        The album's tracks are also updated.
-
         `fields` represents the fields to be stored. If not specified,
         all fields will be.
+
+        The album's tracks are also updated when the `inherit` flag is enabled.
+        This applies to fixed attributes as well as flexible ones. The `id`
+        attribute of the album will never be inherited.
         """
         # Get modified track fields.
         track_updates = {}
         track_deletes = set()
         for key in self._dirty:
-            if key in self.item_keys and inherit:
+            if key in self.item_keys and inherit:  # Fixed attr
                 track_updates[key] = self[key]
-            elif key not in self and inherit:
+            elif key not in self and inherit:  # Fixed or flex attr
                 track_deletes.add(key)
-            elif key != 'id' and inherit:  # Could be a flex attr or id
+            elif key != 'id' and inherit:  # Could be a flex attr or id (fixed)
                 track_updates[key] = self[key]
 
         with self._db.transaction():
