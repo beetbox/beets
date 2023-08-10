@@ -423,7 +423,7 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.status_code, 405)
 
         # Note: if this fails, all items have gone and rest of
-        # tests wil fail!
+        # tests will fail!
 
     def test_delete_item_id_readonly(self):
 
@@ -539,7 +539,7 @@ class WebPluginTest(_common.LibTestCase):
         self.assertEqual(response.status_code, 405)
 
         # Note: if this fails, all albums have gone and rest of
-        # tests wil fail!
+        # tests will fail!
 
     def test_delete_album_id_readonly(self):
 

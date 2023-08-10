@@ -49,7 +49,7 @@ if TYPE_CHECKING:
 
 
 class ParsingError(ValueError):
-    """Abstract class for any unparseable user-requested album/query
+    """Abstract class for any unparsable user-requested album/query
     specification.
     """
 
@@ -549,7 +549,7 @@ class OrQuery(MutableCollectionQuery):
 
 
 class NotQuery(Query):
-    """A query that matches the negation of its `subquery`, as a shorcut for
+    """A query that matches the negation of its `subquery`, as a shortcut for
     performing `not(subquery)` without using regular expressions.
     """
 

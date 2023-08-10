@@ -180,7 +180,7 @@ Bug fixes:
 * :doc:`plugins/lyrics`: Fixed issue with Genius header being included in lyrics,
   added test case of up-to-date Genius html
 * :doc:`plugins/importadded`: Fix a bug with recently added reflink import option
-  that casues a crash when ImportAdded plugin enabled.
+  that causes a crash when ImportAdded plugin enabled.
   :bug:`4389`
 * :doc:`plugins/convert`: Fix a bug with the `wma` format alias.
 * :doc:`/plugins/web`: Fix get file from item.
@@ -197,7 +197,7 @@ Bug fixes:
   :bug:`4561` :bug:`4600`
 * Fix issue where deletion of flexible fields on an album doesn't cascade to items
   :bug:`4662`
-* Fix issue where ``beet write`` continuosly retags the ``albumtypes`` metadata
+* Fix issue where ``beet write`` continuously retags the ``albumtypes`` metadata
   field in files. Additionally broken data could have been added to the library
   when the tag was read from file back into the library using ``beet update``.
   It is required for all users to **check if such broken data is present in the
@@ -2766,7 +2766,7 @@ Still more fixes and little improvements:
   title were found.
 * Fix a crash when reading some files with missing tags.
 * :doc:`/plugins/discogs`: Compatibility with the new 2.0 version of the
-  `discogs_client`_ Python library. If you were using the old version, you wil
+  `discogs_client`_ Python library. If you were using the old version, you will
   need to upgrade to the latest version of the library to use the
   correspondingly new version of the plugin (e.g., with
   ``pip install -U discogs-client``). Thanks to Andriy Kohut.
@@ -4834,7 +4834,7 @@ Here's the detailed list of changes:
   (This means it might fail if that album can't be found.) Also, you can now
   abort the tagging process by entering ``b`` (for aBort) at any of the prompts.
 
-* Overhauled methods for handling fileystem paths to allow filenames that have
+* Overhauled methods for handling filesystem paths to allow filenames that have
   badly encoded special characters. These changes are pretty fragile, so please
   report any bugs involving ``UnicodeError`` or SQLite ``ProgrammingError``
   messages in this version.

@@ -237,7 +237,7 @@ guidelines to follow:
 -  If you have a Unicode path or you’re not sure whether something is
    Unicode or not, pass it through ``bytestring_path`` function in the
    ``beets.util`` module to convert it to bytes.
--  Pass every path name trough the ``syspath`` function (also in
+-  Pass every path name through the ``syspath`` function (also in
    ``beets.util``) before sending it to any *operating system* file
    operation (``open``, for example). This is necessary to use long
    filenames (which, maddeningly, must be Unicode) on Windows. This

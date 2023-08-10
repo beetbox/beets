@@ -1456,7 +1456,7 @@ def user_query(session, task):
     and the processed task is yielded.
 
     It emits the ``import_task_choice`` event for plugins. Plugins have
-    acces to the choice via the ``taks.choice_flag`` property and may
+    access to the choice via the ``task.choice_flag`` property and may
     choose to change it.
     """
     if task.skip:

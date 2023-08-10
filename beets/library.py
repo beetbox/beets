@@ -1790,7 +1790,7 @@ class DefaultTemplateFunctions:
         should return an empty string.
 
         "initial_subqueries" is a list of subqueries that should be included
-        in the query to find the ambigous items.
+        in the query to find the ambiguous items.
         """
         memokey = self._tmpl_unique_memokey(name, keys, disam, item_id)
         memoval = self.lib._memotable.get(memokey)

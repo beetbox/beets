@@ -64,9 +64,9 @@ class ExportPlugin(BeetsPlugin):
             'csv': {
                 # CSV module formatting options.
                 'formatting': {
-                    # The delimiter used to seperate columns.
+                    # The delimiter used to separate columns.
                     'delimiter': ',',
-                    # The dialect to use when formating the file output.
+                    # The dialect to use when formatting the file output.
                     'dialect': 'excel'
                 }
             },
