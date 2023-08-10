@@ -31,7 +31,7 @@ class SonosUpdate(BeetsPlugin):
 
     def update(self, lib):
         """When the client exists try to send refresh request to a Sonos
-        controler.
+        controller.
         """
         self._log.info('Requesting a Sonos library update...')
 

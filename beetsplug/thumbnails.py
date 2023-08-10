@@ -74,7 +74,7 @@ class ThumbnailsPlugin(BeetsPlugin):
                 self.process_album(album)
 
     def _check_local_ok(self):
-        """Check that's everythings ready:
+        """Check that everything is ready:
             - local capability to resize images
             - thumbnail dirs exist (create them if needed)
             - detect whether we'll use PIL or IM

@@ -691,7 +691,7 @@ class MBLibraryTest(unittest.TestCase):
                     'release': {
                         'title': 'actual',
                         'id': 'd2a6f856-b553-40a0-ac54-a321e8e2da01',
-                        'status': 'Offical',
+                        'status': 'Official',
                         'medium-list': [{
                             'track-list': [{
                                 'id': 'baz',

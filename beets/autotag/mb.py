@@ -708,7 +708,7 @@ def _merge_pseudo_and_actual_album(
     According to the ticket PICARD-145, the main release id should be used.
     But the ticket has been in limbo since over a decade now.
     It also suggests the introduction of the tag `musicbrainz_pseudoreleaseid`,
-    but as of this field can't be found in any offical Picard docs,
+    but as of this field can't be found in any official Picard docs,
     hence why we did not implement that for now.
     """
     merged = pseudo.copy()
