@@ -293,7 +293,7 @@ class TestHelper:
         The item receives its attributes from `**values` paratmeter. The
         `title`, `artist`, `album`, `track`, `format` and `path`
         attributes have defaults if they are not given as parameters.
-        The `title` attribute is formated with a running item count to
+        The `title` attribute is formatted with a running item count to
         prevent duplicates. The default for the `path` attribute
         respects the `format` value.
 
