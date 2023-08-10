@@ -99,7 +99,7 @@ For example::
             - https://aura.example.org
 
 In order to use the plugin with a local browser client accessed using
-``file:///`` you must inclue ``'null'`` in the list of allowed origins
+``file:///`` you must include ``'null'`` in the list of allowed origins
 (including quote marks)::
 
     aura:

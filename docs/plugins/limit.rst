@@ -3,7 +3,7 @@ Limit Query Plugin
 
 ``limit`` is a plugin to limit a query to the first or last set of 
 results. We also provide a query prefix ``'<n'`` to inline the same 
-behavior in the ``list`` command. They are analagous to piping results:
+behavior in the ``list`` command. They are analogous to piping results:
 
     $ beet [list|ls] [QUERY] | [head|tail] -n n
 

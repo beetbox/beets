@@ -509,7 +509,7 @@ class GeniusFetchTest(GeniusBaseTest):
             mock_fetch_url.assert_called_once_with("blackbear_url")
             mock_scrape.assert_called_once_with(True)
 
-            # genius uses the hypen minus (\u002D) as their dash
+            # genius uses the hyphen minus (\u002D) as their dash
             self.assertIsNotNone(genius.fetch('El-p', 'Idfc'))
             mock_fetch_url.assert_called_with('El-p_url')
             mock_scrape.assert_called_with(True)
@@ -628,7 +628,7 @@ class TekstowoIntegrationTest(TekstowoBaseTest, LyricsAssertions):
         self.assertEqual(lyrics, None)
 
 
-# test utilties
+# test utilities
 
 class SlugTests(unittest.TestCase):
 

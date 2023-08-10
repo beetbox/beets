@@ -187,7 +187,7 @@ def sorted_walk(
     pattern in `ignore` are skipped. If `logger` is provided, then
     warning messages are logged there when a directory cannot be listed.
     """
-    # Make sure the pathes aren't Unicode strings.
+    # Make sure the paths aren't Unicode strings.
     path = bytestring_path(path)
     ignore = [bytestring_path(i) for i in ignore]
 

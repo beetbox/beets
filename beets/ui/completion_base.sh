@@ -31,7 +31,7 @@
 # plugins dynamically
 #
 # Currently, only Bash 3.2 and newer is supported and the
-# `bash-completion` package is requied.
+# `bash-completion` package is required.
 #
 # TODO
 # ----

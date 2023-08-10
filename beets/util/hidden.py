@@ -46,7 +46,7 @@ def _is_hidden_win(path):
     # Retrieve the attributes for the file.
     attrs = ctypes.windll.kernel32.GetFileAttributesW(beets.util.syspath(path))
 
-    # Ensure we have valid attribues and compare them against the mask.
+    # Ensure we have valid attributes and compare them against the mask.
     return attrs >= 0 and attrs & hidden_mask
 
 

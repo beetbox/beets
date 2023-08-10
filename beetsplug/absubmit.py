@@ -68,7 +68,7 @@ class AcousticBrainzSubmitPlugin(plugins.BeetsPlugin):
         self.extractor = self.config['extractor'].as_str()
         if self.extractor:
             self.extractor = util.normpath(self.extractor)
-            # Expicit path to extractor
+            # Explicit path to extractor
             if not os.path.isfile(self.extractor):
                 raise ui.UserError(
                     'Extractor command does not exist: {0}.'.

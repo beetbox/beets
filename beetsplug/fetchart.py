@@ -411,7 +411,7 @@ class CoverArtArchive(RemoteArtSource):
 
         # Cover Art Archive API offers pre-resized thumbnails at several sizes.
         # If the maxwidth config matches one of the already available sizes
-        # fetch it directly intead of fetching the full sized image and
+        # fetch it directly instead of fetching the full sized image and
         # resizing it.
         preferred_width = None
         if plugin.maxwidth in self.VALID_THUMBNAIL_SIZES:

@@ -250,7 +250,7 @@ Last.fm
 
 To use the Last.fm backend, you need to `register for a Last.fm API key`_. Set
 the ``lastfm_key`` configuration option to your API key, then add ``lastfm`` to
-the list of sources in your configutation.
+the list of sources in your configuration.
 
 .. _register for a Last.fm API key: https://www.last.fm/api/account/create
 
