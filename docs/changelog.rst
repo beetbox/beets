@@ -107,6 +107,8 @@ New features:
 * :doc:`plugins/importfeeds`: Add a new output format allowing to save a
   playlist once per import session.
   :bug: `4863`
+* Make ArtResizer work with :pypi:`PIL`/:pypi:`pillow` 10.0.0 removals.
+  :bug:`4869`
 
 Bug fixes:
 
