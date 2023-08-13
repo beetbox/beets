@@ -209,6 +209,8 @@ Bug fixes:
   :bug:`4726`
 * :doc:`/plugins/fetchart`: Correctly select the cover art from fanart.tv with
   the highest number of likes
+* :doc:`/plugins/lyrics`: Fix a crash with the Google backend when processing
+  some web pages. :bug:`4875`
 
 For packagers:
 
