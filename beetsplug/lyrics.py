@@ -572,6 +572,8 @@ def scrape_lyrics_from_html(html):
     instead.
     """
     def is_text_notcode(text):
+        if not text:
+            return False
         length = len(text)
         return (length > 20 and
                 text.count(' ') > length / 25 and
