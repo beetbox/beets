@@ -283,7 +283,7 @@ to avoid a confusing situation where the data for individual tracks conflicts
 with the data for the whole album.
 
 Modifications issued using ``-a`` by default cascade to individual tracks. To
-prevent this behaviour, ``-I/--noinherit`` can be used.
+prevent this behavior, use ``-I``/``--noinherit``.
 
 Items will automatically be moved around when necessary if they're in your
 library directory, but you can disable that with  ``-M``. Tags will be written
