@@ -1616,7 +1616,7 @@ modify_cmd.parser.add_option(
 )
 modify_cmd.parser.add_option(
     '-I', '--noinherit', action='store_false', dest='inherit', default=True,
-    help="Don't inherit album-changes to tracks"
+    help="when modifying albums, don't also change item data"
 )
 modify_cmd.func = modify_func
 default_commands.append(modify_cmd)
