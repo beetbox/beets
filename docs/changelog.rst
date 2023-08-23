@@ -214,6 +214,11 @@ Bug fixes:
   the highest number of likes
 * :doc:`/plugins/lyrics`: Fix a crash with the Google backend when processing
   some web pages. :bug:`4875`
+* Modifying flexible attributes of albums now cascade to the individual album
+  tracks, similar to how fixed album attributes have been cascading to tracks
+  already. A new option ``--noinherit/-I`` to :ref:`modify <modify-cmd>`
+  allows changing this behaviour.
+  :bug:`4822`
 
 For packagers:
 

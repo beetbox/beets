@@ -87,7 +87,7 @@ class IPFSPluginTest(unittest.TestCase, TestHelper):
 
         album = self.lib.add_album(items)
         album.ipfs = "QmfM9ic5LJj7V6ecozFx1MkSoaaiq3PXfhJoFvyqzpLXSf"
-        album.store()
+        album.store(inherit=False)
 
         return album
 
