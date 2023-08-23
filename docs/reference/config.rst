@@ -728,6 +728,29 @@ Controls how duplicates are treated in import task.
 item; "merge" means merge into one album; "ask" means the user 
 should be prompted for the action each time. The default is ``ask``.
 
+.. _duplicate_verbose_prompt:
+
+duplicate_verbose_prompt
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Usually when duplicates are detected during import, information about the
+existing and the newly imported album is summarized. Enabling this option also
+lists details on individual tracks. The :ref:`format_item setting
+<format_item>` is applied, which would, considering the default, look like
+this:
+
+.. code-block:: console
+
+    This item is already in the library!
+    Old: 1 items, MP3, 320kbps, 5:56, 13.6 MiB
+      Artist Name - Album Name - Third Track Title
+    New: 2 items, MP3, 320kbps, 7:18, 17.1 MiB
+      Artist Name - Album Name - First Track Title
+      Artist Name - Album Name - Second Track Title
+    [S]kip new, Keep all, Remove old, Merge all?
+
+Default: ``no``.
+
 .. _bell:
 
 bell

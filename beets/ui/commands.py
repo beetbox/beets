@@ -872,11 +872,20 @@ class TerminalImportSession(importer.ImportSession):
                     list(duplicate.items()) if task.is_album else [duplicate],
                     not task.is_album,
                 ))
+                if config['import']['duplicate_verbose_prompt']:
+                    if task.is_album:
+                        for dup in duplicate.items():
+                            print(f"  {dup}")
+                    else:
+                        print(f"  {duplicate}")
 
             print_("New: " + summarize_items(
                 task.imported_items(),
                 not task.is_album,
             ))
+            if config['import']['duplicate_verbose_prompt']:
+                for item in task.imported_items():
+                    print(f"  {item}")
 
             sel = ui.input_options(
                 ('Skip new', 'Keep all', 'Remove old', 'Merge all')

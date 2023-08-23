@@ -109,6 +109,9 @@ New features:
   :bug: `4863`
 * Make ArtResizer work with :pypi:`PIL`/:pypi:`pillow` 10.0.0 removals.
   :bug:`4869`
+* A new configuration option, :ref:`duplicate_verbose_prompt`, allows changing
+  how duplicates are presented during import.
+  :bug: `4866`
 
 Bug fixes:
 
