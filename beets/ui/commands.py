@@ -1498,7 +1498,7 @@ default_commands.append(version_cmd)
 
 # modify: Declaratively change metadata.
 
-def modify_items(lib, mods, dels, query, write, move, album, confirm):
+def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
     """Modifies matching items according to user-specified assignments and
     deletions.
 
@@ -1551,7 +1551,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
     # Apply changes to database and files
     with lib.transaction():
         for obj in changed:
-            obj.try_sync(write, move)
+            obj.try_sync(write, move, inherit)
 
 
 def print_and_modify(obj, mods, dels):
@@ -1594,7 +1594,8 @@ def modify_func(lib, opts, args):
     if not mods and not dels:
         raise ui.UserError('no modifications specified')
     modify_items(lib, mods, dels, query, ui.should_write(opts.write),
-                 ui.should_move(opts.move), opts.album, not opts.yes)
+                 ui.should_move(opts.move), opts.album, not opts.yes,
+                 opts.inherit)
 
 
 modify_cmd = ui.Subcommand(
@@ -1621,6 +1622,10 @@ modify_cmd.parser.add_format_option(target='item')
 modify_cmd.parser.add_option(
     '-y', '--yes', action='store_true',
     help='skip confirmation'
+)
+modify_cmd.parser.add_option(
+    '-I', '--noinherit', action='store_false', dest='inherit', default=True,
+    help="when modifying albums, don't also change item data"
 )
 modify_cmd.func = modify_func
 default_commands.append(modify_cmd)
