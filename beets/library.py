@@ -1383,12 +1383,13 @@ class Album(LibModel):
         track_updates = {}
         track_deletes = set()
         for key in self._dirty:
-            if key in self.item_keys and inherit:  # Fixed attr
-                track_updates[key] = self[key]
-            elif key not in self and inherit:  # Fixed or flex attr
-                track_deletes.add(key)
-            elif key != 'id' and inherit:  # Could be a flex attr or id (fixed)
-                track_updates[key] = self[key]
+            if inherit:
+                if key in self.item_keys:  # is a fixed attribute
+                    track_updates[key] = self[key]
+                elif key not in self:  # is a fixed or a flexible attribute
+                    track_deletes.add(key)
+                elif key != 'id':  # is a flexible attribute
+                    track_updates[key] = self[key]
 
         with self._db.transaction():
             super().store(fields)
