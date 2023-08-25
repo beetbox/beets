@@ -29,7 +29,10 @@ The available options under the ``emby:`` section are:
   Default: ``localhost``
 - **port**: The Emby server port.
   Default: 8096
-- **username**: A username of a Emby user that is allowed to refresh the library.
+- **username**: A username of an Emby user that is allowed to refresh the library.
+- **userid**: A user ID of an Emby user that is allowed to refresh the library.
+  (This is only necessary for private users i.e. when the user is hidden from
+  login screens)
 - **apikey**: An Emby API key for the user.
 - **password**: The password for the user. (This is only necessary if no API
   key is provided.)
