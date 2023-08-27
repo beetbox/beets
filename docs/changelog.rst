@@ -112,6 +112,9 @@ New features:
 * A new configuration option, :ref:`duplicate_verbose_prompt`, allows changing
   how duplicates are presented during import.
   :bug: `4866`
+* :doc:`/plugins/embyupdate`: Add handling for private users by adding
+  ``userid`` config option.
+  :bug:`4402`
 
 Bug fixes:
 

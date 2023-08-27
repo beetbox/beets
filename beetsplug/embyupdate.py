@@ -167,6 +167,7 @@ class EmbyUpdate(BeetsPlugin):
         port = config['emby']['port'].get()
         username = config['emby']['username'].get()
         password = config['emby']['password'].get()
+        userid = config['emby']['userid'].get()
         token = config['emby']['apikey'].get()
 
         # Check if at least a apikey or password is given.
@@ -174,16 +175,18 @@ class EmbyUpdate(BeetsPlugin):
             self._log.warning('Provide at least Emby password or apikey.')
             return
 
-        # Get user information from the Emby API.
-        user = get_user(host, port, username)
-        if not user:
-            self._log.warning(f'User {username} could not be found.')
-            return
+        if not userid:
+            # Get user information from the Emby API.
+            user = get_user(host, port, username)
+            if not user:
+                self._log.warning(f'User {username} could not be found.')
+                return
+            userid = user[0]['Id']
 
         if not token:
             # Create Authentication data and headers.
             auth_data = password_data(username, password)
-            headers = create_headers(user[0]['Id'])
+            headers = create_headers(userid)
 
             # Get authentication token.
             token = get_token(host, port, headers, auth_data)
@@ -194,7 +197,7 @@ class EmbyUpdate(BeetsPlugin):
                 return
 
         # Recreate headers with a token.
-        headers = create_headers(user[0]['Id'], token=token)
+        headers = create_headers(userid, token=token)
 
         # Trigger the Update.
         url = api_url(host, port, '/Library/Refresh')
