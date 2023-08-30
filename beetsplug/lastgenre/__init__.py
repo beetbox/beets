@@ -411,7 +411,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     self._log.info(
                         "genre for album {0} ({1}): {0.genre}", album, src
                     )
-                    album.store()
+                    album.store(inherit=False)
 
                     for item in album.items():
                         # If we're using track-level sources, also look up each
