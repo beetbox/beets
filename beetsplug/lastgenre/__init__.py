@@ -316,7 +316,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Shortcut to existing genre if not forcing.
         if not self.config["force"]:
-            genres = obj.genre.split(", ")
+            if isinstance(obj, library.Item):
+                genres = obj.get("genre", with_album=False).split(", ")
+            else:
+                genres = obj.get("genre").split(", ")
             keep_allowed = []
             for g in genres:
                 allowed = self._is_allowed(g)
@@ -420,10 +423,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                         album,
                         src,
                     )
-                    if "track" in self.sources:
-                        album.store(inherit=False)
-                    else:
-                        album.store()
+                    album.store(inherit=False)
 
                     for item in album.items():
                         # If we're using track-level sources, also look up each
