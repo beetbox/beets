@@ -312,7 +312,9 @@ class EditDuringImporterTest(TerminalImportSessionSetup, unittest.TestCase,
         self.assertItemFieldsModified(self.lib.items(), self.items_orig,
                                       ['title'],
                                       self.IGNORED + ['albumartist',
-                                                      'mb_albumartistid'])
+                                                      'mb_albumartistid',
+                                                      'mb_albumartistids',
+                                                      ])
         self.assertTrue(all('Edited Title' in i.title
                             for i in self.lib.items()))
 

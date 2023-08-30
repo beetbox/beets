@@ -24,9 +24,16 @@ from unittest import mock
 
 
 class MBAlbumInfoTest(_common.TestCase):
-    def _make_release(self, date_str='2009', tracks=None, track_length=None,
-                      track_artist=False, data_tracks=None,
-                      medium_format='FORMAT'):
+    def _make_release(
+        self,
+        date_str='2009',
+        tracks=None,
+        track_length=None,
+        track_artist=False,
+        multi_artist_credit=False,
+        data_tracks=None,
+        medium_format='FORMAT'
+    ):
         release = {
             'title': 'ALBUM TITLE',
             'id': 'ALBUM ID',
@@ -61,6 +68,18 @@ class MBAlbumInfoTest(_common.TestCase):
             'country': 'COUNTRY',
             'status': 'STATUS',
         }
+
+        if multi_artist_credit:
+            release['artist-credit'].append(" & ")  # add join phase
+            release['artist-credit'].append({
+                'artist': {
+                    'name': 'ARTIST 2 NAME',
+                    'id': 'ARTIST 2 ID',
+                    'sort-name': 'ARTIST 2 SORT NAME',
+                },
+                'name': 'ARTIST MULTI CREDIT',
+            })
+
         i = 0
         track_list = []
         if tracks:
@@ -88,6 +107,20 @@ class MBAlbumInfoTest(_common.TestCase):
                             'name': 'TRACK ARTIST CREDIT',
                         }
                     ]
+
+                    if multi_artist_credit:
+                        track['artist-credit'].append(" & ")  # add join phase
+                        track['artist-credit'].append(
+                            {
+                                'artist': {
+                                    'name': 'TRACK ARTIST 2 NAME',
+                                    'id': 'TRACK ARTIST 2 ID',
+                                    'sort-name': 'TRACK ARTIST 2 SORT NAME',
+                                },
+                                'name': 'TRACK ARTIST 2 CREDIT',
+                            }
+                        )
+
                 track_list.append(track)
         data_track_list = []
         if data_tracks:
@@ -109,8 +142,17 @@ class MBAlbumInfoTest(_common.TestCase):
         })
         return release
 
-    def _make_track(self, title, tr_id, duration, artist=False,
-                    video=False, disambiguation=None, remixer=False):
+    def _make_track(
+        self,
+        title,
+        tr_id,
+        duration,
+        artist=False,
+        video=False,
+        disambiguation=None,
+        remixer=False,
+        multi_artist_credit=False
+    ):
         track = {
             'title': title,
             'id': tr_id,
@@ -128,6 +170,18 @@ class MBAlbumInfoTest(_common.TestCase):
                     'name': 'RECORDING ARTIST CREDIT',
                 }
             ]
+            if multi_artist_credit:
+                track['artist-credit'].append(" & ")  # add join phase
+                track['artist-credit'].append(
+                    {
+                        'artist': {
+                            'name': 'RECORDING ARTIST 2 NAME',
+                            'id': 'RECORDING ARTIST 2 ID',
+                            'sort-name': 'RECORDING ARTIST 2 SORT NAME',
+                        },
+                        'name': 'RECORDING ARTIST 2 CREDIT',
+                    }
+                )
         if remixer:
             track['artist-relation-list'] = [
                 {
@@ -346,6 +400,52 @@ class MBAlbumInfoTest(_common.TestCase):
         self.assertEqual(track.artist_sort, 'RECORDING ARTIST SORT NAME')
         self.assertEqual(track.artist_credit, 'RECORDING ARTIST CREDIT')
 
+    def test_parse_recording_artist_multi(self):
+        tracks = [
+            self._make_track(
+                'a', 'b', 1, True, multi_artist_credit=True
+            )
+        ]
+        release = self._make_release(None, tracks=tracks)
+        track = mb.album_info(release).tracks[0]
+        self.assertEqual(
+            track.artist,
+            'RECORDING ARTIST NAME & RECORDING ARTIST 2 NAME'
+        )
+        self.assertEqual(
+            track.artist_id, 'RECORDING ARTIST ID'
+        )
+        self.assertEqual(
+            track.artist_sort,
+            'RECORDING ARTIST SORT NAME & RECORDING ARTIST 2 SORT NAME'
+        )
+        self.assertEqual(
+            track.artist_credit,
+            'RECORDING ARTIST CREDIT & RECORDING ARTIST 2 CREDIT'
+        )
+
+        self.assertEqual(
+            track.artists,
+            ['RECORDING ARTIST NAME', 'RECORDING ARTIST 2 NAME']
+        )
+        self.assertEqual(
+            track.artists_ids, ['RECORDING ARTIST ID', 'RECORDING ARTIST 2 ID']
+        )
+        self.assertEqual(
+            track.artists_sort,
+            [
+                'RECORDING ARTIST SORT NAME',
+                'RECORDING ARTIST 2 SORT NAME'
+            ]
+        )
+        self.assertEqual(
+            track.artists_credit,
+            [
+                'RECORDING ARTIST CREDIT',
+                'RECORDING ARTIST 2 CREDIT'
+            ]
+        )
+
     def test_track_artist_overrides_recording_artist(self):
         tracks = [self._make_track('a', 'b', 1, True)]
         release = self._make_release(None, tracks=tracks, track_artist=True)
@@ -354,6 +454,48 @@ class MBAlbumInfoTest(_common.TestCase):
         self.assertEqual(track.artist_id, 'TRACK ARTIST ID')
         self.assertEqual(track.artist_sort, 'TRACK ARTIST SORT NAME')
         self.assertEqual(track.artist_credit, 'TRACK ARTIST CREDIT')
+
+    def test_track_artist_overrides_recording_artist_multi(self):
+        tracks = [
+            self._make_track('a', 'b', 1, True, multi_artist_credit=True)
+        ]
+        release = self._make_release(
+            None,
+            tracks=tracks,
+            track_artist=True,
+            multi_artist_credit=True
+        )
+        track = mb.album_info(release).tracks[0]
+        self.assertEqual(
+            track.artist,
+            'TRACK ARTIST NAME & TRACK ARTIST 2 NAME'
+        )
+        self.assertEqual(track.artist_id, 'TRACK ARTIST ID')
+        self.assertEqual(
+            track.artist_sort,
+            'TRACK ARTIST SORT NAME & TRACK ARTIST 2 SORT NAME'
+        )
+        self.assertEqual(
+            track.artist_credit,
+            'TRACK ARTIST CREDIT & TRACK ARTIST 2 CREDIT'
+        )
+
+        self.assertEqual(
+            track.artists,
+            ['TRACK ARTIST NAME', 'TRACK ARTIST 2 NAME']
+        )
+        self.assertEqual(
+            track.artists_ids,
+            ['TRACK ARTIST ID', 'TRACK ARTIST 2 ID']
+        )
+        self.assertEqual(
+            track.artists_sort,
+            ['TRACK ARTIST SORT NAME', 'TRACK ARTIST 2 SORT NAME']
+        )
+        self.assertEqual(
+            track.artists_credit,
+            ['TRACK ARTIST CREDIT', 'TRACK ARTIST 2 CREDIT']
+        )
 
     def test_parse_recording_remixer(self):
         tracks = [self._make_track('a', 'b', 1, remixer=True)]
@@ -522,18 +664,30 @@ class ArtistFlatteningTest(_common.TestCase):
         credit_dict['artist']['alias-list'].append(alias)
 
     def test_single_artist(self):
-        a, s, c = mb._flatten_artist_credit([self._credit_dict()])
+        credit = [self._credit_dict()]
+        a, s, c = mb._flatten_artist_credit(credit)
         self.assertEqual(a, 'NAME')
         self.assertEqual(s, 'SORT')
         self.assertEqual(c, 'CREDIT')
 
+        a, s, c = mb._multi_artist_credit(credit, include_join_phrase=False)
+        self.assertEqual(a, ['NAME'])
+        self.assertEqual(s, ['SORT'])
+        self.assertEqual(c, ['CREDIT'])
+
     def test_two_artists(self):
+        credit = [self._credit_dict('a'), ' AND ', self._credit_dict('b')]
         a, s, c = mb._flatten_artist_credit(
-            [self._credit_dict('a'), ' AND ', self._credit_dict('b')]
+            credit
         )
         self.assertEqual(a, 'NAMEa AND NAMEb')
         self.assertEqual(s, 'SORTa AND SORTb')
         self.assertEqual(c, 'CREDITa AND CREDITb')
+
+        a, s, c = mb._multi_artist_credit(credit, include_join_phrase=False)
+        self.assertEqual(a, ['NAMEa', 'NAMEb'])
+        self.assertEqual(s, ['SORTa', 'SORTb'])
+        self.assertEqual(c, ['CREDITa', 'CREDITb'])
 
     def test_alias(self):
         credit_dict = self._credit_dict()
