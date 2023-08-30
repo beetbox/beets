@@ -483,13 +483,20 @@ class Item(LibModel):
 
         'title': types.STRING,
         'artist': types.STRING,
+        'artists': types.MULTI_VALUE_DSV,
+        'artists_ids': types.MULTI_VALUE_DSV,
         'artist_sort': types.STRING,
+        'artists_sort': types.MULTI_VALUE_DSV,
         'artist_credit': types.STRING,
+        'artists_credit': types.MULTI_VALUE_DSV,
         'remixer': types.STRING,
         'album': types.STRING,
         'albumartist': types.STRING,
+        'albumartists': types.MULTI_VALUE_DSV,
         'albumartist_sort': types.STRING,
+        'albumartists_sort': types.MULTI_VALUE_DSV,
         'albumartist_credit': types.STRING,
+        'albumartists_credit': types.MULTI_VALUE_DSV,
         'genre': types.STRING,
         'style': types.STRING,
         'discogs_albumid': types.INTEGER,
@@ -517,7 +524,9 @@ class Item(LibModel):
         'mb_trackid': types.STRING,
         'mb_albumid': types.STRING,
         'mb_artistid': types.STRING,
+        'mb_artistids': types.MULTI_VALUE_DSV,
         'mb_albumartistid': types.STRING,
+        'mb_albumartistids': types.MULTI_VALUE_DSV,
         'mb_releasetrackid': types.STRING,
         'trackdisambig': types.STRING,
         'albumtype': types.STRING,
@@ -526,6 +535,7 @@ class Item(LibModel):
         'acoustid_fingerprint': types.STRING,
         'acoustid_id': types.STRING,
         'mb_releasegroupid': types.STRING,
+        'release_group_title': types.STRING,
         'asin': types.STRING,
         'isrc': types.STRING,
         'catalognum': types.STRING,
@@ -1069,6 +1079,9 @@ class Album(LibModel):
         'albumartist': types.STRING,
         'albumartist_sort': types.STRING,
         'albumartist_credit': types.STRING,
+        'albumartists': types.MULTI_VALUE_DSV,
+        'albumartists_sort': types.MULTI_VALUE_DSV,
+        'albumartists_credit': types.MULTI_VALUE_DSV,
         'album': types.STRING,
         'genre': types.STRING,
         'style': types.STRING,
@@ -1086,6 +1099,7 @@ class Album(LibModel):
         'albumtypes': types.SEMICOLON_SPACE_DSV,
         'label': types.STRING,
         'mb_releasegroupid': types.STRING,
+        'release_group_title': types.STRING,
         'asin': types.STRING,
         'catalognum': types.STRING,
         'script': types.STRING,
@@ -1118,8 +1132,11 @@ class Album(LibModel):
     item_keys = [
         'added',
         'albumartist',
+        'albumartists',
         'albumartist_sort',
+        'albumartists_sort',
         'albumartist_credit',
+        'albumartists_credit',
         'album',
         'genre',
         'style',
@@ -1145,6 +1162,7 @@ class Album(LibModel):
         'albumstatus',
         'albumdisambig',
         'releasegroupdisambig',
+        'release_group_title',
         'rg_album_gain',
         'rg_album_peak',
         'r128_album_gain',
@@ -1212,7 +1230,7 @@ class Album(LibModel):
         if not old_art:
             return
 
-        if not os.path.exists(old_art):
+        if not os.path.exists(syspath(old_art)):
             log.error('removing reference to missing album art file {}',
                       util.displayable_path(old_art))
             self.artpath = None

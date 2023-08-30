@@ -211,6 +211,9 @@ def disambig_string(info):
             disambig.append(info.catalognum)
         if info.albumdisambig:
             disambig.append(info.albumdisambig)
+        # Let the user differentiate between pseudo and actual releases.
+        if info.albumstatus == 'Pseudo-Release':
+            disambig.append(info.albumstatus)
 
     if disambig:
         return ', '.join(disambig)
@@ -1269,7 +1272,7 @@ def update_items(lib, query, album, move, pretend, fields):
 
 def update_func(lib, opts, args):
     # Verify that the library folder exists to prevent accidental wipes.
-    if not os.path.isdir(lib.directory):
+    if not os.path.isdir(syspath(lib.directory)):
         ui.print_("Library path is unavailable or does not exist.")
         ui.print_(lib.directory)
         if not ui.input_yn("Are you sure you want to continue (y/n)?", True):
@@ -1663,8 +1666,10 @@ def move_func(lib, opts, args):
     dest = opts.dest
     if dest is not None:
         dest = normpath(dest)
-        if not os.path.isdir(dest):
-            raise ui.UserError('no such directory: %s' % dest)
+        if not os.path.isdir(syspath(dest)):
+            raise ui.UserError('no such directory: {}'.format(
+                displayable_path(dest)
+            ))
 
     move_items(lib, dest, decargs(args), opts.copy, opts.album, opts.pretend,
                opts.timid, opts.export)
@@ -1828,20 +1833,20 @@ default_commands.append(config_cmd)
 def print_completion(*args):
     for line in completion_script(default_commands + plugins.commands()):
         print_(line, end='')
-    if not any(map(os.path.isfile, BASH_COMPLETION_PATHS)):
+    if not any(os.path.isfile(syspath(p)) for p in BASH_COMPLETION_PATHS):
         log.warning('Warning: Unable to find the bash-completion package. '
                     'Command line completion might not work.')
 
 
-BASH_COMPLETION_PATHS = map(syspath, [
-    '/etc/bash_completion',
-    '/usr/share/bash-completion/bash_completion',
-    '/usr/local/share/bash-completion/bash_completion',
+BASH_COMPLETION_PATHS = [
+    b'/etc/bash_completion',
+    b'/usr/share/bash-completion/bash_completion',
+    b'/usr/local/share/bash-completion/bash_completion',
     # SmartOS
-    '/opt/local/share/bash-completion/bash_completion',
+    b'/opt/local/share/bash-completion/bash_completion',
     # Homebrew (before bash-completion2)
-    '/usr/local/etc/bash_completion',
-])
+    b'/usr/local/etc/bash_completion',
+]
 
 
 def completion_script(commands):

@@ -256,6 +256,7 @@ class IMBackend(LocalBackend):
             '-colorspace', 'gray', 'MIFF:-'
         ]
         compare_cmd = self.compare_cmd + [
+            '-define', 'phash:colorspaces=sRGB,HCLp',
             '-metric', 'PHASH', '-', 'null:',
         ]
         log.debug('comparing images with pipeline {} | {}',
@@ -459,11 +460,11 @@ class PILBackend(LocalBackend):
 
         # FIXME: Detect and handle other file types (currently, the only user
         # is the thumbnails plugin, which generates PNG images).
-        im = Image.open(file)
+        im = Image.open(syspath(file))
         meta = PngImagePlugin.PngInfo()
         for k, v in metadata.items():
             meta.add_text(k, v, 0)
-        im.save(file, "PNG", pnginfo=meta)
+        im.save(py3_path(file), "PNG", pnginfo=meta)
 
 
 class Shareable(type):

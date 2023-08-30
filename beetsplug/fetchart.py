@@ -590,7 +590,7 @@ class FanartTV(RemoteArtSource):
                 self._log.debug('fanart.tv: unexpected mb_releasegroupid in '
                                 'response!')
 
-        matches.sort(key=lambda x: x['likes'], reverse=True)
+        matches.sort(key=lambda x: int(x['likes']), reverse=True)
         for item in matches:
             # fanart.tv has a strict size requirement for album art to be
             # uploaded
@@ -956,7 +956,11 @@ class Spotify(RemoteArtSource):
         return HAS_BEAUTIFUL_SOUP
 
     def get(self, album, plugin, paths):
-        url = self.SPOTIFY_ALBUM_URL + album.mb_albumid
+        try:
+            url = self.SPOTIFY_ALBUM_URL + album.items().get().spotify_album_id
+        except AttributeError:
+            self._log.debug('Fetchart: no Spotify album ID found')
+            return
         try:
             response = requests.get(url)
             response.raise_for_status()
@@ -1129,7 +1133,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
     def fetch_art(self, session, task):
         """Find art for the album being imported."""
         if task.is_album:  # Only fetch art for full albums.
-            if task.album.artpath and os.path.isfile(task.album.artpath):
+            if (task.album.artpath
+                    and os.path.isfile(syspath(task.album.artpath))):
                 # Album already has art (probably a re-import); skip it.
                 return
             if task.choice_flag == importer.action.ASIS:
@@ -1233,7 +1238,8 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         fetchart CLI command.
         """
         for album in albums:
-            if album.artpath and not force and os.path.isfile(album.artpath):
+            if (album.artpath and not force
+                    and os.path.isfile(syspath(album.artpath))):
                 if not quiet:
                     message = ui.colorize('text_highlight_minor',
                                           'has album art')

@@ -1169,7 +1169,10 @@ class MtimeTest(_common.TestCase):
     def setUp(self):
         super().setUp()
         self.ipath = os.path.join(self.temp_dir, b'testfile.mp3')
-        shutil.copy(os.path.join(_common.RSRC, b'full.mp3'), self.ipath)
+        shutil.copy(
+            syspath(os.path.join(_common.RSRC, b'full.mp3')),
+            syspath(self.ipath),
+        )
         self.i = beets.library.Item.from_path(self.ipath)
         self.lib = beets.library.Library(':memory:')
         self.lib.add(self.i)
@@ -1301,6 +1304,27 @@ class WriteTest(unittest.TestCase, TestHelper):
         item.write(tags={'artist': 'new artist'})
         self.assertNotEqual(item.artist, 'new artist')
         self.assertEqual(MediaFile(syspath(item.path)).artist, 'new artist')
+
+    def test_write_multi_tags(self):
+        item = self.add_item_fixture(artist='old artist')
+        item.write(tags={'artists': ['old artist', 'another artist']})
+
+        self.assertEqual(
+            MediaFile(syspath(item.path)).artists,
+            ['old artist', 'another artist']
+        )
+
+    def test_write_multi_tags_id3v23(self):
+        item = self.add_item_fixture(artist='old artist')
+        item.write(
+            tags={'artists': ['old artist', 'another artist']},
+            id3v23=True
+        )
+
+        self.assertEqual(
+            MediaFile(syspath(item.path)).artists,
+            ['old artist/another artist']
+        )
 
     def test_write_date_field(self):
         # Since `date` is not a MediaField, this should do nothing.

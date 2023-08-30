@@ -29,6 +29,7 @@ from beets import util
 from beets import config
 from collections import Counter
 from urllib.parse import urljoin
+
 from beets.util.id_extractors import extract_discogs_id_regex, \
     spotify_id_regex, deezer_id_regex, beatport_id_regex
 from beets.plugins import MetadataSourcePlugin
@@ -73,7 +74,8 @@ log = logging.getLogger('beets')
 RELEASE_INCLUDES = ['artists', 'media', 'recordings', 'release-groups',
                     'labels', 'artist-credits', 'aliases',
                     'recording-level-rels', 'work-rels',
-                    'work-level-rels', 'artist-rels', 'isrcs', 'url-rels']
+                    'work-level-rels', 'artist-rels', 'isrcs',
+                    'url-rels', 'release-rels']
 BROWSE_INCLUDES = ['artist-credits', 'work-rels',
                    'artist-rels', 'recording-rels', 'release-rels']
 if "work-level-rels" in musicbrainzngs.VALID_BROWSE_INCLUDES['recording']:
@@ -133,7 +135,7 @@ def _preferred_alias(aliases: List):
         matches = []
         for a in aliases:
             if a['locale'] == locale and 'primary' in a and \
-               a.get('type', '').lower() not in ignored_alias_types:
+                    a.get('type', '').lower() not in ignored_alias_types:
                 matches.append(a)
 
         # Skip to the next locale if we have no matches
@@ -165,9 +167,11 @@ def _preferred_release_event(release: Dict[str, Any]) -> Tuple[str, str]:
     )
 
 
-def _flatten_artist_credit(credit: List[Dict]) -> Tuple[str, str, str]:
-    """Given a list representing an ``artist-credit`` block, flatten the
-    data into a triple of joined artist name strings: canonical, sort, and
+def _multi_artist_credit(
+        credit: List[Dict], include_join_phrase: bool
+) -> Tuple[List[str], List[str], List[str]]:
+    """Given a list representing an ``artist-credit`` block, accumulate
+    data into a triple of joined artist name lists: canonical, sort, and
     credit.
     """
     artist_parts = []
@@ -176,9 +180,10 @@ def _flatten_artist_credit(credit: List[Dict]) -> Tuple[str, str, str]:
     for el in credit:
         if isinstance(el, str):
             # Join phrase.
-            artist_parts.append(el)
-            artist_credit_parts.append(el)
-            artist_sort_parts.append(el)
+            if include_join_phrase:
+                artist_parts.append(el)
+                artist_credit_parts.append(el)
+                artist_sort_parts.append(el)
 
         else:
             alias = _preferred_alias(el['artist'].get('alias-list', ()))
@@ -205,10 +210,40 @@ def _flatten_artist_credit(credit: List[Dict]) -> Tuple[str, str, str]:
                 artist_credit_parts.append(cur_artist_name)
 
     return (
+        artist_parts,
+        artist_sort_parts,
+        artist_credit_parts,
+    )
+
+
+def _flatten_artist_credit(credit: List[Dict]) -> Tuple[str, str, str]:
+    """Given a list representing an ``artist-credit`` block, flatten the
+    data into a triple of joined artist name strings: canonical, sort, and
+    credit.
+    """
+    artist_parts, artist_sort_parts, artist_credit_parts = \
+        _multi_artist_credit(
+            credit,
+            include_join_phrase=True
+        )
+    return (
         ''.join(artist_parts),
         ''.join(artist_sort_parts),
         ''.join(artist_credit_parts),
     )
+
+
+def _artist_ids(credit: List[Dict]) -> List[str]:
+    """
+    Given a list representing an ``artist-credit``,
+    return a list of artist IDs
+    """
+    artist_ids: List[str] = []
+    for el in credit:
+        if isinstance(el, dict):
+            artist_ids.append(el['artist']['id'])
+
+    return artist_ids
 
 
 def _get_related_artist_names(relations, relation_type):
@@ -254,9 +289,13 @@ def track_info(
         info.artist, info.artist_sort, info.artist_credit = \
             _flatten_artist_credit(recording['artist-credit'])
 
-        # Get the ID and sort name of the first artist.
-        artist = recording['artist-credit'][0]['artist']
-        info.artist_id = artist['id']
+        info.artists, info.artists_sort, info.artists_credit = \
+            _multi_artist_credit(
+                recording['artist-credit'], include_join_phrase=False
+            )
+
+        info.artists_ids = _artist_ids(recording['artist-credit'])
+        info.artist_id = info.artists_ids[0]
 
     if recording.get('artist-relation-list'):
         info.remixer = _get_related_artist_names(
@@ -349,6 +388,11 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
     artist_name, artist_sort_name, artist_credit_name = \
         _flatten_artist_credit(release['artist-credit'])
 
+    artists_names, artists_sort_names, artists_credit_names = \
+        _multi_artist_credit(
+            release['artist-credit'], include_join_phrase=False
+        )
+
     ntracks = sum(len(m['track-list']) for m in release['medium-list'])
 
     # The MusicBrainz API omits 'artist-relation-list' and 'work-relation-list'
@@ -420,21 +464,33 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
                 # Get the artist names.
                 ti.artist, ti.artist_sort, ti.artist_credit = \
                     _flatten_artist_credit(track['artist-credit'])
-                ti.artist_id = track['artist-credit'][0]['artist']['id']
+
+                ti.artists, ti.artists_sort, ti.artists_credit = \
+                    _multi_artist_credit(
+                        track['artist-credit'], include_join_phrase=False
+                    )
+
+                ti.artists_ids = _artist_ids(track['artist-credit'])
+                ti.artist_id = ti.artists_ids[0]
             if track.get('length'):
                 ti.length = int(track['length']) / (1000.0)
 
             track_infos.append(ti)
 
+    album_artist_ids = _artist_ids(release['artist-credit'])
     info = beets.autotag.hooks.AlbumInfo(
         album=release['title'],
         album_id=release['id'],
         artist=artist_name,
-        artist_id=release['artist-credit'][0]['artist']['id'],
+        artist_id=album_artist_ids[0],
+        artists=artists_names,
+        artists_ids=album_artist_ids,
         tracks=track_infos,
         mediums=len(release['medium-list']),
         artist_sort=artist_sort_name,
+        artists_sort=artists_sort_names,
         artist_credit=artist_credit_name,
+        artists_credit=artists_credit_names,
         data_source='MusicBrainz',
         data_url=album_url(release['id']),
     )
@@ -444,6 +500,9 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
     info.asin = release.get('asin')
     info.releasegroup_id = release['release-group']['id']
     info.albumstatus = release.get('status')
+
+    if release['release-group'].get('title'):
+        info.release_group_title = release['release-group'].get('title')
 
     # Get the disambiguation strings at the release and release group level.
     if release['release-group'].get('disambiguation'):
@@ -518,9 +577,9 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
     if (any(config['musicbrainz']['external_ids'].get().values())
             and release.get('url-relation-list')):
         discogs_url, bandcamp_url, spotify_url = None, None, None
-        deezer_url, beatport_url = None, None
+        deezer_url, beatport_url, tidal_url = None, None, None
         fetch_discogs, fetch_bandcamp, fetch_spotify = False, False, False
-        fetch_deezer, fetch_beatport = False, False
+        fetch_deezer, fetch_beatport, fetch_tidal = False, False, False
 
         if config['musicbrainz']['external_ids']['discogs'].get():
             fetch_discogs = True
@@ -532,6 +591,8 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
             fetch_deezer = True
         if config['musicbrainz']['external_ids']['beatport'].get():
             fetch_beatport = True
+        if config['musicbrainz']['external_ids']['tidal'].get():
+            fetch_tidal = True
 
         for url in release['url-relation-list']:
             if fetch_discogs and url['type'] == 'discogs':
@@ -549,6 +610,9 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
             if fetch_beatport and 'beatport.com' in url['target']:
                 log.debug('Found link to Beatport release via MusicBrainz')
                 beatport_url = url['target']
+            if fetch_tidal and 'tidal.com' in url['target']:
+                log.debug('Found link to Tidal release via MusicBrainz')
+                tidal_url = url['target']
 
         if discogs_url:
             info.discogs_albumid = extract_discogs_id_regex(discogs_url)
@@ -563,6 +627,8 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
         if beatport_url:
             info.beatport_album_id = MetadataSourcePlugin._get_id(
                 'album', beatport_url, beatport_id_regex)
+        if tidal_url:
+            info.tidal_album_id = tidal_url.split('/')[-1]
 
     extra_albumdatas = plugins.send('mb_album_extract', data=release)
     for extra_albumdata in extra_albumdatas:
@@ -573,10 +639,10 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
 
 
 def match_album(
-    artist: str,
-    album: str,
-    tracks: Optional[int] = None,
-    extra_tags: Optional[Dict[str, Any]] = None,
+        artist: str,
+        album: str,
+        tracks: Optional[int] = None,
+        extra_tags: Optional[Dict[str, Any]] = None,
 ) -> Iterator[beets.autotag.hooks.AlbumInfo]:
     """Searches for a single album ("release" in MusicBrainz parlance)
     and returns an iterator over AlbumInfo objects. May raise a
@@ -660,6 +726,67 @@ def _parse_id(s: str) -> Optional[str]:
     return None
 
 
+def _is_translation(r):
+    _trans_key = 'transl-tracklisting'
+    return r['type'] == _trans_key and r['direction'] == "backward"
+
+
+def _find_actual_release_from_pseudo_release(pseudo_rel: Dict) \
+        -> Optional[Dict]:
+    try:
+        relations = pseudo_rel['release']["release-relation-list"]
+    except KeyError:
+        return None
+
+    # currently we only support trans(liter)ation's
+    translations = [r for r in relations if _is_translation(r)]
+
+    if not translations:
+        return None
+
+    actual_id = translations[0]['target']
+
+    return musicbrainzngs.get_release_by_id(actual_id,
+                                            RELEASE_INCLUDES)
+
+
+def _merge_pseudo_and_actual_album(
+        pseudo: beets.autotag.hooks.AlbumInfo,
+        actual: beets.autotag.hooks.AlbumInfo
+) -> Optional[beets.autotag.hooks.AlbumInfo]:
+    """
+    Merges a pseudo release with its actual release.
+
+    This implementation is naive, it doesn't overwrite fields,
+    like status or ids.
+
+    According to the ticket PICARD-145, the main release id should be used.
+    But the ticket has been in limbo since over a decade now.
+    It also suggests the introduction of the tag `musicbrainz_pseudoreleaseid`,
+    but as of this field can't be found in any offical Picard docs,
+    hence why we did not implement that for now.
+    """
+    merged = pseudo.copy()
+    from_actual = {k: actual[k] for k in [
+        "media",
+        "mediums",
+        "country",
+        "catalognum",
+        "year",
+        "month",
+        "day",
+        "original_year",
+        "original_month",
+        "original_day",
+        "label",
+        "asin",
+        "style",
+        "genre"
+    ]}
+    merged.update(from_actual)
+    return merged
+
+
 def album_for_id(releaseid: str) -> Optional[beets.autotag.hooks.AlbumInfo]:
     """Fetches an album by its MusicBrainz ID and returns an AlbumInfo
     object or None if the album is not found. May raise a
@@ -673,13 +800,29 @@ def album_for_id(releaseid: str) -> Optional[beets.autotag.hooks.AlbumInfo]:
     try:
         res = musicbrainzngs.get_release_by_id(albumid,
                                                RELEASE_INCLUDES)
+
+        # resolve linked release relations
+        actual_res = None
+
+        if res['release'].get('status') == 'Pseudo-Release':
+            actual_res = _find_actual_release_from_pseudo_release(res)
+
     except musicbrainzngs.ResponseError:
         log.debug('Album ID match failed.')
         return None
     except musicbrainzngs.MusicBrainzError as exc:
         raise MusicBrainzAPIError(exc, 'get release by ID', albumid,
                                   traceback.format_exc())
-    return album_info(res['release'])
+
+    # release is potentially a pseudo release
+    release = album_info(res['release'])
+
+    # should be None unless we're dealing with a pseudo release
+    if actual_res is not None:
+        actual_release = album_info(actual_res['release'])
+        return _merge_pseudo_and_actual_album(release, actual_release)
+    else:
+        return release
 
 
 def track_for_id(releaseid: str) -> Optional[beets.autotag.hooks.TrackInfo]:

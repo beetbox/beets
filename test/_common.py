@@ -22,8 +22,6 @@ import shutil
 import unittest
 from contextlib import contextmanager
 
-import reflink
-
 
 # Mangle the search path to include the beets sources.
 sys.path.insert(0, '..')
@@ -31,6 +29,7 @@ import beets.library  # noqa: E402
 from beets import importer, logging  # noqa: E402
 from beets.ui import commands  # noqa: E402
 from beets import util  # noqa: E402
+from beets.util import bytestring_path, syspath  # noqa: E402
 import beets  # noqa: E402
 
 # Make sure the development versions of the plugins are used
@@ -54,7 +53,12 @@ _item_ident = 0
 # OS feature test.
 HAVE_SYMLINK = sys.platform != 'win32'
 HAVE_HARDLINK = sys.platform != 'win32'
-HAVE_REFLINK = reflink.supported_at(tempfile.gettempdir())
+
+try:
+    import reflink
+    HAVE_REFLINK = reflink.supported_at(tempfile.gettempdir())
+except ImportError:
+    HAVE_REFLINK = False
 
 
 def item(lib=None):
@@ -137,12 +141,24 @@ class Assertions:
     """A mixin with additional unit test assertions."""
 
     def assertExists(self, path):  # noqa
-        self.assertTrue(os.path.exists(util.syspath(path)),
+        self.assertTrue(os.path.exists(syspath(path)),
                         f'file does not exist: {path!r}')
 
     def assertNotExists(self, path):  # noqa
-        self.assertFalse(os.path.exists(util.syspath(path)),
+        self.assertFalse(os.path.exists(syspath(path)),
                          f'file exists: {path!r}')
+
+    def assertIsFile(self, path):  # noqa
+        self.assertExists(path)
+        self.assertTrue(os.path.isfile(syspath(path)),
+                        u'path exists, but is not a regular file: {!r}'
+                        .format(path))
+
+    def assertIsDir(self, path):  # noqa
+        self.assertExists(path)
+        self.assertTrue(os.path.isdir(syspath(path)),
+                        u'path exists, but is not a directory: {!r}'
+                        .format(path))
 
     def assert_equal_path(self, a, b):
         """Check that two paths are equal."""
@@ -183,8 +199,8 @@ class TestCase(unittest.TestCase, Assertions):
         self.io = DummyIO()
 
     def tearDown(self):
-        if os.path.isdir(self.temp_dir):
-            shutil.rmtree(self.temp_dir)
+        if os.path.isdir(syspath(self.temp_dir)):
+            shutil.rmtree(syspath(self.temp_dir))
         if self._old_home is None:
             del os.environ['HOME']
         else:
@@ -322,7 +338,7 @@ class DummyIO:
 # Utility.
 
 def touch(path):
-    open(path, 'a').close()
+    open(syspath(path), 'a').close()
 
 
 class Bag:
@@ -348,16 +364,13 @@ class TempDirMixin:
         """Create a temporary directory and assign it into `self.temp_dir`.
         Call `remove_temp_dir` later to delete it.
         """
-        path = tempfile.mkdtemp()
-        if not isinstance(path, bytes):
-            path = path.encode('utf8')
-        self.temp_dir = path
+        self.temp_dir = bytestring_path(tempfile.mkdtemp())
 
     def remove_temp_dir(self):
         """Delete the temporary directory created by `create_temp_dir`.
         """
-        if os.path.isdir(self.temp_dir):
-            shutil.rmtree(self.temp_dir)
+        if os.path.isdir(syspath(self.temp_dir)):
+            shutil.rmtree(syspath(self.temp_dir))
 
 
 # Platform mocking.

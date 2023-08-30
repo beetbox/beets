@@ -11,6 +11,16 @@ for Python 3.6).
 
 New features:
 
+* Added support for ``artists`` and ``albumartists`` multi tags
+  :bug:`505`
+* :doc:`/plugins/deezer`: Import rank and other attributes from Deezer during import and add a function to update the rank of existing items.
+  :bug:`4841`
+* resolve transl-tracklisting relations for pseudo releases and merge data with the actual release
+  :bug:`654`
+* Fetchart: Use the right field (`spotify_album_id`) to obtain the Spotify album id
+  :bug:`4803`
+* Prevent reimporting album if it is permanently removed from Spotify
+  :bug:`4800`
 * Added option use `cover_art_arl` as an album art source in the `fetchart` plugin.
   :bug:`4707`
 * :doc:`/plugins/fetchart`: The plugin can now get album art from `spotify`.
@@ -84,9 +94,12 @@ New features:
 * :doc:`/plugins/convert`: Add support for generating m3u8 playlists together
   with converted media files.
   :bug:`4373`
+* Fetch the ``release_group_title`` field from MusicBrainz.
+  :bug: `4809`
 
 Bug fixes:
 
+* :doc:`/plugins/deezer`: Fixed the error where Deezer plugin would crash if non-Deezer id is passed during import.  
 * :doc:`/plugins/fetchart`: Fix fetching from Cover Art Archive when the
   `maxwidth` option is set to one of the supported Cover Art Archive widths.
 * :doc:`/plugins/discogs`: Fix "Discogs plugin replacing Feat. or Ft. with
@@ -164,6 +177,8 @@ Bug fixes:
 * :doc:`plugins/lyrics`: Fixed issue with Tekstowo backend not actually checking
   if the found song matches.
   :bug:`4406`
+* :doc:`plugins/embedart`: Add support for ImageMagick 7.1.1-12
+  :bug:`4836`
 * :doc:`/plugins/fromfilename`: Fix failed detection of <track> <title>
   filename patterns.
   :bug:`4561` :bug:`4600`
@@ -179,6 +194,8 @@ Bug fixes:
 * Fix updating "data_source" on re-imports and improve logging when flexible
   attributes are being re-imported.
   :bug:`4726`
+* :doc:`/plugins/fetchart`: Correctly select the cover art from fanart.tv with
+  the highest number of likes
 
 For packagers:
 
@@ -203,6 +220,8 @@ Other changes:
 * :doc:`/plugins/lyrics`: Remove Musixmatch from default enabled sources as
   they are currently blocking requests from the beets user agent.
   :bug:`4585`
+* :doc:`/faq`: :ref:`multidisc`: Elaborated the multi-disc FAQ :bug:`4806`
+* :doc:`/faq`: :ref:`src`: Removed some long lines.
 
 1.6.0 (November 27, 2021)
 -------------------------

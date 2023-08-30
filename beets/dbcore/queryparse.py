@@ -17,7 +17,11 @@
 
 import re
 import itertools
-from . import query
+from typing import Dict, Type, Tuple, Optional, Collection, List, \
+    Sequence
+
+from . import query, Model
+from .query import Sort
 
 PARSE_QUERY_PART_REGEX = re.compile(
     # Non-capturing optional segment for the keyword.
@@ -34,8 +38,12 @@ PARSE_QUERY_PART_REGEX = re.compile(
 )
 
 
-def parse_query_part(part, query_classes={}, prefixes={},
-                     default_class=query.SubstringQuery):
+def parse_query_part(
+        part: str,
+        query_classes: Dict = {},
+        prefixes: Dict = {},
+        default_class: Type[query.SubstringQuery] = query.SubstringQuery,
+) -> Tuple[Optional[str], str, Type[query.Query], bool]:
     """Parse a single *query part*, which is a chunk of a complete query
     string representing a single criterion.
 
@@ -100,7 +108,11 @@ def parse_query_part(part, query_classes={}, prefixes={},
     return key, term, query_class, negate
 
 
-def construct_query_part(model_cls, prefixes, query_part):
+def construct_query_part(
+        model_cls: Type[Model],
+        prefixes: Dict,
+        query_part: str,
+) -> query.Query:
     """Parse a *query part* string and return a :class:`Query` object.
 
     :param model_cls: The :class:`Model` class that this is a query for.
@@ -115,6 +127,8 @@ def construct_query_part(model_cls, prefixes, query_part):
     # A shortcut for empty query parts.
     if not query_part:
         return query.TrueQuery()
+
+    out_query: query.Query
 
     # Use `model_cls` to build up a map from field (or query) names to
     # `Query` classes.
@@ -137,9 +151,11 @@ def construct_query_part(model_cls, prefixes, query_part):
             # any field.
             out_query = query.AnyFieldQuery(pattern, model_cls._search_fields,
                                             query_class)
-        else:
+        elif issubclass(query_class, query.NamedQuery):
             # Non-field query type.
             out_query = query_class(pattern)
+        else:
+            assert False, "Unexpected query type"
 
     # Field queries get constructed according to the name of the field
     # they are querying.
@@ -148,8 +164,10 @@ def construct_query_part(model_cls, prefixes, query_part):
         out_query = query_class(key.lower(), pattern, key in model_cls._fields)
 
     # Non-field (named) query.
-    else:
+    elif issubclass(query_class, query.NamedQuery):
         out_query = query_class(pattern)
+    else:
+        assert False, "Unexpected query type"
 
     # Apply negation.
     if negate:
@@ -158,7 +176,13 @@ def construct_query_part(model_cls, prefixes, query_part):
         return out_query
 
 
-def query_from_strings(query_cls, model_cls, prefixes, query_parts):
+# TYPING ERROR
+def query_from_strings(
+        query_cls: Type[query.CollectionQuery],
+        model_cls: Type[Model],
+        prefixes: Dict,
+        query_parts: Collection[str],
+) -> query.Query:
     """Creates a collection query of type `query_cls` from a list of
     strings in the format used by parse_query_part. `model_cls`
     determines how queries are constructed from strings.
@@ -171,7 +195,11 @@ def query_from_strings(query_cls, model_cls, prefixes, query_parts):
     return query_cls(subqueries)
 
 
-def construct_sort_part(model_cls, part, case_insensitive=True):
+def construct_sort_part(
+        model_cls: Type[Model],
+        part: str,
+        case_insensitive: bool = True,
+) -> Sort:
     """Create a `Sort` from a single string criterion.
 
     `model_cls` is the `Model` being queried. `part` is a single string
@@ -197,23 +225,31 @@ def construct_sort_part(model_cls, part, case_insensitive=True):
     return sort
 
 
-def sort_from_strings(model_cls, sort_parts, case_insensitive=True):
+def sort_from_strings(
+        model_cls: Type[Model],
+        sort_parts: Sequence[str],
+        case_insensitive: bool = True,
+) -> Sort:
     """Create a `Sort` from a list of sort criteria (strings).
     """
     if not sort_parts:
-        sort = query.NullSort()
+        return query.NullSort()
     elif len(sort_parts) == 1:
-        sort = construct_sort_part(model_cls, sort_parts[0], case_insensitive)
+        return construct_sort_part(model_cls, sort_parts[0], case_insensitive)
     else:
         sort = query.MultipleSort()
         for part in sort_parts:
             sort.add_sort(construct_sort_part(model_cls, part,
                                               case_insensitive))
-    return sort
+        return sort
 
 
-def parse_sorted_query(model_cls, parts, prefixes={},
-                       case_insensitive=True):
+def parse_sorted_query(
+        model_cls: Type[Model],
+        parts: List[str],
+        prefixes: Dict = {},
+        case_insensitive: bool = True,
+) -> Tuple[query.Query, Sort]:
     """Given a list of strings, create the `Query` and `Sort` that they
     represent.
     """

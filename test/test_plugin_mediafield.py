@@ -23,7 +23,7 @@ from test import _common
 from beets.library import Item
 import mediafile
 from beets.plugins import BeetsPlugin
-from beets.util import bytestring_path
+from beets.util import bytestring_path, syspath
 
 
 field_extension = mediafile.MediaField(
@@ -33,6 +33,13 @@ field_extension = mediafile.MediaField(
     mediafile.ASFStorageStyle('customtag'),
 )
 
+list_field_extension = mediafile.ListMediaField(
+    mediafile.MP3ListDescStorageStyle('customlisttag'),
+    mediafile.MP4ListStorageStyle('----:com.apple.iTunes:customlisttag'),
+    mediafile.ListStorageStyle('customlisttag'),
+    mediafile.ASFStorageStyle('customlisttag'),
+)
+
 
 class ExtendedFieldTestMixin(_common.TestCase):
 
@@ -40,7 +47,7 @@ class ExtendedFieldTestMixin(_common.TestCase):
         name = bytestring_path(name + '.' + extension)
         src = os.path.join(_common.RSRC, name)
         target = os.path.join(self.temp_dir, name)
-        shutil.copy(src, target)
+        shutil.copy(syspath(src), syspath(target))
         return mediafile.MediaFile(target)
 
     def test_extended_field_write(self):
@@ -58,6 +65,22 @@ class ExtendedFieldTestMixin(_common.TestCase):
         finally:
             delattr(mediafile.MediaFile, 'customtag')
             Item._media_fields.remove('customtag')
+
+    def test_extended_list_field_write(self):
+        plugin = BeetsPlugin()
+        plugin.add_media_field('customlisttag', list_field_extension)
+
+        try:
+            mf = self._mediafile_fixture('empty')
+            mf.customlisttag = ['a', 'b']
+            mf.save()
+
+            mf = mediafile.MediaFile(mf.path)
+            self.assertEqual(mf.customlisttag, ['a', 'b'])
+
+        finally:
+            delattr(mediafile.MediaFile, 'customlisttag')
+            Item._media_fields.remove('customlisttag')
 
     def test_write_extended_tag_from_item(self):
         plugin = BeetsPlugin()
