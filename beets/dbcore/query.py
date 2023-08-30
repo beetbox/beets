@@ -49,7 +49,7 @@ if TYPE_CHECKING:
 
 
 class ParsingError(ValueError):
-    """Abstract class for any unparseable user-requested album/query
+    """Abstract class for any unparsable user-requested album/query
     specification.
     """
 
@@ -108,7 +108,7 @@ class Query(ABC):
         return f"{self.__class__.__name__}()"
 
     def __eq__(self, other) -> bool:
-        return type(self) == type(other)
+        return type(self) is type(other)
 
     def __hash__(self) -> int:
         """Minimalistic default implementation of a hash.
@@ -334,9 +334,9 @@ class BytesQuery(FieldQuery[bytes]):
             else:
                 bytes_pattern = pattern
             self.buf_pattern = memoryview(bytes_pattern)
-        elif isinstance(self.pattern, memoryview):
-            self.buf_pattern = self.pattern
-            bytes_pattern = bytes(self.pattern)
+        elif isinstance(pattern, memoryview):
+            self.buf_pattern = pattern
+            bytes_pattern = bytes(pattern)
         else:
             raise ValueError("pattern must be bytes, str, or memoryview")
 
@@ -549,7 +549,7 @@ class OrQuery(MutableCollectionQuery):
 
 
 class NotQuery(Query):
-    """A query that matches the negation of its `subquery`, as a shorcut for
+    """A query that matches the negation of its `subquery`, as a shortcut for
     performing `not(subquery)` without using regular expressions.
     """
 
@@ -868,7 +868,7 @@ class Sort:
         return 0
 
     def __eq__(self, other) -> bool:
-        return type(self) == type(other)
+        return type(self) is type(other)
 
 
 class MultipleSort(Sort):
@@ -1014,7 +1014,7 @@ class NullSort(Sort):
         return False
 
     def __eq__(self, other) -> bool:
-        return type(self) == type(other) or other is None
+        return type(self) is type(other) or other is None
 
     def __hash__(self) -> int:
         return 0

@@ -1384,22 +1384,27 @@ class Album(LibModel):
 
         plugins.send('art_set', album=self)
 
-    def store(self, fields=None):
+    def store(self, fields=None, inherit=True):
         """Update the database with the album information.
-
-        The album's tracks are also updated.
 
         `fields` represents the fields to be stored. If not specified,
         all fields will be.
+
+        The album's tracks are also updated when the `inherit` flag is enabled.
+        This applies to fixed attributes as well as flexible ones. The `id`
+        attribute of the album will never be inherited.
         """
         # Get modified track fields.
         track_updates = {}
         track_deletes = set()
         for key in self._dirty:
-            if key in self.item_keys:
-                track_updates[key] = self[key]
-            elif key not in self:
-                track_deletes.add(key)
+            if inherit:
+                if key in self.item_keys:  # is a fixed attribute
+                    track_updates[key] = self[key]
+                elif key not in self:  # is a fixed or a flexible attribute
+                    track_deletes.add(key)
+                elif key != 'id':  # is a flexible attribute
+                    track_updates[key] = self[key]
 
         with self._db.transaction():
             super().store(fields)
@@ -1415,7 +1420,7 @@ class Album(LibModel):
                             del item[key]
                     item.store()
 
-    def try_sync(self, write, move):
+    def try_sync(self, write, move, inherit=True):
         """Synchronize the album and its items with the database.
         Optionally, also write any new tags into the files and update
         their paths.
@@ -1424,7 +1429,7 @@ class Album(LibModel):
         `move` controls whether files (both audio and album art) are
         moved.
         """
-        self.store()
+        self.store(inherit=inherit)
         for item in self.items():
             item.try_sync(write, move)
 
@@ -1805,7 +1810,7 @@ class DefaultTemplateFunctions:
         should return an empty string.
 
         "initial_subqueries" is a list of subqueries that should be included
-        in the query to find the ambigous items.
+        in the query to find the ambiguous items.
         """
         memokey = self._tmpl_unique_memokey(name, keys, disam, item_id)
         memoval = self.lib._memotable.get(memokey)

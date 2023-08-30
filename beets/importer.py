@@ -1367,7 +1367,7 @@ def _freshen_items(items):
 
 def _extend_pipeline(tasks, *stages):
     # Return pipeline extension for stages with list of tasks
-    if type(tasks) == list:
+    if isinstance(tasks, list):
         task_iter = iter(tasks)
     else:
         task_iter = tasks
@@ -1460,7 +1460,7 @@ def user_query(session, task):
     and the processed task is yielded.
 
     It emits the ``import_task_choice`` event for plugins. Plugins have
-    acces to the choice via the ``taks.choice_flag`` property and may
+    access to the choice via the ``task.choice_flag`` property and may
     choose to change it.
     """
     if task.skip:

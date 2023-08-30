@@ -31,9 +31,11 @@ import:
         album: albumartist album
         item: artist title
     duplicate_action: ask
+    duplicate_verbose_prompt: no
     bell: no
     set_fields: {}
     ignored_alias_types: []
+    singleton_album_disambig: yes
 
 clutter: ["Thumbs.DB", ".DS_Store"]
 ignore: [".*", "*~", "System Volume Information", "lost+found"]

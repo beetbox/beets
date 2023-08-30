@@ -345,7 +345,7 @@ class Genius(Backend):
     def fetch(self, artist, title):
         """Fetch lyrics from genius.com
 
-        Because genius doesn't allow accesssing lyrics via the api,
+        Because genius doesn't allow accessing lyrics via the api,
         we first query the api for a url matching our artist & title,
         then attempt to scrape that url for the lyrics.
         """
@@ -572,6 +572,8 @@ def scrape_lyrics_from_html(html):
     instead.
     """
     def is_text_notcode(text):
+        if not text:
+            return False
         length = len(text)
         return (length > 20 and
                 text.count(' ') > length / 25 and

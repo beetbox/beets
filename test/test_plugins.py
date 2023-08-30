@@ -375,7 +375,7 @@ class ListenersTest(unittest.TestCase, TestHelper):
             def dummy5(self, bar):
                 test.assertFalse(True)
 
-            # more complex exmaples
+            # more complex examples
 
             def dummy6(self, foo, bar=None):
                 test.assertEqual(foo, 5)

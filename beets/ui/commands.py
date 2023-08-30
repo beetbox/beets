@@ -215,6 +215,15 @@ def disambig_string(info):
         if info.albumstatus == 'Pseudo-Release':
             disambig.append(info.albumstatus)
 
+    if isinstance(info, hooks.TrackInfo):
+        if info.index:
+            disambig.append("Index {}".format(str(info.index)))
+        if info.track_alt:
+            disambig.append("Track {}".format(info.track_alt))
+        if (config['import']['singleton_album_disambig'].get()
+                and info.get('album')):
+            disambig.append("[{}]".format(info.album))
+
     if disambig:
         return ', '.join(disambig)
 
@@ -444,18 +453,28 @@ def show_item_change(item, match):
     """
     cur_artist, new_artist = item.artist, match.info.artist
     cur_title, new_title = item.title, match.info.title
+    cur_album = item.album if item.album else ""
+    new_album = match.info.album if match.info.album else ""
 
-    if cur_artist != new_artist or cur_title != new_title:
+    if (cur_artist != new_artist or cur_title != new_title
+            or cur_album != new_album):
         cur_artist, new_artist = ui.colordiff(cur_artist, new_artist)
         cur_title, new_title = ui.colordiff(cur_title, new_title)
+        cur_album, new_album = ui.colordiff(cur_album, new_album)
 
         print_("Correcting track tags from:")
         print_(f"    {cur_artist} - {cur_title}")
+        if cur_album:
+            print_(f"    Album: {cur_album}")
         print_("To:")
         print_(f"    {new_artist} - {new_title}")
+        if new_album:
+            print_(f"    Album: {new_album}")
 
     else:
         print_(f"Tagging track: {cur_artist} - {cur_title}")
+        if cur_album:
+            print_(f"               Album: {new_album}")
 
     # Data URL.
     if match.info.data_url:
@@ -853,11 +872,20 @@ class TerminalImportSession(importer.ImportSession):
                     list(duplicate.items()) if task.is_album else [duplicate],
                     not task.is_album,
                 ))
+                if config['import']['duplicate_verbose_prompt']:
+                    if task.is_album:
+                        for dup in duplicate.items():
+                            print(f"  {dup}")
+                    else:
+                        print(f"  {duplicate}")
 
             print_("New: " + summarize_items(
                 task.imported_items(),
                 not task.is_album,
             ))
+            if config['import']['duplicate_verbose_prompt']:
+                for item in task.imported_items():
+                    print(f"  {item}")
 
             sel = ui.input_options(
                 ('Skip new', 'Keep all', 'Remove old', 'Merge all')
@@ -1470,7 +1498,7 @@ default_commands.append(version_cmd)
 
 # modify: Declaratively change metadata.
 
-def modify_items(lib, mods, dels, query, write, move, album, confirm):
+def modify_items(lib, mods, dels, query, write, move, album, confirm, inherit):
     """Modifies matching items according to user-specified assignments and
     deletions.
 
@@ -1523,7 +1551,7 @@ def modify_items(lib, mods, dels, query, write, move, album, confirm):
     # Apply changes to database and files
     with lib.transaction():
         for obj in changed:
-            obj.try_sync(write, move)
+            obj.try_sync(write, move, inherit)
 
 
 def print_and_modify(obj, mods, dels):
@@ -1566,7 +1594,8 @@ def modify_func(lib, opts, args):
     if not mods and not dels:
         raise ui.UserError('no modifications specified')
     modify_items(lib, mods, dels, query, ui.should_write(opts.write),
-                 ui.should_move(opts.move), opts.album, not opts.yes)
+                 ui.should_move(opts.move), opts.album, not opts.yes,
+                 opts.inherit)
 
 
 modify_cmd = ui.Subcommand(
@@ -1593,6 +1622,10 @@ modify_cmd.parser.add_format_option(target='item')
 modify_cmd.parser.add_option(
     '-y', '--yes', action='store_true',
     help='skip confirmation'
+)
+modify_cmd.parser.add_option(
+    '-I', '--noinherit', action='store_false', dest='inherit', default=True,
+    help="when modifying albums, don't also change item data"
 )
 modify_cmd.func = modify_func
 default_commands.append(modify_cmd)

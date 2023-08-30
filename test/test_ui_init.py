@@ -131,7 +131,7 @@ class ParentalDirCreation(_common.TestCase):
         non_exist_path = _common.util.py3_path(os.path.join(
             self.temp_dir, b'nonexist', str(random()).encode()))
         # Deepcopy instead of recovering because exceptions might
-        # occcur; wish I can use a golang defer here.
+        # occur; wish I can use a golang defer here.
         test_config = deepcopy(config)
         test_config['library'] = non_exist_path
         with control_stdin('y'):
