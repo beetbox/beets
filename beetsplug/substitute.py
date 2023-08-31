@@ -12,7 +12,9 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Uses user-specified substitution rules to canonicalize names for path formats.
+"""The substitute plugin module.
+
+Uses user-specified substitution rules to canonicalize names for path formats.
 """
 
 import re
@@ -20,11 +22,14 @@ from beets.plugins import BeetsPlugin
 
 
 class Substitute(BeetsPlugin):
-    """Create a template field function that subsitute the given field
-    with the given substitution rules. ``rules`` must be a list of
-    (pattern, replacement) pairs.
+    """The substitute plugin class.
+
+    Create a template field function that subsitute the given field with the
+    given substitution rules. ``rules`` must be a list of (pattern,
+    replacement) pairs.
     """
     def tmpl_substitute(self, text):
+        """Do the actual replacing."""
         if text:
             for pattern, replacement in self.substitute_rules:
                 if pattern.match(text.lower()):
@@ -34,6 +39,11 @@ class Substitute(BeetsPlugin):
             return u''
 
     def __init__(self):
+        """Initialize the substitute plugin.
+
+        Get the configuration, register template function and create list of
+        substitute rules.
+        """
         super(Substitute, self).__init__()
         self.substitute_rules = []
         self.template_funcs['substitute'] = self.tmpl_substitute
