@@ -115,6 +115,10 @@ New features:
 * :doc:`/plugins/embyupdate`: Add handling for private users by adding
   ``userid`` config option.
   :bug:`4402`
+* :doc:`/plugins/substitute`: Add the new plugin `substitute` as an alternative
+  to the `rewrite` plugin. The main difference between them being that
+  `rewrite` modifies files' metadata and `substitute` does not.
+  :bug:`2786`
 
 Bug fixes:
 
