@@ -1,5 +1,5 @@
 Substitute Plugin
-==============
+=================
 
 The ``substitute`` plugin lets you easily substitute values in your templates and
 path formats. Specifically, it is intended to let you *canonicalize* names
