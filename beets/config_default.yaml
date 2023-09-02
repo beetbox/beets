@@ -103,11 +103,11 @@ ui:
         text_highlight: ['bold', 'red']
         text_highlight_minor: ['white']
         action_default: ['bold', 'cyan']
-        action: ['bold', 'blue']
+        action: ['bold', 'cyan']
         # New Colors
         text: ['normal']
         text_faint: ['faint']
-        import_path: ['bold', 'inverse', 'blue']
+        import_path: ['bold', 'blue']
         import_path_items: ['bold', 'blue']
         added:   ['green']
         removed: ['red']
@@ -118,7 +118,7 @@ ui:
         text_diff_added:   ['bold', 'red']
         text_diff_removed: ['bold', 'red']
         text_diff_changed: ['bold', 'red']
-        action_description: ['blue']
+        action_description: ['white']
     import:
         indentation:
             match_header: 2
