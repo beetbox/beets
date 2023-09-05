@@ -10,7 +10,8 @@ With this release, beets now requires Python 3.7 or later (it removes support
 for Python 3.6).
 
 New features:
-
+* Allows Genius Class to look for all lyrics, not just the first one in lyrics.py
+  :bug:`4815`
 * :doc:`/plugins/deezer`: Import rank and other attributes from Deezer during import and add a function to update the rank of existing items.
   :bug:`4841`
 * resolve transl-tracklisting relations for pseudo releases and merge data with the actual release
