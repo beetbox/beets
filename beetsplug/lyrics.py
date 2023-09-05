@@ -416,7 +416,7 @@ class Genius(Backend):
         if lyrics_divs:
             return self._extract_lyrics_from_lyrics_divs(lyrics_divs)
 
-        if not lyrics_divs:
+        else:
             self._log.debug('Received unusual song page html')
             verse_div = soup.find("div",
                                   class_=re.compile("Lyrics__Container"))
@@ -442,7 +442,7 @@ class Genius(Backend):
                                           class_=re.compile("Lyrics__Footer"))
             for footer in footers:
                 footer.replace_with("")
-        return lyrics_div.get_text()
+            return lyrics_div.get_text()
 
     def _extract_lyrics_from_lyrics_divs(self, lyric_containers_divs):
         """Extract lyrics from a list of data-lyrics-container divs"""
