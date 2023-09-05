@@ -15,7 +15,6 @@
 """Fetches, embeds, and displays lyrics.
 """
 
-
 import difflib
 import errno
 import itertools
@@ -32,12 +31,14 @@ import urllib
 try:
     import bs4
     from bs4 import SoupStrainer
+
     HAS_BEAUTIFUL_SOUP = True
 except ImportError:
     HAS_BEAUTIFUL_SOUP = False
 
 try:
     import langdetect
+
     HAS_LANGDETECT = True
 except ImportError:
     HAS_LANGDETECT = False
@@ -130,6 +131,7 @@ def unescape(text):
     def replchar(m):
         num = m.group(1)
         return unichar(int(num))
+
     out = re.sub("&#(\\d+);", replchar, out)
     return out
 
@@ -157,6 +159,7 @@ def search_pairs(item):
     non-latin script.
     The method also tries to split multiple titles separated with `/`.
     """
+
     def generate_alternatives(string, patterns):
         """Generate string alternatives by extracting first matching group for
            each given pattern.
@@ -408,12 +411,12 @@ class Genius(Backend):
         # Sometimes, though, it packages the lyrics into separate divs, most
         # likely for easier ad placement
 
-        lyrics_div = soup.find("div", {"data-lyrics-container": True})
+        lyrics_divs = soup.find_all("div", {"data-lyrics-container": True})
 
-        if lyrics_div:
-            self.replace_br(lyrics_div)
+        if lyrics_divs:
+            return self._extract_lyrics_from_lyrics_divs(lyrics_divs)
 
-        if not lyrics_div:
+        if not lyrics_divs:
             self._log.debug('Received unusual song page html')
             verse_div = soup.find("div",
                                   class_=re.compile("Lyrics__Container"))
@@ -440,6 +443,14 @@ class Genius(Backend):
             for footer in footers:
                 footer.replace_with("")
         return lyrics_div.get_text()
+
+    def _extract_lyrics_from_lyrics_divs(self, lyric_containers_divs):
+        """Extract lyrics from a list of data-lyrics-container divs"""
+        lyrics = ""
+        for lyrics_div in lyric_containers_divs:
+            self.replace_br(lyrics_div)
+            lyrics += lyrics_div.get_text()
+        return lyrics
 
 
 class Tekstowo(Backend):
@@ -571,6 +582,7 @@ def scrape_lyrics_from_html(html):
     """Scrape lyrics from a URL. If no lyrics can be found, return None
     instead.
     """
+
     def is_text_notcode(text):
         if not text:
             return False
@@ -578,6 +590,7 @@ def scrape_lyrics_from_html(html):
         return (length > 20 and
                 text.count(' ') > length / 25 and
                 (text.find('{') == -1 or text.find(';') == -1))
+
     html = _scrape_strip_cruft(html)
     html = _scrape_merge_paragraphs(html)
 
@@ -670,7 +683,7 @@ class Google(Backend):
         # they are close enough
         tokens = [by + '_' + artist for by in self.BY_TRANS] + \
                  [artist, sitename, sitename.replace('www.', '')] + \
-            self.LYRICS_TRANS
+                 self.LYRICS_TRANS
         tokens = [re.escape(t) for t in tokens]
         song_title = re.sub('(%s)' % '|'.join(tokens), '', url_title)
 
@@ -876,6 +889,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 ui.print_(('  sphinx-build -b latex %s _build/latex '
                            '&& make -C _build/latex all-pdf')
                           % opts.writerest)
+
         cmd.func = func
         return [cmd]
 
@@ -966,9 +980,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
             if HAS_LANGDETECT and self.config['bing_client_secret'].get():
                 lang_from = langdetect.detect(lyrics)
                 if self.config['bing_lang_to'].get() != lang_from and (
-                    not self.config['bing_lang_from'] or (
+                        not self.config['bing_lang_from'] or (
                         lang_from in self.config[
-                        'bing_lang_from'].as_str_seq())):
+                    'bing_lang_from'].as_str_seq())):
                     lyrics = self.append_translation(
                         lyrics, self.config['bing_lang_to'])
         else:

@@ -14,7 +14,6 @@
 
 """Tests for the 'lyrics' plugin."""
 
-
 import itertools
 import os
 import re
@@ -23,12 +22,11 @@ import unittest
 import confuse
 from unittest.mock import MagicMock, patch
 
-from beets import logging
+from beets import logging, IncludeLazyConfig
 from beets.library import Item
 from beets.util import bytestring_path
 from beetsplug import lyrics
 from test import _common
-
 
 log = logging.getLogger('beets.test_lyrics')
 raw_backend = lyrics.Backend({}, log)
@@ -391,7 +389,8 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest, LyricsAssertions):
         """Test matching html page title with song infos -- when song infos are
            present in the title.
         """
-        from bs4 import SoupStrainer, BeautifulSoup
+        from bs4 import BeautifulSoup
+        from bs4.element import SoupStrainer
         s = self.source
         url = str(s['url'] + s['path'])
         html = raw_backend.fetch_url(url)
@@ -480,28 +479,28 @@ class GeniusFetchTest(GeniusBaseTest):
     def test_json(self, mock_fetch_url, mock_scrape):
         """Ensure we're finding artist matches"""
         with patch.object(
-            lyrics.Genius, '_search', return_value={
-                "response": {
-                    "hits": [
-                        {
-                            "result": {
-                                "primary_artist": {
-                                    "name": "\u200Bblackbear",
-                                },
-                                "url": "blackbear_url"
+                lyrics.Genius, '_search', return_value={
+                    "response": {
+                        "hits": [
+                            {
+                                "result": {
+                                    "primary_artist": {
+                                        "name": "\u200Bblackbear",
+                                    },
+                                    "url": "blackbear_url"
+                                }
+                            },
+                            {
+                                "result": {
+                                    "primary_artist": {
+                                        "name": "El\u002Dp"
+                                    },
+                                    "url": "El-p_url"
+                                }
                             }
-                        },
-                        {
-                            "result": {
-                                "primary_artist": {
-                                    "name": "El\u002Dp"
-                                },
-                                "url": "El-p_url"
-                            }
-                        }
-                    ]
+                        ]
+                    }
                 }
-            }
         ) as mock_json:
             # genius uses zero-width-spaces (\u200B) for lowercase
             # artists so we make sure we can match those
@@ -524,7 +523,32 @@ class GeniusFetchTest(GeniusBaseTest):
     # TODO: add integration test hitting real api
 
 
-# test Tekstowo
+@unittest.skipUnless(
+    os.environ.get('INTEGRATION_TEST', '0') == '1',
+    'integration testing not enabled')
+class GeniusIntegrationTest(GeniusBaseTest):
+    def setUp(self):
+        """Set up configuration"""
+        GeniusBaseTest.setUp(self)
+        genius_access_token = os.getenv('GENIUS_ACCESS_TOKEN')
+        beets_config = IncludeLazyConfig('beets')
+        beets_config.add(
+            {
+                'genius_api_key': genius_access_token
+            }
+        )
+        self.genius = lyrics.Genius(beets_config, log)
+        self.plugin = lyrics.LyricsPlugin()
+
+    def test_successful_lyrics_fetch(self):
+        lyrics_path = './rsrc/lyrics/geniuscom/lyrics-from-genius/'
+        file_name = 'run-the-jewels-legend-has-it.txt'
+        with open(lyrics_path + file_name) as f:
+            expected_lyrics = f.read()
+        actual_lyrics = self.genius.fetch('Run The Jewels', 'Legend Has It')
+        self.assertIsNotNone(actual_lyrics)
+        self.assertEqual(actual_lyrics, expected_lyrics)
+
 
 class TekstowoBaseTest(unittest.TestCase):
     def setUp(self):
@@ -549,14 +573,14 @@ class TekstowoExtractLyricsTest(TekstowoBaseTest):
         url = 'https://www.tekstowo.pl/piosenka,24kgoldn,city_of_angels_1.html'
         mock = MockFetchUrl()
         self.assertIsNotNone(tekstowo.extract_lyrics(mock(url),
-                             '24kGoldn', 'City of Angels'))
+                                                     '24kGoldn', 'City of Angels'))
 
     def test_no_lyrics(self):
         """Ensure we don't crash when the scraping the html for a Tekstowo page
         doesn't contain lyrics
         """
         url = 'https://www.tekstowo.pl/piosenka,beethoven,' \
-            'beethoven_piano_sonata_17_tempest_the_3rd_movement.html'
+              'beethoven_piano_sonata_17_tempest_the_3rd_movement.html'
         mock = MockFetchUrl()
         self.assertEqual(tekstowo.extract_lyrics(mock(url), 'Beethoven',
                                                  'Beethoven Piano Sonata 17'
@@ -568,7 +592,7 @@ class TekstowoExtractLyricsTest(TekstowoBaseTest):
         # https://github.com/beetbox/beets/issues/4406
         # expected return value None
         url = 'https://www.tekstowo.pl/piosenka,bailey_bigger' \
-            ',black_eyed_susan.html'
+              ',black_eyed_susan.html'
         mock = MockFetchUrl()
         self.assertEqual(tekstowo.extract_lyrics(mock(url), 'Kelly Bailey',
                                                  'Black Mesa Inbound'), None)
@@ -585,7 +609,7 @@ class TekstowoParseSearchResultsTest(TekstowoBaseTest):
     def test_multiple_results(self):
         """Ensure we are able to scrape a page with multiple search results"""
         url = 'https://www.tekstowo.pl/szukaj,wykonawca,juice+wrld' \
-            ',tytul,lucid+dreams.html'
+              ',tytul,lucid+dreams.html'
         mock = MockFetchUrl()
         self.assertEqual(tekstowo.parse_search_results(mock(url)),
                          'http://www.tekstowo.pl/piosenka,juice_wrld,'
@@ -594,7 +618,7 @@ class TekstowoParseSearchResultsTest(TekstowoBaseTest):
     def test_no_results(self):
         """Ensure we are able to scrape a page with no search results"""
         url = 'https://www.tekstowo.pl/szukaj,wykonawca,' \
-            'agfdgja,tytul,agfdgafg.html'
+              'agfdgja,tytul,agfdgafg.html'
         mock = MockFetchUrl()
         self.assertEqual(tekstowo.parse_search_results(mock(url)), None)
 

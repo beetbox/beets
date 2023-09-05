@@ -346,6 +346,10 @@ others. See `unittest.mock`_ for more info.
 -  **AVOID** using the ``start()`` and ``stop()`` methods of
    ``mock.patch``, as they require manual cleanup. Use the annotation or
    context manager forms instead.
+- **FOR GENIUS LYRICS TESTS(On test_lyrics.py)** add GENIUS_ACCESS_TOKEN
+    to your environment variables. If you're using tox.ini to run tests,
+    add GENIUS_ACCESS_TOKEN to the [testenv:int] set_env section.
+
 
 .. _Codecov: https://codecov.io/github/beetbox/beets
 .. _pytest-random: https://github.com/klrmn/pytest-random
