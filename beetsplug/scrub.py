@@ -109,7 +109,7 @@ class ScrubPlugin(BeetsPlugin):
                 self._log.error('could not scrub {0}: {1}',
                                 util.displayable_path(path), exc)
 
-    def _scrub_item(self, item, restore=True):
+    def _scrub_item(self, item, restore):
         """Remove tags from an Item's associated file and, if `restore`
         is enabled, write the database's tags back to the file.
         """
@@ -146,4 +146,4 @@ class ScrubPlugin(BeetsPlugin):
         for item in task.imported_items():
             self._log.debug('auto-scrubbing {0}',
                             util.displayable_path(item.path))
-            self._scrub_item(item)
+            self._scrub_item(item, ui.should_write())
