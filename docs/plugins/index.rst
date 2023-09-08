@@ -122,6 +122,7 @@ following to your configuration::
    spotify
    subsonicplaylist
    subsonicupdate
+   substitute
    the
    thumbnails
    types
@@ -239,6 +240,11 @@ Path Formats
 
 :doc:`rewrite <rewrite>`
    Substitute values in path formats.
+
+:doc:`substitute <substitute>`
+   As an alternative to :doc:`rewrite <rewrite>`, use this plugin. The main
+   difference between them is that this plugin never modifies the files
+   metadata.
 
 :doc:`the <the>`
    Move patterns in path formats (i.e., move "a" and "the" to the
