@@ -41,6 +41,7 @@ SPECIAL_FIELDS = {
         'va',
         'releasegroup_id',
         'artist_id',
+        'artists_ids',
         'album_id',
         'mediums',
         'tracks',
@@ -48,21 +49,28 @@ SPECIAL_FIELDS = {
         'month',
         'day',
         'artist',
+        'artists',
         'artist_credit',
+        'artists_credit',
         'artist_sort',
+        'artists_sort',
         'data_url'
     ),
     'track': (
         'track_alt',
         'artist_id',
+        'artists_ids',
         'release_track_id',
         'medium',
         'index',
         'medium_index',
         'title',
         'artist_credit',
+        'artists_credit',
         'artist_sort',
+        'artists_sort',
         'artist',
+        'artists',
         'track_id',
         'medium_total',
         'data_url',
@@ -77,13 +85,18 @@ def apply_item_metadata(item: Item, track_info: TrackInfo):
     """Set an item's metadata from its matched TrackInfo object.
     """
     item.artist = track_info.artist
+    item.artists = track_info.artists
     item.artist_sort = track_info.artist_sort
+    item.artists_sort = track_info.artists_sort
     item.artist_credit = track_info.artist_credit
+    item.artists_credit = track_info.artists_credit
     item.title = track_info.title
     item.mb_trackid = track_info.track_id
     item.mb_releasetrackid = track_info.release_track_id
     if track_info.artist_id:
         item.mb_artistid = track_info.artist_id
+    if track_info.artists_ids:
+        item.mb_artistids = track_info.artists_ids
 
     for field, value in track_info.items():
         # We only overwrite fields that are not already hardcoded.
@@ -108,21 +121,34 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
                            track_info.artist or
                            album_info.artist_credit or
                            album_info.artist)
+            item.artists = (track_info.artists_credit or
+                            track_info.artists or
+                            album_info.artists_credit or
+                            album_info.artists)
             item.albumartist = (album_info.artist_credit or
                                 album_info.artist)
+            item.albumartists = (album_info.artists_credit or
+                                 album_info.artists)
         else:
             item.artist = (track_info.artist or album_info.artist)
+            item.artists = (track_info.artists or album_info.artists)
             item.albumartist = album_info.artist
+            item.albumartists = album_info.artists
 
         # Album.
         item.album = album_info.album
 
         # Artist sort and credit names.
         item.artist_sort = track_info.artist_sort or album_info.artist_sort
+        item.artists_sort = track_info.artists_sort or album_info.artists_sort
         item.artist_credit = (track_info.artist_credit or
                               album_info.artist_credit)
+        item.artists_credit = (track_info.artists_credit or
+                               album_info.artists_credit)
         item.albumartist_sort = album_info.artist_sort
+        item.albumartists_sort = album_info.artists_sort
         item.albumartist_credit = album_info.artist_credit
+        item.albumartists_credit = album_info.artists_credit
 
         # Release date.
         for prefix in '', 'original_':
@@ -174,7 +200,14 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
             item.mb_artistid = track_info.artist_id
         else:
             item.mb_artistid = album_info.artist_id
+
+        if track_info.artists_ids:
+            item.mb_artistids = track_info.artists_ids
+        else:
+            item.mb_artistids = album_info.artists_ids
+
         item.mb_albumartistid = album_info.artist_id
+        item.mb_albumartistids = album_info.artists_ids
         item.mb_releasegroupid = album_info.releasegroup_id
 
         # Compilation flag.

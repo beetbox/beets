@@ -868,7 +868,7 @@ class ImportCompilationTest(_common.TestCase, ImportHelper):
         for item in self.lib.items():
             self.assertEqual(item.albumartist, 'Various Artists')
 
-    def test_asis_heterogenous_sets_sompilation(self):
+    def test_asis_heterogenous_sets_compilation(self):
         self.import_media[0].artist = 'Other Artist'
         self.import_media[0].save()
         self.import_media[1].artist = 'Another Artist'
@@ -907,6 +907,53 @@ class ImportCompilationTest(_common.TestCase, ImportHelper):
         for item in self.lib.items():
             self.assertEqual(item.albumartist, 'Album Artist')
             self.assertEqual(item.mb_albumartistid, 'Album Artist ID')
+
+    def test_asis_albumartists_tag_sets_multi_albumartists(self):
+        self.import_media[0].artist = 'Other Artist'
+        self.import_media[0].artists = ['Other Artist', 'Other Artist 2']
+        self.import_media[1].artist = 'Another Artist'
+        self.import_media[1].artists = ['Another Artist', 'Another Artist 2']
+        for mediafile in self.import_media:
+            mediafile.albumartist = 'Album Artist'
+            mediafile.albumartists = ['Album Artist 1', 'Album Artist 2']
+            mediafile.mb_albumartistid = 'Album Artist ID'
+            mediafile.save()
+
+        self.importer.add_choice(importer.action.ASIS)
+        self.importer.run()
+        self.assertEqual(self.lib.albums().get().albumartist, 'Album Artist')
+        self.assertEqual(
+            self.lib.albums().get().albumartists,
+            ['Album Artist 1', 'Album Artist 2']
+        )
+        self.assertEqual(self.lib.albums().get().mb_albumartistid,
+                         'Album Artist ID')
+
+        # Make sure both custom media items get tested
+        asserted_multi_artists_0 = False
+        asserted_multi_artists_1 = False
+        for item in self.lib.items():
+            self.assertEqual(item.albumartist, 'Album Artist')
+            self.assertEqual(
+                item.albumartists,
+                ['Album Artist 1', 'Album Artist 2']
+            )
+            self.assertEqual(item.mb_albumartistid, 'Album Artist ID')
+
+            if item.artist == "Other Artist":
+                asserted_multi_artists_0 = True
+                self.assertEqual(
+                    item.artists,
+                    ['Other Artist', 'Other Artist 2']
+                )
+            if item.artist == "Another Artist":
+                asserted_multi_artists_1 = True
+                self.assertEqual(
+                    item.artists,
+                    ['Another Artist', 'Another Artist 2']
+                )
+
+        self.assertTrue(asserted_multi_artists_0 and asserted_multi_artists_1)
 
 
 class ImportExistingTest(_common.TestCase, ImportHelper):

@@ -90,6 +90,34 @@ class InfoTest(unittest.TestCase, TestHelper):
         self.assertIn('title: [various]', out)
         self.remove_mediafile_fixtures()
 
+    def test_collect_item_and_path_with_multi_values(self):
+        path = self.create_mediafile_fixture()
+        mediafile = MediaFile(path)
+        item, = self.add_item_fixtures()
+
+        item.album = mediafile.album = 'AAA'
+        item.tracktotal = mediafile.tracktotal = 5
+        item.title = 'TTT'
+        mediafile.title = 'SSS'
+
+        item.albumartists = ['Artist A', 'Artist B']
+        mediafile.albumartists = ['Artist C', 'Artist D']
+
+        item.artists = ['Artist A', 'Artist Z']
+        mediafile.artists = ['Artist A', 'Artist Z']
+
+        item.write()
+        item.store()
+        mediafile.save()
+
+        out = self.run_with_output('info', '--summarize', 'album:AAA', path)
+        self.assertIn('album: AAA', out)
+        self.assertIn('tracktotal: 5', out)
+        self.assertIn('title: [various]', out)
+        self.assertIn('albumartists: [various]', out)
+        self.assertIn('artists: Artist A; Artist Z', out)
+        self.remove_mediafile_fixtures()
+
     def test_custom_format(self):
         self.add_item_fixtures()
         out = self.run_with_output('info', '--library', '--format',

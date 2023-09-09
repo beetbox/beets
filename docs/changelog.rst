@@ -119,6 +119,8 @@ New features:
   to the `rewrite` plugin. The main difference between them being that
   `rewrite` modifies files' metadata and `substitute` does not.
   :bug:`2786`
+* Add support for ``artists`` and ``albumartists`` multi-valued tags.
+  :bug:`505`
 
 Bug fixes:
 
