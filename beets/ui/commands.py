@@ -1196,7 +1196,7 @@ default_commands.append(list_cmd)
 
 # update: Update library contents according to on-disk tags.
 
-def update_items(lib, query, album, move, pretend, fields, exclude_fields):
+def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
     """For all the items matched by the query, update the library to
     reflect the item's embedded tags.
     :param fields: The fields to be stored. If not specified, all fields will
