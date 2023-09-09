@@ -1338,10 +1338,10 @@ update_cmd.parser.add_option(
     '-F', '--field', default=None, action='append', dest='fields',
     help='list of fields to update'
 )
-update_cmd.parser.add_option(
-    '-f', '--exclude-field', default=None, action='append', dest='exclude_fields',
-    help='list of fields to exclude from updates'
-)
+# update_cmd.parser.add_option(
+#     '-f', '--exclude-field', default=None, action='append', dest='exclude_fields',
+#     help='list of fields to exclude from updates'
+# )
 update_cmd.func = update_func
 default_commands.append(update_cmd)
 
