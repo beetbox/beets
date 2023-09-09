@@ -579,13 +579,13 @@ class UpdateTest(_common.TestCase):
         util.remove(artfile)
 
     def _update(self, query=(), album=False, move=False, reset_mtime=True,
-                fields=None, excluded_fields=None):
+                fields=None, exclude_fields=None):
         self.io.addinput('y')
         if reset_mtime:
             self.i.mtime = 0
             self.i.store()
         commands.update_items(self.lib, query, album, move, False,
-                              fields=fields, exclude_fields=excluded_fields)
+                              fields=fields, exclude_fields=exclude_fields)
 
     def test_delete_removes_item(self):
         self.assertTrue(list(self.lib.items()))
@@ -733,7 +733,7 @@ class UpdateTest(_common.TestCase):
         mf = MediaFile(syspath(self.i.path))
         mf.lyrics = 'new lyrics'
         mf.save()
-        self._update(excluded_fields=['lyrics'])
+        self._update(exclude_fields=['lyrics'])
         item = self.lib.items().get()
         self.assertNotEqual(item.lyrics, 'new lyrics')
 
