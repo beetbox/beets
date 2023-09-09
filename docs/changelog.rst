@@ -11,8 +11,6 @@ for Python 3.6).
 
 New features:
 
-* Added support for ``artists`` and ``albumartists`` multi tags
-  :bug:`505`
 * :doc:`/plugins/deezer`: Import rank and other attributes from Deezer during import and add a function to update the rank of existing items.
   :bug:`4841`
 * resolve transl-tracklisting relations for pseudo releases and merge data with the actual release
@@ -121,6 +119,8 @@ New features:
   to the `rewrite` plugin. The main difference between them being that
   `rewrite` modifies files' metadata and `substitute` does not.
   :bug:`2786`
+* Add support for ``artists`` and ``albumartists`` multi-valued tags.
+  :bug:`505`
 
 Bug fixes:
 
