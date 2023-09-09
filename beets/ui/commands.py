@@ -1196,13 +1196,14 @@ default_commands.append(list_cmd)
 
 # update: Update library contents according to on-disk tags.
 
-def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
+def update_items(lib, query, album, move, pretend, fields,
+                 exclude_fields=None):
     """For all the items matched by the query, update the library to
     reflect the item's embedded tags.
     :param fields: The fields to be stored. If not specified, all fields will
     be.
-    :param exclude_fields: The fields to not be stored. If not specified, all fields will
-    be.
+    :param exclude_fields: The fields to not be stored. If not specified, all
+    fields will be.
     """
     with lib.transaction():
         if move and fields is not None and 'path' not in fields:
@@ -1339,7 +1340,8 @@ update_cmd.parser.add_option(
     help='list of fields to update'
 )
 update_cmd.parser.add_option(
-    '-e', '--exclude-field', default=None, action='append', dest='exclude_fields',
+    '-e', '--exclude-field', default=None, action='append',
+    dest='exclude_fields',
     help='list of fields to exclude from updates'
 )
 update_cmd.func = update_func
