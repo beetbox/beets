@@ -14,7 +14,6 @@
 
 """Representation of type information for DBCore model fields.
 """
-
 from abc import ABC
 import sys
 import typing
@@ -287,18 +286,18 @@ class DelimitedString(BaseString[List[str], List[str]]):
     """
     model_type = list
 
-    def __init__(self, delimiter):
+    def __init__(self, delimiter: str):
         self.delimiter = delimiter
 
-    def format(self, value):
+    def format(self, value: List[str]):
         return self.delimiter.join(value)
 
-    def parse(self, string):
+    def parse(self, string: str):
         if not string:
             return []
         return string.split(self.delimiter)
 
-    def to_sql(self, model_value):
+    def to_sql(self, model_value: List[str]):
         return self.delimiter.join(model_value)
 
 
@@ -326,3 +325,6 @@ NULL_FLOAT = NullFloat()
 STRING = String()
 BOOLEAN = Boolean()
 SEMICOLON_SPACE_DSV = DelimitedString(delimiter='; ')
+
+# Will set the proper null char in mediafile
+MULTI_VALUE_DSV = DelimitedString(delimiter='\\␀')

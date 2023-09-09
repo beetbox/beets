@@ -88,7 +88,7 @@ setup(
         'unidecode>=1.3.6',
         'musicbrainzngs>=0.4',
         'pyyaml',
-        'mediafile>=0.9.0',
+        'mediafile>=0.12.0',
         'confuse>=1.5.0',
         'munkres>=1.0.0',
         'jellyfish',

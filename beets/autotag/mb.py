@@ -29,6 +29,7 @@ from beets import util
 from beets import config
 from collections import Counter
 from urllib.parse import urljoin
+
 from beets.util.id_extractors import extract_discogs_id_regex, \
     spotify_id_regex, deezer_id_regex, beatport_id_regex
 from beets.plugins import MetadataSourcePlugin
@@ -166,9 +167,11 @@ def _preferred_release_event(release: Dict[str, Any]) -> Tuple[str, str]:
     )
 
 
-def _flatten_artist_credit(credit: List[Dict]) -> Tuple[str, str, str]:
-    """Given a list representing an ``artist-credit`` block, flatten the
-    data into a triple of joined artist name strings: canonical, sort, and
+def _multi_artist_credit(
+        credit: List[Dict], include_join_phrase: bool
+) -> Tuple[List[str], List[str], List[str]]:
+    """Given a list representing an ``artist-credit`` block, accumulate
+    data into a triple of joined artist name lists: canonical, sort, and
     credit.
     """
     artist_parts = []
@@ -177,9 +180,10 @@ def _flatten_artist_credit(credit: List[Dict]) -> Tuple[str, str, str]:
     for el in credit:
         if isinstance(el, str):
             # Join phrase.
-            artist_parts.append(el)
-            artist_credit_parts.append(el)
-            artist_sort_parts.append(el)
+            if include_join_phrase:
+                artist_parts.append(el)
+                artist_credit_parts.append(el)
+                artist_sort_parts.append(el)
 
         else:
             alias = _preferred_alias(el['artist'].get('alias-list', ()))
@@ -206,10 +210,40 @@ def _flatten_artist_credit(credit: List[Dict]) -> Tuple[str, str, str]:
                 artist_credit_parts.append(cur_artist_name)
 
     return (
+        artist_parts,
+        artist_sort_parts,
+        artist_credit_parts,
+    )
+
+
+def _flatten_artist_credit(credit: List[Dict]) -> Tuple[str, str, str]:
+    """Given a list representing an ``artist-credit`` block, flatten the
+    data into a triple of joined artist name strings: canonical, sort, and
+    credit.
+    """
+    artist_parts, artist_sort_parts, artist_credit_parts = \
+        _multi_artist_credit(
+            credit,
+            include_join_phrase=True
+        )
+    return (
         ''.join(artist_parts),
         ''.join(artist_sort_parts),
         ''.join(artist_credit_parts),
     )
+
+
+def _artist_ids(credit: List[Dict]) -> List[str]:
+    """
+    Given a list representing an ``artist-credit``,
+    return a list of artist IDs
+    """
+    artist_ids: List[str] = []
+    for el in credit:
+        if isinstance(el, dict):
+            artist_ids.append(el['artist']['id'])
+
+    return artist_ids
 
 
 def _get_related_artist_names(relations, relation_type):
@@ -255,9 +289,13 @@ def track_info(
         info.artist, info.artist_sort, info.artist_credit = \
             _flatten_artist_credit(recording['artist-credit'])
 
-        # Get the ID and sort name of the first artist.
-        artist = recording['artist-credit'][0]['artist']
-        info.artist_id = artist['id']
+        info.artists, info.artists_sort, info.artists_credit = \
+            _multi_artist_credit(
+                recording['artist-credit'], include_join_phrase=False
+            )
+
+        info.artists_ids = _artist_ids(recording['artist-credit'])
+        info.artist_id = info.artists_ids[0]
 
     if recording.get('artist-relation-list'):
         info.remixer = _get_related_artist_names(
@@ -350,6 +388,11 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
     artist_name, artist_sort_name, artist_credit_name = \
         _flatten_artist_credit(release['artist-credit'])
 
+    artists_names, artists_sort_names, artists_credit_names = \
+        _multi_artist_credit(
+            release['artist-credit'], include_join_phrase=False
+        )
+
     ntracks = sum(len(m['track-list']) for m in release['medium-list'])
 
     # The MusicBrainz API omits 'artist-relation-list' and 'work-relation-list'
@@ -421,21 +464,33 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
                 # Get the artist names.
                 ti.artist, ti.artist_sort, ti.artist_credit = \
                     _flatten_artist_credit(track['artist-credit'])
-                ti.artist_id = track['artist-credit'][0]['artist']['id']
+
+                ti.artists, ti.artists_sort, ti.artists_credit = \
+                    _multi_artist_credit(
+                        track['artist-credit'], include_join_phrase=False
+                    )
+
+                ti.artists_ids = _artist_ids(track['artist-credit'])
+                ti.artist_id = ti.artists_ids[0]
             if track.get('length'):
                 ti.length = int(track['length']) / (1000.0)
 
             track_infos.append(ti)
 
+    album_artist_ids = _artist_ids(release['artist-credit'])
     info = beets.autotag.hooks.AlbumInfo(
         album=release['title'],
         album_id=release['id'],
         artist=artist_name,
-        artist_id=release['artist-credit'][0]['artist']['id'],
+        artist_id=album_artist_ids[0],
+        artists=artists_names,
+        artists_ids=album_artist_ids,
         tracks=track_infos,
         mediums=len(release['medium-list']),
         artist_sort=artist_sort_name,
+        artists_sort=artists_sort_names,
         artist_credit=artist_credit_name,
+        artists_credit=artists_credit_names,
         data_source='MusicBrainz',
         data_url=album_url(release['id']),
     )
