@@ -1196,10 +1196,12 @@ default_commands.append(list_cmd)
 
 # update: Update library contents according to on-disk tags.
 
-def update_items(lib, query, album, move, pretend, fields):
+def update_items(lib, query, album, move, pretend, fields, exclude_fields):
     """For all the items matched by the query, update the library to
     reflect the item's embedded tags.
     :param fields: The fields to be stored. If not specified, all fields will
+    be.
+    :param exclude_fields: The fields to not be stored. If not specified, all fields will
     be.
     """
     with lib.transaction():
@@ -1209,6 +1211,12 @@ def update_items(lib, query, album, move, pretend, fields):
             # database.
             fields.append('path')
         items, _ = _do_query(lib, query, album)
+
+        item_fields = fields or library.Item._media_fields
+        album_fields = fields or library.Album._fields.keys()
+        if exclude_fields:
+            item_fields = [f for f in item_fields if f not in exclude_fields]
+            album_fields = [f for f in album_fields if f not in exclude_fields]
 
         # Walk through the items and pick up their changes.
         affected_albums = set()
@@ -1248,7 +1256,7 @@ def update_items(lib, query, album, move, pretend, fields):
             # Check for and display changes.
             changed = ui.show_model_changes(
                 item,
-                fields=fields or library.Item._media_fields)
+                fields=item_fields)
 
             # Save changes.
             if not pretend:
@@ -1257,14 +1265,14 @@ def update_items(lib, query, album, move, pretend, fields):
                     if move and lib.directory in ancestry(item.path):
                         item.move(store=False)
 
-                    item.store(fields=fields)
+                    item.store(fields=item_fields)
                     affected_albums.add(item.album_id)
                 else:
                     # The file's mtime was different, but there were no
                     # changes to the metadata. Store the new mtime,
                     # which is set in the call to read(), so we don't
                     # check this again in the future.
-                    item.store(fields=fields)
+                    item.store(fields=item_fields)
 
         # Skip album changes while pretending.
         if pretend:
@@ -1283,7 +1291,7 @@ def update_items(lib, query, album, move, pretend, fields):
             # Update album structure to reflect an item in it.
             for key in library.Album.item_keys:
                 album[key] = first_item[key]
-            album.store(fields=fields)
+            album.store(fields=album_fields)
 
             # Move album art (and any inconsistent items).
             if move and lib.directory in ancestry(first_item.path):
@@ -1293,9 +1301,9 @@ def update_items(lib, query, album, move, pretend, fields):
                 items = list(album.items())
                 for item in items:
                     item.move(store=False, with_album=False)
-                    item.store(fields=fields)
+                    item.store(fields=item_fields)
                 album.move(store=False)
-                album.store(fields=fields)
+                album.store(fields=album_fields)
 
 
 def update_func(lib, opts, args):
@@ -1306,7 +1314,7 @@ def update_func(lib, opts, args):
         if not ui.input_yn("Are you sure you want to continue (y/n)?", True):
             return
     update_items(lib, decargs(args), opts.album, ui.should_move(opts.move),
-                 opts.pretend, opts.fields)
+                 opts.pretend, opts.fields, opts.exclude_fields)
 
 
 update_cmd = ui.Subcommand(
@@ -1329,6 +1337,10 @@ update_cmd.parser.add_option(
 update_cmd.parser.add_option(
     '-F', '--field', default=None, action='append', dest='fields',
     help='list of fields to update'
+)
+update_cmd.parser.add_option(
+    '-f', '--exclude-field', default=None, action='append', dest='exclude_fields',
+    help='list of fields to exclude from updates'
 )
 update_cmd.func = update_func
 default_commands.append(update_cmd)
