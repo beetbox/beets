@@ -30,5 +30,9 @@ As a convenience, the plugin applies patterns for the ``artist`` field to the
 ``albumartist`` field as well. (Otherwise, you would probably want to duplicate
 every rule for ``artist`` and ``albumartist``.)
 
-Note that this plugin only applies to templating; it does not modify files'
-metadata tags or the values tracked by beets' library database.
+A word of warning: This plugin theoretically only applies to templates and path
+formats; it initially does not modify files' metadata tags or the values
+tracked by beets' library database, but since it *rewrites all field lookups*,
+it modifies the file's metadata anyway. See comments in issue :bug:`2786`.
+
+As an alternative to this plugin the :doc:`/plugins/substitute` could be used.
