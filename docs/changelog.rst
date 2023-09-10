@@ -19,7 +19,7 @@ New features:
   :bug:`4803`
 * Prevent reimporting album if it is permanently removed from Spotify
   :bug:`4800`
-* Added option use `cover_art_arl` as an album art source in the `fetchart` plugin.
+* Added option to use `cover_art_url` as an album art source in the `fetchart` plugin.
   :bug:`4707`
 * :doc:`/plugins/fetchart`: The plugin can now get album art from `spotify`.
 * Added option to specify a URL in the `embedart` plugin.
