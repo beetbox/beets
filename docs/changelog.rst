@@ -118,6 +118,10 @@ New features:
 
 Bug fixes:
 
+* :doc:`/plugins/scrub`: Fixed the import behavior where scrubbed database tags 
+  were restored to newly imported tracks with config settings ``scrub.auto: yes`` 
+  and ``import.write: no``.
+  :bug:`4326`
 * :doc:`/plugins/deezer`: Fixed the error where Deezer plugin would crash if non-Deezer id is passed during import.  
 * :doc:`/plugins/fetchart`: Fix fetching from Cover Art Archive when the
   `maxwidth` option is set to one of the supported Cover Art Archive widths.
