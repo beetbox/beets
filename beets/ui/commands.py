@@ -1213,7 +1213,7 @@ def update_items(lib, query, album, move, pretend, fields,
             fields.append('path')
         items, _ = _do_query(lib, query, album)
 
-        item_fields = fields or library.Item._media_fields
+        item_fields = fields or library.Item._fields.keys()
         album_fields = fields or library.Album._fields.keys()
         if exclude_fields:
             item_fields = [f for f in item_fields if f not in exclude_fields]
