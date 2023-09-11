@@ -1206,16 +1206,25 @@ def update_items(lib, query, album, move, pretend, fields,
     fields will be.
     """
     with lib.transaction():
+        items, _ = _do_query(lib, query, album)
         if move and fields is not None and 'path' not in fields:
             # Special case: if an item needs to be moved, the path field has to
             # updated; otherwise the new path will not be reflected in the
             # database.
             fields.append('path')
-        items, _ = _do_query(lib, query, album)
-
-        item_fields = fields or library.Item._fields.keys()
+        if fields is None:
+            # no fields were provided, update all media fields
+            item_fields = fields or library.Item._media_fields
+            if move and 'path' not in item_fields:
+                # move is enabled, add 'path' to the list of fields to update
+                item_fields.add('path')
+        else:
+            # fields was provided, just update those
+            item_fields = fields
+        # get all the album fields to update
         album_fields = fields or library.Album._fields.keys()
         if exclude_fields:
+            # remove any excluded fields from the item and album sets
             item_fields = [f for f in item_fields if f not in exclude_fields]
             album_fields = [f for f in album_fields if f not in exclude_fields]
 
