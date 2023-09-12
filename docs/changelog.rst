@@ -11,6 +11,7 @@ for Python 3.6).
 
 New features:
 
+* :ref:`update-cmd`: added ```-e``` flag for excluding fields from being updated.
 * :doc:`/plugins/deezer`: Import rank and other attributes from Deezer during import and add a function to update the rank of existing items.
   :bug:`4841`
 * resolve transl-tracklisting relations for pseudo releases and merge data with the actual release

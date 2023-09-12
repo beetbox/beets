@@ -329,7 +329,7 @@ update
 ``````
 ::
 
-    beet update [-F] FIELD [-aM] QUERY
+    beet update [-F] FIELD [-e] EXCLUDE_FIELD [-aM] QUERY
 
 Update the library (and, by default, move files) to reflect out-of-band metadata
 changes and file deletions.
@@ -347,8 +347,9 @@ on disk.
 
 By default, all the changed metadata will be populated back to the database.
 If you only want certain fields to be written, specify them with the ```-F```
-flags (which can be used multiple times). For the list of supported fields,
-please see ```beet fields```.
+flags (which can be used multiple times). Alternatively, specify fields to *not*
+write with ```-e``` flags (which can be used multiple times). For the list of 
+supported fields, please see ```beet fields```.
 
 When an updated track is part of an album, the album-level fields of *all*
 tracks from the album are also updated. (Specifically, the command copies
