@@ -18,13 +18,13 @@
 from beets.plugins import BeetsPlugin, apply_item_changes
 from beets import autotag, library, ui, util
 
-from .beatport import BeatportPlugin
+from .beatport4 import Beatport4Plugin
 
 
 class BPSyncPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
-        self.beatport_plugin = BeatportPlugin()
+        self.beatport_plugin = Beatport4Plugin()
         self.beatport_plugin.setup()
 
     def commands(self):
@@ -62,8 +62,7 @@ class BPSyncPlugin(BeetsPlugin):
         return [cmd]
 
     def func(self, lib, opts, args):
-        """Command handler for the bpsync function.
-        """
+        """Command handler for the bpsync function."""
         move = ui.should_move(opts.move)
         pretend = opts.pretend
         write = ui.should_write(opts.write)
@@ -78,9 +77,7 @@ class BPSyncPlugin(BeetsPlugin):
         """
         for item in lib.items(query + ['singleton:true']):
             if not item.mb_trackid:
-                self._log.info(
-                    'Skipping singleton with no mb_trackid: {}', item
-                )
+                self._log.info('Skipping singleton with no mb_trackid: {}', item)
                 continue
 
             if not self.is_beatport_track(item):
@@ -151,9 +148,7 @@ class BPSyncPlugin(BeetsPlugin):
             beatport_trackid_to_trackinfo = {
                 track.track_id: track for track in albuminfo.tracks
             }
-            library_trackid_to_item = {
-                int(item.mb_trackid): item for item in items
-            }
+            library_trackid_to_item = {int(item.mb_trackid): item for item in items}
             item_to_trackinfo = {
                 item: beatport_trackid_to_trackinfo[track_id]
                 for track_id, item in library_trackid_to_item.items()
