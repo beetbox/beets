@@ -12,6 +12,8 @@ for Python 3.6).
 New features:
 * Allows Genius Class to look for all lyrics, not just the first one in lyrics.py
   :bug:`4815`
+
+* :ref:`update-cmd`: added ```-e``` flag for excluding fields from being updated.
 * :doc:`/plugins/deezer`: Import rank and other attributes from Deezer during import and add a function to update the rank of existing items.
   :bug:`4841`
 * resolve transl-tracklisting relations for pseudo releases and merge data with the actual release
@@ -20,7 +22,7 @@ New features:
   :bug:`4803`
 * Prevent reimporting album if it is permanently removed from Spotify
   :bug:`4800`
-* Added option use `cover_art_arl` as an album art source in the `fetchart` plugin.
+* Added option to use `cover_art_url` as an album art source in the `fetchart` plugin.
   :bug:`4707`
 * :doc:`/plugins/fetchart`: The plugin can now get album art from `spotify`.
 * Added option to specify a URL in the `embedart` plugin.
@@ -116,6 +118,12 @@ New features:
 * :doc:`/plugins/embyupdate`: Add handling for private users by adding
   ``userid`` config option.
   :bug:`4402`
+* :doc:`/plugins/substitute`: Add the new plugin `substitute` as an alternative
+  to the `rewrite` plugin. The main difference between them being that
+  `rewrite` modifies files' metadata and `substitute` does not.
+  :bug:`2786`
+* Add support for ``artists`` and ``albumartists`` multi-valued tags.
+  :bug:`505`
 
 Bug fixes:
 
