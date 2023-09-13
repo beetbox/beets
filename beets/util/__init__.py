@@ -452,12 +452,12 @@ def samefile(p1: bytes, p2: bytes) -> bool:
     return shutil._samefile(syspath(p1), syspath(p2))
 
 
-def remove(path: bytes, soft: bool = True):
+def remove(path: Optional[bytes], soft: bool = True):
     """Remove the file. If `soft`, then no error will be raised if the
     file does not exist.
     """
     path = syspath(path)
-    if soft and not os.path.exists(path):
+    if not path or (soft and not os.path.exists(path)):
         return
     try:
         os.remove(path)
