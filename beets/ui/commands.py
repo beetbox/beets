@@ -1232,7 +1232,7 @@ def update_items(lib, query, album, move, pretend, fields,
         affected_albums = set()
         for item in items:
             # Item deleted?
-            if not os.path.exists(syspath(item.path)):
+            if not item.path or not os.path.exists(syspath(item.path)):
                 ui.print_(format(item))
                 ui.print_(ui.colorize('text_error', '  deleted'))
                 if not pretend:
