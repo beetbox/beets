@@ -252,6 +252,7 @@ class ScrubbedImportTest(_common.TestCase, ImportHelper):
         self._setup_import_session(autotag=False)
 
     def tearDown(self):
+        self.unload_plugins()
         self.teardown_beets()
 
     def test_tags_not_scrubbed(self):
