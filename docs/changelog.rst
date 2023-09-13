@@ -235,6 +235,7 @@ Bug fixes:
   already. A new option ``--noinherit/-I`` to :ref:`modify <modify-cmd>`
   allows changing this behaviour.
   :bug:`4822`
+* Fix bug where an interrupted import process poisons the database.
 
 For packagers:
 
