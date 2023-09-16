@@ -244,6 +244,60 @@ class ImportHelper(TestHelper):
         self.assertEqual(len(os.listdir(syspath(self.libdir))), 0)
 
 
+class ScrubbedImportTest(_common.TestCase, ImportHelper):
+    def setUp(self):
+        self.setup_beets(disk=True)
+        self.load_plugins('scrub')
+        self._create_import_dir(2)
+        self._setup_import_session(autotag=False)
+
+    def tearDown(self):
+        self.unload_plugins()
+        self.teardown_beets()
+
+    def test_tags_not_scrubbed(self):
+        config['plugins'] = ['scrub']
+        config['scrub']['auto'] = False
+        config['import']['write'] = True
+        for mediafile in self.import_media:
+            self.assertEqual(mediafile.artist, 'Tag Artist')
+            self.assertEqual(mediafile.album, 'Tag Album')
+        self.importer.run()
+        for item in self.lib.items():
+            imported_file = os.path.join(item.path)
+            imported_file = MediaFile(imported_file)
+            self.assertEqual(imported_file.artist, 'Tag Artist')
+            self.assertEqual(imported_file.album, 'Tag Album')
+
+    def test_tags_restored(self):
+        config['plugins'] = ['scrub']
+        config['scrub']['auto'] = True
+        config['import']['write'] = True
+        for mediafile in self.import_media:
+            self.assertEqual(mediafile.artist, 'Tag Artist')
+            self.assertEqual(mediafile.album, 'Tag Album')
+        self.importer.run()
+        for item in self.lib.items():
+            imported_file = os.path.join(item.path)
+            imported_file = MediaFile(imported_file)
+            self.assertEqual(imported_file.artist, 'Tag Artist')
+            self.assertEqual(imported_file.album, 'Tag Album')
+
+    def test_tags_not_restored(self):
+        config['plugins'] = ['scrub']
+        config['scrub']['auto'] = True
+        config['import']['write'] = False
+        for mediafile in self.import_media:
+            self.assertEqual(mediafile.artist, 'Tag Artist')
+            self.assertEqual(mediafile.album, 'Tag Album')
+        self.importer.run()
+        for item in self.lib.items():
+            imported_file = os.path.join(item.path)
+            imported_file = MediaFile(imported_file)
+            self.assertEqual(imported_file.artist, None)
+            self.assertEqual(imported_file.album, None)
+
+
 @_common.slow_test()
 class NonAutotaggedImportTest(_common.TestCase, ImportHelper):
     def setUp(self):
