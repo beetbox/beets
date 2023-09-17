@@ -22,6 +22,7 @@ import re
 from platform import python_version
 from collections import namedtuple, Counter
 from itertools import chain
+from typing import Sequence
 
 import beets
 from beets import ui
@@ -189,43 +190,57 @@ def disambig_string(info):
     provides context that helps disambiguate similar-looking albums and
     tracks.
     """
-    disambig = []
-    if info.data_source and info.data_source != 'MusicBrainz':
-        disambig.append(info.data_source)
-
     if isinstance(info, hooks.AlbumInfo):
-        if info.media:
-            if info.mediums and info.mediums > 1:
-                disambig.append('{}x{}'.format(
-                    info.mediums, info.media
-                ))
-            else:
-                disambig.append(info.media)
-        if info.year:
-            disambig.append(str(info.year))
-        if info.country:
-            disambig.append(info.country)
-        if info.label:
-            disambig.append(info.label)
-        if info.catalognum:
-            disambig.append(info.catalognum)
-        if info.albumdisambig:
-            disambig.append(info.albumdisambig)
-        # Let the user differentiate between pseudo and actual releases.
-        if info.albumstatus == 'Pseudo-Release':
-            disambig.append(info.albumstatus)
+        disambig = get_album_disambig_fields(info)
+    elif isinstance(info, hooks.TrackInfo):
+        disambig = get_singleton_disambig_fields(info)
+    else:
+        return ''
 
-    if isinstance(info, hooks.TrackInfo):
-        if info.index:
-            disambig.append("Index {}".format(str(info.index)))
-        if info.track_alt:
-            disambig.append("Track {}".format(info.track_alt))
-        if (config['import']['singleton_album_disambig'].get()
-                and info.get('album')):
-            disambig.append("[{}]".format(info.album))
+    return ', '.join(disambig)
 
-    if disambig:
-        return ', '.join(disambig)
+
+def get_singleton_disambig_fields(info: hooks.TrackInfo) -> Sequence[str]:
+    out = []
+    chosen_fields = config['match']['singleton_disambig_fields'].as_str_seq()
+    calculated_values = {
+        'index': "Index {}".format(str(info.index)),
+        'track_alt': "Track {}".format(info.track_alt),
+        'album': "[{}]".format(info.album) if
+                 (config['import']['singleton_album_disambig'].get() and
+                     info.get('album')) else '',
+    }
+
+    for field in chosen_fields:
+        if field in calculated_values:
+            out.append(str(calculated_values[field]))
+        else:
+            try:
+                out.append(str(info[field]))
+            except (AttributeError, KeyError):
+                print(f"Disambiguation string key {field} does not exist.")
+
+    return out
+
+
+def get_album_disambig_fields(info: hooks.AlbumInfo) -> Sequence[str]:
+    out = []
+    chosen_fields = config['match']['album_disambig_fields'].as_str_seq()
+    calculated_values = {
+        'media': '{}x{}'.format(info.mediums, info.media) if
+                 (info.mediums and info.mediums > 1) else info.media,
+    }
+
+    for field in chosen_fields:
+        if field in calculated_values:
+            out.append(str(calculated_values[field]))
+        else:
+            try:
+                out.append(str(info[field]))
+            except (AttributeError, KeyError):
+                print(f"Disambiguation string key {field} does not exist.")
+
+    return out
 
 
 def dist_string(dist):
