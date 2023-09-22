@@ -475,6 +475,9 @@ Here are a few of the plugins written by the beets community:
 `beets-mosaic`_
    Generates a montage of a mosaic from cover art.
 
+`beets-mpd-utils`_
+    Plugins to interface with `MPD`_. Comes with ``mpd_tracker`` (track play/skip counts from MPD) and  ``mpd_dj`` (auto-add songs to your queue.)
+
 `beets-noimport`_
    Adds and removes directories from the incremental import skip list.
 
@@ -550,3 +553,4 @@ Here are a few of the plugins written by the beets community:
 .. _drop2beets: https://github.com/martinkirch/drop2beets
 .. _beets-audible: https://github.com/Neurrone/beets-audible
 .. _beets-more: https://forgejo.sny.sh/sun/beetsplug/src/branch/main/more
+.. _beets-mpd-utils: https://github.com/thekakkun/beets-mpd-utils
