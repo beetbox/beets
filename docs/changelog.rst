@@ -233,6 +233,8 @@ Bug fixes:
   already. A new option ``--noinherit/-I`` to :ref:`modify <modify-cmd>`
   allows changing this behaviour.
   :bug:`4822`
+* Fix bug where an interrupted import process poisons the database, causing
+  a null path that can't be removed.
 
 For packagers:
 
