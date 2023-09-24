@@ -3,7 +3,7 @@ line-length = 80
 
 [tool.isort]
 profile = "black"
-py_version = 36
+py_version = 38
 multi_line_output = 3
 line_length = 80
 indent = 4
