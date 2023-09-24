@@ -49,3 +49,8 @@ man_pages = [
     ('reference/config', 'beetsconfig', 'beets configuration file',
      [AUTHOR], 5),
 ]
+
+# Options for Alabaster theme
+html_theme_options = {
+    "fixed_sidebar": True
+}

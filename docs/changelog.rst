@@ -11,6 +11,7 @@ for Python 3.6).
 
 New features:
 
+* :ref:`update-cmd`: added ```-e``` flag for excluding fields from being updated.
 * :doc:`/plugins/deezer`: Import rank and other attributes from Deezer during import and add a function to update the rank of existing items.
   :bug:`4841`
 * resolve transl-tracklisting relations for pseudo releases and merge data with the actual release
@@ -124,6 +125,10 @@ New features:
 
 Bug fixes:
 
+* :doc:`/plugins/scrub`: Fixed the import behavior where scrubbed database tags 
+  were restored to newly imported tracks with config settings ``scrub.auto: yes`` 
+  and ``import.write: no``.
+  :bug:`4326`
 * :doc:`/plugins/deezer`: Fixed the error where Deezer plugin would crash if non-Deezer id is passed during import.  
 * :doc:`/plugins/fetchart`: Fix fetching from Cover Art Archive when the
   `maxwidth` option is set to one of the supported Cover Art Archive widths.
@@ -228,6 +233,8 @@ Bug fixes:
   already. A new option ``--noinherit/-I`` to :ref:`modify <modify-cmd>`
   allows changing this behaviour.
   :bug:`4822`
+* Fix bug where an interrupted import process poisons the database, causing
+  a null path that can't be removed.
 
 For packagers:
 
