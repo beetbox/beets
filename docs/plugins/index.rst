@@ -63,6 +63,7 @@ following to your configuration::
    acousticbrainz
    albumtypes
    aura
+   autobpm
    badfiles
    bareasc
    beatport
@@ -164,6 +165,9 @@ Metadata
 :doc:`acousticbrainz <acousticbrainz>`
    Fetch various AcousticBrainz metadata
 
+:doc:`autobpm <autobpm>`
+   Use `Librosa`_ to calculate the BPM from the audio.
+
 :doc:`bpm <bpm>`
    Measure tempo using keystrokes.
 
@@ -222,6 +226,7 @@ Metadata
 :doc:`zero <zero>`
    Nullify fields by pattern or unconditionally.
 
+.. _Librosa: https://github.com/librosa/librosa/
 .. _KeyFinder: http://www.ibrahimshaath.co.uk/keyfinder/
 .. _streaming_extractor_music: https://acousticbrainz.org/download
 
