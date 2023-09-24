@@ -124,14 +124,17 @@ New features:
   :bug:`2786`
 * Add support for ``artists`` and ``albumartists`` multi-valued tags.
   :bug:`505`
+* :doc:`/plugins/autobpm`: Add the `autobpm` plugin which uses Librosa to
+  calculate the BPM of the audio.
+  :bug:`3856`
 
 Bug fixes:
 
-* :doc:`/plugins/scrub`: Fixed the import behavior where scrubbed database tags 
-  were restored to newly imported tracks with config settings ``scrub.auto: yes`` 
+* :doc:`/plugins/scrub`: Fixed the import behavior where scrubbed database tags
+  were restored to newly imported tracks with config settings ``scrub.auto: yes``
   and ``import.write: no``.
   :bug:`4326`
-* :doc:`/plugins/deezer`: Fixed the error where Deezer plugin would crash if non-Deezer id is passed during import.  
+* :doc:`/plugins/deezer`: Fixed the error where Deezer plugin would crash if non-Deezer id is passed during import.
 * :doc:`/plugins/fetchart`: Fix fetching from Cover Art Archive when the
   `maxwidth` option is set to one of the supported Cover Art Archive widths.
 * :doc:`/plugins/discogs`: Fix "Discogs plugin replacing Feat. or Ft. with
