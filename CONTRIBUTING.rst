@@ -219,6 +219,8 @@ Style
 We follow `black`_ formatting and `google's docstring format`_.
 
 You can use ``tox -e lint`` to check your code for any style errors.
+Running ``tox -e format`` will automatically format your code according
+to the specifications required by the project.
 
 .. _black: https://black.readthedocs.io/en/stable/
 .. _google's docstring format: https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings
