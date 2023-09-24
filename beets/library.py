@@ -856,7 +856,13 @@ class Item(LibModel):
         `operation` should be an instance of `util.MoveOperation`.
         """
         if not util.samefile(self.path, dest):
+            old_dest = dest
             dest = util.unique_path(dest)
+            log.debug(
+                'File already exists at dest, changing final path slightly, '
+                "to be unique, from '{}', to '{}'.",
+                old_dest, dest
+            )
         if operation == MoveOperation.MOVE:
             plugins.send("before_item_moved", item=self, source=self.path,
                          destination=dest)
