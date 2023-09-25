@@ -12,7 +12,7 @@ zstyle ":completion:${curcontext}:" cache-policy _beet_check_cache
 _beet_check_cache () {
     local cachefile="$(basename ${1})"
     if [[ ! -a "${1}" ]] || [[ "${1}" -ot =beet ]]; then
-	# always update the cache if it doesnt exist, or if the beet executable changes
+	# always update the cache if it doesn't exist, or if the beet executable changes
 	return 0
     fi
     case cachefile; in
