@@ -24,7 +24,7 @@ from beets.plugins import BeetsPlugin
 class Substitute(BeetsPlugin):
     """The substitute plugin class.
 
-    Create a template field function that subsitute the given field with the
+    Create a template field function that substitute the given field with the
     given substitution rules. ``rules`` must be a list of (pattern,
     replacement) pairs.
     """
