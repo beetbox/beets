@@ -12,10 +12,6 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Uses user-specified rewriting rules to replace the value of specific fields
-in templates and path formats.
-"""
-
 from collections import defaultdict
 import shlex
 
@@ -27,11 +23,13 @@ from beets.plugins import BeetsPlugin
 
 
 def rewriter(field, rules):
-    """Create a template field function that rewrites the given field with the
-    given rewriting rules. ``rules`` must be a list of (query, replacement)
-    pairs.
     """
+    Template field function factory.
 
+    Create a template field function that rewrites the given field
+    with the given rewriting rules.
+    ``rules`` must be a list of (query, replacement) pairs.
+    """
     def fieldfunc(item):
         value = item._values_fixed[field]
         for query, replacement in rules:
@@ -45,6 +43,9 @@ def rewriter(field, rules):
 
 
 class AdvancedRewritePlugin(BeetsPlugin):
+    """
+    Plugin to rewrite fields based on a given query.
+    """
     def __init__(self):
         super().__init__()
 
@@ -57,12 +58,14 @@ class AdvancedRewritePlugin(BeetsPlugin):
         # Gather all the rewrite rules for each field.
         rules = defaultdict(list)
         for rule in self.config.get(template):
-            query = query_from_strings(AndQuery, Item, prefixes={}, query_parts=shlex.split(rule['match']))
+            query = query_from_strings(AndQuery, Item, prefixes={},
+                                       query_parts=shlex.split(rule['match']))
             fieldname = rule['field']
             replacement = rule['replacement']
             if fieldname not in Item._fields:
                 raise ui.UserError("invalid field name (%s) in rewriter" % fieldname)
-            self._log.debug('adding template field {0} → {1}', fieldname, replacement)
+            self._log.debug('adding template field {0} → {1}',
+                            fieldname, replacement)
             rules[fieldname].append((query, replacement))
             if fieldname == 'artist':
                 # Special case for the artist field: apply the same
