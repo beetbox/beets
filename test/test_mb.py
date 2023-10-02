@@ -56,13 +56,11 @@ class MBAlbumInfoTest(_common.TestCase):
                 }
             ],
             "date": "3001",
-            "medium-list": [],
-            "label-info-list": [
-                {
-                    "catalog-number": "CATALOG NUMBER",
-                    "label": {"name": "LABEL NAME"},
-                }
-            ],
+            "media": [],
+            "label-info": [{
+                "catalog-number": "CATALOG NUMBER",
+                "label": {"name": "LABEL NAME"},
+            }],
             "text-representation": {
                 "script": "SCRIPT",
                 "language": "LANGUAGE",
@@ -137,15 +135,13 @@ class MBAlbumInfoTest(_common.TestCase):
                     "number": "A1",
                 }
                 data_track_list.append(data_track)
-        release["medium-list"].append(
-            {
-                "position": "1",
-                "track-list": track_list,
-                "data-track-list": data_track_list,
-                "format": medium_format,
-                "title": "MEDIUM TITLE",
-            }
-        )
+        release["media"].append({
+            "position": "1",
+            "tracks": track_list,
+            "data-tracks": data_track_list,
+            "format": medium_format,
+            "title": "MEDIUM TITLE",
+        })
         return release
 
     def _make_track(
@@ -189,7 +185,7 @@ class MBAlbumInfoTest(_common.TestCase):
                     }
                 )
         if remixer:
-            track["artist-relation-list"] = [
+            track["artist-relations"] = [
                 {
                     "type": "remixer",
                     "type-id": "RELATION TYPE ID",
@@ -282,20 +278,16 @@ class MBAlbumInfoTest(_common.TestCase):
             self._make_track("TITLE TWO", "ID TWO", 200.0 * 1000.0),
         ]
         release = self._make_release(tracks=[tracks[0]])
-        second_track_list = [
-            {
-                "id": "RELEASE TRACK ID 2",
-                "recording": tracks[1],
-                "position": "1",
-                "number": "A1",
-            }
-        ]
-        release["medium-list"].append(
-            {
-                "position": "2",
-                "track-list": second_track_list,
-            }
-        )
+        second_track_list = [{
+            "id": "RELEASE TRACK ID 2",
+            "recording": tracks[1],
+            "position": "1",
+            "number": "A1",
+        }]
+        release["media"].append({
+            "position": "2",
+            "tracks": second_track_list,
+        })
 
         d = mb.album_info(release)
         self.assertEqual(d.mediums, 2)
@@ -692,9 +684,9 @@ class ArtistFlatteningTest(_common.TestCase):
         }
         if primary:
             alias["primary"] = "primary"
-        if "alias-list" not in credit_dict["artist"]:
-            credit_dict["artist"]["alias-list"] = []
-        credit_dict["artist"]["alias-list"].append(alias)
+        if "aliases" not in credit_dict["artist"]:
+            credit_dict["artist"]["aliases"] = []
+        credit_dict["artist"]["aliases"].append(alias)
 
     def test_single_artist(self):
         credit = [self._credit_dict()]
@@ -765,13 +757,11 @@ class MBLibraryTest(unittest.TestCase):
     def test_match_track(self):
         with mock.patch("musicbrainzngs.search_recordings") as p:
             p.return_value = {
-                "recording-list": [
-                    {
-                        "title": "foo",
-                        "id": "bar",
-                        "length": 42,
-                    }
-                ],
+                "recordings": [{
+                    "title": "foo",
+                    "id": "bar",
+                    "length": 42,
+                }],
             }
             ti = list(mb.match_track("hello", "there"))[0]
 
@@ -784,46 +774,36 @@ class MBLibraryTest(unittest.TestCase):
         mbid = "d2a6f856-b553-40a0-ac54-a321e8e2da99"
         with mock.patch("musicbrainzngs.search_releases") as sp:
             sp.return_value = {
-                "release-list": [
-                    {
-                        "id": mbid,
-                    }
-                ],
+                "releases": [{
+                    "id": mbid,
+                }],
             }
             with mock.patch("musicbrainzngs.get_release_by_id") as gp:
                 gp.return_value = {
-                    "release": {
-                        "title": "hi",
-                        "id": mbid,
-                        "status": "status",
-                        "medium-list": [
-                            {
-                                "track-list": [
-                                    {
-                                        "id": "baz",
-                                        "recording": {
-                                            "title": "foo",
-                                            "id": "bar",
-                                            "length": 42,
-                                        },
-                                        "position": 9,
-                                        "number": "A1",
-                                    }
-                                ],
-                                "position": 5,
-                            }
-                        ],
-                        "artist-credit": [
-                            {
-                                "artist": {
-                                    "name": "some-artist",
-                                    "id": "some-id",
-                                },
-                            }
-                        ],
-                        "release-group": {
-                            "id": "another-id",
+                    "title": "hi",
+                    "id": mbid,
+                    "status": "status",
+                    "media": [{
+                        "tracks": [{
+                            "id": "baz",
+                            "recording": {
+                                "title": "foo",
+                                "id": "bar",
+                                "length": 42,
+                            },
+                            "position": 9,
+                            "number": "A1",
+                        }],
+                        "position": 5,
+                    }],
+                    "artist-credit": [{
+                        "artist": {
+                            "name": "some-artist",
+                            "id": "some-id",
                         },
+                    }],
+                    "release-group": {
+                        "id": "another-id",
                     }
                 }
 
@@ -851,83 +831,67 @@ class MBLibraryTest(unittest.TestCase):
     def test_follow_pseudo_releases(self):
         side_effect = [
             {
-                "release": {
-                    "title": "pseudo",
-                    "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
-                    "status": "Pseudo-Release",
-                    "medium-list": [
-                        {
-                            "track-list": [
-                                {
-                                    "id": "baz",
-                                    "recording": {
-                                        "title": "translated title",
-                                        "id": "bar",
-                                        "length": 42,
-                                    },
-                                    "position": 9,
-                                    "number": "A1",
-                                }
-                            ],
-                            "position": 5,
-                        }
-                    ],
-                    "artist-credit": [
-                        {
-                            "artist": {
-                                "name": "some-artist",
-                                "id": "some-id",
-                            },
-                        }
-                    ],
-                    "release-group": {
-                        "id": "another-id",
+                "title": "pseudo",
+                "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
+                "status": "Pseudo-Release",
+                "media": [{
+                    "tracks": [{
+                        "id": "baz",
+                        "recording": {
+                            "title": "translated title",
+                            "id": "bar",
+                            "length": 42,
+                        },
+                        "position": 9,
+                        "number": "A1",
+                    }],
+                    "position": 5,
+                }],
+                "artist-credit": [{
+                    "artist": {
+                        "name": "some-artist",
+                        "id": "some-id",
                     },
-                    "release-relation-list": [
-                        {
-                            "type": "transl-tracklisting",
-                            "target": "d2a6f856-b553-40a0-ac54-a321e8e2da01",
-                            "direction": "backward",
-                        }
-                    ],
-                }
+                }],
+                "release-group": {
+                    "id": "another-id",
+                },
+                "release-relations": [
+                    {
+                        "type": "transl-tracklisting",
+                        "target": "d2a6f856-b553-40a0-ac54-a321e8e2da01",
+                        "direction": "backward"
+                    }
+                ]
             },
             {
-                "release": {
-                    "title": "actual",
-                    "id": "d2a6f856-b553-40a0-ac54-a321e8e2da01",
-                    "status": "Official",
-                    "medium-list": [
-                        {
-                            "track-list": [
-                                {
-                                    "id": "baz",
-                                    "recording": {
-                                        "title": "original title",
-                                        "id": "bar",
-                                        "length": 42,
-                                    },
-                                    "position": 9,
-                                    "number": "A1",
-                                }
-                            ],
-                            "position": 5,
-                        }
-                    ],
-                    "artist-credit": [
-                        {
-                            "artist": {
-                                "name": "some-artist",
-                                "id": "some-id",
-                            },
-                        }
-                    ],
-                    "release-group": {
-                        "id": "another-id",
+                "title": "actual",
+                "id": "d2a6f856-b553-40a0-ac54-a321e8e2da01",
+                "status": "Official",
+                "media": [{
+                    "tracks": [{
+                        "id": "baz",
+                        "recording": {
+                            "title": "original title",
+                            "id": "bar",
+                            "length": 42,
+                        },
+                        "position": 9,
+                        "number": "A1",
+                    }],
+                    "position": 5,
+                }],
+                "artist-credit": [{
+                    "artist": {
+                        "name": "some-artist",
+                        "id": "some-id",
                     },
-                    "country": "COUNTRY",
-                }
-            },
+                }],
+                "release-group": {
+                    "id": "another-id",
+                },
+                "country": "COUNTRY",
+            }
         ]
 
         with mock.patch("musicbrainzngs.get_release_by_id") as gp:
@@ -936,44 +900,34 @@ class MBLibraryTest(unittest.TestCase):
             self.assertEqual(album.country, "COUNTRY")
 
     def test_pseudo_releases_with_empty_links(self):
-        side_effect = [
-            {
-                "release": {
-                    "title": "pseudo",
-                    "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
-                    "status": "Pseudo-Release",
-                    "medium-list": [
-                        {
-                            "track-list": [
-                                {
-                                    "id": "baz",
-                                    "recording": {
-                                        "title": "translated title",
-                                        "id": "bar",
-                                        "length": 42,
-                                    },
-                                    "position": 9,
-                                    "number": "A1",
-                                }
-                            ],
-                            "position": 5,
-                        }
-                    ],
-                    "artist-credit": [
-                        {
-                            "artist": {
-                                "name": "some-artist",
-                                "id": "some-id",
-                            },
-                        }
-                    ],
-                    "release-group": {
-                        "id": "another-id",
+        side_effect = [{
+            "title": "pseudo",
+            "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
+            "status": "Pseudo-Release",
+            "media": [{
+                "tracks": [{
+                    "id": "baz",
+                    "recording": {
+                        "title": "translated title",
+                        "id": "bar",
+                        "length": 42,
                     },
-                    "release-relation-list": [],
-                }
+                    "position": 9,
+                    "number": "A1",
+                }],
+                "position": 5,
+            }],
+            "artist-credit": [{
+                "artist": {
+                    "name": "some-artist",
+                    "id": "some-id",
+                },
+            }],
+            "release-group": {
+                "id": "another-id",
             },
-        ]
+            "release-relations": []
+        }]
 
         with mock.patch("musicbrainzngs.get_release_by_id") as gp:
             gp.side_effect = side_effect
@@ -981,43 +935,33 @@ class MBLibraryTest(unittest.TestCase):
             self.assertEqual(album.country, None)
 
     def test_pseudo_releases_without_links(self):
-        side_effect = [
-            {
-                "release": {
-                    "title": "pseudo",
-                    "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
-                    "status": "Pseudo-Release",
-                    "medium-list": [
-                        {
-                            "track-list": [
-                                {
-                                    "id": "baz",
-                                    "recording": {
-                                        "title": "translated title",
-                                        "id": "bar",
-                                        "length": 42,
-                                    },
-                                    "position": 9,
-                                    "number": "A1",
-                                }
-                            ],
-                            "position": 5,
-                        }
-                    ],
-                    "artist-credit": [
-                        {
-                            "artist": {
-                                "name": "some-artist",
-                                "id": "some-id",
-                            },
-                        }
-                    ],
-                    "release-group": {
-                        "id": "another-id",
+        side_effect = [{
+            "title": "pseudo",
+            "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
+            "status": "Pseudo-Release",
+            "media": [{
+                "tracks": [{
+                    "id": "baz",
+                    "recording": {
+                        "title": "translated title",
+                        "id": "bar",
+                        "length": 42,
                     },
-                }
+                    "position": 9,
+                    "number": "A1",
+                }],
+                "position": 5,
+            }],
+            "artist-credit": [{
+                "artist": {
+                    "name": "some-artist",
+                    "id": "some-id",
+                },
+            }],
+            "release-group": {
+                "id": "another-id",
             },
-        ]
+        }]
 
         with mock.patch("musicbrainzngs.get_release_by_id") as gp:
             gp.side_effect = side_effect
@@ -1027,47 +971,39 @@ class MBLibraryTest(unittest.TestCase):
     def test_pseudo_releases_with_unsupported_links(self):
         side_effect = [
             {
-                "release": {
-                    "title": "pseudo",
-                    "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
-                    "status": "Pseudo-Release",
-                    "medium-list": [
-                        {
-                            "track-list": [
-                                {
-                                    "id": "baz",
-                                    "recording": {
-                                        "title": "translated title",
-                                        "id": "bar",
-                                        "length": 42,
-                                    },
-                                    "position": 9,
-                                    "number": "A1",
-                                }
-                            ],
-                            "position": 5,
-                        }
-                    ],
-                    "artist-credit": [
-                        {
-                            "artist": {
-                                "name": "some-artist",
-                                "id": "some-id",
-                            },
-                        }
-                    ],
-                    "release-group": {
-                        "id": "another-id",
+                "title": "pseudo",
+                "id": "d2a6f856-b553-40a0-ac54-a321e8e2da02",
+                "status": "Pseudo-Release",
+                "media": [{
+                    "tracks": [{
+                        "id": "baz",
+                        "recording": {
+                            "title": "translated title",
+                            "id": "bar",
+                            "length": 42,
+                        },
+                        "position": 9,
+                        "number": "A1",
+                    }],
+                    "position": 5,
+                }],
+                "artist-credit": [{
+                    "artist": {
+                        "name": "some-artist",
+                        "id": "some-id",
                     },
-                    "release-relation-list": [
-                        {
-                            "type": "remaster",
-                            "target": "d2a6f856-b553-40a0-ac54-a321e8e2da01",
-                            "direction": "backward",
-                        }
-                    ],
-                }
-            },
+                }],
+                "release-group": {
+                    "id": "another-id",
+                },
+                "release-relations": [
+                    {
+                        "type": "remaster",
+                        "target": "d2a6f856-b553-40a0-ac54-a321e8e2da01",
+                        "direction": "backward"
+                    }
+                ]
+            }
         ]
 
         with mock.patch("musicbrainzngs.get_release_by_id") as gp:
