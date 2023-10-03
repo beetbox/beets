@@ -24,6 +24,12 @@ give you an idea of what you can expect from these *knowledge owners*.
 * The plugin ecosystem
 * The library database API and its documentation
 
+@jackwilsdon
+============
+* Broad knowledge around beets' configuration and plugins
+* Assists in discussion forums frequently
+* Knows internals of beets and puts new contributors into the right direction
+
 @joj0
 =====
 
@@ -64,7 +70,7 @@ give you an idea of what you can expect from these *knowledge owners*.
 ===========
 
 * Mr. Tidy - Keeping the code in shape
-* Focus on improving core things rather than implementing new features 
+* Focus on improving core things rather than implementing new features
 
 @ybnd
 =====
