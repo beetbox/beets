@@ -1,5 +1,6 @@
 [tool.black]
 line-length = 80
+target-version = py38
 
 [tool.isort]
 profile = "black"
