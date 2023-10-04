@@ -139,6 +139,8 @@ New features:
 * :doc:`/plugins/fetchart`: Fix the error with CoverArtArchive where no cover
   would be found when the `maxwidth` option matches a pre-sized thumbnail size,
   but no thumbnail is provided by CAA. We now fallback to the raw image.
+* :doc:`/plugins/advancedrewrite`: Add an advanced version of the `rewrite`
+  plugin which allows to replace fields based on a given library query.
 
 Bug fixes:
 
