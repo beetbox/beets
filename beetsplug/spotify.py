@@ -180,7 +180,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             )
             response.raise_for_status()
         except requests.exceptions.ReadTimeout:
-            self._log.debug('ReadTimeout. Retrying.')
+            self._log.error('ReadTimeout. Retrying.')
             return self._handle_response(request_type, url, params=params)
         if response.status_code != 200:
             if 'token expired' in response.text:
