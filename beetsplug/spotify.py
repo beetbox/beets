@@ -178,7 +178,6 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 params=params,
                 timeout=30,
             )
-            response.raise_for_status()
         except requests.exceptions.ReadTimeout:
             self._log.error('ReadTimeout. Retrying.')
             return self._handle_response(request_type, url, params=params)
