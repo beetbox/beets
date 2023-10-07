@@ -171,11 +171,16 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         :return: JSON data for the class:`Response <Response>` object.
         :rtype: dict
         """
-        response = request_type(
-            url,
-            headers={'Authorization': f'Bearer {self.access_token}'},
-            params=params,
-        )
+        try:
+            response = request_type(
+                url,
+                headers={'Authorization': f'Bearer {self.access_token}'},
+                params=params,
+            )
+            response.raise_for_status()
+        except requests.exceptions.ReadTimeout:
+            self._log.debug('ReadTimeout. Retrying.')
+            return self._handle_response(request_type, url, params=params)
         if response.status_code != 200:
             if 'token expired' in response.text:
                 self._log.debug(
