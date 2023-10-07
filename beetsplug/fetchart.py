@@ -399,10 +399,15 @@ class CoverArtArchive(RemoteArtSource):
                     if 'Front' not in item['types']:
                         continue
 
-                    if preferred_width:
-                        yield item['thumbnails'][preferred_width]
-                    else:
-                        yield item['image']
+                    # If there is a pre-sized thumbnail of the desired size
+                    # we select it. Otherwise, we return the raw image.
+                    image_url: str = item["image"]
+                    if preferred_width is not None:
+                        if isinstance(item.get("thumbnails"), dict):
+                            image_url = item["thumbnails"].get(
+                                preferred_width, image_url
+                            )
+                    yield image_url
                 except KeyError:
                     pass
 
