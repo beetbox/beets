@@ -171,42 +171,51 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         :return: JSON data for the class:`Response <Response>` object.
         :rtype: dict
         """
-        try:
-            response = request_type(
-                url,
-                headers={'Authorization': f'Bearer {self.access_token}'},
-                params=params,
-                timeout=30,
-            )
-        except requests.exceptions.ReadTimeout:
-            self._log.error('ReadTimeout. Retrying.')
-            return self._handle_response(request_type, url, params=params)
-        if response.status_code != 200:
-            if 'token expired' in response.text:
-                self._log.debug(
-                    '{} access token has expired. Reauthenticating.',
-                    self.data_source,
+        retries = 0
+        while retries < 5:
+            try:
+                response = request_type(
+                    url,
+                    headers={'Authorization': f'Bearer {self.access_token}'},
+                    params=params,
+                    timeout=10,
                 )
-                self._authenticate()
-                return self._handle_response(request_type, url, params=params)
-            elif response.status_code == 429:
-                seconds = response.headers.get('Retry-After',
-                                               DEFAULT_WAITING_TIME)
-                self._log.debug('Too many API requests. Retrying after {} \
-                    seconds.', seconds)
-                time.sleep(int(seconds) + 1)
-                return self._handle_response(request_type, url, params=params)
-            elif response.status_code == 404:
-                raise SpotifyAPIError("API Error: {}\nURL: {}\nparams: {}".
-                                      format(response.status_code, url,
-                                             params))
-            else:
-                raise ui.UserError(
-                    '{} API error:\n{}\nURL:\n{}\nparams:\n{}'.format(
-                        self.data_source, response.text, url, params
+                response.raise_for_status()
+                return response.json()
+            except requests.exceptions.ReadTimeout:
+                self._log.error('ReadTimeout. Retrying.')
+                retries += 1
+                time.sleep(1)
+            except requests.exceptions.RequestException as e:
+                if 'token expired' in str(e):
+                    self._log.debug(
+                        f'{self.data_source} access token has expired.'
+                        f' Reauthenticating.'
                     )
-                )
-        return response.json()
+                    self._authenticate()
+                elif isinstance(e, requests.exceptions.HTTPError):
+                    if e.response.status_code == 429:
+                        seconds = e.response.headers.get('Retry-After',
+                                                         DEFAULT_WAITING_TIME)
+                        self._log.debug(f'Too many API requests. '
+                                        f'Retrying after {seconds} seconds.')
+                        time.sleep(int(seconds) + 1)
+                        retries += 1
+                    elif e.response.status_code == 404:
+                        raise SpotifyAPIError(f'API Error: '
+                                              f'{e.response.status_code}\n'
+                                              f'URL: {url}\nparams: {params}')
+                    else:
+                        raise ui.UserError(
+                            f'{self.data_source} API error:\n'
+                            f'{e.response.text}\nURL:\n{url}\n'
+                            f'params:\n{params}'
+                        )
+                else:
+                    self._log.error(f'Request failed. Retrying. Error: {e}')
+                    retries += 1
+                    time.sleep(1)
+        raise ui.UserError('Maximum retries exceeded.')
 
     def album_for_id(self, album_id):
         """Fetch an album by its Spotify ID or URL and return an
