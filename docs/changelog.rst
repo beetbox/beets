@@ -128,6 +128,9 @@ New features:
 * :doc:`/plugins/fetchart`: Fix the error with CoverArtArchive where the
   `maxwidth` option would not be used to download a pre-sized thumbnail for
   release groups, as is already done with releases.
+* :doc:`/plugins/fetchart`: Fix the error with CoverArtArchive where no cover
+  would be found when the `maxwidth` option matches a pre-sized thumbnail size,
+  but no thumbnail is provided by CAA. We now fallback to the raw image.
 
 Bug fixes:
 
