@@ -176,6 +176,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 url,
                 headers={'Authorization': f'Bearer {self.access_token}'},
                 params=params,
+                timeout=30,
             )
             response.raise_for_status()
         except requests.exceptions.ReadTimeout:
