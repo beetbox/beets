@@ -125,6 +125,9 @@ New features:
 * :doc:`/plugins/autobpm`: Add the `autobpm` plugin which uses Librosa to
   calculate the BPM of the audio.
   :bug:`3856`
+* :doc:`/plugins/fetchart`: Fix the error with CoverArtArchive where the
+  `maxwidth` option would not be used to download a pre-sized thumbnail for
+  release groups, as is already done with releases.
 
 Bug fixes:
 
