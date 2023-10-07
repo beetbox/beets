@@ -422,7 +422,7 @@ class CoverArtArchive(RemoteArtSource):
                 yield self._candidate(url=url, match=Candidate.MATCH_EXACT)
 
         if 'releasegroup' in self.match_by and album.mb_releasegroupid:
-            for url in get_image_urls(release_group_url):
+            for url in get_image_urls(release_group_url, preferred_width):
                 yield self._candidate(url=url, match=Candidate.MATCH_FALLBACK)
 
 
