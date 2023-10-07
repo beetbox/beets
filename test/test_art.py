@@ -521,6 +521,22 @@ class CoverArtArchiveTest(UseThePlugin, CAAHelper):
         self.assertEqual(len(responses.calls), 2)
         self.assertEqual(responses.calls[0].request.url, self.RELEASE_URL)
 
+    def test_fetchart_uses_caa_pre_sized_maxwidth_thumbs(self):
+        # CAA provides pre-sized thumbnails of width 250px, 500px, and 1200px
+        # We only test with one of them here
+        maxwidth = 1200
+        self.settings = Settings(maxwidth=maxwidth)
+
+        album = _common.Bag(
+            mb_albumid=self.MBID_RELASE, mb_releasegroupid=self.MBID_GROUP
+        )
+        self.mock_caa_response(self.RELEASE_URL, self.RESPONSE_RELEASE)
+        self.mock_caa_response(self.GROUP_URL, self.RESPONSE_GROUP)
+        candidates = list(self.source.get(album, self.settings, []))
+        self.assertEqual(len(candidates), 3)
+        for candidate in candidates:
+            self.assertTrue(f"-{maxwidth}.jpg" in candidate.url)
+
 
 class FanartTVTest(UseThePlugin):
     RESPONSE_MULTIPLE = """{
