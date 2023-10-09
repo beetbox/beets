@@ -144,6 +144,8 @@ New features:
 
 Bug fixes:
 
+* :doc:`/plugins/spotify`: Fix a crash when the Spotify API timeouts or does not return a `Retry-After` interval.
+  :bug:`4942`
 * :doc:`/plugins/scrub`: Fixed the import behavior where scrubbed database tags
   were restored to newly imported tracks with config settings ``scrub.auto: yes``
   and ``import.write: no``.
