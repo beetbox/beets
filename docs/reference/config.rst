@@ -427,20 +427,66 @@ the ``color`` option is set to ``yes``. For example, you might have a section
 in your configuration file that looks like this::
 
     ui:
-        color: yes
         colors:
-            text_success: green
-            text_warning: yellow
-            text_error: red
-            text_highlight: red
-            text_highlight_minor: lightgray
-            action_default: turquoise
-            action: blue
+            text_success: ['bold', 'green']
+            text_warning: ['bold', 'yellow']
+            text_error: ['bold', 'red']
+            text_highlight: ['bold', 'red']
+            text_highlight_minor: ['white']
+            action_default: ['bold', 'cyan']
+            action: ['bold', 'cyan']
+            # New colors after UI overhaul
+            text: ['normal']
+            text_faint: ['faint']
+            import_path: ['bold', 'blue']
+            import_path_items: ['bold', 'blue']
+            added:   ['green']
+            removed: ['red']
+            changed: ['yellow']
+            added_highlight:   ['bold', 'green']
+            removed_highlight: ['bold', 'red']
+            changed_highlight: ['bold', 'yellow']
+            text_diff_added:   ['bold', 'red']
+            text_diff_removed: ['bold', 'red']
+            text_diff_changed: ['bold', 'red']
+            action_description: ['white']
 
 Available colors: black, darkred, darkgreen, brown (darkyellow), darkblue,
 purple (darkmagenta), teal (darkcyan), lightgray, darkgray, red, green,
 yellow, blue, fuchsia (magenta), turquoise (cyan), white
 
+Legacy UI colors config directive used strings. If any colors value is still a
+string instead of a list, it will be translated to list automatically. For
+example ``blue`` will become ``['blue']``.
+
+terminal_width
+~~~~~~~~~~~~~~
+
+Controls line wrapping. Defaults to ``80`` characters::
+
+    ui:
+        terminal_width: 80
+
+length_diff_thresh
+~~~~~~~~~~~~~~~~~~
+
+FIXME::
+
+    ui:
+        length_diff_thresh: 10.0
+
+import
+~~~~~~
+
+FIXME::
+
+    ui:
+        import:
+            indentation:
+                match_header: 2
+                match_details: 2
+                match_tracklist: 5
+            layout: column
 
 Importer Options
 ----------------
