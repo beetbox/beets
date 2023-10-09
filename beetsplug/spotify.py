@@ -187,7 +187,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 retries += 1
                 time.sleep(1)
             except requests.exceptions.RequestException as e:
-                if 'token expired' in str(e):
+                if e.response.status_code == 401:
                     self._log.debug(
                         f'{self.data_source} access token has expired.'
                         f' Reauthenticating.'
