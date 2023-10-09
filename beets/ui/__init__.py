@@ -593,7 +593,7 @@ def colorize(color_name, text):
                 # is successful, the color definition is a legacy definition
                 # and has to be converted.
                 try:
-                    color_def = config["ui"]["colors"][name].get(unicode)
+                    color_def = config["ui"]["colors"][name].get(str)
                 except (confuse.ConfigTypeError, NameError):
                     # Normal color definition (type: list of unicode).
                     color_def = config["ui"]["colors"][name].get(list)
