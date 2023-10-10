@@ -193,6 +193,16 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             elif e.response.status_code == 404:
                 raise SpotifyAPIError(f'API Error: {e.response.status_code}\n'
                                       f'URL: {url}\nparams: {params}')
+            elif e.response.status_code == 429:
+                seconds = response.headers.get('Retry-After',
+                                               DEFAULT_WAITING_TIME)
+                self._log.debug('Too many API requests. Retrying after {} \
+                    seconds.', seconds)
+                time.sleep(int(seconds) + 1)
+                return self._handle_response(request_type, url, params=params)
+            elif e.response.status_code == 503:
+                self._log.error('Service Unavailable.')
+                raise SpotifyAPIError('Service Unavailable.')
             elif e.response is not None:
                 raise SpotifyAPIError(
                     f'{self.data_source} API error:\n{e.response.text}\n'
@@ -655,8 +665,8 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         track_data = self._handle_response(
             requests.get, self.track_url + track_id
         )
-        self._log.debug('track_data: {}', track_data['popularity'])
-        return track_data['popularity']
+        self._log.debug('track_data: {}', track_data.get('popularity'))
+        return track_data.get('popularity')
 
     def track_audio_features(self, track_id=None):
         """Fetch track audio features by its Spotify ID."""
