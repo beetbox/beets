@@ -171,51 +171,36 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         :return: JSON data for the class:`Response <Response>` object.
         :rtype: dict
         """
-        retries = 0
-        while retries < 5:
-            try:
-                response = request_type(
-                    url,
-                    headers={'Authorization': f'Bearer {self.access_token}'},
-                    params=params,
-                    timeout=10,
+        try:
+            response = request_type(
+                url,
+                headers={'Authorization': f'Bearer {self.access_token}'},
+                params=params,
+                timeout=10,
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.ReadTimeout:
+            self._log.error('ReadTimeout.')
+            raise SpotifyAPIError('Request timed out.')
+        except requests.exceptions.RequestException as e:
+            if e.response.status_code == 401:
+                self._log.debug(
+                    f'{self.data_source} access token has expired. '
+                    f'Reauthenticating.'
                 )
-                response.raise_for_status()
-                return response.json()
-            except requests.exceptions.ReadTimeout:
-                self._log.error('ReadTimeout. Retrying.')
-                retries += 1
-                time.sleep(1)
-            except requests.exceptions.RequestException as e:
-                if e.response.status_code == 401:
-                    self._log.debug(
-                        f'{self.data_source} access token has expired.'
-                        f' Reauthenticating.'
-                    )
-                    self._authenticate()
-                elif isinstance(e, requests.exceptions.HTTPError):
-                    if e.response.status_code == 429:
-                        seconds = e.response.headers.get('Retry-After',
-                                                         DEFAULT_WAITING_TIME)
-                        self._log.debug(f'Too many API requests. '
-                                        f'Retrying after {seconds} seconds.')
-                        time.sleep(int(seconds) + 1)
-                        retries += 1
-                    elif e.response.status_code == 404:
-                        raise SpotifyAPIError(f'API Error: '
-                                              f'{e.response.status_code}\n'
-                                              f'URL: {url}\nparams: {params}')
-                    else:
-                        raise ui.UserError(
-                            f'{self.data_source} API error:\n'
-                            f'{e.response.text}\nURL:\n{url}\n'
-                            f'params:\n{params}'
-                        )
-                else:
-                    self._log.error(f'Request failed. Retrying. Error: {e}')
-                    retries += 1
-                    time.sleep(1)
-        raise ui.UserError('Maximum retries exceeded.')
+                self._authenticate()
+            elif e.response.status_code == 404:
+                raise SpotifyAPIError(f'API Error: {e.response.status_code}\n'
+                                      f'URL: {url}\nparams: {params}')
+            elif e.response is not None:
+                raise SpotifyAPIError(
+                    f'{self.data_source} API error:\n{e.response.text}\n'
+                    f'URL:\n{url}\nparams:\n{params}'
+                )
+            else:
+                self._log.error(f'Request failed. Error: {e}')
+                raise SpotifyAPIError('Request failed.')
 
     def album_for_id(self, album_id):
         """Fetch an album by its Spotify ID or URL and return an
