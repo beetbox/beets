@@ -196,7 +196,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             elif e.response.status_code == 429:
                 seconds = response.headers.get('Retry-After',
                                                DEFAULT_WAITING_TIME)
-                self._log.debug(f'Too many API requests. Retrying after'
+                self._log.debug(f'Too many API requests. Retrying after '
                                 f'{seconds} seconds.')
                 time.sleep(int(seconds) + 1)
                 return self._handle_response(request_type, url, params=params)
