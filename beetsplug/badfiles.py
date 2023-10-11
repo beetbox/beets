@@ -178,19 +178,12 @@ class BadFiles(BeetsPlugin):
                 for error_line in error:
                     ui.print_(error_line)
 
-            ui.print_()
-            ui.print_('What would you like to do?')
-
-            sel = ui.input_options(['aBort', 'skip', 'continue'])
-
-            if sel == 's':
-                return importer.action.SKIP
-            elif sel == 'c':
+             if self.config['skip_import_if_badfile'].get(False):
+                print("according to config option do not import a bad file")
                 return None
-            elif sel == 'b':
-                raise importer.ImportAbort()
-            else:
-                raise Exception(f'Unexpected selection: {sel}')
+             else:
+                print("according to config option import a bad file")
+                return importer.action.SKIP
 
     def command(self, lib, opts, args):
         # Get items from arguments
