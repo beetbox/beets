@@ -89,3 +89,5 @@ ENV/
 /.pydevproject
 /.settings
 .vscode
+*.log
+deezer_orig.py
