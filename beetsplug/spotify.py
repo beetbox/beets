@@ -190,6 +190,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                     f'Reauthenticating.'
                 )
                 self._authenticate()
+                return self._handle_response(request_type, url, params=params)
             elif e.response.status_code == 404:
                 raise SpotifyAPIError(f'API Error: {e.response.status_code}\n'
                                       f'URL: {url}\nparams: {params}')
@@ -228,8 +229,6 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         album_data = self._handle_response(
             requests.get, self.album_url + spotify_id
         )
-        if album_data is None:
-            return None
         if album_data['name'] == "":
             self._log.debug("Album removed from Spotify: {}", album_id)
             return None
