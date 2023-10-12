@@ -419,6 +419,8 @@ support ANSI colors.
     still respected, but a deprecation message will be shown until your
     top-level `color` configuration has been nested under `ui`.
 
+.. _colors:
+
 colors
 ~~~~~~
 
@@ -470,7 +472,13 @@ Controls line wrapping. Defaults to ``80`` characters::
 length_diff_thresh
 ~~~~~~~~~~~~~~~~~~
 
-FIXME::
+Beets compares the length of the imported track with the length the metadata
+source provides. If any tracks differ by at least ``length_diff_thresh``
+seconds, they will be colored with ``text_highlight``. Below this threshold,
+different track lengths are colored with ``text_highlight_minor``.
+``length_diff_thresh`` does not impact which releases are selected in
+autotagger matching or distance score calculation (see :ref:`match-config` and
+:ref:`colors`)::
 
     ui:
         length_diff_thresh: 10.0
