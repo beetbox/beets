@@ -398,6 +398,8 @@ Sets the albumartist for various-artist compilations. Defaults to ``'Various
 Artists'`` (the MusicBrainz standard). Affects other sources, such as
 :doc:`/plugins/discogs`, too.
 
+.. _ui_options:
+
 UI Options
 ----------
 
