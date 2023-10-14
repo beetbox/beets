@@ -12,6 +12,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
+"""Plugin to rewrite fields based on a given query."""
+
 from collections import defaultdict
 import shlex
 
@@ -23,8 +25,7 @@ from beets.plugins import BeetsPlugin
 
 
 def rewriter(field, rules):
-    """
-    Template field function factory.
+    """Template field function factory.
 
     Create a template field function that rewrites the given field
     with the given rewriting rules.
@@ -43,10 +44,10 @@ def rewriter(field, rules):
 
 
 class AdvancedRewritePlugin(BeetsPlugin):
-    """
-    Plugin to rewrite fields based on a given query.
-    """
+    """Plugin to rewrite fields based on a given query."""
+
     def __init__(self):
+        """Parse configuration and register template fields for rewriting."""
         super().__init__()
 
         template = confuse.Sequence({
@@ -63,7 +64,8 @@ class AdvancedRewritePlugin(BeetsPlugin):
             fieldname = rule['field']
             replacement = rule['replacement']
             if fieldname not in Item._fields:
-                raise ui.UserError("invalid field name (%s) in rewriter" % fieldname)
+                raise ui.UserError(
+                        "invalid field name (%s) in rewriter" % fieldname)
             self._log.debug('adding template field {0} → {1}',
                             fieldname, replacement)
             rules[fieldname].append((query, replacement))
