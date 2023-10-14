@@ -197,5 +197,5 @@ match:
     ignore_video_tracks: yes
     track_length_grace: 10
     track_length_max: 30
-    album_disambig_fields: data_source media year country label catalognum albumdisambig albumrelease
+    album_disambig_fields: data_source media year country label catalognum albumdisambig
     singleton_disambig_fields: data_source index track_alt album
