@@ -1184,59 +1184,114 @@ class ShowChangeTest(_common.TestCase):
             ]
         )
 
-    def _show_change(self, items=None, info=None,
+    def _show_change(self, items=None, info=None, color=False,
                      cur_artist='the artist', cur_album='the album',
                      dist=0.1):
         """Return an unicode string representing the changes"""
         items = items or self.items
         info = info or self.info
         mapping = dict(zip(items, info.tracks))
-        config['ui']['color'] = False
-        album_dist = distance(items, info, mapping)
-        album_dist._penalties = {'album': [dist]}
+        config['ui']['color'] = color
+        config['import']['detail'] = True
+        change_dist = distance(items, info, mapping)
+        change_dist._penalties = {'album': [dist], 'artist': [dist]}
         commands.show_change(
             cur_artist,
             cur_album,
-            autotag.AlbumMatch(album_dist, info, mapping, set(), set()),
+            autotag.AlbumMatch(change_dist, info, mapping, set(), set()),
         )
         return self.io.getoutput().lower()
 
     def test_null_change(self):
         msg = self._show_change()
-        self.assertTrue('similarity: 90' in msg)
-        self.assertTrue('tagging:' in msg)
+        self.assertTrue('match (90.0%)' in msg)
+        self.assertTrue('album, artist' in msg)
 
     def test_album_data_change(self):
         msg = self._show_change(cur_artist='another artist',
                                 cur_album='another album')
-        self.assertTrue('correcting tags from:' in msg)
+        self.assertTrue('another artist -> the artist' in msg)
+        self.assertTrue('another album -> the album' in msg)
 
     def test_item_data_change(self):
         self.items[0].title = 'different'
         msg = self._show_change()
-        self.assertTrue('different -> the title' in msg)
+        self.assertTrue('different' in msg and 'the title' in msg)
 
     def test_item_data_change_with_unicode(self):
         self.items[0].title = 'caf\xe9'
         msg = self._show_change()
-        self.assertTrue('caf\xe9 -> the title' in msg)
+        self.assertTrue(u'caf\xe9' in msg and 'the title' in msg)
 
     def test_album_data_change_with_unicode(self):
-        msg = self._show_change(cur_artist='caf\xe9',
-                                cur_album='another album')
-        self.assertTrue('correcting tags from:' in msg)
+        msg = self._show_change(cur_artist=u'caf\xe9',
+                                cur_album=u'another album')
+        self.assertTrue(u'caf\xe9' in msg and 'the artist' in msg)
 
     def test_item_data_change_title_missing(self):
         self.items[0].title = ''
         msg = re.sub(r'  +', ' ', self._show_change())
-        self.assertTrue('file.mp3 -> the title' in msg)
+        self.assertTrue(u'file.mp3' in msg and 'the title' in msg)
 
     def test_item_data_change_title_missing_with_unicode_filename(self):
         self.items[0].title = ''
         self.items[0].path = '/path/to/caf\xe9.mp3'.encode()
         msg = re.sub(r'  +', ' ', self._show_change())
-        self.assertTrue('caf\xe9.mp3 -> the title' in msg or
-                        'caf.mp3 ->' in msg)
+        self.assertTrue(u'caf\xe9.mp3' in msg or
+                        u'caf.mp3' in msg)
+
+    def test_split_into_lines(self):
+        # Test uncolored text
+        txt = ui.split_into_lines("test test test", [5, 5, 5])
+        self.assertEqual(txt, ["test", "test", "test"])
+        # Test multiple colored texts
+        colored_text = "\x1b[31mtest \x1b[39;49;00m" * 3
+        split_txt = ["\x1b[31mtest\x1b[39;49;00m",
+                     "\x1b[31mtest\x1b[39;49;00m",
+                     "\x1b[31mtest\x1b[39;49;00m"]
+        txt = ui.split_into_lines(colored_text, [5, 5, 5])
+        self.assertEqual(txt, split_txt)
+        # Test single color, multi space text
+        colored_text = "\x1b[31m test test test \x1b[39;49;00m"
+        txt = ui.split_into_lines(colored_text, [5, 5, 5])
+        self.assertEqual(txt, split_txt)
+
+    def test_album_data_change_wrap_newline(self):
+        # Patch ui.term_width to force wrapping
+        with patch('beets.ui.commands.ui.term_width', return_value=30):
+            # Test newline layout
+            config['ui']['import']['layout'] = u'newline'
+            long_name = u'another artist with a' + (u' very' * 10) + \
+                        u' long name'
+            msg = self._show_change(cur_artist=long_name,
+                                    cur_album='another album')
+            # _common.log.info("Message:{}".format(msg))
+            self.assertTrue('artist: another artist' in msg)
+            self.assertTrue('  -> the artist' in msg)
+            self.assertFalse('another album -> the album' in msg)
+
+    def test_item_data_change_wrap_column(self):
+        # Patch ui.term_width to force wrapping
+        with patch('beets.ui.commands.ui.term_width', return_value=54):
+            # Test Column layout
+            config['ui']['import']['layout'] = u'column'
+            long_title = u'a track with a' + (u' very' * 10) + \
+                         u' long name'
+            self.items[0].title = long_title
+            msg = self._show_change()
+            self.assertTrue('(#1) a track (1:00) -> (#1) the title (0:00)'
+                            in msg)
+
+    def test_item_data_change_wrap_newline(self):
+        # Patch ui.term_width to force wrapping
+        with patch('beets.ui.commands.ui.term_width', return_value=30):
+            config['ui']['import']['layout'] = u'newline'
+            long_title = u'a track with a' + (u' very' * 10) + \
+                         u' long name'
+            self.items[0].title = long_title
+            msg = self._show_change()
+            self.assertTrue('(#1) a track with' in msg)
+            self.assertTrue('     -> (#1) the title (0:00)' in msg)
 
 
 @patch('beets.library.Item.try_filesize', Mock(return_value=987))
