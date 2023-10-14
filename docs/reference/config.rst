@@ -486,7 +486,13 @@ autotagger matching or distance score calculation (see :ref:`match-config` and
 import
 ~~~~~~
 
-FIXME::
+When importing, beets will read several options to configure the visuals of the
+import dialogue. There are two layouts: ``column`` and ``newline``. The
+indentation of the respective elements of the import UI can also be configured
+to highlight specific sections, in character units e.g. a ``5`` will indent the
+given section by five characters in the terminal.
+
+::
 
     ui:
         import:
