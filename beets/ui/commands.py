@@ -508,7 +508,7 @@ class ChangeRepresentation(object):
             item.length
             and track_info.length
             and abs(item.length - track_info.length)
-            > config["ui"]["length_diff_thresh"].as_number()
+            >= config["ui"]["length_diff_thresh"].as_number()
         ):
             highlight_color = "text_highlight"
             changed = True
