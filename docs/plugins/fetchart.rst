@@ -41,7 +41,10 @@ file. The available options are:
   considered as valid album art candidates. Default: 0.
 - **maxwidth**: A maximum image width to downscale fetched images if they are
   too big. The resize operation reduces image width to at most ``maxwidth``
-  pixels. The height is recomputed so that the aspect ratio is preserved.
+  pixels. The height is recomputed so that the aspect ratio is preserved. See
+  the section on :ref:`cover-art-archive-maxwidth` below for additional
+  information regarding the Cover Art Archive source.
+  Default: 0 (no maximum is enforced).
 - **quality**: The JPEG quality level to use when compressing images (when
   ``maxwidth`` is set). This should be either a number from 1 to 100 or 0 to
   use the default quality. 65–75 is usually a good starting point. The default
@@ -269,7 +272,21 @@ Spotify backend is enabled by default and will update album art if a valid Spoti
 Cover Art URL
 '''''''''''''
 
-The `fetchart` plugin can also use a flexible attribute field ``cover_art_url`` where you can manually specify the image URL to be used as cover art. Any custom plugin can use this field to provide the cover art and ``fetchart`` will use it as a source.
+The `fetchart` plugin can also use a flexible attribute field ``cover_art_url``
+where you can manually specify the image URL to be used as cover art. Any custom
+plugin can use this field to provide the cover art and ``fetchart`` will use it
+as a source.
+
+.. _cover-art-archive-maxwidth:
+
+Cover Art Archive Pre-sized Thumbnails
+--------------------------------------
+
+The CAA provides pre-sized thumbnails of width 250, 500, and 1200 pixels. If you
+set the `maxwidth` option to one of these values, the corresponding image will
+be downloaded, saving `beets` the need to scale down the image. It can also
+speed up the downloading process, as some cover arts can sometimes be very
+large.
 
 Storing the Artwork's Source
 ----------------------------

@@ -131,6 +131,39 @@ class CAAHelper():
     ],
     "release": "https://musicbrainz.org/release/releaseid"
 }"""
+    RESPONSE_RELEASE_WITHOUT_THUMBNAILS = """{
+    "images": [
+      {
+        "approved": false,
+        "back": false,
+        "comment": "GIF",
+        "edit": 12345,
+        "front": true,
+        "id": 12345,
+        "image": "http://coverartarchive.org/release/rid/12345.gif",
+        "types": [
+          "Front"
+        ]
+      },
+      {
+        "approved": false,
+        "back": false,
+        "comment": "",
+        "edit": 12345,
+        "front": false,
+        "id": 12345,
+        "image": "http://coverartarchive.org/release/rid/12345.jpg",
+        "thumbnails": {
+            "large": "http://coverartarchive.org/release/rgid/12345-500.jpg",
+            "small": "http://coverartarchive.org/release/rgid/12345-250.jpg"
+        },
+        "types": [
+          "Front"
+        ]
+      }
+    ],
+    "release": "https://musicbrainz.org/release/releaseid"
+}"""
     RESPONSE_GROUP = """{
         "images": [
           {
@@ -148,6 +181,23 @@ class CAAHelper():
               "large": "http://coverartarchive.org/release/rgid/12345-500.jpg",
               "small": "http://coverartarchive.org/release/rgid/12345-250.jpg"
             },
+            "types": [
+              "Front"
+            ]
+          }
+        ],
+        "release": "https://musicbrainz.org/release/release-id"
+    }"""
+    RESPONSE_GROUP_WITHOUT_THUMBNAILS = """{
+        "images": [
+          {
+            "approved": false,
+            "back": false,
+            "comment": "",
+            "edit": 12345,
+            "front": true,
+            "id": 12345,
+            "image": "http://coverartarchive.org/release/releaseid/12345.jpg",
             "types": [
               "Front"
             ]
@@ -520,6 +570,42 @@ class CoverArtArchiveTest(UseThePlugin, CAAHelper):
         self.assertEqual(len(candidates), 3)
         self.assertEqual(len(responses.calls), 2)
         self.assertEqual(responses.calls[0].request.url, self.RELEASE_URL)
+
+    def test_fetchart_uses_caa_pre_sized_maxwidth_thumbs(self):
+        # CAA provides pre-sized thumbnails of width 250px, 500px, and 1200px
+        # We only test with one of them here
+        maxwidth = 1200
+        self.settings = Settings(maxwidth=maxwidth)
+
+        album = _common.Bag(
+            mb_albumid=self.MBID_RELASE, mb_releasegroupid=self.MBID_GROUP
+        )
+        self.mock_caa_response(self.RELEASE_URL, self.RESPONSE_RELEASE)
+        self.mock_caa_response(self.GROUP_URL, self.RESPONSE_GROUP)
+        candidates = list(self.source.get(album, self.settings, []))
+        self.assertEqual(len(candidates), 3)
+        for candidate in candidates:
+            self.assertTrue(f"-{maxwidth}.jpg" in candidate.url)
+
+    def test_caa_finds_image_if_maxwidth_is_set_and_thumbnails_is_empty(self):
+        # CAA provides pre-sized thumbnails of width 250px, 500px, and 1200px
+        # We only test with one of them here
+        maxwidth = 1200
+        self.settings = Settings(maxwidth=maxwidth)
+
+        album = _common.Bag(
+            mb_albumid=self.MBID_RELASE, mb_releasegroupid=self.MBID_GROUP
+        )
+        self.mock_caa_response(
+            self.RELEASE_URL, self.RESPONSE_RELEASE_WITHOUT_THUMBNAILS
+        )
+        self.mock_caa_response(
+            self.GROUP_URL, self.RESPONSE_GROUP_WITHOUT_THUMBNAILS,
+        )
+        candidates = list(self.source.get(album, self.settings, []))
+        self.assertEqual(len(candidates), 3)
+        for candidate in candidates:
+            self.assertFalse(f"-{maxwidth}.jpg" in candidate.url)
 
 
 class FanartTVTest(UseThePlugin):
