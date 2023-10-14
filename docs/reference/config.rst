@@ -487,12 +487,11 @@ import
 ~~~~~~
 
 When importing, beets will read several options to configure the visuals of the
-import dialogue. There are two layouts: ``column`` and ``newline``. The
-indentation of the respective elements of the import UI can also be configured
-to highlight specific sections, in character units e.g. a ``5`` will indent the
-given section by five characters in the terminal.
-
-::
+import dialogue. There are two layouts controlling how horizontal space and
+line wrapping is dealt with: ``column`` and ``newline``. The indentation of the
+respective elements of the import UI can also be configured. For example
+setting ``5``  for ``match_header`` will indent the very first block of a
+proposed match by five characters in the terminal.::
 
     ui:
         import:
