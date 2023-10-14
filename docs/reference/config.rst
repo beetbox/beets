@@ -477,8 +477,8 @@ source provides. If any tracks differ by at least ``length_diff_thresh``
 seconds, they will be colored with ``text_highlight``. Below this threshold,
 different track lengths are colored with ``text_highlight_minor``.
 ``length_diff_thresh`` does not impact which releases are selected in
-autotagger matching or distance score calculation (see :ref:`match-config` and
-:ref:`colors`)::
+autotagger matching or distance score calculation (see :ref:`match-config`,
+``distance_weights`` and :ref:`colors`)::
 
     ui:
         length_diff_thresh: 10.0
