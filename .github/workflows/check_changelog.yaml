@@ -1,0 +1,29 @@
+name: Verify changelog updated
+
+on: [push, pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Check for Change Log Modification
+      run: |
+        changed_files=$(git diff --name-only HEAD~1..HEAD)
+        
+        changelog_modified=$(echo "$changed_files" | grep '^CHANGELOG.rst$' || true)
+        
+        python_or_rst_modified=$(echo "$changed_files" | grep '.*\.\(rst\|py\)$' || true)
+        
+        if [ -z "$changelog_modified" ] && [ ! -z "$python_or_rst_modified" ]
+        then
+          echo "Error: Changelog not modified while .rst or .py files have been modified"
+          exit 1
+        else
+          echo "Changelog modified or no .rst/.py files have been modified"
+        fi
