@@ -490,16 +490,16 @@ When importing, beets will read several options to configure the visuals of the
 import dialogue. There are two layouts controlling how horizontal space and
 line wrapping is dealt with: ``column`` and ``newline``. The indentation of the
 respective elements of the import UI can also be configured. For example
-setting ``5``  for ``match_header`` will indent the very first block of a
-proposed match by five characters in the terminal.::
+setting ``4``  for ``match_header`` will indent the very first block of a
+proposed match by five characters in the terminal::
 
     ui:
         import:
             indentation:
-                match_header: 2
-                match_details: 2
-                match_tracklist: 5
-            layout: column
+                match_header: 4
+                match_details: 4
+                match_tracklist: 7
+            layout: newline
 
 Importer Options
 ----------------
