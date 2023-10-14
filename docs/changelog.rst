@@ -9,6 +9,12 @@ Changelog goes here! Please add your entry to the bottom of one of the lists bel
 With this release, beets now requires Python 3.7 or later (it removes support
 for Python 3.6).
 
+Major new features:
+
+* The beets importer UI received a major overhaul. Several new configuration
+  options are available for customizing layout and colors: :ref:`ui_options`.
+  :bug:`3721`
+
 New features:
 
 * :ref:`update-cmd`: added ```-e``` flag for excluding fields from being updated.

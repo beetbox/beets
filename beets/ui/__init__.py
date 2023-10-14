@@ -184,6 +184,13 @@ def should_move(move_opt=None):
 
 # Input prompts.
 
+
+def indent(count):
+    """Returns a string with `count` many spaces.
+    """
+    return " " * count
+
+
 def input_(prompt=None):
     """Like `input`, but decodes the result to a Unicode string.
     Raises a UserError if stdin is not available. The prompt is sent to
@@ -267,8 +274,11 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
                                show_letter)
 
         # Insert the highlighted letter back into the word.
+        descr_color = "action_default" if is_default else "action_description"
         capitalized.append(
-            option[:index] + show_letter + option[index + 1:]
+            colorize(descr_color, option[:index])
+            + show_letter
+            + colorize(descr_color, option[index + 1:])
         )
         display_letters.append(found_letter.upper())
 
@@ -301,15 +311,16 @@ def input_options(options, require=False, prompt=None, fallback_prompt=None,
         prompt_part_lengths += [len(s) for s in options]
 
         # Wrap the query text.
-        prompt = ''
+        # Start prompt with U+279C: Heavy Round-Tipped Rightwards Arrow
+        prompt = colorize("action", "\u279C ")
         line_length = 0
         for i, (part, length) in enumerate(zip(prompt_parts,
                                                prompt_part_lengths)):
             # Add punctuation.
             if i == len(prompt_parts) - 1:
-                part += '?'
+                part += colorize("action_description", "?")
             else:
-                part += ','
+                part += colorize("action_description", ",")
             length += 1
 
             # Choose either the current line or the beginning of the next.
@@ -368,10 +379,12 @@ def input_yn(prompt, require=False):
     """Prompts the user for a "yes" or "no" response. The default is
     "yes" unless `require` is `True`, in which case there is no default.
     """
-    sel = input_options(
-        ('y', 'n'), require, prompt, 'Enter Y or N:'
+    # Start prompt with U+279C: Heavy Round-Tipped Rightwards Arrow
+    yesno = colorize("action", "\u279C ") + colorize(
+        "action_description", "Enter Y or N:"
     )
-    return sel == 'y'
+    sel = input_options(("y", "n"), require, prompt, yesno)
+    return sel == "y"
 
 
 def input_select_objects(prompt, objs, rep, prompt_all=None):
@@ -465,51 +478,102 @@ def human_seconds_short(interval):
 # https://bitbucket.org/birkenfeld/pygments-main/src/default/pygments/console.py
 # (pygments is by Tim Hatch, Armin Ronacher, et al.)
 COLOR_ESCAPE = "\x1b["
-DARK_COLORS = {
-    "black": 0,
-    "darkred": 1,
-    "darkgreen": 2,
-    "brown": 3,
-    "darkyellow": 3,
-    "darkblue": 4,
-    "purple": 5,
-    "darkmagenta": 5,
-    "teal": 6,
-    "darkcyan": 6,
-    "lightgray": 7
+LEGACY_COLORS = {
+    "black": ["black"],
+    "darkred": ["red"],
+    "darkgreen": ["green"],
+    "brown": ["yellow"],
+    "darkyellow": ["yellow"],
+    "darkblue": ["blue"],
+    "purple": ["magenta"],
+    "darkmagenta": ["magenta"],
+    "teal": ["cyan"],
+    "darkcyan": ["cyan"],
+    "lightgray": ["white"],
+    "darkgray": ["bold", "black"],
+    "red": ["bold", "red"],
+    "green": ["bold", "green"],
+    "yellow": ["bold", "yellow"],
+    "blue": ["bold", "blue"],
+    "fuchsia": ["bold", "magenta"],
+    "magenta": ["bold", "magenta"],
+    "turquoise": ["bold", "cyan"],
+    "cyan": ["bold", "cyan"],
+    "white": ["bold", "white"],
 }
-LIGHT_COLORS = {
-    "darkgray": 0,
-    "red": 1,
-    "green": 2,
-    "yellow": 3,
-    "blue": 4,
-    "fuchsia": 5,
-    "magenta": 5,
-    "turquoise": 6,
-    "cyan": 6,
-    "white": 7
+# All ANSI Colors.
+ANSI_CODES = {
+    # Styles.
+    "normal": 0,
+    "bold": 1,
+    "faint": 2,
+    # "italic":       3,
+    "underline": 4,
+    # "blink_slow":   5,
+    # "blink_rapid":  6,
+    "inverse": 7,
+    # "conceal":      8,
+    # "crossed_out":  9
+    # Text colors.
+    "black": 30,
+    "red": 31,
+    "green": 32,
+    "yellow": 33,
+    "blue": 34,
+    "magenta": 35,
+    "cyan": 36,
+    "white": 37,
+    # Background colors.
+    "bg_black": 40,
+    "bg_red": 41,
+    "bg_green": 42,
+    "bg_yellow": 43,
+    "bg_blue": 44,
+    "bg_magenta": 45,
+    "bg_cyan": 46,
+    "bg_white": 47,
 }
 RESET_COLOR = COLOR_ESCAPE + "39;49;00m"
 
 # These abstract COLOR_NAMES are lazily mapped on to the actual color in COLORS
 # as they are defined in the configuration files, see function: colorize
-COLOR_NAMES = ['text_success', 'text_warning', 'text_error', 'text_highlight',
-               'text_highlight_minor', 'action_default', 'action']
+COLOR_NAMES = [
+    "text_success",
+    "text_warning",
+    "text_error",
+    "text_highlight",
+    "text_highlight_minor",
+    "action_default",
+    "action",
+    # New Colors
+    "text",
+    "text_faint",
+    "import_path",
+    "import_path_items",
+    "action_description",
+    "added",
+    "removed",
+    "changed",
+    "added_highlight",
+    "removed_highlight",
+    "changed_highlight",
+    "text_diff_added",
+    "text_diff_removed",
+    "text_diff_changed",
+]
 COLORS = None
 
 
 def _colorize(color, text):
     """Returns a string that prints the given text in the given color
-    in a terminal that is ANSI color-aware. The color must be something
-    in DARK_COLORS or LIGHT_COLORS.
+    in a terminal that is ANSI color-aware. The color must be a list of strings
+    from ANSI_CODES.
     """
-    if color in DARK_COLORS:
-        escape = COLOR_ESCAPE + "%im" % (DARK_COLORS[color] + 30)
-    elif color in LIGHT_COLORS:
-        escape = COLOR_ESCAPE + "%i;01m" % (LIGHT_COLORS[color] + 30)
-    else:
-        raise ValueError('no such color %s', color)
+    # Construct escape sequence to be put before the text by iterating
+    # over all "ANSI codes" in `color`.
+    escape = ""
+    for code in color:
+        escape = escape + COLOR_ESCAPE + "%im" % ANSI_CODES[code]
     return escape + text + RESET_COLOR
 
 
@@ -517,44 +581,127 @@ def colorize(color_name, text):
     """Colorize text if colored output is enabled. (Like _colorize but
     conditional.)
     """
-    if not config['ui']['color'] or 'NO_COLOR' in os.environ.keys():
+    if config["ui"]["color"]:
+        global COLORS
+        if not COLORS:
+            # Read all color configurations and set global variable COLORS.
+            COLORS = dict()
+            for name in COLOR_NAMES:
+                # Convert legacy color definitions (strings) into the new
+                # list-based color definitions. Do this by trying to read the
+                # color definition from the configuration as unicode - if this
+                # is successful, the color definition is a legacy definition
+                # and has to be converted.
+                try:
+                    color_def = config["ui"]["colors"][name].get(str)
+                except (confuse.ConfigTypeError, NameError):
+                    # Normal color definition (type: list of unicode).
+                    color_def = config["ui"]["colors"][name].get(list)
+                else:
+                    # Legacy color definition (type: unicode). Convert.
+                    if color_def in LEGACY_COLORS:
+                        color_def = LEGACY_COLORS[color_def]
+                    else:
+                        raise UserError("no such color %s", color_def)
+                for code in color_def:
+                    if code not in ANSI_CODES.keys():
+                        raise ValueError("no such ANSI code %s", code)
+                COLORS[name] = color_def
+        # In case a 3rd party plugin is still passing the actual color ('red')
+        # instead of the abstract color name ('text_error')
+        color = COLORS.get(color_name)
+        if not color:
+            log.debug("Invalid color_name: {0}", color_name)
+            color = color_name
+        return _colorize(color, text)
+    else:
         return text
 
-    global COLORS
-    if not COLORS:
-        COLORS = {name:
-                  config['ui']['colors'][name].as_str()
-                  for name in COLOR_NAMES}
-    # In case a 3rd party plugin is still passing the actual color ('red')
-    # instead of the abstract color name ('text_error')
-    color = COLORS.get(color_name)
-    if not color:
-        log.debug('Invalid color_name: {0}', color_name)
-        color = color_name
-    return _colorize(color, text)
+
+def uncolorize(colored_text):
+    """Remove colors from a string."""
+    # Define a regular expression to match ANSI codes.
+    # See: http://stackoverflow.com/a/2187024/1382707
+    # Explanation of regular expression:
+    #     \x1b     - matches ESC character
+    #     \[       - matches opening square bracket
+    #     [;\d]*   - matches a sequence consisting of one or more digits or
+    #                semicola
+    #     [A-Za-z] - matches a letter
+    ansi_code_regex = re.compile(r"\x1b\[[;\d]*[A-Za-z]", re.VERBOSE)
+    # Strip ANSI codes from `colored_text` using the regular expression.
+    text = ansi_code_regex.sub("", colored_text)
+    return text
 
 
-def _colordiff(a, b, highlight='text_highlight',
-               minor_highlight='text_highlight_minor'):
+def color_split(colored_text, index):
+    ansi_code_regex = re.compile(r"(\x1b\[[;\d]*[A-Za-z])", re.VERBOSE)
+    length = 0
+    pre_split = ""
+    post_split = ""
+    found_color_code = None
+    found_split = False
+    for part in ansi_code_regex.split(colored_text):
+        # Count how many real letters we have passed
+        length += color_len(part)
+        if found_split:
+            post_split += part
+        else:
+            if ansi_code_regex.match(part):
+                # This is a color code
+                if part == RESET_COLOR:
+                    found_color_code = None
+                else:
+                    found_color_code = part
+                pre_split += part
+            else:
+                if index < length:
+                    # Found part with our split in.
+                    split_index = index - (length - color_len(part))
+                    found_split = True
+                    if found_color_code:
+                        pre_split += part[:split_index] + RESET_COLOR
+                        post_split += found_color_code + part[split_index:]
+                    else:
+                        pre_split += part[:split_index]
+                        post_split += part[split_index:]
+                else:
+                    # Not found, add this part to the pre split
+                    pre_split += part
+    return pre_split, post_split
+
+
+def color_len(colored_text):
+    """Measure the length of a string while excluding ANSI codes from the
+    measurement. The standard `len(my_string)` method also counts ANSI codes
+    to the string length, which is counterproductive when layouting a
+    Terminal interface.
+    """
+    # Return the length of the uncolored string.
+    return len(uncolorize(colored_text))
+
+
+def _colordiff(a, b):
     """Given two values, return the same pair of strings except with
     their differences highlighted in the specified color. Strings are
     highlighted intelligently to show differences; other values are
     stringified and highlighted in their entirety.
     """
-    if not isinstance(a, str) \
-       or not isinstance(b, str):
-        # Non-strings: use ordinary equality.
-        a = str(a)
-        b = str(b)
-        if a == b:
-            return a, b
-        else:
-            return colorize(highlight, a), colorize(highlight, b)
-
+    # First, convert paths to readable format
     if isinstance(a, bytes) or isinstance(b, bytes):
         # A path field.
         a = util.displayable_path(a)
         b = util.displayable_path(b)
+
+    if not isinstance(a, str) or not isinstance(b, str):
+        # Non-strings: use ordinary equality.
+        if a == b:
+            return str(a), str(b)
+        else:
+            return (
+                colorize("text_diff_removed", str(a)),
+                colorize("text_diff_added", str(b))
+            )
 
     a_out = []
     b_out = []
@@ -567,31 +714,36 @@ def _colordiff(a, b, highlight='text_highlight',
             b_out.append(b[b_start:b_end])
         elif op == 'insert':
             # Right only.
-            b_out.append(colorize(highlight, b[b_start:b_end]))
+            b_out.append(colorize("text_diff_added",
+                                  b[b_start:b_end]))
         elif op == 'delete':
             # Left only.
-            a_out.append(colorize(highlight, a[a_start:a_end]))
+            a_out.append(colorize("text_diff_removed",
+                                  a[a_start:a_end]))
         elif op == 'replace':
             # Right and left differ. Colorise with second highlight if
             # it's just a case change.
             if a[a_start:a_end].lower() != b[b_start:b_end].lower():
-                color = highlight
+                a_color = "text_diff_removed"
+                b_color = "text_diff_added"
             else:
-                color = minor_highlight
-            a_out.append(colorize(color, a[a_start:a_end]))
-            b_out.append(colorize(color, b[b_start:b_end]))
+                a_color = b_color = "text_highlight_minor"
+            a_out.append(colorize(a_color,
+                                  a[a_start:a_end]))
+            b_out.append(colorize(b_color,
+                                  b[b_start:b_end]))
         else:
             assert False
 
     return ''.join(a_out), ''.join(b_out)
 
 
-def colordiff(a, b, highlight='text_highlight'):
+def colordiff(a, b):
     """Colorize differences between two values if color is enabled.
     (Like _colordiff but conditional.)
     """
     if config['ui']['color']:
-        return _colordiff(a, b, highlight)
+        return _colordiff(a, b)
     else:
         return str(a), str(b)
 
@@ -646,6 +798,335 @@ def term_width():
     except struct.error:
         return fallback
     return width
+
+
+def split_into_lines(string, width_tuple):
+    """Splits string into a list of substrings at whitespace.
+
+    `width_tuple` is a 3-tuple of `(first_width, last_width, middle_width)`.
+    The first substring has a length not longer than `first_width`, the last
+    substring has a length not longer than `last_width`, and all other
+    substrings have a length not longer than `middle_width`.
+    `string` may contain ANSI codes at word borders.
+    """
+    first_width, middle_width, last_width = width_tuple
+    words = []
+    esc_text = re.compile(r"""(?P<pretext>[^\x1b]*)
+                            (?P<esc>(?:\x1b\[[;\d]*[A-Za-z])+)
+                            (?P<text>[^\x1b]+)(?P<reset>\x1b\[39;49;00m)
+                            (?P<posttext>[^\x1b]*)""",
+                          re.VERBOSE)
+    if uncolorize(string) == string:
+        # No colors in string
+        words = string.split()
+    else:
+        # Use a regex to find escapes and the text within them.
+        for m in esc_text.finditer(string):
+            # m contains four groups:
+            # pretext - any text before escape sequence
+            # esc - intitial escape sequence
+            # text - text, no escape sequence, may contain spaces
+            # reset - ASCII colour reset
+            space_before_text = False
+            if m.group("pretext") != "":
+                # Some pretext found, let's handle it
+                # Add any words in the pretext
+                words += m.group("pretext").split()
+                if m.group("pretext")[-1] == " ":
+                    # Pretext ended on a space
+                    space_before_text = True
+                else:
+                    # Pretext ended mid-word, ensure next word
+                    pass
+            else:
+                # pretext empty, treat as if there is a space before
+                space_before_text = True
+            if m.group("text")[0] == " ":
+                # First character of the text is a space
+                space_before_text = True
+            # Now, handle the words in the main text:
+            raw_words = m.group("text").split()
+            if space_before_text:
+                # Colorize each word with pre/post escapes
+                # Reconstruct colored words
+                words += [m.group("esc") + raw_word
+                          + RESET_COLOR for raw_word in raw_words]
+            else:
+                # Pretext stops mid-word
+                if m.group("esc") != RESET_COLOR:
+                    # Add the rest of the current word, with a reset after it
+                    words[-1] += m.group("esc") + raw_words[0] + RESET_COLOR
+                    # Add the subsequent colored words:
+                    words += [m.group("esc") + raw_word
+                              + RESET_COLOR for raw_word in raw_words[1:]]
+                else:
+                    # Caught a mid-word escape sequence
+                    words[-1] += raw_words[0]
+                    words += raw_words[1:]
+            if (m.group("text")[-1] != " " and m.group("posttext") != ""
+               and m.group("posttext")[0] != " "):
+                # reset falls mid-word
+                post_text = m.group("posttext").split()
+                words[-1] += post_text[0]
+                words += post_text[1:]
+            else:
+                # Add any words after escape sequence
+                words += m.group("posttext").split()
+    result = []
+    next_substr = ""
+    # Iterate over all words.
+    previous_fit = False
+    for i in range(len(words)):
+        if i == 0:
+            pot_substr = words[i]
+        else:
+            # (optimistically) add the next word to check the fit
+            pot_substr = " ".join([next_substr, words[i]])
+        # Find out if the pot(ential)_substr fits into the next substring.
+        fits_first = (
+            len(result) == 0 and color_len(pot_substr) <= first_width
+        )
+        fits_middle = (
+            len(result) != 0 and color_len(pot_substr) <= middle_width
+        )
+        if fits_first or fits_middle:
+            # Fitted(!) let's try and add another word before appending
+            next_substr = pot_substr
+            previous_fit = True
+        elif not fits_first and not fits_middle and previous_fit:
+            # Extra word didn't fit, append what we have
+            result.append(next_substr)
+            next_substr = words[i]
+            previous_fit = color_len(next_substr) <= middle_width
+        else:
+            # Didn't fit anywhere
+            if uncolorize(pot_substr) == pot_substr:
+                # Simple uncolored string, append a cropped word
+                if len(result) == 0:
+                    # Crop word by the first_width for the first line
+                    result.append(pot_substr[:first_width])
+                    # add rest of word to next line
+                    next_substr = pot_substr[first_width:]
+                else:
+                    result.append(pot_substr[:middle_width])
+                    next_substr = pot_substr[middle_width:]
+            else:
+                # Colored strings
+                if len(result) == 0:
+                    this_line, next_line = color_split(pot_substr, first_width)
+                    result.append(this_line)
+                    next_substr = next_line
+                else:
+                    this_line, next_line = color_split(pot_substr,
+                                                       middle_width)
+                    result.append(this_line)
+                    next_substr = next_line
+            previous_fit = color_len(next_substr) <= middle_width
+
+    # We finished constructing the substrings, but the last substring
+    # has not yet been added to the result.
+    result.append(next_substr)
+    # Also, the length of the last substring was only checked against
+    # `middle_width`. Append an empty substring as the new last substring if
+    # the last substring is too long.
+    if not color_len(next_substr) <= last_width:
+        result.append('')
+    return result
+
+
+def print_column_layout(
+    indent_str, left, right, separator=" -> ", max_width=term_width()
+):
+    """Print left & right data, with separator inbetween
+    'left' and 'right' have a structure of:
+    {'prefix':u'','contents':u'','suffix':u'','width':0}
+    In a column layout the printing will be:
+    {indent_str}{lhs0}{separator}{rhs0}
+            {lhs1 / padding }{rhs1}
+            ...
+    The first line of each column (i.e. {lhs0} or {rhs0}) is:
+    {prefix}{part of contents}{suffix}
+    With subsequent lines (i.e. {lhs1}, {rhs1} onwards) being the
+    rest of contents, wrapped if the width would be otherwise exceeded.
+    """
+    if right["prefix"] + right["contents"] + right["suffix"] == '':
+        # No right hand information, so we don't need a separator.
+        separator = ""
+    first_line_no_wrap = (
+        indent_str
+        + left["prefix"]
+        + left["contents"]
+        + left["suffix"]
+        + separator
+        + right["prefix"]
+        + right["contents"]
+        + right["suffix"]
+    )
+    if color_len(first_line_no_wrap) < max_width:
+        # Everything fits, print out line.
+        print_(first_line_no_wrap)
+    else:
+        # Wrap into columns
+        if "width" not in left or "width" not in right:
+            # If widths have not been defined, set to share space.
+            left["width"] = (max_width - len(indent_str)
+                             - color_len(separator)) // 2
+            right["width"] = (max_width - len(indent_str)
+                              - color_len(separator)) // 2
+        # On the first line, account for suffix as well as prefix
+        left_width_tuple = (
+            left["width"] - color_len(left["prefix"])
+            - color_len(left["suffix"]),
+            left["width"] - color_len(left["prefix"]),
+            left["width"] - color_len(left["prefix"]),
+        )
+
+        left_split = split_into_lines(left["contents"], left_width_tuple)
+        right_width_tuple = (
+            right["width"] - color_len(right["prefix"])
+            - color_len(right["suffix"]),
+            right["width"] - color_len(right["prefix"]),
+            right["width"] - color_len(right["prefix"]),
+        )
+
+        right_split = split_into_lines(right["contents"], right_width_tuple)
+        max_line_count = max(len(left_split), len(right_split))
+
+        out = ""
+        for i in range(max_line_count):
+            # indentation
+            out += indent_str
+
+            # Prefix or indent_str for line
+            if i == 0:
+                out += left["prefix"]
+            else:
+                out += indent(color_len(left["prefix"]))
+
+            # Line i of left hand side contents.
+            if i < len(left_split):
+                out += left_split[i]
+                left_part_len = color_len(left_split[i])
+            else:
+                left_part_len = 0
+
+            # Padding until end of column.
+            # Note: differs from original
+            # column calcs in not -1 afterwards for space
+            # in track number as that is included in 'prefix'
+            padding = left["width"] - color_len(left["prefix"]) - left_part_len
+
+            # Remove some padding on the first line to display
+            # length
+            if i == 0:
+                padding -= color_len(left["suffix"])
+
+            out += indent(padding)
+
+            if i == 0:
+                out += left["suffix"]
+
+            # Separator between columns.
+            if i == 0:
+                out += separator
+            else:
+                out += indent(color_len(separator))
+
+            # Right prefix, contents, padding, suffix
+            if i == 0:
+                out += right["prefix"]
+            else:
+                out += indent(color_len(right["prefix"]))
+
+            # Line i of right hand side.
+            if i < len(right_split):
+                out += right_split[i]
+                right_part_len = color_len(right_split[i])
+            else:
+                right_part_len = 0
+
+            # Padding until end of column
+            padding = right["width"] - color_len(right["prefix"]) \
+                - right_part_len
+            # Remove some padding on the first line to display
+            # length
+            if i == 0:
+                padding -= color_len(right["suffix"])
+            out += indent(padding)
+            # Length in first line
+            if i == 0:
+                out += right["suffix"]
+
+            # Linebreak, except in the last line.
+            if i < max_line_count - 1:
+                out += "\n"
+
+        # Constructed all of the columns, now print
+        print_(out)
+
+
+def print_newline_layout(
+    indent_str, left, right, separator=" -> ", max_width=term_width()
+):
+    """Prints using a newline separator between left & right if
+    they go over their allocated widths. The datastructures are
+    shared with the column layout. In contrast to the column layout,
+    the prefix and suffix are printed at the beginning and end of
+    the contents. If no wrapping is required (i.e. everything fits) the
+    first line will look exactly the same as the column layout:
+    {indent}{lhs0}{separator}{rhs0}
+    However if this would go over the width given, the layout now becomes:
+    {indent}{lhs0}
+    {indent}{separator}{rhs0}
+    If {lhs0} would go over the maximum width, the subsequent lines are
+    indented a second time for ease of reading.
+    """
+    if right["prefix"] + right["contents"] + right["suffix"] == '':
+        # No right hand information, so we don't need a separator.
+        separator = ""
+    first_line_no_wrap = (
+        indent_str
+        + left["prefix"]
+        + left["contents"]
+        + left["suffix"]
+        + separator
+        + right["prefix"]
+        + right["contents"]
+        + right["suffix"]
+    )
+    if color_len(first_line_no_wrap) < max_width:
+        # Everything fits, print out line.
+        print_(first_line_no_wrap)
+    else:
+        # Newline separation, with wrapping
+        empty_space = max_width - len(indent_str)
+        # On lower lines we will double the indent for clarity
+        left_width_tuple = (
+            empty_space,
+            empty_space - len(indent_str),
+            empty_space - len(indent_str),
+        )
+        left_str = left["prefix"] + left["contents"] + left["suffix"]
+        left_split = split_into_lines(left_str, left_width_tuple)
+        # Repeat calculations for rhs, including separator on first line
+        right_width_tuple = (
+            empty_space - color_len(separator),
+            empty_space - len(indent_str),
+            empty_space - len(indent_str),
+        )
+        right_str = right["prefix"] + right["contents"] + right["suffix"]
+        right_split = split_into_lines(right_str, right_width_tuple)
+        for i, line in enumerate(left_split):
+            if i == 0:
+                print_(indent_str + line)
+            elif line != "":
+                # Ignore empty lines
+                print_(indent_str * 2 + line)
+        for i, line in enumerate(right_split):
+            if i == 0:
+                print_(indent_str + separator + line)
+            elif line != "":
+                print_(indent_str * 2 + line)
 
 
 FLOAT_EPSILON = 0.01
