@@ -61,6 +61,7 @@ following to your configuration::
 
    absubmit
    acousticbrainz
+   advancedrewrite
    albumtypes
    aura
    autobpm
@@ -245,6 +246,9 @@ Path Formats
 
 :doc:`rewrite <rewrite>`
    Substitute values in path formats.
+
+:doc:`advancedrewrite <advancedrewrite>`
+   Substitute field values for items matching a query.
 
 :doc:`substitute <substitute>`
    As an alternative to :doc:`rewrite <rewrite>`, use this plugin. The main
