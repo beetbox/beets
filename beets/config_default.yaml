@@ -97,13 +97,34 @@ ui:
     length_diff_thresh: 10.0
     color: yes
     colors:
-        text_success: green
-        text_warning: yellow
-        text_error: red
-        text_highlight: red
-        text_highlight_minor: lightgray
-        action_default: turquoise
-        action: blue
+        text_success: ['bold', 'green']
+        text_warning: ['bold', 'yellow']
+        text_error: ['bold', 'red']
+        text_highlight: ['bold', 'red']
+        text_highlight_minor: ['white']
+        action_default: ['bold', 'cyan']
+        action: ['bold', 'cyan']
+        # New Colors
+        text: ['normal']
+        text_faint: ['faint']
+        import_path: ['bold', 'blue']
+        import_path_items: ['bold', 'blue']
+        added:   ['green']
+        removed: ['red']
+        changed: ['yellow']
+        added_highlight:   ['bold', 'green']
+        removed_highlight: ['bold', 'red']
+        changed_highlight: ['bold', 'yellow']
+        text_diff_added:   ['bold', 'red']
+        text_diff_removed: ['bold', 'red']
+        text_diff_changed: ['bold', 'red']
+        action_description: ['white']
+    import:
+        indentation:
+            match_header: 2
+            match_details: 2
+            match_tracklist: 5
+        layout: column
 
 format_item: $artist - $album - $title
 format_album: $albumartist - $album
@@ -176,3 +197,5 @@ match:
     ignore_video_tracks: yes
     track_length_grace: 10
     track_length_max: 30
+    album_disambig_fields: data_source media year country label catalognum albumdisambig
+    singleton_disambig_fields: data_source index track_alt album
