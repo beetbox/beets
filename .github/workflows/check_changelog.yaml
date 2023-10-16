@@ -1,6 +1,15 @@
 name: Verify changelog updated
 
-on: [push, pull_request]
+on: 
+  push:
+    paths:
+      - '**.rst'
+      - '**.py'
+  pull_request:
+    paths:
+      - '**.rst'
+      - '**.py'
+
 
 jobs:
   check:
@@ -14,12 +23,7 @@ jobs:
 
     - name: Check for Change Log Modification
       run: |
-        changed_files=$(git diff --name-only HEAD~1..HEAD)
-        
         changelog_modified=$(echo "$changed_files" | grep '^CHANGELOG.rst$' || true)
-        
-        python_or_rst_modified=$(echo "$changed_files" | grep '.*\.\(rst\|py\)$' || true)
-        
         if [ -z "$changelog_modified" ] && [ ! -z "$python_or_rst_modified" ]
         then
           echo "Error: Changelog not modified while .rst or .py files have been modified"
