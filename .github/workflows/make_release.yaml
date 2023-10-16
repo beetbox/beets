@@ -15,14 +15,11 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.x"
-      - name: Install pypa/build
-        run: >-
-          python3 -m
-          pip install
-          build
-          --user
+          python-version: "3.9"
+      - run: pip install build wheel sphinx
       - name: Build a binary wheel and a source tarball
+        env:
+          TZ: UTC
         run: python3 -m build
       - name: Store the distribution packages
         uses: actions/upload-artifact@v3
