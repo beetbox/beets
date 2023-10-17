@@ -17,7 +17,7 @@ import os
 import sys
 import requests
 
-from test.plugin_tests import test_lyrics
+from test.plugins import test_lyrics
 
 
 def mkdir_p(path):
