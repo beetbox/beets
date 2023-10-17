@@ -28,7 +28,7 @@ from beets import config, logging, ui
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
 from beets import art
-from test.plugin_tests.test_art import FetchImageHelper
+from test.plugins.test_art import FetchImageHelper
 
 
 def require_artresizer_compare(test):
