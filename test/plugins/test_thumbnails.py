@@ -137,7 +137,7 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         mock_os.path.exists.assert_called_once_with(syspath(md5_file))
         mock_os.stat.assert_has_calls([call(syspath(md5_file)),
                                        call(syspath(path_to_art))],
-                               any_order=True)
+                                      any_order=True)
 
         mock_resize.assert_called_once_with(12345, path_to_art, md5_file)
         plugin.add_tags.assert_called_once_with(album, path_to_resized_art)
