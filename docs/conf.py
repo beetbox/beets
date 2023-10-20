@@ -60,8 +60,9 @@ man_pages = [
 ]
 
 # Options for Alabaster theme
+html_theme = 'alabaster'
 html_theme_options = {
-    "fixed_sidebar": True
+    "fixed_sidebar": True,
+    "sidebar_collapse": True,  # only expands active chapter in sidebar
 }
-# html_static_path = ['assets']
 html_logo = "assets/beets_logo.png"
