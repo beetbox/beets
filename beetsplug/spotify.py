@@ -171,37 +171,47 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         :return: JSON data for the class:`Response <Response>` object.
         :rtype: dict
         """
-        response = request_type(
-            url,
-            headers={'Authorization': f'Bearer {self.access_token}'},
-            params=params,
-        )
-        if response.status_code != 200:
-            if 'token expired' in response.text:
+        try:
+            response = request_type(
+                url,
+                headers={'Authorization': f'Bearer {self.access_token}'},
+                params=params,
+                timeout=10,
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.ReadTimeout:
+            self._log.error('ReadTimeout.')
+            raise SpotifyAPIError('Request timed out.')
+        except requests.exceptions.RequestException as e:
+            if e.response.status_code == 401:
                 self._log.debug(
-                    '{} access token has expired. Reauthenticating.',
-                    self.data_source,
+                    f'{self.data_source} access token has expired. '
+                    f'Reauthenticating.'
                 )
                 self._authenticate()
                 return self._handle_response(request_type, url, params=params)
-            elif response.status_code == 429:
+            elif e.response.status_code == 404:
+                raise SpotifyAPIError(f'API Error: {e.response.status_code}\n'
+                                      f'URL: {url}\nparams: {params}')
+            elif e.response.status_code == 429:
                 seconds = response.headers.get('Retry-After',
                                                DEFAULT_WAITING_TIME)
-                self._log.debug('Too many API requests. Retrying after {} \
-                    seconds.', seconds)
+                self._log.debug(f'Too many API requests. Retrying after '
+                                f'{seconds} seconds.')
                 time.sleep(int(seconds) + 1)
                 return self._handle_response(request_type, url, params=params)
-            elif response.status_code == 404:
-                raise SpotifyAPIError("API Error: {}\nURL: {}\nparams: {}".
-                                      format(response.status_code, url,
-                                             params))
-            else:
-                raise ui.UserError(
-                    '{} API error:\n{}\nURL:\n{}\nparams:\n{}'.format(
-                        self.data_source, response.text, url, params
-                    )
+            elif e.response.status_code == 503:
+                self._log.error('Service Unavailable.')
+                raise SpotifyAPIError('Service Unavailable.')
+            elif e.response is not None:
+                raise SpotifyAPIError(
+                    f'{self.data_source} API error:\n{e.response.text}\n'
+                    f'URL:\n{url}\nparams:\n{params}'
                 )
-        return response.json()
+            else:
+                self._log.error(f'Request failed. Error: {e}')
+                raise SpotifyAPIError('Request failed.')
 
     def album_for_id(self, album_id):
         """Fetch an album by its Spotify ID or URL and return an
@@ -656,8 +666,8 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         track_data = self._handle_response(
             requests.get, self.track_url + track_id
         )
-        self._log.debug('track_data: {}', track_data['popularity'])
-        return track_data['popularity']
+        self._log.debug('track_data: {}', track_data.get('popularity'))
+        return track_data.get('popularity')
 
     def track_audio_features(self, track_id=None):
         """Fetch track audio features by its Spotify ID."""
