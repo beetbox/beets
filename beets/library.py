@@ -1518,9 +1518,12 @@ def parse_query_parts(parts, model_cls):
 
     case_insensitive = beets.config["sort_case_insensitive"].get(bool)
 
-    return dbcore.parse_sorted_query(
+    query, sort = dbcore.parse_sorted_query(
         model_cls, parts, prefixes, case_insensitive
     )
+    log.debug("Parsed query: {!r}", query)
+    log.debug("Parsed sort: {!r}", sort)
+    return query, sort
 
 
 def parse_query_string(s, model_cls):
