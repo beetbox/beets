@@ -135,9 +135,6 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         plugin.make_cover_thumbnail(album, 12345, thumbnail_dir)
 
         mock_os.path.exists.assert_called_once_with(syspath(md5_file))
-        mock_os.stat.has_calls([call(syspath(md5_file)),
-                                call(syspath(path_to_art))],
-                               any_order=True)
 
         mock_resize.assert_called_once_with(12345, path_to_art, md5_file)
         plugin.add_tags.assert_called_once_with(album, path_to_resized_art)
@@ -230,8 +227,9 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         make_cover.reset_mock()
         get_size.return_value = 500, 500
         plugin.process_album(album)
-        make_cover.has_calls([call(album, 128, NORMAL_DIR),
-                              call(album, 256, LARGE_DIR)], any_order=True)
+        make_cover.assert_has_calls([call(album, 128, NORMAL_DIR),
+                                     call(album, 256, LARGE_DIR)],
+                                    any_order=True)
 
     @patch('beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok')
     @patch('beetsplug.thumbnails.decargs')
@@ -246,8 +244,8 @@ class ThumbnailsTest(unittest.TestCase, TestHelper):
         lib.albums.return_value = [album, album2]
         plugin.process_query(lib, Mock(), None)
         lib.albums.assert_called_once_with(mock_decargs.return_value)
-        plugin.process_album.has_calls([call(album), call(album2)],
-                                       any_order=True)
+        plugin.process_album.assert_has_calls([call(album), call(album2)],
+                                              any_order=True)
 
     @patch('beetsplug.thumbnails.BaseDirectory')
     def test_thumbnail_file_name(self, mock_basedir):
