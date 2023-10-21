@@ -59,10 +59,14 @@ man_pages = [
     ),
 ]
 
-# Options for Alabaster theme
-html_theme = 'alabaster'
+# Options for rtd theme
+html_theme = 'sphinx_rtd_theme'
 html_theme_options = {
-    "fixed_sidebar": True,
-    "sidebar_collapse": True,  # only expands active chapter in sidebar
+    'sticky_navigation': True,
+    'collapse_navigation': True,
+    "style_nav_header_background": "#ffffff",
+    'logo_only': False,
+    'display_version': True,
 }
+html_title = "beets"
 html_logo = "assets/beets_logo.png"
