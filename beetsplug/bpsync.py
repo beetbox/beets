@@ -15,8 +15,8 @@
 """Update library's tags using Beatport.
 """
 
-from beets.plugins import BeetsPlugin, apply_item_changes
 from beets import autotag, library, ui, util
+from beets.plugins import BeetsPlugin, apply_item_changes
 
 from .beatport import BeatportPlugin
 
@@ -28,33 +28,33 @@ class BPSyncPlugin(BeetsPlugin):
         self.beatport_plugin.setup()
 
     def commands(self):
-        cmd = ui.Subcommand('bpsync', help='update metadata from Beatport')
+        cmd = ui.Subcommand("bpsync", help="update metadata from Beatport")
         cmd.parser.add_option(
-            '-p',
-            '--pretend',
-            action='store_true',
-            help='show all changes but do nothing',
+            "-p",
+            "--pretend",
+            action="store_true",
+            help="show all changes but do nothing",
         )
         cmd.parser.add_option(
-            '-m',
-            '--move',
-            action='store_true',
-            dest='move',
+            "-m",
+            "--move",
+            action="store_true",
+            dest="move",
             help="move files in the library directory",
         )
         cmd.parser.add_option(
-            '-M',
-            '--nomove',
-            action='store_false',
-            dest='move',
+            "-M",
+            "--nomove",
+            action="store_false",
+            dest="move",
             help="don't move files in library",
         )
         cmd.parser.add_option(
-            '-W',
-            '--nowrite',
-            action='store_false',
+            "-W",
+            "--nowrite",
+            action="store_false",
             default=None,
-            dest='write',
+            dest="write",
             help="don't write updated metadata to files",
         )
         cmd.parser.add_format_option()
@@ -62,8 +62,7 @@ class BPSyncPlugin(BeetsPlugin):
         return [cmd]
 
     def func(self, lib, opts, args):
-        """Command handler for the bpsync function.
-        """
+        """Command handler for the bpsync function."""
         move = ui.should_move(opts.move)
         pretend = opts.pretend
         write = ui.should_write(opts.write)
@@ -76,16 +75,16 @@ class BPSyncPlugin(BeetsPlugin):
         """Retrieve and apply info from the autotagger for items matched by
         query.
         """
-        for item in lib.items(query + ['singleton:true']):
+        for item in lib.items(query + ["singleton:true"]):
             if not item.mb_trackid:
                 self._log.info(
-                    'Skipping singleton with no mb_trackid: {}', item
+                    "Skipping singleton with no mb_trackid: {}", item
                 )
                 continue
 
             if not self.is_beatport_track(item):
                 self._log.info(
-                    'Skipping non-{} singleton: {}',
+                    "Skipping non-{} singleton: {}",
                     self.beatport_plugin.data_source,
                     item,
                 )
@@ -100,27 +99,27 @@ class BPSyncPlugin(BeetsPlugin):
     @staticmethod
     def is_beatport_track(item):
         return (
-            item.get('data_source') == BeatportPlugin.data_source
+            item.get("data_source") == BeatportPlugin.data_source
             and item.mb_trackid.isnumeric()
         )
 
     def get_album_tracks(self, album):
         if not album.mb_albumid:
-            self._log.info('Skipping album with no mb_albumid: {}', album)
+            self._log.info("Skipping album with no mb_albumid: {}", album)
             return False
         if not album.mb_albumid.isnumeric():
             self._log.info(
-                'Skipping album with invalid {} ID: {}',
+                "Skipping album with invalid {} ID: {}",
                 self.beatport_plugin.data_source,
                 album,
             )
             return False
         items = list(album.items())
-        if album.get('data_source') == self.beatport_plugin.data_source:
+        if album.get("data_source") == self.beatport_plugin.data_source:
             return items
         if not all(self.is_beatport_track(item) for item in items):
             self._log.info(
-                'Skipping non-{} release: {}',
+                "Skipping non-{} release: {}",
                 self.beatport_plugin.data_source,
                 album,
             )
@@ -142,7 +141,7 @@ class BPSyncPlugin(BeetsPlugin):
             albuminfo = self.beatport_plugin.album_for_id(album.mb_albumid)
             if not albuminfo:
                 self._log.info(
-                    'Release ID {} not found for album {}',
+                    "Release ID {} not found for album {}",
                     album.mb_albumid,
                     album,
                 )
@@ -159,7 +158,7 @@ class BPSyncPlugin(BeetsPlugin):
                 for track_id, item in library_trackid_to_item.items()
             }
 
-            self._log.info('applying changes to {}', album)
+            self._log.info("applying changes to {}", album)
             with lib.transaction():
                 autotag.apply_metadata(albuminfo, item_to_trackinfo)
                 changed = False
@@ -182,5 +181,5 @@ class BPSyncPlugin(BeetsPlugin):
 
                 # Move album art (and any inconsistent items).
                 if move and lib.directory in util.ancestry(items[0].path):
-                    self._log.debug('moving album {}', album)
+                    self._log.debug("moving album {}", album)
                     album.move()

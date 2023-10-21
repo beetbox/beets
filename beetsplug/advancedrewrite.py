@@ -14,13 +14,14 @@
 
 """Plugin to rewrite fields based on a given query."""
 
-from collections import defaultdict
 import shlex
+from collections import defaultdict
 
 import confuse
+
 from beets import ui
 from beets.dbcore import AndQuery, query_from_strings
-from beets.library import Item, Album
+from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
 
 
@@ -31,6 +32,7 @@ def rewriter(field, rules):
     with the given rewriting rules.
     ``rules`` must be a list of (query, replacement) pairs.
     """
+
     def fieldfunc(item):
         value = item._values_fixed[field]
         for query, replacement in rules:
@@ -50,29 +52,37 @@ class AdvancedRewritePlugin(BeetsPlugin):
         """Parse configuration and register template fields for rewriting."""
         super().__init__()
 
-        template = confuse.Sequence({
-            'match': str,
-            'field': str,
-            'replacement': str,
-        })
+        template = confuse.Sequence(
+            {
+                "match": str,
+                "field": str,
+                "replacement": str,
+            }
+        )
 
         # Gather all the rewrite rules for each field.
         rules = defaultdict(list)
         for rule in self.config.get(template):
-            query = query_from_strings(AndQuery, Item, prefixes={},
-                                       query_parts=shlex.split(rule['match']))
-            fieldname = rule['field']
-            replacement = rule['replacement']
+            query = query_from_strings(
+                AndQuery,
+                Item,
+                prefixes={},
+                query_parts=shlex.split(rule["match"]),
+            )
+            fieldname = rule["field"]
+            replacement = rule["replacement"]
             if fieldname not in Item._fields:
                 raise ui.UserError(
-                        "invalid field name (%s) in rewriter" % fieldname)
-            self._log.debug('adding template field {0} → {1}',
-                            fieldname, replacement)
+                    "invalid field name (%s) in rewriter" % fieldname
+                )
+            self._log.debug(
+                "adding template field {0} → {1}", fieldname, replacement
+            )
             rules[fieldname].append((query, replacement))
-            if fieldname == 'artist':
+            if fieldname == "artist":
                 # Special case for the artist field: apply the same
                 # rewrite for "albumartist" as well.
-                rules['albumartist'].append((query, replacement))
+                rules["albumartist"].append((query, replacement))
 
         # Replace each template field with the new rewriter function.
         for fieldname, fieldrules in rules.items():

@@ -14,7 +14,6 @@
 """Tests for the 'limit' plugin."""
 
 import unittest
-
 from test.helper import TestHelper
 
 
@@ -25,15 +24,15 @@ class LimitPluginTest(unittest.TestCase, TestHelper):
     """
 
     def setUp(self):
-
         self.setup_beets()
         self.load_plugins("limit")
 
         # we'll create an even number of tracks in the library
         self.num_test_items = 10
         assert self.num_test_items % 2 == 0
-        for item_no, item in \
-                enumerate(self.add_item_fixtures(count=self.num_test_items)):
+        for item_no, item in enumerate(
+            self.add_item_fixtures(count=self.num_test_items)
+        ):
             item.track = item_no + 1
             item.store()
 
@@ -68,13 +67,15 @@ class LimitPluginTest(unittest.TestCase, TestHelper):
     def test_lslimit_head_invariant(self):
         """Returns the expected number with `lslimit --head` and a filter."""
         result = self.run_with_output(
-            "lslimit", "--head", str(self.num_limit), self.track_tail_range)
+            "lslimit", "--head", str(self.num_limit), self.track_tail_range
+        )
         self.assertEqual(result.count("\n"), self.num_limit)
 
     def test_lslimit_tail_invariant(self):
         """Returns the expected number with `lslimit --tail` and a filter."""
         result = self.run_with_output(
-            "lslimit", "--tail", str(self.num_limit), self.track_head_range)
+            "lslimit", "--tail", str(self.num_limit), self.track_head_range
+        )
         self.assertEqual(result.count("\n"), self.num_limit)
 
     def test_prefix(self):
@@ -101,5 +102,5 @@ def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")
