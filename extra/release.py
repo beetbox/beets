@@ -117,16 +117,11 @@ def bump_version(version):
         with open(filename, "w") as f:
             f.write("".join(out_lines))
 
-    # Generate bits to insert into changelog.
-    header_line = f"{version} (in development)"
-    header = "\n\n" + header_line + "\n" + "-" * len(header_line) + "\n\n"
-    header += "Changelog goes here!\n"
-
     # Insert into the right place.
     with open(CHANGELOG) as f:
         contents = f.read()
     location = contents.find("\n\n")  # First blank line.
-    contents = contents[:location] + header + contents[location:]
+    contents = contents[:location] + contents[location:]
 
     # Write back.
     with open(CHANGELOG, "w") as f:
@@ -158,7 +153,7 @@ def get_latest_changelog():
 
             elif started:
                 lines.append(line)
-    return "".join(lines).strip()
+    return "".join(lines[2:]).strip()
 
 
 def rst2md(text):
