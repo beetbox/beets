@@ -321,9 +321,13 @@ class ListenersTest(unittest.TestCase, TestHelper):
                          [d.dummy, d2.dummy])
 
     @patch('beets.plugins.find_plugins')
-    @patch('beets.plugins.inspect')
-    def test_events_called(self, mock_inspect, mock_find_plugins):
-        mock_inspect.getargspec.args.return_value = None
+    @patch('inspect.getfullargspec')
+    def test_events_called(self, mock_gfa, mock_find_plugins):
+        mock_gfa.return_value = Mock(
+            args=(),
+            varargs='args',
+            varkw='kwargs',
+        )
 
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):
