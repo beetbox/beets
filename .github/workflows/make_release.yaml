@@ -21,13 +21,7 @@ jobs:
     - name: Run version script
       id: script
       run: |
-          python extra/release.py "${{ inputs.version }}" >> changelog.txt
-    - name: Store the changelog
-      uses: actions/upload-artifact@v3
-      with:
-        name: changelog
-        path: changelog.txt
-    - run: rm changelog.txt
+          python extra/release.py "${{ inputs.version }}"
     - uses: EndBug/add-and-commit@v9
       name: Commit the changes
       with:
@@ -69,17 +63,12 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
-      - name: Download the changelog
-        uses: actions/download-artifact@v3
-        with:
-          name: changelog
-          path: changelog.txt
       - name: Create a GitHub release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.tag_version.outputs.new_tag }}
           name: Release ${{ steps.tag_version.outputs.new_tag }}
-          bodyFile: ./changelog.txt
+          body: "Check [here](https://beets.readthedocs.io/en/stable/changelog.html) for the latest changes."
           artifacts: dist/*
 
   publish_to_pypi:
