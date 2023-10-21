@@ -16,49 +16,60 @@
 """
 
 
-from beets.plugins import BeetsPlugin
-from beets.plugins import send as send_event
-from beets import ui
-from beets.util import (mkdirall, normpath, sanitize_path, syspath,
-                        bytestring_path, path_as_posix, displayable_path)
-from beets.library import Item, Album, parse_query_string
-from beets.dbcore import OrQuery
-from beets.dbcore.query import MultipleSort, ParsingError
 import os
 from urllib.request import pathname2url
 
+from beets import ui
+from beets.dbcore import OrQuery
+from beets.dbcore.query import MultipleSort, ParsingError
+from beets.library import Album, Item, parse_query_string
+from beets.plugins import BeetsPlugin
+from beets.plugins import send as send_event
+from beets.util import (
+    bytestring_path,
+    displayable_path,
+    mkdirall,
+    normpath,
+    path_as_posix,
+    sanitize_path,
+    syspath,
+)
+
 
 class SmartPlaylistPlugin(BeetsPlugin):
-
     def __init__(self):
         super().__init__()
-        self.config.add({
-            'relative_to': None,
-            'playlist_dir': '.',
-            'auto': True,
-            'playlists': [],
-            'forward_slash': False,
-            'prefix': '',
-            'urlencode': False,
-            'pretend_paths': False,
-        })
+        self.config.add(
+            {
+                "relative_to": None,
+                "playlist_dir": ".",
+                "auto": True,
+                "playlists": [],
+                "forward_slash": False,
+                "prefix": "",
+                "urlencode": False,
+                "pretend_paths": False,
+            }
+        )
 
-        self.config['prefix'].redact = True  # May contain username/password.
+        self.config["prefix"].redact = True  # May contain username/password.
         self._matched_playlists = None
         self._unmatched_playlists = None
 
-        if self.config['auto']:
-            self.register_listener('database_change', self.db_change)
+        if self.config["auto"]:
+            self.register_listener("database_change", self.db_change)
 
     def commands(self):
         spl_update = ui.Subcommand(
-            'splupdate',
-            help='update the smart playlists. Playlist names may be '
-            'passed as arguments.'
+            "splupdate",
+            help="update the smart playlists. Playlist names may be "
+            "passed as arguments.",
         )
         spl_update.parser.add_option(
-            '-p', '--pretend', action='store_true',
-            help="display query results but don't write playlist files."
+            "-p",
+            "--pretend",
+            action="store_true",
+            help="display query results but don't write playlist files.",
         )
         spl_update.func = self.update_cmd
         return [spl_update]
@@ -71,13 +82,16 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 if not a.endswith(".m3u"):
                     args.add(f"{a}.m3u")
 
-            playlists = {(name, q, a_q)
-                         for name, q, a_q in self._unmatched_playlists
-                         if name in args}
+            playlists = {
+                (name, q, a_q)
+                for name, q, a_q in self._unmatched_playlists
+                if name in args
+            }
             if not playlists:
                 raise ui.UserError(
-                    'No playlist matching any of {} found'.format(
-                        [name for name, _, _ in self._unmatched_playlists])
+                    "No playlist matching any of {} found".format(
+                        [name for name, _, _ in self._unmatched_playlists]
+                    )
                 )
 
             self._matched_playlists = playlists
@@ -105,15 +119,14 @@ class SmartPlaylistPlugin(BeetsPlugin):
         self._unmatched_playlists = set()
         self._matched_playlists = set()
 
-        for playlist in self.config['playlists'].get(list):
-            if 'name' not in playlist:
+        for playlist in self.config["playlists"].get(list):
+            if "name" not in playlist:
                 self._log.warning("playlist configuration is missing name")
                 continue
 
-            playlist_data = (playlist['name'],)
+            playlist_data = (playlist["name"],)
             try:
-                for key, model_cls in (('query', Item),
-                                       ('album_query', Album)):
+                for key, model_cls in (("query", Item), ("album_query", Album)):
                     qs = playlist.get(key)
                     if qs is None:
                         query_and_sort = None, None
@@ -123,8 +136,9 @@ class SmartPlaylistPlugin(BeetsPlugin):
                         query_and_sort = parse_query_string(qs[0], model_cls)
                     else:
                         # multiple queries and sorts
-                        queries, sorts = zip(*(parse_query_string(q, model_cls)
-                                               for q in qs))
+                        queries, sorts = zip(
+                            *(parse_query_string(q, model_cls) for q in qs)
+                        )
                         query = OrQuery(queries)
                         final_sorts = []
                         for s in sorts:
@@ -136,7 +150,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
                         if not final_sorts:
                             sort = None
                         elif len(final_sorts) == 1:
-                            sort, = final_sorts
+                            (sort,) = final_sorts
                         else:
                             sort = MultipleSort(final_sorts)
                         query_and_sort = query, sort
@@ -144,8 +158,9 @@ class SmartPlaylistPlugin(BeetsPlugin):
                     playlist_data += (query_and_sort,)
 
             except ParsingError as exc:
-                self._log.warning("invalid query in playlist {}: {}",
-                                  playlist['name'], exc)
+                self._log.warning(
+                    "invalid query in playlist {}: {}", playlist["name"], exc
+                )
                 continue
 
             self._unmatched_playlists.add(playlist_data)
@@ -164,24 +179,26 @@ class SmartPlaylistPlugin(BeetsPlugin):
         for playlist in self._unmatched_playlists:
             n, (q, _), (a_q, _) = playlist
             if self.matches(model, q, a_q):
-                self._log.debug(
-                    "{0} will be updated because of {1}", n, model)
+                self._log.debug("{0} will be updated because of {1}", n, model)
                 self._matched_playlists.add(playlist)
-                self.register_listener('cli_exit', self.update_playlists)
+                self.register_listener("cli_exit", self.update_playlists)
 
         self._unmatched_playlists -= self._matched_playlists
 
     def update_playlists(self, lib, pretend=False):
         if pretend:
-            self._log.info("Showing query results for {0} smart playlists...",
-                           len(self._matched_playlists))
+            self._log.info(
+                "Showing query results for {0} smart playlists...",
+                len(self._matched_playlists),
+            )
         else:
-            self._log.info("Updating {0} smart playlists...",
-                           len(self._matched_playlists))
+            self._log.info(
+                "Updating {0} smart playlists...", len(self._matched_playlists)
+            )
 
-        playlist_dir = self.config['playlist_dir'].as_filename()
+        playlist_dir = self.config["playlist_dir"].as_filename()
         playlist_dir = bytestring_path(playlist_dir)
-        relative_to = self.config['relative_to'].get()
+        relative_to = self.config["relative_to"].get()
         if relative_to:
             relative_to = normpath(relative_to)
 
@@ -191,7 +208,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
         for playlist in self._matched_playlists:
             name, (query, q_sort), (album_query, a_q_sort) = playlist
             if pretend:
-                self._log.info('Results for playlist {}:', name)
+                self._log.info("Results for playlist {}:", name)
             else:
                 self._log.info("Creating playlist {0}", name)
             items = []
@@ -214,31 +231,35 @@ class SmartPlaylistPlugin(BeetsPlugin):
                     item_path = os.path.relpath(item.path, relative_to)
                 if item_path not in m3us[m3u_name]:
                     m3us[m3u_name].append(item_path)
-                    if pretend and self.config['pretend_paths']:
+                    if pretend and self.config["pretend_paths"]:
                         print(displayable_path(item_path))
                     elif pretend:
                         print(item)
 
         if not pretend:
-            prefix = bytestring_path(self.config['prefix'].as_str())
+            prefix = bytestring_path(self.config["prefix"].as_str())
             # Write all of the accumulated track lists to files.
             for m3u in m3us:
-                m3u_path = normpath(os.path.join(playlist_dir,
-                                    bytestring_path(m3u)))
+                m3u_path = normpath(
+                    os.path.join(playlist_dir, bytestring_path(m3u))
+                )
                 mkdirall(m3u_path)
-                with open(syspath(m3u_path), 'wb') as f:
+                with open(syspath(m3u_path), "wb") as f:
                     for path in m3us[m3u]:
-                        if self.config['forward_slash'].get():
+                        if self.config["forward_slash"].get():
                             path = path_as_posix(path)
-                        if self.config['urlencode']:
+                        if self.config["urlencode"]:
                             path = bytestring_path(pathname2url(path))
-                        f.write(prefix + path + b'\n')
+                        f.write(prefix + path + b"\n")
             # Send an event when playlists were updated.
             send_event("smartplaylist_update")
 
         if pretend:
-            self._log.info("Displayed results for {0} playlists",
-                           len(self._matched_playlists))
+            self._log.info(
+                "Displayed results for {0} playlists",
+                len(self._matched_playlists),
+            )
         else:
-            self._log.info("{0} playlists updated",
-                           len(self._matched_playlists))
+            self._log.info(
+                "{0} playlists updated", len(self._matched_playlists)
+            )
