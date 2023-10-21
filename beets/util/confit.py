@@ -13,9 +13,10 @@
 # included in all copies or substantial portions of the Software.
 
 
+import warnings
+
 import confuse
 
-import warnings
 warnings.warn(
     "beets.util.confit is deprecated; use confuse instead",
     # Show the location of the `import confit` statement as the warning's
@@ -26,7 +27,7 @@ warnings.warn(
 
 # Import everything from the confuse module into this module.
 for key, value in confuse.__dict__.items():
-    if key not in ['__name__']:
+    if key not in ["__name__"]:
         globals()[key] = value
 
 

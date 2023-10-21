@@ -19,18 +19,18 @@ import re
 # Spotify IDs consist of 22 alphanumeric characters
 # (zero-left-padded base62 representation of randomly generated UUID4)
 spotify_id_regex = {
-    'pattern': r'(^|open\.spotify\.com/{}/)([0-9A-Za-z]{{22}})',
-    'match_group': 2,
+    "pattern": r"(^|open\.spotify\.com/{}/)([0-9A-Za-z]{{22}})",
+    "match_group": 2,
 }
 
 deezer_id_regex = {
-    'pattern': r'(^|deezer\.com/)([a-z]*/)?({}/)?(\d+)',
-    'match_group': 4,
+    "pattern": r"(^|deezer\.com/)([a-z]*/)?({}/)?(\d+)",
+    "match_group": 4,
 }
 
 beatport_id_regex = {
-    'pattern': r'(^|beatport\.com/release/.+/)(\d+)$',
-    'match_group': 2,
+    "pattern": r"(^|beatport\.com/release/.+/)(\d+)$",
+    "match_group": 2,
 }
 
 # A note on Bandcamp: There is no such thing as a Bandcamp album or artist ID,
@@ -54,12 +54,12 @@ def extract_discogs_id_regex(album_id):
     # Regex has been tested here https://regex101.com/r/TOu7kw/1
 
     for pattern in [
-            r'^\[?r?(?P<id>\d+)\]?$',
-            r'discogs\.com/release/(?P<id>\d+)-?',
-            r'discogs\.com/[^/]+/release/(?P<id>\d+)',
+        r"^\[?r?(?P<id>\d+)\]?$",
+        r"discogs\.com/release/(?P<id>\d+)-?",
+        r"discogs\.com/[^/]+/release/(?P<id>\d+)",
     ]:
         match = re.search(pattern, album_id)
         if match:
-            return int(match.group('id'))
+            return int(match.group("id"))
 
     return None

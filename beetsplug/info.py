@@ -18,10 +18,11 @@
 
 import os
 
-from beets.plugins import BeetsPlugin
-from beets import ui
 import mediafile
+
+from beets import ui
 from beets.library import Item
+from beets.plugins import BeetsPlugin
 from beets.util import displayable_path, normpath, syspath
 
 
@@ -41,23 +42,23 @@ def tag_data(lib, args, album=False):
 
 def tag_fields():
     fields = set(mediafile.MediaFile.readable_fields())
-    fields.add('art')
+    fields.add("art")
     return fields
 
 
 def tag_data_emitter(path):
     def emitter(included_keys):
-        if included_keys == '*':
+        if included_keys == "*":
             fields = tag_fields()
         else:
             fields = included_keys
-        if 'images' in fields:
+        if "images" in fields:
             # We can't serialize the image data.
-            fields.remove('images')
+            fields.remove("images")
         mf = mediafile.MediaFile(syspath(path))
         tags = {}
         for field in fields:
-            if field == 'art':
+            if field == "art":
                 tags[field] = mf.art is not None
             else:
                 tags[field] = getattr(mf, field, None)
@@ -66,6 +67,7 @@ def tag_data_emitter(path):
         item = Item.from_path(syspath(path))
 
         return tags, item
+
     return emitter
 
 
@@ -79,6 +81,7 @@ def library_data_emitter(item):
         data = dict(item.formatted(included_keys=included_keys))
 
         return data, item
+
     return emitter
 
 
@@ -87,7 +90,7 @@ def update_summary(summary, tags):
         if key not in summary:
             summary[key] = value
         elif summary[key] != value:
-            summary[key] = '[various]'
+            summary[key] = "[various]"
     return summary
 
 
@@ -108,7 +111,7 @@ def print_data(data, item=None, fmt=None):
     formatted = {}
     for key, value in data.items():
         if isinstance(value, list):
-            formatted[key] = '; '.join(value)
+            formatted[key] = "; ".join(value)
         if value is not None:
             formatted[key] = value
 
@@ -116,7 +119,7 @@ def print_data(data, item=None, fmt=None):
         return
 
     maxwidth = max(len(key) for key in formatted)
-    lineformat = f'{{0:>{maxwidth}}}: {{1}}'
+    lineformat = f"{{0:>{maxwidth}}}: {{1}}"
 
     if path:
         ui.print_(displayable_path(path))
@@ -124,13 +127,12 @@ def print_data(data, item=None, fmt=None):
     for field in sorted(formatted):
         value = formatted[field]
         if isinstance(value, list):
-            value = '; '.join(value)
+            value = "; ".join(value)
         ui.print_(lineformat.format(field, value))
 
 
 def print_data_keys(data, item=None):
-    """Print only the keys (field names) for an item.
-    """
+    """Print only the keys (field names) for an item."""
     path = displayable_path(item.path) if item else None
     formatted = []
     for key, value in data.items():
@@ -139,7 +141,7 @@ def print_data_keys(data, item=None):
     if len(formatted) == 0:
         return
 
-    line_format = '{0}{{0}}'.format(' ' * 4)
+    line_format = "{0}{{0}}".format(" " * 4)
     if path:
         ui.print_(displayable_path(path))
 
@@ -148,32 +150,42 @@ def print_data_keys(data, item=None):
 
 
 class InfoPlugin(BeetsPlugin):
-
     def commands(self):
-        cmd = ui.Subcommand('info', help='show file metadata')
+        cmd = ui.Subcommand("info", help="show file metadata")
         cmd.func = self.run
         cmd.parser.add_option(
-            '-l', '--library', action='store_true',
-            help='show library fields instead of tags',
+            "-l",
+            "--library",
+            action="store_true",
+            help="show library fields instead of tags",
         )
         cmd.parser.add_option(
-            '-a', '--album', action='store_true',
+            "-a",
+            "--album",
+            action="store_true",
             help='show album fields instead of tracks (implies "--library")',
         )
         cmd.parser.add_option(
-            '-s', '--summarize', action='store_true',
-            help='summarize the tags of all files',
+            "-s",
+            "--summarize",
+            action="store_true",
+            help="summarize the tags of all files",
         )
         cmd.parser.add_option(
-            '-i', '--include-keys', default=[],
-            action='append', dest='included_keys',
-            help='comma separated list of keys to show',
+            "-i",
+            "--include-keys",
+            default=[],
+            action="append",
+            dest="included_keys",
+            help="comma separated list of keys to show",
         )
         cmd.parser.add_option(
-            '-k', '--keys-only', action='store_true',
-            help='show only the keys',
+            "-k",
+            "--keys-only",
+            action="store_true",
+            help="show only the keys",
         )
-        cmd.parser.add_format_option(target='item')
+        cmd.parser.add_format_option(target="item")
         return [cmd]
 
     def run(self, lib, opts, args):
@@ -197,20 +209,21 @@ class InfoPlugin(BeetsPlugin):
 
         included_keys = []
         for keys in opts.included_keys:
-            included_keys.extend(keys.split(','))
+            included_keys.extend(keys.split(","))
         # Drop path even if user provides it multiple times
-        included_keys = [k for k in included_keys if k != 'path']
+        included_keys = [k for k in included_keys if k != "path"]
 
         first = True
         summary = {}
         for data_emitter in data_collector(
-                lib, ui.decargs(args),
-                album=opts.album,
+            lib,
+            ui.decargs(args),
+            album=opts.album,
         ):
             try:
-                data, item = data_emitter(included_keys or '*')
+                data, item = data_emitter(included_keys or "*")
             except (mediafile.UnreadableFileError, OSError) as ex:
-                self._log.error('cannot read file: {0}', ex)
+                self._log.error("cannot read file: {0}", ex)
                 continue
 
             if opts.summarize:

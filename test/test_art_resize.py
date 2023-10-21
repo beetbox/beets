@@ -15,12 +15,12 @@
 """Tests for image resizing based on filesize."""
 
 
-import unittest
-from unittest.mock import patch
 import os
-
+import unittest
 from test import _common
 from test.helper import TestHelper
+from unittest.mock import patch
+
 from beets.util import command_output, syspath
 from beets.util.artresizer import IMBackend, PILBackend
 
@@ -35,9 +35,9 @@ class DummyIMBackend(IMBackend):
         """Init a dummy backend class for mocked ImageMagick tests."""
         self.version = (7, 0, 0)
         self.legacy = False
-        self.convert_cmd = ['magick']
-        self.identify_cmd = ['magick', 'identify']
-        self.compare_cmd = ['magick', 'compare']
+        self.convert_cmd = ["magick"]
+        self.identify_cmd = ["magick", "identify"]
+        self.compare_cmd = ["magick", "compare"]
 
 
 class DummyPILBackend(PILBackend):
@@ -83,8 +83,9 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         )
         self.assertExists(im_a)
         # target size was achieved
-        self.assertLess(os.stat(syspath(im_a)).st_size,
-                        os.stat(syspath(im_95_qual)).st_size)
+        self.assertLess(
+            os.stat(syspath(im_a)).st_size, os.stat(syspath(im_95_qual)).st_size
+        )
 
         # Attempt with lower initial quality
         im_75_qual = backend.resize(
@@ -103,8 +104,9 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         )
         self.assertExists(im_b)
         # Check high (initial) quality still gives a smaller filesize
-        self.assertLess(os.stat(syspath(im_b)).st_size,
-                        os.stat(syspath(im_75_qual)).st_size)
+        self.assertLess(
+            os.stat(syspath(im_b)).st_size, os.stat(syspath(im_75_qual)).st_size
+        )
 
     @unittest.skipUnless(PILBackend.available(), "PIL not available")
     def test_pil_file_resize(self):
@@ -125,8 +127,9 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         """
         path = PILBackend().deinterlace(self.IMG_225x225)
         from PIL import Image
+
         with Image.open(path) as img:
-            self.assertFalse('progression' in img.info)
+            self.assertFalse("progression" in img.info)
 
     @unittest.skipUnless(IMBackend.available(), "ImageMagick not available")
     def test_im_file_deinterlace(self):
@@ -138,12 +141,14 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         im = IMBackend()
         path = im.deinterlace(self.IMG_225x225)
         cmd = im.identify_cmd + [
-            '-format', '%[interlace]', syspath(path, prefix=False),
+            "-format",
+            "%[interlace]",
+            syspath(path, prefix=False),
         ]
         out = command_output(cmd).stdout
-        self.assertTrue(out == b'None')
+        self.assertTrue(out == b"None")
 
-    @patch('beets.util.artresizer.util')
+    @patch("beets.util.artresizer.util")
     def test_write_metadata_im(self, mock_util):
         """Test writing image metadata."""
         metadata = {"a": "A", "b": "B"}

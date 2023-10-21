@@ -14,73 +14,74 @@
 
 
 import unittest
+from test.helper import TestHelper, has_program
+
 from mediafile import MediaFile
 
 from beets import config
-from beetsplug.replaygain import (FatalGstreamerPluginReplayGainError,
-                                  GStreamerBackend)
-from test.helper import TestHelper, has_program
+from beetsplug.replaygain import (
+    FatalGstreamerPluginReplayGainError,
+    GStreamerBackend,
+)
 
 try:
     import gi
-    gi.require_version('Gst', '1.0')
+
+    gi.require_version("Gst", "1.0")
     GST_AVAILABLE = True
 except (ImportError, ValueError):
     GST_AVAILABLE = False
 
-if any(has_program(cmd, ['-v']) for cmd in ['mp3gain', 'aacgain']):
+if any(has_program(cmd, ["-v"]) for cmd in ["mp3gain", "aacgain"]):
     GAIN_PROG_AVAILABLE = True
 else:
     GAIN_PROG_AVAILABLE = False
 
-FFMPEG_AVAILABLE = has_program('ffmpeg', ['-version'])
+FFMPEG_AVAILABLE = has_program("ffmpeg", ["-version"])
 
 
 def reset_replaygain(item):
-    item['rg_track_peak'] = None
-    item['rg_track_gain'] = None
-    item['rg_album_gain'] = None
-    item['rg_album_gain'] = None
-    item['r128_track_gain'] = None
-    item['r128_album_gain'] = None
+    item["rg_track_peak"] = None
+    item["rg_track_gain"] = None
+    item["rg_album_gain"] = None
+    item["rg_album_gain"] = None
+    item["r128_track_gain"] = None
+    item["r128_album_gain"] = None
     item.write()
     item.store()
 
 
-class GstBackendMixin():
-    backend = 'gstreamer'
+class GstBackendMixin:
+    backend = "gstreamer"
     has_r128_support = True
 
     def test_backend(self):
-        """Check whether the backend actually has all required functionality.
-        """
+        """Check whether the backend actually has all required functionality."""
         try:
             # Check if required plugins can be loaded by instantiating a
             # GStreamerBackend (via its .__init__).
-            config['replaygain']['targetlevel'] = 89
-            GStreamerBackend(config['replaygain'], None)
+            config["replaygain"]["targetlevel"] = 89
+            GStreamerBackend(config["replaygain"], None)
         except FatalGstreamerPluginReplayGainError as e:
             # Skip the test if plugins could not be loaded.
             self.skipTest(str(e))
 
 
-class CmdBackendMixin():
-    backend = 'command'
+class CmdBackendMixin:
+    backend = "command"
     has_r128_support = False
 
     def test_backend(self):
-        """Check whether the backend actually has all required functionality.
-        """
+        """Check whether the backend actually has all required functionality."""
         pass
 
 
-class FfmpegBackendMixin():
-    backend = 'ffmpeg'
+class FfmpegBackendMixin:
+    backend = "ffmpeg"
     has_r128_support = True
 
     def test_backend(self):
-        """Check whether the backend actually has all required functionality.
-        """
+        """Check whether the backend actually has all required functionality."""
         pass
 
 
@@ -92,10 +93,10 @@ class ReplayGainCliTestBase(TestHelper):
         self.test_backend()
 
         self.setup_beets(disk=True)
-        self.config['replaygain']['backend'] = self.backend
+        self.config["replaygain"]["backend"] = self.backend
 
         try:
-            self.load_plugins('replaygain')
+            self.load_plugins("replaygain")
         except Exception:
             self.teardown_beets()
             self.unload_plugins()
@@ -122,22 +123,26 @@ class ReplayGainCliTestBase(TestHelper):
             self.assertIsNone(mediafile.rg_track_peak)
             self.assertIsNone(mediafile.rg_track_gain)
 
-        self.run_command('replaygain')
+        self.run_command("replaygain")
 
         # Skip the test if rg_track_peak and rg_track gain is None, assuming
         # that it could only happen if the decoder plugins are missing.
-        if all(i.rg_track_peak is None and i.rg_track_gain is None
-               for i in self.lib.items()):
-            self.skipTest('decoder plugins could not be loaded.')
+        if all(
+            i.rg_track_peak is None and i.rg_track_gain is None
+            for i in self.lib.items()
+        ):
+            self.skipTest("decoder plugins could not be loaded.")
 
         for item in self.lib.items():
             self.assertIsNotNone(item.rg_track_peak)
             self.assertIsNotNone(item.rg_track_gain)
             mediafile = MediaFile(item.path)
             self.assertAlmostEqual(
-                mediafile.rg_track_peak, item.rg_track_peak, places=6)
+                mediafile.rg_track_peak, item.rg_track_peak, places=6
+            )
             self.assertAlmostEqual(
-                mediafile.rg_track_gain, item.rg_track_gain, places=2)
+                mediafile.rg_track_gain, item.rg_track_gain, places=2
+            )
 
     def test_cli_skips_calculated_tracks(self):
         album_rg = self._add_album(1)
@@ -147,7 +152,7 @@ class ReplayGainCliTestBase(TestHelper):
             album_r128 = self._add_album(1, ext="opus")
             item_r128 = album_r128.items()[0]
 
-        self.run_command('replaygain')
+        self.run_command("replaygain")
 
         item_rg.load()
         self.assertIsNotNone(item_rg.rg_track_gain)
@@ -170,7 +175,7 @@ class ReplayGainCliTestBase(TestHelper):
             item_r128.store()
             r128_track_gain = item_r128.r128_track_gain
 
-        self.run_command('replaygain')
+        self.run_command("replaygain")
 
         item_rg.load()
         self.assertEqual(item_rg.rg_track_gain, rg_track_gain)
@@ -181,13 +186,15 @@ class ReplayGainCliTestBase(TestHelper):
             self.assertEqual(item_r128.r128_track_gain, r128_track_gain)
 
     def test_cli_does_not_skip_wrong_tag_type(self):
-        """Check that items that have tags of the wrong type won't be skipped.
-        """
+        """Check that items that have tags of the wrong type won't be skipped."""
         if not self.has_r128_support:
             # This test is a lot less interesting if the backend cannot write
             # both tag types.
-            self.skipTest("r128 tags for opus not supported on backend {}"
-                          .format(self.backend))
+            self.skipTest(
+                "r128 tags for opus not supported on backend {}".format(
+                    self.backend
+                )
+            )
 
         album_rg = self._add_album(1)
         item_rg = album_rg.items()[0]
@@ -202,7 +209,7 @@ class ReplayGainCliTestBase(TestHelper):
         item_r128.rg_track_peak = 42.0
         item_r128.store()
 
-        self.run_command('replaygain')
+        self.run_command("replaygain")
         item_rg.load()
         item_r128.load()
 
@@ -224,7 +231,7 @@ class ReplayGainCliTestBase(TestHelper):
             self.assertIsNone(mediafile.rg_album_peak)
             self.assertIsNone(mediafile.rg_album_gain)
 
-        self.run_command('replaygain', '-a')
+        self.run_command("replaygain", "-a")
 
         peaks = []
         gains = []
@@ -242,12 +249,15 @@ class ReplayGainCliTestBase(TestHelper):
 
     def test_cli_writes_only_r128_tags(self):
         if not self.has_r128_support:
-            self.skipTest("r128 tags for opus not supported on backend {}"
-                          .format(self.backend))
+            self.skipTest(
+                "r128 tags for opus not supported on backend {}".format(
+                    self.backend
+                )
+            )
 
         album = self._add_album(2, ext="opus")
 
-        self.run_command('replaygain', '-a')
+        self.run_command("replaygain", "-a")
 
         for item in album.items():
             mediafile = MediaFile(item.path)
@@ -263,8 +273,8 @@ class ReplayGainCliTestBase(TestHelper):
         item = album.items()[0]
 
         def analyse(target_level):
-            self.config['replaygain']['targetlevel'] = target_level
-            self.run_command('replaygain', '-f')
+            self.config["replaygain"]["targetlevel"] = target_level
+            self.run_command("replaygain", "-f")
             item.load()
             return item.rg_track_gain
 
@@ -275,15 +285,18 @@ class ReplayGainCliTestBase(TestHelper):
 
     def test_r128_targetlevel_has_effect(self):
         if not self.has_r128_support:
-            self.skipTest("r128 tags for opus not supported on backend {}"
-                          .format(self.backend))
+            self.skipTest(
+                "r128 tags for opus not supported on backend {}".format(
+                    self.backend
+                )
+            )
 
         album = self._add_album(1, ext="opus")
         item = album.items()[0]
 
         def analyse(target_level):
-            self.config['replaygain']['r128_targetlevel'] = target_level
-            self.run_command('replaygain', '-f')
+            self.config["replaygain"]["r128_targetlevel"] = target_level
+            self.run_command("replaygain", "-f")
             item.load()
             return item.r128_track_gain
 
@@ -295,8 +308,8 @@ class ReplayGainCliTestBase(TestHelper):
     def test_per_disc(self):
         # Use the per_disc option and add a little more concurrency.
         album = self._add_album(track_count=4, disc_count=3)
-        self.config['replaygain']['per_disc'] = True
-        self.run_command('replaygain', '-a')
+        self.config["replaygain"]["per_disc"] = True
+        self.run_command("replaygain", "-a")
 
         # FIXME: Add fixtures with known track/album gain (within a suitable
         # tolerance) so that we can actually check per-disc operation here.
@@ -305,27 +318,31 @@ class ReplayGainCliTestBase(TestHelper):
             self.assertIsNotNone(item.rg_album_gain)
 
 
-@unittest.skipIf(not GST_AVAILABLE, 'gstreamer cannot be found')
-class ReplayGainGstCliTest(ReplayGainCliTestBase, unittest.TestCase,
-                           GstBackendMixin):
+@unittest.skipIf(not GST_AVAILABLE, "gstreamer cannot be found")
+class ReplayGainGstCliTest(
+    ReplayGainCliTestBase, unittest.TestCase, GstBackendMixin
+):
     FNAME = "full"  # file contains only silence
 
 
-@unittest.skipIf(not GAIN_PROG_AVAILABLE, 'no *gain command found')
-class ReplayGainCmdCliTest(ReplayGainCliTestBase, unittest.TestCase,
-                           CmdBackendMixin):
+@unittest.skipIf(not GAIN_PROG_AVAILABLE, "no *gain command found")
+class ReplayGainCmdCliTest(
+    ReplayGainCliTestBase, unittest.TestCase, CmdBackendMixin
+):
     FNAME = "full"  # file contains only silence
 
 
-@unittest.skipIf(not FFMPEG_AVAILABLE, 'ffmpeg cannot be found')
-class ReplayGainFfmpegCliTest(ReplayGainCliTestBase, unittest.TestCase,
-                              FfmpegBackendMixin):
+@unittest.skipIf(not FFMPEG_AVAILABLE, "ffmpeg cannot be found")
+class ReplayGainFfmpegCliTest(
+    ReplayGainCliTestBase, unittest.TestCase, FfmpegBackendMixin
+):
     FNAME = "full"  # file contains only silence
 
 
-@unittest.skipIf(not FFMPEG_AVAILABLE, 'ffmpeg cannot be found')
-class ReplayGainFfmpegNoiseCliTest(ReplayGainCliTestBase, unittest.TestCase,
-                                   FfmpegBackendMixin):
+@unittest.skipIf(not FFMPEG_AVAILABLE, "ffmpeg cannot be found")
+class ReplayGainFfmpegNoiseCliTest(
+    ReplayGainCliTestBase, unittest.TestCase, FfmpegBackendMixin
+):
     FNAME = "whitenoise"
 
 
@@ -337,11 +354,11 @@ class ImportTest(TestHelper):
         self.test_backend()
 
         self.setup_beets(disk=True)
-        self.config['threaded'] = self.threaded
-        self.config['replaygain']['backend'] = self.backend
+        self.config["threaded"] = self.threaded
+        self.config["replaygain"]["backend"] = self.backend
 
         try:
-            self.load_plugins('replaygain')
+            self.load_plugins("replaygain")
         except Exception:
             self.teardown_beets()
             self.unload_plugins()
@@ -362,27 +379,27 @@ class ImportTest(TestHelper):
             self.assertIsNotNone(item.rg_album_gain)
 
 
-@unittest.skipIf(not GST_AVAILABLE, 'gstreamer cannot be found')
-class ReplayGainGstImportTest(ImportTest, unittest.TestCase,
-                              GstBackendMixin):
+@unittest.skipIf(not GST_AVAILABLE, "gstreamer cannot be found")
+class ReplayGainGstImportTest(ImportTest, unittest.TestCase, GstBackendMixin):
     pass
 
 
-@unittest.skipIf(not GAIN_PROG_AVAILABLE, 'no *gain command found')
-class ReplayGainCmdImportTest(ImportTest, unittest.TestCase,
-                              CmdBackendMixin):
+@unittest.skipIf(not GAIN_PROG_AVAILABLE, "no *gain command found")
+class ReplayGainCmdImportTest(ImportTest, unittest.TestCase, CmdBackendMixin):
     pass
 
 
-@unittest.skipIf(not FFMPEG_AVAILABLE, 'ffmpeg cannot be found')
-class ReplayGainFfmpegImportTest(ImportTest, unittest.TestCase,
-                                 FfmpegBackendMixin):
+@unittest.skipIf(not FFMPEG_AVAILABLE, "ffmpeg cannot be found")
+class ReplayGainFfmpegImportTest(
+    ImportTest, unittest.TestCase, FfmpegBackendMixin
+):
     pass
 
 
-@unittest.skipIf(not FFMPEG_AVAILABLE, 'ffmpeg cannot be found')
-class ReplayGainFfmpegThreadedImportTest(ImportTest, unittest.TestCase,
-                                         FfmpegBackendMixin):
+@unittest.skipIf(not FFMPEG_AVAILABLE, "ffmpeg cannot be found")
+class ReplayGainFfmpegThreadedImportTest(
+    ImportTest, unittest.TestCase, FfmpegBackendMixin
+):
     threaded = True
 
 
@@ -390,5 +407,5 @@ def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")

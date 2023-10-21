@@ -33,11 +33,11 @@ in place of any single coroutine.
 
 
 import queue
-from threading import Thread, Lock
 import sys
+from threading import Lock, Thread
 
-BUBBLE = '__PIPELINE_BUBBLE__'
-POISON = '__PIPELINE_POISON__'
+BUBBLE = "__PIPELINE_BUBBLE__"
+POISON = "__PIPELINE_POISON__"
 
 DEFAULT_QUEUE_SIZE = 16
 
@@ -48,6 +48,7 @@ def _invalidate_queue(q, val=None, sync=True):
     which defaults to None. `sync` controls whether a lock is
     required (because it's not reentrant!).
     """
+
     def _qsize(len=len):
         return 1
 
@@ -168,6 +169,7 @@ def stage(func):
         while True:
             task = yield task
             task = func(*(args + (task,)))
+
     return coro
 
 
@@ -191,6 +193,7 @@ def mutator_stage(func):
         while True:
             task = yield task
             func(*(args + (task,)))
+
     return coro
 
 
@@ -218,20 +221,18 @@ class PipelineThread(Thread):
         self.exc_info = None
 
     def abort(self):
-        """Shut down the thread at the next chance possible.
-        """
+        """Shut down the thread at the next chance possible."""
         with self.abort_lock:
             self.abort_flag = True
 
             # Ensure that we are not blocking on a queue read or write.
-            if hasattr(self, 'in_queue'):
+            if hasattr(self, "in_queue"):
                 _invalidate_queue(self.in_queue, POISON)
-            if hasattr(self, 'out_queue'):
+            if hasattr(self, "out_queue"):
                 _invalidate_queue(self.out_queue, POISON)
 
     def abort_all(self, exc_info):
-        """Abort all other threads in the system for an exception.
-        """
+        """Abort all other threads in the system for an exception."""
         self.exc_info = exc_info
         for thread in self.all_threads:
             thread.abort()
@@ -373,7 +374,7 @@ class Pipeline:
         be at least two stages.
         """
         if len(stages) < 2:
-            raise ValueError('pipeline must have at least two stages')
+            raise ValueError("pipeline must have at least two stages")
         self.stages = []
         for stage in stages:
             if isinstance(stage, (list, tuple)):
@@ -405,15 +406,15 @@ class Pipeline:
         # Middle stages.
         for i in range(1, queue_count):
             for coro in self.stages[i]:
-                threads.append(MiddlePipelineThread(
-                    coro, queues[i - 1], queues[i], threads
-                ))
+                threads.append(
+                    MiddlePipelineThread(
+                        coro, queues[i - 1], queues[i], threads
+                    )
+                )
 
         # Last stage.
         for coro in self.stages[-1]:
-            threads.append(
-                LastPipelineThread(coro, queues[-1], threads)
-            )
+            threads.append(LastPipelineThread(coro, queues[-1], threads))
 
         # Start threads.
         for thread in threads:
@@ -472,21 +473,21 @@ class Pipeline:
 
 
 # Smoke test.
-if __name__ == '__main__':
+if __name__ == "__main__":
     import time
 
     # Test a normally-terminating pipeline both in sequence and
     # in parallel.
     def produce():
         for i in range(5):
-            print('generating %i' % i)
+            print("generating %i" % i)
             time.sleep(1)
             yield i
 
     def work():
         num = yield
         while True:
-            print('processing %i' % num)
+            print("processing %i" % num)
             time.sleep(2)
             num = yield num * 2
 
@@ -494,7 +495,7 @@ if __name__ == '__main__':
         while True:
             num = yield
             time.sleep(1)
-            print('received %i' % num)
+            print("received %i" % num)
 
     ts_start = time.time()
     Pipeline([produce(), work(), consume()]).run_sequential()
@@ -503,22 +504,22 @@ if __name__ == '__main__':
     ts_par = time.time()
     Pipeline([produce(), (work(), work()), consume()]).run_parallel()
     ts_end = time.time()
-    print('Sequential time:', ts_seq - ts_start)
-    print('Parallel time:', ts_par - ts_seq)
-    print('Multiply-parallel time:', ts_end - ts_par)
+    print("Sequential time:", ts_seq - ts_start)
+    print("Parallel time:", ts_par - ts_seq)
+    print("Multiply-parallel time:", ts_end - ts_par)
     print()
 
     # Test a pipeline that raises an exception.
     def exc_produce():
         for i in range(10):
-            print('generating %i' % i)
+            print("generating %i" % i)
             time.sleep(1)
             yield i
 
     def exc_work():
         num = yield
         while True:
-            print('processing %i' % num)
+            print("processing %i" % num)
             time.sleep(3)
             if num == 3:
                 raise Exception()
@@ -527,6 +528,6 @@ if __name__ == '__main__':
     def exc_consume():
         while True:
             num = yield
-            print('received %i' % num)
+            print("received %i" % num)
 
     Pipeline([exc_produce(), exc_work(), exc_consume()]).run_parallel(1)
