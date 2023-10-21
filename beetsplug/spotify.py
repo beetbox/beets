@@ -196,17 +196,16 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 raise SpotifyAPIError(f'API Error: {e.response.status_code}\n'
                                       f'URL: {url}\nparams: {params}')
             elif e.response.status_code == 429:
-                if retry_count < max_retries:
-                    seconds = response.headers.get('Retry-After',
-                                                   DEFAULT_WAITING_TIME)
-                    self._log.debug(f'Too many API requests. Retrying after '
-                                    f'{seconds} seconds.')
-                    time.sleep(int(seconds) + 1)
-                    return self._handle_response(request_type, url,
-                                                 params=params,
-                                                 retry_count=retry_count + 1)
-                else:
+                if retry_count >= max_retries:
                     raise SpotifyAPIError('Maximum retries reached.')
+                seconds = response.headers.get('Retry-After',
+                                               DEFAULT_WAITING_TIME)
+                self._log.debug(f'Too many API requests. Retrying after '
+                                f'{seconds} seconds.')
+                time.sleep(int(seconds) + 1)
+                return self._handle_response(request_type, url,
+                                             params=params,
+                                             retry_count=retry_count + 1)
             elif e.response.status_code == 503:
                 self._log.error('Service Unavailable.')
                 raise SpotifyAPIError('Service Unavailable.')
