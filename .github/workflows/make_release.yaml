@@ -8,8 +8,34 @@ on:
         required: true
 
 jobs:
+  increment_version:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install pandoc
+      run: sudo apt update && sudo apt install pandoc -y
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.9"
+    - name: Run version script
+      id: script
+      run: |
+          python extra/release.py "${{ inputs.version }}" >> changelog.txt
+    - name: Store the changelog
+      uses: actions/upload-artifact@v3
+      with:
+        name: changelog
+        path: changelog.txt
+    - run: rm changelog.txt
+    - uses: EndBug/add-and-commit@v9
+      name: Commit the changes
+      with:
+        message: 'Increment version numbers to ${{ inputs.version }}'
+        
   build:
     runs-on: ubuntu-latest
+    needs: increment_version
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
@@ -43,13 +69,18 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
+      - name: Download the changelog
+        uses: actions/download-artifact@v3
+        with:
+          name: changelog
+          path: changelog.txt
       - name: Create a GitHub release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.tag_version.outputs.new_tag }}
           name: Release ${{ steps.tag_version.outputs.new_tag }}
-          body: ${{ steps.tag_version.outputs.changelog }}
-          artifacts: dist/
+          bodyFile: ./changelog.txt
+          artifacts: dist/*
 
   publish_to_pypi:
     runs-on: ubuntu-latest
