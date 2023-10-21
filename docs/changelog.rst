@@ -142,7 +142,7 @@ New features:
 
 Bug fixes:
 
-* Fix retry-logic for Spotify plugin.
+* :doc:`/plugins/spotify`: Add a limit of 3 retries, instead of retrying endlessly when the API is not available.
 * Fix a crash when the Spotify API timeouts or does not return a `Retry-After` interval.
   :bug:`4942`
 * :doc:`/plugins/scrub`: Fixed the import behavior where scrubbed database tags
