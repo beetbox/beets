@@ -59,14 +59,13 @@ man_pages = [
     ),
 ]
 
-# Options for rtd theme
-html_theme = 'sphinx_rtd_theme'
+# Options for pydata theme
+html_theme = 'pydata_sphinx_theme'
 html_theme_options = {
-    'sticky_navigation': True,
     'collapse_navigation': True,
-    "style_nav_header_background": "#ffffff",
-    'logo_only': False,
-    'display_version': True,
+    "logo": {
+        "text": "beets",
+    },
 }
 html_title = "beets"
 html_logo = "assets/beets_logo.png"
