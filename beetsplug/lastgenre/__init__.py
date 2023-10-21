@@ -21,18 +21,15 @@ and has been edited to remove some questionable entries.
 The scraper script used is available here:
 https://gist.github.com/1241307
 """
-import pylast
 import codecs
 import os
-import yaml
 import traceback
 
-from beets import plugins
-from beets import ui
-from beets import config
-from beets.util import normpath, plurality
-from beets import library
+import pylast
+import yaml
 
+from beets import config, library, plugins, ui
+from beets.util import normpath, plurality
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
 
@@ -78,6 +75,7 @@ def find_parents(candidate, branches):
     the further parent.
     """
     for branch in branches:
+        branch = branch[0].split(' - ')
         try:
             idx = branch.index(candidate.lower())
             return list(reversed(branch[:idx + 1]))
@@ -95,6 +93,7 @@ C14N_TREE = os.path.join(os.path.dirname(__file__), 'genres-tree.yaml')
 class LastGenrePlugin(plugins.BeetsPlugin):
     def __init__(self):
         super().__init__()
+        self.orig_genre = None
 
         self.config.add({
             'whitelist': True,
@@ -132,7 +131,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     line = line.decode('utf-8').strip().lower()
                     if line and not line.startswith('#'):
                         self.whitelist.add(line)
-
         # Read the genres tree for canonicalization if enabled.
         self.c14n_branches = []
         c14n_filename = self.config['canonical'].get()
@@ -152,6 +150,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             with codecs.open(c14n_filename, 'r', encoding='utf-8') as f:
                 genres_tree = yaml.safe_load(f)
             flatten_tree(genres_tree, [], self.c14n_branches)
+        print(self.c14n_branches)
 
     @property
     def sources(self):
@@ -191,7 +190,41 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
         if not tags:
             return None
-
+        print(f"self.orig_genre_pre: {self.orig_genre}")
+        # split self.orig_genre into list using the separator
+        if self.orig_genre is None:
+            self.orig_genre = ''
+        else:
+            try:
+                self.orig_genre = [
+                    genre.lower() for genre in self.orig_genre.split(
+                        self.config['separator'].as_str()
+                    )
+                ]
+            except AttributeError:
+                self.orig_genre = [
+                    genre.lower() for genre in self.orig_genre
+                ]
+        print(f"new tags: {tags}")
+        # This part is only to see what genres (or their variants) are being
+        # used. We can then use this information to clean the tags in the
+        # genre-trees.yaml file.
+        all_genre_fn = self.config['all_genres'].get()
+        if all_genre_fn:
+            all_genre_fn = normpath(all_genre_fn)
+            with open(all_genre_fn, 'r+') as f:
+                lines = f.readlines()
+                # remove the \n from the lines
+                lines = [line.strip() for line in lines]
+                # find tags that are not in the list
+                new_tags = [tag for tag in tags if tag not in lines]
+                new_tags = deduplicate(new_tags)
+                new_tags.sort()
+                # write new tags to the file in a new line
+                for tag in new_tags:
+                    f.write(tag + "\n")
+        if self.orig_genre is not None:
+            tags = self.orig_genre + tags
         count = self.config['count'].get(int)
         if self.canonicalize:
             # Extend the list to consider tags parents in the c14n tree
@@ -204,24 +237,29 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                                if self._is_allowed(x)]
                 else:
                     parents = [find_parents(tag, self.c14n_branches)[-1]]
-
+                self._log.debug('Canonicalizing {0} to {1}', tag, parents)
                 tags_all += parents
+                tagcount = len(tags_all)
                 # Stop if we have enough tags already, unless we need to find
                 # the most specific tag (instead of the most popular).
-                if (not self.config['prefer_specific'] and
-                        len(tags_all) >= count):
+                if not self.config['prefer_specific'] and tagcount >= count:
                     break
             tags = tags_all
-
         tags = deduplicate(tags)
+        print(f"tags post-dedup: {tags}")
 
         # Sort the tags by specificity.
         if self.config['prefer_specific']:
             tags = self._sort_by_depth(tags)
+        print(f"tags post-sort: {tags}")
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
+        for tag in tags:
+            if not self._is_allowed(tag):
+                tags.remove(tag)
         tags = [self._format_tag(x) for x in tags if self._is_allowed(x)]
+        print(f"tags post-allowed: {tags}")
 
         return self.config['separator'].as_str().join(
             tags[:self.config['count'].get(int)]
@@ -398,10 +436,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             if opts.album:
                 # Fetch genres for whole albums
                 for album in lib.albums(ui.decargs(args)):
+                    print(f"Processing album {album.album} ({album.year})")
+                    self.orig_genre = album.genre
                     album.genre, src = self._get_genre(album)
-                    self._log.info('genre for album {0} ({1}): {0.genre}',
-                                   album, src)
-                    album.store()
+                    print(f"Final genre: {album.genre}")
+                    self._log.debug('genre for album {0} ({1}): {0.genre}',
+                                    album, src)
+                    # This will be uncommented when I'm sure it works
+                    # album.store()
 
                     for item in album.items():
                         # If we're using track-level sources, also look up each
@@ -412,7 +454,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                             self._log.info(
                                 'genre for track {0} ({1}): {0.genre}',
                                 item, src)
-
                         if write:
                             item.try_write()
             else:
@@ -484,3 +525,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         res = [el.item.get_name().lower() for el in res]
 
         return res
+
+    def _discogs_tags_for(self, obj):
+        from beetsplug.discogs import DiscogsPlugin
+        d = DiscogsPlugin().discogs_client
+        print(f"d: {d}")
