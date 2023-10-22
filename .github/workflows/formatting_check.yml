@@ -6,7 +6,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install dependencies
-      - uses: actions/checkout@v3
-      - uses: paolorechia/pox@v1.0.1
+        uses: actions/checkout@v3
+
+      - name: Run formatting check
+        uses: paolorechia/pox@v1.0.1
         with:
           tox_env: "format_check"
