@@ -7,6 +7,7 @@ like the following in your config.yaml to configure:
 """
 import os
 import stat
+
 from beets import config
 from beets.plugins import BeetsPlugin
 from beets.util import ancestry, displayable_path, syspath
@@ -35,20 +36,19 @@ def assert_permissions(path, permission, log):
     `check_permissions`.
     """
     if not check_permissions(path, permission):
-        log.warning('could not set permissions on {}', displayable_path(path))
+        log.warning("could not set permissions on {}", displayable_path(path))
         log.debug(
-            'set permissions to {}, but permissions are now {}',
+            "set permissions to {}, but permissions are now {}",
             permission,
             os.stat(syspath(path)).st_mode & 0o777,
         )
 
 
 def dirs_in_library(library, item):
-    """Creates a list of ancestor directories in the beets library path.
-    """
-    return [ancestor
-            for ancestor in ancestry(item)
-            if ancestor.startswith(library)][1:]
+    """Creates a list of ancestor directories in the beets library path."""
+    return [
+        ancestor for ancestor in ancestry(item) if ancestor.startswith(library)
+    ][1:]
 
 
 class Permissions(BeetsPlugin):
@@ -56,18 +56,19 @@ class Permissions(BeetsPlugin):
         super().__init__()
 
         # Adding defaults.
-        self.config.add({
-            'file': '644',
-            'dir': '755',
-        })
+        self.config.add(
+            {
+                "file": "644",
+                "dir": "755",
+            }
+        )
 
-        self.register_listener('item_imported', self.fix)
-        self.register_listener('album_imported', self.fix)
-        self.register_listener('art_set', self.fix_art)
+        self.register_listener("item_imported", self.fix)
+        self.register_listener("album_imported", self.fix)
+        self.register_listener("art_set", self.fix_art)
 
     def fix(self, lib, item=None, album=None):
-        """Fix the permissions for an imported Item or Album.
-        """
+        """Fix the permissions for an imported Item or Album."""
         files = []
         dirs = set()
         if item:
@@ -80,8 +81,7 @@ class Permissions(BeetsPlugin):
         self.set_permissions(files=files, dirs=dirs)
 
     def fix_art(self, album):
-        """Fix the permission for Album art file.
-        """
+        """Fix the permission for Album art file."""
         if album.artpath:
             self.set_permissions(files=[album.artpath])
 
@@ -90,15 +90,15 @@ class Permissions(BeetsPlugin):
         # string (in YAML quotes) or, for convenience, as an integer so the
         # quotes can be omitted. In the latter case, we need to reinterpret the
         # integer as octal, not decimal.
-        file_perm = config['permissions']['file'].get()
-        dir_perm = config['permissions']['dir'].get()
+        file_perm = config["permissions"]["file"].get()
+        dir_perm = config["permissions"]["dir"].get()
         file_perm = convert_perm(file_perm)
         dir_perm = convert_perm(dir_perm)
 
         for path in files:
             # Changing permissions on the destination file.
             self._log.debug(
-                'setting file permissions on {}',
+                "setting file permissions on {}",
                 displayable_path(path),
             )
             if not check_permissions(path, file_perm):
@@ -111,7 +111,7 @@ class Permissions(BeetsPlugin):
         for path in dirs:
             # Changing permissions on the destination directory.
             self._log.debug(
-                'setting directory permissions on {}',
+                "setting directory permissions on {}",
                 displayable_path(path),
             )
             if not check_permissions(path, dir_perm):

@@ -17,18 +17,19 @@ music player.
 """
 
 
+import _thread
+import copy
+import os
 import sys
 import time
-import _thread
-import os
-import copy
 import urllib
-from beets import ui
 
 import gi
-gi.require_version('Gst', '1.0')
-from gi.repository import GLib, Gst  # noqa: E402
 
+from beets import ui
+
+gi.require_version("Gst", "1.0")
+from gi.repository import GLib, Gst  # noqa: E402
 
 Gst.init(None)
 
@@ -128,8 +129,8 @@ class GstPlayer:
         """
         self.player.set_state(Gst.State.NULL)
         if isinstance(path, str):
-            path = path.encode('utf-8')
-        uri = 'file://' + urllib.parse.quote(path)
+            path = path.encode("utf-8")
+        uri = "file://" + urllib.parse.quote(path)
         self.player.set_property("uri", uri)
         self.player.set_state(Gst.State.PLAYING)
         self.playing = True
@@ -175,12 +176,12 @@ class GstPlayer:
             posq = self.player.query_position(fmt)
             if not posq[0]:
                 raise QueryError("query_position failed")
-            pos = posq[1] / (10 ** 9)
+            pos = posq[1] / (10**9)
 
             lengthq = self.player.query_duration(fmt)
             if not lengthq[0]:
                 raise QueryError("query_duration failed")
-            length = lengthq[1] / (10 ** 9)
+            length = lengthq[1] / (10**9)
 
             self.cached_time = (pos, length)
             return (pos, length)
@@ -202,7 +203,7 @@ class GstPlayer:
             return
 
         fmt = Gst.Format(Gst.Format.TIME)
-        ns = position * 10 ** 9  # convert to nanoseconds
+        ns = position * 10**9  # convert to nanoseconds
         self.player.seek_simple(fmt, Gst.SeekFlags.FLUSH, ns)
 
         # save new cached time
@@ -223,11 +224,13 @@ def get_decoders():
     and file extensions.
     """
     # We only care about audio decoder elements.
-    filt = (Gst.ELEMENT_FACTORY_TYPE_DEPAYLOADER |
-            Gst.ELEMENT_FACTORY_TYPE_DEMUXER |
-            Gst.ELEMENT_FACTORY_TYPE_PARSER |
-            Gst.ELEMENT_FACTORY_TYPE_DECODER |
-            Gst.ELEMENT_FACTORY_TYPE_MEDIA_AUDIO)
+    filt = (
+        Gst.ELEMENT_FACTORY_TYPE_DEPAYLOADER
+        | Gst.ELEMENT_FACTORY_TYPE_DEMUXER
+        | Gst.ELEMENT_FACTORY_TYPE_PARSER
+        | Gst.ELEMENT_FACTORY_TYPE_DECODER
+        | Gst.ELEMENT_FACTORY_TYPE_MEDIA_AUDIO
+    )
 
     decoders = {}
     mime_types = set()
@@ -239,7 +242,7 @@ def get_decoders():
                 for i in range(caps.get_size()):
                     struct = caps.get_structure(i)
                     mime = struct.get_name()
-                    if mime == 'unknown/unknown':
+                    if mime == "unknown/unknown":
                         continue
                     mimes.add(mime)
                     mime_types.add(mime)
@@ -295,10 +298,9 @@ def play_complicated(paths):
         time.sleep(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # A very simple command-line player. Just give it names of audio
     # files on the command line; these are all played in sequence.
-    paths = [os.path.abspath(os.path.expanduser(p))
-             for p in sys.argv[1:]]
+    paths = [os.path.abspath(os.path.expanduser(p)) for p in sys.argv[1:]]
     # play_simple(paths)
     play_complicated(paths)
