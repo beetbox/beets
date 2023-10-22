@@ -137,19 +137,21 @@ request and your code will ship in no time.
 
 1. Fork the beets repository and clone it (see above) to create a
    workspace.
-2. Make your changes.
-3. Add tests. If you’ve fixed a bug, write a test to ensure that you’ve
+2. Install pre-commit, following the instructions `here
+   <https://pre-commit.com/>`_.
+3. Make your changes.
+4. Add tests. If you’ve fixed a bug, write a test to ensure that you’ve
    actually fixed it. If there’s a new feature or plugin, please
    contribute tests that show that your code does what it says.
-4. Add documentation. If you’ve added a new command flag, for example,
+5. Add documentation. If you’ve added a new command flag, for example,
    find the appropriate page under ``docs/`` where it needs to be
    listed.
-5. Add a changelog entry to ``docs/changelog.rst`` near the top of the
+6. Add a changelog entry to ``docs/changelog.rst`` near the top of the
    document.
-6. Run the tests and style checker. The easiest way to run the tests is
+7. Run the tests and style checker. The easiest way to run the tests is
    to use `tox`_. For more information on running tests, see :ref:`testing`.
-7. Push to your fork and open a pull request! We’ll be in touch shortly.
-8. If you add commits to a pull request, please add a comment or
+8. Push to your fork and open a pull request! We’ll be in touch shortly.
+9. If you add commits to a pull request, please add a comment or
    re-request a review after you push them since GitHub doesn’t
    automatically notify us when commits are added.
 
@@ -214,11 +216,13 @@ There are a few coding conventions we use in beets:
 Style
 -----
 
-We follow `PEP 8`_ and `google's docstring format`_.
+We follow `black`_ formatting and `google's docstring format`_.
 
 You can use ``tox -e lint`` to check your code for any style errors.
+Running ``tox -e format`` will automatically format your code according
+to the specifications required by the project.
 
-.. _PEP 8: https://www.python.org/dev/peps/pep-0008/
+.. _black: https://black.readthedocs.io/en/stable/
 .. _google's docstring format: https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings
 
 Handling Paths

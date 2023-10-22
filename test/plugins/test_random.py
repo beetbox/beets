@@ -16,11 +16,10 @@
 """
 
 
-import unittest
-from test.helper import TestHelper
-
 import math
+import unittest
 from random import Random
+from test.helper import TestHelper
 
 from beets import random
 
@@ -28,8 +27,8 @@ from beets import random
 class RandomTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.lib = None
-        self.artist1 = 'Artist 1'
-        self.artist2 = 'Artist 2'
+        self.artist1 = "Artist 1"
+        self.artist2 = "Artist 2"
         self.item1 = self.create_item(artist=self.artist1)
         self.item2 = self.create_item(artist=self.artist2)
         self.items = [self.item1, self.item2]
@@ -43,13 +42,12 @@ class RandomTest(unittest.TestCase, TestHelper):
 
     def _stats(self, data):
         mean = sum(data) / len(data)
-        stdev = math.sqrt(
-                sum((p - mean) ** 2 for p in data) / (len(data) - 1))
+        stdev = math.sqrt(sum((p - mean) ** 2 for p in data) / (len(data) - 1))
         quot, rem = divmod(len(data), 2)
         if rem:
             median = sorted(data)[quot]
         else:
-            median = sum(sorted(data)[quot - 1:quot + 1]) / 2
+            median = sum(sorted(data)[quot - 1 : quot + 1]) / 2
         return mean, stdev, median
 
     def test_equal_permutation(self):
@@ -58,23 +56,27 @@ class RandomTest(unittest.TestCase, TestHelper):
         the solo track will almost always end up near the start. If we use a
         different field then it'll be in the middle on average.
         """
+
         def experiment(field, histogram=False):
             """Permutes the list of items 500 times and calculates the position
             of self.item1 each time. Returns stats about that position.
             """
             positions = []
             for _ in range(500):
-                shuffled = list(random._equal_chance_permutation(
-                    self.items, field=field, random_gen=self.random_gen))
+                shuffled = list(
+                    random._equal_chance_permutation(
+                        self.items, field=field, random_gen=self.random_gen
+                    )
+                )
                 positions.append(shuffled.index(self.item1))
             # Print a histogram (useful for debugging).
             if histogram:
                 for i in range(len(self.items)):
-                    print('{:2d} {}'.format(i, '*' * positions.count(i)))
+                    print("{:2d} {}".format(i, "*" * positions.count(i)))
             return self._stats(positions)
 
-        mean1, stdev1, median1 = experiment('artist')
-        mean2, stdev2, median2 = experiment('track')
+        mean1, stdev1, median1 = experiment("artist")
+        mean2, stdev2, median2 = experiment("track")
         self.assertAlmostEqual(0, median1, delta=1)
         self.assertAlmostEqual(len(self.items) // 2, median2, delta=1)
         self.assertGreater(stdev2, stdev1)
@@ -83,5 +85,6 @@ class RandomTest(unittest.TestCase, TestHelper):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")

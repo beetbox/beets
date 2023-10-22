@@ -19,15 +19,17 @@
 """Provides a bare-ASCII matching query."""
 
 
-from beets import ui
-from beets.ui import print_, decargs
-from beets.plugins import BeetsPlugin
-from beets.dbcore.query import StringFieldQuery
 from unidecode import unidecode
+
+from beets import ui
+from beets.dbcore.query import StringFieldQuery
+from beets.plugins import BeetsPlugin
+from beets.ui import decargs, print_
 
 
 class BareascQuery(StringFieldQuery):
     """Compare items using bare ASCII, without accents etc."""
+
     @classmethod
     def string_match(cls, pattern, val):
         """Convert both pattern and string to plain ASCII before matching.
@@ -53,24 +55,29 @@ class BareascQuery(StringFieldQuery):
 
 class BareascPlugin(BeetsPlugin):
     """Plugin to provide bare-ASCII option for beets matching."""
+
     def __init__(self):
         """Default prefix for selecting bare-ASCII matching is #."""
         super().__init__()
-        self.config.add({
-            'prefix': '#',
-        })
+        self.config.add(
+            {
+                "prefix": "#",
+            }
+        )
 
     def queries(self):
         """Register bare-ASCII matching."""
-        prefix = self.config['prefix'].as_str()
+        prefix = self.config["prefix"].as_str()
         return {prefix: BareascQuery}
 
     def commands(self):
         """Add bareasc command as unidecode version of 'list'."""
-        cmd = ui.Subcommand('bareasc',
-                            help='unidecode version of beet list command')
-        cmd.parser.usage += "\n" \
-            'Example: %prog -f \'$album: $title\' artist:beatles'
+        cmd = ui.Subcommand(
+            "bareasc", help="unidecode version of beet list command"
+        )
+        cmd.parser.usage += (
+            "\n" "Example: %prog -f '$album: $title' artist:beatles"
+        )
         cmd.parser.add_all_common_options()
         cmd.func = self.unidecode_list
         return [cmd]

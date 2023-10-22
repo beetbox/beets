@@ -15,22 +15,32 @@
 """Glue between metadata sources and the matching logic."""
 
 from __future__ import annotations
+
+import re
 from collections import namedtuple
 from functools import total_ordering
-import re
-from typing import Dict, List, Tuple, Iterator, Union, Any, Optional, \
-    Iterable, Callable, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Union,
+    cast,
+)
 
-from beets import logging
-from beets import plugins
-from beets import config
-from beets.library import Item
-from beets.util import as_string
-from beets.autotag import mb
 from jellyfish import levenshtein_distance
 from unidecode import unidecode
 
-log = logging.getLogger('beets')
+from beets import config, logging, plugins
+from beets.autotag import mb
+from beets.library import Item
+from beets.util import as_string
+
+log = logging.getLogger("beets")
 
 
 # Classes used to represent candidate options.
@@ -68,48 +78,48 @@ class AlbumInfo(AttrDict):
 
     # TYPING: are all of these correct? I've assumed optional strings
     def __init__(
-            self,
-            tracks: List['TrackInfo'],
-            album: Optional[str] = None,
-            album_id: Optional[str] = None,
-            artist: Optional[str] = None,
-            artist_id: Optional[str] = None,
-            artists: Optional[List[str]] = None,
-            artists_ids: Optional[List[str]] = None,
-            asin: Optional[str] = None,
-            albumtype: Optional[str] = None,
-            albumtypes: Optional[List[str]] = None,
-            va: bool = False,
-            year: Optional[int] = None,
-            month: Optional[int] = None,
-            day: Optional[int] = None,
-            label: Optional[str] = None,
-            mediums: Optional[int] = None,
-            artist_sort: Optional[str] = None,
-            artists_sort: Optional[List[str]] = None,
-            releasegroup_id: Optional[str] = None,
-            release_group_title: Optional[str] = None,
-            catalognum: Optional[str] = None,
-            script: Optional[str] = None,
-            language: Optional[str] = None,
-            country: Optional[str] = None,
-            style: Optional[str] = None,
-            genre: Optional[str] = None,
-            albumstatus: Optional[str] = None,
-            media: Optional[str] = None,
-            albumdisambig: Optional[str] = None,
-            releasegroupdisambig: Optional[str] = None,
-            artist_credit: Optional[str] = None,
-            artists_credit: Optional[List[str]] = None,
-            original_year: Optional[int] = None,
-            original_month: Optional[int] = None,
-            original_day: Optional[int] = None,
-            data_source: Optional[str] = None,
-            data_url: Optional[str] = None,
-            discogs_albumid: Optional[str] = None,
-            discogs_labelid: Optional[str] = None,
-            discogs_artistid: Optional[str] = None,
-            **kwargs,
+        self,
+        tracks: List["TrackInfo"],
+        album: Optional[str] = None,
+        album_id: Optional[str] = None,
+        artist: Optional[str] = None,
+        artist_id: Optional[str] = None,
+        artists: Optional[List[str]] = None,
+        artists_ids: Optional[List[str]] = None,
+        asin: Optional[str] = None,
+        albumtype: Optional[str] = None,
+        albumtypes: Optional[List[str]] = None,
+        va: bool = False,
+        year: Optional[int] = None,
+        month: Optional[int] = None,
+        day: Optional[int] = None,
+        label: Optional[str] = None,
+        mediums: Optional[int] = None,
+        artist_sort: Optional[str] = None,
+        artists_sort: Optional[List[str]] = None,
+        releasegroup_id: Optional[str] = None,
+        release_group_title: Optional[str] = None,
+        catalognum: Optional[str] = None,
+        script: Optional[str] = None,
+        language: Optional[str] = None,
+        country: Optional[str] = None,
+        style: Optional[str] = None,
+        genre: Optional[str] = None,
+        albumstatus: Optional[str] = None,
+        media: Optional[str] = None,
+        albumdisambig: Optional[str] = None,
+        releasegroupdisambig: Optional[str] = None,
+        artist_credit: Optional[str] = None,
+        artists_credit: Optional[List[str]] = None,
+        original_year: Optional[int] = None,
+        original_month: Optional[int] = None,
+        original_day: Optional[int] = None,
+        data_source: Optional[str] = None,
+        data_url: Optional[str] = None,
+        discogs_albumid: Optional[str] = None,
+        discogs_labelid: Optional[str] = None,
+        discogs_artistid: Optional[str] = None,
+        **kwargs,
     ):
         self.album = album
         self.album_id = album_id
@@ -156,24 +166,39 @@ class AlbumInfo(AttrDict):
     # Work around a bug in python-musicbrainz-ngs that causes some
     # strings to be bytes rather than Unicode.
     # https://github.com/alastair/python-musicbrainz-ngs/issues/85
-    def decode(self, codec: str = 'utf-8'):
+    def decode(self, codec: str = "utf-8"):
         """Ensure that all string attributes on this object, and the
         constituent `TrackInfo` objects, are decoded to Unicode.
         """
-        for fld in ['album', 'artist', 'albumtype', 'label', 'artist_sort',
-                    'catalognum', 'script', 'language', 'country', 'style',
-                    'genre', 'albumstatus', 'albumdisambig',
-                    'releasegroupdisambig', 'artist_credit',
-                    'media', 'discogs_albumid', 'discogs_labelid',
-                    'discogs_artistid']:
+        for fld in [
+            "album",
+            "artist",
+            "albumtype",
+            "label",
+            "artist_sort",
+            "catalognum",
+            "script",
+            "language",
+            "country",
+            "style",
+            "genre",
+            "albumstatus",
+            "albumdisambig",
+            "releasegroupdisambig",
+            "artist_credit",
+            "media",
+            "discogs_albumid",
+            "discogs_labelid",
+            "discogs_artistid",
+        ]:
             value = getattr(self, fld)
             if isinstance(value, bytes):
-                setattr(self, fld, value.decode(codec, 'ignore'))
+                setattr(self, fld, value.decode(codec, "ignore"))
 
         for track in self.tracks:
             track.decode(codec)
 
-    def copy(self) -> 'AlbumInfo':
+    def copy(self) -> "AlbumInfo":
         dupe = AlbumInfo([])
         dupe.update(self)
         dupe.tracks = [track.copy() for track in self.tracks]
@@ -194,40 +219,40 @@ class TrackInfo(AttrDict):
 
     # TYPING: are all of these correct? I've assumed optional strings
     def __init__(
-            self,
-            title: Optional[str] = None,
-            track_id: Optional[str] = None,
-            release_track_id: Optional[str] = None,
-            artist: Optional[str] = None,
-            artist_id: Optional[str] = None,
-            artists: Optional[List[str]] = None,
-            artists_ids: Optional[List[str]] = None,
-            length: Optional[float] = None,
-            index: Optional[int] = None,
-            medium: Optional[int] = None,
-            medium_index: Optional[int] = None,
-            medium_total: Optional[int] = None,
-            artist_sort: Optional[str] = None,
-            artists_sort: Optional[List[str]] = None,
-            disctitle: Optional[str] = None,
-            artist_credit: Optional[str] = None,
-            artists_credit: Optional[List[str]] = None,
-            data_source: Optional[str] = None,
-            data_url: Optional[str] = None,
-            media: Optional[str] = None,
-            lyricist: Optional[str] = None,
-            composer: Optional[str] = None,
-            composer_sort: Optional[str] = None,
-            arranger: Optional[str] = None,
-            track_alt: Optional[str] = None,
-            work: Optional[str] = None,
-            mb_workid: Optional[str] = None,
-            work_disambig: Optional[str] = None,
-            bpm: Optional[str] = None,
-            initial_key: Optional[str] = None,
-            genre: Optional[str] = None,
-            album: Optional[str] = None,
-            **kwargs,
+        self,
+        title: Optional[str] = None,
+        track_id: Optional[str] = None,
+        release_track_id: Optional[str] = None,
+        artist: Optional[str] = None,
+        artist_id: Optional[str] = None,
+        artists: Optional[List[str]] = None,
+        artists_ids: Optional[List[str]] = None,
+        length: Optional[float] = None,
+        index: Optional[int] = None,
+        medium: Optional[int] = None,
+        medium_index: Optional[int] = None,
+        medium_total: Optional[int] = None,
+        artist_sort: Optional[str] = None,
+        artists_sort: Optional[List[str]] = None,
+        disctitle: Optional[str] = None,
+        artist_credit: Optional[str] = None,
+        artists_credit: Optional[List[str]] = None,
+        data_source: Optional[str] = None,
+        data_url: Optional[str] = None,
+        media: Optional[str] = None,
+        lyricist: Optional[str] = None,
+        composer: Optional[str] = None,
+        composer_sort: Optional[str] = None,
+        arranger: Optional[str] = None,
+        track_alt: Optional[str] = None,
+        work: Optional[str] = None,
+        mb_workid: Optional[str] = None,
+        work_disambig: Optional[str] = None,
+        bpm: Optional[str] = None,
+        initial_key: Optional[str] = None,
+        genre: Optional[str] = None,
+        album: Optional[str] = None,
+        **kwargs,
     ):
         self.title = title
         self.track_id = track_id
@@ -264,17 +289,24 @@ class TrackInfo(AttrDict):
         self.update(kwargs)
 
     # As above, work around a bug in python-musicbrainz-ngs.
-    def decode(self, codec='utf-8'):
+    def decode(self, codec="utf-8"):
         """Ensure that all string attributes on this object are decoded
         to Unicode.
         """
-        for fld in ['title', 'artist', 'medium', 'artist_sort', 'disctitle',
-                    'artist_credit', 'media']:
+        for fld in [
+            "title",
+            "artist",
+            "medium",
+            "artist_sort",
+            "disctitle",
+            "artist_credit",
+            "media",
+        ]:
             value = getattr(self, fld)
             if isinstance(value, bytes):
-                setattr(self, fld, value.decode(codec, 'ignore'))
+                setattr(self, fld, value.decode(codec, "ignore"))
 
-    def copy(self) -> 'TrackInfo':
+    def copy(self) -> "TrackInfo":
         dupe = TrackInfo()
         dupe.update(self)
         return dupe
@@ -284,19 +316,19 @@ class TrackInfo(AttrDict):
 
 # Parameters for string distance function.
 # Words that can be moved to the end of a string using a comma.
-SD_END_WORDS = ['the', 'a', 'an']
+SD_END_WORDS = ["the", "a", "an"]
 # Reduced weights for certain portions of the string.
 SD_PATTERNS = [
-    (r'^the ', 0.1),
-    (r'[\[\(]?(ep|single)[\]\)]?', 0.0),
-    (r'[\[\(]?(featuring|feat|ft)[\. :].+', 0.1),
-    (r'\(.*?\)', 0.3),
-    (r'\[.*?\]', 0.3),
-    (r'(, )?(pt\.|part) .+', 0.2),
+    (r"^the ", 0.1),
+    (r"[\[\(]?(ep|single)[\]\)]?", 0.0),
+    (r"[\[\(]?(featuring|feat|ft)[\. :].+", 0.1),
+    (r"\(.*?\)", 0.3),
+    (r"\[.*?\]", 0.3),
+    (r"(, )?(pt\.|part) .+", 0.2),
 ]
 # Replacements to use before testing distance.
 SD_REPLACE = [
-    (r'&', 'and'),
+    (r"&", "and"),
 ]
 
 
@@ -310,8 +342,8 @@ def _string_dist_basic(str1: str, str2: str) -> float:
     assert isinstance(str2, str)
     str1 = as_string(unidecode(str1))
     str2 = as_string(unidecode(str2))
-    str1 = re.sub(r'[^a-z0-9]', '', str1.lower())
-    str2 = re.sub(r'[^a-z0-9]', '', str2.lower())
+    str1 = re.sub(r"[^a-z0-9]", "", str1.lower())
+    str2 = re.sub(r"[^a-z0-9]", "", str2.lower())
     if not str1 and not str2:
         return 0.0
     return levenshtein_distance(str1, str2) / float(max(len(str1), len(str2)))
@@ -334,10 +366,10 @@ def string_dist(str1: Optional[str], str2: Optional[str]) -> float:
     # example, "the something" should be considered equal to
     # "something, the".
     for word in SD_END_WORDS:
-        if str1.endswith(', %s' % word):
-            str1 = '{} {}'.format(word, str1[:-len(word) - 2])
-        if str2.endswith(', %s' % word):
-            str2 = '{} {}'.format(word, str2[:-len(word) - 2])
+        if str1.endswith(", %s" % word):
+            str1 = "{} {}".format(word, str1[: -len(word) - 2])
+        if str2.endswith(", %s" % word):
+            str2 = "{} {}".format(word, str2[: -len(word) - 2])
 
     # Perform a couple of basic normalizing substitutions.
     for pat, repl in SD_REPLACE:
@@ -352,8 +384,8 @@ def string_dist(str1: Optional[str], str2: Optional[str]) -> float:
     penalty = 0.0
     for pat, weight in SD_PATTERNS:
         # Get strings that drop the pattern.
-        case_str1 = re.sub(pat, '', str1)
-        case_str2 = re.sub(pat, '', str2)
+        case_str1 = re.sub(pat, "", str1)
+        case_str2 = re.sub(pat, "", str2)
 
         if case_str1 != str1 or case_str2 != str2:
             # If the pattern was present (i.e., it is deleted in the
@@ -405,9 +437,8 @@ class Distance:
 
     @LazyClassProperty
     def _weights(cls) -> Dict[str, float]:  # noqa: N805
-        """A dictionary from keys to floating-point weights.
-        """
-        weights_view = config['match']['distance_weights']
+        """A dictionary from keys to floating-point weights."""
+        weights_view = config["match"]["distance_weights"]
         weights = {}
         for key in weights_view.keys():
             weights[key] = weights_view[key].as_number()
@@ -427,8 +458,7 @@ class Distance:
 
     @property
     def max_distance(self) -> float:
-        """Return the maximum distance penalty (normalization factor).
-        """
+        """Return the maximum distance penalty (normalization factor)."""
         dist_max = 0.0
         for key, penalty in self._penalties.items():
             dist_max += len(penalty) * self._weights[key]
@@ -436,8 +466,7 @@ class Distance:
 
     @property
     def raw_distance(self) -> float:
-        """Return the raw (denormalized) distance.
-        """
+        """Return the raw (denormalized) distance."""
         dist_raw = 0.0
         for key, penalty in self._penalties.items():
             dist_raw += sum(penalty) * self._weights[key]
@@ -457,8 +486,7 @@ class Distance:
         # ascending order (for keys, when the penalty is equal) and
         # still get the items with the biggest distance first.
         return sorted(
-            list_,
-            key=lambda key_and_dist: (-key_and_dist[1], key_and_dist[0])
+            list_, key=lambda key_and_dist: (-key_and_dist[1], key_and_dist[0])
         )
 
     def __hash__(self) -> int:
@@ -487,8 +515,7 @@ class Distance:
     # Behave like a dict.
 
     def __getitem__(self, key) -> float:
-        """Returns the weighted distance for a named penalty.
-        """
+        """Returns the weighted distance for a named penalty."""
         dist = sum(self._penalties[key]) * self._weights[key]
         dist_max = self.max_distance
         if dist_max:
@@ -504,12 +531,11 @@ class Distance:
     def keys(self) -> List[str]:
         return [key for key, _ in self.items()]
 
-    def update(self, dist: 'Distance'):
-        """Adds all the distance penalties from `dist`.
-        """
+    def update(self, dist: "Distance"):
+        """Adds all the distance penalties from `dist`."""
         if not isinstance(dist, Distance):
             raise ValueError(
-                '`dist` must be a Distance object, not {}'.format(type(dist))
+                "`dist` must be a Distance object, not {}".format(type(dist))
             )
         for key, penalties in dist._penalties.items():
             self._penalties.setdefault(key, []).extend(penalties)
@@ -533,16 +559,14 @@ class Distance:
         for the same key.
         """
         if not 0.0 <= dist <= 1.0:
-            raise ValueError(
-                f'`dist` must be between 0.0 and 1.0, not {dist}'
-            )
+            raise ValueError(f"`dist` must be between 0.0 and 1.0, not {dist}")
         self._penalties.setdefault(key, []).append(dist)
 
     def add_equality(
-            self,
-            key: str,
-            value: Any,
-            options: Union[List[Any], Tuple[Any, ...], Any],
+        self,
+        key: str,
+        value: Any,
+        options: Union[List[Any], Tuple[Any, ...], Any],
     ):
         """Adds a distance penalty of 1.0 if `value` doesn't match any
         of the values in `options`. If an option is a compiled regular
@@ -582,10 +606,10 @@ class Distance:
             self.add(key, 0.0)
 
     def add_priority(
-            self,
-            key: str,
-            value: Any,
-            options: Union[List[Any], Tuple[Any, ...], Any],
+        self,
+        key: str,
+        value: Any,
+        options: Union[List[Any], Tuple[Any, ...], Any],
     ):
         """Adds a distance penalty that corresponds to the position at
         which `value` appears in `options`. A distance penalty of 0.0
@@ -605,10 +629,10 @@ class Distance:
         self.add(key, dist)
 
     def add_ratio(
-            self,
-            key: str,
-            number1: Union[int, float],
-            number2: Union[int, float],
+        self,
+        key: str,
+        number1: Union[int, float],
+        number2: Union[int, float],
     ):
         """Adds a distance penalty for `number1` as a ratio of `number2`.
         `number1` is bound at 0 and `number2`.
@@ -630,13 +654,15 @@ class Distance:
 
 # Structures that compose all the information for a candidate match.
 
-AlbumMatch = namedtuple('AlbumMatch', ['distance', 'info', 'mapping',
-                                       'extra_items', 'extra_tracks'])
+AlbumMatch = namedtuple(
+    "AlbumMatch", ["distance", "info", "mapping", "extra_items", "extra_tracks"]
+)
 
-TrackMatch = namedtuple('TrackMatch', ['distance', 'info'])
+TrackMatch = namedtuple("TrackMatch", ["distance", "info"])
 
 
 # Aggregation of sources.
+
 
 def album_for_mbid(release_id: str) -> Optional[AlbumInfo]:
     """Get an AlbumInfo object for a MusicBrainz release ID. Return None
@@ -645,7 +671,7 @@ def album_for_mbid(release_id: str) -> Optional[AlbumInfo]:
     try:
         album = mb.album_for_id(release_id)
         if album:
-            plugins.send('albuminfo_received', info=album)
+            plugins.send("albuminfo_received", info=album)
         return album
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
@@ -659,7 +685,7 @@ def track_for_mbid(recording_id: str) -> Optional[TrackInfo]:
     try:
         track = mb.track_for_id(recording_id)
         if track:
-            plugins.send('trackinfo_received', info=track)
+            plugins.send("trackinfo_received", info=track)
         return track
     except mb.MusicBrainzAPIError as exc:
         exc.log(log)
@@ -673,7 +699,7 @@ def albums_for_id(album_id: str) -> Iterable[AlbumInfo]:
         yield a
     for a in plugins.album_for_id(album_id):
         if a:
-            plugins.send('albuminfo_received', info=a)
+            plugins.send("albuminfo_received", info=a)
             yield a
 
 
@@ -684,7 +710,7 @@ def tracks_for_id(track_id: str) -> Iterable[TrackInfo]:
         yield t
     for t in plugins.track_for_id(track_id):
         if t:
-            plugins.send('trackinfo_received', info=t)
+            plugins.send("trackinfo_received", info=t)
             yield t
 
 
@@ -696,13 +722,13 @@ def invoke_mb(call_func: Callable, *args):
         return ()
 
 
-@plugins.notify_info_yielded('albuminfo_received')
+@plugins.notify_info_yielded("albuminfo_received")
 def album_candidates(
-        items: List[Item],
-        artist: str,
-        album: str,
-        va_likely: bool,
-        extra_tags: Dict,
+    items: List[Item],
+    artist: str,
+    album: str,
+    va_likely: bool,
+    extra_tags: Dict,
 ) -> Iterable[Tuple]:
     """Search for album matches. ``items`` is a list of Item objects
     that make up the album. ``artist`` and ``album`` are the respective
@@ -716,19 +742,21 @@ def album_candidates(
     if config["musicbrainz"]["enabled"]:
         # Base candidates if we have album and artist to match.
         if artist and album:
-            yield from invoke_mb(mb.match_album, artist, album, len(items),
-                                 extra_tags)
+            yield from invoke_mb(
+                mb.match_album, artist, album, len(items), extra_tags
+            )
 
         # Also add VA matches from MusicBrainz where appropriate.
         if va_likely and album:
-            yield from invoke_mb(mb.match_album, None, album, len(items),
-                                 extra_tags)
+            yield from invoke_mb(
+                mb.match_album, None, album, len(items), extra_tags
+            )
 
     # Candidates from plugins.
     yield from plugins.candidates(items, artist, album, va_likely, extra_tags)
 
 
-@plugins.notify_info_yielded('trackinfo_received')
+@plugins.notify_info_yielded("trackinfo_received")
 def item_candidates(item: Item, artist: str, title: str) -> Iterable[Tuple]:
     """Search for item matches. ``item`` is the Item to be matched.
     ``artist`` and ``title`` are strings and either reflect the item or

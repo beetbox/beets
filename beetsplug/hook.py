@@ -14,9 +14,9 @@
 
 """Allows custom commands to be run when an event is emitted by beets"""
 
+import shlex
 import string
 import subprocess
-import shlex
 
 from beets.plugins import BeetsPlugin
 from beets.util import arg_encoding
@@ -53,17 +53,15 @@ class HookPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
 
-        self.config.add({
-            'hooks': []
-        })
+        self.config.add({"hooks": []})
 
-        hooks = self.config['hooks'].get(list)
+        hooks = self.config["hooks"].get(list)
 
         for hook_index in range(len(hooks)):
-            hook = self.config['hooks'][hook_index]
+            hook = self.config["hooks"][hook_index]
 
-            hook_event = hook['event'].as_str()
-            hook_command = hook['command'].as_str()
+            hook_event = hook["event"].as_str()
+            hook_command = hook["command"].as_str()
 
             self.create_and_register_hook(hook_event, hook_command)
 
@@ -81,15 +79,19 @@ class HookPlugin(BeetsPlugin):
                 for piece in shlex.split(command)
             ]
 
-            self._log.debug('running command "{0}" for event {1}',
-                            ' '.join(command_pieces), event)
+            self._log.debug(
+                'running command "{0}" for event {1}',
+                " ".join(command_pieces),
+                event,
+            )
 
             try:
                 subprocess.check_call(command_pieces)
             except subprocess.CalledProcessError as exc:
-                self._log.error('hook for {0} exited with status {1}',
-                                event, exc.returncode)
+                self._log.error(
+                    "hook for {0} exited with status {1}", event, exc.returncode
+                )
             except OSError as exc:
-                self._log.error('hook for {0} failed: {1}', event, exc)
+                self._log.error("hook for {0} failed: {1}", event, exc)
 
         self.register_listener(event, hook_function)
