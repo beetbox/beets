@@ -399,7 +399,7 @@ class DiscogsPlugin(BeetsPlugin):
 
         # Extract information for the optional AlbumInfo fields that are
         # contained on nested discogs fields.
-        albumtype = media = label = catalogno = labelid = None
+        albumtype = media = label = catalogno = labelid = cover_art_url = None
         if result.data.get('formats'):
             albumtype = ', '.join(
                 result.data['formats'][0].get('descriptions', [])) or None
@@ -408,6 +408,8 @@ class DiscogsPlugin(BeetsPlugin):
             label = result.data['labels'][0].get('name')
             catalogno = result.data['labels'][0].get('catno')
             labelid = result.data['labels'][0].get('id')
+        if result.data.get('cover_image'):
+            cover_art_url = result.data.get('cover_image')
 
         # Additional cleanups (various artists name, catalog number, media).
         if va:
@@ -444,7 +446,8 @@ class DiscogsPlugin(BeetsPlugin):
                          media=media, original_year=original_year,
                          data_source='Discogs', data_url=data_url,
                          discogs_albumid=discogs_albumid,
-                         discogs_labelid=labelid, discogs_artistid=artist_id)
+                         discogs_labelid=labelid, discogs_artistid=artist_id,
+                         cover_art_url=cover_art_url)
 
     def format(self, classification):
         if classification:
