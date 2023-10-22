@@ -374,19 +374,19 @@ class DGAlbumInfoTest(_common.TestCase):
             (
                 "http://www.discogs.com/G%C3%BCnther-Lause-Meru-Ep/release/4354798",
                 4354798,
-            ),  # NOQA E501
+            ),
             (
                 "http://www.discogs.com/release/4354798-G%C3%BCnther-Lause-Meru-Ep",
                 4354798,
-            ),  # NOQA E501
+            ),
             (
-                "http://www.discogs.com/G%C3%BCnther-4354798Lause-Meru-Ep/release/4354798",
+                "http://www.discogs.com/G%C3%BCnther-4354798Lause-Meru-Ep/release/4354798",  # NOQA E501
                 4354798,
-            ),  # NOQA E501
+            ),
             (
-                "http://www.discogs.com/release/4354798-G%C3%BCnther-4354798Lause-Meru-Ep/",
+                "http://www.discogs.com/release/4354798-G%C3%BCnther-4354798Lause-Meru-Ep/",  # NOQA E501
                 4354798,
-            ),  # NOQA E501
+            ),
             ("[r4354798]", 4354798),
             ("r4354798", 4354798),
             ("4354798", 4354798),
