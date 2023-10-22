@@ -413,7 +413,7 @@ class DiscogsPlugin(BeetsPlugin):
 
         # Extract information for the optional AlbumInfo fields that are
         # contained on nested discogs fields.
-        albumtype = media = label = catalogno = labelid = cover_art_url = None
+        albumtype = media = label = catalogno = labelid = None
         if result.data.get("formats"):
             albumtype = (
                 ", ".join(result.data["formats"][0].get("descriptions", []))
@@ -424,8 +424,8 @@ class DiscogsPlugin(BeetsPlugin):
             label = result.data["labels"][0].get("name")
             catalogno = result.data["labels"][0].get("catno")
             labelid = result.data["labels"][0].get("id")
-        if result.data.get("cover_image"):
-            cover_art_url = result.data.get("cover_image")
+
+        cover_art_url = self.select_cover_art(result)
 
         # Additional cleanups (various artists name, catalog number, media).
         if va:
@@ -478,6 +478,16 @@ class DiscogsPlugin(BeetsPlugin):
             discogs_artistid=artist_id,
             cover_art_url=cover_art_url
         )
+    
+    def select_cover_art(self, result):
+        """Returns the best candidate image, if any, from a Discogs `Release` object."""
+        if result.data.get("images") and len(result.data.get("images")) > 0:
+            # The first image in this list appears to be the one displayed first 
+            # on the release page - even if it is not flagged as `type: "primary"` - and 
+            # so it is the best candidate for the cover art.
+            return result.data.get("images")[0].get("uri")
+        
+        return None
 
     def format(self, classification):
         if classification:
