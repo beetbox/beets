@@ -151,6 +151,12 @@ class PathQuery(dbcore.FieldQuery):
             dir_blob,
         )
 
+    def __repr__(self) -> str:
+        return (
+            f"{self.__class__.__name__}({self.field!r}, {self.pattern!r}, "
+            f"fast={self.fast}, case_sensitive={self.case_sensitive})"
+        )
+
 
 # Library-specific field types.
 
