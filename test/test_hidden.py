@@ -15,14 +15,15 @@
 """Tests for the 'hidden' utility."""
 
 
-import unittest
+import ctypes
+import errno
+import subprocess
 import sys
 import tempfile
-from beets.util import hidden
+import unittest
+
 from beets import util
-import subprocess
-import errno
-import ctypes
+from beets.util import hidden
 
 
 class HiddenFileTest(unittest.TestCase):
@@ -30,8 +31,8 @@ class HiddenFileTest(unittest.TestCase):
         pass
 
     def test_osx_hidden(self):
-        if not sys.platform == 'darwin':
-            self.skipTest('sys.platform is not darwin')
+        if not sys.platform == "darwin":
+            self.skipTest("sys.platform is not darwin")
             return
 
         with tempfile.NamedTemporaryFile(delete=False) as f:
@@ -47,8 +48,8 @@ class HiddenFileTest(unittest.TestCase):
             self.assertTrue(hidden.is_hidden(f.name))
 
     def test_windows_hidden(self):
-        if not sys.platform == 'win32':
-            self.skipTest('sys.platform is not windows')
+        if not sys.platform == "win32":
+            self.skipTest("sys.platform is not windows")
             return
 
         # FILE_ATTRIBUTE_HIDDEN = 2 (0x2) from GetFileAttributes documentation.
@@ -56,8 +57,9 @@ class HiddenFileTest(unittest.TestCase):
 
         with tempfile.NamedTemporaryFile() as f:
             # Hide the file using
-            success = ctypes.windll.kernel32.SetFileAttributesW(f.name,
-                                                                hidden_mask)
+            success = ctypes.windll.kernel32.SetFileAttributesW(
+                f.name, hidden_mask
+            )
 
             if not success:
                 self.skipTest("unable to set file attributes")
@@ -65,11 +67,11 @@ class HiddenFileTest(unittest.TestCase):
             self.assertTrue(hidden.is_hidden(f.name))
 
     def test_other_hidden(self):
-        if sys.platform == 'darwin' or sys.platform == 'win32':
-            self.skipTest('sys.platform is known')
+        if sys.platform == "darwin" or sys.platform == "win32":
+            self.skipTest("sys.platform is known")
             return
 
-        with tempfile.NamedTemporaryFile(prefix='.tmp') as f:
+        with tempfile.NamedTemporaryFile(prefix=".tmp") as f:
             fn = util.bytestring_path(f.name)
             self.assertTrue(hidden.is_hidden(fn))
 
@@ -77,5 +79,6 @@ class HiddenFileTest(unittest.TestCase):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")

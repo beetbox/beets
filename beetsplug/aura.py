@@ -15,35 +15,34 @@
 """An AURA server using Flask."""
 
 
-from mimetypes import guess_type
-import re
 import os.path
-from os.path import isfile, getsize
-
-from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, _open_library
-from beets import config
-from beets.util import py3_path
-from beets.library import Item, Album
-from beets.dbcore.query import (
-    MatchQuery,
-    NotQuery,
-    RegexpQuery,
-    AndQuery,
-    FixedFieldSort,
-    SlowFieldSort,
-    MultipleSort,
-)
+import re
+from mimetypes import guess_type
+from os.path import getsize, isfile
 
 from flask import (
     Blueprint,
     Flask,
     current_app,
-    send_file,
     make_response,
     request,
+    send_file,
 )
 
+from beets import config
+from beets.dbcore.query import (
+    AndQuery,
+    FixedFieldSort,
+    MatchQuery,
+    MultipleSort,
+    NotQuery,
+    RegexpQuery,
+    SlowFieldSort,
+)
+from beets.library import Album, Item
+from beets.plugins import BeetsPlugin
+from beets.ui import Subcommand, _open_library
+from beets.util import py3_path
 
 # Constants
 
@@ -608,7 +607,7 @@ def safe_filename(fn):
         return False
 
     # In single names, rule out Unix directory traversal names.
-    if fn in ('.', '..'):
+    if fn in (".", ".."):
         return False
 
     return True

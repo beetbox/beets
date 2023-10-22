@@ -20,6 +20,7 @@ class OrderedEnum(Enum):
     """
     An Enum subclass that allows comparison of members.
     """
+
     def __ge__(self, other):
         if self.__class__ is other.__class__:
             return self.value >= other.value

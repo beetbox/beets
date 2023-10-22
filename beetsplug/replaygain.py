@@ -17,21 +17,26 @@ import collections
 import enum
 import math
 import os
+import queue
 import signal
 import subprocess
 import sys
 import warnings
 from multiprocessing.pool import ThreadPool
-import queue
-from threading import Thread, Event
+from threading import Event, Thread
 
 from beets import ui
 from beets.plugins import BeetsPlugin
-from beets.util import (syspath, command_output, displayable_path,
-                        py3_path, cpu_count)
-
+from beets.util import (
+    command_output,
+    cpu_count,
+    displayable_path,
+    py3_path,
+    syspath,
+)
 
 # Utilities.
+
 
 class ReplayGainError(Exception):
     """Raised when a local (to a track or an album) error occurs in one
@@ -40,8 +45,7 @@ class ReplayGainError(Exception):
 
 
 class FatalReplayGainError(Exception):
-    """Raised when a fatal error occurs in one of the backends.
-    """
+    """Raised when a fatal error occurs in one of the backends."""
 
 
 class FatalGstreamerPluginReplayGainError(FatalReplayGainError):
@@ -56,7 +60,7 @@ def call(args, log, **kwargs):
     try:
         return command_output(args, **kwargs)
     except subprocess.CalledProcessError as e:
-        log.debug(e.output.decode('utf8', 'ignore'))
+        log.debug(e.output.decode("utf8", "ignore"))
         raise ReplayGainError(
             "{} exited with status {}".format(args[0], e.returncode)
         )
@@ -68,8 +72,9 @@ def call(args, log, **kwargs):
 
 
 def after_version(version_a, version_b):
-    return tuple(int(s) for s in version_a.split('.')) \
-            >= tuple(int(s) for s in version_b.split('.'))
+    return tuple(int(s) for s in version_a.split(".")) >= tuple(
+        int(s) for s in version_b.split(".")
+    )
 
 
 def db_to_lufs(db):
@@ -102,7 +107,7 @@ class PeakMethod(enum.Enum):
     sample = 2
 
 
-class RgTask():
+class RgTask:
     """State and methods for a single replaygain calculation (rg version).
 
     Bundles the state (parameters and results) of a single replaygain
@@ -112,8 +117,9 @@ class RgTask():
     old rg tags.
     """
 
-    def __init__(self, items, album, target_level, peak_method, backend_name,
-                 log):
+    def __init__(
+        self, items, album, target_level, peak_method, backend_name, log
+    ):
         self.items = items
         self.album = album
         self.target_level = target_level
@@ -124,13 +130,15 @@ class RgTask():
         self.track_gains = None
 
     def _store_track_gain(self, item, track_gain):
-        """Store track gain for a single item in the database.
-        """
+        """Store track gain for a single item in the database."""
         item.rg_track_gain = track_gain.gain
         item.rg_track_peak = track_gain.peak
         item.store()
-        self._log.debug('applied track gain {0} LU, peak {1} of FS',
-                        item.rg_track_gain, item.rg_track_peak)
+        self._log.debug(
+            "applied track gain {0} LU, peak {1} of FS",
+            item.rg_track_gain,
+            item.rg_track_peak,
+        )
 
     def _store_album_gain(self, item):
         """Store album gain for a single item in the database.
@@ -140,50 +148,55 @@ class RgTask():
         item.rg_album_gain = self.album_gain.gain
         item.rg_album_peak = self.album_gain.peak
         item.store()
-        self._log.debug('applied album gain {0} LU, peak {1} of FS',
-                        item.rg_album_gain, item.rg_album_peak)
+        self._log.debug(
+            "applied album gain {0} LU, peak {1} of FS",
+            item.rg_album_gain,
+            item.rg_album_peak,
+        )
 
     def _store_track(self, write):
-        """Store track gain for the first track of the task in the database.
-        """
+        """Store track gain for the first track of the task in the database."""
         item = self.items[0]
         if self.track_gains is None or len(self.track_gains) != 1:
             # In some cases, backends fail to produce a valid
             # `track_gains` without throwing FatalReplayGainError
             #  => raise non-fatal exception & continue
             raise ReplayGainError(
-                "ReplayGain backend `{}` failed for track {}"
-                .format(self.backend_name, item)
+                "ReplayGain backend `{}` failed for track {}".format(
+                    self.backend_name, item
+                )
             )
 
         self._store_track_gain(item, self.track_gains[0])
         if write:
             item.try_write()
-        self._log.debug('done analyzing {0}', item)
+        self._log.debug("done analyzing {0}", item)
 
     def _store_album(self, write):
-        """Store track/album gains for all tracks of the task in the database.
-        """
-        if (self.album_gain is None or self.track_gains is None
-                or len(self.track_gains) != len(self.items)):
+        """Store track/album gains for all tracks of the task in the database."""
+        if (
+            self.album_gain is None
+            or self.track_gains is None
+            or len(self.track_gains) != len(self.items)
+        ):
             # In some cases, backends fail to produce a valid
             # `album_gain` without throwing FatalReplayGainError
             #  => raise non-fatal exception & continue
             raise ReplayGainError(
                 "ReplayGain backend `{}` failed "
-                "for some tracks in album {}"
-                .format(self.backend_name, self.album)
+                "for some tracks in album {}".format(
+                    self.backend_name, self.album
+                )
             )
         for item, track_gain in zip(self.items, self.track_gains):
             self._store_track_gain(item, track_gain)
             self._store_album_gain(item)
             if write:
                 item.try_write()
-            self._log.debug('done analyzing {0}', item)
+            self._log.debug("done analyzing {0}", item)
 
     def store(self, write):
-        """Store computed gains for the items of this task in the database.
-        """
+        """Store computed gains for the items of this task in the database."""
         if self.album is not None:
             self._store_album(write)
         else:
@@ -202,14 +215,12 @@ class R128Task(RgTask):
 
     def __init__(self, items, album, target_level, backend_name, log):
         # R128_* tags do not store the track/album peak
-        super().__init__(items, album, target_level, None, backend_name,
-                         log)
+        super().__init__(items, album, target_level, None, backend_name, log)
 
     def _store_track_gain(self, item, track_gain):
         item.r128_track_gain = track_gain.gain
         item.store()
-        self._log.debug('applied r128 track gain {0} LU',
-                        item.r128_track_gain)
+        self._log.debug("applied r128 track gain {0} LU", item.r128_track_gain)
 
     def _store_album_gain(self, item):
         """
@@ -218,13 +229,11 @@ class R128Task(RgTask):
         """
         item.r128_album_gain = self.album_gain.gain
         item.store()
-        self._log.debug('applied r128 album gain {0} LU',
-                        item.r128_album_gain)
+        self._log.debug("applied r128 album gain {0} LU", item.r128_album_gain)
 
 
 class Backend:
-    """An abstract class representing engine for calculating RG values.
-    """
+    """An abstract class representing engine for calculating RG values."""
 
     NAME = ""
     do_parallel = False
@@ -250,8 +259,7 @@ class Backend:
 
 # ffmpeg backend
 class FfmpegBackend(Backend):
-    """A replaygain backend using ffmpeg's ebur128 filter.
-    """
+    """A replaygain backend using ffmpeg's ebur128 filter."""
 
     NAME = "ffmpeg"
     do_parallel = True
@@ -294,7 +302,9 @@ class FfmpegBackend(Backend):
                 task.target_level,
                 task.peak_method,
                 count_blocks=False,
-            )[0]  # take only the gain, discarding number of gating blocks
+            )[
+                0
+            ]  # take only the gain, discarding number of gating blocks
             for item in task.items
         ]
 
@@ -334,7 +344,7 @@ class FfmpegBackend(Backend):
             # This reverses ITU-R BS.1770-4 p. 6 equation (5) to convert
             # from loudness to power. The result is the average gating
             # block power.
-            power = 10**((loudness + 0.691) / 10)
+            power = 10 ** ((loudness + 0.691) / 10)
 
             # Multiply that average power by the number of gating blocks to get
             # the sum of all block powers in this track.
@@ -358,7 +368,9 @@ class FfmpegBackend(Backend):
 
         self._log.debug(
             "{}: gain {} LU, peak {}",
-            task.album, album_gain, album_peak,
+            task.album,
+            album_gain,
+            album_peak,
         )
 
         task.album_gain = Gain(album_gain, album_peak)
@@ -378,14 +390,14 @@ class FfmpegBackend(Backend):
             "a:0",
             "-filter",
             "ebur128=peak={}".format(
-                "none" if peak_method is None else peak_method.name),
+                "none" if peak_method is None else peak_method.name
+            ),
             "-f",
             "null",
             "-",
         ]
 
-    def _analyse_item(self, item, target_level, peak_method,
-                      count_blocks=True):
+    def _analyse_item(self, item, target_level, peak_method, count_blocks=True):
         """Analyse item. Return a pair of a Gain object and the number
         of gating blocks above the threshold.
 
@@ -397,9 +409,7 @@ class FfmpegBackend(Backend):
         # call ffmpeg
         self._log.debug(f"analyzing {item}")
         cmd = self._construct_cmd(item, peak_method)
-        self._log.debug(
-            'executing {0}', ' '.join(map(displayable_path, cmd))
-        )
+        self._log.debug("executing {0}", " ".join(map(displayable_path, cmd)))
         output = call(cmd, self._log).stderr.splitlines()
 
         # parse output
@@ -411,26 +421,35 @@ class FfmpegBackend(Backend):
                 output,
                 # `peak_method` is non-`None` in this arm of the conditional
                 f"  {peak_method.name.capitalize()} peak:".encode(),
-                start_line=len(output) - 1, step_size=-1,
+                start_line=len(output) - 1,
+                step_size=-1,
             )
             peak = self._parse_float(
-                output[self._find_line(
-                    output, b"    Peak:",
-                    line_peak,
-                )]
+                output[
+                    self._find_line(
+                        output,
+                        b"    Peak:",
+                        line_peak,
+                    )
+                ]
             )
             # convert TPFS -> part of FS
-            peak = 10**(peak / 20)
+            peak = 10 ** (peak / 20)
 
         line_integrated_loudness = self._find_line(
-            output, b"  Integrated loudness:",
-            start_line=len(output) - 1, step_size=-1,
+            output,
+            b"  Integrated loudness:",
+            start_line=len(output) - 1,
+            step_size=-1,
         )
         gain = self._parse_float(
-            output[self._find_line(
-                output, b"    I:",
-                line_integrated_loudness,
-            )]
+            output[
+                self._find_line(
+                    output,
+                    b"    I:",
+                    line_integrated_loudness,
+                )
+            ]
         )
         # convert LUFS -> LU from target level
         gain = target_level_lufs - gain
@@ -439,10 +458,13 @@ class FfmpegBackend(Backend):
         n_blocks = 0
         if count_blocks:
             gating_threshold = self._parse_float(
-                output[self._find_line(
-                    output, b"    Threshold:",
-                    start_line=line_integrated_loudness,
-                )]
+                output[
+                    self._find_line(
+                        output,
+                        b"    Threshold:",
+                        start_line=line_integrated_loudness,
+                    )
+                ]
             )
             for line in output:
                 if not line.startswith(b"[Parsed_ebur128"):
@@ -455,14 +477,12 @@ class FfmpegBackend(Backend):
                 if self._parse_float(b"M: " + line[1]) >= gating_threshold:
                     n_blocks += 1
             self._log.debug(
-                "{}: {} blocks over {} LUFS"
-                .format(item, n_blocks, gating_threshold)
+                "{}: {} blocks over {} LUFS".format(
+                    item, n_blocks, gating_threshold
+                )
             )
 
-        self._log.debug(
-            "{}: gain {} LU, peak {}"
-            .format(item, gain, peak)
-        )
+        self._log.debug("{}: gain {} LU, peak {}".format(item, gain, peak))
 
         return Gain(gain, peak), n_blocks
 
@@ -476,9 +496,10 @@ class FfmpegBackend(Backend):
             if output[i].startswith(search):
                 return i
         raise ReplayGainError(
-            "ffmpeg output: missing {} after line {}"
-            .format(repr(search), start_line)
+            "ffmpeg output: missing {} after line {}".format(
+                repr(search), start_line
             )
+        )
 
     def _parse_float(self, line):
         """Extract a float from a key value pair in `line`.
@@ -490,9 +511,8 @@ class FfmpegBackend(Backend):
         value = line.split(b":", 1)
         if len(value) < 2:
             raise ReplayGainError(
-                "ffmpeg output: expected key value pair, found {}"
-                .format(line)
-                )
+                "ffmpeg output: expected key value pair, found {}".format(line)
+            )
         value = value[1].lstrip()
         # strip unit
         value = value.split(b" ", 1)[0]
@@ -501,9 +521,8 @@ class FfmpegBackend(Backend):
             return float(value)
         except ValueError:
             raise ReplayGainError(
-                "ffmpeg output: expected float value, found {}"
-                .format(value)
-                )
+                "ffmpeg output: expected float value, found {}".format(value)
+            )
 
 
 # mpgain/aacgain CLI tool backend.
@@ -513,10 +532,12 @@ class CommandBackend(Backend):
 
     def __init__(self, config, log):
         super().__init__(config, log)
-        config.add({
-            'command': "",
-            'noclip': True,
-        })
+        config.add(
+            {
+                "command": "",
+                "noclip": True,
+            }
+        )
 
         self.command = config["command"].as_str()
 
@@ -524,23 +545,22 @@ class CommandBackend(Backend):
             # Explicit executable path.
             if not os.path.isfile(self.command):
                 raise FatalReplayGainError(
-                    'replaygain command does not exist: {}'.format(
-                        self.command)
+                    "replaygain command does not exist: {}".format(self.command)
                 )
         else:
             # Check whether the program is in $PATH.
-            for cmd in ('mp3gain', 'aacgain'):
+            for cmd in ("mp3gain", "aacgain"):
                 try:
-                    call([cmd, '-v'], self._log)
+                    call([cmd, "-v"], self._log)
                     self.command = cmd
                 except OSError:
                     pass
         if not self.command:
             raise FatalReplayGainError(
-                'no replaygain command found: install mp3gain or aacgain'
+                "no replaygain command found: install mp3gain or aacgain"
             )
 
-        self.noclip = config['noclip'].get(bool)
+        self.noclip = config["noclip"].get(bool)
 
     def compute_track_gain(self, task):
         """Computes the track gain for the tracks belonging to `task`, and sets
@@ -560,7 +580,7 @@ class CommandBackend(Backend):
 
         supported_items = list(filter(self.format_supported, task.items))
         if len(supported_items) != len(task.items):
-            self._log.debug('tracks are of unsupported format')
+            self._log.debug("tracks are of unsupported format")
             task.album_gain = None
             task.track_gains = None
             return task
@@ -571,11 +591,10 @@ class CommandBackend(Backend):
         return task
 
     def format_supported(self, item):
-        """Checks whether the given item is supported by the selected tool.
-        """
-        if 'mp3gain' in self.command and item.format != 'MP3':
+        """Checks whether the given item is supported by the selected tool."""
+        if "mp3gain" in self.command and item.format != "MP3":
             return False
-        elif 'aacgain' in self.command and item.format not in ('MP3', 'AAC'):
+        elif "aacgain" in self.command and item.format not in ("MP3", "AAC"):
             return False
         return True
 
@@ -587,7 +606,7 @@ class CommandBackend(Backend):
         the album gain
         """
         if not items:
-            self._log.debug('no supported tracks to analyze')
+            self._log.debug("no supported tracks to analyze")
             return []
 
         """Compute ReplayGain values and return a list of results
@@ -599,22 +618,23 @@ class CommandBackend(Backend):
         # tag-writing; this turns the mp3gain/aacgain tool into a gain
         # calculator rather than a tag manipulator because we take care
         # of changing tags ourselves.
-        cmd = [self.command, '-o', '-s', 's']
+        cmd = [self.command, "-o", "-s", "s"]
         if self.noclip:
             # Adjust to avoid clipping.
-            cmd = cmd + ['-k']
+            cmd = cmd + ["-k"]
         else:
             # Disable clipping warning.
-            cmd = cmd + ['-c']
-        cmd = cmd + ['-d', str(int(target_level - 89))]
+            cmd = cmd + ["-c"]
+        cmd = cmd + ["-d", str(int(target_level - 89))]
         cmd = cmd + [syspath(i.path) for i in items]
 
-        self._log.debug('analyzing {0} files', len(items))
+        self._log.debug("analyzing {0} files", len(items))
         self._log.debug("executing {0}", " ".join(map(displayable_path, cmd)))
         output = call(cmd, self._log).stdout
-        self._log.debug('analysis finished')
-        return self.parse_tool_output(output,
-                                      len(items) + (1 if is_album else 0))
+        self._log.debug("analysis finished")
+        return self.parse_tool_output(
+            output, len(items) + (1 if is_album else 0)
+        )
 
     def parse_tool_output(self, text, num_lines):
         """Given the tab-delimited output from an invocation of mp3gain
@@ -622,25 +642,25 @@ class CommandBackend(Backend):
         containing information about each analyzed file.
         """
         out = []
-        for line in text.split(b'\n')[1:num_lines + 1]:
-            parts = line.split(b'\t')
-            if len(parts) != 6 or parts[0] == b'File':
-                self._log.debug('bad tool output: {0}', text)
-                raise ReplayGainError('mp3gain failed')
+        for line in text.split(b"\n")[1 : num_lines + 1]:
+            parts = line.split(b"\t")
+            if len(parts) != 6 or parts[0] == b"File":
+                self._log.debug("bad tool output: {0}", text)
+                raise ReplayGainError("mp3gain failed")
             d = {
-                'file': parts[0],
-                'mp3gain': int(parts[1]),
-                'gain': float(parts[2]),
-                'peak': float(parts[3]) / (1 << 15),
-                'maxgain': int(parts[4]),
-                'mingain': int(parts[5]),
-
+                "file": parts[0],
+                "mp3gain": int(parts[1]),
+                "gain": float(parts[2]),
+                "peak": float(parts[3]) / (1 << 15),
+                "maxgain": int(parts[4]),
+                "mingain": int(parts[5]),
             }
-            out.append(Gain(d['gain'], d['peak']))
+            out.append(Gain(d["gain"], d["peak"]))
         return out
 
 
 # GStreamer-based backend.
+
 
 class GStreamerBackend(Backend):
     NAME = "gstreamer"
@@ -660,8 +680,13 @@ class GStreamerBackend(Backend):
         self._res = self.Gst.ElementFactory.make("audioresample", "res")
         self._rg = self.Gst.ElementFactory.make("rganalysis", "rg")
 
-        if self._src is None or self._decbin is None or self._conv is None \
-           or self._res is None or self._rg is None:
+        if (
+            self._src is None
+            or self._decbin is None
+            or self._conv is None
+            or self._res is None
+            or self._rg is None
+        ):
             raise FatalGstreamerPluginReplayGainError(
                 "Failed to load required GStreamer plugins"
             )
@@ -712,13 +737,12 @@ class GStreamerBackend(Backend):
             )
 
         try:
-            gi.require_version('Gst', '1.0')
+            gi.require_version("Gst", "1.0")
         except ValueError as e:
-            raise FatalReplayGainError(
-                f"Failed to load GStreamer 1.0: {e}"
-            )
+            raise FatalReplayGainError(f"Failed to load GStreamer 1.0: {e}")
 
-        from gi.repository import GObject, Gst, GLib
+        from gi.repository import GLib, GObject, Gst
+
         # Calling GObject.threads_init() is not needed for
         # PyGObject 3.10.2+
         with warnings.catch_warnings():
@@ -759,8 +783,12 @@ class GStreamerBackend(Backend):
 
         ret = []
         for item in task.items:
-            ret.append(Gain(self._file_tags[item.path]["TRACK_GAIN"],
-                            self._file_tags[item.path]["TRACK_PEAK"]))
+            ret.append(
+                Gain(
+                    self._file_tags[item.path]["TRACK_GAIN"],
+                    self._file_tags[item.path]["TRACK_PEAK"],
+                )
+            )
 
         task.track_gains = ret
         return task
@@ -826,20 +854,25 @@ class GStreamerBackend(Backend):
             # store the computed tags, we overwrite the RG values of
             # received a second time.
             if tag == self.Gst.TAG_TRACK_GAIN:
-                self._file_tags[self._file]["TRACK_GAIN"] = \
-                    taglist.get_double(tag)[1]
+                self._file_tags[self._file]["TRACK_GAIN"] = taglist.get_double(
+                    tag
+                )[1]
             elif tag == self.Gst.TAG_TRACK_PEAK:
-                self._file_tags[self._file]["TRACK_PEAK"] = \
-                    taglist.get_double(tag)[1]
+                self._file_tags[self._file]["TRACK_PEAK"] = taglist.get_double(
+                    tag
+                )[1]
             elif tag == self.Gst.TAG_ALBUM_GAIN:
-                self._file_tags[self._file]["ALBUM_GAIN"] = \
-                    taglist.get_double(tag)[1]
+                self._file_tags[self._file]["ALBUM_GAIN"] = taglist.get_double(
+                    tag
+                )[1]
             elif tag == self.Gst.TAG_ALBUM_PEAK:
-                self._file_tags[self._file]["ALBUM_PEAK"] = \
-                    taglist.get_double(tag)[1]
+                self._file_tags[self._file]["ALBUM_PEAK"] = taglist.get_double(
+                    tag
+                )[1]
             elif tag == self.Gst.TAG_REFERENCE_LEVEL:
-                self._file_tags[self._file]["REFERENCE_LEVEL"] = \
-                    taglist.get_double(tag)[1]
+                self._file_tags[self._file][
+                    "REFERENCE_LEVEL"
+                ] = taglist.get_double(tag)[1]
 
         tags.foreach(handle_tag, None)
 
@@ -854,8 +887,7 @@ class GStreamerBackend(Backend):
         return True
 
     def _set_file(self):
-        """Initialize the filesrc element with the next file to be analyzed.
-        """
+        """Initialize the filesrc element with the next file to be analyzed."""
         # No more files, we're done
         if len(self._files) == 0:
             return False
@@ -901,9 +933,9 @@ class GStreamerBackend(Backend):
         if ret:
             # Seek to the beginning in order to clear the EOS state of the
             # various elements of the pipeline
-            self._pipe.seek_simple(self.Gst.Format.TIME,
-                                   self.Gst.SeekFlags.FLUSH,
-                                   0)
+            self._pipe.seek_simple(
+                self.Gst.Format.TIME, self.Gst.SeekFlags.FLUSH, 0
+            )
             self._pipe.set_state(self.Gst.State.PLAYING)
 
         return ret
@@ -925,6 +957,7 @@ class AudioToolsBackend(Backend):
     <http://audiotools.sourceforge.net/>`_ and its capabilities to read more
     file formats and compute ReplayGain values using it replaygain module.
     """
+
     NAME = "audiotools"
 
     def __init__(self, config, log):
@@ -959,13 +992,9 @@ class AudioToolsBackend(Backend):
         try:
             audiofile = self._mod_audiotools.open(py3_path(syspath(item.path)))
         except OSError:
-            raise ReplayGainError(
-                f"File {item.path} was not found"
-            )
+            raise ReplayGainError(f"File {item.path} was not found")
         except self._mod_audiotools.UnsupportedFile:
-            raise ReplayGainError(
-                f"Unsupported file type {item.format}"
-            )
+            raise ReplayGainError(f"Unsupported file type {item.format}")
 
         return audiofile
 
@@ -982,8 +1011,7 @@ class AudioToolsBackend(Backend):
         try:
             rg = self._mod_replaygain.ReplayGain(audiofile.sample_rate())
         except ValueError:
-            raise ReplayGainError(
-                f"Unsupported sample rate {item.samplerate}")
+            raise ReplayGainError(f"Unsupported sample rate {item.samplerate}")
             return
         return rg
 
@@ -991,8 +1019,9 @@ class AudioToolsBackend(Backend):
         """Computes the track gain for the tracks belonging to `task`, and sets
         the `track_gains` attribute on the task. Returns `task`.
         """
-        gains = [self._compute_track_gain(i, task.target_level)
-                 for i in task.items]
+        gains = [
+            self._compute_track_gain(i, task.target_level) for i in task.items
+        ]
         task.track_gains = gains
         return task
 
@@ -1017,8 +1046,8 @@ class AudioToolsBackend(Backend):
         except ValueError as exc:
             # `audiotools.replaygain` can raise a `ValueError` if the sample
             # rate is incorrect.
-            self._log.debug('error in rg.title_gain() call: {}', exc)
-            raise ReplayGainError('audiotools audio data error')
+            self._log.debug("error in rg.title_gain() call: {}", exc)
+            raise ReplayGainError("audiotools audio data error")
         return self._with_target_level(gain, target_level), peak
 
     def _compute_track_gain(self, item, target_level):
@@ -1035,8 +1064,13 @@ class AudioToolsBackend(Backend):
             rg, audiofile, target_level
         )
 
-        self._log.debug('ReplayGain for track {0} - {1}: {2:.2f}, {3:.2f}',
-                        item.artist, item.title, rg_track_gain, rg_track_peak)
+        self._log.debug(
+            "ReplayGain for track {0} - {1}: {2:.2f}, {3:.2f}",
+            item.artist,
+            item.title,
+            rg_track_gain,
+            rg_track_peak,
+        )
         return Gain(gain=rg_track_gain, peak=rg_track_peak)
 
     def compute_album_gain(self, task):
@@ -1056,19 +1090,26 @@ class AudioToolsBackend(Backend):
             rg_track_gain, rg_track_peak = self._title_gain(
                 rg, audiofile, task.target_level
             )
-            track_gains.append(
-                Gain(gain=rg_track_gain, peak=rg_track_peak)
+            track_gains.append(Gain(gain=rg_track_gain, peak=rg_track_peak))
+            self._log.debug(
+                "ReplayGain for track {0}: {1:.2f}, {2:.2f}",
+                item,
+                rg_track_gain,
+                rg_track_peak,
             )
-            self._log.debug('ReplayGain for track {0}: {1:.2f}, {2:.2f}',
-                            item, rg_track_gain, rg_track_peak)
 
         # After getting the values for all tracks, it's possible to get the
         # album values.
         rg_album_gain, rg_album_peak = rg.album_gain()
         rg_album_gain = self._with_target_level(
-                rg_album_gain, task.target_level)
-        self._log.debug('ReplayGain for album {0}: {1:.2f}, {2:.2f}',
-                        task.items[0].album, rg_album_gain, rg_album_peak)
+            rg_album_gain, task.target_level
+        )
+        self._log.debug(
+            "ReplayGain for album {0}: {1:.2f}, {2:.2f}",
+            task.items[0].album,
+            rg_album_gain,
+            rg_album_peak,
+        )
 
         task.album_gain = Gain(gain=rg_album_gain, peak=rg_album_peak)
         task.track_gains = track_gains
@@ -1077,7 +1118,7 @@ class AudioToolsBackend(Backend):
 
 class ExceptionWatcher(Thread):
     """Monitors a queue for exceptions asynchronously.
-        Once an exception occurs, raise it and execute a callback.
+    Once an exception occurs, raise it and execute a callback.
     """
 
     def __init__(self, queue, callback):
@@ -1114,39 +1155,39 @@ BACKENDS = {b.NAME: b for b in BACKEND_CLASSES}
 
 
 class ReplayGainPlugin(BeetsPlugin):
-    """Provides ReplayGain analysis.
-    """
+    """Provides ReplayGain analysis."""
 
     def __init__(self):
         super().__init__()
 
         # default backend is 'command' for backward-compatibility.
-        self.config.add({
-            'overwrite': False,
-            'auto': True,
-            'backend': 'command',
-            'threads': cpu_count(),
-            'parallel_on_import': False,
-            'per_disc': False,
-            'peak': 'true',
-            'targetlevel': 89,
-            'r128': ['Opus'],
-            'r128_targetlevel': lufs_to_db(-23),
-        })
+        self.config.add(
+            {
+                "overwrite": False,
+                "auto": True,
+                "backend": "command",
+                "threads": cpu_count(),
+                "parallel_on_import": False,
+                "per_disc": False,
+                "peak": "true",
+                "targetlevel": 89,
+                "r128": ["Opus"],
+                "r128_targetlevel": lufs_to_db(-23),
+            }
+        )
 
         # FIXME: Consider renaming the configuration option and deprecating the
         # old name 'overwrite'.
-        self.force_on_import = self.config['overwrite'].get(bool)
+        self.force_on_import = self.config["overwrite"].get(bool)
 
         # Remember which backend is used for CLI feedback
-        self.backend_name = self.config['backend'].as_str()
+        self.backend_name = self.config["backend"].as_str()
 
         if self.backend_name not in BACKENDS:
             raise ui.UserError(
                 "Selected ReplayGain backend {} is not supported. "
                 "Please select one of: {}".format(
-                    self.backend_name,
-                    ', '.join(BACKENDS.keys())
+                    self.backend_name, ", ".join(BACKENDS.keys())
                 )
             )
 
@@ -1157,8 +1198,7 @@ class ReplayGainPlugin(BeetsPlugin):
             raise ui.UserError(
                 "Selected ReplayGain peak method {} is not supported. "
                 "Please select one of: {}".format(
-                    peak_method,
-                    ', '.join(PeakMethod.__members__)
+                    peak_method, ", ".join(PeakMethod.__members__)
                 )
             )
         # This only applies to plain old rg tags, r128 doesn't store peak
@@ -1166,21 +1206,20 @@ class ReplayGainPlugin(BeetsPlugin):
         self.peak_method = PeakMethod[peak_method]
 
         # On-import analysis.
-        if self.config['auto']:
-            self.register_listener('import_begin', self.import_begin)
-            self.register_listener('import', self.import_end)
+        if self.config["auto"]:
+            self.register_listener("import_begin", self.import_begin)
+            self.register_listener("import", self.import_end)
             self.import_stages = [self.imported]
 
         # Formats to use R128.
-        self.r128_whitelist = self.config['r128'].as_str_seq()
+        self.r128_whitelist = self.config["r128"].as_str_seq()
 
         try:
             self.backend_instance = BACKENDS[self.backend_name](
                 self.config, self._log
             )
         except (ReplayGainError, FatalReplayGainError) as e:
-            raise ui.UserError(
-                f'replaygain initialization failed: {e}')
+            raise ui.UserError(f"replaygain initialization failed: {e}")
 
         # Start threadpool lazily.
         self.pool = None
@@ -1197,8 +1236,7 @@ class ReplayGainPlugin(BeetsPlugin):
 
     @staticmethod
     def has_rg_track_data(item):
-        return (item.rg_track_gain is not None
-                and item.rg_track_peak is not None)
+        return item.rg_track_gain is not None and item.rg_track_peak is not None
 
     def track_requires_gain(self, item):
         if self.should_use_r128(item):
@@ -1212,13 +1250,14 @@ class ReplayGainPlugin(BeetsPlugin):
 
     @staticmethod
     def has_r128_album_data(item):
-        return (item.r128_track_gain is not None
-                and item.r128_album_gain is not None)
+        return (
+            item.r128_track_gain is not None
+            and item.r128_album_gain is not None
+        )
 
     @staticmethod
     def has_rg_album_data(item):
-        return (item.rg_album_gain is not None
-                and item.rg_album_peak is not None)
+        return item.rg_album_gain is not None and item.rg_album_peak is not None
 
     def album_requires_gain(self, album):
         # Skip calculating gain only when *all* files don't need
@@ -1238,14 +1277,16 @@ class ReplayGainPlugin(BeetsPlugin):
     def create_task(self, items, use_r128, album=None):
         if use_r128:
             return R128Task(
-                items, album,
+                items,
+                album,
                 self.config["r128_targetlevel"].as_number(),
                 self.backend_instance.NAME,
                 self._log,
             )
         else:
             return RgTask(
-                items, album,
+                items,
+                album,
                 self.config["targetlevel"].as_number(),
                 self.peak_method,
                 self.backend_instance.NAME,
@@ -1261,7 +1302,7 @@ class ReplayGainPlugin(BeetsPlugin):
         items, nothing is done.
         """
         if not force and not self.album_requires_gain(album):
-            self._log.info('Skipping album {0}', album)
+            self._log.info("Skipping album {0}", album)
             return
 
         items_iter = iter(album.items())
@@ -1269,13 +1310,14 @@ class ReplayGainPlugin(BeetsPlugin):
         if any(use_r128 != self.should_use_r128(i) for i in items_iter):
             self._log.error(
                 "Cannot calculate gain for album {0} (incompatible formats)",
-                album)
+                album,
+            )
             return
 
-        self._log.info('analyzing {0}', album)
+        self._log.info("analyzing {0}", album)
 
         discs = {}
-        if self.config['per_disc'].get(bool):
+        if self.config["per_disc"].get(bool):
             for item in album.items():
                 if discs.get(item.disc) is None:
                     discs[item.disc] = []
@@ -1288,14 +1330,14 @@ class ReplayGainPlugin(BeetsPlugin):
             try:
                 self._apply(
                     self.backend_instance.compute_album_gain,
-                    args=[task], kwds={},
-                    callback=lambda task: task.store(write)
+                    args=[task],
+                    kwds={},
+                    callback=lambda task: task.store(write),
                 )
             except ReplayGainError as e:
                 self._log.info("ReplayGain error: {0}", e)
             except FatalReplayGainError as e:
-                raise ui.UserError(
-                    f"Fatal replay gain error: {e}")
+                raise ui.UserError(f"Fatal replay gain error: {e}")
 
     def handle_track(self, item, write, force=False):
         """Compute track replay gain and store it in the item.
@@ -1305,7 +1347,7 @@ class ReplayGainPlugin(BeetsPlugin):
         in the item, nothing is done.
         """
         if not force and not self.track_requires_gain(item):
-            self._log.info('Skipping track {0}', item)
+            self._log.info("Skipping track {0}", item)
             return
 
         use_r128 = self.should_use_r128(item)
@@ -1314,8 +1356,9 @@ class ReplayGainPlugin(BeetsPlugin):
         try:
             self._apply(
                 self.backend_instance.compute_track_gain,
-                args=[task], kwds={},
-                callback=lambda task: task.store(write)
+                args=[task],
+                kwds={},
+                callback=lambda task: task.store(write),
             )
         except ReplayGainError as e:
             self._log.info("ReplayGain error: {0}", e)
@@ -1323,8 +1366,7 @@ class ReplayGainPlugin(BeetsPlugin):
             raise ui.UserError(f"Fatal replay gain error: {e}")
 
     def open_pool(self, threads):
-        """Open a `ThreadPool` instance in `self.pool`
-        """
+        """Open a `ThreadPool` instance in `self.pool`"""
         if self.pool is None and self.backend_instance.do_parallel:
             self.pool = ThreadPool(threads)
             self.exc_queue = queue.Queue()
@@ -1332,23 +1374,24 @@ class ReplayGainPlugin(BeetsPlugin):
             signal.signal(signal.SIGINT, self._interrupt)
 
             self.exc_watcher = ExceptionWatcher(
-                self.exc_queue,      # threads push exceptions here
-                self.terminate_pool  # abort once an exception occurs
+                self.exc_queue,  # threads push exceptions here
+                self.terminate_pool,  # abort once an exception occurs
             )
             self.exc_watcher.start()
 
     def _apply(self, func, args, kwds, callback):
         if self.pool is not None:
+
             def handle_exc(exc):
-                """Handle exceptions in the async work.
-                """
+                """Handle exceptions in the async work."""
                 if isinstance(exc, ReplayGainError):
                     self._log.info(exc.args[0])  # Log non-fatal exceptions.
                 else:
                     self.exc_queue.put(exc)
 
-            self.pool.apply_async(func, args, kwds, callback,
-                                  error_callback=handle_exc)
+            self.pool.apply_async(
+                func, args, kwds, callback, error_callback=handle_exc
+            )
         else:
             callback(func(*args, **kwds))
 
@@ -1367,7 +1410,7 @@ class ReplayGainPlugin(BeetsPlugin):
 
     def _interrupt(self, signal, frame):
         try:
-            self._log.info('interrupted')
+            self._log.info("interrupted")
             self.terminate_pool()
             sys.exit(0)
         except SystemExit:
@@ -1375,8 +1418,7 @@ class ReplayGainPlugin(BeetsPlugin):
             pass
 
     def close_pool(self):
-        """Regularly close the `ThreadPool` instance in `self.pool`.
-        """
+        """Regularly close the `ThreadPool` instance in `self.pool`."""
         if self.pool is not None:
             self.pool.close()
             self.pool.join()
@@ -1384,24 +1426,23 @@ class ReplayGainPlugin(BeetsPlugin):
             self.pool = None
 
     def import_begin(self, session):
-        """Handle `import_begin` event -> open pool
-        """
-        threads = self.config['threads'].get(int)
+        """Handle `import_begin` event -> open pool"""
+        threads = self.config["threads"].get(int)
 
-        if self.config['parallel_on_import'] \
-                and self.config['auto'] \
-                and threads:
+        if (
+            self.config["parallel_on_import"]
+            and self.config["auto"]
+            and threads
+        ):
             self.open_pool(threads)
 
     def import_end(self, paths):
-        """Handle `import` event -> close pool
-        """
+        """Handle `import` event -> close pool"""
         self.close_pool()
 
     def imported(self, session, task):
-        """Add replay gain info to items or albums of ``task``.
-        """
-        if self.config['auto']:
+        """Add replay gain info to items or albums of ``task``."""
+        if self.config["auto"]:
             if task.is_album:
                 self.handle_album(task.album, False, self.force_on_import)
             else:
@@ -1414,22 +1455,24 @@ class ReplayGainPlugin(BeetsPlugin):
 
             # Bypass self.open_pool() if called with  `--threads 0`
             if opts.threads != 0:
-                threads = opts.threads or self.config['threads'].get(int)
+                threads = opts.threads or self.config["threads"].get(int)
                 self.open_pool(threads)
 
             if opts.album:
                 albums = lib.albums(ui.decargs(args))
                 self._log.info(
-                    "Analyzing {} albums ~ {} backend..."
-                    .format(len(albums), self.backend_name)
+                    "Analyzing {} albums ~ {} backend...".format(
+                        len(albums), self.backend_name
+                    )
                 )
                 for album in albums:
                     self.handle_album(album, write, force)
             else:
                 items = lib.items(ui.decargs(args))
                 self._log.info(
-                    "Analyzing {} tracks ~ {} backend..."
-                    .format(len(items), self.backend_name)
+                    "Analyzing {} tracks ~ {} backend...".format(
+                        len(items), self.backend_name
+                    )
                 )
                 for item in items:
                     self.handle_track(item, write, force)
@@ -1440,24 +1483,39 @@ class ReplayGainPlugin(BeetsPlugin):
             pass
 
     def commands(self):
-        """Return the "replaygain" ui subcommand.
-        """
-        cmd = ui.Subcommand('replaygain', help='analyze for ReplayGain')
+        """Return the "replaygain" ui subcommand."""
+        cmd = ui.Subcommand("replaygain", help="analyze for ReplayGain")
         cmd.parser.add_album_option()
         cmd.parser.add_option(
-            "-t", "--threads", dest="threads", type=int,
-            help='change the number of threads, \
-            defaults to maximum available processors'
+            "-t",
+            "--threads",
+            dest="threads",
+            type=int,
+            help="change the number of threads, \
+            defaults to maximum available processors",
         )
         cmd.parser.add_option(
-            "-f", "--force", dest="force", action="store_true", default=False,
+            "-f",
+            "--force",
+            dest="force",
+            action="store_true",
+            default=False,
             help="analyze all files, including those that "
-            "already have ReplayGain metadata")
+            "already have ReplayGain metadata",
+        )
         cmd.parser.add_option(
-            "-w", "--write", default=None, action="store_true",
-            help="write new metadata to files' tags")
+            "-w",
+            "--write",
+            default=None,
+            action="store_true",
+            help="write new metadata to files' tags",
+        )
         cmd.parser.add_option(
-            "-W", "--nowrite", dest="write", action="store_false",
-            help="don't write metadata (opposite of -w)")
+            "-W",
+            "--nowrite",
+            dest="write",
+            action="store_false",
+            help="don't write metadata (opposite of -w)",
+        )
         cmd.func = self.command_func
         return [cmd]
