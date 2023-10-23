@@ -132,7 +132,7 @@ setup(
         ],
         "docs": [
             "sphinx",
-            "sphinx_rtd_theme",
+            "pydata_sphinx_theme",
         ],
         # Plugin (optional) dependencies:
         "absubmit": ["requests"],
