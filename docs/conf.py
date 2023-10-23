@@ -60,4 +60,8 @@ man_pages = [
 ]
 
 # Options for Alabaster theme
-html_theme_options = {"fixed_sidebar": True}
+html_theme_options = {
+    "fixed_sidebar": True
+}
+# html_static_path = ['assets']
+html_logo = "assets/beets_logo.png"
