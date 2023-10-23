@@ -68,4 +68,4 @@ html_theme_options = {
     },
 }
 html_title = "beets"
-html_logo = "assets/beets_logo.png"
+html_logo = "_static/beets_logo.png"
