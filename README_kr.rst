@@ -104,5 +104,5 @@ Read More
 `Adrian Sampson`_ 와 많은 사람들의 지지를 받아 Beets를 만들었다.
 돕고 싶다면 `forum`_.를 방문하면 된다.
 
-.. _forum: https://discourse.beets.io
+.. _forum: https://github.com/beetbox/beets/discussions/
 .. _Adrian Sampson: https://www.cs.cornell.edu/~asampson/

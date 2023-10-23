@@ -42,12 +42,12 @@ Non-Programming
    compiling a library of freely-licensed music files (preferably with
    incorrect metadata) for testing and measurement.
 -  Think you have a nice config or cool use-case for beets? We’d love to
-   hear about it! Submit a post to our `our
-   forums <https://discourse.beets.io/>`__ under the “Show and Tell”
-   category for a chance to get featured in `the
+   hear about it! Submit a post to our `discussion board
+   <https://github.com/beetbox/beets/discussions/categories/show-and-tell>`__
+   under the “Show and Tell” category for a chance to get featured in `the
    docs <https://beets.readthedocs.io/en/stable/guides/advanced.html>`__.
--  Consider helping out in `our forums <https://discourse.beets.io/>`__
-   by responding to support requests or driving some new discussions.
+-  Consider helping out fellow users by by `responding to support requests
+   <https://github.com/beetbox/beets/discussions/categories/q-a>`__ .
 
 Programming
 -----------
@@ -119,7 +119,8 @@ If this is your first time contributing to an open source project,
 welcome! If you are confused at all about how to contribute or what to
 contribute, take a look at `this great
 tutorial <http://makeapullrequest.com/>`__, or stop by our
-`forums <https://discourse.beets.io/>`__ if you have any questions.
+`discussion board <https://github.com/beetbox/beets/discussions/>`__
+if you have any questions.
 
 We maintain a list of issues we reserved for those new to open source
 labeled `“first timers
