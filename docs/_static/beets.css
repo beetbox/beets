@@ -1,0 +1,12 @@
+html[data-theme="light"] {
+    --pst-color-secondary: #a23632;
+}
+html[data-theme="light"] {
+    --pst-color-inline-code: #a23632;
+}
+
+/* beetroot red: #a23632 */
+/* beetroot green: #1B5801 */
+/* beetroot green light: rgb(27, 150, 50) */
+/* pydata teal (primary): #126A7E */
+/* pydata violet (secondary): #7D0E70 */

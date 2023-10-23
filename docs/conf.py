@@ -66,6 +66,9 @@ html_theme_options = {
     "logo": {
         "text": "beets",
     },
+    "pygment_light_style": "bw",
 }
 html_title = "beets"
 html_logo = "_static/beets_logo.png"
+html_static_path = ['_static']
+html_css_files = ['beets.css']
