@@ -476,17 +476,17 @@ class DiscogsPlugin(BeetsPlugin):
             discogs_albumid=discogs_albumid,
             discogs_labelid=labelid,
             discogs_artistid=artist_id,
-            cover_art_url=cover_art_url
+            cover_art_url=cover_art_url,
         )
-    
+
     def select_cover_art(self, result):
         """Returns the best candidate image, if any, from a Discogs `Release` object."""
         if result.data.get("images") and len(result.data.get("images")) > 0:
-            # The first image in this list appears to be the one displayed first 
-            # on the release page - even if it is not flagged as `type: "primary"` - and 
+            # The first image in this list appears to be the one displayed first
+            # on the release page - even if it is not flagged as `type: "primary"` - and
             # so it is the best candidate for the cover art.
             return result.data.get("images")[0].get("uri")
-        
+
         return None
 
     def format(self, classification):
