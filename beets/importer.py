@@ -412,7 +412,7 @@ class ImportSession:
 
     def ask_resume(self, toppath):
         """If import of `toppath` was aborted in an earlier session, ask
-        user if she wants to resume the import.
+        user if they want to resume the import.
 
         Determines the return value of `is_resuming(toppath)`.
         """
