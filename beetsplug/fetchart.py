@@ -1098,7 +1098,7 @@ class CoverArtUrl(RemoteArtSource):
         image_url = None
         try:
             # look for cover_art_url on album or first track
-            if album.get('cover_art_url'):
+            if album.get("cover_art_url"):
                 image_url = album.cover_art_url
             else:
                 image_url = album.items().get().cover_art_url
