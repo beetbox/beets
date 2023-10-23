@@ -59,8 +59,8 @@ man_pages = [
     ),
 ]
 
-# Options for book theme
-html_theme = 'sphinx_book_theme'
+# Options for pydata theme
+html_theme = 'pydata_sphinx_theme'
 html_theme_options = {
     'collapse_navigation': True,
     "logo": {
@@ -69,7 +69,3 @@ html_theme_options = {
 }
 html_title = "beets"
 html_logo = "assets/beets_logo.png"
-html_static_path = ['_static']
-html_css_files = [
-    'css/custom.css',
-]
