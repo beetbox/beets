@@ -517,7 +517,7 @@ Here are a few of the plugins written by the beets community:
    Downloads audio from youtube-dl sources and import into beets.
 
 `beets-ytimport`_
-   Download and import your liked songs from Youtube into beets.
+   Download and import your liked songs from YouTube into beets.
 
 `beets-yearfixer`_
    Attempts to fix all missing ``original_year`` and ``year`` fields.
