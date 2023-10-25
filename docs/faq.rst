@@ -6,7 +6,7 @@ Got a question that isn't answered here? Try the `discussion board`_, or
 :ref:`filing an issue <bugs>` in the bug tracker.
 
 .. _mailing list: https://groups.google.com/group/beets-users
-.. _discussion board: https://discourse.beets.io
+.. _discussion board: https://github.com/beetbox/beets/discussions/
 
 .. contents::
     :local:

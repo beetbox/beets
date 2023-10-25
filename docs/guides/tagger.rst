@@ -309,4 +309,4 @@ If we haven't made the process clear, please post on `the discussion
 board`_ and we'll try to improve this guide.
 
 .. _the mailing list: https://groups.google.com/group/beets-users
-.. _the discussion board: https://discourse.beets.io
+.. _the discussion board: https://github.com/beetbox/beets/discussions/
