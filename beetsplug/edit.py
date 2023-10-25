@@ -220,7 +220,7 @@ class EditPlugin(plugins.BeetsPlugin):
         - `fields`: The set of field names to edit (or None to edit
           everything).
         """
-        # Present the YAML to the user and let her change it.
+        # Present the YAML to the user and let them change it.
         success = self.edit_objects(objs, fields)
 
         # Save the new data.
@@ -370,7 +370,7 @@ class EditPlugin(plugins.BeetsPlugin):
             if not obj._db or obj.id is None:
                 obj.id = -i
 
-        # Present the YAML to the user and let her change it.
+        # Present the YAML to the user and let them change it.
         fields = self._get_fields(album=False, extra=[])
         success = self.edit_objects(task.items, fields)
 
