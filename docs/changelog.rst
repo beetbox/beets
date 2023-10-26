@@ -257,6 +257,8 @@ Bug fixes:
   :bug:`4822`
 * Fix bug where an interrupted import process poisons the database, causing
   a null path that can't be removed.
+* Fix bug where empty artist and title fields would return None instead of an
+  empty list in the discord plugin. :bug:`4973`
 
 For packagers:
 
