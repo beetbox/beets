@@ -246,13 +246,13 @@ class DiscogsPlugin(BeetsPlugin):
         :rtype: list[beets.autotag.hooks.TrackInfo]
         """
         if not self.discogs_client:
-            return
+            return []
 
         if not artist and not title:
             self._log.debug(
                 "Skipping Discogs query. File missing artist and " "title tags."
             )
-            return
+            return []
 
         query = f"{artist} {title}"
         try:
