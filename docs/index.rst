@@ -34,6 +34,7 @@ Contents
    faq
    team
    contributing
+   code_of_conduct
    dev/index
 
 .. toctree::
