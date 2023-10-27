@@ -17,6 +17,7 @@ Major new features:
 
 New features:
 
+* :doc:`plugins/mbsubmit`: add new prompt choices helping further to submit unmatched tracks to MusicBrainz faster.
 * :doc:`plugins/spotify`: We now fetch track's ISRC, EAN, and UPC identifiers from Spotify when using the ``spotifysync`` command.
   :bug:`4992`
 * :doc:`plugins/discogs`: supply a value for the `cover_art_url` attribute, for use by `fetchart`.
