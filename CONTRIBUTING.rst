@@ -23,6 +23,10 @@ Types of Contributions
 We love to get contributions from our community—you! There are many ways
 to contribute, whether you’re a programmer or not.
 
+The first thing to do, regardless of how you'd like to contribute to the
+project, is to check out our `Code of Conduct <./CODE_OF_CONDUCT.md>`__ and to
+keep that in mind while interacting with other contributors and users.
+
 Non-Programming
 ---------------
 
