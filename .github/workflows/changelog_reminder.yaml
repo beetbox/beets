@@ -2,9 +2,6 @@ name: Verify changelog updated
 
 on: 
   pull_request:
-    paths:
-      - '**.rst'
-      - '**.py'
     types:
       - opened
       - ready_for_review
