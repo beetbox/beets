@@ -76,11 +76,11 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         if deezer_id is None:
             return None
         try:
-            album_data = requests.get(self.album_url + deezer_id,
-                                      timeout=10).json()
+            album_data = requests.get(
+                self.album_url + deezer_id, timeout=10
+            ).json()
         except requests.exceptions as e:
-            self._log.debug("Error fetching album {}\n Error: {}",
-                            deezer_id, e)
+            self._log.debug("Error fetching album {}\n Error: {}", deezer_id, e)
             return None
         contributors = album_data.get("contributors")
         if contributors is not None:
@@ -108,8 +108,9 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             )
 
         try:
-            tracks_obj = requests.get(self.album_url + deezer_id + "/tracks",
-                                      timeout=10).json()
+            tracks_obj = requests.get(
+                self.album_url + deezer_id + "/tracks", timeout=10
+            ).json()
             tracks_data = tracks_obj["data"]
         except requests.exceptions.ReadTimeout:
             self._log.debug("Timeout fetching album tracks for {}", deezer_id)
@@ -197,11 +198,13 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             if deezer_id is None:
                 return None
             try:
-                track_data = requests.get(self.track_url + deezer_id,
-                                          timeout=10).json()
+                track_data = requests.get(
+                    self.track_url + deezer_id, timeout=10
+                ).json()
             except requests.exception as e:
-                self._log.debug("Error fetching track {}\n Error: {}",
-                                deezer_id, e)
+                self._log.debug(
+                    "Error fetching track {}\n Error: {}", deezer_id, e
+                )
                 return None
         track = self._get_track(track_data)
 
@@ -214,8 +217,11 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
                 timeout=10,
             ).json()["data"]
         except requests.exceptions as e:
-            self._log.debug("Error fetching album tracks for {} \n Error: {}",
-                            track_data["album"]["id"], e)
+            self._log.debug(
+                "Error fetching album tracks for {} \n Error: {}",
+                track_data["album"]["id"],
+                e,
+            )
             return None
         medium_total = 0
         for i, track_data in enumerate(album_tracks_data, start=1):
