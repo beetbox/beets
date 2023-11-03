@@ -527,7 +527,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                         album,
                         src,
                     )
-                    album.store(inherit=False)
+                    if "track" in self.sources:
+                        album.store(inherit=False)
+                    else:
+                        album.store()
 
                     for item in album.items():
                         # If we're using track-level sources, also look up each
