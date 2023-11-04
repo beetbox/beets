@@ -451,15 +451,20 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             self._log.debug(
                 "added last.fm album genre ({0}): {1}", src, album.genre
             )
-            album.store()
 
+            # If we're using track-level sources, store the album genre only,
+            # then also look up individual track genres.
             if "track" in self.sources:
+                album.store(inherit=False)
                 for item in album.items():
                     item.genre, src = self._get_genre(item)
                     self._log.debug(
                         "added last.fm item genre ({0}): {1}", src, item.genre
                     )
                     item.store()
+            # Store the album genre and inherit to tracks.
+            else:
+                album.store()
 
         else:
             item = task.item
