@@ -64,6 +64,7 @@ configuration file. The available options are:
   is setup.
   The ``google``, ``genius``, and ``tekstowo`` sources will only be enabled if
   BeautifulSoup is installed.
+- **synced**: Prefer synced lyrics over plain lyrics if a source offers them. Currently `lrclib` is the only source that provides them. Default: `no`.
 
 Here's an example of ``config.yaml``::
 

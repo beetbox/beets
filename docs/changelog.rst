@@ -141,7 +141,8 @@ New features:
   but no thumbnail is provided by CAA. We now fallback to the raw image.
 * :doc:`/plugins/advancedrewrite`: Add an advanced version of the `rewrite`
   plugin which allows to replace fields based on a given library query.
-* :doc:`/plugins/lyrics`: Add LRCLIB as a new lyrics provider.
+* :doc:`/plugins/lyrics`: Add LRCLIB as a new lyrics provider and a new
+  `synced` option to prefer synced lyrics over plain lyrics.
 
 Bug fixes:
 
