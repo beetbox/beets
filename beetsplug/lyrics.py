@@ -290,8 +290,29 @@ class Backend:
             self._log.debug("failed to fetch: {0} ({1})", url, r.status_code)
             return None
 
-    def fetch(self, artist, title):
+    def fetch(self, artist, title, album=None, length=None):
         raise NotImplementedError()
+
+
+class LRCLib(Backend):
+    base_url = "https://lrclib.net/api/get"
+
+    def fetch(self, artist, title, album=None, length=None):
+        params = {
+            "artist_name": artist,
+            "track_name": title,
+            "album_name": album,
+            "duration": length,
+        }
+
+        try:
+            response = requests.get(self.base_url, params=params)
+            data = response.json()
+        except (requests.RequestException, json.decoder.JSONDecodeError) as exc:
+            self._log.debug("LRCLib API request failed: {0}", exc)
+            return None
+
+        return data.get("syncedLyrics") or data.get("plainLyrics")
 
 
 class MusiXmatch(Backend):
@@ -313,7 +334,7 @@ class MusiXmatch(Backend):
 
         return super()._encode(s)
 
-    def fetch(self, artist, title):
+    def fetch(self, artist, title, album=None, length=None):
         url = self.build_url(artist, title)
 
         html = self.fetch_url(url)
@@ -361,7 +382,7 @@ class Genius(Backend):
             "User-Agent": USER_AGENT,
         }
 
-    def fetch(self, artist, title):
+    def fetch(self, artist, title, album=None, length=None):
         """Fetch lyrics from genius.com
 
         Because genius doesn't allow accessing lyrics via the api,
@@ -473,7 +494,7 @@ class Tekstowo(Backend):
     BASE_URL = "http://www.tekstowo.pl"
     URL_PATTERN = BASE_URL + "/wyszukaj.html?search-title=%s&search-artist=%s"
 
-    def fetch(self, artist, title):
+    def fetch(self, artist, title, album=None, length=None):
         url = self.build_url(title, artist)
         search_results = self.fetch_url(url)
         if not search_results:
@@ -706,7 +727,7 @@ class Google(Backend):
         ratio = difflib.SequenceMatcher(None, song_title, title).ratio()
         return ratio >= typo_ratio
 
-    def fetch(self, artist, title):
+    def fetch(self, artist, title, album=None, length=None):
         query = f"{artist} {title}"
         url = "https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s" % (
             self.api_key,
@@ -750,12 +771,13 @@ class Google(Backend):
 
 
 class LyricsPlugin(plugins.BeetsPlugin):
-    SOURCES = ["google", "musixmatch", "genius", "tekstowo"]
+    SOURCES = ["google", "musixmatch", "genius", "tekstowo", "lrclib"]
     SOURCE_BACKENDS = {
         "google": Google,
         "musixmatch": MusiXmatch,
         "genius": Genius,
         "tekstowo": Tekstowo,
+        "lrclib": LRCLib,
     }
 
     def __init__(self):
@@ -1019,8 +1041,13 @@ class LyricsPlugin(plugins.BeetsPlugin):
             return
 
         lyrics = None
+        album = item.album
+        length = round(item.length)
         for artist, titles in search_pairs(item):
-            lyrics = [self.get_lyrics(artist, title) for title in titles]
+            lyrics = [
+                self.get_lyrics(artist, title, album=album, length=length)
+                for title in titles
+            ]
             if any(lyrics):
                 break
 
@@ -1049,12 +1076,12 @@ class LyricsPlugin(plugins.BeetsPlugin):
             item.try_write()
         item.store()
 
-    def get_lyrics(self, artist, title):
+    def get_lyrics(self, artist, title, album=None, length=None):
         """Fetch lyrics, trying each source in turn. Return a string or
         None if no lyrics were found.
         """
         for backend in self.backends:
-            lyrics = backend.fetch(artist, title)
+            lyrics = backend.fetch(artist, title, album=album, length=length)
             if lyrics:
                 self._log.debug(
                     "got lyrics from backend: {0}", backend.__class__.__name__
