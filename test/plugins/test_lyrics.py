@@ -23,6 +23,7 @@ from test import _common
 from unittest.mock import MagicMock, patch
 
 import confuse
+import requests
 
 from beets import logging
 from beets.library import Item
@@ -34,6 +35,7 @@ raw_backend = lyrics.Backend({}, log)
 google = lyrics.Google(MagicMock(), log)
 genius = lyrics.Genius(MagicMock(), log)
 tekstowo = lyrics.Tekstowo(MagicMock(), log)
+lrclib = lyrics.LRCLib(MagicMock(), log)
 
 
 class LyricsPluginTest(unittest.TestCase):
@@ -675,6 +677,98 @@ class TekstowoIntegrationTest(TekstowoBaseTest, LyricsAssertions):
         # expected return value None
         lyrics = tekstowo.fetch("Kelly Bailey", "Black Mesa Inbound")
         self.assertEqual(lyrics, None)
+
+
+# test LRCLib backend
+
+
+class LRCLibLyricsTest(unittest.TestCase):
+    def setUp(self):
+        self.plugin = lyrics.LyricsPlugin()
+        lrclib.config = self.plugin.config
+
+    @patch("beetsplug.lyrics.requests.get")
+    def test_fetch_synced_lyrics(self, mock_get):
+        mock_response = {
+            "syncedLyrics": "[00:00.00] la la la",
+            "plainLyrics": "la la la",
+        }
+        mock_get.return_value.json.return_value = mock_response
+        mock_get.return_value.status_code = 200
+
+        lyrics = lrclib.fetch("la", "la", "la", 999)
+
+        self.assertEqual(lyrics, mock_response["syncedLyrics"])
+
+    @patch("beetsplug.lyrics.requests.get")
+    def test_fetch_plain_lyrics(self, mock_get):
+        mock_response = {
+            "syncedLyrics": "",
+            "plainLyrics": "la la la",
+        }
+        mock_get.return_value.json.return_value = mock_response
+        mock_get.return_value.status_code = 200
+
+        lyrics = lrclib.fetch("la", "la", "la", 999)
+
+        self.assertEqual(lyrics, mock_response["plainLyrics"])
+
+    @patch("beetsplug.lyrics.requests.get")
+    def test_fetch_not_found(self, mock_get):
+        mock_response = {
+            "statusCode": 404,
+            "error": "Not Found",
+            "message": "Failed to find specified track",
+        }
+        mock_get.return_value.json.return_value = mock_response
+        mock_get.return_value.status_code = 404
+
+        lyrics = lrclib.fetch("la", "la", "la", 999)
+
+        self.assertIsNone(lyrics)
+
+    @patch("beetsplug.lyrics.requests.get")
+    def test_fetch_exception(self, mock_get):
+        mock_get.side_effect = requests.RequestException
+
+        lyrics = lrclib.fetch("la", "la", "la", 999)
+
+        self.assertIsNone(lyrics)
+
+
+class LRCLibIntegrationTest(LyricsAssertions):
+    def setUp(self):
+        self.plugin = lyrics.LyricsPlugin()
+        lrclib.config = self.plugin.config
+
+    @unittest.skipUnless(
+        os.environ.get("INTEGRATION_TEST", "0") == "1",
+        "integration testing not enabled",
+    )
+    def test_track_with_lyrics(self):
+        lyrics = lrclib.fetch("Boy in Space", "u n eye", "Live EP", 160)
+        self.assertLyricsContentOk("u n eye", lyrics)
+
+    @unittest.skipUnless(
+        os.environ.get("INTEGRATION_TEST", "0") == "1",
+        "integration testing not enabled",
+    )
+    def test_instrumental_track(self):
+        lyrics = lrclib.fetch(
+            "Kelly Bailey",
+            "Black Mesa Inbound",
+            "Half Life 2 Soundtrack",
+            134,
+        )
+        self.assertIsNone(lyrics)
+
+    @unittest.skipUnless(
+        os.environ.get("INTEGRATION_TEST", "0") == "1",
+        "integration testing not enabled",
+    )
+    def test_nonexistent_track(self):
+        lyrics = lrclib.fetch("blah", "blah", "blah", 999)
+        self.assertIsNone(lyrics)
 
 
 # test utilities
