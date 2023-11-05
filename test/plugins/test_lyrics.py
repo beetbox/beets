@@ -721,7 +721,10 @@ class LRCLibLyricsTest(unittest.TestCase):
         mock_get.return_value.status_code = 200
 
         lyrics = lrclib.fetch("la", "la", "la", 999)
+        self.assertEqual(lyrics, mock_response["plainLyrics"])
 
+        self.plugin.config["synced"] = True
+        lyrics = lrclib.fetch("la", "la", "la", 999)
         self.assertEqual(lyrics, mock_response["syncedLyrics"])
 
     @patch("beetsplug.lyrics.requests.get")

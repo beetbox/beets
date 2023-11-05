@@ -311,7 +311,10 @@ class LRCLib(Backend):
             self._log.debug("LRCLib API request failed: {0}", exc)
             return None
 
-        return data.get("syncedLyrics") or data.get("plainLyrics")
+        if self.config["synced"]:
+            return data.get("syncedLyrics")
+
+        return data.get("plainLyrics")
 
 
 class MusiXmatch(Backend):
@@ -802,6 +805,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 "fallback": None,
                 "force": False,
                 "local": False,
+                "synced": False,
                 # Musixmatch is disabled by default as they are currently blocking
                 # requests with the beets user agent.
                 "sources": [s for s in self.SOURCES if s != "musixmatch"],
