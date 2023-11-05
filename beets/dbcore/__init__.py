@@ -16,7 +16,7 @@
 Library.
 """
 
-from .db import Database, Model
+from .db import Database, Model, Results
 from .query import (
     AndQuery,
     FieldQuery,
