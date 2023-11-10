@@ -283,7 +283,7 @@ Running the Tests
 To run the tests for multiple Python versions, compile the docs, and
 check style, use `tox`_. Just type ``tox`` or use something like
 ``tox -e py27`` to test a specific configuration. You can use the
-``--parallel`` flag to make this go faster. 
+``--parallel`` flag to make this go faster.
 
 You can disable a hand-selected set of "slow" tests by setting the
 environment variable SKIP_SLOW_TESTS before running them.
