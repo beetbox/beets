@@ -45,16 +45,6 @@ try:
 except ImportError:
     HAS_LANGDETECT = False
 
-try:
-    # PY3: HTMLParseError was removed in 3.5 as strict mode
-    # was deprecated in 3.3.
-    # https://docs.python.org/3.3/library/html.parser.html
-    from html.parser import HTMLParseError
-except ImportError:
-
-    class HTMLParseError(Exception):
-        pass
-
 
 import beets
 from beets import plugins, ui
@@ -230,10 +220,7 @@ def slug(text):
 if HAS_BEAUTIFUL_SOUP:
 
     def try_parse_html(html, **kwargs):
-        try:
-            return bs4.BeautifulSoup(html, "html.parser", **kwargs)
-        except HTMLParseError:
-            return None
+        return bs4.BeautifulSoup(html, "html.parser", **kwargs)
 
 else:
 
