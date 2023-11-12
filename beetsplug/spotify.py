@@ -305,7 +305,6 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             mediums=max(medium_totals.keys()),
             data_source=self.data_source,
             data_url=album_data["external_urls"]["spotify"],
-            isrc=album_data["external_ids"].get("isrc"),
         )
 
     def _get_track(self, track_data):
@@ -338,7 +337,6 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             medium_index=track_data["track_number"],
             data_source=self.data_source,
             data_url=track_data["external_urls"]["spotify"],
-            isrc=track_data["external_ids"].get("isrc"),
         )
 
     def track_for_id(self, track_id=None, track_data=None):
@@ -660,8 +658,9 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 self._log.debug("No track_id present for: {}", item)
                 continue
 
-            popularity = self.track_popularity(spotify_track_id)
-            item["spotify_track_popularity"] = popularity
+            info = self.track_info(spotify_track_id)
+            item["spotify_track_popularity"] = info[0]
+            item["isrc"] = info[1]
             audio_features = self.track_audio_features(spotify_track_id)
             if audio_features is None:
                 self._log.info("No audio features found for: {}", item)
@@ -676,13 +675,16 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             if write:
                 item.try_write()
 
-    def track_popularity(self, track_id=None):
-        """Fetch a track popularity by its Spotify ID."""
+    def track_info(self, track_id=None):
+        """Fetch a track popularity and ISRC by its Spotify ID."""
         track_data = self._handle_response(
             requests.get, self.track_url + track_id
         )
-        self._log.debug("track_data: {}", track_data.get("popularity"))
-        return track_data.get("popularity")
+        self._log.debug("track_popularity: {} and track_isrc: {}",
+                        track_data.get("popularity"),
+                        track_data.get("external_ids").get("isrc"))
+        return [track_data.get("popularity"),
+                track_data.get("external_ids").get("isrc")]
 
     def track_audio_features(self, track_id=None):
         """Fetch track audio features by its Spotify ID."""
