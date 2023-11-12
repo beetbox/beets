@@ -338,6 +338,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             medium_index=track_data["track_number"],
             data_source=self.data_source,
             data_url=track_data["external_urls"]["spotify"],
+            isrc=track_data["external_ids"].get("isrc"),
         )
 
     def track_for_id(self, track_id=None, track_data=None):
