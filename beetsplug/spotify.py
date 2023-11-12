@@ -661,6 +661,8 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             info = self.track_info(spotify_track_id)
             item["spotify_track_popularity"] = info[0]
             item["isrc"] = info[1]
+            item["ean"] = info[2]
+            item["upc"] = info[3]
             audio_features = self.track_audio_features(spotify_track_id)
             if audio_features is None:
                 self._log.info("No audio features found for: {}", item)
@@ -676,7 +678,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 item.try_write()
 
     def track_info(self, track_id=None):
-        """Fetch a track popularity and ISRC by its Spotify ID."""
+        """Fetch a track popularity and other external_ids by its Spotify ID."""
         track_data = self._handle_response(
             requests.get, self.track_url + track_id
         )
@@ -684,7 +686,9 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                         track_data.get("popularity"),
                         track_data.get("external_ids").get("isrc"))
         return [track_data.get("popularity"),
-                track_data.get("external_ids").get("isrc")]
+                track_data.get("external_ids").get("isrc"),
+                track_data.get("external_ids").get("ean"),
+                track_data.get("external_ids").get("upc")]
 
     def track_audio_features(self, track_id=None):
         """Fetch track audio features by its Spotify ID."""
