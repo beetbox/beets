@@ -17,7 +17,7 @@ Major new features:
 
 New features:
 
-* :doc:`plugins/spotify`: We now fetch ISRC identifiers from Spotify.
+* :doc:`plugins/spotify`: We now fetch ISRC, EAN, and UPC identifiers from Spotify.
   :bug:`4992`
 * :doc:`plugins/discogs`: supply a value for the `cover_art_url` attribute, for use by `fetchart`.
   :bug:`429`
