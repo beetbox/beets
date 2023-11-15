@@ -658,11 +658,11 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 self._log.debug("No track_id present for: {}", item)
                 continue
 
-            info = self.track_info(spotify_track_id)
-            item["spotify_track_popularity"] = info[0]
-            item["isrc"] = info[1]
-            item["ean"] = info[2]
-            item["upc"] = info[3]
+            popularity, iscr, ean, upc = self.track_info(spotify_track_id)
+            item["spotify_track_popularity"] = popularity
+            item["isrc"] = isrc
+            item["ean"] = ean
+            item["upc"] = upc
             audio_features = self.track_audio_features(spotify_track_id)
             if audio_features is None:
                 self._log.info("No audio features found for: {}", item)
