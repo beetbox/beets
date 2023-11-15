@@ -658,7 +658,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 self._log.debug("No track_id present for: {}", item)
                 continue
 
-            popularity, iscr, ean, upc = self.track_info(spotify_track_id)
+            popularity, isrc, ean, upc = self.track_info(spotify_track_id)
             item["spotify_track_popularity"] = popularity
             item["isrc"] = isrc
             item["ean"] = ean
