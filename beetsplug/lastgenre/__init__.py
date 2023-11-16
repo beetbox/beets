@@ -321,7 +321,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 genres = obj.get("genre", with_album=False).split(separator)
             else:
                 genres = obj.get("genre").split(separator)
-            keep_allowed = set([g for g in genres if self._is_allowed(g)])
+            keep_allowed = deduplicate(
+                [g for g in genres if self._is_allowed(g)]
+            )
             if keep_allowed:
                 return separator.join(keep_allowed), "keep"
 
