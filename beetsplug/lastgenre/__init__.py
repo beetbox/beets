@@ -316,13 +316,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Shortcut to existing genre if not forcing.
         if not self.config["force"]:
+            separator = self.config["separator"].get()
             if isinstance(obj, library.Item):
-                genres = obj.get("genre", with_album=False).split(", ")
+                genres = obj.get("genre", with_album=False).split(separator)
             else:
-                genres = obj.get("genre").split(", ")
+                genres = obj.get("genre").split(separator)
             keep_allowed = set([g for g in genres if self._is_allowed(g)])
             if keep_allowed:
-                return ", ".join(keep_allowed), "keep"
+                return separator.join(keep_allowed), "keep"
 
         # Track genre (for Items only).
         if isinstance(obj, library.Item):
