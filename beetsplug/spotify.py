@@ -678,7 +678,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                 item.try_write()
 
     def track_info(self, track_id=None):
-        """Fetch track popularity and other external_ids using its Spotify ID."""
+        """Fetch a track's popularity and external IDs using its Spotify ID."""
         track_data = self._handle_response(
             requests.get, self.track_url + track_id
         )
