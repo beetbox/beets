@@ -290,6 +290,7 @@ Other changes:
 * :doc:`/faq`: :ref:`multidisc`: Elaborated the multi-disc FAQ :bug:`4806`
 * :doc:`/faq`: :ref:`src`: Removed some long lines.
 * :doc:`README.rst`: Update contact information
+* :doc:`CONTRIBUTING.rst`: Fix link typo
 
 1.6.0 (November 27, 2021)
 -------------------------
