@@ -100,11 +100,11 @@ programmer or not, you should be able to find all the info you need at
 Read More
 ---------
 
-Learn more about beets at `its Web site`_. Follow `@b33ts`_ on Twitter for
+Learn more about beets at `its Web site`_. Follow `@b33ts`_ on Mastodon for
 news and updates.
 
 .. _its Web site: https://beets.io/
-.. _@b33ts: https://twitter.com/b33ts/
+.. _@b33ts: https://fosstodon.org/@beets
 
 Contact
 -------
