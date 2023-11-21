@@ -22,6 +22,8 @@ from beets.dbcore.query import InQuery
 from beets.library import BLOB_TYPE
 from beets.util import path_as_posix
 
+M3U_GLOB = "*.[mM]3[uU]8?"
+
 
 class PlaylistQuery(InQuery[bytes]):
     """Matches files listed by a playlist file."""
@@ -46,7 +48,7 @@ class PlaylistQuery(InQuery[bytes]):
 
         paths = []
         for playlist_path in playlist_paths:
-            if not fnmatch.fnmatch(playlist_path, "*.[mM]3[uU]"):
+            if not fnmatch.fnmatch(playlist_path, M3U_GLOB):
                 # This is not am M3U playlist, skip this candidate
                 continue
 
@@ -149,7 +151,7 @@ class PlaylistPlugin(beets.plugins.BeetsPlugin):
             return
 
         for filename in dir_contents:
-            if fnmatch.fnmatch(filename, "*.[mM]3[uU]"):
+            if fnmatch.fnmatch(filename, M3U_GLOB):
                 yield os.path.join(self.playlist_dir, filename)
 
     def update_playlist(self, filename, base_dir):
