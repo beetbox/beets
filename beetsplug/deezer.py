@@ -79,15 +79,17 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             album_data = requests.get(
                 self.album_url + deezer_id, timeout=10
             ).json()
-        except (requests.exceptions.ConnectionError,
-                requests.exceptions.RequestException) as e:
-            self._log.debug("Error fetching album {}\n Error: {}",
-                            deezer_id, e)
+        except (
+            requests.exceptions.ConnectionError,
+            requests.exceptions.RequestException,
+        ) as e:
+            self._log.debug("Error fetching album {}\n Error: {}", deezer_id, e)
             return None
         else:
-            if 'error' in album_data:
-                self._log.debug("Deezer API error: {}",
-                                album_data['error']['message'])
+            if "error" in album_data:
+                self._log.debug(
+                    "Deezer API error: {}", album_data["error"]["message"]
+                )
                 return None
         contributors = album_data.get("contributors")
         if contributors is not None:
@@ -223,8 +225,10 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
                 self.album_url + str(track_data["album"]["id"]) + "/tracks",
                 timeout=10,
             ).json()["data"]
-        except (requests.exceptions.ConnectionError,
-                requests.exceptions.RequestException) as e:
+        except (
+            requests.exceptions.ConnectionError,
+            requests.exceptions.RequestException,
+        ) as e:
             self._log.debug(
                 "Error fetching album tracks for {} \n Error: {}",
                 track_data["album"]["id"],
@@ -232,9 +236,11 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             )
             return None
         else:
-            if 'error' in album_tracks_data:
-                self._log.debug("Deezer API error: {}",
-                                album_tracks_data['error']['message'])
+            if "error" in album_tracks_data:
+                self._log.debug(
+                    "Deezer API error: {}",
+                    album_tracks_data["error"]["message"],
+                )
                 return None
         medium_total = 0
         for i, track_data in enumerate(album_tracks_data, start=1):
