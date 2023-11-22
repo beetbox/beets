@@ -82,6 +82,10 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         except requests.exceptions as e:
             self._log.debug("Error fetching album {}\n Error: {}", deezer_id, e)
             return None
+        else:
+            if 'error' in album_data:
+                self._log.debug("Deezer API error: {}", album_data['error']['message'])
+                return None
         contributors = album_data.get("contributors")
         if contributors is not None:
             artist, artist_id = self.get_artist(contributors)
@@ -223,6 +227,10 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
                 e,
             )
             return None
+        else:
+            if 'error' in album_tracks_data:
+                self._log.debug("Deezer API error: {}", album_tracks_data['error']['message'])
+                return None
         medium_total = 0
         for i, track_data in enumerate(album_tracks_data, start=1):
             if track_data["disk_number"] == track.medium:
