@@ -305,8 +305,9 @@ def find_plugins():
         return list(_instances.values())
 
     load_plugins()
+    classes = sorted(_classes, key=lambda _class: _class.__name__)
     plugins = []
-    for cls in _classes:
+    for cls in classes:
         # Only instantiate each plugin class once.
         if cls not in _instances:
             _instances[cls] = cls()
