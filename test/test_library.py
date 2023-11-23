@@ -917,7 +917,7 @@ class PluginDestinationTest(_common.TestCase):
         def field_getters():
             getters = {}
             for key, value in self._tv_map.items():
-                getters[key] = lambda _: value
+                getters[key] = [lambda _: value]
             return getters
 
         self.old_field_getters = plugins.item_field_getters

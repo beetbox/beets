@@ -35,8 +35,8 @@ def rewriter(field, rules):
             if pattern.match(value.lower()):
                 # Rewrite activated.
                 return replacement
-        # Not activated; return original value.
-        return value
+        # Not activated; return None.
+        return None
 
     return fieldfunc
 

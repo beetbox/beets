@@ -662,8 +662,8 @@ class Item(LibModel):
     @classmethod
     def _getters(cls):
         getters = plugins.item_field_getters()
-        getters["singleton"] = lambda i: i.album_id is None
-        getters["filesize"] = Item.try_filesize  # In bytes.
+        getters["singleton"] = [lambda i: i.album_id is None]
+        getters["filesize"] = [Item.try_filesize]  # In bytes.
         return getters
 
     @classmethod
@@ -1242,8 +1242,8 @@ class Album(LibModel):
         # In addition to plugin-provided computed fields, also expose
         # the album's directory as `path`.
         getters = plugins.album_field_getters()
-        getters["path"] = Album.item_dir
-        getters["albumtotal"] = Album._albumtotal
+        getters["path"] = [Album.item_dir]
+        getters["albumtotal"] = [Album._albumtotal]
         return getters
 
     def items(self):

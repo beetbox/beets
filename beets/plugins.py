@@ -26,6 +26,7 @@ import mediafile
 
 import beets
 from beets import logging
+from beets.util.dict_utils import merge_list_dicts
 
 PLUGIN_NAMESPACE = "beetsplug"
 
@@ -452,7 +453,7 @@ def item_field_getters():
     funcs = {}
     for plugin in find_plugins():
         if plugin.template_fields:
-            funcs.update(plugin.template_fields)
+            merge_list_dicts(plugin.template_fields, funcs)
     return funcs
 
 
@@ -461,7 +462,7 @@ def album_field_getters():
     funcs = {}
     for plugin in find_plugins():
         if plugin.album_template_fields:
-            funcs.update(plugin.album_template_fields)
+            merge_list_dicts(plugin.album_template_fields, funcs)
     return funcs
 
 

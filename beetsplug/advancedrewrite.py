@@ -34,13 +34,12 @@ def rewriter(field, rules):
     """
 
     def fieldfunc(item):
-        value = item._values_fixed[field]
         for query, replacement in rules:
             if query.match(item):
                 # Rewrite activated.
                 return replacement
-        # Not activated; return original value.
-        return value
+        # Not activated; return None.
+        return None
 
     return fieldfunc
 

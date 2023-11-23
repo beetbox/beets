@@ -430,8 +430,12 @@ class Model(ABC):
         """
         getters = self._getters()
         if key in getters:  # Computed.
-            return getters[key](self)
-        elif key in self._fields:  # Fixed.
+            # Use the result of the first getter that returns a value.
+            for getter in getters[key]:
+                result = getter(self)
+                if result is not None:
+                    return result
+        if key in self._fields:  # Fixed.
             if key in self._values_fixed:
                 return self._values_fixed[key]
             else:

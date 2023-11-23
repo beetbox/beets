@@ -146,7 +146,7 @@ class DatabaseFixtureTwoModels(dbcore.Database):
 class ModelFixtureWithGetters(dbcore.Model):
     @classmethod
     def _getters(cls):
-        return {"aComputedField": (lambda s: "thing")}
+        return {"aComputedField": [lambda s: "thing"]}
 
     def _template_funcs(self):
         return {}
