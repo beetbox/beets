@@ -263,6 +263,11 @@ Bug fixes:
   a null path that can't be removed.
 * Fix bug where empty artist and title fields would return None instead of an
   empty list in the discord plugin. :bug:`4973`
+* Fix a bug where it wasn't possible for multiple plugins to define replacement
+  functions for the same field.
+  For example, it wasn't possible to have both `rewrite` and `advancedrewrite`
+  rules for the same field.
+  :bug:`5002`
 
 For packagers:
 
