@@ -63,6 +63,25 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
 
         return [deezer_update_cmd]
 
+    def fetch_data(self, url):
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+        except (
+            requests.exceptions.ConnectionError,
+            requests.exceptions.RequestException,
+        ) as e:
+            self._log.debug("Error fetching data from {}\n Error: {}", url, e)
+            return None
+        else:
+            if "error" in data:
+                self._log.debug(
+                    "Deezer API error: {}", data["error"]["message"]
+                )
+                return None
+        return data
+
     def album_for_id(self, album_id):
         """Fetch an album by its Deezer ID or URL and return an
         AlbumInfo object or None if the album is not found.
@@ -75,22 +94,9 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         deezer_id = self._get_id("album", album_id, self.id_regex)
         if deezer_id is None:
             return None
-        try:
-            album_data = requests.get(
-                self.album_url + deezer_id, timeout=10
-            ).json()
-        except (
-            requests.exceptions.ConnectionError,
-            requests.exceptions.RequestException,
-        ) as e:
-            self._log.debug("Error fetching album {}\n Error: {}", deezer_id, e)
+        album_data = self.fetch_data(self.album_url + deezer_id)
+        if album_data is None:
             return None
-        else:
-            if "error" in album_data:
-                self._log.debug(
-                    "Deezer API error: {}", album_data["error"]["message"]
-                )
-                return None
         contributors = album_data.get("contributors")
         if contributors is not None:
             artist, artist_id = self.get_artist(contributors)
@@ -115,14 +121,13 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
                 "Invalid `release_date` returned "
                 "by {} API: '{}'".format(self.data_source, release_date)
             )
-
+        tracks_obj = self.fetch_data(self.album_url + deezer_id + "/tracks")
+        if tracks_obj is None:
+            return None
         try:
-            tracks_obj = requests.get(
-                self.album_url + deezer_id + "/tracks", timeout=10
-            ).json()
             tracks_data = tracks_obj["data"]
-        except requests.exceptions.ReadTimeout:
-            self._log.debug("Timeout fetching album tracks for {}", deezer_id)
+        except KeyError:
+            self._log.debug("Error fetching album tracks for {}", deezer_id)
             tracks_data = None
         if not tracks_data:
             return None
@@ -206,42 +211,26 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             deezer_id = self._get_id("track", track_id, self.id_regex)
             if deezer_id is None:
                 return None
-            try:
-                track_data = requests.get(
-                    self.track_url + deezer_id, timeout=10
-                ).json()
-            except requests.exception as e:
-                self._log.debug(
-                    "Error fetching track {}\n Error: {}", deezer_id, e
-                )
+            track_data = self.fetch_data(self.track_url + deezer_id)
+            if track_data is None:
                 return None
         track = self._get_track(track_data)
 
         # Get album's tracks to set `track.index` (position on the entire
         # release) and `track.medium_total` (total number of tracks on
         # the track's disc).
+        album_tracks_obj = self.fetch_data(
+            self.album_url + str(track_data["album"]["id"]) + "/tracks"
+        )
+        if album_tracks_obj is None:
+            return None
         try:
-            album_tracks_data = requests.get(
-                self.album_url + str(track_data["album"]["id"]) + "/tracks",
-                timeout=10,
-            ).json()["data"]
-        except (
-            requests.exceptions.ConnectionError,
-            requests.exceptions.RequestException,
-        ) as e:
+            album_tracks_data = album_tracks_obj["data"]
+        except KeyError:
             self._log.debug(
-                "Error fetching album tracks for {} \n Error: {}",
-                track_data["album"]["id"],
-                e,
+                "Error fetching album tracks for {}", track_data["album"]["id"]
             )
             return None
-        else:
-            if "error" in album_tracks_data:
-                self._log.debug(
-                    "Deezer API error: {}",
-                    album_tracks_data["error"]["message"],
-                )
-                return None
         medium_total = 0
         for i, track_data in enumerate(album_tracks_data, start=1):
             if track_data["disk_number"] == track.medium:
@@ -318,11 +307,9 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
                 self._log.debug("No deezer_track_id present for: {}", item)
                 continue
             try:
-                rank = (
-                    requests.get(f"{self.track_url}{deezer_track_id}")
-                    .json()
-                    .get("rank")
-                )
+                rank = self.fetch_data(
+                    f"{self.track_url}{deezer_track_id}"
+                ).get("rank")
                 self._log.debug(
                     "Deezer track: {} has {} rank", deezer_track_id, rank
                 )
