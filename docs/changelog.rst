@@ -267,6 +267,8 @@ Bug fixes:
   a null path that can't be removed.
 * Fix bug where empty artist and title fields would return None instead of an
   empty list in the discord plugin. :bug:`4973`
+* Fix bug regarding displaying tracks that have been changed not being
+  displayed unless the detail configuration is enabled.
 
 For packagers:
 
