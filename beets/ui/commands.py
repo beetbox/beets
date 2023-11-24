@@ -682,7 +682,7 @@ class AlbumChange(ChangeRepresentation):
 
             # Construct the line tuple for the track.
             left, right = self.make_line(item, track_info)
-            if left != right:
+            if right["contents"] != "":
                 lines.append((left, right))
             else:
                 if config["import"]["detail"]:
