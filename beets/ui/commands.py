@@ -680,10 +680,13 @@ class AlbumChange(ChangeRepresentation):
                 # Save new medium details for future comparison.
                 medium, disctitle = track_info.medium, track_info.disctitle
 
-            if config["import"]["detail"]:
-                # Construct the line tuple for the track.
-                left, right = self.make_line(item, track_info)
+            # Construct the line tuple for the track.
+            left, right = self.make_line(item, track_info)
+            if left != right:
                 lines.append((left, right))
+            else:
+                if config["import"]["detail"]:
+                    lines.append((left, right))
         self.print_tracklist(lines)
 
         # Missing and unmatched tracks.
