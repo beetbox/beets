@@ -89,3 +89,4 @@ ENV/
 /.pydevproject
 /.settings
 .vscode
+.envrc
