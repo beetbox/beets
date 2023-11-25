@@ -69,17 +69,16 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             response.raise_for_status()
             data = response.json()
         except (
-            requests.exceptions.ConnectionError,
+            requests.ConnectionError,
             requests.exceptions.RequestException,
         ) as e:
             self._log.debug("Error fetching data from {}\n Error: {}", url, e)
             return None
-        else:
-            if "error" in data:
-                self._log.debug(
-                    "Deezer API error: {}", data["error"]["message"]
-                )
-                return None
+        if "error" in data:
+            self._log.debug(
+                "Deezer API error: {}", data["error"]["message"]
+            )
+            return None
         return data
 
     def album_for_id(self, album_id):
