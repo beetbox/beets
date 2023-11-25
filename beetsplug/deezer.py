@@ -75,9 +75,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             self._log.debug("Error fetching data from {}\n Error: {}", url, e)
             return None
         if "error" in data:
-            self._log.debug(
-                "Deezer API error: {}", data["error"]["message"]
-            )
+            self._log.debug("Deezer API error: {}", data["error"]["message"])
             return None
         return data
 
