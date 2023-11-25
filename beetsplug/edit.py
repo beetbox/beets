@@ -15,19 +15,18 @@
 """Open metadata information in a text editor to let the user edit it.
 """
 
-from beets import plugins
-from beets import util
-from beets import ui
-from beets.dbcore import types
-from beets.importer import action
-from beets.ui.commands import _do_query, PromptChoice
 import codecs
-import subprocess
-import yaml
-from tempfile import NamedTemporaryFile
 import os
 import shlex
+import subprocess
+from tempfile import NamedTemporaryFile
 
+import yaml
+
+from beets import plugins, ui, util
+from beets.dbcore import types
+from beets.importer import action
+from beets.ui.commands import PromptChoice, _do_query
 
 # These "safe" types can avoid the format/parse cycle that most fields go
 # through: they are safe to edit with native YAML types.
@@ -41,22 +40,20 @@ class ParseError(Exception):
 
 
 def edit(filename, log):
-    """Open `filename` in a text editor.
-    """
+    """Open `filename` in a text editor."""
     cmd = shlex.split(util.editor_command())
     cmd.append(filename)
-    log.debug('invoking editor command: {!r}', cmd)
+    log.debug("invoking editor command: {!r}", cmd)
     try:
         subprocess.call(cmd)
     except OSError as exc:
-        raise ui.UserError('could not run editor command {!r}: {}'.format(
-            cmd[0], exc
-        ))
+        raise ui.UserError(
+            "could not run editor command {!r}: {}".format(cmd[0], exc)
+        )
 
 
 def dump(arg):
-    """Dump a sequence of dictionaries as YAML for editing.
-    """
+    """Dump a sequence of dictionaries as YAML for editing."""
     return yaml.safe_dump_all(
         arg,
         allow_unicode=True,
@@ -75,7 +72,7 @@ def load(s):
         for d in yaml.safe_load_all(s):
             if not isinstance(d, dict):
                 raise ParseError(
-                    'each entry must be a dictionary; found {}'.format(
+                    "each entry must be a dictionary; found {}".format(
                         type(d).__name__
                     )
                 )
@@ -85,7 +82,7 @@ def load(s):
             out.append({str(k): v for k, v in d.items()})
 
     except yaml.YAMLError as e:
-        raise ParseError(f'invalid YAML: {e}')
+        raise ParseError(f"invalid YAML: {e}")
     return out
 
 
@@ -145,51 +142,50 @@ def apply_(obj, data):
 
 
 class EditPlugin(plugins.BeetsPlugin):
-
     def __init__(self):
         super().__init__()
 
-        self.config.add({
-            # The default fields to edit.
-            'albumfields': 'album albumartist',
-            'itemfields': 'track title artist album',
+        self.config.add(
+            {
+                # The default fields to edit.
+                "albumfields": "album albumartist",
+                "itemfields": "track title artist album",
+                # Silently ignore any changes to these fields.
+                "ignore_fields": "id path",
+            }
+        )
 
-            # Silently ignore any changes to these fields.
-            'ignore_fields': 'id path',
-        })
-
-        self.register_listener('before_choose_candidate',
-                               self.before_choose_candidate_listener)
+        self.register_listener(
+            "before_choose_candidate", self.before_choose_candidate_listener
+        )
 
     def commands(self):
-        edit_command = ui.Subcommand(
-            'edit',
-            help='interactively edit metadata'
+        edit_command = ui.Subcommand("edit", help="interactively edit metadata")
+        edit_command.parser.add_option(
+            "-f",
+            "--field",
+            metavar="FIELD",
+            action="append",
+            help="edit this field also",
         )
         edit_command.parser.add_option(
-            '-f', '--field',
-            metavar='FIELD',
-            action='append',
-            help='edit this field also',
-        )
-        edit_command.parser.add_option(
-            '--all',
-            action='store_true', dest='all',
-            help='edit all fields',
+            "--all",
+            action="store_true",
+            dest="all",
+            help="edit all fields",
         )
         edit_command.parser.add_album_option()
         edit_command.func = self._edit_command
         return [edit_command]
 
     def _edit_command(self, lib, opts, args):
-        """The CLI command function for the `beet edit` command.
-        """
+        """The CLI command function for the `beet edit` command."""
         # Get the objects to edit.
         query = ui.decargs(args)
         items, albums = _do_query(lib, query, opts.album, False)
         objs = albums if opts.album else items
         if not objs:
-            ui.print_('Nothing to edit.')
+            ui.print_("Nothing to edit.")
             return
 
         # Get the fields to edit.
@@ -200,20 +196,19 @@ class EditPlugin(plugins.BeetsPlugin):
         self.edit(opts.album, objs, fields)
 
     def _get_fields(self, album, extra):
-        """Get the set of fields to edit.
-        """
+        """Get the set of fields to edit."""
         # Start with the configured base fields.
         if album:
-            fields = self.config['albumfields'].as_str_seq()
+            fields = self.config["albumfields"].as_str_seq()
         else:
-            fields = self.config['itemfields'].as_str_seq()
+            fields = self.config["itemfields"].as_str_seq()
 
         # Add the requested extra fields.
         if extra:
             fields += extra
 
         # Ensure we always have the `id` field for identification.
-        fields.append('id')
+        fields.append("id")
 
         return set(fields)
 
@@ -225,7 +220,7 @@ class EditPlugin(plugins.BeetsPlugin):
         - `fields`: The set of field names to edit (or None to edit
           everything).
         """
-        # Present the YAML to the user and let her change it.
+        # Present the YAML to the user and let them change it.
         success = self.edit_objects(objs, fields)
 
         # Save the new data.
@@ -242,8 +237,9 @@ class EditPlugin(plugins.BeetsPlugin):
         old_data = [flatten(o, fields) for o in objs]
 
         # Set up a temporary file with the initial data for editing.
-        new = NamedTemporaryFile(mode='w', suffix='.yaml', delete=False,
-                                 encoding='utf-8')
+        new = NamedTemporaryFile(
+            mode="w", suffix=".yaml", delete=False, encoding="utf-8"
+        )
         old_str = dump(old_data)
         new.write(old_str)
         new.close()
@@ -256,7 +252,7 @@ class EditPlugin(plugins.BeetsPlugin):
 
                 # Read the data back after editing and check whether anything
                 # changed.
-                with codecs.open(new.name, encoding='utf-8') as f:
+                with codecs.open(new.name, encoding="utf-8") as f:
                     new_str = f.read()
                 if new_str == old_str:
                     ui.print_("No changes; aborting.")
@@ -275,29 +271,29 @@ class EditPlugin(plugins.BeetsPlugin):
                 # Show the changes.
                 # If the objects are not on the DB yet, we need a copy of their
                 # original state for show_model_changes.
-                objs_old = [obj.copy() if obj.id < 0 else None
-                            for obj in objs]
+                objs_old = [obj.copy() if obj.id < 0 else None for obj in objs]
                 self.apply_data(objs, old_data, new_data)
                 changed = False
                 for obj, obj_old in zip(objs, objs_old):
                     changed |= ui.show_model_changes(obj, obj_old)
                 if not changed:
-                    ui.print_('No changes to apply.')
+                    ui.print_("No changes to apply.")
                     return False
 
                 # Confirm the changes.
                 choice = ui.input_options(
-                    ('continue Editing', 'apply', 'cancel')
+                    ("continue Editing", "apply", "cancel")
                 )
-                if choice == 'a':  # Apply.
+                if choice == "a":  # Apply.
                     return True
-                elif choice == 'c':  # Cancel.
+                elif choice == "c":  # Cancel.
                     return False
-                elif choice == 'e':  # Keep editing.
+                elif choice == "e":  # Keep editing.
                     # Reset the temporary changes to the objects. I we have a
                     # copy from above, use that, else reload from the database.
-                    objs = [(old_obj or obj)
-                            for old_obj, obj in zip(objs_old, objs)]
+                    objs = [
+                        (old_obj or obj) for old_obj, obj in zip(objs_old, objs)
+                    ]
                     for obj in objs:
                         if not obj.id < 0:
                             obj.load()
@@ -315,33 +311,35 @@ class EditPlugin(plugins.BeetsPlugin):
         are temporary.
         """
         if len(old_data) != len(new_data):
-            self._log.warning('number of objects changed from {} to {}',
-                              len(old_data), len(new_data))
+            self._log.warning(
+                "number of objects changed from {} to {}",
+                len(old_data),
+                len(new_data),
+            )
 
         obj_by_id = {o.id: o for o in objs}
-        ignore_fields = self.config['ignore_fields'].as_str_seq()
+        ignore_fields = self.config["ignore_fields"].as_str_seq()
         for old_dict, new_dict in zip(old_data, new_data):
             # Prohibit any changes to forbidden fields to avoid
             # clobbering `id` and such by mistake.
             forbidden = False
             for key in ignore_fields:
                 if old_dict.get(key) != new_dict.get(key):
-                    self._log.warning('ignoring object whose {} changed', key)
+                    self._log.warning("ignoring object whose {} changed", key)
                     forbidden = True
                     break
             if forbidden:
                 continue
 
-            id_ = int(old_dict['id'])
+            id_ = int(old_dict["id"])
             apply_(obj_by_id[id_], new_dict)
 
     def save_changes(self, objs):
-        """Save a list of updated Model objects to the database.
-        """
+        """Save a list of updated Model objects to the database."""
         # Save to the database and possibly write tags.
         for ob in objs:
             if ob._dirty:
-                self._log.debug('saving changes to {}', ob)
+                self._log.debug("saving changes to {}", ob)
                 ob.try_sync(ui.should_write(), ui.should_move())
 
     # Methods for interactive importer execution.
@@ -350,10 +348,13 @@ class EditPlugin(plugins.BeetsPlugin):
         """Append an "Edit" choice and an "edit Candidates" choice (if
         there are candidates) to the interactive importer prompt.
         """
-        choices = [PromptChoice('d', 'eDit', self.importer_edit)]
+        choices = [PromptChoice("d", "eDit", self.importer_edit)]
         if task.candidates:
-            choices.append(PromptChoice('c', 'edit Candidates',
-                                        self.importer_edit_candidate))
+            choices.append(
+                PromptChoice(
+                    "c", "edit Candidates", self.importer_edit_candidate
+                )
+            )
 
         return choices
 
@@ -369,7 +370,7 @@ class EditPlugin(plugins.BeetsPlugin):
             if not obj._db or obj.id is None:
                 obj.id = -i
 
-        # Present the YAML to the user and let her change it.
+        # Present the YAML to the user and let them change it.
         fields = self._get_fields(album=False, extra=[])
         success = self.edit_objects(task.items, fields)
 

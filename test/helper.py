@@ -30,33 +30,30 @@ information or mock the environment.
 """
 
 
-import sys
 import os
 import os.path
 import shutil
 import subprocess
-from tempfile import mkdtemp, mkstemp
+import sys
 from contextlib import contextmanager
-from io import StringIO
 from enum import Enum
-
-import beets
-from beets import logging
-from beets import config
-import beets.plugins
-from beets.library import Library, Item, Album
-from beets import importer
-from beets.autotag.hooks import AlbumInfo, TrackInfo
-from mediafile import MediaFile, Image
-from beets import util
-from beets.util import MoveOperation, syspath, bytestring_path
+from io import StringIO
+from tempfile import mkdtemp, mkstemp
 
 # TODO Move AutotagMock here
 from test import _common
 
+from mediafile import Image, MediaFile
+
+import beets
+import beets.plugins
+from beets import config, importer, logging, util
+from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.library import Album, Item, Library
+from beets.util import MoveOperation, bytestring_path, syspath
+
 
 class LogCapture(logging.Handler):
-
     def __init__(self):
         logging.Handler.__init__(self)
         self.messages = []
@@ -66,7 +63,7 @@ class LogCapture(logging.Handler):
 
 
 @contextmanager
-def capture_log(logger='beets'):
+def capture_log(logger="beets"):
     capture = LogCapture()
     log = logging.getLogger(logger)
     log.addHandler(capture)
@@ -113,7 +110,7 @@ def capture_stdout():
 
 def _convert_args(args):
     """Convert args to bytestrings for Python 2 and convert them to strings
-       on Python 3.
+    on Python 3.
     """
     for i, elem in enumerate(args):
         if isinstance(elem, bytes):
@@ -122,14 +119,14 @@ def _convert_args(args):
     return args
 
 
-def has_program(cmd, args=['--version']):
-    """Returns `True` if `cmd` can be executed.
-    """
+def has_program(cmd, args=["--version"]):
+    """Returns `True` if `cmd` can be executed."""
     full_cmd = _convert_args([cmd] + args)
     try:
-        with open(os.devnull, 'wb') as devnull:
-            subprocess.check_call(full_cmd, stderr=devnull,
-                                  stdout=devnull, stdin=devnull)
+        with open(os.devnull, "wb") as devnull:
+            subprocess.check_call(
+                full_cmd, stderr=devnull, stdout=devnull, stdin=devnull
+            )
     except OSError:
         return False
     except subprocess.CalledProcessError:
@@ -144,6 +141,7 @@ class TestHelper:
     This mixin provides methods to isolate beets' global state provide
     fixtures.
     """
+
     # TODO automate teardown through hook registration
 
     def setup_beets(self, disk=False):
@@ -169,33 +167,31 @@ class TestHelper:
         Make sure you call ``teardown_beets()`` afterwards.
         """
         self.create_temp_dir()
-        os.environ['BEETSDIR'] = util.py3_path(self.temp_dir)
+        os.environ["BEETSDIR"] = util.py3_path(self.temp_dir)
 
         self.config = beets.config
         self.config.clear()
         self.config.read()
 
-        self.config['plugins'] = []
-        self.config['verbose'] = 1
-        self.config['ui']['color'] = False
-        self.config['threaded'] = False
+        self.config["plugins"] = []
+        self.config["verbose"] = 1
+        self.config["ui"]["color"] = False
+        self.config["threaded"] = False
 
-        self.libdir = os.path.join(self.temp_dir, b'libdir')
+        self.libdir = os.path.join(self.temp_dir, b"libdir")
         os.mkdir(syspath(self.libdir))
-        self.config['directory'] = util.py3_path(self.libdir)
+        self.config["directory"] = util.py3_path(self.libdir)
 
         if disk:
-            dbpath = util.bytestring_path(
-                self.config['library'].as_filename()
-            )
+            dbpath = util.bytestring_path(self.config["library"].as_filename())
         else:
-            dbpath = ':memory:'
+            dbpath = ":memory:"
         self.lib = Library(dbpath, self.libdir)
 
     def teardown_beets(self):
         self.lib._close()
-        if 'BEETSDIR' in os.environ:
-            del os.environ['BEETSDIR']
+        if "BEETSDIR" in os.environ:
+            del os.environ["BEETSDIR"]
         self.remove_temp_dir()
         self.config.clear()
         beets.config.read(user=False, defaults=True)
@@ -207,7 +203,7 @@ class TestHelper:
         sure you call ``unload_plugins()`` afterwards.
         """
         # FIXME this should eventually be handled by a plugin manager
-        beets.config['plugins'] = plugins
+        beets.config["plugins"] = plugins
         beets.plugins.load_plugins(plugins)
         beets.plugins.find_plugins()
 
@@ -224,10 +220,9 @@ class TestHelper:
         Album._queries.update(beets.plugins.named_queries(Album))
 
     def unload_plugins(self):
-        """Unload all plugins and remove the from the configuration.
-        """
+        """Unload all plugins and remove the from the configuration."""
         # FIXME this should eventually be handled by a plugin manager
-        beets.config['plugins'] = []
+        beets.config["plugins"] = []
         beets.plugins._classes = set()
         beets.plugins._instances = {}
         Item._types = Item._original_types
@@ -241,13 +236,13 @@ class TestHelper:
         Copies the specified number of files to a subdirectory of
         `self.temp_dir` and creates a `ImportSessionFixture` for this path.
         """
-        import_dir = os.path.join(self.temp_dir, b'import')
+        import_dir = os.path.join(self.temp_dir, b"import")
         if not os.path.isdir(syspath(import_dir)):
             os.mkdir(syspath(import_dir))
 
         album_no = 0
         while album_count:
-            album = util.bytestring_path(f'album {album_no}')
+            album = util.bytestring_path(f"album {album_no}")
             album_dir = os.path.join(import_dir, album)
             if os.path.exists(syspath(album_dir)):
                 album_no += 1
@@ -258,9 +253,9 @@ class TestHelper:
             track_no = 0
             album_item_count = item_count
             while album_item_count:
-                title = f'track {track_no}'
-                src = os.path.join(_common.RSRC, b'full.mp3')
-                title_file = util.bytestring_path(f'{title}.mp3')
+                title = f"track {track_no}"
+                src = os.path.join(_common.RSRC, b"full.mp3")
+                title_file = util.bytestring_path(f"{title}.mp3")
                 dest = os.path.join(album_dir, title_file)
                 if os.path.exists(syspath(dest)):
                     track_no += 1
@@ -268,22 +263,25 @@ class TestHelper:
                 album_item_count -= 1
                 shutil.copy(syspath(src), syspath(dest))
                 mediafile = MediaFile(dest)
-                mediafile.update({
-                    'artist': 'artist',
-                    'albumartist': 'album artist',
-                    'title': title,
-                    'album': album,
-                    'mb_albumid': None,
-                    'mb_trackid': None,
-                })
+                mediafile.update(
+                    {
+                        "artist": "artist",
+                        "albumartist": "album artist",
+                        "title": title,
+                        "album": album,
+                        "mb_albumid": None,
+                        "mb_trackid": None,
+                    }
+                )
                 mediafile.save()
 
-        config['import']['quiet'] = True
-        config['import']['autotag'] = False
-        config['import']['resume'] = False
+        config["import"]["quiet"] = True
+        config["import"]["autotag"] = False
+        config["import"]["resume"] = False
 
-        return ImportSessionFixture(self.lib, loghandler=None, query=None,
-                                    paths=[import_dir])
+        return ImportSessionFixture(
+            self.lib, loghandler=None, query=None, paths=[import_dir]
+        )
 
     # Library fixtures methods
 
@@ -301,18 +299,18 @@ class TestHelper:
         """
         item_count = self._get_item_count()
         values_ = {
-            'title': 't\u00eftle {0}',
-            'artist': 'the \u00e4rtist',
-            'album': 'the \u00e4lbum',
-            'track': item_count,
-            'format': 'MP3',
+            "title": "t\u00eftle {0}",
+            "artist": "the \u00e4rtist",
+            "album": "the \u00e4lbum",
+            "track": item_count,
+            "format": "MP3",
         }
         values_.update(values)
-        values_['title'] = values_['title'].format(item_count)
-        values_['db'] = self.lib
+        values_["title"] = values_["title"].format(item_count)
+        values_["db"] = self.lib
         item = Item(**values_)
-        if 'path' not in values:
-            item['path'] = 'audio.' + item['format'].lower()
+        if "path" not in values:
+            item["path"] = "audio." + item["format"].lower()
         # mtime needs to be set last since other assignments reset it.
         item.mtime = 12345
         return item
@@ -326,26 +324,26 @@ class TestHelper:
         """
         # When specifying a path, store it normalized (as beets does
         # ordinarily).
-        if 'path' in values:
-            values['path'] = util.normpath(values['path'])
+        if "path" in values:
+            values["path"] = util.normpath(values["path"])
 
         item = self.create_item(**values)
         item.add(self.lib)
 
         # Ensure every item has a path.
-        if 'path' not in values:
-            item['path'] = item.destination()
+        if "path" not in values:
+            item["path"] = item.destination()
             item.store()
 
         return item
 
     def add_item_fixture(self, **values):
-        """Add an item with an actual audio file to the library.
-        """
+        """Add an item with an actual audio file to the library."""
         item = self.create_item(**values)
-        extension = item['format'].lower()
-        item['path'] = os.path.join(_common.RSRC,
-                                    util.bytestring_path('min.' + extension))
+        extension = item["format"].lower()
+        item["path"] = os.path.join(
+            _common.RSRC, util.bytestring_path("min." + extension)
+        )
         item.add(self.lib)
         item.move(operation=MoveOperation.COPY)
         item.store()
@@ -355,16 +353,15 @@ class TestHelper:
         item = self.add_item(**values)
         return self.lib.add_album([item])
 
-    def add_item_fixtures(self, ext='mp3', count=1):
-        """Add a number of items with files to the database.
-        """
+    def add_item_fixtures(self, ext="mp3", count=1):
+        """Add a number of items with files to the database."""
         # TODO base this on `add_item()`
         items = []
-        path = os.path.join(_common.RSRC, util.bytestring_path('full.' + ext))
+        path = os.path.join(_common.RSRC, util.bytestring_path("full." + ext))
         for i in range(count):
             item = Item.from_path(path)
-            item.album = f'\u00e4lbum {i}'  # Check unicode paths
-            item.title = f't\u00eftle {i}'
+            item.album = f"\u00e4lbum {i}"  # Check unicode paths
+            item.title = f"t\u00eftle {i}"
             # mtime needs to be set last since other assignments reset it.
             item.mtime = 12345
             item.add(self.lib)
@@ -376,22 +373,21 @@ class TestHelper:
     def add_album_fixture(
         self,
         track_count=1,
-        fname='full',
-        ext='mp3',
+        fname="full",
+        ext="mp3",
         disc_count=1,
     ):
-        """Add an album with files to the database.
-        """
+        """Add an album with files to the database."""
         items = []
         path = os.path.join(
             _common.RSRC,
-            util.bytestring_path(f'{fname}.{ext}'),
+            util.bytestring_path(f"{fname}.{ext}"),
         )
         for discnumber in range(1, disc_count + 1):
             for i in range(track_count):
                 item = Item.from_path(path)
-                item.album = '\u00e4lbum'  # Check unicode paths
-                item.title = f't\u00eftle {i}'
+                item.album = "\u00e4lbum"  # Check unicode paths
+                item.title = f"t\u00eftle {i}"
                 item.disc = discnumber
                 # mtime needs to be set last since other assignments reset it.
                 item.mtime = 12345
@@ -401,7 +397,7 @@ class TestHelper:
                 items.append(item)
         return self.lib.add_album(items)
 
-    def create_mediafile_fixture(self, ext='mp3', images=[]):
+    def create_mediafile_fixture(self, ext="mp3", images=[]):
         """Copies a fixture mediafile with the extension to a temporary
         location and returns the path.
 
@@ -412,7 +408,7 @@ class TestHelper:
         specified extension a cover art image is added to the media
         file.
         """
-        src = os.path.join(_common.RSRC, util.bytestring_path('full.' + ext))
+        src = os.path.join(_common.RSRC, util.bytestring_path("full." + ext))
         handle, path = mkstemp()
         path = bytestring_path(path)
         os.close(handle)
@@ -422,26 +418,26 @@ class TestHelper:
             mediafile = MediaFile(path)
             imgs = []
             for img_ext in images:
-                file = util.bytestring_path(f'image-2x3.{img_ext}')
+                file = util.bytestring_path(f"image-2x3.{img_ext}")
                 img_path = os.path.join(_common.RSRC, file)
-                with open(img_path, 'rb') as f:
+                with open(img_path, "rb") as f:
                     imgs.append(Image(f.read()))
             mediafile.images = imgs
             mediafile.save()
 
-        if not hasattr(self, '_mediafile_fixtures'):
+        if not hasattr(self, "_mediafile_fixtures"):
             self._mediafile_fixtures = []
         self._mediafile_fixtures.append(path)
 
         return path
 
     def remove_mediafile_fixtures(self):
-        if hasattr(self, '_mediafile_fixtures'):
+        if hasattr(self, "_mediafile_fixtures"):
             for path in self._mediafile_fixtures:
                 os.remove(syspath(path))
 
     def _get_item_count(self):
-        if not hasattr(self, '__item_count'):
+        if not hasattr(self, "__item_count"):
             count = 0
         self.__item_count = count + 1
         return count
@@ -450,14 +446,14 @@ class TestHelper:
 
     def run_command(self, *args, **kwargs):
         """Run a beets command with an arbitrary amount of arguments. The
-           Library` defaults to `self.lib`, but can be overridden with
-           the keyword argument `lib`.
+        Library` defaults to `self.lib`, but can be overridden with
+        the keyword argument `lib`.
         """
-        sys.argv = ['beet']  # avoid leakage from test suite args
+        sys.argv = ["beet"]  # avoid leakage from test suite args
         lib = None
-        if hasattr(self, 'lib'):
+        if hasattr(self, "lib"):
             lib = self.lib
-        lib = kwargs.get('lib', lib)
+        lib = kwargs.get("lib", lib)
         beets.ui._raw_main(_convert_args(list(args)), lib)
 
     def run_with_output(self, *args):
@@ -475,11 +471,10 @@ class TestHelper:
         self.temp_dir = util.bytestring_path(temp_dir)
 
     def remove_temp_dir(self):
-        """Delete the temporary directory created by `create_temp_dir`.
-        """
+        """Delete the temporary directory created by `create_temp_dir`."""
         shutil.rmtree(syspath(self.temp_dir))
 
-    def touch(self, path, dir=None, content=''):
+    def touch(self, path, dir=None, content=""):
         """Create a file at `path` with given content.
 
         If `dir` is given, it is prepended to `path`. After that, if the
@@ -496,7 +491,7 @@ class TestHelper:
         if not os.path.isdir(syspath(parent)):
             os.makedirs(syspath(parent))
 
-        with open(syspath(path), 'a+') as f:
+        with open(syspath(path), "a+") as f:
             f.write(content)
         return path
 
@@ -544,9 +539,9 @@ class ImportSessionFixture(importer.ImportSession):
 
     choose_item = choose_match
 
-    Resolution = Enum('Resolution', 'REMOVE SKIP KEEPBOTH MERGE')
+    Resolution = Enum("Resolution", "REMOVE SKIP KEEPBOTH MERGE")
 
-    default_resolution = 'REMOVE'
+    default_resolution = "REMOVE"
 
     def add_resolution(self, resolution):
         assert isinstance(resolution, self.Resolution)
@@ -577,43 +572,65 @@ def generate_album_info(album_id, track_values):
     """
     tracks = [generate_track_info(id, values) for id, values in track_values]
     album = AlbumInfo(
-        album_id='album info',
-        album='album info',
-        artist='album info',
-        artist_id='album info',
+        album_id="album info",
+        album="album info",
+        artist="album info",
+        artist_id="album info",
         tracks=tracks,
     )
     for field in ALBUM_INFO_FIELDS:
-        setattr(album, field, 'album info')
+        setattr(album, field, "album info")
 
     return album
 
 
-ALBUM_INFO_FIELDS = ['album', 'album_id', 'artist', 'artist_id',
-                     'asin', 'albumtype', 'va', 'label',
-                     'artist_sort', 'releasegroup_id', 'catalognum',
-                     'language', 'country', 'albumstatus', 'media',
-                     'albumdisambig', 'releasegroupdisambig', 'artist_credit',
-                     'data_source', 'data_url']
+ALBUM_INFO_FIELDS = [
+    "album",
+    "album_id",
+    "artist",
+    "artist_id",
+    "asin",
+    "albumtype",
+    "va",
+    "label",
+    "artist_sort",
+    "releasegroup_id",
+    "catalognum",
+    "language",
+    "country",
+    "albumstatus",
+    "media",
+    "albumdisambig",
+    "releasegroupdisambig",
+    "artist_credit",
+    "data_source",
+    "data_url",
+]
 
 
-def generate_track_info(track_id='track info', values={}):
+def generate_track_info(track_id="track info", values={}):
     """Return `TrackInfo` populated with mock data.
 
     The `track_id` field is set to the corresponding argument. All other
     string fields are set to "track info".
     """
     track = TrackInfo(
-        title='track info',
+        title="track info",
         track_id=track_id,
     )
     for field in TRACK_INFO_FIELDS:
-        setattr(track, field, 'track info')
+        setattr(track, field, "track info")
     for field, value in values.items():
         setattr(track, field, value)
     return track
 
 
-TRACK_INFO_FIELDS = ['artist', 'artist_id', 'artist_sort',
-                     'disctitle', 'artist_credit', 'data_source',
-                     'data_url']
+TRACK_INFO_FIELDS = [
+    "artist",
+    "artist_id",
+    "artist_sort",
+    "disctitle",
+    "artist_credit",
+    "data_source",
+    "data_url",
+]

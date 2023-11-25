@@ -26,7 +26,6 @@ from beets import ui
 from beets.autotag import Recommendation
 from beets.plugins import BeetsPlugin
 from beets.ui.commands import PromptChoice
-
 from beetsplug.info import print_data
 
 
@@ -34,34 +33,40 @@ class MBSubmitPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
 
-        self.config.add({
-            'format': '$track. $title - $artist ($length)',
-            'threshold': 'medium',
-        })
+        self.config.add(
+            {
+                "format": "$track. $title - $artist ($length)",
+                "threshold": "medium",
+            }
+        )
 
         # Validate and store threshold.
-        self.threshold = self.config['threshold'].as_choice({
-            'none': Recommendation.none,
-            'low': Recommendation.low,
-            'medium': Recommendation.medium,
-            'strong': Recommendation.strong
-        })
+        self.threshold = self.config["threshold"].as_choice(
+            {
+                "none": Recommendation.none,
+                "low": Recommendation.low,
+                "medium": Recommendation.medium,
+                "strong": Recommendation.strong,
+            }
+        )
 
-        self.register_listener('before_choose_candidate',
-                               self.before_choose_candidate_event)
+        self.register_listener(
+            "before_choose_candidate", self.before_choose_candidate_event
+        )
 
     def before_choose_candidate_event(self, session, task):
         if task.rec <= self.threshold:
-            return [PromptChoice('p', 'Print tracks', self.print_tracks)]
+            return [PromptChoice("p", "Print tracks", self.print_tracks)]
 
     def print_tracks(self, session, task):
         for i in sorted(task.items, key=lambda i: i.track):
-            print_data(None, i, self.config['format'].as_str())
+            print_data(None, i, self.config["format"].as_str())
 
     def commands(self):
         """Add beet UI commands for mbsubmit."""
         mbsubmit_cmd = ui.Subcommand(
-            'mbsubmit', help='Submit Tracks to MusicBrainz')
+            "mbsubmit", help="Submit Tracks to MusicBrainz"
+        )
 
         def func(lib, opts, args):
             items = lib.items(ui.decargs(args))
@@ -74,4 +79,4 @@ class MBSubmitPlugin(BeetsPlugin):
     def _mbsubmit(self, items):
         """Print track information to be submitted to MusicBrainz."""
         for i in sorted(items, key=lambda i: i.track):
-            print_data(None, i, self.config['format'].as_str())
+            print_data(None, i, self.config["format"].as_str())

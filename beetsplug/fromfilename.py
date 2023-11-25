@@ -16,34 +16,34 @@
 filename.
 """
 
-from beets import plugins
-from beets.util import displayable_path
 import os
 import re
 
+from beets import plugins
+from beets.util import displayable_path
+
 # Filename field extraction patterns.
 PATTERNS = [
-  # Useful patterns.
-  r'^(?P<artist>.+)[\-_](?P<title>.+)[\-_](?P<tag>.*)$',
-  r'^(?P<track>\d+)[\s.\-_]+(?P<artist>.+)[\-_](?P<title>.+)[\-_](?P<tag>.*)$',
-  r'^(?P<artist>.+)[\-_](?P<title>.+)$',
-  r'^(?P<track>\d+)[\s.\-_]+(?P<artist>.+)[\-_](?P<title>.+)$',
-  r'^(?P<track>\d+)[\s.\-_]+(?P<title>.+)$',
-  r'^(?P<track>\d+)\s+(?P<title>.+)$',
-  r'^(?P<title>.+) by (?P<artist>.+)$',
-  r'^(?P<track>\d+).*$',
-  r'^(?P<title>.+)$',
+    # Useful patterns.
+    r"^(?P<artist>.+)[\-_](?P<title>.+)[\-_](?P<tag>.*)$",
+    r"^(?P<track>\d+)[\s.\-_]+(?P<artist>.+)[\-_](?P<title>.+)[\-_](?P<tag>.*)$",
+    r"^(?P<artist>.+)[\-_](?P<title>.+)$",
+    r"^(?P<track>\d+)[\s.\-_]+(?P<artist>.+)[\-_](?P<title>.+)$",
+    r"^(?P<track>\d+)[\s.\-_]+(?P<title>.+)$",
+    r"^(?P<track>\d+)\s+(?P<title>.+)$",
+    r"^(?P<title>.+) by (?P<artist>.+)$",
+    r"^(?P<track>\d+).*$",
+    r"^(?P<title>.+)$",
 ]
 
 # Titles considered "empty" and in need of replacement.
 BAD_TITLE_PATTERNS = [
-    r'^$',
+    r"^$",
 ]
 
 
 def equal(seq):
-    """Determine whether a sequence holds identical elements.
-    """
+    """Determine whether a sequence holds identical elements."""
     return len(set(seq)) <= 1
 
 
@@ -92,19 +92,19 @@ def apply_matches(d, log):
     keys = some_map.keys()
 
     # Only proceed if the "tag" field is equal across all filenames.
-    if 'tag' in keys and not equal_fields(d, 'tag'):
+    if "tag" in keys and not equal_fields(d, "tag"):
         return
 
     # Given both an "artist" and "title" field, assume that one is
     # *actually* the artist, which must be uniform, and use the other
     # for the title. This, of course, won't work for VA albums.
-    if 'artist' in keys:
-        if equal_fields(d, 'artist'):
-            artist = some_map['artist']
-            title_field = 'title'
-        elif equal_fields(d, 'title'):
-            artist = some_map['title']
-            title_field = 'artist'
+    if "artist" in keys:
+        if equal_fields(d, "artist"):
+            artist = some_map["artist"]
+            title_field = "title"
+        elif equal_fields(d, "title"):
+            artist = some_map["title"]
+            title_field = "artist"
         else:
             # Both vary. Abort.
             return
@@ -112,29 +112,30 @@ def apply_matches(d, log):
         for item in d:
             if not item.artist:
                 item.artist = artist
-                log.info('Artist replaced with: {}'.format(item.artist))
+                log.info("Artist replaced with: {}".format(item.artist))
 
     # No artist field: remaining field is the title.
     else:
-        title_field = 'title'
+        title_field = "title"
 
     # Apply the title and track.
     for item in d:
         if bad_title(item.title):
             item.title = str(d[item][title_field])
-            log.info('Title replaced with: {}'.format(item.title))
+            log.info("Title replaced with: {}".format(item.title))
 
-        if 'track' in d[item] and item.track == 0:
-            item.track = int(d[item]['track'])
-            log.info('Track replaced with: {}'.format(item.track))
+        if "track" in d[item] and item.track == 0:
+            item.track = int(d[item]["track"])
+            log.info("Track replaced with: {}".format(item.track))
 
 
 # Plugin structure and hook into import process.
 
+
 class FromFilenamePlugin(plugins.BeetsPlugin):
     def __init__(self):
         super().__init__()
-        self.register_listener('import_task_start', self.filename_task)
+        self.register_listener("import_task_start", self.filename_task)
 
     def filename_task(self, task, session):
         """Examine each item in the task to see if we can extract a title

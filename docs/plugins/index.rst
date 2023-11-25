@@ -61,6 +61,7 @@ following to your configuration::
 
    absubmit
    acousticbrainz
+   advancedrewrite
    albumtypes
    aura
    autobpm
@@ -245,6 +246,9 @@ Path Formats
 
 :doc:`rewrite <rewrite>`
    Substitute values in path formats.
+
+:doc:`advancedrewrite <advancedrewrite>`
+   Substitute field values for items matching a query.
 
 :doc:`substitute <substitute>`
    As an alternative to :doc:`rewrite <rewrite>`, use this plugin. The main
@@ -512,6 +516,9 @@ Here are a few of the plugins written by the beets community:
 `beets-ydl`_
    Downloads audio from youtube-dl sources and import into beets.
 
+`beets-ytimport`_
+   Download and import your liked songs from YouTube into beets.
+
 `beets-yearfixer`_
    Attempts to fix all missing ``original_year`` and ``year`` fields.
 
@@ -546,6 +553,7 @@ Here are a few of the plugins written by the beets community:
 .. _beets-jiosaavn: https://github.com/arsaboo/beets-jiosaavn
 .. _beets-youtube: https://github.com/arsaboo/beets-youtube
 .. _beets-ydl: https://github.com/vmassuchetto/beets-ydl
+.. _beets-ytimport: https://github.com/mgoltzsche/beets-ytimport
 .. _beet-summarize: https://github.com/steven-murray/beet-summarize
 .. _beets-mosaic: https://github.com/SusannaMaria/beets-mosaic
 .. _beets-goingrunning: https://pypi.org/project/beets-goingrunning

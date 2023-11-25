@@ -9,8 +9,18 @@ Changelog goes here! Please add your entry to the bottom of one of the lists bel
 With this release, beets now requires Python 3.7 or later (it removes support
 for Python 3.6).
 
+Major new features:
+
+* The beets importer UI received a major overhaul. Several new configuration
+  options are available for customizing layout and colors: :ref:`ui_options`.
+  :bug:`3721`
+
 New features:
 
+* :doc:`plugins/spotify`: We now fetch track's ISRC, EAN, and UPC identifiers from Spotify when using the ``spotifysync`` command.
+  :bug:`4992`
+* :doc:`plugins/discogs`: supply a value for the `cover_art_url` attribute, for use by `fetchart`.
+  :bug:`429`
 * :ref:`update-cmd`: added ```-e``` flag for excluding fields from being updated.
 * :doc:`/plugins/deezer`: Import rank and other attributes from Deezer during import and add a function to update the rank of existing items.
   :bug:`4841`
@@ -125,9 +135,22 @@ New features:
 * :doc:`/plugins/autobpm`: Add the `autobpm` plugin which uses Librosa to
   calculate the BPM of the audio.
   :bug:`3856`
+* :doc:`/plugins/fetchart`: Fix the error with CoverArtArchive where the
+  `maxwidth` option would not be used to download a pre-sized thumbnail for
+  release groups, as is already done with releases.
+* :doc:`/plugins/fetchart`: Fix the error with CoverArtArchive where no cover
+  would be found when the `maxwidth` option matches a pre-sized thumbnail size,
+  but no thumbnail is provided by CAA. We now fallback to the raw image.
+* :doc:`/plugins/advancedrewrite`: Add an advanced version of the `rewrite`
+  plugin which allows to replace fields based on a given library query.
+* :doc:`/plugins/lyrics`: Add LRCLIB as a new lyrics provider and a new
+  `synced` option to prefer synced lyrics over plain lyrics.
 
 Bug fixes:
 
+* :doc:`/plugins/spotify`: Add a limit of 3 retries, instead of retrying endlessly when the API is not available.
+* Fix a crash when the Spotify API timeouts or does not return a `Retry-After` interval.
+  :bug:`4942`
 * :doc:`/plugins/scrub`: Fixed the import behavior where scrubbed database tags
   were restored to newly imported tracks with config settings ``scrub.auto: yes``
   and ``import.write: no``.
@@ -238,6 +261,8 @@ Bug fixes:
   :bug:`4822`
 * Fix bug where an interrupted import process poisons the database, causing
   a null path that can't be removed.
+* Fix bug where empty artist and title fields would return None instead of an
+  empty list in the discord plugin. :bug:`4973`
 
 For packagers:
 

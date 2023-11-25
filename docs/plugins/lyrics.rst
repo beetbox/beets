@@ -2,11 +2,12 @@ Lyrics Plugin
 =============
 
 The ``lyrics`` plugin fetches and stores song lyrics from databases on the Web.
-Namely, the current version of the plugin uses `Genius.com`_, `Tekstowo.pl`_,
+Namely, the current version of the plugin uses `Genius.com`_, `Tekstowo.pl`_, `LRCLIB`_
 and, optionally, the Google custom search API.
 
 .. _Genius.com: https://genius.com/
 .. _Tekstowo.pl: https://www.tekstowo.pl/
+.. _LRCLIB: https://lrclib.net/
 
 
 Fetch Lyrics During Import
@@ -58,11 +59,12 @@ configuration file. The available options are:
   sources known to be scrapeable.
 - **sources**: List of sources to search for lyrics. An asterisk ``*`` expands
   to all available sources.
-  Default: ``google genius tekstowo``, i.e., all the available sources. The
+  Default: ``google genius tekstowo lrclib``, i.e., all the available sources. The
   ``google`` source will be automatically deactivated if no ``google_API_key``
   is setup.
   The ``google``, ``genius``, and ``tekstowo`` sources will only be enabled if
   BeautifulSoup is installed.
+- **synced**: Prefer synced lyrics over plain lyrics if a source offers them. Currently `lrclib` is the only source that provides them. Default: `no`.
 
 Here's an example of ``config.yaml``::
 

@@ -20,7 +20,7 @@ where you think this documentation can be improved.
 .. _beets: https://beets.io/
 .. _the mailing list: https://groups.google.com/group/beets-users
 .. _file a bug: https://github.com/beetbox/beets/issues
-.. _the discussion board: https://discourse.beets.io
+.. _the discussion board: https://github.com/beetbox/beets/discussions/
 
 Contents
 --------
@@ -34,6 +34,7 @@ Contents
    faq
    team
    contributing
+   code_of_conduct
    dev/index
 
 .. toctree::
