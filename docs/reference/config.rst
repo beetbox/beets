@@ -466,7 +466,9 @@ example ``blue`` will become ``['blue']``.
 terminal_width
 ~~~~~~~~~~~~~~
 
-Controls line wrapping. Defaults to ``80`` characters::
+Controls line wrapping on non-Unix systems. On Unix systems, the width of the
+terminal is detected automatically. If this fails, or on non-Unix systems, the
+specified value is used as a fallback. Defaults to ``80`` characters::
 
     ui:
         terminal_width: 80
