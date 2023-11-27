@@ -263,6 +263,11 @@ Bug fixes:
   a null path that can't be removed.
 * Fix bug where empty artist and title fields would return None instead of an
   empty list in the discord plugin. :bug:`4973`
+* :doc:`/plugins/lastgenre`: Fix issue where setting ``force:no`` overwrites
+  comma-separated multi-genres anyway; Fix issue where setting ``source:
+  track`` falls back to using the album's genre, thus preventing fetching
+  track-agnostic genres at all.
+  :bug:`4982`
 
 For packagers:
 
