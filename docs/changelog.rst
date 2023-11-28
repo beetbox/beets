@@ -152,6 +152,7 @@ Bug fixes:
 
 * :doc:`/plugins/deezer`: Improve Deezer plugin error handling and set requests timeout to 10 seconds.
   :bug:`4983`
+* :doc:`/plugins/spotify`: Add bad gateway (502) error handling.
 * :doc:`/plugins/spotify`: Add a limit of 3 retries, instead of retrying endlessly when the API is not available.
 * Fix a crash when the Spotify API timeouts or does not return a `Retry-After` interval.
   :bug:`4942`
