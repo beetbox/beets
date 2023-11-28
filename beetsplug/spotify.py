@@ -217,6 +217,9 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             elif e.response.status_code == 503:
                 self._log.error("Service Unavailable.")
                 raise SpotifyAPIError("Service Unavailable.")
+            elif e.response.status_code == 502:
+                self._log.error("Bad Gateway.")
+                raise SpotifyAPIError("Bad Gateway.")
             elif e.response is not None:
                 raise SpotifyAPIError(
                     f"{self.data_source} API error:\n{e.response.text}\n"
