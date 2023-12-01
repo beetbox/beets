@@ -68,10 +68,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             response = requests.get(url, timeout=10)
             response.raise_for_status()
             data = response.json()
-        except (
-            requests.ConnectionError,
-            requests.exceptions.RequestException,
-        ) as e:
+        except requests.exceptions.RequestException as e:
             self._log.debug("Error fetching data from {}\n Error: {}", url, e)
             return None
         if "error" in data:
