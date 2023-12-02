@@ -148,6 +148,7 @@ New features:
 
 Bug fixes:
 
+* :doc:`/plugins/spotify`: Add bad gateway (502) error handling.
 * :doc:`/plugins/spotify`: Add a limit of 3 retries, instead of retrying endlessly when the API is not available.
 * Fix a crash when the Spotify API timeouts or does not return a `Retry-After` interval.
   :bug:`4942`
