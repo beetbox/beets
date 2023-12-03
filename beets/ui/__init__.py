@@ -858,7 +858,7 @@ def split_into_lines(string, width_tuple):
                     m.group("esc") + raw_word + RESET_COLOR
                     for raw_word in raw_words
                 ]
-            else:
+            elif len(raw_words) >= 1:
                 # Pretext stops mid-word
                 if m.group("esc") != RESET_COLOR:
                     # Add the rest of the current word, with a reset after it
