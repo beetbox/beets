@@ -188,41 +188,38 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             self._log.error(f"Network error: {e}")
             raise SpotifyAPIError("Network error.")
         except requests.exceptions.RequestException as e:
-            if e.response.status_code == 401:
-                self._log.debug(
-                    f"{self.data_source} access token has expired. "
-                    f"Reauthenticating."
-                )
-                self._authenticate()
-                return self._handle_response(request_type, url, params=params)
-            elif e.response.status_code == 404:
-                raise SpotifyAPIError(
-                    f"API Error: {e.response.status_code}\n"
-                    f"URL: {url}\nparams: {params}"
-                )
-            elif e.response.status_code == 429:
-                if retry_count >= max_retries:
-                    raise SpotifyAPIError("Maximum retries reached.")
-                seconds = response.headers.get(
-                    "Retry-After", DEFAULT_WAITING_TIME
-                )
-                self._log.debug(
-                    f"Too many API requests. Retrying after "
-                    f"{seconds} seconds."
-                )
-                time.sleep(int(seconds) + 1)
-                return self._handle_response(
-                    request_type,
-                    url,
-                    params=params,
-                    retry_count=retry_count + 1,
-                )
-            elif e.response.status_code == 503:
-                self._log.error("Service Unavailable.")
-                raise SpotifyAPIError("Service Unavailable.")
-            elif e.response.status_code == 502:
-                self._log.error("Bad Gateway.")
-                raise SpotifyAPIError("Bad Gateway.")
+            status_code = e.response.status_code if e.response else None
+            error_messages = {
+                401: f"{self.data_source} access token has expired. Reauthenticating.",
+                404: f"API Error: {status_code}\nURL: {url}\nparams: {params}",
+                429: "Too many API requests.",
+                502: "Bad Gateway.",
+                503: "Service Unavailable.",
+            }
+
+            if status_code in error_messages:
+                self._log.debug(error_messages[status_code])
+                if status_code == 401:
+                    self._authenticate()
+                    return self._handle_response(
+                        request_type, url, params=params
+                    )
+                elif status_code == 429:
+                    if retry_count >= max_retries:
+                        raise SpotifyAPIError("Maximum retries reached.")
+                    seconds = response.headers.get(
+                        "Retry-After", DEFAULT_WAITING_TIME
+                    )
+                    self._log.debug(f"Retrying after {seconds} seconds.")
+                    time.sleep(int(seconds) + 1)
+                    return self._handle_response(
+                        request_type,
+                        url,
+                        params=params,
+                        retry_count=retry_count + 1,
+                    )
+                else:
+                    raise SpotifyAPIError(error_messages[status_code])
             elif e.response is not None:
                 raise SpotifyAPIError(
                     f"{self.data_source} API error:\n{e.response.text}\n"
