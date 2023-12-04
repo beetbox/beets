@@ -184,6 +184,9 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         except requests.exceptions.ReadTimeout:
             self._log.error("ReadTimeout.")
             raise SpotifyAPIError("Request timed out.")
+        except requests.exceptions.ConnectionError as e:
+            self._log.error(f"Network error: {e}")
+            raise SpotifyAPIError("Network error.")
         except requests.exceptions.RequestException as e:
             if e.response.status_code == 401:
                 self._log.debug(
