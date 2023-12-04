@@ -160,9 +160,6 @@ sort_case_insensitive: yes
 
 # --------------- Autotagger ---------------
 
-# FIXME undocumented feature
-# https://github.com/beetbox/beets/blob/c15ccb16bf3bceadfdf50268818dd64f04de25f8/beets/autotag/__init__.py#L219
-
 overwrite_null:
   album: []
   track: []
