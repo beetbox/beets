@@ -152,6 +152,7 @@ New features:
 
 Bug fixes:
 
+* :doc:`/plugins/spotify`: Improve handling of ConnectionError.
 * :doc:`/plugins/deezer`: Improve Deezer plugin error handling and set requests timeout to 10 seconds.
   :bug:`4983`
 * :doc:`/plugins/spotify`: Add bad gateway (502) error handling.
