@@ -28,6 +28,7 @@ import sys
 import textwrap
 import traceback
 from difflib import SequenceMatcher
+from typing import Any, Callable, List
 
 import confuse
 
@@ -857,7 +858,7 @@ def split_into_lines(string, width_tuple):
                     m.group("esc") + raw_word + RESET_COLOR
                     for raw_word in raw_words
                 ]
-            else:
+            elif raw_words:
                 # Pretext stops mid-word
                 if m.group("esc") != RESET_COLOR:
                     # Add the rest of the current word, with a reset after it
@@ -1449,6 +1450,8 @@ class Subcommand:
     """A subcommand of a root command-line application that may be
     invoked by a SubcommandOptionParser.
     """
+
+    func: Callable[[library.Library, optparse.Values, List[str]], Any]
 
     def __init__(self, name, parser=None, help="", aliases=(), hide=False):
         """Creates a new subcommand. name is the primary way to invoke

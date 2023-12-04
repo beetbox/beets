@@ -405,7 +405,10 @@ def bytestring_path(path: Bytes_or_String) -> bytes:
 PATH_SEP: bytes = bytestring_path(os.sep)
 
 
-def displayable_path(path: bytes, separator: str = "; ") -> str:
+def displayable_path(
+    path: Union[bytes, str, Tuple[Union[bytes, str], ...]],
+    separator: str = "; ",
+) -> str:
     """Attempts to decode a bytestring path to a unicode object for the
     purpose of displaying it to the user. If the `path` argument is a
     list or a tuple, the elements are joined with `separator`.
@@ -801,7 +804,7 @@ def legalize_path(
     return second_stage_path, retruncated
 
 
-def py3_path(path: AnyStr) -> str:
+def py3_path(path: Union[bytes, str]) -> str:
     """Convert a bytestring path to Unicode.
 
     This helps deal with APIs on Python 3 that *only* accept Unicode

@@ -24,7 +24,7 @@ We love to get contributions from our community—you! There are many ways
 to contribute, whether you’re a programmer or not.
 
 The first thing to do, regardless of how you'd like to contribute to the
-project, is to check out our :doc:`Code of Conduct </code_of_conduct>` and to
+project, is to check out our :doc:`Code of Conduct <code_of_conduct>` and to
 keep that in mind while interacting with other contributors and users.
 
 Non-Programming
@@ -282,8 +282,8 @@ Running the Tests
 
 To run the tests for multiple Python versions, compile the docs, and
 check style, use `tox`_. Just type ``tox`` or use something like
-``tox -e py27`` to test a specific configuration. `detox`_ makes this go
-faster.
+``tox -e py27`` to test a specific configuration. You can use the
+``--parallel`` flag to make this go faster.
 
 You can disable a hand-selected set of "slow" tests by setting the
 environment variable SKIP_SLOW_TESTS before running them.
@@ -359,7 +359,6 @@ others. See `unittest.mock`_ for more info.
 .. _Codecov: https://codecov.io/github/beetbox/beets
 .. _pytest-random: https://github.com/klrmn/pytest-random
 .. _tox: https://tox.readthedocs.io/en/latest/
-.. _detox: https://pypi.org/project/detox/
 .. _pytest: https://docs.pytest.org/en/stable/
 .. _Linux: https://github.com/beetbox/beets/actions
 .. _Windows: https://ci.appveyor.com/project/beetbox/beets/
