@@ -93,8 +93,10 @@ Optional command flags:
 * Relatedly, the ``-q`` (quiet) option can help with large imports by
   autotagging without ever bothering to ask for user input. Whenever the
   normal autotagger mode would ask for confirmation, the quiet mode
-  pessimistically skips the album. The quiet mode also disables the tagger's
-  ability to resume interrupted imports.
+  performs a fallback action that can be configured using the
+  ``quiet_fallback`` configuration or ``--quiet-fallback`` CLI option.
+  By default it pessimistically ``skip``s the file.
+  Alternatively, it can be used as is, by configuring ``asis``.
 
 * Speaking of resuming interrupted imports, the tagger will prompt you if it
   seems like the last import of the directory was interrupted (by you or by
