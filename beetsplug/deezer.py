@@ -63,6 +63,19 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
 
         return [deezer_update_cmd]
 
+    def fetch_data(self, url):
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+        except requests.exceptions.RequestException as e:
+            self._log.error("Error fetching data from {}\n Error: {}", url, e)
+            return None
+        if "error" in data:
+            self._log.error("Deezer API error: {}", data["error"]["message"])
+            return None
+        return data
+
     def album_for_id(self, album_id):
         """Fetch an album by its Deezer ID or URL and return an
         AlbumInfo object or None if the album is not found.
@@ -75,13 +88,8 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         deezer_id = self._get_id("album", album_id, self.id_regex)
         if deezer_id is None:
             return None
-
-        album_data = requests.get(self.album_url + deezer_id).json()
-        if "error" in album_data:
-            self._log.debug(
-                f"Error fetching album {album_id}: "
-                f"{album_data['error']['message']}"
-            )
+        album_data = self.fetch_data(self.album_url + deezer_id)
+        if album_data is None:
             return None
         contributors = album_data.get("contributors")
         if contributors is not None:
@@ -107,9 +115,14 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
                 "Invalid `release_date` returned "
                 "by {} API: '{}'".format(self.data_source, release_date)
             )
-
-        tracks_obj = requests.get(self.album_url + deezer_id + "/tracks").json()
-        tracks_data = tracks_obj["data"]
+        tracks_obj = self.fetch_data(self.album_url + deezer_id + "/tracks")
+        if tracks_obj is None:
+            return None
+        try:
+            tracks_data = tracks_obj["data"]
+        except KeyError:
+            self._log.debug("Error fetching album tracks for {}", deezer_id)
+            tracks_data = None
         if not tracks_data:
             return None
         while "next" in tracks_obj:
@@ -192,21 +205,26 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             deezer_id = self._get_id("track", track_id, self.id_regex)
             if deezer_id is None:
                 return None
-            track_data = requests.get(self.track_url + deezer_id).json()
-            if "error" in track_data:
-                self._log.debug(
-                    f"Error fetching track {track_id}: "
-                    f"{track_data['error']['message']}"
-                )
+            track_data = self.fetch_data(self.track_url + deezer_id)
+            if track_data is None:
                 return None
         track = self._get_track(track_data)
 
         # Get album's tracks to set `track.index` (position on the entire
         # release) and `track.medium_total` (total number of tracks on
         # the track's disc).
-        album_tracks_data = requests.get(
+        album_tracks_obj = self.fetch_data(
             self.album_url + str(track_data["album"]["id"]) + "/tracks"
-        ).json()["data"]
+        )
+        if album_tracks_obj is None:
+            return None
+        try:
+            album_tracks_data = album_tracks_obj["data"]
+        except KeyError:
+            self._log.debug(
+                "Error fetching album tracks for {}", track_data["album"]["id"]
+            )
+            return None
         medium_total = 0
         for i, track_data in enumerate(album_tracks_data, start=1):
             if track_data["disk_number"] == track.medium:
@@ -283,11 +301,9 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
                 self._log.debug("No deezer_track_id present for: {}", item)
                 continue
             try:
-                rank = (
-                    requests.get(f"{self.track_url}{deezer_track_id}")
-                    .json()
-                    .get("rank")
-                )
+                rank = self.fetch_data(
+                    f"{self.track_url}{deezer_track_id}"
+                ).get("rank")
                 self._log.debug(
                     "Deezer track: {} has {} rank", deezer_track_id, rank
                 )

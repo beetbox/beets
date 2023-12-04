@@ -17,6 +17,8 @@ Major new features:
 
 New features:
 
+* :doc:`plugins/spotify`: We now fetch track's ISRC, EAN, and UPC identifiers from Spotify when using the ``spotifysync`` command.
+  :bug:`4992`
 * :doc:`plugins/discogs`: supply a value for the `cover_art_url` attribute, for use by `fetchart`.
   :bug:`429`
 * :ref:`update-cmd`: added ```-e``` flag for excluding fields from being updated.
@@ -141,9 +143,14 @@ New features:
   but no thumbnail is provided by CAA. We now fallback to the raw image.
 * :doc:`/plugins/advancedrewrite`: Add an advanced version of the `rewrite`
   plugin which allows to replace fields based on a given library query.
+* :doc:`/plugins/lyrics`: Add LRCLIB as a new lyrics provider and a new
+  `synced` option to prefer synced lyrics over plain lyrics.
 
 Bug fixes:
 
+* :doc:`/plugins/deezer`: Improve Deezer plugin error handling and set requests timeout to 10 seconds.
+  :bug:`4983`
+* :doc:`/plugins/spotify`: Add bad gateway (502) error handling.
 * :doc:`/plugins/spotify`: Add a limit of 3 retries, instead of retrying endlessly when the API is not available.
 * Fix a crash when the Spotify API timeouts or does not return a `Retry-After` interval.
   :bug:`4942`
@@ -259,6 +266,8 @@ Bug fixes:
   a null path that can't be removed.
 * Fix bug where empty artist and title fields would return None instead of an
   empty list in the discord plugin. :bug:`4973`
+* Fix bug regarding displaying tracks that have been changed not being
+  displayed unless the detail configuration is enabled.
 
 For packagers:
 

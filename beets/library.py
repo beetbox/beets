@@ -27,7 +27,7 @@ from mediafile import MediaFile, UnreadableFileError
 
 import beets
 from beets import dbcore, logging, plugins, util
-from beets.dbcore import types
+from beets.dbcore import Results, types
 from beets.util import (
     MoveOperation,
     bytestring_path,
@@ -1665,11 +1665,11 @@ class Library(dbcore.Database):
             Item, beets.config["sort_item"].as_str_seq()
         )
 
-    def albums(self, query=None, sort=None):
+    def albums(self, query=None, sort=None) -> Results[Album]:
         """Get :class:`Album` objects matching the query."""
         return self._fetch(Album, query, sort or self.get_default_album_sort())
 
-    def items(self, query=None, sort=None):
+    def items(self, query=None, sort=None) -> Results[Item]:
         """Get :class:`Item` objects matching the query."""
         return self._fetch(Item, query, sort or self.get_default_item_sort())
 
