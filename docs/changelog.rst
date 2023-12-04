@@ -146,6 +146,7 @@ New features:
 * :doc:`/plugins/lyrics`: Add LRCLIB as a new lyrics provider and a new
   `synced` option to prefer synced lyrics over plain lyrics.
 * :ref:`import-cmd`: Expose import.quiet_fallback as CLI option.
+* :ref:`import-cmd`: Expose `import.incremental_skip_later` as CLI option.
 
 Bug fixes:
 

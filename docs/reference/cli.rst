@@ -115,6 +115,15 @@ Optional command flags:
   time, when no subdirectories will be skipped. So consider enabling the
   ``incremental`` configuration option.
 
+* If you don't want to record skipped files during an *incremental* import, use
+  the ``--incremental-skip-later`` flag which corresponds to the 
+  ``incremental_skip_later`` configuration option.
+  Setting the flag prevents beets from persisting skip decisions during a
+  non-interactive import so that a user can make a decision regarding
+  previously skipped files during a subsequent interactive import run.
+  To record skipped files during incremental import explicitly, use the
+  ``--noincremental-skip-later`` option.
+
 * When beets applies metadata to your music, it will retain the value of any
   existing tags that weren't overwritten, and import them into the database. You
   may prefer to only use existing metadata for finding matches, and to erase it
