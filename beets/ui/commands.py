@@ -1461,6 +1461,12 @@ import_cmd.parser.add_option(
     help="never prompt for input: skip albums instead",
 )
 import_cmd.parser.add_option(
+    "--quiet-fallback",
+    type="string",
+    dest="quiet_fallback",
+    help="decision in quiet mode when no strong match: skip or asis",
+)
+import_cmd.parser.add_option(
     "-l",
     "--log",
     dest="log",
