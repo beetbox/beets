@@ -1,23 +1,40 @@
 MusicBrainz Submit Plugin
 =========================
 
-The ``mbsubmit`` plugin provides an extra prompt choice during an import
-session and a ``mbsubmit`` command that prints the tracks of the current
-album in a format that is parseable by MusicBrainz's `track parser`_.
+The ``mbsubmit`` plugin provides extra prompt choices when an import session
+fails to find a good enough match for a release. Additionally, it provides an
+``mbsubmit`` command that prints the tracks of the current album in a format
+that is parseable by MusicBrainz's `track parser`_. The prompt choices are:
+
+- Print the tracks to stdout in a format suitable for MusicBrainz's `track
+  parser`_.
+
+- Open the program `Picard`_ with the unmatched folder as an input, allowing
+  you to start submitting the unmatched release to MusicBrainz with many input
+  fields already filled in, thanks to Picard reading the preexisting tags of
+  the files.
+
+For the last option, `Picard`_ is assumed to be installed and available on the
+machine including a ``picard`` executable. Picard developers list `download
+options`_. `other GNU/Linux distributions`_ may distribute Picard via their
+package manager as well.
 
 .. _track parser: https://wiki.musicbrainz.org/History:How_To_Parse_Track_Listings
+.. _Picard: https://picard.musicbrainz.org/
+.. _download options: https://picard.musicbrainz.org/downloads/
+.. _other GNU/Linux distributions: https://repology.org/project/picard-tagger/versions
 
 Usage
 -----
 
 Enable the ``mbsubmit`` plugin in your configuration (see :ref:`using-plugins`)
-and select the ``Print tracks`` choice which is by default displayed when no
-strong recommendations are found for the album::
+and select one of the options mentioned above. Here the option ``Print tracks``
+choice is demonstrated::
 
     No matching release found for 3 tracks.
     For help, see: https://beets.readthedocs.org/en/latest/faq.html#nomatch
     [U]se as-is, as Tracks, Group albums, Skip, Enter search, enter Id, aBort,
-    Print tracks? p
+    Print tracks, Open files with Picard? p
     01. An Obscure Track - An Obscure Artist (3:37)
     02. Another Obscure Track - An Obscure Artist (2:05)
     03. The Third Track - Another Obscure Artist (3:02)
@@ -53,6 +70,11 @@ file. The following options are available:
   Default: ``medium`` (causing the choice to be displayed for all albums that
   have a recommendation of medium strength or lower). Valid values: ``none``,
   ``low``, ``medium``, ``strong``.
+- **picard_path**: The path to the ``picard`` executable. Could be an absolute
+  path, and if not, ``$PATH`` is consulted. The default value is simply
+  ``picard``. Windows users will have to find and specify the absolute path to
+  their ``picard.exe``. That would probably be:
+  ``C:\Program Files\MusicBrainz Picard\picard.exe``.
 
 Please note that some values of the ``threshold`` configuration option might
 require other ``beets`` command line switches to be enabled in order to work as
