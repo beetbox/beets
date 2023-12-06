@@ -21,11 +21,13 @@ implemented by MusicBrainz yet.
 [1] https://wiki.musicbrainz.org/History:How_To_Parse_Track_Listings
 """
 
+import subprocess
 
 from beets import ui
 from beets.autotag import Recommendation
 from beets.plugins import BeetsPlugin
 from beets.ui.commands import PromptChoice
+from beets.util import displayable_path
 from beetsplug.info import print_data
 
 
@@ -37,6 +39,7 @@ class MBSubmitPlugin(BeetsPlugin):
             {
                 "format": "$track. $title - $artist ($length)",
                 "threshold": "medium",
+                "picard_path": "picard",
             }
         )
 
@@ -56,7 +59,21 @@ class MBSubmitPlugin(BeetsPlugin):
 
     def before_choose_candidate_event(self, session, task):
         if task.rec <= self.threshold:
-            return [PromptChoice("p", "Print tracks", self.print_tracks)]
+            return [
+                PromptChoice("p", "Print tracks", self.print_tracks),
+                PromptChoice("o", "Open files with Picard", self.picard),
+            ]
+
+    def picard(self, session, task):
+        paths = []
+        for p in task.paths:
+            paths.append(displayable_path(p))
+        try:
+            picard_path = self.config["picard_path"].as_str()
+            subprocess.Popen([picard_path] + paths)
+            self._log.info("launched picard from\n{}", picard_path)
+        except OSError as exc:
+            self._log.error(f"Could not open picard, got error:\n{exc}")
 
     def print_tracks(self, session, task):
         for i in sorted(task.items, key=lambda i: i.track):
