@@ -591,7 +591,7 @@ def colorize(color_name, text):
     """Colorize text if colored output is enabled. (Like _colorize but
     conditional.)
     """
-    if config["ui"]["color"]:
+    if config["ui"]["color"] and "NO_COLOR" not in os.environ:
         global COLORS
         if not COLORS:
             # Read all color configurations and set global variable COLORS.
