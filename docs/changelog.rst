@@ -270,8 +270,10 @@ Bug fixes:
   :bug:`4822`
 * Fix bug where an interrupted import process poisons the database, causing
   a null path that can't be removed.
-* Fix bug where empty artist and title fields would return None instead of an
-  empty list in the discord plugin. :bug:`4973`
+  :bug:`4906`
+* :doc:`/plugins/discogs`: Fix bug where empty artist and title fields would
+  return None instead of an empty list.
+  :bug:`4973`
 * Fix bug regarding displaying tracks that have been changed not being
   displayed unless the detail configuration is enabled.
 
