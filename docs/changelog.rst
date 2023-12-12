@@ -13,7 +13,7 @@ Major new features:
 
 * The beets importer UI received a major overhaul. Several new configuration
   options are available for customizing layout and colors: :ref:`ui_options`.
-  :bug:`3721`
+  :bug:`3721` :bug:`5028`
 
 New features:
 * Allows Genius Class to look for all lyrics, not just the first one in lyrics.py
