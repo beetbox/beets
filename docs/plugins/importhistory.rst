@@ -6,11 +6,11 @@ to every item imported to your library. It is useful when you import many
 directories in a bulk, and you want to keep track of the directories you
 already imported. 
 
-Another feature of the plugin, is suggesting the user to delete the source
+Another feature of the plugin is suggesting the user to delete the source
 paths of items you remove from your beets library. This is useful if you keep
 backups of your imports in their original source paths by using `beet import
---copy`, you want to delete their backup when you regret the imports
-alltogether.
+--copy`, and you want to delete their backup when you regret the imports
+altogether.
 
 To use the ``importhistory`` plugin, enable it in your configuration (see
 :ref:`using-plugins`).
@@ -18,7 +18,7 @@ To use the ``importhistory`` plugin, enable it in your configuration (see
 `source_path` Usage
 -------------------
 
-The first use case of the `source_path` field, is in the following scenario: You
+The first use case of the `source_path` field is in the following scenario: You
 imported all of the directories in your current `$PWD`::
 
     beet import --flat --copy */
@@ -37,7 +37,7 @@ You can of course pipe this command to other standard UNIX utilities::
       sort -u
 
 The above will print only the directories you successfully finished importing
-with `beet import --flat --copy */`
+with `beet import --flat --copy */`.
 
 Removal Suggestion Usage
 ------------------------

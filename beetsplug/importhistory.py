@@ -5,12 +5,13 @@ you've removed the album from the library.
 """
 
 import os
-import re
 from shutil import rmtree
 
+from beets import library
 from beets.plugins import BeetsPlugin
 from beets.ui import colorize as colorize_text
 from beets.ui import input_options, input_yn
+from beets.util import displayable_path
 
 
 class ImportHistPlugin(BeetsPlugin):
@@ -43,6 +44,7 @@ class ImportHistPlugin(BeetsPlugin):
     def suggest_removal(self, item):
         """Prompts the user to delete the original path the item was imported from."""
         if "source_path" not in item:
+            # TODO: Maybe switch to a less arbitrary choice of item fields?
             try:
                 self._log.warn(
                     "Item without a source_path was found: {0.title} by {0.artist}",
@@ -59,6 +61,7 @@ class ImportHistPlugin(BeetsPlugin):
             or item.mb_albumid in self.stop_suggestions_for_albums
         ):
             return
+        # TODO: Consider whether it is even possible for this to happen
         if os.path.isdir(item["source_path"]):
             # We ask the user whether they'd like to delete the item's source
             # directory
@@ -66,10 +69,10 @@ class ImportHistPlugin(BeetsPlugin):
                 "The item:\n{path}\nis originated in the directory:\n{source}\n"
                 "Would you like to delete the source directory of this item?".format(
                     path=colorize_text(
-                        "text_warning", item.path.decode("utf-8")
+                        "text_warning", displayable_path(item.path)
                     ),
                     source=colorize_text(
-                        "text_warning", item["source_path"].decode("utf-8")
+                        "text_warning", displayable_path(item["source_path"])
                     ),
                 ),
                 require=True,
@@ -105,23 +108,16 @@ class ImportHistPlugin(BeetsPlugin):
             )
             if resp == "d":
                 self._log.info(
-                    "Deleting the item's source file: %s", item["source_path"]
+                    "Deleting the item's source file: {}", item["source_path"]
                 )
                 os.remove(item["source_path"])
             elif resp == "r":
                 source_dir = os.path.dirname(item["source_path"])
                 self._log.info(
-                    "Searching for other items with a source_path attr containing: %s",
+                    "Searching for other items with a source_path attr containing: {}",
                     source_dir,
                 )
-                # NOTE: I'm not sure why, but we need to escape it twice
-                # otherwise the search fails
-                escaped_source_dir = re.escape(
-                    re.escape(source_dir.decode("utf-8"))
-                )
-                source_dir_query = "source_path::^{}/*".format(
-                    escaped_source_dir
-                )
+                source_dir_query = library.PathQuery("source_path", source_dir)
                 print(
                     "Doing so will delete the following items' sources as well:"
                 )
