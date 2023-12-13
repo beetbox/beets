@@ -118,3 +118,4 @@ other configuration options are:
 - **urlencoded**: URL-encode all paths. Default: ``no``.
 - **pretend_paths**: When running with ``--pretend``, show the actual file
   paths that will be written to the m3u file. Default: ``false``.
+- **extm3u**: Generate extm3u/m3u8 playlists. Default ``ǹo``.
