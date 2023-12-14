@@ -73,15 +73,52 @@ class SmartPlaylistPlugin(BeetsPlugin):
             help="display query results but don't write playlist files.",
         )
         spl_update.parser.add_option(
+            "--pretend-paths",
+            action="store_true",
+            dest="pretend_paths",
+            help="in pretend mode, log the playlist item URIs/paths.",
+        )
+        spl_update.parser.add_option(
+            "-d",
+            "--playlist-dir",
+            dest="playlist_dir",
+            metavar="PATH",
+            type="string",
+            help="directory to write the generated playlist files to.",
+        )
+        spl_update.parser.add_option(
+            "--relative-to",
+            dest="relative_to",
+            metavar="PATH",
+            type="string",
+            help="Generate playlist item paths relative to this path.",
+        )
+        spl_update.parser.add_option(
+            "--prefix",
+            type="string",
+            help="prepend string to every path in the playlist file.",
+        )
+        spl_update.parser.add_option(
+            "--forward-slash",
+            action="store_true",
+            dest="forward_slash",
+            help="Force forward slash in paths within playlists.",
+        )
+        spl_update.parser.add_option(
+            "--urlencode",
+            action="store_true",
+            help="URL-encode all paths.",
+        )
+        spl_update.parser.add_option(
             "--extm3u",
             action="store_true",
-            help="add artist/title as m3u8 comments to playlists.",
+            help="generate extm3u/m3u8 playlists.",
         )
         spl_update.parser.add_option(
             "--no-extm3u",
             action="store_false",
             dest="extm3u",
-            help="do not add artist/title as extm3u comments to playlists.",
+            help="generate extm3u/m3u8 playlists.",
         )
         spl_update.func = self.update_cmd
         return [spl_update]
@@ -111,7 +148,13 @@ class SmartPlaylistPlugin(BeetsPlugin):
         else:
             self._matched_playlists = self._unmatched_playlists
 
-        self.update_playlists(lib, opts.extm3u, opts.pretend)
+        self.__apply_opts_to_config(opts)
+        self.update_playlists(lib, opts.pretend)
+
+    def __apply_opts_to_config(self, opts):
+        for k, v in opts.__dict__.items():
+            if v is not None and k in self.config:
+                self.config[k] = v
 
     def build_queries(self):
         """
@@ -197,7 +240,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
         self._unmatched_playlists -= self._matched_playlists
 
-    def update_playlists(self, lib, extm3u=None, pretend=False):
+    def update_playlists(self, lib, pretend=False):
         if pretend:
             self._log.info(
                 "Showing query results for {0} smart playlists...",
@@ -256,7 +299,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
                     os.path.join(playlist_dir, bytestring_path(m3u))
                 )
                 mkdirall(m3u_path)
-                extm3u = extm3u is None and self.config["extm3u"] or extm3u
+                extm3u = self.config["extm3u"]
                 with open(syspath(m3u_path), "wb") as f:
                     if extm3u:
                         f.write(b"#EXTM3U\n")
