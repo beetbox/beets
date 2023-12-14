@@ -115,7 +115,12 @@ other configuration options are:
 - **prefix**: Prepend this string to every path in the playlist file. For
   example, you could use the URL for a server where the music is stored.
   Default: empty string.
-- **urlencoded**: URL-encode all paths. Default: ``no``.
+- **urlencode**: URL-encode all paths. Default: ``no``.
 - **pretend_paths**: When running with ``--pretend``, show the actual file
   paths that will be written to the m3u file. Default: ``false``.
 - **extm3u**: Generate extm3u/m3u8 playlists. Default ``ǹo``.
+
+For many configuration options, there is a corresponding CLI option, e.g.
+``--playlist-dir``, ``--relative-to``, ``--prefix``, ``--forward-slash``,
+``--urlencode``, ``--extm3u``, ``--pretend-paths``.
+CLI options take precedence over those specified within the configuration file.
