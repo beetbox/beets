@@ -148,8 +148,9 @@ New features:
   `synced` option to prefer synced lyrics over plain lyrics.
 * :ref:`import-cmd`: Expose import.quiet_fallback as CLI option.
 * :ref:`import-cmd`: Expose `import.incremental_skip_later` as CLI option.
-* :doc:`/plugins/smartplaylist`: Add new config option `smartplaylist.output`.
 * :doc:`/plugins/smartplaylist`: Expose config options as CLI options.
+* :doc:`/plugins/smartplaylist`: Add new option `smartplaylist.output`.
+* :doc:`/plugins/smartplaylist`: Add new option `smartplaylist.uri_format`.
 
 Bug fixes:
 
