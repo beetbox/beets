@@ -14,18 +14,40 @@
 
 """Plugin to rewrite fields based on a given query."""
 
+import re
 import shlex
 from collections import defaultdict
 
 import confuse
 
-from beets import ui
 from beets.dbcore import AndQuery, query_from_strings
+from beets.dbcore.types import MULTI_VALUE_DSV
 from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
+from beets.ui import UserError
 
 
-def rewriter(field, rules):
+def simple_rewriter(field, rules):
+    """Template field function factory.
+
+    Create a template field function that rewrites the given field
+    with the given rewriting rules.
+    ``rules`` must be a list of (pattern, replacement) pairs.
+    """
+
+    def fieldfunc(item):
+        value = item._values_fixed[field]
+        for pattern, replacement in rules:
+            if pattern.match(value.lower()):
+                # Rewrite activated.
+                return replacement
+        # Not activated; return original value.
+        return value
+
+    return fieldfunc
+
+
+def advanced_rewriter(field, rules):
     """Template field function factory.
 
     Create a template field function that rewrites the given field
@@ -53,40 +75,115 @@ class AdvancedRewritePlugin(BeetsPlugin):
         super().__init__()
 
         template = confuse.Sequence(
-            {
-                "match": str,
-                "field": str,
-                "replacement": str,
-            }
+            confuse.OneOf(
+                [
+                    confuse.MappingValues(str),
+                    {
+                        "match": str,
+                        "replacements": confuse.MappingValues(
+                            confuse.OneOf([str, confuse.Sequence(str)]),
+                        ),
+                    },
+                ]
+            )
         )
 
         # Gather all the rewrite rules for each field.
-        rules = defaultdict(list)
+        simple_rules = defaultdict(list)
+        advanced_rules = defaultdict(list)
         for rule in self.config.get(template):
-            query = query_from_strings(
-                AndQuery,
-                Item,
-                prefixes={},
-                query_parts=shlex.split(rule["match"]),
-            )
-            fieldname = rule["field"]
-            replacement = rule["replacement"]
-            if fieldname not in Item._fields:
-                raise ui.UserError(
-                    "invalid field name (%s) in rewriter" % fieldname
+            if "match" not in rule:
+                # Simple syntax
+                if len(rule) != 1:
+                    raise UserError(
+                        "Simple rewrites must have only one rule, "
+                        "but found multiple entries. "
+                        "Did you forget to prepend a dash (-)?"
+                    )
+                key, value = next(iter(rule.items()))
+                try:
+                    fieldname, pattern = key.split(None, 1)
+                except ValueError:
+                    raise UserError(
+                        f"Invalid simple rewrite specification {key}"
+                    )
+                if fieldname not in Item._fields:
+                    raise UserError(
+                        f"invalid field name {fieldname} in rewriter"
+                    )
+                self._log.debug(
+                    f"adding simple rewrite '{pattern}' → '{value}' "
+                    f"for field {fieldname}"
                 )
-            self._log.debug(
-                "adding template field {0} → {1}", fieldname, replacement
-            )
-            rules[fieldname].append((query, replacement))
-            if fieldname == "artist":
-                # Special case for the artist field: apply the same
-                # rewrite for "albumartist" as well.
-                rules["albumartist"].append((query, replacement))
+                pattern = re.compile(pattern.lower())
+                simple_rules[fieldname].append((pattern, value))
+                if fieldname == "artist":
+                    # Special case for the artist field: apply the same
+                    # rewrite for "albumartist" as well.
+                    simple_rules["albumartist"].append((pattern, value))
+            else:
+                # Advanced syntax
+                match = rule["match"]
+                replacements = rule["replacements"]
+                if len(replacements) == 0:
+                    raise UserError(
+                        "Advanced rewrites must have at least one replacement"
+                    )
+                query = query_from_strings(
+                    AndQuery,
+                    Item,
+                    prefixes={},
+                    query_parts=shlex.split(match),
+                )
+                for fieldname, replacement in replacements.items():
+                    if fieldname not in Item._fields:
+                        raise UserError(
+                            f"Invalid field name {fieldname} in rewriter"
+                        )
+                    self._log.debug(
+                        f"adding advanced rewrite to '{replacement}' "
+                        f"for field {fieldname}"
+                    )
+                    if isinstance(replacement, list):
+                        if Item._fields[fieldname] is not MULTI_VALUE_DSV:
+                            raise UserError(
+                                f"Field {fieldname} is not a multi-valued field "
+                                f"but a list was given: {', '.join(replacement)}"
+                            )
+                    elif isinstance(replacement, str):
+                        if Item._fields[fieldname] is MULTI_VALUE_DSV:
+                            replacement = list(replacement)
+                    else:
+                        raise UserError(
+                            f"Invalid type of replacement {replacement} "
+                            f"for field {fieldname}"
+                        )
+
+                    advanced_rules[fieldname].append((query, replacement))
+                    # Special case for the artist(s) field:
+                    # apply the same rewrite for "albumartist(s)" as well.
+                    if fieldname == "artist":
+                        advanced_rules["albumartist"].append(
+                            (query, replacement)
+                        )
+                    elif fieldname == "artists":
+                        advanced_rules["albumartists"].append(
+                            (query, replacement)
+                        )
+                    elif fieldname == "artist_sort":
+                        advanced_rules["albumartist_sort"].append(
+                            (query, replacement)
+                        )
 
         # Replace each template field with the new rewriter function.
-        for fieldname, fieldrules in rules.items():
-            getter = rewriter(fieldname, fieldrules)
+        for fieldname, fieldrules in simple_rules.items():
+            getter = simple_rewriter(fieldname, fieldrules)
+            self.template_fields[fieldname] = getter
+            if fieldname in Album._fields:
+                self.album_template_fields[fieldname] = getter
+
+        for fieldname, fieldrules in advanced_rules.items():
+            getter = advanced_rewriter(fieldname, fieldrules)
             self.template_fields[fieldname] = getter
             if fieldname in Album._fields:
                 self.album_template_fields[fieldname] = getter
