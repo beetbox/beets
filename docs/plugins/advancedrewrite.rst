@@ -55,6 +55,31 @@ As a convenience, the plugin applies patterns for the ``artist`` field to the
 ``albumartist`` field as well. (Otherwise, you would probably want to duplicate
 every rule for ``artist`` and ``albumartist``.)
 
+Make sure to properly quote your query strings if they contain spaces,
+otherwise they might not do what you expect, or even cause beets to crash.
+
+Take the following example::
+
+    advancedrewrite:
+      # BAD, DON'T DO THIS!
+      - match: album:THE ALBUM
+        replacements:
+          artist: New artist
+
+On the first sight, this might look sane, and replace the artist of the album
+*THE ALBUM* with *New artist*. However, due to the space and missing quotes,
+this query will evaluate to ``album:THE`` and match ``ALBUM`` on any field,
+including ``artist``. As ``artist`` is the field being replaced,
+this query will result in infinite recursion and ultimately crash beets.
+
+Instead, you should use the following rule::
+
+    advancedrewrite:
+      # Note the quotes around the query string!
+      - match: album:"THE ALBUM"
+        replacements:
+          artist: New artist
+
 A word of warning: This plugin theoretically only applies to templates and path
 formats; it initially does not modify files' metadata tags or the values
 tracked by beets' library database, but since it *rewrites all field lookups*,
