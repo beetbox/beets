@@ -14,27 +14,30 @@
 
 """Representation of type information for DBCore model fields.
 """
-
-from abc import ABC
 import sys
 import typing
-from typing import Any, cast, Generic, List, TYPE_CHECKING, TypeVar, Union
-from .query import BooleanQuery, FieldQuery, NumericQuery, SubstringQuery
+from abc import ABC
+from typing import TYPE_CHECKING, Any, Generic, List, TypeVar, Union, cast
+
 from beets.util import str2bool
 
+from .query import BooleanQuery, FieldQuery, NumericQuery, SubstringQuery
 
 # Abstract base.
 
 
 # FIXME: unconditionally define the Protocol once we drop Python 3.7
 if TYPE_CHECKING and sys.version_info >= (3, 8):
+
     class ModelType(typing.Protocol):
         """Protocol that specifies the required constructor for model types,
         i.e. a function that takes any argument and attempts to parse it to the
         given type.
         """
+
         def __init__(self, value: Any = None):
             ...
+
 else:
     # No structural subtyping in Python < 3.8...
     ModelType = Any
@@ -53,7 +56,7 @@ class Type(ABC, Generic[T, N]):
     field.
     """
 
-    sql: str = 'TEXT'
+    sql: str = "TEXT"
     """The SQLite column type for the value.
     """
 
@@ -71,8 +74,7 @@ class Type(ABC, Generic[T, N]):
 
     @property
     def null(self) -> N:
-        """The value to be exposed when the underlying value is None.
-        """
+        """The value to be exposed when the underlying value is None."""
         # Note that this default implementation only makes sense for T = N.
         # It would be better to implement `null()` only in subclasses, or
         # have a field null_type similar to `model_type` and use that here.
@@ -86,9 +88,9 @@ class Type(ABC, Generic[T, N]):
             value = self.null
         # `self.null` might be `None`
         if value is None:
-            return ''
+            return ""
         elif isinstance(value, bytes):
-            return value.decode('utf-8', 'ignore')
+            return value.decode("utf-8", "ignore")
         else:
             return str(value)
 
@@ -132,7 +134,7 @@ class Type(ABC, Generic[T, N]):
         and the method must handle these in addition.
         """
         if isinstance(sql_value, memoryview):
-            sql_value = bytes(sql_value).decode('utf-8', 'ignore')
+            sql_value = bytes(sql_value).decode("utf-8", "ignore")
         if isinstance(sql_value, str):
             return self.parse(sql_value)
         else:
@@ -147,6 +149,7 @@ class Type(ABC, Generic[T, N]):
 
 # Reusable types.
 
+
 class Default(Type[str, None]):
     model_type = str
 
@@ -156,9 +159,9 @@ class Default(Type[str, None]):
 
 
 class BaseInteger(Type[int, N]):
-    """A basic integer type.
-    """
-    sql = 'INTEGER'
+    """A basic integer type."""
+
+    sql = "INTEGER"
     query = NumericQuery
     model_type = int
 
@@ -187,11 +190,12 @@ class BasePaddedInt(BaseInteger[N]):
     """An integer field that is formatted with a given number of digits,
     padded with zeroes.
     """
+
     def __init__(self, digits: int):
         self.digits = digits
 
     def format(self, value: Union[int, N]) -> str:
-        return '{0:0{1}d}'.format(value or 0, self.digits)
+        return "{0:0{1}d}".format(value or 0, self.digits)
 
 
 class PaddedInt(BasePaddedInt[int]):
@@ -199,8 +203,8 @@ class PaddedInt(BasePaddedInt[int]):
 
 
 class NullPaddedInt(BasePaddedInt[None]):
-    """Same as `PaddedInt`, but does not normalize `None` to `0`.
-    """
+    """Same as `PaddedInt`, but does not normalize `None` to `0`."""
+
     @property
     def null(self) -> None:
         return None
@@ -210,32 +214,35 @@ class ScaledInt(Integer):
     """An integer whose formatting operation scales the number by a
     constant and adds a suffix. Good for units with large magnitudes.
     """
-    def __init__(self, unit: int, suffix: str = ''):
+
+    def __init__(self, unit: int, suffix: str = ""):
         self.unit = unit
         self.suffix = suffix
 
     def format(self, value: int) -> str:
-        return '{}{}'.format((value or 0) // self.unit, self.suffix)
+        return "{}{}".format((value or 0) // self.unit, self.suffix)
 
 
 class Id(NullInteger):
     """An integer used as the row id or a foreign key in a SQLite table.
     This type is nullable: None values are not translated to zero.
     """
+
     @property
     def null(self) -> None:
         return None
 
     def __init__(self, primary: bool = True):
         if primary:
-            self.sql = 'INTEGER PRIMARY KEY'
+            self.sql = "INTEGER PRIMARY KEY"
 
 
 class BaseFloat(Type[float, N]):
     """A basic floating-point type. The `digits` parameter specifies how
     many decimal places to use in the human-readable representation.
     """
-    sql = 'REAL'
+
+    sql = "REAL"
     query = NumericQuery
     model_type = float
 
@@ -243,29 +250,29 @@ class BaseFloat(Type[float, N]):
         self.digits = digits
 
     def format(self, value: Union[float, N]) -> str:
-        return '{0:.{1}f}'.format(value or 0, self.digits)
+        return "{0:.{1}f}".format(value or 0, self.digits)
 
 
 class Float(BaseFloat[float]):
-    """Floating-point type that normalizes `None` to `0.0`.
-    """
+    """Floating-point type that normalizes `None` to `0.0`."""
+
     @property
     def null(self) -> float:
         return 0.0
 
 
 class NullFloat(BaseFloat[None]):
-    """Same as `Float`, but does not normalize `None` to `0.0`.
-    """
+    """Same as `Float`, but does not normalize `None` to `0.0`."""
+
     @property
     def null(self) -> None:
         return None
 
 
 class BaseString(Type[T, N]):
-    """A Unicode string type.
-    """
-    sql = 'TEXT'
+    """A Unicode string type."""
+
+    sql = "TEXT"
     query = SubstringQuery
 
     def normalize(self, value: Any) -> Union[T, N]:
@@ -276,8 +283,8 @@ class BaseString(Type[T, N]):
 
 
 class String(BaseString[str, Any]):
-    """A Unicode string type.
-    """
+    """A Unicode string type."""
+
     model_type = str
 
 
@@ -285,27 +292,28 @@ class DelimitedString(BaseString[List[str], List[str]]):
     """A list of Unicode strings, represented in-database by a single string
     containing delimiter-separated values.
     """
+
     model_type = list
 
-    def __init__(self, delimiter):
+    def __init__(self, delimiter: str):
         self.delimiter = delimiter
 
-    def format(self, value):
+    def format(self, value: List[str]):
         return self.delimiter.join(value)
 
-    def parse(self, string):
+    def parse(self, string: str):
         if not string:
             return []
         return string.split(self.delimiter)
 
-    def to_sql(self, model_value):
+    def to_sql(self, model_value: List[str]):
         return self.delimiter.join(model_value)
 
 
 class Boolean(Type):
-    """A boolean type.
-    """
-    sql = 'INTEGER'
+    """A boolean type."""
+
+    sql = "INTEGER"
     query = BooleanQuery
     model_type = bool
 
@@ -325,4 +333,7 @@ FLOAT = Float()
 NULL_FLOAT = NullFloat()
 STRING = String()
 BOOLEAN = Boolean()
-SEMICOLON_SPACE_DSV = DelimitedString(delimiter='; ')
+SEMICOLON_SPACE_DSV = DelimitedString(delimiter="; ")
+
+# Will set the proper null char in mediafile
+MULTI_VALUE_DSV = DelimitedString(delimiter="\\␀")

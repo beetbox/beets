@@ -17,29 +17,33 @@
 
 import re
 
-from beets.plugins import BeetsPlugin
-from mediafile import MediaFile
-from beets.importer import action
-from beets.ui import Subcommand, decargs, input_yn
 import confuse
+from mediafile import MediaFile
 
-__author__ = 'baobab@heresiarch.info'
+from beets.importer import action
+from beets.plugins import BeetsPlugin
+from beets.ui import Subcommand, decargs, input_yn
+
+__author__ = "baobab@heresiarch.info"
 
 
 class ZeroPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
 
-        self.register_listener('write', self.write_event)
-        self.register_listener('import_task_choice',
-                               self.import_task_choice_event)
+        self.register_listener("write", self.write_event)
+        self.register_listener(
+            "import_task_choice", self.import_task_choice_event
+        )
 
-        self.config.add({
-            'auto': True,
-            'fields': [],
-            'keep_fields': [],
-            'update_database': False,
-        })
+        self.config.add(
+            {
+                "auto": True,
+                "fields": [],
+                "keep_fields": [],
+                "update_database": False,
+            }
+        )
 
         self.fields_to_progs = {}
         self.warned = False
@@ -51,29 +55,30 @@ class ZeroPlugin(BeetsPlugin):
         A field is zeroed if its value matches one of the associated progs. If
         progs is empty, then the associated field is always zeroed.
         """
-        if self.config['fields'] and self.config['keep_fields']:
-            self._log.warning(
-                'cannot blacklist and whitelist at the same time'
-            )
+        if self.config["fields"] and self.config["keep_fields"]:
+            self._log.warning("cannot blacklist and whitelist at the same time")
         # Blacklist mode.
-        elif self.config['fields']:
-            for field in self.config['fields'].as_str_seq():
+        elif self.config["fields"]:
+            for field in self.config["fields"].as_str_seq():
                 self._set_pattern(field)
         # Whitelist mode.
-        elif self.config['keep_fields']:
+        elif self.config["keep_fields"]:
             for field in MediaFile.fields():
-                if (field not in self.config['keep_fields'].as_str_seq() and
-                        # These fields should always be preserved.
-                        field not in ('id', 'path', 'album_id')):
+                if (
+                    field not in self.config["keep_fields"].as_str_seq()
+                    and
+                    # These fields should always be preserved.
+                    field not in ("id", "path", "album_id")
+                ):
                     self._set_pattern(field)
 
     def commands(self):
-        zero_command = Subcommand('zero', help='set fields to null')
+        zero_command = Subcommand("zero", help="set fields to null")
 
         def zero_fields(lib, opts, args):
             if not decargs(args) and not input_yn(
-                    "Remove fields for all items? (Y/n)",
-                    True):
+                "Remove fields for all items? (Y/n)", True
+            ):
                 return
             for item in lib.items(decargs(args)):
                 self.process_item(item)
@@ -86,10 +91,11 @@ class ZeroPlugin(BeetsPlugin):
         Do some sanity checks then compile the regexes.
         """
         if field not in MediaFile.fields():
-            self._log.error('invalid field: {0}', field)
-        elif field in ('id', 'path', 'album_id'):
-            self._log.warning('field \'{0}\' ignored, zeroing '
-                              'it would be dangerous', field)
+            self._log.error("invalid field: {0}", field)
+        elif field in ("id", "path", "album_id"):
+            self._log.warning(
+                "field '{0}' ignored, zeroing " "it would be dangerous", field
+            )
         else:
             try:
                 for pattern in self.config[field].as_str_seq():
@@ -101,12 +107,12 @@ class ZeroPlugin(BeetsPlugin):
 
     def import_task_choice_event(self, session, task):
         if task.choice_flag == action.ASIS and not self.warned:
-            self._log.warning('cannot zero in \"as-is\" mode')
+            self._log.warning('cannot zero in "as-is" mode')
             self.warned = True
         # TODO request write in as-is mode
 
     def write_event(self, item, path, tags):
-        if self.config['auto']:
+        if self.config["auto"]:
             self.set_fields(item, tags)
 
     def set_fields(self, item, tags):
@@ -119,7 +125,7 @@ class ZeroPlugin(BeetsPlugin):
         fields_set = False
 
         if not self.fields_to_progs:
-            self._log.warning('no fields, nothing to do')
+            self._log.warning("no fields, nothing to do")
             return False
 
         for field, progs in self.fields_to_progs.items():
@@ -127,14 +133,14 @@ class ZeroPlugin(BeetsPlugin):
                 value = tags[field]
                 match = _match_progs(tags[field], progs)
             else:
-                value = ''
+                value = ""
                 match = not progs
 
             if match:
                 fields_set = True
-                self._log.debug('{0}: {1} -> None', field, value)
+                self._log.debug("{0}: {1} -> None", field, value)
                 tags[field] = None
-                if self.config['update_database']:
+                if self.config["update_database"]:
                     item[field] = None
 
         return fields_set
@@ -144,7 +150,7 @@ class ZeroPlugin(BeetsPlugin):
 
         if self.set_fields(item, tags):
             item.write(tags=tags)
-            if self.config['update_database']:
+            if self.config["update_database"]:
                 item.store(fields=tags)
 
 

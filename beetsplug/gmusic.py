@@ -20,6 +20,8 @@ class Gmusic(BeetsPlugin):
     def __init__(self):
         super().__init__()
 
-        self._log.warning("The 'gmusic' plugin has been removed following the"
-                          " shutdown of Google Play Music. Remove the plugin"
-                          " from your configuration to silence this warning.")
+        self._log.warning(
+            "The 'gmusic' plugin has been removed following the"
+            " shutdown of Google Play Music. Remove the plugin"
+            " from your configuration to silence this warning."
+        )

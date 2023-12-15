@@ -159,7 +159,7 @@ path_sep_replace
 A string that replaces the path separator (for example, the forward slash
 ``/`` on Linux and MacOS, and the backward slash ``\\`` on Windows) when
 generating filenames with beets.
-This option is related to :ref:`replace`, but is distict from it for
+This option is related to :ref:`replace`, but is distinct from it for
 technical reasons.
 
 .. warning::
@@ -398,6 +398,8 @@ Sets the albumartist for various-artist compilations. Defaults to ``'Various
 Artists'`` (the MusicBrainz standard). Affects other sources, such as
 :doc:`/plugins/discogs`, too.
 
+.. _ui_options:
+
 UI Options
 ----------
 
@@ -419,6 +421,8 @@ support ANSI colors.
     still respected, but a deprecation message will be shown until your
     top-level `color` configuration has been nested under `ui`.
 
+.. _colors:
+
 colors
 ~~~~~~
 
@@ -427,20 +431,79 @@ the ``color`` option is set to ``yes``. For example, you might have a section
 in your configuration file that looks like this::
 
     ui:
-        color: yes
         colors:
-            text_success: green
-            text_warning: yellow
-            text_error: red
-            text_highlight: red
-            text_highlight_minor: lightgray
-            action_default: turquoise
-            action: blue
+            text_success: ['bold', 'green']
+            text_warning: ['bold', 'yellow']
+            text_error: ['bold', 'red']
+            text_highlight: ['bold', 'red']
+            text_highlight_minor: ['white']
+            action_default: ['bold', 'cyan']
+            action: ['bold', 'cyan']
+            # New colors after UI overhaul
+            text: ['normal']
+            text_faint: ['faint']
+            import_path: ['bold', 'blue']
+            import_path_items: ['bold', 'blue']
+            added:   ['green']
+            removed: ['red']
+            changed: ['yellow']
+            added_highlight:   ['bold', 'green']
+            removed_highlight: ['bold', 'red']
+            changed_highlight: ['bold', 'yellow']
+            text_diff_added:   ['bold', 'red']
+            text_diff_removed: ['bold', 'red']
+            text_diff_changed: ['bold', 'red']
+            action_description: ['white']
 
 Available colors: black, darkred, darkgreen, brown (darkyellow), darkblue,
 purple (darkmagenta), teal (darkcyan), lightgray, darkgray, red, green,
 yellow, blue, fuchsia (magenta), turquoise (cyan), white
 
+Legacy UI colors config directive used strings. If any colors value is still a
+string instead of a list, it will be translated to list automatically. For
+example ``blue`` will become ``['blue']``.
+
+terminal_width
+~~~~~~~~~~~~~~
+
+Controls line wrapping on non-Unix systems. On Unix systems, the width of the
+terminal is detected automatically. If this fails, or on non-Unix systems, the
+specified value is used as a fallback. Defaults to ``80`` characters::
+
+    ui:
+        terminal_width: 80
+
+length_diff_thresh
+~~~~~~~~~~~~~~~~~~
+
+Beets compares the length of the imported track with the length the metadata
+source provides. If any tracks differ by at least ``length_diff_thresh``
+seconds, they will be colored with ``text_highlight``. Below this threshold,
+different track lengths are colored with ``text_highlight_minor``.
+``length_diff_thresh`` does not impact which releases are selected in
+autotagger matching or distance score calculation (see :ref:`match-config`,
+``distance_weights`` and :ref:`colors`)::
+
+    ui:
+        length_diff_thresh: 10.0
+
+import
+~~~~~~
+
+When importing, beets will read several options to configure the visuals of the
+import dialogue. There are two layouts controlling how horizontal space and
+line wrapping is dealt with: ``column`` and ``newline``. The indentation of the
+respective elements of the import UI can also be configured. For example
+setting ``4``  for ``match_header`` will indent the very first block of a
+proposed match by five characters in the terminal::
+
+    ui:
+        import:
+            indentation:
+                match_header: 4
+                match_details: 4
+                match_tracklist: 7
+            layout: newline
 
 Importer Options
 ----------------
@@ -728,6 +791,29 @@ Controls how duplicates are treated in import task.
 item; "merge" means merge into one album; "ask" means the user 
 should be prompted for the action each time. The default is ``ask``.
 
+.. _duplicate_verbose_prompt:
+
+duplicate_verbose_prompt
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Usually when duplicates are detected during import, information about the
+existing and the newly imported album is summarized. Enabling this option also
+lists details on individual tracks. The :ref:`format_item setting
+<format_item>` is applied, which would, considering the default, look like
+this:
+
+.. code-block:: console
+
+    This item is already in the library!
+    Old: 1 items, MP3, 320kbps, 5:56, 13.6 MiB
+      Artist Name - Album Name - Third Track Title
+    New: 2 items, MP3, 320kbps, 7:18, 17.1 MiB
+      Artist Name - Album Name - First Track Title
+      Artist Name - Album Name - Second Track Title
+    [S]kip new, Keep all, Remove old, Merge all?
+
+Default: ``no``.
+
 .. _bell:
 
 bell
@@ -759,6 +845,19 @@ Fields are set on both the album and each individual track of the album.
 Fields are persisted to the media files of each track.
 
 Default: ``{}`` (empty).
+
+.. _singleton_album_disambig:
+
+singleton_album_disambig
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+During singleton imports and if the metadata source provides it, album names
+are appended to the disambiguation string of matching track candidates. For
+example: ``The Artist - The Title (Discogs, Index 3, Track B1, [The Album]``.
+This feature is currently supported by the :doc:`/plugins/discogs` and the
+:doc:`/plugins/spotify`.
+
+Default: ``yes``.
 
 .. _musicbrainz-config:
 
@@ -850,7 +949,7 @@ external_ids
 Set any of the ``external_ids`` options to ``yes`` to enable the MusicBrainz
 importer to look for links to related metadata sources. If such a link is
 available the release ID will be extracted from the URL provided and imported
-to the beets library.
+to the beets library::
 
     musicbrainz:
         external_ids:

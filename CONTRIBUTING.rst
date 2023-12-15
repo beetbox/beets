@@ -23,6 +23,10 @@ Types of Contributions
 We love to get contributions from our community—you! There are many ways
 to contribute, whether you’re a programmer or not.
 
+The first thing to do, regardless of how you'd like to contribute to the
+project, is to check out our :doc:`Code of Conduct <code_of_conduct>` and to
+keep that in mind while interacting with other contributors and users.
+
 Non-Programming
 ---------------
 
@@ -42,12 +46,12 @@ Non-Programming
    compiling a library of freely-licensed music files (preferably with
    incorrect metadata) for testing and measurement.
 -  Think you have a nice config or cool use-case for beets? We’d love to
-   hear about it! Submit a post to our `our
-   forums <https://discourse.beets.io/>`__ under the “Show and Tell”
-   category for a chance to get featured in `the
+   hear about it! Submit a post to our `discussion board
+   <https://github.com/beetbox/beets/discussions/categories/show-and-tell>`__
+   under the “Show and Tell” category for a chance to get featured in `the
    docs <https://beets.readthedocs.io/en/stable/guides/advanced.html>`__.
--  Consider helping out in `our forums <https://discourse.beets.io/>`__
-   by responding to support requests or driving some new discussions.
+-  Consider helping out fellow users by by `responding to support requests
+   <https://github.com/beetbox/beets/discussions/categories/q-a>`__ .
 
 Programming
 -----------
@@ -119,7 +123,8 @@ If this is your first time contributing to an open source project,
 welcome! If you are confused at all about how to contribute or what to
 contribute, take a look at `this great
 tutorial <http://makeapullrequest.com/>`__, or stop by our
-`forums <https://discourse.beets.io/>`__ if you have any questions.
+`discussion board <https://github.com/beetbox/beets/discussions/>`__
+if you have any questions.
 
 We maintain a list of issues we reserved for those new to open source
 labeled `“first timers
@@ -137,19 +142,21 @@ request and your code will ship in no time.
 
 1. Fork the beets repository and clone it (see above) to create a
    workspace.
-2. Make your changes.
-3. Add tests. If you’ve fixed a bug, write a test to ensure that you’ve
+2. Install pre-commit, following the instructions `here
+   <https://pre-commit.com/>`_.
+3. Make your changes.
+4. Add tests. If you’ve fixed a bug, write a test to ensure that you’ve
    actually fixed it. If there’s a new feature or plugin, please
    contribute tests that show that your code does what it says.
-4. Add documentation. If you’ve added a new command flag, for example,
+5. Add documentation. If you’ve added a new command flag, for example,
    find the appropriate page under ``docs/`` where it needs to be
    listed.
-5. Add a changelog entry to ``docs/changelog.rst`` near the top of the
+6. Add a changelog entry to ``docs/changelog.rst`` near the top of the
    document.
-6. Run the tests and style checker. The easiest way to run the tests is
+7. Run the tests and style checker. The easiest way to run the tests is
    to use `tox`_. For more information on running tests, see :ref:`testing`.
-7. Push to your fork and open a pull request! We’ll be in touch shortly.
-8. If you add commits to a pull request, please add a comment or
+8. Push to your fork and open a pull request! We’ll be in touch shortly.
+9. If you add commits to a pull request, please add a comment or
    re-request a review after you push them since GitHub doesn’t
    automatically notify us when commits are added.
 
@@ -214,11 +221,13 @@ There are a few coding conventions we use in beets:
 Style
 -----
 
-We follow `PEP 8`_ and `google's docstring format`_.
+We follow `black`_ formatting and `google's docstring format`_.
 
 You can use ``tox -e lint`` to check your code for any style errors.
+Running ``tox -e format`` will automatically format your code according
+to the specifications required by the project.
 
-.. _PEP 8: https://www.python.org/dev/peps/pep-0008/
+.. _black: https://black.readthedocs.io/en/stable/
 .. _google's docstring format: https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings
 
 Handling Paths
@@ -237,7 +246,7 @@ guidelines to follow:
 -  If you have a Unicode path or you’re not sure whether something is
    Unicode or not, pass it through ``bytestring_path`` function in the
    ``beets.util`` module to convert it to bytes.
--  Pass every path name trough the ``syspath`` function (also in
+-  Pass every path name through the ``syspath`` function (also in
    ``beets.util``) before sending it to any *operating system* file
    operation (``open``, for example). This is necessary to use long
    filenames (which, maddeningly, must be Unicode) on Windows. This
@@ -273,8 +282,8 @@ Running the Tests
 
 To run the tests for multiple Python versions, compile the docs, and
 check style, use `tox`_. Just type ``tox`` or use something like
-``tox -e py27`` to test a specific configuration. `detox`_ makes this go
-faster.
+``tox -e py27`` to test a specific configuration. You can use the
+``--parallel`` flag to make this go faster.
 
 You can disable a hand-selected set of "slow" tests by setting the
 environment variable SKIP_SLOW_TESTS before running them.
@@ -288,7 +297,7 @@ Other ways to run the tests:
 You can also see the latest test results on `Linux`_ and on `Windows`_.
 
 Note, if you are on Windows and are seeing errors running tox, it may be related to `this issue`_,
-in which case you may have to install tox v3.8.3 e.g. ``python -m pip install tox=3.8.3``
+in which case you may have to install tox v3.8.3 e.g. ``python -m pip install tox==3.8.3``
 
 .. _this issue: https://github.com/tox-dev/tox/issues/1550
 
@@ -350,7 +359,6 @@ others. See `unittest.mock`_ for more info.
 .. _Codecov: https://codecov.io/github/beetbox/beets
 .. _pytest-random: https://github.com/klrmn/pytest-random
 .. _tox: https://tox.readthedocs.io/en/latest/
-.. _detox: https://pypi.org/project/detox/
 .. _pytest: https://docs.pytest.org/en/stable/
 .. _Linux: https://github.com/beetbox/beets/actions
 .. _Windows: https://ci.appveyor.com/project/beetbox/beets/

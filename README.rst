@@ -80,10 +80,11 @@ shockingly simple if you know a little Python.
 Install
 -------
 
-You can install beets by typing ``pip install beets`` or directly from Github (see details [here](https://beets.readthedocs.io/en/latest/faq.html#run-the-latest-source-version-of-beets)).
+You can install beets by typing ``pip install beets`` or directly from Github (see details `here`_).
 Beets has also been packaged in the `software repositories`_ of several
 distributions. Check out the `Getting Started`_ guide for more information.
 
+.. _here: https://beets.readthedocs.io/en/latest/faq.html#run-the-latest-source-version-of-beets
 .. _Getting Started: https://beets.readthedocs.org/page/guides/main.html
 .. _software repositories: https://repology.org/project/beets/versions
 
@@ -99,11 +100,11 @@ programmer or not, you should be able to find all the info you need at
 Read More
 ---------
 
-Learn more about beets at `its Web site`_. Follow `@b33ts`_ on Twitter for
+Learn more about beets at `its Web site`_. Follow `@b33ts`_ on Mastodon for
 news and updates.
 
 .. _its Web site: https://beets.io/
-.. _@b33ts: https://twitter.com/b33ts/
+.. _@b33ts: https://fosstodon.org/@beets
 
 Contact
 -------
@@ -114,12 +115,11 @@ Contact
       you'd like to see prioritized over others.
 * Need help/support, would like to start a discussion, have an idea for a new
   feature, or would just like to introduce yourself to the team? Check out
-  `GitHub Discussions`_ or `Discourse`_!
+  `GitHub Discussions`_!
 
 .. _GitHub Discussions: https://github.com/beetbox/beets/discussions
 .. _issue tracker: https://github.com/beetbox/beets/issues
 .. _open a new ticket: https://github.com/beetbox/beets/issues/new/choose
-.. _Discourse: https://discourse.beets.io/
 
 Authors
 -------

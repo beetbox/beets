@@ -19,7 +19,7 @@ Once installed, this plugin analyzes all files during the import process. This
 can be a slow process; to instead analyze after the fact, disable automatic
 analysis and use the ``beet replaygain`` command (see below).
 
-To speed up analysis with some of the avalaible backends, this plugin processes
+To speed up analysis with some of the available backends, this plugin processes
 tracks or albums (when using the ``-a`` option) in parallel. By default,
 a single thread is used per logical core of your CPU.
 

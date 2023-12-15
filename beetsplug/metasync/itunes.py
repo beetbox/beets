@@ -16,31 +16,32 @@
 """
 
 
-from contextlib import contextmanager
 import os
+import plistlib
 import shutil
 import tempfile
-import plistlib
-
-from urllib.parse import urlparse, unquote
+from contextlib import contextmanager
 from time import mktime
+from urllib.parse import unquote, urlparse
+
+from confuse import ConfigValueError
 
 from beets import util
 from beets.dbcore import types
 from beets.library import DateType
-from confuse import ConfigValueError
+from beets.util import bytestring_path, syspath
 from beetsplug.metasync import MetaSource
 
 
 @contextmanager
 def create_temporary_copy(path):
-    temp_dir = tempfile.mkdtemp()
-    temp_path = os.path.join(temp_dir, 'temp_itunes_lib')
-    shutil.copyfile(path, temp_path)
+    temp_dir = bytestring_path(tempfile.mkdtemp())
+    temp_path = os.path.join(temp_dir, b"temp_itunes_lib")
+    shutil.copyfile(syspath(path), syspath(temp_path))
     try:
         yield temp_path
     finally:
-        shutil.rmtree(temp_dir)
+        shutil.rmtree(syspath(temp_dir))
 
 
 def _norm_itunes_path(path):
@@ -54,72 +55,74 @@ def _norm_itunes_path(path):
     # which is unwanted in the case of Windows systems.
     # E.g., '\\G:\\Music\\bar' needs to be stripped to 'G:\\Music\\bar'
 
-    return util.bytestring_path(os.path.normpath(
-        unquote(urlparse(path).path)).lstrip('\\')).lower()
+    return util.bytestring_path(
+        os.path.normpath(unquote(urlparse(path).path)).lstrip("\\")
+    ).lower()
 
 
 class Itunes(MetaSource):
-
     item_types = {
-        'itunes_rating': types.INTEGER,  # 0..100 scale
-        'itunes_playcount': types.INTEGER,
-        'itunes_skipcount': types.INTEGER,
-        'itunes_lastplayed': DateType(),
-        'itunes_lastskipped': DateType(),
-        'itunes_dateadded': DateType(),
+        "itunes_rating": types.INTEGER,  # 0..100 scale
+        "itunes_playcount": types.INTEGER,
+        "itunes_skipcount": types.INTEGER,
+        "itunes_lastplayed": DateType(),
+        "itunes_lastskipped": DateType(),
+        "itunes_dateadded": DateType(),
     }
 
     def __init__(self, config, log):
         super().__init__(config, log)
 
-        config.add({'itunes': {
-            'library': '~/Music/iTunes/iTunes Library.xml'
-        }})
+        config.add({"itunes": {"library": "~/Music/iTunes/iTunes Library.xml"}})
 
         # Load the iTunes library, which has to be the .xml one (not the .itl)
-        library_path = config['itunes']['library'].as_filename()
+        library_path = config["itunes"]["library"].as_filename()
 
         try:
-            self._log.debug(
-                f'loading iTunes library from {library_path}')
+            self._log.debug(f"loading iTunes library from {library_path}")
             with create_temporary_copy(library_path) as library_copy:
-                with open(library_copy, 'rb') as library_copy_f:
+                with open(library_copy, "rb") as library_copy_f:
                     raw_library = plistlib.load(library_copy_f)
         except OSError as e:
-            raise ConfigValueError('invalid iTunes library: ' + e.strerror)
+            raise ConfigValueError("invalid iTunes library: " + e.strerror)
         except Exception:
             # It's likely the user configured their '.itl' library (<> xml)
-            if os.path.splitext(library_path)[1].lower() != '.xml':
-                hint = ': please ensure that the configured path' \
-                       ' points to the .XML library'
+            if os.path.splitext(library_path)[1].lower() != ".xml":
+                hint = (
+                    ": please ensure that the configured path"
+                    " points to the .XML library"
+                )
             else:
-                hint = ''
-            raise ConfigValueError('invalid iTunes library' + hint)
+                hint = ""
+            raise ConfigValueError("invalid iTunes library" + hint)
 
         # Make the iTunes library queryable using the path
-        self.collection = {_norm_itunes_path(track['Location']): track
-                           for track in raw_library['Tracks'].values()
-                           if 'Location' in track}
+        self.collection = {
+            _norm_itunes_path(track["Location"]): track
+            for track in raw_library["Tracks"].values()
+            if "Location" in track
+        }
 
     def sync_from_source(self, item):
         result = self.collection.get(util.bytestring_path(item.path).lower())
 
         if not result:
-            self._log.warning(f'no iTunes match found for {item}')
+            self._log.warning(f"no iTunes match found for {item}")
             return
 
-        item.itunes_rating = result.get('Rating')
-        item.itunes_playcount = result.get('Play Count')
-        item.itunes_skipcount = result.get('Skip Count')
+        item.itunes_rating = result.get("Rating")
+        item.itunes_playcount = result.get("Play Count")
+        item.itunes_skipcount = result.get("Skip Count")
 
-        if result.get('Play Date UTC'):
+        if result.get("Play Date UTC"):
             item.itunes_lastplayed = mktime(
-                result.get('Play Date UTC').timetuple())
+                result.get("Play Date UTC").timetuple()
+            )
 
-        if result.get('Skip Date'):
+        if result.get("Skip Date"):
             item.itunes_lastskipped = mktime(
-                result.get('Skip Date').timetuple())
+                result.get("Skip Date").timetuple()
+            )
 
-        if result.get('Date Added'):
-            item.itunes_dateadded = mktime(
-                result.get('Date Added').timetuple())
+        if result.get("Date Added"):
+            item.itunes_dateadded = mktime(result.get("Date Added").timetuple())

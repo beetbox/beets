@@ -9,15 +9,29 @@ Changelog goes here! Please add your entry to the bottom of one of the lists bel
 With this release, beets now requires Python 3.7 or later (it removes support
 for Python 3.6).
 
+Major new features:
+
+* The beets importer UI received a major overhaul. Several new configuration
+  options are available for customizing layout and colors: :ref:`ui_options`.
+  :bug:`3721` :bug:`5028`
+
 New features:
 
+* :doc:`plugins/mbsubmit`: add new prompt choices helping further to submit unmatched tracks to MusicBrainz faster.
+* :doc:`plugins/spotify`: We now fetch track's ISRC, EAN, and UPC identifiers from Spotify when using the ``spotifysync`` command.
+  :bug:`4992`
+* :doc:`plugins/discogs`: supply a value for the `cover_art_url` attribute, for use by `fetchart`.
+  :bug:`429`
+* :ref:`update-cmd`: added ```-e``` flag for excluding fields from being updated.
+* :doc:`/plugins/deezer`: Import rank and other attributes from Deezer during import and add a function to update the rank of existing items.
+  :bug:`4841`
 * resolve transl-tracklisting relations for pseudo releases and merge data with the actual release
   :bug:`654`
 * Fetchart: Use the right field (`spotify_album_id`) to obtain the Spotify album id
   :bug:`4803`
 * Prevent reimporting album if it is permanently removed from Spotify
   :bug:`4800`
-* Added option use `cover_art_arl` as an album art source in the `fetchart` plugin.
+* Added option to use `cover_art_url` as an album art source in the `fetchart` plugin.
   :bug:`4707`
 * :doc:`/plugins/fetchart`: The plugin can now get album art from `spotify`.
 * Added option to specify a URL in the `embedart` plugin.
@@ -93,9 +107,65 @@ New features:
   :bug:`4373`
 * Fetch the ``release_group_title`` field from MusicBrainz.
   :bug: `4809`
+* :doc:`plugins/discogs`: Add support for applying album information on
+  singleton imports.
+  :bug: `4716`
+* :doc:`/plugins/smartplaylist`: During explicit runs of the ``splupdate``
+  command, the log message "Creating playlist ..."" is now displayed instead of
+  hidden in the debug log, which states some form of progress through the UI.
+  :bug:`4861`
+* :doc:`plugins/subsonicupdate`: Updates are now triggered whenever either the
+  beets database is changed or a smart playlist is created/updated.
+  :bug: `4862`
+* :doc:`plugins/importfeeds`: Add a new output format allowing to save a
+  playlist once per import session.
+  :bug: `4863`
+* Make ArtResizer work with :pypi:`PIL`/:pypi:`pillow` 10.0.0 removals.
+  :bug:`4869`
+* A new configuration option, :ref:`duplicate_verbose_prompt`, allows changing
+  how duplicates are presented during import.
+  :bug: `4866`
+* :doc:`/plugins/embyupdate`: Add handling for private users by adding
+  ``userid`` config option.
+  :bug:`4402`
+* :doc:`/plugins/substitute`: Add the new plugin `substitute` as an alternative
+  to the `rewrite` plugin. The main difference between them being that
+  `rewrite` modifies files' metadata and `substitute` does not.
+  :bug:`2786`
+* Add support for ``artists`` and ``albumartists`` multi-valued tags.
+  :bug:`505`
+* :doc:`/plugins/autobpm`: Add the `autobpm` plugin which uses Librosa to
+  calculate the BPM of the audio.
+  :bug:`3856`
+* :doc:`/plugins/fetchart`: Fix the error with CoverArtArchive where the
+  `maxwidth` option would not be used to download a pre-sized thumbnail for
+  release groups, as is already done with releases.
+* :doc:`/plugins/fetchart`: Fix the error with CoverArtArchive where no cover
+  would be found when the `maxwidth` option matches a pre-sized thumbnail size,
+  but no thumbnail is provided by CAA. We now fallback to the raw image.
+* :doc:`/plugins/advancedrewrite`: Add an advanced version of the `rewrite`
+  plugin which allows to replace fields based on a given library query.
+* :doc:`/plugins/lyrics`: Add LRCLIB as a new lyrics provider and a new
+  `synced` option to prefer synced lyrics over plain lyrics.
+* :ref:`import-cmd`: Expose import.quiet_fallback as CLI option.
+* :ref:`import-cmd`: Expose `import.incremental_skip_later` as CLI option.
+* :doc:`/plugins/smartplaylist`: Add new config option `smartplaylist.extm3u`.
+* :doc:`/plugins/smartplaylist`: Expose config options as CLI options.
 
 Bug fixes:
 
+* :doc:`/plugins/spotify`: Improve handling of ConnectionError.
+* :doc:`/plugins/deezer`: Improve Deezer plugin error handling and set requests timeout to 10 seconds.
+  :bug:`4983`
+* :doc:`/plugins/spotify`: Add bad gateway (502) error handling.
+* :doc:`/plugins/spotify`: Add a limit of 3 retries, instead of retrying endlessly when the API is not available.
+* Fix a crash when the Spotify API timeouts or does not return a `Retry-After` interval.
+  :bug:`4942`
+* :doc:`/plugins/scrub`: Fixed the import behavior where scrubbed database tags
+  were restored to newly imported tracks with config settings ``scrub.auto: yes``
+  and ``import.write: no``.
+  :bug:`4326`
+* :doc:`/plugins/deezer`: Fixed the error where Deezer plugin would crash if non-Deezer id is passed during import.
 * :doc:`/plugins/fetchart`: Fix fetching from Cover Art Archive when the
   `maxwidth` option is set to one of the supported Cover Art Archive widths.
 * :doc:`/plugins/discogs`: Fix "Discogs plugin replacing Feat. or Ft. with
@@ -163,7 +233,7 @@ Bug fixes:
 * :doc:`plugins/lyrics`: Fixed issue with Genius header being included in lyrics,
   added test case of up-to-date Genius html
 * :doc:`plugins/importadded`: Fix a bug with recently added reflink import option
-  that casues a crash when ImportAdded plugin enabled.
+  that causes a crash when ImportAdded plugin enabled.
   :bug:`4389`
 * :doc:`plugins/convert`: Fix a bug with the `wma` format alias.
 * :doc:`/plugins/web`: Fix get file from item.
@@ -173,12 +243,14 @@ Bug fixes:
 * :doc:`plugins/lyrics`: Fixed issue with Tekstowo backend not actually checking
   if the found song matches.
   :bug:`4406`
+* :doc:`plugins/embedart`: Add support for ImageMagick 7.1.1-12
+  :bug:`4836`
 * :doc:`/plugins/fromfilename`: Fix failed detection of <track> <title>
   filename patterns.
   :bug:`4561` :bug:`4600`
 * Fix issue where deletion of flexible fields on an album doesn't cascade to items
   :bug:`4662`
-* Fix issue where ``beet write`` continuosly retags the ``albumtypes`` metadata
+* Fix issue where ``beet write`` continuously retags the ``albumtypes`` metadata
   field in files. Additionally broken data could have been added to the library
   when the tag was read from file back into the library using ``beet update``.
   It is required for all users to **check if such broken data is present in the
@@ -190,6 +262,21 @@ Bug fixes:
   :bug:`4726`
 * :doc:`/plugins/fetchart`: Correctly select the cover art from fanart.tv with
   the highest number of likes
+* :doc:`/plugins/lyrics`: Fix a crash with the Google backend when processing
+  some web pages. :bug:`4875`
+* Modifying flexible attributes of albums now cascade to the individual album
+  tracks, similar to how fixed album attributes have been cascading to tracks
+  already. A new option ``--noinherit/-I`` to :ref:`modify <modify-cmd>`
+  allows changing this behaviour.
+  :bug:`4822`
+* Fix bug where an interrupted import process poisons the database, causing
+  a null path that can't be removed.
+  :bug:`4906`
+* :doc:`/plugins/discogs`: Fix bug where empty artist and title fields would
+  return None instead of an empty list.
+  :bug:`4973`
+* Fix bug regarding displaying tracks that have been changed not being
+  displayed unless the detail configuration is enabled.
 
 For packagers:
 
@@ -2747,7 +2834,7 @@ Still more fixes and little improvements:
   title were found.
 * Fix a crash when reading some files with missing tags.
 * :doc:`/plugins/discogs`: Compatibility with the new 2.0 version of the
-  `discogs_client`_ Python library. If you were using the old version, you wil
+  `discogs_client`_ Python library. If you were using the old version, you will
   need to upgrade to the latest version of the library to use the
   correspondingly new version of the plugin (e.g., with
   ``pip install -U discogs-client``). Thanks to Andriy Kohut.
@@ -4815,7 +4902,7 @@ Here's the detailed list of changes:
   (This means it might fail if that album can't be found.) Also, you can now
   abort the tagging process by entering ``b`` (for aBort) at any of the prompts.
 
-* Overhauled methods for handling fileystem paths to allow filenames that have
+* Overhauled methods for handling filesystem paths to allow filenames that have
   badly encoded special characters. These changes are pretty fragile, so please
   report any bugs involving ``UnicodeError`` or SQLite ``ProgrammingError``
   messages in this version.

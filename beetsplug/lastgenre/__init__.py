@@ -21,18 +21,15 @@ and has been edited to remove some questionable entries.
 The scraper script used is available here:
 https://gist.github.com/1241307
 """
-import pylast
 import codecs
 import os
-import yaml
 import traceback
 
-from beets import plugins
-from beets import ui
-from beets import config
-from beets.util import normpath, plurality
-from beets import library
+import pylast
+import yaml
 
+from beets import config, library, plugins, ui
+from beets.util import normpath, plurality
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
 
@@ -43,18 +40,18 @@ PYLAST_EXCEPTIONS = (
 )
 
 REPLACE = {
-    '\u2010': '-',
+    "\u2010": "-",
 }
 
 
 def deduplicate(seq):
-    """Remove duplicates from sequence wile preserving order.
-    """
+    """Remove duplicates from sequence while preserving order."""
     seen = set()
     return [x for x in seq if x not in seen and not seen.add(x)]
 
 
 # Canonicalization tree processing.
+
 
 def flatten_tree(elem, path, branches):
     """Flatten nested lists/dictionaries into lists of strings
@@ -64,7 +61,7 @@ def flatten_tree(elem, path, branches):
         path = []
 
     if isinstance(elem, dict):
-        for (k, v) in elem.items():
+        for k, v in elem.items():
             flatten_tree(v, path + [k], branches)
     elif isinstance(elem, list):
         for sub in elem:
@@ -80,7 +77,7 @@ def find_parents(candidate, branches):
     for branch in branches:
         try:
             idx = branch.index(candidate.lower())
-            return list(reversed(branch[:idx + 1]))
+            return list(reversed(branch[: idx + 1]))
         except ValueError:
             continue
     return [candidate]
@@ -88,68 +85,69 @@ def find_parents(candidate, branches):
 
 # Main plugin logic.
 
-WHITELIST = os.path.join(os.path.dirname(__file__), 'genres.txt')
-C14N_TREE = os.path.join(os.path.dirname(__file__), 'genres-tree.yaml')
+WHITELIST = os.path.join(os.path.dirname(__file__), "genres.txt")
+C14N_TREE = os.path.join(os.path.dirname(__file__), "genres-tree.yaml")
 
 
 class LastGenrePlugin(plugins.BeetsPlugin):
     def __init__(self):
         super().__init__()
 
-        self.config.add({
-            'whitelist': True,
-            'min_weight': 10,
-            'count': 1,
-            'fallback': None,
-            'canonical': False,
-            'source': 'album',
-            'force': True,
-            'auto': True,
-            'separator': ', ',
-            'prefer_specific': False,
-            'title_case': True,
-        })
+        self.config.add(
+            {
+                "whitelist": True,
+                "min_weight": 10,
+                "count": 1,
+                "fallback": None,
+                "canonical": False,
+                "source": "album",
+                "force": True,
+                "auto": True,
+                "separator": ", ",
+                "prefer_specific": False,
+                "title_case": True,
+            }
+        )
 
         self.setup()
 
     def setup(self):
-        """Setup plugin from config options
-        """
-        if self.config['auto']:
+        """Setup plugin from config options"""
+        if self.config["auto"]:
             self.import_stages = [self.imported]
 
         self._genre_cache = {}
 
         # Read the whitelist file if enabled.
         self.whitelist = set()
-        wl_filename = self.config['whitelist'].get()
-        if wl_filename in (True, ''):  # Indicates the default whitelist.
+        wl_filename = self.config["whitelist"].get()
+        if wl_filename in (True, ""):  # Indicates the default whitelist.
             wl_filename = WHITELIST
         if wl_filename:
             wl_filename = normpath(wl_filename)
-            with open(wl_filename, 'rb') as f:
+            with open(wl_filename, "rb") as f:
                 for line in f:
-                    line = line.decode('utf-8').strip().lower()
-                    if line and not line.startswith('#'):
+                    line = line.decode("utf-8").strip().lower()
+                    if line and not line.startswith("#"):
                         self.whitelist.add(line)
 
         # Read the genres tree for canonicalization if enabled.
         self.c14n_branches = []
-        c14n_filename = self.config['canonical'].get()
+        c14n_filename = self.config["canonical"].get()
         self.canonicalize = c14n_filename is not False
 
         # Default tree
-        if c14n_filename in (True, ''):
+        if c14n_filename in (True, ""):
             c14n_filename = C14N_TREE
-        elif not self.canonicalize and self.config['prefer_specific'].get():
+        elif not self.canonicalize and self.config["prefer_specific"].get():
             # prefer_specific requires a tree, load default tree
             c14n_filename = C14N_TREE
 
         # Read the tree
         if c14n_filename:
-            self._log.debug('Loading canonicalization tree {0}', c14n_filename)
+            self._log.debug("Loading canonicalization tree {0}", c14n_filename)
             c14n_filename = normpath(c14n_filename)
-            with codecs.open(c14n_filename, 'r', encoding='utf-8') as f:
+            with codecs.open(c14n_filename, "r", encoding="utf-8") as f:
                 genres_tree = yaml.safe_load(f)
             flatten_tree(genres_tree, [], self.c14n_branches)
 
@@ -158,17 +156,16 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """A tuple of allowed genre sources. May contain 'track',
         'album', or 'artist.'
         """
-        source = self.config['source'].as_choice(('track', 'album', 'artist'))
-        if source == 'track':
-            return 'track', 'album', 'artist'
-        elif source == 'album':
-            return 'album', 'artist'
-        elif source == 'artist':
-            return 'artist',
+        source = self.config["source"].as_choice(("track", "album", "artist"))
+        if source == "track":
+            return "track", "album", "artist"
+        elif source == "album":
+            return "album", "artist"
+        elif source == "artist":
+            return ("artist",)
 
     def _get_depth(self, tag):
-        """Find the depth of a tag in the genres tree.
-        """
+        """Find the depth of a tag in the genres tree."""
         depth = None
         for key, value in enumerate(self.c14n_branches):
             if tag in value:
@@ -192,7 +189,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if not tags:
             return None
 
-        count = self.config['count'].get(int)
+        count = self.config["count"].get(int)
         if self.canonicalize:
             # Extend the list to consider tags parents in the c14n tree
             tags_all = []
@@ -200,31 +197,38 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 # Add parents that are in the whitelist, or add the oldest
                 # ancestor if no whitelist
                 if self.whitelist:
-                    parents = [x for x in find_parents(tag, self.c14n_branches)
-                               if self._is_allowed(x)]
+                    parents = [
+                        x
+                        for x in find_parents(tag, self.c14n_branches)
+                        if self._is_allowed(x)
+                    ]
                 else:
                     parents = [find_parents(tag, self.c14n_branches)[-1]]
 
                 tags_all += parents
                 # Stop if we have enough tags already, unless we need to find
                 # the most specific tag (instead of the most popular).
-                if (not self.config['prefer_specific'] and
-                        len(tags_all) >= count):
+                if (
+                    not self.config["prefer_specific"]
+                    and len(tags_all) >= count
+                ):
                     break
             tags = tags_all
 
         tags = deduplicate(tags)
 
         # Sort the tags by specificity.
-        if self.config['prefer_specific']:
+        if self.config["prefer_specific"]:
             tags = self._sort_by_depth(tags)
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
         tags = [self._format_tag(x) for x in tags if self._is_allowed(x)]
 
-        return self.config['separator'].as_str().join(
-            tags[:self.config['count'].get(int)]
+        return (
+            self.config["separator"]
+            .as_str()
+            .join(tags[: self.config["count"].get(int)])
         )
 
     def _format_tag(self, tag):
@@ -236,7 +240,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """Return the genre for a pylast entity or None if no suitable genre
         can be found. Ex. 'Electronic, House, Dance'
         """
-        min_weight = self.config['min_weight'].get(int)
+        min_weight = self.config["min_weight"].get(int)
         return self._resolve_genres(self._tags_for(lastfm_obj, min_weight))
 
     def _is_allowed(self, genre):
@@ -263,8 +267,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if any(not s for s in args):
             return None
 
-        key = '{}.{}'.format(entity,
-                             '-'.join(str(a) for a in args))
+        key = "{}.{}".format(entity, "-".join(str(a) for a in args))
         if key in self._genre_cache:
             return self._genre_cache[key]
         else:
@@ -279,31 +282,23 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return genre
 
     def fetch_album_genre(self, obj):
-        """Return the album genre for this Item or Album.
-        """
+        """Return the album genre for this Item or Album."""
         return self._last_lookup(
-            'album', LASTFM.get_album, obj.albumartist, obj.album
+            "album", LASTFM.get_album, obj.albumartist, obj.album
         )
 
     def fetch_album_artist_genre(self, obj):
-        """Return the album artist genre for this Item or Album.
-        """
-        return self._last_lookup(
-            'artist', LASTFM.get_artist, obj.albumartist
-        )
+        """Return the album artist genre for this Item or Album."""
+        return self._last_lookup("artist", LASTFM.get_artist, obj.albumartist)
 
     def fetch_artist_genre(self, item):
-        """Returns the track artist genre for this Item.
-        """
-        return self._last_lookup(
-            'artist', LASTFM.get_artist, item.artist
-        )
+        """Returns the track artist genre for this Item."""
+        return self._last_lookup("artist", LASTFM.get_artist, item.artist)
 
     def fetch_track_genre(self, obj):
-        """Returns the track genre for this Item.
-        """
+        """Returns the track genre for this Item."""
         return self._last_lookup(
-            'track', LASTFM.get_track, obj.artist, obj.title
+            "track", LASTFM.get_track, obj.artist, obj.title
         )
 
     def _get_genre(self, obj):
@@ -319,35 +314,35 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
 
         # Shortcut to existing genre if not forcing.
-        if not self.config['force'] and self._is_allowed(obj.genre):
-            return obj.genre, 'keep'
+        if not self.config["force"] and self._is_allowed(obj.genre):
+            return obj.genre, "keep"
 
         # Track genre (for Items only).
         if isinstance(obj, library.Item):
-            if 'track' in self.sources:
+            if "track" in self.sources:
                 result = self.fetch_track_genre(obj)
                 if result:
-                    return result, 'track'
+                    return result, "track"
 
         # Album genre.
-        if 'album' in self.sources:
+        if "album" in self.sources:
             result = self.fetch_album_genre(obj)
             if result:
-                return result, 'album'
+                return result, "album"
 
         # Artist (or album artist) genre.
-        if 'artist' in self.sources:
+        if "artist" in self.sources:
             result = None
             if isinstance(obj, library.Item):
                 result = self.fetch_artist_genre(obj)
-            elif obj.albumartist != config['va_name'].as_str():
+            elif obj.albumartist != config["va_name"].as_str():
                 result = self.fetch_album_artist_genre(obj)
             else:
                 # For "Various Artists", pick the most popular track genre.
                 item_genres = []
                 for item in obj.items():
                     item_genre = None
-                    if 'track' in self.sources:
+                    if "track" in self.sources:
                         item_genre = self.fetch_track_genre(item)
                     if not item_genre:
                         item_genre = self.fetch_artist_genre(item)
@@ -357,38 +352,51 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     result, _ = plurality(item_genres)
 
             if result:
-                return result, 'artist'
+                return result, "artist"
 
         # Filter the existing genre.
         if obj.genre:
             result = self._resolve_genres([obj.genre])
             if result:
-                return result, 'original'
+                return result, "original"
 
         # Fallback string.
-        fallback = self.config['fallback'].get()
+        fallback = self.config["fallback"].get()
         if fallback:
-            return fallback, 'fallback'
+            return fallback, "fallback"
 
         return None, None
 
     def commands(self):
-        lastgenre_cmd = ui.Subcommand('lastgenre', help='fetch genres')
+        lastgenre_cmd = ui.Subcommand("lastgenre", help="fetch genres")
         lastgenre_cmd.parser.add_option(
-            '-f', '--force', dest='force',
-            action='store_true',
-            help='re-download genre when already present'
+            "-f",
+            "--force",
+            dest="force",
+            action="store_true",
+            help="re-download genre when already present",
         )
         lastgenre_cmd.parser.add_option(
-            '-s', '--source', dest='source', type='string',
-            help='genre source: artist, album, or track'
+            "-s",
+            "--source",
+            dest="source",
+            type="string",
+            help="genre source: artist, album, or track",
         )
         lastgenre_cmd.parser.add_option(
-            '-A', '--items', action='store_false', dest='album',
-            help='match items instead of albums')
+            "-A",
+            "--items",
+            action="store_false",
+            dest="album",
+            help="match items instead of albums",
+        )
         lastgenre_cmd.parser.add_option(
-            '-a', '--albums', action='store_true', dest='album',
-            help='match albums instead of items')
+            "-a",
+            "--albums",
+            action="store_true",
+            dest="album",
+            help="match albums instead of items",
+        )
         lastgenre_cmd.parser.set_defaults(album=True)
 
         def lastgenre_func(lib, opts, args):
@@ -399,19 +407,22 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 # Fetch genres for whole albums
                 for album in lib.albums(ui.decargs(args)):
                     album.genre, src = self._get_genre(album)
-                    self._log.info('genre for album {0} ({1}): {0.genre}',
-                                   album, src)
+                    self._log.info(
+                        "genre for album {0} ({1}): {0.genre}", album, src
+                    )
                     album.store()
 
                     for item in album.items():
                         # If we're using track-level sources, also look up each
                         # track on the album.
-                        if 'track' in self.sources:
+                        if "track" in self.sources:
                             item.genre, src = self._get_genre(item)
                             item.store()
                             self._log.info(
-                                'genre for track {0} ({1}): {0.genre}',
-                                item, src)
+                                "genre for track {0} ({1}): {0.genre}",
+                                item,
+                                src,
+                            )
 
                         if write:
                             item.try_write()
@@ -420,8 +431,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 # an album
                 for item in lib.items(ui.decargs(args)):
                     item.genre, src = self._get_genre(item)
-                    self._log.debug('added last.fm item genre ({0}): {1}',
-                                    src, item.genre)
+                    self._log.debug(
+                        "added last.fm item genre ({0}): {1}", src, item.genre
+                    )
                     item.store()
 
         lastgenre_cmd.func = lastgenre_func
@@ -432,22 +444,25 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if task.is_album:
             album = task.album
             album.genre, src = self._get_genre(album)
-            self._log.debug('added last.fm album genre ({0}): {1}',
-                            src, album.genre)
+            self._log.debug(
+                "added last.fm album genre ({0}): {1}", src, album.genre
+            )
             album.store()
 
-            if 'track' in self.sources:
+            if "track" in self.sources:
                 for item in album.items():
                     item.genre, src = self._get_genre(item)
-                    self._log.debug('added last.fm item genre ({0}): {1}',
-                                    src, item.genre)
+                    self._log.debug(
+                        "added last.fm item genre ({0}): {1}", src, item.genre
+                    )
                     item.store()
 
         else:
             item = task.item
             item.genre, src = self._get_genre(item)
-            self._log.debug('added last.fm item genre ({0}): {1}',
-                            src, item.genre)
+            self._log.debug(
+                "added last.fm item genre ({0}): {1}", src, item.genre
+            )
             item.store()
 
     def _tags_for(self, obj, min_weight=None):
@@ -468,12 +483,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         try:
             res = obj.get_top_tags()
         except PYLAST_EXCEPTIONS as exc:
-            self._log.debug('last.fm error: {0}', exc)
+            self._log.debug("last.fm error: {0}", exc)
             return []
         except Exception as exc:
             # Isolate bugs in pylast.
-            self._log.debug('{}', traceback.format_exc())
-            self._log.error('error in pylast library: {0}', exc)
+            self._log.debug("{}", traceback.format_exc())
+            self._log.error("error in pylast library: {0}", exc)
             return []
 
         # Filter by weight (optionally).

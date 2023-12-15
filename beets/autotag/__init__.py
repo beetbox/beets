@@ -16,78 +16,89 @@
 """
 from typing import Mapping
 
+from beets import config, logging
 from beets.library import Item
-
-from beets import logging
-from beets import config
 
 # Parts of external interface.
 from .hooks import (  # noqa
     AlbumInfo,
-    TrackInfo,
     AlbumMatch,
-    TrackMatch,
     Distance,
+    TrackInfo,
+    TrackMatch,
 )
-from .match import tag_item, tag_album, current_metadata, Proposal  # noqa
 from .match import Recommendation  # noqa
+from .match import Proposal, current_metadata, tag_album, tag_item  # noqa
 
 # Global logger.
-log = logging.getLogger('beets')
+log = logging.getLogger("beets")
 
 # Metadata fields that are already hardcoded, or where the tag name changes.
 SPECIAL_FIELDS = {
-    'album': (
-        'va',
-        'releasegroup_id',
-        'artist_id',
-        'album_id',
-        'mediums',
-        'tracks',
-        'year',
-        'month',
-        'day',
-        'artist',
-        'artist_credit',
-        'artist_sort',
-        'data_url'
+    "album": (
+        "va",
+        "releasegroup_id",
+        "artist_id",
+        "artists_ids",
+        "album_id",
+        "mediums",
+        "tracks",
+        "year",
+        "month",
+        "day",
+        "artist",
+        "artists",
+        "artist_credit",
+        "artists_credit",
+        "artist_sort",
+        "artists_sort",
+        "data_url",
     ),
-    'track': (
-        'track_alt',
-        'artist_id',
-        'release_track_id',
-        'medium',
-        'index',
-        'medium_index',
-        'title',
-        'artist_credit',
-        'artist_sort',
-        'artist',
-        'track_id',
-        'medium_total',
-        'data_url',
-        'length'
-    )
+    "track": (
+        "track_alt",
+        "artist_id",
+        "artists_ids",
+        "release_track_id",
+        "medium",
+        "index",
+        "medium_index",
+        "title",
+        "artist_credit",
+        "artists_credit",
+        "artist_sort",
+        "artists_sort",
+        "artist",
+        "artists",
+        "track_id",
+        "medium_total",
+        "data_url",
+        "length",
+    ),
 }
 
 
 # Additional utilities for the main interface.
 
+
 def apply_item_metadata(item: Item, track_info: TrackInfo):
-    """Set an item's metadata from its matched TrackInfo object.
-    """
+    """Set an item's metadata from its matched TrackInfo object."""
     item.artist = track_info.artist
+    item.artists = track_info.artists
     item.artist_sort = track_info.artist_sort
+    item.artists_sort = track_info.artists_sort
     item.artist_credit = track_info.artist_credit
+    item.artists_credit = track_info.artists_credit
     item.title = track_info.title
     item.mb_trackid = track_info.track_id
     item.mb_releasetrackid = track_info.release_track_id
     if track_info.artist_id:
         item.mb_artistid = track_info.artist_id
+    if track_info.artists_ids:
+        item.mb_artistids = track_info.artists_ids
 
     for field, value in track_info.items():
         # We only overwrite fields that are not already hardcoded.
-        if field in SPECIAL_FIELDS['track']:
+        if field in SPECIAL_FIELDS["track"]:
             continue
         if value is None:
             continue
@@ -103,39 +114,56 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
     """
     for item, track_info in mapping.items():
         # Artist or artist credit.
-        if config['artist_credit']:
-            item.artist = (track_info.artist_credit or
-                           track_info.artist or
-                           album_info.artist_credit or
-                           album_info.artist)
-            item.albumartist = (album_info.artist_credit or
-                                album_info.artist)
+        if config["artist_credit"]:
+            item.artist = (
+                track_info.artist_credit
+                or track_info.artist
+                or album_info.artist_credit
+                or album_info.artist
+            )
+            item.artists = (
+                track_info.artists_credit
+                or track_info.artists
+                or album_info.artists_credit
+                or album_info.artists
+            )
+            item.albumartist = album_info.artist_credit or album_info.artist
+            item.albumartists = album_info.artists_credit or album_info.artists
         else:
-            item.artist = (track_info.artist or album_info.artist)
+            item.artist = track_info.artist or album_info.artist
+            item.artists = track_info.artists or album_info.artists
             item.albumartist = album_info.artist
+            item.albumartists = album_info.artists
 
         # Album.
         item.album = album_info.album
 
         # Artist sort and credit names.
         item.artist_sort = track_info.artist_sort or album_info.artist_sort
-        item.artist_credit = (track_info.artist_credit or
-                              album_info.artist_credit)
+        item.artists_sort = track_info.artists_sort or album_info.artists_sort
+        item.artist_credit = (
+            track_info.artist_credit or album_info.artist_credit
+        )
+        item.artists_credit = (
+            track_info.artists_credit or album_info.artists_credit
+        )
         item.albumartist_sort = album_info.artist_sort
+        item.albumartists_sort = album_info.artists_sort
         item.albumartist_credit = album_info.artist_credit
+        item.albumartists_credit = album_info.artists_credit
 
         # Release date.
-        for prefix in '', 'original_':
-            if config['original_date'] and not prefix:
+        for prefix in "", "original_":
+            if config["original_date"] and not prefix:
                 # Ignore specific release date.
                 continue
 
-            for suffix in 'year', 'month', 'day':
+            for suffix in "year", "month", "day":
                 key = prefix + suffix
                 value = getattr(album_info, key) or 0
 
                 # If we don't even have a year, apply nothing.
-                if suffix == 'year' and not value:
+                if suffix == "year" and not value:
                     break
 
                 # Otherwise, set the fetched value (or 0 for the month
@@ -144,13 +172,13 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
 
                 # If we're using original release date for both fields,
                 # also set item.year = info.original_year, etc.
-                if config['original_date']:
+                if config["original_date"]:
                     item[suffix] = value
 
         # Title.
         item.title = track_info.title
 
-        if config['per_disc_numbering']:
+        if config["per_disc_numbering"]:
             # We want to let the track number be zero, but if the medium index
             # is not provided we need to fall back to the overall index.
             if track_info.medium_index is not None:
@@ -174,7 +202,14 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
             item.mb_artistid = track_info.artist_id
         else:
             item.mb_artistid = album_info.artist_id
+
+        if track_info.artists_ids:
+            item.mb_artistids = track_info.artists_ids
+        else:
+            item.mb_artistids = album_info.artists_ids
+
         item.mb_albumartistid = album_info.artist_id
+        item.mb_albumartistids = album_info.artists_ids
         item.mb_releasegroupid = album_info.releasegroup_id
 
         # Compilation flag.
@@ -186,17 +221,17 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
         # Don't overwrite fields with empty values unless the
         # field is explicitly allowed to be overwritten
         for field, value in album_info.items():
-            if field in SPECIAL_FIELDS['album']:
+            if field in SPECIAL_FIELDS["album"]:
                 continue
-            clobber = field in config['overwrite_null']['album'].as_str_seq()
+            clobber = field in config["overwrite_null"]["album"].as_str_seq()
             if value is None and not clobber:
                 continue
             item[field] = value
 
         for field, value in track_info.items():
-            if field in SPECIAL_FIELDS['track']:
+            if field in SPECIAL_FIELDS["track"]:
                 continue
-            clobber = field in config['overwrite_null']['track'].as_str_seq()
+            clobber = field in config["overwrite_null"]["track"].as_str_seq()
             value = getattr(track_info, field)
             if value is None and not clobber:
                 continue

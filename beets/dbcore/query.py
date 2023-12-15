@@ -17,37 +17,37 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 import re
+import unicodedata
+from abc import ABC, abstractmethod
+from datetime import datetime, timedelta
+from functools import reduce
 from operator import mul
 from typing import (
+    TYPE_CHECKING,
     Any,
     Collection,
+    Generic,
     Iterator,
     List,
-    MutableMapping,
+    MutableSequence,
     Optional,
     Pattern,
     Sequence,
     Tuple,
     Type,
+    TypeVar,
     Union,
 )
 
 from beets import util
-from datetime import datetime, timedelta
-import unicodedata
-from functools import reduce
-
-from typing import TYPE_CHECKING
-
 
 if TYPE_CHECKING:
     from beets.dbcore import Model
 
 
 class ParsingError(ValueError):
-    """Abstract class for any unparseable user-requested album/query
+    """Abstract class for any unparsable user-requested album/query
     specification.
     """
 
@@ -80,8 +80,7 @@ class InvalidQueryArgumentValueError(ParsingError):
 
 
 class Query(ABC):
-    """An abstract class representing a query into the database.
-    """
+    """An abstract class representing a query into the database."""
 
     def clause(self) -> Tuple[Optional[str], Sequence[Any]]:
         """Generate an SQLite expression implementing the query.
@@ -106,7 +105,7 @@ class Query(ABC):
         return f"{self.__class__.__name__}()"
 
     def __eq__(self, other) -> bool:
-        return type(self) == type(other)
+        return type(self) is type(other)
 
     def __hash__(self) -> int:
         """Minimalistic default implementation of a hash.
@@ -121,12 +120,18 @@ class NamedQuery(Query):
     """Non-field query, i.e. the query prefix is not a field but identifies the
     query class.
     """
+
     @abstractmethod
     def __init__(self, pattern):
         ...
 
 
-class FieldQuery(Query):
+P = TypeVar("P")
+SQLiteType = Union[str, float, int, memoryview]
+AnySQLiteType = TypeVar("AnySQLiteType", bound=SQLiteType)
+
+
+class FieldQuery(Query, Generic[P]):
     """An abstract query that searches in a specific field for a
     pattern. Subclasses must provide a `value_match` class method, which
     determines whether a certain pattern string matches a certain value
@@ -134,15 +139,15 @@ class FieldQuery(Query):
     same matching functionality in SQLite.
     """
 
-    def __init__(self, field: str, pattern: str, fast: bool = True):
+    def __init__(self, field: str, pattern: P, fast: bool = True):
         self.field = field
         self.pattern = pattern
         self.fast = fast
 
-    def col_clause(self) -> Union[Optional[str], Sequence[Any]]:
+    def col_clause(self) -> Tuple[Optional[str], Sequence[SQLiteType]]:
         return None, ()
 
-    def clause(self):
+    def clause(self) -> Tuple[Optional[str], Sequence[SQLiteType]]:
         if self.fast:
             return self.col_clause()
         else:
@@ -150,7 +155,7 @@ class FieldQuery(Query):
             return None, ()
 
     @classmethod
-    def value_match(cls, pattern: str, value: str):
+    def value_match(cls, pattern: P, value: Any):
         """Determine whether the value matches the pattern. Both
         arguments are strings.
         """
@@ -160,51 +165,56 @@ class FieldQuery(Query):
         return self.value_match(self.pattern, obj.get(self.field))
 
     def __repr__(self) -> str:
-        return ("{0.__class__.__name__}({0.field!r}, {0.pattern!r}, "
-                "{0.fast})".format(self))
+        return (
+            f"{self.__class__.__name__}({self.field!r}, {self.pattern!r}, "
+            f"fast={self.fast})"
+        )
 
     def __eq__(self, other) -> bool:
-        return super().__eq__(other) and \
-            self.field == other.field and self.pattern == other.pattern
+        return (
+            super().__eq__(other)
+            and self.field == other.field
+            and self.pattern == other.pattern
+        )
 
     def __hash__(self) -> int:
         return hash((self.field, hash(self.pattern)))
 
 
-class MatchQuery(FieldQuery):
+class MatchQuery(FieldQuery[AnySQLiteType]):
     """A query that looks for exact matches in an Model field."""
 
-    def col_clause(self) -> Tuple[str, List[str]]:
+    def col_clause(self) -> Tuple[str, Sequence[SQLiteType]]:
         return self.field + " = ?", [self.pattern]
 
     @classmethod
-    def value_match(cls, pattern: str, value: str) -> bool:
+    def value_match(cls, pattern: AnySQLiteType, value: Any) -> bool:
         return pattern == value
 
 
-class NoneQuery(FieldQuery):
+class NoneQuery(FieldQuery[None]):
     """A query that checks whether a field is null."""
 
     def __init__(self, field, fast: bool = True):
-        super().__init__(field, "", fast)
+        super().__init__(field, None, fast)
 
-    def col_clause(self) -> Tuple[str, Tuple]:
+    def col_clause(self) -> Tuple[str, Sequence[SQLiteType]]:
         return self.field + " IS NULL", ()
 
     def match(self, obj: Model) -> bool:
         return obj.get(self.field) is None
 
     def __repr__(self) -> str:
-        return "{0.__class__.__name__}({0.field!r}, {0.fast})".format(self)
+        return f"{self.__class__.__name__}({self.field!r}, {self.fast})"
 
 
-class StringFieldQuery(FieldQuery):
+class StringFieldQuery(FieldQuery[P]):
     """A FieldQuery that converts values to strings before matching
     them.
     """
 
     @classmethod
-    def value_match(cls, pattern: str, value: Any):
+    def value_match(cls, pattern: P, value: Any):
         """Determine whether the value matches the pattern. The value
         may have any type.
         """
@@ -213,7 +223,7 @@ class StringFieldQuery(FieldQuery):
     @classmethod
     def string_match(
         cls,
-        pattern: str,
+        pattern: P,
         value: str,
     ) -> bool:
         """Determine whether the value matches the pattern. Both
@@ -222,14 +232,15 @@ class StringFieldQuery(FieldQuery):
         raise NotImplementedError()
 
 
-class StringQuery(StringFieldQuery):
+class StringQuery(StringFieldQuery[str]):
     """A query that matches a whole string in a specific Model field."""
 
-    def col_clause(self) -> Tuple[str, List[str]]:
-        search = (self.pattern
-                  .replace('\\', '\\\\')
-                  .replace('%', '\\%')
-                  .replace('_', '\\_'))
+    def col_clause(self) -> Tuple[str, Sequence[SQLiteType]]:
+        search = (
+            self.pattern.replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_")
+        )
         clause = self.field + " like ? escape '\\'"
         subvals = [search]
         return clause, subvals
@@ -239,15 +250,16 @@ class StringQuery(StringFieldQuery):
         return pattern.lower() == value.lower()
 
 
-class SubstringQuery(StringFieldQuery):
+class SubstringQuery(StringFieldQuery[str]):
     """A query that matches a substring in a specific Model field."""
 
-    def col_clause(self) -> Tuple[str, List[str]]:
-        pattern = (self.pattern
-                   .replace('\\', '\\\\')
-                   .replace('%', '\\%')
-                   .replace('_', '\\_'))
-        search = '%' + pattern + '%'
+    def col_clause(self) -> Tuple[str, Sequence[SQLiteType]]:
+        pattern = (
+            self.pattern.replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_")
+        )
+        search = "%" + pattern + "%"
         clause = self.field + " like ? escape '\\'"
         subvals = [search]
         return clause, subvals
@@ -257,7 +269,7 @@ class SubstringQuery(StringFieldQuery):
         return pattern.lower() in value.lower()
 
 
-class RegexpQuery(StringFieldQuery):
+class RegexpQuery(StringFieldQuery[Pattern]):
     """A query that matches a regular expression in a specific Model field.
 
     Raises InvalidQueryError when the pattern is not a valid regular
@@ -265,17 +277,18 @@ class RegexpQuery(StringFieldQuery):
     """
 
     def __init__(self, field: str, pattern: str, fast: bool = True):
-        super().__init__(field, pattern, fast)
         pattern = self._normalize(pattern)
         try:
-            self.pattern = re.compile(self.pattern)
+            pattern_re = re.compile(pattern)
         except re.error as exc:
             # Invalid regular expression.
-            raise InvalidQueryArgumentValueError(pattern,
-                                                 "a regular expression",
-                                                 format(exc))
+            raise InvalidQueryArgumentValueError(
+                pattern, "a regular expression", format(exc)
+            )
 
-    def col_clause(self):
+        super().__init__(field, pattern_re, fast)
+
+    def col_clause(self) -> Tuple[str, Sequence[SQLiteType]]:
         return f" regexp({self.field}, ?)", [self.pattern.pattern]
 
     @staticmethod
@@ -283,31 +296,33 @@ class RegexpQuery(StringFieldQuery):
         """Normalize a Unicode string's representation (used on both
         patterns and matched values).
         """
-        return unicodedata.normalize('NFC', s)
+        return unicodedata.normalize("NFC", s)
 
     @classmethod
     def string_match(cls, pattern: Pattern, value: str) -> bool:
         return pattern.search(cls._normalize(value)) is not None
 
 
-class BooleanQuery(MatchQuery):
+class BooleanQuery(MatchQuery[int]):
     """Matches a boolean field. Pattern should either be a boolean or a
     string reflecting a boolean.
     """
 
     def __init__(
-            self,
-            field: str,
-            pattern: Union[bool, str],
-            fast: bool = True,
+        self,
+        field: str,
+        pattern: bool,
+        fast: bool = True,
     ):
-        super().__init__(field, pattern, fast)
         if isinstance(pattern, str):
-            self.pattern = util.str2bool(pattern)
-        self.pattern = int(self.pattern)
+            pattern = util.str2bool(pattern)
+
+        pattern_int = int(pattern)
+
+        super().__init__(field, pattern_int, fast)
 
 
-class BytesQuery(MatchQuery):
+class BytesQuery(FieldQuery[bytes]):
     """Match a raw bytes field (i.e., a path). This is a necessary hack
     to work around the `sqlite3` module's desire to treat `bytes` and
     `unicode` equivalently in Python 2. Always use this query instead of
@@ -315,21 +330,29 @@ class BytesQuery(MatchQuery):
     """
 
     def __init__(self, field: str, pattern: Union[bytes, str, memoryview]):
-        super().__init__(field, pattern)
-
         # Use a buffer/memoryview representation of the pattern for SQLite
         # matching. This instructs SQLite to treat the blob as binary
         # rather than encoded Unicode.
-        if isinstance(self.pattern, (str, bytes)):
-            if isinstance(self.pattern, str):
-                self.pattern = self.pattern.encode('utf-8')
-            self.buf_pattern = memoryview(self.pattern)
-        elif isinstance(self.pattern, memoryview):
-            self.buf_pattern = self.pattern
-            self.pattern = bytes(self.pattern)
+        if isinstance(pattern, (str, bytes)):
+            if isinstance(pattern, str):
+                bytes_pattern = pattern.encode("utf-8")
+            else:
+                bytes_pattern = pattern
+            self.buf_pattern = memoryview(bytes_pattern)
+        elif isinstance(pattern, memoryview):
+            self.buf_pattern = pattern
+            bytes_pattern = bytes(pattern)
+        else:
+            raise ValueError("pattern must be bytes, str, or memoryview")
 
-    def col_clause(self) -> Tuple[str, List[memoryview]]:
+        super().__init__(field, bytes_pattern)
+
+    def col_clause(self) -> Tuple[str, Sequence[SQLiteType]]:
         return self.field + " = ?", [self.buf_pattern]
+
+    @classmethod
+    def value_match(cls, pattern: bytes, value: Any) -> bool:
+        return pattern == value
 
 
 class NumericQuery(FieldQuery):
@@ -361,7 +384,7 @@ class NumericQuery(FieldQuery):
     def __init__(self, field: str, pattern: str, fast: bool = True):
         super().__init__(field, pattern, fast)
 
-        parts = pattern.split('..', 1)
+        parts = pattern.split("..", 1)
         if len(parts) == 1:
             # No range.
             self.point = self._convert(parts[0])
@@ -389,19 +412,21 @@ class NumericQuery(FieldQuery):
                 return False
             return True
 
-    def col_clause(self) -> Tuple[str, Tuple]:
+    def col_clause(self) -> Tuple[str, Sequence[SQLiteType]]:
         if self.point is not None:
-            return self.field + '=?', (self.point,)
+            return self.field + "=?", (self.point,)
         else:
             if self.rangemin is not None and self.rangemax is not None:
-                return ('{0} >= ? AND {0} <= ?'.format(self.field),
-                        (self.rangemin, self.rangemax))
+                return (
+                    "{0} >= ? AND {0} <= ?".format(self.field),
+                    (self.rangemin, self.rangemax),
+                )
             elif self.rangemin is not None:
-                return f'{self.field} >= ?', (self.rangemin,)
+                return f"{self.field} >= ?", (self.rangemin,)
             elif self.rangemax is not None:
-                return f'{self.field} <= ?', (self.rangemax,)
+                return f"{self.field} <= ?", (self.rangemax,)
             else:
-                return '1', ()
+                return "1", ()
 
 
 class CollectionQuery(Query):
@@ -429,7 +454,7 @@ class CollectionQuery(Query):
     def clause_with_joiner(
         self,
         joiner: str,
-    ) -> Tuple[Optional[str], Collection]:
+    ) -> Tuple[Optional[str], Sequence[SQLiteType]]:
         """Return a clause created by joining together the clauses of
         all subqueries with the string joiner (padded by spaces).
         """
@@ -440,17 +465,16 @@ class CollectionQuery(Query):
             if not subq_clause:
                 # Fall back to slow query.
                 return None, ()
-            clause_parts.append('(' + subq_clause + ')')
+            clause_parts.append("(" + subq_clause + ")")
             subvals += subq_subvals
-        clause = (' ' + joiner + ' ').join(clause_parts)
+        clause = (" " + joiner + " ").join(clause_parts)
         return clause, subvals
 
     def __repr__(self) -> str:
-        return "{0.__class__.__name__}({0.subqueries!r})".format(self)
+        return f"{self.__class__.__name__}({self.subqueries!r})"
 
     def __eq__(self, other) -> bool:
-        return super().__eq__(other) and \
-            self.subqueries == other.subqueries
+        return super().__eq__(other) and self.subqueries == other.subqueries
 
     def __hash__(self) -> int:
         """Since subqueries are mutable, this object should not be hashable.
@@ -476,8 +500,8 @@ class AnyFieldQuery(CollectionQuery):
         # TYPING ERROR
         super().__init__(subqueries)
 
-    def clause(self) -> Tuple[Union[str, None], Collection]:
-        return self.clause_with_joiner('or')
+    def clause(self) -> Tuple[Optional[str], Sequence[SQLiteType]]:
+        return self.clause_with_joiner("or")
 
     def match(self, obj: Model) -> bool:
         for subq in self.subqueries:
@@ -486,12 +510,13 @@ class AnyFieldQuery(CollectionQuery):
         return False
 
     def __repr__(self) -> str:
-        return ("{0.__class__.__name__}({0.pattern!r}, {0.fields!r}, "
-                "{0.query_class.__name__})".format(self))
+        return (
+            f"{self.__class__.__name__}({self.pattern!r}, {self.fields!r}, "
+            f"{self.query_class.__name__})"
+        )
 
     def __eq__(self, other) -> bool:
-        return super().__eq__(other) and \
-            self.query_class == other.query_class
+        return super().__eq__(other) and self.query_class == other.query_class
 
     def __hash__(self) -> int:
         return hash((self.pattern, tuple(self.fields), self.query_class))
@@ -501,7 +526,8 @@ class MutableCollectionQuery(CollectionQuery):
     """A collection query whose subqueries may be modified after the
     query is initialized.
     """
-    subqueries: MutableMapping
+
+    subqueries: MutableSequence
 
     def __setitem__(self, key, value):
         self.subqueries[key] = value
@@ -513,8 +539,8 @@ class MutableCollectionQuery(CollectionQuery):
 class AndQuery(MutableCollectionQuery):
     """A conjunction of a list of other queries."""
 
-    def clause(self) -> Tuple[Union[str, None], Collection]:
-        return self.clause_with_joiner('and')
+    def clause(self) -> Tuple[Optional[str], Sequence[SQLiteType]]:
+        return self.clause_with_joiner("and")
 
     def match(self, obj: Model) -> bool:
         return all(q.match(obj) for q in self.subqueries)
@@ -523,25 +549,25 @@ class AndQuery(MutableCollectionQuery):
 class OrQuery(MutableCollectionQuery):
     """A conjunction of a list of other queries."""
 
-    def clause(self) -> Tuple[Union[str, None], Collection]:
-        return self.clause_with_joiner('or')
+    def clause(self) -> Tuple[Optional[str], Sequence[SQLiteType]]:
+        return self.clause_with_joiner("or")
 
     def match(self, obj: Model) -> bool:
         return any(q.match(obj) for q in self.subqueries)
 
 
 class NotQuery(Query):
-    """A query that matches the negation of its `subquery`, as a shorcut for
+    """A query that matches the negation of its `subquery`, as a shortcut for
     performing `not(subquery)` without using regular expressions.
     """
 
     def __init__(self, subquery):
         self.subquery = subquery
 
-    def clause(self):
+    def clause(self) -> Tuple[Optional[str], Sequence[SQLiteType]]:
         clause, subvals = self.subquery.clause()
         if clause:
-            return f'not ({clause})', subvals
+            return f"not ({clause})", subvals
         else:
             # If there is no clause, there is nothing to negate. All the logic
             # is handled by match() for slow queries.
@@ -551,21 +577,20 @@ class NotQuery(Query):
         return not self.subquery.match(obj)
 
     def __repr__(self) -> str:
-        return "{0.__class__.__name__}({0.subquery!r})".format(self)
+        return f"{self.__class__.__name__}({self.subquery!r})"
 
     def __eq__(self, other) -> bool:
-        return super().__eq__(other) and \
-            self.subquery == other.subquery
+        return super().__eq__(other) and self.subquery == other.subquery
 
     def __hash__(self) -> int:
-        return hash(('not', hash(self.subquery)))
+        return hash(("not", hash(self.subquery)))
 
 
 class TrueQuery(Query):
     """A query that always matches."""
 
-    def clause(self) -> Tuple[Union[str, None], Collection]:
-        return '1', ()
+    def clause(self) -> Tuple[str, Sequence[SQLiteType]]:
+        return "1", ()
 
     def match(self, obj: Model) -> bool:
         return True
@@ -574,8 +599,8 @@ class TrueQuery(Query):
 class FalseQuery(Query):
     """A query that never matches."""
 
-    def clause(self) -> Tuple[Union[str, None], Collection]:
-        return '0', ()
+    def clause(self) -> Tuple[str, Sequence[SQLiteType]]:
+        return "0", ()
 
     def match(self, obj: Model) -> bool:
         return False
@@ -583,11 +608,12 @@ class FalseQuery(Query):
 
 # Time/date queries.
 
-def _parse_periods(pattern: str) -> Tuple['Period', 'Period']:
+
+def _parse_periods(pattern: str) -> Tuple[Optional[Period], Optional[Period]]:
     """Parse a string containing two dates separated by two dots (..).
     Return a pair of `Period` objects.
     """
-    parts = pattern.split('..', 1)
+    parts = pattern.split("..", 1)
     if len(parts) == 1:
         instant = Period.parse(parts[0])
         return (instant, instant)
@@ -604,18 +630,19 @@ class Period:
     instants of time during January 2014.
     """
 
-    precisions = ('year', 'month', 'day', 'hour', 'minute', 'second')
+    precisions = ("year", "month", "day", "hour", "minute", "second")
     date_formats = (
-        ('%Y',),  # year
-        ('%Y-%m',),  # month
-        ('%Y-%m-%d',),  # day
-        ('%Y-%m-%dT%H', '%Y-%m-%d %H'),  # hour
-        ('%Y-%m-%dT%H:%M', '%Y-%m-%d %H:%M'),  # minute
-        ('%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S')  # second
+        ("%Y",),  # year
+        ("%Y-%m",),  # month
+        ("%Y-%m-%d",),  # day
+        ("%Y-%m-%dT%H", "%Y-%m-%d %H"),  # hour
+        ("%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M"),  # minute
+        ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"),  # second
     )
-    relative_units = {'y': 365, 'm': 30, 'w': 7, 'd': 1}
-    relative_re = '(?P<sign>[+|-]?)(?P<quantity>[0-9]+)' + \
-        '(?P<timespan>[y|m|w|d])'
+    relative_units = {"y": 365, "m": 30, "w": 7, "d": 1}
+    relative_re = (
+        "(?P<sign>[+|-]?)(?P<quantity>[0-9]+)" + "(?P<timespan>[y|m|w|d])"
+    )
 
     def __init__(self, date: datetime, precision: str):
         """Create a period with the given date (a `datetime` object) and
@@ -623,12 +650,12 @@ class Period:
         or "second").
         """
         if precision not in Period.precisions:
-            raise ValueError(f'Invalid precision {precision}')
+            raise ValueError(f"Invalid precision {precision}")
         self.date = date
         self.precision = precision
 
     @classmethod
-    def parse(cls: Type['Period'], string: str) -> Optional['Period']:
+    def parse(cls: Type["Period"], string: str) -> Optional["Period"]:
         """Parse a date and return a `Period` object or `None` if the
         string is empty, or raise an InvalidQueryArgumentValueError if
         the string cannot be parsed to a date.
@@ -645,8 +672,9 @@ class Period:
           and a "year" is exactly 365 days.
         """
 
-        def find_date_and_format(string: str) -> \
-                Union[Tuple[None, None], Tuple[datetime, int]]:
+        def find_date_and_format(
+            string: str,
+        ) -> Union[Tuple[None, None], Tuple[datetime, int]]:
             for ord, format in enumerate(cls.date_formats):
                 for format_option in format:
                     try:
@@ -660,26 +688,31 @@ class Period:
         if not string:
             return None
 
+        date: Optional[datetime]
+
         # Check for a relative date.
         match_dq = re.match(cls.relative_re, string)
         if match_dq:
-            sign = match_dq.group('sign')
-            quantity = match_dq.group('quantity')
-            timespan = match_dq.group('timespan')
+            sign = match_dq.group("sign")
+            quantity = match_dq.group("quantity")
+            timespan = match_dq.group("timespan")
 
             # Add or subtract the given amount of time from the current
             # date.
-            multiplier = -1 if sign == '-' else 1
+            multiplier = -1 if sign == "-" else 1
             days = cls.relative_units[timespan]
-            date = datetime.now() + \
-                timedelta(days=int(quantity) * days) * multiplier
+            date = (
+                datetime.now()
+                + timedelta(days=int(quantity) * days) * multiplier
+            )
             return cls(date, cls.precisions[5])
 
         # Check for an absolute date.
         date, ordinal = find_date_and_format(string)
-        if date is None:
-            raise InvalidQueryArgumentValueError(string,
-                                                 'a valid date/time string')
+        if date is None or ordinal is None:
+            raise InvalidQueryArgumentValueError(
+                string, "a valid date/time string"
+            )
         precision = cls.precisions[ordinal]
         return cls(date, precision)
 
@@ -689,23 +722,23 @@ class Period:
         """
         precision = self.precision
         date = self.date
-        if 'year' == self.precision:
+        if "year" == self.precision:
             return date.replace(year=date.year + 1, month=1)
-        elif 'month' == precision:
-            if (date.month < 12):
+        elif "month" == precision:
+            if date.month < 12:
                 return date.replace(month=date.month + 1)
             else:
                 return date.replace(year=date.year + 1, month=1)
-        elif 'day' == precision:
+        elif "day" == precision:
             return date + timedelta(days=1)
-        elif 'hour' == precision:
+        elif "hour" == precision:
             return date + timedelta(hours=1)
-        elif 'minute' == precision:
+        elif "minute" == precision:
             return date + timedelta(minutes=1)
-        elif 'second' == precision:
+        elif "second" == precision:
             return date + timedelta(seconds=1)
         else:
-            raise ValueError(f'unhandled precision {precision}')
+            raise ValueError(f"unhandled precision {precision}")
 
 
 class DateInterval:
@@ -717,15 +750,19 @@ class DateInterval:
 
     def __init__(self, start: Optional[datetime], end: Optional[datetime]):
         if start is not None and end is not None and not start < end:
-            raise ValueError("start date {} is not before end date {}"
-                             .format(start, end))
+            raise ValueError(
+                "start date {} is not before end date {}".format(start, end)
+            )
         self.start = start
         self.end = end
 
     @classmethod
-    def from_periods(cls, start: Period, end: Period) -> 'DateInterval':
-        """Create an interval with two Periods as the endpoints.
-        """
+    def from_periods(
+        cls,
+        start: Optional[Period],
+        end: Optional[Period],
+    ) -> DateInterval:
+        """Create an interval with two Periods as the endpoints."""
         end_date = end.open_right_endpoint() if end is not None else None
         start_date = start.date if start is not None else None
         return cls(start_date, end_date)
@@ -738,7 +775,7 @@ class DateInterval:
         return True
 
     def __str__(self) -> str:
-        return f'[{self.start}, {self.end})'
+        return f"[{self.start}, {self.end})"
 
 
 class DateQuery(FieldQuery):
@@ -765,7 +802,7 @@ class DateQuery(FieldQuery):
 
     _clause_tmpl = "{0} {1} ?"
 
-    def col_clause(self) -> Tuple[Union[str, None], Collection]:
+    def col_clause(self) -> Tuple[str, Sequence[SQLiteType]]:
         clause_parts = []
         subvals = []
 
@@ -781,10 +818,10 @@ class DateQuery(FieldQuery):
 
         if clause_parts:
             # One- or two-sided interval.
-            clause = ' AND '.join(clause_parts)
+            clause = " AND ".join(clause_parts)
         else:
             # Match any date.
-            clause = '1'
+            clause = "1"
         return clause, subvals
 
 
@@ -812,26 +849,26 @@ class DurationQuery(NumericQuery):
                 return float(s)
             except ValueError:
                 raise InvalidQueryArgumentValueError(
-                    s,
-                    "a M:SS string or a float")
+                    s, "a M:SS string or a float"
+                )
 
 
 # Sorting.
+
 
 class Sort:
     """An abstract class representing a sort operation for a query into
     the database.
     """
 
-    def order_clause(self) -> None:
+    def order_clause(self) -> Optional[str]:
         """Generates a SQL fragment to be used in a ORDER BY clause, or
         None if no fragment is used (i.e., this is a slow sort).
         """
         return None
 
     def sort(self, items: List) -> List:
-        """Sort the list of objects and return a list.
-        """
+        """Sort the list of objects and return a list."""
         return sorted(items)
 
     def is_slow(self) -> bool:
@@ -844,12 +881,14 @@ class Sort:
         return 0
 
     def __eq__(self, other) -> bool:
-        return type(self) == type(other)
+        return type(self) is type(other)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}()"
 
 
 class MultipleSort(Sort):
-    """Sort that encapsulates multiple sub-sorts.
-    """
+    """Sort that encapsulates multiple sub-sorts."""
 
     def __init__(self, sorts: Optional[List[Sort]] = None):
         self.sorts = sorts or []
@@ -857,30 +896,22 @@ class MultipleSort(Sort):
     def add_sort(self, sort: Sort):
         self.sorts.append(sort)
 
-    def _sql_sorts(self) -> List[Sort]:
-        """Return the list of sub-sorts for which we can be (at least
-        partially) fast.
+    def order_clause(self) -> str:
+        """Return the list SQL clauses for those sub-sorts for which we can be
+        (at least partially) fast.
 
         A contiguous suffix of fast (SQL-capable) sub-sorts are
         executable in SQL. The remaining, even if they are fast
         independently, must be executed slowly.
         """
-        sql_sorts = []
-        for sort in reversed(self.sorts):
-            if not sort.order_clause() is None:
-                sql_sorts.append(sort)
-            else:
-                break
-        sql_sorts.reverse()
-        return sql_sorts
-
-    def order_clause(self) -> str:
         order_strings = []
-        for sort in self._sql_sorts():
-            order = sort.order_clause()
-            order_strings.append(order)
+        for sort in reversed(self.sorts):
+            clause = sort.order_clause()
+            if clause is None:
+                break
+            order_strings.append(clause)
+        order_strings.reverse()
 
-        # TYPING ERROR
         return ", ".join(order_strings)
 
     def is_slow(self) -> bool:
@@ -906,14 +937,13 @@ class MultipleSort(Sort):
         return items
 
     def __repr__(self):
-        return f'MultipleSort({self.sorts!r})'
+        return f"{self.__class__.__name__}({self.sorts!r})"
 
     def __hash__(self):
         return hash(tuple(self.sorts))
 
     def __eq__(self, other):
-        return super().__eq__(other) and \
-            self.sorts == other.sorts
+        return super().__eq__(other) and self.sorts == other.sorts
 
 
 class FieldSort(Sort):
@@ -937,7 +967,7 @@ class FieldSort(Sort):
         # attributes with different types without falling over.
 
         def key(obj: Model) -> Any:
-            field_val = obj.get(self.field, '')
+            field_val = obj.get(self.field, "")
             if self.case_insensitive and isinstance(field_val, str):
                 field_val = field_val.lower()
             return field_val
@@ -945,32 +975,34 @@ class FieldSort(Sort):
         return sorted(objs, key=key, reverse=not self.ascending)
 
     def __repr__(self) -> str:
-        return '<{}: {}{}>'.format(
-            type(self).__name__,
-            self.field,
-            '+' if self.ascending else '-',
+        return (
+            f"{self.__class__.__name__}"
+            f"({self.field!r}, ascending={self.ascending!r})"
         )
 
     def __hash__(self) -> int:
         return hash((self.field, self.ascending))
 
     def __eq__(self, other) -> bool:
-        return super().__eq__(other) and \
-            self.field == other.field and \
-            self.ascending == other.ascending
+        return (
+            super().__eq__(other)
+            and self.field == other.field
+            and self.ascending == other.ascending
+        )
 
 
 class FixedFieldSort(FieldSort):
-    """Sort object to sort on a fixed field.
-    """
+    """Sort object to sort on a fixed field."""
 
     def order_clause(self) -> str:
         order = "ASC" if self.ascending else "DESC"
         if self.case_insensitive:
-            field = '(CASE ' \
-                    'WHEN TYPEOF({0})="text" THEN LOWER({0}) ' \
-                    'WHEN TYPEOF({0})="blob" THEN LOWER({0}) ' \
-                    'ELSE {0} END)'.format(self.field)
+            field = (
+                "(CASE "
+                'WHEN TYPEOF({0})="text" THEN LOWER({0}) '
+                'WHEN TYPEOF({0})="blob" THEN LOWER({0}) '
+                "ELSE {0} END)".format(self.field)
+            )
         else:
             field = self.field
         return f"{field} {order}"
@@ -998,7 +1030,7 @@ class NullSort(Sort):
         return False
 
     def __eq__(self, other) -> bool:
-        return type(self) == type(other) or other is None
+        return type(self) is type(other) or other is None
 
     def __hash__(self) -> int:
         return 0

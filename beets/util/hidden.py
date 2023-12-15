@@ -14,10 +14,11 @@
 
 """Simple library to work out if a file is hidden on different platforms."""
 
+import ctypes
 import os
 import stat
-import ctypes
 import sys
+
 import beets.util
 
 
@@ -28,7 +29,7 @@ def _is_hidden_osx(path):
     """
     file_stat = os.lstat(beets.util.syspath(path))
 
-    if hasattr(file_stat, 'st_flags') and hasattr(stat, 'UF_HIDDEN'):
+    if hasattr(file_stat, "st_flags") and hasattr(stat, "UF_HIDDEN"):
         return bool(file_stat.st_flags & stat.UF_HIDDEN)
     else:
         return False
@@ -46,7 +47,7 @@ def _is_hidden_win(path):
     # Retrieve the attributes for the file.
     attrs = ctypes.windll.kernel32.GetFileAttributesW(beets.util.syspath(path))
 
-    # Ensure we have valid attribues and compare them against the mask.
+    # Ensure we have valid attributes and compare them against the mask.
     return attrs >= 0 and attrs & hidden_mask
 
 
@@ -55,7 +56,7 @@ def _is_hidden_dot(path):
 
     Files starting with a dot are seen as "hidden" files on Unix-based OSes.
     """
-    return os.path.basename(path).startswith(b'.')
+    return os.path.basename(path).startswith(b".")
 
 
 def is_hidden(path):
@@ -74,11 +75,12 @@ def is_hidden(path):
     work out if a file is hidden.
     """
     # Run platform specific functions depending on the platform
-    if sys.platform == 'darwin':
+    if sys.platform == "darwin":
         return _is_hidden_osx(path) or _is_hidden_dot(path)
-    elif sys.platform == 'win32':
+    elif sys.platform == "win32":
         return _is_hidden_win(path)
     else:
         return _is_hidden_dot(path)
 
-__all__ = ['is_hidden']
+
+__all__ = ["is_hidden"]

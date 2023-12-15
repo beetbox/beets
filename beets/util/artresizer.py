@@ -16,21 +16,21 @@
 public resizing proxy if neither is available.
 """
 
-from itertools import chain
-import subprocess
 import os
 import os.path
 import platform
 import re
+import subprocess
+from itertools import chain
 from tempfile import NamedTemporaryFile
 from urllib.parse import urlencode
-from beets import logging
-from beets import util
+
+from beets import logging, util
 from beets.util import bytestring_path, displayable_path, py3_path, syspath
 
-PROXY_URL = 'https://images.weserv.nl/'
+PROXY_URL = "https://images.weserv.nl/"
 
-log = logging.getLogger('beets')
+log = logging.getLogger("beets")
 
 
 def resize_url(url, maxwidth, quality=0):
@@ -38,14 +38,14 @@ def resize_url(url, maxwidth, quality=0):
     maxwidth (preserving aspect ratio).
     """
     params = {
-        'url': url.replace('http://', ''),
-        'w': maxwidth,
+        "url": url.replace("http://", ""),
+        "w": maxwidth,
     }
 
     if quality > 0:
-        params['q'] = quality
+        params["q"] = quality
 
-    return '{}?{}'.format(PROXY_URL, urlencode(params))
+    return "{}?{}".format(PROXY_URL, urlencode(params))
 
 
 def temp_file_for(path):
@@ -90,20 +90,22 @@ class IMBackend(LocalBackend):
         Raises `LocalBackendNotAvailableError` if not available.
         """
         if cls._version is None:
-            for cmd_name, legacy in (('magick', False), ('convert', True)):
+            for cmd_name, legacy in (("magick", False), ("convert", True)):
                 try:
                     out = util.command_output([cmd_name, "--version"]).stdout
                 except (subprocess.CalledProcessError, OSError) as exc:
-                    log.debug('ImageMagick version check failed: {}', exc)
+                    log.debug("ImageMagick version check failed: {}", exc)
                     cls._version = _NOT_AVAILABLE
                 else:
-                    if b'imagemagick' in out.lower():
-                        pattern = br".+ (\d+)\.(\d+)\.(\d+).*"
+                    if b"imagemagick" in out.lower():
+                        pattern = rb".+ (\d+)\.(\d+)\.(\d+).*"
                         match = re.search(pattern, out)
                         if match:
-                            cls._version = (int(match.group(1)),
-                                            int(match.group(2)),
-                                            int(match.group(3)))
+                            cls._version = (
+                                int(match.group(1)),
+                                int(match.group(2)),
+                                int(match.group(3)),
+                            )
                             cls._legacy = legacy
 
         if cls._version is _NOT_AVAILABLE:
@@ -123,24 +125,28 @@ class IMBackend(LocalBackend):
         # If it's not, fall back to the older, separate convert
         # and identify commands.
         if self._legacy:
-            self.convert_cmd = ['convert']
-            self.identify_cmd = ['identify']
-            self.compare_cmd = ['compare']
+            self.convert_cmd = ["convert"]
+            self.identify_cmd = ["identify"]
+            self.compare_cmd = ["compare"]
         else:
-            self.convert_cmd = ['magick']
-            self.identify_cmd = ['magick', 'identify']
-            self.compare_cmd = ['magick', 'compare']
+            self.convert_cmd = ["magick"]
+            self.identify_cmd = ["magick", "identify"]
+            self.compare_cmd = ["magick", "compare"]
 
-    def resize(self, maxwidth, path_in, path_out=None, quality=0,
-               max_filesize=0):
+    def resize(
+        self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0
+    ):
         """Resize using ImageMagick.
 
         Use the ``magick`` program or ``convert`` on older versions. Return
         the output path of resized image.
         """
         path_out = path_out or temp_file_for(path_in)
-        log.debug('artresizer: ImageMagick resizing {0} to {1}',
-                  displayable_path(path_in), displayable_path(path_out))
+        log.debug(
+            "artresizer: ImageMagick resizing {0} to {1}",
+            displayable_path(path_in),
+            displayable_path(path_out),
+        )
 
         # "-resize WIDTHx>" shrinks images with the width larger
         # than the given width while maintaining the aspect ratio
@@ -149,48 +155,56 @@ class IMBackend(LocalBackend):
         # it here for the sake of explicitness.
         cmd = self.convert_cmd + [
             syspath(path_in, prefix=False),
-            '-resize', f'{maxwidth}x>',
-            '-interlace', 'none',
+            "-resize",
+            f"{maxwidth}x>",
+            "-interlace",
+            "none",
         ]
 
         if quality > 0:
-            cmd += ['-quality', f'{quality}']
+            cmd += ["-quality", f"{quality}"]
 
         # "-define jpeg:extent=SIZEb" sets the target filesize for imagemagick
         # to SIZE in bytes.
         if max_filesize > 0:
-            cmd += ['-define', f'jpeg:extent={max_filesize}b']
+            cmd += ["-define", f"jpeg:extent={max_filesize}b"]
 
         cmd.append(syspath(path_out, prefix=False))
 
         try:
             util.command_output(cmd)
         except subprocess.CalledProcessError:
-            log.warning('artresizer: IM convert failed for {0}',
-                        displayable_path(path_in))
+            log.warning(
+                "artresizer: IM convert failed for {0}",
+                displayable_path(path_in),
+            )
             return path_in
 
         return path_out
 
     def get_size(self, path_in):
         cmd = self.identify_cmd + [
-            '-format', '%w %h', syspath(path_in, prefix=False)
+            "-format",
+            "%w %h",
+            syspath(path_in, prefix=False),
         ]
 
         try:
             out = util.command_output(cmd).stdout
         except subprocess.CalledProcessError as exc:
-            log.warning('ImageMagick size query failed')
+            log.warning("ImageMagick size query failed")
             log.debug(
-                '`convert` exited with (status {}) when '
-                'getting size with command {}:\n{}',
-                exc.returncode, cmd, exc.output.strip()
+                "`convert` exited with (status {}) when "
+                "getting size with command {}:\n{}",
+                exc.returncode,
+                cmd,
+                exc.output.strip(),
             )
             return None
         try:
-            return tuple(map(int, out.split(b' ')))
+            return tuple(map(int, out.split(b" ")))
         except IndexError:
-            log.warning('Could not understand IM output: {0!r}', out)
+            log.warning("Could not understand IM output: {0!r}", out)
             return None
 
     def deinterlace(self, path_in, path_out=None):
@@ -198,7 +212,8 @@ class IMBackend(LocalBackend):
 
         cmd = self.convert_cmd + [
             syspath(path_in, prefix=False),
-            '-interlace', 'none',
+            "-interlace",
+            "none",
             syspath(path_out, prefix=False),
         ]
 
@@ -210,10 +225,7 @@ class IMBackend(LocalBackend):
             return path_in
 
     def get_format(self, filepath):
-        cmd = self.identify_cmd + [
-            '-format', '%[magick]',
-            syspath(filepath)
-        ]
+        cmd = self.identify_cmd + ["-format", "%[magick]", syspath(filepath)]
 
         try:
             return util.command_output(cmd).stdout
@@ -230,9 +242,7 @@ class IMBackend(LocalBackend):
 
         try:
             subprocess.check_call(
-                cmd,
-                stderr=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL
+                cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL
             )
             return target
         except subprocess.CalledProcessError:
@@ -252,14 +262,23 @@ class IMBackend(LocalBackend):
         # On Windows, ImageMagick doesn't support the magic \\?\ prefix
         # on paths, so we pass `prefix=False` to `syspath`.
         convert_cmd = self.convert_cmd + [
-            syspath(im2, prefix=False), syspath(im1, prefix=False),
-            '-colorspace', 'gray', 'MIFF:-'
+            syspath(im2, prefix=False),
+            syspath(im1, prefix=False),
+            "-colorspace",
+            "gray",
+            "MIFF:-",
         ]
         compare_cmd = self.compare_cmd + [
-            '-metric', 'PHASH', '-', 'null:',
+            "-define",
+            "phash:colorspaces=sRGB,HCLp",
+            "-metric",
+            "PHASH",
+            "-",
+            "null:",
         ]
-        log.debug('comparing images with pipeline {} | {}',
-                  convert_cmd, compare_cmd)
+        log.debug(
+            "comparing images with pipeline {} | {}", convert_cmd, compare_cmd
+        )
         convert_proc = subprocess.Popen(
             convert_cmd,
             stdout=subprocess.PIPE,
@@ -282,7 +301,7 @@ class IMBackend(LocalBackend):
         convert_proc.wait()
         if convert_proc.returncode:
             log.debug(
-                'ImageMagick convert failed with status {}: {!r}',
+                "ImageMagick convert failed with status {}: {!r}",
                 convert_proc.returncode,
                 convert_stderr,
             )
@@ -292,8 +311,11 @@ class IMBackend(LocalBackend):
         stdout, stderr = compare_proc.communicate()
         if compare_proc.returncode:
             if compare_proc.returncode != 1:
-                log.debug('ImageMagick compare failed: {0}, {1}',
-                          displayable_path(im2), displayable_path(im1))
+                log.debug(
+                    "ImageMagick compare failed: {0}, {1}",
+                    displayable_path(im2),
+                    displayable_path(im1),
+                )
                 return None
             out_str = stderr
         else:
@@ -302,10 +324,10 @@ class IMBackend(LocalBackend):
         try:
             phash_diff = float(out_str)
         except ValueError:
-            log.debug('IM output is not a number: {0!r}', out_str)
+            log.debug("IM output is not a number: {0!r}", out_str)
             return None
 
-        log.debug('ImageMagick compare score: {0}', phash_diff)
+        log.debug("ImageMagick compare score: {0}", phash_diff)
         return phash_diff <= compare_threshold
 
     @property
@@ -313,9 +335,9 @@ class IMBackend(LocalBackend):
         return True
 
     def write_metadata(self, file, metadata):
-        assignments = list(chain.from_iterable(
-            ('-set', k, v) for k, v in metadata.items()
-        ))
+        assignments = list(
+            chain.from_iterable(("-set", k, v) for k, v in metadata.items())
+        )
         command = self.convert_cmd + [file, *assignments, file]
 
         util.command_output(command)
@@ -327,7 +349,7 @@ class PILBackend(LocalBackend):
     @classmethod
     def version(cls):
         try:
-            __import__('PIL', fromlist=['Image'])
+            __import__("PIL", fromlist=["Image"])
         except ImportError:
             raise LocalBackendNotAvailableError()
 
@@ -338,21 +360,25 @@ class PILBackend(LocalBackend):
         """
         self.version()
 
-    def resize(self, maxwidth, path_in, path_out=None, quality=0,
-               max_filesize=0):
+    def resize(
+        self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0
+    ):
         """Resize using Python Imaging Library (PIL).  Return the output path
         of resized image.
         """
         path_out = path_out or temp_file_for(path_in)
         from PIL import Image
 
-        log.debug('artresizer: PIL resizing {0} to {1}',
-                  displayable_path(path_in), displayable_path(path_out))
+        log.debug(
+            "artresizer: PIL resizing {0} to {1}",
+            displayable_path(path_in),
+            displayable_path(path_out),
+        )
 
         try:
             im = Image.open(syspath(path_in))
             size = maxwidth, maxwidth
-            im.thumbnail(size, Image.ANTIALIAS)
+            im.thumbnail(size, Image.Resampling.LANCZOS)
 
             if quality == 0:
                 # Use PIL's default quality.
@@ -371,7 +397,7 @@ class PILBackend(LocalBackend):
                 else:
                     lower_qual = 95
                 for i in range(5):
-                    # 5 attempts is an abitrary choice
+                    # 5 attempts is an arbitrary choice
                     filesize = os.stat(syspath(path_out)).st_size
                     log.debug("PIL Pass {0} : Output size: {1}B", i, filesize)
                     if filesize <= max_filesize:
@@ -383,17 +409,24 @@ class PILBackend(LocalBackend):
                     if lower_qual < 10:
                         lower_qual = 10
                     # Use optimize flag to improve filesize decrease
-                    im.save(py3_path(path_out), quality=lower_qual,
-                            optimize=True, progressive=False)
-                log.warning("PIL Failed to resize file to below {0}B",
-                            max_filesize)
+                    im.save(
+                        py3_path(path_out),
+                        quality=lower_qual,
+                        optimize=True,
+                        progressive=False,
+                    )
+                log.warning(
+                    "PIL Failed to resize file to below {0}B", max_filesize
+                )
                 return path_out
 
             else:
                 return path_out
         except OSError:
-            log.error("PIL cannot create thumbnail for '{0}'",
-                      displayable_path(path_in))
+            log.error(
+                "PIL cannot create thumbnail for '{0}'",
+                displayable_path(path_in),
+            )
             return path_in
 
     def get_size(self, path_in):
@@ -403,8 +436,9 @@ class PILBackend(LocalBackend):
             im = Image.open(syspath(path_in))
             return im.size
         except OSError as exc:
-            log.error("PIL could not read file {}: {}",
-                      displayable_path(path_in), exc)
+            log.error(
+                "PIL could not read file {}: {}", displayable_path(path_in), exc
+            )
             return None
 
     def deinterlace(self, path_in, path_out=None):
@@ -425,8 +459,12 @@ class PILBackend(LocalBackend):
         try:
             with Image.open(syspath(filepath)) as im:
                 return im.format
-        except (ValueError, TypeError, UnidentifiedImageError,
-                FileNotFoundError):
+        except (
+            ValueError,
+            TypeError,
+            UnidentifiedImageError,
+            FileNotFoundError,
+        ):
             log.exception("failed to detect image format for {}", filepath)
             return None
 
@@ -437,8 +475,13 @@ class PILBackend(LocalBackend):
             with Image.open(syspath(source)) as im:
                 im.save(py3_path(target), progressive=not deinterlaced)
                 return target
-        except (ValueError, TypeError, UnidentifiedImageError,
-                FileNotFoundError, OSError):
+        except (
+            ValueError,
+            TypeError,
+            UnidentifiedImageError,
+            FileNotFoundError,
+            OSError,
+        ):
             log.exception("failed to convert image {} -> {}", source, target)
             return source
 
@@ -459,11 +502,11 @@ class PILBackend(LocalBackend):
 
         # FIXME: Detect and handle other file types (currently, the only user
         # is the thumbnails plugin, which generates PNG images).
-        im = Image.open(file)
+        im = Image.open(syspath(file))
         meta = PngImagePlugin.PngInfo()
         for k, v in metadata.items():
             meta.add_text(k, v, 0)
-        im.save(file, "PNG", pnginfo=meta)
+        im.save(py3_path(file), "PNG", pnginfo=meta)
 
 
 class Shareable(type):
@@ -491,13 +534,11 @@ BACKEND_CLASSES = [
 
 
 class ArtResizer(metaclass=Shareable):
-    """A singleton class that performs image resizes.
-    """
+    """A singleton class that performs image resizes."""
 
     def __init__(self):
-        """Create a resizer object with an inferred method.
-        """
-        # Check if a local backend is availabe, and store an instance of the
+        """Create a resizer object with an inferred method."""
+        # Check if a local backend is available, and store an instance of the
         # backend class. Otherwise, fallback to the web proxy.
         for backend_cls in BACKEND_CLASSES:
             try:
@@ -527,8 +568,11 @@ class ArtResizer(metaclass=Shareable):
         """
         if self.local:
             return self.local_method.resize(
-                maxwidth, path_in, path_out,
-                quality=quality, max_filesize=max_filesize
+                maxwidth,
+                path_in,
+                path_out,
+                quality=quality,
+                max_filesize=max_filesize,
             )
         else:
             # Handled by `proxy_url` already.
@@ -599,11 +643,11 @@ class ArtResizer(metaclass=Shareable):
         new_format = new_format.lower()
         # A nonexhaustive map of image "types" to extensions overrides
         new_format = {
-            'jpeg': 'jpg',
+            "jpeg": "jpg",
         }.get(new_format, new_format)
 
         fname, ext = os.path.splitext(path_in)
-        path_new = fname + b'.' + new_format.encode('utf8')
+        path_new = fname + b"." + new_format.encode("utf8")
 
         # allows the exception to propagate, while still making sure a changed
         # file path was removed
