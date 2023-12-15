@@ -191,7 +191,7 @@ class SmartPlaylistTest(_common.TestCase):
 
         self.assertEqual(content, b"/tagada.mp3\n")
 
-    def test_playlist_update_extm3u(self):
+    def test_playlist_update_output_m3u8(self):
         spl = SmartPlaylistPlugin()
 
         i = MagicMock()
@@ -215,7 +215,7 @@ class SmartPlaylistTest(_common.TestCase):
         spl._matched_playlists = [pl]
 
         dir = bytestring_path(mkdtemp())
-        config["smartplaylist"]["extm3u"] = True
+        config["smartplaylist"]["output"] = "m3u8"
         config["smartplaylist"]["prefix"] = "http://beets:8337/files"
         config["smartplaylist"]["relative_to"] = False
         config["smartplaylist"]["playlist_dir"] = py3_path(dir)
