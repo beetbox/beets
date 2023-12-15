@@ -88,6 +88,14 @@ class AdvancedRewritePlugin(BeetsPlugin):
             )
         )
 
+        # Used to apply the same rewrite to the corresponding album field.
+        corresponding_album_fields = {
+            "artist": "albumartist",
+            "artists": "albumartists",
+            "artist_sort": "albumartist_sort",
+            "artists_sort": "albumartists_sort",
+        }
+
         # Gather all the rewrite rules for each field.
         simple_rules = defaultdict(list)
         advanced_rules = defaultdict(list)
@@ -117,10 +125,11 @@ class AdvancedRewritePlugin(BeetsPlugin):
                 )
                 pattern = re.compile(pattern.lower())
                 simple_rules[fieldname].append((pattern, value))
-                if fieldname == "artist":
-                    # Special case for the artist field: apply the same
-                    # rewrite for "albumartist" as well.
-                    simple_rules["albumartist"].append((pattern, value))
+
+                # Apply the same rewrite to the corresponding album field.
+                if fieldname in corresponding_album_fields:
+                    album_fieldname = corresponding_album_fields[fieldname]
+                    simple_rules[album_fieldname].append((pattern, value))
             else:
                 # Advanced syntax
                 match = rule["match"]
@@ -160,18 +169,11 @@ class AdvancedRewritePlugin(BeetsPlugin):
                         )
 
                     advanced_rules[fieldname].append((query, replacement))
-                    # Special case for the artist(s) field:
-                    # apply the same rewrite for "albumartist(s)" as well.
-                    if fieldname == "artist":
-                        advanced_rules["albumartist"].append(
-                            (query, replacement)
-                        )
-                    elif fieldname == "artists":
-                        advanced_rules["albumartists"].append(
-                            (query, replacement)
-                        )
-                    elif fieldname == "artist_sort":
-                        advanced_rules["albumartist_sort"].append(
+
+                    # Apply the same rewrite to the corresponding album field.
+                    if fieldname in corresponding_album_fields:
+                        album_fieldname = corresponding_album_fields[fieldname]
+                        advanced_rules[album_fieldname].append(
                             (query, replacement)
                         )
 
