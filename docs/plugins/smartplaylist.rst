@@ -118,9 +118,9 @@ other configuration options are:
 - **urlencode**: URL-encode all paths. Default: ``no``.
 - **pretend_paths**: When running with ``--pretend``, show the actual file
   paths that will be written to the m3u file. Default: ``false``.
-- **extm3u**: Generate extm3u/m3u8 playlists. Default ``ǹo``.
+- **output**: Specify the playlist format: m3u|m3u8. Default ``m3u``.
 
 For many configuration options, there is a corresponding CLI option, e.g.
 ``--playlist-dir``, ``--relative-to``, ``--prefix``, ``--forward-slash``,
-``--urlencode``, ``--extm3u``, ``--pretend-paths``.
+``--urlencode``, ``--output``, ``--pretend-paths``.
 CLI options take precedence over those specified within the configuration file.
