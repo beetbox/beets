@@ -444,14 +444,29 @@ def import_stages():
 # New-style (lazy) plugin-provided fields.
 
 
+def _check_conflicts_and_merge(plugin, plugin_funcs, funcs):
+    """Check the provided template functions for conflicts and merge into funcs.
+
+    Raises a `PluginConflictException` if a plugin defines template functions
+    for fields that another plugin has already defined template functions for.
+    """
+    if plugin_funcs:
+        if not plugin_funcs.keys().isdisjoint(funcs.keys()):
+            conflicted_fields = ", ".join(plugin_funcs.keys() & funcs.keys())
+            raise PluginConflictException(
+                f"Plugin {plugin.name} defines template functions for "
+                f"{conflicted_fields} that conflict with another plugin."
+            )
+        funcs.update(plugin_funcs)
+
+
 def item_field_getters():
     """Get a dictionary mapping field names to unary functions that
     compute the field's value.
     """
     funcs = {}
     for plugin in find_plugins():
-        if plugin.template_fields:
-            funcs.update(plugin.template_fields)
+        _check_conflicts_and_merge(plugin, plugin.template_fields, funcs)
     return funcs
 
 
@@ -459,8 +474,7 @@ def album_field_getters():
     """As above, for album fields."""
     funcs = {}
     for plugin in find_plugins():
-        if plugin.album_template_fields:
-            funcs.update(plugin.album_template_fields)
+        _check_conflicts_and_merge(plugin, plugin.album_template_fields, funcs)
     return funcs
 
 
