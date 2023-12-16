@@ -278,6 +278,15 @@ Bug fixes:
 * Fix bug regarding displaying tracks that have been changed not being
   displayed unless the detail configuration is enabled.
 
+For plugin developers:
+
+* beets now explicitly prevents multiple plugins to define replacement
+  functions for the same field. When previously defining `template_fields`
+  for the same field in two plugins, the last loaded plugin would silently
+  overwrite the function defined by the other plugin.
+  Now, beets will raise an exception when this happens.
+  :bug:`5002`
+
 For packagers:
 
 * As noted above, the minimum Python version is now 3.7.
