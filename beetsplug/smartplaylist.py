@@ -49,7 +49,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 "prefix": "",
                 "urlencode": False,
                 "pretend_paths": False,
-                "extm3u": False,
+                "output": "m3u",
             }
         )
 
@@ -91,7 +91,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
             dest="relative_to",
             metavar="PATH",
             type="string",
-            help="Generate playlist item paths relative to this path.",
+            help="generate playlist item paths relative to this path.",
         )
         spl_update.parser.add_option(
             "--prefix",
@@ -102,7 +102,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
             "--forward-slash",
             action="store_true",
             dest="forward_slash",
-            help="Force forward slash in paths within playlists.",
+            help="force forward slash in paths within playlists.",
         )
         spl_update.parser.add_option(
             "--urlencode",
@@ -110,15 +110,9 @@ class SmartPlaylistPlugin(BeetsPlugin):
             help="URL-encode all paths.",
         )
         spl_update.parser.add_option(
-            "--extm3u",
-            action="store_true",
-            help="generate extm3u/m3u8 playlists.",
-        )
-        spl_update.parser.add_option(
-            "--no-extm3u",
-            action="store_false",
-            dest="extm3u",
-            help="generate extm3u/m3u8 playlists.",
+            "--output",
+            type="string",
+            help="specify the playlist format: m3u|m3u8.",
         )
         spl_update.func = self.update_cmd
         return [spl_update]
@@ -299,9 +293,14 @@ class SmartPlaylistPlugin(BeetsPlugin):
                     os.path.join(playlist_dir, bytestring_path(m3u))
                 )
                 mkdirall(m3u_path)
-                extm3u = self.config["extm3u"]
+                pl_format = self.config["output"].get()
+                if pl_format != "m3u" and pl_format != "m3u8":
+                    msg = "Unsupported output format '{}' provided! "
+                    msg += "Supported: m3u, m3u8"
+                    raise Exception(msg.format(pl_format))
+                m3u8 = pl_format == "m3u8"
                 with open(syspath(m3u_path), "wb") as f:
-                    if extm3u:
+                    if m3u8:
                         f.write(b"#EXTM3U\n")
                     for entry in m3us[m3u]:
                         path = entry["path"]
@@ -311,7 +310,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
                         if self.config["urlencode"]:
                             path = bytestring_path(pathname2url(path))
                         comment = ""
-                        if extm3u:
+                        if m3u8:
                             comment = "#EXTINF:{},{} - {}\n".format(
                                 int(item.length), item.artist, item.title
                             )
