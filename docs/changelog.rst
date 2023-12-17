@@ -151,6 +151,8 @@ New features:
 * :doc:`/plugins/smartplaylist`: Expose config options as CLI options.
 * :doc:`/plugins/smartplaylist`: Add new option `smartplaylist.output`.
 * :doc:`/plugins/smartplaylist`: Add new option `smartplaylist.uri_format`.
+* Sorted the default configuration file into categories.
+  :bug:`4987`
 
 Bug fixes:
 
