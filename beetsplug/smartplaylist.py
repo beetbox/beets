@@ -45,10 +45,12 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 "playlist_dir": ".",
                 "auto": True,
                 "playlists": [],
+                "uri_format": None,
                 "forward_slash": False,
                 "prefix": "",
                 "urlencode": False,
                 "pretend_paths": False,
+                "output": "m3u",
             }
         )
 
@@ -70,6 +72,54 @@ class SmartPlaylistPlugin(BeetsPlugin):
             "--pretend",
             action="store_true",
             help="display query results but don't write playlist files.",
+        )
+        spl_update.parser.add_option(
+            "--pretend-paths",
+            action="store_true",
+            dest="pretend_paths",
+            help="in pretend mode, log the playlist item URIs/paths.",
+        )
+        spl_update.parser.add_option(
+            "-d",
+            "--playlist-dir",
+            dest="playlist_dir",
+            metavar="PATH",
+            type="string",
+            help="directory to write the generated playlist files to.",
+        )
+        spl_update.parser.add_option(
+            "--relative-to",
+            dest="relative_to",
+            metavar="PATH",
+            type="string",
+            help="generate playlist item paths relative to this path.",
+        )
+        spl_update.parser.add_option(
+            "--prefix",
+            type="string",
+            help="prepend string to every path in the playlist file.",
+        )
+        spl_update.parser.add_option(
+            "--forward-slash",
+            action="store_true",
+            dest="forward_slash",
+            help="force forward slash in paths within playlists.",
+        )
+        spl_update.parser.add_option(
+            "--urlencode",
+            action="store_true",
+            help="URL-encode all paths.",
+        )
+        spl_update.parser.add_option(
+            "--uri-format",
+            dest="uri_format",
+            type="string",
+            help="playlist item URI template, e.g. http://beets:8337/item/$id/file.",
+        )
+        spl_update.parser.add_option(
+            "--output",
+            type="string",
+            help="specify the playlist format: m3u|m3u8.",
         )
         spl_update.func = self.update_cmd
         return [spl_update]
@@ -99,7 +149,13 @@ class SmartPlaylistPlugin(BeetsPlugin):
         else:
             self._matched_playlists = self._unmatched_playlists
 
+        self.__apply_opts_to_config(opts)
         self.update_playlists(lib, opts.pretend)
+
+    def __apply_opts_to_config(self, opts):
+        for k, v in opts.__dict__.items():
+            if v is not None and k in self.config:
+                self.config[k] = v
 
     def build_queries(self):
         """
@@ -198,6 +254,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
 
         playlist_dir = self.config["playlist_dir"].as_filename()
         playlist_dir = bytestring_path(playlist_dir)
+        tpl = self.config["uri_format"].get()
+        prefix = bytestring_path(self.config["prefix"].as_str())
         relative_to = self.config["relative_to"].get()
         if relative_to:
             relative_to = normpath(relative_to)
@@ -226,31 +284,49 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 m3u_name = sanitize_path(m3u_name, lib.replacements)
                 if m3u_name not in m3us:
                     m3us[m3u_name] = []
-                item_path = item.path
-                if relative_to:
-                    item_path = os.path.relpath(item.path, relative_to)
-                if item_path not in m3us[m3u_name]:
-                    m3us[m3u_name].append(item_path)
+                item_uri = item.path
+                if tpl:
+                    item_uri = tpl.replace("$id", str(item.id)).encode("utf-8")
+                else:
+                    if relative_to:
+                        item_uri = os.path.relpath(item_uri, relative_to)
+                    if self.config["forward_slash"].get():
+                        item_uri = path_as_posix(item_uri)
+                    if self.config["urlencode"]:
+                        item_uri = bytestring_path(pathname2url(item_uri))
+                    item_uri = prefix + item_uri
+
+                if item_uri not in m3us[m3u_name]:
+                    m3us[m3u_name].append({"item": item, "uri": item_uri})
                     if pretend and self.config["pretend_paths"]:
-                        print(displayable_path(item_path))
+                        print(displayable_path(item_uri))
                     elif pretend:
                         print(item)
 
         if not pretend:
-            prefix = bytestring_path(self.config["prefix"].as_str())
             # Write all of the accumulated track lists to files.
             for m3u in m3us:
                 m3u_path = normpath(
                     os.path.join(playlist_dir, bytestring_path(m3u))
                 )
                 mkdirall(m3u_path)
+                pl_format = self.config["output"].get()
+                if pl_format != "m3u" and pl_format != "m3u8":
+                    msg = "Unsupported output format '{}' provided! "
+                    msg += "Supported: m3u, m3u8"
+                    raise Exception(msg.format(pl_format))
+                m3u8 = pl_format == "m3u8"
                 with open(syspath(m3u_path), "wb") as f:
-                    for path in m3us[m3u]:
-                        if self.config["forward_slash"].get():
-                            path = path_as_posix(path)
-                        if self.config["urlencode"]:
-                            path = bytestring_path(pathname2url(path))
-                        f.write(prefix + path + b"\n")
+                    if m3u8:
+                        f.write(b"#EXTM3U\n")
+                    for entry in m3us[m3u]:
+                        item = entry["item"]
+                        comment = ""
+                        if m3u8:
+                            comment = "#EXTINF:{},{} - {}\n".format(
+                                int(item.length), item.artist, item.title
+                            )
+                        f.write(comment.encode("utf-8") + entry["uri"] + b"\n")
             # Send an event when playlists were updated.
             send_event("smartplaylist_update")
 
