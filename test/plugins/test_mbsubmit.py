@@ -45,7 +45,7 @@ class MBSubmitPluginTest(
 
         # Manually build the string for comparing the output.
         tracklist = (
-            "Print tracks? "
+            "Open files with Picard? "
             "01. Tag Title 1 - Tag Artist (0:01)\n"
             "02. Tag Title 2 - Tag Artist (0:01)"
         )
@@ -61,7 +61,9 @@ class MBSubmitPluginTest(
                 self.importer.run()
 
         # Manually build the string for comparing the output.
-        tracklist = "Print tracks? " "02. Tag Title 2 - Tag Artist (0:01)"
+        tracklist = (
+            "Open files with Picard? " "02. Tag Title 2 - Tag Artist (0:01)"
+        )
         self.assertIn(tracklist, output.getvalue())
 
 
