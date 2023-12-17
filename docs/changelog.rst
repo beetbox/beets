@@ -147,7 +147,8 @@ New features:
   plugin which allows to replace fields based on a given library query.
 * :doc:`/plugins/lyrics`: Add LRCLIB as a new lyrics provider and a new
   `synced` option to prefer synced lyrics over plain lyrics.
-* Sorted the default configuration file :ref: into categories.
+* Sorted the default configuration file into categories.
+  :bug:`4987`
 
 Bug fixes:
 
