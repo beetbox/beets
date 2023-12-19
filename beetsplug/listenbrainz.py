@@ -77,7 +77,7 @@ class ListenBrainzPlugin(BeetsPlugin):
             ),
         )
 
-        if response["status"] == "ok":
+        if response is not None:
             return response["payload"]["listens"]
         else:
             return None
