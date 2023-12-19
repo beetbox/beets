@@ -8,15 +8,8 @@ import datetime
 from beets import config, ui
 from beets.plugins import BeetsPlugin
 import musicbrainzngs
-
+from beetsplug import lastimport.process_tracks as process_tracks
 from beets.plugins import find_plugin
-
-lastimport_plugin = find_plugin("lastimport")
-
-if lastimport_plugin is not None:
-    process_tracks = lastimport_plugin.process_tracks
-else:
-    raise ImportError("lastimport plugin not found")
 
 
 class ListenBrainzPlugin(BeetsPlugin):
