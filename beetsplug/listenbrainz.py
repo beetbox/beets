@@ -116,6 +116,8 @@ class ListenBrainzPlugin(BeetsPlugin):
     def get_tracks_from_listens(self, listens):
         tracks = []
         for track in listens:
+            if track["track_metadata"].get("release_name") is None:
+                continue
             mbid_mapping = track["track_metadata"].get("mbid_mapping", {})
             tracks.append(
                 {
