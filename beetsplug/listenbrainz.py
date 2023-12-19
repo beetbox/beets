@@ -106,12 +106,14 @@ class ListenBrainzPlugin(BeetsPlugin):
     def get_tracks_from_listens(self, listens):
         tracks = []
         for track in listens:
-            print(json.dumps(track, indent=4))
+            #print(json.dumps(track, indent=4))
             tracks.append(
                 {
                     "release_name": track["track_metadata"]["release_name"],
                     "track_name": track["track_metadata"]["track_name"],
                     "artist_name": track["track_metadata"]["artist_name"],
+                    "recording_mbid": track["track_metadata"]["mbid_mapping"]["recording_mbid"],
+                    "release_mbid": track["track_metadata"]["mbid_mapping"]["release_mbid"],
                     "listened_at": track["listened_at"],
                 }
             )
