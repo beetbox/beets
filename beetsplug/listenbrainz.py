@@ -115,6 +115,7 @@ class ListenBrainzPlugin(BeetsPlugin):
                     "listened_at": track["listened_at"],
                 }
             )
+            self.lookup_metadata(tracks[-1])
         return tracks
 
     def lookup_metadata(self, track) -> dict:
