@@ -105,14 +105,24 @@ class ListenBrainzPlugin(BeetsPlugin):
     def get_tracks_from_listens(self, listens):
         tracks = []
         for track in listens:
-            self._log.debug(
-                "{0} - {1}, artist: {2}, listened at {3}".format(
-                    track["track_metadata"]["release_name"],
-                    track["track_metadata"]["track_name"],
-                    track["track_metadata"]["artist_name"],
-                    track["listened_at"],
-                )
+            tracks.append(
+                {
+                    "release_name": track["track_metadata"]["release_name"],
+                    "track_name": track["track_metadata"]["track_name"],
+                    "artist_name": track["track_metadata"]["artist_name"],
+                    "listened_at": track["listened_at"],
+                }
             )
+            self._log.debug(self.lookup_metadata(tracks[-1]))
+        return tracks
+
+    def lookup_metadata(self, track) -> dict:
+        """Looks up the metadata for a listen using track name and artist name."""
+
+        params = {"recording_name": track.track_name, "artist_name": track.artist_name}
+        url = f"{self.ROOT}/metadata/lookup/"
+        response = self._make_request(url, params)
+        return response.json()
 
     def get_playlists_createdfor(self, username):
         """Returns a list of playlists created by a user."""
