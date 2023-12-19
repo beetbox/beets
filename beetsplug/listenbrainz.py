@@ -101,7 +101,6 @@ class ListenBrainzPlugin(BeetsPlugin):
         tracks = []
         for listen in listens:
             self._log.debug(f"listen: {listen.get('track_metadata')}")
-        return self.get_track_info(tracks)
 
     def get_playlists_createdfor(self, username):
         """Returns a list of playlists created by a user."""
