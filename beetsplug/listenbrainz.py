@@ -36,7 +36,7 @@ class ListenBrainzPlugin(BeetsPlugin):
     def _lbupdate(self, items, write):
         """Obtain view count from Listenbrainz."""
         ls = self.get_listens()
-        tracks = self.get_tracks_from_listens(ls)
+        self.get_tracks_from_listens(ls)
         self._log.info(f"Found {len(ls)} listens")
 
     def _make_request(self, url, params=None):
@@ -100,9 +100,7 @@ class ListenBrainzPlugin(BeetsPlugin):
     def get_tracks_from_listens(self, listens):
         tracks = []
         for listen in listens:
-            track_metadata = listen.get('track_metadata')
-            if 'additional_info' in track_metadata:
-                self._log.debug("listen: {}".format(track_metadata))
+            self._log.debug("listen: %s", listen)
 
     def get_playlists_createdfor(self, username):
         """Returns a list of playlists created by a user."""
