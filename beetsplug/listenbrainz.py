@@ -107,7 +107,7 @@ class ListenBrainzPlugin(BeetsPlugin):
         for track in listens:
             self._log.debug(
                 "Track: {0}, listened at {1}".format(
-                    track["track_metadata"]["track_name"], track["listened_at"]
+                    track["track_metadata"]["track_name"], track["track_metadata"]
                 )
             )
 
