@@ -8,8 +8,7 @@ import datetime
 from beets import config, ui
 from beets.plugins import BeetsPlugin
 import musicbrainzngs
-from beetsplug import lastimport.process_tracks as process_tracks
-from beets.plugins import find_plugin
+from lastimport import process_tracks
 
 
 class ListenBrainzPlugin(BeetsPlugin):
