@@ -74,11 +74,15 @@ class ListenBrainzPlugin(BeetsPlugin):
             An IndexError if the JSON is not structured as expected.
         """
         url = f"{self.ROOT}/user/{self.username}/listens"
-        params = {k: v for k, v in {
-            "min_ts": min_ts,
-            "max_ts": max_ts,
-            "count": count,
-        }.items() if v is not None}
+        params = {
+            k: v
+            for k, v in {
+                "min_ts": min_ts,
+                "max_ts": max_ts,
+                "count": count,
+            }.items()
+            if v is not None
+        }
         response = self._make_request(url, params)
 
         if response is not None:
@@ -97,10 +101,15 @@ class ListenBrainzPlugin(BeetsPlugin):
         }
     ]
     """
+
     def get_tracks_from_listens(self, listens):
         tracks = []
-        for listen in listens:
-            self._log.debug(f"listen: {listen}")
+        for track in listens:
+            self._log.debug(
+                "Track: {0}, listened at {1}".format(
+                    track["track_metadata"]["track_name"], track["listened_at"]
+                )
+            )
 
     def get_playlists_createdfor(self, username):
         """Returns a list of playlists created by a user."""
