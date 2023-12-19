@@ -71,11 +71,8 @@ class ListenBrainzPlugin(BeetsPlugin):
             A ValueError if the JSON in the response is invalid.
             An IndexError if the JSON is not structured as expected.
         """
-        response = self._make_request(
-            url="http://{0}/1/user/{1}/listens".format(
-                self.ROOT, self.username
-            ),
-        )
+        url = f"{self.ROOT}/user/{self.username}/listens"
+        response = self._make_request(url)
 
         if response is not None:
             return response["payload"]["listens"]
