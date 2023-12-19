@@ -119,6 +119,7 @@ class ListenBrainzPlugin(BeetsPlugin):
             if track["track_metadata"].get("release_name") is None:
                 continue
             mbid_mapping = track["track_metadata"].get("mbid_mapping", {})
+            print(json.dumps(track, indent=4, sort_keys=True))
             tracks.append(
                 {
                     "release_name": track["track_metadata"].get("release_name"),
