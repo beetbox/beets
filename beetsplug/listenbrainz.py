@@ -9,6 +9,15 @@ from beets import config, ui
 from beets.plugins import BeetsPlugin
 import musicbrainzngs
 
+from beets.plugins import find_plugin
+
+lastimport_plugin = find_plugin("lastimport")
+
+if lastimport_plugin is not None:
+    process_tracks = lastimport_plugin.process_tracks
+else:
+    raise ImportError("lastimport plugin not found")
+
 
 class ListenBrainzPlugin(BeetsPlugin):
     data_source = "ListenBrainz"
@@ -29,16 +38,25 @@ class ListenBrainzPlugin(BeetsPlugin):
 
         def func(lib, opts, args):
             items = lib.items(ui.decargs(args))
-            self._lbupdate(items, ui.should_write())
+            self._lbupdate(lib, self._log)
 
         lbupdate_cmd.func = func
         return [lbupdate_cmd]
 
-    def _lbupdate(self, items, write):
+    def _lbupdate(self, lib, log):
         """Obtain view count from Listenbrainz."""
+        found_total = 0
+        unknown_total = 0
         ls = self.get_listens()
-        self.get_tracks_from_listens(ls)
-        self._log.info(f"Found {len(ls)} listens")
+        tracks = self.get_tracks_from_listens(ls)
+        log.info(f"Found {len(ls)} listens")
+        if tracks:
+            found, unknown = process_tracks(lib, tracks, log)
+            found_total += found
+            unknown_total += unknown
+        log.info("... done!")
+        log.info("{0} unknown play-counts", unknown_total)
+        log.info("{0} play-counts imported", found_total)
 
     def _make_request(self, url, params=None):
         try:
@@ -110,26 +128,14 @@ class ListenBrainzPlugin(BeetsPlugin):
             tracks.append(
                 {
                     "release_name": track["track_metadata"].get("release_name"),
-                    "track_name": track["track_metadata"].get("track_name"),
-                    "artist_name": track["track_metadata"].get("artist_name"),
-                    "recording_mbid": mbid_mapping.get("recording_mbid"),
+                    "name": track["track_metadata"].get("track_name"),
+                    "artist": track["track_metadata"].get("artist_name"),
+                    "mbid": mbid_mapping.get("recording_mbid"),
                     "release_mbid": mbid_mapping.get("release_mbid"),
                     "listened_at": track.get("listened_at"),
                 }
             )
         return tracks
-
-    def lookup_metadata(self, track) -> dict:
-        """Looks up the metadata for a listen using track name and artist name."""
-
-        params = {
-            "recording_name": track["track_name"],
-            "artist_name": track["artist_name"],
-        }
-        url = f"{self.ROOT}/metadata/lookup/"
-        response = self._make_request(url, params)
-        print(json.dumps(response, indent=4))
-        return response
 
     def get_playlists_createdfor(self, username):
         """Returns a list of playlists created by a user."""
