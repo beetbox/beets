@@ -100,7 +100,7 @@ class ListenBrainzPlugin(BeetsPlugin):
     def get_tracks_from_listens(self, listens):
         tracks = []
         for listen in listens:
-            self._log.debug(f"listen: {listen}")
+            self._log.debug(f"listen: {listen.get('track_metadata')}")
         return self.get_track_info(tracks)
 
     def get_playlists_createdfor(self, username):
