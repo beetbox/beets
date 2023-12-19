@@ -74,11 +74,11 @@ class ListenBrainzPlugin(BeetsPlugin):
             An IndexError if the JSON is not structured as expected.
         """
         url = f"{self.ROOT}/user/{self.username}/listens"
-        params={
+        params = {k: v for k, v in {
             "min_ts": min_ts,
             "max_ts": max_ts,
             "count": count,
-        },
+        }.items() if v is not None},
         response = self._make_request(url, params)
 
         if response is not None:
