@@ -119,7 +119,10 @@ class ListenBrainzPlugin(BeetsPlugin):
     def lookup_metadata(self, track) -> dict:
         """Looks up the metadata for a listen using track name and artist name."""
 
-        params = {"recording_name": track.track_name, "artist_name": track.artist_name}
+        params = {
+            "recording_name": track["track_name"],
+            "artist_name": track["artist_name"],
+        }
         url = f"{self.ROOT}/metadata/lookup/"
         response = self._make_request(url, params)
         return response.json()
