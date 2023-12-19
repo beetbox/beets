@@ -125,7 +125,7 @@ class ListenBrainzPlugin(BeetsPlugin):
         }
         url = f"{self.ROOT}/metadata/lookup/"
         response = self._make_request(url, params)
-        return response.json()
+        return response
 
     def get_playlists_createdfor(self, username):
         """Returns a list of playlists created by a user."""
