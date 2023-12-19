@@ -2,6 +2,7 @@
 Adds Listenbrainz support to Beets.
 """
 
+import json
 import requests
 import datetime
 from beets import config, ui
@@ -105,6 +106,7 @@ class ListenBrainzPlugin(BeetsPlugin):
     def get_tracks_from_listens(self, listens):
         tracks = []
         for track in listens:
+            #print(json.dumps(track, indent=4))
             tracks.append(
                 {
                     "release_name": track["track_metadata"]["release_name"],
@@ -113,7 +115,6 @@ class ListenBrainzPlugin(BeetsPlugin):
                     "listened_at": track["listened_at"],
                 }
             )
-            self._log.debug(self.lookup_metadata(tracks[-1]))
         return tracks
 
     def lookup_metadata(self, track) -> dict:
@@ -125,6 +126,7 @@ class ListenBrainzPlugin(BeetsPlugin):
         }
         url = f"{self.ROOT}/metadata/lookup/"
         response = self._make_request(url, params)
+        print(json.dumps(response, indent=4))
         return response
 
     def get_playlists_createdfor(self, username):
