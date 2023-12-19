@@ -109,7 +109,7 @@ class ListenBrainzPlugin(BeetsPlugin):
                 "{0} - {1}, Release MBID: {2}, listened at {3}".format(
                     track["track_metadata"]["release_name"],
                     track["track_metadata"]["track_name"],
-                    track["track_metadata"]["additional_info"],
+                    track["track_metadata"],
                     track["listened_at"],
                 )
             )
