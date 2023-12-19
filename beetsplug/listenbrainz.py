@@ -78,7 +78,7 @@ class ListenBrainzPlugin(BeetsPlugin):
             "min_ts": min_ts,
             "max_ts": max_ts,
             "count": count,
-        }.items() if v is not None},
+        }.items() if v is not None}
         response = self._make_request(url, params)
 
         if response is not None:
