@@ -36,14 +36,16 @@ class ListenBrainzPlugin(BeetsPlugin):
     def _lbupdate(self, items, write):
         """Obtain view count from Listenbrainz."""
         ls = self.get_listens()
+        tracks = self.get_tracks_from_listens(ls)
         self._log.info(f"Found {len(ls)} listens")
 
-    def _make_request(self, url):
+    def _make_request(self, url, params=None):
         try:
             response = requests.get(
                 url=url,
                 headers=self.AUTH_HEADER,
                 timeout=10,
+                params=params,
             )
             response.raise_for_status()
             return response.json()
@@ -72,12 +74,41 @@ class ListenBrainzPlugin(BeetsPlugin):
             An IndexError if the JSON is not structured as expected.
         """
         url = f"{self.ROOT}/user/{self.username}/listens"
-        response = self._make_request(url)
+        params={
+            "min_ts": min_ts,
+            "max_ts": max_ts,
+            "count": count,
+        },
+        response = self._make_request(url, params)
 
         if response is not None:
             return response["payload"]["listens"]
         else:
             return None
+
+    # write a function to return all the listens in the followign JSON format:
+    """JSON format:
+    [
+        {
+            "mbid": "...",
+            "artist": "...",
+            "title": "...",
+            "playcount": "..."
+        }
+    ]
+    """
+    def get_tracks_from_listens(self, listens):
+        tracks = []
+        for listen in listens:
+            tracks.append(
+                {
+                    "artist": listen.get("artist_name"),
+                    "identifier": listen.get("identifier"),
+                    "title": listen.get("track_name"),
+                }
+            )
+            self._log.debug(f"track: {tracks[-1]}")
+        return self.get_track_info(tracks)
 
     def get_playlists_createdfor(self, username):
         """Returns a list of playlists created by a user."""
