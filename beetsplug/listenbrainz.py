@@ -121,7 +121,7 @@ class ListenBrainzPlugin(BeetsPlugin):
                 {
                     "release_name": track["track_metadata"].get("release_name"),
                     "name": track["track_metadata"].get("track_name"),
-                    "artist": track["track_metadata"].get("artist_name"),
+                    "artist": {"name": track["track_metadata"].get("artist_name")},
                     "mbid": mbid_mapping.get("recording_mbid"),
                     "release_mbid": mbid_mapping.get("release_mbid"),
                     "listened_at": track.get("listened_at"),
