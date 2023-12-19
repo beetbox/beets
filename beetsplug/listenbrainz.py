@@ -106,9 +106,12 @@ class ListenBrainzPlugin(BeetsPlugin):
         tracks = []
         for track in listens:
             self._log.debug(
-                f"{track['track_metadata']['release_name']} - {track['track_metadata']['track_name']}, "
-                f"Release MBID: {track['track_metadata'].get('additional_info', 'No additional info')}, "
-                f"listened at {track['listened_at']}"
+                "{0} - {1}, artist: {2}, listened at {3}".format(
+                    track["track_metadata"]["release_name"],
+                    track["track_metadata"]["track_name"],
+                    track["track_metadata"]["artist_name"],
+                    track["listened_at"],
+                )
             )
 
     def get_playlists_createdfor(self, username):
