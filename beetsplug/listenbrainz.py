@@ -106,18 +106,17 @@ class ListenBrainzPlugin(BeetsPlugin):
     def get_tracks_from_listens(self, listens):
         tracks = []
         for track in listens:
-            #print(json.dumps(track, indent=4))
+            mbid_mapping = track["track_metadata"].get("mbid_mapping", {})
             tracks.append(
                 {
-                    "release_name": track["track_metadata"]["release_name"],
-                    "track_name": track["track_metadata"]["track_name"],
-                    "artist_name": track["track_metadata"]["artist_name"],
-                    "recording_mbid": track["track_metadata"]["mbid_mapping"]["recording_mbid"],
-                    "release_mbid": track["track_metadata"]["mbid_mapping"]["release_mbid"],
-                    "listened_at": track["listened_at"],
+                    "release_name": track["track_metadata"].get("release_name"),
+                    "track_name": track["track_metadata"].get("track_name"),
+                    "artist_name": track["track_metadata"].get("artist_name"),
+                    "recording_mbid": mbid_mapping.get("recording_mbid"),
+                    "release_mbid": mbid_mapping.get("release_mbid"),
+                    "listened_at": track.get("listened_at"),
                 }
             )
-            #self.lookup_metadata(tracks[-1])
         return tracks
 
     def lookup_metadata(self, track) -> dict:
