@@ -119,15 +119,19 @@ class ListenBrainzPlugin(BeetsPlugin):
             if track["track_metadata"].get("release_name") is None:
                 continue
             mbid_mapping = track["track_metadata"].get("mbid_mapping", {})
-            #print(json.dumps(track, indent=4, sort_keys=True))
+            # print(json.dumps(track, indent=4, sort_keys=True))
             if mbid_mapping.get("recording_mbid") is None:
                 # search for the track using title and release
                 mbid = self.get_mb_recording_id(track)
             tracks.append(
                 {
-                    "album": {"name": track["track_metadata"].get("release_name")},
+                    "album": {
+                        "name": track["track_metadata"].get("release_name")
+                    },
                     "name": track["track_metadata"].get("track_name"),
-                    "artist": {"name": track["track_metadata"].get("artist_name")},
+                    "artist": {
+                        "name": track["track_metadata"].get("artist_name")
+                    },
                     "mbid": mbid,
                     "release_mbid": mbid_mapping.get("release_mbid"),
                     "listened_at": track.get("listened_at"),
@@ -138,10 +142,10 @@ class ListenBrainzPlugin(BeetsPlugin):
     def get_mb_recording_id(self, track):
         """Returns the MusicBrainz recording ID for a track."""
         resp = musicbrainzngs.search_recordings(
-                    query=track["track_metadata"].get("track_name"),
-                    release=track["track_metadata"].get("release_name"),
-                    strict=True
-                )
+            query=track["track_metadata"].get("track_name"),
+            release=track["track_metadata"].get("release_name"),
+            strict=True,
+        )
         if resp.get("recording-count") == "1":
             return resp.get("recording-list")[0].get("id")
         else:
