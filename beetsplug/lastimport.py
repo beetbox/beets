@@ -213,7 +213,11 @@ def process_tracks(lib, tracks, log):
         title = tracks[num]["name"].strip() if tracks[num]["name"] else None
         album = ""
         if "album" in tracks[num]:
-            album = tracks[num]["album"].get("name", "").strip()
+            album = (
+                tracks[num]["album"].get("name", "").strip()
+                if tracks[num]["album"]
+                else None
+            )
 
         log.debug("query: {0} - {1} ({2})", artist, title, album)
 
