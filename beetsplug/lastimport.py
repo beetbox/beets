@@ -204,9 +204,13 @@ def process_tracks(lib, tracks, log):
 
     for num in range(0, total):
         song = None
-        trackid = tracks[num]["mbid"].strip() or None
-        artist = tracks[num]["artist"].get("name", "").strip() or None
-        title = tracks[num]["name"].strip() or None
+        trackid = tracks[num]["mbid"].strip() if tracks[num]["mbid"] else None
+        artist = (
+            tracks[num]["artist"].get("name", "").strip()
+            if tracks[num]["artist"].get("name", "")
+            else None
+        )
+        title = tracks[num]["name"].strip() if tracks[num]["name"] else None
         album = ""
         if "album" in tracks[num]:
             album = tracks[num]["album"].get("name", "").strip()
