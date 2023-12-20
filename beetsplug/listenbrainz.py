@@ -145,7 +145,6 @@ class ListenBrainzPlugin(BeetsPlugin):
         if resp.get("recording-count") == "1":
             return resp.get("recording-list")[0].get("id")
         else:
-            self._log.debug(f"Invalid Search Error: {resp}")
             return None
 
     def get_playlists_createdfor(self, username):
