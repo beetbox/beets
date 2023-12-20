@@ -223,6 +223,17 @@ def process_tracks(lib, tracks, log):
                 dbcore.query.MatchQuery("mb_trackid", trackid)
             ).get()
 
+        # If not, try just album/title
+        if song is None:
+            log.debug("no album match, trying by album/title")
+            query = dbcore.AndQuery(
+                [
+                    dbcore.query.SubstringQuery("album", album),
+                    dbcore.query.SubstringQuery("title", title),
+                ]
+            )
+            song = lib.items(query).get()
+
         # If not, try just artist/title
         if song is None:
             log.debug("no album match, trying by artist/title")
