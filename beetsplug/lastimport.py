@@ -225,7 +225,9 @@ def process_tracks(lib, tracks, log):
 
         # If not, try just album/title
         if song is None:
-            log.debug("no album match, trying by album/title")
+            log.debug(
+                "no album match, trying by album/title: {0} - {1}", album, title
+            )
             query = dbcore.AndQuery(
                 [
                     dbcore.query.SubstringQuery("album", album),
