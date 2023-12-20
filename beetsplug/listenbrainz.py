@@ -128,7 +128,7 @@ class ListenBrainzPlugin(BeetsPlugin):
                     artist=track["track_metadata"].get("artist_name"),
                     limit=5, strict=True,
                 )
-                self._log.debug(print(json.dumps(resp, indent=4, sort_keys=True)))
+                print(json.dumps(resp, indent=4, sort_keys=True))
             tracks.append(
                 {
                     "release_name": track["track_metadata"].get("release_name"),
