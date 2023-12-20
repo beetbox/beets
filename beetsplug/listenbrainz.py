@@ -126,6 +126,7 @@ class ListenBrainzPlugin(BeetsPlugin):
                     query=track["track_metadata"].get("track_name"),
                     release=track["track_metadata"].get("release_name"),
                     artist=track["track_metadata"].get("artist_name"),
+                    limit=5, strict=True,
                 )
                 self._log.debug(print(json.dumps(resp, indent=4, sort_keys=True)))
             tracks.append(
@@ -139,6 +140,7 @@ class ListenBrainzPlugin(BeetsPlugin):
                 }
             )
         return tracks
+
 
     def get_playlists_createdfor(self, username):
         """Returns a list of playlists created by a user."""
