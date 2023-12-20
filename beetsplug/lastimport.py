@@ -248,7 +248,7 @@ def process_tracks(lib, tracks, log):
 
         if song is not None:
             count = int(song.get("play_count", 0))
-            new_count = int(tracks[num]["playcount"])
+            new_count = int(tracks[num]["playcount"]) if tracks[num]["playcount"] else 1
             log.debug(
                 "match: {0} - {1} ({2}) " "updating: play_count {3} => {4}",
                 song.artist,
