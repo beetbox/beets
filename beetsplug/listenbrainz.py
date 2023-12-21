@@ -1,6 +1,4 @@
-"""
-Adds Listenbrainz support to Beets.
-"""
+""" Adds Listenbrainz support to Beets. """
 
 import datetime
 
@@ -12,10 +10,12 @@ from beetsplug.lastimport import process_tracks
 
 
 class ListenBrainzPlugin(BeetsPlugin):
+    """ A Beets plugin for interacting with ListenBrainz."""
     data_source = "ListenBrainz"
     ROOT = "http://api.listenbrainz.org/1/"
 
     def __init__(self):
+        """Initialize the plugin."""
         super().__init__()
         self.token = self.config["token"].get()
         self.username = self.config["username"].get()
@@ -29,7 +29,6 @@ class ListenBrainzPlugin(BeetsPlugin):
         )
 
         def func(lib, opts, args):
-            items = lib.items(ui.decargs(args))
             self._lbupdate(lib, self._log)
 
         lbupdate_cmd.func = func
@@ -51,6 +50,7 @@ class ListenBrainzPlugin(BeetsPlugin):
         log.info("{0} play-counts imported", found_total)
 
     def _make_request(self, url, params=None):
+        """Makes a request to the ListenBrainz API."""
         try:
             response = requests.get(
                 url=url,
@@ -101,19 +101,9 @@ class ListenBrainzPlugin(BeetsPlugin):
         else:
             return None
 
-    # write a function to return all the listens in the followign JSON format:
-    """JSON format:
-    [
-        {
-            "mbid": "...",
-            "artist": "...",
-            "title": "...",
-            "playcount": "..."
-        }
-    ]
-    """
 
     def get_tracks_from_listens(self, listens):
+        """Returns a list of tracks from a list of listens."""
         tracks = []
         for track in listens:
             if track["track_metadata"].get("release_name") is None:
@@ -157,6 +147,7 @@ class ListenBrainzPlugin(BeetsPlugin):
         return self._make_request(url)
 
     def get_listenbrainz_playlists(self):
+        """Returns a list of playlists created by ListenBrainz."""
         resp = self.get_playlists_createdfor(self.username)
         playlists = resp.get("playlists")
         listenbrainz_playlists = []
@@ -196,6 +187,7 @@ class ListenBrainzPlugin(BeetsPlugin):
         return self.get_track_info(tracks)
 
     def get_track_info(self, tracks):
+        """Returns a list of track info."""
         track_info = []
         for track in tracks:
             identifier = track.get("identifier")
