@@ -2,12 +2,12 @@
 Adds Listenbrainz support to Beets.
 """
 
-import json
-import requests
 import datetime
+
+import musicbrainzngs
+import requests
 from beets import config, ui
 from beets.plugins import BeetsPlugin
-import musicbrainzngs
 from beetsplug.lastimport import process_tracks
 
 
