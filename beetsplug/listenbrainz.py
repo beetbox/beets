@@ -1,4 +1,4 @@
-""" Adds Listenbrainz support to Beets. """
+"""Adds Listenbrainz support to Beets."""
 
 import datetime
 
