@@ -101,6 +101,7 @@ following to your configuration::
    lastgenre
    lastimport
    limit
+   listenbrainz
    loadext
    lyrics
    mbcollection
