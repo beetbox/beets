@@ -83,7 +83,7 @@ replace:
 
 aunique:
     keys: albumartist album
-    disambiguators: albumtype year label catalognum albumdisambig releasegroupdisambig
+    disambiguators: year label catalognum albumdisambig releasegroupdisambig
     bracket: '[]'
 
 sunique:
