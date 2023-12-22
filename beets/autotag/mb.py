@@ -554,8 +554,11 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
     # feature before MusicBrainz supported multiple release types.
     if "type" in release["release-group"]:
         reltype = release["release-group"]["type"]
-        if reltype:
-            info.albumtype = reltype.lower()
+        log.debug(
+            "MusicBrainz release-group.type received but ignoring in favor of"
+            "new-style primary/secondary release-types:",
+            reltype,
+        )
 
     # Set the new-style "primary" and "secondary" release types.
     albumtypes = []
