@@ -279,6 +279,8 @@ Bug fixes:
   :bug:`4973`
 * Fix bug regarding displaying tracks that have been changed not being
   displayed unless the detail configuration is enabled.
+* :doc:`/plugins/web`: Fix range request support, allowing to play large audio/
+  opus files using e.g. a browser/firefox or gstreamer/mopidy directly.
 
 For plugin developers:
 
