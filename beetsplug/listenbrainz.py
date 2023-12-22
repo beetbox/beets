@@ -160,8 +160,11 @@ class ListenBrainzPlugin(BeetsPlugin):
                 playlist_type = (
                     "Exploration" if "Exploration" in title else "Jams"
                 )
-                date_str = title.split("week of ")[1].split(" ")[0]
-                date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+                if "week of " in title:
+                    date_str = title.split("week of ")[1].split(" ")[0]
+                    date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+                else:
+                    date = None
                 identifier = playlist_info.get("identifier")
                 id = identifier.split("/")[-1]
                 listenbrainz_playlists.append(
