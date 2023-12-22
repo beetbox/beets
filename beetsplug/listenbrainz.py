@@ -149,6 +149,7 @@ class ListenBrainzPlugin(BeetsPlugin):
 
     def get_listenbrainz_playlists(self):
         """Returns a list of playlists created by ListenBrainz."""
+        import re
         resp = self.get_playlists_createdfor(self.username)
         playlists = resp.get("playlists")
         listenbrainz_playlists = []
@@ -157,9 +158,15 @@ class ListenBrainzPlugin(BeetsPlugin):
             playlist_info = playlist.get("playlist")
             if playlist_info.get("creator") == "listenbrainz":
                 title = playlist_info.get("title")
-                playlist_type = (
-                    "Exploration" if "Exploration" in title else "Jams"
-                )
+                match = re.search(r"(Missed Recordings of \d{4}|Discoveries of \d{4})", title)
+                if "Exploration" in title:
+                    playlist_type = "Exploration"
+                elif "Jams" in title:
+                    playlist_type = "Jams"
+                elif match:
+                    playlist_type = match.group(1)
+                else:
+                    playlist_type = None
                 if "week of " in title:
                     date_str = title.split("week of ")[1].split(" ")[0]
                     date = datetime.datetime.strptime(
@@ -169,9 +176,10 @@ class ListenBrainzPlugin(BeetsPlugin):
                     date = None
                 identifier = playlist_info.get("identifier")
                 id = identifier.split("/")[-1]
-                listenbrainz_playlists.append(
+                if playlist_type in ["Jams", "Exploration"]:
+                    listenbrainz_playlists.append(
                     {"type": playlist_type, "date": date, "identifier": id}
-                )
+                    )
         return listenbrainz_playlists
 
     def get_playlist(self, identifier):
