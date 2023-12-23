@@ -336,6 +336,7 @@ def item_file(item_id):
     response = flask.send_file(
         item_path, as_attachment=True, download_name=safe_filename
     )
+    response.headers["Content-Length"] = os.path.getsize(item_path)
     return response
 
 
