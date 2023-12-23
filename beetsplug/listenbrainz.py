@@ -181,7 +181,12 @@ class ListenBrainzPlugin(BeetsPlugin):
                 id = identifier.split("/")[-1]
                 if playlist_type in ["Jams", "Exploration"]:
                     listenbrainz_playlists.append(
-                        {"type": playlist_type, "date": date, "identifier": id}
+                        {
+                            "type": playlist_type,
+                            "date": date,
+                            "identifier": id,
+                            "title": title,
+                        }
                     )
         return listenbrainz_playlists
 
@@ -241,6 +246,7 @@ class ListenBrainzPlugin(BeetsPlugin):
         """Returns a list of weekly playlists based on the index."""
         playlists = self.get_listenbrainz_playlists()
         playlist = self.get_playlist(playlists[index].get("identifier"))
+        self._log.info(f"Getting {playlist.get('playlist').get('title')}")
         return self.get_tracks_from_playlist(playlist)
 
     def get_weekly_exploration(self):
