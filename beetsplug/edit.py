@@ -155,13 +155,10 @@ class EditPlugin(plugins.BeetsPlugin):
             }
         )
 
-        self.readonly_fields = {}
+        self.has_shown_ui = False
 
         self.register_listener(
             "before_choose_candidate", self.before_choose_candidate_listener
-        )
-        self.register_listener(
-            "import_begin", self.import_begin_listener
         )
 
     def commands(self):
@@ -242,13 +239,14 @@ class EditPlugin(plugins.BeetsPlugin):
         old_data = [flatten(o, fields) for o in objs]
 
         # take set fields into account
-        if self.readonly_fields:
-            old_str = "# note: the following fields will be reset to their current values:\n"
-            for key in self.readonly_fields:
+        set_fields = config["import"]["set_fields"]
+        if set_fields and not self.has_shown_ui:
+            old_str = "\n\n# note: the following fields will be reset to their current values:\n"
+            for key in set_fields:
                 old_str += f"# - {key}\n"
             for obj in old_data:
                 # those values will be enforced later anyway
-                obj.update(self.readonly_fields)
+                obj.update({k:v.get() for k,v in set_fields.items()})
         else:
             old_str = ""
 
@@ -256,7 +254,7 @@ class EditPlugin(plugins.BeetsPlugin):
         new = NamedTemporaryFile(
             mode="w", suffix=".yaml", delete=False, encoding="utf-8"
         )
-        old_str += dump(old_data)
+        old_str = dump(old_data) + old_str
         new.write(old_str)
         new.close()
 
@@ -265,6 +263,7 @@ class EditPlugin(plugins.BeetsPlugin):
             while True:
                 # Ask the user to edit the data.
                 edit(new.name, self._log)
+                self.has_shown_ui = True
 
                 # Read the data back after editing and check whether anything
                 # changed.
@@ -373,12 +372,6 @@ class EditPlugin(plugins.BeetsPlugin):
             )
 
         return choices
-
-    def import_begin_listener(self, session):
-        """Load data from import session into self"""
-        self.readonly_fields = {}
-        for field, view in config["import"]["set_fields"].items():
-            self.readonly_fields[field] = view.get()
 
     def importer_edit(self, session, task):
         """Callback for invoking the functionality during an interactive
