@@ -238,28 +238,33 @@ class EditPlugin(plugins.BeetsPlugin):
         old_data = [flatten(o, fields) for o in objs]
 
         # the following few paragraphs do the following:
-        # take set fields into account, by setting their values, commenting them out, and annotating them
-        # also pruning the "id" and "path" fields, which can only contain placeholders at this time
+        # take set fields into account, by setting their values, commenting them out,
+        # and annotating them
+        # also pruning the "id" and "path" fields, which can only contain placeholders
+        # at this time
 
         # prepare regex matching
         # the following regex detects yaml lines setting values for 'id' or 'path'
         placeholder_field_detector = re.compile(r"\s*(-\s+)?(id|path):(\s+.*)?")
         set_fields = config["import"]["set_fields"]
         if set_fields:
-            # a similar regex, but for setting values for any field in the set_fields list
-            ro_field_detector = re.compile(r"\s*(-\s+)?({0:s}):(\s+.*)?".format(
-                '|'.join(re.escape(key) for key in set_fields.keys())
-            ))
+            # a similar regex, but for setting values for any field
+            # in the set_fields list
+            ro_field_detector = re.compile(
+                r"\s*(-\s+)?({0:s}):(\s+.*)?".format(
+                    "|".join(re.escape(key) for key in set_fields.keys())
+                )
+            )
 
-        # deal with the values of the set fields
+            # deal with the values of the set fields
             for obj in old_data:
-                obj.update({k:v.get() for k,v in set_fields.items()})
+                obj.update({k: v.get() for k, v in set_fields.items()})
         else:
             ro_field_detector = None
             # will in theory never be read, this is just to make static analysis happy
 
         # convert to text, then comment/annotate/prune lines
-        old_data_lines = dump(old_data).split('\n')
+        old_data_lines = dump(old_data).split("\n")
 
         line_i = 0
         while line_i < len(old_data_lines):
@@ -267,11 +272,11 @@ class EditPlugin(plugins.BeetsPlugin):
             if set_fields and ro_field_detector.fullmatch(line):
                 line = "#" + line + "   # [read-only field]"
                 old_data_lines[line_i] = line
-                line_i +=1
+                line_i += 1
             elif placeholder_field_detector.fullmatch(line):
                 del old_data_lines[line_i]
             else:
-                line_i +=1
+                line_i += 1
 
         old_str = "\n".join(old_data_lines)
 
@@ -305,14 +310,18 @@ class EditPlugin(plugins.BeetsPlugin):
                         continue
                     else:
                         return False
-                # this makes the missing fields of new_data 'default to' the values in old_data
-                new_data = [ old_obj | new_obj for old_obj,new_obj in zip(old_data,new_data)]
+                # this makes the missing fields of new_data 'default to'
+                # the values in old_data
+                new_data = [
+                    old_obj | new_obj
+                    for old_obj, new_obj in zip(old_data, new_data)
+                ]
 
                 # see if any changes to the data need to be discarded:
                 for field in list(set_fields.keys()) + ["id", "path"]:
                     changed = False
                     for old_obj, new_obj in zip(old_data, new_data):
-                        if old_obj.get(field,'') != new_obj.get(field,''):
+                        if old_obj.get(field, "") != new_obj.get(field, ""):
                             changed = True
                             if field in old_obj:
                                 new_obj[field] = old_obj[field]
@@ -320,21 +329,27 @@ class EditPlugin(plugins.BeetsPlugin):
                                 del new_obj[field]
                     if changed:
                         # TODO: colors?
-                        if field in ('id','path'):
-                            ui.print_(ui.colorize(
-                                "text_warning",
-                                f"NOTICE: the field \"{field:s}\" is read-only "
-                                "because it can only contain placeholder values at this time.\n"
-                                "The values you have manually set will have to be discarded."
-                            ))
+                        if field in ("id", "path"):
+                            ui.print_(
+                                ui.colorize(
+                                    "text_warning",
+                                    f'NOTICE: the field "{field:s}" is read-only '
+                                    "because it can only contain placeholder values "
+                                    "at this time.\nThe values you have manually set "
+                                    "will have to be discarded.",
+                                )
+                            )
                         else:
-                            ui.print_(ui.colorize(
-                                "text_warning",
-                                f"NOTICE: the field \"{field:s}\" is read-only "
-                                "because a value for it was set through the `--set` "
-                                "command line arguemnt or an equivalent in beets's configuration.\n"
-                                "The manual changes you have made to it will have to be discarded."
-                            ))
+                            ui.print_(
+                                ui.colorize(
+                                    "text_warning",
+                                    f'NOTICE: the field "{field:s}" is read-only '
+                                    "because a value for it was set through the `--set` "
+                                    "command line arguemnt or an equivalent in beets's "
+                                    "configuration.\nThe manual changes you have made "
+                                    "to it will have to be discarded.",
+                                )
+                            )
 
                 # Show the changes.
                 # If the objects are not on the DB yet, we need a copy of their
