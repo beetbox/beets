@@ -310,17 +310,16 @@ class EditPlugin(plugins.BeetsPlugin):
                         continue
                     else:
                         return False
-                # this makes the missing fields of new_data 'default to'
-                # the values in old_data
-                new_data = [
-                    old_obj | new_obj
-                    for old_obj, new_obj in zip(old_data, new_data)
-                ]
 
                 # see if any changes to the data need to be discarded:
                 for field in list(set_fields.keys()) + ["id", "path"]:
                     changed = False
                     for old_obj, new_obj in zip(old_data, new_data):
+                        if field in old_obj and field not in new_obj:
+                            # only copy 'missing fields' if they are missing
+                            # due to us pruning/commenting them out in the editable
+                            # text
+                            new_obj[field] = old_obj[field]
                         if old_obj.get(field, "") != new_obj.get(field, ""):
                             changed = True
                             if field in old_obj:
@@ -344,7 +343,7 @@ class EditPlugin(plugins.BeetsPlugin):
                                 ui.colorize(
                                     "text_warning",
                                     f'NOTICE: the field "{field:s}" is read-only '
-                                    "because a value for it was set through the `--set` "
+                                    "because it was set through the `--set` "
                                     "command line arguemnt or an equivalent in beets's "
                                     "configuration.\nThe manual changes you have made "
                                     "to it will have to be discarded.",
