@@ -22,8 +22,6 @@ import time
 import unittest
 from contextlib import contextmanager
 
-# Mangle the search path to include the beets sources.
-sys.path.insert(0, "..")
 import beets  # noqa: E402
 import beets.library  # noqa: E402
 
