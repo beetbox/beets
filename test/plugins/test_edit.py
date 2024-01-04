@@ -15,8 +15,7 @@
 import codecs
 import unittest
 from test import _common
-from test.helper import TestHelper, control_stdin
-from test.test_importer import AutotagStub, ImportHelper
+from test.helper import AutotagStub, ImportHelper, TestHelper, control_stdin
 from test.test_ui_importer import TerminalImportSessionSetup
 from unittest.mock import patch
 

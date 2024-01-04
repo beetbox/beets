@@ -47,7 +47,7 @@ from mediafile import Image, MediaFile
 
 import beets
 import beets.plugins
-from beets import config, importer, logging, util
+from beets import autotag, config, importer, logging, util
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Album, Item, Library
 from beets.util import MoveOperation, bytestring_path, syspath
@@ -496,6 +496,115 @@ class TestHelper:
         return path
 
 
+class ImportHelper(TestHelper):
+    """Provides tools to setup a library, a directory containing files that are
+    to be imported and an import session. The class also provides stubs for the
+    autotagging library and several assertions for the library.
+    """
+
+    def setup_beets(self, disk=False):
+        super().setup_beets(disk)
+        self.lib.path_formats = [
+            ("default", os.path.join("$artist", "$album", "$title")),
+            ("singleton:true", os.path.join("singletons", "$title")),
+            ("comp:true", os.path.join("compilations", "$album", "$title")),
+        ]
+
+    def _create_import_dir(self, count=3):
+        """Creates a directory with media files to import.
+        Sets ``self.import_dir`` to the path of the directory. Also sets
+        ``self.import_media`` to a list :class:`MediaFile` for all the files in
+        the directory.
+
+        The directory has following layout
+          the_album/
+            track_1.mp3
+            track_2.mp3
+            track_3.mp3
+
+        :param count:  Number of files to create
+        """
+        self.import_dir = os.path.join(self.temp_dir, b"testsrcdir")
+        if os.path.isdir(syspath(self.import_dir)):
+            shutil.rmtree(syspath(self.import_dir))
+
+        album_path = os.path.join(self.import_dir, b"the_album")
+        os.makedirs(syspath(album_path))
+
+        resource_path = os.path.join(_common.RSRC, b"full.mp3")
+
+        metadata = {
+            "artist": "Tag Artist",
+            "album": "Tag Album",
+            "albumartist": None,
+            "mb_trackid": None,
+            "mb_albumid": None,
+            "comp": None,
+        }
+        self.media_files = []
+        for i in range(count):
+            # Copy files
+            medium_path = os.path.join(
+                album_path, bytestring_path("track_%d.mp3" % (i + 1))
+            )
+            shutil.copy(syspath(resource_path), syspath(medium_path))
+            medium = MediaFile(medium_path)
+
+            # Set metadata
+            metadata["track"] = i + 1
+            metadata["title"] = "Tag Title %d" % (i + 1)
+            for attr in metadata:
+                setattr(medium, attr, metadata[attr])
+            medium.save()
+            self.media_files.append(medium)
+        self.import_media = self.media_files
+
+    def _setup_import_session(
+        self,
+        import_dir=None,
+        delete=False,
+        threaded=False,
+        copy=True,
+        singletons=False,
+        move=False,
+        autotag=True,
+        link=False,
+        hardlink=False,
+    ):
+        config["import"]["copy"] = copy
+        config["import"]["delete"] = delete
+        config["import"]["timid"] = True
+        config["threaded"] = False
+        config["import"]["singletons"] = singletons
+        config["import"]["move"] = move
+        config["import"]["autotag"] = autotag
+        config["import"]["resume"] = False
+        config["import"]["link"] = link
+        config["import"]["hardlink"] = hardlink
+
+        self.importer = ImportSessionFixture(
+            self.lib,
+            loghandler=None,
+            query=None,
+            paths=[import_dir or self.import_dir],
+        )
+
+    def assert_file_in_lib(self, *segments):
+        """Join the ``segments`` and assert that this path exists in the
+        library directory.
+        """
+        self.assertExists(os.path.join(self.libdir, *segments))
+
+    def assert_file_not_in_lib(self, *segments):
+        """Join the ``segments`` and assert that this path does not
+        exist in the library directory.
+        """
+        self.assertNotExists(os.path.join(self.libdir, *segments))
+
+    def assert_lib_dir_empty(self):
+        self.assertEqual(len(os.listdir(syspath(self.libdir))), 0)
+
+
 class ImportSessionFixture(importer.ImportSession):
     """ImportSession that can be controlled programaticaly.
 
@@ -634,3 +743,105 @@ TRACK_INFO_FIELDS = [
     "data_source",
     "data_url",
 ]
+
+
+class AutotagStub:
+    """Stub out MusicBrainz album and track matcher and control what the
+    autotagger returns.
+    """
+
+    NONE = "NONE"
+    IDENT = "IDENT"
+    GOOD = "GOOD"
+    BAD = "BAD"
+    MISSING = "MISSING"
+    """Generate an album match for all but one track
+    """
+
+    length = 2
+    matching = IDENT
+
+    def install(self):
+        self.mb_match_album = autotag.mb.match_album
+        self.mb_match_track = autotag.mb.match_track
+        self.mb_album_for_id = autotag.mb.album_for_id
+        self.mb_track_for_id = autotag.mb.track_for_id
+
+        autotag.mb.match_album = self.match_album
+        autotag.mb.match_track = self.match_track
+        autotag.mb.album_for_id = self.album_for_id
+        autotag.mb.track_for_id = self.track_for_id
+
+        return self
+
+    def restore(self):
+        autotag.mb.match_album = self.mb_match_album
+        autotag.mb.match_track = self.mb_match_track
+        autotag.mb.album_for_id = self.mb_album_for_id
+        autotag.mb.track_for_id = self.mb_track_for_id
+
+    def match_album(self, albumartist, album, tracks, extra_tags):
+        if self.matching == self.IDENT:
+            yield self._make_album_match(albumartist, album, tracks)
+
+        elif self.matching == self.GOOD:
+            for i in range(self.length):
+                yield self._make_album_match(albumartist, album, tracks, i)
+
+        elif self.matching == self.BAD:
+            for i in range(self.length):
+                yield self._make_album_match(albumartist, album, tracks, i + 1)
+
+        elif self.matching == self.MISSING:
+            yield self._make_album_match(albumartist, album, tracks, missing=1)
+
+    def match_track(self, artist, title):
+        yield TrackInfo(
+            title=title.replace("Tag", "Applied"),
+            track_id="trackid",
+            artist=artist.replace("Tag", "Applied"),
+            artist_id="artistid",
+            length=1,
+            index=0,
+        )
+
+    def album_for_id(self, mbid):
+        return None
+
+    def track_for_id(self, mbid):
+        return None
+
+    def _make_track_match(self, artist, album, number):
+        return TrackInfo(
+            title="Applied Title %d" % number,
+            track_id="match %d" % number,
+            artist=artist,
+            length=1,
+            index=0,
+        )
+
+    def _make_album_match(self, artist, album, tracks, distance=0, missing=0):
+        if distance:
+            id = " " + "M" * distance
+        else:
+            id = ""
+        if artist is None:
+            artist = "Various Artists"
+        else:
+            artist = artist.replace("Tag", "Applied") + id
+        album = album.replace("Tag", "Applied") + id
+
+        track_infos = []
+        for i in range(tracks - missing):
+            track_infos.append(self._make_track_match(artist, album, i + 1))
+
+        return AlbumInfo(
+            artist=artist,
+            album=album,
+            tracks=track_infos,
+            va=False,
+            album_id="albumid" + id,
+            artist_id="artistid" + id,
+            albumtype="soundtrack",
+            data_source="match_source",
+        )

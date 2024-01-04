@@ -73,7 +73,7 @@ class TerminalImportSessionFixture(TerminalImportSession):
 
 
 class TerminalImportSessionSetup:
-    """Overwrites test_importer.ImportHelper to provide a terminal importer"""
+    """Overwrites ImportHelper._setup_import_session to provide a terminal importer"""
 
     def _setup_import_session(
         self,
