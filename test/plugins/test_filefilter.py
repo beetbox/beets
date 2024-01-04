@@ -20,8 +20,7 @@ import os
 import shutil
 import unittest
 from test import _common
-from test.helper import capture_log
-from test.test_importer import ImportHelper
+from test.helper import ImportHelper, capture_log
 
 from mediafile import MediaFile
 

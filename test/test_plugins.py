@@ -19,7 +19,7 @@ import shutil
 import unittest
 from test import helper
 from test._common import RSRC
-from test.test_importer import AutotagStub, ImportHelper
+from test.helper import AutotagStub, ImportHelper
 from test.test_ui_importer import TerminalImportSessionSetup
 from unittest.mock import ANY, Mock, patch
 
