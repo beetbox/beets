@@ -19,8 +19,7 @@ import shutil
 import unittest
 from test import helper
 from test._common import RSRC
-from test.helper import AutotagStub, ImportHelper
-from test.test_ui_importer import TerminalImportSessionSetup
+from test.helper import AutotagStub, ImportHelper, TerminalImportSessionSetup
 from unittest.mock import ANY, Mock, patch
 
 from mediafile import MediaFile

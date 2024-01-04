@@ -50,6 +50,7 @@ import beets.plugins
 from beets import autotag, config, importer, logging, util
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Album, Item, Library
+from beets.ui.commands import TerminalImportSession
 from beets.util import MoveOperation, bytestring_path, syspath
 
 
@@ -668,6 +669,86 @@ class ImportSessionFixture(importer.ImportSession):
             task.should_remove_duplicates = True
         elif res == self.Resolution.MERGE:
             task.should_merge_duplicates = True
+
+
+class TerminalImportSessionFixture(TerminalImportSession):
+    def __init__(self, *args, **kwargs):
+        self.io = kwargs.pop("io")
+        super().__init__(*args, **kwargs)
+        self._choices = []
+
+    default_choice = importer.action.APPLY
+
+    def add_choice(self, choice):
+        self._choices.append(choice)
+
+    def clear_choices(self):
+        self._choices = []
+
+    def choose_match(self, task):
+        self._add_choice_input()
+        return super().choose_match(task)
+
+    def choose_item(self, task):
+        self._add_choice_input()
+        return super().choose_item(task)
+
+    def _add_choice_input(self):
+        try:
+            choice = self._choices.pop(0)
+        except IndexError:
+            choice = self.default_choice
+
+        if choice == importer.action.APPLY:
+            self.io.addinput("A")
+        elif choice == importer.action.ASIS:
+            self.io.addinput("U")
+        elif choice == importer.action.ALBUMS:
+            self.io.addinput("G")
+        elif choice == importer.action.TRACKS:
+            self.io.addinput("T")
+        elif choice == importer.action.SKIP:
+            self.io.addinput("S")
+        elif isinstance(choice, int):
+            self.io.addinput("M")
+            self.io.addinput(str(choice))
+            self._add_choice_input()
+        else:
+            raise Exception("Unknown choice %s" % choice)
+
+
+class TerminalImportSessionSetup:
+    """Overwrites ImportHelper._setup_import_session to provide a terminal importer"""
+
+    def _setup_import_session(
+        self,
+        import_dir=None,
+        delete=False,
+        threaded=False,
+        copy=True,
+        singletons=False,
+        move=False,
+        autotag=True,
+    ):
+        config["import"]["copy"] = copy
+        config["import"]["delete"] = delete
+        config["import"]["timid"] = True
+        config["threaded"] = False
+        config["import"]["singletons"] = singletons
+        config["import"]["move"] = move
+        config["import"]["autotag"] = autotag
+        config["import"]["resume"] = False
+
+        if not hasattr(self, "io"):
+            self.io = _common.DummyIO()
+        self.io.install()
+        self.importer = TerminalImportSessionFixture(
+            self.lib,
+            loghandler=None,
+            query=None,
+            io=self.io,
+            paths=[import_dir or self.import_dir],
+        )
 
 
 def generate_album_info(album_id, track_values):

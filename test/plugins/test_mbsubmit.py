@@ -17,11 +17,11 @@ import unittest
 from test.helper import (
     AutotagStub,
     ImportHelper,
+    TerminalImportSessionSetup,
     TestHelper,
     capture_stdout,
     control_stdin,
 )
-from test.test_ui_importer import TerminalImportSessionSetup
 
 
 class MBSubmitPluginTest(
