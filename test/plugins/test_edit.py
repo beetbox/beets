@@ -15,8 +15,13 @@
 import codecs
 import unittest
 from test import _common
-from test.helper import AutotagStub, ImportHelper, TestHelper, control_stdin
-from test.test_ui_importer import TerminalImportSessionSetup
+from test.helper import (
+    AutotagStub,
+    ImportHelper,
+    TerminalImportSessionSetup,
+    TestHelper,
+    control_stdin,
+)
 from unittest.mock import patch
 
 from beets.dbcore.query import TrueQuery
