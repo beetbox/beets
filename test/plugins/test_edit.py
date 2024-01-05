@@ -14,18 +14,18 @@
 
 import codecs
 import unittest
-from test import _common
-from test.helper import (
+from unittest.mock import patch
+
+from beets.dbcore.query import TrueQuery
+from beets.library import Item
+from beets.test import _common
+from beets.test.helper import (
     AutotagStub,
     ImportHelper,
     TerminalImportSessionSetup,
     TestHelper,
     control_stdin,
 )
-from unittest.mock import patch
-
-from beets.dbcore.query import TrueQuery
-from beets.library import Item
 from beetsplug.edit import EditPlugin
 
 

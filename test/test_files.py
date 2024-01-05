@@ -20,11 +20,11 @@ import shutil
 import stat
 import unittest
 from os.path import join
-from test import _common
-from test._common import item, touch
 
 import beets.library
 from beets import util
+from beets.test import _common
+from beets.test._common import item, touch
 from beets.util import MoveOperation, bytestring_path, syspath
 
 

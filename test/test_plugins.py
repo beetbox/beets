@@ -17,9 +17,6 @@ import itertools
 import os
 import shutil
 import unittest
-from test import helper
-from test._common import RSRC
-from test.helper import AutotagStub, ImportHelper, TerminalImportSessionSetup
 from unittest.mock import ANY, Mock, patch
 
 from mediafile import MediaFile
@@ -34,6 +31,13 @@ from beets.importer import (
 )
 from beets.library import Item
 from beets.plugins import MetadataSourcePlugin
+from beets.test import helper
+from beets.test._common import RSRC
+from beets.test.helper import (
+    AutotagStub,
+    ImportHelper,
+    TerminalImportSessionSetup,
+)
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.id_extractors import (
     beatport_id_regex,

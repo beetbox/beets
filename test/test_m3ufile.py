@@ -19,8 +19,8 @@ import unittest
 from os import path
 from shutil import rmtree
 from tempfile import mkdtemp
-from test._common import RSRC
 
+from beets.test._common import RSRC
 from beets.util import bytestring_path
 from beets.util.m3u import EmptyPlaylistError, M3UFile
 

@@ -25,14 +25,6 @@ import unittest
 from io import StringIO
 from tarfile import TarFile
 from tempfile import mkstemp
-from test import _common
-from test.helper import (
-    AutotagStub,
-    ImportHelper,
-    TestHelper,
-    capture_log,
-    has_program,
-)
 from unittest.mock import Mock, patch
 from zipfile import ZipFile
 
@@ -41,6 +33,14 @@ from mediafile import MediaFile
 from beets import config, importer, logging, util
 from beets.autotag import AlbumInfo, AlbumMatch, TrackInfo
 from beets.importer import albums_in_dir
+from beets.test import _common
+from beets.test.helper import (
+    AutotagStub,
+    ImportHelper,
+    TestHelper,
+    capture_log,
+    has_program,
+)
 from beets.util import bytestring_path, displayable_path, py3_path, syspath
 
 
