@@ -18,7 +18,6 @@ import itertools
 import os
 import re
 import unittest
-from test import _common
 from unittest.mock import MagicMock, patch
 
 import confuse
@@ -26,6 +25,7 @@ import requests
 
 from beets import logging, IncludeLazyConfig
 from beets.library import Item
+from beets.test import _common
 from beets.util import bytestring_path
 from beetsplug import lyrics
 

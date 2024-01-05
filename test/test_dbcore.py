@@ -20,9 +20,9 @@ import shutil
 import sqlite3
 import unittest
 from tempfile import mkstemp
-from test import _common
 
 from beets import dbcore
+from beets.test import _common
 
 # Fixture: concrete database and model classes. For migration tests, we
 # have multiple models with different numbers of fields.

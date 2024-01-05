@@ -40,9 +40,6 @@ from enum import Enum
 from io import StringIO
 from tempfile import mkdtemp, mkstemp
 
-# TODO Move AutotagMock here
-from test import _common
-
 from mediafile import Image, MediaFile
 
 import beets
@@ -50,6 +47,7 @@ import beets.plugins
 from beets import autotag, config, importer, logging, util
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Album, Item, Library
+from beets.test import _common
 from beets.ui.commands import TerminalImportSession
 from beets.util import MoveOperation, bytestring_path, syspath
 

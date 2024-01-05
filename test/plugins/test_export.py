@@ -19,9 +19,10 @@
 import json
 import re  # used to test csv format
 import unittest
-from test.helper import TestHelper
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
+
+from beets.test.helper import TestHelper
 
 
 class ExportPluginTest(unittest.TestCase, TestHelper):

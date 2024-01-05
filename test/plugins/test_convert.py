@@ -18,12 +18,12 @@ import os.path
 import re
 import sys
 import unittest
-from test import _common, helper
-from test.helper import capture_log, control_stdin
 
 from mediafile import MediaFile
 
 from beets import util
+from beets.test import _common, helper
+from beets.test.helper import capture_log, control_stdin
 from beets.util import bytestring_path, displayable_path
 
 

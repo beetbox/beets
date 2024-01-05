@@ -18,12 +18,12 @@
 import os
 import shutil
 import unittest
-from test import _common
 
 import mediafile
 
 from beets.library import Item
 from beets.plugins import BeetsPlugin
+from beets.test import _common
 from beets.util import bytestring_path, syspath
 
 field_extension = mediafile.MediaField(
