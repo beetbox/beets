@@ -17,9 +17,9 @@ import os.path
 import unittest
 from shutil import rmtree
 from tempfile import mkdtemp
-from test.helper import TestHelper
 from unittest.mock import Mock, call, patch
 
+from beets.test.helper import TestHelper
 from beets.util import bytestring_path, syspath
 from beetsplug.thumbnails import (
     LARGE_DIR,

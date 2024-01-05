@@ -17,8 +17,6 @@ import os.path
 import shutil
 import tempfile
 import unittest
-from test import _common
-from test.helper import TestHelper
 from test.plugins.test_art import FetchImageHelper
 from test.test_art_resize import DummyIMBackend
 from unittest.mock import MagicMock, patch
@@ -26,6 +24,8 @@ from unittest.mock import MagicMock, patch
 from mediafile import MediaFile
 
 from beets import art, config, logging, ui
+from beets.test import _common
+from beets.test.helper import TestHelper
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
 

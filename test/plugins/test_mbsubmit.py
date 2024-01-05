@@ -14,7 +14,8 @@
 
 
 import unittest
-from test.helper import (
+
+from beets.test.helper import (
     AutotagStub,
     ImportHelper,
     TerminalImportSessionSetup,

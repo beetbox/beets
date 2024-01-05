@@ -20,7 +20,8 @@ test_importer module. But here the test importer inherits from
 
 import unittest
 from test import test_importer
-from test.helper import TerminalImportSessionSetup
+
+from beets.test.helper import TerminalImportSessionSetup
 
 
 class NonAutotaggedImportTest(

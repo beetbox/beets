@@ -16,9 +16,9 @@
 
 
 import unittest
-from test.helper import TestHelper
 
 from beets import config, ui
+from beets.test.helper import TestHelper
 from beetsplug import bucket
 
 

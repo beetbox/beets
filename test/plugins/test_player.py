@@ -25,7 +25,6 @@ import threading
 import time
 import unittest
 from contextlib import contextmanager
-from test.helper import TestHelper
 
 # Mock GstPlayer so that the forked process doesn't attempt to import gi:
 from unittest import mock
@@ -33,6 +32,7 @@ from unittest import mock
 import confuse
 import yaml
 
+from beets.test.helper import TestHelper
 from beets.util import bluelet, py3_path
 from beetsplug import bpd
 

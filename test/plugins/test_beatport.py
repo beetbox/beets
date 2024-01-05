@@ -17,10 +17,10 @@
 
 import unittest
 from datetime import timedelta
-from test import _common
-from test.helper import TestHelper
 
 from beets import library
+from beets.test import _common
+from beets.test.helper import TestHelper
 from beetsplug import beatport
 
 

@@ -20,10 +20,10 @@ import re
 import subprocess
 import sys
 import unittest
-from test import _common
 from unittest.mock import Mock, patch
 
 from beets import util
+from beets.test import _common
 
 
 class UtilTest(unittest.TestCase):

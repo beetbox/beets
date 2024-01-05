@@ -18,7 +18,6 @@
 import time
 import unittest
 from datetime import datetime, timedelta
-from test import _common
 
 from beets.dbcore.query import (
     DateInterval,
@@ -26,6 +25,7 @@ from beets.dbcore.query import (
     InvalidQueryArgumentValueError,
     _parse_periods,
 )
+from beets.test import _common
 
 
 def _date(string):

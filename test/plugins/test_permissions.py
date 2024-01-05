@@ -4,10 +4,10 @@
 import os
 import platform
 import unittest
-from test._common import touch
-from test.helper import TestHelper
 from unittest.mock import Mock, patch
 
+from beets.test._common import touch
+from beets.test.helper import TestHelper
 from beets.util import displayable_path
 from beetsplug.permissions import (
     check_permissions,
