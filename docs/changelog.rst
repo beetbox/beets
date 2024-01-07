@@ -13,10 +13,11 @@ Major new features:
 
 * The beets importer UI received a major overhaul. Several new configuration
   options are available for customizing layout and colors: :ref:`ui_options`.
-  :bug:`3721`
+  :bug:`3721` :bug:`5028`
 
 New features:
 
+* :doc:`plugins/mbsubmit`: add new prompt choices helping further to submit unmatched tracks to MusicBrainz faster.
 * :doc:`plugins/spotify`: We now fetch track's ISRC, EAN, and UPC identifiers from Spotify when using the ``spotifysync`` command.
   :bug:`4992`
 * :doc:`plugins/discogs`: supply a value for the `cover_art_url` attribute, for use by `fetchart`.
@@ -145,9 +146,20 @@ New features:
   plugin which allows to replace fields based on a given library query.
 * :doc:`/plugins/lyrics`: Add LRCLIB as a new lyrics provider and a new
   `synced` option to prefer synced lyrics over plain lyrics.
+* :ref:`import-cmd`: Expose import.quiet_fallback as CLI option.
+* :ref:`import-cmd`: Expose `import.incremental_skip_later` as CLI option.
+* :doc:`/plugins/smartplaylist`: Expose config options as CLI options.
+* :doc:`/plugins/smartplaylist`: Add new option `smartplaylist.output`.
+* :doc:`/plugins/smartplaylist`: Add new option `smartplaylist.uri_format`.
+* Sorted the default configuration file into categories.
+  :bug:`4987`
 
 Bug fixes:
 
+* :doc:`/plugins/spotify`: Improve handling of ConnectionError.
+* :doc:`/plugins/deezer`: Improve Deezer plugin error handling and set requests timeout to 10 seconds.
+  :bug:`4983`
+* :doc:`/plugins/spotify`: Add bad gateway (502) error handling.
 * :doc:`/plugins/spotify`: Add a limit of 3 retries, instead of retrying endlessly when the API is not available.
 * Fix a crash when the Spotify API timeouts or does not return a `Retry-After` interval.
   :bug:`4942`
@@ -261,8 +273,23 @@ Bug fixes:
   :bug:`4822`
 * Fix bug where an interrupted import process poisons the database, causing
   a null path that can't be removed.
-* Fix bug where empty artist and title fields would return None instead of an
-  empty list in the discord plugin. :bug:`4973`
+  :bug:`4906`
+* :doc:`/plugins/discogs`: Fix bug where empty artist and title fields would
+  return None instead of an empty list.
+  :bug:`4973`
+* Fix bug regarding displaying tracks that have been changed not being
+  displayed unless the detail configuration is enabled.
+* :doc:`/plugins/web`: Fix range request support, allowing to play large audio/
+  opus files using e.g. a browser/firefox or gstreamer/mopidy directly.
+
+For plugin developers:
+
+* beets now explicitly prevents multiple plugins to define replacement
+  functions for the same field. When previously defining `template_fields`
+  for the same field in two plugins, the last loaded plugin would silently
+  overwrite the function defined by the other plugin.
+  Now, beets will raise an exception when this happens.
+  :bug:`5002`
 
 For packagers:
 

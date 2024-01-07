@@ -591,7 +591,7 @@ def colorize(color_name, text):
     """Colorize text if colored output is enabled. (Like _colorize but
     conditional.)
     """
-    if config["ui"]["color"]:
+    if config["ui"]["color"] and "NO_COLOR" not in os.environ:
         global COLORS
         if not COLORS:
             # Read all color configurations and set global variable COLORS.
@@ -858,7 +858,7 @@ def split_into_lines(string, width_tuple):
                     m.group("esc") + raw_word + RESET_COLOR
                     for raw_word in raw_words
                 ]
-            else:
+            elif raw_words:
                 # Pretext stops mid-word
                 if m.group("esc") != RESET_COLOR:
                     # Add the rest of the current word, with a reset after it

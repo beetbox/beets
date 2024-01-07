@@ -680,10 +680,13 @@ class AlbumChange(ChangeRepresentation):
                 # Save new medium details for future comparison.
                 medium, disctitle = track_info.medium, track_info.disctitle
 
-            if config["import"]["detail"]:
-                # Construct the line tuple for the track.
-                left, right = self.make_line(item, track_info)
+            # Construct the line tuple for the track.
+            left, right = self.make_line(item, track_info)
+            if right["contents"] != "":
                 lines.append((left, right))
+            else:
+                if config["import"]["detail"]:
+                    lines.append((left, right))
         self.print_tracklist(lines)
 
         # Missing and unmatched tracks.
@@ -1458,6 +1461,12 @@ import_cmd.parser.add_option(
     help="never prompt for input: skip albums instead",
 )
 import_cmd.parser.add_option(
+    "--quiet-fallback",
+    type="string",
+    dest="quiet_fallback",
+    help="decision in quiet mode when no strong match: skip or asis",
+)
+import_cmd.parser.add_option(
     "-l",
     "--log",
     dest="log",
@@ -1496,6 +1505,20 @@ import_cmd.parser.add_option(
     dest="incremental",
     action="store_false",
     help="do not skip already-imported directories",
+)
+import_cmd.parser.add_option(
+    "-R",
+    "--incremental-skip-later",
+    action="store_true",
+    dest="incremental_skip_later",
+    help="do not record skipped files during incremental import",
+)
+import_cmd.parser.add_option(
+    "-r",
+    "--noincremental-skip-later",
+    action="store_false",
+    dest="incremental_skip_later",
+    help="record skipped files during incremental import",
 )
 import_cmd.parser.add_option(
     "--from-scratch",

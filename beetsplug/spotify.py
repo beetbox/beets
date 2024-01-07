@@ -184,6 +184,9 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         except requests.exceptions.ReadTimeout:
             self._log.error("ReadTimeout.")
             raise SpotifyAPIError("Request timed out.")
+        except requests.exceptions.ConnectionError as e:
+            self._log.error(f"Network error: {e}")
+            raise SpotifyAPIError("Network error.")
         except requests.exceptions.RequestException as e:
             if e.response.status_code == 401:
                 self._log.debug(
@@ -217,6 +220,9 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             elif e.response.status_code == 503:
                 self._log.error("Service Unavailable.")
                 raise SpotifyAPIError("Service Unavailable.")
+            elif e.response.status_code == 502:
+                self._log.error("Bad Gateway.")
+                raise SpotifyAPIError("Bad Gateway.")
             elif e.response is not None:
                 raise SpotifyAPIError(
                     f"{self.data_source} API error:\n{e.response.text}\n"
