@@ -161,7 +161,7 @@ class AdvancedRewritePlugin(BeetsPlugin):
                             )
                     elif isinstance(replacement, str):
                         if Item._fields[fieldname] is MULTI_VALUE_DSV:
-                            replacement = list(replacement)
+                            replacement = [replacement]
                     else:
                         raise UserError(
                             f"Invalid type of replacement {replacement} "
