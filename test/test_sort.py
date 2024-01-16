@@ -16,10 +16,10 @@
 """
 
 import unittest
-from test import _common
 
 import beets.library
 from beets import config, dbcore
+from beets.test import _common
 
 
 # A test case class providing a library with some dummy data and some

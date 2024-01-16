@@ -16,9 +16,10 @@
 import time
 import unittest
 from datetime import datetime
-from test.helper import TestHelper
 
 from confuse import ConfigValueError
+
+from beets.test.helper import TestHelper
 
 
 class TypesPluginTest(unittest.TestCase, TestHelper):

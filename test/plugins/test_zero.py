@@ -2,11 +2,11 @@
 
 
 import unittest
-from test.helper import TestHelper, control_stdin
 
 from mediafile import MediaFile
 
 from beets.library import Item
+from beets.test.helper import TestHelper, control_stdin
 from beets.util import syspath
 from beetsplug.zero import ZeroPlugin
 

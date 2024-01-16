@@ -20,7 +20,6 @@ import sys
 import unittest
 from contextlib import contextmanager
 from functools import partial
-from test import _common, helper
 
 import beets.library
 from beets import dbcore, util
@@ -31,6 +30,7 @@ from beets.dbcore.query import (
     ParsingError,
 )
 from beets.library import Item, Library
+from beets.test import _common, helper
 from beets.util import syspath
 
 # Because the absolute path begins with something like C:, we

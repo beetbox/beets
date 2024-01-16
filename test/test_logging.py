@@ -5,12 +5,12 @@ import sys
 import threading
 import unittest
 from io import StringIO
-from test import _common, helper
-from test._common import TestCase
 
 import beets.logging as blog
 import beetsplug
 from beets import plugins, ui
+from beets.test import _common, helper
+from beets.test._common import TestCase
 
 
 class LoggingTest(TestCase):

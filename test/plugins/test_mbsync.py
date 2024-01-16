@@ -14,16 +14,16 @@
 
 
 import unittest
-from test.helper import (
+from unittest.mock import patch
+
+from beets import config
+from beets.library import Item
+from beets.test.helper import (
     TestHelper,
     capture_log,
     generate_album_info,
     generate_track_info,
 )
-from unittest.mock import patch
-
-from beets import config
-from beets.library import Item
 
 
 class MbsyncCliTest(unittest.TestCase, TestHelper):
