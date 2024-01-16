@@ -14,11 +14,11 @@
 
 import os
 import unittest
-from test import _common
-from test.helper import TestHelper
 from unittest.mock import Mock, patch
 
 from beets import library
+from beets.test import _common
+from beets.test.helper import TestHelper
 from beets.util import _fsencoding, bytestring_path
 from beetsplug.ipfs import IPFSPlugin
 

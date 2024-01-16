@@ -18,8 +18,6 @@
 import os
 import shutil
 import unittest
-from test import _common
-from test.helper import capture_log
 from unittest.mock import patch
 
 import confuse
@@ -27,6 +25,8 @@ import responses
 
 from beets import config, importer, library, logging, util
 from beets.autotag import AlbumInfo, AlbumMatch
+from beets.test import _common
+from beets.test.helper import capture_log
 from beets.util import syspath
 from beets.util.artresizer import ArtResizer
 from beetsplug import fetchart

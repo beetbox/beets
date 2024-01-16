@@ -17,14 +17,14 @@ import unittest
 from os import path, remove
 from shutil import rmtree
 from tempfile import mkdtemp
-from test import _common
-from test.helper import TestHelper
 from unittest.mock import MagicMock, Mock, PropertyMock
 
 from beets import config
 from beets.dbcore import OrQuery
 from beets.dbcore.query import FixedFieldSort, MultipleSort, NullSort
 from beets.library import Album, Item, parse_query_string
+from beets.test import _common
+from beets.test.helper import TestHelper
 from beets.ui import UserError
 from beets.util import CHAR_REPLACE, bytestring_path, py3_path, syspath
 from beetsplug.smartplaylist import SmartPlaylistPlugin

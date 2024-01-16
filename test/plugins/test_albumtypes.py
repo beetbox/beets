@@ -16,9 +16,9 @@
 
 
 import unittest
-from test.helper import TestHelper
 
 from beets.autotag.mb import VARIOUS_ARTISTS_ID
+from beets.test.helper import TestHelper
 from beetsplug.albumtypes import AlbumTypesPlugin
 
 

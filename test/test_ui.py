@@ -22,8 +22,6 @@ import shutil
 import subprocess
 import sys
 import unittest
-from test import _common
-from test.helper import TestHelper, capture_stdout, control_stdin, has_program
 from unittest.mock import Mock, patch
 
 from confuse import ConfigError
@@ -31,6 +29,13 @@ from mediafile import MediaFile
 
 from beets import autotag, config, library, plugins, ui, util
 from beets.autotag.match import distance
+from beets.test import _common
+from beets.test.helper import (
+    TestHelper,
+    capture_stdout,
+    control_stdin,
+    has_program,
+)
 from beets.ui import commands
 from beets.util import MoveOperation, syspath
 

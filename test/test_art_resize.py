@@ -17,10 +17,10 @@
 
 import os
 import unittest
-from test import _common
-from test.helper import TestHelper
 from unittest.mock import patch
 
+from beets.test import _common
+from beets.test.helper import TestHelper
 from beets.util import command_output, syspath
 from beets.util.artresizer import IMBackend, PILBackend
 

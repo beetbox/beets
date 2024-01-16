@@ -16,11 +16,11 @@
 """
 
 import unittest
-from test import _common
 from unittest import mock
 
 from beets import config
 from beets.autotag import mb
+from beets.test import _common
 
 
 class MBAlbumInfoTest(_common.TestCase):

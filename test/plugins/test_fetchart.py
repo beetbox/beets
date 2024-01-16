@@ -17,9 +17,9 @@ import ctypes
 import os
 import sys
 import unittest
-from test.helper import TestHelper
 
 from beets import util
+from beets.test.helper import TestHelper
 
 
 class FetchartCliTest(unittest.TestCase, TestHelper):

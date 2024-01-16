@@ -14,9 +14,15 @@
 
 
 import unittest
-from test.helper import TestHelper, capture_stdout, control_stdin
-from test.test_importer import AutotagStub, ImportHelper
-from test.test_ui_importer import TerminalImportSessionSetup
+
+from beets.test.helper import (
+    AutotagStub,
+    ImportHelper,
+    TerminalImportSessionSetup,
+    TestHelper,
+    capture_stdout,
+    control_stdin,
+)
 
 
 class MBSubmitPluginTest(

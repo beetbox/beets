@@ -2,13 +2,13 @@ import os
 import unittest
 from shutil import rmtree
 from tempfile import mkdtemp
-from test.helper import TestHelper
 from unittest.mock import patch
 
 import yaml
 
 from beets import config, ui
 from beets.library import Library
+from beets.test.helper import TestHelper
 
 
 class ConfigCommandTest(unittest.TestCase, TestHelper):
