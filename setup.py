@@ -85,6 +85,7 @@ setup(
     },
     install_requires=[
         "unidecode>=1.3.6",
+        "mbzero>=0.1",
         "musicbrainzngs>=0.4",
         "pyyaml",
         "mediafile>=0.12.0",
@@ -92,8 +93,7 @@ setup(
         "munkres>=1.0.0",
         "jellyfish",
         "typing_extensions",
-    ]
-    + (
+    ] + (
         # Support for ANSI console colors on Windows.
         ["colorama"]
         if (sys.platform == "win32")
