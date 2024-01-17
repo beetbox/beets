@@ -281,6 +281,10 @@ Bug fixes:
   displayed unless the detail configuration is enabled.
 * :doc:`/plugins/web`: Fix range request support, allowing to play large audio/
   opus files using e.g. a browser/firefox or gstreamer/mopidy directly.
+* Fix bug where `zsh` completion script made assumptions about the specific
+  variant of `awk` installed and required specific settings for `sqlite3`
+  and caching in `zsh`.
+  :bug:`3546`
 
 For plugin developers:
 
