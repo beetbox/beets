@@ -70,6 +70,7 @@ setup(
         "beets",
         "beets.autotag",
         "beets.dbcore",
+        "beets.test",
         "beets.ui",
         "beets.util",
         "beetsplug",
