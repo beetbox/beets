@@ -620,12 +620,26 @@ class LRCLibLyricsTest(unittest.TestCase):
         mock_get.return_value.json.return_value = mock_response
         mock_get.return_value.status_code = 200
 
+        self.plugin.config["synced"] = False
         lyrics = lrclib.fetch("la", "la", "la", 999)
         assert lyrics == mock_response["plainLyrics"]
 
         self.plugin.config["synced"] = True
         lyrics = lrclib.fetch("la", "la", "la", 999)
         assert lyrics == mock_response["syncedLyrics"]
+
+    @patch("beetsplug.lyrics.requests.get")
+    def test_fetch_synced_lyrics_fallback(self, mock_get):
+        mock_response = {
+            "syncedLyrics": "",
+            "plainLyrics": "la la la",
+        }
+        mock_get.return_value.json.return_value = mock_response
+        mock_get.return_value.status_code = 200
+
+        self.plugin.config["synced"] = True
+        lyrics = lrclib.fetch("la", "la", "la", 999)
+        assert lyrics == mock_response["plainLyrics"]
 
     @patch("beetsplug.lyrics.requests.get")
     def test_fetch_plain_lyrics(self, mock_get):
@@ -636,6 +650,7 @@ class LRCLibLyricsTest(unittest.TestCase):
         mock_get.return_value.json.return_value = mock_response
         mock_get.return_value.status_code = 200
 
+        self.plugin.config["synced"] = False
         lyrics = lrclib.fetch("la", "la", "la", 999)
 
         assert lyrics == mock_response["plainLyrics"]
