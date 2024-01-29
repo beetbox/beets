@@ -5,9 +5,9 @@
 
 
 import unittest
-from test.helper import TestHelper, capture_stdout
 
 from beets import logging
+from beets.test.helper import TestHelper, capture_stdout
 
 
 class BareascPluginTest(unittest.TestCase, TestHelper):

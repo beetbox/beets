@@ -24,15 +24,15 @@ import sys
 import time
 import unicodedata
 import unittest
-from test import _common
-from test._common import item
-from test.helper import TestHelper
 
 from mediafile import MediaFile, UnreadableFileError
 
 import beets.dbcore.query
 import beets.library
 from beets import config, plugins, util
+from beets.test import _common
+from beets.test._common import item
+from beets.test.helper import TestHelper
 from beets.util import bytestring_path, syspath
 
 # Shortcut to path normalization.

@@ -22,8 +22,6 @@ import time
 import unittest
 from contextlib import contextmanager
 
-# Mangle the search path to include the beets sources.
-sys.path.insert(0, "..")
 import beets  # noqa: E402
 import beets.library  # noqa: E402
 
@@ -35,12 +33,29 @@ from beets.ui import commands  # noqa: E402
 from beets.util import bytestring_path, syspath  # noqa: E402
 
 beetsplug.__path__ = [
-    os.path.abspath(os.path.join(__file__, "..", "..", "beetsplug"))
+    os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            os.path.pardir,
+            "beetsplug",
+        )
+    )
 ]
 
 # Test resources path.
-RSRC = util.bytestring_path(os.path.join(os.path.dirname(__file__), "rsrc"))
-PLUGINPATH = os.path.join(os.path.dirname(__file__), "rsrc", "beetsplug")
+RSRC = util.bytestring_path(
+    os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__),
+            os.path.pardir,
+            os.path.pardir,
+            "test",
+            "rsrc",
+        )
+    )
+)
+PLUGINPATH = os.path.join(RSRC.decode(), "beetsplug")
 
 # Propagate to root logger so the test runner can capture it
 log = logging.getLogger("beets")

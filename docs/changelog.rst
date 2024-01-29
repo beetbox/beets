@@ -281,6 +281,10 @@ Bug fixes:
   displayed unless the detail configuration is enabled.
 * :doc:`/plugins/web`: Fix range request support, allowing to play large audio/
   opus files using e.g. a browser/firefox or gstreamer/mopidy directly.
+* Fix bug where `zsh` completion script made assumptions about the specific
+  variant of `awk` installed and required specific settings for `sqlite3`
+  and caching in `zsh`.
+  :bug:`3546`
 
 For plugin developers:
 
@@ -290,6 +294,10 @@ For plugin developers:
   overwrite the function defined by the other plugin.
   Now, beets will raise an exception when this happens.
   :bug:`5002`
+* Allow reuse of some parts of beets' testing components. This may ease the
+  work for externally developed plugins or related software (e.g. the beets
+  plugin for Mopidy), if they need to create an in-memory instance of a beets
+  music library for their tests.
 
 For packagers:
 

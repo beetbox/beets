@@ -3,14 +3,14 @@
 
 import os
 import unittest
-from test import _common
-from test.helper import TestHelper
 from urllib.parse import parse_qs, urlparse
 
 import responses
 
 from beets import config
 from beets.library import Item
+from beets.test import _common
+from beets.test.helper import TestHelper
 from beetsplug import spotify
 
 
