@@ -58,11 +58,6 @@ class Environment:
 # Code generation helpers.
 
 
-def ex_lvalue(name):
-    """A variable load expression."""
-    return ast.Name(name, ast.Store())
-
-
 def ex_rvalue(name):
     """A variable store expression."""
     return ast.Name(name, ast.Load())
@@ -73,15 +68,6 @@ def ex_literal(val):
     value.
     """
     return ast.Constant(val)
-
-
-def ex_varassign(name, expr):
-    """Assign an expression into a single variable. The expression may
-    either be an `ast.expr` object or a value to be used as a literal.
-    """
-    if not isinstance(expr, ast.expr):
-        expr = ex_literal(expr)
-    return ast.Assign([ex_lvalue(name)], expr)
 
 
 def ex_call(func, args):
