@@ -156,6 +156,7 @@ New features:
 
 Bug fixes:
 
+* :doc:`/plugins/spotify`: Limit search query length to 100 characters. :bug:`5105`
 * :doc:`/plugins/spotify`: Improve handling of ConnectionError.
 * :doc:`/plugins/deezer`: Improve Deezer plugin error handling and set requests timeout to 10 seconds.
   :bug:`4983`
