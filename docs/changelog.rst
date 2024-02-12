@@ -285,6 +285,7 @@ Bug fixes:
   variant of `awk` installed and required specific settings for `sqlite3`
   and caching in `zsh`.
   :bug:`3546`
+* Remove unused functions :bug:`5103`
 
 For plugin developers:
 
