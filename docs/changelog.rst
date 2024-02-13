@@ -156,6 +156,8 @@ New features:
 
 Bug fixes:
 
+* :doc:`/plugins/spotify`: Prevent Spotify errors caused by long artist search strings.
+  :bug:`4893`
 * :doc:`/plugins/spotify`: Improve handling of ConnectionError.
 * :doc:`/plugins/deezer`: Improve Deezer plugin error handling and set requests timeout to 10 seconds.
   :bug:`4983`
