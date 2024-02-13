@@ -15,22 +15,22 @@
 """Allows inline path template customization code in the config file.
 """
 
-import traceback
 import itertools
+import traceback
 
-from beets.plugins import BeetsPlugin
 from beets import config
+from beets.plugins import BeetsPlugin
 
-FUNC_NAME = '__INLINE_FUNC__'
+FUNC_NAME = "__INLINE_FUNC__"
 
 
 class InlineError(Exception):
-    """Raised when a runtime error occurs in an inline expression.
-    """
+    """Raised when a runtime error occurs in an inline expression."""
+
     def __init__(self, code, exc):
         super().__init__(
-            ("error in inline path field code:\n"
-             "%s\n%s: %s") % (code, type(exc).__name__, str(exc))
+            ("error in inline path field code:\n" "%s\n%s: %s")
+            % (code, type(exc).__name__, str(exc))
         )
 
 
@@ -38,11 +38,8 @@ def _compile_func(body):
     """Given Python code for a function body, return a compiled
     callable that invokes that code.
     """
-    body = 'def {}():\n    {}'.format(
-        FUNC_NAME,
-        body.replace('\n', '\n    ')
-    )
-    code = compile(body, 'inline', 'exec')
+    body = "def {}():\n    {}".format(FUNC_NAME, body.replace("\n", "\n    "))
+    code = compile(body, "inline", "exec")
     env = {}
     eval(code, env)
     return env[FUNC_NAME]
@@ -52,23 +49,26 @@ class InlinePlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
 
-        config.add({
-            'pathfields': {},  # Legacy name.
-            'item_fields': {},
-            'album_fields': {},
-        })
+        config.add(
+            {
+                "pathfields": {},  # Legacy name.
+                "item_fields": {},
+                "album_fields": {},
+            }
+        )
 
         # Item fields.
-        for key, view in itertools.chain(config['item_fields'].items(),
-                                         config['pathfields'].items()):
-            self._log.debug('adding item field {0}', key)
+        for key, view in itertools.chain(
+            config["item_fields"].items(), config["pathfields"].items()
+        ):
+            self._log.debug("adding item field {0}", key)
             func = self.compile_inline(view.as_str(), False)
             if func is not None:
                 self.template_fields[key] = func
 
         # Album fields.
-        for key, view in config['album_fields'].items():
-            self._log.debug('adding album field {0}', key)
+        for key, view in config["album_fields"].items():
+            self._log.debug("adding album field {0}", key)
             func = self.compile_inline(view.as_str(), True)
             if func is not None:
                 self.album_template_fields[key] = func
@@ -81,14 +81,16 @@ class InlinePlugin(BeetsPlugin):
         """
         # First, try compiling as a single function.
         try:
-            code = compile(f'({python_code})', 'inline', 'eval')
+            code = compile(f"({python_code})", "inline", "eval")
         except SyntaxError:
             # Fall back to a function body.
             try:
                 func = _compile_func(python_code)
             except SyntaxError:
-                self._log.error('syntax error in inline field definition:\n'
-                                '{0}', traceback.format_exc())
+                self._log.error(
+                    "syntax error in inline field definition:\n" "{0}",
+                    traceback.format_exc(),
+                )
                 return
             else:
                 is_expr = False
@@ -98,7 +100,7 @@ class InlinePlugin(BeetsPlugin):
         def _dict_for(obj):
             out = dict(obj)
             if album:
-                out['items'] = list(obj.items())
+                out["items"] = list(obj.items())
             return out
 
         if is_expr:
@@ -109,6 +111,7 @@ class InlinePlugin(BeetsPlugin):
                     return eval(code, values)
                 except Exception as exc:
                     raise InlineError(python_code, exc)
+
             return _expr_func
         else:
             # For function bodies, invoke the function with values as global
@@ -123,4 +126,5 @@ class InlinePlugin(BeetsPlugin):
                 finally:
                     func.__globals__.clear()
                     func.__globals__.update(old_globals)
+
             return _func_func

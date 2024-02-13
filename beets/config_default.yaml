@@ -1,10 +1,34 @@
+# --------------- Main ---------------
+
 library: library.db
 directory: ~/Music
+statefile: state.pickle
+
+# --------------- Plugins ---------------
+
+plugins: []
+pluginpath: []
+
+# --------------- Import ---------------
+
+clutter: ["Thumbs.DB", ".DS_Store"]
+ignore: [".*", "*~", "System Volume Information", "lost+found"]
+ignore_hidden: yes
 
 import:
+    # common options
     write: yes
     copy: yes
     move: no
+    timid: no
+    quiet: no
+    log:
+    # other options
+    default_action: apply
+    languages: []
+    quiet_fallback: skip
+    none_rec_action: ask
+    # rare options
     link: no
     hardlink: no
     reflink: no
@@ -13,15 +37,8 @@ import:
     incremental: no
     incremental_skip_later: no
     from_scratch: no
-    quiet_fallback: skip
-    none_rec_action: ask
-    timid: no
-    log:
     autotag: yes
-    quiet: no
     singletons: no
-    default_action: apply
-    languages: []
     detail: no
     flat: no
     group_albums: no
@@ -37,10 +54,13 @@ import:
     ignored_alias_types: []
     singleton_album_disambig: yes
 
-clutter: ["Thumbs.DB", ".DS_Store"]
-ignore: [".*", "*~", "System Volume Information", "lost+found"]
-ignore_hidden: yes
+# --------------- Paths ---------------
 
+path_sep_replace: _
+drive_sep_replace: _
+asciify_paths: false
+art_filename: cover
+max_filename_length: 0
 replace:
     # Replace bad characters with _
     # prohibited in many filesystem paths
@@ -60,11 +80,6 @@ replace:
     # starting and closing whitespace
     '\s+$': ''
     '^\s+': ''
-path_sep_replace: _
-drive_sep_replace: _
-asciify_paths: false
-art_filename: cover
-max_filename_length: 0
 
 aunique:
     keys: albumartist album
@@ -76,34 +91,63 @@ sunique:
     disambiguators: year trackdisambig
     bracket: '[]'
 
-overwrite_null:
-  album: []
-  track: []
+# --------------- Tagging ---------------
 
-plugins: []
-pluginpath: []
-threaded: yes
-timeout: 5.0
 per_disc_numbering: no
-verbose: 0
-terminal_encoding:
 original_date: no
 artist_credit: no
 id3v23: no
 va_name: "Various Artists"
+paths:
+    default: $albumartist/$album%aunique{}/$track $title
+    singleton: Non-Album/$artist/$title
+    comp: Compilations/$album%aunique{}/$track $title
+
+# --------------- Performance ---------------
+
+threaded: yes
+timeout: 5.0
+
+# --------------- UI ---------------
+
+verbose: 0
+terminal_encoding:
 
 ui:
     terminal_width: 80
     length_diff_thresh: 10.0
     color: yes
     colors:
-        text_success: green
-        text_warning: yellow
-        text_error: red
-        text_highlight: red
-        text_highlight_minor: lightgray
-        action_default: turquoise
-        action: blue
+        text_success: ['bold', 'green']
+        text_warning: ['bold', 'yellow']
+        text_error: ['bold', 'red']
+        text_highlight: ['bold', 'red']
+        text_highlight_minor: ['white']
+        action_default: ['bold', 'cyan']
+        action: ['bold', 'cyan']
+        # New Colors
+        text: ['normal']
+        text_faint: ['faint']
+        import_path: ['bold', 'blue']
+        import_path_items: ['bold', 'blue']
+        added:   ['green']
+        removed: ['red']
+        changed: ['yellow']
+        added_highlight:   ['bold', 'green']
+        removed_highlight: ['bold', 'red']
+        changed_highlight: ['bold', 'yellow']
+        text_diff_added:   ['bold', 'red']
+        text_diff_removed: ['bold', 'red']
+        text_diff_changed: ['bold', 'red']
+        action_description: ['white']
+    import:
+        indentation:
+            match_header: 2
+            match_details: 2
+            match_tracklist: 5
+        layout: column
+
+# --------------- Search ---------------
 
 format_item: $artist - $album - $title
 format_album: $albumartist - $album
@@ -114,13 +158,11 @@ sort_album: albumartist+ album+
 sort_item: artist+ album+ disc+ track+
 sort_case_insensitive: yes
 
-paths:
-    default: $albumartist/$album%aunique{}/$track $title
-    singleton: Non-Album/$artist/$title
-    comp: Compilations/$album%aunique{}/$track $title
+# --------------- Autotagger ---------------
 
-statefile: state.pickle
-
+overwrite_null:
+  album: []
+  track: []
 musicbrainz:
     enabled: yes
     host: musicbrainz.org
@@ -176,3 +218,5 @@ match:
     ignore_video_tracks: yes
     track_length_grace: 10
     track_length_max: 30
+    album_disambig_fields: data_source media year country label catalognum albumdisambig
+    singleton_disambig_fields: data_source index track_alt album

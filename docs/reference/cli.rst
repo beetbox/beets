@@ -93,8 +93,10 @@ Optional command flags:
 * Relatedly, the ``-q`` (quiet) option can help with large imports by
   autotagging without ever bothering to ask for user input. Whenever the
   normal autotagger mode would ask for confirmation, the quiet mode
-  pessimistically skips the album. The quiet mode also disables the tagger's
-  ability to resume interrupted imports.
+  performs a fallback action that can be configured using the
+  ``quiet_fallback`` configuration or ``--quiet-fallback`` CLI option.
+  By default it pessimistically ``skip``s the file.
+  Alternatively, it can be used as is, by configuring ``asis``.
 
 * Speaking of resuming interrupted imports, the tagger will prompt you if it
   seems like the last import of the directory was interrupted (by you or by
@@ -112,6 +114,15 @@ Optional command flags:
   time* you run an import on the directory in question---including the first
   time, when no subdirectories will be skipped. So consider enabling the
   ``incremental`` configuration option.
+
+* If you don't want to record skipped files during an *incremental* import, use
+  the ``--incremental-skip-later`` flag which corresponds to the 
+  ``incremental_skip_later`` configuration option.
+  Setting the flag prevents beets from persisting skip decisions during a
+  non-interactive import so that a user can make a decision regarding
+  previously skipped files during a subsequent interactive import run.
+  To record skipped files during incremental import explicitly, use the
+  ``--noincremental-skip-later`` option.
 
 * When beets applies metadata to your music, it will retain the value of any
   existing tags that weren't overwritten, and import them into the database. You
@@ -329,7 +340,7 @@ update
 ``````
 ::
 
-    beet update [-F] FIELD [-aM] QUERY
+    beet update [-F] FIELD [-e] EXCLUDE_FIELD [-aM] QUERY
 
 Update the library (and, by default, move files) to reflect out-of-band metadata
 changes and file deletions.
@@ -347,8 +358,9 @@ on disk.
 
 By default, all the changed metadata will be populated back to the database.
 If you only want certain fields to be written, specify them with the ```-F```
-flags (which can be used multiple times). For the list of supported fields,
-please see ```beet fields```.
+flags (which can be used multiple times). Alternatively, specify fields to *not*
+write with ```-e``` flags (which can be used multiple times). For the list of 
+supported fields, please see ```beet fields```.
 
 When an updated track is part of an album, the album-level fields of *all*
 tracks from the album are also updated. (Specifically, the command copies

@@ -18,16 +18,18 @@ Uses user-specified substitution rules to canonicalize names for path formats.
 """
 
 import re
+
 from beets.plugins import BeetsPlugin
 
 
 class Substitute(BeetsPlugin):
     """The substitute plugin class.
 
-    Create a template field function that subsitute the given field with the
+    Create a template field function that substitute the given field with the
     given substitution rules. ``rules`` must be a list of (pattern,
     replacement) pairs.
     """
+
     def tmpl_substitute(self, text):
         """Do the actual replacing."""
         if text:
@@ -36,7 +38,7 @@ class Substitute(BeetsPlugin):
                     return replacement
             return text
         else:
-            return u''
+            return ""
 
     def __init__(self):
         """Initialize the substitute plugin.
@@ -46,7 +48,7 @@ class Substitute(BeetsPlugin):
         """
         super(Substitute, self).__init__()
         self.substitute_rules = []
-        self.template_funcs['substitute'] = self.tmpl_substitute
+        self.template_funcs["substitute"] = self.tmpl_substitute
 
         for key, view in self.config.items():
             value = view.as_str()

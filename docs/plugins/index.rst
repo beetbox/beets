@@ -61,8 +61,10 @@ following to your configuration::
 
    absubmit
    acousticbrainz
+   advancedrewrite
    albumtypes
    aura
+   autobpm
    badfiles
    bareasc
    beatport
@@ -164,6 +166,9 @@ Metadata
 :doc:`acousticbrainz <acousticbrainz>`
    Fetch various AcousticBrainz metadata
 
+:doc:`autobpm <autobpm>`
+   Use `Librosa`_ to calculate the BPM from the audio.
+
 :doc:`bpm <bpm>`
    Measure tempo using keystrokes.
 
@@ -222,6 +227,7 @@ Metadata
 :doc:`zero <zero>`
    Nullify fields by pattern or unconditionally.
 
+.. _Librosa: https://github.com/librosa/librosa/
 .. _KeyFinder: http://www.ibrahimshaath.co.uk/keyfinder/
 .. _streaming_extractor_music: https://acousticbrainz.org/download
 
@@ -240,6 +246,9 @@ Path Formats
 
 :doc:`rewrite <rewrite>`
    Substitute values in path formats.
+
+:doc:`advancedrewrite <advancedrewrite>`
+   Substitute field values for items matching a query.
 
 :doc:`substitute <substitute>`
    As an alternative to :doc:`rewrite <rewrite>`, use this plugin. The main
@@ -475,6 +484,9 @@ Here are a few of the plugins written by the beets community:
 `beets-mosaic`_
    Generates a montage of a mosaic from cover art.
 
+`beets-mpd-utils`_
+    Plugins to interface with `MPD`_. Comes with ``mpd_tracker`` (track play/skip counts from MPD) and  ``mpd_dj`` (auto-add songs to your queue.)
+
 `beets-noimport`_
    Adds and removes directories from the incremental import skip list.
 
@@ -503,6 +515,9 @@ Here are a few of the plugins written by the beets community:
 
 `beets-ydl`_
    Downloads audio from youtube-dl sources and import into beets.
+
+`beets-ytimport`_
+   Download and import your liked songs from YouTube into beets.
 
 `beets-yearfixer`_
    Attempts to fix all missing ``original_year`` and ``year`` fields.
@@ -538,6 +553,7 @@ Here are a few of the plugins written by the beets community:
 .. _beets-jiosaavn: https://github.com/arsaboo/beets-jiosaavn
 .. _beets-youtube: https://github.com/arsaboo/beets-youtube
 .. _beets-ydl: https://github.com/vmassuchetto/beets-ydl
+.. _beets-ytimport: https://github.com/mgoltzsche/beets-ytimport
 .. _beet-summarize: https://github.com/steven-murray/beet-summarize
 .. _beets-mosaic: https://github.com/SusannaMaria/beets-mosaic
 .. _beets-goingrunning: https://pypi.org/project/beets-goingrunning
@@ -550,3 +566,4 @@ Here are a few of the plugins written by the beets community:
 .. _drop2beets: https://github.com/martinkirch/drop2beets
 .. _beets-audible: https://github.com/Neurrone/beets-audible
 .. _beets-more: https://forgejo.sny.sh/sun/beetsplug/src/branch/main/more
+.. _beets-mpd-utils: https://github.com/thekakkun/beets-mpd-utils
