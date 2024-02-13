@@ -554,8 +554,8 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
 
             # Query the Web API for each track, look for the items' JSON data
             if len(artist) > 50:
-                artist = ','.join(artist.split(',')[:2])
-            query_filters = {'artist': artist, 'album': album}
+                artist = ",".join(artist.split(",")[:2])
+            query_filters = {"artist": artist, "album": album}
             response_data_tracks = self._search_api(
                 query_type="track", keywords=keywords, filters=query_filters
             )
