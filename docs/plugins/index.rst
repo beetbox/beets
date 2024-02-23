@@ -313,6 +313,9 @@ Interoperability
    Automatically notifies `Subsonic`_ whenever the beets
    library changes.
 
+`webm3u`_
+   Serves the (:doc:`smartplaylist <smartplaylist>` plugin generated) M3U
+   playlists via HTTP.
 
 .. _AURA: https://auraspec.readthedocs.io
 .. _Emby: https://emby.media
@@ -321,6 +324,7 @@ Interoperability
 .. _Kodi: https://kodi.tv
 .. _Sonos: https://sonos.com
 .. _Subsonic: http://www.subsonic.org/
+.. _webm3u: https://github.com/mgoltzsche/beets-webm3u
 
 Miscellaneous
 -------------

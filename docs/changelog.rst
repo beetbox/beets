@@ -160,6 +160,7 @@ New features:
   like the other lossless formats.
 * Add support for `barcode` field.
   :bug:`3172`
+* :doc:`/plugins/smartplaylist`: Add new config option `smartplaylist.fields`.
 
 Bug fixes:
 
