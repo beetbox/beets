@@ -153,6 +153,9 @@ New features:
 * :doc:`/plugins/smartplaylist`: Add new option `smartplaylist.uri_format`.
 * Sorted the default configuration file into categories.
   :bug:`4987`
+* :doc:`/plugins/convert`: Don't treat WAVE (`.wav`) files as lossy anymore
+  when using the `never_convert_lossy_files` option. They will get transcoded
+  like the other lossless formats.
 
 Bug fixes:
 
