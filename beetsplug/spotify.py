@@ -381,12 +381,12 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
                     track.index = i
         track.medium_total = medium_total
         return track
-    
+
     @staticmethod
     def _list_limit(str_input, max_length=50, delim=","):
         """Return a list of strings from the input string that can be joined into
         a single string with a length less than or equal to max_length.
-    
+
         :param str_input: String to split and join.
         :type str_input: str
         :param max_length: Maximum length of the resulting string.
@@ -410,9 +410,9 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             result.append(item)
             current_length += item_length
         return result
-    
+
     @staticmethod
-    def _construct_search_query(filters=None, keywords=""):
+    def _construct_search_query(self, filters=None, keywords=""):
         """Construct a query string with the specified filters and keywords to
         be provided to the Spotify Search API
         (https://developer.spotify.com/documentation/web-api/reference/search/search/#writing-a-query---guidelines).
@@ -432,15 +432,19 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
 
         # Limit each component to 50 characters max, so, for example the artist field doesn't take up all 100 characters
         for component in query_components:
-            if component
+            if component:
                 if not isinstance(component, str):
                     component = component.decode("utf8")
-                limited_list = self._list_limit(component, max_length=50, delim=',')
+                limited_list = self._list_limit(
+                    component, max_length=50, delim=","
+                )
                 # Each component is split by a comma but queries are joined by a space
                 query.append(",".join(limited_list))
 
         # Make sure it's less than 100 characters
-        return unidecode.unidecode(self._list_limit(" ".join(query), max_length=100, delim=' '))
+        return unidecode.unidecode(
+            self._list_limit(" ".join(query), max_length=100, delim=" ")
+        )
 
     def _search_api(self, query_type, filters=None, keywords=""):
         """Query the Spotify Search API for the specified ``keywords``,
