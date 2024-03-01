@@ -35,8 +35,7 @@ if TYPE_CHECKING and sys.version_info >= (3, 8):
         given type.
         """
 
-        def __init__(self, value: Any = None):
-            ...
+        def __init__(self, value: Any = None): ...
 
 else:
     # No structural subtyping in Python < 3.8...

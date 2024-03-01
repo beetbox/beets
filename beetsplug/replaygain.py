@@ -819,9 +819,9 @@ class GStreamerBackend(Backend):
         self._files = [i.path for i in items]
 
         # FIXME: Turn this into DefaultDict[bytes, Gain]
-        self._file_tags: DefaultDict[
-            bytes, Dict[str, float]
-        ] = collections.defaultdict(dict)
+        self._file_tags: DefaultDict[bytes, Dict[str, float]] = (
+            collections.defaultdict(dict)
+        )
 
         self._rg.set_property("reference-level", target_level)
 
@@ -930,9 +930,9 @@ class GStreamerBackend(Backend):
                     tag
                 )[1]
             elif tag == self.Gst.TAG_REFERENCE_LEVEL:
-                self._file_tags[self._file][
-                    "REFERENCE_LEVEL"
-                ] = taglist.get_double(tag)[1]
+                self._file_tags[self._file]["REFERENCE_LEVEL"] = (
+                    taglist.get_double(tag)[1]
+                )
 
         tags.foreach(handle_tag, None)
 

@@ -1,6 +1,5 @@
 """Tests for the 'spotify' plugin"""
 
-
 import os
 import unittest
 from urllib.parse import parse_qs, urlparse
