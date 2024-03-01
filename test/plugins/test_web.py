@@ -1,6 +1,5 @@
 """Tests for the 'web' plugin"""
 
-
 import json
 import os.path
 import platform

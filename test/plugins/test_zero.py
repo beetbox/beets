@@ -1,6 +1,5 @@
 """Tests for the 'zero' plugin"""
 
-
 import unittest
 
 from mediafile import MediaFile

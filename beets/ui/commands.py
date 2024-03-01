@@ -216,12 +216,14 @@ def get_singleton_disambig_fields(info: hooks.TrackInfo) -> Sequence[str]:
     calculated_values = {
         "index": "Index {}".format(str(info.index)),
         "track_alt": "Track {}".format(info.track_alt),
-        "album": "[{}]".format(info.album)
-        if (
-            config["import"]["singleton_album_disambig"].get()
-            and info.get("album")
-        )
-        else "",
+        "album": (
+            "[{}]".format(info.album)
+            if (
+                config["import"]["singleton_album_disambig"].get()
+                and info.get("album")
+            )
+            else ""
+        ),
     }
 
     for field in chosen_fields:
@@ -240,9 +242,11 @@ def get_album_disambig_fields(info: hooks.AlbumInfo) -> Sequence[str]:
     out = []
     chosen_fields = config["match"]["album_disambig_fields"].as_str_seq()
     calculated_values = {
-        "media": "{}x{}".format(info.mediums, info.media)
-        if (info.mediums and info.mediums > 1)
-        else info.media,
+        "media": (
+            "{}x{}".format(info.mediums, info.media)
+            if (info.mediums and info.mediums > 1)
+            else info.media
+        ),
     }
 
     for field in chosen_fields:
@@ -1160,9 +1164,11 @@ class TerminalImportSession(importer.ImportSession):
                 print_(
                     "Old: "
                     + summarize_items(
-                        list(duplicate.items())
-                        if task.is_album
-                        else [duplicate],
+                        (
+                            list(duplicate.items())
+                            if task.is_album
+                            else [duplicate]
+                        ),
                         not task.is_album,
                     )
                 )
