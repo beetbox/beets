@@ -204,12 +204,20 @@ def process_tracks(lib, tracks, log):
 
     for num in range(0, total):
         song = None
-        trackid = tracks[num]["mbid"].strip()
-        artist = tracks[num]["artist"].get("name", "").strip()
-        title = tracks[num]["name"].strip()
+        trackid = tracks[num]["mbid"].strip() if tracks[num]["mbid"] else None
+        artist = (
+            tracks[num]["artist"].get("name", "").strip()
+            if tracks[num]["artist"].get("name", "")
+            else None
+        )
+        title = tracks[num]["name"].strip() if tracks[num]["name"] else None
         album = ""
         if "album" in tracks[num]:
-            album = tracks[num]["album"].get("name", "").strip()
+            album = (
+                tracks[num]["album"].get("name", "").strip()
+                if tracks[num]["album"]
+                else None
+            )
 
         log.debug("query: {0} - {1} ({2})", artist, title, album)
 
@@ -218,6 +226,19 @@ def process_tracks(lib, tracks, log):
             song = lib.items(
                 dbcore.query.MatchQuery("mb_trackid", trackid)
             ).get()
+
+        # If not, try just album/title
+        if song is None:
+            log.debug(
+                "no album match, trying by album/title: {0} - {1}", album, title
+            )
+            query = dbcore.AndQuery(
+                [
+                    dbcore.query.SubstringQuery("album", album),
+                    dbcore.query.SubstringQuery("title", title),
+                ]
+            )
+            song = lib.items(query).get()
 
         # If not, try just artist/title
         if song is None:
@@ -244,7 +265,7 @@ def process_tracks(lib, tracks, log):
 
         if song is not None:
             count = int(song.get("play_count", 0))
-            new_count = int(tracks[num]["playcount"])
+            new_count = int(tracks[num].get("playcount", 1))
             log.debug(
                 "match: {0} - {1} ({2}) " "updating: play_count {3} => {4}",
                 song.artist,
