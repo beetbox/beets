@@ -17,6 +17,8 @@ Major new features:
 
 New features:
 
+* :doc:`/plugins/listenbrainz`: Add initial support for importing history and playlists from `ListenBrainz`
+  :bug:`1719`
 * :doc:`plugins/mbsubmit`: add new prompt choices helping further to submit unmatched tracks to MusicBrainz faster.
 * :doc:`plugins/spotify`: We now fetch track's ISRC, EAN, and UPC identifiers from Spotify when using the ``spotifysync`` command.
   :bug:`4992`
@@ -158,6 +160,7 @@ Bug fixes:
 
 * :doc:`/plugins/spotify`: Prevent Spotify errors caused by long artist search strings.
   :bug:`4893`
+* :doc:`/plugins/lastimport`: Improve error handling in the `process_tracks` function and enable it to be used with other plugins.
 * :doc:`/plugins/spotify`: Improve handling of ConnectionError.
 * :doc:`/plugins/deezer`: Improve Deezer plugin error handling and set requests timeout to 10 seconds.
   :bug:`4983`
@@ -287,6 +290,7 @@ Bug fixes:
   variant of `awk` installed and required specific settings for `sqlite3`
   and caching in `zsh`.
   :bug:`3546`
+* Remove unused functions :bug:`5103`
 
 For plugin developers:
 
