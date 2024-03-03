@@ -453,14 +453,14 @@ class ChangeRepresentation(object):
 
     def make_medium_info_line(self, track_info):
         """Construct a line with the current medium's info."""
-        media = self.match.info.media or "Media"
+        track_media = track_info.get("media", "Media")
         # Build output string.
         if self.match.info.mediums > 1 and track_info.disctitle:
-            return f"* {media} {track_info.medium}: {track_info.disctitle}"
+            return f"* {track_media} {track_info.medium}: {track_info.disctitle}"
         elif self.match.info.mediums > 1:
-            return f"* {media} {track_info.medium}"
+            return f"* {track_media} {track_info.medium}"
         elif track_info.disctitle:
-            return f"* {media}: {track_info.disctitle}"
+            return f"* {track_media}: {track_info.disctitle}"
         else:
             return ""
 
