@@ -133,6 +133,31 @@ class AdvancedRewritePluginTest(unittest.TestCase, TestHelper):
         ):
             self.load_plugins(PLUGIN_NAME)
 
+    def test_combined_rewrite_example(self):
+        self.config[PLUGIN_NAME] = [
+            {"artist A": "B"},
+            {
+                "match": "album:'C'",
+                "replacements": {
+                    "artist": "D",
+                },
+            },
+        ]
+        self.load_plugins(PLUGIN_NAME)
+
+        item = self.add_item(
+            artist="A",
+            albumartist="A",
+        )
+        self.assertEqual(item.artist, "B")
+
+        item = self.add_item(
+            artist="C",
+            albumartist="C",
+            album="C",
+        )
+        self.assertEqual(item.artist, "D")
+
 
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)

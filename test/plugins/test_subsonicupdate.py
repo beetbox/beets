@@ -1,6 +1,5 @@
 """Tests for the 'subsonic' plugin."""
 
-
 import unittest
 from urllib.parse import parse_qs, urlparse
 

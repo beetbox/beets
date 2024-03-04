@@ -1,6 +1,5 @@
 """Tests for the 'the' plugin"""
 
-
 import unittest
 
 from beets import config
