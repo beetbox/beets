@@ -596,7 +596,7 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
     # Media (format).
     if release["medium-list"]:
         # If all media are the same, use that medium name
-        if len(set([x.get("format") for x in release["medium-list"]])) == 1:
+        if len(set([m.get("format") for m in release["medium-list"]])) == 1:
             info.media = release["medium-list"][0].get("format")
         # Otherwise, let's just call it "Media"
         else:
