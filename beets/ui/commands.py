@@ -456,7 +456,9 @@ class ChangeRepresentation(object):
         track_media = track_info.get("media", "Media")
         # Build output string.
         if self.match.info.mediums > 1 and track_info.disctitle:
-            return f"* {track_media} {track_info.medium}: {track_info.disctitle}"
+            return (
+                f"* {track_media} {track_info.medium}: {track_info.disctitle}"
+            )
         elif self.match.info.mediums > 1:
             return f"* {track_media} {track_info.medium}"
         elif track_info.disctitle:
