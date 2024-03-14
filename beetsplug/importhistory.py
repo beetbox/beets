@@ -59,8 +59,8 @@ class ImportHistPlugin(BeetsPlugin):
             return
         source_dir = os.path.dirname(syspath(item.source_path))
         if not (
-            os.access(syspath(item.source_path), os.W_OK) and
-            os.access(source_dir, os.W_OK | os.X_OK)
+            os.access(syspath(item.source_path), os.W_OK)
+            and os.access(source_dir, os.W_OK | os.X_OK)
         ):
             self._log.warn(
                 "Item with a source_path isn't deletable:\n%s",
@@ -68,7 +68,7 @@ class ImportHistPlugin(BeetsPlugin):
             )
             return
         try:
-            open(syspath(item.source_path), 'w').close()
+            open(syspath(item.source_path), "w").close()
         except OSError:
             self._log.warn(
                 "Item with a source_path is open in another process, and hence "
@@ -81,9 +81,7 @@ class ImportHistPlugin(BeetsPlugin):
         print(
             "The item:\n{path}\nis originated from:\n{source}\n"
             "What would you like to do?".format(
-                path=colorize_text(
-                    "text_warning", item.path.decode("utf-8")
-                ),
+                path=colorize_text("text_warning", item.path.decode("utf-8")),
                 source=colorize_text(
                     "text_warning", item.source_path.decode("utf-8")
                 ),
@@ -113,11 +111,9 @@ class ImportHistPlugin(BeetsPlugin):
                 source_dir,
                 # The "source_path" attribute may not be present in all
                 # items of the library, so we avoid errors with this:
-                fast=False
+                fast=False,
             )
-            print(
-                "Doing so will delete the following items' sources as well:"
-            )
+            print("Doing so will delete the following items' sources as well:")
             for searched_item in item._db.items(source_dir_query):
                 print(
                     colorize_text(
