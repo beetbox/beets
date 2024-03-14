@@ -49,10 +49,7 @@ class ImportHistPlugin(BeetsPlugin):
                 item.path.decode("utf-8"),
             )
             return
-        if (
-            not item.source_path
-            or item.mb_albumid in self.stop_suggestions_for_albums
-        ):
+        if item.mb_albumid in self.stop_suggestions_for_albums:
             return
         if not os.path.isfile(syspath(item.source_path)):
             self._log.warn(
