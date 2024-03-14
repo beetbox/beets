@@ -44,17 +44,10 @@ class ImportHistPlugin(BeetsPlugin):
     def suggest_removal(self, item):
         """Prompts the user to delete the original path the item was imported from."""
         if "source_path" not in item:
-            # TODO: Maybe switch to a less arbitrary choice of item fields?
-            try:
-                self._log.warn(
-                    "Item without a source_path was found: {0.title} by {0.artist}",
-                    item,
-                )
-            except UnicodeDecodeError:
-                self._log.warn(
-                    "Item without a source_path was found: mb_trackid: {0.mb_trackid}",
-                    item,
-                )
+            self._log.warn(
+                "Item without a source_path was found at:\n%s",
+                item.path.decode("utf-8"),
+            )
             return
         if (
             not item.source_path
