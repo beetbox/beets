@@ -117,7 +117,13 @@ class ImportHistPlugin(BeetsPlugin):
                     "Searching for other items with a source_path attr containing: {}",
                     source_dir,
                 )
-                source_dir_query = library.PathQuery("source_path", source_dir)
+                source_dir_query = library.PathQuery(
+                    "source_path",
+                    source_dir,
+                    # The "source_path" attribute may not be present in all
+                    # items of the library, so we avoid errors with this:
+                    fast=False
+                )
                 print(
                     "Doing so will delete the following items' sources as well:"
                 )
