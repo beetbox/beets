@@ -57,12 +57,12 @@ class ImportHistPlugin(BeetsPlugin):
                 )
             return
         if (
-            not item["source_path"]
+            not item.source_path
             or item.mb_albumid in self.stop_suggestions_for_albums
         ):
             return
         # TODO: Consider whether it is even possible for this to happen
-        if os.path.isdir(item["source_path"]):
+        if os.path.isdir(item.source_path):
             # We ask the user whether they'd like to delete the item's source
             # directory
             delete = input_yn(
@@ -72,7 +72,7 @@ class ImportHistPlugin(BeetsPlugin):
                         "text_warning", displayable_path(item.path)
                     ),
                     source=colorize_text(
-                        "text_warning", displayable_path(item["source_path"])
+                        "text_warning", displayable_path(item.source_path)
                     ),
                 ),
                 require=True,
@@ -80,10 +80,10 @@ class ImportHistPlugin(BeetsPlugin):
             if delete:
                 self._log.info(
                     "Deleting the item's source which is a directory: %s",
-                    item["source_path"],
+                    item.source_path,
                 )
-                rmtree(item["source_path"])
-        elif os.path.isfile(item["source_path"]):
+                rmtree(item.source_path)
+        elif os.path.isfile(item.source_path):
             # We ask the user whether they'd like to delete the item's source
             # directory
             print(
@@ -93,7 +93,7 @@ class ImportHistPlugin(BeetsPlugin):
                         "text_warning", item.path.decode("utf-8")
                     ),
                     source=colorize_text(
-                        "text_warning", item["source_path"].decode("utf-8")
+                        "text_warning", item.source_path.decode("utf-8")
                     ),
                 )
             )
@@ -108,11 +108,11 @@ class ImportHistPlugin(BeetsPlugin):
             )
             if resp == "d":
                 self._log.info(
-                    "Deleting the item's source file: {}", item["source_path"]
+                    "Deleting the item's source file: {}", item.source_path
                 )
-                os.remove(item["source_path"])
+                os.remove(item.source_path)
             elif resp == "r":
-                source_dir = os.path.dirname(item["source_path"])
+                source_dir = os.path.dirname(item.source_path)
                 self._log.info(
                     "Searching for other items with a source_path attr containing: {}",
                     source_dir,
@@ -150,9 +150,9 @@ class ImportHistPlugin(BeetsPlugin):
                 elif continue_resp == "f":
                     self._log.info(
                         "removing just the item's original source: %s",
-                        item["source_path"],
+                        item.source_path,
                     )
-                    os.remove(item["source_path"])
+                    os.remove(item.source_path)
             elif resp == "s":
                 self.stop_suggestions_for_albums.append(item.mb_albumid)
             else:
