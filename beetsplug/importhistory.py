@@ -67,15 +67,6 @@ class ImportHistPlugin(BeetsPlugin):
                 item.source_path.decode("utf-8"),
             )
             return
-        try:
-            open(syspath(item.source_path), "w").close()
-        except OSError:
-            self._log.warn(
-                "Item with a source_path is open in another process, and hence "
-                "cannot be deleted:\n{}",
-                item.source_path.decode("utf-8"),
-            )
-            return
         # We ask the user whether they'd like to delete the item's source
         # directory
         print(
