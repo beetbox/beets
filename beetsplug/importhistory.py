@@ -10,8 +10,8 @@ from shutil import rmtree
 from beets import library
 from beets.plugins import BeetsPlugin
 from beets.ui import colorize as colorize_text
-from beets.ui import input_options, input_yn
-from beets.util import displayable_path, syspath
+from beets.ui import input_options
+from beets.util import syspath
 
 
 class ImportHistPlugin(BeetsPlugin):
