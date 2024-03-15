@@ -45,7 +45,7 @@ class ImportHistPlugin(BeetsPlugin):
         """Prompts the user to delete the original path the item was imported from."""
         if "source_path" not in item:
             self._log.warn(
-                "Item without a source_path was found at:\n%s",
+                "Item without a source_path was found at:\n{}",
                 item.path.decode("utf-8"),
             )
             return
@@ -53,7 +53,7 @@ class ImportHistPlugin(BeetsPlugin):
             return
         if not os.path.isfile(syspath(item.source_path)):
             self._log.warn(
-                "Item with a source_path that doesn't exist was found:\n%s",
+                "Item with a source_path that doesn't exist was found:\n{}",
                 item.source_path.decode("utf-8"),
             )
             return
@@ -63,7 +63,7 @@ class ImportHistPlugin(BeetsPlugin):
             and os.access(source_dir, os.W_OK | os.X_OK)
         ):
             self._log.warn(
-                "Item with a source_path isn't deletable:\n%s",
+                "Item with a source_path isn't deletable:\n{}",
                 item.source_path.decode("utf-8"),
             )
             return
@@ -72,7 +72,7 @@ class ImportHistPlugin(BeetsPlugin):
         except OSError:
             self._log.warn(
                 "Item with a source_path is open in another process, and hence "
-                "cannot be deleted:\n%s",
+                "cannot be deleted:\n{}",
                 item.source_path.decode("utf-8"),
             )
             return
@@ -128,7 +128,7 @@ class ImportHistPlugin(BeetsPlugin):
             )
             if continue_resp == "y":
                 self._log.info(
-                    "Deleting the item's source directory: %s", source_dir
+                    "Deleting the item's source directory: {}", source_dir
                 )
                 rmtree(source_dir)
             elif continue_resp == "n":
@@ -136,7 +136,7 @@ class ImportHistPlugin(BeetsPlugin):
                 return
             elif continue_resp == "f":
                 self._log.info(
-                    "removing just the item's original source: %s",
+                    "removing just the item's original source: {}",
                     item.source_path,
                 )
                 os.remove(item.source_path)
