@@ -29,9 +29,9 @@ class ImportHistPlugin(BeetsPlugin):
             self.import_stages = [self.import_stage]
             self.register_listener("item_removed", self.suggest_removal)
         # In order to stop suggestions for certain albums in
-        # self.suggest_removal, we initialize an empty list of mb_albumids that
-        # these will be ignored in future runs
-        self.stop_suggestions_for_albums = []
+        # self.suggest_removal, we initialize an empty set of `mb_albumid`s
+        # that these will be ignored in future runs of the suggest_removal.
+        self.stop_suggestions_for_albums = set()
 
     def import_stage(self, _, task):
         """Event handler for albums import finished."""
@@ -141,6 +141,6 @@ class ImportHistPlugin(BeetsPlugin):
                 )
                 os.remove(item.source_path)
         elif resp == "s":
-            self.stop_suggestions_for_albums.append(item.mb_albumid)
+            self.stop_suggestions_for_albums.add(item.mb_albumid)
         else:
             self._log.info("Doing nothing")
