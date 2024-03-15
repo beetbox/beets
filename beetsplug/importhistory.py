@@ -32,20 +32,43 @@ class ImportHistPlugin(BeetsPlugin):
         # self.suggest_removal, we initialize an empty set of `mb_albumid`s
         # that these will be ignored in future runs of the suggest_removal.
         self.stop_suggestions_for_albums = set()
+        # In case 'import --library' is used, we will get both the import
+        # event triggered, and the item_removed event triggered because
+        # that's how 'import --library' works. Unfortuneatly, but
+        # naturally, the item_removed event is triggered first, and we need
+        # to prevent suggesting to remove the source_path because that has
+        # nothing to do with the import. Hence we use this event, and use
+        # the self.stop_suggestions_for_albums array
+        self.register_listener(
+            "import_task_choice", self.prevent_suggest_removal
+        )
+
+    def prevent_suggest_removal(self, session, task):
+        for item in task.imported_items():
+            if "mb_albumid" in item:
+                self.stop_suggestions_for_albums.add(item.mb_albumid)
 
     def import_stage(self, _, task):
         """Event handler for albums import finished."""
-        # first, we sort the items using a dictionary and a list of paths for
-        # every mbid
         for item in task.imported_items():
-            item["source_path"] = item.path
-            item.try_sync(write=True, move=False)
+            # If import --library is used, this check prevents changing the
+            # source_path attribute to the path from the music library -
+            # something which would make this attribute completely useless.
+            if "source_path" not in item:
+                item["source_path"] = item.path
+                item.try_sync(write=True, move=False)
+            else:
+                self._log.info(
+                    "Not changing source_path of item already imported - "
+                    "probably 'import --library' was used"
+                )
 
     def suggest_removal(self, item):
         """Prompts the user to delete the original path the item was imported from."""
         if "source_path" not in item:
             self._log.warn(
-                "Item without a source_path was found at:\n{}",
+                "Item without a source_path was found at:\n{}\n"
+                "probably was imported before this plugin was used",
                 item.path.decode("utf-8"),
             )
             return
