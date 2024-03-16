@@ -292,6 +292,9 @@ Bug fixes:
   and caching in `zsh`.
   :bug:`3546`
 * Remove unused functions :bug:`5103`
+* Fix bug where all media types are reported as the first media type when
+  importing with MusicBrainz as the data source
+  :bug:`4947`
 
 For plugin developers:
 
