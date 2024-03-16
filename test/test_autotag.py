@@ -354,6 +354,14 @@ class TrackDistanceTest(BeetsTestCase):
         dist = match.track_distance(item, info, incl_artist=True)
         assert dist == 0.0
 
+    def test_missing_metadata(self):
+        item = _make_item("", 0)
+        info = _make_trackinfo()[0]
+        dist1 = match.track_distance(item, info)
+        item.path = b"/tmp/01 One.mp3"
+        dist2 = match.track_distance(item, info)
+        assert dist2 < dist1
+
 
 class AlbumDistanceTest(BeetsTestCase):
     def _mapping(self, items, info):

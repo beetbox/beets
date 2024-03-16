@@ -19,6 +19,7 @@ releases and tracks.
 from __future__ import annotations
 
 import datetime
+import os
 import re
 from enum import IntEnum
 from typing import (
@@ -190,7 +191,8 @@ def track_distance(
         dist.add_ratio("track_length", diff, track_length_max)
 
     # Title.
-    dist.add_string("track_title", item.title, track_info.title)
+    cur_title = item.title or os.fsdecode(os.path.basename(item.path))
+    dist.add_string("track_title", cur_title, track_info.title)
 
     # Artist. Only check if there is actually an artist in the track data.
     if (
