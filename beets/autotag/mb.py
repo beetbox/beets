@@ -595,8 +595,12 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
 
     # Media (format).
     if release["medium-list"]:
-        first_medium = release["medium-list"][0]
-        info.media = first_medium.get("format")
+        # If all media are the same, use that medium name
+        if len(set([m.get("format") for m in release["medium-list"]])) == 1:
+            info.media = release["medium-list"][0].get("format")
+        # Otherwise, let's just call it "Media"
+        else:
+            info.media = "Media"
 
     if config["musicbrainz"]["genres"]:
         sources = [
