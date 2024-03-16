@@ -158,6 +158,11 @@ def track_index_changed(item: Item, track_info: TrackInfo) -> bool:
     return item.track not in (track_info.medium_index, track_info.index)
 
 
+def medium_index_changed(item: Item, track_info: TrackInfo) -> bool:
+    """Returns True if the item and track info medium is different."""
+    return item.disc != track_info.medium
+
+
 def track_distance(
     item: Item,
     track_info: TrackInfo,
@@ -202,6 +207,10 @@ def track_distance(
     # Track ID.
     if item.mb_trackid:
         dist.add_expr("track_id", item.mb_trackid != track_info.track_id)
+
+    # Media index.
+    if track_info.medium and item.disc:
+        dist.add_expr("medium_index", medium_index_changed(item, track_info))
 
     # Plugins.
     dist.update(plugins.track_distance(item, track_info))
