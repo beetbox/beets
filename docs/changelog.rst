@@ -295,8 +295,8 @@ Bug fixes:
 * Fix bug where all media types are reported as the first media type when
   importing with MusicBrainz as the data source
   :bug:`4947`
-* Fix bug where matcher doesn't consider media numbers when importing
-  with MusicBrainz as the data source
+* Fix bug where matcher doesn't consider medium number when importing making
+  it difficult to import hybrid SACDs
   :bug:`5148`
 
 For plugin developers:
