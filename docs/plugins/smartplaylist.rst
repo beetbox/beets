@@ -125,9 +125,10 @@ other configuration options are:
 - **output**: Specify the playlist format: m3u|extm3u. Default ``m3u``.
 - **fields**: Specify the names of the additional item fields to export into
   the playlist. This allows using e.g. the ``id`` field within other tools such
-  as the `webm3u`_ plugin.
+  as the `webm3u`_ and `Beetstream`_ plugins.
   To use this option, you must set the ``output`` option to ``extm3u``.
 
+.. _Beetstream: https://github.com/BinaryBrain/Beetstream
 .. _webm3u: https://github.com/mgoltzsche/beets-webm3u
 
 For many configuration options, there is a corresponding CLI option, e.g.
