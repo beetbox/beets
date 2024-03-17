@@ -122,11 +122,11 @@ other configuration options are:
   playlist item URI, e.g. ``http://beets:8337/item/$id/file``.
   When this option is specified, the local path-related options ``prefix``,
   ``relative_to``, ``forward_slash`` and ``urlencode`` are ignored.
-- **output**: Specify the playlist format: m3u|m3u8. Default ``m3u``.
+- **output**: Specify the playlist format: m3u|extm3u. Default ``m3u``.
 - **fields**: Specify the names of the additional item fields to export into
   the playlist. This allows using e.g. the ``id`` field within other tools such
   as the `webm3u`_ plugin.
-  To use this option, you must set the ``output`` option to ``m3u8``.
+  To use this option, you must set the ``output`` option to ``extm3u``.
 
 .. _webm3u: https://github.com/mgoltzsche/beets-webm3u
 
