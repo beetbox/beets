@@ -121,7 +121,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
         spl_update.parser.add_option(
             "--output",
             type="string",
-            help="specify the playlist format: m3u|m3u8.",
+            help="specify the playlist format: m3u|extm3u.",
         )
         spl_update.func = self.update_cmd
         return [spl_update]
@@ -313,20 +313,20 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 )
                 mkdirall(m3u_path)
                 pl_format = self.config["output"].get()
-                if pl_format != "m3u" and pl_format != "m3u8":
+                if pl_format != "m3u" and pl_format != "extm3u":
                     msg = "Unsupported output format '{}' provided! "
-                    msg += "Supported: m3u, m3u8"
+                    msg += "Supported: m3u, extm3u"
                     raise Exception(msg.format(pl_format))
-                m3u8 = pl_format == "m3u8"
+                extm3u = pl_format == "extm3u"
                 with open(syspath(m3u_path), "wb") as f:
                     keys = []
-                    if m3u8:
+                    if extm3u:
                         keys = self.config["fields"].get(list)
                         f.write(b"#EXTM3U\n")
                     for entry in m3us[m3u]:
                         item = entry.item
                         comment = ""
-                        if m3u8:
+                        if extm3u:
                             attr = [(k, entry.item[k]) for k in keys]
                             al = [
                                 f" {a[0]}={json.dumps(str(a[1]))}" for a in attr
