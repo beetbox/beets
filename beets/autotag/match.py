@@ -102,6 +102,7 @@ def current_metadata(
         "disctotal",
         "mb_albumid",
         "label",
+        "barcode",
         "catalognum",
         "country",
         "media",
