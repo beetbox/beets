@@ -781,6 +781,7 @@ ALBUM_INFO_FIELDS = [
     "albumtype",
     "va",
     "label",
+    "barcode",
     "artist_sort",
     "releasegroup_id",
     "catalognum",
