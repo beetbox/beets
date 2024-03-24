@@ -301,7 +301,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             artist_id=artist_id,
             spotify_artist_id=artist_id,
             tracks=tracks,
-            albumtype=album_data["album_type"],
+            albumtypes=[album_data["album_type"]],
             va=len(album_data["artists"]) == 1
             and artist.lower() == "various artists",
             year=year,

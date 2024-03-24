@@ -147,7 +147,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             artist_credit=self.get_artist([album_data["artist"]])[0],
             artist_id=artist_id,
             tracks=tracks,
-            albumtype=album_data["record_type"],
+            albumtypes=[album_data["record_type"]],
             va=len(album_data["contributors"]) == 1
             and artist.lower() == "various artists",
             year=year,
