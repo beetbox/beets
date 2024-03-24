@@ -503,10 +503,7 @@ def copy(path: bytes, dest: bytes, replace: bool = False):
 def move(path: bytes, dest: bytes, replace: bool = False):
     """Rename a file. `dest` may not be a directory. If `dest` already
     exists, raises an OSError unless `replace` is True. Has no effect if
-    `path` is the same as `dest`. If the paths are on different
-    filesystems (or the rename otherwise fails), a copy is attempted
-    instead, in which case metadata will *not* be preserved. Paths are
-    translated to system paths.
+    `path` is the same as `dest`. Paths are translated to system paths.
     """
     if os.path.isdir(syspath(path)):
         raise FilesystemError("source is directory", "move", (path, dest))
@@ -535,6 +532,9 @@ def move(path: bytes, dest: bytes, replace: bool = False):
                 shutil.copyfileobj(f, tmp)
         finally:
             tmp.close()
+
+        # Copy file metadata
+        shutil.copystat(syspath(path), tmp.name)
 
         # Move the copied file into place.
         try:
