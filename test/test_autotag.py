@@ -90,6 +90,7 @@ class PluralityTest(_common.TestCase):
             "disctotal",
             "mb_albumid",
             "label",
+            "barcode",
             "catalognum",
             "country",
             "media",
