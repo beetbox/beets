@@ -94,6 +94,7 @@ class AlbumInfo(AttrDict):
         month: Optional[int] = None,
         day: Optional[int] = None,
         label: Optional[str] = None,
+        barcode: Optional[str] = None,
         mediums: Optional[int] = None,
         artist_sort: Optional[str] = None,
         artists_sort: Optional[List[str]] = None,
@@ -136,6 +137,7 @@ class AlbumInfo(AttrDict):
         self.month = month
         self.day = day
         self.label = label
+        self.barcode = barcode
         self.mediums = mediums
         self.artist_sort = artist_sort
         self.artists_sort = artists_sort or []
@@ -175,6 +177,7 @@ class AlbumInfo(AttrDict):
             "artist",
             "albumtype",
             "label",
+            "barcode",
             "artist_sort",
             "catalognum",
             "script",
