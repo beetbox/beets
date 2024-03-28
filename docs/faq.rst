@@ -397,3 +397,17 @@ try `this Super User answer`_.
 
 .. _this Super User answer: https://superuser.com/a/284361/4569
 .. _pip: https://pip.pypa.io/en/stable/
+
+
+.. _movefiles:
+
+…move and change my files? (Linuxserver.io Docker image)
+--------------------------------------------------------
+
+You may have installed a container created by
+`Linuxserver.io <https://docs.linuxserver.io/images/docker-beets>`__.
+`Their config has been changed from our defaults <https://github.com/beetbox/beets/issues/4838>`__
+and you might want to
+`change the config <https://github.com/linuxserver/docker-beets/issues/94>`__
+to match the beets default. See :doc:`/reference/config` for more
+in-depth discussion.
