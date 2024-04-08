@@ -1463,9 +1463,8 @@ class CompletionTest(_common.TestCase, TestHelper):
         with open(test_script_name, "rb") as test_script_file:
             tester.stdin.writelines(test_script_file)
         out, err = tester.communicate()
-        if tester.returncode != 0 or out != b"completion tests passed\n":
-            print(out.decode("utf-8"))
-            self.fail("test/test_completion.sh did not execute properly")
+        self.assertTrue(tester.returncode != 0 or out != b"completion tests passed\n", f'test/test_completion.sh did not execute properly. Output:{out.decode("utf-8")}')
+
 
 
 class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):
