@@ -67,7 +67,7 @@ class AnyFieldQueryTest(_common.LibTestCase):
         q = dbcore.query.AnyFieldQuery(
             "title", ["artist"], dbcore.query.SubstringQuery
         )
-        self.assertEqual(self.lib.items(q).get(), None)
+        self.assertIsNone(self.lib.items(q).get())
 
     def test_eq(self):
         q1 = dbcore.query.AnyFieldQuery(

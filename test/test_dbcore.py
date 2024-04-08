@@ -315,16 +315,16 @@ class ModelTest(unittest.TestCase):
     def test_delete_flexattr(self):
         model = ModelFixture1()
         model["foo"] = "bar"
-        self.assertTrue("foo" in model)
+        self.assertIn("foo", model)
         del model["foo"]
-        self.assertFalse("foo" in model)
+        self.assertNotIn("foo", model)
 
     def test_delete_flexattr_via_dot(self):
         model = ModelFixture1()
         model["foo"] = "bar"
-        self.assertTrue("foo" in model)
+        self.assertIn("foo", model)
         del model.foo
-        self.assertFalse("foo" in model)
+        self.assertNotIn("foo", model)
 
     def test_delete_flexattr_persists(self):
         model = ModelFixture1()
@@ -337,7 +337,7 @@ class ModelTest(unittest.TestCase):
         model.store()
 
         model = self.db._get(ModelFixture1, model.id)
-        self.assertFalse("foo" in model)
+        self.assertNotIn("foo", model)
 
     def test_delete_non_existent_attribute(self):
         model = ModelFixture1()
@@ -365,7 +365,7 @@ class ModelTest(unittest.TestCase):
     def test_null_value_stays_none_for_untyped_field(self):
         model = ModelFixture1()
         model.foo = None
-        self.assertEqual(model.foo, None)
+        self.assertIsNone(model.foo)
 
     def test_normalization_for_typed_flex_fields(self):
         model = ModelFixture1()

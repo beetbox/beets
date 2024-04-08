@@ -82,7 +82,7 @@ class KeyFinderTest(unittest.TestCase, TestHelper):
         self.run_command("keyfinder")
 
         item.load()
-        self.assertEqual(item["initial_key"], None)
+        self.assertIsNone(item["initial_key"])
 
 
 def suite():
