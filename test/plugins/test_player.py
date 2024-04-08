@@ -24,6 +24,7 @@ import tempfile
 import threading
 import time
 import unittest
+import asyncio
 from contextlib import contextmanager
 
 # Mock GstPlayer so that the forked process doesn't attempt to import gi:
@@ -549,7 +550,7 @@ class BPDQueryTest(BPDTestHelper):
             # Manually send a command without reading a response.
             request = client.serialise_command("idle")
             client.sock.sendall(request)
-            time.sleep(0.01)
+            asyncio.sleep(0.01)
             response = client.send_command("noidle")
         self._assert_ok(response)
 
