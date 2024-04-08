@@ -306,7 +306,7 @@ class AlbumFileTest(_common.TestCase):
         self.ai.move(basedir=self.otherdir)
         self.i.load()
         self.ai.store()
-        self.assertTrue(b"testotherdir" in self.i.path)
+        self.assertIn(b"testotherdir", self.i.path)
 
 
 class ArtFileTest(_common.TestCase):
@@ -359,7 +359,7 @@ class ArtFileTest(_common.TestCase):
         self.assertNotExists(self.art)
         newart = self.lib.get_album(self.i).artpath
         self.assertExists(newart)
-        self.assertTrue(b"testotherdir" in newart)
+        self.assertIn(b"testotherdir", newart)
 
     def test_setart_copies_image(self):
         util.remove(self.art)
@@ -372,7 +372,7 @@ class ArtFileTest(_common.TestCase):
         ai = self.lib.add_album((i2,))
         i2.move(operation=MoveOperation.COPY)
 
-        self.assertEqual(ai.artpath, None)
+        self.assertIsNone(ai.artpath)
         ai.set_art(newart)
         self.assertExists(ai.artpath)
 
@@ -478,7 +478,7 @@ class ArtFileTest(_common.TestCase):
         self.i.move()
 
         artpath = self.lib.albums()[0].artpath
-        self.assertFalse(b"different_album" in artpath)
+        self.assertNotIn(b"different_album", artpath)
         self.assertEqual(artpath, oldartpath)
         self.assertExists(oldartpath)
 
