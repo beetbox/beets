@@ -45,6 +45,7 @@ FIELDS_TO_MB_KEYS = {
     "catalognum": "catno",
     "country": "country",
     "label": "label",
+    "barcode": "barcode",
     "media": "format",
     "year": "date",
 }
@@ -531,6 +532,7 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
         artists_credit=artists_credit_names,
         data_source="MusicBrainz",
         data_url=album_url(release["id"]),
+        barcode=release.get("barcode"),
     )
     info.va = info.artist_id == VARIOUS_ARTISTS_ID
     if info.va:
@@ -595,8 +597,12 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
 
     # Media (format).
     if release["medium-list"]:
-        first_medium = release["medium-list"][0]
-        info.media = first_medium.get("format")
+        # If all media are the same, use that medium name
+        if len(set([m.get("format") for m in release["medium-list"]])) == 1:
+            info.media = release["medium-list"][0].get("format")
+        # Otherwise, let's just call it "Media"
+        else:
+            info.media = "Media"
 
     if config["musicbrainz"]["genres"]:
         sources = [
@@ -827,6 +833,7 @@ def _merge_pseudo_and_actual_album(
             "original_month",
             "original_day",
             "label",
+            "barcode",
             "asin",
             "style",
             "genre",

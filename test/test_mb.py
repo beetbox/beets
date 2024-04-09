@@ -69,6 +69,7 @@ class MBAlbumInfoTest(_common.TestCase):
             },
             "country": "COUNTRY",
             "status": "STATUS",
+            "barcode": "BARCODE",
         }
 
         if multi_artist_credit:
@@ -378,6 +379,11 @@ class MBAlbumInfoTest(_common.TestCase):
         release = self._make_release(None)
         d = mb.album_info(release)
         self.assertEqual(d.albumstatus, "STATUS")
+
+    def test_parse_barcode(self):
+        release = self._make_release(None)
+        d = mb.album_info(release)
+        self.assertEqual(d.barcode, "BARCODE")
 
     def test_parse_media(self):
         tracks = [
