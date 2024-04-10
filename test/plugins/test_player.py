@@ -22,7 +22,6 @@ import socket
 import sys
 import tempfile
 import threading
-import time
 import unittest
 import asyncio
 from contextlib import contextmanager

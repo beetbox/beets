@@ -29,13 +29,34 @@ class BareascPluginTest(unittest.TestCase, TestHelper):
 
     def test_bareasc_search(self):
         test_cases = [
-            ("dvorak", ["without accents"]),  # Normal search, no accents, not using bare-ASCII match.
-            ("dvořák", ["with accents"]), # Normal search, with accents, not using bare-ASCII match.
-            ("#dvorak", ["without accents", "with accents"]), # Bare-ASCII search, no accents.
-            ("#dvořák", ["without accents", "with accents"]), # Bare-ASCII search, with accents.
-            ("#dvořäk", ["without accents", "with accents"]), # Bare-ASCII search, with incorrect accent.
-            ("#Bruggen", ["without umlaut or e", "with umlaut"]), # Bare-ASCII search, with no umlaut.
-            ("#Brüggen", ["without umlaut or e", "with umlaut"]), # Bare-ASCII search, with umlaut.
+            (
+                "dvorak",
+                ["without accents"],
+            ),  # Normal search, no accents, not using bare-ASCII match.
+            (
+                "dvořák",
+                ["with accents"],
+            ),  # Normal search, with accents, not using bare-ASCII match.
+            (
+                "#dvorak",
+                ["without accents", "with accents"],
+            ),  # Bare-ASCII search, no accents.
+            (
+                "#dvořák",
+                ["without accents", "with accents"],
+            ),  # Bare-ASCII search, with accents.
+            (
+                "#dvořäk",
+                ["without accents", "with accents"],
+            ),  # Bare-ASCII search, with incorrect accent.
+            (
+                "#Bruggen",
+                ["without umlaut or e", "with umlaut"],
+            ),  # Bare-ASCII search, with no umlaut.
+            (
+                "#Brüggen",
+                ["without umlaut or e", "with umlaut"],
+            ),  # Bare-ASCII search, with umlaut.
         ]
 
         for query, expected_titles in test_cases:
