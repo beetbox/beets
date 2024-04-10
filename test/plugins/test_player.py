@@ -15,6 +15,7 @@
 """Tests for BPD's implementation of the MPD protocol.
 """
 
+import asyncio
 import importlib.util
 import multiprocessing as mp
 import os
@@ -23,7 +24,6 @@ import sys
 import tempfile
 import threading
 import unittest
-import asyncio
 from contextlib import contextmanager
 
 # Mock GstPlayer so that the forked process doesn't attempt to import gi:
