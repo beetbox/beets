@@ -441,7 +441,7 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest, LyricsAssertions):
         )
         # reject different title
         url_title = "example.com | seets bong lyrics by John doe"
-        self.assertTrue(
+        self.assertFalse(
             google.is_page_candidate(url, url_title, s["title"], s["artist"]),
             url,
         )
