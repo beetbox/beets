@@ -1344,9 +1344,7 @@ class ShowChangeTest(_common.TestCase):
             long_title = "a track with a" + (" very" * 10) + " long name"
             self.items[0].title = long_title
             msg = self._show_change()
-            self.assertIn(
-                "(#1) a track (1:00) -> (#1) the title (0:00)", msg
-            )
+            self.assertIn("(#1) a track (1:00) -> (#1) the title (0:00)", msg)
 
     def test_item_data_change_wrap_newline(self):
         # Patch ui.term_width to force wrapping
@@ -1463,8 +1461,11 @@ class CompletionTest(_common.TestCase, TestHelper):
         with open(test_script_name, "rb") as test_script_file:
             tester.stdin.writelines(test_script_file)
         out, err = tester.communicate()
-        self.assertTrue(tester.returncode != 0 or out != b"completion tests passed\n", f'test/test_completion.sh did not execute properly. Output:{out.decode("utf-8")}')
-
+        self.assertTrue(
+            tester.returncode != 0 or out != b"completion tests passed\n",
+            f'test/test_completion.sh did not execute properly. '
+            f'Output:{out.decode("utf-8")}',
+        )
 
 
 class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):
