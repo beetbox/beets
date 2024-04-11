@@ -295,6 +295,8 @@ Bug fixes:
 * Fix bug where all media types are reported as the first media type when
   importing with MusicBrainz as the data source
   :bug:`4947`
+* Fix cover art resizing logic to support multiple steps of resizing
+  :bug:`5151`
 
 For plugin developers:
 
