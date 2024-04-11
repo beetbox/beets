@@ -1463,7 +1463,7 @@ class CompletionTest(_common.TestCase, TestHelper):
         out, err = tester.communicate()
         self.assertTrue(
             tester.returncode != 0 or out != b"completion tests passed\n",
-            f'test/test_completion.sh did not execute properly. '
+            f"test/test_completion.sh did not execute properly. "
             f'Output:{out.decode("utf-8")}',
         )
 
