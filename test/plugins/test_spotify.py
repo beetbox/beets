@@ -56,9 +56,7 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
         self.assertTrue(self.spotify._parse_opts(opts))
 
     def test_empty_query(self):
-        self.assertIsNone(
-            self.spotify._match_library_tracks(self.lib, "1=2")
-        )
+        self.assertIsNone(self.spotify._match_library_tracks(self.lib, "1=2"))
 
     @responses.activate
     def test_missing_request(self):
