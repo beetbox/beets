@@ -1461,7 +1461,7 @@ class CompletionTest(_common.TestCase, TestHelper):
         with open(test_script_name, "rb") as test_script_file:
             tester.stdin.writelines(test_script_file)
         out, err = tester.communicate()
-        self.assertTrue(
+        self.assertFalse(
             tester.returncode != 0 or out != b"completion tests passed\n",
             f"test/test_completion.sh did not execute properly. "
             f'Output:{out.decode("utf-8")}',
