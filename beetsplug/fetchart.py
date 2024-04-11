@@ -190,15 +190,15 @@ class Candidate:
                     plugin.cover_format,
                 )
 
-        if downscale and (not self.CANDIDATE_DOWNSCALE in skip_check_for):
+        if downscale and (self.CANDIDATE_DOWNSCALE not in skip_check_for):
             return self.CANDIDATE_DOWNSCALE
-        if reformat and (not self.CANDIDATE_REFORMAT in skip_check_for):
+        if reformat and (self.CANDIDATE_REFORMAT not in skip_check_for):
             return self.CANDIDATE_REFORMAT
         if plugin.deinterlace and (
-            not self.CANDIDATE_DEINTERLACE in skip_check_for
+            self.CANDIDATE_DEINTERLACE not in skip_check_for
         ):
             return self.CANDIDATE_DEINTERLACE
-        if downsize and (not self.CANDIDATE_DOWNSIZE in skip_check_for):
+        if downsize and (self.CANDIDATE_DOWNSIZE not in skip_check_for):
             return self.CANDIDATE_DOWNSIZE
         return self.CANDIDATE_EXACT
 

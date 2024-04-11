@@ -896,7 +896,7 @@ class ArtForAlbumTest(UseThePlugin):
         else:
             self.assertIsNone(candidate)
 
-    def _assertImageOperated(
+    def _assert_image_operated(
         self, image_file, operation, should_operate
     ):  # noqa
         self.image_file = image_file
@@ -954,45 +954,47 @@ class ArtForAlbumTest(UseThePlugin):
     def test_resize_if_necessary(self):
         self._require_backend()
         self.plugin.maxwidth = 300
-        self._assertImageOperated(self.IMG_225x225, self.RESIZE_OP, False)
-        self._assertImageOperated(self.IMG_348x348, self.RESIZE_OP, True)
+        self._assert_image_operated(self.IMG_225x225, self.RESIZE_OP, False)
+        self._assert_image_operated(self.IMG_348x348, self.RESIZE_OP, True)
 
     def test_fileresize(self):
         self._require_backend()
         self.plugin.max_filesize = self.IMG_225x225_SIZE // 2
-        self._assertImageOperated(self.IMG_225x225, self.RESIZE_OP, True)
+        self._assert_image_operated(self.IMG_225x225, self.RESIZE_OP, True)
 
     def test_fileresize_if_necessary(self):
         self._require_backend()
         self.plugin.max_filesize = self.IMG_225x225_SIZE
-        self._assertImageOperated(self.IMG_225x225, self.RESIZE_OP, False)
+        self._assert_image_operated(self.IMG_225x225, self.RESIZE_OP, False)
         self._assertImageIsValidArt(self.IMG_225x225, True)
 
     def test_fileresize_no_scale(self):
         self._require_backend()
         self.plugin.maxwidth = 300
         self.plugin.max_filesize = self.IMG_225x225_SIZE // 2
-        self._assertImageOperated(self.IMG_225x225, self.RESIZE_OP, True)
+        self._assert_image_operated(self.IMG_225x225, self.RESIZE_OP, True)
 
     def test_fileresize_and_scale(self):
         self._require_backend()
         self.plugin.maxwidth = 200
         self.plugin.max_filesize = self.IMG_225x225_SIZE // 2
-        self._assertImageOperated(self.IMG_225x225, self.RESIZE_OP, True)
+        self._assert_image_operated(self.IMG_225x225, self.RESIZE_OP, True)
 
     def test_deinterlace(self):
         self._require_backend()
         self.plugin.deinterlace = True
-        self._assertImageOperated(self.IMG_225x225, self.DEINTERLACE_OP, True)
+        self._assert_image_operated(self.IMG_225x225, self.DEINTERLACE_OP, True)
         self.plugin.deinterlace = False
-        self._assertImageOperated(self.IMG_225x225, self.DEINTERLACE_OP, False)
+        self._assert_image_operated(
+            self.IMG_225x225, self.DEINTERLACE_OP, False
+        )
 
     def test_deinterlace_and_resize(self):
         self._require_backend()
         self.plugin.maxwidth = 300
         self.plugin.deinterlace = True
-        self._assertImageOperated(self.IMG_348x348, self.DEINTERLACE_OP, True)
-        self._assertImageOperated(self.IMG_348x348, self.RESIZE_OP, True)
+        self._assert_image_operated(self.IMG_348x348, self.DEINTERLACE_OP, True)
+        self._assert_image_operated(self.IMG_348x348, self.RESIZE_OP, True)
 
 
 class DeprecatedConfigTest(_common.TestCase):
