@@ -896,11 +896,11 @@ class ArtForAlbumTest(UseThePlugin):
         else:
             self.assertIsNone(candidate)
 
-    def _assert_image_operated(
-        self, image_file, operation, should_operate
-    ):  # noqa
+    def _assert_image_operated(self, image_file, operation, should_operate):
         self.image_file = image_file
-        with patch.object(ArtResizer.shared, operation) as mock_operation:
+        with patch.object(
+            ArtResizer.shared, operation, return_value=self.image_file
+        ) as mock_operation:
             self.plugin.art_for_album(self.album, [""], True)
             self.assertEqual(mock_operation.called, should_operate)
 
