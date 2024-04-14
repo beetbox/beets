@@ -305,6 +305,8 @@ Bug fixes:
 * Fix bug where unimported plugin would not ignore children directories of
   ignored directories.
   :bug:`5130` 
+* :doc:`/plugins/convert`: Fix extension substitution inside path of the
+  exported playlist.
 
 For plugin developers:
 
