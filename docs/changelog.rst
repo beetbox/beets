@@ -297,6 +297,9 @@ Bug fixes:
 * Fix bug where all media types are reported as the first media type when
   importing with MusicBrainz as the data source
   :bug:`4947`
+* Fix bug where unimported plugin would not ignore children directories of
+  ignored directories.
+  :bug:`5130` 
 
 For plugin developers:
 
