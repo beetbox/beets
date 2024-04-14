@@ -339,6 +339,8 @@ Other changes:
   :bug:`4585`
 * :doc:`/faq`: :ref:`multidisc`: Elaborated the multi-disc FAQ :bug:`4806`
 * :doc:`/faq`: :ref:`src`: Removed some long lines.
+* :doc:`/guides/main`: Added a quick checkpoint to ensure the config file is 
+  set up correctly prior to users importing their music library.
 
 1.6.0 (November 27, 2021)
 -------------------------
