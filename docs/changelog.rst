@@ -14,6 +14,8 @@ Bug fixes:
   incorrectly removed parts of user-configured path formats that followed a dot
   (**.**).
   :bug:`5771`
+* :doc:`/plugins/convert`: Fix extension substitution inside path of the
+  exported playlist.
 
 For packagers:
 
