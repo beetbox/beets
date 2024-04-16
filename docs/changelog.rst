@@ -17,6 +17,8 @@ Major new features:
 
 New features:
 
+* :doc:`/plugins/edit`: Prefer editor from ``VISUAL`` environment variable over ``EDITOR``.
+* :ref:`config-cmd`: Prefer editor from ``VISUAL`` environment variable over ``EDITOR``.
 * :doc:`/plugins/listenbrainz`: Add initial support for importing history and playlists from `ListenBrainz`
   :bug:`1719`
 * :doc:`plugins/mbsubmit`: add new prompt choices helping further to submit unmatched tracks to MusicBrainz faster.
