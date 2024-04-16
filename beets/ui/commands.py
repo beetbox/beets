@@ -2371,7 +2371,9 @@ def config_edit():
     except OSError as exc:
         message = f"Could not edit configuration: {exc}"
         if not editor:
-            message += ". Please set the EDITOR environment variable"
+            message += (
+                ". Please set the VISUAL (or EDITOR) environment variable"
+            )
         raise ui.UserError(message)
 
 
@@ -2386,7 +2388,7 @@ config_cmd.parser.add_option(
     "-e",
     "--edit",
     action="store_true",
-    help="edit user configuration with $EDITOR",
+    help="edit user configuration with $VISUAL (or $EDITOR)",
 )
 config_cmd.parser.add_option(
     "-d",

@@ -9,9 +9,9 @@ then type::
 
      beet edit QUERY
 
-Your text editor (i.e., the command in your ``$EDITOR`` environment variable)
-will open with a list of tracks to edit. Make your changes and exit your text
-editor to apply them to your music.
+Your text editor (i.e., the command in your ``$VISUAL`` or ``$EDITOR``
+environment variable) will open with a list of tracks to edit. Make your changes
+and exit your text editor to apply them to your music.
 
 Command-Line Options
 --------------------
