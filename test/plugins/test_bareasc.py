@@ -65,6 +65,7 @@ class BareascPluginTest(unittest.TestCase, TestHelper):
                 self.assertListEqual(
                     [item.title for item in items], expected_titles
                 )
+
     def test_bareasc_list_output(self):
         """Bare-ASCII version of list command - check output."""
         with capture_stdout() as output:
