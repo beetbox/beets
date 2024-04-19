@@ -93,6 +93,38 @@ The ``pretend_paths`` configuration option sets whether the items should be
 displayed as per the user's ``format_item`` setting or what the file
 paths as they would be written to the m3u file look like.
 
+In case you want to export additional fields from the beets database into the
+generated playlists, you can do so by specifying them within the ``fields``
+configuration option and setting the ``output`` option to ``extm3u``.
+For instance the following configuration exports the ``id`` and ``genre``
+fields:
+
+    smartplaylist:
+        playlist_dir: /data/playlists
+        relative_to: /data/playlists
+        output: extm3u
+        fields:
+
+            - id
+            - genre
+
+        playlists:
+
+            - name: all.m3u
+              query: ''
+
+A resulting ``all.m3u`` file could look as follows:
+
+    #EXTM3U
+    #EXTINF:805 id="1931" genre="Jazz",Miles Davis - Autumn Leaves
+    ../music/Albums/Miles Davis/Autumn Leaves/02 Autumn Leaves.mp3
+
+To give a usage example, the `webm3u`_ and `Beetstream`_ plugins read the
+exported ``id`` field, allowing you to serve your local m3u playlists via HTTP.
+
+.. _Beetstream: https://github.com/BinaryBrain/Beetstream
+.. _webm3u: https://github.com/mgoltzsche/beets-webm3u
+
 Configuration
 -------------
 
