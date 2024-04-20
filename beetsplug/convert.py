@@ -120,6 +120,7 @@ class ConvertPlugin(BeetsPlugin):
                 "delete_originals": False,
                 "playlist": None,
                 "force": False,
+                "refresh": False,
                 "keep_new": False,
             }
         )
