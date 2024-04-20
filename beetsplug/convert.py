@@ -416,6 +416,26 @@ class ConvertPlugin(BeetsPlugin):
             self._log.error("Could not open file to convert: {}", exc)
             return
 
+        # TODO: Implement the option as --refresh.
+        refresh = True
+
+        # Delete existing destination files when original files have been
+        # modified since the last conversion [only when not using the
+        # --keep-new option].
+        if ((refresh and not keep_new) and
+            (os.path.exists(util.syspath(dest))) and
+            (os.path.getmtime(util.syspath(item.path)) > os.path.getmtime(util.syspath(dest)))):
+            if pretend:
+                self._log.info(
+                    "rm {0} (original file modified)",
+                    util.displayable_path(dest),
+                )
+            else:
+                self._log.info(
+                    "Removing {0} (original file modified)", util.displayable_path(dest)
+                )
+                util.remove(util.syspath(dest))
+
         # When keeping the new file in the library, we first move the
         # current (pristine) file to the destination. We'll then copy it
         # back to its old path or transcode it to a new path.
