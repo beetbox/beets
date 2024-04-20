@@ -163,6 +163,8 @@ New features:
 * Add support for `barcode` field.
   :bug:`3172`
 * :doc:`/plugins/smartplaylist`: Add new config option `smartplaylist.fields`.
+* :doc:`/plugins/convert`: Add new configuration option `convert.refresh` and
+  command-line option ``--refresh``.
 
 Bug fixes:
 
