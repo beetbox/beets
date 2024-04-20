@@ -169,6 +169,14 @@ class ConvertPlugin(BeetsPlugin):
                               defaults to maximum available processors",
         )
         cmd.parser.add_option(
+            "-r",
+            "--refresh",
+            action="store_true",
+            dest="refresh",
+            help="reconvert if original file is \
+                            newer than converted file",
+        )
+        cmd.parser.add_option(
             "-k",
             "--keep-new",
             action="store_true",
@@ -251,6 +259,7 @@ class ConvertPlugin(BeetsPlugin):
             self._parallel_convert(
                 dest,
                 False,
+                False,
                 path_formats,
                 fmt,
                 pretend,
@@ -330,6 +339,7 @@ class ConvertPlugin(BeetsPlugin):
     def convert_item(
         self,
         dest_dir,
+        refresh,
         keep_new,
         path_formats,
         fmt,
@@ -367,12 +377,9 @@ class ConvertPlugin(BeetsPlugin):
                 with _fs_lock:
                     util.mkdirall(dest)
 
-            # TODO: Implement the option as --refresh.
-            refresh = True
-
             # Delete existing destination files when original files have been
-            # modified since the last conversion [only when not using the
-            # --keep-new option].
+            # modified since the last conversion. NOTE: Only when not using the
+            # --keep-new option because I'm not sure what to do in this case.
             if ((refresh and not keep_new) and
                 (os.path.exists(util.syspath(dest))) and
                 (os.path.getmtime(util.syspath(item.path)) > os.path.getmtime(util.syspath(dest)))):
@@ -609,6 +616,7 @@ class ConvertPlugin(BeetsPlugin):
 
         self._parallel_convert(
             dest,
+            opts.refresh,
             opts.keep_new,
             path_formats,
             fmt,
@@ -760,6 +768,7 @@ class ConvertPlugin(BeetsPlugin):
     def _parallel_convert(
         self,
         dest,
+        refresh,
         keep_new,
         path_formats,
         fmt,
@@ -774,7 +783,7 @@ class ConvertPlugin(BeetsPlugin):
         """
         convert = [
             self.convert_item(
-                dest, keep_new, path_formats, fmt, pretend, link, hardlink
+                dest, refresh, keep_new, path_formats, fmt, pretend, link, hardlink
             )
             for _ in range(threads)
         ]
