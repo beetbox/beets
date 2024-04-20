@@ -152,6 +152,7 @@ class ConvertPlugin(BeetsPlugin):
                 "album_art_maxwidth": 0,
                 "delete_originals": False,
                 "playlist": None,
+                "refresh": False,
             }
         )
         self.early_import_stages = [self.auto_convert, self.auto_convert_keep]
@@ -259,12 +260,13 @@ class ConvertPlugin(BeetsPlugin):
                 hardlink,
                 link,
                 playlist,
+                refresh,
             ) = self._get_opts_and_config(empty_opts)
 
             items = task.imported_items()
             self._parallel_convert(
                 dest,
-                False,
+                refresh,
                 False,
                 path_formats,
                 fmt,
@@ -603,6 +605,7 @@ class ConvertPlugin(BeetsPlugin):
             hardlink,
             link,
             playlist,
+            refresh,
         ) = self._get_opts_and_config(opts)
 
         if opts.album:
@@ -631,7 +634,7 @@ class ConvertPlugin(BeetsPlugin):
 
         self._parallel_convert(
             dest,
-            opts.refresh,
+            refresh,
             opts.keep_new,
             path_formats,
             fmt,
@@ -763,6 +766,11 @@ class ConvertPlugin(BeetsPlugin):
             hardlink = self.config["hardlink"].get(bool)
             link = self.config["link"].get(bool)
 
+        if opts.refresh is not None:
+            refresh = opts.refresh
+        else:
+            refresh = self.config["refresh"].get(bool)
+
         return (
             dest,
             threads,
@@ -772,6 +780,7 @@ class ConvertPlugin(BeetsPlugin):
             hardlink,
             link,
             playlist,
+            refresh,
         )
 
     def _parallel_convert(
