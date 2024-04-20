@@ -419,11 +419,10 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest, LyricsAssertions):
         soup = BeautifulSoup(
             html, "html.parser", parse_only=SoupStrainer("title")
         )
-        self.assertEqual(
+        self.assertTrue(
             google.is_page_candidate(
                 url, soup.title.string, s["title"], s["artist"]
             ),
-            True,
             url,
         )
 
@@ -436,16 +435,14 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest, LyricsAssertions):
         url_title = "example.com | Beats song by John doe"
 
         # very small diffs (typo) are ok eg 'beats' vs 'beets' with same artist
-        self.assertEqual(
+        self.assertTrue(
             google.is_page_candidate(url, url_title, s["title"], s["artist"]),
-            True,
             url,
         )
         # reject different title
         url_title = "example.com | seets bong lyrics by John doe"
-        self.assertEqual(
+        self.assertFalse(
             google.is_page_candidate(url, url_title, s["title"], s["artist"]),
-            False,
             url,
         )
 
@@ -489,7 +486,7 @@ class GeniusScrapeLyricsFromHtmlTest(GeniusBaseTest):
         # expected return value None
         url = "https://genius.com/sample"
         mock = MockFetchUrl()
-        self.assertEqual(genius._scrape_lyrics_from_html(mock(url)), None)
+        self.assertIsNone(genius._scrape_lyrics_from_html(mock(url)))
 
     def test_good_lyrics(self):
         """Ensure we are able to scrape a page with lyrics"""
