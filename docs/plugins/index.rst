@@ -422,6 +422,10 @@ Here are a few of the plugins written by the beets community:
 `beets-autofix`_
    Automates repetitive tasks to keep your library in order.
 
+`beets-autogenre`_
+   Assigns genres to your library items using the :doc:`lastgenre <lastgenre>`
+   and `beets-xtractor`_ plugins as well as additional rules.
+
 `beets-audible`_
    Adds Audible as a tagger data source and provides
    other features for managing audiobook collections.
@@ -581,3 +585,4 @@ Here are a few of the plugins written by the beets community:
 .. _beets-mpd-utils: https://github.com/thekakkun/beets-mpd-utils
 .. _beets-webm3u: https://github.com/mgoltzsche/beets-webm3u
 .. _beets-webrouter: https://github.com/mgoltzsche/beets-webrouter
+.. _beets-autogenre: https://github.com/mgoltzsche/beets-autogenre
