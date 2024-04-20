@@ -51,14 +51,12 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
 
     def test_args(self):
         opts = ArgumentsMock("fail", True)
-        self.assertEqual(False, self.spotify._parse_opts(opts))
+        self.assertFalse(self.spotify._parse_opts(opts))
         opts = ArgumentsMock("list", False)
-        self.assertEqual(True, self.spotify._parse_opts(opts))
+        self.assertTrue(self.spotify._parse_opts(opts))
 
     def test_empty_query(self):
-        self.assertEqual(
-            None, self.spotify._match_library_tracks(self.lib, "1=2")
-        )
+        self.assertIsNone(self.spotify._match_library_tracks(self.lib, "1=2"))
 
     @responses.activate
     def test_missing_request(self):
