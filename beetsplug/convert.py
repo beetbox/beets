@@ -148,6 +148,14 @@ class ConvertPlugin(BeetsPlugin):
             ),
         )
         cmd.parser.add_option(
+            "-r",
+            "--refresh",
+            action="store_true",
+            dest="refresh",
+            help="reconvert if original file is \
+                            newer than converted file",
+        )
+        cmd.parser.add_option(
             "-k",
             "--keep-new",
             action="store_true",
@@ -306,7 +314,7 @@ class ConvertPlugin(BeetsPlugin):
             # Filter items based on should_transcode function
             items = [item for item in items if self.should_transcode(item)]
 
-            self._parallel_convert(items, keep_new=False)
+            self._parallel_convert(items, refresh=False, keep_new=False)
 
     # Utilities converted from functions to methods on logging overhaul
 
@@ -400,7 +408,7 @@ class ConvertPlugin(BeetsPlugin):
         )
 
     @pipeline.mutator_stage
-    def convert_item(self, keep_new: bool, item: Item) -> None:
+    def convert_item(self, refresh: bool, keep_new: bool, item: Item) -> None:
         """Convert an Item from the library."""
         pretend, link, hardlink = self.pretend, self.link, self.hardlink
         command, ext = self.command
@@ -416,12 +424,9 @@ class ConvertPlugin(BeetsPlugin):
             self._log.error("Could not open file to convert: {}", exc)
             return
 
-        # TODO: Implement the option as --refresh.
-        refresh = True
-
         # Delete existing destination files when original files have been
-        # modified since the last conversion [only when not using the
-        # --keep-new option].
+        # modified since the last conversion. NOTE: Only when not using the
+        # --keep-new option because I'm not sure what to do in this case.
         if ((refresh and not keep_new) and
             (os.path.exists(util.syspath(dest))) and
             (os.path.getmtime(util.syspath(item.path)) > os.path.getmtime(util.syspath(dest)))):
@@ -676,7 +681,7 @@ class ConvertPlugin(BeetsPlugin):
                 items_paths.append(os.path.relpath(item_path, pl_dir))
 
         self._parallel_convert(
-            items, keep_new=self.config["keep_new"].get(bool)
+            items, refresh=self.config["refresh"].get(bool), keep_new=self.config["keep_new"].get(bool)
         )
 
         if playlist:
@@ -751,10 +756,10 @@ class ConvertPlugin(BeetsPlugin):
                     util.remove(path)
                 _temp_files.remove(path)
 
-    def _parallel_convert(self, items: list[Item], keep_new: bool):
+    def _parallel_convert(self, items: list[Item], refresh: bool, keep_new: bool):
         """Run the convert_item function for every items on as many thread as
         defined in threads
         """
-        convert = [self.convert_item(keep_new) for _ in range(self.threads)]
+        convert = [self.convert_item(refresh, keep_new) for _ in range(self.threads)]
         pipe = pipeline.Pipeline([iter(items), convert])
         pipe.run_parallel()
