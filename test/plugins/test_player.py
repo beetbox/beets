@@ -15,7 +15,6 @@
 """Tests for BPD's implementation of the MPD protocol.
 """
 
-import asyncio
 import importlib.util
 import multiprocessing as mp
 import os
@@ -23,6 +22,7 @@ import socket
 import sys
 import tempfile
 import threading
+import time
 import unittest
 from contextlib import contextmanager
 
@@ -549,7 +549,7 @@ class BPDQueryTest(BPDTestHelper):
             # Manually send a command without reading a response.
             request = client.serialise_command("idle")
             client.sock.sendall(request)
-            asyncio.sleep(0.01)
+            time.sleep(0.01)
             response = client.send_command("noidle")
         self._assert_ok(response)
 
