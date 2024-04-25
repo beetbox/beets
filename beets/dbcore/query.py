@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""The Query type hierarchy for DBCore.
-"""
+"""The Query type hierarchy for DBCore."""
 
 from __future__ import annotations
 
@@ -155,9 +154,7 @@ class FieldQuery(Query, Generic[P]):
 
     @classmethod
     def value_match(cls, pattern: P, value: Any):
-        """Determine whether the value matches the pattern. Both
-        arguments are strings.
-        """
+        """Determine whether the value matches the pattern."""
         raise NotImplementedError()
 
     def match(self, obj: Model) -> bool:
@@ -426,6 +423,28 @@ class NumericQuery(FieldQuery):
                 return f"{self.field} <= ?", (self.rangemax,)
             else:
                 return "1", ()
+
+
+class InQuery(FieldQuery[Sequence[AnySQLiteType]]):
+    """Query which matches values in the given set."""
+
+    field: str
+    pattern: Sequence[AnySQLiteType]
+    fast: bool = True
+
+    @property
+    def subvals(self) -> Sequence[AnySQLiteType]:
+        return self.pattern
+
+    def col_clause(self) -> Tuple[str, Sequence[AnySQLiteType]]:
+        placeholders = ", ".join(["?"] * len(self.subvals))
+        return f"{self.field} IN ({placeholders})", self.subvals
+
+    @classmethod
+    def value_match(
+        cls, pattern: Sequence[AnySQLiteType], value: AnySQLiteType
+    ) -> bool:
+        return value in pattern
 
 
 class CollectionQuery(Query):
