@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""The central Model and Database constructs for DBCore.
-"""
+"""The central Model and Database constructs for DBCore."""
 
 from __future__ import annotations
 
@@ -309,7 +308,7 @@ class Model(ABC):
     are subclasses of `Sort`.
     """
 
-    _queries: Dict[str, Type[Query]] = {}
+    _queries: Dict[str, Type[FieldQuery]] = {}
     """Named queries that use a field-like `name:value` syntax but which
     do not relate to any specific field.
     """
@@ -599,8 +598,7 @@ class Model(ABC):
             # Deleted flexible attributes.
             for key in self._dirty:
                 tx.mutate(
-                    "DELETE FROM {} "
-                    "WHERE entity_id=? AND key=?".format(self._flex_table),
+                    f"DELETE FROM {self._flex_table} WHERE entity_id=? AND key=?",
                     (self.id, key),
                 )
 
