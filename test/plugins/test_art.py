@@ -220,7 +220,11 @@ class FetchImageTest(FetchImageHelper, UseThePlugin):
         self.dpath = os.path.join(self.temp_dir, b"arttest")
         self.source = fetchart.RemoteArtSource(logger, self.plugin.config)
         self.settings = Settings(maxwidth=0)
-        self.candidate = fetchart.Candidate(logger, url=self.URL)
+        self.candidate = fetchart.Candidate(
+            logger,
+            source=self.source,
+            url=self.URL,
+        )
 
     def test_invalid_type_returns_none(self):
         self.mock_response(self.URL, "image/watercolour")
@@ -743,7 +747,11 @@ class ArtImporterTest(UseThePlugin):
         self.art_file = os.path.join(self.temp_dir, b"tmpcover.jpg")
         _common.touch(self.art_file)
         self.old_afa = self.plugin.art_for_album
-        self.afa_response = fetchart.Candidate(logger, path=self.art_file)
+        self.afa_response = fetchart.Candidate(
+            logger,
+            source=fetchart.ArtSource(logger, self.plugin.config),
+            path=self.art_file,
+        )
 
         def art_for_album(i, p, local_only=False):
             return self.afa_response
@@ -832,7 +840,11 @@ class ArtImporterTest(UseThePlugin):
     def test_do_not_delete_original_if_already_in_place(self):
         artdest = os.path.join(os.path.dirname(self.i.path), b"cover.jpg")
         shutil.copyfile(syspath(self.art_file), syspath(artdest))
-        self.afa_response = fetchart.Candidate(logger, path=artdest)
+        self.afa_response = fetchart.Candidate(
+            logger,
+            source=fetchart.ArtSource(logger, self.plugin.config),
+            path=artdest,
+        )
         self._fetch_art(True)
 
     def test_fetch_art_if_imported_file_deleted(self):
@@ -869,7 +881,11 @@ class ArtForAlbumTest(UseThePlugin):
 
         def fs_source_get(_self, album, settings, paths):
             if paths:
-                yield fetchart.Candidate(logger, path=self.image_file)
+                yield fetchart.Candidate(
+                    logger,
+                    source=fetchart.ArtSource(logger, self.plugin.config),
+                    path=self.image_file,
+                )
 
         fetchart.FileSystem.get = fs_source_get
 
