@@ -115,15 +115,6 @@ class Query(ABC):
         return hash(type(self))
 
 
-class NamedQuery(Query):
-    """Non-field query, i.e. the query prefix is not a field but identifies the
-    query class.
-    """
-
-    @abstractmethod
-    def __init__(self, pattern): ...
-
-
 P = TypeVar("P")
 SQLiteType = Union[str, float, int, memoryview]
 AnySQLiteType = TypeVar("AnySQLiteType", bound=SQLiteType)
