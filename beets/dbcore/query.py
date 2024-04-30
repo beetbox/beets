@@ -116,7 +116,7 @@ class Query(ABC):
 
 
 P = TypeVar("P")
-SQLiteType = Union[str, float, int, memoryview]
+SQLiteType = Union[str, bytes, float, int, memoryview]
 AnySQLiteType = TypeVar("AnySQLiteType", bound=SQLiteType)
 
 
@@ -416,7 +416,7 @@ class NumericQuery(FieldQuery):
                 return "1", ()
 
 
-class InQuery(FieldQuery[Sequence[AnySQLiteType]]):
+class InQuery(Generic[AnySQLiteType], FieldQuery[Sequence[AnySQLiteType]]):
     """Query which matches values in the given set."""
 
     field: str
@@ -424,10 +424,10 @@ class InQuery(FieldQuery[Sequence[AnySQLiteType]]):
     fast: bool = True
 
     @property
-    def subvals(self) -> Sequence[AnySQLiteType]:
+    def subvals(self) -> Sequence[SQLiteType]:
         return self.pattern
 
-    def col_clause(self) -> Tuple[str, Sequence[AnySQLiteType]]:
+    def col_clause(self) -> Tuple[str, Sequence[SQLiteType]]:
         placeholders = ", ".join(["?"] * len(self.subvals))
         return f"{self.field} IN ({placeholders})", self.subvals
 

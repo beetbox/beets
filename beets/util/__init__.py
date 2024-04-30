@@ -427,7 +427,7 @@ def displayable_path(
         return path.decode("utf-8", "ignore")
 
 
-def syspath(path: bytes, prefix: bool = True) -> Bytes_or_String:
+def syspath(path: Bytes_or_String, prefix: bool = True) -> Bytes_or_String:
     """Convert a path for use by the operating system. In particular,
     paths on Windows must receive a magic prefix and must be converted
     to Unicode before they are sent to the OS. To disable the magic
