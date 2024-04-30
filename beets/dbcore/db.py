@@ -29,6 +29,7 @@ from sqlite3 import Connection
 from types import TracebackType
 from typing import (
     Any,
+    AnyStr,
     Callable,
     DefaultDict,
     Dict,
@@ -1088,8 +1089,22 @@ class Database:
                 value = value.decode()
             return re.search(pattern, str(value)) is not None
 
+        def bytelower(bytestring: Optional[AnyStr]) -> Optional[AnyStr]:
+            """A custom ``bytelower`` sqlite function so we can compare
+            bytestrings in a semi case insensitive fashion.
+
+            This is to work around sqlite builds are that compiled with
+            ``-DSQLITE_LIKE_DOESNT_MATCH_BLOBS``. See
+            ``https://github.com/beetbox/beets/issues/2172`` for details.
+            """
+            if bytestring is not None:
+                return bytestring.lower()
+
+            return bytestring
+
         conn.create_function("regexp", 2, regexp)
         conn.create_function("unidecode", 1, unidecode)
+        conn.create_function("bytelower", 1, bytelower)
 
     def _close(self):
         """Close the all connections to the underlying SQLite database
