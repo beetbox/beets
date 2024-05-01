@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Tests for the DBCore database abstraction.
-"""
+"""Tests for the DBCore database abstraction."""
 
 import os
 import shutil
@@ -32,7 +31,7 @@ class SortFixture(dbcore.query.FieldSort):
     pass
 
 
-class QueryFixture(dbcore.query.NamedQuery):
+class QueryFixture(dbcore.query.FieldQuery):
     def __init__(self, pattern):
         self.pattern = pattern
 
@@ -604,10 +603,6 @@ class QueryFromStringsTest(unittest.TestCase):
     def test_empty_query_part(self):
         q = self.qfs([""])
         self.assertIsInstance(q.subqueries[0], dbcore.query.TrueQuery)
-
-    def test_parse_named_query(self):
-        q = self.qfs(["some_query:foo"])
-        self.assertIsInstance(q.subqueries[0], QueryFixture)
 
 
 class SortFromStringsTest(unittest.TestCase):
