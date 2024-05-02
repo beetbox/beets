@@ -117,6 +117,7 @@ setup(
             "reflink",
             "requests_oauthlib",
             "responses>=0.3.0",
+            "rich-tables",
         ],
         "lint": [
             "flake8",
