@@ -31,6 +31,7 @@ from beets.dbcore import Results, types
 from beets.util import (
     MoveOperation,
     bytestring_path,
+    cached_classproperty,
     lazy_property,
     normpath,
     samefile,
@@ -640,6 +641,17 @@ class Item(LibModel):
     # Cached album object. Read-only.
     __album = None
 
+    @cached_classproperty
+    def table_with_joined_relation(cls) -> str:
+        """Return the FROM clause which includes related albums.
+
+        We need to use a LEFT JOIN here, otherwise items that are not part of
+        an album (e.g. singletons) would be left out.
+        """
+        this_table = cls._table
+        other_table = Album._table
+        return f"{this_table} LEFT JOIN {other_table} ON {this_table}.album_id = {other_table}.id"
+
     @property
     def _cached_album(self):
         """The Album object that this item belongs to, if any, or
@@ -1239,6 +1251,17 @@ class Album(LibModel):
     ]
 
     _format_config_key = "format_album"
+
+    @cached_classproperty
+    def table_with_joined_relation(cls) -> str:
+        """Return the FROM clause which joins on related album items.
+
+        Here we can use INNER JOIN (which is more performant than LEFT JOIN),
+        since we only want to see albums that
+        """
+        this_table = cls._table
+        other_table = Item._table
+        return f"{this_table} INNER JOIN {other_table} ON {this_table}.id = {other_table}.album_id"
 
     @classmethod
     def _getters(cls):
