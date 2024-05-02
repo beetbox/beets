@@ -1055,3 +1055,20 @@ def par_map(transform: Callable, items: Iterable):
     pool.map(transform, items)
     pool.close()
     pool.join()
+
+
+class cached_classproperty:  # noqa: N801
+    """A decorator implementing a read-only property that is *lazy* in
+    the sense that the getter is only invoked once. Subsequent accesses
+    through *any* instance use the cached result.
+    """
+
+    def __init__(self, getter):
+        self.getter = getter
+        self.cache = {}
+
+    def __get__(self, instance, owner):
+        if owner not in self.cache:
+            self.cache[owner] = self.getter(owner)
+
+        return self.cache[owner]
