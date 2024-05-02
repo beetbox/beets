@@ -143,7 +143,7 @@ def _clear_weights():
     """Hack around the lazy descriptor used to cache weights for
     Distance calculations.
     """
-    Distance.__dict__["_weights"].computed = False
+    Distance.__dict__["_weights"].cache = {}
 
 
 class DistanceTest(_common.TestCase):
