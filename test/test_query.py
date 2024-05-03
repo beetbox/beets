@@ -1148,6 +1148,7 @@ class RelatedQueriesTest(_common.TestCase, AssertsMixin):
                 album_items.append(item)
             album = self.lib.add_album(album_items)
             album.artpath = f"{album_name} Artpath"
+            album.catalognum = "ABC"
             album.store()
             albums.append(album)
 
@@ -1162,6 +1163,11 @@ class RelatedQueriesTest(_common.TestCase, AssertsMixin):
         q = "artpath::Album1"
         results = self.lib.items(q)
         self.assert_items_matched(results, ["Album1 Item1", "Album1 Item2"])
+
+    def test_filter_by_common_field(self):
+        q = "catalognum:ABC Album1"
+        results = self.lib.albums(q)
+        self.assert_albums_matched(results, ["Album1"])
 
 
 def suite():

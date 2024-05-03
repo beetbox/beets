@@ -154,7 +154,15 @@ def construct_query_part(
     # they are querying.
     else:
         key = key.lower()
-        fast = key in {*library.Album._fields, *library.Item._fields}
+        album_fields = library.Album._fields.keys()
+        item_fields = library.Item._fields.keys()
+        fast = key in album_fields | item_fields
+
+        if key in album_fields & item_fields:
+            # This field exists in both tables, so SQLite will encounter
+            # an OperationalError. Using an explicit table name resolves this.
+            key = f"{model_cls._table}.{key}"
+
         out_query = query_class(key, pattern, fast)
 
     # Apply negation.
