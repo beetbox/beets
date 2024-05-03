@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""The central Model and Database constructs for DBCore.
-"""
+"""The central Model and Database constructs for DBCore."""
 
 from __future__ import annotations
 
@@ -29,6 +28,7 @@ from sqlite3 import Connection
 from types import TracebackType
 from typing import (
     Any,
+    AnyStr,
     Callable,
     DefaultDict,
     Dict,
@@ -308,7 +308,7 @@ class Model(ABC):
     are subclasses of `Sort`.
     """
 
-    _queries: Dict[str, Type[Query]] = {}
+    _queries: Dict[str, Type[FieldQuery]] = {}
     """Named queries that use a field-like `name:value` syntax but which
     do not relate to any specific field.
     """
@@ -598,8 +598,7 @@ class Model(ABC):
             # Deleted flexible attributes.
             for key in self._dirty:
                 tx.mutate(
-                    "DELETE FROM {} "
-                    "WHERE entity_id=? AND key=?".format(self._flex_table),
+                    f"DELETE FROM {self._flex_table} WHERE entity_id=? AND key=?",
                     (self.id, key),
                 )
 
@@ -1088,8 +1087,22 @@ class Database:
                 value = value.decode()
             return re.search(pattern, str(value)) is not None
 
+        def bytelower(bytestring: Optional[AnyStr]) -> Optional[AnyStr]:
+            """A custom ``bytelower`` sqlite function so we can compare
+            bytestrings in a semi case insensitive fashion.
+
+            This is to work around sqlite builds are that compiled with
+            ``-DSQLITE_LIKE_DOESNT_MATCH_BLOBS``. See
+            ``https://github.com/beetbox/beets/issues/2172`` for details.
+            """
+            if bytestring is not None:
+                return bytestring.lower()
+
+            return bytestring
+
         conn.create_function("regexp", 2, regexp)
         conn.create_function("unidecode", 1, unidecode)
+        conn.create_function("bytelower", 1, bytelower)
 
     def _close(self):
         """Close the all connections to the underlying SQLite database

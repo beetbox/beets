@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Tests for the DBCore database abstraction.
-"""
+"""Tests for the DBCore database abstraction."""
 
 import os
 import shutil
@@ -32,7 +31,7 @@ class SortFixture(dbcore.query.FieldSort):
     pass
 
 
-class QueryFixture(dbcore.query.NamedQuery):
+class QueryFixture(dbcore.query.FieldQuery):
     def __init__(self, pattern):
         self.pattern = pattern
 
@@ -315,16 +314,16 @@ class ModelTest(unittest.TestCase):
     def test_delete_flexattr(self):
         model = ModelFixture1()
         model["foo"] = "bar"
-        self.assertTrue("foo" in model)
+        self.assertIn("foo", model)
         del model["foo"]
-        self.assertFalse("foo" in model)
+        self.assertNotIn("foo", model)
 
     def test_delete_flexattr_via_dot(self):
         model = ModelFixture1()
         model["foo"] = "bar"
-        self.assertTrue("foo" in model)
+        self.assertIn("foo", model)
         del model.foo
-        self.assertFalse("foo" in model)
+        self.assertNotIn("foo", model)
 
     def test_delete_flexattr_persists(self):
         model = ModelFixture1()
@@ -337,7 +336,7 @@ class ModelTest(unittest.TestCase):
         model.store()
 
         model = self.db._get(ModelFixture1, model.id)
-        self.assertFalse("foo" in model)
+        self.assertNotIn("foo", model)
 
     def test_delete_non_existent_attribute(self):
         model = ModelFixture1()
@@ -365,7 +364,7 @@ class ModelTest(unittest.TestCase):
     def test_null_value_stays_none_for_untyped_field(self):
         model = ModelFixture1()
         model.foo = None
-        self.assertEqual(model.foo, None)
+        self.assertIsNone(model.foo)
 
     def test_normalization_for_typed_flex_fields(self):
         model = ModelFixture1()
@@ -604,10 +603,6 @@ class QueryFromStringsTest(unittest.TestCase):
     def test_empty_query_part(self):
         q = self.qfs([""])
         self.assertIsInstance(q.subqueries[0], dbcore.query.TrueQuery)
-
-    def test_parse_named_query(self):
-        q = self.qfs(["some_query:foo"])
-        self.assertIsInstance(q.subqueries[0], QueryFixture)
 
 
 class SortFromStringsTest(unittest.TestCase):

@@ -427,7 +427,7 @@ def displayable_path(
         return path.decode("utf-8", "ignore")
 
 
-def syspath(path: bytes, prefix: bool = True) -> Bytes_or_String:
+def syspath(path: Bytes_or_String, prefix: bool = True) -> Bytes_or_String:
     """Convert a path for use by the operating system. In particular,
     paths on Windows must receive a magic prefix and must be converted
     to Unicode before they are sent to the OS. To disable the magic
@@ -978,14 +978,14 @@ def open_anything() -> str:
 def editor_command() -> str:
     """Get a command for opening a text file.
 
-    Use the `EDITOR` environment variable by default. If it is not
-    present, fall back to `open_anything()`, the platform-specific tool
-    for opening files in general.
+    First try environment variable `VISUAL` followed by `EDITOR`. As last resort
+    fall back to `open_anything()`, the platform-specific tool for opening files
+    in general.
+
     """
-    editor = os.environ.get("EDITOR")
-    if editor:
-        return editor
-    return open_anything()
+    return (
+        os.environ.get("VISUAL") or os.environ.get("EDITOR") or open_anything()
+    )
 
 
 def interactive_open(targets: Sequence[str], command: str):

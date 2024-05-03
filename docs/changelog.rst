@@ -17,6 +17,8 @@ Major new features:
 
 New features:
 
+* :doc:`/plugins/edit`: Prefer editor from ``VISUAL`` environment variable over ``EDITOR``.
+* :ref:`config-cmd`: Prefer editor from ``VISUAL`` environment variable over ``EDITOR``.
 * :doc:`/plugins/listenbrainz`: Add initial support for importing history and playlists from `ListenBrainz`
   :bug:`1719`
 * :doc:`plugins/mbsubmit`: add new prompt choices helping further to submit unmatched tracks to MusicBrainz faster.
@@ -158,6 +160,9 @@ New features:
 * :doc:`/plugins/convert`: Don't treat WAVE (`.wav`) files as lossy anymore
   when using the `never_convert_lossy_files` option. They will get transcoded
   like the other lossless formats.
+* Add support for `barcode` field.
+  :bug:`3172`
+* :doc:`/plugins/smartplaylist`: Add new config option `smartplaylist.fields`.
 
 Bug fixes:
 
@@ -295,6 +300,9 @@ Bug fixes:
 * Fix bug where all media types are reported as the first media type when
   importing with MusicBrainz as the data source
   :bug:`4947`
+* Fix bug where unimported plugin would not ignore children directories of
+  ignored directories.
+  :bug:`5130` 
 
 For plugin developers:
 
@@ -334,6 +342,7 @@ Other changes:
   :bug:`4585`
 * :doc:`/faq`: :ref:`multidisc`: Elaborated the multi-disc FAQ :bug:`4806`
 * :doc:`/faq`: :ref:`src`: Removed some long lines.
+* Refactor the test cases to avoid test smells.
 
 1.6.0 (November 27, 2021)
 -------------------------
