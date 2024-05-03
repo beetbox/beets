@@ -506,7 +506,7 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
 class Item(LibModel):
     """Represent a song or track."""
 
-    _table = "items"
+    _table_name = "items"
     _flex_table = "item_attributes"
     _fields = {
         "id": types.PRIMARY_ID,
@@ -642,15 +642,14 @@ class Item(LibModel):
     __album = None
 
     @cached_classproperty
-    def table_with_joined_relation(cls) -> str:
+    def relation_join(cls) -> str:
         """Return the FROM clause which includes related albums.
 
         We need to use a LEFT JOIN here, otherwise items that are not part of
         an album (e.g. singletons) would be left out.
         """
-        this_table = cls._table
-        other_table = Album._table
-        return f"{this_table} LEFT JOIN {other_table} ON {this_table}.album_id = {other_table}.id"
+        other_table = Album._table_name
+        return f"LEFT JOIN {other_table} ON {cls._table_name}.album_id = {other_table}.id"
 
     @property
     def _cached_album(self):
@@ -1146,7 +1145,7 @@ class Album(LibModel):
     Reflects the library's "albums" table, including album art.
     """
 
-    _table = "albums"
+    _table_name = "albums"
     _flex_table = "album_attributes"
     _always_dirty = True
     _fields = {
@@ -1253,15 +1252,14 @@ class Album(LibModel):
     _format_config_key = "format_album"
 
     @cached_classproperty
-    def table_with_joined_relation(cls) -> str:
+    def relation_join(cls) -> str:
         """Return the FROM clause which joins on related album items.
 
         Here we can use INNER JOIN (which is more performant than LEFT JOIN),
         since we only want to see albums that
         """
-        this_table = cls._table
-        other_table = Item._table
-        return f"{this_table} INNER JOIN {other_table} ON {this_table}.id = {other_table}.album_id"
+        other_table = Item._table_name
+        return f"INNER JOIN {other_table} ON {cls._table_name}.id = {other_table}.album_id"
 
     @classmethod
     def _getters(cls):

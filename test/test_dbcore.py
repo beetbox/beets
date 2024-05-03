@@ -43,7 +43,7 @@ class QueryFixture(dbcore.query.FieldQuery):
 
 
 class ModelFixture1(dbcore.Model):
-    _table = "test"
+    _table_name = "test"
     _flex_table = "testflex"
     _fields = {
         "id": dbcore.types.PRIMARY_ID,
@@ -116,7 +116,7 @@ class DatabaseFixture4(dbcore.Database):
 
 
 class AnotherModelFixture(ModelFixture1):
-    _table = "another"
+    _table_name = "another"
     _flex_table = "anotherflex"
     _fields = {
         "id": dbcore.types.PRIMARY_ID,
@@ -239,7 +239,7 @@ class TransactionTest(unittest.TestCase):
             tx.mutate(
                 "INSERT INTO {} "
                 "(field_one) "
-                "VALUES (?);".format(ModelFixture1._table),
+                "VALUES (?);".format(ModelFixture1._table_name),
                 (111,),
             )
         self.assertGreater(self.db.revision, old_rev)
@@ -247,7 +247,7 @@ class TransactionTest(unittest.TestCase):
     def test_query_no_increase_revision(self):
         old_rev = self.db.revision
         with self.db.transaction() as tx:
-            tx.query("PRAGMA table_info(%s)" % ModelFixture1._table)
+            tx.query("PRAGMA table_info(%s)" % ModelFixture1._table_name)
         self.assertEqual(self.db.revision, old_rev)
 
 

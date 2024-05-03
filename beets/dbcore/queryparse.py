@@ -161,7 +161,7 @@ def construct_query_part(
         if key in album_fields & item_fields:
             # This field exists in both tables, so SQLite will encounter
             # an OperationalError. Using an explicit table name resolves this.
-            key = f"{model_cls._table}.{key}"
+            key = f"{model_cls._table_name}.{key}"
 
         out_query = query_class(key, pattern, fast)
 
