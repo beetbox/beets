@@ -140,7 +140,7 @@ class FieldQuery(Query, Generic[P]):
     """
 
     def __init__(self, field: str, pattern: P, fast: bool = True):
-        self.field = field
+        self.table, _, self.field = field.rpartition(".")
         self.pattern = pattern
         self.fast = fast
 
@@ -149,8 +149,12 @@ class FieldQuery(Query, Generic[P]):
         """Return a set with (field, fast) tuples."""
         return {(self.field, self.fast)}
 
-    def col_clause(self) -> Tuple[Optional[str], Sequence[SQLiteType]]:
-        return None, ()
+    @property
+    def col_name(self) -> str:
+        return f"{self.table}.{self.field}" if self.table else self.field
+
+    def col_clause(self) -> Tuple[str, Sequence[SQLiteType]]:
+        return self.col_name, ()
 
     def clause(self) -> Tuple[Optional[str], Sequence[SQLiteType]]:
         if self.fast:
@@ -188,7 +192,7 @@ class MatchQuery(FieldQuery[AnySQLiteType]):
     """A query that looks for exact matches in an Model field."""
 
     def col_clause(self) -> Tuple[str, Sequence[SQLiteType]]:
-        return self.field + " = ?", [self.pattern]
+        return self.col_name + " = ?", [self.pattern]
 
     @classmethod
     def value_match(cls, pattern: AnySQLiteType, value: Any) -> bool:
@@ -202,7 +206,7 @@ class NoneQuery(FieldQuery[None]):
         super().__init__(field, None, fast)
 
     def col_clause(self) -> Tuple[str, Sequence[SQLiteType]]:
-        return self.field + " IS NULL", ()
+        return self.col_name + " IS NULL", ()
 
     def match(self, obj: Model) -> bool:
         return obj.get(self.field) is None
@@ -244,7 +248,7 @@ class StringQuery(StringFieldQuery[str]):
             .replace("%", "\\%")
             .replace("_", "\\_")
         )
-        clause = self.field + " like ? escape '\\'"
+        clause = self.col_name + " like ? escape '\\'"
         subvals = [search]
         return clause, subvals
 
@@ -263,7 +267,7 @@ class SubstringQuery(StringFieldQuery[str]):
             .replace("_", "\\_")
         )
         search = "%" + pattern + "%"
-        clause = self.field + " like ? escape '\\'"
+        clause = self.col_name + " like ? escape '\\'"
         subvals = [search]
         return clause, subvals
 
@@ -292,7 +296,7 @@ class RegexpQuery(StringFieldQuery[Pattern]):
         super().__init__(field, pattern_re, fast)
 
     def col_clause(self) -> Tuple[str, Sequence[SQLiteType]]:
-        return f" regexp({self.field}, ?)", [self.pattern.pattern]
+        return f" regexp({self.col_name}, ?)", [self.pattern.pattern]
 
     @staticmethod
     def _normalize(s: str) -> str:
@@ -351,7 +355,7 @@ class BytesQuery(FieldQuery[bytes]):
         super().__init__(field, bytes_pattern)
 
     def col_clause(self) -> Tuple[str, Sequence[SQLiteType]]:
-        return self.field + " = ?", [self.buf_pattern]
+        return self.col_name + " = ?", [self.buf_pattern]
 
     @classmethod
     def value_match(cls, pattern: bytes, value: Any) -> bool:
@@ -417,17 +421,17 @@ class NumericQuery(FieldQuery):
 
     def col_clause(self) -> Tuple[str, Sequence[SQLiteType]]:
         if self.point is not None:
-            return self.field + "=?", (self.point,)
+            return self.col_name + "=?", (self.point,)
         else:
             if self.rangemin is not None and self.rangemax is not None:
                 return (
-                    "{0} >= ? AND {0} <= ?".format(self.field),
+                    "{0} >= ? AND {0} <= ?".format(self.col_name),
                     (self.rangemin, self.rangemax),
                 )
             elif self.rangemin is not None:
-                return f"{self.field} >= ?", (self.rangemin,)
+                return f"{self.col_name} >= ?", (self.rangemin,)
             elif self.rangemax is not None:
-                return f"{self.field} <= ?", (self.rangemax,)
+                return f"{self.col_name} <= ?", (self.rangemax,)
             else:
                 return "1", ()
 
@@ -445,7 +449,7 @@ class InQuery(Generic[AnySQLiteType], FieldQuery[Sequence[AnySQLiteType]]):
 
     def col_clause(self) -> Tuple[str, Sequence[SQLiteType]]:
         placeholders = ", ".join(["?"] * len(self.subvals))
-        return f"{self.field} IN ({placeholders})", self.subvals
+        return f"{self.col_name} IN ({placeholders})", self.subvals
 
     @classmethod
     def value_match(
@@ -846,11 +850,11 @@ class DateQuery(FieldQuery):
         # Convert the `datetime` objects to an integer number of seconds since
         # the (local) Unix epoch using `datetime.timestamp()`.
         if self.interval.start:
-            clause_parts.append(self._clause_tmpl.format(self.field, ">="))
+            clause_parts.append(self._clause_tmpl.format(self.col_name, ">="))
             subvals.append(int(self.interval.start.timestamp()))
 
         if self.interval.end:
-            clause_parts.append(self._clause_tmpl.format(self.field, "<"))
+            clause_parts.append(self._clause_tmpl.format(self.col_name, "<"))
             subvals.append(int(self.interval.end.timestamp()))
 
         if clause_parts:

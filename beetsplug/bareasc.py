@@ -46,7 +46,7 @@ class BareascQuery(StringFieldQuery):
 
     def col_clause(self):
         """Compare ascii version of the pattern."""
-        clause = f"unidecode({self.field})"
+        clause = f"unidecode({self.col_name})"
         if self.pattern.islower():
             clause = f"lower({clause})"
 
