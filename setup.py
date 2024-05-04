@@ -103,11 +103,11 @@ setup(
     extras_require={
         "test": [
             "beautifulsoup4",
-            "coverage",
             "flask",
             "mock",
             "pylast",
             "pytest",
+            "pytest-cov",
             "python-mpd2",
             "python3-discogs-client>=2.3.15",
             "py7zr",
