@@ -16,6 +16,7 @@
 
 import errno
 import fnmatch
+import functools
 import os
 import platform
 import re
