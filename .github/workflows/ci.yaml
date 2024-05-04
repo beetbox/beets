@@ -49,10 +49,11 @@ jobs:
         run: |
           tox -e py-test
 
-      - name: Test latest Python version with tox and get coverage
-        if: matrix.python-version == '3.x'
+      - name: Upload code coverage
+        if: matrix.python-version == '3.7' && matrix.platform == 'ubuntu-latest'
         run: |
-          tox -vv -e py-cov
+          pip install codecov || true
+          codecov || true
 
       - name: Test latest Python version with tox and mypy
         if: matrix.python-version == '3.x'
@@ -62,12 +63,6 @@ jobs:
         continue-on-error: true
         run: |
           tox -vv -e py-mypy
-
-      - name: Upload code coverage
-        if: matrix.python-version == '3.x'
-        run: |
-          pip install codecov || true
-          codecov || true
 
   test-docs:
     runs-on: ubuntu-latest
