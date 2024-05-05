@@ -10,7 +10,7 @@ from beets.test.fixtures import ModelFixture1, SortFixture
 class QueryParseTest(unittest.TestCase):
     def pqp(self, part):
         return dbcore.queryparse.parse_query_part(
-            part, {"year": query.NumericQuery}, {":": query.RegexpQuery}
+            part, {"year": query.NumericQuery}
         )[:-1]  # remove the negate flag
 
     def test_one_basic_term(self):
@@ -67,7 +67,7 @@ class QueryParseTest(unittest.TestCase):
 class QueryFromStringsTest(unittest.TestCase):
     def qfs(self, strings):
         return dbcore.queryparse.query_from_strings(
-            query.AndQuery, ModelFixture1, {":": query.RegexpQuery}, strings
+            query.AndQuery, ModelFixture1, strings
         )
 
     def test_zero_parts(self):
