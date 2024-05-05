@@ -6,14 +6,14 @@ import itertools
 import re
 from typing import TYPE_CHECKING
 
+from beets import plugins
+
 from . import query, sort
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Sequence
 
     from ..library import LibModel
-
-    Prefixes = dict[str, query.FieldQueryType]
 
 
 PARSE_QUERY_PART_REGEX = re.compile(
@@ -28,10 +28,19 @@ PARSE_QUERY_PART_REGEX = re.compile(
 )
 
 
+def get_prefixes():
+    """Get query types and their prefix characters."""
+    return {
+        ":": query.RegexpQuery,
+        "=~": query.StringQuery,
+        "=": query.MatchQuery,
+        **plugins.queries(),
+    }
+
+
 def parse_query_part(
     part: str,
     query_classes: dict[str, query.FieldQueryType] = {},
-    prefixes: Prefixes = {},
     default_class: type[query.SubstringQuery] = query.SubstringQuery,
 ) -> tuple[str | None, str, query.FieldQueryType, bool]:
     """Parse a single *query part*, which is a chunk of a complete query
@@ -44,8 +53,7 @@ def parse_query_part(
       pattern.
     - Optionally, a *query prefix* just before the pattern (and after the
       optional colon) indicating the type of query that should be used. For
-      example, in `~foo`, `~` might be a prefix. (The set of prefixes to
-      look for is given in the `prefixes` parameter.)
+      example, in `~foo`, `~` might be a prefix.
     - Optionally, a negation indicator, `-` or `^`, at the very beginning.
 
     Both prefixes and the separating `:` character may be escaped with a
@@ -58,11 +66,10 @@ def parse_query_part(
       :class:`Query` type.
     - A negation flag, a bool.
 
-    The three optional parameters determine which query class is used (i.e.,
+    The two optional parameters determine which query class is used (i.e.,
     the third return value). They are:
     - `query_classes`, which maps field names to query classes. These
       are used when no explicit prefix is present.
-    - `prefixes`, which maps prefix strings to query classes.
     - `default_class`, the fallback when neither the field nor a prefix
       indicates a query class.
 
@@ -88,7 +95,7 @@ def parse_query_part(
 
     # Check whether there's a prefix in the query and use the
     # corresponding query type.
-    for pre, query_class in prefixes.items():
+    for pre, query_class in get_prefixes().items():
         if term.startswith(pre):
             return key, term[len(pre) :], query_class, negate
 
@@ -99,14 +106,13 @@ def parse_query_part(
 
 
 def construct_query_part(
-    model_cls: type[LibModel], prefixes: Prefixes, query_part: str
+    model_cls: type[LibModel], query_part: str
 ) -> query.Query:
     """Parse a *query part* string and return a :class:`Query` object.
 
     :param model_cls: The :class:`Model` class that this is a query for.
       This is used to determine the appropriate query types for the
       model's fields.
-    :param prefixes: A map from prefix strings to :class:`Query` types.
     :param query_part: The string to parse.
 
     See the documentation for `parse_query_part` for more information on
@@ -129,7 +135,7 @@ def construct_query_part(
 
     # Parse the string.
     key, pattern, query_class, negate = parse_query_part(
-        query_part, query_classes, prefixes
+        query_part, query_classes
     )
 
     if key is None:
@@ -151,7 +157,6 @@ def construct_query_part(
 def query_from_strings(
     query_cls: type[query.CollectionQuery],
     model_cls: type[LibModel],
-    prefixes: Prefixes,
     query_parts: Collection[str],
 ) -> query.Query:
     """Creates a collection query of type `query_cls` from a list of
@@ -160,7 +165,7 @@ def query_from_strings(
     """
     subqueries = []
     for part in query_parts:
-        subqueries.append(construct_query_part(model_cls, prefixes, part))
+        subqueries.append(construct_query_part(model_cls, part))
     if not subqueries:  # No terms in query.
         subqueries = [query.TrueQuery()]
     return query_cls(subqueries)
@@ -214,7 +219,6 @@ def sort_from_strings(
 def parse_sorted_query(
     model_cls: type[LibModel],
     parts: list[str],
-    prefixes: Prefixes = {},
     case_insensitive: bool = True,
 ) -> tuple[query.Query, sort.Sort]:
     """Given a list of strings, create the `Query` and `Sort` that they
@@ -236,9 +240,7 @@ def parse_sorted_query(
             # Parse the subquery in to a single AndQuery
             # TODO: Avoid needlessly wrapping AndQueries containing 1 subquery?
             query_parts.append(
-                query_from_strings(
-                    query.AndQuery, model_cls, prefixes, subquery_parts
-                )
+                query_from_strings(query.AndQuery, model_cls, subquery_parts)
             )
             del subquery_parts[:]
         else:
