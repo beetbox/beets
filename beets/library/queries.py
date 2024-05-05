@@ -4,12 +4,11 @@ import shlex
 from typing import TYPE_CHECKING
 
 import beets
-from beets import dbcore, logging, plugins
+from beets import dbcore, logging
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from beets.dbcore.queryparse import Prefixes
     from beets.library import LibModel
 
 log = logging.getLogger("beets")
@@ -27,14 +26,6 @@ def parse_query_parts(
     Like `dbcore.parse_sorted_query`, with beets query prefixes and
     ensuring that implicit path queries are made explicit with 'path::<query>'
     """
-    # Get query types and their prefix characters.
-    prefixes: Prefixes = {
-        ":": dbcore.query.RegexpQuery,
-        "=~": dbcore.query.StringQuery,
-        "=": dbcore.query.MatchQuery,
-    }
-    prefixes.update(plugins.queries())
-
     # Special-case path-like queries, which are non-field queries
     # containing path separators (/).
     parts = [
@@ -44,9 +35,7 @@ def parse_query_parts(
 
     case_insensitive = beets.config["sort_case_insensitive"].get(bool)
 
-    query, sort = dbcore.parse_sorted_query(
-        model_cls, parts, prefixes, case_insensitive
-    )
+    query, sort = dbcore.parse_sorted_query(model_cls, parts, case_insensitive)
     log.debug("Parsed query: {!r}", query)
     log.debug("Parsed sort: {!r}", sort)
     return query, sort
