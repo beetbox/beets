@@ -15,11 +15,10 @@
 """An AURA server using Flask."""
 
 
-import os.path
+import os
 import re
 from dataclasses import dataclass
 from mimetypes import guess_type
-from os.path import getsize, isfile
 from typing import ClassVar, Mapping, Type
 
 from flask import (
@@ -46,7 +45,6 @@ from beets.dbcore.query import (
 from beets.library import Album, Item, LibModel, Library
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, _open_library
-from beets.util import py3_path
 
 # Constants
 
@@ -482,7 +480,7 @@ class AlbumDocument(AURADocument):
         }
         # Add images relationship if album has associated images
         if album.artpath:
-            path = py3_path(album.artpath)
+            path = os.fsdecode(album.artpath)
             filename = path.split("/")[-1]
             image_id = f"album-{album.id}-{filename}"
             relationships["images"] = {
@@ -660,7 +658,7 @@ class ImageDocument(AURADocument):
             # Cut the filename off of artpath
             # This is in preparation for supporting images in the same
             # directory that are not tracked by beets.
-            artpath = py3_path(album.artpath)
+            artpath = os.fsdecode(album.artpath)
             dir_path = "/".join(artpath.split("/")[:-1])
         else:
             # Images for other resource types are not supported
@@ -668,7 +666,7 @@ class ImageDocument(AURADocument):
 
         img_path = os.path.join(dir_path, img_filename)
         # Check the image actually exists
-        if isfile(img_path):
+        if os.path.isfile(img_path):
             return img_path
         else:
             return None
@@ -690,7 +688,7 @@ class ImageDocument(AURADocument):
         attributes = {
             "role": "cover",
             "mimetype": guess_type(image_path)[0],
-            "size": getsize(image_path),
+            "size": os.path.getsize(image_path),
         }
         try:
             from PIL import Image
@@ -781,8 +779,8 @@ def audio_file(track_id):
             ),
         )
 
-    path = py3_path(track.path)
-    if not isfile(path):
+    path = os.fsdecode(track.path)
+    if not os.path.isfile(path):
         return AURADocument.error(
             "404 Not Found",
             "No audio file for the requested track.",

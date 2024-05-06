@@ -51,7 +51,7 @@ from typing import (
 from unidecode import unidecode
 
 import beets
-from beets.util import functemplate, py3_path
+from beets.util import functemplate
 
 from ..util.functemplate import Template
 from . import types
@@ -1059,9 +1059,9 @@ class Database:
         """
         # Make a new connection. The `sqlite3` module can't use
         # bytestring paths here on Python 3, so we need to
-        # provide a `str` using `py3_path`.
+        # provide a `str` using `os.fsdecode`.
         conn = sqlite3.connect(
-            py3_path(self.path),
+            os.fsdecode(self.path),
             timeout=self.timeout,
             # We have our own same-thread checks in _connection(), but need to
             # call conn.close() in _close()

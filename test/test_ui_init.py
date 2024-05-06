@@ -131,7 +131,7 @@ class InitTest(_common.LibTestCase):
 
 class ParentalDirCreation(_common.TestCase):
     def test_create_yes(self):
-        non_exist_path = _common.util.py3_path(
+        non_exist_path = _common.os.fsdecode(
             os.path.join(self.temp_dir, b"nonexist", str(random()).encode())
         )
         # Deepcopy instead of recovering because exceptions might
@@ -143,10 +143,10 @@ class ParentalDirCreation(_common.TestCase):
         lib._close()
 
     def test_create_no(self):
-        non_exist_path_parent = _common.util.py3_path(
+        non_exist_path_parent = _common.os.fsdecode(
             os.path.join(self.temp_dir, b"nonexist")
         )
-        non_exist_path = _common.util.py3_path(
+        non_exist_path = _common.os.fsdecode(
             os.path.join(non_exist_path_parent.encode(), str(random()).encode())
         )
         test_config = deepcopy(config)
