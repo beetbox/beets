@@ -803,21 +803,6 @@ def legalize_path(
     return second_stage_path, retruncated
 
 
-def py3_path(path: Union[bytes, str]) -> str:
-    """Convert a bytestring path to Unicode.
-
-    This helps deal with APIs on Python 3 that *only* accept Unicode
-    (i.e., `str` objects). I philosophically disagree with this
-    decision, because paths are sadly bytes on Unix, but that's the way
-    it is. So this function helps us "smuggle" the true bytes data
-    through APIs that took Python 3's Unicode mandate too seriously.
-    """
-    if isinstance(path, str):
-        return path
-    assert isinstance(path, bytes)
-    return os.fsdecode(path)
-
-
 def str2bool(value: str) -> bool:
     """Returns a boolean reflecting a human-entered string."""
     return value.lower() in ("yes", "1", "true", "t", "y")

@@ -26,7 +26,7 @@ import requests
 from mediafile import image_mime_type
 
 from beets import config, importer, plugins, ui, util
-from beets.util import bytestring_path, py3_path, sorted_walk, syspath
+from beets.util import bytestring_path, sorted_walk, syspath
 from beets.util.artresizer import ArtResizer
 
 try:
@@ -381,7 +381,7 @@ class RemoteArtSource(ArtSource):
                         ext,
                     )
 
-                suffix = py3_path(ext)
+                suffix = os.fsdecode(ext)
                 with NamedTemporaryFile(suffix=suffix, delete=False) as fh:
                     # write the first already loaded part of the image
                     fh.write(header)

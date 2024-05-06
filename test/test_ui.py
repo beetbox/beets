@@ -852,11 +852,11 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         # directory there. Some tests will set `BEETSDIR` themselves.
         del os.environ["BEETSDIR"]
         self._old_home = os.environ.get("HOME")
-        os.environ["HOME"] = util.py3_path(self.temp_dir)
+        os.environ["HOME"] = os.fsdecode(self.temp_dir)
 
         # Also set APPDATA, the Windows equivalent of setting $HOME.
         self._old_appdata = os.environ.get("APPDATA")
-        os.environ["APPDATA"] = util.py3_path(
+        os.environ["APPDATA"] = os.fsdecode(
             os.path.join(self.temp_dir, b"AppData", b"Roaming")
         )
 
@@ -992,7 +992,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         self.assertEqual(config["anoption"].get(), "cli overwrite")
 
     def test_cli_config_file_overwrites_beetsdir_defaults(self):
-        os.environ["BEETSDIR"] = util.py3_path(self.beetsdir)
+        os.environ["BEETSDIR"] = os.fsdecode(self.beetsdir)
         env_config_path = os.path.join(self.beetsdir, b"config.yaml")
         with open(env_config_path, "w") as file:
             file.write("anoption: value")
@@ -1054,7 +1054,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         )
 
     def test_cli_config_paths_resolve_relative_to_beetsdir(self):
-        os.environ["BEETSDIR"] = util.py3_path(self.beetsdir)
+        os.environ["BEETSDIR"] = os.fsdecode(self.beetsdir)
 
         cli_config_path = os.path.join(self.temp_dir, b"config.yaml")
         with open(cli_config_path, "w") as file:
@@ -1089,7 +1089,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         self.assertTrue(plugins.find_plugins()[0].is_test_plugin)
 
     def test_beetsdir_config(self):
-        os.environ["BEETSDIR"] = util.py3_path(self.beetsdir)
+        os.environ["BEETSDIR"] = os.fsdecode(self.beetsdir)
 
         env_config_path = os.path.join(self.beetsdir, b"config.yaml")
         with open(env_config_path, "w") as file:
@@ -1101,11 +1101,11 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
     def test_beetsdir_points_to_file_error(self):
         beetsdir = os.path.join(self.temp_dir, b"beetsfile")
         open(beetsdir, "a").close()
-        os.environ["BEETSDIR"] = util.py3_path(beetsdir)
+        os.environ["BEETSDIR"] = os.fsdecode(beetsdir)
         self.assertRaises(ConfigError, self.run_command, "test")
 
     def test_beetsdir_config_does_not_load_default_user_config(self):
-        os.environ["BEETSDIR"] = util.py3_path(self.beetsdir)
+        os.environ["BEETSDIR"] = os.fsdecode(self.beetsdir)
 
         with open(self.user_config_path, "w") as file:
             file.write("anoption: value")
@@ -1114,7 +1114,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         self.assertFalse(config["anoption"].exists())
 
     def test_default_config_paths_resolve_relative_to_beetsdir(self):
-        os.environ["BEETSDIR"] = util.py3_path(self.beetsdir)
+        os.environ["BEETSDIR"] = os.fsdecode(self.beetsdir)
 
         config.read()
         self.assert_equal_path(
@@ -1127,7 +1127,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         )
 
     def test_beetsdir_config_paths_resolve_relative_to_beetsdir(self):
-        os.environ["BEETSDIR"] = util.py3_path(self.beetsdir)
+        os.environ["BEETSDIR"] = os.fsdecode(self.beetsdir)
 
         env_config_path = os.path.join(self.beetsdir, b"config.yaml")
         with open(env_config_path, "w") as file:
