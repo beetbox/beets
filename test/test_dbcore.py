@@ -21,6 +21,7 @@ import unittest
 from tempfile import mkstemp
 
 from beets import dbcore
+from beets.library import LibModel
 from beets.test import _common
 
 # Fixture: concrete database and model classes. For migration tests, we
@@ -42,7 +43,7 @@ class QueryFixture(dbcore.query.FieldQuery):
         return True
 
 
-class ModelFixture1(dbcore.Model):
+class ModelFixture1(LibModel):
     _table_name = "test"
     _flex_table = "testflex"
     _fields = {
@@ -590,15 +591,17 @@ class QueryFromStringsTest(unittest.TestCase):
         self.assertIsInstance(q, dbcore.query.AndQuery)
         self.assertEqual(len(q.subqueries), 2)
         self.assertIsInstance(q.subqueries[0], dbcore.query.AnyFieldQuery)
-        self.assertIsInstance(q.subqueries[1], dbcore.query.SubstringQuery)
+        self.assertIsInstance(q.subqueries[1], dbcore.query.OrQuery)
+        self.assertIsInstance(q.subqueries[1][0], dbcore.query.SubstringQuery)
 
     def test_parse_fixed_type_query(self):
         q = self.qfs(["field_one:2..3"])
-        self.assertIsInstance(q.subqueries[0], dbcore.query.NumericQuery)
+        self.assertIsInstance(q.subqueries[0], dbcore.query.OrQuery)
+        self.assertIsInstance(q.subqueries[0][0], dbcore.query.NumericQuery)
 
     def test_parse_flex_type_query(self):
         q = self.qfs(["some_float_field:2..3"])
-        self.assertIsInstance(q.subqueries[0], dbcore.query.NumericQuery)
+        self.assertIsInstance(q.subqueries[0], dbcore.query.OrQuery)
 
     def test_empty_query_part(self):
         q = self.qfs([""])

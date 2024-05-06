@@ -92,6 +92,11 @@ class Query(ABC):
         """Return query fields that are (any) model attributes."""
         return {f for f, fast in self.fields_info if fast}
 
+    @property
+    def flex_fields(self) -> Set[str]:
+        """Return query fields that are (any) model attributes."""
+        return {f for f, fast in self.fields_info if not fast}
+
     def clause(self) -> Tuple[Optional[str], Sequence[Any]]:
         """Generate an SQLite expression implementing the query.
 
@@ -149,7 +154,10 @@ class FieldQuery(Query, Generic[P]):
     @property
     def col_name(self) -> str:
         if not self.fast:
-            return f'json_extract("flex_attrs [json_str]", "$.{self.field}")'
+            column = '"flex_attrs [json_str]"'
+            if self.table:
+                column = f"{self.table}.{column}"
+            return f'json_extract({column}, "$.{self.field}")'
 
         return f"{self.table}.{self.field}" if self.table else self.field
 

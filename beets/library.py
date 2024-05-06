@@ -22,6 +22,7 @@ import string
 import sys
 import time
 import unicodedata
+from typing import Mapping, Set, Type
 
 from mediafile import MediaFile, UnreadableFileError
 
@@ -387,6 +388,14 @@ class LibModel(dbcore.Model):
     # Config key that specifies how an instance should be formatted.
     _format_config_key = None
 
+    @cached_classproperty
+    def all_model_db_fields(cls) -> Set[str]:
+        return Album._fields.keys() | Item._fields.keys()
+
+    @cached_classproperty
+    def shared_model_db_fields(cls) -> Set[str]:
+        return Album._fields.keys() & Item._fields.keys()
+
     def _template_funcs(self):
         funcs = DefaultTemplateFunctions(self, self._db).functions()
         funcs.update(plugins.template_funcs())
@@ -415,6 +424,46 @@ class LibModel(dbcore.Model):
 
     def __bytes__(self):
         return self.__str__().encode("utf-8")
+
+    # Convenient queries.
+
+    @classmethod
+    def field_query(
+        cls, field: str, pattern: str, query_cls: Type[dbcore.FieldQuery]
+    ) -> dbcore.Query:
+        """Get a `FieldQuery` for this model."""
+        if field not in cls.all_model_db_fields:
+            # this is a flexible attribute. Since we do not know which entity
+            # it belongs, we check them both
+            tables = [Item._table_name, Album._table_name]
+            return dbcore.OrQuery(
+                [query_cls(f"{t}.{field}", pattern, False) for t in tables]
+            )
+
+        if field in cls.shared_model_db_fields:
+            # This field exists in both tables, so SQLite will encounter
+            # an OperationalError if we try to use it in a query.
+            # Using an explicit table name resolves this.
+            field = f"{cls._table_name}.{field}"
+
+        return query_cls(field, pattern, True)
+
+    @classmethod
+    def all_fields_query(
+        cls, pattern_by_field: Mapping[str, str]
+    ) -> dbcore.AndQuery:
+        """Get a query that matches many fields with different patterns.
+
+        `pattern_by_field` should be a mapping from field names to patterns.
+        The resulting query is a conjunction ("and") of per-field queries
+        for all of these field/pattern pairs.
+        """
+        return dbcore.AndQuery(
+            [
+                cls.field_query(f, p, dbcore.MatchQuery)
+                for f, p in pattern_by_field.items()
+            ]
+        )
 
 
 class FormattedItemMapping(dbcore.db.FormattedMapping):
@@ -648,8 +697,7 @@ class Item(LibModel):
         We need to use a LEFT JOIN here, otherwise items that are not part of
         an album (e.g. singletons) would be left out.
         """
-        other_table = Album._table_name
-        return f"LEFT JOIN {other_table} ON {cls._table_name}.album_id = {other_table}.id"
+        return f"LEFT JOIN {Album.table_with_flex_attrs} ON {cls._table_name}.album_id = {Album._table_name}.id"
 
     @property
     def _cached_album(self):
@@ -1258,8 +1306,7 @@ class Album(LibModel):
         Here we can use INNER JOIN (which is more performant than LEFT JOIN),
         since we only want to see albums that
         """
-        other_table = Item._table_name
-        return f"INNER JOIN {other_table} ON {cls._table_name}.id = {other_table}.album_id"
+        return f"INNER JOIN {Item.table_with_flex_attrs} ON {cls._table_name}.id = {Item._table_name}.album_id"
 
     @classmethod
     def _getters(cls):
@@ -1949,9 +1996,10 @@ class DefaultTemplateFunctions:
             subqueries.extend(initial_subqueries)
         for key in keys:
             value = db_item.get(key, "")
-            # Use slow queries for flexible attributes.
-            fast = key in item_keys
-            subqueries.append(dbcore.MatchQuery(key, value, fast))
+            subqueries.append(
+                db_item.field_query(key, value, dbcore.MatchQuery)
+            )
+
         query = dbcore.AndQuery(subqueries)
         ambigous_items = (
             self.lib.items(query)
