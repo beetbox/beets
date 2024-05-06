@@ -833,41 +833,6 @@ def plurality(objs: Sequence[T]) -> T:
     return c.most_common(1)[0]
 
 
-def cpu_count() -> int:
-    """Return the number of hardware thread contexts (cores or SMT
-    threads) in the system.
-    """
-    # Adapted from the soundconverter project:
-    # https://github.com/kassoulet/soundconverter
-    if sys.platform == "win32":
-        try:
-            num = int(os.environ["NUMBER_OF_PROCESSORS"])
-        except (ValueError, KeyError):
-            num = 0
-    elif sys.platform == "darwin":
-        try:
-            num = int(
-                command_output(
-                    [
-                        "/usr/sbin/sysctl",
-                        "-n",
-                        "hw.ncpu",
-                    ]
-                ).stdout
-            )
-        except (ValueError, OSError, subprocess.CalledProcessError):
-            num = 0
-    else:
-        try:
-            num = os.sysconf("SC_NPROCESSORS_ONLN")
-        except (ValueError, OSError, AttributeError):
-            num = 0
-    if num >= 1:
-        return num
-    else:
-        return 1
-
-
 def convert_command_args(args: List[bytes]) -> List[str]:
     """Convert command arguments, which may either be `bytes` or `str`
     objects, to uniformly surrogate-escaped strings."""
