@@ -114,7 +114,7 @@ class ConvertPlugin(BeetsPlugin):
                 "pretend": False,
                 "link": False,
                 "hardlink": False,
-                "threads": util.cpu_count(),
+                "threads": os.cpu_count(),
                 "format": "mp3",
                 "id3v23": "inherit",
                 "formats": {

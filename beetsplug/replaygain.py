@@ -49,7 +49,7 @@ from beets import ui
 from beets.importer import ImportSession, ImportTask
 from beets.library import Album, Item, Library
 from beets.plugins import BeetsPlugin
-from beets.util import command_output, cpu_count, displayable_path, syspath
+from beets.util import command_output, displayable_path, syspath
 
 # Utilities.
 
@@ -1222,7 +1222,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 "overwrite": False,
                 "auto": True,
                 "backend": "command",
-                "threads": cpu_count(),
+                "threads": os.cpu_count(),
                 "parallel_on_import": False,
                 "per_disc": False,
                 "peak": "true",
