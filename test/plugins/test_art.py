@@ -18,6 +18,7 @@
 import os
 import shutil
 import unittest
+from typing import Iterator, Optional, Sequence
 from unittest.mock import patch
 
 import confuse
@@ -25,6 +26,7 @@ import responses
 
 from beets import config, importer, library, logging, util
 from beets.autotag import AlbumInfo, AlbumMatch
+from beets.library import Album
 from beets.test import _common
 from beets.test.helper import capture_log
 from beets.util import syspath
@@ -48,6 +50,26 @@ class UseThePlugin(_common.TestCase):
     def setUp(self):
         super().setUp()
         self.plugin = fetchart.FetchArtPlugin()
+
+
+class DummyLocalArtSource(fetchart.LocalArtSource):
+    def get(
+        self,
+        album: Album,
+        plugin: fetchart.FetchArtPlugin,
+        paths: Optional[Sequence[bytes]],
+    ) -> Iterator[fetchart.Candidate]:
+        pass
+
+
+class DummyRemoteArtSource(fetchart.RemoteArtSource):
+    def get(
+        self,
+        album: Album,
+        plugin: fetchart.FetchArtPlugin,
+        paths: Optional[Sequence[bytes]],
+    ) -> Iterator[fetchart.Candidate]:
+        pass
 
 
 class FetchImageHelper(_common.TestCase):
@@ -218,7 +240,7 @@ class FetchImageTest(FetchImageHelper, UseThePlugin):
     def setUp(self):
         super().setUp()
         self.dpath = os.path.join(self.temp_dir, b"arttest")
-        self.source = fetchart.RemoteArtSource(logger, self.plugin.config)
+        self.source = DummyRemoteArtSource(logger, self.plugin.config)
         self.settings = Settings(maxwidth=0)
         self.candidate = fetchart.Candidate(
             logger,
@@ -452,7 +474,7 @@ class ITunesStoreTest(UseThePlugin):
         self.mock_response(fetchart.ITunesStore.API_URL, json)
         candidate = next(self.source.get(self.album, self.settings, []))
         self.assertEqual(candidate.url, "url_to_the_image")
-        self.assertEqual(candidate.match, fetchart.Candidate.MATCH_EXACT)
+        self.assertEqual(candidate.match, fetchart.MetadataMatch.EXACT)
 
     def test_itunesstore_no_result(self):
         json = '{"results": []}'
@@ -491,7 +513,7 @@ class ITunesStoreTest(UseThePlugin):
         self.mock_response(fetchart.ITunesStore.API_URL, json)
         candidate = next(self.source.get(self.album, self.settings, []))
         self.assertEqual(candidate.url, "url_to_the_image")
-        self.assertEqual(candidate.match, fetchart.Candidate.MATCH_FALLBACK)
+        self.assertEqual(candidate.match, fetchart.MetadataMatch.FALLBACK)
 
     def test_itunesstore_returns_result_without_artwork(self):
         json = """{
@@ -749,7 +771,7 @@ class ArtImporterTest(UseThePlugin):
         self.old_afa = self.plugin.art_for_album
         self.afa_response = fetchart.Candidate(
             logger,
-            source=fetchart.ArtSource(logger, self.plugin.config),
+            source=DummyLocalArtSource(logger, self.plugin.config),
             path=self.art_file,
         )
 
@@ -842,7 +864,7 @@ class ArtImporterTest(UseThePlugin):
         shutil.copyfile(syspath(self.art_file), syspath(artdest))
         self.afa_response = fetchart.Candidate(
             logger,
-            source=fetchart.ArtSource(logger, self.plugin.config),
+            source=DummyLocalArtSource(logger, self.plugin.config),
             path=artdest,
         )
         self._fetch_art(True)
@@ -883,7 +905,7 @@ class ArtForAlbumTest(UseThePlugin):
             if paths:
                 yield fetchart.Candidate(
                     logger,
-                    source=fetchart.ArtSource(logger, self.plugin.config),
+                    source=DummyLocalArtSource(logger, self.plugin.config),
                     path=self.image_file,
                 )
 
