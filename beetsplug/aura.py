@@ -20,7 +20,7 @@ import re
 from dataclasses import dataclass
 from mimetypes import guess_type
 from os.path import getsize, isfile
-from typing import Mapping
+from typing import ClassVar, Mapping, Type
 
 from flask import (
     Blueprint,
@@ -41,8 +41,9 @@ from beets.dbcore.query import (
     NotQuery,
     RegexpQuery,
     SlowFieldSort,
+    SQLiteType,
 )
-from beets.library import Album, Item, Library
+from beets.library import Album, Item, LibModel, Library
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, _open_library
 from beets.util import py3_path
@@ -124,6 +125,8 @@ ARTIST_ATTR_MAP = {
 class AURADocument:
     """Base class for building AURA documents."""
 
+    model_cls: ClassVar[Type[LibModel]]
+
     lib: Library
     args: Mapping[str, str]
 
@@ -146,6 +149,22 @@ class AURADocument:
             "errors": [{"status": status, "title": title, "detail": detail}]
         }
         return make_response(document, status)
+
+    @classmethod
+    def get_attribute_converter(cls, beets_attr: str) -> Type[SQLiteType]:
+        """Work out what data type an attribute should be for beets.
+
+        Args:
+            beets_attr: The name of the beets attribute, e.g. "title".
+        """
+        try:
+            # Look for field in list of Album fields
+            # and get python type of database type.
+            # See beets.library.Album and beets.dbcore.types
+            return cls.model_cls._fields[beets_attr].model_type
+        except KeyError:
+            # Fall back to string (NOTE: probably not good)
+            return str
 
     def translate_filters(self):
         """Translate filters from request arguments to a beets Query."""
@@ -339,6 +358,8 @@ class AURADocument:
 class TrackDocument(AURADocument):
     """Class for building documents for /tracks endpoints."""
 
+    model_cls = Item
+
     attribute_map = TRACK_ATTR_MAP
 
     def get_collection(self, query=None, sort=None):
@@ -350,7 +371,8 @@ class TrackDocument(AURADocument):
         """
         return self.lib.items(query, sort)
 
-    def get_attribute_converter(self, beets_attr):
+    @classmethod
+    def get_attribute_converter(cls, beets_attr: str) -> Type[SQLiteType]:
         """Work out what data type an attribute should be for beets.
 
         Args:
@@ -358,17 +380,9 @@ class TrackDocument(AURADocument):
         """
         # filesize is a special field (read from disk not db?)
         if beets_attr == "filesize":
-            converter = int
-        else:
-            try:
-                # Look for field in list of Item fields
-                # and get python type of database type.
-                # See beets.library.Item and beets.dbcore.types
-                converter = Item._fields[beets_attr].model_type
-            except KeyError:
-                # Fall back to string (NOTE: probably not good)
-                converter = str
-        return converter
+            return int
+
+        return super().get_attribute_converter(beets_attr)
 
     @staticmethod
     def get_resource_object(lib: Library, track):
@@ -426,6 +440,8 @@ class TrackDocument(AURADocument):
 class AlbumDocument(AURADocument):
     """Class for building documents for /albums endpoints."""
 
+    model_cls = Album
+
     attribute_map = ALBUM_ATTR_MAP
 
     def get_collection(self, query=None, sort=None):
@@ -436,22 +452,6 @@ class AlbumDocument(AURADocument):
             sort: A beets Sort object.
         """
         return self.lib.albums(query, sort)
-
-    def get_attribute_converter(self, beets_attr):
-        """Work out what data type an attribute should be for beets.
-
-        Args:
-            beets_attr: The name of the beets attribute, e.g. "title".
-        """
-        try:
-            # Look for field in list of Album fields
-            # and get python type of database type.
-            # See beets.library.Album and beets.dbcore.types
-            converter = Album._fields[beets_attr].model_type
-        except KeyError:
-            # Fall back to string (NOTE: probably not good)
-            converter = str
-        return converter
 
     @staticmethod
     def get_resource_object(lib: Library, album):
@@ -526,6 +526,8 @@ class AlbumDocument(AURADocument):
 class ArtistDocument(AURADocument):
     """Class for building documents for /artists endpoints."""
 
+    model_cls = Item
+
     attribute_map = ARTIST_ATTR_MAP
 
     def get_collection(self, query=None, sort=None):
@@ -543,22 +545,6 @@ class ArtistDocument(AURADocument):
             if track.artist not in collection:
                 collection.append(track.artist)
         return collection
-
-    def get_attribute_converter(self, beets_attr):
-        """Work out what data type an attribute should be for beets.
-
-        Args:
-            beets_attr: The name of the beets attribute, e.g. "artist".
-        """
-        try:
-            # Look for field in list of Item fields
-            # and get python type of database type.
-            # See beets.library.Item and beets.dbcore.types
-            converter = Item._fields[beets_attr].model_type
-        except KeyError:
-            # Fall back to string (NOTE: probably not good)
-            converter = str
-        return converter
 
     @staticmethod
     def get_resource_object(lib: Library, artist_id):
@@ -642,6 +628,8 @@ def safe_filename(fn):
 
 class ImageDocument(AURADocument):
     """Class for building documents for /images/(id) endpoints."""
+
+    model_cls = Album
 
     @staticmethod
     def get_image_path(lib: Library, image_id):
