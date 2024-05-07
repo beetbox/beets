@@ -17,8 +17,10 @@
 
 import os.path
 import re
+from dataclasses import dataclass
 from mimetypes import guess_type
 from os.path import getsize, isfile
+from typing import Mapping
 
 from flask import (
     Blueprint,
@@ -28,6 +30,7 @@ from flask import (
     request,
     send_file,
 )
+from typing_extensions import Self
 
 from beets import config
 from beets.dbcore.query import (
@@ -39,7 +42,7 @@ from beets.dbcore.query import (
     RegexpQuery,
     SlowFieldSort,
 )
-from beets.library import Album, Item
+from beets.library import Album, Item, Library
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, _open_library
 from beets.util import py3_path
@@ -117,8 +120,17 @@ ARTIST_ATTR_MAP = {
 }
 
 
+@dataclass
 class AURADocument:
     """Base class for building AURA documents."""
+
+    lib: Library
+    args: Mapping[str, str]
+
+    @classmethod
+    def from_app(cls) -> Self:
+        """Initialise the document using the global app and request."""
+        return cls(current_app.config["lib"], request.args)
 
     @staticmethod
     def error(status, title, detail):
@@ -141,7 +153,7 @@ class AURADocument:
         # filter[<attribute>]. This regex extracts <attribute>.
         pattern = re.compile(r"filter\[(?P<attribute>[a-zA-Z0-9_-]+)\]")
         queries = []
-        for key, value in request.args.items():
+        for key, value in self.args.items():
             match = pattern.match(key)
             if match:
                 # Extract attribute name from key
@@ -190,10 +202,10 @@ class AURADocument:
                 albums) or a list of strings (artists).
         """
         # Pages start from zero
-        page = request.args.get("page", 0, int)
+        page = self.args.get("page", 0, int)
         # Use page limit defined in config by default.
         default_limit = config["aura"]["page_limit"].get(int)
-        limit = request.args.get("limit", default_limit, int)
+        limit = self.args.get("limit", default_limit, int)
         # start = offset of first item to return
         start = page * limit
         # end = offset of last item + 1
@@ -203,10 +215,10 @@ class AURADocument:
             next_url = None
         else:
             # Not the last page so work out links.next url
-            if not request.args:
+            if not self.args:
                 # No existing arguments, so current page is 0
                 next_url = request.url + "?page=1"
-            elif not request.args.get("page", None):
+            elif not self.args.get("page", None):
                 # No existing page argument, so add one to the end
                 next_url = request.url + "&page=1"
             else:
@@ -215,7 +227,10 @@ class AURADocument:
                     f"page={page}", "page={}".format(page + 1)
                 )
         # Get only the items in the page range
-        data = [self.resource_object(collection[i]) for i in range(start, end)]
+        data = [
+            self.get_resource_object(self.lib, collection[i])
+            for i in range(start, end)
+        ]
         return data, next_url
 
     def get_included(self, data, include_str):
@@ -249,18 +264,26 @@ class AURADocument:
             res_type = identifier["type"]
             if res_type == "track":
                 track_id = int(identifier["id"])
-                track = current_app.config["lib"].get_item(track_id)
-                included.append(TrackDocument.resource_object(track))
+                track = self.lib.get_item(track_id)
+                included.append(
+                    TrackDocument.get_resource_object(self.lib, track)
+                )
             elif res_type == "album":
                 album_id = int(identifier["id"])
-                album = current_app.config["lib"].get_album(album_id)
-                included.append(AlbumDocument.resource_object(album))
+                album = self.lib.get_album(album_id)
+                included.append(
+                    AlbumDocument.get_resource_object(self.lib, album)
+                )
             elif res_type == "artist":
                 artist_id = identifier["id"]
-                included.append(ArtistDocument.resource_object(artist_id))
+                included.append(
+                    ArtistDocument.get_resource_object(self.lib, artist_id)
+                )
             elif res_type == "image":
                 image_id = identifier["id"]
-                included.append(ImageDocument.resource_object(image_id))
+                included.append(
+                    ImageDocument.get_resource_object(self.lib, image_id)
+                )
             else:
                 raise ValueError(f"Invalid resource type: {res_type}")
         return included
@@ -268,7 +291,7 @@ class AURADocument:
     def all_resources(self):
         """Build document for /tracks, /albums or /artists."""
         query = self.translate_filters()
-        sort_arg = request.args.get("sort", None)
+        sort_arg = self.args.get("sort", None)
         if sort_arg:
             sort = self.translate_sorts(sort_arg)
             # For each sort field add a query which ensures all results
@@ -291,7 +314,7 @@ class AURADocument:
         if next_url:
             document["links"] = {"next": next_url}
         # Include related resources for each element in "data"
-        include_str = request.args.get("include", None)
+        include_str = self.args.get("include", None)
         if include_str:
             document["included"] = self.get_included(data, include_str)
         return document
@@ -304,7 +327,7 @@ class AURADocument:
                 resource object.
         """
         document = {"data": resource_object}
-        include_str = request.args.get("include", None)
+        include_str = self.args.get("include", None)
         if include_str:
             # [document["data"]] is because arg needs to be list
             document["included"] = self.get_included(
@@ -325,7 +348,7 @@ class TrackDocument(AURADocument):
             query: A beets Query object or a beets query string.
             sort: A beets Sort object.
         """
-        return current_app.config["lib"].items(query, sort)
+        return self.lib.items(query, sort)
 
     def get_attribute_converter(self, beets_attr):
         """Work out what data type an attribute should be for beets.
@@ -348,7 +371,7 @@ class TrackDocument(AURADocument):
         return converter
 
     @staticmethod
-    def resource_object(track):
+    def get_resource_object(lib: Library, track):
         """Construct a JSON:API resource object from a beets Item.
 
         Args:
@@ -386,7 +409,7 @@ class TrackDocument(AURADocument):
         Args:
             track_id: The beets id of the track (integer).
         """
-        track = current_app.config["lib"].get_item(track_id)
+        track = self.lib.get_item(track_id)
         if not track:
             return self.error(
                 "404 Not Found",
@@ -395,7 +418,9 @@ class TrackDocument(AURADocument):
                     track_id
                 ),
             )
-        return self.single_resource_document(self.resource_object(track))
+        return self.single_resource_document(
+            self.get_resource_object(self.lib, track)
+        )
 
 
 class AlbumDocument(AURADocument):
@@ -410,7 +435,7 @@ class AlbumDocument(AURADocument):
             query: A beets Query object or a beets query string.
             sort: A beets Sort object.
         """
-        return current_app.config["lib"].albums(query, sort)
+        return self.lib.albums(query, sort)
 
     def get_attribute_converter(self, beets_attr):
         """Work out what data type an attribute should be for beets.
@@ -429,7 +454,7 @@ class AlbumDocument(AURADocument):
         return converter
 
     @staticmethod
-    def resource_object(album):
+    def get_resource_object(lib: Library, album):
         """Construct a JSON:API resource object from a beets Album.
 
         Args:
@@ -448,7 +473,7 @@ class AlbumDocument(AURADocument):
         # track number. Sorting is not required but it's nice.
         query = MatchQuery("album_id", album.id)
         sort = FixedFieldSort("track", ascending=True)
-        tracks = current_app.config["lib"].items(query, sort)
+        tracks = lib.items(query, sort)
         # JSON:API one-to-many relationship to tracks on the album
         relationships = {
             "tracks": {
@@ -484,7 +509,7 @@ class AlbumDocument(AURADocument):
         Args:
             album_id: The beets id of the album (integer).
         """
-        album = current_app.config["lib"].get_album(album_id)
+        album = self.lib.get_album(album_id)
         if not album:
             return self.error(
                 "404 Not Found",
@@ -493,7 +518,9 @@ class AlbumDocument(AURADocument):
                     album_id
                 ),
             )
-        return self.single_resource_document(self.resource_object(album))
+        return self.single_resource_document(
+            self.get_resource_object(self.lib, album)
+        )
 
 
 class ArtistDocument(AURADocument):
@@ -509,7 +536,7 @@ class ArtistDocument(AURADocument):
             sort: A beets Sort object.
         """
         # Gets only tracks with matching artist information
-        tracks = current_app.config["lib"].items(query, sort)
+        tracks = self.lib.items(query, sort)
         collection = []
         for track in tracks:
             # Do not add duplicates
@@ -534,7 +561,7 @@ class ArtistDocument(AURADocument):
         return converter
 
     @staticmethod
-    def resource_object(artist_id):
+    def get_resource_object(lib: Library, artist_id):
         """Construct a JSON:API resource object for the given artist.
 
         Args:
@@ -542,7 +569,7 @@ class ArtistDocument(AURADocument):
         """
         # Get tracks where artist field exactly matches artist_id
         query = MatchQuery("artist", artist_id)
-        tracks = current_app.config["lib"].items(query)
+        tracks = lib.items(query)
         if not tracks:
             return None
 
@@ -564,7 +591,7 @@ class ArtistDocument(AURADocument):
             }
         }
         album_query = MatchQuery("albumartist", artist_id)
-        albums = current_app.config["lib"].albums(query=album_query)
+        albums = lib.albums(query=album_query)
         if len(albums) != 0:
             relationships["albums"] = {
                 "data": [{"type": "album", "id": str(a.id)} for a in albums]
@@ -583,7 +610,7 @@ class ArtistDocument(AURADocument):
         Args:
             artist_id: A string which is the artist's name.
         """
-        artist_resource = self.resource_object(artist_id)
+        artist_resource = self.get_resource_object(self.lib, artist_id)
         if not artist_resource:
             return self.error(
                 "404 Not Found",
@@ -617,7 +644,7 @@ class ImageDocument(AURADocument):
     """Class for building documents for /images/(id) endpoints."""
 
     @staticmethod
-    def get_image_path(image_id):
+    def get_image_path(lib: Library, image_id):
         """Works out the full path to the image with the given id.
 
         Returns None if there is no such image.
@@ -639,7 +666,7 @@ class ImageDocument(AURADocument):
 
         # Get the path to the directory parent's images are in
         if parent_type == "album":
-            album = current_app.config["lib"].get_album(int(parent_id))
+            album = lib.get_album(int(parent_id))
             if not album or not album.artpath:
                 return None
             # Cut the filename off of artpath
@@ -659,7 +686,7 @@ class ImageDocument(AURADocument):
             return None
 
     @staticmethod
-    def resource_object(image_id):
+    def get_resource_object(lib: Library, image_id):
         """Construct a JSON:API resource object for the given image.
 
         Args:
@@ -668,7 +695,7 @@ class ImageDocument(AURADocument):
         """
         # Could be called as a static method, so can't use
         # self.get_image_path()
-        image_path = ImageDocument.get_image_path(image_id)
+        image_path = ImageDocument.get_image_path(lib, image_id)
         if not image_path:
             return None
 
@@ -708,7 +735,7 @@ class ImageDocument(AURADocument):
             image_id: A string in the form
                 "<parent_type>-<parent_id>-<img_filename>".
         """
-        image_resource = self.resource_object(image_id)
+        image_resource = self.get_resource_object(self.lib, image_id)
         if not image_resource:
             return self.error(
                 "404 Not Found",
@@ -736,8 +763,7 @@ def server_info():
 @aura_bp.route("/tracks")
 def all_tracks():
     """Respond with a list of all tracks and related information."""
-    doc = TrackDocument()
-    return doc.all_resources()
+    return TrackDocument.from_app().all_resources()
 
 
 @aura_bp.route("/tracks/<int:track_id>")
@@ -747,8 +773,7 @@ def single_track(track_id):
     Args:
         track_id: The id of the track provided in the URL (integer).
     """
-    doc = TrackDocument()
-    return doc.single_resource(track_id)
+    return TrackDocument.from_app().single_resource(track_id)
 
 
 @aura_bp.route("/tracks/<int:track_id>/audio")
@@ -820,8 +845,7 @@ def audio_file(track_id):
 @aura_bp.route("/albums")
 def all_albums():
     """Respond with a list of all albums and related information."""
-    doc = AlbumDocument()
-    return doc.all_resources()
+    return AlbumDocument.from_app().all_resources()
 
 
 @aura_bp.route("/albums/<int:album_id>")
@@ -831,8 +855,7 @@ def single_album(album_id):
     Args:
         album_id: The id of the album provided in the URL (integer).
     """
-    doc = AlbumDocument()
-    return doc.single_resource(album_id)
+    return AlbumDocument.from_app().single_resource(album_id)
 
 
 # Artist endpoints
@@ -842,8 +865,7 @@ def single_album(album_id):
 @aura_bp.route("/artists")
 def all_artists():
     """Respond with a list of all artists and related information."""
-    doc = ArtistDocument()
-    return doc.all_resources()
+    return ArtistDocument.from_app().all_resources()
 
 
 # Using the path converter allows slashes in artist_id
@@ -855,8 +877,7 @@ def single_artist(artist_id):
         artist_id: The id of the artist provided in the URL. A string
             which is the artist's name.
     """
-    doc = ArtistDocument()
-    return doc.single_resource(artist_id)
+    return ArtistDocument.from_app().single_resource(artist_id)
 
 
 # Image endpoints
@@ -872,8 +893,7 @@ def single_image(image_id):
         image_id: The id of the image provided in the URL. A string in
             the form "<parent_type>-<parent_id>-<img_filename>".
     """
-    doc = ImageDocument()
-    return doc.single_resource(image_id)
+    return ImageDocument.from_app().single_resource(image_id)
 
 
 @aura_bp.route("/images/<string:image_id>/file")
@@ -884,7 +904,7 @@ def image_file(image_id):
         image_id: The id of the image provided in the URL. A string in
             the form "<parent_type>-<parent_id>-<img_filename>".
     """
-    img_path = ImageDocument.get_image_path(image_id)
+    img_path = ImageDocument.get_image_path(current_app.config["lib"], image_id)
     if not img_path:
         return AURADocument.error(
             "404 Not Found",
