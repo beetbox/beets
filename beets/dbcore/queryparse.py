@@ -20,14 +20,16 @@ import itertools
 import re
 from typing import TYPE_CHECKING
 
-from . import Model, query
+from . import query
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Sequence
 
+    from ..library import LibModel
     from .query import FieldQueryType, Sort
 
     Prefixes = dict[str, FieldQueryType]
+
 
 PARSE_QUERY_PART_REGEX = re.compile(
     # Non-capturing optional segment for the keyword.
@@ -112,7 +114,7 @@ def parse_query_part(
 
 
 def construct_query_part(
-    model_cls: type[Model],
+    model_cls: type[LibModel],
     prefixes: Prefixes,
     query_part: str,
 ) -> query.Query:
@@ -160,15 +162,7 @@ def construct_query_part(
     # Field queries get constructed according to the name of the field
     # they are querying.
     else:
-        field = table = key.lower()
-        if field in model_cls.shared_db_fields:
-            # This field exists in both tables, so SQLite will encounter
-            # an OperationalError if we try to query it in a join.
-            # Using an explicit table name resolves this.
-            table = f"{model_cls._table}.{field}"
-
-        field_in_db = field in model_cls.all_db_fields
-        out_query = query_class(table, pattern, field_in_db)
+        out_query = model_cls.field_query(key.lower(), pattern, query_class)
 
     # Apply negation.
     if negate:
@@ -180,7 +174,7 @@ def construct_query_part(
 # TYPING ERROR
 def query_from_strings(
     query_cls: type[query.CollectionQuery],
-    model_cls: type[Model],
+    model_cls: type[LibModel],
     prefixes: Prefixes,
     query_parts: Collection[str],
 ) -> query.Query:
@@ -197,7 +191,7 @@ def query_from_strings(
 
 
 def construct_sort_part(
-    model_cls: type[Model],
+    model_cls: type[LibModel],
     part: str,
     case_insensitive: bool = True,
 ) -> Sort:
@@ -228,7 +222,7 @@ def construct_sort_part(
 
 
 def sort_from_strings(
-    model_cls: type[Model],
+    model_cls: type[LibModel],
     sort_parts: Sequence[str],
     case_insensitive: bool = True,
 ) -> Sort:
@@ -247,7 +241,7 @@ def sort_from_strings(
 
 
 def parse_sorted_query(
-    model_cls: type[Model],
+    model_cls: type[LibModel],
     parts: list[str],
     prefixes: Prefixes = {},
     case_insensitive: bool = True,

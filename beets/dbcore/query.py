@@ -97,6 +97,9 @@ class Query(ABC):
         """
         ...
 
+    def __and__(self, other: Query) -> AndQuery:
+        return AndQuery([self, other])
+
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"
 

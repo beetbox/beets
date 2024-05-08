@@ -25,6 +25,7 @@ import time
 import unicodedata
 from functools import cached_property
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import platformdirs
 from mediafile import MediaFile, UnreadableFileError
@@ -41,6 +42,9 @@ from beets.util import (
     syspath,
 )
 from beets.util.functemplate import Template, template
+
+if TYPE_CHECKING:
+    from .dbcore.query import FieldQuery, FieldQueryType
 
 # To use the SQLite "blob" type, it doesn't suffice to provide a byte
 # string; SQLite treats that as encoded text. Wrapping it in a
@@ -375,6 +379,31 @@ class LibModel(dbcore.Model["Library"]):
     def __bytes__(self):
         return self.__str__().encode("utf-8")
 
+    # Convenient queries.
+
+    @classmethod
+    def field_query(
+        cls, field: str, pattern: str, query_cls: FieldQueryType
+    ) -> FieldQuery:
+        """Get a `FieldQuery` for the given field on this model."""
+        fast = field in cls.all_db_fields
+        if field in cls.shared_db_fields:
+            # This field exists in both tables, so SQLite will encounter
+            # an OperationalError if we try to use it in a query.
+            # Using an explicit table name resolves this.
+            field = f"{cls._table}.{field}"
+
+        return query_cls(field, pattern, fast)
+
+    def duplicates_query(self, fields: list[str]) -> dbcore.AndQuery:
+        """Return a query for entities with same values in the given fields."""
+        return dbcore.AndQuery(
+            [
+                self.field_query(f, self.get(f), dbcore.MatchQuery)
+                for f in fields
+            ]
+        )
+
 
 class FormattedItemMapping(dbcore.db.FormattedMapping):
     """Add lookup for album-level fields.
@@ -647,6 +676,12 @@ class Item(LibModel):
         getters["singleton"] = lambda i: i.album_id is None
         getters["filesize"] = Item.try_filesize  # In bytes.
         return getters
+
+    def duplicates_query(self, fields: list[str]) -> dbcore.AndQuery:
+        """Return a query for entities with same values in the given fields."""
+        return super().duplicates_query(fields) & dbcore.query.NoneQuery(
+            "album_id"
+        )
 
     @classmethod
     def from_path(cls, path):
@@ -1866,7 +1901,6 @@ class DefaultTemplateFunctions:
             Item.all_keys(),
             # Do nothing for non singletons.
             lambda i: i.album_id is not None,
-            initial_subqueries=[dbcore.query.NoneQuery("album_id", True)],
         )
 
     def _tmpl_unique_memokey(self, name, keys, disam, item_id):
@@ -1885,7 +1919,6 @@ class DefaultTemplateFunctions:
         db_item,
         item_keys,
         skip_item,
-        initial_subqueries=None,
     ):
         """Generate a string that is guaranteed to be unique among all items of
         the same type as "db_item" who share the same set of keys.
@@ -1932,15 +1965,7 @@ class DefaultTemplateFunctions:
             bracket_r = ""
 
         # Find matching items to disambiguate with.
-        subqueries = []
-        if initial_subqueries is not None:
-            subqueries.extend(initial_subqueries)
-        for key in keys:
-            value = db_item.get(key, "")
-            # Use slow queries for flexible attributes.
-            fast = key in item_keys
-            subqueries.append(dbcore.MatchQuery(key, value, fast))
-        query = dbcore.AndQuery(subqueries)
+        query = db_item.duplicates_query(keys)
         ambigous_items = (
             self.lib.items(query)
             if isinstance(db_item, Item)
