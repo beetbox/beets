@@ -121,7 +121,10 @@ class Query(ABC):
         return hash(type(self))
 
 
-P = TypeVar("P")
+if TYPE_CHECKING:
+    P = TypeVar("P", default=Any)
+else:
+    P = TypeVar("P")
 SQLiteType = Union[str, bytes, float, int, memoryview]
 AnySQLiteType = TypeVar("AnySQLiteType", bound=SQLiteType)
 

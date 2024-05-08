@@ -53,15 +53,7 @@ import beets
 
 from ..util import cached_classproperty, functemplate
 from . import types
-from .query import (
-    AndQuery,
-    FieldQuery,
-    MatchQuery,
-    NullSort,
-    Query,
-    Sort,
-    TrueQuery,
-)
+from .query import FieldQuery, MatchQuery, NullSort, Query, Sort, TrueQuery
 
 
 class DBAccessError(Exception):
@@ -722,33 +714,6 @@ class Model(ABC):
     def set_parse(self, key, string: str):
         """Set the object's key to a value represented by a string."""
         self[key] = self._parse(key, string)
-
-    # Convenient queries.
-
-    @classmethod
-    def field_query(
-        cls,
-        field,
-        pattern,
-        query_cls: Type[FieldQuery] = MatchQuery,
-    ) -> FieldQuery:
-        """Get a `FieldQuery` for this model."""
-        return query_cls(field, pattern, field in cls._fields)
-
-    @classmethod
-    def all_fields_query(
-        cls: Type["Model"],
-        pats: Mapping,
-        query_cls: Type[FieldQuery] = MatchQuery,
-    ):
-        """Get a query that matches many fields with different patterns.
-
-        `pats` should be a mapping from field names to patterns. The
-        resulting query is a conjunction ("and") of per-field queries
-        for all of these field/pattern pairs.
-        """
-        subqueries = [cls.field_query(k, v, query_cls) for k, v in pats.items()]
-        return AndQuery(subqueries)
 
 
 # Database controller and supporting interfaces.
