@@ -16,11 +16,22 @@
 
 import itertools
 import re
-from typing import Collection, Dict, List, Optional, Sequence, Tuple, Type
+from typing import (
+    TYPE_CHECKING,
+    Collection,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+)
 
-from .. import library
 from . import Model, query
 from .query import Sort
+
+if TYPE_CHECKING:
+    from ..library import LibModel
 
 PARSE_QUERY_PART_REGEX = re.compile(
     # Non-capturing optional segment for the keyword.
@@ -105,7 +116,7 @@ def parse_query_part(
 
 
 def construct_query_part(
-    model_cls: Type[Model],
+    model_cls: Type["LibModel"],
     prefixes: Dict,
     query_part: str,
 ) -> query.Query:
@@ -153,17 +164,7 @@ def construct_query_part(
     # Field queries get constructed according to the name of the field
     # they are querying.
     else:
-        key = key.lower()
-        album_fields = library.Album._fields.keys()
-        item_fields = library.Item._fields.keys()
-        fast = key in album_fields | item_fields
-
-        if key in album_fields & item_fields:
-            # This field exists in both tables, so SQLite will encounter
-            # an OperationalError. Using an explicit table name resolves this.
-            key = f"{model_cls._table}.{key}"
-
-        out_query = query_class(key, pattern, fast)
+        out_query = model_cls.field_query(key.lower(), pattern, query_class)
 
     # Apply negation.
     if negate:
