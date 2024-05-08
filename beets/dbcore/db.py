@@ -39,8 +39,6 @@ import beets
 from ..util import cached_classproperty, functemplate
 from . import types
 from .query import (
-    AndQuery,
-    FieldQuery,
     FieldQueryType,
     FieldSort,
     MatchQuery,
@@ -775,33 +773,6 @@ class Model(ABC, Generic[D]):
         """Set the object's key to a value represented by a string."""
         self[key] = self._parse(key, string)
 
-    # Convenient queries.
-
-    @classmethod
-    def field_query(
-        cls,
-        field,
-        pattern,
-        query_cls: FieldQueryType = MatchQuery,
-    ) -> FieldQuery:
-        """Get a `FieldQuery` for this model."""
-        return query_cls(field, pattern, field in cls._fields)
-
-    @classmethod
-    def all_fields_query(
-        cls: type[Model],
-        pats: Mapping[str, str],
-        query_cls: FieldQueryType = MatchQuery,
-    ):
-        """Get a query that matches many fields with different patterns.
-
-        `pats` should be a mapping from field names to patterns. The
-        resulting query is a conjunction ("and") of per-field queries
-        for all of these field/pattern pairs.
-        """
-        subqueries = [cls.field_query(k, v, query_cls) for k, v in pats.items()]
-        return AndQuery(subqueries)
-
 
 # Database controller and supporting interfaces.
 
@@ -1274,17 +1245,30 @@ class Database:
         where, subvals = query.clause()
         order_by = sort.order_clause()
 
+        this_table = model_cls._table
+        select_fields = [f"{this_table}.*"]
         _from = model_cls.table_with_flex_attrs
-        if query.field_names & model_cls.other_db_fields:
+
+        required_fields = query.field_names
+        if required_fields - model_cls._fields.keys():
             _from += f" {model_cls.relation_join}"
 
-        table = model_cls._table
-        # group by id to avoid duplicates when joining with the relation
+            if required_fields - model_cls.all_db_fields:
+                # merge all flexible attribute into a single JSON field
+                select_fields.append(
+                    f"""
+                    json_patch(
+                        COALESCE({this_table}."flex_attrs [json_str]", '{{}}'),
+                        COALESCE({model_cls._relation._table}."flex_attrs [json_str]", '{{}}')
+                    ) AS all_flex_attrs
+                    """  # noqa: E501
+                )
+
         sql = (
-            f"SELECT {table}.* "
+            f"SELECT {', '.join(select_fields)} "
             f"FROM ({_from}) "
             f"WHERE {where or 1} "
-            f"GROUP BY {table}.id"
+            f"GROUP BY {this_table}.id"
         )
 
         if order_by:

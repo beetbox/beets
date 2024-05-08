@@ -125,9 +125,7 @@ class FieldQuery(Query, Generic[P]):
     @property
     def field(self) -> str:
         if not self.fast:
-            return (
-                f'json_extract("flex_attrs [json_str]", "$.{self.field_name}")'
-            )
+            return f'json_extract(all_flex_attrs, "$.{self.field_name}")'
 
         return (
             f"{self.table}.{self.field_name}" if self.table else self.field_name

@@ -1134,3 +1134,23 @@ class RelatedQueriesTest(BeetsTestCase, AssertsMixin):
         q = "album_flex:Album1"
         results = self.lib.albums(q)
         self.assert_albums_matched(results, ["Album1"])
+
+    def test_get_albums_filter_by_track_flex(self):
+        q = "item_flex1:Album1"
+        results = self.lib.albums(q)
+        self.assert_albums_matched(results, ["Album1"])
+
+    def test_get_items_filter_by_album_flex(self):
+        q = "album_flex:Album1"
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ["Album1 Item1", "Album1 Item2"])
+
+    def test_filter_by_flex(self):
+        q = "item_flex1:'Item1 Flex1'"
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ["Album1 Item1", "Album2 Item1"])
+
+    def test_filter_by_many_flex(self):
+        q = "item_flex1:'Item1 Flex1' item_flex2:Album1"
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ["Album1 Item1"])
