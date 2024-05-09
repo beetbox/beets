@@ -104,7 +104,10 @@ class AddTest(_common.TestCase):
         self.lib.add(self.i)
         new_grouping = (
             self.lib._connection()
-            .execute("select grouping from items where composer = ?", (self.i.composer,))
+            .execute(
+                "select grouping from items where composer = ?",
+                (self.i.composer,),
+            )
             .fetchone()["grouping"]
         )
         self.assertEqual(new_grouping, self.i.grouping)
@@ -116,7 +119,10 @@ class AddTest(_common.TestCase):
         self.lib.add(i)
         new_grouping = (
             self.lib._connection()
-            .execute("select grouping from items where composer = ?", (self.i.composer,))
+            .execute(
+                "select grouping from items where composer = ?",
+                (self.i.composer,),
+            )
             .fetchone()["grouping"]
         )
         self.assertEqual(new_grouping, self.i.grouping)
