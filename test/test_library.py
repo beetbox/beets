@@ -59,7 +59,7 @@ class StoreTest(_common.LibTestCase):
         self.i.store()
         new_year = (
             self.lib._connection()
-            .execute("select year from items where title='the title'")
+            .execute("select year from items where title = ?", (self.i.title,))
             .fetchone()["year"]
         )
         self.assertEqual(new_year, 1987)
@@ -70,7 +70,7 @@ class StoreTest(_common.LibTestCase):
         self.i.store()
         new_genre = (
             self.lib._connection()
-            .execute("select genre from items where title='the title'")
+            .execute("select genre from items where title = ?", (self.i.title,))
             .fetchone()["genre"]
         )
         self.assertEqual(new_genre, original_genre)
@@ -104,7 +104,7 @@ class AddTest(_common.TestCase):
         self.lib.add(self.i)
         new_grouping = (
             self.lib._connection()
-            .execute("select grouping from items where composer='the composer'")
+            .execute("select grouping from items where composer = ?", (self.i.composer,))
             .fetchone()["grouping"]
         )
         self.assertEqual(new_grouping, self.i.grouping)
@@ -116,7 +116,7 @@ class AddTest(_common.TestCase):
         self.lib.add(i)
         new_grouping = (
             self.lib._connection()
-            .execute("select grouping from items where composer='the composer'")
+            .execute("select grouping from items where composer = ?", (self.i.composer,))
             .fetchone()["grouping"]
         )
         self.assertEqual(new_grouping, self.i.grouping)
