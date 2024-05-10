@@ -396,7 +396,18 @@ class LibModel(dbcore.Model["Library"]):
         return query_cls(field, pattern, fast)
 
     @classmethod
-    def all_fields_query(
+    def any_field_query(
+        cls, query_class: FieldQueryType, pattern: str
+    ) -> dbcore.OrQuery:
+        return dbcore.OrQuery(
+            [
+                cls.field_query(f, pattern, query_class)
+                for f in cls._search_fields
+            ]
+        )
+
+    @classmethod
+    def match_all_query(
         cls, pattern_by_field: Mapping[str, str]
     ) -> dbcore.AndQuery:
         """Get a query that matches many fields with different patterns.
