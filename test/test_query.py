@@ -48,40 +48,6 @@ class TestHelper(helper.TestHelper):
         self.assertNotIn(item.id, result_ids)
 
 
-class AnyFieldQueryTest(_common.LibTestCase):
-    def test_no_restriction(self):
-        q = dbcore.query.AnyFieldQuery(
-            "title",
-            beets.library.Item._fields.keys(),
-            dbcore.query.SubstringQuery,
-        )
-        self.assertEqual(self.lib.items(q).get().title, "the title")
-
-    def test_restriction_completeness(self):
-        q = dbcore.query.AnyFieldQuery(
-            "title", ["title"], dbcore.query.SubstringQuery
-        )
-        self.assertEqual(self.lib.items(q).get().title, "the title")
-
-    def test_restriction_soundness(self):
-        q = dbcore.query.AnyFieldQuery(
-            "title", ["artist"], dbcore.query.SubstringQuery
-        )
-        self.assertIsNone(self.lib.items(q).get())
-
-    def test_eq(self):
-        q1 = dbcore.query.AnyFieldQuery(
-            "foo", ["bar"], dbcore.query.SubstringQuery
-        )
-        q2 = dbcore.query.AnyFieldQuery(
-            "foo", ["bar"], dbcore.query.SubstringQuery
-        )
-        self.assertEqual(q1, q2)
-
-        q2.query_class = None
-        self.assertNotEqual(q1, q2)
-
-
 class AssertsMixin:
     def assert_items_matched(self, results, titles):
         self.assertEqual({i.title for i in results}, set(titles))
@@ -981,14 +947,6 @@ class NotQueryTest(DummyDataTestCase):
         self.assert_items_matched(not_results, ["foo bar", "beets 4 eva"])
         self.assertNegationProperties(q)
 
-    def test_type_anyfield(self):
-        q = dbcore.query.AnyFieldQuery(
-            "foo", ["title", "artist", "album"], dbcore.query.SubstringQuery
-        )
-        not_results = self.lib.items(dbcore.query.NotQuery(q))
-        self.assert_items_matched(not_results, ["baz qux"])
-        self.assertNegationProperties(q)
-
     def test_type_boolean(self):
         q = dbcore.query.BooleanQuery("comp", True)
         not_results = self.lib.items(dbcore.query.NotQuery(q))
@@ -1137,10 +1095,17 @@ class RelatedQueriesTest(_common.TestCase, AssertsMixin):
         results = self.lib.items(q)
         self.assert_items_matched(results, ["Album1 Item1", "Album1 Item2"])
 
-    def test_filter_by_common_field(self):
-        q = "catalognum:ABC Album1"
+    def test_filter_albums_by_common_field(self):
+        # title:Album1 ensures that the items table is joined for the query
+        q = "title:Album1 catalognum:ABC"
         results = self.lib.albums(q)
         self.assert_albums_matched(results, ["Album1"])
+
+    def test_filter_items_by_common_field(self):
+        # artpath::A ensures that the albums table is joined for the query
+        q = "artpath::A Album1"
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ["Album1 Item1", "Album1 Item2"])
 
     def test_get_items_filter_by_track_flex(self):
         q = "item_flex1:Item1"
