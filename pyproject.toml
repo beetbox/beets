@@ -1,3 +1,144 @@
+[tool.poetry]
+name = "beets"
+version = "2.0.0"
+description = "music tagger and library organizer"
+authors = ["Adrian Sampson <adrian@radbox.org>"]
+maintainers = ["Serene-Arc"]
+license = "MIT"
+readme = "README.rst"
+homepage = "https://beets.io/"
+repository = "https://github.com/beetbox/beets"
+documentation = "https://beets.readthedocs.io/en/stable/"
+classifiers = [
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Multimedia :: Sound/Audio :: Players :: MP3",
+    "License :: OSI Approved :: MIT License",
+    "Environment :: Console",
+    "Environment :: Web Environment",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+packages = [
+    { include = "beets" },
+    { include = "beetsplug" },
+]
+
+[tool.poetry.urls]
+Changelog = "https://github.com/beetbox/beets/blob/master/docs/changelog.rst"
+"Bug Tracker" = "https://github.com/beetbox/beets/issues"
+
+[tool.poetry.dependencies]
+python = ">=3.8,<4"
+
+click = ">=8.1.7"
+colorama = { version = "*", markers = "sys_platform == 'win32'" }
+confuse = ">=1.5.0"
+jellyfish = "*"
+mediafile = ">=0.12.0"
+munkres = ">=1.0.0"
+musicbrainzngs = ">=0.4"
+packaging = ">=24.0"
+pyyaml = "*"
+tomli = ">=2.0.1"
+typing_extensions = "*"
+unidecode = ">=1.3.6"
+beautifulsoup4 = { version = "*", optional = true }
+dbus-python = { version = "*", optional = true }
+flask = { version = "*", optional = true }
+flask-cors = { version = "*", optional = true }
+langdetect = { version = "*", optional = true }
+mutagen = { version = ">=1.33", optional = true }
+Pillow = { version = "*", optional = true }
+py7zr = { version = "*", optional = true }
+pyacoustid = { version = "*", optional = true }
+PyGObject = { version = "*", optional = true }
+pylast = { version = "*", optional = true }
+python-mpd2 = { version = ">=0.4.2", optional = true }
+python3-discogs-client = { version = ">=2.3.15", optional = true }
+pyxdg = { version = "*", optional = true }
+rarfile = { version = "*", optional = true }
+reflink = { version = "*", optional = true }
+requests = { version = "*", optional = true }
+requests-oauthlib = { version = ">=0.6.1", optional = true }
+soco = { version = "*", optional = true }
+
+[tool.poetry.group.test.dependencies]
+beautifulsoup4 = "*"
+flask = "*"
+mock = "*"
+pylast = "*"
+pytest = "*"
+pytest-cov = "*"
+pytest-flask = "*"
+python-mpd2 = "*"
+python3-discogs-client = ">=2.3.15"
+py7zr = "*"
+pyxdg = "*"
+rarfile = "*"
+reflink = "*"
+requests_oauthlib = "*"
+responses = ">=0.3.0"
+
+[tool.poetry.group.lint.dependencies]
+flake8 = "*"
+flake8-docstrings = "*"
+pep8-naming = "*"
+
+[tool.poetry.group.typing.dependencies]
+mypy = "*"
+types-beautifulsoup4 = "*"
+types-Flask-Cors = "*"
+types-Pillow = "*"
+types-PyYAML = "*"
+types-requests = "*"
+types-urllib3 = "*"
+
+[tool.poetry.group.docs.dependencies]
+pydata-sphinx-theme = "*"
+sphinx = "*"
+
+[tool.poetry.extras]
+# inline comments note required external / non-python dependencies
+absubmit = ["requests"] # extractor binary from https://acousticbrainz.org/download
+# badfiles # mp3val and flac
+beatport = ["requests-oauthlib"]
+bpd = ["PyGObject"] # python-gi and GStreamer 1.0+
+chroma = ["pyacoustid"] # chromaprint or fpcalc
+# convert # ffmpeg
+discogs = ["python3-discogs-client"]
+embedart = ["Pillow"] # ImageMagick
+embyupdate = ["requests"]
+fetchart = ["beautifulsoup4", "Pillow", "requests"]
+import = ["py7zr", "rarfile"]
+# ipfs # go-ipfs
+# keyfinder # KeyFinder
+kodiupdate = ["requests"]
+lastgenre = ["pylast"]
+lastimport = ["pylast"]
+lyrics = ["beautifulsoup4", "langdetect", "requests"]
+metasync = ["dbus-python"]
+mpdstats = ["python-mpd2"]
+plexupdate = ["requests"]
+reflink = ["reflink"]
+replaygain = [
+    "PyGObject",
+] # python-gi and GStreamer 1.0+ or mp3gain/aacgain or Python Audio Tools or ffmpeg
+scrub = ["mutagen"]
+sonosupdate = ["soco"]
+thumbnails = ["Pillow", "pyxdg"]
+web = ["flask", "flask-cors"]
+
+[tool.poetry.scripts]
+beet = "beets.ui:main"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
 [tool.black]
 line-length = 80
 target-version = ["py38", "py39", "py310", "py311"]
@@ -8,4 +149,3 @@ py_version = 38
 multi_line_output = 3
 line_length = 80
 indent = 4
-
