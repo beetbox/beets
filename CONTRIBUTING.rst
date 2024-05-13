@@ -65,30 +65,24 @@ Programming
 Getting the Source
 ^^^^^^^^^^^^^^^^^^
 
-The easiest way to get started with the latest beets source is to use
-`pip`_ to install an “editable” package. This
-can be done with one command:
-
-.. code-block:: bash
-
-    $ pip install -e git+https://github.com/beetbox/beets.git#egg=beets
-
-Or, equivalently:
+The easiest way to get started with the latest beets source is to clone the
+repository and install ``beets`` in a local virtual environment using `poetry`_.
+This can be done with:
 
 .. code-block:: bash
 
     $ git clone https://github.com/beetbox/beets.git
     $ cd beets
-    $ pip install -e .
+    $ poetry install
 
-If you already have a released version of beets installed, you may need
-to remove it first by typing ``pip uninstall beets``. The pip command
-above will put the beets source in a ``src/beets`` directory and install
-the ``beet`` CLI script to a standard location on your system. You may
-want to use the ``--src`` option to specify the parent directory where
-the source will be checked out and the ``--user`` option such that the
-package will be installed to your home directory (compare with the
-output of ``pip install --help``).
+This will install ``beets`` and all development dependencies into its own
+virtual environment in your ``$POETRY_CACHE_DIR``. See ``poetry install
+--help`` for installation options, including installing ``extra`` dependencies
+for plugins.
+
+In order to run commands within this virtual environment, prepend ``poetry
+run`` to them, for example ``poetry run pytest``.
+
 
 Code Contribution Ideas
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -310,15 +304,12 @@ that reveal ordering dependencies—which are bad news!
 Test Dependencies
 ^^^^^^^^^^^^^^^^^
 
-The tests have a few more dependencies than beets itself. (The
-additional dependencies consist of testing utilities and dependencies of
-non-default plugins exercised by the test suite.) The dependencies are
-listed under 'test' in ``extras_require`` in `setup.py`_.
-To install the test dependencies, run ``python -m pip install .[test]``.
-Or, just run a test suite with ``tox`` which will install them
-automatically.
+The tests have a few more dependencies than beets itself. (The additional
+dependencies consist of testing utilities and dependencies of non-default
+plugins exercised by the test suite.) The dependencies are listed under the
+``tool.poetry.group.test.dependencies`` section in `pyproject.toml`_.
 
-.. _setup.py: https://github.com/beetbox/beets/blob/master/setup.py
+.. _pyproject.toml: https://github.com/beetbox/beets/blob/master/pyproject.toml
 
 Writing Tests
 -------------
@@ -359,5 +350,5 @@ others. See `unittest.mock`_ for more info.
 .. _integration test: https://github.com/beetbox/beets/actions?query=workflow%3A%22integration+tests%22
 .. _unittest.mock: https://docs.python.org/3/library/unittest.mock.html
 .. _documentation: https://beets.readthedocs.io/en/stable/
-.. _pip: https://pip.pypa.io/en/stable/
+.. _poetry: https://python-poetry.org/docs/
 .. _vim: https://www.vim.org/
