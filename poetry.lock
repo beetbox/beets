@@ -2602,13 +2602,14 @@ files = [
 
 [extras]
 absubmit = ["requests"]
+aura = ["Pillow", "flask", "flask-cors"]
 beatport = ["requests-oauthlib"]
 bpd = ["PyGObject"]
 chroma = ["pyacoustid"]
 discogs = ["python3-discogs-client"]
 embedart = ["Pillow"]
 embyupdate = ["requests"]
-fetchart = ["Pillow", "beautifulsoup4", "requests"]
+fetchart = ["Pillow", "beautifulsoup4", "langdetect", "requests"]
 import = ["py7zr", "rarfile"]
 kodiupdate = ["requests"]
 lastgenre = ["pylast"]
@@ -2627,4 +2628,4 @@ web = ["flask", "flask-cors"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4"
-content-hash = "3c37973d479d97cb7cb4ca195fe15ede03577e4c91a88a939769aa7924ca2d3c"
+content-hash = "697ebfc73bb20e4bf4ee41f639847212384102601d94b0231374f41e6932e5bd"

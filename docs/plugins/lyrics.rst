@@ -13,21 +13,18 @@ and, optionally, the Google custom search API.
 Fetch Lyrics During Import
 --------------------------
 
-To automatically fetch lyrics for songs you import, enable the ``lyrics``
-plugin in your configuration (see :ref:`using-plugins`).
-Then, install the `requests`_ library by typing::
+To automatically fetch lyrics for songs you import, first enable it in your
+configuration (see :ref:`using-plugins`). Then, install ``beets`` with
+``lyrics`` extra
 
-    pip install requests
+.. code-block:: bash
 
-The plugin uses `requests`_ to download lyrics.
+    pip install "beets[lyrics]"
 
 When importing new files, beets will now fetch lyrics for files that don't
 already have them. The lyrics will be stored in the beets database. If the
 ``import.write`` config option is on, then the lyrics will also be written to
 the files' tags.
-
-.. _requests: https://requests.readthedocs.io/en/master/
-
 
 Configuration
 -------------
@@ -130,12 +127,7 @@ few suggestions.
 Activate Google Custom Search
 ------------------------------
 
-Using the Google backend requires `BeautifulSoup`_, which you can install
-using `pip`_ by typing::
-
-    pip install beautifulsoup4
-
-You also need to `register for a Google API key`_. Set the ``google_API_key``
+You need to `register for a Google API key`_. Set the ``google_API_key``
 configuration option to your key.
 Then add ``google`` to the list of sources in your configuration (or use
 default list, which includes it as long as you have an API key).
@@ -153,16 +145,10 @@ default, beets use a list of sources known to be scrapeable.
 Note that the Google custom search API is limited to 100 queries per day.
 After that, the lyrics plugin will fall back on other declared data sources.
 
-.. _pip: https://pip.pypa.io
 .. _BeautifulSoup: https://www.crummy.com/software/BeautifulSoup/bs4/doc/
 
 Activate Genius and Tekstowo.pl Lyrics
 --------------------------------------
-
-Using the Genius or Tekstowo.pl backends requires `BeautifulSoup`_, which
-you can install using `pip`_ by typing::
-
-    pip install beautifulsoup4
 
 These backends are enabled by default.
 
@@ -171,16 +157,10 @@ These backends are enabled by default.
 Activate On-the-Fly Translation
 -------------------------------
 
-Using the Bing Translation API requires `langdetect`_, which you can install
-using `pip`_ by typing::
-
-    pip install langdetect
-
-You also need to register for a Microsoft Azure Marketplace free account and
+You need to register for a Microsoft Azure Marketplace free account and
 to the `Microsoft Translator API`_. Follow the four steps process, specifically
 at step 3 enter ``beets`` as *Client ID* and copy/paste the generated
 *Client secret* into your ``bing_client_secret`` configuration, alongside
 ``bing_lang_to`` target `language code`.
 
-.. _langdetect: https://pypi.python.org/pypi/langdetect
 .. _Microsoft Translator API: https://docs.microsoft.com/en-us/azure/cognitive-services/translator/translator-how-to-signup
