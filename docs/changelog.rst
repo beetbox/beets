@@ -303,6 +303,8 @@ Bug fixes:
 * Fix bug where unimported plugin would not ignore children directories of
   ignored directories.
   :bug:`5130` 
+* Fix bug where some plugin commands hang indefinitely due to a missing
+  `requests` timeout.
 
 For plugin developers:
 
