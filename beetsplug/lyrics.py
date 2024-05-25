@@ -267,6 +267,7 @@ class Backend:
                     headers={
                         "User-Agent": USER_AGENT,
                     },
+                    timeout=10,
                 )
         except requests.RequestException as exc:
             self._log.debug("lyrics request failed: {0}", exc)
@@ -293,7 +294,11 @@ class LRCLib(Backend):
         }
 
         try:
-            response = requests.get(self.base_url, params=params)
+            response = requests.get(
+                self.base_url,
+                params=params,
+                timeout=10,
+            )
             data = response.json()
         except (requests.RequestException, json.decoder.JSONDecodeError) as exc:
             self._log.debug("LRCLib API request failed: {0}", exc)
@@ -410,7 +415,10 @@ class Genius(Backend):
         data = {"q": title + " " + artist.lower()}
         try:
             response = requests.get(
-                search_url, params=data, headers=self.headers
+                search_url,
+                params=data,
+                headers=self.headers,
+                timeout=10,
             )
         except requests.RequestException as exc:
             self._log.debug("Genius API request failed: {0}", exc)
@@ -868,7 +876,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
         oauth_url = "https://datamarket.accesscontrol.windows.net/v2/OAuth2-13"
         oauth_token = json.loads(
             requests.post(
-                oauth_url, data=urllib.parse.urlencode(params)
+                oauth_url,
+                data=urllib.parse.urlencode(params),
+                timeout=10,
             ).content
         )
         if "access_token" in oauth_token:
@@ -1092,7 +1102,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 "Translate?text=%s&to=%s" % ("|".join(text_lines), to_lang)
             )
             r = requests.get(
-                url, headers={"Authorization ": self.bing_auth_token}
+                url,
+                headers={"Authorization ": self.bing_auth_token},
+                timeout=10,
             )
             if r.status_code != 200:
                 self._log.debug(
