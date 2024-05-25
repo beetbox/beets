@@ -203,7 +203,10 @@ only files which would be processed",
         mbid = item["mb_trackid"]
         headers = {"Content-Type": "application/json"}
         response = requests.post(
-            self.url.format(mbid=mbid), json=data, headers=headers
+            self.url.format(mbid=mbid),
+            json=data,
+            headers=headers,
+            timeout=10,
         )
         # Test that request was successful and raise an error on failure.
         if response.status_code != 200:
