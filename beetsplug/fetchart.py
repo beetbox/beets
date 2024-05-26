@@ -1069,10 +1069,7 @@ class Spotify(RemoteArtSource):
             self._log.debug("Fetchart: no Spotify album ID found")
             return
         try:
-            response = requests.get(
-                url,
-                timeout=10,
-            )
+            response = requests.get(url, timeout=10)
             response.raise_for_status()
         except requests.RequestException as e:
             self._log.debug("Error: " + str(e))

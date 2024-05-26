@@ -135,10 +135,7 @@ def get_user(host, port, username):
     :rtype: list
     """
     url = api_url(host, port, "/Users/Public")
-    r = requests.get(
-        url,
-        timeout=10,
-    )
+    r = requests.get(url, timeout=10)
     user = [i for i in r.json() if i["Name"] == username]
 
     return user
