@@ -13,7 +13,7 @@ Then you can get a more detailed look at beets' features in the
 be interested in exploring the :doc:`plugins </plugins/index>`.
 
 If you still need help, your can drop by the ``#beets`` IRC channel on
-Libera.Chat, drop by `the discussion board`_, send email to
+`Libera.Chat <https://libera.chat/>`_, drop by `the discussion board`_, send email to
 `the mailing list`_, or `file a bug`_ in the issue tracker. Please let us know
 where you think this documentation can be improved.
 
