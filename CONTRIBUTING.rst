@@ -62,8 +62,10 @@ Programming
    information in the `“For Developers” section of the
    docs <https://beets.readthedocs.io/en/stable/dev/>`__.
 
-Tools
-^^^^^
+.. _development-tools:
+
+Development Tools
+^^^^^^^^^^^^^^^^^
 
 In order to develop beets, you will need a few tools installed:
 
@@ -87,6 +89,8 @@ Install `poetry`_ and `poethepoet`_ using `pipx`_::
 
 .. _pipx: https://pipx.pypa.io/stable
 .. _pipx-installation-instructions: https://pipx.pypa.io/stable/installation/
+
+.. _getting-the-source:
 
 Getting the Source
 ^^^^^^^^^^^^^^^^^^
@@ -203,8 +207,7 @@ request and your code will ship in no time.
    listed.
 6. Add a changelog entry to ``docs/changelog.rst`` near the top of the
    document.
-7. Run the tests and style checker. The easiest way to run the tests is
-   to use `tox`_. For more information on running tests, see :ref:`testing`.
+7. Run the tests and style checker, see :ref:`testing`.
 8. Push to your fork and open a pull request! We’ll be in touch shortly.
 9. If you add commits to a pull request, please add a comment or
    re-request a review after you push them since GitHub doesn’t
@@ -273,9 +276,9 @@ Style
 
 We follow `black`_ formatting and `google's docstring format`_.
 
-You can use ``tox -e lint`` to check your code for any style errors.
-Running ``tox -e format`` will automatically format your code according
-to the specifications required by the project.
+Use ``poe check-format`` and ``poe lint`` to check your code for style and
+linting errors. Running ``poe format`` will automatically format your code
+according to the specifications required by the project.
 
 .. _black: https://black.readthedocs.io/en/stable/
 .. _google's docstring format: https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings
@@ -330,31 +333,36 @@ Testing
 Running the Tests
 -----------------
 
-To run the tests for multiple Python versions, compile the docs, and
-check style, use `tox`_. Just type ``tox`` or use something like
-``tox -e py38`` to test a specific configuration. You can use the
-``--parallel`` flag to make this go faster.
+Use ``poe`` to run tests::
+
+    $ poe test [pytest options]
 
 You can disable a hand-selected set of "slow" tests by setting the
-environment variable SKIP_SLOW_TESTS before running them.
+environment variable ``SKIP_SLOW_TESTS``, for example::
 
-Other ways to run the tests:
-
--  ``python testall.py`` (ditto)
--  ``python -m unittest discover -p 'test_*'`` (ditto)
--  `pytest`_
+    $ SKIP_SLOW_TESTS=1 poe test
 
 Coverage
 ^^^^^^^^
 
-``tox -e cov`` will add coverage info for tests: Coverage is pretty low
-still -- see the current status on `Codecov`_.
+Coverage is measured automatically when running the tests. If you find it takes
+a while to calculate, disable it::
+
+    $ poe test --no-cov
+
+You are welcome to explore coverage by opening the HTML report in
+``.reports/html/index.html``.
+
+Note that for each covered line the report shows **which tests cover it**
+(expand the list on the right-hand side of the affected line).
+
+You can find project coverage status on `Codecov`_.
 
 Red Flags
 ^^^^^^^^^
 
 The `pytest-random`_ plugin makes it easy to randomize the order of
-tests. ``py.test test --random`` will occasionally turn up failing tests
+tests. ``poe test --random`` will occasionally turn up failing tests
 that reveal ordering dependencies—which are bad news!
 
 Test Dependencies
@@ -396,7 +404,6 @@ others. See `unittest.mock`_ for more info.
 
 .. _Codecov: https://codecov.io/github/beetbox/beets
 .. _pytest-random: https://github.com/klrmn/pytest-random
-.. _tox: https://tox.readthedocs.io/en/latest/
 .. _pytest: https://docs.pytest.org/en/stable/
 .. _pyproject.toml: https://github.com/beetbox/beets/tree/master/pyproject.toml
 .. _test: https://github.com/beetbox/beets/tree/master/test

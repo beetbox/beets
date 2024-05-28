@@ -5,10 +5,19 @@ jobs:
   formatting_check:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.8
+          cache: poetry
+
       - name: Install dependencies
-        uses: actions/checkout@v3
+        run: poetry install
 
       - name: Run formatting check
-        uses: paolorechia/pox@v1.0.1
-        with:
-          tox_env: "format_check"
+        run: poetry run project check-format

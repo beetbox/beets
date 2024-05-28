@@ -2,7 +2,7 @@ name: integration tests
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * SUN'  # run every Sunday at midnight
+    - cron: "0 0 * * SUN" # run every Sunday at midnight
 jobs:
   test_integration:
     runs-on: ubuntu-latest
@@ -23,13 +23,13 @@ jobs:
           pip install poetry
           poetry install
 
-      - name: Test with tox
-        run: |
-          tox -e int
+      - name: Test
+        env:
+          INTEGRATION_TEST: 1
+        run: poetry run project test
 
       - name: Check external links in docs
-        run: |
-          tox -e links
+        run: poetry run project check-docs-links
 
       - name: Notify on failure
         if: ${{ failure() }}
