@@ -39,24 +39,22 @@ jobs:
           sudo apt install ffmpeg
           poetry install --extras replaygain
 
-      - name: Test older Python versions with tox
+      - name: Test older Python versions
         if: matrix.python-version != '3.x'
-        run: |
-          tox -e py-test
+        run: poetry run project test
 
       - name: Upload code coverage
         if: matrix.python-version == '3.8' && matrix.platform == 'ubuntu-latest'
         continue-on-error: true
         run: codecov
 
-      - name: Test latest Python version with tox and mypy
+      - name: Check types
         if: matrix.python-version == '3.x'
         # continue-on-error is not ideal since it doesn't give a visible
         # warning, but there doesn't seem to be anything better:
         # https://github.com/actions/toolkit/issues/399
         continue-on-error: true
-        run: |
-          tox -vv -e py-mypy
+        run: poetry run project check-types
 
   test-docs:
     runs-on: ubuntu-latest
@@ -82,8 +80,8 @@ jobs:
       - name: Add problem matcher
         run: echo "::add-matcher::.github/sphinx-problem-matcher.json"
 
-      - name: Build and check docs using tox
-        run: tox -e docs
+      - name: Build and check docs
+        run: poetry run project docs
 
   lint:
     runs-on: ubuntu-latest
@@ -107,4 +105,4 @@ jobs:
         run: echo "::add-matcher::.github/flake8-problem-matcher.json"
 
       - name: Lint with flake8
-        run: tox -e py-lint
+        run: poetry run project lint
