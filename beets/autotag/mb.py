@@ -50,7 +50,80 @@ FIELDS_TO_MB_KEYS = {
     "year": "date",
 }
 
-musicbrainzngs.set_useragent("beets", beets.__version__, "https://beets.io/")
+
+class MbInterface:
+    VALID_BROWSE_INCLUDES = musicbrainzngs.VALID_BROWSE_INCLUDES
+    VALID_INCLUDES = musicbrainzngs.VALID_INCLUDES
+
+    class WebServiceError(musicbrainzngs.WebServiceError):
+        pass
+
+    class MusicBrainzError(musicbrainzngs.MusicBrainzError):
+        pass
+
+    class ResponseError(musicbrainzngs.ResponseError):
+        pass
+
+    def __init__(self):
+        pass
+
+    def set_useragent(self, app, version, contact=None):
+        return musicbrainzngs.set_useragent(app, version, contact=contact)
+
+    def set_hostname(self, hostname, https):
+        return musicbrainzngs.set_hostname(hostname, https)
+
+    def set_rate_limit(self, interval, ratelimit):
+        return musicbrainzngs.set_rate_limit(interval, ratelimit)
+
+    def browse_recordings(
+        self, artist=None, release=None, includes=[], limit=None, offset=None
+    ):
+        return musicbrainzngs.browse_recordings(
+            artist=artist,
+            release=release,
+            includes=includes,
+            limit=limit,
+            offset=offset,
+        )
+
+    def search_recordings(
+        self, query="", limit=None, offset=None, strict=False, **fields
+    ):
+        return musicbrainzngs.search_recordings(
+            query=query, limit=limit, offset=offset, strict=strict, **fields
+        )
+
+    def get_release_by_id(
+        self, id, includes=[], release_status=[], release_type=[]
+    ):
+        return musicbrainzngs.get_release_by_id(
+            id,
+            includes=includes,
+            release_status=release_status,
+            release_type=release_type,
+        )
+
+    def get_recording_by_id(
+        self, id, includes=[], release_status=[], release_type=[]
+    ):
+        return musicbrainzngs.get_recording_by_id(
+            id,
+            includes=includes,
+            release_status=release_status,
+            release_type=release_type,
+        )
+
+    def search_releases(
+        self, query="", limit=None, offset=None, strict=False, **fields
+    ):
+        return musicbrainzngs.search_releases(
+            query=query, limit=limit, offset=offset, strict=strict, **fields
+        )
+
+
+mbi = MbInterface()
+mbi.set_useragent("beets", beets.__version__, "https://beets.io/")
 
 
 class MusicBrainzAPIError(util.HumanReadableException):
@@ -60,7 +133,7 @@ class MusicBrainzAPIError(util.HumanReadableException):
 
     def __init__(self, reason, verb, query, tb=None):
         self.query = query
-        if isinstance(reason, musicbrainzngs.WebServiceError):
+        if isinstance(reason, mbi.WebServiceError):
             reason = "MusicBrainz not reachable"
         super().__init__(reason, verb, tb)
 
@@ -95,14 +168,14 @@ BROWSE_INCLUDES = [
     "recording-rels",
     "release-rels",
 ]
-if "work-level-rels" in musicbrainzngs.VALID_BROWSE_INCLUDES["recording"]:
+if "work-level-rels" in mbi.VALID_BROWSE_INCLUDES["recording"]:
     BROWSE_INCLUDES.append("work-level-rels")
 BROWSE_CHUNKSIZE = 100
 BROWSE_MAXTRACKS = 500
 TRACK_INCLUDES = ["artists", "aliases", "isrcs"]
-if "work-level-rels" in musicbrainzngs.VALID_INCLUDES["recording"]:
+if "work-level-rels" in mbi.VALID_INCLUDES["recording"]:
     TRACK_INCLUDES += ["work-level-rels", "artist-rels"]
-if "genres" in musicbrainzngs.VALID_INCLUDES["recording"]:
+if "genres" in mbi.VALID_INCLUDES["recording"]:
     RELEASE_INCLUDES += ["genres"]
 
 
@@ -123,8 +196,8 @@ def configure():
     # Only call set_hostname when a custom server is configured. Since
     # musicbrainz-ngs connects to musicbrainz.org with HTTPS by default
     if hostname != "musicbrainz.org":
-        musicbrainzngs.set_hostname(hostname, https)
-    musicbrainzngs.set_rate_limit(
+        mbi.set_hostname(hostname, https)
+    mbi.set_rate_limit(
         config["musicbrainz"]["ratelimit_interval"].as_number(),
         config["musicbrainz"]["ratelimit"].get(int),
     )
@@ -428,7 +501,7 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
         for i in range(0, ntracks, BROWSE_CHUNKSIZE):
             log.debug("Retrieving tracks starting at {}", i)
             recording_list.extend(
-                musicbrainzngs.browse_recordings(
+                mbi.browse_recordings(
                     release=release["id"],
                     limit=BROWSE_CHUNKSIZE,
                     includes=BROWSE_INCLUDES,
@@ -726,10 +799,10 @@ def match_album(
 
     try:
         log.debug("Searching for MusicBrainz releases with: {!r}", criteria)
-        res = musicbrainzngs.search_releases(
+        res = mbi.search_releases(
             limit=config["musicbrainz"]["searchlimit"].get(int), **criteria
         )
-    except musicbrainzngs.MusicBrainzError as exc:
+    except mbi.MusicBrainzError as exc:
         raise MusicBrainzAPIError(
             exc, "release search", criteria, traceback.format_exc()
         )
@@ -757,10 +830,10 @@ def match_track(
         return
 
     try:
-        res = musicbrainzngs.search_recordings(
+        res = mbi.search_recordings(
             limit=config["musicbrainz"]["searchlimit"].get(int), **criteria
         )
-    except musicbrainzngs.MusicBrainzError as exc:
+    except mbi.MusicBrainzError as exc:
         raise MusicBrainzAPIError(
             exc, "recording search", criteria, traceback.format_exc()
         )
@@ -800,7 +873,7 @@ def _find_actual_release_from_pseudo_release(
 
     actual_id = translations[0]["target"]
 
-    return musicbrainzngs.get_release_by_id(actual_id, RELEASE_INCLUDES)
+    return mbi.get_release_by_id(actual_id, RELEASE_INCLUDES)
 
 
 def _merge_pseudo_and_actual_album(
@@ -854,7 +927,7 @@ def album_for_id(releaseid: str) -> Optional[beets.autotag.hooks.AlbumInfo]:
         log.debug("Invalid MBID ({0}).", releaseid)
         return None
     try:
-        res = musicbrainzngs.get_release_by_id(albumid, RELEASE_INCLUDES)
+        res = mbi.get_release_by_id(albumid, RELEASE_INCLUDES)
 
         # resolve linked release relations
         actual_res = None
@@ -862,10 +935,10 @@ def album_for_id(releaseid: str) -> Optional[beets.autotag.hooks.AlbumInfo]:
         if res["release"].get("status") == "Pseudo-Release":
             actual_res = _find_actual_release_from_pseudo_release(res)
 
-    except musicbrainzngs.ResponseError:
+    except mbi.ResponseError:
         log.debug("Album ID match failed.")
         return None
-    except musicbrainzngs.MusicBrainzError as exc:
+    except mbi.MusicBrainzError as exc:
         raise MusicBrainzAPIError(
             exc, "get release by ID", albumid, traceback.format_exc()
         )
@@ -890,11 +963,11 @@ def track_for_id(releaseid: str) -> Optional[beets.autotag.hooks.TrackInfo]:
         log.debug("Invalid MBID ({0}).", releaseid)
         return None
     try:
-        res = musicbrainzngs.get_recording_by_id(trackid, TRACK_INCLUDES)
-    except musicbrainzngs.ResponseError:
+        res = mbi.get_recording_by_id(trackid, TRACK_INCLUDES)
+    except mbi.ResponseError:
         log.debug("Track ID match failed.")
         return None
-    except musicbrainzngs.MusicBrainzError as exc:
+    except mbi.MusicBrainzError as exc:
         raise MusicBrainzAPIError(
             exc, "get recording by ID", trackid, traceback.format_exc()
         )

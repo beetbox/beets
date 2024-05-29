@@ -781,7 +781,14 @@ class MBLibraryTest(unittest.TestCase):
             }
             ti = list(mb.match_track("hello", "there"))[0]
 
-            p.assert_called_with(artist="hello", recording="there", limit=5)
+            p.assert_called_with(
+                query="",
+                limit=5,
+                offset=None,
+                strict=False,
+                artist="hello",
+                recording="there",
+            )
             self.assertEqual(ti.title, "foo")
             self.assertEqual(ti.track_id, "bar")
 
@@ -834,8 +841,17 @@ class MBLibraryTest(unittest.TestCase):
 
                 ai = list(mb.match_album("hello", "there"))[0]
 
-                sp.assert_called_with(artist="hello", release="there", limit=5)
-                gp.assert_called_with(mbid, mock.ANY)
+                sp.assert_called_with(
+                    query="",
+                    limit=5,
+                    offset=None,
+                    strict=False,
+                    artist="hello",
+                    release="there",
+                )
+                gp.assert_called_with(
+                    mbid, includes=mock.ANY, release_status=[], release_type=[]
+                )
                 self.assertEqual(ai.tracks[0].title, "foo")
                 self.assertEqual(ai.album, "hi")
 
