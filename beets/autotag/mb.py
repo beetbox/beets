@@ -16,13 +16,17 @@
 """
 from __future__ import annotations
 
+import json
 import re
+import threading
+import time
 import traceback
 from collections import Counter
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, cast
 from urllib.parse import urljoin
 
-import musicbrainzngs
+from mbzero import mbzerror
+from mbzero import mbzrequest as mbzr
 
 import beets
 import beets.autotag.hooks
@@ -37,7 +41,7 @@ from beets.util.id_extractors import (
 
 VARIOUS_ARTISTS_ID = "89ad4ac3-39f7-470e-963a-56509c546377"
 
-BASE_URL = "https://musicbrainz.org/"
+BASE_URL = "musicbrainz.org/ws/2"
 
 SKIPPED_TRACKS = ["[data track]"]
 
@@ -50,80 +54,258 @@ FIELDS_TO_MB_KEYS = {
     "year": "date",
 }
 
+# Rate limiting
+
+limit_interval = 1.0
+limit_requests = 1
+do_rate_limit = True
+
+
+def set_rate_limit(limit_or_interval=1.0, new_requests=1):
+    """Sets the rate limiting behavior of the module. Must be invoked
+    before the first Web service call.
+    If the `limit_or_interval` parameter is set to False then
+    rate limiting will be disabled. If it is a number then only
+    a set number of requests (`new_requests`) will be made per
+    given interval (`limit_or_interval`).
+    """
+    global limit_interval
+    global limit_requests
+    global do_rate_limit
+    if isinstance(limit_or_interval, bool):
+        do_rate_limit = limit_or_interval
+    else:
+        if limit_or_interval <= 0.0:
+            raise ValueError("limit_or_interval can't be less than 0")
+        if new_requests <= 0:
+            raise ValueError("new_requests can't be less than 0")
+        do_rate_limit = True
+        limit_interval = limit_or_interval
+        limit_requests = new_requests
+
+
+class _RateLim(object):
+    """A decorator that limits the rate at which the function may be
+    called. The rate is controlled by the `limit_interval` and
+    `limit_requests` global variables. The limiting is thread-safe;
+    only one thread may be in the function at a time (acts like a
+    monitor in this sense). The globals must be set before the first
+    call to the limited function.
+    """
+
+    def __init__(self, fun):
+        self.fun = fun
+        self.last_call = 0.0
+        self.lock = threading.Lock()
+        self.remaining_requests = None  # Set on first invocation.
+
+    def _update_remaining(self):
+        """Update remaining requests based on the elapsed time since
+        they were last calculated.
+        """
+        # On first invocation, we have the maximum number of requests
+        # available.
+        if self.remaining_requests is None:
+            self.remaining_requests = float(limit_requests)
+
+        else:
+            since_last_call = time.time() - self.last_call
+            self.remaining_requests += since_last_call * (
+                limit_requests / limit_interval
+            )
+            self.remaining_requests = min(
+                self.remaining_requests, float(limit_requests)
+            )
+
+        self.last_call = time.time()
+
+    def __call__(self, *args, **kwargs):
+        with self.lock:
+            if do_rate_limit:
+                self._update_remaining()
+
+                # Delay if necessary.
+                while self.remaining_requests < 0.999:
+                    time.sleep(
+                        (1.0 - self.remaining_requests)
+                        * (limit_requests / limit_interval)
+                    )
+                    self._update_remaining()
+
+                # Call the original function, "paying" for this call.
+                self.remaining_requests -= 1.0
+            return self.fun(*args, **kwargs)
+
+
+# Musicbrainz library interface
+
+
+@_RateLim
+def _lookup(mbi, entity, mbid, includes, limit=None, offset=None, params={}):
+    return mbi._send(
+        mbzr.MbzRequestLookup(mbi.useragent, entity, mbid, includes),
+        limit=limit,
+        offset=offset,
+    )
+
+
+@_RateLim
+def _browse(mbi, entity, bw_entity, mbid, includes=[], limit=None, offset=None):
+    return mbi._send(
+        mbzr.MbzRequestBrowse(mbi.useragent, entity, bw_entity, mbid, includes),
+        limit=limit,
+        offset=offset,
+    )
+
+
+@_RateLim
+def _search(mbi, entity, query, limit=None, offset=None, **fields):
+    return mbi._send(
+        mbzr.MbzRequestSearch(mbi.useragent, entity, query),
+        limit=limit,
+        offset=offset,
+    )
+
 
 class MbInterface:
-    VALID_BROWSE_INCLUDES = musicbrainzngs.VALID_BROWSE_INCLUDES
-    VALID_INCLUDES = musicbrainzngs.VALID_INCLUDES
 
-    class WebServiceError(musicbrainzngs.WebServiceError):
+    class WebServiceError(mbzerror.MbzWebServiceError):
         pass
 
-    class MusicBrainzError(musicbrainzngs.MusicBrainzError):
+    class MusicBrainzError(mbzerror.MbzError):
         pass
 
-    class ResponseError(musicbrainzngs.ResponseError):
+    class ResponseError(mbzerror.MbzWebServiceError):
         pass
 
-    def __init__(self):
+    def __init__(self, useragent):
+        self.hostname = BASE_URL
+        self.https = True
+        self.useragent = useragent
         pass
-
-    def set_useragent(self, app, version, contact=None):
-        return musicbrainzngs.set_useragent(app, version, contact=contact)
 
     def set_hostname(self, hostname, https):
-        return musicbrainzngs.set_hostname(hostname, https)
+        self.hostname = hostname
+        self.https = https
 
-    def set_rate_limit(self, interval, ratelimit):
-        return musicbrainzngs.set_rate_limit(interval, ratelimit)
+    def _send(self, mbr, limit=None, offset=None):
+        if self.hostname:
+            mbr.set_url(
+                "{}://{}".format(
+                    "https" if self.https else "http", self.hostname
+                )
+            )
+        opts = {}
+        if limit:
+            opts["limit"] = limit
+        if offset:
+            opts["offset"] = offset
+        return mbr.send(opts=opts)
+
+    def _make_params(self, release_status=[], release_type=[]):
+        params = {}
+        if len(release_status):
+            params["status"] = "|".join(release_status)
+        if len(release_type):
+            params["type"] = "|".join(release_type)
+        return params
+
+    def _make_query(self, query="", fields={}):
+        """`query` is a lucene query string when no fields are set,
+        but is escaped when any fields are given. `fields` is a dictionary
+        of key/value query parameters.
+        """
+        # Encode the query terms as a Lucene query string.
+        lucene_special = r'([+\-&|!(){}\[\]\^"~*?:\\\/])'
+        query_parts = []
+
+        if query:
+            clean_query = util._unicode(query)
+            if fields:
+                clean_query = re.sub(lucene_special, r"\\\1", clean_query)
+                query_parts.append(clean_query.lower())
+            else:
+                query_parts.append(clean_query)
+        for key, value in fields.items():
+            # Escape Lucene's special characters.
+            value = util._unicode(value)
+            value = re.sub(lucene_special, r"\\\1", value)
+            if value:
+                value = value.lower()  # avoid AND / OR
+                query_parts.append("%s:(%s)" % (key, value))
+        full_query = " ".join(query_parts).strip()
+
+        if not full_query:
+            raise ValueError("at least one query term is required")
+
+        return full_query
 
     def browse_recordings(
-        self, artist=None, release=None, includes=[], limit=None, offset=None
+        self, bw_entity, mbid, includes=[], limit=None, offset=None
     ):
-        return musicbrainzngs.browse_recordings(
-            artist=artist,
-            release=release,
-            includes=includes,
+        """Get all recordings linked to an artist or a release.
+        You need to give one MusicBrainz ID."""
+        return _browse(
+            self,
+            "recording",
+            bw_entity,
+            mbid,
+            includes,
             limit=limit,
             offset=offset,
         )
 
-    def search_recordings(
-        self, query="", limit=None, offset=None, strict=False, **fields
-    ):
-        return musicbrainzngs.search_recordings(
-            query=query, limit=limit, offset=offset, strict=strict, **fields
-        )
-
     def get_release_by_id(
-        self, id, includes=[], release_status=[], release_type=[]
+        self, mbid, includes=[], release_status=[], release_type=[]
     ):
-        return musicbrainzngs.get_release_by_id(
-            id,
-            includes=includes,
-            release_status=release_status,
-            release_type=release_type,
+        return json.loads(
+            _lookup(
+                self,
+                "release",
+                mbid,
+                includes,
+                params=self._make_params(release_status, release_type),
+            )
         )
 
     def get_recording_by_id(
-        self, id, includes=[], release_status=[], release_type=[]
+        self, mbid, includes=[], release_status=[], release_type=[]
     ):
-        return musicbrainzngs.get_recording_by_id(
-            id,
-            includes=includes,
-            release_status=release_status,
-            release_type=release_type,
+        return json.loads(
+            _lookup(
+                self,
+                "recording",
+                mbid,
+                includes,
+                params=self._make_params(release_status, release_type),
+            )
         )
 
-    def search_releases(
-        self, query="", limit=None, offset=None, strict=False, **fields
-    ):
-        return musicbrainzngs.search_releases(
-            query=query, limit=limit, offset=offset, strict=strict, **fields
+    def search_releases(self, query="", limit=None, offset=None, **fields):
+        return json.loads(
+            _search(
+                self,
+                "release",
+                query=self._make_query(query, fields),
+                limit=limit,
+                offset=offset,
+            )
+        )
+
+    def search_recordings(self, query="", limit=None, offset=None, **fields):
+        return json.loads(
+            _search(
+                self,
+                "recording",
+                query=self._make_query(query, fields),
+                limit=limit,
+                offset=offset,
+            )
         )
 
 
-mbi = MbInterface()
-mbi.set_useragent("beets", beets.__version__, "https://beets.io/")
+useragent = "beets/{} (https://beets.io/)".format(beets.__version__)
+mbi = MbInterface(useragent)
 
 
 class MusicBrainzAPIError(util.HumanReadableException):
@@ -160,6 +342,7 @@ RELEASE_INCLUDES = [
     "isrcs",
     "url-rels",
     "release-rels",
+    "genres",
 ]
 BROWSE_INCLUDES = [
     "artist-credits",
@@ -167,16 +350,17 @@ BROWSE_INCLUDES = [
     "artist-rels",
     "recording-rels",
     "release-rels",
+    "work-level-rels",
 ]
-if "work-level-rels" in mbi.VALID_BROWSE_INCLUDES["recording"]:
-    BROWSE_INCLUDES.append("work-level-rels")
 BROWSE_CHUNKSIZE = 100
 BROWSE_MAXTRACKS = 500
-TRACK_INCLUDES = ["artists", "aliases", "isrcs"]
-if "work-level-rels" in mbi.VALID_INCLUDES["recording"]:
-    TRACK_INCLUDES += ["work-level-rels", "artist-rels"]
-if "genres" in mbi.VALID_INCLUDES["recording"]:
-    RELEASE_INCLUDES += ["genres"]
+TRACK_INCLUDES = [
+    "artists",
+    "aliases",
+    "isrcs",
+    "work-level-rels",
+    "artist-rels",
+]
 
 
 def track_url(trackid: str) -> str:
@@ -197,7 +381,7 @@ def configure():
     # musicbrainz-ngs connects to musicbrainz.org with HTTPS by default
     if hostname != "musicbrainz.org":
         mbi.set_hostname(hostname, https)
-    mbi.set_rate_limit(
+    set_rate_limit(
         config["musicbrainz"]["ratelimit_interval"].as_number(),
         config["musicbrainz"]["ratelimit"].get(int),
     )
@@ -247,9 +431,9 @@ def _preferred_release_event(release: Dict[str, Any]) -> Tuple[str, str]:
     countries = cast(Sequence, countries)
 
     for country in countries:
-        for event in release.get("release-event-list", {}):
+        for event in release.get("release-events", {}):
             try:
-                if country in event["area"]["iso-3166-1-code-list"]:
+                if country in event["area"]["iso-3166-1-codes"]:
                     return country, event["date"]
             except KeyError:
                 pass
@@ -276,7 +460,7 @@ def _multi_artist_credit(
                 artist_sort_parts.append(el)
 
         else:
-            alias = _preferred_alias(el["artist"].get("alias-list", ()))
+            alias = _preferred_alias(el["artist"].get("aliases", ()))
 
             # An artist.
             if alias:
@@ -391,9 +575,9 @@ def track_info(
         info.artists_ids = _artist_ids(recording["artist-credit"])
         info.artist_id = info.artists_ids[0]
 
-    if recording.get("artist-relation-list"):
+    if recording.get("artist-relations"):
         info.remixer = _get_related_artist_names(
-            recording["artist-relation-list"], relation_type="remixer"
+            recording["artist-relations"], relation_type="remixer"
         )
 
     if recording.get("length"):
@@ -401,13 +585,13 @@ def track_info(
 
     info.trackdisambig = recording.get("disambiguation")
 
-    if recording.get("isrc-list"):
-        info.isrc = ";".join(recording["isrc-list"])
+    if recording.get("isrcs"):
+        info.isrc = ";".join(recording["isrcs"])
 
     lyricist = []
     composer = []
     composer_sort = []
-    for work_relation in recording.get("work-relation-list", ()):
+    for work_relation in recording.get("work-relations", ()):
         if work_relation["type"] != "performance":
             continue
         info.work = work_relation["work"]["title"]
@@ -416,7 +600,7 @@ def track_info(
             info.work_disambig = work_relation["work"]["disambiguation"]
 
         for artist_relation in work_relation["work"].get(
-            "artist-relation-list", ()
+            "artist-relations", ()
         ):
             if "type" in artist_relation:
                 type = artist_relation["type"]
@@ -432,7 +616,7 @@ def track_info(
         info.composer_sort = ", ".join(composer_sort)
 
     arranger = []
-    for artist_relation in recording.get("artist-relation-list", ()):
+    for artist_relation in recording.get("artist-relations", ()):
         if "type" in artist_relation:
             type = artist_relation["type"]
             if type == "arranger":
@@ -490,9 +674,9 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
         release["artist-credit"], include_join_phrase=False
     )
 
-    ntracks = sum(len(m["track-list"]) for m in release["medium-list"])
+    ntracks = sum(len(m["tracks"]) for m in release["media"])
 
-    # The MusicBrainz API omits 'artist-relation-list' and 'work-relation-list'
+    # The MusicBrainz API omits 'artist-relations' and 'work-relations'
     # when the release has more than 500 tracks. So we use browse_recordings
     # on chunks of tracks to recover the same information in this case.
     if ntracks > BROWSE_MAXTRACKS:
@@ -506,30 +690,30 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
                     limit=BROWSE_CHUNKSIZE,
                     includes=BROWSE_INCLUDES,
                     offset=i,
-                )["recording-list"]
+                )["recordings"]
             )
         track_map = {r["id"]: r for r in recording_list}
-        for medium in release["medium-list"]:
-            for recording in medium["track-list"]:
+        for medium in release["media"]:
+            for recording in medium["tracks"]:
                 recording_info = track_map[recording["recording"]["id"]]
                 recording["recording"] = recording_info
 
     # Basic info.
     track_infos = []
     index = 0
-    for medium in release["medium-list"]:
+    for medium in release["media"]:
         disctitle = medium.get("title")
         format = medium.get("format")
 
         if format in config["match"]["ignored_media"].as_str_seq():
             continue
 
-        all_tracks = medium["track-list"]
+        all_tracks = medium["tracks"]
         if (
-            "data-track-list" in medium
+            "data-tracks" in medium
             and not config["match"]["ignore_data_tracks"]
         ):
-            all_tracks += medium["data-track-list"]
+            all_tracks += medium["data-tracks"]
         track_count = len(all_tracks)
 
         if "pregap" in medium:
@@ -598,7 +782,7 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
         artists=artists_names,
         artists_ids=album_artist_ids,
         tracks=track_infos,
-        mediums=len(release["medium-list"]),
+        mediums=len(release["media"]),
         artist_sort=artist_sort_name,
         artists_sort=artists_sort_names,
         artist_credit=artist_credit_name,
@@ -638,9 +822,9 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
         rel_primarytype = release["release-group"]["primary-type"]
         if rel_primarytype:
             albumtypes.append(rel_primarytype.lower())
-    if "secondary-type-list" in release["release-group"]:
-        if release["release-group"]["secondary-type-list"]:
-            for sec_type in release["release-group"]["secondary-type-list"]:
+    if "secondary-types" in release["release-group"]:
+        if release["release-group"]["secondary-types"]:
+            for sec_type in release["release-group"]["secondary-types"]:
                 albumtypes.append(sec_type.lower())
     info.albumtypes = albumtypes
 
@@ -654,8 +838,8 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
     _set_date_str(info, release_group_date, True)
 
     # Label name.
-    if release.get("label-info-list"):
-        label_info = release["label-info-list"][0]
+    if release.get("label-info"):
+        label_info = release["label-info"][0]
         if label_info.get("label"):
             label = label_info["label"]["name"]
             if label != "[no label]":
@@ -669,18 +853,18 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
         info.language = rep.get("language")
 
     # Media (format).
-    if release["medium-list"]:
+    if release["media"]:
         # If all media are the same, use that medium name
-        if len({m.get("format") for m in release["medium-list"]}) == 1:
-            info.media = release["medium-list"][0].get("format")
+        if len({m.get("format") for m in release["media"]}) == 1:
+            info.media = release["media"][0].get("format")
         # Otherwise, let's just call it "Media"
         else:
             info.media = "Media"
 
     if config["musicbrainz"]["genres"]:
         sources = [
-            release["release-group"].get("genre-list", []),
-            release.get("genre-list", []),
+            release["release-group"].get("genres", []),
+            release.get("genres", []),
         ]
         genres: Counter[str] = Counter()
         for source in sources:
@@ -694,7 +878,7 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
     # We might find links to external sources (Discogs, Bandcamp, ...)
     if any(
         config["musicbrainz"]["external_ids"].get().values()
-    ) and release.get("url-relation-list"):
+    ) and release.get("url-relations"):
         discogs_url, bandcamp_url, spotify_url = None, None, None
         deezer_url, beatport_url, tidal_url = None, None, None
         fetch_discogs, fetch_bandcamp, fetch_spotify = False, False, False
@@ -713,7 +897,7 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
         if config["musicbrainz"]["external_ids"]["tidal"].get():
             fetch_tidal = True
 
-        for url in release["url-relation-list"]:
+        for url in release["url-relations"]:
             if fetch_discogs and url["type"] == "discogs":
                 log.debug("Found link to Discogs release via MusicBrainz")
                 discogs_url = url["target"]
@@ -806,7 +990,7 @@ def match_album(
         raise MusicBrainzAPIError(
             exc, "release search", criteria, traceback.format_exc()
         )
-    for release in res["release-list"]:
+    for release in res["releases"]:
         # The search result is missing some data (namely, the tracks),
         # so we just use the ID and fetch the rest of the information.
         albuminfo = album_for_id(release["id"])
@@ -837,7 +1021,7 @@ def match_track(
         raise MusicBrainzAPIError(
             exc, "recording search", criteria, traceback.format_exc()
         )
-    for recording in res["recording-list"]:
+    for recording in res["recordings"]:
         yield track_info(recording)
 
 
@@ -861,7 +1045,7 @@ def _find_actual_release_from_pseudo_release(
     pseudo_rel: Dict,
 ) -> Optional[Dict]:
     try:
-        relations = pseudo_rel["release"]["release-relation-list"]
+        relations = pseudo_rel["release-relations"]
     except KeyError:
         return None
 
@@ -873,7 +1057,7 @@ def _find_actual_release_from_pseudo_release(
 
     actual_id = translations[0]["target"]
 
-    return mbi.get_release_by_id(actual_id, RELEASE_INCLUDES)
+    return mbi.get_release_by_id(actual_id, includes=RELEASE_INCLUDES)
 
 
 def _merge_pseudo_and_actual_album(
@@ -927,12 +1111,12 @@ def album_for_id(releaseid: str) -> Optional[beets.autotag.hooks.AlbumInfo]:
         log.debug("Invalid MBID ({0}).", releaseid)
         return None
     try:
-        res = mbi.get_release_by_id(albumid, RELEASE_INCLUDES)
+        res = mbi.get_release_by_id(albumid, includes=RELEASE_INCLUDES)
 
         # resolve linked release relations
         actual_res = None
 
-        if res["release"].get("status") == "Pseudo-Release":
+        if res.get("status") == "Pseudo-Release":
             actual_res = _find_actual_release_from_pseudo_release(res)
 
     except mbi.ResponseError:
@@ -944,11 +1128,11 @@ def album_for_id(releaseid: str) -> Optional[beets.autotag.hooks.AlbumInfo]:
         )
 
     # release is potentially a pseudo release
-    release = album_info(res["release"])
+    release = album_info(res)
 
     # should be None unless we're dealing with a pseudo release
     if actual_res is not None:
-        actual_release = album_info(actual_res["release"])
+        actual_release = album_info(actual_res)
         return _merge_pseudo_and_actual_album(release, actual_release)
     else:
         return release
@@ -971,4 +1155,4 @@ def track_for_id(releaseid: str) -> Optional[beets.autotag.hooks.TrackInfo]:
         raise MusicBrainzAPIError(
             exc, "get recording by ID", trackid, traceback.format_exc()
         )
-    return track_info(res["recording"])
+    return track_info(res)

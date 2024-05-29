@@ -769,7 +769,7 @@ class ArtistFlatteningTest(_common.TestCase):
 
 class MBLibraryTest(unittest.TestCase):
     def test_match_track(self):
-        with mock.patch("musicbrainzngs.search_recordings") as p:
+        with mock.patch("beets.autotag.mb.MbInterface.search_recordings") as p:
             p.return_value = {
                 "recordings": [
                     {
@@ -781,20 +781,13 @@ class MBLibraryTest(unittest.TestCase):
             }
             ti = list(mb.match_track("hello", "there"))[0]
 
-            p.assert_called_with(
-                query="",
-                limit=5,
-                offset=None,
-                strict=False,
-                artist="hello",
-                recording="there",
-            )
+            p.assert_called_with(limit=5, artist="hello", recording="there")
             self.assertEqual(ti.title, "foo")
             self.assertEqual(ti.track_id, "bar")
 
     def test_match_album(self):
         mbid = "d2a6f856-b553-40a0-ac54-a321e8e2da99"
-        with mock.patch("musicbrainzngs.search_releases") as sp:
+        with mock.patch("beets.autotag.mb.MbInterface.search_releases") as sp:
             sp.return_value = {
                 "releases": [
                     {
@@ -802,7 +795,9 @@ class MBLibraryTest(unittest.TestCase):
                     }
                 ],
             }
-            with mock.patch("musicbrainzngs.get_release_by_id") as gp:
+            with mock.patch(
+                "beets.autotag.mb.MbInterface.get_release_by_id"
+            ) as gp:
                 gp.return_value = {
                     "title": "hi",
                     "id": mbid,
@@ -839,28 +834,19 @@ class MBLibraryTest(unittest.TestCase):
 
                 ai = list(mb.match_album("hello", "there"))[0]
 
-                sp.assert_called_with(
-                    query="",
-                    limit=5,
-                    offset=None,
-                    strict=False,
-                    artist="hello",
-                    release="there",
-                )
-                gp.assert_called_with(
-                    mbid, includes=mock.ANY, release_status=[], release_type=[]
-                )
+                sp.assert_called_with(limit=5, artist="hello", release="there")
+                gp.assert_called_with(mbid, includes=mock.ANY)
                 self.assertEqual(ai.tracks[0].title, "foo")
                 self.assertEqual(ai.album, "hi")
 
     def test_match_track_empty(self):
-        with mock.patch("musicbrainzngs.search_recordings") as p:
+        with mock.patch("beets.autotag.mb.MbInterface.search_recordings") as p:
             til = list(mb.match_track(" ", " "))
             self.assertFalse(p.called)
             self.assertEqual(til, [])
 
     def test_match_album_empty(self):
-        with mock.patch("musicbrainzngs.search_releases") as p:
+        with mock.patch("beets.autotag.mb.MbInterface.search_releases") as p:
             ail = list(mb.match_album(" ", " "))
             self.assertFalse(p.called)
             self.assertEqual(ail, [])
@@ -942,8 +928,7 @@ class MBLibraryTest(unittest.TestCase):
                 "country": "COUNTRY",
             },
         ]
-
-        with mock.patch("musicbrainzngs.get_release_by_id") as gp:
+        with mock.patch("beets.autotag.mb.MbInterface.get_release_by_id") as gp:
             gp.side_effect = side_effect
             album = mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
             self.assertEqual(album.country, "COUNTRY")
@@ -986,7 +971,7 @@ class MBLibraryTest(unittest.TestCase):
             },
         ]
 
-        with mock.patch("musicbrainzngs.get_release_by_id") as gp:
+        with mock.patch("beets.autotag.mb.MbInterface.get_release_by_id") as gp:
             gp.side_effect = side_effect
             album = mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
             self.assertIsNone(album.country)
@@ -1028,7 +1013,7 @@ class MBLibraryTest(unittest.TestCase):
             },
         ]
 
-        with mock.patch("musicbrainzngs.get_release_by_id") as gp:
+        with mock.patch("beets.autotag.mb.MbInterface.get_release_by_id") as gp:
             gp.side_effect = side_effect
             album = mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
             self.assertIsNone(album.country)
@@ -1077,7 +1062,7 @@ class MBLibraryTest(unittest.TestCase):
             },
         ]
 
-        with mock.patch("musicbrainzngs.get_release_by_id") as gp:
+        with mock.patch("beets.autotag.mb.MbInterface.get_release_by_id") as gp:
             gp.side_effect = side_effect
             album = mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
             self.assertIsNone(album.country)
