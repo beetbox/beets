@@ -1519,6 +1519,28 @@ files = [
 ]
 
 [[package]]
+name = "mbzero"
+version = "0.5"
+description = "Python bindings for the MusicBrainz and the Cover Art Archive webservices"
+optional = false
+python-versions = "<4,>=3.8"
+files = [
+    {file = "mbzero-0.5-py3-none-any.whl", hash = "sha256:01e0bf1388a32118ce975c5dc0e01d41f29e9bf9859878e747f6c27d9648d87f"},
+    {file = "mbzero-0.5.tar.gz", hash = "sha256:d5f1e1352c616f6ec2abbc17ea71d50f12165992cc176e0cb0d04c0711307c15"},
+]
+
+[package.dependencies]
+pytest = "*"
+requests = "*"
+requests_oauthlib = "*"
+
+[package.extras]
+cov = ["pytest-cov"]
+docs = ["sphinx (>=7.1.2)", "sphinx-rtd-theme (>=2.0.0)"]
+lint = ["flake8 (>=3.5.0)", "flake8-simplify"]
+test = ["pytest (>=4.6)"]
+
+[[package]]
 name = "mediafile"
 version = "0.13.0"
 description = "Handles low-level interfacing for files' tags. Wraps Mutagen to"
@@ -3617,4 +3639,4 @@ web = ["flask", "flask-cors"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<4"
-content-hash = "daa6c3c2b5bee3180f74f4186bb29ee1ad825870b5b9f6c2b743fcaa61b34c8c"
+content-hash = "7ea4b5e00231578251e99b9e6e70f83c79f32550b02d703f770fc603c06e9667"
