@@ -176,24 +176,24 @@ def rst2md(text):
     return re.sub(r"^-   ", "- ", md, flags=re.M)
 
 
-def changelog_as_markdown():
+def changelog_as_markdown() -> str:
     """Get the latest changelog entry as hacked up Markdown."""
     rst = get_latest_changelog()
 
     # Replace plugin links with plugin names.
-    rst = re.sub(r":doc:`/plugins/(\w+)`", r"``\1``", rst)
-
-    # References with text.
-    rst = re.sub(r":ref:`([^<]+)(<[^>]+>)`", r"\1", rst)
-
-    # Other backslashes with verbatim ranges.
-    rst = re.sub(r"(\s)`([^`]+)`([^_])", r"\1``\2``\3", rst)
+    rst = re.sub(r":doc:`/?plugins/(\w+)`", r"**\1**", rst)
 
     # Command links with command names.
-    rst = re.sub(r":ref:`(\w+)-cmd`", r"``\1``", rst)
+    rst = re.sub(r":ref:`(\w+)-cmd`", r"**\1**", rst)
+
+    # References with text.
+    rst = re.sub(r":(?:ref|doc|pypi):`([^`]+)`", r"``\1``", rst)
+
+    # Other backslashes with verbatim ranges.
+    rst = re.sub(r"(?<=[\s(])`([^`]+)`(?=[^_])", r"``\1``", rst)
 
     # Bug numbers.
-    rst = re.sub(r":bug:`(\d+)`", r"#\1", rst)
+    rst = re.sub(r":bug:`(\d+)`", r":bug: (#\1)", rst)
 
     # Users.
     rst = re.sub(r":user:`(\w+)`", r"@\1", rst)
@@ -201,8 +201,8 @@ def changelog_as_markdown():
     # Convert with Pandoc.
     md = rst2md(rst)
 
-    # Restore escaped issue numbers.
-    md = re.sub(r"\\#(\d+)\b", r"#\1", md)
+    # Make headers stand out
+    md = re.sub(r"^(\w.+?):$", r"### \1", md, flags=re.M)
 
     return md
 
