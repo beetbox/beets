@@ -1,13 +1,13 @@
 Changelog
 =========
 
-2.0.0 (in development)
+2.0.1 (in development)
 ----------------------
 
 Changelog goes here! Please add your entry to the bottom of one of the lists below!
 
 
-1.6.1 (May 30, 2024)
+2.0.0 (May 30, 2024)
 --------------------
 
 With this release, beets now requires Python 3.7 or later (it removes support
