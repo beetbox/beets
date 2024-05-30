@@ -307,6 +307,8 @@ Bug fixes:
 * Fix bug where unimported plugin would not ignore children directories of
   ignored directories.
   :bug:`5130` 
+* :doc:`/plugins/convert`: Fix attempt to convert and perform side-effects if
+  library file is not readable.
 
 For plugin developers:
 
