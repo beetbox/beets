@@ -248,13 +248,13 @@ class MissingPlugin(BeetsPlugin):
                     continue
 
                 missing_release = (missing_release_group["id"],
-                                   release_year , missing_release_group["title"])
+                                   release_year , missing_release_group["title"], missing_release_group["type"])
 
                 missing_releases.append(missing_release)
 
             # print out missing albums for artist sorted by release year
             for entry in list(sorted(missing_releases, key=lambda item: item[1])):
-                print_("{} - [{}] {}".format(artist[0], entry[1], entry[2]))
+                print_("{} - [{}] {} ({})".format(artist[0], entry[1], entry[2], entry[3]))
 
         if total:
             print(total_missing)
