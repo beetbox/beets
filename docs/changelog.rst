@@ -307,6 +307,9 @@ Bug fixes:
 * Fix bug where unimported plugin would not ignore children directories of
   ignored directories.
   :bug:`5130` 
+* Fix bug where matcher doesn't consider medium number when importing making
+  it difficult to import hybrid SACDs
+  :bug:`5148`
 
 For plugin developers:
 
