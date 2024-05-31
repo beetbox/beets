@@ -219,10 +219,22 @@ class MissingPlugin(BeetsPlugin):
             if total:
                 continue
 
-            missing_titles = {rg["title"] for rg in missing}
+            missing_releases = []
 
-            for release_title in missing_titles:
-                print_("{} - {}".format(artist[0], release_title))
+            for missing_release_group in missing:
+                # Get releases (e.g. album editions) for release-group
+                resp = musicbrainzngs.browse_releases(release_group=missing_release_group["id"])
+                releases = resp["release-list"]
+
+                missing_release = (missing_release_group["id"],
+                                   self._year_of_oldest_release(releases), missing_release_group["title"])
+
+                missing_releases.append(missing_release)
+
+            # print out missing albums for artist sorted by release year
+            for entry in list(sorted(missing_releases, key=lambda item: item[1])):
+                # TODO: add config option to only show albums that are older than recent owned one
+                print_("{} - [{}] {}".format(artist[0], entry[1], entry[2]))
 
         if total:
             print(total_missing)
@@ -243,3 +255,25 @@ class MissingPlugin(BeetsPlugin):
                         album_info.album_id,
                     )
                     yield item
+
+    def _year_of_oldest_release(self, releases):
+        """Returns the year of the oldest release out of the releases passed"""
+        years = []
+        for release in releases:
+            if "date" in release:
+                # Get year from date, convert it and add it to list of years
+                year = int(release["date"][:4])
+                years.append(year)
+                self._log.debug(
+                    "year {0} in release {1}",
+                    year,
+                    release["title"]
+                )
+
+        # return oldest year as first release year of the group
+        if len(years) != 0:
+            years.sort()
+            return years[0]
+
+        # return default-value for the rare case there are no years found
+        return 1900
