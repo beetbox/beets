@@ -229,8 +229,17 @@ class MissingPlugin(BeetsPlugin):
 
             for missing_release_group in missing:
                 # Get releases (e.g. album editions) for release-group
-                resp = musicbrainzngs.browse_releases(release_group=missing_release_group["id"])
-                releases = resp["release-list"]
+                try:
+                    resp = musicbrainzngs.browse_releases(release_group=missing_release_group["id"])
+                    releases = resp["release-list"]
+                except MusicBrainzError as err:
+                    self._log.info(
+                        "Couldn't fetch info for release-group '{}' ({}) - '{}'",
+                        missing_release_group["title"],
+                        missing_release_group["id"],
+                        err,
+                        )
+                    continue
 
                 release_year = self._year_of_oldest_release(releases)
 
