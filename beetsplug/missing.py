@@ -171,6 +171,7 @@ class MissingPlugin(BeetsPlugin):
         matching query.
         """
         total = self.config["total"].get()
+        recent_albums_only = self.config["albums"]["recent"].get(bool)
 
         albums = lib.albums(query)
         # build dict mapping artist to list of their albums in library
@@ -207,9 +208,14 @@ class MissingPlugin(BeetsPlugin):
 
             missing = []
             present = []
+
+            most_recent_album_year = 0
+
             for rg in release_groups:
                 missing.append(rg)
                 for alb in albums:
+                    if "year" in alb and alb["year"] > most_recent_album_year:
+                        most_recent_album_year = alb["year"]
                     if alb["mb_releasegroupid"] == rg["id"]:
                         missing.remove(rg)
                         present.append(rg)
@@ -226,14 +232,19 @@ class MissingPlugin(BeetsPlugin):
                 resp = musicbrainzngs.browse_releases(release_group=missing_release_group["id"])
                 releases = resp["release-list"]
 
+                release_year = self._year_of_oldest_release(releases)
+
+                # skip if only recent albums are searched for and it is not one
+                if recent_albums_only and release_year < most_recent_album_year:
+                    continue
+
                 missing_release = (missing_release_group["id"],
-                                   self._year_of_oldest_release(releases), missing_release_group["title"])
+                                   release_year , missing_release_group["title"])
 
                 missing_releases.append(missing_release)
 
             # print out missing albums for artist sorted by release year
             for entry in list(sorted(missing_releases, key=lambda item: item[1])):
-                # TODO: add config option to only show albums that are older than recent owned one
                 print_("{} - [{}] {}".format(artist[0], entry[1], entry[2]))
 
         if total:
