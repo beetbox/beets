@@ -527,8 +527,19 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
             track_infos.append(ti)
 
     album_artist_ids = _artist_ids(release["artist-credit"])
+
+    if "alias-list" in release:
+        alias = _preferred_alias(release["alias-list"])
+    else:
+        alias = None
+
+    if alias:
+        title = alias["alias"]
+    else:
+        title = release["title"]
+
     info = beets.autotag.hooks.AlbumInfo(
-        album=release["title"],
+        album=title,
         album_id=release["id"],
         artist=artist_name,
         artist_id=album_artist_ids[0],
