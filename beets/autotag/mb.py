@@ -502,7 +502,15 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
 
             # Prefer track data, where present, over recording data.
             if track.get("title"):
-                ti.title = track["title"]
+                if "alias-list" in track["recording"]:
+                    alias = _preferred_alias(track["recording"]["alias-list"])
+                else:
+                    alias = None
+
+                if alias:
+                    ti.title = alias["alias"]
+                else:
+                    ti.title = track["title"]
             if track.get("artist-credit"):
                 # Get the artist names.
                 (
