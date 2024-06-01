@@ -19,7 +19,7 @@ VERSION_LOCS = [
         [
             (
                 r'__version__\s*=\s*[\'"]([0-9\.]+)[\'"]',
-                "__version__ = '{version}'",
+                '__version__ = "{version}"',
             )
         ],
     ),
@@ -28,11 +28,11 @@ VERSION_LOCS = [
         [
             (
                 r'version\s*=\s*[\'"]([0-9\.]+)[\'"]',
-                "version = '{minor}'",
+                'version = "{minor}"',
             ),
             (
                 r'release\s*=\s*[\'"]([0-9\.]+)[\'"]',
-                "release = '{version}'",
+                'release = "{version}"',
             ),
         ],
     ),
@@ -41,7 +41,7 @@ VERSION_LOCS = [
         [
             (
                 r'\s*version\s*=\s*[\'"]([0-9\.]+)[\'"]',
-                "    version='{version}',",
+                '    version="{version}",',
             )
         ],
     ),
