@@ -103,7 +103,7 @@ def bump_version(version: str):
 
 def update_changelog(version: str):
     # Generate bits to insert into changelog.
-    header_line = f"{version} (in development)"
+    header_line = f"In Development"
     header = "\n\n" + header_line + "\n" + "-" * len(header_line) + "\n\n"
     header += (
         "Changelog goes here! Please add your entry to the bottom of"
