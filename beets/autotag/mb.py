@@ -288,8 +288,18 @@ def track_info(
     ``medium_index``, the track's index on its medium; ``medium_total``,
     the number of tracks on the medium. Each number is a 1-based index.
     """
+    if "alias-list" in recording:
+        alias = _preferred_alias(recording["alias-list"])
+    else:
+        alias = None
+
+    if alias:
+        title = alias["alias"]
+    else:
+        title = recording["title"]
+
     info = beets.autotag.hooks.TrackInfo(
-        title=recording["title"],
+        title=title,
         track_id=recording["id"],
         index=index,
         medium=medium,
