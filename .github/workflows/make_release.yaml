@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version of the new release'
+        description: 'Version of the new release, just as a number with no prepended "v"'
         required: true
 
 jobs:
@@ -32,6 +32,9 @@ jobs:
     needs: increment_version
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: master
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
