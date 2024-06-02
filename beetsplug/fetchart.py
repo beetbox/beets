@@ -239,6 +239,8 @@ def _logged_get(log, *args, **kwargs):
     for arg in ("stream", "verify", "proxies", "cert", "timeout"):
         if arg in kwargs:
             send_kwargs[arg] = req_kwargs.pop(arg)
+    if "timeout" not in send_kwargs:
+        send_kwargs["timeout"] = 10
 
     # Our special logging message parameter.
     if "message" in kwargs:
@@ -1067,7 +1069,7 @@ class Spotify(RemoteArtSource):
             self._log.debug("Fetchart: no Spotify album ID found")
             return
         try:
-            response = requests.get(url)
+            response = requests.get(url, timeout=10)
             response.raise_for_status()
         except requests.RequestException as e:
             self._log.debug("Error: " + str(e))
