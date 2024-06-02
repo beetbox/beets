@@ -35,6 +35,7 @@ in place of any single coroutine.
 import queue
 import sys
 from threading import Lock, Thread
+from typing import TypeVar
 
 BUBBLE = "__PIPELINE_BUBBLE__"
 POISON = "__PIPELINE_POISON__"
@@ -84,7 +85,10 @@ def _invalidate_queue(q, val=None, sync=True):
             q.mutex.release()
 
 
-class CountedQueue(queue.Queue):
+T = TypeVar("T")
+
+
+class CountedQueue(queue.Queue[T]):
     """A queue that keeps track of the number of threads that are
     still feeding into it. The queue is poisoned when all threads are
     finished with the queue.

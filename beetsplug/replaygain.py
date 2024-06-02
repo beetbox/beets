@@ -1181,7 +1181,9 @@ class ExceptionWatcher(Thread):
     Once an exception occurs, raise it and execute a callback.
     """
 
-    def __init__(self, queue: queue.Queue, callback: Callable[[], None]):
+    def __init__(
+        self, queue: queue.Queue[Exception], callback: Callable[[], None]
+    ):
         self._queue = queue
         self._callback = callback
         self._stopevent = Event()

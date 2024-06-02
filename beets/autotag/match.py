@@ -238,7 +238,7 @@ def distance(
     if album_info.media:
         # Preferred media options.
         patterns = config["match"]["preferred"]["media"].as_str_seq()
-        patterns = cast(Sequence, patterns)
+        patterns = cast(Sequence[str], patterns)
         options = [re.compile(r"(\d+x)?(%s)" % pat, re.I) for pat in patterns]
         if options:
             dist.add_priority("media", album_info.media, options)
@@ -276,7 +276,7 @@ def distance(
 
     # Preferred countries.
     patterns = config["match"]["preferred"]["countries"].as_str_seq()
-    patterns = cast(Sequence, patterns)
+    patterns = cast(Sequence[str], patterns)
     options = [re.compile(pat, re.I) for pat in patterns]
     if album_info.country and options:
         dist.add_priority("country", album_info.country, options)
@@ -440,7 +440,9 @@ def _add_candidate(
         return
 
     # Discard matches without required tags.
-    for req_tag in cast(Sequence, config["match"]["required"].as_str_seq()):
+    for req_tag in cast(
+        Sequence[str], config["match"]["required"].as_str_seq()
+    ):
         if getattr(info, req_tag) is None:
             log.debug("Ignored. Missing required tag: {0}", req_tag)
             return
@@ -469,7 +471,7 @@ def tag_album(
     items,
     search_artist: Optional[str] = None,
     search_album: Optional[str] = None,
-    search_ids: List = [],
+    search_ids: List[str] = [],
 ) -> Tuple[str, str, Proposal]:
     """Return a tuple of the current artist name, the current album
     name, and a `Proposal` containing `AlbumMatch` candidates.
@@ -561,7 +563,7 @@ def tag_item(
     item,
     search_artist: Optional[str] = None,
     search_title: Optional[str] = None,
-    search_ids: List = [],
+    search_ids: Optional[List[str]] = None,
 ) -> Proposal:
     """Find metadata for a single track. Return a `Proposal` consisting
     of `TrackMatch` objects.

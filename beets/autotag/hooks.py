@@ -28,6 +28,7 @@ from typing import (
     List,
     Optional,
     Tuple,
+    TypeVar,
     Union,
     cast,
 )
@@ -42,20 +43,23 @@ from beets.util import as_string
 
 log = logging.getLogger("beets")
 
+V = TypeVar("V")
+
 
 # Classes used to represent candidate options.
-class AttrDict(dict):
+class AttrDict(Dict[str, V]):
     """A dictionary that supports attribute ("dot") access, so `d.field`
     is equivalent to `d['field']`.
     """
 
-    def __getattr__(self, attr):
-        if attr in self:
-            return self.get(attr)
+    def __getattr__(self, attr: str) -> V:
+        result = self.get(attr)
+        if result is not None:
+            return result
         else:
             raise AttributeError
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key: str, value: V):
         self.__setitem__(key, value)
 
     def __hash__(self):
@@ -79,7 +83,7 @@ class AlbumInfo(AttrDict):
     # TYPING: are all of these correct? I've assumed optional strings
     def __init__(
         self,
-        tracks: List["TrackInfo"],
+        tracks: List[TrackInfo],
         album: Optional[str] = None,
         album_id: Optional[str] = None,
         artist: Optional[str] = None,
@@ -201,7 +205,7 @@ class AlbumInfo(AttrDict):
         for track in self.tracks:
             track.decode(codec)
 
-    def copy(self) -> "AlbumInfo":
+    def copy(self) -> AlbumInfo:
         dupe = AlbumInfo([])
         dupe.update(self)
         dupe.tracks = [track.copy() for track in self.tracks]
@@ -309,7 +313,7 @@ class TrackInfo(AttrDict):
             if isinstance(value, bytes):
                 setattr(self, fld, value.decode(codec, "ignore"))
 
-    def copy(self) -> "TrackInfo":
+    def copy(self) -> TrackInfo:
         dupe = TrackInfo()
         dupe.update(self)
         return dupe
@@ -545,7 +549,7 @@ class Distance:
 
     # Adding components.
 
-    def _eq(self, value1: Union[re.Pattern, Any], value2: Any) -> bool:
+    def _eq(self, value1: Union[re.Pattern[str], Any], value2: Any) -> bool:
         """Returns True if `value1` is equal to `value2`. `value1` may
         be a compiled regular expression, in which case it will be
         matched against `value2`.
