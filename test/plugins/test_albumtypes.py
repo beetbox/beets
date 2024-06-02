@@ -16,6 +16,7 @@
 
 
 import unittest
+from typing import Sequence, Tuple
 
 from beets.autotag.mb import VARIOUS_ARTISTS_ID
 from beets.test.helper import TestHelper
@@ -98,12 +99,17 @@ class AlbumTypesPluginTest(unittest.TestCase, TestHelper):
         result = subject._atypes(album)
         self.assertEqual("[EP][Single][OST][Live][Remix]", result)
 
-    def _set_config(self, types: [(str, str)], ignore_va: [str], bracket: str):
+    def _set_config(
+        self,
+        types: Sequence[Tuple[str, str]],
+        ignore_va: Sequence[str],
+        bracket: str,
+    ):
         self.config["albumtypes"]["types"] = types
         self.config["albumtypes"]["ignore_va"] = ignore_va
         self.config["albumtypes"]["bracket"] = bracket
 
-    def _create_album(self, album_types: [str], artist_id: str = 0):
+    def _create_album(self, album_types: Sequence[str], artist_id: str = "0"):
         return self.add_album(
             albumtypes=album_types, mb_albumartistid=artist_id
         )

@@ -256,7 +256,7 @@ class SubstringQuery(StringFieldQuery[str]):
         return pattern.lower() in value.lower()
 
 
-class RegexpQuery(StringFieldQuery[Pattern]):
+class RegexpQuery(StringFieldQuery[Pattern[str]]):
     """A query that matches a regular expression in a specific Model field.
 
     Raises InvalidQueryError when the pattern is not a valid regular
@@ -342,7 +342,7 @@ class BytesQuery(FieldQuery[bytes]):
         return pattern == value
 
 
-class NumericQuery(FieldQuery):
+class NumericQuery(FieldQuery[str]):
     """Matches numeric fields. A syntax using Ruby-style range ellipses
     (``..``) lets users specify one- or two-sided ranges. For example,
     ``year:2001..`` finds music released since the turn of the century.
@@ -787,7 +787,7 @@ class DateInterval:
         return f"[{self.start}, {self.end})"
 
 
-class DateQuery(FieldQuery):
+class DateQuery(FieldQuery[str]):
     """Matches date fields stored as seconds since Unix epoch time.
 
     Dates can be specified as ``year-month-day`` strings where only year
@@ -797,7 +797,7 @@ class DateQuery(FieldQuery):
     using an ellipsis interval syntax similar to that of NumericQuery.
     """
 
-    def __init__(self, field, pattern, fast: bool = True):
+    def __init__(self, field: str, pattern: str, fast: bool = True):
         super().__init__(field, pattern, fast)
         start, end = _parse_periods(pattern)
         self.interval = DateInterval.from_periods(start, end)
