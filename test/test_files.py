@@ -88,10 +88,12 @@ class MoveTest(_common.TestCase):
         self.i.move(operation=MoveOperation.COPY)
         self.assertExists(self.path)
 
+    @unittest.skipUnless(_common.HAVE_REFLINK, "need reflink")
     def test_reflink_arrives(self):
         self.i.move(operation=MoveOperation.REFLINK_AUTO)
         self.assertExists(self.dest)
 
+    @unittest.skipUnless(_common.HAVE_REFLINK, "need reflink")
     def test_reflink_does_not_depart(self):
         self.i.move(operation=MoveOperation.REFLINK_AUTO)
         self.assertExists(self.path)
