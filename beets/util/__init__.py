@@ -526,7 +526,7 @@ def move(path: bytes, dest: bytes, replace: bool = False):
         dirname = os.path.dirname(bytestring_path(dest))
         tmp = tempfile.NamedTemporaryFile(
             suffix=syspath(b".beets", prefix=False),
-            prefix=syspath(b"." + basename, prefix=False),
+            prefix=syspath(b"." + basename + b".", prefix=False),
             dir=syspath(dirname),
             delete=False,
         )
