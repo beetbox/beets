@@ -6,6 +6,9 @@ Changelog
 
 Changelog goes here! Please add your entry to the bottom of one of the lists below!
 
+Bug fixes:
+
+* Improved naming of temporary files by separating the random part with the file extension.
 
 2.0.0 (May 30, 2024)
 --------------------
