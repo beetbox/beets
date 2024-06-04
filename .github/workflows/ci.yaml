@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         platform: [ubuntu-latest, windows-latest]
-        python-version: ['3.7', '3.8', '3.9', '3.x']
+        python-version: ["3.8", "3.9", "3.x"]
 
     env:
       PY_COLORS: 1
@@ -50,7 +50,7 @@ jobs:
           tox -e py-test
 
       - name: Upload code coverage
-        if: matrix.python-version == '3.7' && matrix.platform == 'ubuntu-latest'
+        if: matrix.python-version == '3.8' && matrix.platform == 'ubuntu-latest'
         run: |
           pip install codecov || true
           codecov || true
@@ -76,7 +76,7 @@ jobs:
       - name: Set up Python 3.x
         uses: actions/setup-python@v2
         with:
-          python-version: '3.x'
+          python-version: "3.x"
 
       - name: Install base dependencies
         run: |
@@ -98,7 +98,7 @@ jobs:
       - name: Set up Python 3.x
         uses: actions/setup-python@v2
         with:
-          python-version: '3.x'
+          python-version: "3.x"
 
       - name: Install base dependencies
         run: |
