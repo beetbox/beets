@@ -2,15 +2,14 @@
 
 """A utility script for automating the beets release process.
 """
-import argparse
 import datetime
 import os
 import re
 
+import click
+
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CHANGELOG = os.path.join(BASE, "docs", "changelog.rst")
-parser = argparse.ArgumentParser()
-parser.add_argument("version", type=str)
 
 # Locations (filenames and patterns) of the version number.
 VERSION_LOCS = [
@@ -155,12 +154,18 @@ def datestamp():
             f.write(line)
 
 
-def prep(args: argparse.Namespace):
+@click.group()
+def cli():
+    pass
+
+
+@cli.command()
+@click.argument("version")
+def bump(version: str) -> None:
     # Version number bump.
     datestamp()
-    bump_version(args.version)
+    bump_version(version)
 
 
 if __name__ == "__main__":
-    args = parser.parse_args()
-    prep(args)
+    cli()
