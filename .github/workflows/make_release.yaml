@@ -21,7 +21,7 @@ jobs:
     - name: Run version script
       id: script
       run: |
-          python extra/release.py "${{ inputs.version }}"
+          python extra/release.py bump "${{ inputs.version }}"
     - uses: EndBug/add-and-commit@v9
       name: Commit the changes
       with:
