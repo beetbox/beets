@@ -16,7 +16,6 @@
 
 import errno
 import fnmatch
-import functools
 import os
 import platform
 import re
@@ -1106,26 +1105,3 @@ def par_map(transform: Callable, items: Iterable):
     pool.map(transform, items)
     pool.close()
     pool.join()
-
-
-def lazy_property(func: Callable) -> Callable:
-    """A decorator that creates a lazily evaluated property. On first access,
-    the property is assigned the return value of `func`. This first value is
-    stored, so that future accesses do not have to evaluate `func` again.
-
-    This behaviour is useful when `func` is expensive to evaluate, and it is
-    not certain that the result will be needed.
-    """
-    field_name = "_" + func.__name__
-
-    @property
-    @functools.wraps(func)
-    def wrapper(self):
-        if hasattr(self, field_name):
-            return getattr(self, field_name)
-
-        value = func(self)
-        setattr(self, field_name, value)
-        return value
-
-    return wrapper
