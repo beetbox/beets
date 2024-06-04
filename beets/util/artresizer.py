@@ -449,7 +449,7 @@ class PILBackend(LocalBackend):
             im = Image.open(syspath(path_in))
             im.save(py3_path(path_out), progressive=False)
             return path_out
-        except IOError:
+        except OSError:
             # FIXME: Should probably issue a warning?
             return path_in
 

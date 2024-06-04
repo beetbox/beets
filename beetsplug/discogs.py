@@ -87,7 +87,7 @@ class DiscogsPlugin(BeetsPlugin):
         ]
         if True not in gt_min:
             self._log.warning(
-                ("python3-discogs-client version should be " ">= 2.3.15")
+                "python3-discogs-client version should be >= 2.3.15"
             )
 
     def setup(self, session=None):
