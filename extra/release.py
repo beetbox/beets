@@ -2,156 +2,86 @@
 
 """A utility script for automating the beets release process.
 """
-import datetime
-import os
+from __future__ import annotations
+
 import re
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Callable
 
 import click
+from packaging.version import Version, parse
 
-BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CHANGELOG = os.path.join(BASE, "docs", "changelog.rst")
+BASE = Path(__file__).parent.parent.absolute()
+BEETS_INIT = BASE / "beets" / "__init__.py"
 
-# Locations (filenames and patterns) of the version number.
-VERSION_LOCS = [
+
+def update_docs_config(text: str, new: Version) -> str:
+    new_major_minor = f"{new.major}.{new.minor}"
+    text = re.sub(r"(?<=version = )[^\n]+", f'"{new_major_minor}"', text)
+    return re.sub(r"(?<=release = )[^\n]+", f'"{new}"', text)
+
+
+def update_changelog(text: str, new: Version) -> str:
+    new_header = f"{new} ({datetime.now(timezone.utc).date():%B %d, %Y})"
+    return re.sub(
+        # do not match if the new version is already present
+        r"\nUnreleased\n--+\n",
+        rf"""
+Unreleased
+----------
+
+Changelog goes here! Please add your entry to the bottom of one of the lists below!
+
+{new_header}
+{'-' * len(new_header)}
+""",
+        text,
+    )
+
+
+UpdateVersionCallable = Callable[[str, Version], str]
+FILENAME_AND_UPDATE_TEXT: list[tuple[Path, UpdateVersionCallable]] = [
     (
-        os.path.join(BASE, "beets", "__init__.py"),
-        [
-            (
-                r'__version__\s*=\s*[\'"]([0-9\.]+)[\'"]',
-                '__version__ = "{version}"',
-            )
-        ],
+        BEETS_INIT,
+        lambda text, new: re.sub(
+            r"(?<=__version__ = )[^\n]+", f'"{new}"', text
+        ),
     ),
-    (
-        os.path.join(BASE, "docs", "conf.py"),
-        [
-            (
-                r'version\s*=\s*[\'"]([0-9\.]+)[\'"]',
-                'version = "{minor}"',
-            ),
-            (
-                r'release\s*=\s*[\'"]([0-9\.]+)[\'"]',
-                'release = "{version}"',
-            ),
-        ],
-    ),
-    (
-        os.path.join(BASE, "setup.py"),
-        [
-            (
-                r'\s*version\s*=\s*[\'"]([0-9\.]+)[\'"]',
-                '    version="{version}",',
-            )
-        ],
-    ),
+    (BASE / "docs" / "changelog.rst", update_changelog),
+    (BASE / "docs" / "conf.py", update_docs_config),
 ]
 
 GITHUB_USER = "beetbox"
 GITHUB_REPO = "beets"
 
 
-def bump_version(version: str):
-    """Update the version number in setup.py, docs config, changelog,
-    and root module.
-    """
-    version_parts = [int(p) for p in version.split(".")]
-    assert len(version_parts) == 3, "invalid version number"
-    minor = "{}.{}".format(*version_parts)
-    major = "{}".format(*version_parts)
+def validate_new_version(
+    ctx: click.Context, param: click.Argument, value: Version
+) -> Version:
+    """Validate the version is newer than the current one."""
+    with BEETS_INIT.open() as f:
+        contents = f.read()
 
-    # Replace the version each place where it lives.
-    for filename, locations in VERSION_LOCS:
-        # Read and transform the file.
-        out_lines = []
-        with open(filename) as f:
-            found = False
-            for line in f:
-                for pattern, template in locations:
-                    match = re.match(pattern, line)
-                    if match:
-                        # Check that this version is actually newer.
-                        old_version = match.group(1)
-                        old_parts = [int(p) for p in old_version.split(".")]
-                        assert (
-                            version_parts > old_parts
-                        ), "version must be newer than {}".format(old_version)
+    m = re.search(r'(?<=__version__ = ")[^"]+', contents)
+    assert m, "Current version not found in __init__.py"
+    current = parse(m.group())
 
-                        # Insert the new version.
-                        out_lines.append(
-                            template.format(
-                                version=version,
-                                major=major,
-                                minor=minor,
-                            )
-                            + "\n"
-                        )
+    if not value > current:
+        msg = f"version must be newer than {current}"
+        raise click.BadParameter(msg)
 
-                        found = True
-                        break
-                else:
-                    # Normal line.
-                    out_lines.append(line)
-            if not found:
-                print(f"No pattern found in {filename}")
-        # Write the file back.
-        with open(filename, "w") as f:
-            f.write("".join(out_lines))
-
-    update_changelog(version)
+    return value
 
 
-def update_changelog(version: str):
-    # Generate bits to insert into changelog.
-    header_line = f"In Development"
-    header = "\n\n" + header_line + "\n" + "-" * len(header_line) + "\n\n"
-    header += (
-        "Changelog goes here! Please add your entry to the bottom of"
-        " one of the lists below!\n"
-    )
-    # Insert into the right place.
-    with open(CHANGELOG) as f:
-        contents = f.readlines()
-
-    contents = [
-        line
-        for line in contents
-        if not re.match(r"Changelog goes here!.*", line)
-    ]
-    contents = "".join(contents)
-    contents = re.sub("\n{3,}", "\n\n", contents)
-
-    location = contents.find("\n\n")  # First blank line.
-    contents = contents[:location] + header + contents[location:]
-    # Write back.
-    with open(CHANGELOG, "w") as f:
-        f.write(contents)
-
-
-def datestamp():
-    """Enter today's date as the release date in the changelog."""
-    dt = datetime.datetime.now()
-    stamp = "({} {}, {})".format(dt.strftime("%B"), dt.day, dt.year)
-    marker = "(in development)"
-
-    lines = []
-    underline_length = None
-    with open(CHANGELOG) as f:
-        for line in f:
-            if marker in line:
-                # The header line.
-                line = line.replace(marker, stamp)
-                lines.append(line)
-                underline_length = len(line.strip())
-            elif underline_length:
-                # This is the line after the header. Rewrite the dashes.
-                lines.append("-" * underline_length + "\n")
-                underline_length = None
-            else:
-                lines.append(line)
-
-    with open(CHANGELOG, "w") as f:
-        for line in lines:
-            f.write(line)
+def bump_version(new: Version) -> None:
+    """Update the version number in specified files."""
+    for path, perform_update in FILENAME_AND_UPDATE_TEXT:
+        with path.open("r+") as f:
+            contents = f.read()
+            f.seek(0)
+            f.write(perform_update(contents, new))
+            f.truncate()
 
 
 @click.group()
@@ -160,10 +90,9 @@ def cli():
 
 
 @cli.command()
-@click.argument("version")
-def bump(version: str) -> None:
-    # Version number bump.
-    datestamp()
+@click.argument("version", type=Version, callback=validate_new_version)
+def bump(version: Version) -> None:
+    """Bump the version in project files."""
     bump_version(version)
 
 
