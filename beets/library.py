@@ -22,6 +22,7 @@ import string
 import sys
 import time
 import unicodedata
+from functools import cached_property
 
 from mediafile import MediaFile, UnreadableFileError
 
@@ -31,7 +32,6 @@ from beets.dbcore import Results, types
 from beets.util import (
     MoveOperation,
     bytestring_path,
-    lazy_property,
     normpath,
     samefile,
     syspath,
@@ -436,11 +436,11 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
             self.model_keys = included_keys
         self.item = item
 
-    @lazy_property
+    @cached_property
     def all_keys(self):
         return set(self.model_keys).union(self.album_keys)
 
-    @lazy_property
+    @cached_property
     def album_keys(self):
         album_keys = []
         if self.album:
