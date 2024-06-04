@@ -11,10 +11,11 @@ from pathlib import Path
 from typing import Callable
 
 import click
+import tomli
 from packaging.version import Version, parse
 
 BASE = Path(__file__).parent.parent.absolute()
-BEETS_INIT = BASE / "beets" / "__init__.py"
+PYPROJECT = BASE / "pyproject.toml"
 CHANGELOG = BASE / "docs" / "changelog.rst"
 
 MD_CHANGELOG_SECTION_LIST = re.compile(r"- .+?(?=\n\n###|$)", re.DOTALL)
@@ -51,7 +52,11 @@ Changelog goes here! Please add your entry to the bottom of one of the lists bel
 UpdateVersionCallable = Callable[[str, Version], str]
 FILENAME_AND_UPDATE_TEXT: list[tuple[Path, UpdateVersionCallable]] = [
     (
-        BEETS_INIT,
+        PYPROJECT,
+        lambda text, new: re.sub(r"(?<=\nversion = )[^\n]+", f'"{new}"', text),
+    ),
+    (
+        BASE / "beets" / "__init__.py",
         lambda text, new: re.sub(
             r"(?<=__version__ = )[^\n]+", f'"{new}"', text
         ),
@@ -65,12 +70,8 @@ def validate_new_version(
     ctx: click.Context, param: click.Argument, value: Version
 ) -> Version:
     """Validate the version is newer than the current one."""
-    with BEETS_INIT.open() as f:
-        contents = f.read()
-
-    m = re.search(r'(?<=__version__ = ")[^"]+', contents)
-    assert m, "Current version not found in __init__.py"
-    current = parse(m.group())
+    with PYPROJECT.open("rb") as f:
+        current = parse(tomli.load(f)["tool"]["poetry"]["version"])
 
     if not value > current:
         msg = f"version must be newer than {current}"

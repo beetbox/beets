@@ -136,6 +136,7 @@ web = ["flask", "flask-cors"]
 
 [tool.poetry.scripts]
 beet = "beets.ui:main"
+release = "extra.release:cli"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
