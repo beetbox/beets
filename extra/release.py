@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import re
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
@@ -14,6 +15,13 @@ from packaging.version import Version, parse
 
 BASE = Path(__file__).parent.parent.absolute()
 BEETS_INIT = BASE / "beets" / "__init__.py"
+CHANGELOG = BASE / "docs" / "changelog.rst"
+
+MD_CHANGELOG_SECTION_LIST = re.compile(r"- .+?(?=\n\n###|$)", re.DOTALL)
+version_header = r"\d+\.\d+\.\d+ \([^)]+\)"
+RST_LATEST_CHANGES = re.compile(
+    rf"{version_header}\n--+\s+(.+?)\n\n+{version_header}", re.DOTALL
+)
 
 
 def update_docs_config(text: str, new: Version) -> str:
@@ -48,12 +56,9 @@ FILENAME_AND_UPDATE_TEXT: list[tuple[Path, UpdateVersionCallable]] = [
             r"(?<=__version__ = )[^\n]+", f'"{new}"', text
         ),
     ),
-    (BASE / "docs" / "changelog.rst", update_changelog),
+    (CHANGELOG, update_changelog),
     (BASE / "docs" / "conf.py", update_docs_config),
 ]
-
-GITHUB_USER = "beetbox"
-GITHUB_REPO = "beets"
 
 
 def validate_new_version(
@@ -84,6 +89,54 @@ def bump_version(new: Version) -> None:
             f.truncate()
 
 
+def rst2md(text: str) -> str:
+    """Use Pandoc to convert text from ReST to Markdown."""
+    # Other backslashes with verbatim ranges.
+    rst = re.sub(r"(?<=[\s(])`([^`]+)`(?=[^_])", r"``\1``", text)
+
+    # Bug numbers.
+    rst = re.sub(r":bug:`(\d+)`", r":bug: (#\1)", rst)
+
+    # Users.
+    rst = re.sub(r":user:`(\w+)`", r"@\1", rst)
+    return (
+        subprocess.check_output(
+            ["/usr/bin/pandoc", "--from=rst", "--to=gfm", "--wrap=none"],
+            input=rst.encode(),
+        )
+        .decode()
+        .strip()
+    )
+
+
+def changelog_as_markdown() -> str:
+    """Get the latest changelog entry as hacked up Markdown."""
+    with CHANGELOG.open() as f:
+        contents = f.read()
+
+    m = RST_LATEST_CHANGES.search(contents)
+    rst = m.group(1) if m else ""
+
+    # Convert with Pandoc.
+    md = rst2md(rst)
+
+    # Make sections stand out
+    md = re.sub(r"^(\w.+?):$", r"### \1", md, flags=re.M)
+
+    # Highlight plugin names
+    md = re.sub(
+        r"^- `/?plugins/(\w+)`:?", r"- Plugin **`\1`**:", md, flags=re.M
+    )
+
+    # Highlights command names.
+    md = re.sub(r"^- `(\w+)-cmd`:?", r"- Command **`\1`**:", md, flags=re.M)
+
+    # sort list items alphabetically for each of the sections
+    return MD_CHANGELOG_SECTION_LIST.sub(
+        lambda m: "\n".join(sorted(m.group().splitlines())), md
+    )
+
+
 @click.group()
 def cli():
     pass
@@ -94,6 +147,12 @@ def cli():
 def bump(version: Version) -> None:
     """Bump the version in project files."""
     bump_version(version)
+
+
+@cli.command()
+def changelog():
+    """Get the most recent version's changelog as Markdown."""
+    print(changelog_as_markdown())
 
 
 if __name__ == "__main__":
