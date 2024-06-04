@@ -1,8 +1,8 @@
 Changelog
 =========
 
-2.0.1 (in development)
-----------------------
+Unreleased
+----------
 
 Changelog goes here! Please add your entry to the bottom of one of the lists below!
 
