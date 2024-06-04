@@ -282,7 +282,7 @@ Running the Tests
 
 To run the tests for multiple Python versions, compile the docs, and
 check style, use `tox`_. Just type ``tox`` or use something like
-``tox -e py27`` to test a specific configuration. You can use the
+``tox -e py38`` to test a specific configuration. You can use the
 ``--parallel`` flag to make this go faster.
 
 You can disable a hand-selected set of "slow" tests by setting the
@@ -293,13 +293,6 @@ Other ways to run the tests:
 -  ``python testall.py`` (ditto)
 -  ``python -m unittest discover -p 'test_*'`` (ditto)
 -  `pytest`_
-
-You can also see the latest test results on `Linux`_ and on `Windows`_.
-
-Note, if you are on Windows and are seeing errors running tox, it may be related to `this issue`_,
-in which case you may have to install tox v3.8.3 e.g. ``python -m pip install tox==3.8.3``
-
-.. _this issue: https://github.com/tox-dev/tox/issues/1550
 
 Coverage
 ^^^^^^^^
@@ -360,9 +353,6 @@ others. See `unittest.mock`_ for more info.
 .. _pytest-random: https://github.com/klrmn/pytest-random
 .. _tox: https://tox.readthedocs.io/en/latest/
 .. _pytest: https://docs.pytest.org/en/stable/
-.. _Linux: https://github.com/beetbox/beets/actions
-.. _Windows: https://ci.appveyor.com/project/beetbox/beets/
-.. _`https://github.com/beetbox/beets/blob/master/setup.py#L99`: https://github.com/beetbox/beets/blob/master/setup.py#L99
 .. _test: https://github.com/beetbox/beets/tree/master/test
 .. _`https://github.com/beetbox/beets/blob/master/test/test_template.py#L224`: https://github.com/beetbox/beets/blob/master/test/test_template.py#L224
 .. _unittest: https://docs.python.org/3/library/unittest.html
