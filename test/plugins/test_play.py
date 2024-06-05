@@ -147,6 +147,22 @@ class PlayPluginTest(unittest.TestCase, TestHelper):
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
+def cleanup_tmp_files():
+    # List all files and directories in /tmp that start with 'tmp'
+    temp_files = [f for f in os.listdir('/tmp') if f.startswith('tmp')]
+    
+    # Remove each file or directory
+    for f in temp_files:
+        temp_path = os.path.join('/tmp', f)
+        if os.path.isdir(temp_path):
+            shutil.rmtree(temp_path)
+        else:
+            os.remove(temp_path)
+            
 
 if __name__ == "__main__":
     unittest.main(defaultTest="suite")
+
+    # Cleanup temporary files
+    cleanup_tmp_files()
+    
