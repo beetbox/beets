@@ -10,6 +10,10 @@ Bug fixes:
 
 * Improved naming of temporary files by separating the random part with the file extension.
 
+For packagers:
+
+* The minimum Python version is now 3.8.
+
 2.0.0 (May 30, 2024)
 --------------------
 
