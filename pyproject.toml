@@ -146,6 +146,10 @@ release = "extra.release:cli"
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.pipx-install]
+poethepoet = ">=0.26"
+poetry = ">=1.8"
+
 # We use a default path '.' to make black and isort behave like flake8 and
 # mypy do: they act on the entire codebase (flake8 does it by default, and
 # mypy follows our configuration) by default. Positional command-line arguments

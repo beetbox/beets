@@ -1,0 +1,71 @@
+name: Lint check
+run-name: Lint code
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+env:
+  PYTHON_VERSION: 3.8
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Python tools
+        uses: BrandonLWhite/pipx-install-action@v0.1.1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: poetry
+
+      - name: Install dependencies
+        run: poetry install --only=main,lint
+
+      - name: Lint code
+        uses: liskin/gh-problem-matcher-wrap@v3
+        with:
+          linters: flake8, isort
+          run: poe lint
+
+  typing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Python tools
+        uses: BrandonLWhite/pipx-install-action@v0.1.1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: poetry
+
+      - name: Install dependencies
+        run: poetry install --only=main,typing
+
+      - name: Type check code
+        uses: liskin/gh-problem-matcher-wrap@v3
+        continue-on-error: true
+        with:
+          linters: mypy
+          run: poe check-types --show-column-numbers --no-error-summary
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Python tools
+        uses: BrandonLWhite/pipx-install-action@v0.1.1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: poetry
+
+      - name: Install dependencies
+        run: poetry install --only=main,docs
+
+      - uses: sphinx-doc/github-problem-matcher@master
+        name: Build docs
+        with:
+          run: poe docs
