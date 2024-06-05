@@ -114,7 +114,7 @@ an example::
 
     class SomePlugin(BeetsPlugin):
       def __init__(self):
-        super(SomePlugin, self).__init__()
+        super().__init__()
         self.register_listener('pluginload', loaded)
 
 Note that if you want to access an attribute of your plugin (e.g. ``config`` or
@@ -125,7 +125,7 @@ registration process in this case::
 
     class SomePlugin(BeetsPlugin):
       def __init__(self):
-        super(SomePlugin, self).__init__()
+        super().__init__()
         self.register_listener('pluginload', self.loaded)
 
       def loaded(self):
@@ -354,7 +354,7 @@ Here's an example::
 
     class MyPlugin(BeetsPlugin):
         def __init__(self):
-            super(MyPlugin, self).__init__()
+            super().__init__()
             self.template_funcs['initial'] = _tmpl_initial
 
     def _tmpl_initial(text):
@@ -374,7 +374,7 @@ Here's an example that adds a ``$disc_and_track`` field::
 
     class MyPlugin(BeetsPlugin):
         def __init__(self):
-            super(MyPlugin, self).__init__()
+            super().__init__()
             self.template_fields['disc_and_track'] = _tmpl_disc_and_track
 
     def _tmpl_disc_and_track(item):
@@ -452,7 +452,7 @@ to register it::
     from beets.plugins import BeetsPlugin
     class ExamplePlugin(BeetsPlugin):
         def __init__(self):
-            super(ExamplePlugin, self).__init__()
+            super().__init__()
             self.import_stages = [self.stage]
         def stage(self, session, task):
             print('Importing something!')
@@ -596,7 +596,7 @@ plugin shall expose to the user::
 
     class ExamplePlugin(BeetsPlugin):
         def __init__(self):
-            super(ExamplePlugin, self).__init__()
+            super().__init__()
             self.register_listener('before_choose_candidate',
                                    self.before_choose_candidate_event)
 
