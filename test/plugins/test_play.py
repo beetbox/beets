@@ -16,6 +16,7 @@
 
 
 import os
+import shutil
 import sys
 import unittest
 from unittest.mock import ANY, patch
