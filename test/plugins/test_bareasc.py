@@ -3,6 +3,8 @@
 
 """Tests for the 'bareasc' plugin."""
 
+import os
+import shutil
 import unittest
 
 from beets import logging
