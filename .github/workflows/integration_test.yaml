@@ -6,30 +6,25 @@ on:
 jobs:
   test_integration:
     runs-on: ubuntu-latest
-
-    env:
-      PY_COLORS: 1
-
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Set up latest Python version
-        uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - name: Install Python tools
+        uses: BrandonLWhite/pipx-install-action@v0.1.1
+      - uses: actions/setup-python@v5
         with:
-          python-version: 3.9-dev
+          python-version: 3.8
+          cache: poetry
 
       - name: Install dependencies
-        run: |
-          pip install poetry
-          poetry install
+        run: poetry install
 
       - name: Test
         env:
           INTEGRATION_TEST: 1
-        run: poetry run project test
+        run: poe test
 
       - name: Check external links in docs
-        run: poetry run project check-docs-links
+        run: poe check-docs-links
 
       - name: Notify on failure
         if: ${{ failure() }}
