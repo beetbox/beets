@@ -10,8 +10,27 @@ env:
   PYTHON_VERSION: 3.8
 
 jobs:
-  lint:
+  changed-files:
     runs-on: ubuntu-latest
+    name: Get changed files
+    outputs:
+      any_changed: ${{ steps.changed-files.outputs.any_changed }}
+      changed_files: ${{ steps.changed-files.outputs.all_changed_files }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            **/*.py
+
+  format:
+    if: needs.changed-files.outputs.any_changed == 'true'
+    runs-on: ubuntu-latest
+    name: Check formatting
+    needs: changed-files
     steps:
       - uses: actions/checkout@v4
       - name: Install Python tools
@@ -22,16 +41,42 @@ jobs:
           cache: poetry
 
       - name: Install dependencies
-        run: poetry install --only=main,lint
+        run: poetry install --only=format
+
+      - name: Check code formatting
+        uses: liskin/gh-problem-matcher-wrap@v3
+        with:
+          linters: isort
+          run: poe check-format ${{ needs.changed-files.outputs.changed_files }}
+
+  lint:
+    if: needs.changed-files.outputs.any_changed == 'true'
+    runs-on: ubuntu-latest
+    name: Check linting
+    needs: changed-files
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Python tools
+        uses: BrandonLWhite/pipx-install-action@v0.1.1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: poetry
+
+      - name: Install dependencies
+        run: poetry install --only=lint
 
       - name: Lint code
         uses: liskin/gh-problem-matcher-wrap@v3
         with:
-          linters: flake8, isort
-          run: poe lint
+          linters: flake8
+          run: poe lint ${{ needs.changed-files.outputs.changed_files }}
 
   typing:
+    if: needs.changed-files.outputs.any_changed == 'true'
     runs-on: ubuntu-latest
+    name: Check types
+    needs: changed-files
     steps:
       - uses: actions/checkout@v4
       - name: Install Python tools
@@ -42,17 +87,20 @@ jobs:
           cache: poetry
 
       - name: Install dependencies
-        run: poetry install --only=main,typing
+        run: poetry install --only=typing
 
       - name: Type check code
         uses: liskin/gh-problem-matcher-wrap@v3
         continue-on-error: true
         with:
           linters: mypy
-          run: poe check-types --show-column-numbers --no-error-summary
+          run: poe check-types --show-column-numbers --no-error-summary ${{ needs.changed-files.outputs.changed_files }}
 
   docs:
+    if: needs.changed-files.outputs.any_changed == 'true'
     runs-on: ubuntu-latest
+    name: Check docs
+    needs: changed-files
     steps:
       - uses: actions/checkout@v4
       - name: Install Python tools
@@ -63,7 +111,7 @@ jobs:
           cache: poetry
 
       - name: Install dependencies
-        run: poetry install --only=main,docs
+        run: poetry install --only=docs
 
       - uses: sphinx-doc/github-problem-matcher@master
         name: Build docs
