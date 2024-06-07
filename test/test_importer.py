@@ -235,6 +235,30 @@ class NonAutotaggedImportTest(_common.TestCase, ImportHelper):
                 == (s2[stat.ST_INO], s2[stat.ST_DEV])
             )
 
+    @unittest.skipUnless(_common.HAVE_REFLINK, "need reflinks")
+    def test_import_reflink_arrives(self):
+        # Detecting reflinks is currently tricky due to various fs
+        # implementations, we'll just check the file exists.
+        config["import"]["reflink"] = True
+        self.importer.run()
+        for mediafile in self.import_media:
+            self.assert_file_in_lib(
+                b"Tag Artist",
+                b"Tag Album",
+                util.bytestring_path(f"{mediafile.title}.mp3"),
+            )
+
+    def test_import_reflink_auto_arrives(self):
+        # Should pass regardless of reflink support due to fallback.
+        config["import"]["reflink"] = "auto"
+        self.importer.run()
+        for mediafile in self.import_media:
+            self.assert_file_in_lib(
+                b"Tag Artist",
+                b"Tag Album",
+                util.bytestring_path(f"{mediafile.title}.mp3"),
+            )
+
 
 def create_archive(session):
     (handle, path) = mkstemp(dir=py3_path(session.temp_dir))

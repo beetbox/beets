@@ -1684,6 +1684,8 @@ def manipulate_files(session, task):
             operation = MoveOperation.LINK
         elif session.config["hardlink"]:
             operation = MoveOperation.HARDLINK
+        elif session.config["reflink"] == "auto":
+            operation = MoveOperation.REFLINK_AUTO
         elif session.config["reflink"]:
             operation = MoveOperation.REFLINK
         else:
