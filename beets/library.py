@@ -22,8 +22,8 @@ import string
 import sys
 import time
 import unicodedata
-from typing import Never
 from functools import cached_property
+from typing import NoReturn
 
 from mediafile import MediaFile, UnreadableFileError
 
@@ -50,7 +50,7 @@ log = logging.getLogger("beets")
 # Library-specific query types.
 
 
-class SingletonQuery(dbcore.FieldQuery[Never]):
+class SingletonQuery(dbcore.FieldQuery[NoReturn]):
     """This query is responsible for the 'singleton' lookup.
 
     It is based on the FieldQuery and constructs a SQL clause
