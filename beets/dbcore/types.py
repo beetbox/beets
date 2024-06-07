@@ -232,7 +232,7 @@ class BaseFloat(Type[float, N]):
     """
 
     sql = "REAL"
-    query: type[FieldQuery[Any]] = NumericQuery
+    query: typing.Type[FieldQuery[Any]] = NumericQuery
     model_type = float
 
     def __init__(self, digits: int = 1):
