@@ -142,6 +142,63 @@ release = "extra.release:cli"
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
+# We use a default path '.' to make black and isort behave like flake8 and
+# mypy do: they act on the entire codebase (flake8 does it by default, and
+# mypy follows our configuration) by default. Positional command-line arguments
+# override it. This allows us to check changed files _only_ in CI in a 
+# consistent way. 
+# Note: both tools respect .gitignore, therefore if we see them format
+# something unwanted locally, we should add these paths to .gitignore.
+[tool.poe.tasks._black]
+help = "Run black"
+cmd = "black $OPTS $path"
+args = { path = { help = "Path to blacken", positional = true, multiple = true, default = "." } }
+
+[tool.poe.tasks._isort]
+help = "Run isort"
+cmd = "isort $OPTS $path"
+args = { path = { help = "Path to isort", positional = true, multiple = true, default = "." } }
+
+[tool.poe.tasks.bump]
+help = "Bump project version and update relevant files"
+cmd = "release bump $version"
+args = { version = { help = "The new version to set", positional = true, required = true } }
+
+[tool.poe.tasks.changelog]
+help = "Print the latest version's changelog in Markdown"
+cmd = "release changelog"
+
+[tool.poe.tasks.check-docs-links]
+help = "Check the documentation for broken URLs"
+cmd = "make -C docs linkcheck"
+
+[tool.poe.tasks.check-format]
+help = "Check the code for style issues"
+ref = "format"
+env.OPTS = "--check --diff --color"
+
+[tool.poe.tasks.check-types]
+help = "Check the code for typing issues. Accepts mypy options."
+cmd = "mypy"
+
+[tool.poe.tasks.docs]
+help = "Build documentation"
+cmd = "make -C docs html"
+
+[tool.poe.tasks.format]
+help = "Format the codebase"
+ignore_fail = "return_non_zero"
+sequence = ["_black $path", "_isort $path"]
+args = { path = { help = "Path to format", positional = true, multiple = true, default = "." } }
+
+[tool.poe.tasks.lint]
+help = "Check the code for linting issues. Accepts flake8 options."
+cmd = "flake8"
+
+[tool.poe.tasks.test]
+help = "Run tests with pytest"
+cmd = "pytest"
+
 [tool.black]
 line-length = 80
 target-version = ["py38", "py39", "py310", "py311"]
