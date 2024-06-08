@@ -53,9 +53,8 @@ class AttrDict(Dict[str, V]):
     """
 
     def __getattr__(self, attr: str) -> V:
-        result = self.get(attr)
-        if result is not None:
-            return result
+        if attr in self:
+            return self[attr]
         else:
             raise AttributeError
 
