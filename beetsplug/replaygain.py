@@ -1181,9 +1181,7 @@ class ExceptionWatcher(Thread):
     Once an exception occurs, raise it and execute a callback.
     """
 
-    def __init__(
-        self, queue: queue.Queue[Exception], callback: Callable[[], None]
-    ):
+    def __init__(self, queue: queue.Queue, callback: Callable[[], None]):
         self._queue = queue
         self._callback = callback
         self._stopevent = Event()
@@ -1442,7 +1440,7 @@ class ReplayGainPlugin(BeetsPlugin):
         """Open a `ThreadPool` instance in `self.pool`"""
         if self.pool is None and self.backend_instance.do_parallel:
             self.pool = ThreadPool(threads)
-            self.exc_queue: queue.Queue[Exception] = queue.Queue()
+            self.exc_queue: queue.Queue = queue.Queue()
 
             signal.signal(signal.SIGINT, self._interrupt)
 
