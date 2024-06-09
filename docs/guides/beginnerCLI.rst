@@ -35,7 +35,7 @@ Installing Python
 * Select *Environment Variables* at the bottom of the window.
 
         .. image:: ../_static/Images/environmentV.png
-            :width: 800
+            :width: 600
 
 * This is where the path from earlier comes in. Under the 'User variables' section, double click the ``path`` variable. Then select *New*. Enter the path where you installed Python. Add ``\Scripts\`` at the end. After select OK in both the edit window and the Environment Variables window. 
     
@@ -123,7 +123,7 @@ By following this base config set up, your config file should
 look similarly to this.
 
     .. image:: ../_static/Images/configBase.png
-        :width: 600
+        :width: 800
 
 There are approximately six million other configuration options you can set
 here, including the directory and file naming scheme. See
@@ -240,6 +240,7 @@ you have::
     Albums: 1094
 
 An example of some of these commands will look like this:
+
     .. image:: ../_static/Images/extraCommands.png
         :width: 600
 
