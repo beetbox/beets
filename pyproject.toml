@@ -68,6 +68,7 @@ soco = { version = "*", optional = true }
 
 [tool.poetry.group.test.dependencies]
 beautifulsoup4 = "*"
+codecov = ">=2.1.13"
 flask = "*"
 mock = "*"
 pylast = "*"

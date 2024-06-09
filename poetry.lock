@@ -367,6 +367,21 @@ files = [
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
+name = "codecov"
+version = "2.1.13"
+description = "Hosted coverage reports for GitHub, Bitbucket and Gitlab"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+files = [
+    {file = "codecov-2.1.13-py2.py3-none-any.whl", hash = "sha256:c2ca5e51bba9ebb43644c43d0690148a55086f7f5e6fd36170858fa4206744d5"},
+    {file = "codecov-2.1.13.tar.gz", hash = "sha256:2362b685633caeaf45b9951a9b76ce359cd3581dd515b430c6c3f5dfb4d92a8c"},
+]
+
+[package.dependencies]
+coverage = "*"
+requests = ">=2.7.9"
+
+[[package]]
 name = "colorama"
 version = "0.4.4"
 description = "Cross-platform colored terminal text."
@@ -2612,4 +2627,4 @@ web = ["flask", "flask-cors"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4"
-content-hash = "0c088183c51e1a068292d1af7bfa82f9c8569d8481d5044906f690219a601212"
+content-hash = "3c37973d479d97cb7cb4ca195fe15ede03577e4c91a88a939769aa7924ca2d3c"
