@@ -18,13 +18,13 @@ jobs:
       PY_COLORS: 1
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Install Poetry
         run: pipx install poetry
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: poetry
@@ -46,9 +46,8 @@ jobs:
 
       - name: Upload code coverage
         if: matrix.python-version == '3.8' && matrix.platform == 'ubuntu-latest'
-        run: |
-          pip install codecov || true
-          codecov || true
+        continue-on-error: true
+        run: codecov
 
       - name: Test latest Python version with tox and mypy
         if: matrix.python-version == '3.x'
@@ -66,13 +65,13 @@ jobs:
       PY_COLORS: 1
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Install Poetry
         run: pipx install poetry
 
       - name: Set up Python 3.x
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: "3.x"
           cache: poetry
@@ -90,13 +89,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Install Poetry
         run: pipx install poetry
 
       - name: Set up Python 3.x
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: "3.x"
           cache: poetry

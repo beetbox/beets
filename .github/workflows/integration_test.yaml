@@ -18,7 +18,7 @@ jobs:
         with:
           python-version: 3.9-dev
 
-      - name: Install base dependencies
+      - name: Install dependencies
         run: |
           pip install poetry
           poetry install
