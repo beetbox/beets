@@ -35,23 +35,23 @@ Installing Python
 * Select *Environment Variables* at the bottom of the window.
 
         .. image:: ../_static/Images/environmentV.png
-            :width: 600
+            :width: 800
 
 * This is where the path from earlier comes in. Under the 'User variables' section, double click the ``path`` variable. Then select *New*. Enter the path where you installed Python. Add ``\Scripts\`` at the end. After select OK in both the edit window and the Environment Variables window. 
     
     **IMPORTANT** - If you do not select OK in both windows, it will not save the update and you will have to repeate this step.
 
         .. image:: ../_static/Images/path.png
-            :width: 600
+            :width: 800
     
 Installing beets
 ^^^^^^^^^^^^^^^^
-2.  Press the Windows key and type 'cmd' and then press enter on the Command Prompt. This will open your Command Line Interface. Type ``cd [folder name]`` that you wish to install beets into. Note that you may have to change directories a few times to get to the desired one ex. ``cd users\name\music_library``. For this example, I am saving it to my user so I do not need to change directories. 
+2.  Press the Windows key and type 'cmd', and then press enter on the Command Prompt. This will open your Command Line Interface. Type ``cd [folder name]`` that you wish to install beets into. Note that you may have to change directories a few times to get to the desired one ex. ``cd users\name\music_library``. For this example, I am saving it to my user so I do not need to change directories. 
  
 * Now install beets by running: ``pip install beets``. A successful install will collect and download the included libraries.
 
     .. image:: ../_static/Images/install.png
-        :width: 600
+        :width: 800
 
 * You're all set! Type ``beet`` at the command prompt to make sure everything's in order. Doing so will bring up a list of helpful commands, as well as the format needed to use them.
 
@@ -68,6 +68,7 @@ Configuring
 :doc:`configuration </reference/config>` is stored in a text file. You
 can show its location by running ``beet config -p``, though it may not
 exist yet. 
+
 **Note:** You will need a text editor for these next steps. If you don't already have one, some popular ones are: `VS Code`_ , `Vim`_, and `Sublime`_. VS Code and Vim are free, but Sublime may come with a price tag. However, if you aren't too keen on downloading one, Windows Notepad will work in this case. 
 
 .. _VS Code: https://code.visualstudio.com 
@@ -77,7 +78,7 @@ exist yet.
 2. Locate the path to the and open the config.yaml file. You may notice that when you search, that the file does not exist, even though the path does. To fix this, we can manually create the file within the text editor. I am using VS Code in this example. Hover over *File* in the top left corner of the window and select *Open Folder* from the drop down. Select the location that the ``beet config -p`` command returned. Once there, hover over the folder name, and select the little page and plus icon next to it. This will create the new file. We will name this file *config.yaml*. Double check that the config.yaml and the library.db are in the *same* folder. 
 
     .. image:: ../_static/Images/config.png
-        :width: 400
+        :width: 600
 
 The file will start out empty, but here's a good place to start::
 
@@ -121,7 +122,7 @@ beets to behave many other ways:
 By following this base config set up, your config file should
 look similarly to this.
 
-    .. image:: C../_static/Images/configBase.png
+    .. image:: ../_static/Images/configBase.png
         :width: 600
 
 There are approximately six million other configuration options you can set
@@ -181,8 +182,7 @@ the ``beet import`` command, the same way you imported your library. Like so::
     beet import ~/some_great_album
 
 This will attempt to autotag the new album (interactively) and add it to your
-library. There are, of course, more options for this command---just type ``beet
-help import`` to see what's available.
+library. There are, of course, more options for this command---just type ``beet help import`` to see what's available.
 
 Seeing Your Music
 -----------------
