@@ -14,20 +14,29 @@ jobs:
     runs-on: ubuntu-latest
     name: Get changed files
     outputs:
-      any_changed: ${{ steps.changed-files.outputs.any_changed }}
-      changed_files: ${{ steps.changed-files.outputs.all_changed_files }}
+      any_docs_changed: ${{ steps.changed-doc-files.outputs.any_changed }}
+      any_python_changed: ${{ steps.changed-python-files.outputs.any_changed }}
+      changed_doc_files: ${{ steps.changed-doc-files.outputs.all_changed_files }}
+      changed_python_files: ${{ steps.changed-python-files.outputs.all_changed_files }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Get changed files
-        id: changed-files
+        with:
+          fetch-depth: 2
+      - name: Get changed docs files
+        id: changed-doc-files
         uses: tj-actions/changed-files@v44
         with:
           files: |
-            **/*.py
+            docs/**
+      - name: Get changed docs files
+        id: changed-python-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            **.py
 
   format:
-    if: needs.changed-files.outputs.any_changed == 'true'
+    if: needs.changed-files.outputs.any_python_changed == 'true'
     runs-on: ubuntu-latest
     name: Check formatting
     needs: changed-files
@@ -47,10 +56,10 @@ jobs:
         uses: liskin/gh-problem-matcher-wrap@v3
         with:
           linters: isort
-          run: poe check-format ${{ needs.changed-files.outputs.changed_files }}
+          run: poe check-format ${{ needs.changed-files.outputs.changed_python_files }}
 
   lint:
-    if: needs.changed-files.outputs.any_changed == 'true'
+    if: needs.changed-files.outputs.any_python_changed == 'true'
     runs-on: ubuntu-latest
     name: Check linting
     needs: changed-files
@@ -70,10 +79,10 @@ jobs:
         uses: liskin/gh-problem-matcher-wrap@v3
         with:
           linters: flake8
-          run: poe lint ${{ needs.changed-files.outputs.changed_files }}
+          run: poe lint ${{ needs.changed-files.outputs.changed_python_files }}
 
   typing:
-    if: needs.changed-files.outputs.any_changed == 'true'
+    if: needs.changed-files.outputs.any_python_changed == 'true'
     runs-on: ubuntu-latest
     name: Check types
     needs: changed-files
@@ -94,10 +103,10 @@ jobs:
         continue-on-error: true
         with:
           linters: mypy
-          run: poe check-types --show-column-numbers --no-error-summary ${{ needs.changed-files.outputs.changed_files }}
+          run: poe check-types --show-column-numbers --no-error-summary ${{ needs.changed-files.outputs.changed_python_files }}
 
   docs:
-    if: needs.changed-files.outputs.any_changed == 'true'
+    if: needs.changed-files.outputs.any_docs_changed == 'true'
     runs-on: ubuntu-latest
     name: Check docs
     needs: changed-files
