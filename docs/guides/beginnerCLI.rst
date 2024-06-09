@@ -7,7 +7,7 @@ Note that this guide is using Windows 11, but following the same steps will also
 
 .. _beets: https://beets.io/
 
-Installingexit
+Installing
 ----------
 
 You will need Python.
@@ -17,45 +17,45 @@ Installing Python
 ^^^^^^^^^^^^^^^^^
 1. If you don't have it, `install Python`_ (you want at least Python 3.8). If you already have Python properly installed and the path set, you may skip this step.
 
-   A. Download the appropriate installer for your PC and follow the installation instructions. In this example, I am using the 64-bit installer. 
+* Download the appropriate installer for your PC and follow the installation instructions. In this example, I am using the 64-bit installer. 
 
-    .. image:: C:/beets_screenshots/windowsDownload.png
+    .. image:: ../_static/Images/windowsDownload.png
         :width: 600
 
-    B. Once you have downloaded and launched the installer, select the *Install Now* option, and take care to remember the path its installing to. 
+* Once you have downloaded and launched the installer, select the *Install Now* option, and take care to remember the path its installing to. 
 
-    .. image:: C:/beets_screenshots/pythonDownload.png
-        :width: 600
+    .. image:: ../_static/Images/pythonDownload.png
+        :align: 600
     
-    C. Once the installation is complete, press the Windows key and type *Environment Variables* - select the best match that comes up: Edit the System Envrionment Variables.
+* Once the installation is complete, press the Windows key and type *Environment Variables* - select the best match that comes up: Edit the System Envrionment Variables.
 
-    .. image:: C:/beets_screenshots/env.png
+    .. image:: ../_static/Images/env.png
         :width: 400
 
-    D. Select *Environment Variables* at the bottom of the window.
+* Select *Environment Variables* at the bottom of the window.
 
-        .. image:: C:/beets_screenshots/environmentV.png
+        .. image:: ../_static/Images/environmentV.png
             :width: 600
 
-    E. This is where the path from earlier comes in. Under the 'User variables' section, double click the ``path`` variable. Then select *New*. Enter the path where you installed Python. Add ``\Scripts\`` at the end. After select OK in both the edit window and the Environment Variables window. 
+* This is where the path from earlier comes in. Under the 'User variables' section, double click the ``path`` variable. Then select *New*. Enter the path where you installed Python. Add ``\Scripts\`` at the end. After select OK in both the edit window and the Environment Variables window. 
     
     **IMPORTANT** - If you do not select OK in both windows, it will not save the update and you will have to repeate this step.
 
-        .. image:: C:/beets_screenshots/path.png
+        .. image:: ../_static/Images/path.png
             :width: 600
     
 Installing beets
 ^^^^^^^^^^^^^^^^
 2.  Press the Windows key and type 'cmd' and then press enter on the Command Prompt. This will open your Command Line Interface. Type ``cd [folder name]`` that you wish to install beets into. Note that you may have to change directories a few times to get to the desired one ex. ``cd users\name\music_library``. For this example, I am saving it to my user so I do not need to change directories. 
  
-    A. Now install beets by running: ``pip install beets``. A successful install will collect and download the included libraries.
+* Now install beets by running: ``pip install beets``. A successful install will collect and download the included libraries.
 
-    .. image:: C:/beets_screenshots/install.png
+    .. image:: ../_static/Images/install.png
         :width: 600
 
-    B. You're all set! Type ``beet`` at the command prompt to make sure everything's in order. Doing so will bring up a list of helpful commands, as well as the format needed to use them.
+* You're all set! Type ``beet`` at the command prompt to make sure everything's in order. Doing so will bring up a list of helpful commands, as well as the format needed to use them.
 
-    .. image:: C:/beets_screenshots/command.png
+    .. image:: ../_static/Images/command.png
         :width: 600
 
 **Optional** - You may also want to install a context menu item for importing files into beets. Download the `beets.reg`_ file and open it in a text file to make sure the paths to Python match your system. Then double-click the file add the necessary keys to your registry. You can then right-click a directory and
@@ -76,7 +76,7 @@ exist yet.
 
 2. Locate the path to the and open the config.yaml file. You may notice that when you search, that the file does not exist, even though the path does. To fix this, we can manually create the file within the text editor. I am using VS Code in this example. Hover over *File* in the top left corner of the window and select *Open Folder* from the drop down. Select the location that the ``beet config -p`` command returned. Once there, hover over the folder name, and select the little page and plus icon next to it. This will create the new file. We will name this file *config.yaml*. Double check that the config.yaml and the library.db are in the *same* folder. 
 
-    .. image:: C:/beets_screenshots/config.png
+    .. image:: ../_static/Images/config.png
         :width: 400
 
 The file will start out empty, but here's a good place to start::
@@ -121,7 +121,7 @@ beets to behave many other ways:
 By following this base config set up, your config file should
 look similarly to this.
 
-    .. image:: C:/beets_screenshots/configBase.png
+    .. image:: C../_static/Images/configBase.png
         :width: 600
 
 There are approximately six million other configuration options you can set
@@ -161,7 +161,7 @@ specified above*. If you want to use your current directory structure, set the
 
 A successful import will look as follows:
 
-    .. image:: C:/beets_screenshots/firstImport.png
+    .. image:: ../_static/Images/firstImport.png
         :width: 600
 
 Once imported, follow the prompts in the CLI to tag the music as you see fit. 
@@ -240,7 +240,7 @@ you have::
     Albums: 1094
 
 An example of some of these commands will look like this:
-    .. image:: C:/beets_screenshots/extraCommands.png
+    .. image:: ../_static/Images/extraCommands.png
         :width: 600
 
 If you need more of a walkthrough on configuring and importing libraries, you can read a more in depth and illustrated one `on the

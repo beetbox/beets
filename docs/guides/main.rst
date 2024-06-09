@@ -4,7 +4,7 @@ Getting Started
 Welcome to `beets`_! This guide will help you begin using it to make your music
 collection better.
 
-New to the CLI? Check out our :doc:`beginner friendly</guides/beginnerCLI>` getting started guide!
+New to the CLI? Check out our :doc:`beginner friendly</guides/beginnerCLI>` getting started guide for Windows!
 
 .. _beets: https://beets.io/
 
