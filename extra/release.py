@@ -2,165 +2,158 @@
 
 """A utility script for automating the beets release process.
 """
-import argparse
-import datetime
-import os
+from __future__ import annotations
+
 import re
+import subprocess
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Callable
 
-BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CHANGELOG = os.path.join(BASE, "docs", "changelog.rst")
-parser = argparse.ArgumentParser()
-parser.add_argument("version", type=str)
+import click
+from packaging.version import Version, parse
 
-# Locations (filenames and patterns) of the version number.
-VERSION_LOCS = [
+BASE = Path(__file__).parent.parent.absolute()
+BEETS_INIT = BASE / "beets" / "__init__.py"
+CHANGELOG = BASE / "docs" / "changelog.rst"
+
+MD_CHANGELOG_SECTION_LIST = re.compile(r"- .+?(?=\n\n###|$)", re.DOTALL)
+version_header = r"\d+\.\d+\.\d+ \([^)]+\)"
+RST_LATEST_CHANGES = re.compile(
+    rf"{version_header}\n--+\s+(.+?)\n\n+{version_header}", re.DOTALL
+)
+
+
+def update_docs_config(text: str, new: Version) -> str:
+    new_major_minor = f"{new.major}.{new.minor}"
+    text = re.sub(r"(?<=version = )[^\n]+", f'"{new_major_minor}"', text)
+    return re.sub(r"(?<=release = )[^\n]+", f'"{new}"', text)
+
+
+def update_changelog(text: str, new: Version) -> str:
+    new_header = f"{new} ({datetime.now(timezone.utc).date():%B %d, %Y})"
+    return re.sub(
+        # do not match if the new version is already present
+        r"\nUnreleased\n--+\n",
+        rf"""
+Unreleased
+----------
+
+Changelog goes here! Please add your entry to the bottom of one of the lists below!
+
+{new_header}
+{'-' * len(new_header)}
+""",
+        text,
+    )
+
+
+UpdateVersionCallable = Callable[[str, Version], str]
+FILENAME_AND_UPDATE_TEXT: list[tuple[Path, UpdateVersionCallable]] = [
     (
-        os.path.join(BASE, "beets", "__init__.py"),
-        [
-            (
-                r'__version__\s*=\s*[\'"]([0-9\.]+)[\'"]',
-                "__version__ = '{version}'",
-            )
-        ],
+        BEETS_INIT,
+        lambda text, new: re.sub(
+            r"(?<=__version__ = )[^\n]+", f'"{new}"', text
+        ),
     ),
-    (
-        os.path.join(BASE, "docs", "conf.py"),
-        [
-            (
-                r'version\s*=\s*[\'"]([0-9\.]+)[\'"]',
-                "version = '{minor}'",
-            ),
-            (
-                r'release\s*=\s*[\'"]([0-9\.]+)[\'"]',
-                "release = '{version}'",
-            ),
-        ],
-    ),
-    (
-        os.path.join(BASE, "setup.py"),
-        [
-            (
-                r'\s*version\s*=\s*[\'"]([0-9\.]+)[\'"]',
-                "    version='{version}',",
-            )
-        ],
-    ),
+    (CHANGELOG, update_changelog),
+    (BASE / "docs" / "conf.py", update_docs_config),
 ]
 
-GITHUB_USER = "beetbox"
-GITHUB_REPO = "beets"
+
+def validate_new_version(
+    ctx: click.Context, param: click.Argument, value: Version
+) -> Version:
+    """Validate the version is newer than the current one."""
+    with BEETS_INIT.open() as f:
+        contents = f.read()
+
+    m = re.search(r'(?<=__version__ = ")[^"]+', contents)
+    assert m, "Current version not found in __init__.py"
+    current = parse(m.group())
+
+    if not value > current:
+        msg = f"version must be newer than {current}"
+        raise click.BadParameter(msg)
+
+    return value
 
 
-def bump_version(version: str):
-    """Update the version number in setup.py, docs config, changelog,
-    and root module.
-    """
-    version_parts = [int(p) for p in version.split(".")]
-    assert len(version_parts) == 3, "invalid version number"
-    minor = "{}.{}".format(*version_parts)
-    major = "{}".format(*version_parts)
-
-    # Replace the version each place where it lives.
-    for filename, locations in VERSION_LOCS:
-        # Read and transform the file.
-        out_lines = []
-        with open(filename) as f:
-            found = False
-            for line in f:
-                for pattern, template in locations:
-                    match = re.match(pattern, line)
-                    if match:
-                        # Check that this version is actually newer.
-                        old_version = match.group(1)
-                        old_parts = [int(p) for p in old_version.split(".")]
-                        assert (
-                            version_parts > old_parts
-                        ), "version must be newer than {}".format(old_version)
-
-                        # Insert the new version.
-                        out_lines.append(
-                            template.format(
-                                version=version,
-                                major=major,
-                                minor=minor,
-                            )
-                            + "\n"
-                        )
-
-                        found = True
-                        break
-                else:
-                    # Normal line.
-                    out_lines.append(line)
-            if not found:
-                print(f"No pattern found in {filename}")
-        # Write the file back.
-        with open(filename, "w") as f:
-            f.write("".join(out_lines))
-
-    update_changelog(version)
+def bump_version(new: Version) -> None:
+    """Update the version number in specified files."""
+    for path, perform_update in FILENAME_AND_UPDATE_TEXT:
+        with path.open("r+") as f:
+            contents = f.read()
+            f.seek(0)
+            f.write(perform_update(contents, new))
+            f.truncate()
 
 
-def update_changelog(version: str):
-    # Generate bits to insert into changelog.
-    header_line = f"{version} (in development)"
-    header = "\n\n" + header_line + "\n" + "-" * len(header_line) + "\n\n"
-    header += (
-        "Changelog goes here! Please add your entry to the bottom of"
-        " one of the lists below!\n"
+def rst2md(text: str) -> str:
+    """Use Pandoc to convert text from ReST to Markdown."""
+    # Other backslashes with verbatim ranges.
+    rst = re.sub(r"(?<=[\s(])`([^`]+)`(?=[^_])", r"``\1``", text)
+
+    # Bug numbers.
+    rst = re.sub(r":bug:`(\d+)`", r":bug: (#\1)", rst)
+
+    # Users.
+    rst = re.sub(r":user:`(\w+)`", r"@\1", rst)
+    return (
+        subprocess.check_output(
+            ["/usr/bin/pandoc", "--from=rst", "--to=gfm", "--wrap=none"],
+            input=rst.encode(),
+        )
+        .decode()
+        .strip()
     )
-    # Insert into the right place.
-    with open(CHANGELOG) as f:
-        contents = f.readlines()
-
-    contents = [
-        line
-        for line in contents
-        if not re.match(r"Changelog goes here!.*", line)
-    ]
-    contents = "".join(contents)
-    contents = re.sub("\n{3,}", "\n\n", contents)
-
-    location = contents.find("\n\n")  # First blank line.
-    contents = contents[:location] + header + contents[location:]
-    # Write back.
-    with open(CHANGELOG, "w") as f:
-        f.write(contents)
 
 
-def datestamp():
-    """Enter today's date as the release date in the changelog."""
-    dt = datetime.datetime.now()
-    stamp = "({} {}, {})".format(dt.strftime("%B"), dt.day, dt.year)
-    marker = "(in development)"
+def changelog_as_markdown() -> str:
+    """Get the latest changelog entry as hacked up Markdown."""
+    with CHANGELOG.open() as f:
+        contents = f.read()
 
-    lines = []
-    underline_length = None
-    with open(CHANGELOG) as f:
-        for line in f:
-            if marker in line:
-                # The header line.
-                line = line.replace(marker, stamp)
-                lines.append(line)
-                underline_length = len(line.strip())
-            elif underline_length:
-                # This is the line after the header. Rewrite the dashes.
-                lines.append("-" * underline_length + "\n")
-                underline_length = None
-            else:
-                lines.append(line)
+    m = RST_LATEST_CHANGES.search(contents)
+    rst = m.group(1) if m else ""
 
-    with open(CHANGELOG, "w") as f:
-        for line in lines:
-            f.write(line)
+    # Convert with Pandoc.
+    md = rst2md(rst)
+
+    # Make sections stand out
+    md = re.sub(r"^(\w.+?):$", r"### \1", md, flags=re.M)
+
+    # Highlight plugin names
+    md = re.sub(
+        r"^- `/?plugins/(\w+)`:?", r"- Plugin **`\1`**:", md, flags=re.M
+    )
+
+    # Highlights command names.
+    md = re.sub(r"^- `(\w+)-cmd`:?", r"- Command **`\1`**:", md, flags=re.M)
+
+    # sort list items alphabetically for each of the sections
+    return MD_CHANGELOG_SECTION_LIST.sub(
+        lambda m: "\n".join(sorted(m.group().splitlines())), md
+    )
 
 
-def prep(args: argparse.Namespace):
-    # Version number bump.
-    datestamp()
-    bump_version(args.version)
+@click.group()
+def cli():
+    pass
+
+
+@cli.command()
+@click.argument("version", type=Version, callback=validate_new_version)
+def bump(version: Version) -> None:
+    """Bump the version in project files."""
+    bump_version(version)
+
+
+@cli.command()
+def changelog():
+    """Get the most recent version's changelog as Markdown."""
+    print(changelog_as_markdown())
 
 
 if __name__ == "__main__":
-    args = parser.parse_args()
-    prep(args)
+    cli()
