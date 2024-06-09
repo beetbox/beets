@@ -56,7 +56,7 @@ jobs:
         uses: liskin/gh-problem-matcher-wrap@v3
         with:
           linters: isort
-          run: poe check-format ${{ needs.changed-files.outputs.changed_python_files }}
+          run: poetry run poe check-format ${{ needs.changed-files.outputs.changed_python_files }}
 
   lint:
     if: needs.changed-files.outputs.any_python_changed == 'true'
@@ -79,7 +79,7 @@ jobs:
         uses: liskin/gh-problem-matcher-wrap@v3
         with:
           linters: flake8
-          run: poe lint ${{ needs.changed-files.outputs.changed_python_files }}
+          run: poetry run poe lint ${{ needs.changed-files.outputs.changed_python_files }}
 
   mypy:
     if: needs.changed-files.outputs.any_python_changed == 'true'
@@ -103,7 +103,7 @@ jobs:
         continue-on-error: true
         with:
           linters: mypy
-          run: poe check-types --show-column-numbers --no-error-summary ${{ needs.changed-files.outputs.changed_python_files }}
+          run: poetry run poe check-types --show-column-numbers --no-error-summary ${{ needs.changed-files.outputs.changed_python_files }}
 
   docs:
     if: needs.changed-files.outputs.any_docs_changed == 'true'
@@ -125,4 +125,4 @@ jobs:
       - uses: sphinx-doc/github-problem-matcher@master
         name: Build docs
         with:
-          run: poe docs
+          run: poetry run poe docs
