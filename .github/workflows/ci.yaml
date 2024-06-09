@@ -20,21 +20,24 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Install Poetry
+        run: pipx install poetry
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+          cache: poetry
 
       - name: Install base dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install tox sphinx
+        run: poetry install
 
       - name: Install optional dependencies
         if: matrix.platform != 'windows-latest'
         run: |
           sudo apt update
-          sudo apt install ffmpeg  # For replaygain
+          sudo apt install ffmpeg
+          poetry install --extras replaygain
 
       - name: Test older Python versions with tox
         if: matrix.python-version != '3.x'
@@ -65,15 +68,17 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Install Poetry
+        run: pipx install poetry
+
       - name: Set up Python 3.x
         uses: actions/setup-python@v2
         with:
           python-version: "3.x"
+          cache: poetry
 
       - name: Install base dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install tox sphinx
+        run: poetry install
 
       - name: Add problem matcher
         run: echo "::add-matcher::.github/sphinx-problem-matcher.json"
@@ -87,15 +92,17 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Install Poetry
+        run: pipx install poetry
+
       - name: Set up Python 3.x
         uses: actions/setup-python@v2
         with:
           python-version: "3.x"
+          cache: poetry
 
       - name: Install base dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install tox sphinx
+        run: poetry install
 
       - name: Add problem matcher
         run: echo "::add-matcher::.github/flake8-problem-matcher.json"
