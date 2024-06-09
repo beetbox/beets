@@ -5,48 +5,50 @@ on:
     branches:
       - master
 env:
-  PYTHON_VERSION: 3.8
+  MIN_PYTHON_VERSION: 3.8
   PY_COLORS: 1
+  IS_MAIN_PYTHON: ${{ matrix.python-version == env.MIN_PYTHON_VERSION && matrix.platform == 'ubuntu-latest' }}
 
 jobs:
   test:
     name: Run tests
     strategy:
+      fail-fast: false
       matrix:
         platform: [ubuntu-latest, windows-latest]
         python-version: ["3.8", "3.9"]
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install Python tools
-        uses: BrandonLWhite/pipx-install-action@v0.1.1
-      - uses: actions/setup-python@v5
+      - name: Install Python
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: poetry
-
-      - name: Install PyGobject dependencies
-        if: matrix.platform == 'ubuntu-latest'
+          cache: 'poetry'
+      
+      - name: Install PyGobject dependencies on Ubuntu
+        if: startsWith(matrix.platform, 'ubuntu-')
         run: |
           sudo apt update
           sudo apt install ffmpeg gobject-introspection libgirepository1.0-dev
-          poetry install --extras replaygain
+          
+      
+      - name: Install Python dependencies with Poetry
+        run: |
+          poetry install --no-root
+          if [ "${{ env.IS_MAIN_PYTHON }}" = "true" ]; then
+            poetry install --extras replaygain
+          fi
 
-      - name: Install Python dependencies
-        run: poetry install --only=main,test
-
-      - if: ${{ ! (matrix.python-version == env.PYTHON_VERSION && matrix.platform == 'ubuntu-latest') }}
-        name: Test without coverage
-        run: poe test --no-cov
-
-      - if: matrix.python-version == env.PYTHON_VERSION && matrix.platform == 'ubuntu-latest'
-        name: Test with coverage
-        uses: liskin/gh-problem-matcher-wrap@v3
-        with:
-          linters: pytest
-          run: poe test
-
-      - if: matrix.python-version == env.PYTHON_VERSION && matrix.platform == 'ubuntu-latest'
-        name: Upload code coverage
+      - name: Run tests
+        run: |
+          if [ "${{ env.IS_MAIN_PYTHON }}" = "true" ]; then
+            poe test
+          else
+            poe test --no-cov
+          fi
+          
+      - name: Upload code coverage
+        if: env.IS_MAIN_PYTHON
         continue-on-error: true
         run: poetry run codecov
