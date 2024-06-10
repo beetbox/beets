@@ -35,9 +35,11 @@ jobs:
           files: |
             **.py
 
-  python-setup:
+  format:
+    if: needs.changed-files.outputs.any_python_changed == 'true'
     runs-on: ubuntu-latest
-    name: Setup python and poetry
+    name: Check formatting
+    needs: changed-files
     steps:
       - uses: actions/checkout@v4
       - name: Install Python tools
@@ -47,15 +49,8 @@ jobs:
           cache: poetry
       - uses: abatilo/actions-poetry@v2
       - name: Install dependencies
-        run: poetry install --all-extras
-    
+        run: poetry install --only=format
 
-  format:
-    if: needs.changed-files.outputs.any_python_changed == 'true'
-    runs-on: ubuntu-latest
-    name: Check formatting
-    needs: [changed-files, python-setup]
-    steps:
       - name: Check code formatting
         uses: liskin/gh-problem-matcher-wrap@v3
         with:
@@ -66,8 +61,18 @@ jobs:
     if: needs.changed-files.outputs.any_python_changed == 'true'
     runs-on: ubuntu-latest
     name: Check linting
-    needs: [changed-files, python-setup]
+    needs: changed-files
     steps:
+      - uses: actions/checkout@v4
+      - name: Install Python tools
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: poetry
+      - uses: abatilo/actions-poetry@v2
+      - name: Install dependencies
+        run: poetry install --only=lint
+
       - name: Lint code
         uses: liskin/gh-problem-matcher-wrap@v3
         with:
@@ -78,8 +83,18 @@ jobs:
     if: needs.changed-files.outputs.any_python_changed == 'true'
     runs-on: ubuntu-latest
     name: Check types with mypy
-    needs: [changed-files, python-setup]
+    needs: changed-files
     steps:
+      - uses: actions/checkout@v4
+      - name: Install Python tools
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: poetry
+      - uses: abatilo/actions-poetry@v2
+      - name: Install dependencies
+        run: poetry install --only=typing
+
       - name: Type check code
         uses: liskin/gh-problem-matcher-wrap@v3
         continue-on-error: true
@@ -91,8 +106,18 @@ jobs:
     if: needs.changed-files.outputs.any_docs_changed == 'true'
     runs-on: ubuntu-latest
     name: Check docs
-    needs: [changed-files, python-setup]
+    needs: changed-files
     steps:
+      - uses: actions/checkout@v4
+      - name: Install Python tools
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: poetry
+      - uses: abatilo/actions-poetry@v2
+      - name: Install dependencies
+        run: poetry install --only=docs
+
       - uses: sphinx-doc/github-problem-matcher@master
         name: Build docs
         with:
