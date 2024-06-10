@@ -261,9 +261,12 @@ real power of beets is in its extensibility---with plugins, beets can do almost
 anything for your music collection.
 
 You can always get help using the ``beet help`` command. The plain ``beet help``
-command lists all the available commands; then, for example, ``beet help
-import`` gives more specific help about the ``import`` command.
+command lists all the available commands; then, for example, ``beet help import`` gives more specific help about the ``import`` command.
 
+Want to stay updated on beets? Follow `@b33ts`_ on Twitter to hear about progress on
+new versions.
+
+.. _@b33ts: https://twitter.com/b33ts
 
 Please let us know what you think of beets via `the discussion board`_ or
 `Mastodon`_.
