@@ -43,11 +43,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Python tools
+        uses: BrandonLWhite/pipx-install-action@v0.1.1
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: poetry
-      - uses: abatilo/actions-poetry@v2
+
       - name: Install dependencies
         run: poetry install --only=format
 
@@ -65,11 +66,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Python tools
+        uses: BrandonLWhite/pipx-install-action@v0.1.1
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: poetry
-      - uses: abatilo/actions-poetry@v2
+
       - name: Install dependencies
         run: poetry install --only=lint
 
@@ -87,11 +89,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Python tools
+        uses: BrandonLWhite/pipx-install-action@v0.1.1
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: poetry
-      - uses: abatilo/actions-poetry@v2
+
       - name: Install dependencies
         run: poetry install --only=typing
 
@@ -110,11 +113,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Python tools
+        uses: BrandonLWhite/pipx-install-action@v0.1.1
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: poetry
-      - uses: abatilo/actions-poetry@v2
+
       - name: Install dependencies
         run: poetry install --only=docs
 
