@@ -106,10 +106,6 @@ types-urllib3 = "*"
 pydata-sphinx-theme = "*"
 sphinx = "*"
 
-
-[tool.poetry.group.dev.dependencies]
-poethepoet = "^0.26.1"
-
 [tool.poetry.extras]
 # inline comments note required external / non-python dependencies
 absubmit = ["requests"] # extractor binary from https://acousticbrainz.org/download
