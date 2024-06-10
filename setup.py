@@ -108,6 +108,7 @@ setup(
             "pylast",
             "pytest",
             "pytest-cov",
+            "pytest-flask",
             "python-mpd2",
             "python3-discogs-client>=2.3.15",
             "py7zr",
