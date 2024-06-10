@@ -203,6 +203,10 @@ args = { path = { help = "Path to format", positional = true, multiple = true, d
 help = "Check the code for linting issues. Accepts flake8 options."
 cmd = "flake8"
 
+[tool.poe.tasks.update-dependencies]
+help = "Update dependencies to their latest versions."
+cmd = "poetry update -vv"
+
 [tool.poe.tasks.test]
 help = "Run tests with pytest"
 cmd = "pytest"
