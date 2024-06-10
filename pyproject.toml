@@ -163,11 +163,13 @@ poetry = ">=1.8"
 # something unwanted locally, we should add these paths to .gitignore.
 [tool.poe.tasks._black]
 help = "Run black"
-cmd = "black $OPTS beets beetsplug test"
+cmd = "black $OPTS $path"
+args = { path = { help = "Path to blacken", positional = true, multiple = true, default = "." } }
 
 [tool.poe.tasks._isort]
 help = "Run isort"
-cmd = "isort $OPTS beets beetsplug test"
+cmd = "isort $OPTS $path"
+args = { path = { help = "Path to isort", positional = true, multiple = true, default = "." } }
 
 [tool.poe.tasks.bump]
 help = "Bump project version and update relevant files"
