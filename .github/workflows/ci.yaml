@@ -5,9 +5,7 @@ on:
     branches:
       - master
 env:
-  MIN_PYTHON_VERSION: 3.8
   PY_COLORS: 1
-  IS_MAIN_PYTHON: ${{ matrix.python-version == env.MIN_PYTHON_VERSION && matrix.platform == 'ubuntu-latest' }}
 
 jobs:
   test:
@@ -18,37 +16,41 @@ jobs:
         platform: [ubuntu-latest, windows-latest]
         python-version: ["3.8", "3.9"]
     runs-on: ${{ matrix.platform }}
+    env:
+      IS_MAIN_PYTHON: ${{ matrix.python-version == '3.8' && matrix.platform == 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install Python
+      - name: Install Python tools
+        uses: BrandonLWhite/pipx-install-action@v0.1.1
+      - name: Setup Python with poetry caching
+        # poetry cache requires poetry to already be installed, weirdly
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
-      
+          cache: poetry
+
       - name: Install PyGobject dependencies on Ubuntu
-        if: startsWith(matrix.platform, 'ubuntu-')
+        if: matrix.platform == 'ubuntu-latest'
         run: |
           sudo apt update
           sudo apt install ffmpeg gobject-introspection libgirepository1.0-dev
-          
-      
-      - name: Install Python dependencies with Poetry
-        run: |
-          poetry install --no-root
-          if [ "${{ env.IS_MAIN_PYTHON }}" = "true" ]; then
-            poetry install --extras replaygain
-          fi
+          poetry install --extras replaygain
 
-      - name: Run tests
-        run: |
-          if [ "${{ env.IS_MAIN_PYTHON }}" = "true" ]; then
-            poe test
-          else
-            poe test --no-cov
-          fi
-          
-      - name: Upload code coverage
-        if: env.IS_MAIN_PYTHON
+      - name: Install Python dependencies
+        run: poetry install --only=main,test
+
+      - if: ${{ ! env.IS_MAIN_PYTHON }}
+        name: Test without coverage
+        run: poe test --no-cov
+
+      - if: ${{ env.IS_MAIN_PYTHON }}
+        name: Test with coverage
+        uses: liskin/gh-problem-matcher-wrap@v3
+        with:
+          linters: pytest
+          run: poe test
+
+      - if: ${{ env.IS_MAIN_PYTHON }}
+        name: Upload code coverage
         continue-on-error: true
         run: poetry run codecov
