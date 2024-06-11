@@ -51,10 +51,8 @@ jobs:
         run: poetry install --only=format
 
       - name: Check code formatting
-        uses: liskin/gh-problem-matcher-wrap@v3
-        with:
-          linters: isort
-          run: poe check-format ${{ needs.changed-files.outputs.changed_python_files }}
+        # the job output will contain colored diffs with what needs adjusting
+        run: poe check-format
 
   lint:
     if: needs.changed-files.outputs.any_python_changed == 'true'
