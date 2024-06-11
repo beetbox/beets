@@ -9,10 +9,23 @@ that is parseable by MusicBrainz's `track parser`_. The prompt choices are:
 - Print the tracks to stdout in a format suitable for MusicBrainz's `track
   parser`_.
 
+- Create a new release on MusicBrainz, opens
+  https://musicbrainz.org/release/add in a new browser window with
+  fields pre-populated using existing metadata.
+
 - Open the program `Picard`_ with the unmatched folder as an input, allowing
   you to start submitting the unmatched release to MusicBrainz with many input
   fields already filled in, thanks to Picard reading the preexisting tags of
   the files.
+
+To create new releases on MusicBrainz with this plugin you need to install the
+`PyJWT`_ library with:
+
+.. code-block:: console
+
+   $ pip install beets[mbsubmit]
+
+.. _PyJWT: https://pyjwt.readthedocs.io/en/stable/
 
 For the last option, `Picard`_ is assumed to be installed and available on the
 machine including a ``picard`` executable. Picard developers list `download
@@ -34,7 +47,7 @@ choice is demonstrated::
     No matching release found for 3 tracks.
     For help, see: https://beets.readthedocs.org/en/latest/faq.html#nomatch
     [U]se as-is, as Tracks, Group albums, Skip, Enter search, enter Id, aBort,
-    Print tracks, Open files with Picard? p
+    Print tracks, Open files with Picard, Create release on musicbrainz? p
     01. An Obscure Track - An Obscure Artist (3:37)
     02. Another Obscure Track - An Obscure Artist (2:05)
     03. The Third Track - Another Obscure Artist (3:02)
@@ -56,6 +69,24 @@ the recommended workflow is to copy the output of the ``Print tracks`` choice
 and paste it into the parser that can be found by clicking on the
 "Track Parser" button on MusicBrainz "Tracklist" tab.
 
+Create release on MusicBrainz
+-----------------------------
+
+The https://musicbrainz.org/release/add page can be seeded with existing
+metadata, as described here: https://musicbrainz.org/doc/Development/Seeding/Release_Editor.
+This works in the following way:
+
+1. When you select the option to create a release, a local web server is started.
+2. You point your web browser to that web server, either by clicking a link
+   displayed in the console, or by having beets open the link automatically.
+3. The opened web page will redirect you to MusicBrainz, and the form fields
+   will be prepopulated with metadata found in the files. MusicBrainz may
+   ask you to confirm the action.
+4. You edit the release on MusicBrainz and click "Enter edit" to finish.
+5. MusicBrainz will redirect you to the local web server, submitting the ID
+   of the newly created release.
+6. beets will add the release using the release ID returned by MusicBrainz.
+
 Configuration
 -------------
 
@@ -70,6 +101,20 @@ file. The following options are available:
   Default: ``medium`` (causing the choice to be displayed for all albums that
   have a recommendation of medium strength or lower). Valid values: ``none``,
   ``low``, ``medium``, ``strong``.
+- **create_release_server_hostname**: The host name of the local web server used for the
+  'Create release on musicbrainz' functionality. The default is '127.0.0.1'.
+  Adjust this if beets is running on a different host in your local network.
+  Be aware that this web server is not secured in any way.
+- **create_release_server_port**: The port for the local web server. Default is 29661. If
+  unavailable, beets will search for other ports until an available one is
+  found.
+- **create_release_method**: Either 'open_browser' to automatically open a new
+  window/tab in your local browser or 'show_link' to simply show the link on
+  the console.
+- **create_release_await_mbid**: Whether or not to wait for you to create the
+  release on MusicBrainz. If true, waits for a callback from MusicBrainz with
+  the new release ID and proceeds to add the unmatched album using that Id.
+  If false, simply shows the select action prompt again. Default: true.
 - **picard_path**: The path to the ``picard`` executable. Could be an absolute
   path, and if not, ``$PATH`` is consulted. The default value is simply
   ``picard``. Windows users will have to find and specify the absolute path to
