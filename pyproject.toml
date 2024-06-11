@@ -153,8 +153,9 @@ poetry = ">=1.8"
 # We use a default path '.' to make black and isort behave like flake8 and
 # mypy do: they act on the entire codebase (flake8 does it by default, and
 # mypy follows our configuration) by default. Positional command-line arguments
-# override it. This allows us to check changed files _only_ in CI in a 
-# consistent way. 
+# override this. Therefore, locally you can run `poe check-format <some-path>`
+# to quickly check a specific path.
+#
 # Note: both tools respect .gitignore, therefore if we see them format
 # something unwanted locally, we should add these paths to .gitignore.
 [tool.poe.tasks._black]
