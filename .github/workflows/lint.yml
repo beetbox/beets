@@ -118,7 +118,11 @@ jobs:
       - name: Install dependencies
         run: poetry install --only=docs
 
-      - uses: sphinx-doc/github-problem-matcher@master
-        name: Build docs
-        with:
-          run: poe docs
+      - name: Add Sphinx problem matcher
+        run: echo "::add-matcher::.github/sphinx-problem-matcher.json"
+
+      - name: Build docs
+        run: |
+          poe docs |& tee /tmp/output
+          # fail the job if there are issues
+          grep -q " WARNING:" /tmp/output && exit 1 || exit 0
