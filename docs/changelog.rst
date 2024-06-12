@@ -13,7 +13,27 @@ Bug fixes:
 
 For packagers:
 
-* The minimum Python version is now 3.8.
+* The minimum supported Python version is now 3.8.
+
+Other changes:
+
+* :doc:`contributing`: The project now uses `poetry` for packaging and
+  dependency management. This change affects project management and mostly
+  affects beets developers. Please see updates in :ref:`getting-the-source` and
+  :ref:`testing` for more information.
+* :doc:`contributing`: Since `poetry` now manages local virtual environments,
+  `tox` has been replaced by a task runner `poethepoet`. This change affects
+  beets developers and contributors. Please see updates in the
+  :ref:`development-tools` section for more details. Type ``poe`` while in
+  the project directory to see the available commands.
+* Installation instructions have been made consistent across plugins
+  documentation. Users should simply install `beets` with an `extra` of the
+  corresponding plugin name in order to install extra dependencies for that
+  plugin.
+* GitHub workflows have been reorganised for clarity: style, linting, type and
+  docs checks now live in separate jobs and are named accordingly.
+* Added caching for dependency installation in all CI jobs which speeds them up
+  a bit, especially the tests.
 
 2.0.0 (May 30, 2024)
 --------------------

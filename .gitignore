@@ -74,6 +74,7 @@ target/
 .env
 
 # virtualenv
+env/
 venv/
 .venv/
 ENV/
