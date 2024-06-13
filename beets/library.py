@@ -49,7 +49,7 @@ log = logging.getLogger("beets")
 # Library-specific query types.
 
 
-class SingletonQuery(dbcore.FieldQuery):
+class SingletonQuery(dbcore.FieldQuery[str]):
     """This query is responsible for the 'singleton' lookup.
 
     It is based on the FieldQuery and constructs a SQL clause
@@ -60,14 +60,14 @@ class SingletonQuery(dbcore.FieldQuery):
     and singleton:false, singleton:0 are handled consistently.
     """
 
-    def __new__(cls, field, value, *args, **kwargs):
+    def __new__(cls, field: str, value: str, *args, **kwargs):
         query = dbcore.query.NoneQuery("album_id")
         if util.str2bool(value):
             return query
         return dbcore.query.NotQuery(query)
 
 
-class PathQuery(dbcore.FieldQuery):
+class PathQuery(dbcore.FieldQuery[bytes]):
     """A query that matches all items under a given path.
 
     Matching can either be case-insensitive or case-sensitive. By
@@ -185,7 +185,7 @@ class DateType(types.Float):
                 return self.null
 
 
-class PathType(types.Type):
+class PathType(types.Type[bytes, bytes]):
     """A dbcore type for filesystem paths.
 
     These are represented as `bytes` objects, in keeping with
@@ -384,7 +384,7 @@ class LibModel(dbcore.Model):
     """Shared concrete functionality for Items and Albums."""
 
     # Config key that specifies how an instance should be formatted.
-    _format_config_key = None
+    _format_config_key: str
 
     def _template_funcs(self):
         funcs = DefaultTemplateFunctions(self, self._db).functions()
