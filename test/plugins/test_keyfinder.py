@@ -14,11 +14,11 @@
 
 
 import unittest
-from test.helper import TestHelper
 from unittest.mock import patch
 
 from beets import util
 from beets.library import Item
+from beets.test.helper import TestHelper
 
 
 @patch("beets.util.command_output")
@@ -82,7 +82,7 @@ class KeyFinderTest(unittest.TestCase, TestHelper):
         self.run_command("keyfinder")
 
         item.load()
-        self.assertEqual(item["initial_key"], None)
+        self.assertIsNone(item["initial_key"])
 
 
 def suite():

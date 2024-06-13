@@ -14,7 +14,8 @@
 """Tests for the 'limit' plugin."""
 
 import unittest
-from test.helper import TestHelper
+
+from beets.test.helper import TestHelper
 
 
 class LimitPluginTest(unittest.TestCase, TestHelper):

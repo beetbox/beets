@@ -216,12 +216,14 @@ def get_singleton_disambig_fields(info: hooks.TrackInfo) -> Sequence[str]:
     calculated_values = {
         "index": "Index {}".format(str(info.index)),
         "track_alt": "Track {}".format(info.track_alt),
-        "album": "[{}]".format(info.album)
-        if (
-            config["import"]["singleton_album_disambig"].get()
-            and info.get("album")
-        )
-        else "",
+        "album": (
+            "[{}]".format(info.album)
+            if (
+                config["import"]["singleton_album_disambig"].get()
+                and info.get("album")
+            )
+            else ""
+        ),
     }
 
     for field in chosen_fields:
@@ -240,9 +242,11 @@ def get_album_disambig_fields(info: hooks.AlbumInfo) -> Sequence[str]:
     out = []
     chosen_fields = config["match"]["album_disambig_fields"].as_str_seq()
     calculated_values = {
-        "media": "{}x{}".format(info.mediums, info.media)
-        if (info.mediums and info.mediums > 1)
-        else info.media,
+        "media": (
+            "{}x{}".format(info.mediums, info.media)
+            if (info.mediums and info.mediums > 1)
+            else info.media
+        ),
     }
 
     for field in chosen_fields:
@@ -449,14 +453,16 @@ class ChangeRepresentation(object):
 
     def make_medium_info_line(self, track_info):
         """Construct a line with the current medium's info."""
-        media = self.match.info.media or "Media"
+        track_media = track_info.get("media", "Media")
         # Build output string.
         if self.match.info.mediums > 1 and track_info.disctitle:
-            return f"* {media} {track_info.medium}: {track_info.disctitle}"
+            return (
+                f"* {track_media} {track_info.medium}: {track_info.disctitle}"
+            )
         elif self.match.info.mediums > 1:
-            return f"* {media} {track_info.medium}"
+            return f"* {track_media} {track_info.medium}"
         elif track_info.disctitle:
-            return f"* {media}: {track_info.disctitle}"
+            return f"* {track_media}: {track_info.disctitle}"
         else:
             return ""
 
@@ -1160,9 +1166,11 @@ class TerminalImportSession(importer.ImportSession):
                 print_(
                     "Old: "
                     + summarize_items(
-                        list(duplicate.items())
-                        if task.is_album
-                        else [duplicate],
+                        (
+                            list(duplicate.items())
+                            if task.is_album
+                            else [duplicate]
+                        ),
                         not task.is_album,
                     )
                 )
@@ -2363,7 +2371,9 @@ def config_edit():
     except OSError as exc:
         message = f"Could not edit configuration: {exc}"
         if not editor:
-            message += ". Please set the EDITOR environment variable"
+            message += (
+                ". Please set the VISUAL (or EDITOR) environment variable"
+            )
         raise ui.UserError(message)
 
 
@@ -2378,7 +2388,7 @@ config_cmd.parser.add_option(
     "-e",
     "--edit",
     action="store_true",
-    help="edit user configuration with $EDITOR",
+    help="edit user configuration with $VISUAL (or $EDITOR)",
 )
 config_cmd.parser.add_option(
     "-d",

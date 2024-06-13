@@ -17,10 +17,6 @@ import itertools
 import os
 import shutil
 import unittest
-from test import helper
-from test._common import RSRC
-from test.test_importer import AutotagStub, ImportHelper
-from test.test_ui_importer import TerminalImportSessionSetup
 from unittest.mock import ANY, Mock, patch
 
 from mediafile import MediaFile
@@ -35,6 +31,13 @@ from beets.importer import (
 )
 from beets.library import Item
 from beets.plugins import MetadataSourcePlugin
+from beets.test import helper
+from beets.test._common import RSRC
+from beets.test.helper import (
+    AutotagStub,
+    ImportHelper,
+    TerminalImportSessionSetup,
+)
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.id_extractors import (
     beatport_id_regex,
@@ -164,7 +167,7 @@ class ItemTypeConflictTest(unittest.TestCase, TestHelper):
         self.advent_listener_plugin = AdventListenerPlugin
         self.register_plugin(EventListenerPlugin)
         self.register_plugin(AdventListenerPlugin)
-        self.assertNotEqual(None, plugins.types(Item))
+        self.assertIsNotNone(plugins.types(Item))
 
 
 class EventsTest(unittest.TestCase, ImportHelper, TestHelper):
@@ -644,7 +647,7 @@ class ParseSpotifyIDTest(unittest.TestCase):
     def test_parse_id_non_id_returns_none(self):
         id_string = "blah blah"
         out = MetadataSourcePlugin._get_id("album", id_string, spotify_id_regex)
-        self.assertEqual(out, None)
+        self.assertIsNone(out)
 
     def test_parse_id_url_finds_id(self):
         id_string = "39WqpoPgZxygo6YQjehLJJ"
@@ -662,7 +665,7 @@ class ParseDeezerIDTest(unittest.TestCase):
     def test_parse_id_non_id_returns_none(self):
         id_string = "blah blah"
         out = MetadataSourcePlugin._get_id("album", id_string, deezer_id_regex)
-        self.assertEqual(out, None)
+        self.assertIsNone(out)
 
     def test_parse_id_url_finds_id(self):
         id_string = "176356382"
@@ -684,7 +687,7 @@ class ParseBeatportIDTest(unittest.TestCase):
         out = MetadataSourcePlugin._get_id(
             "album", id_string, beatport_id_regex
         )
-        self.assertEqual(out, None)
+        self.assertIsNone(out)
 
     def test_parse_id_url_finds_id(self):
         id_string = "3089651"

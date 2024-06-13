@@ -74,7 +74,7 @@ class ExportPlugin(BeetsPlugin):
                 "xml": {
                     # XML module formatting options.
                     "formatting": {}
-                }
+                },
                 # TODO: Use something like the edit plugin
                 # 'item_fields': []
             }

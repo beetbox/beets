@@ -1,16 +1,15 @@
 """Tests for the 'spotify' plugin"""
 
-
 import os
 import unittest
-from test import _common
-from test.helper import TestHelper
 from urllib.parse import parse_qs, urlparse
 
 import responses
 
 from beets import config
 from beets.library import Item
+from beets.test import _common
+from beets.test.helper import TestHelper
 from beetsplug import spotify
 
 
@@ -52,14 +51,12 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
 
     def test_args(self):
         opts = ArgumentsMock("fail", True)
-        self.assertEqual(False, self.spotify._parse_opts(opts))
+        self.assertFalse(self.spotify._parse_opts(opts))
         opts = ArgumentsMock("list", False)
-        self.assertEqual(True, self.spotify._parse_opts(opts))
+        self.assertTrue(self.spotify._parse_opts(opts))
 
     def test_empty_query(self):
-        self.assertEqual(
-            None, self.spotify._match_library_tracks(self.lib, "1=2")
-        )
+        self.assertIsNone(self.spotify._match_library_tracks(self.lib, "1=2"))
 
     @responses.activate
     def test_missing_request(self):

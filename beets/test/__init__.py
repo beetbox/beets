@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2016, Adrian Sampson.
+# Copyright 2024, Lars Kruse
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -12,24 +12,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""DBCore is an abstract database package that forms the basis for beets'
-Library.
+"""This module contains components of beets' test environment, which
+may be of use for testing procedures of external libraries or programs.
+For example the 'TestHelper' class may be useful for creating an
+in-memory beets library filled with a few example items.
 """
-
-from .db import Database, Model, Results
-from .query import (
-    AndQuery,
-    FieldQuery,
-    InvalidQueryError,
-    MatchQuery,
-    OrQuery,
-    Query,
-)
-from .queryparse import (
-    parse_sorted_query,
-    query_from_strings,
-    sort_from_strings,
-)
-from .types import Type
-
-# flake8: noqa

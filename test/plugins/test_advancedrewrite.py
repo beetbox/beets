@@ -16,8 +16,8 @@
 """
 
 import unittest
-from test.helper import TestHelper
 
+from beets.test.helper import TestHelper
 from beets.ui import UserError
 
 PLUGIN_NAME = "advancedrewrite"
@@ -132,6 +132,31 @@ class AdvancedRewritePluginTest(unittest.TestCase, TestHelper):
             msg="Field artist is not a multi-valued field but a list was given: C, D",
         ):
             self.load_plugins(PLUGIN_NAME)
+
+    def test_combined_rewrite_example(self):
+        self.config[PLUGIN_NAME] = [
+            {"artist A": "B"},
+            {
+                "match": "album:'C'",
+                "replacements": {
+                    "artist": "D",
+                },
+            },
+        ]
+        self.load_plugins(PLUGIN_NAME)
+
+        item = self.add_item(
+            artist="A",
+            albumartist="A",
+        )
+        self.assertEqual(item.artist, "B")
+
+        item = self.add_item(
+            artist="C",
+            albumartist="C",
+            album="C",
+        )
+        self.assertEqual(item.artist, "D")
 
 
 def suite():

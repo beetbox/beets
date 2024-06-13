@@ -1,8 +1,8 @@
 import unittest
-from test.helper import TestHelper
 
 import responses
 
+from beets.test.helper import TestHelper
 from beetsplug.plexupdate import get_music_section, update_plex
 
 

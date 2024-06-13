@@ -20,10 +20,10 @@ import re
 import subprocess
 import sys
 import unittest
-from test import _common
 from unittest.mock import Mock, patch
 
 from beets import util
+from beets.test import _common
 
 
 class UtilTest(unittest.TestCase):
@@ -51,28 +51,28 @@ class UtilTest(unittest.TestCase):
     def test_sanitize_unix_replaces_leading_dot(self):
         with _common.platform_posix():
             p = util.sanitize_path("one/.two/three")
-        self.assertFalse("." in p)
+        self.assertNotIn(".", p)
 
     def test_sanitize_windows_replaces_trailing_dot(self):
         with _common.platform_windows():
             p = util.sanitize_path("one/two./three")
-        self.assertFalse("." in p)
+        self.assertNotIn(".", p)
 
     def test_sanitize_windows_replaces_illegal_chars(self):
         with _common.platform_windows():
             p = util.sanitize_path(':*?"<>|')
-        self.assertFalse(":" in p)
-        self.assertFalse("*" in p)
-        self.assertFalse("?" in p)
-        self.assertFalse('"' in p)
-        self.assertFalse("<" in p)
-        self.assertFalse(">" in p)
-        self.assertFalse("|" in p)
+        self.assertNotIn(":", p)
+        self.assertNotIn("*", p)
+        self.assertNotIn("?", p)
+        self.assertNotIn('"', p)
+        self.assertNotIn("<", p)
+        self.assertNotIn(">", p)
+        self.assertNotIn("|", p)
 
     def test_sanitize_windows_replaces_trailing_space(self):
         with _common.platform_windows():
             p = util.sanitize_path("one/two /three")
-        self.assertFalse(" " in p)
+        self.assertNotIn(" ", p)
 
     def test_sanitize_path_works_on_empty_string(self):
         with _common.platform_posix():

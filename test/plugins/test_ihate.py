@@ -1,6 +1,5 @@
 """Tests for the 'ihate' plugin"""
 
-
 import unittest
 
 from beets import importer

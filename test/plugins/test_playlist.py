@@ -18,9 +18,9 @@ import shutil
 import tempfile
 import unittest
 from shlex import quote
-from test import _common, helper
 
 import beets
+from beets.test import _common, helper
 
 
 class PlaylistTestHelper(helper.TestHelper):

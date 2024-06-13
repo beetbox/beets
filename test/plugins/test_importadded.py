@@ -17,9 +17,9 @@
 
 import os
 import unittest
-from test.test_importer import AutotagStub, ImportHelper
 
 from beets import importer
+from beets.test.helper import AutotagStub, ImportHelper
 from beets.util import displayable_path, syspath
 from beetsplug.importadded import ImportAddedPlugin
 

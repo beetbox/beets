@@ -16,10 +16,10 @@
 """
 
 import unittest
-from test import _common
 
 import beets.library
 from beets import config, dbcore
+from beets.test import _common
 
 
 # A test case class providing a library with some dummy data and some
@@ -460,7 +460,7 @@ class CaseSensitivityTest(DummyDataTestCase, _common.TestCase):
         results = list(self.lib.items(q))
         # If the numerical values were sorted as strings,
         # then ['1', '10', '2'] would be valid.
-        print([r.track for r in results])
+        # print([r.track for r in results])
         self.assertEqual(results[0].track, 1)
         self.assertEqual(results[1].track, 2)
         self.assertEqual(results[-1].track, 10)

@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""The Query type hierarchy for DBCore.
-"""
+"""The Query type hierarchy for DBCore."""
 
 from __future__ import annotations
 
@@ -116,18 +115,8 @@ class Query(ABC):
         return hash(type(self))
 
 
-class NamedQuery(Query):
-    """Non-field query, i.e. the query prefix is not a field but identifies the
-    query class.
-    """
-
-    @abstractmethod
-    def __init__(self, pattern):
-        ...
-
-
 P = TypeVar("P")
-SQLiteType = Union[str, float, int, memoryview]
+SQLiteType = Union[str, bytes, float, int, memoryview]
 AnySQLiteType = TypeVar("AnySQLiteType", bound=SQLiteType)
 
 
@@ -156,9 +145,7 @@ class FieldQuery(Query, Generic[P]):
 
     @classmethod
     def value_match(cls, pattern: P, value: Any):
-        """Determine whether the value matches the pattern. Both
-        arguments are strings.
-        """
+        """Determine whether the value matches the pattern."""
         raise NotImplementedError()
 
     def match(self, obj: Model) -> bool:
@@ -427,6 +414,28 @@ class NumericQuery(FieldQuery):
                 return f"{self.field} <= ?", (self.rangemax,)
             else:
                 return "1", ()
+
+
+class InQuery(Generic[AnySQLiteType], FieldQuery[Sequence[AnySQLiteType]]):
+    """Query which matches values in the given set."""
+
+    field: str
+    pattern: Sequence[AnySQLiteType]
+    fast: bool = True
+
+    @property
+    def subvals(self) -> Sequence[SQLiteType]:
+        return self.pattern
+
+    def col_clause(self) -> Tuple[str, Sequence[SQLiteType]]:
+        placeholders = ", ".join(["?"] * len(self.subvals))
+        return f"{self.field} IN ({placeholders})", self.subvals
+
+    @classmethod
+    def value_match(
+        cls, pattern: Sequence[AnySQLiteType], value: AnySQLiteType
+    ) -> bool:
+        return value in pattern
 
 
 class CollectionQuery(Query):

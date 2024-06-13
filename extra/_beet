@@ -8,7 +8,8 @@ local BEETS_LIBRARY=~/.config/beets/library.db
 local BEETS_CONFIG=~/.config/beets/config.yaml
 # Use separate caches for file locations, command completions, and query completions.
 # This allows the use of different rules for when to update each one.
-zstyle ":completion:${curcontext}:" cache-policy _beet_check_cache
+zstyle ":completion:${curcontext%:*}:*" cache-policy _beet_check_cache
+zstyle ":completion:${curcontext%:*}:*" use-cache true
 _beet_check_cache () {
     local cachefile="$(basename ${1})"
     if [[ ! -a "${1}" ]] || [[ "${1}" -ot =beet ]]; then
@@ -51,7 +52,7 @@ if ! _retrieve_cache beetscmds || _cache_invalid beetscmds; then
     # Useful function for joining grouped lines of output into single lines (taken from _completion_helpers)
     _join_lines() {
 	awk -v SEP="$1" -v ARG2="$2" -v START="$3" -v END2="$4" 'BEGIN {if(START==""){f=1}{f=0};
-         if(ARG2 ~ "^[0-9]+"){LINE1 = "^[[:space:]]{,"ARG2"}[^[:space:]]"}else{LINE1 = ARG2}}
+         if(ARG2 ~ "^[0-9]+"){LINE1 = "^[[:space:]]{0,"ARG2"}[^[:space:]]"}else{LINE1 = ARG2}}
          ($0 ~ END2 && f>0 && END2!="") {exit}
          ($0 ~ START && f<1) {f=1; if(length(START)!=0){next}}
          ($0 ~ LINE1 && f>0) {if(f<2){f=2; printf("%s",$0)}else{printf("\n%s",$0)}; next}
@@ -109,7 +110,7 @@ _beet_field_values() {
 	    if [[ "$(sqlite3 ${~BEETS_LIBRARY} ${sqlcmd} 2>&1)" =~ "no such column" ]]; then
 		sqlcmd="select distinct value from item_attributes where key=='$1' and value!='';"
 	    fi
-	    output="$(sqlite3 ${~BEETS_LIBRARY} ${sqlcmd} 2>/dev/null | sed -rn '/^-+$/,${{/^[- ]+$/n};p}')"
+	    output="$(sqlite3 -list -noheader ${~BEETS_LIBRARY} ${sqlcmd} 2>/dev/null)"
             fieldvals=("${(f)output[@]}")
             ;;
     esac

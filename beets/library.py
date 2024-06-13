@@ -562,6 +562,7 @@ class Item(LibModel):
         "albumtype": types.STRING,
         "albumtypes": types.SEMICOLON_SPACE_DSV,
         "label": types.STRING,
+        "barcode": types.STRING,
         "acoustid_fingerprint": types.STRING,
         "acoustid_id": types.STRING,
         "mb_releasegroupid": types.STRING,
@@ -1162,6 +1163,7 @@ class Album(LibModel):
         "albumtype": types.STRING,
         "albumtypes": types.SEMICOLON_SPACE_DSV,
         "label": types.STRING,
+        "barcode": types.STRING,
         "mb_releasegroupid": types.STRING,
         "release_group_title": types.STRING,
         "asin": types.STRING,
@@ -1217,6 +1219,7 @@ class Album(LibModel):
         "albumtype",
         "albumtypes",
         "label",
+        "barcode",
         "mb_releasegroupid",
         "asin",
         "catalognum",
@@ -1547,17 +1550,6 @@ def parse_query_string(s, model_cls):
     return parse_query_parts(parts, model_cls)
 
 
-def _sqlite_bytelower(bytestring):
-    """A custom ``bytelower`` sqlite function so we can compare
-    bytestrings in a semi case insensitive fashion.
-
-    This is to work around sqlite builds are that compiled with
-    ``-DSQLITE_LIKE_DOESNT_MATCH_BLOBS``. See
-    ``https://github.com/beetbox/beets/issues/2172`` for details.
-    """
-    return bytestring.lower()
-
-
 # The Library: interface to the database.
 
 
@@ -1581,11 +1573,6 @@ class Library(dbcore.Database):
         self.replacements = replacements
 
         self._memotable = {}  # Used for template substitution performance.
-
-    def _create_connection(self):
-        conn = super()._create_connection()
-        conn.create_function("bytelower", 1, _sqlite_bytelower)
-        return conn
 
     # Adding objects to the database.
 

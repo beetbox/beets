@@ -1,12 +1,11 @@
 """Tests for the 'zero' plugin"""
 
-
 import unittest
-from test.helper import TestHelper, control_stdin
 
 from mediafile import MediaFile
 
 from beets.library import Item
+from beets.test.helper import TestHelper, control_stdin
 from beets.util import syspath
 from beetsplug.zero import ZeroPlugin
 
@@ -138,7 +137,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
 
         self.assertEqual(item["year"], 2016)
         self.assertEqual(mf.year, 2016)
-        self.assertEqual(mf.comments, None)
+        self.assertIsNone(mf.comments)
         self.assertEqual(item["comments"], "")
 
     def test_subcommand_update_database_false(self):
@@ -162,7 +161,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(item["year"], 2016)
         self.assertEqual(mf.year, 2016)
         self.assertEqual(item["comments"], "test comment")
-        self.assertEqual(mf.comments, None)
+        self.assertIsNone(mf.comments)
 
     def test_subcommand_query_include(self):
         item = self.add_item_fixture(
@@ -181,7 +180,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         mf = MediaFile(syspath(item.path))
 
         self.assertEqual(mf.year, 2016)
-        self.assertEqual(mf.comments, None)
+        self.assertIsNone(mf.comments)
 
     def test_subcommand_query_exclude(self):
         item = self.add_item_fixture(
@@ -252,7 +251,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
 
         z = ZeroPlugin()
         z.write_event(item, item.path, tags)
-        self.assertEqual(tags["comments"], None)
+        self.assertIsNone(tags["comments"])
         self.assertEqual(tags["year"], 2016)
 
     def test_keep_fields_removes_preserved_tags(self):

@@ -101,6 +101,7 @@ following to your configuration::
    lastgenre
    lastimport
    limit
+   listenbrainz
    loadext
    lyrics
    mbcollection
@@ -421,6 +422,10 @@ Here are a few of the plugins written by the beets community:
 `beets-autofix`_
    Automates repetitive tasks to keep your library in order.
 
+`beets-autogenre`_
+   Assigns genres to your library items using the :doc:`lastgenre <lastgenre>`
+   and `beets-xtractor`_ plugins as well as additional rules.
+
 `beets-audible`_
    Adds Audible as a tagger data source and provides
    other features for managing audiobook collections.
@@ -433,7 +438,9 @@ Here are a few of the plugins written by the beets community:
    Enables **bandcamp.com** autotagger with a fairly extensive amount of metadata.
 
 `beetstream`_
-   Is server implementation of the `SubSonic API`_ specification, allowing you to stream your music on a multitude of clients.
+   Server implementation of the `Subsonic API`_ specification, serving the
+   beets library and (:doc:`smartplaylist <smartplaylist>` plugin generated)
+   M3U playlists, allowing you to stream your music on a multitude of clients.
 
 `beets-bpmanalyser`_
    Analyses songs and calculates their tempo (BPM).
@@ -507,6 +514,15 @@ Here are a few of the plugins written by the beets community:
 `beets-usertag`_
    Lets you use keywords to tag and organize your music.
 
+`beets-webm3u`_
+   Serves the (:doc:`smartplaylist <smartplaylist>` plugin generated) M3U
+   playlists via HTTP.
+
+`beets-webrouter`_
+   Serves multiple beets webapps (e.g. :doc:`web <web>`, `beets-webm3u`_,
+   `beetstream`_, :doc:`aura <aura>`) using a single command/process/host/port,
+   each under a different path.
+
 `whatlastgenre`_
    Fetches genres from various music sites.
 
@@ -528,7 +544,7 @@ Here are a few of the plugins written by the beets community:
 .. _beets-barcode: https://github.com/8h2a/beets-barcode
 .. _beetcamp: https://github.com/snejus/beetcamp
 .. _beetstream: https://github.com/BinaryBrain/Beetstream
-.. _SubSonic API: http://www.subsonic.org/pages/api.jsp
+.. _Subsonic API: http://www.subsonic.org/pages/api.jsp
 .. _beets-check: https://github.com/geigerzaehler/beets-check
 .. _beets-copyartifacts: https://github.com/adammillerio/beets-copyartifacts
 .. _dsedivec: https://github.com/dsedivec/beets-plugins
@@ -567,3 +583,6 @@ Here are a few of the plugins written by the beets community:
 .. _beets-audible: https://github.com/Neurrone/beets-audible
 .. _beets-more: https://forgejo.sny.sh/sun/beetsplug/src/branch/main/more
 .. _beets-mpd-utils: https://github.com/thekakkun/beets-mpd-utils
+.. _beets-webm3u: https://github.com/mgoltzsche/beets-webm3u
+.. _beets-webrouter: https://github.com/mgoltzsche/beets-webrouter
+.. _beets-autogenre: https://github.com/mgoltzsche/beets-autogenre

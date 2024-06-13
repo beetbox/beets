@@ -17,6 +17,10 @@ Major new features:
 
 New features:
 
+* :doc:`/plugins/edit`: Prefer editor from ``VISUAL`` environment variable over ``EDITOR``.
+* :ref:`config-cmd`: Prefer editor from ``VISUAL`` environment variable over ``EDITOR``.
+* :doc:`/plugins/listenbrainz`: Add initial support for importing history and playlists from `ListenBrainz`
+  :bug:`1719`
 * :doc:`plugins/mbsubmit`: add new prompt choices helping further to submit unmatched tracks to MusicBrainz faster.
 * :doc:`plugins/spotify`: We now fetch track's ISRC, EAN, and UPC identifiers from Spotify when using the ``spotifysync`` command.
   :bug:`4992`
@@ -149,11 +153,21 @@ New features:
   `synced` option to prefer synced lyrics over plain lyrics.
 * :ref:`import-cmd`: Expose import.quiet_fallback as CLI option.
 * :ref:`import-cmd`: Expose `import.incremental_skip_later` as CLI option.
-* :doc:`/plugins/smartplaylist`: Add new config option `smartplaylist.extm3u`.
 * :doc:`/plugins/smartplaylist`: Expose config options as CLI options.
+* :doc:`/plugins/smartplaylist`: Add new option `smartplaylist.output`.
+* :doc:`/plugins/smartplaylist`: Add new option `smartplaylist.uri_format`.
+* Sorted the default configuration file into categories.
+  :bug:`4987`
+* :doc:`/plugins/convert`: Don't treat WAVE (`.wav`) files as lossy anymore
+  when using the `never_convert_lossy_files` option. They will get transcoded
+  like the other lossless formats.
+* Add support for `barcode` field.
+  :bug:`3172`
+* :doc:`/plugins/smartplaylist`: Add new config option `smartplaylist.fields`.
 
 Bug fixes:
 
+* :doc:`/plugins/lastimport`: Improve error handling in the `process_tracks` function and enable it to be used with other plugins.
 * :doc:`/plugins/spotify`: Improve handling of ConnectionError.
 * :doc:`/plugins/deezer`: Improve Deezer plugin error handling and set requests timeout to 10 seconds.
   :bug:`4983`
@@ -277,6 +291,32 @@ Bug fixes:
   :bug:`4973`
 * Fix bug regarding displaying tracks that have been changed not being
   displayed unless the detail configuration is enabled.
+* :doc:`/plugins/web`: Fix range request support, allowing to play large audio/
+  opus files using e.g. a browser/firefox or gstreamer/mopidy directly.
+* Fix bug where `zsh` completion script made assumptions about the specific
+  variant of `awk` installed and required specific settings for `sqlite3`
+  and caching in `zsh`.
+  :bug:`3546`
+* Remove unused functions :bug:`5103`
+* Fix bug where all media types are reported as the first media type when
+  importing with MusicBrainz as the data source
+  :bug:`4947`
+* Fix bug where unimported plugin would not ignore children directories of
+  ignored directories.
+  :bug:`5130` 
+
+For plugin developers:
+
+* beets now explicitly prevents multiple plugins to define replacement
+  functions for the same field. When previously defining `template_fields`
+  for the same field in two plugins, the last loaded plugin would silently
+  overwrite the function defined by the other plugin.
+  Now, beets will raise an exception when this happens.
+  :bug:`5002`
+* Allow reuse of some parts of beets' testing components. This may ease the
+  work for externally developed plugins or related software (e.g. the beets
+  plugin for Mopidy), if they need to create an in-memory instance of a beets
+  music library for their tests.
 
 For packagers:
 
@@ -303,6 +343,7 @@ Other changes:
   :bug:`4585`
 * :doc:`/faq`: :ref:`multidisc`: Elaborated the multi-disc FAQ :bug:`4806`
 * :doc:`/faq`: :ref:`src`: Removed some long lines.
+* Refactor the test cases to avoid test smells.
 
 1.6.0 (November 27, 2021)
 -------------------------

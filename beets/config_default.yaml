@@ -1,10 +1,34 @@
+# --------------- Main ---------------
+
 library: library.db
 directory: ~/Music
+statefile: state.pickle
+
+# --------------- Plugins ---------------
+
+plugins: []
+pluginpath: []
+
+# --------------- Import ---------------
+
+clutter: ["Thumbs.DB", ".DS_Store"]
+ignore: [".*", "*~", "System Volume Information", "lost+found"]
+ignore_hidden: yes
 
 import:
+    # common options
     write: yes
     copy: yes
     move: no
+    timid: no
+    quiet: no
+    log:
+    # other options
+    default_action: apply
+    languages: []
+    quiet_fallback: skip
+    none_rec_action: ask
+    # rare options
     link: no
     hardlink: no
     reflink: no
@@ -13,15 +37,8 @@ import:
     incremental: no
     incremental_skip_later: no
     from_scratch: no
-    quiet_fallback: skip
-    none_rec_action: ask
-    timid: no
-    log:
     autotag: yes
-    quiet: no
     singletons: no
-    default_action: apply
-    languages: []
     detail: no
     flat: no
     group_albums: no
@@ -37,10 +54,13 @@ import:
     ignored_alias_types: []
     singleton_album_disambig: yes
 
-clutter: ["Thumbs.DB", ".DS_Store"]
-ignore: [".*", "*~", "System Volume Information", "lost+found"]
-ignore_hidden: yes
+# --------------- Paths ---------------
 
+path_sep_replace: _
+drive_sep_replace: _
+asciify_paths: false
+art_filename: cover
+max_filename_length: 0
 replace:
     # Replace bad characters with _
     # prohibited in many filesystem paths
@@ -60,11 +80,6 @@ replace:
     # starting and closing whitespace
     '\s+$': ''
     '^\s+': ''
-path_sep_replace: _
-drive_sep_replace: _
-asciify_paths: false
-art_filename: cover
-max_filename_length: 0
 
 aunique:
     keys: albumartist album
@@ -76,21 +91,27 @@ sunique:
     disambiguators: year trackdisambig
     bracket: '[]'
 
-overwrite_null:
-  album: []
-  track: []
+# --------------- Tagging ---------------
 
-plugins: []
-pluginpath: []
-threaded: yes
-timeout: 5.0
 per_disc_numbering: no
-verbose: 0
-terminal_encoding:
 original_date: no
 artist_credit: no
 id3v23: no
 va_name: "Various Artists"
+paths:
+    default: $albumartist/$album%aunique{}/$track $title
+    singleton: Non-Album/$artist/$title
+    comp: Compilations/$album%aunique{}/$track $title
+
+# --------------- Performance ---------------
+
+threaded: yes
+timeout: 5.0
+
+# --------------- UI ---------------
+
+verbose: 0
+terminal_encoding:
 
 ui:
     terminal_width: 80
@@ -126,6 +147,8 @@ ui:
             match_tracklist: 5
         layout: column
 
+# --------------- Search ---------------
+
 format_item: $artist - $album - $title
 format_album: $albumartist - $album
 time_format: '%Y-%m-%d %H:%M:%S'
@@ -135,13 +158,11 @@ sort_album: albumartist+ album+
 sort_item: artist+ album+ disc+ track+
 sort_case_insensitive: yes
 
-paths:
-    default: $albumartist/$album%aunique{}/$track $title
-    singleton: Non-Album/$artist/$title
-    comp: Compilations/$album%aunique{}/$track $title
+# --------------- Autotagger ---------------
 
-statefile: state.pickle
-
+overwrite_null:
+  album: []
+  track: []
 musicbrainz:
     enabled: yes
     host: musicbrainz.org

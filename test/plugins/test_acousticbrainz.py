@@ -19,8 +19,8 @@
 import json
 import os.path
 import unittest
-from test._common import RSRC
 
+from beets.test._common import RSRC
 from beetsplug.acousticbrainz import ABSCHEME, AcousticPlugin
 
 

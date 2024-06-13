@@ -2,21 +2,22 @@ import os
 import unittest
 from shutil import rmtree
 from tempfile import mkdtemp
-from test.helper import TestHelper
 from unittest.mock import patch
 
 import yaml
 
 from beets import config, ui
 from beets.library import Library
+from beets.test.helper import TestHelper
 
 
 class ConfigCommandTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.lib = Library(":memory:")
         self.temp_dir = mkdtemp()
-        if "EDITOR" in os.environ:
-            del os.environ["EDITOR"]
+        for k in ("VISUAL", "EDITOR"):
+            if k in os.environ:
+                del os.environ[k]
 
         os.environ["BEETSDIR"] = self.temp_dir
         self.config_path = os.path.join(self.temp_dir, "config.yaml")
@@ -52,7 +53,7 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
         self.assertEqual(output["option"], "value")
         self.assertEqual(output["password"], "password_value")
         self.assertEqual(output["library"], "lib")
-        self.assertEqual(output["import"]["timid"], False)
+        self.assertFalse(output["import"]["timid"])
 
     def test_show_user_config_with_cli(self):
         output = self._run_with_yaml_output(
@@ -73,7 +74,7 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
 
         self.assertEqual(output["option"], "value")
         self.assertEqual(output["password"], "REDACTED")
-        self.assertEqual(output["import"]["timid"], False)
+        self.assertFalse(output["import"]["timid"])
 
     def test_config_paths(self):
         output = self.run_with_output("config", "-p")
@@ -90,11 +91,21 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
         self.assertEqual(len(paths), 3)
         self.assertEqual(paths[0], self.cli_config_path)
 
-    def test_edit_config_with_editor_env(self):
+    def test_edit_config_with_visual_or_editor_env(self):
         os.environ["EDITOR"] = "myeditor"
         with patch("os.execlp") as execlp:
             self.run_command("config", "-e")
         execlp.assert_called_once_with("myeditor", "myeditor", self.config_path)
+
+        os.environ["VISUAL"] = ""  # empty environment variables gets ignored
+        with patch("os.execlp") as execlp:
+            self.run_command("config", "-e")
+        execlp.assert_called_once_with("myeditor", "myeditor", self.config_path)
+
+        os.environ["VISUAL"] = "myvisual"
+        with patch("os.execlp") as execlp:
+            self.run_command("config", "-e")
+        execlp.assert_called_once_with("myvisual", "myvisual", self.config_path)
 
     def test_edit_config_with_automatic_open(self):
         with patch("beets.util.open_anything") as open:
