@@ -31,7 +31,7 @@
 # plugins dynamically
 #
 # Currently, only Bash 3.2 and newer is supported and the
-# `bash-completion` package is required.
+# `bash-completion` package (v2.10 or newer) is required.
 #
 # TODO
 # ----
@@ -47,6 +47,26 @@
 #   completion package can handle this.
 #
 
+if [[ ${BASH_COMPLETION_VERSINFO[0]} -ne 2 \
+   || ${BASH_COMPLETION_VERSINFO[1]} -lt 10 ]]; then
+  echo "Incompatible version of 'bash-completion'!"
+  return 1
+fi
+
+# The following functions are introduced by bash-completion v2.12, and
+# at the same time the functions they replace are deprecated.  In order
+# to avoid using deprecated functions, here are some forward-compatible
+# aliases which use the deprecated functions when necessary.
+
+if [[ ${BASH_COMPLETION_VERSINFO[1]} -lt 12 ]]; then
+  _comp_get_words() {
+    _get_comp_words_by_ref "$@"
+  }
+
+  _comp_compgen_filedir() {
+    _filedir "$@"
+  }
+fi
 
 # Determines the beets subcommand and dispatches the completion
 # accordingly.
@@ -54,7 +74,7 @@ _beet_dispatch() {
   local cur prev cmd=
 
   COMPREPLY=()
-  _get_comp_words_by_ref -n : cur prev
+  _comp_get_words -n : cur prev
 
   # Look for the beets subcommand
   local arg
@@ -99,7 +119,7 @@ _beet_complete() {
     completions="${flags___common} ${opts} ${flags}"
     COMPREPLY+=( $(compgen -W "$completions"  -- $cur) )
   else
-    _filedir
+    _comp_compgen_filedir
   fi
 }
 
@@ -114,12 +134,12 @@ _beet_complete_global() {
       ;;
     -l|--library|-c|--config)
       # Filename completion
-      _filedir
+      _comp_compgen_filedir
       return
       ;;
     -d|--directory)
       # Directory completion
-      _filedir -d
+      _comp_compgen_filedir -d
       return
       ;;
   esac
