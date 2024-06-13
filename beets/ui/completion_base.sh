@@ -31,7 +31,7 @@
 # plugins dynamically
 #
 # Currently, only Bash 3.2 and newer is supported and the
-# `bash-completion` package (v2.10 or newer) is required.
+# `bash-completion` package (v2.8 or newer) is required.
 #
 # TODO
 # ----
@@ -46,17 +46,20 @@
 # * Support long options with `=`, e.g. `--config=file`. Debian's bash
 #   completion package can handle this.
 #
+# Note that 'bash-completion' v2.8 is a part of Debian 10, which is part of
+# LTS until 2024-06-30.  After this date, the minimum version requirement can
+# be changed, and newer features can be used unconditionally.  See PR#5301.
+#
 
 if [[ ${BASH_COMPLETION_VERSINFO[0]} -ne 2 \
-   || ${BASH_COMPLETION_VERSINFO[1]} -lt 10 ]]; then
+   || ${BASH_COMPLETION_VERSINFO[1]} -lt 8 ]]; then
   echo "Incompatible version of 'bash-completion'!"
   return 1
 fi
 
-# The following functions are introduced by bash-completion v2.12, and
-# at the same time the functions they replace are deprecated.  In order
-# to avoid using deprecated functions, here are some forward-compatible
-# aliases which use the deprecated functions when necessary.
+# The later code relies on 'bash-completion' version 2.12, but older versions
+# are still supported.  Here, we provide implementations of the newer functions
+# in terms of older ones, if 'bash-completion' is too old to have them.
 
 if [[ ${BASH_COMPLETION_VERSINFO[1]} -lt 12 ]]; then
   _comp_get_words() {
