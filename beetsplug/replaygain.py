@@ -1440,7 +1440,7 @@ class ReplayGainPlugin(BeetsPlugin):
         """Open a `ThreadPool` instance in `self.pool`"""
         if self.pool is None and self.backend_instance.do_parallel:
             self.pool = ThreadPool(threads)
-            self.exc_queue: queue.Queue[Exception] = queue.Queue()
+            self.exc_queue: queue.Queue = queue.Queue()
 
             signal.signal(signal.SIGINT, self._interrupt)
 
