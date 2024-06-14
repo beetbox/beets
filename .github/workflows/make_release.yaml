@@ -7,27 +7,38 @@ on:
         description: 'Version of the new release, just as a number with no prepended "v"'
         required: true
 
+env:
+  PYTHON_VERSION: 3.8
+  NEW_VERSION: ${{ inputs.version }}
+
 jobs:
-  increment_version:
+  increment-version:
+    name: Bump project version and commit it
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Install Python tools
+        uses: BrandonLWhite/pipx-install-action@v0.1.1
+      - uses: actions/setup-python@v5
         with:
-          python-version: "3.9"
-      - name: Run version script
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: poetry
+
+      - name: Install dependencies
+        run: poetry install --only=release
+
+      - name: Bump project version
         id: script
-        run: |
-          python extra/release.py bump "${{ inputs.version }}"
+        run: poe bump "${{ env.NEW_VERSION }}"
+
       - uses: EndBug/add-and-commit@v9
         name: Commit the changes
         with:
-          message: "Increment version numbers to ${{ inputs.version }}"
+          message: "Increment version to ${{ env.NEW_VERSION }}"
 
   build:
     runs-on: ubuntu-latest
-    needs: increment_version
+    needs: increment-version
     steps:
       - uses: actions/checkout@v4
         with:
@@ -66,7 +77,7 @@ jobs:
         uses: mathieudutour/github-tag-action@v6.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          custom_tag: ${{ inputs.version }}
+          custom_tag: ${{ env.NEW_VERSION }}
       - name: Download all the dists
         uses: actions/download-artifact@v3
         with:
