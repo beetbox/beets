@@ -32,6 +32,7 @@ jobs:
         with:
           files: |
             **.py
+            poetry.lock
 
   format:
     if: needs.changed-files.outputs.any_python_changed == 'true'
