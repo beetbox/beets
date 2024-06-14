@@ -86,7 +86,7 @@ responses = ">=0.3.0"
 
 [tool.poetry.group.format.dependencies]
 isort = { version = "<5.14", extras = ["colors"] }
-black = "<24.3"
+black = ">=24.3,<25"
 
 [tool.poetry.group.lint.dependencies]
 flake8 = "*"

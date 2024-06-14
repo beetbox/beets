@@ -15,7 +15,7 @@ jobs:
     name: Get changed files
     outputs:
       any_docs_changed: ${{ steps.changed-doc-files.outputs.any_changed }}
-      any_python_changed: ${{ steps.changed-python-files.outputs.any_changed }}
+      any_python_changed: ${{ steps.raw-changed-python-files.outputs.any_changed }}
       changed_doc_files: ${{ steps.changed-doc-files.outputs.all_changed_files }}
       changed_python_files: ${{ steps.changed-python-files.outputs.all_changed_files }}
     steps:
@@ -27,11 +27,23 @@ jobs:
           files: |
             docs/**
       - name: Get changed python files
-        id: changed-python-files
+        id: raw-changed-python-files
         uses: tj-actions/changed-files@v44
         with:
           files: |
             **.py
+            poetry.lock
+
+      - name: Check changed python files
+        id: changed-python-files
+        env:
+          CHANGED_PYTHON_FILES: ${{ steps.raw-changed-python-files.outputs.all_changed_files }}
+        run: |
+          if [[ " $CHANGED_PYTHON_FILES " == *" poetry.lock "* ]]; then
+            # if poetry.lock is changed, we need to check everything
+            CHANGED_PYTHON_FILES="."
+          fi
+          echo "all_changed_files=$CHANGED_PYTHON_FILES" >> "$GITHUB_OUTPUT"
 
   format:
     if: needs.changed-files.outputs.any_python_changed == 'true'
