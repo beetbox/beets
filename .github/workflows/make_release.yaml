@@ -37,22 +37,17 @@ jobs:
           message: "Increment version to ${{ env.NEW_VERSION }}"
 
   build:
+    name: Build the distribution packages
     runs-on: ubuntu-latest
     needs: increment-version
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: master
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.9"
-      - run: pip install build wheel sphinx
+      - name: Install Python tools
+        uses: BrandonLWhite/pipx-install-action@v0.1.1
+
       - name: Build a binary wheel and a source tarball
-        env:
-          TZ: UTC
-        run: python3 -m build
+        run: poetry build
+
       - name: Store the distribution packages
         uses: actions/upload-artifact@v3
         with:
