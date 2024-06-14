@@ -140,7 +140,6 @@ web = ["flask", "flask-cors"]
 
 [tool.poetry.scripts]
 beet = "beets.ui:main"
-release = "extra.release:cli"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -170,12 +169,12 @@ args = { path = { help = "Path to isort", positional = true, multiple = true, de
 
 [tool.poe.tasks.bump]
 help = "Bump project version and update relevant files"
-cmd = "release bump $version"
+cmd = "python ./extra/release.py bump $version"
 args = { version = { help = "The new version to set", positional = true, required = true } }
 
 [tool.poe.tasks.changelog]
 help = "Print the latest version's changelog in Markdown"
-cmd = "release changelog"
+cmd = "python ./extra/release.py changelog"
 
 [tool.poe.tasks.check-docs-links]
 help = "Check the documentation for broken URLs"
