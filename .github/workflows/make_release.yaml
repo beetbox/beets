@@ -73,12 +73,19 @@ jobs:
           name: python-package-distributions
           path: dist/
       - name: Create a GitHub release
+        id: make_release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.tag_version.outputs.new_tag }}
           name: Release ${{ steps.tag_version.outputs.new_tag }}
           body: ${{ env.CHANGELOG }}
           artifacts: dist/*
+      - name: Send release toot to Fosstodon
+        uses: cbrgm/mastodon-github-action@v2
+        with:
+          access-token: ${{ secrets.MASTODON_ACCESS_TOKEN }}
+          url: ${{ secrets.MASTODON_URL }}
+          message: "Version v${{ inputs.version }} of beets has been released! Check out all of the new changes at ${{ steps.create_release.outputs.html_url }}"
 
   publish_to_pypi:
     runs-on: ubuntu-latest
