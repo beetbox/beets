@@ -34,6 +34,10 @@ Other changes:
   docs checks now live in separate jobs and are named accordingly.
 * Added caching for dependency installation in all CI jobs which speeds them up
   a bit, especially the tests.
+* The linting workflow has been made to run only when Python files or
+  documentation is changed, and they only check the changed files. When
+  dependencies are updated (``poetry.lock``), then the entire code base is
+  checked.
 
 2.0.0 (May 30, 2024)
 --------------------
