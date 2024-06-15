@@ -51,6 +51,26 @@ jobs:
           run: poe test
 
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
-        name: Upload code coverage
-        continue-on-error: true
-        run: poetry run codecov
+        name: Store the coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: .reports/coverage.xml
+
+  upload-coverage:
+    name: Upload coverage report
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Get the coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+
+      - name: Upload code coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          use_oidc: true
