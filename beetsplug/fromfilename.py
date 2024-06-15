@@ -162,6 +162,7 @@ class FromFilenamePlugin(plugins.BeetsPlugin):
 
             # Look for useful information in the filenames.
             for pattern in PATTERNS:
+                self._log.debug("Trying pattern: {}".format(pattern))
                 d = all_matches(names, pattern)
                 if d:
                     apply_matches(d, self._log)
