@@ -39,18 +39,38 @@ jobs:
       - name: Install Python dependencies
         run: poetry install --only=main,test
 
-      - if: ${{ ! env.IS_MAIN_PYTHON }}
+      - if: ${{ env.IS_MAIN_PYTHON != 'true' }}
         name: Test without coverage
         run: poe test --no-cov
 
-      - if: ${{ env.IS_MAIN_PYTHON }}
+      - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
         name: Test with coverage
         uses: liskin/gh-problem-matcher-wrap@v3
         with:
           linters: pytest
           run: poe test
 
-      - if: ${{ env.IS_MAIN_PYTHON }}
-        name: Upload code coverage
-        continue-on-error: true
-        run: poetry run codecov
+      - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
+        name: Store the coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: .reports/coverage.xml
+
+  upload-coverage:
+    name: Upload coverage report
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Get the coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+
+      - name: Upload code coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          use_oidc: true
