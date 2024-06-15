@@ -16,7 +16,8 @@ jobs:
         id: changed-python-files
         uses: tj-actions/changed-files@v44
         with:
-          files: **.py
+          files: |
+            **.py
 
       - name: Check for the changelog update
         id: changelog-update

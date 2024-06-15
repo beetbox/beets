@@ -147,7 +147,7 @@ class BeetsPlugin:
         return wrapper
 
     def queries(self):
-        """Should return a dict mapping prefixes to Query subclasses."""
+        """Return a dict mapping prefixes to Query subclasses."""
         return {}
 
     def track_distance(self, item, info):
