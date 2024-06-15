@@ -14,6 +14,7 @@ Bug fixes:
 For packagers:
 
 * The minimum supported Python version is now 3.8.
+* The `beet` script has been removed from the repository.
 
 Other changes:
 
