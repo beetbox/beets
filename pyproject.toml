@@ -211,7 +211,25 @@ cmd = "poetry update -vv"
 
 [tool.poe.tasks.test]
 help = "Run tests with pytest"
-cmd = "pytest"
+cmd = "pytest $OPTS"
+env.OPTS.default = "-p no:cov"
+
+[tool.poe.tasks.test-with-coverage]
+help = "Run tests and record coverage"
+ref = "test"
+# record coverage in beets and beetsplug packages
+# save xml for coverage upload to coveralls
+# save html report for local dev use
+# measure coverage across logical branches
+# show which tests cover specific lines in the code (see the HTML report)
+env.OPTS = """
+--cov=beets
+--cov=beetsplug
+--cov-report=xml:.reports/coverage.xml
+--cov-report=html:.reports/html
+--cov-branch
+--cov-context=test
+"""
 
 [tool.black]
 line-length = 80
