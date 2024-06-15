@@ -98,6 +98,7 @@ def apply_matches(d, log):
     # Given both an "artist" and "title" field, assume that one is
     # *actually* the artist, which must be uniform, and use the other
     # for the title. This, of course, won't work for VA albums.
+    # Only check for "artist": patterns containing it, also contain "title"
     if "artist" in keys:
         if equal_fields(d, "artist"):
             artist = some_map["artist"]
@@ -113,14 +114,15 @@ def apply_matches(d, log):
             if not item.artist:
                 item.artist = artist
                 log.info("Artist replaced with: {}".format(item.artist))
-
-    # No artist field: remaining field is the title.
-    else:
+    # otherwise, if the pattern contains "title", use that for title_field
+    elif "title" in keys:
         title_field = "title"
+    else:
+        title_field = None
 
-    # Apply the title and track.
+    # Apply the title and track, if any.
     for item in d:
-        if bad_title(item.title):
+        if title_field and bad_title(item.title):
             item.title = str(d[item][title_field])
             log.info("Title replaced with: {}".format(item.title))
 
