@@ -64,6 +64,8 @@ jobs:
     permissions:
       id-token: write
     steps:
+      - uses: actions/checkout@v4
+
       - name: Get the coverage report
         uses: actions/download-artifact@v4
         with:
