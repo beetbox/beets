@@ -397,6 +397,10 @@ class LibModel(dbcore.Model):
     def shared_model_db_fields(cls) -> Set[str]:
         return cls._fields.keys() & cls._relation._fields.keys()
 
+    @cached_classproperty
+    def writable_fields(cls) -> Set[str]:
+        return MediaFile.fields() & cls._relation._fields.keys()
+
     def _template_funcs(self):
         funcs = DefaultTemplateFunctions(self, self._db).functions()
         funcs.update(plugins.template_funcs())
@@ -450,6 +454,17 @@ class LibModel(dbcore.Model):
             [
                 cls.field_query(f, pattern, query_class)
                 for f in cls._search_fields
+            ]
+        )
+
+    @classmethod
+    def any_writable_field_query(
+        cls, query_class: Type[dbcore.FieldQuery], pattern: str
+    ) -> dbcore.OrQuery:
+        return dbcore.OrQuery(
+            [
+                cls.field_query(f, pattern, query_class)
+                for f in cls.writable_fields
             ]
         )
 
