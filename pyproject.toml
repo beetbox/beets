@@ -87,7 +87,6 @@ black = ">=24.3,<25"
 
 [tool.poetry.group.lint.dependencies]
 flake8 = "*"
-flake8-docstrings = "*"
 pep8-naming = "*"
 
 [tool.poetry.group.typing.dependencies]
