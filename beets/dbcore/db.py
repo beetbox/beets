@@ -30,6 +30,7 @@ from collections.abc import Generator, Iterable, Iterator, Mapping, Sequence
 from sqlite3 import Connection
 from typing import TYPE_CHECKING, Any, AnyStr, Callable, Generic, TypeVar, cast
 
+from mediafile import MediaFile
 from rich import print
 from rich_tables.generic import flexitable
 from unidecode import unidecode
@@ -355,6 +356,10 @@ class Model(ABC, Generic[D]):
     def other_db_fields(cls) -> set[str]:
         """Fields in the related table."""
         return cls._relation._fields.keys() - cls.shared_db_fields
+
+    @cached_classproperty
+    def writable_db_fields(cls) -> set[str]:
+        return MediaFile.fields() & cls._relation._fields.keys()
 
     @cached_classproperty
     def table_with_flex_attrs(cls) -> str:
