@@ -26,7 +26,7 @@ from tempfile import NamedTemporaryFile
 from urllib.parse import urlencode
 
 from beets import logging, util
-from beets.util import bytestring_path, displayable_path, py3_path, syspath
+from beets.util import bytestring_path, displayable_path, syspath
 
 PROXY_URL = "https://images.weserv.nl/"
 
@@ -53,7 +53,7 @@ def temp_file_for(path):
     specified path.
     """
     ext = os.path.splitext(path)[1]
-    with NamedTemporaryFile(suffix=py3_path(ext), delete=False) as f:
+    with NamedTemporaryFile(suffix=os.fsdecode(ext), delete=False) as f:
         return bytestring_path(f.name)
 
 
@@ -386,7 +386,7 @@ class PILBackend(LocalBackend):
 
             # progressive=False only affects JPEGs and is the default,
             # but we include it here for explicitness.
-            im.save(py3_path(path_out), quality=quality, progressive=False)
+            im.save(os.fsdecode(path_out), quality=quality, progressive=False)
 
             if max_filesize > 0:
                 # If maximum filesize is set, we attempt to lower the quality
@@ -410,7 +410,7 @@ class PILBackend(LocalBackend):
                         lower_qual = 10
                     # Use optimize flag to improve filesize decrease
                     im.save(
-                        py3_path(path_out),
+                        os.fsdecode(path_out),
                         quality=lower_qual,
                         optimize=True,
                         progressive=False,
@@ -447,7 +447,7 @@ class PILBackend(LocalBackend):
 
         try:
             im = Image.open(syspath(path_in))
-            im.save(py3_path(path_out), progressive=False)
+            im.save(os.fsdecode(path_out), progressive=False)
             return path_out
         except OSError:
             # FIXME: Should probably issue a warning?
@@ -473,7 +473,7 @@ class PILBackend(LocalBackend):
 
         try:
             with Image.open(syspath(source)) as im:
-                im.save(py3_path(target), progressive=not deinterlaced)
+                im.save(os.fsdecode(target), progressive=not deinterlaced)
                 return target
         except (
             ValueError,
@@ -506,7 +506,7 @@ class PILBackend(LocalBackend):
         meta = PngImagePlugin.PngInfo()
         for k, v in metadata.items():
             meta.add_text(k, v, 0)
-        im.save(py3_path(file), "PNG", pnginfo=meta)
+        im.save(os.fsdecode(file), "PNG", pnginfo=meta)
 
 
 class Shareable(type):
