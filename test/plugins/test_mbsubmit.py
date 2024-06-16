@@ -38,16 +38,11 @@ class MBSubmitPluginTest(
     def setUp(self):
         self.setup_beets()
         self.load_plugins("mbsubmit")
-        self.plugin: MBSubmitPlugin = beets.plugins.find_plugins()[0]
-        self.plugin._start_server()
-        self.server_url = f"http://localhost:{self.plugin._server.server_port}"
         self._create_import_dir(2)
         self._setup_import_session()
         self.matcher = AutotagStub().install()
 
     def tearDown(self):
-        self.plugin._stop_server()
-
         self.unload_plugins()
         self.teardown_beets()
         self.matcher.restore()
@@ -85,7 +80,8 @@ class MBSubmitPluginTest(
         self.assertIn(tracklist, output.getvalue())
 
     @patch.object(MBSubmitPlugin, "_wait_for_condition", autospec=True)
-    def test_create_release(self, wait_for_condition_mock):
+    @patch("beetsplug.mbsubmit.ThreadingHTTPServer")
+    def test_create_release(self, start_server_mock, wait_for_condition_mock):
         self.matcher.matching = AutotagStub.BAD
 
         def _wait_for_condition(plugin: MBSubmitPlugin, condition):
@@ -107,74 +103,85 @@ class MBSubmitPluginTest(
         self.assertEqual(2, wait_for_condition_mock.call_count)
 
     def test_create_release_server_add(self):
-        r = requests.get(self.server_url)
-        self.assertEqual(404, r.status_code)
 
-        r = requests.get(urljoin(self.server_url, "/add"))
-        self.assertEqual(400, r.status_code)
-        self.assertEqual("Token missing.", r.text)
+        plugin = MBSubmitPlugin()
 
-        r = requests.get(urljoin(self.server_url, "/add?token=12356"))
-        self.assertEqual(400, r.status_code)
-        self.assertEqual("Invalid token.", r.text)
+        self.assertTrue(plugin._start_server())
+        self.server_url = f"http://127.0.0.1:{plugin._server.server_port}"
 
-        token = jwt.encode(
-            {"task_key": "unique_key"},
-            self.plugin.jwt_key,
-            algorithm=self.plugin.jwt_algorithm,
-        )
+        try:
 
-        r = requests.get(urljoin(self.server_url, f"/add?token={token}"))
-        self.assertEqual(404, r.status_code)
-        self.assertEqual("task_key not found.", r.text)
 
-        task = CreateReleaseTask(
-            {"a": 1, "b": "Something'test\"", "c": 6767.74}
-        )
-        self.plugin.create_release_tasks["unique_key"] = task
+            r = requests.get(self.server_url)
+            self.assertEqual(404, r.status_code)
 
-        self.assertFalse(task.browser_opened)
+            r = requests.get(urljoin(self.server_url, "/add"))
+            self.assertEqual(400, r.status_code)
+            self.assertEqual("Token missing.", r.text)
 
-        r = requests.get(urljoin(self.server_url, f"/add?token={token}"))
-        self.assertEqual(200, r.status_code)
-        self.assertIn('<input type="hidden" name="a" value="1">', r.text)
-        self.assertIn(
-            '<input type="hidden" name="b" value="Something&#x27;test&quot;">',
-            r.text,
-        )
-        self.assertIn('<input type="hidden" name="c" value="6767.74">', r.text)
+            r = requests.get(urljoin(self.server_url, "/add?token=12356"))
+            self.assertEqual(400, r.status_code)
+            self.assertEqual("Invalid token.", r.text)
 
-        self.assertTrue(task.browser_opened)
-
-        r = requests.get(urljoin(self.server_url, f"/complete_add"))
-        self.assertEqual(400, r.status_code)
-        self.assertEqual("Token missing.", r.text)
-
-        r = requests.get(urljoin(self.server_url, "/complete_add?token=12356"))
-        self.assertEqual(400, r.status_code)
-        self.assertEqual("Invalid token.", r.text)
-
-        r = requests.get(
-            urljoin(self.server_url, f"/complete_add?token={token}")
-        )
-        self.assertEqual(400, r.status_code)
-        self.assertEqual("release_mbid missing.", r.text)
-
-        self.assertIsNone(task.result_release_mbid)
-
-        r = requests.get(
-            urljoin(
-                self.server_url,
-                f"/complete_add?token={token}&release_mbid=the_new_id",
+            token = jwt.encode(
+                {"task_key": "unique_key"},
+                plugin.jwt_key,
+                algorithm=plugin.jwt_algorithm,
             )
-        )
-        self.assertEqual(200, r.status_code)
-        self.assertEqual(
-            "Release the_new_id added. You can close this browser window now and return to beets.",
-            r.text,
-        )
 
-        self.assertEqual("the_new_id", task.result_release_mbid)
+            r = requests.get(urljoin(self.server_url, f"/add?token={token}"))
+            self.assertEqual(404, r.status_code)
+            self.assertEqual("task_key not found.", r.text)
+
+            task = CreateReleaseTask(
+                {"a": 1, "b": "Something'test\"", "c": 6767.74}
+            )
+            plugin.create_release_tasks["unique_key"] = task
+
+            self.assertFalse(task.browser_opened)
+
+            r = requests.get(urljoin(self.server_url, f"/add?token={token}"))
+            self.assertEqual(200, r.status_code)
+            self.assertIn('<input type="hidden" name="a" value="1">', r.text)
+            self.assertIn(
+                '<input type="hidden" name="b" value="Something&#x27;test&quot;">',
+                r.text,
+            )
+            self.assertIn('<input type="hidden" name="c" value="6767.74">', r.text)
+
+            self.assertTrue(task.browser_opened)
+
+            r = requests.get(urljoin(self.server_url, f"/complete_add"))
+            self.assertEqual(400, r.status_code)
+            self.assertEqual("Token missing.", r.text)
+
+            r = requests.get(urljoin(self.server_url, "/complete_add?token=12356"))
+            self.assertEqual(400, r.status_code)
+            self.assertEqual("Invalid token.", r.text)
+
+            r = requests.get(
+                urljoin(self.server_url, f"/complete_add?token={token}")
+            )
+            self.assertEqual(400, r.status_code)
+            self.assertEqual("release_mbid missing.", r.text)
+
+            self.assertIsNone(task.result_release_mbid)
+
+            r = requests.get(
+                urljoin(
+                    self.server_url,
+                    f"/complete_add?token={token}&release_mbid=the_new_id",
+                )
+            )
+            self.assertEqual(200, r.status_code)
+            self.assertEqual(
+                "Release the_new_id added. You can close this browser window now and return to beets.",
+                r.text,
+            )
+
+            self.assertEqual("the_new_id", task.result_release_mbid)
+        finally:
+            plugin._stop_server()
 
     def test_build_formdata(self):
         self.assertDictEqual({}, mbsubmit.build_formdata([], None))
