@@ -14,7 +14,7 @@
 
 
 import unittest
-from os import path, remove
+from os import fsdecode, path, remove
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest.mock import MagicMock, Mock, PropertyMock
@@ -26,7 +26,7 @@ from beets.library import Album, Item, parse_query_string
 from beets.test import _common
 from beets.test.helper import TestHelper
 from beets.ui import UserError
-from beets.util import CHAR_REPLACE, bytestring_path, py3_path, syspath
+from beets.util import CHAR_REPLACE, bytestring_path, syspath
 from beetsplug.smartplaylist import SmartPlaylistPlugin
 
 
@@ -173,7 +173,7 @@ class SmartPlaylistTest(_common.TestCase):
 
         dir = bytestring_path(mkdtemp())
         config["smartplaylist"]["relative_to"] = False
-        config["smartplaylist"]["playlist_dir"] = py3_path(dir)
+        config["smartplaylist"]["playlist_dir"] = fsdecode(dir)
         try:
             spl.update_playlists(lib)
         except Exception:
@@ -218,7 +218,7 @@ class SmartPlaylistTest(_common.TestCase):
         config["smartplaylist"]["output"] = "extm3u"
         config["smartplaylist"]["prefix"] = "http://beets:8337/files"
         config["smartplaylist"]["relative_to"] = False
-        config["smartplaylist"]["playlist_dir"] = py3_path(dir)
+        config["smartplaylist"]["playlist_dir"] = fsdecode(dir)
         try:
             spl.update_playlists(lib)
         except Exception:
@@ -269,7 +269,7 @@ class SmartPlaylistTest(_common.TestCase):
         dir = bytestring_path(mkdtemp())
         config["smartplaylist"]["output"] = "extm3u"
         config["smartplaylist"]["relative_to"] = False
-        config["smartplaylist"]["playlist_dir"] = py3_path(dir)
+        config["smartplaylist"]["playlist_dir"] = fsdecode(dir)
         config["smartplaylist"]["fields"] = ["id", "genre"]
         try:
             spl.update_playlists(lib)
@@ -316,7 +316,7 @@ class SmartPlaylistTest(_common.TestCase):
         dir = bytestring_path(mkdtemp())
         tpl = "http://beets:8337/item/$id/file"
         config["smartplaylist"]["uri_format"] = tpl
-        config["smartplaylist"]["playlist_dir"] = py3_path(dir)
+        config["smartplaylist"]["playlist_dir"] = fsdecode(dir)
         # The following options should be ignored when uri_format is set
         config["smartplaylist"]["relative_to"] = "/data"
         config["smartplaylist"]["prefix"] = "/prefix"
@@ -350,7 +350,7 @@ class SmartPlaylistCLITest(_common.TestCase, TestHelper):
                 {"name": "all.m3u", "query": ""},
             ]
         )
-        config["smartplaylist"]["playlist_dir"].set(py3_path(self.temp_dir))
+        config["smartplaylist"]["playlist_dir"].set(fsdecode(self.temp_dir))
         self.load_plugins("smartplaylist")
 
     def tearDown(self):

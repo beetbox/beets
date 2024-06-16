@@ -22,7 +22,6 @@ from datetime import datetime
 from beets.library import Item
 from beets.test import _common
 from beets.test.helper import TestHelper
-from beets.util import py3_path
 
 
 def _parsetime(s):
@@ -46,11 +45,11 @@ class MetaSyncTest(_common.TestCase, TestHelper):
         self.config["metasync"]["source"] = "itunes"
 
         if _is_windows():
-            self.config["metasync"]["itunes"]["library"] = py3_path(
+            self.config["metasync"]["itunes"]["library"] = os.fsdecode(
                 self.itunes_library_windows
             )
         else:
-            self.config["metasync"]["itunes"]["library"] = py3_path(
+            self.config["metasync"]["itunes"]["library"] = os.fsdecode(
                 self.itunes_library_unix
             )
 

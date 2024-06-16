@@ -49,13 +49,7 @@ from beets import ui
 from beets.importer import ImportSession, ImportTask
 from beets.library import Album, Item, Library
 from beets.plugins import BeetsPlugin
-from beets.util import (
-    command_output,
-    cpu_count,
-    displayable_path,
-    py3_path,
-    syspath,
-)
+from beets.util import command_output, displayable_path, syspath
 
 # Utilities.
 
@@ -942,7 +936,7 @@ class GStreamerBackend(Backend):
 
         self._file = self._files.pop(0)
         self._pipe.set_state(self.Gst.State.NULL)
-        self._src.set_property("location", py3_path(syspath(self._file)))
+        self._src.set_property("location", os.fsdecode(syspath(self._file)))
         self._pipe.set_state(self.Gst.State.PLAYING)
         return True
 
@@ -972,7 +966,7 @@ class GStreamerBackend(Backend):
         # Set a new file on the filesrc element, can only be done in the
         # READY state
         self._src.set_state(self.Gst.State.READY)
-        self._src.set_property("location", py3_path(syspath(self._file)))
+        self._src.set_property("location", os.fsdecode(syspath(self._file)))
 
         self._decbin.link(self._conv)
         self._pipe.set_state(self.Gst.State.READY)
@@ -1050,7 +1044,9 @@ class AudioToolsBackend(Backend):
         file format is not supported
         """
         try:
-            audiofile = self._mod_audiotools.open(py3_path(syspath(item.path)))
+            audiofile = self._mod_audiotools.open(
+                os.fsdecode(syspath(item.path))
+            )
         except OSError:
             raise ReplayGainError(f"File {item.path} was not found")
         except self._mod_audiotools.UnsupportedFile:
@@ -1226,7 +1222,7 @@ class ReplayGainPlugin(BeetsPlugin):
                 "overwrite": False,
                 "auto": True,
                 "backend": "command",
-                "threads": cpu_count(),
+                "threads": os.cpu_count(),
                 "parallel_on_import": False,
                 "per_disc": False,
                 "peak": "true",

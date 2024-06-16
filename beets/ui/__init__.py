@@ -1633,7 +1633,7 @@ def _load_plugins(options, config):
     log.debug("plugin paths: {0}", util.displayable_path(paths))
 
     # On Python 3, the search paths need to be unicode.
-    paths = [util.py3_path(p) for p in paths]
+    paths = [os.fsdecode(p) for p in paths]
 
     # Extend the `beetsplug` package to include the plugin paths.
     import beetsplug

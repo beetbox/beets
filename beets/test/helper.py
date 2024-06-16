@@ -166,7 +166,7 @@ class TestHelper:
         Make sure you call ``teardown_beets()`` afterwards.
         """
         self.create_temp_dir()
-        os.environ["BEETSDIR"] = util.py3_path(self.temp_dir)
+        os.environ["BEETSDIR"] = os.fsdecode(self.temp_dir)
 
         self.config = beets.config
         self.config.clear()
@@ -179,7 +179,7 @@ class TestHelper:
 
         self.libdir = os.path.join(self.temp_dir, b"libdir")
         os.mkdir(syspath(self.libdir))
-        self.config["directory"] = util.py3_path(self.libdir)
+        self.config["directory"] = os.fsdecode(self.libdir)
 
         if disk:
             dbpath = util.bytestring_path(self.config["library"].as_filename())

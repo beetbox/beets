@@ -33,7 +33,7 @@ import confuse
 import yaml
 
 from beets.test.helper import TestHelper
-from beets.util import bluelet, py3_path
+from beets.util import bluelet
 from beetsplug import bpd
 
 gstplayer = importlib.util.module_from_spec(
@@ -313,7 +313,7 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
         """
         # Create a config file:
         config = {
-            "pluginpath": [py3_path(self.temp_dir)],
+            "pluginpath": [os.fsdecode(self.temp_dir)],
             "plugins": "bpd",
             # use port 0 to let the OS choose a free port
             "bpd": {"host": host, "port": 0, "control_port": 0},
@@ -321,7 +321,10 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
         if password:
             config["bpd"]["password"] = password
         config_file = tempfile.NamedTemporaryFile(
-            mode="wb", dir=py3_path(self.temp_dir), suffix=".yaml", delete=False
+            mode="wb",
+            dir=os.fsdecode(self.temp_dir),
+            suffix=".yaml",
+            delete=False,
         )
         config_file.write(
             yaml.dump(config, Dumper=confuse.Dumper, encoding="utf-8")
@@ -337,9 +340,9 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
                     "--library",
                     self.config["library"].as_filename(),
                     "--directory",
-                    py3_path(self.libdir),
+                    os.fsdecode(self.libdir),
                     "--config",
-                    py3_path(config_file.name),
+                    os.fsdecode(config_file.name),
                     "bpd",
                 ],
                 assigned_port,
@@ -399,7 +402,11 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
         """Add the given item to the BPD playlist or queue."""
         paths = [
             "/".join(
-                [item.artist, item.album, py3_path(os.path.basename(item.path))]
+                [
+                    item.artist,
+                    item.album,
+                    os.fsdecode(os.path.basename(item.path)),
+                ]
             )
             for item in items
         ]

@@ -209,19 +209,19 @@ class TestCase(unittest.TestCase, Assertions):
         # temporary directory.
         self.temp_dir = util.bytestring_path(tempfile.mkdtemp())
 
-        beets.config["statefile"] = util.py3_path(
+        beets.config["statefile"] = os.fsdecode(
             os.path.join(self.temp_dir, b"state.pickle")
         )
-        beets.config["library"] = util.py3_path(
+        beets.config["library"] = os.fsdecode(
             os.path.join(self.temp_dir, b"library.db")
         )
-        beets.config["directory"] = util.py3_path(
+        beets.config["directory"] = os.fsdecode(
             os.path.join(self.temp_dir, b"libdir")
         )
 
         # Set $HOME, which is used by Confuse to create directories.
         self._old_home = os.environ.get("HOME")
-        os.environ["HOME"] = util.py3_path(self.temp_dir)
+        os.environ["HOME"] = os.fsdecode(self.temp_dir)
 
         # Initialize, but don't install, a DummyIO.
         self.io = DummyIO()
