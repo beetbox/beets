@@ -350,6 +350,10 @@ class LibModel(dbcore.Model["Library"]):
     # Config key that specifies how an instance should be formatted.
     _format_config_key: str
 
+    @cached_classproperty
+    def writable_media_fields(cls) -> set[str]:
+        return set(MediaFile.fields()) & cls._fields.keys()
+
     def _template_funcs(self):
         funcs = DefaultTemplateFunctions(self, self._db).functions()
         funcs.update(plugins.template_funcs())
@@ -399,6 +403,13 @@ class LibModel(dbcore.Model["Library"]):
     def any_field_query(cls, *args, **kwargs) -> dbcore.OrQuery:
         return dbcore.OrQuery(
             [cls.field_query(f, *args, **kwargs) for f in cls._search_fields]
+        )
+
+    @classmethod
+    def any_writable_media_field_query(cls, *args, **kwargs) -> dbcore.OrQuery:
+        fields = cls.writable_media_fields
+        return dbcore.OrQuery(
+            [cls.field_query(f, *args, **kwargs) for f in fields]
         )
 
     def duplicates_query(self, fields: list[str]) -> dbcore.AndQuery:
