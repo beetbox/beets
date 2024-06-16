@@ -85,7 +85,8 @@ _form_input_template = '<input type="hidden" name="{name}" value="{value}">'
 @dataclass
 class CreateReleaseTask:
     """
-    Represents a task for creating a single release on MusicBrainz and its current status.
+    Represents a task for creating a single release on MusicBrainz and its current
+    status.
     """
 
     formdata: dict
@@ -113,7 +114,7 @@ class RequestHandler(BaseHTTPRequestHandler):
         self._plugin = plugin
         super(RequestHandler, self).__init__(*args)
 
-    def do_GET(self):
+    def do_GET(self):  # noqa: N802
         try:
             self._handle_get()
         except Exception as e:
@@ -129,17 +130,19 @@ class RequestHandler(BaseHTTPRequestHandler):
         action = parsed.path
 
         if action == "/add":
-            # Generates a web page using _form_template that POSTs data to the MusicBrainz release editor.
+            # Generates a web page using _form_template that POSTs data to the
+            #  MusicBrainz release editor.
             self._add(args)
         elif action == "/complete_add":
-            # MusicBrainz redirects to this endpoint after successfully adding a release. The ID of the new release
-            #  is provided, completing the flow.
+            # MusicBrainz redirects to this endpoint after successfully adding a
+            #  release. The ID of the new release is provided, completing the flow.
             self._complete_add(args)
         else:
             self._response(404, "Unknown action.")
 
     def _get_task_from_args(self, args) -> Optional[CreateReleaseTask]:
-        # Try to get the token from query args, try to decode it, and try to find the associated CreateReleaseTask.
+        # Try to get the token from query args, try to decode it, and try to find the
+        #  associated CreateReleaseTask.
         if "token" in args:
             token = args["token"][0]
             try:
@@ -194,7 +197,8 @@ class RequestHandler(BaseHTTPRequestHandler):
         task.result_release_mbid = release_mbid
         self._response(
             200,
-            f"Release {release_mbid} added. You can close this browser window now and return to beets.",
+            f"Release {release_mbid} added. You can close this browser window now and "
+            "return to beets.",
         )
 
     def _response(
@@ -276,11 +280,17 @@ def build_formdata(items: list, redirect_uri: Optional[str]):
 
         for i, artist in enumerate(track_artists):
             formdata[
-                f"mediums.{medium_index}.track.{track_index}.artist_credit.names.{i}.artist.name"
+                (
+                    f"mediums.{medium_index}.track.{track_index}."
+                    f"artist_credit.names.{i}.artist.name"
+                )
             ] = artist
             if join_phrase(i, len(track_artists)):
                 formdata[
-                    f"mediums.{medium_index}.track.{track_index}.artist_credit.names.{i}.join_phrase"
+                    (
+                        f"mediums.{medium_index}.track.{track_index}."
+                        f"artist_credit.names.{i}.join_phrase"
+                    )
                 ] = join_phrase(i, len(track_artists))
 
         track_counter[medium_index] += 1
@@ -307,7 +317,8 @@ class MBSubmitPlugin(BeetsPlugin):
 
         if jwt is None:
             self._log.warn(
-                "Cannot import PyJWT, disabling 'Create release on musicbrainz' functionality"
+                "Cannot import PyJWT, disabling 'Create release on musicbrainz' "
+                "functionality"
             )
 
         self.config.add(
@@ -354,10 +365,11 @@ class MBSubmitPlugin(BeetsPlugin):
         self.jwt_key = token_bytes()
         self.jwt_algorithm = "HS256"
 
-        # When the user selects "Create release on musicbrainz", the data that is going to get POSTed to MusicBrainz is
-        #  stored in this dict using a randomly generated key. The token in the URL opened by the user contains this
-        #  key. The web server looks up the data in this dictionary using the key, and generates the page to be
-        #  displayed.
+        # When the user selects "Create release on musicbrainz", the data that is going
+        #  to get POSTed to MusicBrainz is stored in this dict using a randomly
+        #  generated key. The token in the URL opened by the user contains this key. The
+        #  web server looks up the data in this dictionary using the key, and generates
+        #  the page to be displayed.
         self.create_release_tasks = dict()
 
     def _start_server(self):
@@ -380,7 +392,8 @@ class MBSubmitPlugin(BeetsPlugin):
                     target=self._server.serve_forever, daemon=True
                 ).start()
                 self._log.debug(
-                    f"Starting web server on {self.create_release_server_hostname}:{port}"
+                    "Starting web server on "
+                    f"{self.create_release_server_hostname}:{port}"
                 )
                 break
             else:
@@ -451,8 +464,14 @@ class MBSubmitPlugin(BeetsPlugin):
             {"task_key": task_key}, self.jwt_key, algorithm=self.jwt_algorithm
         )
 
-        url = f"http://{self.create_release_server_hostname}:{self._server.server_port}/add?token={token}"
-        redirect_uri = f"http://{self.create_release_server_hostname}:{self._server.server_port}/complete_add?token={token}"
+        url = (
+            f"http://{self.create_release_server_hostname}:"
+            f"{self._server.server_port}/add?token={token}"
+        )
+        redirect_uri = (
+            f"http://{self.create_release_server_hostname}:"
+            f"{self._server.server_port}/complete_add?token={token}"
+        )
 
         self._log.debug(
             f"New create release task with task_key {task_key}, serving at {url}"

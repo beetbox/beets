@@ -18,7 +18,6 @@ from urllib.parse import urljoin
 import jwt
 import requests
 
-import beets.plugins
 from beets.test._common import item
 from beets.test.helper import (
     AutotagStub,
@@ -103,15 +102,12 @@ class MBSubmitPluginTest(
         self.assertEqual(2, wait_for_condition_mock.call_count)
 
     def test_create_release_server_add(self):
-
         plugin = MBSubmitPlugin()
 
         self.assertTrue(plugin._start_server())
         self.server_url = f"http://127.0.0.1:{plugin._server.server_port}"
 
         try:
-
-
             r = requests.get(self.server_url)
             self.assertEqual(404, r.status_code)
 
@@ -147,15 +143,19 @@ class MBSubmitPluginTest(
                 '<input type="hidden" name="b" value="Something&#x27;test&quot;">',
                 r.text,
             )
-            self.assertIn('<input type="hidden" name="c" value="6767.74">', r.text)
+            self.assertIn(
+                '<input type="hidden" name="c" value="6767.74">', r.text
+            )
 
             self.assertTrue(task.browser_opened)
 
-            r = requests.get(urljoin(self.server_url, f"/complete_add"))
+            r = requests.get(urljoin(self.server_url, "/complete_add"))
             self.assertEqual(400, r.status_code)
             self.assertEqual("Token missing.", r.text)
 
-            r = requests.get(urljoin(self.server_url, "/complete_add?token=12356"))
+            r = requests.get(
+                urljoin(self.server_url, "/complete_add?token=12356")
+            )
             self.assertEqual(400, r.status_code)
             self.assertEqual("Invalid token.", r.text)
 
@@ -175,7 +175,8 @@ class MBSubmitPluginTest(
             )
             self.assertEqual(200, r.status_code)
             self.assertEqual(
-                "Release the_new_id added. You can close this browser window now and return to beets.",
+                "Release the_new_id added. You can close this browser window now and "
+                "return to beets.",
                 r.text,
             )
 
