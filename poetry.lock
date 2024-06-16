@@ -2390,13 +2390,13 @@ jupyter = ["ipywidgets (>=7.5.1,<9)"]
 
 [[package]]
 name = "rich-tables"
-version = "0.4.0"
+version = "0.5.1"
 description = "Ready-made rich tables for various purposes"
 optional = false
 python-versions = "<4,>=3.8"
 files = [
-    {file = "rich_tables-0.4.0-py3-none-any.whl", hash = "sha256:f7e7431d1c3cbe74084848f7393926560bd2f05aaae56e673371fc1380c7b4be"},
-    {file = "rich_tables-0.4.0.tar.gz", hash = "sha256:ca6474e35d6bc6a592d3cdfb6c03ed6dd26e5bef2ad09f5733685b972fde19dc"},
+    {file = "rich_tables-0.5.1-py3-none-any.whl", hash = "sha256:26980f9881a44cd5a530f634c17fa4bed40875ee962127bbdafec9c237589b8d"},
+    {file = "rich_tables-0.5.1.tar.gz", hash = "sha256:7cc9887f380d773aa0e2da05256970bcbb61bc40445193f32a1f7e167e77a971"},
 ]
 
 [package.dependencies]
@@ -2833,4 +2833,4 @@ web = ["flask", "flask-cors"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4"
-content-hash = "ee74bed6f552311e7d4da47904e5507ca6d1d7cafefc8493719fcc3b18abb151"
+content-hash = "0de3f4cf9e0fc7ace1de5e9c3aa859cb2b5b2a42d0a58e4b1d96a4dc251bde07"
