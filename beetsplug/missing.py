@@ -284,8 +284,13 @@ class MissingPlugin(BeetsPlugin):
             if _most_recent_album_year is not None and release_year < _most_recent_album_year:
                 continue
 
+            release_type = "No Type"
+
+            if "type" in missing_release_group:
+                release_type = missing_release_group["type"]
+
             missing_release = (missing_release_group["id"],
-                               release_year, missing_release_group["title"], missing_release_group["type"])
+                               release_year, missing_release_group["title"], release_type)
 
             missing_releases.append(missing_release)
 
