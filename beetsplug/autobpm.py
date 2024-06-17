@@ -14,7 +14,7 @@
 """Uses Librosa to calculate the `bpm` field.
 """
 
-
+import numpy
 from librosa import beat, load
 from soundfile import LibsndfileError
 
@@ -79,7 +79,7 @@ class AutoBPMPlugin(BeetsPlugin):
                 continue
 
             tempo, _ = beat.beat_track(y=y, sr=sr)
-            bpm = round(tempo)
+            bpm = numpy.round(tempo)
             item["bpm"] = bpm
             self._log.info(
                 "added computed bpm {0} for {1}",
