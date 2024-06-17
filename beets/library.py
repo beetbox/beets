@@ -148,7 +148,7 @@ class PathQuery(dbcore.FieldQuery[bytes]):
             query_part = "(BYTELOWER({0}) = BYTELOWER(?)) || \
                          (substr(BYTELOWER({0}), 1, ?) = BYTELOWER(?))"
 
-        return query_part.format(self.col_name), (
+        return query_part.format(self.field), (
             file_blob,
             len(dir_blob),
             dir_blob,

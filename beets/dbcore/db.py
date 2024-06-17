@@ -365,7 +365,7 @@ class Model(ABC):
 
         Availability of the 'flex_attrs' means we can query flexible attributes
         in the same manner we query other entity fields, see
-        `FieldQuery.col_name`. This way, we also remove the need for an
+        `FieldQuery.field`. This way, we also remove the need for an
         additional query to fetch them.
 
         Note: we use LEFT join to include entities without flexible attributes.
