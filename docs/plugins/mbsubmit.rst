@@ -23,7 +23,7 @@ To create new releases on MusicBrainz with this plugin you need to install the
 
 .. code-block:: console
 
-   $ pip install beets[mbsubmit]
+   $ pip install "beets[mbsubmit]"
 
 .. _PyJWT: https://pyjwt.readthedocs.io/en/stable/
 
@@ -105,9 +105,8 @@ file. The following options are available:
   'Create release on musicbrainz' functionality. The default is '127.0.0.1'.
   Adjust this if beets is running on a different host in your local network.
   Be aware that this web server is not secured in any way.
-- **create_release_server_port**: The port for the local web server. Default is 29661. If
-  unavailable, beets will search for other ports until an available one is
-  found.
+- **create_release_server_port**: The port for the local web server. By default,
+  beets will choose a random available port for you.
 - **create_release_method**: Either 'open_browser' to automatically open a new
   window/tab in your local browser or 'show_link' to simply show the link on
   the console.
