@@ -16,10 +16,22 @@
 
 import itertools
 import re
-from typing import Collection, Dict, List, Optional, Sequence, Tuple, Type
+from typing import (
+    TYPE_CHECKING,
+    Collection,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+)
 
 from . import Model, query
 from .query import Sort
+
+if TYPE_CHECKING:
+    from ..library import LibModel
 
 PARSE_QUERY_PART_REGEX = re.compile(
     # Non-capturing optional segment for the keyword.
@@ -104,7 +116,7 @@ def parse_query_part(
 
 
 def construct_query_part(
-    model_cls: Type[Model],
+    model_cls: Type["LibModel"],
     prefixes: Dict,
     query_part: str,
 ) -> query.Query:
@@ -139,20 +151,14 @@ def construct_query_part(
         query_part, query_classes, prefixes
     )
 
-    # If there's no key (field name) specified, this is a "match
-    # anything" query.
     if key is None:
-        # The query type matches a specific field, but none was
-        # specified. So we use a version of the query that matches
-        # any field.
-        out_query = query.AnyFieldQuery(
-            pattern, model_cls._search_fields, query_class
-        )
-
-    # Field queries get constructed according to the name of the field
-    # they are querying.
+        # If there's no key (field name) specified, this is a "match anything"
+        # query.
+        out_query = model_cls.any_field_query(query_class, pattern)
     else:
-        out_query = query_class(key.lower(), pattern, key in model_cls._fields)
+        # Field queries get constructed according to the name of the field
+        # they are querying.
+        out_query = model_cls.field_query(key.lower(), pattern, query_class)
 
     # Apply negation.
     if negate:
