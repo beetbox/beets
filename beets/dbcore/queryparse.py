@@ -152,7 +152,8 @@ def construct_query_part(
     # Field queries get constructed according to the name of the field
     # they are querying.
     else:
-        out_query = query_class(key.lower(), pattern, key in model_cls._fields)
+        key = key.lower()
+        out_query = query_class(key, pattern, key in model_cls.all_db_fields)
 
     # Apply negation.
     if negate:
