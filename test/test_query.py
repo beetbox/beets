@@ -48,6 +48,40 @@ class TestHelper(helper.TestHelper):
         self.assertNotIn(item.id, result_ids)
 
 
+class AnyFieldQueryTest(_common.LibTestCase):
+    def test_no_restriction(self):
+        q = dbcore.query.AnyFieldQuery(
+            "title",
+            beets.library.Item._fields.keys(),
+            dbcore.query.SubstringQuery,
+        )
+        self.assertEqual(self.lib.items(q).get().title, "the title")
+
+    def test_restriction_completeness(self):
+        q = dbcore.query.AnyFieldQuery(
+            "title", ["title"], dbcore.query.SubstringQuery
+        )
+        self.assertEqual(self.lib.items(q).get().title, "the title")
+
+    def test_restriction_soundness(self):
+        q = dbcore.query.AnyFieldQuery(
+            "title", ["artist"], dbcore.query.SubstringQuery
+        )
+        self.assertIsNone(self.lib.items(q).get())
+
+    def test_eq(self):
+        q1 = dbcore.query.AnyFieldQuery(
+            "foo", ["bar"], dbcore.query.SubstringQuery
+        )
+        q2 = dbcore.query.AnyFieldQuery(
+            "foo", ["bar"], dbcore.query.SubstringQuery
+        )
+        self.assertEqual(q1, q2)
+
+        q2.query_class = None
+        self.assertNotEqual(q1, q2)
+
+
 class AssertsMixin:
     def assert_items_matched(self, results, titles):
         self.assertEqual({i.title for i in results}, set(titles))
@@ -487,7 +521,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         self.assert_items_matched(results, ["path item"])
 
         results = self.lib.albums(q)
-        self.assert_albums_matched(results, ["path album"])
+        self.assert_albums_matched(results, [])
 
     # FIXME: fails on windows
     @unittest.skipIf(sys.platform == "win32", "win32")
@@ -569,9 +603,6 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         q = "path::c\\.mp3$"
         results = self.lib.items(q)
         self.assert_items_matched(results, ["path item"])
-
-        results = self.lib.albums(q)
-        self.assert_albums_matched(results, ["path album"])
 
     def test_path_album_regex(self):
         q = "path::b"
@@ -823,17 +854,17 @@ class NoneQueryTest(unittest.TestCase, TestHelper):
 
     def test_match_slow(self):
         item = self.add_item()
-        matched = self.lib.items(NoneQuery("rg_track_peak"))
+        matched = self.lib.items(NoneQuery("rg_track_peak", fast=False))
         self.assertInResult(item, matched)
 
     def test_match_slow_after_set_none(self):
         item = self.add_item(rg_track_gain=0)
-        matched = self.lib.items(NoneQuery("rg_track_gain"))
+        matched = self.lib.items(NoneQuery("rg_track_gain", fast=False))
         self.assertNotInResult(item, matched)
 
         item["rg_track_gain"] = None
         item.store()
-        matched = self.lib.items(NoneQuery("rg_track_gain"))
+        matched = self.lib.items(NoneQuery("rg_track_gain", fast=False))
         self.assertInResult(item, matched)
 
 
@@ -947,6 +978,14 @@ class NotQueryTest(DummyDataTestCase):
         self.assert_items_matched(not_results, ["foo bar", "beets 4 eva"])
         self.assertNegationProperties(q)
 
+    def test_type_anyfield(self):
+        q = dbcore.query.AnyFieldQuery(
+            "foo", ["title", "artist", "album"], dbcore.query.SubstringQuery
+        )
+        not_results = self.lib.items(dbcore.query.NotQuery(q))
+        self.assert_items_matched(not_results, ["baz qux"])
+        self.assertNegationProperties(q)
+
     def test_type_boolean(self):
         q = dbcore.query.BooleanQuery("comp", True)
         not_results = self.lib.items(dbcore.query.NotQuery(q))
@@ -1055,87 +1094,36 @@ class NotQueryTest(DummyDataTestCase):
         results = self.lib.items(q)
         self.assert_items_matched(results, ["baz qux"])
 
+    def test_fast_vs_slow(self):
+        """Test that the results are the same regardless of the `fast` flag
+        for negated `FieldQuery`s.
 
-class RelatedQueriesTest(_common.TestCase, AssertsMixin):
-    """Test album-level queries with track-level filters and vice-versa."""
+        TODO: investigate NoneQuery(fast=False), as it is raising
+        AttributeError: type object 'NoneQuery' has no attribute 'field'
+        at NoneQuery.match() (due to being @classmethod, and no self?)
+        """
+        classes = [
+            (dbcore.query.DateQuery, ["added", "2001-01-01"]),
+            (dbcore.query.MatchQuery, ["artist", "one"]),
+            # (dbcore.query.NoneQuery, ['rg_track_gain']),
+            (dbcore.query.NumericQuery, ["year", "2002"]),
+            (dbcore.query.StringFieldQuery, ["year", "2001"]),
+            (dbcore.query.RegexpQuery, ["album", "^.a"]),
+            (dbcore.query.SubstringQuery, ["title", "x"]),
+        ]
 
-    def setUp(self):
-        super().setUp()
-        self.lib = beets.library.Library(":memory:")
+        for klass, args in classes:
+            q_fast = dbcore.query.NotQuery(klass(*(args + [True])))
+            q_slow = dbcore.query.NotQuery(klass(*(args + [False])))
 
-        albums = []
-        for album_idx in range(1, 3):
-            album_name = f"Album{album_idx}"
-            album_items = []
-            for item_idx in range(1, 3):
-                item = _common.item()
-                item.album = album_name
-                title = f"{album_name} Item{item_idx}"
-                item.title = title
-                item.item_flex1 = f"{title} Flex1"
-                item.item_flex2 = f"{title} Flex2"
-                self.lib.add(item)
-                album_items.append(item)
-            album = self.lib.add_album(album_items)
-            album.artpath = f"{album_name} Artpath"
-            album.catalognum = "ABC"
-            album.album_flex = f"{album_name} Flex"
-            album.store()
-            albums.append(album)
-
-        self.album, self.another_album = albums
-
-    def test_get_albums_filter_by_track_field(self):
-        q = "title:Album1"
-        results = self.lib.albums(q)
-        self.assert_albums_matched(results, ["Album1"])
-
-    def test_get_items_filter_by_album_field(self):
-        q = "artpath::Album1"
-        results = self.lib.items(q)
-        self.assert_items_matched(results, ["Album1 Item1", "Album1 Item2"])
-
-    def test_filter_albums_by_common_field(self):
-        # title:Album1 ensures that the items table is joined for the query
-        q = "title:Album1 catalognum:ABC"
-        results = self.lib.albums(q)
-        self.assert_albums_matched(results, ["Album1"])
-
-    def test_filter_items_by_common_field(self):
-        # artpath::A ensures that the albums table is joined for the query
-        q = "artpath::A Album1"
-        results = self.lib.items(q)
-        self.assert_items_matched(results, ["Album1 Item1", "Album1 Item2"])
-
-    def test_get_items_filter_by_track_flex(self):
-        q = "item_flex1:Item1"
-        results = self.lib.items(q)
-        self.assert_items_matched(results, ["Album1 Item1", "Album2 Item1"])
-
-    def test_get_albums_filter_by_album_flex(self):
-        q = "album_flex:Album1"
-        results = self.lib.albums(q)
-        self.assert_albums_matched(results, ["Album1"])
-
-    def test_get_albums_filter_by_track_flex(self):
-        q = "item_flex1:Album1"
-        results = self.lib.albums(q)
-        self.assert_albums_matched(results, ["Album1"])
-
-    def test_get_items_filter_by_album_flex(self):
-        q = "album_flex:Album1"
-        results = self.lib.items(q)
-        self.assert_items_matched(results, ["Album1 Item1", "Album1 Item2"])
-
-    def test_filter_by_flex(self):
-        q = "item_flex1:'Item1 Flex1'"
-        results = self.lib.items(q)
-        self.assert_items_matched(results, ["Album1 Item1", "Album2 Item1"])
-
-    def test_filter_by_many_flex(self):
-        q = "item_flex1:'Item1 Flex1' item_flex2:Album1"
-        results = self.lib.items(q)
-        self.assert_items_matched(results, ["Album1 Item1"])
+            try:
+                self.assertEqual(
+                    [i.title for i in self.lib.items(q_fast)],
+                    [i.title for i in self.lib.items(q_slow)],
+                )
+            except NotImplementedError:
+                # ignore classes that do not provide `fast` implementation
+                pass
 
 
 def suite():
