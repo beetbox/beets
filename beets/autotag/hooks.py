@@ -39,7 +39,7 @@ from unidecode import unidecode
 from beets import config, logging, plugins
 from beets.autotag import mb
 from beets.library import Item
-from beets.util import as_string, cached_classproperty
+from beets.util import as_string
 
 log = logging.getLogger("beets")
 
@@ -413,6 +413,23 @@ def string_dist(str1: Optional[str], str2: Optional[str]) -> float:
     return base_dist + penalty
 
 
+class LazyClassProperty:
+    """A decorator implementing a read-only property that is *lazy* in
+    the sense that the getter is only invoked once. Subsequent accesses
+    through *any* instance use the cached result.
+    """
+
+    def __init__(self, getter):
+        self.getter = getter
+        self.computed = False
+
+    def __get__(self, obj, owner):
+        if not self.computed:
+            self.value = self.getter(owner)
+            self.computed = True
+        return self.value
+
+
 @total_ordering
 class Distance:
     """Keeps track of multiple distance penalties. Provides a single
@@ -424,7 +441,7 @@ class Distance:
         self._penalties = {}
         self.tracks: Dict[TrackInfo, Distance] = {}
 
-    @cached_classproperty
+    @LazyClassProperty
     def _weights(cls) -> Dict[str, float]:  # noqa: N805
         """A dictionary from keys to floating-point weights."""
         weights_view = config["match"]["distance_weights"]
