@@ -14,6 +14,7 @@
 
 """The core data store and collection logic for beets.
 """
+from __future__ import annotations
 
 import os
 import re
@@ -32,6 +33,7 @@ from beets.dbcore import Results, types
 from beets.util import (
     MoveOperation,
     bytestring_path,
+    cached_classproperty,
     normpath,
     samefile,
     syspath,
@@ -640,6 +642,22 @@ class Item(LibModel):
     # Cached album object. Read-only.
     __album = None
 
+    @cached_classproperty
+    def _relation(cls) -> type[Album]:
+        return Album
+
+    @cached_classproperty
+    def relation_join(cls) -> str:
+        """Return the FROM clause which includes related albums.
+
+        We need to use a LEFT JOIN here, otherwise items that are not part of
+        an album (e.g. singletons) would be left out.
+        """
+        return (
+            f"LEFT JOIN {cls._relation._table} "
+            f"ON {cls._table}.album_id = {cls._relation._table}.id"
+        )
+
     @property
     def _cached_album(self):
         """The Album object that this item belongs to, if any, or
@@ -1239,6 +1257,22 @@ class Album(LibModel):
     ]
 
     _format_config_key = "format_album"
+
+    @cached_classproperty
+    def _relation(cls) -> type[Item]:
+        return Item
+
+    @cached_classproperty
+    def relation_join(cls) -> str:
+        """Return FROM clause which joins on related album items.
+
+        Use LEFT join to select all albums, including those that do not have
+        any items.
+        """
+        return (
+            f"LEFT JOIN {cls._relation._table} "
+            f"ON {cls._table}.id = {cls._relation._table}.album_id"
+        )
 
     @classmethod
     def _getters(cls):

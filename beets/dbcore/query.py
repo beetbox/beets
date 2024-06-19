@@ -21,7 +21,7 @@ import unicodedata
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from functools import reduce
-from operator import mul
+from operator import mul, or_
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -33,6 +33,7 @@ from typing import (
     Optional,
     Pattern,
     Sequence,
+    Set,
     Tuple,
     Type,
     TypeVar,
@@ -81,6 +82,11 @@ class InvalidQueryArgumentValueError(ParsingError):
 class Query(ABC):
     """An abstract class representing a query into the database."""
 
+    @property
+    def field_names(self) -> Set[str]:
+        """Return a set with field names that this query operates on."""
+        return set()
+
     def clause(self) -> Tuple[Optional[str], Sequence[Any]]:
         """Generate an SQLite expression implementing the query.
 
@@ -127,6 +133,11 @@ class FieldQuery(Query, Generic[P]):
     string. Subclasses may also provide `col_clause` to implement the
     same matching functionality in SQLite.
     """
+
+    @property
+    def field_names(self) -> Set[str]:
+        """Return a set with field names that this query operates on."""
+        return {self.field}
 
     def __init__(self, field: str, pattern: P, fast: bool = True):
         self.field = field
@@ -443,6 +454,11 @@ class CollectionQuery(Query):
     indexed like a list to access the sub-queries.
     """
 
+    @property
+    def field_names(self) -> Set[str]:
+        """Return a set with field names that this query operates on."""
+        return reduce(or_, (sq.field_names for sq in self.subqueries))
+
     def __init__(self, subqueries: Sequence = ()):
         self.subqueries = subqueries
 
@@ -497,6 +513,11 @@ class AnyFieldQuery(CollectionQuery):
     any field. The individual field query class is provided to the
     constructor.
     """
+
+    @property
+    def field_names(self) -> Set[str]:
+        """Return a set with field names that this query operates on."""
+        return set(self.fields)
 
     def __init__(self, pattern, fields, cls: Type[FieldQuery]):
         self.pattern = pattern
@@ -569,6 +590,11 @@ class NotQuery(Query):
     """A query that matches the negation of its `subquery`, as a shortcut for
     performing `not(subquery)` without using regular expressions.
     """
+
+    @property
+    def field_names(self) -> Set[str]:
+        """Return a set with field names that this query operates on."""
+        return self.subquery.field_names
 
     def __init__(self, subquery):
         self.subquery = subquery

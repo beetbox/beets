@@ -6,6 +6,13 @@ Unreleased
 
 Changelog goes here! Please add your entry to the bottom of one of the lists below!
 
+New features:
+
+* Ability to query albums with track db fields and vice-versa, for example
+  `beet list -a title:something` or `beet list artpath:cover`. Consequently
+  album queries involving `path` field have been sped up, like `beet list -a
+  path:/path/`.
+
 Bug fixes:
 
 * Improved naming of temporary files by separating the random part with the file extension.
