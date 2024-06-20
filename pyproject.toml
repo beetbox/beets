@@ -41,7 +41,6 @@ mediafile = ">=0.12.0"
 munkres = ">=1.0.0"
 musicbrainzngs = ">=0.4"
 pyyaml = "*"
-rich-tables = ">=0.5.1"
 typing_extensions = "*"
 unidecode = ">=1.3.6"
 beautifulsoup4 = { version = "*", optional = true }

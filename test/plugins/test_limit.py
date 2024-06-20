@@ -15,8 +15,6 @@
 
 import unittest
 
-import pytest
-
 from beets.test.helper import TestHelper
 
 
@@ -81,17 +79,11 @@ class LimitPluginTest(unittest.TestCase, TestHelper):
         )
         self.assertEqual(result.count("\n"), self.num_limit)
 
-    @pytest.mark.xfail(
-        reason="Will be restored together with removal of slow sorts"
-    )
     def test_prefix(self):
         """Returns the expected number with the query prefix."""
         result = self.lib.items(self.num_limit_prefix)
         self.assertEqual(len(result), self.num_limit)
 
-    @pytest.mark.xfail(
-        reason="Will be restored together with removal of slow sorts"
-    )
     def test_prefix_when_correctly_ordered(self):
         """Returns the expected number with the query prefix and filter when
         the prefix portion (correctly) appears last."""
@@ -99,9 +91,6 @@ class LimitPluginTest(unittest.TestCase, TestHelper):
         result = self.lib.items(correct_order)
         self.assertEqual(len(result), self.num_limit)
 
-    @pytest.mark.xfail(
-        reason="Will be restored together with removal of slow sorts"
-    )
     def test_prefix_when_incorrectly_ordred(self):
         """Returns no results with the query prefix and filter when the prefix
         portion (incorrectly) appears first."""
