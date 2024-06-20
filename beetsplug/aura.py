@@ -180,9 +180,8 @@ class AURADocument:
                 converter = self.get_attribute_converter(beets_attr)
                 value = converter(value)
                 # Add exact match query to list
-                queries.append(
-                    self.model_cls.field_query(beets_attr, value, MatchQuery)
-                )
+                # Use a slow query so it works with all fields
+                queries.append(MatchQuery(beets_attr, value, fast=False))
         # NOTE: AURA doesn't officially support multiple queries
         return AndQuery(queries)
 

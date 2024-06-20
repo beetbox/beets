@@ -6,16 +6,6 @@ Unreleased
 
 Changelog goes here! Please add your entry to the bottom of one of the lists below!
 
-New features:
-
-* Ability to query albums with track-level (and vice-versa) **db** or
-  **flexible** field queries, for example `beet list -a title:something`, `beet
-  list artpath:cover`.
-* Queries have been made faster, and their speed is constant regardless of
-  their complexity or the type of queried fields. Notably, album queries for
-  the `path` field and those that involve flexible attributes have seen the
-  most significant speedup.
-
 Bug fixes:
 
 * Improved naming of temporary files by separating the random part with the file extension.
