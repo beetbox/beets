@@ -85,9 +85,11 @@ For multi-valued tags (such as ``artists`` or ``albumartists``), a regular
 expression search must be used to search for a single value within the
 multi-valued tag.
 
-Note that you can filter albums by querying tracks fields and vice versa::
+Note that you can filter albums by querying tracks fields, including
+flexible attributes::
 
     $ beet list -a title:love
+    $ beet list -a play_count::10
 
 and vice versa::
 
