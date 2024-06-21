@@ -154,13 +154,19 @@ class MBSubmitPluginTest(
 
         self.assertEqual("the_new_id", task.result_release_mbid)
 
-    def test_build_formdata(self):
-        self.assertDictEqual({}, mbsubmit.build_formdata([], None))
+    def test_build_formdata_empty(self):
+        plugin = MBSubmitPlugin()
+        self.assertDictEqual({}, plugin._build_formdata([], None))
+
+    def test_build_formdata_redirect(self):
+        plugin = MBSubmitPlugin()
         self.assertDictEqual(
             {"redirect_uri": "redirect_to_somewhere"},
-            mbsubmit.build_formdata([], "redirect_to_somewhere"),
+            plugin._build_formdata([], "redirect_to_somewhere"),
         )
 
+    def test_build_formdata_items(self):
+        plugin = MBSubmitPlugin()
         item1 = item(self.lib)
         item1.track = 1
         item1.title = "Track 1"
@@ -217,8 +223,40 @@ class MBSubmitPluginTest(
                 "mediums.0.track.0.name": "Track 3",
                 "mediums.0.track.0.number": 3,
             },
-            mbsubmit.build_formdata([item1, item2, item3], None),
+            plugin._build_formdata([item1, item2, item3], None),
         )
+
+    def test_build_formdata_defaults(self):
+        plugin = MBSubmitPlugin()
+        plugin.config["create_release_default_type"] = "Album"
+        plugin.config["create_release_default_language"] = "eng"
+        plugin.config["create_release_default_script"] = "Latn"
+        plugin.config["create_release_default_status"] = "Official"
+        plugin.config["create_release_default_packaging"] = "Box"
+        plugin.config["create_release_default_edit_note"] = (
+            "Created via beets mbsubmit plugin"
+        )
+        self.assertDictEqual(
+            {
+                "type": "Album",
+                "language": "eng",
+                "script": "Latn",
+                "status": "Official",
+                "packaging": "Box",
+                "edit_note": "Created via beets mbsubmit plugin",
+            },
+            plugin._build_formdata([], None),
+        )
+
+    def test_build_formdata_defaults_override(self):
+        plugin = MBSubmitPlugin()
+        plugin.config["create_release_default_type"] = "Album"
+
+        item1 = item(self.lib)
+        item1.albumtype = "Single"
+
+        formdata = plugin._build_formdata([item1], None)
+        self.assertEqual(formdata["type"], "Single")
 
 
 def suite():

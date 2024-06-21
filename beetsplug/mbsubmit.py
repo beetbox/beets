@@ -105,97 +105,6 @@ def join_phrase(i, total):
         return ""
 
 
-def build_formdata(items: List[Item], redirect_uri: Optional[str]):
-    formdata = dict()
-
-    labels = set()
-    album_artists = set()
-
-    track_counter = defaultdict(int)
-
-    for track in items:
-        if "name" not in formdata and track.album:
-            formdata["name"] = track.album
-        if "type" not in formdata and track.albumtype:
-            formdata["type"] = track.albumtype
-        if "barcode" not in formdata and track.barcode:
-            formdata["barcode"] = track.barcode
-        if "events.0.date.year" not in formdata and track.year:
-            formdata["events.0.date.year"] = track.year
-        if "events.0.date.month" not in formdata and track.month:
-            formdata["events.0.date.month"] = track.month
-        if "events.0.date.day" not in formdata and track.day:
-            formdata["events.0.date.day"] = track.day
-
-        if track.label:
-            labels.add(track.label)
-
-        if track.albumartists:
-            for artist in track.albumartists:
-                album_artists.add(artist)
-        elif track.albumartist:
-            album_artists.add(track.albumartist)
-
-        if track.disc:
-            medium_index = track.disc - 1
-        else:
-            medium_index = 0
-
-        track_index = track_counter[medium_index]
-
-        if f"mediums.{medium_index}.format" not in formdata and track.media:
-            formdata[f"mediums.{medium_index}.format"] = track.media
-
-        formdata[f"mediums.{medium_index}.track.{track_index}.name"] = (
-            track.title
-        )
-        formdata[f"mediums.{medium_index}.track.{track_index}.number"] = (
-            track.track
-        )
-        formdata[f"mediums.{medium_index}.track.{track_index}.length"] = int(
-            track.length * 1000
-        )  # in milliseconds
-
-        if track.artists:
-            track_artists = track.artists
-        elif track.artist:
-            track_artists = [track.artist]
-        else:
-            track_artists = []
-
-        for i, artist in enumerate(track_artists):
-            formdata[
-                (
-                    f"mediums.{medium_index}.track.{track_index}."
-                    f"artist_credit.names.{i}.artist.name"
-                )
-            ] = artist
-            if join_phrase(i, len(track_artists)):
-                formdata[
-                    (
-                        f"mediums.{medium_index}.track.{track_index}."
-                        f"artist_credit.names.{i}.join_phrase"
-                    )
-                ] = join_phrase(i, len(track_artists))
-
-        track_counter[medium_index] += 1
-
-    for i, label in enumerate(labels):
-        formdata[f"labels.{i}.name"] = label
-
-    for i, artist in enumerate(album_artists):
-        formdata[f"artist_credit.names.{i}.artist.name"] = artist
-        if join_phrase(i, len(album_artists)):
-            formdata[f"artist_credit.names.{i}.join_phrase"] = join_phrase(
-                i, len(album_artists)
-            )
-
-    if redirect_uri:
-        formdata["redirect_uri"] = redirect_uri
-
-    return formdata
-
-
 class MBSubmitPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
@@ -215,6 +124,12 @@ class MBSubmitPlugin(BeetsPlugin):
                 "create_release_server_port": 0,
                 "create_release_method": "show_link",
                 "create_release_await_mbid": True,
+                "create_release_default_type": None,
+                "create_release_default_language": None,
+                "create_release_default_script": None,
+                "create_release_default_status": None,
+                "create_release_default_packaging": None,
+                "create_release_default_edit_note": None,
             }
         )
 
@@ -266,6 +181,116 @@ class MBSubmitPlugin(BeetsPlugin):
         #  web server looks up the data in this dictionary using the key, and generates
         #  the page to be displayed.
         self._create_release_tasks = dict()
+
+    def _build_formdata(self, items: List[Item], redirect_uri: Optional[str]):
+        formdata = dict()
+
+        labels = set()
+        album_artists = set()
+
+        track_counter = defaultdict(int)
+
+        all_track_names = ""
+
+        for track in items:
+            if "name" not in formdata and track.album:
+                formdata["name"] = track.album
+            if "type" not in formdata and track.albumtype:
+                formdata["type"] = track.albumtype
+            if "barcode" not in formdata and track.barcode:
+                formdata["barcode"] = track.barcode
+            if "events.0.date.year" not in formdata and track.year:
+                formdata["events.0.date.year"] = track.year
+            if "events.0.date.month" not in formdata and track.month:
+                formdata["events.0.date.month"] = track.month
+            if "events.0.date.day" not in formdata and track.day:
+                formdata["events.0.date.day"] = track.day
+
+            if track.label:
+                labels.add(track.label)
+
+            if track.albumartists:
+                for artist in track.albumartists:
+                    album_artists.add(artist)
+            elif track.albumartist:
+                album_artists.add(track.albumartist)
+
+            if track.disc:
+                medium_index = track.disc - 1
+            else:
+                medium_index = 0
+
+            track_index = track_counter[medium_index]
+
+            if f"mediums.{medium_index}.format" not in formdata and track.media:
+                formdata[f"mediums.{medium_index}.format"] = track.media
+
+            formdata[f"mediums.{medium_index}.track.{track_index}.name"] = (
+                track.title
+            )
+            formdata[f"mediums.{medium_index}.track.{track_index}.number"] = (
+                track.track
+            )
+            formdata[f"mediums.{medium_index}.track.{track_index}.length"] = (
+                int(track.length * 1000)
+            )  # in milliseconds
+
+            all_track_names += f"{track.title}\n"
+
+            if track.artists:
+                track_artists = track.artists
+            elif track.artist:
+                track_artists = [track.artist]
+            else:
+                track_artists = []
+
+            for i, artist in enumerate(track_artists):
+                formdata[
+                    (
+                        f"mediums.{medium_index}.track.{track_index}."
+                        f"artist_credit.names.{i}.artist.name"
+                    )
+                ] = artist
+                if join_phrase(i, len(track_artists)):
+                    formdata[
+                        (
+                            f"mediums.{medium_index}.track.{track_index}."
+                            f"artist_credit.names.{i}.join_phrase"
+                        )
+                    ] = join_phrase(i, len(track_artists))
+
+            track_counter[medium_index] += 1
+
+        for i, label in enumerate(labels):
+            formdata[f"labels.{i}.name"] = label
+
+        for i, artist in enumerate(album_artists):
+            formdata[f"artist_credit.names.{i}.artist.name"] = artist
+            if join_phrase(i, len(album_artists)):
+                formdata[f"artist_credit.names.{i}.join_phrase"] = join_phrase(
+                    i, len(album_artists)
+                )
+
+        if redirect_uri:
+            formdata["redirect_uri"] = redirect_uri
+
+        for default_field in [
+            "type",
+            "language",
+            "script",
+            "status",
+            "packaging",
+            "edit_note",
+        ]:
+            if (
+                default_field not in formdata
+                and self.config[f"create_release_default_{default_field}"]
+            ):
+                formdata[default_field] = self.config[
+                    f"create_release_default_{default_field}"
+                ].get()
+
+        return formdata
 
     def _get_task_from_token(self, token: str) -> CreateReleaseTask:
         # Try to get the token from query args, try to decode it, and try to find the
@@ -421,7 +446,7 @@ class MBSubmitPlugin(BeetsPlugin):
         )
 
         self._create_release_tasks[task_key] = CreateReleaseTask(
-            formdata=build_formdata(
+            formdata=self._build_formdata(
                 items=items,
                 redirect_uri=(
                     redirect_uri if self.create_release_await_mbid else None
