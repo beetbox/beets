@@ -114,11 +114,27 @@ file. The following options are available:
   release on MusicBrainz. If true, waits for a callback from MusicBrainz with
   the new release ID and proceeds to add the unmatched album using that Id.
   If false, simply shows the select action prompt again. Default: true.
+- **create_release_default_type**: The default release type when none can be
+  identified from the unmatched files.
+  See https://musicbrainz.org/doc/Release_Group/Type
+- **create_release_default_language**: The default language as an `ISO 639-3`_
+  code (eng, deu, jpn).
+- **create_release_default_script**: The default script as an `ISO 15924`_ code
+  (Latn, Cyrl).
+- **create_release_default_status**: The default status. Possible values:
+  official, promotion, bootleg, pseudo-release.
+- **create_release_default_packaging**: The default packaging.
+  See https://musicbrainz.org/doc/Release/Packaging
+- **create_release_default_edit_note**: The default edit note when submitting
+  new releases.
 - **picard_path**: The path to the ``picard`` executable. Could be an absolute
   path, and if not, ``$PATH`` is consulted. The default value is simply
   ``picard``. Windows users will have to find and specify the absolute path to
   their ``picard.exe``. That would probably be:
   ``C:\Program Files\MusicBrainz Picard\picard.exe``.
+
+.. _ISO 639-3: https://en.wikipedia.org/wiki/List_of_ISO_639-3_codes
+.. _ISO 15924: https://en.wikipedia.org/wiki/ISO_15924
 
 Please note that some values of the ``threshold`` configuration option might
 require other ``beets`` command line switches to be enabled in order to work as
