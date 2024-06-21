@@ -40,6 +40,7 @@ Picard [4].
 [3] https://musicbrainz.org/doc/Development/Seeding/Release_Editor
 [4] https://github.com/metabrainz/picard/blob/master/picard/browser/browser.py
 """
+import socket
 import subprocess
 import threading
 import time
@@ -255,6 +256,7 @@ class MBSubmitPlugin(BeetsPlugin):
         )
 
         self._server = None
+        self._server_port = None
         self._jwt_key = token_bytes()
         self._jwt_algorithm = "HS256"
 
@@ -312,22 +314,36 @@ class MBSubmitPlugin(BeetsPlugin):
         if self._server:
             return True
 
+        if (port := self.create_release_server_port) == 0:
+            with socket.socket() as s:
+                # Find a free port for us to use. The OS will select a random available one.
+                # We can't pass 0 to waitress.create_server directly, this won't work when
+                #  using hostnames instead of IP addresses for create_release_server_hostname,
+                #  waitress will then bind to multiple sockets, with different ports for each.
+                s.bind((self.create_release_server_hostname, 0))
+                port = s.getsockname()[1]
+
         try:
             self._server = waitress.create_server(
                 self.flask_app,
                 host=self.create_release_server_hostname,
-                port=self.create_release_server_port,
+                port=port,
             )
             threading.Thread(target=self._server.run, daemon=True).start()
+            self._server_port = port
             return True
-        except (PermissionError, ValueError) as e:
-            self._log.error(f"Failed to start internal web server: {str(e)}")
+        except (PermissionError, ValueError, OSError) as e:
+            self._log.error(
+                f"Failed to start internal web server on {self.create_release_server_hostname}:{port}: {str(e)}"
+            )
+            self._server = None
             return False
 
     def _stop_server(self):
         if self._server:
             self._server.close()
             self._server = None
+            self._server_port = None
 
     def _wait_for_condition(self, condition: Callable):
         t = threading.current_thread()
@@ -393,11 +409,11 @@ class MBSubmitPlugin(BeetsPlugin):
 
         url = (
             f"http://{self.create_release_server_hostname}:"
-            f"{self._server.effective_port}/add?token={token}"
+            f"{self._server_port}/add?token={token}"
         )
         redirect_uri = (
             f"http://{self.create_release_server_hostname}:"
-            f"{self._server.effective_port}/complete_add?token={token}"
+            f"{self._server_port}/complete_add?token={token}"
         )
 
         self._log.debug(
