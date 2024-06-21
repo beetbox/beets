@@ -340,11 +340,12 @@ class MBSubmitPlugin(BeetsPlugin):
             return True
 
         if (port := self.create_release_server_port) == 0:
+            # Find a free port for us to use. The OS will select a random available one.
+            # We can't pass 0 to waitress.create_server directly, this won't work when
+            #  using hostnames instead of IP addresses for
+            #  create_release_server_hostname, waitress will then bind to multiple
+            #  sockets, with different ports for each.
             with socket.socket() as s:
-                # Find a free port for us to use. The OS will select a random available one.
-                # We can't pass 0 to waitress.create_server directly, this won't work when
-                #  using hostnames instead of IP addresses for create_release_server_hostname,
-                #  waitress will then bind to multiple sockets, with different ports for each.
                 s.bind((self.create_release_server_hostname, 0))
                 port = s.getsockname()[1]
 
@@ -359,7 +360,8 @@ class MBSubmitPlugin(BeetsPlugin):
             return True
         except (PermissionError, ValueError, OSError) as e:
             self._log.error(
-                f"Failed to start internal web server on {self.create_release_server_hostname}:{port}: {str(e)}"
+                f"Failed to start internal web server on "
+                f"{self.create_release_server_hostname}:{port}: {str(e)}"
             )
             self._server = None
             return False

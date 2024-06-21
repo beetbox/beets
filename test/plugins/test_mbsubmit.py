@@ -25,7 +25,6 @@ from beets.test.helper import (
     capture_stdout,
     control_stdin,
 )
-from beetsplug import mbsubmit
 from beetsplug.mbsubmit import CreateReleaseTask, MBSubmitPlugin
 
 
