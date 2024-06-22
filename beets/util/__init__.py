@@ -45,7 +45,11 @@ from typing import (
     Union,
 )
 
-from typing_extensions import TypeAlias
+try:
+    # Python 3.10+
+    from typing import TypeAlias
+except ImportError:
+    from typing_extensions import TypeAlias
 from unidecode import unidecode
 
 from beets.util import hidden

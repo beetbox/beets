@@ -15,6 +15,7 @@ For packagers:
 
 * The minimum supported Python version is now 3.8.
 * The `beet` script has been removed from the repository.
+* The `typing_extensions` is required for Python 3.10 and below.
 
 Other changes:
 
