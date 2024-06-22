@@ -45,11 +45,11 @@ from typing import (
     Union,
 )
 
-try:
-    # Python 3.10+
+if sys.version_info >= (3, 10):
     from typing import TypeAlias
-except ImportError:
+else:
     from typing_extensions import TypeAlias
+
 from unidecode import unidecode
 
 from beets.util import hidden

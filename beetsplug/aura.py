@@ -17,6 +17,7 @@
 
 import os
 import re
+import sys
 from dataclasses import dataclass
 from mimetypes import guess_type
 from typing import ClassVar, Mapping, Type
@@ -30,10 +31,9 @@ from flask import (
     send_file,
 )
 
-try:
-    # Python 3.11+
+if sys.version_info >= (3, 11):
     from typing import Self
-except ImportError:
+else:
     from typing_extensions import Self
 
 from beets import config
