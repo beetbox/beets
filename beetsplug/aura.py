@@ -29,7 +29,12 @@ from flask import (
     request,
     send_file,
 )
-from typing_extensions import Self
+
+try:
+    # Python 3.11+
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 from beets import config
 from beets.dbcore.query import (
