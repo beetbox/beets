@@ -17,6 +17,7 @@
 
 import os
 import re
+import sys
 from dataclasses import dataclass
 from mimetypes import guess_type
 from typing import ClassVar, Mapping, Type
@@ -29,7 +30,11 @@ from flask import (
     request,
     send_file,
 )
-from typing_extensions import Self
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 from beets import config
 from beets.dbcore.query import (

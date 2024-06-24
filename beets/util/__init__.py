@@ -45,7 +45,11 @@ from typing import (
     Union,
 )
 
-from typing_extensions import TypeAlias
+if sys.version_info >= (3, 10):
+    from typing import TypeAlias
+else:
+    from typing_extensions import TypeAlias
+
 from unidecode import unidecode
 
 from beets.util import hidden
