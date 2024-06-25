@@ -12,15 +12,14 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Parsing of strings into DBCore queries.
-"""
+"""Parsing of strings into DBCore queries."""
 
 import itertools
 import re
 from typing import Collection, Dict, List, Optional, Sequence, Tuple, Type
 
 from . import Model, query
-from .query import Query, Sort
+from .query import Sort
 
 PARSE_QUERY_PART_REGEX = re.compile(
     # Non-capturing optional segment for the keyword.
@@ -36,10 +35,10 @@ PARSE_QUERY_PART_REGEX = re.compile(
 
 def parse_query_part(
     part: str,
-    query_classes: Dict = {},
+    query_classes: Dict[str, Type[query.FieldQuery]] = {},
     prefixes: Dict = {},
     default_class: Type[query.SubstringQuery] = query.SubstringQuery,
-) -> Tuple[Optional[str], str, Type[query.Query], bool]:
+) -> Tuple[Optional[str], str, Type[query.FieldQuery], bool]:
     """Parse a single *query part*, which is a chunk of a complete query
     string representing a single criterion.
 
@@ -128,7 +127,7 @@ def construct_query_part(
 
     # Use `model_cls` to build up a map from field (or query) names to
     # `Query` classes.
-    query_classes: Dict[str, Type[Query]] = {}
+    query_classes: Dict[str, Type[query.FieldQuery]] = {}
     for k, t in itertools.chain(
         model_cls._fields.items(), model_cls._types.items()
     ):
@@ -143,30 +142,24 @@ def construct_query_part(
     # If there's no key (field name) specified, this is a "match
     # anything" query.
     if key is None:
-        if issubclass(query_class, query.FieldQuery):
-            # The query type matches a specific field, but none was
-            # specified. So we use a version of the query that matches
-            # any field.
-            out_query = query.AnyFieldQuery(
-                pattern, model_cls._search_fields, query_class
-            )
-        elif issubclass(query_class, query.NamedQuery):
-            # Non-field query type.
-            out_query = query_class(pattern)
-        else:
-            assert False, "Unexpected query type"
+        # The query type matches a specific field, but none was
+        # specified. So we use a version of the query that matches
+        # any field.
+        out_query = query.AnyFieldQuery(
+            pattern, model_cls._search_fields, query_class
+        )
 
     # Field queries get constructed according to the name of the field
     # they are querying.
-    elif issubclass(query_class, query.FieldQuery):
-        key = key.lower()
-        out_query = query_class(key.lower(), pattern, key in model_cls._fields)
-
-    # Non-field (named) query.
-    elif issubclass(query_class, query.NamedQuery):
-        out_query = query_class(pattern)
     else:
-        assert False, "Unexpected query type"
+        key = key.lower()
+        if key in model_cls.shared_db_fields:
+            # This field exists in both tables, so SQLite will encounter
+            # an OperationalError if we try to query it in a join.
+            # Using an explicit table name resolves this.
+            key = f"{model_cls._table}.{key}"
+
+        out_query = query_class(key, pattern, key in model_cls.all_db_fields)
 
     # Apply negation.
     if negate:

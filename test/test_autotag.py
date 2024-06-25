@@ -42,7 +42,7 @@ class PluralityTest(_common.TestCase):
     def test_plurality_conflict(self):
         objs = [1, 1, 2, 2, 3]
         obj, freq = plurality(objs)
-        self.assertTrue(obj in (1, 2))
+        self.assertIn(obj, (1, 2))
         self.assertEqual(freq, 2)
 
     def test_plurality_empty_sequence_raises_error(self):
@@ -90,6 +90,7 @@ class PluralityTest(_common.TestCase):
             "disctotal",
             "mb_albumid",
             "label",
+            "barcode",
             "catalognum",
             "country",
             "media",
@@ -142,7 +143,7 @@ def _clear_weights():
     """Hack around the lazy descriptor used to cache weights for
     Distance calculations.
     """
-    Distance.__dict__["_weights"].computed = False
+    Distance.__dict__["_weights"].cache = {}
 
 
 class DistanceTest(_common.TestCase):
@@ -278,9 +279,9 @@ class DistanceTest(_common.TestCase):
         dist.add("medium", 0.75)
         self.assertEqual(len(dist), 2)
         self.assertEqual(list(dist), [("album", 0.2), ("medium", 0.2)])
-        self.assertTrue(dist == 0.4)
-        self.assertTrue(dist < 1.0)
-        self.assertTrue(dist > 0.0)
+        self.assertEqual(dist, 0.4)
+        self.assertLess(dist, 1.0)
+        self.assertGreater(dist, 0.0)
         self.assertEqual(dist - 0.4, 0.0)
         self.assertEqual(0.4 - dist, 0.0)
         self.assertEqual(float(dist), 0.4)
@@ -393,7 +394,7 @@ class AlbumDistanceTest(_common.TestCase):
         dist = self._dist(items, info)
         self.assertNotEqual(dist, 0)
         # Make sure the distance is not too great
-        self.assertTrue(dist < 0.2)
+        self.assertLess(dist, 0.2)
 
     def test_global_artists_differ(self):
         items = []
@@ -1016,17 +1017,17 @@ class StringDistanceTest(unittest.TestCase):
     def test_leading_the_has_lower_weight(self):
         dist1 = string_dist("XXX Band Name", "Band Name")
         dist2 = string_dist("The Band Name", "Band Name")
-        self.assertTrue(dist2 < dist1)
+        self.assertLess(dist2, dist1)
 
     def test_parens_have_lower_weight(self):
         dist1 = string_dist("One .Two.", "One")
         dist2 = string_dist("One (Two)", "One")
-        self.assertTrue(dist2 < dist1)
+        self.assertLess(dist2, dist1)
 
     def test_brackets_have_lower_weight(self):
         dist1 = string_dist("One .Two.", "One")
         dist2 = string_dist("One [Two]", "One")
-        self.assertTrue(dist2 < dist1)
+        self.assertLess(dist2, dist1)
 
     def test_ep_label_has_zero_weight(self):
         dist = string_dist("My Song (EP)", "My Song")
@@ -1035,7 +1036,7 @@ class StringDistanceTest(unittest.TestCase):
     def test_featured_has_lower_weight(self):
         dist1 = string_dist("My Song blah Someone", "My Song")
         dist2 = string_dist("My Song feat Someone", "My Song")
-        self.assertTrue(dist2 < dist1)
+        self.assertLess(dist2, dist1)
 
     def test_postfix_the(self):
         dist = string_dist("The Song Title", "Song Title, The")

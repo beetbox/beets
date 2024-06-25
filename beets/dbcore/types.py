@@ -14,32 +14,22 @@
 
 """Representation of type information for DBCore model fields.
 """
-import sys
 import typing
 from abc import ABC
-from typing import TYPE_CHECKING, Any, Generic, List, TypeVar, Union, cast
+from typing import Any, Generic, List, TypeVar, Union, cast
 
 from beets.util import str2bool
 
 from .query import BooleanQuery, FieldQuery, NumericQuery, SubstringQuery
 
-# Abstract base.
 
+class ModelType(typing.Protocol):
+    """Protocol that specifies the required constructor for model types,
+    i.e. a function that takes any argument and attempts to parse it to the
+    given type.
+    """
 
-# FIXME: unconditionally define the Protocol once we drop Python 3.7
-if TYPE_CHECKING and sys.version_info >= (3, 8):
-
-    class ModelType(typing.Protocol):
-        """Protocol that specifies the required constructor for model types,
-        i.e. a function that takes any argument and attempts to parse it to the
-        given type.
-        """
-
-        def __init__(self, value: Any = None): ...
-
-else:
-    # No structural subtyping in Python < 3.8...
-    ModelType = Any
+    def __init__(self, value: Any = None): ...
 
 
 # Generic type variables, used for the value type T and null type N (if
@@ -242,7 +232,7 @@ class BaseFloat(Type[float, N]):
     """
 
     sql = "REAL"
-    query = NumericQuery
+    query: typing.Type[FieldQuery[Any]] = NumericQuery
     model_type = float
 
     def __init__(self, digits: int = 1):

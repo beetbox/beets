@@ -37,7 +37,7 @@ class QueryTest(_common.TestCase):
         self.lib = library.Library(":memory:", self.libdir)
 
         # Alternate destination directory.
-        self.otherdir = os.path.join(self.temp_dir, b"testotherdir")
+        # self.otherdir = os.path.join(self.temp_dir, b"testotherdir")
 
     def add_item(self, filename=b"srcfile", templatefile=b"full.mp3"):
         itempath = os.path.join(self.libdir, filename)

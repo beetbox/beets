@@ -46,7 +46,7 @@ class Substitute(BeetsPlugin):
         Get the configuration, register template function and create list of
         substitute rules.
         """
-        super(Substitute, self).__init__()
+        super().__init__()
         self.substitute_rules = []
         self.template_funcs["substitute"] = self.tmpl_substitute
 

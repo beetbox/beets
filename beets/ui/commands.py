@@ -90,7 +90,7 @@ def _paths_from_logfile(path):
     """Parse the logfile and yield skipped paths to pass to the `import`
     command.
     """
-    with open(path, mode="r", encoding="utf-8") as fp:
+    with open(path, encoding="utf-8") as fp:
         for i, line in enumerate(fp, start=1):
             verb, sep, paths = line.rstrip("\n").partition(" ")
             if not sep:
@@ -117,7 +117,7 @@ def _parse_logfiles(logfiles):
                     util.displayable_path(logfile), str(err)
                 )
             ) from err
-        except IOError as err:
+        except OSError as err:
             raise ui.UserError(
                 "unreadable logfile {}: {}".format(
                     util.displayable_path(logfile), str(err)
@@ -300,7 +300,7 @@ def penalty_string(distance, limit=None):
         return ui.colorize("changed", penalty_string)
 
 
-class ChangeRepresentation(object):
+class ChangeRepresentation:
     """Keeps track of all information needed to generate a (colored) text
     representation of the changes that will be made if an album or singleton's
     tags are changed according to `match`, which must be an AlbumMatch or
@@ -654,7 +654,7 @@ class AlbumChange(ChangeRepresentation):
     """Album change representation, setting cur_album"""
 
     def __init__(self, cur_artist, cur_album, match):
-        super(AlbumChange, self).__init__()
+        super().__init__()
         self.cur_artist = cur_artist
         self.cur_album = cur_album
         self.match = match
@@ -722,7 +722,7 @@ class TrackChange(ChangeRepresentation):
     """Track change representation, comparing item with match."""
 
     def __init__(self, cur_artist, cur_title, match):
-        super(TrackChange, self).__init__()
+        super().__init__()
         self.cur_artist = cur_artist
         self.cur_title = cur_title
         self.match = match
@@ -2371,7 +2371,9 @@ def config_edit():
     except OSError as exc:
         message = f"Could not edit configuration: {exc}"
         if not editor:
-            message += ". Please set the EDITOR environment variable"
+            message += (
+                ". Please set the VISUAL (or EDITOR) environment variable"
+            )
         raise ui.UserError(message)
 
 
@@ -2386,7 +2388,7 @@ config_cmd.parser.add_option(
     "-e",
     "--edit",
     action="store_true",
-    help="edit user configuration with $EDITOR",
+    help="edit user configuration with $VISUAL (or $EDITOR)",
 )
 config_cmd.parser.add_option(
     "-d",

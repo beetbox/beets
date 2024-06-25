@@ -22,7 +22,6 @@ from .query import (
     FieldQuery,
     InvalidQueryError,
     MatchQuery,
-    NamedQuery,
     OrQuery,
     Query,
 )

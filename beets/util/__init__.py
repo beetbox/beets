@@ -16,7 +16,6 @@
 
 import errno
 import fnmatch
-import functools
 import os
 import platform
 import re
@@ -46,7 +45,11 @@ from typing import (
     Union,
 )
 
-from typing_extensions import TypeAlias
+if sys.version_info >= (3, 10):
+    from typing import TypeAlias
+else:
+    from typing_extensions import TypeAlias
+
 from unidecode import unidecode
 
 from beets.util import hidden
@@ -427,7 +430,7 @@ def displayable_path(
         return path.decode("utf-8", "ignore")
 
 
-def syspath(path: bytes, prefix: bool = True) -> Bytes_or_String:
+def syspath(path: Bytes_or_String, prefix: bool = True) -> Bytes_or_String:
     """Convert a path for use by the operating system. In particular,
     paths on Windows must receive a magic prefix and must be converted
     to Unicode before they are sent to the OS. To disable the magic
@@ -526,7 +529,7 @@ def move(path: bytes, dest: bytes, replace: bool = False):
         dirname = os.path.dirname(bytestring_path(dest))
         tmp = tempfile.NamedTemporaryFile(
             suffix=syspath(b".beets", prefix=False),
-            prefix=syspath(b"." + basename, prefix=False),
+            prefix=syspath(b"." + basename + b".", prefix=False),
             dir=syspath(dirname),
             delete=False,
         )
@@ -804,21 +807,6 @@ def legalize_path(
     return second_stage_path, retruncated
 
 
-def py3_path(path: Union[bytes, str]) -> str:
-    """Convert a bytestring path to Unicode.
-
-    This helps deal with APIs on Python 3 that *only* accept Unicode
-    (i.e., `str` objects). I philosophically disagree with this
-    decision, because paths are sadly bytes on Unix, but that's the way
-    it is. So this function helps us "smuggle" the true bytes data
-    through APIs that took Python 3's Unicode mandate too seriously.
-    """
-    if isinstance(path, str):
-        return path
-    assert isinstance(path, bytes)
-    return os.fsdecode(path)
-
-
 def str2bool(value: str) -> bool:
     """Returns a boolean reflecting a human-entered string."""
     return value.lower() in ("yes", "1", "true", "t", "y")
@@ -847,41 +835,6 @@ def plurality(objs: Sequence[T]) -> T:
     if not c:
         raise ValueError("sequence must be non-empty")
     return c.most_common(1)[0]
-
-
-def cpu_count() -> int:
-    """Return the number of hardware thread contexts (cores or SMT
-    threads) in the system.
-    """
-    # Adapted from the soundconverter project:
-    # https://github.com/kassoulet/soundconverter
-    if sys.platform == "win32":
-        try:
-            num = int(os.environ["NUMBER_OF_PROCESSORS"])
-        except (ValueError, KeyError):
-            num = 0
-    elif sys.platform == "darwin":
-        try:
-            num = int(
-                command_output(
-                    [
-                        "/usr/sbin/sysctl",
-                        "-n",
-                        "hw.ncpu",
-                    ]
-                ).stdout
-            )
-        except (ValueError, OSError, subprocess.CalledProcessError):
-            num = 0
-    else:
-        try:
-            num = os.sysconf("SC_NPROCESSORS_ONLN")
-        except (ValueError, OSError, AttributeError):
-            num = 0
-    if num >= 1:
-        return num
-    else:
-        return 1
 
 
 def convert_command_args(args: List[bytes]) -> List[str]:
@@ -978,14 +931,14 @@ def open_anything() -> str:
 def editor_command() -> str:
     """Get a command for opening a text file.
 
-    Use the `EDITOR` environment variable by default. If it is not
-    present, fall back to `open_anything()`, the platform-specific tool
-    for opening files in general.
+    First try environment variable `VISUAL` followed by `EDITOR`. As last resort
+    fall back to `open_anything()`, the platform-specific tool for opening files
+    in general.
+
     """
-    editor = os.environ.get("EDITOR")
-    if editor:
-        return editor
-    return open_anything()
+    return (
+        os.environ.get("VISUAL") or os.environ.get("EDITOR") or open_anything()
+    )
 
 
 def interactive_open(targets: Sequence[str], command: str):
@@ -1108,24 +1061,18 @@ def par_map(transform: Callable, items: Iterable):
     pool.join()
 
 
-def lazy_property(func: Callable) -> Callable:
-    """A decorator that creates a lazily evaluated property. On first access,
-    the property is assigned the return value of `func`. This first value is
-    stored, so that future accesses do not have to evaluate `func` again.
-
-    This behaviour is useful when `func` is expensive to evaluate, and it is
-    not certain that the result will be needed.
+class cached_classproperty:  # noqa: N801
+    """A decorator implementing a read-only property that is *lazy* in
+    the sense that the getter is only invoked once. Subsequent accesses
+    through *any* instance use the cached result.
     """
-    field_name = "_" + func.__name__
 
-    @property
-    @functools.wraps(func)
-    def wrapper(self):
-        if hasattr(self, field_name):
-            return getattr(self, field_name)
+    def __init__(self, getter):
+        self.getter = getter
+        self.cache = {}
 
-        value = func(self)
-        setattr(self, field_name, value)
-        return value
+    def __get__(self, instance, owner):
+        if owner not in self.cache:
+            self.cache[owner] = self.getter(owner)
 
-    return wrapper
+        return self.cache[owner]

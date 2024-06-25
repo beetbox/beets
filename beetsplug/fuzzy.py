@@ -23,9 +23,9 @@ from beets.dbcore.query import StringFieldQuery
 from beets.plugins import BeetsPlugin
 
 
-class FuzzyQuery(StringFieldQuery):
+class FuzzyQuery(StringFieldQuery[str]):
     @classmethod
-    def string_match(cls, pattern, val):
+    def string_match(cls, pattern: str, val: str):
         # smartcase
         if pattern.islower():
             val = val.lower()
