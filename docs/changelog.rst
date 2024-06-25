@@ -13,6 +13,10 @@ New features:
   album queries involving `path` field have been sped up, like `beet list -a
   path:/path/`.
 
+* Beets now respects `XDG_MUSIC_DIR` if it is set in `user-dirs.dirs(5)` on
+  Unix-like systems.  It will continue to fall back to `~/Music`, but only if
+  `user-dirs.dirs` is not found (in `$XDG_CONFIG_HOME` or `$HOME/.config`).
+
 Bug fixes:
 
 * Improved naming of temporary files by separating the random part with the file extension.
