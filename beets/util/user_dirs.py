@@ -28,7 +28,7 @@ of any particular entry -- always provide a reasonable default.
 import os
 import re
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 
 from beets import logging
 
@@ -39,7 +39,7 @@ user_dir_regex = re.compile(b'XDG_(.*)_DIR=("[^"]*"|.*)')
 def get_user_dirs(
     home: Optional[Path] = None,
     xdg_config_home: Optional[Path] = None,
-) -> dict[str, Path]:
+) -> Dict[str, Path]:
     """
     Parse the 'user-dirs.dirs' file in the given configuration directory.
 
@@ -82,7 +82,7 @@ def parse_user_dirs(
     data: bytes,
     path: str,
     home: Path,
-) -> dict[str, Path]:
+) -> Dict[str, Path]:
     """
     Parse the given 'user-dirs.dirs' file.
 
@@ -98,7 +98,7 @@ def parse_user_dirs(
     """
 
     # Parse the loaded data line by line.
-    mapping: dict[str, Path] = {}
+    mapping: Dict[str, Path] = {}
     for line in map(bytes.strip, data.splitlines()):
 
         # Skip blank lines.
