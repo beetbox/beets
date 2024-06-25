@@ -17,9 +17,11 @@
 import os
 import platform
 import re
+import shutil
 import subprocess
 import sys
 import unittest
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 from beets import util
@@ -215,6 +217,51 @@ class PathTruncationTest(_common.TestCase):
         with _common.platform_posix():
             p = util.truncate_path("abcde/fgh.ext", 5)
         self.assertEqual(p, "abcde/f.ext")
+
+
+class UserDirsTest(_common.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.home = Path.home()
+        self.old_config_home = os.environ.pop("XDG_CONFIG_HOME", default=None)
+        self.xdg_config_home = self.home / "xdg-config-home"
+        self.xdg_config_home.mkdir(parents=False, exist_ok=True)
+        self.def_config_home = self.home / ".config"
+        self.def_config_home.mkdir(parents=False, exist_ok=True)
+        os.environ["XDG_CONFIG_HOME"] = str(self.xdg_config_home)
+
+    def tearDown(self):
+        os.environ.pop("XDG_CONFIG_HOME", default=None)
+        if self.old_config_home is not None:
+            os.environ["XDG_CONFIG_HOME"] = self.old_config_home
+
+        super().tearDown()
+
+    def test_lookup(self):
+        path1 = self.xdg_config_home / "user-dirs.dirs"
+        path2 = self.def_config_home / "user-dirs.dirs"
+        path1.write_bytes(b"XDG_MUSIC_DIR=$HOME/Music1")
+        path2.write_bytes(b"XDG_MUSIC_DIR=$HOME/Music2")
+
+        # Test '$XDG_CONFIG_HOME/user-dirs.dirs'.
+        self.assertEqual({"music": self.home / "Music1"}, util.get_user_dirs())
+
+        # Test '$HOME/.config/user-dirs.dirs'.
+        path1.unlink()
+        del os.environ["XDG_CONFIG_HOME"]
+        self.assertEqual({"music": self.home / "Music2"}, util.get_user_dirs())
+
+        # Test neither option available.
+        path2.unlink()
+        self.assertEqual({}, util.get_user_dirs())
+
+    def test_simple(self):
+        data = b"XDG_MUSIC_DIR=$HOME/Music"
+        self.assertEqual(
+            {"music": self.home / "Music"},
+            util.user_dirs.parse_user_dirs(data, "", self.home),
+        )
 
 
 class ConfitDeprecationTest(_common.TestCase):
