@@ -60,14 +60,14 @@ class FetchartCliTest(unittest.TestCase, TestHelper):
         os.makedirs(os.path.join(self.album.path, b"mycover.jpg"))
         self.run_command("fetchart")
         self.album.load()
-        self.assertEqual(self.album["artpath"], None)
+        self.assertIsNone(self.album["artpath"])
 
     def test_filesystem_does_not_pick_up_ignored_file(self):
         self.touch(b"co_ver.jpg", dir=self.album.path, content="IMAGE")
         self.config["ignore"] = ["*_*"]
         self.run_command("fetchart")
         self.album.load()
-        self.assertEqual(self.album["artpath"], None)
+        self.assertIsNone(self.album["artpath"])
 
     def test_filesystem_picks_up_non_ignored_file(self):
         self.touch(b"cover.jpg", dir=self.album.path, content="IMAGE")
@@ -84,7 +84,7 @@ class FetchartCliTest(unittest.TestCase, TestHelper):
         self.config["ignore_hidden"] = True
         self.run_command("fetchart")
         self.album.load()
-        self.assertEqual(self.album["artpath"], None)
+        self.assertIsNone(self.album["artpath"])
 
     def test_filesystem_picks_up_non_hidden_file(self):
         self.touch(b"cover.jpg", dir=self.album.path, content="IMAGE")

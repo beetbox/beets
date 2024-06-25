@@ -225,12 +225,12 @@ class FetchImageTest(FetchImageHelper, UseThePlugin):
     def test_invalid_type_returns_none(self):
         self.mock_response(self.URL, "image/watercolour")
         self.source.fetch_image(self.candidate, self.settings)
-        self.assertEqual(self.candidate.path, None)
+        self.assertIsNone(self.candidate.path)
 
     def test_jpeg_type_returns_path(self):
         self.mock_response(self.URL, "image/jpeg")
         self.source.fetch_image(self.candidate, self.settings)
-        self.assertNotEqual(self.candidate.path, None)
+        self.assertIsNotNone(self.candidate.path)
 
     def test_extension_set_by_content_type(self):
         self.mock_response(self.URL, "image/png")
@@ -600,7 +600,7 @@ class CoverArtArchiveTest(UseThePlugin, CAAHelper):
         candidates = list(self.source.get(album, self.settings, []))
         self.assertEqual(len(candidates), 3)
         for candidate in candidates:
-            self.assertTrue(f"-{maxwidth}.jpg" in candidate.url)
+            self.assertIn(f"-{maxwidth}.jpg", candidate.url)
 
     def test_caa_finds_image_if_maxwidth_is_set_and_thumbnails_is_empty(self):
         # CAA provides pre-sized thumbnails of width 250px, 500px, and 1200px
@@ -621,7 +621,7 @@ class CoverArtArchiveTest(UseThePlugin, CAAHelper):
         candidates = list(self.source.get(album, self.settings, []))
         self.assertEqual(len(candidates), 3)
         for candidate in candidates:
-            self.assertFalse(f"-{maxwidth}.jpg" in candidate.url)
+            self.assertNotIn(f"-{maxwidth}.jpg", candidate.url)
 
 
 class FanartTVTest(UseThePlugin):

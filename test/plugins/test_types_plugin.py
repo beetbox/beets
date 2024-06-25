@@ -92,12 +92,12 @@ class TypesPluginTest(unittest.TestCase, TestHelper):
         # Set true
         self.modify("mybool=1", "artist:true")
         true.load()
-        self.assertEqual(true["mybool"], True)
+        self.assertTrue(true["mybool"])
 
         # Set false
         self.modify("mybool=false", "artist:false")
         false.load()
-        self.assertEqual(false["mybool"], False)
+        self.assertFalse(false["mybool"])
 
         # Query bools
         out = self.list("mybool:true", "$artist $mybool")

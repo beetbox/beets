@@ -11,8 +11,8 @@ master_doc = "index"
 project = "beets"
 copyright = "2016, Adrian Sampson"
 
-version = "1.6"
-release = "1.6.1"
+version = "2.0"
+release = "2.0.0"
 
 pygments_style = "sphinx"
 
@@ -60,9 +60,9 @@ man_pages = [
 ]
 
 # Options for pydata theme
-html_theme = 'pydata_sphinx_theme'
+html_theme = "pydata_sphinx_theme"
 html_theme_options = {
-    'collapse_navigation': True,
+    "collapse_navigation": True,
     "logo": {
         "text": "beets",
     },
@@ -70,5 +70,5 @@ html_theme_options = {
 }
 html_title = "beets"
 html_logo = "_static/beets_logo_nobg.png"
-html_static_path = ['_static']
-html_css_files = ['beets.css']
+html_static_path = ["_static"]
+html_css_files = ["beets.css"]

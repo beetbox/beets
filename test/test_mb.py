@@ -69,6 +69,7 @@ class MBAlbumInfoTest(_common.TestCase):
             },
             "country": "COUNTRY",
             "status": "STATUS",
+            "barcode": "BARCODE",
         }
 
         if multi_artist_credit:
@@ -317,7 +318,7 @@ class MBAlbumInfoTest(_common.TestCase):
         tracks = [self._make_track("TITLE", "ID", None)]
         release = self._make_release(tracks=tracks)
         d = mb.album_info(release)
-        self.assertEqual(d.tracks[0].length, None)
+        self.assertIsNone(d.tracks[0].length)
 
     def test_track_length_overrides_recording_length(self):
         tracks = [self._make_track("TITLE", "ID", 1.0 * 1000.0)]
@@ -379,6 +380,11 @@ class MBAlbumInfoTest(_common.TestCase):
         d = mb.album_info(release)
         self.assertEqual(d.albumstatus, "STATUS")
 
+    def test_parse_barcode(self):
+        release = self._make_release(None)
+        d = mb.album_info(release)
+        self.assertEqual(d.barcode, "BARCODE")
+
     def test_parse_media(self):
         tracks = [
             self._make_track("TITLE ONE", "ID ONE", 100.0 * 1000.0),
@@ -409,7 +415,7 @@ class MBAlbumInfoTest(_common.TestCase):
         release = self._make_release(None)
         del release["text-representation"]["language"]
         d = mb.album_info(release)
-        self.assertEqual(d.language, None)
+        self.assertIsNone(d.language)
 
     def test_parse_recording_artist(self):
         tracks = [self._make_track("a", "b", 1, True)]
@@ -652,7 +658,7 @@ class MBAlbumInfoTest(_common.TestCase):
         d = mb.album_info(release)
         t = d.tracks
         self.assertEqual(len(t), 2)
-        self.assertEqual(t[0].trackdisambig, None)
+        self.assertIsNone(t[0].trackdisambig)
         self.assertEqual(t[1].trackdisambig, "SECOND TRACK")
 
 
@@ -665,7 +671,7 @@ class ParseIDTest(_common.TestCase):
     def test_parse_id_non_id_returns_none(self):
         id_string = "blah blah"
         out = mb._parse_id(id_string)
-        self.assertEqual(out, None)
+        self.assertIsNone(out)
 
     def test_parse_id_url_finds_id(self):
         id_string = "28e32c71-1450-463e-92bf-e0a46446fc11"
@@ -975,7 +981,7 @@ class MBLibraryTest(unittest.TestCase):
         with mock.patch("musicbrainzngs.get_release_by_id") as gp:
             gp.side_effect = side_effect
             album = mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
-            self.assertEqual(album.country, None)
+            self.assertIsNone(album.country)
 
     def test_pseudo_releases_without_links(self):
         side_effect = [
@@ -1019,7 +1025,7 @@ class MBLibraryTest(unittest.TestCase):
         with mock.patch("musicbrainzngs.get_release_by_id") as gp:
             gp.side_effect = side_effect
             album = mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
-            self.assertEqual(album.country, None)
+            self.assertIsNone(album.country)
 
     def test_pseudo_releases_with_unsupported_links(self):
         side_effect = [
@@ -1070,7 +1076,7 @@ class MBLibraryTest(unittest.TestCase):
         with mock.patch("musicbrainzngs.get_release_by_id") as gp:
             gp.side_effect = side_effect
             album = mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
-            self.assertEqual(album.country, None)
+            self.assertIsNone(album.country)
 
 
 def suite():

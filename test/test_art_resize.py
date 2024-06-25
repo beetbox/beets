@@ -129,7 +129,7 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
         from PIL import Image
 
         with Image.open(path) as img:
-            self.assertFalse("progression" in img.info)
+            self.assertNotIn("progression", img.info)
 
     @unittest.skipUnless(IMBackend.available(), "ImageMagick not available")
     def test_im_file_deinterlace(self):
@@ -146,7 +146,7 @@ class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
             syspath(path, prefix=False),
         ]
         out = command_output(cmd).stdout
-        self.assertTrue(out == b"None")
+        self.assertEqual(out, b"None")
 
     @patch("beets.util.artresizer.util")
     def test_write_metadata_im(self, mock_util):

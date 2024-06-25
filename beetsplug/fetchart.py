@@ -26,7 +26,7 @@ import requests
 from mediafile import image_mime_type
 
 from beets import config, importer, plugins, ui, util
-from beets.util import bytestring_path, py3_path, sorted_walk, syspath
+from beets.util import bytestring_path, sorted_walk, syspath
 from beets.util.artresizer import ArtResizer
 
 try:
@@ -270,6 +270,8 @@ def _logged_get(log, *args, **kwargs):
     for arg in ("stream", "verify", "proxies", "cert", "timeout"):
         if arg in kwargs:
             send_kwargs[arg] = req_kwargs.pop(arg)
+    if "timeout" not in send_kwargs:
+        send_kwargs["timeout"] = 10
 
     # Our special logging message parameter.
     if "message" in kwargs:
@@ -410,7 +412,7 @@ class RemoteArtSource(ArtSource):
                         ext,
                     )
 
-                suffix = py3_path(ext)
+                suffix = os.fsdecode(ext)
                 with NamedTemporaryFile(suffix=suffix, delete=False) as fh:
                     # write the first already loaded part of the image
                     fh.write(header)
@@ -1098,7 +1100,7 @@ class Spotify(RemoteArtSource):
             self._log.debug("Fetchart: no Spotify album ID found")
             return
         try:
-            response = requests.get(url)
+            response = requests.get(url, timeout=10)
             response.raise_for_status()
         except requests.RequestException as e:
             self._log.debug("Error: " + str(e))

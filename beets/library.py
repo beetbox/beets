@@ -14,6 +14,7 @@
 
 """The core data store and collection logic for beets.
 """
+from __future__ import annotations
 
 import os
 import re
@@ -22,6 +23,7 @@ import string
 import sys
 import time
 import unicodedata
+from functools import cached_property
 
 from mediafile import MediaFile, UnreadableFileError
 
@@ -31,7 +33,7 @@ from beets.dbcore import Results, types
 from beets.util import (
     MoveOperation,
     bytestring_path,
-    lazy_property,
+    cached_classproperty,
     normpath,
     samefile,
     syspath,
@@ -49,7 +51,7 @@ log = logging.getLogger("beets")
 # Library-specific query types.
 
 
-class SingletonQuery(dbcore.FieldQuery):
+class SingletonQuery(dbcore.FieldQuery[str]):
     """This query is responsible for the 'singleton' lookup.
 
     It is based on the FieldQuery and constructs a SQL clause
@@ -60,14 +62,14 @@ class SingletonQuery(dbcore.FieldQuery):
     and singleton:false, singleton:0 are handled consistently.
     """
 
-    def __new__(cls, field, value, *args, **kwargs):
+    def __new__(cls, field: str, value: str, *args, **kwargs):
         query = dbcore.query.NoneQuery("album_id")
         if util.str2bool(value):
             return query
         return dbcore.query.NotQuery(query)
 
 
-class PathQuery(dbcore.FieldQuery):
+class PathQuery(dbcore.FieldQuery[bytes]):
     """A query that matches all items under a given path.
 
     Matching can either be case-insensitive or case-sensitive. By
@@ -185,7 +187,7 @@ class DateType(types.Float):
                 return self.null
 
 
-class PathType(types.Type):
+class PathType(types.Type[bytes, bytes]):
     """A dbcore type for filesystem paths.
 
     These are represented as `bytes` objects, in keeping with
@@ -384,7 +386,7 @@ class LibModel(dbcore.Model):
     """Shared concrete functionality for Items and Albums."""
 
     # Config key that specifies how an instance should be formatted.
-    _format_config_key = None
+    _format_config_key: str
 
     def _template_funcs(self):
         funcs = DefaultTemplateFunctions(self, self._db).functions()
@@ -436,11 +438,11 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
             self.model_keys = included_keys
         self.item = item
 
-    @lazy_property
+    @cached_property
     def all_keys(self):
         return set(self.model_keys).union(self.album_keys)
 
-    @lazy_property
+    @cached_property
     def album_keys(self):
         album_keys = []
         if self.album:
@@ -562,6 +564,7 @@ class Item(LibModel):
         "albumtype": types.STRING,
         "albumtypes": types.SEMICOLON_SPACE_DSV,
         "label": types.STRING,
+        "barcode": types.STRING,
         "acoustid_fingerprint": types.STRING,
         "acoustid_id": types.STRING,
         "mb_releasegroupid": types.STRING,
@@ -638,6 +641,22 @@ class Item(LibModel):
 
     # Cached album object. Read-only.
     __album = None
+
+    @cached_classproperty
+    def _relation(cls) -> type[Album]:
+        return Album
+
+    @cached_classproperty
+    def relation_join(cls) -> str:
+        """Return the FROM clause which includes related albums.
+
+        We need to use a LEFT JOIN here, otherwise items that are not part of
+        an album (e.g. singletons) would be left out.
+        """
+        return (
+            f"LEFT JOIN {cls._relation._table} "
+            f"ON {cls._table}.album_id = {cls._relation._table}.id"
+        )
 
     @property
     def _cached_album(self):
@@ -1162,6 +1181,7 @@ class Album(LibModel):
         "albumtype": types.STRING,
         "albumtypes": types.SEMICOLON_SPACE_DSV,
         "label": types.STRING,
+        "barcode": types.STRING,
         "mb_releasegroupid": types.STRING,
         "release_group_title": types.STRING,
         "asin": types.STRING,
@@ -1217,6 +1237,7 @@ class Album(LibModel):
         "albumtype",
         "albumtypes",
         "label",
+        "barcode",
         "mb_releasegroupid",
         "asin",
         "catalognum",
@@ -1236,6 +1257,22 @@ class Album(LibModel):
     ]
 
     _format_config_key = "format_album"
+
+    @cached_classproperty
+    def _relation(cls) -> type[Item]:
+        return Item
+
+    @cached_classproperty
+    def relation_join(cls) -> str:
+        """Return FROM clause which joins on related album items.
+
+        Use LEFT join to select all albums, including those that do not have
+        any items.
+        """
+        return (
+            f"LEFT JOIN {cls._relation._table} "
+            f"ON {cls._table}.id = {cls._relation._table}.album_id"
+        )
 
     @classmethod
     def _getters(cls):
@@ -1547,17 +1584,6 @@ def parse_query_string(s, model_cls):
     return parse_query_parts(parts, model_cls)
 
 
-def _sqlite_bytelower(bytestring):
-    """A custom ``bytelower`` sqlite function so we can compare
-    bytestrings in a semi case insensitive fashion.
-
-    This is to work around sqlite builds are that compiled with
-    ``-DSQLITE_LIKE_DOESNT_MATCH_BLOBS``. See
-    ``https://github.com/beetbox/beets/issues/2172`` for details.
-    """
-    return bytestring.lower()
-
-
 # The Library: interface to the database.
 
 
@@ -1581,11 +1607,6 @@ class Library(dbcore.Database):
         self.replacements = replacements
 
         self._memotable = {}  # Used for template substitution performance.
-
-    def _create_connection(self):
-        conn = super()._create_connection()
-        conn.create_function("bytelower", 1, _sqlite_bytelower)
-        return conn
 
     # Adding objects to the database.
 

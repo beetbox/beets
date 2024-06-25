@@ -48,9 +48,9 @@ class LoadTest(_common.LibTestCase):
 
     def test_load_clears_dirty_flags(self):
         self.i.artist = "something"
-        self.assertTrue("artist" in self.i._dirty)
+        self.assertIn("artist", self.i._dirty)
         self.i.load()
-        self.assertTrue("artist" not in self.i._dirty)
+        self.assertNotIn("artist", self.i._dirty)
 
 
 class StoreTest(_common.LibTestCase):
@@ -78,7 +78,7 @@ class StoreTest(_common.LibTestCase):
     def test_store_clears_dirty_flags(self):
         self.i.composer = "tvp"
         self.i.store()
-        self.assertTrue("composer" not in self.i._dirty)
+        self.assertNotIn("composer", self.i._dirty)
 
     def test_store_album_cascades_flex_deletes(self):
         album = _common.album()
@@ -130,7 +130,7 @@ class RemoveTest(_common.LibTestCase):
     def test_remove_deletes_from_db(self):
         self.i.remove()
         c = self.lib._connection().execute("select * from items")
-        self.assertEqual(c.fetchone(), None)
+        self.assertIsNone(c.fetchone())
 
 
 class GetSetTest(_common.TestCase):
@@ -144,11 +144,11 @@ class GetSetTest(_common.TestCase):
 
     def test_set_sets_dirty_flag(self):
         self.i.comp = not self.i.comp
-        self.assertTrue("comp" in self.i._dirty)
+        self.assertIn("comp", self.i._dirty)
 
     def test_set_does_not_dirty_if_value_unchanged(self):
         self.i.title = self.i.title
-        self.assertTrue("title" not in self.i._dirty)
+        self.assertNotIn("title", self.i._dirty)
 
     def test_invalid_field_raises_attributeerror(self):
         self.assertRaises(AttributeError, getattr, self.i, "xyzzy")
@@ -161,12 +161,12 @@ class GetSetTest(_common.TestCase):
         album["flex"] = "foo"
         album.store()
 
-        self.assertTrue("flex" in i)
-        self.assertFalse("flex" in i.keys(with_album=False))
+        self.assertIn("flex", i)
+        self.assertNotIn("flex", i.keys(with_album=False))
         self.assertEqual(i["flex"], "foo")
         self.assertEqual(i.get("flex"), "foo")
-        self.assertEqual(i.get("flex", with_album=False), None)
-        self.assertEqual(i.get("flexx"), None)
+        self.assertIsNone(i.get("flex", with_album=False))
+        self.assertIsNone(i.get("flexx"))
 
 
 class DestinationTest(_common.TestCase):
@@ -239,27 +239,27 @@ class DestinationTest(_common.TestCase):
     def test_destination_escapes_slashes(self):
         self.i.album = "one/two"
         dest = self.i.destination()
-        self.assertTrue(b"one" in dest)
-        self.assertTrue(b"two" in dest)
-        self.assertFalse(b"one/two" in dest)
+        self.assertIn(b"one", dest)
+        self.assertIn(b"two", dest)
+        self.assertNotIn(b"one/two", dest)
 
     def test_destination_escapes_leading_dot(self):
         self.i.album = ".something"
         dest = self.i.destination()
-        self.assertTrue(b"something" in dest)
-        self.assertFalse(b"/.something" in dest)
+        self.assertIn(b"something", dest)
+        self.assertNotIn(b"/.something", dest)
 
     def test_destination_preserves_legitimate_slashes(self):
         self.i.artist = "one"
         self.i.album = "two"
         dest = self.i.destination()
-        self.assertTrue(os.path.join(b"one", b"two") in dest)
+        self.assertIn(os.path.join(b"one", b"two"), dest)
 
     def test_destination_long_names_truncated(self):
         self.i.title = "X" * 300
         self.i.artist = "Y" * 300
         for c in self.i.destination().split(util.PATH_SEP):
-            self.assertTrue(len(c) <= 255)
+            self.assertLessEqual(len(c), 255)
 
     def test_destination_long_names_keep_extension(self):
         self.i.title = "X" * 300
@@ -271,15 +271,15 @@ class DestinationTest(_common.TestCase):
         self.i.title = "one \\ two / three.mp3"
         with _common.platform_windows():
             p = self.i.destination()
-        self.assertFalse(b"one \\ two" in p)
-        self.assertFalse(b"one / two" in p)
-        self.assertFalse(b"two \\ three" in p)
-        self.assertFalse(b"two / three" in p)
+        self.assertNotIn(b"one \\ two", p)
+        self.assertNotIn(b"one / two", p)
+        self.assertNotIn(b"two \\ three", p)
+        self.assertNotIn(b"two / three", p)
 
     def test_path_with_format(self):
         self.lib.path_formats = [("default", "$artist/$album ($format)")]
         p = self.i.destination()
-        self.assertTrue(b"(FLAC)" in p)
+        self.assertIn(b"(FLAC)", p)
 
     def test_heterogeneous_album_gets_single_directory(self):
         i1, i2 = item(), item()
@@ -435,9 +435,9 @@ class DestinationTest(_common.TestCase):
             self.i.title = "h\u0259d"
             self.lib.path_formats = [("default", "$title")]
             p = self.i.destination()
-            self.assertFalse(b"?" in p)
+            self.assertNotIn(b"?", p)
             # We use UTF-8 to encode Windows paths now.
-            self.assertTrue("h\u0259d".encode() in p)
+            self.assertIn("h\u0259d".encode(), p)
         finally:
             sys.getfilesystemencoding = oldfunc
 
@@ -988,20 +988,20 @@ class AlbumInfoTest(_common.TestCase):
         c = self.lib._connection().cursor()
         c.execute("select * from albums where album=?", (self.i.album,))
         # Cursor should only return one row.
-        self.assertNotEqual(c.fetchone(), None)
-        self.assertEqual(c.fetchone(), None)
+        self.assertIsNotNone(c.fetchone())
+        self.assertIsNone(c.fetchone())
 
     def test_individual_tracks_have_no_albuminfo(self):
         i2 = item()
         i2.album = "aTotallyDifferentAlbum"
         self.lib.add(i2)
         ai = self.lib.get_album(i2)
-        self.assertEqual(ai, None)
+        self.assertIsNone(ai)
 
     def test_get_album_by_id(self):
         ai = self.lib.get_album(self.i)
         ai = self.lib.get_album(self.i.id)
-        self.assertNotEqual(ai, None)
+        self.assertIsNotNone(ai)
 
     def test_album_items_consistent(self):
         ai = self.lib.get_album(self.i)
@@ -1079,7 +1079,7 @@ class ArtDestinationTest(_common.TestCase):
     def test_art_filename_respects_setting(self):
         art = self.ai.art_destination("something.jpg")
         new_art = bytestring_path("%sartimage.jpg" % os.path.sep)
-        self.assertTrue(new_art in art)
+        self.assertIn(new_art, art)
 
     def test_art_path_in_item_dir(self):
         art = self.ai.art_destination("something.jpg")
@@ -1089,7 +1089,7 @@ class ArtDestinationTest(_common.TestCase):
     def test_art_path_sanitized(self):
         config["art_filename"] = "artXimage"
         art = self.ai.art_destination("something.jpg")
-        self.assertTrue(b"artYimage" in art)
+        self.assertIn(b"artYimage", art)
 
 
 class PathStringTest(_common.TestCase):

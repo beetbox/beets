@@ -16,6 +16,7 @@
 """
 
 
+import json
 import os
 from urllib.request import pathname2url
 
@@ -46,6 +47,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 "auto": True,
                 "playlists": [],
                 "uri_format": None,
+                "fields": [],
                 "forward_slash": False,
                 "prefix": "",
                 "urlencode": False,
@@ -119,7 +121,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
         spl_update.parser.add_option(
             "--output",
             type="string",
-            help="specify the playlist format: m3u|m3u8.",
+            help="specify the playlist format: m3u|extm3u.",
         )
         spl_update.func = self.update_cmd
         return [spl_update]
@@ -297,7 +299,7 @@ class SmartPlaylistPlugin(BeetsPlugin):
                     item_uri = prefix + item_uri
 
                 if item_uri not in m3us[m3u_name]:
-                    m3us[m3u_name].append({"item": item, "uri": item_uri})
+                    m3us[m3u_name].append(PlaylistItem(item, item_uri))
                     if pretend and self.config["pretend_paths"]:
                         print(displayable_path(item_uri))
                     elif pretend:
@@ -311,22 +313,29 @@ class SmartPlaylistPlugin(BeetsPlugin):
                 )
                 mkdirall(m3u_path)
                 pl_format = self.config["output"].get()
-                if pl_format != "m3u" and pl_format != "m3u8":
+                if pl_format != "m3u" and pl_format != "extm3u":
                     msg = "Unsupported output format '{}' provided! "
-                    msg += "Supported: m3u, m3u8"
+                    msg += "Supported: m3u, extm3u"
                     raise Exception(msg.format(pl_format))
-                m3u8 = pl_format == "m3u8"
+                extm3u = pl_format == "extm3u"
                 with open(syspath(m3u_path), "wb") as f:
-                    if m3u8:
+                    keys = []
+                    if extm3u:
+                        keys = self.config["fields"].get(list)
                         f.write(b"#EXTM3U\n")
                     for entry in m3us[m3u]:
-                        item = entry["item"]
+                        item = entry.item
                         comment = ""
-                        if m3u8:
-                            comment = "#EXTINF:{},{} - {}\n".format(
-                                int(item.length), item.artist, item.title
+                        if extm3u:
+                            attr = [(k, entry.item[k]) for k in keys]
+                            al = [
+                                f" {a[0]}={json.dumps(str(a[1]))}" for a in attr
+                            ]
+                            attrs = "".join(al)
+                            comment = "#EXTINF:{}{},{} - {}\n".format(
+                                int(item.length), attrs, item.artist, item.title
                             )
-                        f.write(comment.encode("utf-8") + entry["uri"] + b"\n")
+                        f.write(comment.encode("utf-8") + entry.uri + b"\n")
             # Send an event when playlists were updated.
             send_event("smartplaylist_update")
 
@@ -339,3 +348,9 @@ class SmartPlaylistPlugin(BeetsPlugin):
             self._log.info(
                 "{0} playlists updated", len(self._matched_playlists)
             )
+
+
+class PlaylistItem:
+    def __init__(self, item, uri):
+        self.item = item
+        self.uri = uri

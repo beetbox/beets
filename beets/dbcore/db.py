@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""The central Model and Database constructs for DBCore.
-"""
+"""The central Model and Database constructs for DBCore."""
 
 from __future__ import annotations
 
@@ -29,6 +28,7 @@ from sqlite3 import Connection
 from types import TracebackType
 from typing import (
     Any,
+    AnyStr,
     Callable,
     DefaultDict,
     Dict,
@@ -40,7 +40,6 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
-    Set,
     Tuple,
     Type,
     TypeVar,
@@ -51,14 +50,12 @@ from typing import (
 from unidecode import unidecode
 
 import beets
-from beets.util import functemplate, py3_path
 
-from ..util.functemplate import Template
+from ..util import cached_classproperty, functemplate
 from . import types
 from .query import (
     AndQuery,
     FieldQuery,
-    FieldSort,
     MatchQuery,
     NullSort,
     Query,
@@ -303,12 +300,12 @@ class Model(ABC):
     """Optional Types for non-fixed (i.e., flexible and computed) fields.
     """
 
-    _sorts: Dict[str, Type[FieldSort]] = {}
+    _sorts: Dict[str, Type[Sort]] = {}
     """Optional named sort criteria. The keys are strings and the values
     are subclasses of `Sort`.
     """
 
-    _queries: Dict[str, Type[Query]] = {}
+    _queries: Dict[str, Type[FieldQuery]] = {}
     """Named queries that use a field-like `name:value` syntax but which
     do not relate to any specific field.
     """
@@ -323,6 +320,32 @@ class Model(ABC):
     """A revision number from when the model was loaded from or written
     to the database.
     """
+
+    @cached_classproperty
+    def _relation(cls) -> type[Model]:
+        """The model that this model is closely related to."""
+        return cls
+
+    @cached_classproperty
+    def relation_join(cls) -> str:
+        """Return the join required to include the related table in the query.
+
+        This is intended to be used as a FROM clause in the SQL query.
+        """
+        return ""
+
+    @cached_classproperty
+    def all_db_fields(cls) -> set[str]:
+        return cls._fields.keys() | cls._relation._fields.keys()
+
+    @cached_classproperty
+    def shared_db_fields(cls) -> set[str]:
+        return cls._fields.keys() & cls._relation._fields.keys()
+
+    @cached_classproperty
+    def other_db_fields(cls) -> set[str]:
+        """Fields in the related table."""
+        return cls._relation._fields.keys() - cls.shared_db_fields
 
     @classmethod
     def _getters(cls: Type["Model"]):
@@ -345,7 +368,7 @@ class Model(ABC):
         initial field values.
         """
         self._db = db
-        self._dirty: Set[str] = set()
+        self._dirty: set[str] = set()
         self._values_fixed = LazyConvertDict(self)
         self._values_flex = LazyConvertDict(self)
 
@@ -598,8 +621,7 @@ class Model(ABC):
             # Deleted flexible attributes.
             for key in self._dirty:
                 tx.mutate(
-                    "DELETE FROM {} "
-                    "WHERE entity_id=? AND key=?".format(self._flex_table),
+                    f"DELETE FROM {self._flex_table} WHERE entity_id=? AND key=?",
                     (self.id, key),
                 )
 
@@ -670,7 +692,7 @@ class Model(ABC):
 
     def evaluate_template(
         self,
-        template: Union[str, Template],
+        template: Union[str, functemplate.Template],
         for_path: bool = False,
     ) -> str:
         """Evaluate a template (a string or a `Template` object) using
@@ -1061,9 +1083,9 @@ class Database:
         """
         # Make a new connection. The `sqlite3` module can't use
         # bytestring paths here on Python 3, so we need to
-        # provide a `str` using `py3_path`.
+        # provide a `str` using `os.fsdecode`.
         conn = sqlite3.connect(
-            py3_path(self.path),
+            os.fsdecode(self.path),
             timeout=self.timeout,
             # We have our own same-thread checks in _connection(), but need to
             # call conn.close() in _close()
@@ -1088,8 +1110,22 @@ class Database:
                 value = value.decode()
             return re.search(pattern, str(value)) is not None
 
+        def bytelower(bytestring: Optional[AnyStr]) -> Optional[AnyStr]:
+            """A custom ``bytelower`` sqlite function so we can compare
+            bytestrings in a semi case insensitive fashion.
+
+            This is to work around sqlite builds are that compiled with
+            ``-DSQLITE_LIKE_DOESNT_MATCH_BLOBS``. See
+            ``https://github.com/beetbox/beets/issues/2172`` for details.
+            """
+            if bytestring is not None:
+                return bytestring.lower()
+
+            return bytestring
+
         conn.create_function("regexp", 2, regexp)
         conn.create_function("unidecode", 1, unidecode)
+        conn.create_function("bytelower", 1, bytelower)
 
     def _close(self):
         """Close the all connections to the underlying SQLite database
@@ -1211,23 +1247,34 @@ class Database:
         where, subvals = query.clause()
         order_by = sort.order_clause()
 
-        sql = ("SELECT * FROM {} WHERE {} {}").format(
-            model_cls._table,
-            where or "1",
-            f"ORDER BY {order_by}" if order_by else "",
-        )
+        table = model_cls._table
+        _from = table
+        if query.field_names & model_cls.other_db_fields:
+            _from += f" {model_cls.relation_join}"
 
+        # group by id to avoid duplicates when joining with the relation
+        sql = (
+            f"SELECT {table}.* "
+            f"FROM ({_from}) "
+            f"WHERE {where or 1} "
+            f"GROUP BY {table}.id"
+        )
         # Fetch flexible attributes for items matching the main query.
         # Doing the per-item filtering in python is faster than issuing
         # one query per item to sqlite.
-        flex_sql = """
-            SELECT * FROM {} WHERE entity_id IN
-                (SELECT id FROM {} WHERE {});
-            """.format(
-            model_cls._flex_table,
-            model_cls._table,
-            where or "1",
+        flex_sql = (
+            "SELECT * "
+            f"FROM {model_cls._flex_table} "
+            f"WHERE entity_id IN (SELECT id FROM ({sql}))"
         )
+
+        if order_by:
+            # the sort field may exist in both 'items' and 'albums' tables
+            # (when they are joined), causing ambiguous column OperationalError
+            # if we try to order directly.
+            # Since the join is required only for filtering, we can filter in
+            # a subquery and order the result, which returns unique fields.
+            sql = f"SELECT * FROM ({sql}) ORDER BY {order_by}"
 
         with self.transaction() as tx:
             rows = tx.query(sql, subvals)

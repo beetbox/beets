@@ -67,7 +67,7 @@ class AnyFieldQueryTest(_common.LibTestCase):
         q = dbcore.query.AnyFieldQuery(
             "title", ["artist"], dbcore.query.SubstringQuery
         )
-        self.assertEqual(self.lib.items(q).get(), None)
+        self.assertIsNone(self.lib.items(q).get())
 
     def test_eq(self):
         q1 = dbcore.query.AnyFieldQuery(
@@ -521,7 +521,7 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         self.assert_items_matched(results, ["path item"])
 
         results = self.lib.albums(q)
-        self.assert_albums_matched(results, [])
+        self.assert_albums_matched(results, ["path album"])
 
     # FIXME: fails on windows
     @unittest.skipIf(sys.platform == "win32", "win32")
@@ -603,6 +603,9 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
         q = "path::c\\.mp3$"
         results = self.lib.items(q)
         self.assert_items_matched(results, ["path item"])
+
+        results = self.lib.albums(q)
+        self.assert_albums_matched(results, ["path album"])
 
     def test_path_album_regex(self):
         q = "path::b"
@@ -1124,6 +1127,47 @@ class NotQueryTest(DummyDataTestCase):
             except NotImplementedError:
                 # ignore classes that do not provide `fast` implementation
                 pass
+
+
+class RelatedQueriesTest(_common.TestCase, AssertsMixin):
+    """Test album-level queries with track-level filters and vice-versa."""
+
+    def setUp(self):
+        super().setUp()
+        self.lib = beets.library.Library(":memory:")
+
+        albums = []
+        for album_idx in range(1, 3):
+            album_name = f"Album{album_idx}"
+            album_items = []
+            for item_idx in range(1, 3):
+                item = _common.item()
+                item.album = album_name
+                item.title = f"{album_name} Item{item_idx}"
+                self.lib.add(item)
+                album_items.append(item)
+            album = self.lib.add_album(album_items)
+            album.artpath = f"{album_name} Artpath"
+            album.catalognum = "ABC"
+            album.store()
+            albums.append(album)
+
+        self.album, self.another_album = albums
+
+    def test_get_albums_filter_by_track_field(self):
+        q = "title:Album1"
+        results = self.lib.albums(q)
+        self.assert_albums_matched(results, ["Album1"])
+
+    def test_get_items_filter_by_album_field(self):
+        q = "artpath::Album1"
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ["Album1 Item1", "Album1 Item2"])
+
+    def test_filter_by_common_field(self):
+        q = "catalognum:ABC Album1"
+        results = self.lib.albums(q)
+        self.assert_albums_matched(results, ["Album1"])
 
 
 def suite():
