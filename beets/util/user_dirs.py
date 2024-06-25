@@ -36,7 +36,7 @@ log = logging.getLogger("beets")
 user_dir_regex = re.compile(b'XDG_(.*)_DIR=("[^"]*"|.*)')
 
 
-def parse_user_dirs(
+def get_user_dirs(
     home: Optional[Path] = None,
     xdg_config_home: Optional[Path] = None,
 ) -> dict[str, Path]:
@@ -70,13 +70,36 @@ def parse_user_dirs(
     path = xdg_config_home / "user-dirs.dirs"
     try:
         with open(path, "rb") as file:
-            data = file.readlines()
+            data = file.read()
     except OSError:
         return {}
 
+    # Parse the loaded contents.
+    return parse_user_dirs(data, str(path), home)
+
+
+def parse_user_dirs(
+    data: bytes,
+    path: str,
+    home: Path,
+) -> dict[str, Path]:
+    """
+    Parse the given 'user-dirs.dirs' file.
+
+    :param data: the contents of 'user-dirs.dirs'.
+
+    :param path: the path to the loaded 'user-dirs.dirs'.
+      This is used for informative warning messages.
+
+    :param home: the user's home directory.
+      If not provided, this defaults to `$HOME`.
+
+    :return: a mapping from (lower-cased) keys to paths.
+    """
+
     # Parse the loaded data line by line.
     mapping: dict[str, Path] = {}
-    for line in map(bytes.strip, data):
+    for line in map(bytes.strip, data.splitlines()):
 
         # Skip blank lines.
         if len(line) == 0:

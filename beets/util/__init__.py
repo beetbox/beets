@@ -54,7 +54,7 @@ from unidecode import unidecode
 
 from beets.util import hidden
 
-from .user_dirs import parse_user_dirs
+from .user_dirs import get_user_dirs
 
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = "\\\\?\\"

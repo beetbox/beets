@@ -36,8 +36,8 @@ from beets.util import (
     MoveOperation,
     bytestring_path,
     cached_classproperty,
+    get_user_dirs,
     normpath,
-    parse_user_dirs,
     samefile,
     syspath,
 )
@@ -1610,7 +1610,7 @@ class Library(dbcore.Database):
         else:
             # Check if the user specified something in the XDG user dirs.
             # Otherwise, fall back to '~/Music'.
-            user_dirs = parse_user_dirs()
+            user_dirs = get_user_dirs()
             music_dir = user_dirs.get("music", Path.home() / "Music")
             self.directory = bytes(music_dir)
 
