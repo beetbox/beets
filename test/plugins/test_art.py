@@ -862,6 +862,10 @@ class ArtForAlbumTest(UseThePlugin):
     IMG_225x225_SIZE = os.stat(util.syspath(IMG_225x225)).st_size
     IMG_348x348_SIZE = os.stat(util.syspath(IMG_348x348)).st_size
 
+    RESIZE_OP = "resize"
+    DEINTERLACE_OP = "deinterlace"
+    REFORMAT_OP = "reformat"
+
     def setUp(self):
         super().setUp()
 
@@ -892,11 +896,13 @@ class ArtForAlbumTest(UseThePlugin):
         else:
             self.assertIsNone(candidate)
 
-    def _assertImageResized(self, image_file, should_resize):  # noqa
+    def _assert_image_operated(self, image_file, operation, should_operate):
         self.image_file = image_file
-        with patch.object(ArtResizer.shared, "resize") as mock_resize:
+        with patch.object(
+            ArtResizer.shared, operation, return_value=self.image_file
+        ) as mock_operation:
             self.plugin.art_for_album(self.album, [""], True)
-            self.assertEqual(mock_resize.called, should_resize)
+            self.assertEqual(mock_operation.called, should_operate)
 
     def _require_backend(self):
         """Skip the test if the art resizer doesn't have ImageMagick or
@@ -948,31 +954,47 @@ class ArtForAlbumTest(UseThePlugin):
     def test_resize_if_necessary(self):
         self._require_backend()
         self.plugin.maxwidth = 300
-        self._assertImageResized(self.IMG_225x225, False)
-        self._assertImageResized(self.IMG_348x348, True)
+        self._assert_image_operated(self.IMG_225x225, self.RESIZE_OP, False)
+        self._assert_image_operated(self.IMG_348x348, self.RESIZE_OP, True)
 
     def test_fileresize(self):
         self._require_backend()
         self.plugin.max_filesize = self.IMG_225x225_SIZE // 2
-        self._assertImageResized(self.IMG_225x225, True)
+        self._assert_image_operated(self.IMG_225x225, self.RESIZE_OP, True)
 
     def test_fileresize_if_necessary(self):
         self._require_backend()
         self.plugin.max_filesize = self.IMG_225x225_SIZE
-        self._assertImageResized(self.IMG_225x225, False)
+        self._assert_image_operated(self.IMG_225x225, self.RESIZE_OP, False)
         self._assertImageIsValidArt(self.IMG_225x225, True)
 
     def test_fileresize_no_scale(self):
         self._require_backend()
         self.plugin.maxwidth = 300
         self.plugin.max_filesize = self.IMG_225x225_SIZE // 2
-        self._assertImageResized(self.IMG_225x225, True)
+        self._assert_image_operated(self.IMG_225x225, self.RESIZE_OP, True)
 
     def test_fileresize_and_scale(self):
         self._require_backend()
         self.plugin.maxwidth = 200
         self.plugin.max_filesize = self.IMG_225x225_SIZE // 2
-        self._assertImageResized(self.IMG_225x225, True)
+        self._assert_image_operated(self.IMG_225x225, self.RESIZE_OP, True)
+
+    def test_deinterlace(self):
+        self._require_backend()
+        self.plugin.deinterlace = True
+        self._assert_image_operated(self.IMG_225x225, self.DEINTERLACE_OP, True)
+        self.plugin.deinterlace = False
+        self._assert_image_operated(
+            self.IMG_225x225, self.DEINTERLACE_OP, False
+        )
+
+    def test_deinterlace_and_resize(self):
+        self._require_backend()
+        self.plugin.maxwidth = 300
+        self.plugin.deinterlace = True
+        self._assert_image_operated(self.IMG_348x348, self.DEINTERLACE_OP, True)
+        self._assert_image_operated(self.IMG_348x348, self.RESIZE_OP, True)
 
 
 class DeprecatedConfigTest(_common.TestCase):

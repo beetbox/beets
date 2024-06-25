@@ -350,6 +350,8 @@ Bug fixes:
   :bug:`5130` 
 * Fix bug where some plugin commands hang indefinitely due to a missing
   `requests` timeout.
+* Fix cover art resizing logic to support multiple steps of resizing
+  :bug:`5151`
 
 For plugin developers:
 
