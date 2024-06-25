@@ -208,6 +208,8 @@ New features:
 * Add support for `barcode` field.
   :bug:`3172`
 * :doc:`/plugins/smartplaylist`: Add new config option `smartplaylist.fields`.
+* :doc:`/plugins/fetchart`: Defer source removal config option evaluation to
+  the point where they are used really, supporting temporary config changes.
 
 Bug fixes:
 
