@@ -237,6 +237,9 @@ class UserDirsTest(_common.TestCase):
 
         super().tearDown()
 
+    @unittest.skipIf(
+        os.name != "posix", "'user-dirs.dirs' is only used on Unix-like systems"
+    )
     def test_lookup(self):
         path1 = self.xdg_config_home / "user-dirs.dirs"
         path2 = self.def_config_home / "user-dirs.dirs"
