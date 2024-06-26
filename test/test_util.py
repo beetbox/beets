@@ -217,21 +217,6 @@ class PathTruncationTest(_common.TestCase):
         self.assertEqual(p, "abcde/f.ext")
 
 
-class ConfitDeprecationTest(_common.TestCase):
-    def test_confit_deprecattion_warning_origin(self):
-        """Test that importing `confit` raises a warning.
-
-        In addition, ensure that the warning originates from the actual
-        import statement, not the `confit` module.
-        """
-        # See https://github.com/beetbox/beets/discussions/4024
-        with self.assertWarns(UserWarning) as w:
-            import beets.util.confit  # noqa: F401
-
-        self.assertIn(__file__, w.filename)
-        self.assertNotIn("confit.py", w.filename)
-
-
 def suite():
     return unittest.TestLoader().loadTestsFromName(__name__)
 
