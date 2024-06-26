@@ -396,10 +396,9 @@ class Model(ABC):
         return obj
 
     def __repr__(self) -> str:
-        return "{}({})".format(
-            type(self).__name__,
-            ", ".join(f"{k}={v!r}" for k, v in dict(self).items()),
-        )
+        name = type(self).__name__
+        fields = ", ".join(f"{k}={v!r}" for k, v in dict(self).items())
+        return f"{name}({fields})"
 
     def clear_dirty(self):
         """Mark all fields as *clean* (i.e., not needing to be stored to
@@ -414,10 +413,11 @@ class Model(ABC):
         has a reference to a database (`_db`) and an id. A ValueError
         exception is raised otherwise.
         """
+        name = type(self).__name__
         if not self._db:
-            raise ValueError("{} has no database".format(type(self).__name__))
+            raise ValueError(f"{name} has no database")
         if need_id and not self.id:
-            raise ValueError("{} has no id".format(type(self).__name__))
+            raise ValueError(f"{name} has no id")
 
         return self._db
 
@@ -585,38 +585,34 @@ class Model(ABC):
         will be.
         """
         if fields is None:
-            fields = self._fields
+            fields = self._fields.keys()
+        fields = set(fields) - {"id"}
         db = self._check_db()
 
         # Build assignments for query.
-        assignments = []
-        subvars = []
-        for key in fields:
-            if key != "id" and key in self._dirty:
-                self._dirty.remove(key)
-                assignments.append(key + "=?")
-                value = self._type(key).to_sql(self[key])
-                subvars.append(value)
+        dirty_fields = list(fields & self._dirty)
+        self._dirty -= fields
+        assignments = ",".join(f"{k}=?" for k in dirty_fields)
+        subvars = [self._type(k).to_sql(self[k]) for k in dirty_fields]
 
         with db.transaction() as tx:
             # Main table update.
             if assignments:
-                query = "UPDATE {} SET {} WHERE id=?".format(
-                    self._table, ",".join(assignments)
-                )
+                query = f"UPDATE {self._table} SET {assignments} WHERE id=?"
                 subvars.append(self.id)
                 tx.mutate(query, subvars)
 
             # Modified/added flexible attributes.
-            for key, value in self._values_flex.items():
-                if key in self._dirty:
-                    self._dirty.remove(key)
-                    tx.mutate(
-                        "INSERT INTO {} "
-                        "(entity_id, key, value) "
-                        "VALUES (?, ?, ?);".format(self._flex_table),
-                        (self.id, key, value),
-                    )
+            flex_fields = set(self._values_flex.keys())
+            dirty_flex_fields = list(flex_fields & self._dirty)
+            self._dirty -= flex_fields
+            for key in dirty_flex_fields:
+                tx.mutate(
+                    f"INSERT INTO {self._flex_table} "
+                    "(entity_id, key, value) "
+                    "VALUES (?, ?, ?);",
+                    (self.id, key, self._values_flex[key]),
+                )
 
             # Deleted flexible attributes.
             for key in self._dirty:
@@ -1192,9 +1188,8 @@ class Database:
             columns = []
             for name, typ in fields.items():
                 columns.append(f"{name} {typ.sql}")
-            setup_sql = "CREATE TABLE {} ({});\n".format(
-                table, ", ".join(columns)
-            )
+            columns_def = ", ".join(columns)
+            setup_sql = f"CREATE TABLE {table} ({columns_def});\n"
 
         else:
             # Table exists does not match the field set.
@@ -1202,8 +1197,8 @@ class Database:
             for name, typ in fields.items():
                 if name in current_fields:
                     continue
-                setup_sql += "ALTER TABLE {} ADD COLUMN {} {};\n".format(
-                    table, name, typ.sql
+                setup_sql += (
+                    f"ALTER TABLE {table} ADD COLUMN {name} {typ.sql};\n"
                 )
 
         with self.transaction() as tx:
@@ -1215,16 +1210,16 @@ class Database:
         """
         with self.transaction() as tx:
             tx.script(
-                """
-                CREATE TABLE IF NOT EXISTS {0} (
+                f"""
+                CREATE TABLE IF NOT EXISTS {flex_table} (
                     id INTEGER PRIMARY KEY,
                     entity_id INTEGER,
                     key TEXT,
                     value TEXT,
                     UNIQUE(entity_id, key) ON CONFLICT REPLACE);
-                CREATE INDEX IF NOT EXISTS {0}_by_entity
-                    ON {0} (entity_id);
-                """.format(flex_table)
+                CREATE INDEX IF NOT EXISTS {flex_table}_by_entity
+                    ON {flex_table} (entity_id);
+                """
             )
 
     # Querying.

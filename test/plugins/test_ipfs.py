@@ -39,7 +39,7 @@ class IPFSPluginTest(PluginTestCase):
                     ipfs_item = os.path.basename(want_item.path).decode(
                         _fsencoding(),
                     )
-                    want_path = "/ipfs/{}/{}".format(test_album.ipfs, ipfs_item)
+                    want_path = f"/ipfs/{test_album.ipfs}/{ipfs_item}"
                     want_path = bytestring_path(want_path)
                     assert check_item.path == want_path
                     assert (

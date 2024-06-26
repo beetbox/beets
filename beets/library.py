@@ -734,13 +734,10 @@ class Item(LibModel):
         # This must not use `with_album=True`, because that might access
         # the database. When debugging, that is not guaranteed to succeed, and
         # can even deadlock due to the database lock.
-        return "{}({})".format(
-            type(self).__name__,
-            ", ".join(
-                "{}={!r}".format(k, self[k])
-                for k in self.keys(with_album=False)
-            ),
-        )
+        name = type(self).__name__
+        keys = self.keys(with_album=False)
+        fields = (f"{k}={self[k]!r}" for k in keys)
+        return f"{name}({', '.join(fields)})"
 
     def keys(self, computed=False, with_album=True):
         """Get a list of available field names.

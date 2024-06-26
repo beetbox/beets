@@ -774,7 +774,7 @@ def get_replacements():
             replacements.append((re.compile(pattern), repl))
         except re.error:
             raise UserError(
-                "malformed regular expression in replace: {}".format(pattern)
+                f"malformed regular expression in replace: {pattern}"
             )
     return replacements
 
@@ -1252,22 +1252,15 @@ def show_path_changes(path_changes):
         # Print every change over two lines
         for source, dest in zip(sources, destinations):
             color_source, color_dest = colordiff(source, dest)
-            print_("{0} \n  -> {1}".format(color_source, color_dest))
+            print_(f"{color_source} \n  -> {color_dest}")
     else:
         # Print every change on a single line, and add a header
-        title_pad = max_width - len("Source ") + len(" -> ")
-
-        print_("Source {0} Destination".format(" " * title_pad))
+        source = "Source "
+        print_(f"{source:<{max_width}}     Destination")
         for source, dest in zip(sources, destinations):
-            pad = max_width - len(source)
             color_source, color_dest = colordiff(source, dest)
-            print_(
-                "{0} {1} -> {2}".format(
-                    color_source,
-                    " " * pad,
-                    color_dest,
-                )
-            )
+            width = max_width - len(source) + len(color_source)
+            print_(f"{color_source:<{width}}  -> {color_dest}")
 
 
 # Helper functions for option parsing.
@@ -1293,9 +1286,7 @@ def _store_dict(option, opt_str, value, parser):
             raise ValueError
     except ValueError:
         raise UserError(
-            "supplied argument `{}' is not of the form `key=value'".format(
-                value
-            )
+            f"supplied argument `{value}' is not of the form `key=value'"
         )
 
     option_values[key] = value
