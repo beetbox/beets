@@ -331,7 +331,10 @@ class SmartPlaylistPlugin(BeetsPlugin):
                                 f" {a[0]}={json.dumps(str(a[1]))}" for a in attr
                             ]
                             attrs = "".join(al)
-                            comment = f"#EXTINF:{int(item.length)}{attrs},{item.artist} - {item.title}\n"
+                            comment = (
+                                f"#EXTINF:{int(item.length)}{attrs},"
+                                f"{item.artist} - {item.title}\n"
+                            )
                         f.write(comment.encode("utf-8") + entry.uri + b"\n")
             # Send an event when playlists were updated.
             send_event("smartplaylist_update")
