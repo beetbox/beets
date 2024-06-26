@@ -381,7 +381,7 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
         for response in responses:
             self.assertTrue(response is not None)
             self.assertTrue(
-                response.ok, "Response failed: {}".format(response.err_data)
+                response.ok, f"Response failed: {response.err_data}"
             )
 
     def _assert_failed(self, response, code, pos=None):

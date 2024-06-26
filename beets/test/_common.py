@@ -171,14 +171,14 @@ class Assertions:
         self.assertExists(path)
         self.assertTrue(
             os.path.isfile(syspath(path)),
-            "path exists, but is not a regular file: {!r}".format(path),
+            f"path exists, but is not a regular file: {path!r}",
         )
 
     def assertIsDir(self, path):  # noqa
         self.assertExists(path)
         self.assertTrue(
             os.path.isdir(syspath(path)),
-            "path exists, but is not a directory: {!r}".format(path),
+            f"path exists, but is not a directory: {path!r}",
         )
 
     def assert_equal_path(self, a, b):

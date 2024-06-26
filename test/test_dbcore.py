@@ -237,9 +237,9 @@ class TransactionTest(unittest.TestCase):
         old_rev = self.db.revision
         with self.db.transaction() as tx:
             tx.mutate(
-                "INSERT INTO {} "
+                f"INSERT INTO {ModelFixture1._table} "
                 "(field_one) "
-                "VALUES (?);".format(ModelFixture1._table),
+                "VALUES (?);",
                 (111,),
             )
         self.assertGreater(self.db.revision, old_rev)

@@ -65,9 +65,7 @@ class MusicBrainzAPIError(util.HumanReadableException):
         super().__init__(reason, verb, tb)
 
     def get_message(self):
-        return "{} in {} with query {}".format(
-            self._reasonstr(), self.verb, repr(self.query)
-        )
+        return f"{self._reasonstr()} in {self.verb} with query {self.query!r}"
 
 
 log = logging.getLogger("beets")
