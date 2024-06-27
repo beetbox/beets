@@ -32,6 +32,7 @@ def is_hidden(path: Union[bytes, Path]) -> bool:
         path = Path(os.fsdecode(path))
 
     # TODO: Avoid doing a platform check on every invocation of the function.
+    # TODO: Stop supporting 'bytes' inputs once 'pathlib' is fully integrated.
 
     if sys.platform == "win32":
         # On Windows, we check for an FS-provided attribute.
