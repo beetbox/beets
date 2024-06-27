@@ -46,10 +46,11 @@ def is_hidden(path: Union[bytes, Path]) -> bool:
         # Ensure we have valid attributes and compare them against the mask.
         return attrs >= 0 and attrs & hidden_mask
 
-    if sys.platform == "darwin" and hasattr(stat, "UF_HIDDEN"):
-        # On OS X, we check for an FS-provided attribute.
-        if path.lstat().st_flags & stat.UF_HIDDEN:
-            return True
+    # On OS X, we check for an FS-provided attribute.
+    if sys.platform == "darwin":
+        if hasattr(os.stat_result, "st_flags") and hasattr(stat, "UF_HIDDEN"):
+            if path.lstat().st_flags & stat.UF_HIDDEN:
+                return True
 
     # On all non-Windows platforms, we check for a '.'-prefixed file name.
     if path.name.startswith("."):
