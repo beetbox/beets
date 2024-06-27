@@ -54,34 +54,42 @@ FIELDS_TO_MB_KEYS = {
     "year": "date",
 }
 
+
 # Rate limiting
 
-limit_interval = 1.0
-limit_requests = 1
-do_rate_limit = True
 
+class _RateLimitsSingleton:
+    limit_interval = 1.0
+    limit_requests = 1
+    do_rate_limit = True
 
-def set_rate_limit(limit_or_interval=1.0, new_requests=1):
-    """Sets the rate limiting behavior of the module. Must be invoked
-    before the first Web service call.
-    If the `limit_or_interval` parameter is set to False then
-    rate limiting will be disabled. If it is a number then only
-    a set number of requests (`new_requests`) will be made per
-    given interval (`limit_or_interval`).
-    """
-    global limit_interval
-    global limit_requests
-    global do_rate_limit
-    if isinstance(limit_or_interval, bool):
-        do_rate_limit = limit_or_interval
-    else:
-        if limit_or_interval <= 0.0:
-            raise ValueError("limit_or_interval can't be less than 0")
-        if new_requests <= 0:
-            raise ValueError("new_requests can't be less than 0")
-        do_rate_limit = True
-        limit_interval = limit_or_interval
-        limit_requests = new_requests
+    def __new__(cls):
+        """Makes that class a singleton"""
+        if not hasattr(cls, "instance"):
+            cls.instance = super(_RateLimitsSingleton, cls).__new__(cls)
+        return cls.instance
+
+    def get(self):
+        return (self.limit_interval, self.limit_requests, self.do_rate_limit)
+
+    def set_rate_limit(self, limit_or_interval=1.0, new_requests=1):
+        """Sets the rate limiting behavior of the module. Must be invoked
+        before the first Web service call.
+        If the `limit_or_interval` parameter is set to False then
+        rate limiting will be disabled. If it is a number then only
+        a set number of requests (`new_requests`) will be made per
+        given interval (`limit_or_interval`).
+        """
+        if isinstance(limit_or_interval, bool):
+            self.do_rate_limit = limit_or_interval
+        else:
+            if limit_or_interval <= 0.0:
+                raise ValueError("limit_or_interval can't be less than 0")
+            if new_requests <= 0:
+                raise ValueError("new_requests can't be less than 0")
+            self.do_rate_limit = True
+            self.limit_interval = limit_or_interval
+            self.limit_requests = new_requests
 
 
 class _RateLim(object):
@@ -103,6 +111,10 @@ class _RateLim(object):
         """Update remaining requests based on the elapsed time since
         they were last calculated.
         """
+        (limit_interval, limit_requests, do_rate_limit) = (
+            _RateLimitsSingleton().get()
+        )
+
         # On first invocation, we have the maximum number of requests
         # available.
         if self.remaining_requests is None:
@@ -120,6 +132,10 @@ class _RateLim(object):
         self.last_call = time.time()
 
     def __call__(self, *args, **kwargs):
+        (limit_interval, limit_requests, do_rate_limit) = (
+            _RateLimitsSingleton().get()
+        )
+
         with self.lock:
             if do_rate_limit:
                 self._update_remaining()
@@ -138,33 +154,6 @@ class _RateLim(object):
 
 
 # Musicbrainz library interface
-
-
-@_RateLim
-def _lookup(mbi, entity, mbid, includes, limit=None, offset=None, params={}):
-    return mbi._send(
-        mbzr.MbzRequestLookup(mbi.useragent, entity, mbid, includes),
-        limit=limit,
-        offset=offset,
-    )
-
-
-@_RateLim
-def _browse(mbi, entity, bw_entity, mbid, includes=[], limit=None, offset=None):
-    return mbi._send(
-        mbzr.MbzRequestBrowse(mbi.useragent, entity, bw_entity, mbid, includes),
-        limit=limit,
-        offset=offset,
-    )
-
-
-@_RateLim
-def _search(mbi, entity, query, limit=None, offset=None, **fields):
-    return mbi._send(
-        mbzr.MbzRequestSearch(mbi.useragent, entity, query),
-        limit=limit,
-        offset=offset,
-    )
 
 
 class MbWebServiceError(mbzerror.MbzWebServiceError):
@@ -191,6 +180,36 @@ class MbInterface:
     def set_hostname(self, hostname, https):
         self.hostname = hostname
         self.https = https
+
+    @_RateLim
+    def _lookup(
+        self, entity, mbid, includes, limit=None, offset=None, params={}
+    ):
+        return self._send(
+            mbzr.MbzRequestLookup(self.useragent, entity, mbid, includes),
+            limit=limit,
+            offset=offset,
+        )
+
+    @_RateLim
+    def _browse(
+        self, entity, bw_entity, mbid, includes=[], limit=None, offset=None
+    ):
+        return self._send(
+            mbzr.MbzRequestBrowse(
+                self.useragent, entity, bw_entity, mbid, includes
+            ),
+            limit=limit,
+            offset=offset,
+        )
+
+    @_RateLim
+    def _search(self, entity, query, limit=None, offset=None, **fields):
+        return self._send(
+            mbzr.MbzRequestSearch(self.useragent, entity, query),
+            limit=limit,
+            offset=offset,
+        )
 
     def _send(self, mbr, limit=None, offset=None):
         if self.hostname:
@@ -249,7 +268,7 @@ class MbInterface:
     ):
         """Get all recordings linked to an artist or a release.
         You need to give one MusicBrainz ID."""
-        return _browse(
+        return self._browse(
             self,
             "recording",
             bw_entity,
@@ -263,7 +282,7 @@ class MbInterface:
         self, mbid, includes=[], release_status=[], release_type=[]
     ):
         return json.loads(
-            _lookup(
+            self._lookup(
                 self,
                 "release",
                 mbid,
@@ -276,7 +295,7 @@ class MbInterface:
         self, mbid, includes=[], release_status=[], release_type=[]
     ):
         return json.loads(
-            _lookup(
+            self._lookup(
                 self,
                 "recording",
                 mbid,
@@ -287,7 +306,7 @@ class MbInterface:
 
     def search_releases(self, query="", limit=None, offset=None, **fields):
         return json.loads(
-            _search(
+            self._search(
                 self,
                 "release",
                 query=self._make_query(query, fields),
@@ -298,7 +317,7 @@ class MbInterface:
 
     def search_recordings(self, query="", limit=None, offset=None, **fields):
         return json.loads(
-            _search(
+            self._search(
                 self,
                 "recording",
                 query=self._make_query(query, fields),
@@ -381,7 +400,7 @@ def configure():
     # musicbrainz-ngs connects to musicbrainz.org with HTTPS by default
     if hostname != "musicbrainz.org":
         MbInterface().set_hostname(hostname, https)
-    set_rate_limit(
+    _RateLimitsSingleton().set_rate_limit(
         config["musicbrainz"]["ratelimit_interval"].as_number(),
         config["musicbrainz"]["ratelimit"].get(int),
     )
