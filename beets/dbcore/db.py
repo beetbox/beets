@@ -397,7 +397,7 @@ class Model(ABC):
 
     def __repr__(self) -> str:
         name = type(self).__name__
-        fields = ", ".join(f"{k}={v!r}" for k, v in dict(self).items())
+        fields = ", ".join(f"{k}={repr(v)}" for k, v in dict(self).items())
         return f"{name}({fields})"
 
     def clear_dirty(self):
@@ -558,12 +558,12 @@ class Model(ABC):
 
     def __getattr__(self, key):
         if key.startswith("_"):
-            raise AttributeError(f"model has no attribute {key!r}")
+            raise AttributeError(f"model has no attribute {repr(key)}")
         else:
             try:
                 return self[key]
             except KeyError:
-                raise AttributeError(f"no such field {key!r}")
+                raise AttributeError(f"no such field {repr(key)}")
 
     def __setattr__(self, key, value):
         if key.startswith("_"):

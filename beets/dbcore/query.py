@@ -171,7 +171,7 @@ class FieldQuery(Query, Generic[P]):
 
     def __repr__(self) -> str:
         return (
-            f"{self.__class__.__name__}({self.field_name!r}, {self.pattern!r}, "
+            f"{self.__class__.__name__}({repr(self.field_name)}, {repr(self.pattern)}, "
             f"fast={self.fast})"
         )
 
@@ -210,7 +210,9 @@ class NoneQuery(FieldQuery[None]):
         return obj.get(self.field_name) is None
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.field_name!r}, {self.fast})"
+        return (
+            f"{self.__class__.__name__}({repr(self.field_name)}, {self.fast})"
+        )
 
 
 class StringFieldQuery(FieldQuery[P]):
@@ -503,7 +505,7 @@ class CollectionQuery(Query):
         return clause, subvals
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.subqueries!r})"
+        return f"{self.__class__.__name__}({repr(self.subqueries)})"
 
     def __eq__(self, other) -> bool:
         return super().__eq__(other) and self.subqueries == other.subqueries
@@ -548,7 +550,7 @@ class AnyFieldQuery(CollectionQuery):
 
     def __repr__(self) -> str:
         return (
-            f"{self.__class__.__name__}({self.pattern!r}, {self.fields!r}, "
+            f"{self.__class__.__name__}({repr(self.pattern)}, {repr(self.fields)}, "
             f"{self.query_class.__name__})"
         )
 
@@ -619,7 +621,7 @@ class NotQuery(Query):
         return not self.subquery.match(obj)
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.subquery!r})"
+        return f"{self.__class__.__name__}({repr(self.subquery)})"
 
     def __eq__(self, other) -> bool:
         return super().__eq__(other) and self.subquery == other.subquery
@@ -975,7 +977,7 @@ class MultipleSort(Sort):
         return items
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.sorts!r})"
+        return f"{self.__class__.__name__}({repr(self.sorts)})"
 
     def __hash__(self):
         return hash(tuple(self.sorts))
@@ -1015,7 +1017,7 @@ class FieldSort(Sort):
     def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}"
-            f"({self.field!r}, ascending={self.ascending!r})"
+            f"({repr(self.field)}, ascending={repr(self.ascending)})"
         )
 
     def __hash__(self) -> int:

@@ -534,7 +534,7 @@ class FfmpegBackend(Backend):
             if output[i].startswith(search):
                 return i
         raise ReplayGainError(
-            f"ffmpeg output: missing {search!r} after line {start_line}"
+            f"ffmpeg output: missing {repr(search)} after line {start_line}"
         )
 
     def _parse_float(self, line: bytes) -> float:
@@ -547,7 +547,7 @@ class FfmpegBackend(Backend):
         parts = line.split(b":", 1)
         if len(parts) < 2:
             raise ReplayGainError(
-                f"ffmpeg output: expected key value pair, found {line!r}"
+                f"ffmpeg output: expected key value pair, found {repr(line)}"
             )
         value = parts[1].lstrip()
         # strip unit
@@ -557,7 +557,7 @@ class FfmpegBackend(Backend):
             return float(value)
         except ValueError:
             raise ReplayGainError(
-                f"ffmpeg output: expected float value, found {value!r}"
+                f"ffmpeg output: expected float value, found {repr(value)}"
             )
 
 
@@ -886,7 +886,7 @@ class GStreamerBackend(Backend):
         f = self._src.get_property("location")
         # A GStreamer error, either an unsupported format or a bug.
         self._error = ReplayGainError(
-            f"Error {err!r} - {debug!r} on file {f!r}"
+            f"Error {repr(err)} - {repr(debug)} on file {repr(f)}"
         )
 
     def _on_tag(self, bus, message):
