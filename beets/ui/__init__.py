@@ -19,7 +19,6 @@ CLI commands are implemented in the ui.commands module.
 
 
 import errno
-import itertools
 import optparse
 import os.path
 import re

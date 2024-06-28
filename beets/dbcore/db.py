@@ -17,7 +17,6 @@
 from __future__ import annotations
 
 import contextlib
-import itertools
 import os
 import re
 import sqlite3
