@@ -43,8 +43,12 @@ def is_hidden(path: Union[bytes, Path]) -> bool:
         # Retrieve the attributes for the file.
         attrs = ctypes.windll.kernel32.GetFileAttributesW(str(path))
 
-        # Ensure we have valid attributes and compare them against the mask.
-        return attrs >= 0 and attrs & hidden_mask
+        # Ensure the attribute mask is valid.
+        if attrs < 0:
+            return False
+
+        # Check for the hidden attribute.
+        return attrs & hidden_mask
 
     # On OS X, we check for an FS-provided attribute.
     if sys.platform == "darwin":
