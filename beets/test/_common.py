@@ -178,7 +178,7 @@ class InputError(Exception):
     def __str__(self):
         msg = "Attempt to read with no input provided."
         if self.output is not None:
-            msg += f" Output: {self.output!r}"
+            msg += f" Output: {repr(self.output)}"
         return msg
 
 

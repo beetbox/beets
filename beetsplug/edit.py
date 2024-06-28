@@ -46,7 +46,9 @@ def edit(filename, log):
     try:
         subprocess.call(cmd)
     except OSError as exc:
-        raise ui.UserError(f"could not run editor command {cmd[0]!r}: {exc}")
+        raise ui.UserError(
+            f"could not run editor command {repr(cmd[0])}: {exc}"
+        )
 
 
 def dump(arg):

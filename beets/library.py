@@ -157,7 +157,7 @@ class PathQuery(dbcore.FieldQuery[bytes]):
 
     def __repr__(self) -> str:
         return (
-            f"{self.__class__.__name__}({self.field!r}, {self.pattern!r}, "
+            f"{self.__class__.__name__}({repr(self.field)}, {repr(self.pattern)}, "
             f"fast={self.fast}, case_sensitive={self.case_sensitive})"
         )
 
@@ -736,7 +736,7 @@ class Item(LibModel):
         # can even deadlock due to the database lock.
         name = type(self).__name__
         keys = self.keys(with_album=False)
-        fields = (f"{k}={self[k]!r}" for k in keys)
+        fields = (f"{k}={repr(self[k])}" for k in keys)
         return f"{name}({', '.join(fields)})"
 
     def keys(self, computed=False, with_album=True):
@@ -1579,7 +1579,7 @@ def parse_query_string(s, model_cls):
 
     The string is split into components using shell-like syntax.
     """
-    message = f"Query is not unicode: {s!r}"
+    message = f"Query is not unicode: {repr(s)}"
     assert isinstance(s, str), message
     try:
         parts = shlex.split(s)

@@ -290,4 +290,6 @@ class GioURI(URIGetter):
         try:
             return uri.decode(util._fsencoding())
         except UnicodeDecodeError:
-            raise RuntimeError(f"Could not decode filename from GIO: {uri!r}")
+            raise RuntimeError(
+                f"Could not decode filename from GIO: {repr(uri)}"
+            )

@@ -212,7 +212,7 @@ def get_singleton_disambig_fields(info: hooks.TrackInfo) -> Sequence[str]:
     out = []
     chosen_fields = config["match"]["singleton_disambig_fields"].as_str_seq()
     calculated_values = {
-        "index": f"Index {info.index!s}",
+        "index": f"Index {str(info.index)}",
         "track_alt": f"Track {info.track_alt}",
         "album": (
             f"[{info.album}]"
