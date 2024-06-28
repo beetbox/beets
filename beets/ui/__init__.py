@@ -18,6 +18,7 @@ CLI commands are implemented in the ui.commands module.
 """
 
 import errno
+import itertools
 import optparse
 import os.path
 import re
@@ -1186,6 +1187,10 @@ def show_model_changes(new, old=None, fields=None, always=False):
     restrict the detection to. `always` indicates whether the object is
     always identified, regardless of whether any changes are present.
     """
+
+    # TODO: require 'fields' to be 'Optional[set[str]]'.
+    fields = set(fields) if fields else None
+
     old = old or new._db._get(type(new), new.id)
 
     # Keep the formatted views around instead of re-creating them in each
@@ -1193,26 +1198,26 @@ def show_model_changes(new, old=None, fields=None, always=False):
     old_fmt = old.formatted()
     new_fmt = new.formatted()
 
-    # Build up lines showing changed fields.
-    changes = []
-    for field in old:
-        # Subset of the fields. Never show mtime.
-        if field == "mtime" or (fields and field not in fields):
-            continue
+    # Calculate which fields need to be shown.
+    changed_fields = [f for f in old if f != "mtime"]
+    new_fields = set(new) - set(old)
+    if fields is not None:
+        # Restrict the presented fields to the given set.
+        changed_fields = [f for f in changed_fields if f in fields]
+        new_fields &= set(fields)
 
+    # Build up the list of changes.
+    changes = []
+
+    for field in changed_fields:
         # Detect and show difference for this field.
         line = _field_diff(field, old, old_fmt, new, new_fmt)
         if line:
             changes.append(f"  {field}: {line}")
 
-    # New fields.
-    for field in set(new) - set(old):
-        if fields and field not in fields:
-            continue
-
-        changes.append(
-            "  {}: {}".format(field, colorize("text_highlight", new_fmt[field]))
-        )
+    for field in new_fields:
+        value = colorize("text_highlight", new_fmt[field])
+        changes.append(f"  {field}: {value}")
 
     # Print changes.
     if changes or always:
@@ -1245,22 +1250,23 @@ def show_path_changes(path_changes):
     destinations = list(map(util.displayable_path, destinations))
 
     # Calculate widths for terminal split
-    col_width = (term_width() - len(" -> ")) // 2
-    max_width = len(max(sources + destinations, key=len))
+    src_width = max(map(len, sources))
+    dst_width = max(map(len, destinations))
 
-    if max_width > col_width:
+    if src_width + len(" -> ") + dst_width > term_width():
         # Print every change over two lines
         for source, dest in zip(sources, destinations):
             color_source, color_dest = colordiff(source, dest)
-            print_(f"{color_source} \n  -> {color_dest}")
+            print_(f"{color_source}\n  -> {color_dest}")
     else:
         # Print every change on a single line, and add a header
         source = "Source "
-        print_(f"{source:<{max_width}}     Destination")
+        print_(f"{source:<{src_width}}    Destination")
         for source, dest in zip(sources, destinations):
             color_source, color_dest = colordiff(source, dest)
-            width = max_width - len(source) + len(color_source)
-            print_(f"{color_source:<{width}}  -> {color_dest}")
+            # Account for color control codes in the padding width.
+            width = src_width - len(source) + len(color_source)
+            print_(f"{color_source:<{width}} -> {color_dest}")
 
 
 # Helper functions for option parsing.
