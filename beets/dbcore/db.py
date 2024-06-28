@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import contextlib
+import itertools
 import os
 import re
 import sqlite3
@@ -580,42 +581,53 @@ class Model(ABC):
     # Database interaction (CRUD methods).
 
     def store(self, fields: Optional[Iterable[str]] = None):
-        """Save the object's metadata into the library database.
-        :param fields: the fields to be stored. If not specified, all fields
-        will be.
         """
-        if fields is None:
-            fields = self._fields.keys()
-        fields = set(fields) - {"id"}
+        Save the object's metadata into the library database.
+
+        :param fields: the fields to be stored (default: all of them).
+          Only non-flexible fields (excluding `"id"`) can be specified.
+        """
+
         db = self._check_db()
 
-        # Build assignments for query.
-        dirty_fields = list(fields & self._dirty)
-        self._dirty -= fields
-        assignments = ",".join(f"{k}=?" for k in dirty_fields)
-        subvars = [self._type(k).to_sql(self[k]) for k in dirty_fields]
+        # Extract known sets of keys from the table.
+        known_fields = set(self._fields.keys())
+        known_flex_fields = set(self._values_flex.keys())
+
+        # Normalize the 'fields' parameter.
+        fields = set(fields or known_fields) - {"id"}
+        assert (
+            len(fields & known_flex_fields) == 0
+        ), "`fields` cannot contain flexible fields"
+
+        # Compute how various fields were modified.
+        dirty_fields = fields & self._dirty
+        dirty_flex_fields = known_flex_fields & self._dirty
+        removed_flex_fields = self._dirty - fields - known_flex_fields
 
         with db.transaction() as tx:
-            # Main table update.
-            if assignments:
+            # Update non-flexible fields.
+            if dirty_fields:
+                # NOTE: the order of iteration of 'dirty_fields' will not change
+                #       between the two statements, since the set is not modified.
+                assignments = ",".join(f"{k}=?" for k in dirty_fields)
+                values = [self._type(k).to_sql(self[k]) for k in dirty_fields]
                 query = f"UPDATE {self._table} SET {assignments} WHERE id=?"
-                subvars.append(self.id)
-                tx.mutate(query, subvars)
+                tx.mutate(query, [*values, self.id])
 
             # Modified/added flexible attributes.
-            flex_fields = set(self._values_flex.keys())
-            dirty_flex_fields = list(flex_fields & self._dirty)
-            self._dirty -= flex_fields
+            # TODO: Use the underlying 'executemany()' function here.
             for key in dirty_flex_fields:
                 tx.mutate(
                     f"INSERT INTO {self._flex_table} "
                     "(entity_id, key, value) "
-                    "VALUES (?, ?, ?);",
+                    "VALUES (?, ?, ?)",
                     (self.id, key, self._values_flex[key]),
                 )
 
             # Deleted flexible attributes.
-            for key in self._dirty:
+            # TODO: Use the underlying 'executemany()' function here.
+            for key in removed_flex_fields:
                 tx.mutate(
                     f"DELETE FROM {self._flex_table} WHERE entity_id=? AND key=?",
                     (self.id, key),
