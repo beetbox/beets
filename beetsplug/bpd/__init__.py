@@ -1300,7 +1300,7 @@ class Server(BaseServer):
 
             yield (
                 f"bitrate: {item.bitrate / 1000}",
-                f"audio: {str(item.samplerate)}:{str(item.bitdepth)}:{str(item.channels)}",
+                f"audio: {item.samplerate}:{item.bitdepth}:{item.channels}",
             )
 
             (pos, total) = self.player.time()
