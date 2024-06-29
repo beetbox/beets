@@ -21,57 +21,53 @@ test_importer module. But here the test importer inherits from
 import unittest
 from test import test_importer
 
-from beets.test.helper import TerminalImportSessionSetup
+from beets.test.helper import TerminalImportMixin
 
 
 class NonAutotaggedImportTest(
-    TerminalImportSessionSetup, test_importer.NonAutotaggedImportTest
+    TerminalImportMixin, test_importer.NonAutotaggedImportTest
 ):
     pass
 
 
-class ImportTest(TerminalImportSessionSetup, test_importer.ImportTest):
+class ImportTest(TerminalImportMixin, test_importer.ImportTest):
     pass
 
 
 class ImportSingletonTest(
-    TerminalImportSessionSetup, test_importer.ImportSingletonTest
+    TerminalImportMixin, test_importer.ImportSingletonTest
 ):
     pass
 
 
-class ImportTracksTest(
-    TerminalImportSessionSetup, test_importer.ImportTracksTest
-):
+class ImportTracksTest(TerminalImportMixin, test_importer.ImportTracksTest):
     pass
 
 
 class ImportCompilationTest(
-    TerminalImportSessionSetup, test_importer.ImportCompilationTest
+    TerminalImportMixin, test_importer.ImportCompilationTest
 ):
     pass
 
 
-class ImportExistingTest(
-    TerminalImportSessionSetup, test_importer.ImportExistingTest
-):
+class ImportExistingTest(TerminalImportMixin, test_importer.ImportExistingTest):
     pass
 
 
 class ChooseCandidateTest(
-    TerminalImportSessionSetup, test_importer.ChooseCandidateTest
+    TerminalImportMixin, test_importer.ChooseCandidateTest
 ):
     pass
 
 
 class GroupAlbumsImportTest(
-    TerminalImportSessionSetup, test_importer.GroupAlbumsImportTest
+    TerminalImportMixin, test_importer.GroupAlbumsImportTest
 ):
     pass
 
 
 class GlobalGroupAlbumsImportTest(
-    TerminalImportSessionSetup, test_importer.GlobalGroupAlbumsImportTest
+    TerminalImportMixin, test_importer.GlobalGroupAlbumsImportTest
 ):
     pass
 

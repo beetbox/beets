@@ -541,6 +541,8 @@ class ImportHelper:
     autotagging library and several assertions for the library.
     """
 
+    importer: importer.ImportSession
+
     def setup_beets(self, disk=False):
         super().setup_beets(disk)
         self.lib.path_formats = [
@@ -598,35 +600,33 @@ class ImportHelper:
             self.media_files.append(medium)
         self.import_media = self.media_files
 
+    def _get_import_session(self, import_dir: str) -> None:
+        self.importer = ImportSessionFixture(
+            self.lib,
+            loghandler=None,
+            query=None,
+            paths=[import_dir],
+        )
+
     def _setup_import_session(
         self,
         import_dir=None,
-        delete=False,
-        threaded=False,
-        copy=True,
         singletons=False,
         move=False,
         autotag=True,
-        link=False,
-        hardlink=False,
     ):
-        config["import"]["copy"] = copy
-        config["import"]["delete"] = delete
+        config["import"]["copy"] = True
+        config["import"]["delete"] = False
         config["import"]["timid"] = True
         config["threaded"] = False
         config["import"]["singletons"] = singletons
         config["import"]["move"] = move
         config["import"]["autotag"] = autotag
         config["import"]["resume"] = False
-        config["import"]["link"] = link
-        config["import"]["hardlink"] = hardlink
+        config["import"]["link"] = False
+        config["import"]["hardlink"] = False
 
-        self.importer = ImportSessionFixture(
-            self.lib,
-            loghandler=None,
-            query=None,
-            paths=[import_dir or self.import_dir],
-        )
+        self._get_import_session(import_dir or self.import_dir)
 
     def assert_file_in_lib(self, *segments):
         """Join the ``segments`` and assert that this path exists in the
@@ -759,37 +759,17 @@ class TerminalImportSessionFixture(TerminalImportSession):
             raise Exception("Unknown choice %s" % choice)
 
 
-class TerminalImportSessionSetup:
-    """Overwrites ImportHelper._setup_import_session to provide a terminal importer"""
+class TerminalImportMixin(ImportHelper):
+    """Provides_a terminal importer for the import session."""
 
-    def _setup_import_session(
-        self,
-        import_dir=None,
-        delete=False,
-        threaded=False,
-        copy=True,
-        singletons=False,
-        move=False,
-        autotag=True,
-    ):
-        config["import"]["copy"] = copy
-        config["import"]["delete"] = delete
-        config["import"]["timid"] = True
-        config["threaded"] = False
-        config["import"]["singletons"] = singletons
-        config["import"]["move"] = move
-        config["import"]["autotag"] = autotag
-        config["import"]["resume"] = False
-
-        if not hasattr(self, "io"):
-            self.io = _common.DummyIO()
+    def _get_import_session(self, import_dir: str) -> None:
         self.io.install()
         self.importer = TerminalImportSessionFixture(
             self.lib,
             loghandler=None,
             query=None,
             io=self.io,
-            paths=[import_dir or self.import_dir],
+            paths=[import_dir],
         )
 
 

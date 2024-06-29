@@ -23,7 +23,7 @@ from beets.test.helper import (
     AutotagStub,
     BeetsTestCase,
     ImportTestCase,
-    TerminalImportSessionSetup,
+    TerminalImportMixin,
     control_stdin,
 )
 from beetsplug.edit import EditPlugin
@@ -322,8 +322,8 @@ class EditCommandTest(BeetsTestCase, EditMixin):
 
 
 @_common.slow_test()
-class EditDuringImporterTest(
-    TerminalImportSessionSetup, ImportTestCase, EditMixin
+class EditDuringImporterTestCase(
+    EditMixin, TerminalImportMixin, ImportTestCase
 ):
     """TODO"""
 

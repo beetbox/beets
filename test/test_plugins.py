@@ -35,7 +35,7 @@ from beets.test.helper import (
     AutotagStub,
     BeetsTestCase,
     ImportHelper,
-    TerminalImportSessionSetup,
+    TerminalImportMixin,
 )
 from beets.util import displayable_path, syspath
 from beets.util.id_extractors import (
@@ -377,7 +377,7 @@ class ListenersTest(PluginLoaderTestCase):
         plugins.send("event9", foo=5)
 
 
-class PromptChoicesTest(TerminalImportSessionSetup, PluginImportTestCase):
+class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
     def setUp(self):
         super().setUp()
         self._setup_import_session()
