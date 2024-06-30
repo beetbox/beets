@@ -405,18 +405,14 @@ class TestHelper:
         return self.lib.add_album(items)
 
     def create_mediafile_fixture(self, ext="mp3", images=[]):
-        """Copies a fixture mediafile with the extension to a temporary
-        location and returns the path.
-
-        It keeps track of the created locations and will delete the with
-        `remove_mediafile_fixtures()`
+        """Copy a fixture mediafile with the extension to `temp_dir`.
 
         `images` is a subset of 'png', 'jpg', and 'tiff'. For each
         specified extension a cover art image is added to the media
         file.
         """
         src = os.path.join(_common.RSRC, util.bytestring_path("full." + ext))
-        handle, path = mkstemp()
+        handle, path = mkstemp(dir=self.temp_dir)
         path = bytestring_path(path)
         os.close(handle)
         shutil.copyfile(syspath(src), syspath(path))
@@ -432,16 +428,7 @@ class TestHelper:
             mediafile.images = imgs
             mediafile.save()
 
-        if not hasattr(self, "_mediafile_fixtures"):
-            self._mediafile_fixtures = []
-        self._mediafile_fixtures.append(path)
-
         return path
-
-    def remove_mediafile_fixtures(self):
-        if hasattr(self, "_mediafile_fixtures"):
-            for path in self._mediafile_fixtures:
-                os.remove(syspath(path))
 
     def _get_item_count(self):
         if not hasattr(self, "__item_count"):
