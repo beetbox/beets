@@ -46,7 +46,6 @@ class InfoTest(unittest.TestCase, TestHelper):
         self.assertIn("disctitle: DDD", out)
         self.assertIn("genres: a; b; c", out)
         self.assertNotIn("composer:", out)
-        self.remove_mediafile_fixtures()
 
     def test_item_query(self):
         item1, item2 = self.add_item_fixtures(count=2)
@@ -88,7 +87,6 @@ class InfoTest(unittest.TestCase, TestHelper):
         self.assertIn("album: AAA", out)
         self.assertIn("tracktotal: 5", out)
         self.assertIn("title: [various]", out)
-        self.remove_mediafile_fixtures()
 
     def test_collect_item_and_path_with_multi_values(self):
         path = self.create_mediafile_fixture()
@@ -116,7 +114,6 @@ class InfoTest(unittest.TestCase, TestHelper):
         self.assertIn("title: [various]", out)
         self.assertIn("albumartists: [various]", out)
         self.assertIn("artists: Artist A; Artist Z", out)
-        self.remove_mediafile_fixtures()
 
     def test_custom_format(self):
         self.add_item_fixtures()
