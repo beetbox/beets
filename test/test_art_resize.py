@@ -20,7 +20,7 @@ import unittest
 from unittest.mock import patch
 
 from beets.test import _common
-from beets.test.helper import TestHelper
+from beets.test.helper import CleanupModulesMixin, TestHelper
 from beets.util import command_output, syspath
 from beets.util.artresizer import IMBackend, PILBackend
 
@@ -48,8 +48,10 @@ class DummyPILBackend(PILBackend):
         pass
 
 
-class ArtResizerFileSizeTest(_common.TestCase, TestHelper):
+class ArtResizerFileSizeTest(CleanupModulesMixin, _common.TestCase, TestHelper):
     """Unittest test case for Art Resizer to a specific filesize."""
+
+    modules = (IMBackend.__module__,)
 
     IMG_225x225 = os.path.join(_common.RSRC, b"abbey.jpg")
     IMG_225x225_SIZE = os.stat(syspath(IMG_225x225)).st_size
