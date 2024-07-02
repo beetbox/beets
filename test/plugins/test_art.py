@@ -26,7 +26,7 @@ import responses
 from beets import config, importer, library, logging, util
 from beets.autotag import AlbumInfo, AlbumMatch
 from beets.test import _common
-from beets.test.helper import FetchImageHelper, capture_log
+from beets.test.helper import CleanupModulesMixin, FetchImageHelper, capture_log
 from beets.util import syspath
 from beets.util.artresizer import ArtResizer
 from beetsplug import fetchart
@@ -44,7 +44,9 @@ class Settings:
             setattr(self, k, v)
 
 
-class UseThePlugin(_common.TestCase):
+class UseThePlugin(CleanupModulesMixin, _common.TestCase):
+    modules = (fetchart.__name__, ArtResizer.__module__)
+
     def setUp(self):
         super().setUp()
         self.plugin = fetchart.FetchArtPlugin()

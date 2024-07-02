@@ -29,6 +29,7 @@ information or mock the environment.
 - The `TestHelper` class encapsulates various fixtures that can be set up.
 """
 
+from __future__ import annotations
 
 import os
 import os.path
@@ -39,6 +40,7 @@ from contextlib import contextmanager
 from enum import Enum
 from io import StringIO
 from tempfile import mkdtemp, mkstemp
+from typing import ClassVar
 
 import responses
 from mediafile import Image, MediaFile
@@ -50,7 +52,12 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Album, Item, Library
 from beets.test import _common
 from beets.ui.commands import TerminalImportSession
-from beets.util import MoveOperation, bytestring_path, syspath
+from beets.util import (
+    MoveOperation,
+    bytestring_path,
+    clean_module_tempdir,
+    syspath,
+)
 
 
 class LogCapture(logging.Handler):
@@ -952,3 +959,13 @@ class FetchImageHelper:
             # imghdr reads 32 bytes
             body=self.IMAGEHEADER.get(file_type, b"").ljust(32, b"\x00"),
         )
+
+
+class CleanupModulesMixin:
+    modules: ClassVar[tuple[str, ...]]
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        """Remove files created by the plugin."""
+        for module in cls.modules:
+            clean_module_tempdir(module)
