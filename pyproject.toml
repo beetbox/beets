@@ -230,6 +230,21 @@ env.OPTS = """
 --cov-context=test
 """
 
+[tool.poe.tasks.check-temp-files]
+help = "Run each test module one by one and check for leftover temp files"
+shell = """
+setopt nullglob
+for file in test/**/*.py; do
+  print Temp files created by $file && poe test $file &>/dev/null
+  tempfiles=(/tmp/**/tmp* /tmp/beets/**/*)
+  if (( $#tempfiles )); then
+    print -l $'\t'$^tempfiles
+    rm -r --interactive=never $tempfiles &>/dev/null
+  fi
+done
+"""
+interpreter = "zsh"
+
 [tool.black]
 line-length = 80
 target-version = ["py38", "py39", "py310", "py311"]
