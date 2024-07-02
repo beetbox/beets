@@ -26,7 +26,7 @@ import responses
 from beets import config, importer, library, logging, util
 from beets.autotag import AlbumInfo, AlbumMatch
 from beets.test import _common
-from beets.test.helper import capture_log
+from beets.test.helper import FetchImageHelper, capture_log
 from beets.util import syspath
 from beets.util.artresizer import ArtResizer
 from beetsplug import fetchart
@@ -50,30 +50,8 @@ class UseThePlugin(_common.TestCase):
         self.plugin = fetchart.FetchArtPlugin()
 
 
-class FetchImageHelper(_common.TestCase):
-    """Helper mixin for mocking requests when fetching images
-    with remote art sources.
-    """
-
-    @responses.activate
-    def run(self, *args, **kwargs):
-        super().run(*args, **kwargs)
-
-    IMAGEHEADER = {
-        "image/jpeg": b"\x00" * 6 + b"JFIF",
-        "image/png": b"\211PNG\r\n\032\n",
-    }
-
-    def mock_response(self, url, content_type="image/jpeg", file_type=None):
-        if file_type is None:
-            file_type = content_type
-        responses.add(
-            responses.GET,
-            url,
-            content_type=content_type,
-            # imghdr reads 32 bytes
-            body=self.IMAGEHEADER.get(file_type, b"").ljust(32, b"\x00"),
-        )
+class FetchImageTestCase(FetchImageHelper, UseThePlugin):
+    pass
 
 
 class CAAHelper:
@@ -212,7 +190,7 @@ class CAAHelper:
         )
 
 
-class FetchImageTest(FetchImageHelper, UseThePlugin):
+class FetchImageTest(FetchImageTestCase):
     URL = "http://example.com/test.jpg"
 
     def setUp(self):
@@ -293,7 +271,7 @@ class FSArtTest(UseThePlugin):
         self.assertEqual(candidates, paths)
 
 
-class CombinedTest(FetchImageHelper, UseThePlugin, CAAHelper):
+class CombinedTest(FetchImageTestCase, CAAHelper):
     ASIN = "xxxx"
     MBID = "releaseid"
     AMAZON_URL = "https://images.amazon.com/images/P/{}.01.LZZZZZZZ.jpg".format(
