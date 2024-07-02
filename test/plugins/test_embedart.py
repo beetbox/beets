@@ -17,7 +17,6 @@ import os.path
 import shutil
 import tempfile
 import unittest
-from test.plugins.test_art import FetchImageHelper
 from test.test_art_resize import DummyIMBackend
 from unittest.mock import MagicMock, patch
 
@@ -25,7 +24,7 @@ from mediafile import MediaFile
 
 from beets import art, config, logging, ui
 from beets.test import _common
-from beets.test.helper import TestHelper
+from beets.test.helper import FetchImageHelper, TestHelper
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
 
@@ -48,7 +47,7 @@ class EmbedartCliTest(TestHelper, FetchImageHelper):
     abbey_differentpath = os.path.join(_common.RSRC, b"abbey-different.jpg")
 
     def setUp(self):
-        super().setUp()
+        self.io = _common.DummyIO()
         self.io.install()
         self.setup_beets()  # Converter is threaded
         self.load_plugins("embedart")

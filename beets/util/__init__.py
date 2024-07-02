@@ -13,6 +13,7 @@
 # included in all copies or substantial portions of the Software.
 
 """Miscellaneous utility functions."""
+from __future__ import annotations
 
 import errno
 import fnmatch
@@ -26,9 +27,11 @@ import sys
 import tempfile
 import traceback
 from collections import Counter, namedtuple
+from contextlib import suppress
 from enum import Enum
 from logging import Logger
 from multiprocessing.pool import ThreadPool
+from pathlib import Path
 from typing import (
     Any,
     AnyStr,
@@ -58,6 +61,7 @@ MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = "\\\\?\\"
 T = TypeVar("T")
 Bytes_or_String: TypeAlias = Union[str, bytes]
+PathLike = Union[str, bytes, Path]
 
 
 class HumanReadableException(Exception):
@@ -1076,3 +1080,46 @@ class cached_classproperty:  # noqa: N801
             self.cache[owner] = self.getter(owner)
 
         return self.cache[owner]
+
+
+def get_module_tempdir(module: str) -> Path:
+    """Return the temporary directory for the given module.
+
+    The directory is created within the `/tmp/beets/<module>` directory on
+    Linux (or the equivalent temporary directory on other systems).
+
+    Dots in the module name are replaced by underscores.
+    """
+    module = module.replace("beets.", "").replace(".", "_")
+    return Path(tempfile.gettempdir()) / "beets" / module
+
+
+def clean_module_tempdir(module: str) -> None:
+    """Clean the temporary directory for the given module."""
+    tempdir = get_module_tempdir(module)
+    shutil.rmtree(tempdir, ignore_errors=True)
+    with suppress(OSError):
+        # remove parent (/tmp/beets) directory if it is empty
+        tempdir.parent.rmdir()
+
+
+def get_temp_filename(
+    module: str,
+    prefix: str = "",
+    path: PathLike | None = None,
+    suffix: str = "",
+) -> bytes:
+    """Return temporary filename for the given module and prefix.
+
+    The filename starts with the given `prefix`.
+    If 'suffix' is given, it is used a the file extension.
+    If 'path' is given, we use the same suffix.
+    """
+    if not suffix and path:
+        suffix = Path(os.fsdecode(path)).suffix
+
+    tempdir = get_module_tempdir(module)
+    tempdir.mkdir(parents=True, exist_ok=True)
+
+    _, filename = tempfile.mkstemp(dir=tempdir, prefix=prefix, suffix=suffix)
+    return bytestring_path(filename)

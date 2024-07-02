@@ -94,6 +94,7 @@ class FieldsTest(_common.LibTestCase):
         self.io.install()
 
     def tearDown(self):
+        super().tearDown()
         self.io.restore()
 
     def remove_keys(self, l, text):

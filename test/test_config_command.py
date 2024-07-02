@@ -1,32 +1,29 @@
 import os
 import unittest
-from shutil import rmtree
-from tempfile import mkdtemp
 from unittest.mock import patch
 
 import yaml
 
 from beets import config, ui
-from beets.library import Library
 from beets.test.helper import TestHelper
 
 
 class ConfigCommandTest(unittest.TestCase, TestHelper):
     def setUp(self):
-        self.lib = Library(":memory:")
-        self.temp_dir = mkdtemp()
+        self.setup_beets()
         for k in ("VISUAL", "EDITOR"):
             if k in os.environ:
                 del os.environ[k]
 
-        os.environ["BEETSDIR"] = self.temp_dir
-        self.config_path = os.path.join(self.temp_dir, "config.yaml")
+        temp_dir = self.temp_dir.decode()
+
+        self.config_path = os.path.join(temp_dir, "config.yaml")
         with open(self.config_path, "w") as file:
             file.write("library: lib\n")
             file.write("option: value\n")
             file.write("password: password_value")
 
-        self.cli_config_path = os.path.join(self.temp_dir, "cli_config.yaml")
+        self.cli_config_path = os.path.join(temp_dir, "cli_config.yaml")
         with open(self.cli_config_path, "w") as file:
             file.write("option: cli overwrite")
 
@@ -35,7 +32,7 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
         config._materialized = False
 
     def tearDown(self):
-        rmtree(self.temp_dir)
+        self.teardown_beets()
 
     def _run_with_yaml_output(self, *args):
         output = self.run_with_output(*args)
