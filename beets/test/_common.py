@@ -18,19 +18,17 @@ import os
 import shutil
 import sys
 import tempfile
-import time
 import unittest
 from contextlib import contextmanager
 
-import beets  # noqa: E402
-import beets.library  # noqa: E402
+import beets
+import beets.library
 
 # Make sure the development versions of the plugins are used
-import beetsplug  # noqa: E402
-from beets import util  # noqa: E402
-from beets import importer, logging  # noqa: E402
-from beets.ui import commands  # noqa: E402
-from beets.util import bytestring_path, syspath  # noqa: E402
+import beetsplug
+from beets import importer, logging, util
+from beets.ui import commands
+from beets.util import syspath
 
 beetsplug.__path__ = [
     os.path.abspath(
@@ -119,9 +117,6 @@ def item(lib=None):
     if lib:
         lib.add(i)
     return i
-
-
-_album_ident = 0
 
 
 def album(lib=None):
@@ -254,36 +249,6 @@ class LibTestCase(TestCase):
         super().tearDown()
 
 
-# Mock timing.
-
-
-class Timecop:
-    """Mocks the timing system (namely time() and sleep()) for testing.
-    Inspired by the Ruby timecop library.
-    """
-
-    def __init__(self):
-        self.now = time.time()
-
-    def time(self):
-        return self.now
-
-    def sleep(self, amount):
-        self.now += amount
-
-    def install(self):
-        self.orig = {
-            "time": time.time,
-            "sleep": time.sleep,
-        }
-        time.time = self.time
-        time.sleep = self.sleep
-
-    def restore(self):
-        time.time = self.orig["time"]
-        time.sleep = self.orig["sleep"]
-
-
 # Mock I/O.
 
 
@@ -386,25 +351,6 @@ class Bag:
 
     def __getattr__(self, key):
         return self.fields.get(key)
-
-
-# Convenience methods for setting up a temporary sandbox directory for tests
-# that need to interact with the filesystem.
-
-
-class TempDirMixin:
-    """Text mixin for creating and deleting a temporary directory."""
-
-    def create_temp_dir(self):
-        """Create a temporary directory and assign it into `self.temp_dir`.
-        Call `remove_temp_dir` later to delete it.
-        """
-        self.temp_dir = bytestring_path(tempfile.mkdtemp())
-
-    def remove_temp_dir(self):
-        """Delete the temporary directory created by `create_temp_dir`."""
-        if os.path.isdir(syspath(self.temp_dir)):
-            shutil.rmtree(syspath(self.temp_dir))
 
 
 # Platform mocking.
