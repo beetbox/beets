@@ -40,6 +40,7 @@ from enum import Enum
 from io import StringIO
 from tempfile import mkdtemp, mkstemp
 
+import responses
 from mediafile import Image, MediaFile
 
 import beets
@@ -924,4 +925,30 @@ class AutotagStub:
             artist_id="artistid" + id,
             albumtype="soundtrack",
             data_source="match_source",
+        )
+
+
+class FetchImageHelper:
+    """Helper mixin for mocking requests when fetching images
+    with remote art sources.
+    """
+
+    @responses.activate
+    def run(self, *args, **kwargs):
+        super().run(*args, **kwargs)
+
+    IMAGEHEADER = {
+        "image/jpeg": b"\x00" * 6 + b"JFIF",
+        "image/png": b"\211PNG\r\n\032\n",
+    }
+
+    def mock_response(self, url, content_type="image/jpeg", file_type=None):
+        if file_type is None:
+            file_type = content_type
+        responses.add(
+            responses.GET,
+            url,
+            content_type=content_type,
+            # imghdr reads 32 bytes
+            body=self.IMAGEHEADER.get(file_type, b"").ljust(32, b"\x00"),
         )
