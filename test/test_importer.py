@@ -1763,7 +1763,7 @@ class ImportPretendTest(_common.TestCase, ImportHelper):
         self.matcher = None
 
     def setUp(self):
-        super().setUp()
+        self.io = _common.DummyIO()
         self.setup_beets()
         self.__create_import_dir()
         self.__create_empty_import_dir()
