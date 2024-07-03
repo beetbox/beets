@@ -844,7 +844,7 @@ class ImportTest(_common.TestCase):
 
 
 @_common.slow_test()
-class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
+class ConfigTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.setup_beets()
 
