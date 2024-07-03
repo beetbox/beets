@@ -271,7 +271,7 @@ def create_archive(session):
     return path
 
 
-class RmTempTest(unittest.TestCase, ImportHelper, _common.Assertions):
+class RmTempTest(unittest.TestCase, ImportHelper):
     """Tests that temporarily extracted archives are properly removed
     after usage.
     """
@@ -1170,9 +1170,7 @@ def match_album_mock(*args, **kwargs):
 
 
 @patch("beets.autotag.mb.match_album", Mock(side_effect=match_album_mock))
-class ImportDuplicateAlbumTest(
-    unittest.TestCase, TestHelper, _common.Assertions
-):
+class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.setup_beets()
 
@@ -1294,9 +1292,7 @@ def match_track_mock(*args, **kwargs):
 
 
 @patch("beets.autotag.mb.match_track", Mock(side_effect=match_track_mock))
-class ImportDuplicateSingletonTest(
-    unittest.TestCase, TestHelper, _common.Assertions
-):
+class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.setup_beets()
 
@@ -1650,7 +1646,7 @@ class MultiDiscAlbumsInDirTest(_common.TestCase):
         self.assertEqual(len(items), 3)
 
 
-class ReimportTest(unittest.TestCase, ImportHelper, _common.Assertions):
+class ReimportTest(unittest.TestCase, ImportHelper):
     """Test "re-imports", in which the autotagging machinery is used for
     music that's already in the library.
 

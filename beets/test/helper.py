@@ -142,7 +142,7 @@ def has_program(cmd, args=["--version"]):
         return True
 
 
-class TestHelper:
+class TestHelper(_common.Assertions):
     """Helper mixin for high-level cli and plugin tests.
 
     This mixin provides methods to isolate beets' global state provide
