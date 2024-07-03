@@ -19,7 +19,7 @@ import os
 import unittest
 
 from beets import importer
-from beets.test.helper import AutotagStub, ImportHelper
+from beets.test.helper import AutotagStub, ImportTestCase
 from beets.util import displayable_path, syspath
 from beetsplug.importadded import ImportAddedPlugin
 
@@ -40,7 +40,7 @@ def modify_mtimes(paths, offset=-60000):
         os.utime(syspath(path), (mstat.st_atime, mstat.st_mtime + offset * i))
 
 
-class ImportAddedTest(unittest.TestCase, ImportHelper):
+class ImportAddedTest(ImportTestCase):
     # The minimum mtime of the files to be imported
     min_mtime = None
 

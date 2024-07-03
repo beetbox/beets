@@ -535,7 +535,7 @@ class LibTestCase(BeetsTestCase):
         super().tearDown()
 
 
-class ImportHelper(TestHelper):
+class ImportHelper:
     """Provides tools to setup a library, a directory containing files that are
     to be imported and an import session. The class also provides stubs for the
     autotagging library and several assertions for the library.
@@ -642,6 +642,10 @@ class ImportHelper(TestHelper):
 
     def assert_lib_dir_empty(self):
         self.assertEqual(len(os.listdir(syspath(self.libdir))), 0)
+
+
+class ImportTestCase(ImportHelper, BeetsTestCase):
+    pass
 
 
 class ImportSessionFixture(importer.ImportSession):
