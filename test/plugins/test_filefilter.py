@@ -24,12 +24,12 @@ from mediafile import MediaFile
 
 from beets import config
 from beets.test import _common
-from beets.test.helper import ImportHelper, capture_log
+from beets.test.helper import ImportTestCase, capture_log
 from beets.util import bytestring_path, displayable_path, syspath
 from beetsplug.filefilter import FileFilterPlugin
 
 
-class FileFilterPluginTest(unittest.TestCase, ImportHelper):
+class FileFilterPluginTest(ImportTestCase):
     def setUp(self):
         self.setup_beets()
         self.__create_import_dir(2)

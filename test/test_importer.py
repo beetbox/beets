@@ -37,14 +37,14 @@ from beets.test import _common
 from beets.test.helper import (
     AutotagStub,
     BeetsTestCase,
-    ImportHelper,
+    ImportTestCase,
     capture_log,
     has_program,
 )
 from beets.util import bytestring_path, displayable_path, syspath
 
 
-class ScrubbedImportTest(BeetsTestCase, ImportHelper):
+class ScrubbedImportTest(ImportTestCase):
     def setUp(self):
         self.setup_beets(disk=True)
         self.load_plugins("scrub")
@@ -99,7 +99,7 @@ class ScrubbedImportTest(BeetsTestCase, ImportHelper):
 
 
 @_common.slow_test()
-class NonAutotaggedImportTest(BeetsTestCase, ImportHelper):
+class NonAutotaggedImportTest(ImportTestCase):
     def setUp(self):
         self.setup_beets(disk=True)
         self._create_import_dir(2)
@@ -271,7 +271,7 @@ def create_archive(session):
     return path
 
 
-class RmTempTest(unittest.TestCase, ImportHelper):
+class RmTempTest(ImportTestCase):
     """Tests that temporarily extracted archives are properly removed
     after usage.
     """
@@ -296,7 +296,7 @@ class RmTempTest(unittest.TestCase, ImportHelper):
         self.assertNotExists(tmp_path)
 
 
-class ImportZipTest(unittest.TestCase, ImportHelper):
+class ImportZipTest(ImportTestCase):
     def setUp(self):
         self.setup_beets()
 
@@ -344,7 +344,7 @@ class ImportPasswordRarTest(ImportZipTest):
         return os.path.join(_common.RSRC, b"password.rar")
 
 
-class ImportSingletonTest(BeetsTestCase, ImportHelper):
+class ImportSingletonTest(ImportTestCase):
     """Test ``APPLY`` and ``ASIS`` choices for an import session with
     singletons config set to True.
     """
@@ -467,7 +467,7 @@ class ImportSingletonTest(BeetsTestCase, ImportHelper):
             self.assertEqual(item.title, "Applied Title 1 - formatted")
 
 
-class ImportTest(BeetsTestCase, ImportHelper):
+class ImportTest(ImportTestCase):
     """Test APPLY, ASIS and SKIP choices."""
 
     def setUp(self):
@@ -681,7 +681,7 @@ class ImportTest(BeetsTestCase, ImportHelper):
                 )
 
 
-class ImportTracksTest(BeetsTestCase, ImportHelper):
+class ImportTracksTest(ImportTestCase):
     """Test TRACKS and APPLY choice."""
 
     def setUp(self):
@@ -715,7 +715,7 @@ class ImportTracksTest(BeetsTestCase, ImportHelper):
         self.assert_file_in_lib(b"singletons", b"Applied Title 1.mp3")
 
 
-class ImportCompilationTest(BeetsTestCase, ImportHelper):
+class ImportCompilationTest(ImportTestCase):
     """Test ASIS import of a folder containing tracks with different artists."""
 
     def setUp(self):
@@ -834,7 +834,7 @@ class ImportCompilationTest(BeetsTestCase, ImportHelper):
         self.assertTrue(asserted_multi_artists_0 and asserted_multi_artists_1)
 
 
-class ImportExistingTest(BeetsTestCase, ImportHelper):
+class ImportExistingTest(ImportTestCase):
     """Test importing files that are already in the library directory."""
 
     def setUp(self):
@@ -959,7 +959,7 @@ class ImportExistingTest(BeetsTestCase, ImportHelper):
         self.assertNotExists(self.import_media[0].path)
 
 
-class GroupAlbumsImportTest(BeetsTestCase, ImportHelper):
+class GroupAlbumsImportTest(ImportTestCase):
     def setUp(self):
         self.setup_beets()
         self._create_import_dir(3)
@@ -1031,7 +1031,7 @@ class GlobalGroupAlbumsImportTest(GroupAlbumsImportTest):
         config["import"]["group_albums"] = True
 
 
-class ChooseCandidateTest(BeetsTestCase, ImportHelper):
+class ChooseCandidateTest(ImportTestCase):
     def setUp(self):
         self.setup_beets()
         self._create_import_dir(1)
@@ -1646,7 +1646,7 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
         self.assertEqual(len(items), 3)
 
 
-class ReimportTest(unittest.TestCase, ImportHelper):
+class ReimportTest(ImportTestCase):
     """Test "re-imports", in which the autotagging machinery is used for
     music that's already in the library.
 
@@ -1751,7 +1751,7 @@ class ReimportTest(unittest.TestCase, ImportHelper):
         self.assertEqual(self._album().data_source, "match_source")
 
 
-class ImportPretendTest(BeetsTestCase, ImportHelper):
+class ImportPretendTest(ImportTestCase):
     """Test the pretend commandline option"""
 
     def __init__(self, method_name="runTest"):
@@ -1944,7 +1944,7 @@ def mocked_get_recording_by_id(
     "musicbrainzngs.get_release_by_id",
     Mock(side_effect=mocked_get_release_by_id),
 )
-class ImportMusicBrainzIdTest(BeetsTestCase, ImportHelper):
+class ImportMusicBrainzIdTest(ImportTestCase):
     """Test the --musicbrainzid argument."""
 
     MB_RELEASE_PREFIX = "https://musicbrainz.org/release/"
