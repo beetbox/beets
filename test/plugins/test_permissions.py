@@ -18,13 +18,13 @@ from beetsplug.permissions import (
 
 class PermissionsPluginTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("permissions")
 
         self.config["permissions"] = {"file": "777", "dir": "777"}
 
     def tearDown(self):
-        self.teardown_beets()
+        super().tearDown()
         self.unload_plugins()
 
     def test_permissions_on_album_imported(self):

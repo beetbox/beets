@@ -27,13 +27,13 @@ class AlbumTypesPluginTest(BeetsTestCase):
 
     def setUp(self):
         """Set up tests."""
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("albumtypes")
 
     def tearDown(self):
         """Tear down tests."""
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def test_renames_types(self):
         """Tests if the plugin correctly renames the specified types."""

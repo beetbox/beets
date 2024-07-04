@@ -25,7 +25,7 @@ class LimitPluginTest(BeetsTestCase):
     """
 
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("limit")
 
         # we'll create an even number of tracks in the library
@@ -48,7 +48,7 @@ class LimitPluginTest(BeetsTestCase):
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def test_no_limit(self):
         """Returns all when there is no limit or filter."""

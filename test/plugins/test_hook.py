@@ -32,12 +32,9 @@ def get_temporary_path():
 class HookTest(BeetsTestCase):
     TEST_HOOK_COUNT = 5
 
-    def setUp(self):
-        self.setup_beets()
-
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def _add_hook(self, event, command):
         hook = {"event": event, "command": command}

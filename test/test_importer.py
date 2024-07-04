@@ -53,7 +53,7 @@ class ScrubbedImportTest(ImportTestCase):
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def test_tags_not_scrubbed(self):
         config["plugins"] = ["scrub"]
@@ -104,9 +104,6 @@ class NonAutotaggedImportTest(ImportTestCase):
         self.setup_beets(disk=True)
         self._create_import_dir(2)
         self._setup_import_session(autotag=False)
-
-    def tearDown(self):
-        self.teardown_beets()
 
     def test_album_created_with_track_artist(self):
         self.importer.run()
@@ -277,13 +274,10 @@ class RmTempTest(ImportTestCase):
     """
 
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.want_resume = False
         self.config["incremental"] = False
         self._old_home = None
-
-    def tearDown(self):
-        self.teardown_beets()
 
     def test_rm(self):
         zip_path = create_archive(self)
@@ -297,12 +291,6 @@ class RmTempTest(ImportTestCase):
 
 
 class ImportZipTest(ImportTestCase):
-    def setUp(self):
-        self.setup_beets()
-
-    def tearDown(self):
-        self.teardown_beets()
-
     def test_import_zip(self):
         zip_path = create_archive(self)
         self.assertEqual(len(self.lib.items()), 0)
@@ -350,14 +338,14 @@ class ImportSingletonTest(ImportTestCase):
     """
 
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self._create_import_dir(1)
         self._setup_import_session()
         config["import"]["singletons"] = True
         self.matcher = AutotagStub().install()
 
     def tearDown(self):
-        self.teardown_beets()
+        super().tearDown()
         self.matcher.restore()
 
     def test_apply_asis_adds_track(self):
@@ -471,14 +459,14 @@ class ImportTest(ImportTestCase):
     """Test APPLY, ASIS and SKIP choices."""
 
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self._create_import_dir(1)
         self._setup_import_session()
         self.matcher = AutotagStub().install()
         self.matcher.macthin = AutotagStub.GOOD
 
     def tearDown(self):
-        self.teardown_beets()
+        super().tearDown()
         self.matcher.restore()
 
     def test_apply_asis_adds_album(self):
@@ -685,13 +673,13 @@ class ImportTracksTest(ImportTestCase):
     """Test TRACKS and APPLY choice."""
 
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self._create_import_dir(1)
         self._setup_import_session()
         self.matcher = AutotagStub().install()
 
     def tearDown(self):
-        self.teardown_beets()
+        super().tearDown()
         self.matcher.restore()
 
     def test_apply_tracks_adds_singleton_track(self):
@@ -719,13 +707,13 @@ class ImportCompilationTest(ImportTestCase):
     """Test ASIS import of a folder containing tracks with different artists."""
 
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self._create_import_dir(3)
         self._setup_import_session()
         self.matcher = AutotagStub().install()
 
     def tearDown(self):
-        self.teardown_beets()
+        super().tearDown()
         self.matcher.restore()
 
     def test_asis_homogenous_sets_albumartist(self):
@@ -838,7 +826,7 @@ class ImportExistingTest(ImportTestCase):
     """Test importing files that are already in the library directory."""
 
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self._create_import_dir(1)
         self.matcher = AutotagStub().install()
 
@@ -849,7 +837,7 @@ class ImportExistingTest(ImportTestCase):
         self._setup_import_session(import_dir=self.libdir)
 
     def tearDown(self):
-        self.teardown_beets()
+        super().tearDown()
         self.matcher.restore()
 
     def test_does_not_duplicate_item(self):
@@ -961,7 +949,7 @@ class ImportExistingTest(ImportTestCase):
 
 class GroupAlbumsImportTest(ImportTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self._create_import_dir(3)
         self.matcher = AutotagStub().install()
         self.matcher.matching = AutotagStub.NONE
@@ -973,7 +961,7 @@ class GroupAlbumsImportTest(ImportTestCase):
         self.importer.add_choice(importer.action.ASIS)
 
     def tearDown(self):
-        self.teardown_beets()
+        super().tearDown()
         self.matcher.restore()
 
     def test_add_album_for_different_artist_and_different_album(self):
@@ -1033,14 +1021,14 @@ class GlobalGroupAlbumsImportTest(GroupAlbumsImportTest):
 
 class ChooseCandidateTest(ImportTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self._create_import_dir(1)
         self._setup_import_session()
         self.matcher = AutotagStub().install()
         self.matcher.matching = AutotagStub.BAD
 
     def tearDown(self):
-        self.teardown_beets()
+        super().tearDown()
         self.matcher.restore()
 
     def test_choose_first_candidate(self):
@@ -1172,7 +1160,7 @@ def match_album_mock(*args, **kwargs):
 @patch("beets.autotag.mb.match_album", Mock(side_effect=match_album_mock))
 class ImportDuplicateAlbumTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
 
         # Original album
         self.add_album_fixture(albumartist="artist", album="album")
@@ -1181,9 +1169,6 @@ class ImportDuplicateAlbumTest(BeetsTestCase):
         self.importer = self.create_importer()
         config["import"]["autotag"] = True
         config["import"]["duplicate_keys"]["album"] = "albumartist album"
-
-    def tearDown(self):
-        self.teardown_beets()
 
     def test_remove_duplicate_album(self):
         item = self.lib.items().get()
@@ -1294,7 +1279,7 @@ def match_track_mock(*args, **kwargs):
 @patch("beets.autotag.mb.match_track", Mock(side_effect=match_track_mock))
 class ImportDuplicateSingletonTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
 
         # Original file in library
         self.add_item_fixture(
@@ -1306,9 +1291,6 @@ class ImportDuplicateSingletonTest(BeetsTestCase):
         config["import"]["autotag"] = True
         config["import"]["singletons"] = True
         config["import"]["duplicate_keys"]["item"] = "artist title"
-
-    def tearDown(self):
-        self.teardown_beets()
 
     def test_remove_duplicate(self):
         item = self.lib.items().get()
@@ -1382,12 +1364,6 @@ class TagLogTest(BeetsTestCase):
 
 
 class ResumeImportTest(BeetsTestCase):
-    def setUp(self):
-        self.setup_beets()
-
-    def tearDown(self):
-        self.teardown_beets()
-
     @patch("beets.plugins.send")
     def test_resume_album(self, plugins_send):
         self.importer = self.create_importer(album_count=2)
@@ -1434,11 +1410,8 @@ class ResumeImportTest(BeetsTestCase):
 
 class IncrementalImportTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.config["import"]["incremental"] = True
-
-    def tearDown(self):
-        self.teardown_beets()
 
     def test_incremental_album(self):
         importer = self.create_importer(album_count=1)
@@ -1656,7 +1629,7 @@ class ReimportTest(ImportTestCase):
     """
 
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
 
         # The existing album.
         album = self.add_album_fixture()
@@ -1674,7 +1647,7 @@ class ReimportTest(ImportTestCase):
         self.matcher.matching = AutotagStub.GOOD
 
     def tearDown(self):
-        self.teardown_beets()
+        super().tearDown()
         self.matcher.restore()
 
     def _setup_session(self, singletons=False):
@@ -1759,8 +1732,7 @@ class ImportPretendTest(ImportTestCase):
         self.matcher = None
 
     def setUp(self):
-        self.io = _common.DummyIO()
-        self.setup_beets()
+        super().setUp()
         self.__create_import_dir()
         self.__create_empty_import_dir()
         self._setup_import_session()
@@ -1769,7 +1741,7 @@ class ImportPretendTest(ImportTestCase):
         self.io.install()
 
     def tearDown(self):
-        self.teardown_beets()
+        super().tearDown()
         self.matcher.restore()
 
     def __create_import_dir(self):
@@ -1955,11 +1927,8 @@ class ImportMusicBrainzIdTest(ImportTestCase):
     ID_RECORDING_1 = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
 
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self._create_import_dir(1)
-
-    def tearDown(self):
-        self.teardown_beets()
 
     def test_one_mbid_one_album(self):
         self.config["import"]["search_ids"] = [

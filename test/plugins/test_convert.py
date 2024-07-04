@@ -106,7 +106,7 @@ class ImportConvertTest(ConvertTestCase):
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def test_import_converted(self):
         self.importer.run()
@@ -193,7 +193,7 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def test_convert(self):
         with control_stdin("y"):
@@ -334,7 +334,7 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def test_transcode_from_lossless(self):
         [item] = self.add_item_fixtures(ext="flac")

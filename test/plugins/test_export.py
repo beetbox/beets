@@ -27,13 +27,13 @@ from beets.test.helper import BeetsTestCase
 
 class ExportPluginTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("export")
         self.test_values = {"title": "xtitle", "album": "xalbum"}
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def execute_command(self, format_type, artist):
         query = ",".join(self.test_values.keys())

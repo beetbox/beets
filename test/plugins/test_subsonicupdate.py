@@ -31,8 +31,7 @@ class SubsonicPluginTest(BeetsTestCase):
     @responses.activate
     def setUp(self):
         """Sets up config and plugin for test."""
-        config.clear()
-        self.setup_beets()
+        super().setUp()
 
         config["subsonic"]["user"] = "admin"
         config["subsonic"]["pass"] = "admin"
@@ -88,10 +87,6 @@ class SubsonicPluginTest(BeetsTestCase):
     "path": "/rest/startScn"
 }
 """
-
-    def tearDown(self):
-        """Tears down tests."""
-        self.teardown_beets()
 
     @responses.activate
     def test_start_scan(self):

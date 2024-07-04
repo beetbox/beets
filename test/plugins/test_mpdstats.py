@@ -24,11 +24,11 @@ from beetsplug.mpdstats import MPDStats
 
 class MPDStatsTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("mpdstats")
 
     def tearDown(self):
-        self.teardown_beets()
+        super().tearDown()
         self.unload_plugins()
 
     def test_update_rating(self):

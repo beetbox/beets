@@ -91,9 +91,6 @@ class InputMethodsTest(BeetsTestCase):
 
 
 class InitTest(ItemInDBTestCase):
-    def setUp(self):
-        super().setUp()
-
     def test_human_bytes(self):
         tests = [
             (0, "0.0 B"),

@@ -23,12 +23,12 @@ from beets.util import displayable_path
 
 class InfoTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("info")
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def test_path(self):
         path = self.create_mediafile_fixture()

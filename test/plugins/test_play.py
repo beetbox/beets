@@ -31,14 +31,14 @@ class PlayPluginTest(CleanupModulesMixin, BeetsTestCase):
     modules = (PlayPlugin.__module__,)
 
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("play")
         self.item = self.add_item(album="a nice älbum", title="aNiceTitle")
         self.lib.add_album([self.item])
         self.config["play"]["command"] = "echo"
 
     def tearDown(self):
-        self.teardown_beets()
+        super().tearDown()
         self.unload_plugins()
 
     def run_and_assert(

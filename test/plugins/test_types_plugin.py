@@ -24,12 +24,12 @@ from beets.test.helper import BeetsTestCase
 
 class TypesPluginTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("types")
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def test_integer_modify_and_query(self):
         self.config["types"] = {"myint": "int"}

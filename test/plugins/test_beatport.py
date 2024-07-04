@@ -450,7 +450,7 @@ class BeatportTest(BeetsTestCase):
         return results
 
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("beatport")
         self.lib = library.Library(":memory:")
 
@@ -470,7 +470,7 @@ class BeatportTest(BeetsTestCase):
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def mk_test_album(self):
         items = [_common.item() for _ in range(6)]
@@ -628,7 +628,7 @@ class BeatportResponseEmptyTest(BeetsTestCase):
         return results
 
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("beatport")
         self.lib = library.Library(":memory:")
 
@@ -641,7 +641,7 @@ class BeatportResponseEmptyTest(BeetsTestCase):
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def test_response_tracks_empty(self):
         response_tracks = []

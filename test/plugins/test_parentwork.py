@@ -88,12 +88,12 @@ def mock_workid_response(mbid, includes):
 class ParentWorkIntegrationTest(BeetsTestCase):
     def setUp(self):
         """Set up configuration"""
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("parentwork")
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     # test how it works with real musicbrainz data
     @unittest.skipUnless(
@@ -183,7 +183,7 @@ class ParentWorkIntegrationTest(BeetsTestCase):
 class ParentWorkTest(BeetsTestCase):
     def setUp(self):
         """Set up configuration"""
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("parentwork")
         self.patcher = patch(
             "musicbrainzngs.get_work_by_id", side_effect=mock_workid_response
@@ -192,7 +192,7 @@ class ParentWorkTest(BeetsTestCase):
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
         self.patcher.stop()
 
     def test_normal_case(self):

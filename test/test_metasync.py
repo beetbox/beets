@@ -39,7 +39,7 @@ class MetaSyncTest(BeetsTestCase):
     )
 
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("metasync")
 
         self.config["metasync"]["source"] = "itunes"
@@ -85,7 +85,7 @@ class MetaSyncTest(BeetsTestCase):
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def test_load_item_types(self):
         # This test also verifies that the MetaSources have loaded correctly

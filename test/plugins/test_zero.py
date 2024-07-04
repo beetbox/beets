@@ -12,7 +12,7 @@ from beetsplug.zero import ZeroPlugin
 
 class ZeroPluginTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.config["zero"] = {
             "fields": [],
             "keep_fields": [],
@@ -21,7 +21,7 @@ class ZeroPluginTest(BeetsTestCase):
 
     def tearDown(self):
         ZeroPlugin.listeners = None
-        self.teardown_beets()
+        super().tearDown()
         self.unload_plugins()
 
     def test_no_patterns(self):

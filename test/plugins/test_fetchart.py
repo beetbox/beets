@@ -24,7 +24,7 @@ from beets.test.helper import BeetsTestCase
 
 class FetchartCliTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("fetchart")
         self.config["fetchart"]["cover_names"] = "c\xc3\xb6ver.jpg"
         self.config["art_filename"] = "mycover"
@@ -33,7 +33,7 @@ class FetchartCliTest(BeetsTestCase):
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def check_cover_is_stored(self):
         self.assertEqual(self.album["artpath"], self.cover_path)

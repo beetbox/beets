@@ -26,7 +26,7 @@ from beets.test.helper import (
 
 class MBSubmitPluginTest(TerminalImportMixin, ImportTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("mbsubmit")
         self._create_import_dir(2)
         self._setup_import_session()
@@ -34,7 +34,7 @@ class MBSubmitPluginTest(TerminalImportMixin, ImportTestCase):
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
         self.matcher.restore()
 
     def test_print_tracks_output(self):

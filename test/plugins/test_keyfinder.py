@@ -24,11 +24,11 @@ from beets.test.helper import BeetsTestCase
 @patch("beets.util.command_output")
 class KeyFinderTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("keyfinder")
 
     def tearDown(self):
-        self.teardown_beets()
+        super().tearDown()
         self.unload_plugins()
 
     def test_add_key(self, command_output):

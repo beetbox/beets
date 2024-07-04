@@ -125,7 +125,7 @@ class EditCommandTest(BeetsTestCase, EditMixin):
     TRACK_COUNT = 10
 
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("edit")
         # Add an album, storing the original fields for comparison.
         self.album = self.add_album_fixture(track_count=self.TRACK_COUNT)
@@ -136,7 +136,7 @@ class EditCommandTest(BeetsTestCase, EditMixin):
 
     def tearDown(self):
         EditPlugin.listeners = None
-        self.teardown_beets()
+        super().tearDown()
         self.unload_plugins()
 
     def assertCounts(  # noqa
@@ -330,7 +330,7 @@ class EditDuringImporterTestCase(
     IGNORED = ["added", "album_id", "id", "mtime", "path"]
 
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("edit")
         # Create some mediafiles, and store them for comparison.
         self._create_import_dir(3)
@@ -342,7 +342,7 @@ class EditDuringImporterTestCase(
     def tearDown(self):
         EditPlugin.listeners = None
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
         self.matcher.restore()
 
     def test_edit_apply_asis(self):

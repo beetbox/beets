@@ -73,13 +73,13 @@ class PlexUpdateTest(BeetsTestCase):
         )
 
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("plexupdate")
 
         self.config["plex"] = {"host": "localhost", "port": 32400}
 
     def tearDown(self):
-        self.teardown_beets()
+        super().tearDown()
         self.unload_plugins()
 
     @responses.activate

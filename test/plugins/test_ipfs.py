@@ -26,13 +26,13 @@ from beetsplug.ipfs import IPFSPlugin
 @patch("beets.util.command_output", Mock())
 class IPFSPluginTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("ipfs")
         self.lib = library.Library(":memory:")
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def test_stored_hashes(self):
         test_album = self.mk_test_album()
