@@ -8,7 +8,7 @@ from beetsplug import embyupdate
 
 class EmbyUpdateTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("embyupdate")
 
         self.config["emby"] = {
@@ -19,7 +19,7 @@ class EmbyUpdateTest(BeetsTestCase):
         }
 
     def tearDown(self):
-        self.teardown_beets()
+        super().tearDown()
         self.unload_plugins()
 
     def test_api_url_only_name(self):

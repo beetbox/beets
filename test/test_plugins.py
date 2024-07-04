@@ -58,7 +58,7 @@ class PluginLoaderTestCase(BeetsTestCase):
             plugins._classes.update(self._plugin_classes)
 
         load_plugins.side_effect = myload
-        self.setup_beets()
+        super().setUp()
 
     def teardown_plugin_loader(self):
         self._plugin_loader_patch.stop()
@@ -72,7 +72,7 @@ class PluginLoaderTestCase(BeetsTestCase):
 
     def tearDown(self):
         self.teardown_plugin_loader()
-        self.teardown_beets()
+        super().tearDown()
 
 
 class PluginImportTestCase(ImportHelper, PluginLoaderTestCase):

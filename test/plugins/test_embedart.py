@@ -47,8 +47,8 @@ class EmbedartCliTest(FetchImageHelper, BeetsTestCase):
     abbey_differentpath = os.path.join(_common.RSRC, b"abbey-different.jpg")
 
     def setUp(self):
+        super().setUp()  # Converter is threaded
         self.io.install()
-        self.setup_beets()  # Converter is threaded
         self.load_plugins("embedart")
 
     def _setup_data(self, artpath=None):
@@ -59,7 +59,7 @@ class EmbedartCliTest(FetchImageHelper, BeetsTestCase):
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def test_embed_art_from_file_with_yes_input(self):
         self._setup_data()

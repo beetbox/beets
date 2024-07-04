@@ -340,7 +340,7 @@ class SmartPlaylistTest(BeetsTestCase):
 
 class SmartPlaylistCLITest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
 
         self.item = self.add_item()
         config["smartplaylist"]["playlists"].set(
@@ -354,7 +354,7 @@ class SmartPlaylistCLITest(BeetsTestCase):
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def test_splupdate(self):
         with self.assertRaises(UserError):

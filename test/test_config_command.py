@@ -10,7 +10,7 @@ from beets.test.helper import BeetsTestCase
 
 class ConfigCommandTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         for k in ("VISUAL", "EDITOR"):
             if k in os.environ:
                 del os.environ[k]
@@ -30,9 +30,6 @@ class ConfigCommandTest(BeetsTestCase):
         config.clear()
         config["password"].redact = True
         config._materialized = False
-
-    def tearDown(self):
-        self.teardown_beets()
 
     def _run_with_yaml_output(self, *args):
         output = self.run_with_output(*args)

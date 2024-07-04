@@ -24,12 +24,9 @@ PLUGIN_NAME = "advancedrewrite"
 
 
 class AdvancedRewritePluginTest(BeetsTestCase):
-    def setUp(self):
-        self.setup_beets()
-
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def test_simple_rewrite_example(self):
         self.config[PLUGIN_NAME] = [

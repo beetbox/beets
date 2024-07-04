@@ -191,12 +191,9 @@ class RemoveTest(BeetsTestCase):
 
 class ModifyTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.album = self.add_album_fixture()
         [self.item] = self.album.items()
-
-    def tearDown(self):
-        self.teardown_beets()
 
     def modify_inp(self, inp, *args):
         with control_stdin(inp):
@@ -404,12 +401,6 @@ class ModifyTest(BeetsTestCase):
 
 
 class WriteTest(BeetsTestCase):
-    def setUp(self):
-        self.setup_beets()
-
-    def tearDown(self):
-        self.teardown_beets()
-
     def write_cmd(self, *args):
         return self.run_with_output("write", *args)
 
@@ -846,7 +837,7 @@ class ImportTest(BeetsTestCase):
 @_common.slow_test()
 class ConfigTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
 
         # Don't use the BEETSDIR from `helper`. Instead, we point the home
         # directory there. Some tests will set `BEETSDIR` themselves.
@@ -895,7 +886,7 @@ class ConfigTest(BeetsTestCase):
         else:
             os.environ["APPDATA"] = self._old_appdata
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def _make_test_cmd(self):
         test_cmd = ui.Subcommand("test", help="test")
@@ -1474,7 +1465,7 @@ class CommonOptionsParserCliTest(BeetsTestCase):
     """
 
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.item = _common.item()
         self.item.path = b"xxx/yyy"
         self.lib.add(self.item)
@@ -1483,7 +1474,7 @@ class CommonOptionsParserCliTest(BeetsTestCase):
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def test_base(self):
         l = self.run_with_output("ls")
@@ -1552,12 +1543,6 @@ class CommonOptionsParserCliTest(BeetsTestCase):
 
 
 class CommonOptionsParserTest(BeetsTestCase):
-    def setUp(self):
-        self.setup_beets()
-
-    def tearDown(self):
-        self.teardown_beets()
-
     def test_album_option(self):
         parser = ui.CommonOptionsParser()
         self.assertFalse(parser._album_flags)

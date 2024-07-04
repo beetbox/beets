@@ -6,7 +6,6 @@ from urllib.parse import parse_qs, urlparse
 
 import responses
 
-from beets import config
 from beets.library import Item
 from beets.test import _common
 from beets.test.helper import BeetsTestCase
@@ -28,8 +27,7 @@ def _params(url):
 class SpotifyPluginTest(BeetsTestCase):
     @responses.activate
     def setUp(self):
-        config.clear()
-        self.setup_beets()
+        super().setUp()
         responses.add(
             responses.POST,
             spotify.SpotifyPlugin.oauth_token_url,
@@ -45,9 +43,6 @@ class SpotifyPluginTest(BeetsTestCase):
         self.spotify = spotify.SpotifyPlugin()
         opts = ArgumentsMock("list", False)
         self.spotify._parse_opts(opts)
-
-    def tearDown(self):
-        self.teardown_beets()
 
     def test_args(self):
         opts = ArgumentsMock("fail", True)

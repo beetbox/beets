@@ -56,14 +56,6 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
     IMG_225x225 = os.path.join(_common.RSRC, b"abbey.jpg")
     IMG_225x225_SIZE = os.stat(syspath(IMG_225x225)).st_size
 
-    def setUp(self):
-        """Called before each test, setting up beets."""
-        self.setup_beets()
-
-    def tearDown(self):
-        """Called after each test, unloading all plugins."""
-        self.teardown_beets()
-
     def _test_img_resize(self, backend):
         """Test resizing based on file size, given a resize_func."""
         # Check quality setting unaffected by new parameter

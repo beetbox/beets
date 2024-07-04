@@ -31,13 +31,10 @@ from beetsplug.filefilter import FileFilterPlugin
 
 class FileFilterPluginTest(ImportTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.__create_import_dir(2)
         self._setup_import_session()
         config["import"]["pretend"] = True
-
-    def tearDown(self):
-        self.teardown_beets()
 
     def __copy_file(self, dest_path, metadata):
         # Copy files

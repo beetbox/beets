@@ -28,12 +28,12 @@ from beets.test.helper import (
 
 class MbsyncCliTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("mbsync")
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     @patch("beets.autotag.mb.album_for_id")
     @patch("beets.autotag.mb.track_for_id")

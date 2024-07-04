@@ -24,7 +24,7 @@ from beets.test.helper import BeetsTestCase
 
 class PlaylistTestCase(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.lib = beets.library.Library(":memory:")
 
         self.music_dir = os.path.expanduser(os.path.join("~", "Music"))
@@ -86,7 +86,7 @@ class PlaylistTestCase(BeetsTestCase):
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
 
 class PlaylistQueryTest:

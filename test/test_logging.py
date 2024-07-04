@@ -74,12 +74,12 @@ class LoggingLevelTest(BeetsTestCase):
     def setUp(self):
         sys.modules["beetsplug.dummy"] = self.DummyModule
         beetsplug.dummy = self.DummyModule
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("dummy")
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
         del beetsplug.dummy
         sys.modules.pop("beetsplug.dummy")
         self.DummyModule.DummyPlugin.listeners = None
@@ -206,9 +206,6 @@ class ConcurrentEventsTest(BeetsTestCase):
 
     def setUp(self):
         self.setup_beets(disk=True)
-
-    def tearDown(self):
-        self.teardown_beets()
 
     def test_concurrent_events(self):
         dp = self.DummyPlugin(self)

@@ -31,12 +31,6 @@ from beetsplug.thumbnails import (
 
 
 class ThumbnailsTest(BeetsTestCase):
-    def setUp(self):
-        self.setup_beets()
-
-    def tearDown(self):
-        self.teardown_beets()
-
     @patch("beetsplug.thumbnails.ArtResizer")
     @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok")
     @patch("beetsplug.thumbnails.os.stat")

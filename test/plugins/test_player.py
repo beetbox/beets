@@ -296,7 +296,7 @@ class BPDTestHelper(BeetsTestCase):
         self.lib.add_album([self.item1, self.item2])
 
     def tearDown(self):
-        self.teardown_beets()
+        super().tearDown()
         self.unload_plugins()
 
     @contextmanager

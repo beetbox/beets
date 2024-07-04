@@ -24,12 +24,12 @@ from beetsplug import ftintitle
 class FtInTitlePluginFunctional(BeetsTestCase):
     def setUp(self):
         """Set up configuration"""
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("ftintitle")
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def _ft_add_item(self, path, artist, title, aartist):
         return self.add_item(

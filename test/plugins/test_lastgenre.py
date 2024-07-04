@@ -26,11 +26,8 @@ from beetsplug import lastgenre
 
 class LastGenrePluginTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.plugin = lastgenre.LastGenrePlugin()
-
-    def tearDown(self):
-        self.teardown_beets()
 
     def _setup_config(
         self, whitelist=False, canonical=False, count=1, prefer_specific=False

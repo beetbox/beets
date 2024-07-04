@@ -14,7 +14,7 @@ class BareascPluginTest(BeetsTestCase):
 
     def setUp(self):
         """Set up test environment for bare ASCII query matching."""
-        self.setup_beets()
+        super().setUp()
         self.log = logging.getLogger("beets.web")
         self.config["bareasc"]["prefix"] = "#"
         self.load_plugins("bareasc")
@@ -26,9 +26,6 @@ class BareascPluginTest(BeetsTestCase):
         self.add_item(title="with umlaut", album_id=2, artist="Brüggen")
         self.add_item(title="without umlaut or e", artist="Bruggen")
         self.add_item(title="without umlaut with e", artist="Brueggen")
-
-    def tearDown(self):
-        self.teardown_beets()
 
     def test_bareasc_search(self):
         test_cases = [

@@ -46,7 +46,7 @@ class ImportAddedTest(ImportTestCase):
 
     def setUp(self):
         preserve_plugin_listeners()
-        self.setup_beets()
+        super().setUp()
         self.load_plugins("importadded")
         self._create_import_dir(2)
         # Different mtimes on the files to be imported in order to test the
@@ -62,7 +62,7 @@ class ImportAddedTest(ImportTestCase):
 
     def tearDown(self):
         self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
         self.matcher.restore()
 
     def find_media_file(self, item):

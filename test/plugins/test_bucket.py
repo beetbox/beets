@@ -24,11 +24,8 @@ from beetsplug import bucket
 
 class BucketPluginTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.plugin = bucket.BucketPlugin()
-
-    def tearDown(self):
-        self.teardown_beets()
 
     def _setup_config(
         self,
