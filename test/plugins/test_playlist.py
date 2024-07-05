@@ -25,7 +25,6 @@ from beets.test.helper import BeetsTestCase
 class PlaylistTestCase(BeetsTestCase):
     def setUp(self):
         super().setUp()
-        self.lib = beets.library.Library(":memory:")
 
         self.music_dir = os.path.expanduser(os.path.join("~", "Music"))
 

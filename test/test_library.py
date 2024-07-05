@@ -97,7 +97,6 @@ class StoreTest(ItemInDBTestCase):
 class AddTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
-        self.lib = beets.library.Library(":memory:")
         self.i = item()
 
     def test_item_add_inserts_row(self):
@@ -155,9 +154,8 @@ class GetSetTest(BeetsTestCase):
 
     def test_album_fallback(self):
         # integration test of item-album fallback
-        lib = beets.library.Library(":memory:")
-        i = item(lib)
-        album = lib.add_album([i])
+        i = item(self.lib)
+        album = self.lib.add_album([i])
         album["flex"] = "foo"
         album.store()
 
@@ -170,17 +168,15 @@ class GetSetTest(BeetsTestCase):
 
 
 class DestinationTest(BeetsTestCase):
+    """Confirm tests handle temporary directory path containing '.'"""
+
+    def create_temp_dir(self, **kwargs):
+        kwargs["prefix"] = "."
+        super().create_temp_dir(**kwargs)
+
     def setUp(self):
         super().setUp()
-        # default directory is ~/Music and the only reason why it was switched
-        # to ~/.Music is to confirm that tests works well when path to
-        # temporary directory contains .
-        self.lib = beets.library.Library(":memory:", "~/.Music")
         self.i = item(self.lib)
-
-    def tearDown(self):
-        super().tearDown()
-        self.lib._connection().close()
 
     def test_directory_works_with_trailing_slash(self):
         self.lib.directory = b"one/"
@@ -623,14 +619,9 @@ class PathFormattingMixin:
 class DestinationFunctionTest(BeetsTestCase, PathFormattingMixin):
     def setUp(self):
         super().setUp()
-        self.lib = beets.library.Library(":memory:")
         self.lib.directory = b"/base"
         self.lib.path_formats = [("default", "path")]
         self.i = item(self.lib)
-
-    def tearDown(self):
-        super().tearDown()
-        self.lib._connection().close()
 
     def test_upper_case_literal(self):
         self._setf("%upper{foo}")
@@ -732,7 +723,6 @@ class DestinationFunctionTest(BeetsTestCase, PathFormattingMixin):
 class DisambiguationTest(BeetsTestCase, PathFormattingMixin):
     def setUp(self):
         super().setUp()
-        self.lib = beets.library.Library(":memory:")
         self.lib.directory = b"/base"
         self.lib.path_formats = [("default", "path")]
 
@@ -745,10 +735,6 @@ class DisambiguationTest(BeetsTestCase, PathFormattingMixin):
         self.lib._connection().commit()
 
         self._setf("foo%aunique{albumartist album,year}/$title")
-
-    def tearDown(self):
-        super().tearDown()
-        self.lib._connection().close()
 
     def test_unique_expands_to_disambiguating_year(self):
         self._assert_dest(b"/base/foo [2001]/the title", self.i1)
@@ -821,7 +807,6 @@ class DisambiguationTest(BeetsTestCase, PathFormattingMixin):
 class SingletonDisambiguationTest(BeetsTestCase, PathFormattingMixin):
     def setUp(self):
         super().setUp()
-        self.lib = beets.library.Library(":memory:")
         self.lib.directory = b"/base"
         self.lib.path_formats = [("default", "path")]
 
@@ -834,10 +819,6 @@ class SingletonDisambiguationTest(BeetsTestCase, PathFormattingMixin):
         self.lib._connection().commit()
 
         self._setf("foo/$title%sunique{artist title,year}")
-
-    def tearDown(self):
-        super().tearDown()
-        self.lib._connection().close()
 
     def test_sunique_expands_to_disambiguating_year(self):
         self._assert_dest(b"/base/foo/the title [2001]", self.i1)
@@ -919,7 +900,6 @@ class PluginDestinationTest(BeetsTestCase):
         self.old_field_getters = plugins.item_field_getters
         plugins.item_field_getters = field_getters
 
-        self.lib = beets.library.Library(":memory:")
         self.lib.directory = b"/base"
         self.lib.path_formats = [("default", "$artist $foo")]
         self.i = item(self.lib)
@@ -958,7 +938,6 @@ class PluginDestinationTest(BeetsTestCase):
 class AlbumInfoTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
-        self.lib = beets.library.Library(":memory:")
         self.i = item()
         self.lib.add_album((self.i,))
 
@@ -1065,9 +1044,7 @@ class ArtDestinationTest(BeetsTestCase):
         super().setUp()
         config["art_filename"] = "artimage"
         config["replace"] = {"X": "Y"}
-        self.lib = beets.library.Library(
-            ":memory:", replacements=[(re.compile("X"), "Y")]
-        )
+        self.lib.replacements = [(re.compile("X"), "Y")]
         self.i = item(self.lib)
         self.i.path = self.i.destination()
         self.ai = self.lib.add_album((self.i,))
@@ -1091,7 +1068,6 @@ class ArtDestinationTest(BeetsTestCase):
 class PathStringTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
-        self.lib = beets.library.Library(":memory:")
         self.i = item(self.lib)
 
     def test_item_path_is_bytestring(self):
@@ -1183,7 +1159,6 @@ class MtimeTest(BeetsTestCase):
             syspath(self.ipath),
         )
         self.i = beets.library.Item.from_path(self.ipath)
-        self.lib = beets.library.Library(":memory:")
         self.lib.add(self.i)
 
     def tearDown(self):
@@ -1213,10 +1188,6 @@ class MtimeTest(BeetsTestCase):
 
 
 class ImportTimeTest(BeetsTestCase):
-    def setUp(self):
-        super().setUp()
-        self.lib = beets.library.Library(":memory:")
-
     def added(self):
         self.track = item()
         self.album = self.lib.add_album((self.track,))

@@ -41,14 +41,10 @@ class MoveTest(BeetsTestCase):
         )
 
         # add it to a temporary library
-        self.lib = beets.library.Library(":memory:")
         self.i = beets.library.Item.from_path(self.path)
         self.lib.add(self.i)
 
         # set up the destination
-        self.libdir = join(self.temp_dir, b"testlibdir")
-        os.mkdir(syspath(self.libdir))
-        self.lib.directory = self.libdir
         self.lib.path_formats = [
             ("default", join("$artist", "$album", "$title"))
         ]
@@ -250,12 +246,9 @@ class AlbumFileTest(BeetsTestCase):
         super().setUp()
 
         # Make library and item.
-        self.lib = beets.library.Library(":memory:")
         self.lib.path_formats = [
             ("default", join("$albumartist", "$album", "$title"))
         ]
-        self.libdir = os.path.join(self.temp_dir, b"testlibdir")
-        self.lib.directory = self.libdir
         self.i = item(self.lib)
         # Make a file for the item.
         self.i.path = self.i.destination()
@@ -317,9 +310,6 @@ class ArtFileTest(BeetsTestCase):
         super().setUp()
 
         # Make library and item.
-        self.lib = beets.library.Library(":memory:")
-        self.libdir = os.path.join(self.temp_dir, b"testlibdir")
-        self.lib.directory = self.libdir
         self.i = item(self.lib)
         self.i.path = self.i.destination()
         # Make a music file.
@@ -491,9 +481,6 @@ class RemoveTest(BeetsTestCase):
         super().setUp()
 
         # Make library and item.
-        self.lib = beets.library.Library(":memory:")
-        self.libdir = os.path.join(self.temp_dir, b"testlibdir")
-        self.lib.directory = self.libdir
         self.i = item(self.lib)
         self.i.path = self.i.destination()
         # Make a music file.

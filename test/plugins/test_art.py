@@ -23,7 +23,7 @@ from unittest.mock import patch
 import confuse
 import responses
 
-from beets import config, importer, library, logging, util
+from beets import config, importer, logging, util
 from beets.autotag import AlbumInfo, AlbumMatch
 from beets.test import _common
 from beets.test.helper import (
@@ -736,16 +736,12 @@ class ArtImporterTest(UseThePlugin):
         self.plugin.art_for_album = art_for_album
 
         # Test library.
-        self.libpath = os.path.join(self.temp_dir, b"tmplib.blb")
-        self.libdir = os.path.join(self.temp_dir, b"tmplib")
-        os.mkdir(syspath(self.libdir))
         os.mkdir(syspath(os.path.join(self.libdir, b"album")))
         itempath = os.path.join(self.libdir, b"album", b"test.mp3")
         shutil.copyfile(
             syspath(os.path.join(_common.RSRC, b"full.mp3")),
             syspath(itempath),
         )
-        self.lib = library.Library(self.libpath)
         self.i = _common.item()
         self.i.path = itempath
         self.album = self.lib.add_album([self.i])
@@ -768,7 +764,6 @@ class ArtImporterTest(UseThePlugin):
         self.task.set_choice(AlbumMatch(0, info, {}, set(), set()))
 
     def tearDown(self):
-        self.lib._connection().close()
         super().tearDown()
         self.plugin.art_for_album = self.old_afa
 

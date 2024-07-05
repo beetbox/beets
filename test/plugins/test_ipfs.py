@@ -16,7 +16,6 @@ import os
 import unittest
 from unittest.mock import Mock, patch
 
-from beets import library
 from beets.test import _common
 from beets.test.helper import BeetsTestCase
 from beets.util import _fsencoding, bytestring_path
@@ -28,7 +27,6 @@ class IPFSPluginTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.load_plugins("ipfs")
-        self.lib = library.Library(":memory:")
 
     def tearDown(self):
         self.unload_plugins()
