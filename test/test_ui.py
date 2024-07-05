@@ -40,9 +40,9 @@ from beets.ui import commands
 from beets.util import MoveOperation, syspath
 
 
-class ListTest(unittest.TestCase):
+class ListTest(BeetsTestCase):
     def setUp(self):
-        self.lib = library.Library(":memory:")
+        super().setUp()
         self.item = _common.item()
         self.item.path = "xxx/yyy"
         self.lib.add(self.item)
@@ -114,11 +114,7 @@ class RemoveTest(BeetsTestCase):
 
         self.io.install()
 
-        self.libdir = os.path.join(self.temp_dir, b"testlibdir")
-        os.mkdir(syspath(self.libdir))
-
         # Copy a file into the library.
-        self.lib = library.Library(":memory:", self.libdir)
         self.item_path = os.path.join(_common.RSRC, b"full.mp3")
         self.i = library.Item.from_path(self.item_path)
         self.lib.add(self.i)
@@ -451,9 +447,6 @@ class MoveTest(BeetsTestCase):
 
         self.io.install()
 
-        self.libdir = os.path.join(self.temp_dir, b"testlibdir")
-        os.mkdir(syspath(self.libdir))
-
         self.itempath = os.path.join(self.libdir, b"srcfile")
         shutil.copy(
             syspath(os.path.join(_common.RSRC, b"full.mp3")),
@@ -461,7 +454,6 @@ class MoveTest(BeetsTestCase):
         )
 
         # Add a file to the library but don't copy it in yet.
-        self.lib = library.Library(":memory:", self.libdir)
         self.i = library.Item.from_path(self.itempath)
         self.lib.add(self.i)
         self.album = self.lib.add_album([self.i])
@@ -485,28 +477,28 @@ class MoveTest(BeetsTestCase):
     def test_move_item(self):
         self._move()
         self.i.load()
-        self.assertIn(b"testlibdir", self.i.path)
+        self.assertIn(b"libdir", self.i.path)
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
 
     def test_copy_item(self):
         self._move(copy=True)
         self.i.load()
-        self.assertIn(b"testlibdir", self.i.path)
+        self.assertIn(b"libdir", self.i.path)
         self.assertExists(self.i.path)
         self.assertExists(self.itempath)
 
     def test_move_album(self):
         self._move(album=True)
         self.i.load()
-        self.assertIn(b"testlibdir", self.i.path)
+        self.assertIn(b"libdir", self.i.path)
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
 
     def test_copy_album(self):
         self._move(copy=True, album=True)
         self.i.load()
-        self.assertIn(b"testlibdir", self.i.path)
+        self.assertIn(b"libdir", self.i.path)
         self.assertExists(self.i.path)
         self.assertExists(self.itempath)
 
@@ -559,10 +551,7 @@ class UpdateTest(BeetsTestCase):
 
         self.io.install()
 
-        self.libdir = os.path.join(self.temp_dir, b"testlibdir")
-
         # Copy a file into the library.
-        self.lib = library.Library(":memory:", self.libdir)
         item_path = os.path.join(_common.RSRC, b"full.mp3")
         item_path_two = os.path.join(_common.RSRC, b"full.flac")
         self.i = library.Item.from_path(item_path)

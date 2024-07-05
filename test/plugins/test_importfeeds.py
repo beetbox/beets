@@ -1,26 +1,20 @@
 import datetime
 import os
 import os.path
-import shutil
-import tempfile
 import unittest
 
 from beets import config
-from beets.library import Album, Item, Library
+from beets.library import Album, Item
+from beets.test.helper import BeetsTestCase
 from beetsplug.importfeeds import ImportFeedsPlugin
 
 
-class ImportfeedsTestTest(unittest.TestCase):
+class ImportfeedsTestTest(BeetsTestCase):
     def setUp(self):
-        config.clear()
-        config.read(user=False)
+        super().setUp()
         self.importfeeds = ImportFeedsPlugin()
-        self.lib = Library(":memory:")
-        self.feeds_dir = tempfile.mkdtemp()
+        self.feeds_dir = os.path.join(os.fsdecode(self.temp_dir), "importfeeds")
         config["importfeeds"]["dir"] = self.feeds_dir
-
-    def tearDown(self):
-        shutil.rmtree(self.feeds_dir)
 
     def test_multi_format_album_playlist(self):
         config["importfeeds"]["formats"] = "m3u_multi"

@@ -28,18 +28,6 @@ from beets.util import syspath
 
 
 class QueryTest(BeetsTestCase):
-    def setUp(self):
-        super().setUp()
-
-        self.libdir = os.path.join(self.temp_dir, b"testlibdir")
-        os.mkdir(syspath(self.libdir))
-
-        # Add a file to the library but don't copy it in yet.
-        self.lib = library.Library(":memory:", self.libdir)
-
-        # Alternate destination directory.
-        # self.otherdir = os.path.join(self.temp_dir, b"testotherdir")
-
     def add_item(self, filename=b"srcfile", templatefile=b"full.mp3"):
         itempath = os.path.join(self.libdir, filename)
         shutil.copy(

@@ -29,7 +29,7 @@ from beets.dbcore.query import (
     NoneQuery,
     ParsingError,
 )
-from beets.library import Item, Library
+from beets.library import Item
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, ItemInDBTestCase
 from beets.util import syspath
@@ -94,7 +94,6 @@ class AnyFieldQueryTest(ItemInDBTestCase):
 class DummyDataTestCase(BeetsTestCase, AssertsMixin):
     def setUp(self):
         super().setUp()
-        self.lib = beets.library.Library(":memory:")
         items = [_common.item() for _ in range(3)]
         items[0].title = "foo bar"
         items[0].artist = "one"
@@ -725,9 +724,6 @@ class PathQueryTest(ItemInDBTestCase, AssertsMixin):
 
 
 class IntQueryTest(BeetsTestCase):
-    def setUp(self):
-        self.lib = Library(":memory:")
-
     def tearDown(self):
         super().tearDown()
         Item._types = {}
@@ -766,7 +762,6 @@ class IntQueryTest(BeetsTestCase):
 class BoolQueryTest(BeetsTestCase, AssertsMixin):
     def setUp(self):
         super().setUp()
-        self.lib = Library(":memory:")
         Item._types = {"flexbool": types.Boolean()}
 
     def tearDown(self):
@@ -836,10 +831,6 @@ class DefaultSearchFieldsTest(DummyDataTestCase):
 
 
 class NoneQueryTest(BeetsTestCase, AssertsMixin):
-    def setUp(self):
-        super().setUp()
-        self.lib = Library(":memory:")
-
     def test_match_singletons(self):
         singleton = self.add_item()
         album_item = self.add_album().items().get()
@@ -1137,7 +1128,6 @@ class RelatedQueriesTest(BeetsTestCase, AssertsMixin):
 
     def setUp(self):
         super().setUp()
-        self.lib = beets.library.Library(":memory:")
 
         albums = []
         for album_idx in range(1, 3):

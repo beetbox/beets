@@ -16,7 +16,7 @@
 
 import unittest
 
-from beets import library, vfs
+from beets import vfs
 from beets.test import _common
 from beets.test.helper import BeetsTestCase
 
@@ -24,13 +24,10 @@ from beets.test.helper import BeetsTestCase
 class VFSTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
-        self.lib = library.Library(
-            ":memory:",
-            path_formats=[
-                ("default", "albums/$album/$title"),
-                ("singleton:true", "tracks/$artist/$title"),
-            ],
-        )
+        self.lib.path_formats = [
+            ("default", "albums/$album/$title"),
+            ("singleton:true", "tracks/$artist/$title"),
+        ]
         self.lib.add(_common.item())
         self.lib.add_album([_common.item()])
         self.tree = vfs.libtree(self.lib)

@@ -28,7 +28,6 @@ from beets.test.helper import BeetsTestCase
 class DummyDataTestCase(BeetsTestCase):
     def setUp(self):
         super().setUp()
-        self.lib = beets.library.Library(":memory:")
 
         albums = [_common.album() for _ in range(3)]
         albums[0].album = "Album A"

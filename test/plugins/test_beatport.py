@@ -18,7 +18,6 @@
 import unittest
 from datetime import timedelta
 
-from beets import library
 from beets.test import _common
 from beets.test.helper import BeetsTestCase
 from beetsplug import beatport
@@ -452,7 +451,6 @@ class BeatportTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.load_plugins("beatport")
-        self.lib = library.Library(":memory:")
 
         # Set up 'album'.
         response_release = self._make_release_response()
@@ -630,7 +628,6 @@ class BeatportResponseEmptyTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.load_plugins("beatport")
-        self.lib = library.Library(":memory:")
 
         # Set up 'tracks'.
         self.response_tracks = self._make_tracks_response()

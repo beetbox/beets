@@ -470,11 +470,11 @@ class TestHelper(_common.Assertions):
 
     # Safe file operations
 
-    def create_temp_dir(self):
+    def create_temp_dir(self, **kwargs):
         """Create a temporary directory and assign it into
         `self.temp_dir`. Call `remove_temp_dir` later to delete it.
         """
-        temp_dir = mkdtemp()
+        temp_dir = mkdtemp(**kwargs)
         self.temp_dir = util.bytestring_path(temp_dir)
 
     def remove_temp_dir(self):
@@ -980,4 +980,3 @@ class CleanupModulesMixin:
         """Remove files created by the plugin."""
         for module in cls.modules:
             clean_module_tempdir(module)
-        self.lib = beets.library.Library(":memory:")
