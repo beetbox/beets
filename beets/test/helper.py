@@ -151,9 +151,11 @@ class TestHelper(_common.Assertions):
     fixtures.
     """
 
+    db_on_disk: ClassVar[bool] = False
+
     # TODO automate teardown through hook registration
 
-    def setup_beets(self, disk=False):
+    def setup_beets(self):
         """Setup pristine global configuration and library for testing.
 
         Sets ``beets.config`` so we can safely use any functionality
@@ -199,7 +201,7 @@ class TestHelper(_common.Assertions):
         os.mkdir(syspath(self.libdir))
         self.config["directory"] = os.fsdecode(self.libdir)
 
-        if disk:
+        if self.db_on_disk:
             dbpath = util.bytestring_path(self.config["library"].as_filename())
         else:
             dbpath = ":memory:"
@@ -538,8 +540,8 @@ class ImportHelper:
 
     importer: importer.ImportSession
 
-    def setup_beets(self, disk=False):
-        super().setup_beets(disk)
+    def setup_beets(self):
+        super().setup_beets()
         self.lib.path_formats = [
             ("default", os.path.join("$artist", "$album", "$title")),
             ("singleton:true", os.path.join("singletons", "$title")),

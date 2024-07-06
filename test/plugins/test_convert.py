@@ -85,13 +85,13 @@ class ConvertMixin:
 
 
 class ConvertTestCase(BeetsTestCase, ConvertMixin):
-    pass
+    db_on_disk = True
 
 
 @_common.slow_test()
 class ImportConvertTest(ConvertTestCase):
     def setUp(self):
-        self.setup_beets(disk=True)  # Converter is threaded
+        super().setUp()
         self.importer = self.create_importer()
         self.load_plugins("convert")
 
@@ -169,7 +169,7 @@ class ConvertCommand:
 @_common.slow_test()
 class ConvertCliTest(ConvertTestCase, ConvertCommand):
     def setUp(self):
-        self.setup_beets(disk=True)  # Converter is threaded
+        super().setUp()
         self.album = self.add_album_fixture(ext="ogg")
         self.item = self.album.items()[0]
         self.load_plugins("convert")
@@ -318,7 +318,7 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
     """Test the effect of the `never_convert_lossy_files` option."""
 
     def setUp(self):
-        self.setup_beets(disk=True)  # Converter is threaded
+        super().setUp()
         self.load_plugins("convert")
 
         self.convert_dest = os.path.join(self.temp_dir, b"convert_dest")

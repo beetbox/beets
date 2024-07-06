@@ -278,8 +278,10 @@ def start_server(args, assigned_port, listener_patch):
 
 
 class BPDTestHelper(BeetsTestCase):
+    db_on_disk = True
+
     def setUp(self):
-        self.setup_beets(disk=True)
+        super().setUp()
         self.load_plugins("bpd")
         self.item1 = self.add_item(
             title="Track One Title",

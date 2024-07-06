@@ -168,6 +168,8 @@ class ConcurrentEventsTest(BeetsTestCase):
     LoggingLevelTest.
     """
 
+    db_on_disk = True
+
     class DummyPlugin(plugins.BeetsPlugin):
         def __init__(self, test_case):
             plugins.BeetsPlugin.__init__(self, "dummy")
@@ -203,9 +205,6 @@ class ConcurrentEventsTest(BeetsTestCase):
                 self.t2_step = 2
             except Exception as e:
                 self.exc = e
-
-    def setUp(self):
-        self.setup_beets(disk=True)
 
     def test_concurrent_events(self):
         dp = self.DummyPlugin(self)
