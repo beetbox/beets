@@ -38,24 +38,21 @@ from beets.test.helper import (
     AutotagStub,
     BeetsTestCase,
     ImportTestCase,
+    PluginMixin,
     capture_log,
     has_program,
 )
 from beets.util import bytestring_path, displayable_path, syspath
 
 
-class ScrubbedImportTest(ImportTestCase):
+class ScrubbedImportTest(PluginMixin, ImportTestCase):
     db_on_disk = True
+    plugin = "scrub"
 
     def setUp(self):
         super().setUp()
-        self.load_plugins("scrub")
         self._create_import_dir(2)
         self._setup_import_session(autotag=False)
-
-    def tearDown(self):
-        self.unload_plugins()
-        super().tearDown()
 
     def test_tags_not_scrubbed(self):
         config["plugins"] = ["scrub"]

@@ -31,12 +31,9 @@ from beets.importer import (
 from beets.library import Item
 from beets.plugins import MetadataSourcePlugin
 from beets.test import helper
-from beets.test.helper import (
-    AutotagStub,
-    BeetsTestCase,
-    ImportHelper,
-    TerminalImportMixin,
-)
+from beets.test.helper import AutotagStub, ImportHelper
+from beets.test.helper import PluginTestCase as BasePluginTestCase
+from beets.test.helper import TerminalImportMixin
 from beets.util import displayable_path, syspath
 from beets.util.id_extractors import (
     beatport_id_regex,
@@ -45,11 +42,10 @@ from beets.util.id_extractors import (
 )
 
 
-class PluginLoaderTestCase(BeetsTestCase):
+class PluginLoaderTestCase(BasePluginTestCase):
     def setup_plugin_loader(self):
         # FIXME the mocking code is horrific, but this is the lowest and
         # earliest level of the plugin mechanism we can hook into.
-        self.load_plugins()
         self._plugin_loader_patch = patch("beets.plugins.load_plugins")
         self._plugin_classes = set()
         load_plugins = self._plugin_loader_patch.start()
@@ -58,17 +54,16 @@ class PluginLoaderTestCase(BeetsTestCase):
             plugins._classes.update(self._plugin_classes)
 
         load_plugins.side_effect = myload
-        super().setUp()
 
     def teardown_plugin_loader(self):
         self._plugin_loader_patch.stop()
-        self.unload_plugins()
 
     def register_plugin(self, plugin_class):
         self._plugin_classes.add(plugin_class)
 
     def setUp(self):
         self.setup_plugin_loader()
+        super().setUp()
 
     def tearDown(self):
         self.teardown_plugin_loader()
@@ -174,7 +169,6 @@ class EventsTest(PluginImportTestCase):
 
         with helper.capture_log() as logs:
             self.importer.run()
-        self.unload_plugins()
 
         # Exactly one event should have been imported (for the album).
         # Sentinels do not get emitted.
@@ -226,7 +220,6 @@ class EventsTest(PluginImportTestCase):
 
         with helper.capture_log() as logs:
             self.importer.run()
-        self.unload_plugins()
 
         # Exactly one event should have been imported (for the album).
         # Sentinels do not get emitted.

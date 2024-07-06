@@ -15,18 +15,19 @@
 
 import unittest
 
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import PluginTestCase
 
 
-class LimitPluginTest(BeetsTestCase):
+class LimitPluginTest(PluginTestCase):
     """Unit tests for LimitPlugin
 
     Note: query prefix tests do not work correctly with `run_with_output`.
     """
 
+    plugin = "limit"
+
     def setUp(self):
         super().setUp()
-        self.load_plugins("limit")
 
         # we'll create an even number of tracks in the library
         self.num_test_items = 10
@@ -45,10 +46,6 @@ class LimitPluginTest(BeetsTestCase):
         # range filter on the track number
         self.track_head_range = "track:.." + str(self.num_limit)
         self.track_tail_range = "track:" + str(self.num_limit + 1) + ".."
-
-    def tearDown(self):
-        self.unload_plugins()
-        super().tearDown()
 
     def test_no_limit(self):
         """Returns all when there is no limit or filter."""

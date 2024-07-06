@@ -17,19 +17,12 @@
 
 import unittest
 
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import PluginTestCase
 from beetsplug import ftintitle
 
 
-class FtInTitlePluginFunctional(BeetsTestCase):
-    def setUp(self):
-        """Set up configuration"""
-        super().setUp()
-        self.load_plugins("ftintitle")
-
-    def tearDown(self):
-        self.unload_plugins()
-        super().tearDown()
+class FtInTitlePluginFunctional(PluginTestCase):
+    plugin = "ftintitle"
 
     def _ft_add_item(self, path, artist, title, aartist):
         return self.add_item(

@@ -10,7 +10,7 @@ import beets.logging as blog
 import beetsplug
 from beets import plugins, ui
 from beets.test import _common, helper
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import BeetsTestCase, PluginTestCase
 
 
 class LoggingTest(BeetsTestCase):
@@ -47,7 +47,8 @@ class LoggingTest(BeetsTestCase):
         self.assertTrue(stream.getvalue(), "foo oof baz")
 
 
-class LoggingLevelTest(BeetsTestCase):
+class LoggingLevelTest(PluginTestCase):
+    plugin = "dummy"
     class DummyModule:
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):
@@ -75,10 +76,8 @@ class LoggingLevelTest(BeetsTestCase):
         sys.modules["beetsplug.dummy"] = self.DummyModule
         beetsplug.dummy = self.DummyModule
         super().setUp()
-        self.load_plugins("dummy")
 
     def tearDown(self):
-        self.unload_plugins()
         super().tearDown()
         del beetsplug.dummy
         sys.modules.pop("beetsplug.dummy")

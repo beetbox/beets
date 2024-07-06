@@ -19,7 +19,7 @@ import os
 import unittest
 
 from beets import importer
-from beets.test.helper import AutotagStub, ImportTestCase
+from beets.test.helper import AutotagStub, ImportTestCase, PluginMixin
 from beets.util import displayable_path, syspath
 from beetsplug.importadded import ImportAddedPlugin
 
@@ -40,14 +40,14 @@ def modify_mtimes(paths, offset=-60000):
         os.utime(syspath(path), (mstat.st_atime, mstat.st_mtime + offset * i))
 
 
-class ImportAddedTest(ImportTestCase):
+class ImportAddedTest(PluginMixin, ImportTestCase):
     # The minimum mtime of the files to be imported
+    plugin = "importadded"
     min_mtime = None
 
     def setUp(self):
         preserve_plugin_listeners()
         super().setUp()
-        self.load_plugins("importadded")
         self._create_import_dir(2)
         # Different mtimes on the files to be imported in order to test the
         # plugin
@@ -61,7 +61,6 @@ class ImportAddedTest(ImportTestCase):
         self.importer.add_choice(importer.action.APPLY)
 
     def tearDown(self):
-        self.unload_plugins()
         super().tearDown()
         self.matcher.restore()
 

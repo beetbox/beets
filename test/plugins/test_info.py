@@ -17,18 +17,12 @@ import unittest
 
 from mediafile import MediaFile
 
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import PluginTestCase
 from beets.util import displayable_path
 
 
-class InfoTest(BeetsTestCase):
-    def setUp(self):
-        super().setUp()
-        self.load_plugins("info")
-
-    def tearDown(self):
-        self.unload_plugins()
-        super().tearDown()
+class InfoTest(PluginTestCase):
+    plugin = "info"
 
     def test_path(self):
         path = self.create_mediafile_fixture()

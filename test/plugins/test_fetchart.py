@@ -19,21 +19,18 @@ import sys
 import unittest
 
 from beets import util
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import PluginTestCase
 
 
-class FetchartCliTest(BeetsTestCase):
+class FetchartCliTest(PluginTestCase):
+    plugin = "fetchart"
+
     def setUp(self):
         super().setUp()
-        self.load_plugins("fetchart")
         self.config["fetchart"]["cover_names"] = "c\xc3\xb6ver.jpg"
         self.config["art_filename"] = "mycover"
         self.album = self.add_album()
         self.cover_path = os.path.join(self.album.path, b"mycover.jpg")
-
-    def tearDown(self):
-        self.unload_plugins()
-        super().tearDown()
 
     def check_cover_is_stored(self):
         self.assertEqual(self.album["artpath"], self.cover_path)

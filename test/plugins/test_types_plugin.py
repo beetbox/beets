@@ -19,17 +19,11 @@ from datetime import datetime
 
 from confuse import ConfigValueError
 
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import PluginTestCase
 
 
-class TypesPluginTest(BeetsTestCase):
-    def setUp(self):
-        super().setUp()
-        self.load_plugins("types")
-
-    def tearDown(self):
-        self.unload_plugins()
-        super().tearDown()
+class TypesPluginTest(PluginTestCase):
+    plugin = "types"
 
     def test_integer_modify_and_query(self):
         self.config["types"] = {"myint": "int"}

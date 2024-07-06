@@ -22,18 +22,15 @@ import unittest
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import PluginTestCase
 
 
-class ExportPluginTest(BeetsTestCase):
+class ExportPluginTest(PluginTestCase):
+    plugin = "export"
+
     def setUp(self):
         super().setUp()
-        self.load_plugins("export")
         self.test_values = {"title": "xtitle", "album": "xalbum"}
-
-    def tearDown(self):
-        self.unload_plugins()
-        super().tearDown()
 
     def execute_command(self, format_type, artist):
         query = ",".join(self.test_values.keys())

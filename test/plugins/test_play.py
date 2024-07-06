@@ -20,26 +20,22 @@ import sys
 import unittest
 from unittest.mock import ANY, patch
 
-from beets.test.helper import BeetsTestCase, CleanupModulesMixin, control_stdin
+from beets.test.helper import CleanupModulesMixin, PluginTestCase, control_stdin
 from beets.ui import UserError
 from beets.util import open_anything
 from beetsplug.play import PlayPlugin
 
 
 @patch("beetsplug.play.util.interactive_open")
-class PlayPluginTest(CleanupModulesMixin, BeetsTestCase):
+class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
     modules = (PlayPlugin.__module__,)
+    plugin = "play"
 
     def setUp(self):
         super().setUp()
-        self.load_plugins("play")
         self.item = self.add_item(album="a nice älbum", title="aNiceTitle")
         self.lib.add_album([self.item])
         self.config["play"]["command"] = "echo"
-
-    def tearDown(self):
-        super().tearDown()
-        self.unload_plugins()
 
     def run_and_assert(
         self,

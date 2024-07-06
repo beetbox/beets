@@ -18,22 +18,13 @@
 from typing import Sequence, Tuple
 
 from beets.autotag.mb import VARIOUS_ARTISTS_ID
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import PluginTestCase
 from beetsplug.albumtypes import AlbumTypesPlugin
 
 
-class AlbumTypesPluginTest(BeetsTestCase):
+class AlbumTypesPluginTest(PluginTestCase):
     """Tests for albumtypes plugin."""
-
-    def setUp(self):
-        """Set up tests."""
-        super().setUp()
-        self.load_plugins("albumtypes")
-
-    def tearDown(self):
-        """Tear down tests."""
-        self.unload_plugins()
-        super().tearDown()
+    plugin = "albumtypes"
 
     def test_renames_types(self):
         """Tests if the plugin correctly renames the specified types."""
