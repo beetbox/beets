@@ -45,8 +45,10 @@ from beets.util import bytestring_path, displayable_path, syspath
 
 
 class ScrubbedImportTest(ImportTestCase):
+    db_on_disk = True
+
     def setUp(self):
-        self.setup_beets(disk=True)
+        super().setUp()
         self.load_plugins("scrub")
         self._create_import_dir(2)
         self._setup_import_session(autotag=False)
@@ -100,8 +102,10 @@ class ScrubbedImportTest(ImportTestCase):
 
 @_common.slow_test()
 class NonAutotaggedImportTest(ImportTestCase):
+    db_on_disk = True
+
     def setUp(self):
-        self.setup_beets(disk=True)
+        super().setUp()
         self._create_import_dir(2)
         self._setup_import_session(autotag=False)
 

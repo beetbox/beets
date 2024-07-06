@@ -53,13 +53,14 @@ def reset_replaygain(item):
 
 
 class ReplayGainTestCase(BeetsTestCase):
+    db_on_disk = True
     backend: ClassVar[str]
 
     def setUp(self):
         # Implemented by Mixins, see above. This may decide to skip the test.
         self.test_backend()
 
-        self.setup_beets(disk=True)
+        super().setUp()
         self.config["replaygain"]["backend"] = self.backend
 
         try:
