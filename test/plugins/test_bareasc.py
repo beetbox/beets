@@ -6,18 +6,18 @@
 import unittest
 
 from beets import logging
-from beets.test.helper import BeetsTestCase, capture_stdout
+from beets.test.helper import PluginTestCase, capture_stdout
 
 
-class BareascPluginTest(BeetsTestCase):
+class BareascPluginTest(PluginTestCase):
     """Test bare ASCII query matching."""
+    plugin = "bareasc"
 
     def setUp(self):
         """Set up test environment for bare ASCII query matching."""
         super().setUp()
         self.log = logging.getLogger("beets.web")
         self.config["bareasc"]["prefix"] = "#"
-        self.load_plugins("bareasc")
 
         # Add library elements. Note that self.lib.add overrides any "id=<n>"
         # and assigns the next free id number.

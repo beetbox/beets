@@ -17,20 +17,14 @@ import unittest
 from unittest.mock import Mock, patch
 
 from beets.test import _common
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import PluginTestCase
 from beets.util import _fsencoding, bytestring_path
 from beetsplug.ipfs import IPFSPlugin
 
 
 @patch("beets.util.command_output", Mock())
-class IPFSPluginTest(BeetsTestCase):
-    def setUp(self):
-        super().setUp()
-        self.load_plugins("ipfs")
-
-    def tearDown(self):
-        self.unload_plugins()
-        super().tearDown()
+class IPFSPluginTest(PluginTestCase):
+    plugin = "ipfs"
 
     def test_stored_hashes(self):
         test_album = self.mk_test_album()

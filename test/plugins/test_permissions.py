@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 from beets.test._common import touch
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import PluginTestCase
 from beets.util import displayable_path
 from beetsplug.permissions import (
     check_permissions,
@@ -16,16 +16,13 @@ from beetsplug.permissions import (
 )
 
 
-class PermissionsPluginTest(BeetsTestCase):
+class PermissionsPluginTest(PluginTestCase):
+    plugin = "permissions"
+
     def setUp(self):
         super().setUp()
-        self.load_plugins("permissions")
 
         self.config["permissions"] = {"file": "777", "dir": "777"}
-
-    def tearDown(self):
-        super().tearDown()
-        self.unload_plugins()
 
     def test_permissions_on_album_imported(self):
         self.do_thing(True)

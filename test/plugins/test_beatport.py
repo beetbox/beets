@@ -450,7 +450,6 @@ class BeatportTest(BeetsTestCase):
 
     def setUp(self):
         super().setUp()
-        self.load_plugins("beatport")
 
         # Set up 'album'.
         response_release = self._make_release_response()
@@ -465,10 +464,6 @@ class BeatportTest(BeetsTestCase):
 
         # Set up 'test_tracks'
         self.test_tracks = self.test_album.items()
-
-    def tearDown(self):
-        self.unload_plugins()
-        super().tearDown()
 
     def mk_test_album(self):
         items = [_common.item() for _ in range(6)]
@@ -627,7 +622,6 @@ class BeatportResponseEmptyTest(BeetsTestCase):
 
     def setUp(self):
         super().setUp()
-        self.load_plugins("beatport")
 
         # Set up 'tracks'.
         self.response_tracks = self._make_tracks_response()
@@ -635,10 +629,6 @@ class BeatportResponseEmptyTest(BeetsTestCase):
 
         # Make alias to be congruent with class `BeatportTest`.
         self.test_tracks = self.response_tracks
-
-    def tearDown(self):
-        self.unload_plugins()
-        super().tearDown()
 
     def test_response_tracks_empty(self):
         response_tracks = []

@@ -21,7 +21,7 @@ from datetime import datetime
 
 from beets.library import Item
 from beets.test import _common
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import PluginTestCase
 
 
 def _parsetime(s):
@@ -32,7 +32,8 @@ def _is_windows():
     return platform.system() == "Windows"
 
 
-class MetaSyncTest(BeetsTestCase):
+class MetaSyncTest(PluginTestCase):
+    plugin = "metasync"
     itunes_library_unix = os.path.join(_common.RSRC, b"itunes_library_unix.xml")
     itunes_library_windows = os.path.join(
         _common.RSRC, b"itunes_library_windows.xml"
@@ -40,7 +41,6 @@ class MetaSyncTest(BeetsTestCase):
 
     def setUp(self):
         super().setUp()
-        self.load_plugins("metasync")
 
         self.config["metasync"]["source"] = "itunes"
 
@@ -82,10 +82,6 @@ class MetaSyncTest(BeetsTestCase):
 
         for item in items:
             self.lib.add(item)
-
-    def tearDown(self):
-        self.unload_plugins()
-        super().tearDown()
 
     def test_load_item_types(self):
         # This test also verifies that the MetaSources have loaded correctly

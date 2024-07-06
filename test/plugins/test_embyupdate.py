@@ -2,14 +2,15 @@ import unittest
 
 import responses
 
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import PluginTestCase
 from beetsplug import embyupdate
 
 
-class EmbyUpdateTest(BeetsTestCase):
+class EmbyUpdateTest(PluginTestCase):
+    plugin = "embyupdate"
+
     def setUp(self):
         super().setUp()
-        self.load_plugins("embyupdate")
 
         self.config["emby"] = {
             "host": "localhost",
@@ -17,10 +18,6 @@ class EmbyUpdateTest(BeetsTestCase):
             "username": "username",
             "password": "password",
         }
-
-    def tearDown(self):
-        super().tearDown()
-        self.unload_plugins()
 
     def test_api_url_only_name(self):
         self.assertEqual(

@@ -19,21 +19,15 @@ from unittest.mock import patch
 from beets import config
 from beets.library import Item
 from beets.test.helper import (
-    BeetsTestCase,
+    PluginTestCase,
     capture_log,
     generate_album_info,
     generate_track_info,
 )
 
 
-class MbsyncCliTest(BeetsTestCase):
-    def setUp(self):
-        super().setUp()
-        self.load_plugins("mbsync")
-
-    def tearDown(self):
-        self.unload_plugins()
-        super().tearDown()
+class MbsyncCliTest(PluginTestCase):
+    plugin = "mbsync"
 
     @patch("beets.autotag.mb.album_for_id")
     @patch("beets.autotag.mb.track_for_id")

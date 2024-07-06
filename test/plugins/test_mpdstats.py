@@ -18,18 +18,12 @@ from unittest.mock import ANY, Mock, call, patch
 
 from beets import util
 from beets.library import Item
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import PluginTestCase
 from beetsplug.mpdstats import MPDStats
 
 
-class MPDStatsTest(BeetsTestCase):
-    def setUp(self):
-        super().setUp()
-        self.load_plugins("mpdstats")
-
-    def tearDown(self):
-        super().tearDown()
-        self.unload_plugins()
+class MPDStatsTest(PluginTestCase):
+    plugin = "mpdstats"
 
     def test_update_rating(self):
         item = Item(title="title", path="", id=1)

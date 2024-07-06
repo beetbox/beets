@@ -23,7 +23,7 @@ from mediafile import MediaFile
 
 from beets import util
 from beets.test import _common
-from beets.test.helper import BeetsTestCase, capture_log, control_stdin
+from beets.test.helper import PluginTestCase, capture_log, control_stdin
 from beets.util import bytestring_path, displayable_path
 
 
@@ -84,8 +84,9 @@ class ConvertMixin:
             )
 
 
-class ConvertTestCase(BeetsTestCase, ConvertMixin):
+class ConvertTestCase(ConvertMixin, PluginTestCase):
     db_on_disk = True
+    plugin = "convert"
 
 
 @_common.slow_test()
@@ -93,7 +94,6 @@ class ImportConvertTest(ConvertTestCase):
     def setUp(self):
         super().setUp()
         self.importer = self.create_importer()
-        self.load_plugins("convert")
 
         self.config["convert"] = {
             "dest": os.path.join(self.temp_dir, b"convert"),
@@ -103,10 +103,6 @@ class ImportConvertTest(ConvertTestCase):
             "auto": True,
             "quiet": False,
         }
-
-    def tearDown(self):
-        self.unload_plugins()
-        super().tearDown()
 
     def test_import_converted(self):
         self.importer.run()
@@ -172,7 +168,6 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
         super().setUp()
         self.album = self.add_album_fixture(ext="ogg")
         self.item = self.album.items()[0]
-        self.load_plugins("convert")
 
         self.convert_dest = bytestring_path(
             os.path.join(self.temp_dir, b"convert_dest")
@@ -190,10 +185,6 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
                 },
             },
         }
-
-    def tearDown(self):
-        self.unload_plugins()
-        super().tearDown()
 
     def test_convert(self):
         with control_stdin("y"):
@@ -319,7 +310,6 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
 
     def setUp(self):
         super().setUp()
-        self.load_plugins("convert")
 
         self.convert_dest = os.path.join(self.temp_dir, b"convert_dest")
         self.config["convert"] = {
@@ -331,10 +321,6 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
                 "mp3": self.tagged_copy_cmd("mp3"),
             },
         }
-
-    def tearDown(self):
-        self.unload_plugins()
-        super().tearDown()
 
     def test_transcode_from_lossless(self):
         [item] = self.add_item_fixtures(ext="flac")

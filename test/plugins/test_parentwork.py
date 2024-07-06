@@ -20,7 +20,7 @@ import unittest
 from unittest.mock import patch
 
 from beets.library import Item
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import PluginTestCase
 from beetsplug import parentwork
 
 work = {
@@ -85,15 +85,8 @@ def mock_workid_response(mbid, includes):
         return p_work
 
 
-class ParentWorkIntegrationTest(BeetsTestCase):
-    def setUp(self):
-        """Set up configuration"""
-        super().setUp()
-        self.load_plugins("parentwork")
-
-    def tearDown(self):
-        self.unload_plugins()
-        super().tearDown()
+class ParentWorkIntegrationTest(PluginTestCase):
+    plugin = "parentwork"
 
     # test how it works with real musicbrainz data
     @unittest.skipUnless(
@@ -180,18 +173,18 @@ class ParentWorkIntegrationTest(BeetsTestCase):
         )
 
 
-class ParentWorkTest(BeetsTestCase):
+class ParentWorkTest(PluginTestCase):
+    plugin = "parentwork"
+
     def setUp(self):
         """Set up configuration"""
         super().setUp()
-        self.load_plugins("parentwork")
         self.patcher = patch(
             "musicbrainzngs.get_work_by_id", side_effect=mock_workid_response
         )
         self.patcher.start()
 
     def tearDown(self):
-        self.unload_plugins()
         super().tearDown()
         self.patcher.stop()
 
