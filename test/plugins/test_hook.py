@@ -160,11 +160,3 @@ class HookTest(BeetsTestCase):
         for path in temporary_paths:
             self.assertTrue(os.path.isfile(path))
             os.remove(path)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

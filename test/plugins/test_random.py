@@ -77,11 +77,3 @@ class RandomTest(TestHelper, unittest.TestCase):
         self.assertAlmostEqual(0, median1, delta=1)
         self.assertAlmostEqual(len(self.items) // 2, median2, delta=1)
         self.assertGreater(stdev2, stdev1)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

@@ -14,7 +14,6 @@
 
 
 import os
-import unittest
 from shlex import quote
 
 import beets
@@ -387,11 +386,3 @@ class PlaylistTestItemRemoved(PlaylistUpdateTest, PlaylistTestCase):
                 "nonexisting.mp3",
             ],
         )
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

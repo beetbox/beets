@@ -15,7 +15,6 @@
 """Tests for the 'lastgenre' plugin."""
 
 
-import unittest
 from unittest.mock import Mock
 
 from beets import config
@@ -230,11 +229,3 @@ class LastGenrePluginTest(BeetsTestCase):
         tags = ("electronic", "ambient", "chillout")
         res = self.plugin._sort_by_depth(tags)
         self.assertEqual(res, ["ambient", "electronic"])
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

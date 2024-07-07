@@ -1,7 +1,5 @@
 """Tests for the 'zero' plugin"""
 
-import unittest
-
 from mediafile import MediaFile
 
 from beets.library import Item
@@ -292,11 +290,3 @@ class ZeroPluginTest(BeetsTestCase):
         self.assertEqual(mf.year, 2016)
         self.assertEqual(mf.comments, "test comment")
         self.assertEqual(item["comments"], "test comment")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

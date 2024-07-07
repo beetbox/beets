@@ -17,7 +17,6 @@
 
 import os
 import shutil
-import unittest
 from copy import deepcopy
 from random import random
 
@@ -160,11 +159,3 @@ class ParentalDirCreation(BeetsTestCase):
                 if lib:
                     lib._close()
                 raise OSError("Parent directories should not be created.")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

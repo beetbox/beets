@@ -18,7 +18,6 @@
 
 import os
 import shutil
-import unittest
 
 from mediafile import MediaFile
 
@@ -217,11 +216,3 @@ class FileFilterPluginTest(ImportTestCase):
             ],
             singletons=True,
         )
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

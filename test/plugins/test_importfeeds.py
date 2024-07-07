@@ -1,7 +1,6 @@
 import datetime
 import os
 import os.path
-import unittest
 
 from beets import config
 from beets.library import Album, Item
@@ -67,11 +66,3 @@ class ImportfeedsTestTest(BeetsTestCase):
         self.assertTrue(os.path.isfile(playlist))
         with open(playlist) as playlist_contents:
             self.assertIn(item_path, playlist_contents.read())
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

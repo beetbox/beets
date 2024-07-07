@@ -13,7 +13,6 @@
 # included in all copies or substantial portions of the Software.
 
 
-import unittest
 from unittest.mock import patch
 
 from beets import util
@@ -77,11 +76,3 @@ class KeyFinderTest(PluginTestCase):
 
         item.load()
         self.assertIsNone(item["initial_key"])
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

@@ -15,7 +15,6 @@
 """Tests for discogs plugin.
 """
 
-import unittest
 
 from beets import config
 from beets.test._common import Bag
@@ -424,11 +423,3 @@ class DGAlbumInfoTest(BeetsTestCase):
         d = DiscogsPlugin().get_album_info(release)
         self.assertEqual(d.genre, "GENRE1, GENRE2")
         self.assertEqual(d.style, None)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

@@ -13,8 +13,6 @@
 # included in all copies or substantial portions of the Software.
 
 
-import unittest
-
 from beets.test.helper import (
     AutotagStub,
     ImportTestCase,
@@ -69,11 +67,3 @@ class MBSubmitPluginTest(PluginMixin, TerminalImportMixin, ImportTestCase):
             "Open files with Picard? " "02. Tag Title 2 - Tag Artist (0:01)"
         )
         self.assertIn(tracklist, output.getvalue())
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

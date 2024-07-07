@@ -343,11 +343,3 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
             self.run_convert_path(item.path)
         converted = os.path.join(self.convert_dest, b"converted.ogg")
         self.assertNoFileTag(converted, "mp3")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

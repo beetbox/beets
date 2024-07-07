@@ -154,12 +154,3 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
         except AssertionError:
             command = im.convert_cmd + "foo -set b B -set a A foo".split()
             mock_util.command_output.assert_called_once_with(command)
-
-
-def suite():
-    """Run this suite of tests."""
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

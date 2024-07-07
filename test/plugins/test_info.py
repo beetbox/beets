@@ -13,8 +13,6 @@
 # included in all copies or substantial portions of the Software.
 
 
-import unittest
-
 from mediafile import MediaFile
 
 from beets.test.helper import PluginTestCase
@@ -118,11 +116,3 @@ class InfoTest(PluginTestCase):
             "$track. $title - $artist ($length)",
         )
         self.assertEqual("02. tïtle 0 - the artist (0:01)\n", out)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

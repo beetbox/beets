@@ -816,11 +816,3 @@ class SlugTests(unittest.TestCase):
         dashes = ["\u200D", "\u2010"]
         for dash1, dash2 in itertools.combinations(dashes, 2):
             self.assertEqual(lyrics.slug(dash1), lyrics.slug(dash2))
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

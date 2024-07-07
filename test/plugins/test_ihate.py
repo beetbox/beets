@@ -43,11 +43,3 @@ class IHatePluginTest(unittest.TestCase):
             "artist:testartist album:notthis",
         ]
         self.assertTrue(IHatePlugin.do_i_hate_this(task, match_pattern))
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

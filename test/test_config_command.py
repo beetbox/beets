@@ -1,5 +1,4 @@
 import os
-import unittest
 from unittest.mock import patch
 
 import yaml
@@ -128,11 +127,3 @@ class ConfigCommandTest(BeetsTestCase):
         with patch("os.execlp") as execlp:
             self.run_command("config", "-e")
         execlp.assert_called_once_with("myeditor", "myeditor", self.config_path)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

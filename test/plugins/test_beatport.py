@@ -15,7 +15,6 @@
 """Tests for the 'beatport' plugin.
 """
 
-import unittest
 from datetime import timedelta
 
 from beets.test import _common
@@ -656,11 +655,3 @@ class BeatportResponseEmptyTest(BeetsTestCase):
         self.assertEqual(
             tracks[0].genre, self.test_tracks[0]["subGenres"][0]["name"]
         )
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

@@ -232,11 +232,3 @@ class ParentWorkTest(PluginTestCase):
     def test_direct_parent_work(self):
         self.assertEqual("2", parentwork.direct_parent_id("1")[0])
         self.assertEqual("3", parentwork.work_parent_id("1")[0])
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

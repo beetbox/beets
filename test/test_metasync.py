@@ -16,7 +16,6 @@
 import os
 import platform
 import time
-import unittest
 from datetime import datetime
 
 from beets.library import Item
@@ -128,11 +127,3 @@ class MetaSyncTest(PluginTestCase):
             _parsetime("2014-04-24 09:28:38"),
         )
         self.assertFalse(hasattr(self.lib.items()[1], "itunes_lastskipped"))
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

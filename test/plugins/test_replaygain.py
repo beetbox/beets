@@ -392,12 +392,3 @@ class ReplayGainFfmpegThreadedImportTest(
     ThreadedImportMixin, ImportTest, ReplayGainTestCase, FfmpegBackendMixin
 ):
     pass
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")
-    unittest.main(defaultTest="suite")

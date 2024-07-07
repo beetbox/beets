@@ -3,7 +3,6 @@
 import logging as log
 import sys
 import threading
-import unittest
 from io import StringIO
 
 import beets.logging as blog
@@ -49,6 +48,7 @@ class LoggingTest(BeetsTestCase):
 
 class LoggingLevelTest(PluginTestCase):
     plugin = "dummy"
+
     class DummyModule:
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):
@@ -281,11 +281,3 @@ class ConcurrentEventsTest(BeetsTestCase):
             importer = self.create_importer()
             importer.run()
         self.assertIn("Sending event: database_change", logs)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

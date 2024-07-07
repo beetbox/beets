@@ -632,11 +632,3 @@ class ParseBeatportIDTest(unittest.TestCase):
         id_url = "https://www.beatport.com/release/album-name/%s" % id_string
         out = MetadataSourcePlugin._get_id("album", id_url, beatport_id_regex)
         self.assertEqual(out, id_string)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

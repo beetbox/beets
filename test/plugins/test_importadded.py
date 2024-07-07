@@ -16,7 +16,6 @@
 """Tests for the `importadded` plugin."""
 
 import os
-import unittest
 
 from beets import importer
 from beets.test.helper import AutotagStub, ImportTestCase, PluginMixin
@@ -167,11 +166,3 @@ class ImportAddedTest(PluginMixin, ImportTestCase):
                 "reimport modified Item.added for "
                 + displayable_path(item_path),
             )
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

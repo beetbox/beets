@@ -18,7 +18,6 @@
 
 import os
 import shutil
-import unittest
 
 from beets import library, ui
 from beets.test import _common
@@ -104,11 +103,3 @@ class FieldsTest(ItemInDBTestCase):
 
         self.assertEqual(len(items), 0)
         self.assertEqual(len(albums), 0)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

@@ -216,11 +216,3 @@ class PathTruncationTest(BeetsTestCase):
         with _common.platform_posix():
             p = util.truncate_path("abcde/fgh.ext", 5)
         self.assertEqual(p, "abcde/f.ext")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

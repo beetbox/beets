@@ -24,6 +24,7 @@ from beetsplug.albumtypes import AlbumTypesPlugin
 
 class AlbumTypesPluginTest(PluginTestCase):
     """Tests for albumtypes plugin."""
+
     plugin = "albumtypes"
 
     def test_renames_types(self):

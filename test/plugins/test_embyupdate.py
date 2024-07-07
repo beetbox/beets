@@ -1,5 +1,3 @@
-import unittest
-
 import responses
 
 from beets.test.helper import PluginTestCase
@@ -235,11 +233,3 @@ class EmbyUpdateTest(PluginTestCase):
         self.assertEqual(response[0]["Id"], "2ec276a2642e54a19b612b9418a8bd3b")
 
         self.assertEqual(response[0]["Name"], "username")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

@@ -18,7 +18,6 @@
 
 import json
 import re  # used to test csv format
-import unittest
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
@@ -85,11 +84,3 @@ class ExportPluginTest(PluginTestCase):
                 txt = details.text
                 self.assertIn(tag, self.test_values, msg=tag)
                 self.assertEqual(self.test_values[tag], txt, msg=txt)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

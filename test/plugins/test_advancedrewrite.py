@@ -15,7 +15,6 @@
 """Test the advancedrewrite plugin for various configurations.
 """
 
-import unittest
 
 from beets.test.helper import BeetsTestCase
 from beets.ui import UserError
@@ -154,11 +153,3 @@ class AdvancedRewritePluginTest(BeetsTestCase):
             album="C",
         )
         self.assertEqual(item.artist, "D")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")
