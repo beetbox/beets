@@ -448,40 +448,49 @@ class Genius(Backend):
         # Sometimes, though, it packages the lyrics into separate divs, most
         # likely for easier ad placement
 
-        lyrics_div = soup.find("div", {"data-lyrics-container": True})
-
-        if lyrics_div:
-            self.replace_br(lyrics_div)
-
-        if not lyrics_div:
+        lyrics_divs = soup.find_all("div", {"data-lyrics-container": True})
+        if not lyrics_divs:
             self._log.debug("Received unusual song page html")
-            verse_div = soup.find("div", class_=re.compile("Lyrics__Container"))
-            if not verse_div:
-                if soup.find(
-                    "div",
-                    class_=re.compile("LyricsPlaceholder__Message"),
-                    string="This song is an instrumental",
-                ):
-                    self._log.debug("Detected instrumental")
-                    return "[Instrumental]"
-                else:
-                    self._log.debug("Couldn't scrape page using known layouts")
-                    return None
-
-            lyrics_div = verse_div.parent
+            return self._try_extracting_lyrics_from_non_data_lyrics_container(
+                soup
+            )
+        lyrics = ""
+        for lyrics_div in lyrics_divs:
             self.replace_br(lyrics_div)
+            lyrics += lyrics_div.get_text() + "\n\n"
+        return lyrics
 
-            ads = lyrics_div.find_all(
-                "div", class_=re.compile("InreadAd__Container")
-            )
-            for ad in ads:
-                ad.replace_with("\n")
+    def _try_extracting_lyrics_from_non_data_lyrics_container(self, soup):
+        """Extract lyrics from a div without attribute data-lyrics-container
+        This is the second most common layout on genius.com
+        """
+        verse_div = soup.find("div", class_=re.compile("Lyrics__Container"))
+        if not verse_div:
+            if soup.find(
+                "div",
+                class_=re.compile("LyricsPlaceholder__Message"),
+                string="This song is an instrumental",
+            ):
+                self._log.debug("Detected instrumental")
+                return "[Instrumental]"
+            else:
+                self._log.debug("Couldn't scrape page using known layouts")
+                return None
 
-            footers = lyrics_div.find_all(
-                "div", class_=re.compile("Lyrics__Footer")
-            )
-            for footer in footers:
-                footer.replace_with("")
+        lyrics_div = verse_div.parent
+        self.replace_br(lyrics_div)
+
+        ads = lyrics_div.find_all(
+            "div", class_=re.compile("InreadAd__Container")
+        )
+        for ad in ads:
+            ad.replace_with("\n")
+
+        footers = lyrics_div.find_all(
+            "div", class_=re.compile("Lyrics__Footer")
+        )
+        for footer in footers:
+            footer.replace_with("")
         return lyrics_div.get_text()
 
 
