@@ -19,10 +19,10 @@ from datetime import datetime
 
 from confuse import ConfigValueError
 
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 
 
-class TypesPluginTest(unittest.TestCase, TestHelper):
+class TypesPluginTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
         self.load_plugins("types")

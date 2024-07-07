@@ -15,10 +15,10 @@
 
 import unittest
 
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 
 
-class LimitPluginTest(unittest.TestCase, TestHelper):
+class LimitPluginTest(BeetsTestCase):
     """Unit tests for LimitPlugin
 
     Note: query prefix tests do not work correctly with `run_with_output`.

@@ -32,7 +32,7 @@ import beets.library
 from beets import config, plugins, util
 from beets.test import _common
 from beets.test._common import item
-from beets.test.helper import BeetsTestCase, LibTestCase, TestHelper
+from beets.test.helper import BeetsTestCase, LibTestCase
 from beets.util import bytestring_path, syspath
 
 # Shortcut to path normalization.
@@ -1267,7 +1267,7 @@ class UnicodePathTest(LibTestCase):
         self.i.write()
 
 
-class WriteTest(unittest.TestCase, TestHelper):
+class WriteTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
 
@@ -1355,7 +1355,7 @@ class ItemReadTest(unittest.TestCase):
             item.read("/thisfiledoesnotexist")
 
 
-class FilesizeTest(unittest.TestCase, TestHelper):
+class FilesizeTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
 

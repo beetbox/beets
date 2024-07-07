@@ -2,11 +2,11 @@ import unittest
 
 import responses
 
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 from beetsplug import embyupdate
 
 
-class EmbyUpdateTest(unittest.TestCase, TestHelper):
+class EmbyUpdateTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
         self.load_plugins("embyupdate")

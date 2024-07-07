@@ -18,13 +18,13 @@ from unittest.mock import Mock, patch
 
 from beets import library
 from beets.test import _common
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 from beets.util import _fsencoding, bytestring_path
 from beetsplug.ipfs import IPFSPlugin
 
 
 @patch("beets.util.command_output", Mock())
-class IPFSPluginTest(unittest.TestCase, TestHelper):
+class IPFSPluginTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
         self.load_plugins("ipfs")

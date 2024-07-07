@@ -20,11 +20,11 @@ from unittest.mock import Mock
 
 from beets import config
 from beets.test import _common
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 from beetsplug import lastgenre
 
 
-class LastGenrePluginTest(unittest.TestCase, TestHelper):
+class LastGenrePluginTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
         self.plugin = lastgenre.LastGenrePlugin()

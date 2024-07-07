@@ -19,7 +19,7 @@ from shutil import rmtree
 from tempfile import mkdtemp
 from unittest.mock import Mock, call, patch
 
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 from beets.util import bytestring_path, syspath
 from beetsplug.thumbnails import (
     LARGE_DIR,
@@ -30,7 +30,7 @@ from beetsplug.thumbnails import (
 )
 
 
-class ThumbnailsTest(unittest.TestCase, TestHelper):
+class ThumbnailsTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
 

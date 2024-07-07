@@ -19,10 +19,10 @@ import sys
 import unittest
 
 from beets import util
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 
 
-class FetchartCliTest(unittest.TestCase, TestHelper):
+class FetchartCliTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
         self.load_plugins("fetchart")

@@ -30,7 +30,7 @@ from beets.dbcore.query import (
     ParsingError,
 )
 from beets.library import Item, Library
-from beets.test import _common, helper
+from beets.test import _common
 from beets.test.helper import BeetsTestCase, LibTestCase
 from beets.util import syspath
 
@@ -39,7 +39,13 @@ from beets.util import syspath
 WIN32_NO_IMPLICIT_PATHS = "Implicit paths are not supported on Windows"
 
 
-class TestHelper(helper.TestHelper):
+class AssertsMixin:
+    def assert_items_matched(self, results, titles):
+        self.assertEqual({i.title for i in results}, set(titles))
+
+    def assert_albums_matched(self, results, albums):
+        self.assertEqual({a.album for a in results}, set(albums))
+
     def assertInResult(self, item, results):  # noqa
         result_ids = [i.id for i in results]
         self.assertIn(item.id, result_ids)
@@ -81,14 +87,6 @@ class AnyFieldQueryTest(LibTestCase):
 
         q2.query_class = None
         self.assertNotEqual(q1, q2)
-
-
-class AssertsMixin:
-    def assert_items_matched(self, results, titles):
-        self.assertEqual({i.title for i in results}, set(titles))
-
-    def assert_albums_matched(self, results, albums):
-        self.assertEqual({a.album for a in results}, set(albums))
 
 
 # A test case class providing a library with some dummy data and some
@@ -488,7 +486,7 @@ class MatchTest(BeetsTestCase):
         self.assertNotEqual(q3, q4)
 
 
-class PathQueryTest(LibTestCase, TestHelper, AssertsMixin):
+class PathQueryTest(LibTestCase, AssertsMixin):
     def setUp(self):
         super().setUp()
 
@@ -726,11 +724,12 @@ class PathQueryTest(LibTestCase, TestHelper, AssertsMixin):
             os.chdir(cur_dir)
 
 
-class IntQueryTest(unittest.TestCase, TestHelper):
+class IntQueryTest(BeetsTestCase):
     def setUp(self):
         self.lib = Library(":memory:")
 
     def tearDown(self):
+        super().tearDown()
         Item._types = {}
 
     def test_exact_value_match(self):
@@ -764,12 +763,14 @@ class IntQueryTest(unittest.TestCase, TestHelper):
         self.assertIsNone(matched)
 
 
-class BoolQueryTest(unittest.TestCase, TestHelper):
+class BoolQueryTest(BeetsTestCase, AssertsMixin):
     def setUp(self):
+        super().setUp()
         self.lib = Library(":memory:")
         Item._types = {"flexbool": types.Boolean()}
 
     def tearDown(self):
+        super().tearDown()
         Item._types = {}
 
     def test_parse_true(self):
@@ -834,8 +835,9 @@ class DefaultSearchFieldsTest(DummyDataTestCase):
         self.assert_items_matched(items, [])
 
 
-class NoneQueryTest(unittest.TestCase, TestHelper):
+class NoneQueryTest(BeetsTestCase, AssertsMixin):
     def setUp(self):
+        super().setUp()
         self.lib = Library(":memory:")
 
     def test_match_singletons(self):

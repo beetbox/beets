@@ -32,7 +32,7 @@ from unittest import mock
 import confuse
 import yaml
 
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 from beets.util import bluelet
 from beetsplug import bpd
 
@@ -277,7 +277,7 @@ def start_server(args, assigned_port, listener_patch):
     beets.ui.main(args)
 
 
-class BPDTestHelper(unittest.TestCase, TestHelper):
+class BPDTestHelper(BeetsTestCase):
     def setUp(self):
         self.setup_beets(disk=True)
         self.load_plugins("bpd")

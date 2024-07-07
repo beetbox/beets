@@ -18,11 +18,11 @@ from unittest.mock import patch
 
 from beets import util
 from beets.library import Item
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 
 
 @patch("beets.util.command_output")
-class KeyFinderTest(unittest.TestCase, TestHelper):
+class KeyFinderTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
         self.load_plugins("keyfinder")

@@ -32,7 +32,6 @@ from beets.autotag.match import distance
 from beets.test import _common
 from beets.test.helper import (
     BeetsTestCase,
-    TestHelper,
     capture_stdout,
     control_stdin,
     has_program,
@@ -190,7 +189,7 @@ class RemoveTest(BeetsTestCase):
         self.assertEqual(num_existing, 1)
 
 
-class ModifyTest(unittest.TestCase, TestHelper):
+class ModifyTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
         self.album = self.add_album_fixture()
@@ -404,7 +403,7 @@ class ModifyTest(unittest.TestCase, TestHelper):
         self.assertEqual(mods, {"title": "newTitle"})
 
 
-class WriteTest(unittest.TestCase, TestHelper):
+class WriteTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
 
@@ -845,7 +844,7 @@ class ImportTest(BeetsTestCase):
 
 
 @_common.slow_test()
-class ConfigTest(unittest.TestCase, TestHelper):
+class ConfigTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
 
@@ -1469,7 +1468,7 @@ class CompletionTest(BeetsTestCase):
         )
 
 
-class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):
+class CommonOptionsParserCliTest(BeetsTestCase):
     """Test CommonOptionsParser and formatting LibModel formatting on 'list'
     command.
     """
@@ -1552,7 +1551,7 @@ class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):
         # self.assertIn('plugins: ', l)
 
 
-class CommonOptionsParserTest(unittest.TestCase, TestHelper):
+class CommonOptionsParserTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
 
