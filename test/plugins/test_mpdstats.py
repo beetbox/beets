@@ -18,11 +18,11 @@ from unittest.mock import ANY, Mock, call, patch
 
 from beets import util
 from beets.library import Item
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 from beetsplug.mpdstats import MPDStats
 
 
-class MPDStatsTest(unittest.TestCase, TestHelper):
+class MPDStatsTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
         self.load_plugins("mpdstats")

@@ -17,11 +17,11 @@ import unittest
 
 from mediafile import MediaFile
 
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 from beets.util import displayable_path
 
 
-class InfoTest(unittest.TestCase, TestHelper):
+class InfoTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
         self.load_plugins("info")

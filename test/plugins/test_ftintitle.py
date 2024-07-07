@@ -17,11 +17,11 @@
 
 import unittest
 
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 from beetsplug import ftintitle
 
 
-class FtInTitlePluginFunctional(unittest.TestCase, TestHelper):
+class FtInTitlePluginFunctional(BeetsTestCase):
     def setUp(self):
         """Set up configuration"""
         self.setup_beets()

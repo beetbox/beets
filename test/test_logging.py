@@ -47,7 +47,7 @@ class LoggingTest(BeetsTestCase):
         self.assertTrue(stream.getvalue(), "foo oof baz")
 
 
-class LoggingLevelTest(unittest.TestCase, helper.TestHelper):
+class LoggingLevelTest(BeetsTestCase):
     class DummyModule:
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):

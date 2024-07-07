@@ -35,9 +35,9 @@ from beets.test import helper
 from beets.test._common import RSRC
 from beets.test.helper import (
     AutotagStub,
+    BeetsTestCase,
     ImportHelper,
     TerminalImportSessionSetup,
-    TestHelper,
 )
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.id_extractors import (
@@ -47,7 +47,7 @@ from beets.util.id_extractors import (
 )
 
 
-class PluginLoaderTestCase(unittest.TestCase, TestHelper):
+class PluginLoaderTestCase(BeetsTestCase):
     def setup_plugin_loader(self):
         # FIXME the mocking code is horrific, but this is the lowest and
         # earliest level of the plugin mechanism we can hook into.

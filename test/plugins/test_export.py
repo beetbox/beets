@@ -22,10 +22,10 @@ import unittest
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 
 
-class ExportPluginTest(unittest.TestCase, TestHelper):
+class ExportPluginTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
         self.load_plugins("export")

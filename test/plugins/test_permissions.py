@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 from beets.test._common import touch
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 from beets.util import displayable_path
 from beetsplug.permissions import (
     check_permissions,
@@ -16,7 +16,7 @@ from beetsplug.permissions import (
 )
 
 
-class PermissionsPluginTest(unittest.TestCase, TestHelper):
+class PermissionsPluginTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
         self.load_plugins("permissions")

@@ -15,15 +15,14 @@
 """Tests for the 'albumtypes' plugin."""
 
 
-import unittest
 from typing import Sequence, Tuple
 
 from beets.autotag.mb import VARIOUS_ARTISTS_ID
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 from beetsplug.albumtypes import AlbumTypesPlugin
 
 
-class AlbumTypesPluginTest(unittest.TestCase, TestHelper):
+class AlbumTypesPluginTest(BeetsTestCase):
     """Tests for albumtypes plugin."""
 
     def setUp(self):

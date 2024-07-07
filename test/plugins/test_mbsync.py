@@ -19,14 +19,14 @@ from unittest.mock import patch
 from beets import config
 from beets.library import Item
 from beets.test.helper import (
-    TestHelper,
+    BeetsTestCase,
     capture_log,
     generate_album_info,
     generate_track_info,
 )
 
 
-class MbsyncCliTest(unittest.TestCase, TestHelper):
+class MbsyncCliTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
         self.load_plugins("mbsync")

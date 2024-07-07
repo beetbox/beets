@@ -5,10 +5,10 @@ from unittest.mock import patch
 import yaml
 
 from beets import config, ui
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 
 
-class ConfigCommandTest(unittest.TestCase, TestHelper):
+class ConfigCommandTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
         for k in ("VISUAL", "EDITOR"):

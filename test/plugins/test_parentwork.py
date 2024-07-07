@@ -20,7 +20,7 @@ import unittest
 from unittest.mock import patch
 
 from beets.library import Item
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 from beetsplug import parentwork
 
 work = {
@@ -85,7 +85,7 @@ def mock_workid_response(mbid, includes):
         return p_work
 
 
-class ParentWorkIntegrationTest(unittest.TestCase, TestHelper):
+class ParentWorkIntegrationTest(BeetsTestCase):
     def setUp(self):
         """Set up configuration"""
         self.setup_beets()
@@ -180,7 +180,7 @@ class ParentWorkIntegrationTest(unittest.TestCase, TestHelper):
         )
 
 
-class ParentWorkTest(unittest.TestCase, TestHelper):
+class ParentWorkTest(BeetsTestCase):
     def setUp(self):
         """Set up configuration"""
         self.setup_beets()

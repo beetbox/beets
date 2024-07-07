@@ -24,7 +24,7 @@ from beets import random
 from beets.test.helper import TestHelper
 
 
-class RandomTest(unittest.TestCase, TestHelper):
+class RandomTest(TestHelper, unittest.TestCase):
     def setUp(self):
         self.lib = None
         self.artist1 = "Artist 1"
@@ -36,9 +36,6 @@ class RandomTest(unittest.TestCase, TestHelper):
             self.items.append(self.create_item(artist=self.artist2))
         self.random_gen = Random()
         self.random_gen.seed(12345)
-
-    def tearDown(self):
-        pass
 
     def _stats(self, data):
         mean = sum(data) / len(data)

@@ -6,10 +6,10 @@
 import unittest
 
 from beets import logging
-from beets.test.helper import TestHelper, capture_stdout
+from beets.test.helper import BeetsTestCase, capture_stdout
 
 
-class BareascPluginTest(unittest.TestCase, TestHelper):
+class BareascPluginTest(BeetsTestCase):
     """Test bare ASCII query matching."""
 
     def setUp(self):

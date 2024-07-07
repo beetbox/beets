@@ -18,11 +18,11 @@
 import unittest
 
 from beets import config, ui
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 from beetsplug import bucket
 
 
-class BucketPluginTest(unittest.TestCase, TestHelper):
+class BucketPluginTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
         self.plugin = bucket.BucketPlugin()

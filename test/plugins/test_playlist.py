@@ -18,10 +18,11 @@ import unittest
 from shlex import quote
 
 import beets
-from beets.test import _common, helper
+from beets.test import _common
+from beets.test.helper import BeetsTestCase
 
 
-class PlaylistTestHelper(helper.TestHelper):
+class PlaylistTestCase(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
         self.lib = beets.library.Library(":memory:")
@@ -88,7 +89,7 @@ class PlaylistTestHelper(helper.TestHelper):
         self.teardown_beets()
 
 
-class PlaylistQueryTestHelper(PlaylistTestHelper):
+class PlaylistQueryTest:
     def test_name_query_with_absolute_paths_in_playlist(self):
         q = "playlist:absolute"
         results = self.lib.items(q)
@@ -166,7 +167,7 @@ class PlaylistQueryTestHelper(PlaylistTestHelper):
         self.assertEqual(set(results), set())
 
 
-class PlaylistTestRelativeToLib(PlaylistQueryTestHelper, unittest.TestCase):
+class PlaylistTestRelativeToLib(PlaylistQueryTest, PlaylistTestCase):
     def setup_test(self):
         with open(os.path.join(self.playlist_dir, "absolute.m3u"), "w") as f:
             f.write(
@@ -187,7 +188,7 @@ class PlaylistTestRelativeToLib(PlaylistQueryTestHelper, unittest.TestCase):
         self.config["playlist"]["relative_to"] = "library"
 
 
-class PlaylistTestRelativeToDir(PlaylistQueryTestHelper, unittest.TestCase):
+class PlaylistTestRelativeToDir(PlaylistQueryTest, PlaylistTestCase):
     def setup_test(self):
         with open(os.path.join(self.playlist_dir, "absolute.m3u"), "w") as f:
             f.write(
@@ -208,7 +209,7 @@ class PlaylistTestRelativeToDir(PlaylistQueryTestHelper, unittest.TestCase):
         self.config["playlist"]["relative_to"] = self.music_dir
 
 
-class PlaylistTestRelativeToPls(PlaylistQueryTestHelper, unittest.TestCase):
+class PlaylistTestRelativeToPls(PlaylistQueryTest, PlaylistTestCase):
     def setup_test(self):
         with open(os.path.join(self.playlist_dir, "absolute.m3u"), "w") as f:
             f.write(
@@ -251,7 +252,7 @@ class PlaylistTestRelativeToPls(PlaylistQueryTestHelper, unittest.TestCase):
         self.config["playlist"]["playlist_dir"] = self.playlist_dir
 
 
-class PlaylistUpdateTestHelper(PlaylistTestHelper):
+class PlaylistUpdateTest:
     def setup_test(self):
         with open(os.path.join(self.playlist_dir, "absolute.m3u"), "w") as f:
             f.write(
@@ -273,7 +274,7 @@ class PlaylistUpdateTestHelper(PlaylistTestHelper):
         self.config["playlist"]["relative_to"] = "library"
 
 
-class PlaylistTestItemMoved(PlaylistUpdateTestHelper, unittest.TestCase):
+class PlaylistTestItemMoved(PlaylistUpdateTest, PlaylistTestCase):
     def test_item_moved(self):
         # Emit item_moved event for an item that is in a playlist
         results = self.lib.items(
@@ -339,7 +340,7 @@ class PlaylistTestItemMoved(PlaylistUpdateTestHelper, unittest.TestCase):
         )
 
 
-class PlaylistTestItemRemoved(PlaylistUpdateTestHelper, unittest.TestCase):
+class PlaylistTestItemRemoved(PlaylistUpdateTest, PlaylistTestCase):
     def test_item_removed(self):
         # Emit item_removed event for an item that is in a playlist
         results = self.lib.items(

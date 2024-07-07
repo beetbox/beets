@@ -38,7 +38,6 @@ from beets.test.helper import (
     AutotagStub,
     BeetsTestCase,
     ImportHelper,
-    TestHelper,
     capture_log,
     has_program,
 )
@@ -1171,7 +1170,7 @@ def match_album_mock(*args, **kwargs):
 
 
 @patch("beets.autotag.mb.match_album", Mock(side_effect=match_album_mock))
-class ImportDuplicateAlbumTest(unittest.TestCase, TestHelper):
+class ImportDuplicateAlbumTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
 
@@ -1293,7 +1292,7 @@ def match_track_mock(*args, **kwargs):
 
 
 @patch("beets.autotag.mb.match_track", Mock(side_effect=match_track_mock))
-class ImportDuplicateSingletonTest(unittest.TestCase, TestHelper):
+class ImportDuplicateSingletonTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
 
@@ -1382,7 +1381,7 @@ class TagLogTest(BeetsTestCase):
         self.assertIn("status caf\xe9", sio.getvalue())
 
 
-class ResumeImportTest(unittest.TestCase, TestHelper):
+class ResumeImportTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
 
@@ -1433,7 +1432,7 @@ class ResumeImportTest(unittest.TestCase, TestHelper):
         self.assertIsNotNone(self.lib.items("title:track 1").get())
 
 
-class IncrementalImportTest(unittest.TestCase, TestHelper):
+class IncrementalImportTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
         self.config["import"]["incremental"] = True

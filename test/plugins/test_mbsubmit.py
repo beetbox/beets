@@ -17,16 +17,16 @@ import unittest
 
 from beets.test.helper import (
     AutotagStub,
+    BeetsTestCase,
     ImportHelper,
     TerminalImportSessionSetup,
-    TestHelper,
     capture_stdout,
     control_stdin,
 )
 
 
 class MBSubmitPluginTest(
-    TerminalImportSessionSetup, unittest.TestCase, ImportHelper, TestHelper
+    TerminalImportSessionSetup, BeetsTestCase, ImportHelper
 ):
     def setUp(self):
         self.setup_beets()

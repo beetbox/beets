@@ -2,11 +2,11 @@ import unittest
 
 import responses
 
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 from beetsplug.plexupdate import get_music_section, update_plex
 
 
-class PlexUpdateTest(unittest.TestCase, TestHelper):
+class PlexUpdateTest(BeetsTestCase):
     def add_response_get_music_section(self, section_name="Music"):
         """Create response for mocking the get_music_section function."""
 

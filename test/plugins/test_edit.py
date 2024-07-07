@@ -21,9 +21,9 @@ from beets.library import Item
 from beets.test import _common
 from beets.test.helper import (
     AutotagStub,
+    BeetsTestCase,
     ImportHelper,
     TerminalImportSessionSetup,
-    TestHelper,
     control_stdin,
 )
 from beetsplug.edit import EditPlugin
@@ -115,7 +115,7 @@ class EditMixin:
 
 @_common.slow_test()
 @patch("beets.library.Item.write")
-class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
+class EditCommandTest(BeetsTestCase, EditMixin):
     """Black box tests for `beetsplug.edit`. Command line interaction is
     simulated using `test.helper.control_stdin()`, and yaml editing via an
     external editor is simulated using `ModifyFileMocker`.
@@ -323,11 +323,7 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
 
 @_common.slow_test()
 class EditDuringImporterTest(
-    TerminalImportSessionSetup,
-    unittest.TestCase,
-    ImportHelper,
-    TestHelper,
-    EditMixin,
+    TerminalImportSessionSetup, BeetsTestCase, ImportHelper, EditMixin
 ):
     """TODO"""
 

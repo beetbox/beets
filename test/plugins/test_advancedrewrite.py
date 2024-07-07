@@ -17,13 +17,13 @@
 
 import unittest
 
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 from beets.ui import UserError
 
 PLUGIN_NAME = "advancedrewrite"
 
 
-class AdvancedRewritePluginTest(unittest.TestCase, TestHelper):
+class AdvancedRewritePluginTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
 

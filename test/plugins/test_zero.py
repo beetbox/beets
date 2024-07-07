@@ -5,12 +5,12 @@ import unittest
 from mediafile import MediaFile
 
 from beets.library import Item
-from beets.test.helper import TestHelper, control_stdin
+from beets.test.helper import BeetsTestCase, control_stdin
 from beets.util import syspath
 from beetsplug.zero import ZeroPlugin
 
 
-class ZeroPluginTest(unittest.TestCase, TestHelper):
+class ZeroPluginTest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
         self.config["zero"] = {
