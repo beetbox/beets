@@ -18,7 +18,6 @@ test_importer module. But here the test importer inherits from
 ``TerminalImportSession``. So we test this class, too.
 """
 
-import unittest
 from test import test_importer
 
 from beets.test.helper import TerminalImportMixin
@@ -70,11 +69,3 @@ class GlobalGroupAlbumsImportTest(
     TerminalImportMixin, test_importer.GlobalGroupAlbumsImportTest
 ):
     pass
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

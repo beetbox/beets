@@ -17,7 +17,6 @@
 
 import os
 import shutil
-import unittest
 from unittest.mock import patch
 
 import confuse
@@ -1016,11 +1015,3 @@ class EnforceRatioConfigTest(BeetsTestCase):
     def test_percent(self):
         self._load_with_config("0% 0.00% 5.1% 5% 100%".split(), False)
         self._load_with_config("00% 1.234% foo5% 100.1%".split(), True)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

@@ -1648,11 +1648,3 @@ class EncodingTest(BeetsTestCase):
         with patch("sys.stdin") as stdin:
             stdin.encoding = None
             self.assertEqual(ui._in_encoding(), "utf-8")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

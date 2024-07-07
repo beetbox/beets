@@ -14,7 +14,6 @@
 
 
 import time
-import unittest
 from datetime import datetime
 
 from confuse import ConfigValueError
@@ -193,11 +192,3 @@ class TypesPluginTest(PluginTestCase):
 
 def mktime(*args):
     return time.mktime(datetime(*args).timetuple())
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

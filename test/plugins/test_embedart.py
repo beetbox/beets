@@ -339,11 +339,3 @@ class ArtSimilarityTest(unittest.TestCase):
     def test_convert_failure(self, mock_extract, mock_subprocess):
         self._mock_popens(mock_extract, mock_subprocess, convert_status=1)
         self.assertIsNone(self._similarity(20))
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

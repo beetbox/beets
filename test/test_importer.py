@@ -2008,11 +2008,3 @@ class ImportMusicBrainzIdTest(ImportTestCase):
             {"VALID_RECORDING_0", "VALID_RECORDING_1"},
             {c.info.title for c in task.candidates},
         )
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

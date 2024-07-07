@@ -290,11 +290,3 @@ class EvalTest(unittest.TestCase):
 
     def test_function_call_with_empty_arg(self):
         self.assertEqual(self._eval("%len{}"), "0")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

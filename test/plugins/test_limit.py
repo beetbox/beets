@@ -13,7 +13,6 @@
 
 """Tests for the 'limit' plugin."""
 
-import unittest
 
 from beets.test.helper import PluginTestCase
 
@@ -94,11 +93,3 @@ class LimitPluginTest(PluginTestCase):
         incorrect_order = self.num_limit_prefix + " " + self.track_tail_range
         result = self.lib.items(incorrect_order)
         self.assertEqual(len(result), 0)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

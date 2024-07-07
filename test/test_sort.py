@@ -15,7 +15,6 @@
 """Various tests for querying the library database.
 """
 
-import unittest
 
 import beets.library
 from beets import config, dbcore
@@ -531,11 +530,3 @@ class NonExistingFieldTest(DummyDataTestCase):
         self.assertTrue(isinstance(query.subqueries[0], dbcore.query.TrueQuery))
         self.assertTrue(isinstance(sort, dbcore.query.SlowFieldSort))
         self.assertEqual(sort.field, "-bar")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

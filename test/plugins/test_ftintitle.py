@@ -169,11 +169,3 @@ class FtInTitlePluginTest(unittest.TestCase):
         self.assertTrue(ftintitle.contains_feat("Alice With Bob"))
         self.assertFalse(ftintitle.contains_feat("Alice defeat Bob"))
         self.assertFalse(ftintitle.contains_feat("Aliceft.Bob"))
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

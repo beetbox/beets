@@ -1392,11 +1392,3 @@ class LibraryFieldTypesTest(unittest.TestCase):
         beets.config["format_raw_length"] = True
         self.assertEqual(61.23, t.format(61.23))
         self.assertEqual(3601.23, t.format(3601.23))
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

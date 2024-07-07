@@ -13,7 +13,6 @@
 # included in all copies or substantial portions of the Software.
 
 
-import unittest
 from os import fsdecode, path, remove
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -373,11 +372,3 @@ class SmartPlaylistCLITest(PluginTestCase):
         for name in (b"my_playlist.m3u", b"all.m3u"):
             with open(path.join(self.temp_dir, name), "rb") as f:
                 self.assertEqual(f.read(), self.item.path + b"\n")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

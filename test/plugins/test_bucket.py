@@ -15,8 +15,6 @@
 """Tests for the 'bucket' plugin."""
 
 
-import unittest
-
 from beets import config, ui
 from beets.test.helper import BeetsTestCase
 from beetsplug import bucket
@@ -165,11 +163,3 @@ class BucketPluginTest(BeetsTestCase):
         self.check_span_from_str("1980 00", 1980, 2000)
         self.check_span_from_str("1930 00", 1930, 2000)
         self.check_span_from_str("1930 50", 1930, 1950)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

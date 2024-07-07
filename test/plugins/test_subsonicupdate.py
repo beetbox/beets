@@ -1,6 +1,5 @@
 """Tests for the 'subsonic' plugin."""
 
-import unittest
 from urllib.parse import parse_qs, urlparse
 
 import responses
@@ -183,12 +182,3 @@ class SubsonicPluginTest(BeetsTestCase):
         )
 
         self.subsonicupdate.start_scan()
-
-
-def suite():
-    """Default test suite."""
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

@@ -3,7 +3,6 @@
 
 import os
 import platform
-import unittest
 from unittest.mock import Mock, patch
 
 from beets.test._common import touch
@@ -103,11 +102,3 @@ class PermissionsPluginTest(PluginTestCase):
         self.assertEqual(
             expect_success, check_permissions(album.artpath, 0o777)
         )
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

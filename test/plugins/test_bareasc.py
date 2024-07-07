@@ -3,7 +3,6 @@
 
 """Tests for the 'bareasc' plugin."""
 
-import unittest
 
 from beets import logging
 from beets.test.helper import PluginTestCase, capture_stdout
@@ -11,6 +10,7 @@ from beets.test.helper import PluginTestCase, capture_stdout
 
 class BareascPluginTest(PluginTestCase):
     """Test bare ASCII query matching."""
+
     plugin = "bareasc"
 
     def setUp(self):
@@ -81,12 +81,3 @@ class BareascPluginTest(PluginTestCase):
             )
 
         self.assertEqual("Antonin Dvorak:: with accents\n", output.getvalue())
-
-
-def suite():
-    """loader."""
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

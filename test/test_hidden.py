@@ -74,11 +74,3 @@ class HiddenFileTest(unittest.TestCase):
         with tempfile.NamedTemporaryFile(prefix=".tmp") as f:
             fn = util.bytestring_path(f.name)
             self.assertTrue(hidden.is_hidden(fn))
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

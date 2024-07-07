@@ -16,7 +16,6 @@
 import ctypes
 import os
 import sys
-import unittest
 
 from beets import util
 from beets.test.helper import PluginTestCase
@@ -99,11 +98,3 @@ class FetchartCliTest(PluginTestCase):
         self.run_command("fetchart")
         self.album.load()
         self.check_cover_is_stored()
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

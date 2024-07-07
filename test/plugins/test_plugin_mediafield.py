@@ -17,7 +17,6 @@
 
 import os
 import shutil
-import unittest
 
 import mediafile
 
@@ -124,11 +123,3 @@ class ExtendedFieldTestMixin(BeetsTestCase):
         with self.assertRaises(ValueError) as cm:
             mediafile.MediaFile.add_field("artist", mediafile.MediaField())
         self.assertIn('property "artist" already exists', str(cm.exception))
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

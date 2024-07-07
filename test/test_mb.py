@@ -1077,11 +1077,3 @@ class MBLibraryTest(unittest.TestCase):
             gp.side_effect = side_effect
             album = mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
             self.assertIsNone(album.country)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

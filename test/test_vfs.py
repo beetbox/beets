@@ -14,7 +14,6 @@
 
 """Tests for the virtual filesystem builder.."""
 
-import unittest
 
 from beets import vfs
 from beets.test import _common
@@ -41,11 +40,3 @@ class VFSTest(BeetsTestCase):
         self.assertEqual(
             self.tree.dirs["albums"].dirs["the album"].files["the title"], 2
         )
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

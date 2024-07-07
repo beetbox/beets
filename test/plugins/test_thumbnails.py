@@ -14,7 +14,6 @@
 
 
 import os.path
-import unittest
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest.mock import Mock, call, patch
@@ -281,11 +280,3 @@ class TestPathlibURI:
 
         # test it won't break if we pass it bytes for a path
         test_uri.uri(b"/")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

@@ -318,11 +318,3 @@ class DateQueryConstructTest(unittest.TestCase):
     def test_datetime_invalid_separator(self):
         with self.assertRaises(InvalidQueryArgumentValueError):
             DateQuery("added", "2000-01-01x12")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

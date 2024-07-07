@@ -13,7 +13,6 @@
 # included in all copies or substantial portions of the Software.
 
 import codecs
-import unittest
 from unittest.mock import patch
 
 from beets.dbcore.query import TrueQuery
@@ -514,11 +513,3 @@ class EditDuringImporterTestCase(
             all("Edited Title " in i.title for i in self.lib.items())
         )
         self.assertTrue(all("match " in i.mb_trackid for i in self.lib.items()))
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

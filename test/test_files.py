@@ -692,11 +692,3 @@ class MkDirAllTest(BeetsTestCase):
         path = os.path.join(self.temp_dir, b"foo", b"bar", b"baz", b"qux.mp3")
         util.mkdirall(path)
         self.assertNotExists(path)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

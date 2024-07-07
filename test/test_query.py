@@ -1161,11 +1161,3 @@ class RelatedQueriesTest(BeetsTestCase, AssertsMixin):
         q = "catalognum:ABC Album1"
         results = self.lib.albums(q)
         self.assert_albums_matched(results, ["Album1"])
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")
