@@ -9,7 +9,7 @@ import beets.logging as blog
 import beetsplug
 from beets import plugins, ui
 from beets.test import _common, helper
-from beets.test.helper import BeetsTestCase, PluginTestCase
+from beets.test.helper import BeetsTestCase, ImportTestCase, PluginMixin
 
 
 class LoggingTest(BeetsTestCase):
@@ -46,7 +46,7 @@ class LoggingTest(BeetsTestCase):
         self.assertTrue(stream.getvalue(), "foo oof baz")
 
 
-class LoggingLevelTest(PluginTestCase):
+class LoggingLevelTest(PluginMixin, ImportTestCase):
     plugin = "dummy"
 
     class DummyModule:
@@ -161,7 +161,7 @@ class LoggingLevelTest(PluginTestCase):
 
 
 @_common.slow_test()
-class ConcurrentEventsTest(BeetsTestCase):
+class ConcurrentEventsTest(ImportTestCase):
     """Similar to LoggingLevelTest but lower-level and focused on multiple
     events interaction. Since this is a bit heavy we don't do it in
     LoggingLevelTest.

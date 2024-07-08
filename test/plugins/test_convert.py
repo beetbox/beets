@@ -23,7 +23,12 @@ from mediafile import MediaFile
 
 from beets import util
 from beets.test import _common
-from beets.test.helper import PluginTestCase, capture_log, control_stdin
+from beets.test.helper import (
+    ImportHelper,
+    PluginTestCase,
+    capture_log,
+    control_stdin,
+)
 from beets.util import bytestring_path, displayable_path
 
 
@@ -90,7 +95,7 @@ class ConvertTestCase(ConvertMixin, PluginTestCase):
 
 
 @_common.slow_test()
-class ImportConvertTest(ConvertTestCase):
+class ImportConvertTest(ImportHelper, ConvertTestCase):
     def setUp(self):
         super().setUp()
         self.importer = self.create_importer()
