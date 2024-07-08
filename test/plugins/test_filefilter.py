@@ -46,10 +46,6 @@ class FileFilterPluginTest(ImportTestCase):
         medium.save()
 
     def __create_import_dir(self, count):
-        self.import_dir = os.path.join(self.temp_dir, b"testsrcdir")
-        if os.path.isdir(syspath(self.import_dir)):
-            shutil.rmtree(syspath(self.import_dir))
-
         self.artist_path = os.path.join(self.import_dir, b"artist")
         self.album_path = os.path.join(self.artist_path, b"album")
         self.misc_path = os.path.join(self.import_dir, b"misc")

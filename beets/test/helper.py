@@ -39,6 +39,7 @@ import sys
 import unittest
 from contextlib import contextmanager
 from enum import Enum
+from functools import cached_property
 from io import StringIO
 from tempfile import mkdtemp, mkstemp
 from typing import ClassVar
@@ -504,6 +505,12 @@ class ImportHelper:
 
     importer: importer.ImportSession
 
+    @cached_property
+    def import_dir(self):
+        import_dir = os.path.join(self.temp_dir, b"import")
+        os.makedirs(syspath(import_dir), exist_ok=True)
+        return import_dir
+
     def setup_beets(self):
         super().setup_beets()
         self.lib.path_formats = [
@@ -526,10 +533,6 @@ class ImportHelper:
 
         :param count:  Number of files to create
         """
-        self.import_dir = os.path.join(self.temp_dir, b"testsrcdir")
-        if os.path.isdir(syspath(self.import_dir)):
-            shutil.rmtree(syspath(self.import_dir))
-
         album_path = os.path.join(self.import_dir, b"the_album")
         os.makedirs(syspath(album_path))
 
@@ -595,14 +598,10 @@ class ImportHelper:
         Copies the specified number of files to a subdirectory of
         `self.temp_dir` and creates a `ImportSessionFixture` for this path.
         """
-        import_dir = os.path.join(self.temp_dir, b"import")
-        if not os.path.isdir(syspath(import_dir)):
-            os.mkdir(syspath(import_dir))
-
         album_no = 0
         while album_count:
             album = util.bytestring_path(f"album {album_no}")
-            album_dir = os.path.join(import_dir, album)
+            album_dir = os.path.join(self.import_dir, album)
             if os.path.exists(syspath(album_dir)):
                 album_no += 1
                 continue
@@ -639,7 +638,7 @@ class ImportHelper:
         config["import"]["resume"] = False
 
         return ImportSessionFixture(
-            self.lib, loghandler=None, query=None, paths=[import_dir]
+            self.lib, loghandler=None, query=None, paths=[self.import_dir]
         )
 
     def assert_file_in_lib(self, *segments):
