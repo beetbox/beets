@@ -47,7 +47,7 @@ class PermissionsPluginTest(PluginMixin, ImportTestCase):
         self.importer = self.create_importer()
         typs = ["file", "dir"]
 
-        track_file = (b"album 0", b"track 0.mp3")
+        track_file = (b"album_1", b"track_1.mp3")
         self.exp_perms = {
             True: {
                 k: convert_perm(self.config["permissions"][k].get())

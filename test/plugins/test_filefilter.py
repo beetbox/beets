@@ -63,7 +63,7 @@ class FileFilterPluginTest(ImportTestCase):
         self.album_paths = []
         for i in range(count):
             metadata["track"] = i + 1
-            metadata["title"] = "Tag Title Album %d" % (i + 1)
+            metadata["title"] = "Tag Track Album %d" % (i + 1)
             track_file = bytestring_path("%02d - track.mp3" % (i + 1))
             dest_path = os.path.join(self.album_path, track_file)
             self.__copy_file(dest_path, metadata)
@@ -73,7 +73,7 @@ class FileFilterPluginTest(ImportTestCase):
         metadata["album"] = None
         for i in range(count):
             metadata["track"] = i + 10
-            metadata["title"] = "Tag Title Artist %d" % (i + 1)
+            metadata["title"] = "Tag Track Artist %d" % (i + 1)
             track_file = bytestring_path("track_%d.mp3" % (i + 1))
             dest_path = os.path.join(self.artist_path, track_file)
             self.__copy_file(dest_path, metadata)
@@ -83,7 +83,7 @@ class FileFilterPluginTest(ImportTestCase):
         for i in range(count):
             metadata["artist"] = "Artist %d" % (i + 42)
             metadata["track"] = i + 5
-            metadata["title"] = "Tag Title Misc %d" % (i + 1)
+            metadata["title"] = "Tag Track Misc %d" % (i + 1)
             track_file = bytestring_path("track_%d.mp3" % (i + 1))
             dest_path = os.path.join(self.misc_path, track_file)
             self.__copy_file(dest_path, metadata)

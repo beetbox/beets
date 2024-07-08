@@ -48,8 +48,8 @@ class MBSubmitPluginTest(PluginMixin, TerminalImportMixin, ImportTestCase):
         # Manually build the string for comparing the output.
         tracklist = (
             "Open files with Picard? "
-            "01. Tag Title 1 - Tag Artist (0:01)\n"
-            "02. Tag Title 2 - Tag Artist (0:01)"
+            "01. Tag Track 1 - Tag Artist (0:01)\n"
+            "02. Tag Track 2 - Tag Artist (0:01)"
         )
         self.assertIn(tracklist, output.getvalue())
 
@@ -64,6 +64,6 @@ class MBSubmitPluginTest(PluginMixin, TerminalImportMixin, ImportTestCase):
 
         # Manually build the string for comparing the output.
         tracklist = (
-            "Open files with Picard? " "02. Tag Title 2 - Tag Artist (0:01)"
+            "Open files with Picard? " "02. Tag Track 2 - Tag Artist (0:01)"
         )
         self.assertIn(tracklist, output.getvalue())

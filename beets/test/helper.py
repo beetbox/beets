@@ -41,6 +41,7 @@ from contextlib import contextmanager
 from enum import Enum
 from functools import cached_property
 from io import StringIO
+from pathlib import Path
 from tempfile import mkdtemp, mkstemp
 from typing import ClassVar
 from unittest.mock import patch
@@ -534,35 +535,35 @@ class ImportHelper:
         :param count:  Number of files to create
         """
         album_path = os.path.join(self.import_dir, b"the_album")
-        os.makedirs(syspath(album_path))
+        os.makedirs(syspath(album_path), exist_ok=True)
 
         resource_path = os.path.join(_common.RSRC, b"full.mp3")
 
-        metadata = {
-            "artist": "Tag Artist",
-            "album": "Tag Album",
-            "albumartist": None,
-            "mb_trackid": None,
-            "mb_albumid": None,
-            "comp": None,
-        }
-        self.media_files = []
-        for i in range(count):
-            # Copy files
+        album = bytestring_path("album")
+        album_path = os.path.join(self.import_dir, album)
+        os.makedirs(syspath(album_path), exist_ok=True)
+
+        self.import_media = []
+        for track_id in range(1, count + 1):
             medium_path = os.path.join(
-                album_path, bytestring_path("track_%d.mp3" % (i + 1))
+                album_path, bytestring_path(f"track_{track_id}.mp3")
             )
             shutil.copy(syspath(resource_path), syspath(medium_path))
             medium = MediaFile(medium_path)
-
-            # Set metadata
-            metadata["track"] = i + 1
-            metadata["title"] = "Tag Title %d" % (i + 1)
-            for attr in metadata:
-                setattr(medium, attr, metadata[attr])
+            medium.update(
+                {
+                    "album": "Tag Album",
+                    "albumartist": None,
+                    "mb_albumid": None,
+                    "comp": None,
+                    "artist": "Tag Artist",
+                    "title": f"Tag Track {track_id}",
+                    "track": track_id,
+                    "mb_trackid": None,
+                }
+            )
             medium.save()
-            self.media_files.append(medium)
-        self.import_media = self.media_files
+            self.import_media.append(medium)
 
     def _get_import_session(self, import_dir: str) -> None:
         self.importer = ImportSessionFixture(
@@ -598,40 +599,35 @@ class ImportHelper:
         Copies the specified number of files to a subdirectory of
         `self.temp_dir` and creates a `ImportSessionFixture` for this path.
         """
-        album_no = 0
-        while album_count:
-            album = util.bytestring_path(f"album {album_no}")
-            album_dir = os.path.join(self.import_dir, album)
-            if os.path.exists(syspath(album_dir)):
-                album_no += 1
-                continue
-            os.mkdir(syspath(album_dir))
-            album_count -= 1
+        resource_path = os.path.join(_common.RSRC, b"full.mp3")
 
-            track_no = 0
-            album_item_count = item_count
-            while album_item_count:
-                title = f"track {track_no}"
-                src = os.path.join(_common.RSRC, b"full.mp3")
-                title_file = util.bytestring_path(f"{title}.mp3")
-                dest = os.path.join(album_dir, title_file)
-                if os.path.exists(syspath(dest)):
-                    track_no += 1
-                    continue
-                album_item_count -= 1
-                shutil.copy(syspath(src), syspath(dest))
-                mediafile = MediaFile(dest)
-                mediafile.update(
+        album_dirs = Path(os.fsdecode(self.import_dir)).glob("album_*")
+        base_idx = int(str(max(album_dirs, default="0")).split("_")[-1]) + 1
+
+        for album_id in range(base_idx, album_count + base_idx):
+            album = bytestring_path(f"album_{album_id}")
+            album_path = os.path.join(self.import_dir, album)
+            os.makedirs(syspath(album_path), exist_ok=True)
+
+            for track_id in range(1, item_count + 1):
+                medium_path = os.path.join(
+                    album_path, bytestring_path(f"track_{track_id}.mp3")
+                )
+                shutil.copy(syspath(resource_path), syspath(medium_path))
+                medium = MediaFile(medium_path)
+                medium.update(
                     {
-                        "artist": "artist",
-                        "albumartist": "album artist",
-                        "title": title,
-                        "album": album,
+                        "album": f"Tag Album {album_id}",
+                        "albumartist": None,
                         "mb_albumid": None,
+                        "comp": None,
+                        "artist": "Tag Artist",
+                        "title": f"Tag Track {track_id}",
+                        "track": track_id,
                         "mb_trackid": None,
                     }
                 )
-                mediafile.save()
+                medium.save()
 
         config["import"]["quiet"] = True
         config["import"]["autotag"] = False
@@ -930,7 +926,7 @@ class AutotagStub:
 
     def _make_track_match(self, artist, album, number):
         return TrackInfo(
-            title="Applied Title %d" % number,
+            title="Applied Track %d" % number,
             track_id="match %d" % number,
             artist=artist,
             length=1,
