@@ -1159,7 +1159,7 @@ def match_album_mock(*args, **kwargs):
 
 
 @patch("beets.autotag.mb.match_album", Mock(side_effect=match_album_mock))
-class ImportDuplicateAlbumTest(BeetsTestCase):
+class ImportDuplicateAlbumTest(ImportTestCase):
     def setUp(self):
         super().setUp()
 
@@ -1278,7 +1278,7 @@ def match_track_mock(*args, **kwargs):
 
 
 @patch("beets.autotag.mb.match_track", Mock(side_effect=match_track_mock))
-class ImportDuplicateSingletonTest(BeetsTestCase):
+class ImportDuplicateSingletonTest(ImportTestCase):
     def setUp(self):
         super().setUp()
 
@@ -1364,7 +1364,7 @@ class TagLogTest(BeetsTestCase):
         self.assertIn("status caf\xe9", sio.getvalue())
 
 
-class ResumeImportTest(BeetsTestCase):
+class ResumeImportTest(ImportTestCase):
     @patch("beets.plugins.send")
     def test_resume_album(self, plugins_send):
         self.importer = self.create_importer(album_count=2)
@@ -1409,7 +1409,7 @@ class ResumeImportTest(BeetsTestCase):
         self.assertIsNotNone(self.lib.items("title:track 1").get())
 
 
-class IncrementalImportTest(BeetsTestCase):
+class IncrementalImportTest(ImportTestCase):
     def setUp(self):
         super().setUp()
         self.config["import"]["incremental"] = True

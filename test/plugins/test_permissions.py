@@ -6,7 +6,7 @@ import platform
 from unittest.mock import Mock, patch
 
 from beets.test._common import touch
-from beets.test.helper import PluginTestCase
+from beets.test.helper import ImportTestCase, PluginMixin
 from beets.util import displayable_path
 from beetsplug.permissions import (
     check_permissions,
@@ -15,7 +15,7 @@ from beetsplug.permissions import (
 )
 
 
-class PermissionsPluginTest(PluginTestCase):
+class PermissionsPluginTest(PluginMixin, ImportTestCase):
     plugin = "permissions"
 
     def setUp(self):

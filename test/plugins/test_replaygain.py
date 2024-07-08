@@ -19,7 +19,7 @@ from typing import ClassVar
 from mediafile import MediaFile
 
 from beets import config
-from beets.test.helper import BeetsTestCase, has_program
+from beets.test.helper import ImportTestCase, has_program
 from beetsplug.replaygain import (
     FatalGstreamerPluginReplayGainError,
     GStreamerBackend,
@@ -52,7 +52,7 @@ def reset_replaygain(item):
     item.store()
 
 
-class ReplayGainTestCase(BeetsTestCase):
+class ReplayGainTestCase(ImportTestCase):
     db_on_disk = True
     backend: ClassVar[str]
 

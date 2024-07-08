@@ -253,59 +253,6 @@ class TestHelper(_common.Assertions):
         Item._queries = Item._original_queries
         Album._queries = Album._original_queries
 
-    def create_importer(self, item_count=1, album_count=1):
-        """Create files to import and return corresponding session.
-
-        Copies the specified number of files to a subdirectory of
-        `self.temp_dir` and creates a `ImportSessionFixture` for this path.
-        """
-        import_dir = os.path.join(self.temp_dir, b"import")
-        if not os.path.isdir(syspath(import_dir)):
-            os.mkdir(syspath(import_dir))
-
-        album_no = 0
-        while album_count:
-            album = util.bytestring_path(f"album {album_no}")
-            album_dir = os.path.join(import_dir, album)
-            if os.path.exists(syspath(album_dir)):
-                album_no += 1
-                continue
-            os.mkdir(syspath(album_dir))
-            album_count -= 1
-
-            track_no = 0
-            album_item_count = item_count
-            while album_item_count:
-                title = f"track {track_no}"
-                src = os.path.join(_common.RSRC, b"full.mp3")
-                title_file = util.bytestring_path(f"{title}.mp3")
-                dest = os.path.join(album_dir, title_file)
-                if os.path.exists(syspath(dest)):
-                    track_no += 1
-                    continue
-                album_item_count -= 1
-                shutil.copy(syspath(src), syspath(dest))
-                mediafile = MediaFile(dest)
-                mediafile.update(
-                    {
-                        "artist": "artist",
-                        "albumartist": "album artist",
-                        "title": title,
-                        "album": album,
-                        "mb_albumid": None,
-                        "mb_trackid": None,
-                    }
-                )
-                mediafile.save()
-
-        config["import"]["quiet"] = True
-        config["import"]["autotag"] = False
-        config["import"]["resume"] = False
-
-        return ImportSessionFixture(
-            self.lib, loghandler=None, query=None, paths=[import_dir]
-        )
-
     # Library fixtures methods
 
     def create_item(self, **values):
@@ -641,6 +588,59 @@ class ImportHelper:
         config["import"]["hardlink"] = False
 
         self._get_import_session(import_dir or self.import_dir)
+
+    def create_importer(self, item_count=1, album_count=1):
+        """Create files to import and return corresponding session.
+
+        Copies the specified number of files to a subdirectory of
+        `self.temp_dir` and creates a `ImportSessionFixture` for this path.
+        """
+        import_dir = os.path.join(self.temp_dir, b"import")
+        if not os.path.isdir(syspath(import_dir)):
+            os.mkdir(syspath(import_dir))
+
+        album_no = 0
+        while album_count:
+            album = util.bytestring_path(f"album {album_no}")
+            album_dir = os.path.join(import_dir, album)
+            if os.path.exists(syspath(album_dir)):
+                album_no += 1
+                continue
+            os.mkdir(syspath(album_dir))
+            album_count -= 1
+
+            track_no = 0
+            album_item_count = item_count
+            while album_item_count:
+                title = f"track {track_no}"
+                src = os.path.join(_common.RSRC, b"full.mp3")
+                title_file = util.bytestring_path(f"{title}.mp3")
+                dest = os.path.join(album_dir, title_file)
+                if os.path.exists(syspath(dest)):
+                    track_no += 1
+                    continue
+                album_item_count -= 1
+                shutil.copy(syspath(src), syspath(dest))
+                mediafile = MediaFile(dest)
+                mediafile.update(
+                    {
+                        "artist": "artist",
+                        "albumartist": "album artist",
+                        "title": title,
+                        "album": album,
+                        "mb_albumid": None,
+                        "mb_trackid": None,
+                    }
+                )
+                mediafile.save()
+
+        config["import"]["quiet"] = True
+        config["import"]["autotag"] = False
+        config["import"]["resume"] = False
+
+        return ImportSessionFixture(
+            self.lib, loghandler=None, query=None, paths=[import_dir]
+        )
 
     def assert_file_in_lib(self, *segments):
         """Join the ``segments`` and assert that this path exists in the
