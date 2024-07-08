@@ -179,12 +179,10 @@ class EventsTest(PluginImportTestCase):
             logs,
             [
                 "Album: {}".format(
-                    displayable_path(
-                        os.path.join(self.import_dir, b"the_album")
-                    )
+                    displayable_path(os.path.join(self.import_dir, b"album"))
                 ),
-                "  {}".format(displayable_path(self.media_files[0].path)),
-                "  {}".format(displayable_path(self.media_files[1].path)),
+                "  {}".format(displayable_path(self.import_media[0].path)),
+                "  {}".format(displayable_path(self.import_media[1].path)),
             ],
         )
 
@@ -230,10 +228,10 @@ class EventsTest(PluginImportTestCase):
             logs,
             [
                 "Singleton: {}".format(
-                    displayable_path(self.media_files[0].path)
+                    displayable_path(self.import_media[0].path)
                 ),
                 "Singleton: {}".format(
-                    displayable_path(self.media_files[1].path)
+                    displayable_path(self.import_media[1].path)
                 ),
             ],
         )

@@ -50,9 +50,9 @@ class ImportAddedTest(PluginMixin, ImportTestCase):
         self._create_import_dir(2)
         # Different mtimes on the files to be imported in order to test the
         # plugin
-        modify_mtimes(mfile.path for mfile in self.media_files)
+        modify_mtimes(mfile.path for mfile in self.import_media)
         self.min_mtime = min(
-            os.path.getmtime(mfile.path) for mfile in self.media_files
+            os.path.getmtime(mfile.path) for mfile in self.import_media
         )
         self.matcher = AutotagStub().install()
         self.matcher.macthin = AutotagStub.GOOD
@@ -65,7 +65,7 @@ class ImportAddedTest(PluginMixin, ImportTestCase):
 
     def find_media_file(self, item):
         """Find the pre-import MediaFile for an Item"""
-        for m in self.media_files:
+        for m in self.import_media:
             if m.title.replace("Tag", "Applied") == item.title:
                 return m
         raise AssertionError(
