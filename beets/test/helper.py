@@ -520,7 +520,7 @@ class ImportHelper:
             ("comp:true", os.path.join("compilations", "$album", "$title")),
         ]
 
-    def _create_import_dir(self, count=3):
+    def prepare_album_for_import(self, count=3):
         """Creates a directory with media files to import.
         Sets ``self.import_dir`` to the path of the directory. Also sets
         ``self.import_media`` to a list :class:`MediaFile` for all the files in

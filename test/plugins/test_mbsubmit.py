@@ -28,7 +28,7 @@ class MBSubmitPluginTest(PluginMixin, TerminalImportMixin, ImportTestCase):
 
     def setUp(self):
         super().setUp()
-        self._create_import_dir(2)
+        self.prepare_album_for_import(2)
         self._setup_import_session()
         self.matcher = AutotagStub().install()
 

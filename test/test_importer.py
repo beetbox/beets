@@ -51,7 +51,7 @@ class ScrubbedImportTest(PluginMixin, ImportTestCase):
 
     def setUp(self):
         super().setUp()
-        self._create_import_dir(2)
+        self.prepare_album_for_import(2)
         self._setup_import_session(autotag=False)
 
     def test_tags_not_scrubbed(self):
@@ -103,7 +103,7 @@ class NonAutotaggedImportTest(ImportTestCase):
 
     def setUp(self):
         super().setUp()
-        self._create_import_dir(2)
+        self.prepare_album_for_import(2)
         self._setup_import_session(autotag=False)
 
     def test_album_created_with_track_artist(self):
@@ -340,7 +340,7 @@ class ImportSingletonTest(ImportTestCase):
 
     def setUp(self):
         super().setUp()
-        self._create_import_dir(1)
+        self.prepare_album_for_import(1)
         self._setup_import_session()
         config["import"]["singletons"] = True
         self.matcher = AutotagStub().install()
@@ -395,7 +395,7 @@ class ImportSingletonTest(ImportTestCase):
         self.assertIsNone(self.lib.items().get())
 
     def test_skip_adds_other_tracks(self):
-        self._create_import_dir(2)
+        self.prepare_album_for_import(2)
         self.importer.add_choice(importer.action.SKIP)
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
@@ -461,7 +461,7 @@ class ImportTest(ImportTestCase):
 
     def setUp(self):
         super().setUp()
-        self._create_import_dir(1)
+        self.prepare_album_for_import(1)
         self._setup_import_session()
         self.matcher = AutotagStub().install()
         self.matcher.macthin = AutotagStub.GOOD
@@ -572,7 +572,7 @@ class ImportTest(ImportTestCase):
         self.assertEqual(len(self.lib.albums()), 1)
 
     def test_unmatched_tracks_not_added(self):
-        self._create_import_dir(2)
+        self.prepare_album_for_import(2)
         self.matcher.matching = self.matcher.MISSING
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
@@ -671,7 +671,7 @@ class ImportTracksTest(ImportTestCase):
 
     def setUp(self):
         super().setUp()
-        self._create_import_dir(1)
+        self.prepare_album_for_import(1)
         self._setup_import_session()
         self.matcher = AutotagStub().install()
 
@@ -705,7 +705,7 @@ class ImportCompilationTest(ImportTestCase):
 
     def setUp(self):
         super().setUp()
-        self._create_import_dir(3)
+        self.prepare_album_for_import(3)
         self._setup_import_session()
         self.matcher = AutotagStub().install()
 
@@ -824,7 +824,7 @@ class ImportExistingTest(ImportTestCase):
 
     def setUp(self):
         super().setUp()
-        self._create_import_dir(1)
+        self.prepare_album_for_import(1)
         self.matcher = AutotagStub().install()
 
         self._setup_import_session()
@@ -947,7 +947,7 @@ class ImportExistingTest(ImportTestCase):
 class GroupAlbumsImportTest(ImportTestCase):
     def setUp(self):
         super().setUp()
-        self._create_import_dir(3)
+        self.prepare_album_for_import(3)
         self.matcher = AutotagStub().install()
         self.matcher.matching = AutotagStub.NONE
         self._setup_import_session()
@@ -1019,7 +1019,7 @@ class GlobalGroupAlbumsImportTest(GroupAlbumsImportTest):
 class ChooseCandidateTest(ImportTestCase):
     def setUp(self):
         super().setUp()
-        self._create_import_dir(1)
+        self.prepare_album_for_import(1)
         self._setup_import_session()
         self.matcher = AutotagStub().install()
         self.matcher.matching = AutotagStub.BAD
@@ -1742,7 +1742,7 @@ class ImportPretendTest(ImportTestCase):
         self.matcher.restore()
 
     def __create_import_dir(self):
-        self._create_import_dir(1)
+        self.prepare_album_for_import(1)
         resource_path = os.path.join(_common.RSRC, b"empty.mp3")
         single_path = os.path.join(self.import_dir, b"track_2.mp3")
         shutil.copy(syspath(resource_path), syspath(single_path))
@@ -1822,7 +1822,7 @@ def mocked_get_release_by_id(
     """Mimic musicbrainzngs.get_release_by_id, accepting only a restricted list
     of MB ids (ID_RELEASE_0, ID_RELEASE_1). The returned dict differs only in
     the release title and artist name, so that ID_RELEASE_0 is a closer match
-    to the items created by ImportHelper._create_import_dir()."""
+    to the items created by ImportHelper.prepare_album_for_import()."""
     # Map IDs to (release title, artist), so the distances are different.
     releases = {
         ImportMusicBrainzIdTest.ID_RELEASE_0: ("VALID_RELEASE_0", "TAG ARTIST"),
@@ -1875,7 +1875,8 @@ def mocked_get_recording_by_id(
     """Mimic musicbrainzngs.get_recording_by_id, accepting only a restricted
     list of MB ids (ID_RECORDING_0, ID_RECORDING_1). The returned dict differs
     only in the recording title and artist name, so that ID_RECORDING_0 is a
-    closer match to the items created by ImportHelper._create_import_dir()."""
+    closer match to the items created by ImportHelper.prepare_album_for_import().
+    """
     # Map IDs to (recording title, artist), so the distances are different.
     releases = {
         ImportMusicBrainzIdTest.ID_RECORDING_0: (
@@ -1925,7 +1926,7 @@ class ImportMusicBrainzIdTest(ImportTestCase):
 
     def setUp(self):
         super().setUp()
-        self._create_import_dir(1)
+        self.prepare_album_for_import(1)
 
     def test_one_mbid_one_album(self):
         self.config["import"]["search_ids"] = [
