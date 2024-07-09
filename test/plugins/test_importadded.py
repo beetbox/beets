@@ -47,7 +47,7 @@ class ImportAddedTest(PluginMixin, ImportTestCase):
     def setUp(self):
         preserve_plugin_listeners()
         super().setUp()
-        self._create_import_dir(2)
+        self.prepare_album_for_import(2)
         # Different mtimes on the files to be imported in order to test the
         # plugin
         modify_mtimes(mfile.path for mfile in self.import_media)

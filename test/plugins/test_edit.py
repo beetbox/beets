@@ -331,7 +331,7 @@ class EditDuringImporterTestCase(
     def setUp(self):
         super().setUp()
         # Create some mediafiles, and store them for comparison.
-        self._create_import_dir(3)
+        self.prepare_album_for_import()
         self.items_orig = [Item.from_path(f.path) for f in self.import_media]
         self.matcher = AutotagStub().install()
         self.matcher.matching = AutotagStub.GOOD

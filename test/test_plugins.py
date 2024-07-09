@@ -73,7 +73,7 @@ class PluginLoaderTestCase(BasePluginTestCase):
 class PluginImportTestCase(ImportHelper, PluginLoaderTestCase):
     def setUp(self):
         super().setUp()
-        self._create_import_dir(2)
+        self.prepare_album_for_import(2)
 
 
 class ItemTypesTest(PluginLoaderTestCase):
