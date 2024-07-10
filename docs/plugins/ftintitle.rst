@@ -27,6 +27,8 @@ file. The available options are:
 - **format**: Defines the format for the featuring X  part of the new title field.
   In this format the ``{0}`` is used to define where the featured artists are placed.
   Default: ``feat. {0}``
+- **keep_in_artist**: Keep the featuring X part in the artist field.
+  Defailt: ``no``.
 
 Running Manually
 ----------------
