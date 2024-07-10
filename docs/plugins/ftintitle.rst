@@ -28,7 +28,7 @@ file. The available options are:
   In this format the ``{0}`` is used to define where the featured artists are placed.
   Default: ``feat. {0}``
 - **keep_in_artist**: Keep the featuring X part in the artist field.
-  Defailt: ``no``.
+  Default: ``no``.
 
 Running Manually
 ----------------
