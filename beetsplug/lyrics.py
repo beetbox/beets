@@ -458,6 +458,8 @@ class Genius(Backend):
         for lyrics_div in lyrics_divs:
             self.replace_br(lyrics_div)
             lyrics += lyrics_div.get_text() + "\n\n"
+        while lyrics[-1] == "\n":
+            lyrics = lyrics[:-1]
         return lyrics
 
     def _try_extracting_lyrics_from_non_data_lyrics_container(self, soup):
