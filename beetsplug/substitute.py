@@ -34,9 +34,9 @@ class Substitute(BeetsPlugin):
         """Do the actual replacing."""
         if text:
             for pattern, replacement in self.substitute_rules:
-                new_string, number_of_subs_made = re.subn(pattern, replacement, text)
-                if number_of_subs_made > 0:
-                    return new_string
+                new_text, subs_made = re.subn(pattern, replacement, text)
+                if subs_made > 0:
+                    return new_text
             return text
         else:
             return ""
