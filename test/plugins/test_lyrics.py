@@ -492,7 +492,17 @@ class GeniusScrapeLyricsFromHtmlTest(GeniusBaseTest):
         """Ensure we are able to scrape a page with lyrics"""
         url = "https://genius.com/Ttng-chinchilla-lyrics"
         mock = MockFetchUrl()
-        self.assertIsNotNone(genius._scrape_lyrics_from_html(mock(url)))
+        lyrics = genius._scrape_lyrics_from_html(mock(url))
+        self.assertIsNotNone(lyrics)
+        self.assertEqual(lyrics.count("\n"), 28)
+
+    def test_good_lyrics_multiple_divs(self):
+        """Ensure we are able to scrape a page with lyrics"""
+        url = "https://genius.com/2pac-all-eyez-on-me-lyrics"
+        mock = MockFetchUrl()
+        lyrics = genius._scrape_lyrics_from_html(mock(url))
+        self.assertIsNotNone(lyrics)
+        self.assertEqual(lyrics.count("\n"), 133)
 
     # TODO: find an example of a lyrics page with multiple divs and test it
 
