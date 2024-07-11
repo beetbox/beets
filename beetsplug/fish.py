@@ -82,23 +82,23 @@ HELPERS = [
         set -l cmd (commandline -opc)
         set -e cmd[1]
         set -l test_cmd $argv[1]
-        
+
         set -f cached $__fish_beet_subcommand_cache
         set -l crange "1 .. $(count $cached)"
         if not set -q __fish_beet_subcommand_cache
             or test "$cmd[$crange]" != "$cached"
-            
+
             argparse --stop-nonopt (__fish_beet_global_optspec) -- $cmd
             or return 1
-            
+
             set -q _flag_help; and return 1
             test (count $argv) -eq 0; and return 1
-            
+
             set -l crange "1 .. -$(count $argv)"
             set -g __fish_beet_subcommand_cache $cmd[$crange]
             set -f cached $__fish_beet_subcommand_cache
         end 2>/dev/null
-        
+
         if test -n "$test_cmd"
             test "$test_cmd" = "$cached[-1]"
         else
@@ -114,13 +114,13 @@ HELPERS = [
         set -l cmd (commandline -ct)
         set -l field (string split -f 1 -- ":" $cmd)
         or return 1
-        
+
         if test -n "$argv[1]"
             test "$field" = "$argv[1]"
         else
             return 0
         end
-    end  
+    end
     """,
 ]
 
@@ -209,7 +209,7 @@ class FishScript(io.StringIO):
         if required is None:
             required = bool(values or files)
 
-        self.write(f"complete -c beet")
+        self.write("complete -c beet")
         for condition in conditions or []:
             self.write(f" -n {fish_escape(condition)}")
         if short:
@@ -310,8 +310,8 @@ class FishPlugin(BeetsPlugin):
 
         # The commands supported by 'beet', including from plugins.
         commands: list[ui.Subcommand] = [
-            *ui.commands.default_commands,
-            *ui.commands.plugins.commands(),
+            *beets.ui.commands.default_commands,
+            *beets.ui.commands.plugins.commands(),
         ]
 
         # Global options supported by 'beet'.
