@@ -6,7 +6,7 @@ import platform
 from unittest.mock import Mock, patch
 
 from beets.test._common import touch
-from beets.test.helper import ImportTestCase, PluginMixin
+from beets.test.helper import AsIsImporterMixin, ImportTestCase, PluginMixin
 from beets.util import displayable_path
 from beetsplug.permissions import (
     check_permissions,
@@ -15,14 +15,13 @@ from beetsplug.permissions import (
 )
 
 
-class PermissionsPluginTest(PluginMixin, ImportTestCase):
+class PermissionsPluginTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
     plugin = "permissions"
 
     def setUp(self):
         super().setUp()
 
         self.config["permissions"] = {"file": "777", "dir": "777"}
-        self.prepare_album_for_import(1)
 
     def test_permissions_on_album_imported(self):
         self.do_thing(True)
@@ -45,7 +44,6 @@ class PermissionsPluginTest(PluginMixin, ImportTestCase):
                 & 0o777
             )
 
-        self.importer = self.setup_importer(autotag=False)
         typs = ["file", "dir"]
 
         track_file = (b"album", b"track_1.mp3")
@@ -57,7 +55,7 @@ class PermissionsPluginTest(PluginMixin, ImportTestCase):
             False: {k: get_stat(v) for (k, v) in zip(typs, (track_file, ()))},
         }
 
-        self.importer.run()
+        self.run_asis_importer()
         item = self.lib.items().get()
 
         self.assertPerms(item.path, "file", expect_success)
@@ -94,7 +92,7 @@ class PermissionsPluginTest(PluginMixin, ImportTestCase):
     def do_set_art(self, expect_success):
         if platform.system() == "Windows":
             self.skipTest("permissions not available on Windows")
-        self.setup_importer(autotag=False).run()
+        self.run_asis_importer()
         album = self.lib.albums().get()
         artpath = os.path.join(self.temp_dir, b"cover.jpg")
         touch(artpath)

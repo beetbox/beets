@@ -24,6 +24,7 @@ from mediafile import MediaFile
 from beets import util
 from beets.test import _common
 from beets.test.helper import (
+    AsIsImporterMixin,
     ImportHelper,
     PluginTestCase,
     capture_log,
@@ -95,12 +96,9 @@ class ConvertTestCase(ConvertMixin, PluginTestCase):
 
 
 @_common.slow_test()
-class ImportConvertTest(ImportHelper, ConvertTestCase):
+class ImportConvertTest(AsIsImporterMixin, ImportHelper, ConvertTestCase):
     def setUp(self):
         super().setUp()
-        self.prepare_album_for_import(1)
-        self.importer = self.setup_importer(autotag=False)
-
         self.config["convert"] = {
             "dest": os.path.join(self.temp_dir, b"convert"),
             "command": self.tagged_copy_cmd("convert"),
@@ -111,7 +109,7 @@ class ImportConvertTest(ImportHelper, ConvertTestCase):
         }
 
     def test_import_converted(self):
-        self.importer.run()
+        self.run_asis_importer()
         item = self.lib.items().get()
         self.assertFileTag(item.path, "convert")
 
@@ -120,7 +118,7 @@ class ImportConvertTest(ImportHelper, ConvertTestCase):
     def test_import_original_on_convert_error(self):
         # `false` exits with non-zero code
         self.config["convert"]["command"] = "false"
-        self.importer.run()
+        self.run_asis_importer()
 
         item = self.lib.items().get()
         self.assertIsNotNone(item)
@@ -128,7 +126,7 @@ class ImportConvertTest(ImportHelper, ConvertTestCase):
 
     def test_delete_originals(self):
         self.config["convert"]["delete_originals"] = True
-        self.importer.run()
+        self.run_asis_importer()
         for path in self.importer.paths:
             for root, dirnames, filenames in os.walk(path):
                 self.assertEqual(

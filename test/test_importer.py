@@ -35,6 +35,7 @@ from beets.autotag import AlbumInfo, AlbumMatch, TrackInfo
 from beets.importer import albums_in_dir
 from beets.test import _common
 from beets.test.helper import (
+    AsIsImporterMixin,
     AutotagStub,
     BeetsTestCase,
     ImportTestCase,
@@ -45,14 +46,9 @@ from beets.test.helper import (
 from beets.util import bytestring_path, displayable_path, syspath
 
 
-class ScrubbedImportTest(PluginMixin, ImportTestCase):
+class ScrubbedImportTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
     db_on_disk = True
     plugin = "scrub"
-
-    def setUp(self):
-        super().setUp()
-        self.prepare_album_for_import(1)
-        self.setup_importer(autotag=False)
 
     def test_tags_not_scrubbed(self):
         config["plugins"] = ["scrub"]
@@ -61,7 +57,7 @@ class ScrubbedImportTest(PluginMixin, ImportTestCase):
         for mediafile in self.import_media:
             self.assertEqual(mediafile.artist, "Tag Artist")
             self.assertEqual(mediafile.album, "Tag Album")
-        self.importer.run()
+        self.run_asis_importer()
         for item in self.lib.items():
             imported_file = os.path.join(item.path)
             imported_file = MediaFile(imported_file)
@@ -75,7 +71,7 @@ class ScrubbedImportTest(PluginMixin, ImportTestCase):
         for mediafile in self.import_media:
             self.assertEqual(mediafile.artist, "Tag Artist")
             self.assertEqual(mediafile.album, "Tag Album")
-        self.importer.run()
+        self.run_asis_importer()
         for item in self.lib.items():
             imported_file = os.path.join(item.path)
             imported_file = MediaFile(imported_file)
@@ -89,7 +85,7 @@ class ScrubbedImportTest(PluginMixin, ImportTestCase):
         for mediafile in self.import_media:
             self.assertEqual(mediafile.artist, "Tag Artist")
             self.assertEqual(mediafile.album, "Tag Album")
-        self.importer.run()
+        self.run_asis_importer()
         for item in self.lib.items():
             imported_file = os.path.join(item.path)
             imported_file = MediaFile(imported_file)
@@ -98,22 +94,17 @@ class ScrubbedImportTest(PluginMixin, ImportTestCase):
 
 
 @_common.slow_test()
-class NonAutotaggedImportTest(ImportTestCase):
+class NonAutotaggedImportTest(AsIsImporterMixin, ImportTestCase):
     db_on_disk = True
 
-    def setUp(self):
-        super().setUp()
-        self.prepare_album_for_import(1)
-        self.setup_importer(autotag=False)
-
     def test_album_created_with_track_artist(self):
-        self.importer.run()
+        self.run_asis_importer()
         albums = self.lib.albums()
         self.assertEqual(len(albums), 1)
         self.assertEqual(albums[0].albumartist, "Tag Artist")
 
     def test_import_copy_arrives(self):
-        self.importer.run()
+        self.run_asis_importer()
         for mediafile in self.import_media:
             self.assert_file_in_lib(
                 b"Tag Artist",
@@ -124,7 +115,7 @@ class NonAutotaggedImportTest(ImportTestCase):
     def test_threaded_import_copy_arrives(self):
         config["threaded"] = True
 
-        self.importer.run()
+        self.run_asis_importer()
         for mediafile in self.import_media:
             self.assert_file_in_lib(
                 b"Tag Artist",
@@ -133,35 +124,27 @@ class NonAutotaggedImportTest(ImportTestCase):
             )
 
     def test_import_with_move_deletes_import_files(self):
-        config["import"]["move"] = True
-
         for mediafile in self.import_media:
             self.assertExists(mediafile.path)
-        self.importer.run()
+        self.run_asis_importer(move=True)
         for mediafile in self.import_media:
             self.assertNotExists(mediafile.path)
 
     def test_import_with_move_prunes_directory_empty(self):
-        config["import"]["move"] = True
-
         self.assertExists(os.path.join(self.import_dir, b"album"))
-        self.importer.run()
+        self.run_asis_importer(move=True)
         self.assertNotExists(os.path.join(self.import_dir, b"album"))
 
     def test_import_with_move_prunes_with_extra_clutter(self):
         self.touch(os.path.join(self.import_dir, b"album", b"alog.log"))
         config["clutter"] = ["*.log"]
-        config["import"]["move"] = True
 
         self.assertExists(os.path.join(self.import_dir, b"album"))
-        self.importer.run()
+        self.run_asis_importer(move=True)
         self.assertNotExists(os.path.join(self.import_dir, b"album"))
 
     def test_threaded_import_move_arrives(self):
-        config["import"]["move"] = True
-        config["import"]["threaded"] = True
-
-        self.importer.run()
+        self.run_asis_importer(move=True, threaded=True)
         for mediafile in self.import_media:
             self.assert_file_in_lib(
                 b"Tag Artist",
@@ -170,36 +153,28 @@ class NonAutotaggedImportTest(ImportTestCase):
             )
 
     def test_threaded_import_move_deletes_import(self):
-        config["import"]["move"] = True
-        config["threaded"] = True
-
-        self.importer.run()
+        self.run_asis_importer(move=True, threaded=True)
         for mediafile in self.import_media:
             self.assertNotExists(mediafile.path)
 
     def test_import_without_delete_retains_files(self):
-        config["import"]["delete"] = False
-        self.importer.run()
+        self.run_asis_importer(delete=False)
         for mediafile in self.import_media:
             self.assertExists(mediafile.path)
 
     def test_import_with_delete_removes_files(self):
-        config["import"]["delete"] = True
-
-        self.importer.run()
+        self.run_asis_importer(delete=True)
         for mediafile in self.import_media:
             self.assertNotExists(mediafile.path)
 
     def test_import_with_delete_prunes_directory_empty(self):
-        config["import"]["delete"] = True
         self.assertExists(os.path.join(self.import_dir, b"album"))
-        self.importer.run()
+        self.run_asis_importer(delete=True)
         self.assertNotExists(os.path.join(self.import_dir, b"album"))
 
     @unittest.skipUnless(_common.HAVE_SYMLINK, "need symlinks")
     def test_import_link_arrives(self):
-        config["import"]["link"] = True
-        self.importer.run()
+        self.run_asis_importer(link=True)
         for mediafile in self.import_media:
             filename = os.path.join(
                 self.libdir,
@@ -216,8 +191,7 @@ class NonAutotaggedImportTest(ImportTestCase):
 
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_import_hardlink_arrives(self):
-        config["import"]["hardlink"] = True
-        self.importer.run()
+        self.run_asis_importer(hardlink=True)
         for mediafile in self.import_media:
             filename = os.path.join(
                 self.libdir,
@@ -237,8 +211,7 @@ class NonAutotaggedImportTest(ImportTestCase):
     def test_import_reflink_arrives(self):
         # Detecting reflinks is currently tricky due to various fs
         # implementations, we'll just check the file exists.
-        config["import"]["reflink"] = True
-        self.importer.run()
+        self.run_asis_importer(reflink=True)
         for mediafile in self.import_media:
             self.assert_file_in_lib(
                 b"Tag Artist",
@@ -248,8 +221,7 @@ class NonAutotaggedImportTest(ImportTestCase):
 
     def test_import_reflink_auto_arrives(self):
         # Should pass regardless of reflink support due to fallback.
-        config["import"]["reflink"] = "auto"
-        self.importer.run()
+        self.run_asis_importer(reflink="auto")
         for mediafile in self.import_media:
             self.assert_file_in_lib(
                 b"Tag Artist",
@@ -269,7 +241,7 @@ def create_archive(session):
     return path
 
 
-class RmTempTest(ImportTestCase):
+class RmTempTest(BeetsTestCase):
     """Tests that temporarily extracted archives are properly removed
     after usage.
     """
@@ -285,20 +257,18 @@ class RmTempTest(ImportTestCase):
         archive_task = importer.ArchiveImportTask(zip_path)
         archive_task.extract()
         tmp_path = archive_task.toppath
-        self.setup_importer(autotag=False, import_dir=tmp_path)
         self.assertExists(tmp_path)
         archive_task.finalize(self)
         self.assertNotExists(tmp_path)
 
 
-class ImportZipTest(ImportTestCase):
+class ImportZipTest(AsIsImporterMixin, ImportTestCase):
     def test_import_zip(self):
         zip_path = create_archive(self)
         self.assertEqual(len(self.lib.items()), 0)
         self.assertEqual(len(self.lib.albums()), 0)
 
-        self.setup_importer(autotag=False, import_dir=zip_path)
-        self.importer.run()
+        self.run_asis_importer(import_dir=zip_path)
         self.assertEqual(len(self.lib.items()), 1)
         self.assertEqual(len(self.lib.albums()), 1)
 
@@ -1402,14 +1372,9 @@ class ResumeImportTest(ImportTestCase):
         self.assertIsNotNone(self.lib.items("title:'Track 1'").get())
 
 
-class IncrementalImportTest(ImportTestCase):
-    def setUp(self):
-        super().setUp()
-        self.prepare_album_for_import(1)
-
+class IncrementalImportTest(AsIsImporterMixin, ImportTestCase):
     def test_incremental_album(self):
-        importer = self.setup_importer(autotag=False, incremental=True)
-        importer.run()
+        importer = self.run_asis_importer(incremental=True)
 
         # Change album name so the original file would be imported again
         # if incremental was off.
@@ -1421,10 +1386,7 @@ class IncrementalImportTest(ImportTestCase):
         self.assertEqual(len(self.lib.albums()), 2)
 
     def test_incremental_item(self):
-        importer = self.setup_importer(
-            autotag=False, incremental=True, singletons=True
-        )
-        importer.run()
+        importer = self.run_asis_importer(incremental=True, singletons=True)
 
         # Change track name so the original file would be imported again
         # if incremental was off.
@@ -1436,10 +1398,9 @@ class IncrementalImportTest(ImportTestCase):
         self.assertEqual(len(self.lib.items()), 2)
 
     def test_invalid_state_file(self):
-        importer = self.setup_importer(autotag=False, incremental=True)
         with open(self.config["statefile"].as_filename(), "wb") as f:
             f.write(b"000")
-        importer.run()
+        self.run_asis_importer(incremental=True)
         self.assertEqual(len(self.lib.albums()), 1)
 
 
