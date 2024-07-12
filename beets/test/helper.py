@@ -624,6 +624,17 @@ class ImportHelper(TestHelper):
         self.assertEqual(len(os.listdir(syspath(self.libdir))), 0)
 
 
+class AsIsImporterMixin:
+    def setUp(self):
+        super().setUp()
+        self.prepare_album_for_import(1)
+
+    def run_asis_importer(self, **kwargs):
+        importer = self.setup_importer(autotag=False, **kwargs)
+        importer.run()
+        return importer
+
+
 class ImportTestCase(ImportHelper, BeetsTestCase):
     pass
 

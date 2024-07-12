@@ -19,7 +19,7 @@ from typing import ClassVar
 from mediafile import MediaFile
 
 from beets import config
-from beets.test.helper import ImportTestCase, has_program
+from beets.test.helper import AsIsImporterMixin, ImportTestCase, has_program
 from beetsplug.replaygain import (
     FatalGstreamerPluginReplayGainError,
     GStreamerBackend,
@@ -67,9 +67,6 @@ class ReplayGainTestCase(ImportTestCase):
             self.load_plugins("replaygain")
         except Exception:
             self.tearDown()
-
-        self.prepare_album_for_import(1)
-        self.importer = self.setup_importer(autotag=False)
 
     def tearDown(self):
         self.unload_plugins()
@@ -360,9 +357,9 @@ class ReplayGainFfmpegNoiseCliTest(
     FNAME = "whitenoise"
 
 
-class ImportTest:
+class ImportTest(AsIsImporterMixin):
     def test_import_converted(self):
-        self.importer.run()
+        self.run_asis_importer()
         for item in self.lib.items():
             # FIXME: Add fixtures with known track/album gain (within a
             # suitable tolerance) so that we can actually check correct

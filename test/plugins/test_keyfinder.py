@@ -17,11 +17,11 @@ from unittest.mock import patch
 
 from beets import util
 from beets.library import Item
-from beets.test.helper import ImportTestCase, PluginMixin
+from beets.test.helper import AsIsImporterMixin, ImportTestCase, PluginMixin
 
 
 @patch("beets.util.command_output")
-class KeyFinderTest(PluginMixin, ImportTestCase):
+class KeyFinderTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
     plugin = "keyfinder"
 
     def test_add_key(self, command_output):
@@ -39,8 +39,7 @@ class KeyFinderTest(PluginMixin, ImportTestCase):
 
     def test_add_key_on_import(self, command_output):
         command_output.return_value = util.CommandOutput(b"dbm", b"")
-        self.prepare_album_for_import(1)
-        self.setup_importer(autotag=False).run()
+        self.run_asis_importer()
 
         item = self.lib.items().get()
         self.assertEqual(item["initial_key"], "C#m")

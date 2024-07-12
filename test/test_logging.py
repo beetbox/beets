@@ -9,7 +9,12 @@ import beets.logging as blog
 import beetsplug
 from beets import plugins, ui
 from beets.test import _common, helper
-from beets.test.helper import BeetsTestCase, ImportTestCase, PluginMixin
+from beets.test.helper import (
+    AsIsImporterMixin,
+    BeetsTestCase,
+    ImportTestCase,
+    PluginMixin,
+)
 
 
 class LoggingTest(BeetsTestCase):
@@ -46,7 +51,7 @@ class LoggingTest(BeetsTestCase):
         self.assertTrue(stream.getvalue(), "foo oof baz")
 
 
-class LoggingLevelTest(PluginMixin, ImportTestCase):
+class LoggingLevelTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
     plugin = "dummy"
 
     class DummyModule:
@@ -135,8 +140,7 @@ class LoggingLevelTest(PluginMixin, ImportTestCase):
     def test_import_stage_level0(self):
         self.config["verbose"] = 0
         with helper.capture_log() as logs:
-            self.prepare_album_for_import(1)
-            self.setup_importer(autotag=False).run()
+            self.run_asis_importer()
         self.assertIn("dummy: warning import_stage", logs)
         self.assertNotIn("dummy: info import_stage", logs)
         self.assertNotIn("dummy: debug import_stage", logs)
@@ -144,8 +148,7 @@ class LoggingLevelTest(PluginMixin, ImportTestCase):
     def test_import_stage_level1(self):
         self.config["verbose"] = 1
         with helper.capture_log() as logs:
-            self.prepare_album_for_import(1)
-            self.setup_importer(autotag=False).run()
+            self.run_asis_importer()
         self.assertIn("dummy: warning import_stage", logs)
         self.assertIn("dummy: info import_stage", logs)
         self.assertNotIn("dummy: debug import_stage", logs)
@@ -153,15 +156,14 @@ class LoggingLevelTest(PluginMixin, ImportTestCase):
     def test_import_stage_level2(self):
         self.config["verbose"] = 2
         with helper.capture_log() as logs:
-            self.prepare_album_for_import(1)
-            self.setup_importer(autotag=False).run()
+            self.run_asis_importer()
         self.assertIn("dummy: warning import_stage", logs)
         self.assertIn("dummy: info import_stage", logs)
         self.assertIn("dummy: debug import_stage", logs)
 
 
 @_common.slow_test()
-class ConcurrentEventsTest(ImportTestCase):
+class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
     """Similar to LoggingLevelTest but lower-level and focused on multiple
     events interaction. Since this is a bit heavy we don't do it in
     LoggingLevelTest.
@@ -264,20 +266,17 @@ class ConcurrentEventsTest(ImportTestCase):
 
         blog.getLogger("beets").set_global_level(blog.WARNING)
         with helper.capture_log() as logs:
-            self.prepare_album_for_import(1)
-            self.setup_importer(autotag=False).run()
+            self.run_asis_importer()
         self.assertEqual(logs, [])
 
         blog.getLogger("beets").set_global_level(blog.INFO)
         with helper.capture_log() as logs:
-            self.prepare_album_for_import(1)
-            self.setup_importer(autotag=False).run()
+            self.run_asis_importer()
         for l in logs:
             self.assertIn("import", l)
             self.assertIn("album", l)
 
         blog.getLogger("beets").set_global_level(blog.DEBUG)
         with helper.capture_log() as logs:
-            self.prepare_album_for_import(1)
-            self.setup_importer(autotag=False).run()
+            self.run_asis_importer()
         self.assertIn("Sending event: database_change", logs)
