@@ -22,6 +22,7 @@ class PermissionsPluginTest(PluginMixin, ImportTestCase):
         super().setUp()
 
         self.config["permissions"] = {"file": "777", "dir": "777"}
+        self.prepare_album_for_import(1)
 
     def test_permissions_on_album_imported(self):
         self.do_thing(True)
@@ -44,10 +45,10 @@ class PermissionsPluginTest(PluginMixin, ImportTestCase):
                 & 0o777
             )
 
-        self.importer = self.create_importer()
+        self.importer = self.setup_importer(autotag=False)
         typs = ["file", "dir"]
 
-        track_file = (b"album_1", b"track_1.mp3")
+        track_file = (b"album", b"track_1.mp3")
         self.exp_perms = {
             True: {
                 k: convert_perm(self.config["permissions"][k].get())
@@ -93,8 +94,7 @@ class PermissionsPluginTest(PluginMixin, ImportTestCase):
     def do_set_art(self, expect_success):
         if platform.system() == "Windows":
             self.skipTest("permissions not available on Windows")
-        self.importer = self.create_importer()
-        self.importer.run()
+        self.setup_importer(autotag=False).run()
         album = self.lib.albums().get()
         artpath = os.path.join(self.temp_dir, b"cover.jpg")
         touch(artpath)

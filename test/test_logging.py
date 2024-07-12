@@ -135,8 +135,8 @@ class LoggingLevelTest(PluginMixin, ImportTestCase):
     def test_import_stage_level0(self):
         self.config["verbose"] = 0
         with helper.capture_log() as logs:
-            importer = self.create_importer()
-            importer.run()
+            self.prepare_album_for_import(1)
+            self.setup_importer(autotag=False).run()
         self.assertIn("dummy: warning import_stage", logs)
         self.assertNotIn("dummy: info import_stage", logs)
         self.assertNotIn("dummy: debug import_stage", logs)
@@ -144,8 +144,8 @@ class LoggingLevelTest(PluginMixin, ImportTestCase):
     def test_import_stage_level1(self):
         self.config["verbose"] = 1
         with helper.capture_log() as logs:
-            importer = self.create_importer()
-            importer.run()
+            self.prepare_album_for_import(1)
+            self.setup_importer(autotag=False).run()
         self.assertIn("dummy: warning import_stage", logs)
         self.assertIn("dummy: info import_stage", logs)
         self.assertNotIn("dummy: debug import_stage", logs)
@@ -153,8 +153,8 @@ class LoggingLevelTest(PluginMixin, ImportTestCase):
     def test_import_stage_level2(self):
         self.config["verbose"] = 2
         with helper.capture_log() as logs:
-            importer = self.create_importer()
-            importer.run()
+            self.prepare_album_for_import(1)
+            self.setup_importer(autotag=False).run()
         self.assertIn("dummy: warning import_stage", logs)
         self.assertIn("dummy: info import_stage", logs)
         self.assertIn("dummy: debug import_stage", logs)
@@ -264,20 +264,20 @@ class ConcurrentEventsTest(ImportTestCase):
 
         blog.getLogger("beets").set_global_level(blog.WARNING)
         with helper.capture_log() as logs:
-            importer = self.create_importer()
-            importer.run()
+            self.prepare_album_for_import(1)
+            self.setup_importer(autotag=False).run()
         self.assertEqual(logs, [])
 
         blog.getLogger("beets").set_global_level(blog.INFO)
         with helper.capture_log() as logs:
-            importer = self.create_importer()
-            importer.run()
+            self.prepare_album_for_import(1)
+            self.setup_importer(autotag=False).run()
         for l in logs:
             self.assertIn("import", l)
             self.assertIn("album", l)
 
         blog.getLogger("beets").set_global_level(blog.DEBUG)
         with helper.capture_log() as logs:
-            importer = self.create_importer()
-            importer.run()
+            self.prepare_album_for_import(1)
+            self.setup_importer(autotag=False).run()
         self.assertIn("Sending event: database_change", logs)

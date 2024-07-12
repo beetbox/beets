@@ -56,7 +56,7 @@ class ImportAddedTest(PluginMixin, ImportTestCase):
         )
         self.matcher = AutotagStub().install()
         self.matcher.macthin = AutotagStub.GOOD
-        self._setup_import_session()
+        self.importer = self.setup_importer()
         self.importer.add_choice(importer.action.APPLY)
 
     def tearDown(self):
@@ -113,7 +113,7 @@ class ImportAddedTest(PluginMixin, ImportTestCase):
         # Newer Item path mtimes as if Beets had modified them
         modify_mtimes(items_added_before.keys(), offset=10000)
         # Reimport
-        self._setup_import_session(import_dir=album.path)
+        self.setup_importer(import_dir=self.libdir)
         self.importer.run()
         # Verify the reimported items
         album = self.lib.albums().get()
@@ -154,8 +154,7 @@ class ImportAddedTest(PluginMixin, ImportTestCase):
         # Newer Item path mtimes as if Beets had modified them
         modify_mtimes(items_added_before.keys(), offset=10000)
         # Reimport
-        import_dir = os.path.dirname(list(items_added_before.keys())[0])
-        self._setup_import_session(import_dir=import_dir, singletons=True)
+        self.setup_importer(import_dir=self.libdir, singletons=True)
         self.importer.run()
         # Verify the reimported items
         items_added_after = {item.path: item.added for item in self.lib.items()}

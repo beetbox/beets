@@ -98,7 +98,8 @@ class ConvertTestCase(ConvertMixin, PluginTestCase):
 class ImportConvertTest(ImportHelper, ConvertTestCase):
     def setUp(self):
         super().setUp()
-        self.importer = self.create_importer()
+        self.prepare_album_for_import(1)
+        self.importer = self.setup_importer(autotag=False)
 
         self.config["convert"] = {
             "dest": os.path.join(self.temp_dir, b"convert"),

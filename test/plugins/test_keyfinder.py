@@ -39,8 +39,8 @@ class KeyFinderTest(PluginMixin, ImportTestCase):
 
     def test_add_key_on_import(self, command_output):
         command_output.return_value = util.CommandOutput(b"dbm", b"")
-        importer = self.create_importer()
-        importer.run()
+        self.prepare_album_for_import(1)
+        self.setup_importer(autotag=False).run()
 
         item = self.lib.items().get()
         self.assertEqual(item["initial_key"], "C#m")
