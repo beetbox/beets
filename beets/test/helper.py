@@ -53,6 +53,7 @@ import beets
 import beets.plugins
 from beets import autotag, config, importer, logging, util
 from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.importer import ImportSession
 from beets.library import Album, Item, Library
 from beets.test import _common
 from beets.ui.commands import TerminalImportSession
@@ -498,13 +499,26 @@ class PluginTestCase(PluginMixin, BeetsTestCase):
     pass
 
 
-class ImportHelper:
+class ImportHelper(TestHelper):
     """Provides tools to setup a library, a directory containing files that are
     to be imported and an import session. The class also provides stubs for the
     autotagging library and several assertions for the library.
     """
 
-    importer: importer.ImportSession
+    resource_path = syspath(os.path.join(_common.RSRC, b"full.mp3"))
+    default_import_config = {
+        "autotag": True,
+        "copy": True,
+        "hardlink": False,
+        "link": False,
+        "move": False,
+        "resume": False,
+        "singletons": False,
+        "timid": True,
+    }
+
+    lib: Library
+    importer: ImportSession
 
     @cached_property
     def import_dir(self):
@@ -512,130 +526,87 @@ class ImportHelper:
         os.makedirs(syspath(import_dir), exist_ok=True)
         return import_dir
 
-    def setup_beets(self):
-        super().setup_beets()
+    def setUp(self):
+        super().setUp()
+        self.import_media = []
         self.lib.path_formats = [
             ("default", os.path.join("$artist", "$album", "$title")),
             ("singleton:true", os.path.join("singletons", "$title")),
             ("comp:true", os.path.join("compilations", "$album", "$title")),
         ]
 
-    def prepare_album_for_import(self, count=3):
-        """Creates a directory with media files to import.
-        Sets ``self.import_dir`` to the path of the directory. Also sets
-        ``self.import_media`` to a list :class:`MediaFile` for all the files in
-        the directory.
+    def prepare_track_for_import(
+        self,
+        track_id: int,
+        album_path: bytes,
+        album_id: int | None = None,
+    ) -> MediaFile:
+        filename = bytestring_path(f"track_{track_id}.mp3")
+        medium_path = os.path.join(album_path, filename)
+        shutil.copy(self.resource_path, syspath(medium_path))
+        medium = MediaFile(medium_path)
+        medium.update(
+            {
+                "album": "Tag Album" + (f" {album_id}" if album_id else ""),
+                "albumartist": None,
+                "mb_albumid": None,
+                "comp": None,
+                "artist": "Tag Artist",
+                "title": f"Tag Track {track_id}",
+                "track": track_id,
+                "mb_trackid": None,
+            }
+        )
+        medium.save()
+        return medium
+
+    def prepare_album_for_import(
+        self, item_count: int, album_id: int | None = None
+    ) -> None:
+        """Create an album directory with media files to import.
 
         The directory has following layout
-          the_album/
+          album/
             track_1.mp3
             track_2.mp3
             track_3.mp3
-
-        :param count:  Number of files to create
         """
-        album_path = os.path.join(self.import_dir, b"the_album")
+        album_path = os.path.join(
+            self.import_dir,
+            bytestring_path(f"album_{album_id}" if album_id else "album"),
+        )
         os.makedirs(syspath(album_path), exist_ok=True)
 
-        resource_path = os.path.join(_common.RSRC, b"full.mp3")
+        mediums = [
+            self.prepare_track_for_import(tid, album_path, album_id=album_id)
+            for tid in range(1, item_count + 1)
+        ]
+        self.import_media.extend(mediums)
 
-        album = bytestring_path("album")
-        album_path = os.path.join(self.import_dir, album)
-        os.makedirs(syspath(album_path), exist_ok=True)
+    def prepare_albums_for_import(self, count: int = 1) -> None:
+        album_dirs = Path(os.fsdecode(self.import_dir)).glob("album_*")
+        base_idx = int(str(max(album_dirs, default="0")).split("_")[-1]) + 1
 
-        self.import_media = []
-        for track_id in range(1, count + 1):
-            medium_path = os.path.join(
-                album_path, bytestring_path(f"track_{track_id}.mp3")
-            )
-            shutil.copy(syspath(resource_path), syspath(medium_path))
-            medium = MediaFile(medium_path)
-            medium.update(
-                {
-                    "album": "Tag Album",
-                    "albumartist": None,
-                    "mb_albumid": None,
-                    "comp": None,
-                    "artist": "Tag Artist",
-                    "title": f"Tag Track {track_id}",
-                    "track": track_id,
-                    "mb_trackid": None,
-                }
-            )
-            medium.save()
-            self.import_media.append(medium)
+        for album_id in range(base_idx, count + base_idx):
+            self.prepare_album_for_import(1, album_id=album_id)
 
-    def _get_import_session(self, import_dir: str) -> None:
-        self.importer = ImportSessionFixture(
+    def _get_import_session(self, import_dir: str) -> ImportSession:
+        return ImportSessionFixture(
             self.lib,
             loghandler=None,
             query=None,
             paths=[import_dir],
         )
 
-    def _setup_import_session(
-        self,
-        import_dir=None,
-        singletons=False,
-        move=False,
-        autotag=True,
-    ):
-        config["import"]["copy"] = True
-        config["import"]["delete"] = False
-        config["import"]["timid"] = True
-        config["threaded"] = False
-        config["import"]["singletons"] = singletons
-        config["import"]["move"] = move
-        config["import"]["autotag"] = autotag
-        config["import"]["resume"] = False
-        config["import"]["link"] = False
-        config["import"]["hardlink"] = False
+    def setup_importer(
+        self, import_dir: str | None = None, **kwargs
+    ) -> ImportSession:
+        config["import"].set_args({**self.default_import_config, **kwargs})
+        self.importer = self._get_import_session(import_dir or self.import_dir)
+        return self.importer
 
-        self._get_import_session(import_dir or self.import_dir)
-
-    def create_importer(self, item_count=1, album_count=1):
-        """Create files to import and return corresponding session.
-
-        Copies the specified number of files to a subdirectory of
-        `self.temp_dir` and creates a `ImportSessionFixture` for this path.
-        """
-        resource_path = os.path.join(_common.RSRC, b"full.mp3")
-
-        album_dirs = Path(os.fsdecode(self.import_dir)).glob("album_*")
-        base_idx = int(str(max(album_dirs, default="0")).split("_")[-1]) + 1
-
-        for album_id in range(base_idx, album_count + base_idx):
-            album = bytestring_path(f"album_{album_id}")
-            album_path = os.path.join(self.import_dir, album)
-            os.makedirs(syspath(album_path), exist_ok=True)
-
-            for track_id in range(1, item_count + 1):
-                medium_path = os.path.join(
-                    album_path, bytestring_path(f"track_{track_id}.mp3")
-                )
-                shutil.copy(syspath(resource_path), syspath(medium_path))
-                medium = MediaFile(medium_path)
-                medium.update(
-                    {
-                        "album": f"Tag Album {album_id}",
-                        "albumartist": None,
-                        "mb_albumid": None,
-                        "comp": None,
-                        "artist": "Tag Artist",
-                        "title": f"Tag Track {track_id}",
-                        "track": track_id,
-                        "mb_trackid": None,
-                    }
-                )
-                medium.save()
-
-        config["import"]["quiet"] = True
-        config["import"]["autotag"] = False
-        config["import"]["resume"] = False
-
-        return ImportSessionFixture(
-            self.lib, loghandler=None, query=None, paths=[self.import_dir]
-        )
+    def setup_singleton_importer(self, **kwargs) -> ImportSession:
+        return self.setup_importer(singletons=True, **kwargs)
 
     def assert_file_in_lib(self, *segments):
         """Join the ``segments`` and assert that this path exists in the
@@ -657,7 +628,7 @@ class ImportTestCase(ImportHelper, BeetsTestCase):
     pass
 
 
-class ImportSessionFixture(importer.ImportSession):
+class ImportSessionFixture(ImportSession):
     """ImportSession that can be controlled programaticaly.
 
     >>> lib = Library(':memory:')
@@ -771,9 +742,11 @@ class TerminalImportSessionFixture(TerminalImportSession):
 class TerminalImportMixin(ImportHelper):
     """Provides_a terminal importer for the import session."""
 
-    def _get_import_session(self, import_dir: str) -> None:
+    io: _common.DummyIO
+
+    def _get_import_session(self, import_dir: str) -> importer.ImportSession:
         self.io.install()
-        self.importer = TerminalImportSessionFixture(
+        return TerminalImportSessionFixture(
             self.lib,
             loghandler=None,
             query=None,

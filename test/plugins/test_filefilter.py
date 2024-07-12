@@ -18,7 +18,6 @@
 
 import os
 import shutil
-from typing import ClassVar
 
 from mediafile import MediaFile
 
@@ -30,17 +29,9 @@ from beetsplug.filefilter import FileFilterPlugin
 
 
 class FileFilterPluginMixin(ImportTestCase):
-    singletons: ClassVar[bool]
-
     def setUp(self):
         super().setUp()
         self.__create_import_dir(2)
-        self._setup_import_session()
-        config["import"]["pretend"] = True
-
-        import_files = [self.import_dir]
-        self._setup_import_session(singletons=self.singletons)
-        self.importer.paths = import_files
 
     def tearDown(self):
         self.unload_plugins()
@@ -112,7 +103,9 @@ class FileFilterPluginMixin(ImportTestCase):
 
 
 class FileFilterPluginNonSingletonTest(FileFilterPluginMixin):
-    singletons = False
+    def setUp(self):
+        super().setUp()
+        self.importer = self.setup_importer(pretend=True)
 
     def test_import_default(self):
         """The default configuration should import everything."""
@@ -189,7 +182,9 @@ class FileFilterPluginNonSingletonTest(FileFilterPluginMixin):
 
 
 class FileFilterPluginSingletonTest(FileFilterPluginMixin):
-    singletons = True
+    def setUp(self):
+        super().setUp()
+        self.importer = self.setup_singleton_importer(pretend=True)
 
     def test_import_global(self):
         config["filefilter"]["path"] = ".*track_1.*\\.mp3"

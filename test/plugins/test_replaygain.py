@@ -68,7 +68,8 @@ class ReplayGainTestCase(ImportTestCase):
         except Exception:
             self.tearDown()
 
-        self.importer = self.create_importer()
+        self.prepare_album_for_import(1)
+        self.importer = self.setup_importer(autotag=False)
 
     def tearDown(self):
         self.unload_plugins()

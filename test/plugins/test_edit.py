@@ -13,7 +13,6 @@
 # included in all copies or substantial portions of the Software.
 
 import codecs
-from typing import ClassVar
 from unittest.mock import patch
 
 from beets.dbcore.query import TrueQuery
@@ -329,17 +328,14 @@ class EditDuringImporterTestCase(
     """TODO"""
 
     IGNORED = ["added", "album_id", "id", "mtime", "path"]
-    singletons: ClassVar[bool]
 
     def setUp(self):
         super().setUp()
         # Create some mediafiles, and store them for comparison.
-        self.prepare_album_for_import()
-        self._setup_import_session(singletons=self.singletons)
+        self.prepare_album_for_import(1)
         self.items_orig = [Item.from_path(f.path) for f in self.import_media]
         self.matcher = AutotagStub().install()
         self.matcher.matching = AutotagStub.GOOD
-        self.config["import"]["timid"] = True
 
     def tearDown(self):
         EditPlugin.listeners = None
@@ -349,7 +345,9 @@ class EditDuringImporterTestCase(
 
 @_common.slow_test()
 class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
-    singletons = False
+    def setUp(self):
+        super().setUp()
+        self.importer = self.setup_importer()
 
     def test_edit_apply_asis(self):
         """Edit the album field for all items in the library, apply changes,
@@ -497,7 +495,9 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
 
 @_common.slow_test()
 class EditDuringImporterSingletonTest(EditDuringImporterTestCase):
-    singletons = True
+    def setUp(self):
+        super().setUp()
+        self.importer = self.setup_singleton_importer()
 
     def test_edit_apply_asis_singleton(self):
         """Edit the album field for all items in the library, apply changes,

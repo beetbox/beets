@@ -160,12 +160,9 @@ class ItemTypeConflictTest(PluginLoaderTestCase):
 class EventsTest(PluginImportTestCase):
     def setUp(self):
         super().setUp()
-        config["import"]["pretend"] = True
 
     def test_import_task_created(self):
-        import_files = [self.import_dir]
-        self._setup_import_session(singletons=False)
-        self.importer.paths = import_files
+        self.importer = self.setup_importer(pretend=True)
 
         with helper.capture_log() as logs:
             self.importer.run()
@@ -212,9 +209,7 @@ class EventsTest(PluginImportTestCase):
         to_singleton_plugin = ToSingletonPlugin
         self.register_plugin(to_singleton_plugin)
 
-        import_files = [self.import_dir]
-        self._setup_import_session(singletons=False)
-        self.importer.paths = import_files
+        self.importer = self.setup_importer(pretend=True)
 
         with helper.capture_log() as logs:
             self.importer.run()
@@ -371,7 +366,7 @@ class ListenersTest(PluginLoaderTestCase):
 class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
     def setUp(self):
         super().setUp()
-        self._setup_import_session()
+        self.setup_importer()
         self.matcher = AutotagStub().install()
         # keep track of ui.input_option() calls
         self.input_options_patcher = patch(
