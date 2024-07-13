@@ -831,12 +831,9 @@ class ConfigTest(BeetsTestCase):
         # Don't use the BEETSDIR from `helper`. Instead, we point the home
         # directory there. Some tests will set `BEETSDIR` themselves.
         del os.environ["BEETSDIR"]
-        self._old_home = os.environ.get("HOME")
-        os.environ["HOME"] = os.fsdecode(self.temp_dir)
 
         # Also set APPDATA, the Windows equivalent of setting $HOME.
-        self._old_appdata = os.environ.get("APPDATA")
-        os.environ["APPDATA"] = os.fsdecode(
+        appdata_dir = os.fsdecode(
             os.path.join(self.temp_dir, b"AppData", b"Roaming")
         )
 
@@ -846,8 +843,8 @@ class ConfigTest(BeetsTestCase):
 
         # Default user configuration
         if platform.system() == "Windows":
-            self.user_config_dir = os.path.join(
-                self.temp_dir, b"AppData", b"Roaming", b"beets"
+            self.user_config_dir = os.fsencode(
+                os.path.join(appdata_dir, "beets")
             )
         else:
             self.user_config_dir = os.path.join(
@@ -861,19 +858,19 @@ class ConfigTest(BeetsTestCase):
         # Custom BEETSDIR
         self.beetsdir = os.path.join(self.temp_dir, b"beetsdir")
         os.makedirs(syspath(self.beetsdir))
+        self.env_patcher = patch(
+            "os.environ",
+            {"HOME": os.fsdecode(self.temp_dir), "APPDATA": appdata_dir},
+        )
+        self.env_patcher.start()
 
         self._reset_config()
         self.load_plugins()
 
     def tearDown(self):
+        self.env_patcher.stop()
         commands.default_commands.pop()
         os.chdir(syspath(self._orig_cwd))
-        if self._old_home is not None:
-            os.environ["HOME"] = self._old_home
-        if self._old_appdata is None:
-            del os.environ["APPDATA"]
-        else:
-            os.environ["APPDATA"] = self._old_appdata
         self.unload_plugins()
         super().tearDown()
 
