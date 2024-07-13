@@ -9,11 +9,11 @@ import unittest
 from beets import logging
 from beets.library import Album, Item
 from beets.test import _common
-from beets.test.helper import LibTestCase
+from beets.test.helper import ItemInDBTestCase
 from beetsplug import web
 
 
-class WebPluginTest(LibTestCase):
+class WebPluginTest(ItemInDBTestCase):
     def setUp(self):
         super().setUp()
         self.log = logging.getLogger("beets.web")

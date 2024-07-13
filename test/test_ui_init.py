@@ -23,7 +23,7 @@ from random import random
 
 from beets import config, ui
 from beets.test import _common
-from beets.test.helper import BeetsTestCase, LibTestCase, control_stdin
+from beets.test.helper import BeetsTestCase, ItemInDBTestCase, control_stdin
 
 
 class InputMethodsTest(BeetsTestCase):
@@ -90,7 +90,7 @@ class InputMethodsTest(BeetsTestCase):
         self.assertEqual(items, ["1", "3"])
 
 
-class InitTest(LibTestCase):
+class InitTest(ItemInDBTestCase):
     def setUp(self):
         super().setUp()
 

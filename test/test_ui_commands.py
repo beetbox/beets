@@ -22,7 +22,7 @@ import unittest
 
 from beets import library, ui
 from beets.test import _common
-from beets.test.helper import BeetsTestCase, LibTestCase
+from beets.test.helper import BeetsTestCase, ItemInDBTestCase
 from beets.ui import commands
 from beets.util import syspath
 
@@ -88,7 +88,7 @@ class QueryTest(BeetsTestCase):
         self.check_do_query(0, 2, album=True, also_items=False)
 
 
-class FieldsTest(LibTestCase):
+class FieldsTest(ItemInDBTestCase):
     def setUp(self):
         super().setUp()
 
