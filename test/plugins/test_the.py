@@ -3,11 +3,11 @@
 import unittest
 
 from beets import config
-from beets.test import _common
+from beets.test.helper import BeetsTestCase
 from beetsplug.the import FORMAT, PATTERN_A, PATTERN_THE, ThePlugin
 
 
-class ThePluginTest(_common.TestCase):
+class ThePluginTest(BeetsTestCase):
     def test_unthe_with_default_patterns(self):
         self.assertEqual(ThePlugin().unthe("", PATTERN_THE), "")
         self.assertEqual(

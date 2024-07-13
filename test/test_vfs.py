@@ -18,9 +18,10 @@ import unittest
 
 from beets import library, vfs
 from beets.test import _common
+from beets.test.helper import BeetsTestCase
 
 
-class VFSTest(_common.TestCase):
+class VFSTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.lib = library.Library(

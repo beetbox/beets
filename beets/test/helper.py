@@ -36,11 +36,13 @@ import os.path
 import shutil
 import subprocess
 import sys
+import unittest
 from contextlib import contextmanager
 from enum import Enum
 from io import StringIO
 from tempfile import mkdtemp, mkstemp
 from typing import ClassVar
+from unittest.mock import patch
 
 import responses
 from mediafile import Image, MediaFile
@@ -174,11 +176,19 @@ class TestHelper(_common.Assertions):
         Make sure you call ``teardown_beets()`` afterwards.
         """
         self.create_temp_dir()
-        os.environ["BEETSDIR"] = os.fsdecode(self.temp_dir)
+        temp_dir_str = os.fsdecode(self.temp_dir)
+        self.env_patcher = patch.dict(
+            "os.environ",
+            {
+                "BEETSDIR": temp_dir_str,
+                "HOME": temp_dir_str,  # used by Confuse to create directories.
+            },
+        )
+        self.env_patcher.start()
 
         self.config = beets.config
-        self.config.clear()
-        self.config.read()
+        self.config.sources = []
+        self.config.read(user=False, defaults=True)
 
         self.config["plugins"] = []
         self.config["verbose"] = 1
@@ -195,13 +205,16 @@ class TestHelper(_common.Assertions):
             dbpath = ":memory:"
         self.lib = Library(dbpath, self.libdir)
 
+        # Initialize, but don't install, a DummyIO.
+        self.io = _common.DummyIO()
+
     def teardown_beets(self):
+        self.env_patcher.stop()
+        self.io.restore()
         self.lib._close()
-        if "BEETSDIR" in os.environ:
-            del os.environ["BEETSDIR"]
         self.remove_temp_dir()
-        self.config.clear()
-        beets.config.read(user=False, defaults=True)
+        beets.config.clear()
+        beets.config._materialized = False
 
     def load_plugins(self, *plugins):
         """Load and initialize plugins by names.
@@ -488,6 +501,38 @@ class TestHelper(_common.Assertions):
         with open(syspath(path), "a+") as f:
             f.write(content)
         return path
+
+
+# A test harness for all beets tests.
+# Provides temporary, isolated configuration.
+class BeetsTestCase(unittest.TestCase, TestHelper):
+    """A unittest.TestCase subclass that saves and restores beets'
+    global configuration. This allows tests to make temporary
+    modifications that will then be automatically removed when the test
+    completes. Also provides some additional assertion methods, a
+    temporary directory, and a DummyIO.
+    """
+
+    def setUp(self):
+        self.setup_beets()
+
+    def tearDown(self):
+        self.teardown_beets()
+
+
+class LibTestCase(BeetsTestCase):
+    """A test case that includes an in-memory library object (`lib`) and
+    an item added to the library (`i`).
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.lib = beets.library.Library(":memory:")
+        self.i = _common.item(self.lib)
+
+    def tearDown(self):
+        self.lib._connection().close()
+        super().tearDown()
 
 
 class ImportHelper(TestHelper):

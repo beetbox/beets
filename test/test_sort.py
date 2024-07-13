@@ -20,11 +20,12 @@ import unittest
 import beets.library
 from beets import config, dbcore
 from beets.test import _common
+from beets.test.helper import BeetsTestCase
 
 
 # A test case class providing a library with some dummy data and some
 # assertions involving that data.
-class DummyDataTestCase(_common.TestCase):
+class DummyDataTestCase(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.lib = beets.library.Library(":memory:")
@@ -373,7 +374,7 @@ class ConfigSortTest(DummyDataTestCase):
         self.assertGreater(results[0].albumartist, results[1].albumartist)
 
 
-class CaseSensitivityTest(DummyDataTestCase, _common.TestCase):
+class CaseSensitivityTest(DummyDataTestCase, BeetsTestCase):
     """If case_insensitive is false, lower-case values should be placed
     after all upper-case values. E.g., `Foo Qux bar`
     """

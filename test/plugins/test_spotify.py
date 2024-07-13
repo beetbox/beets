@@ -9,7 +9,7 @@ import responses
 from beets import config
 from beets.library import Item
 from beets.test import _common
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 from beetsplug import spotify
 
 
@@ -25,7 +25,7 @@ def _params(url):
     return parse_qs(urlparse(url).query)
 
 
-class SpotifyPluginTest(_common.TestCase, TestHelper):
+class SpotifyPluginTest(BeetsTestCase):
     @responses.activate
     def setUp(self):
         config.clear()

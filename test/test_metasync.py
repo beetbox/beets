@@ -21,7 +21,7 @@ from datetime import datetime
 
 from beets.library import Item
 from beets.test import _common
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 
 
 def _parsetime(s):
@@ -32,7 +32,7 @@ def _is_windows():
     return platform.system() == "Windows"
 
 
-class MetaSyncTest(_common.TestCase, TestHelper):
+class MetaSyncTest(BeetsTestCase):
     itunes_library_unix = os.path.join(_common.RSRC, b"itunes_library_unix.xml")
     itunes_library_windows = os.path.join(
         _common.RSRC, b"itunes_library_windows.xml"

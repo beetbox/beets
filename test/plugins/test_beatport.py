@@ -20,11 +20,11 @@ from datetime import timedelta
 
 from beets import library
 from beets.test import _common
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 from beetsplug import beatport
 
 
-class BeatportTest(_common.TestCase, TestHelper):
+class BeatportTest(BeetsTestCase):
     def _make_release_response(self):
         """Returns a dict that mimics a response from the beatport API.
 
@@ -601,7 +601,7 @@ class BeatportTest(_common.TestCase, TestHelper):
             self.assertEqual(track.genre, test_track.genre)
 
 
-class BeatportResponseEmptyTest(_common.TestCase, TestHelper):
+class BeatportResponseEmptyTest(BeetsTestCase):
     def _make_tracks_response(self):
         results = [
             {

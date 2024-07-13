@@ -31,6 +31,7 @@ from beets import autotag, config, library, plugins, ui, util
 from beets.autotag.match import distance
 from beets.test import _common
 from beets.test.helper import (
+    BeetsTestCase,
     TestHelper,
     capture_stdout,
     control_stdin,
@@ -108,7 +109,7 @@ class ListTest(unittest.TestCase):
         self.assertNotIn("the album", stdout.getvalue())
 
 
-class RemoveTest(_common.TestCase, TestHelper):
+class RemoveTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
@@ -454,7 +455,7 @@ class WriteTest(unittest.TestCase, TestHelper):
         self.assertIn(f"{old_title} -> new title", output)
 
 
-class MoveTest(_common.TestCase):
+class MoveTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
@@ -562,7 +563,7 @@ class MoveTest(_common.TestCase):
         self.assertNotExists(self.otherdir)
 
 
-class UpdateTest(_common.TestCase):
+class UpdateTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
@@ -763,7 +764,7 @@ class UpdateTest(_common.TestCase):
         self.assertNotEqual(item.lyrics, "new lyrics")
 
 
-class PrintTest(_common.TestCase):
+class PrintTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.io.install()
@@ -802,7 +803,7 @@ class PrintTest(_common.TestCase):
                 del os.environ["LC_CTYPE"]
 
 
-class ImportTest(_common.TestCase):
+class ImportTest(BeetsTestCase):
     def test_quiet_timid_disallowed(self):
         config["import"]["quiet"] = True
         config["import"]["timid"] = True
@@ -1145,7 +1146,7 @@ class ConfigTest(unittest.TestCase, TestHelper):
         )
 
 
-class ShowModelChangeTest(_common.TestCase):
+class ShowModelChangeTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.io.install()
@@ -1197,7 +1198,7 @@ class ShowModelChangeTest(_common.TestCase):
         self.assertIn("bar", out)
 
 
-class ShowChangeTest(_common.TestCase):
+class ShowChangeTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.io.install()
@@ -1358,7 +1359,7 @@ class ShowChangeTest(_common.TestCase):
 
 
 @patch("beets.library.Item.try_filesize", Mock(return_value=987))
-class SummarizeItemsTest(_common.TestCase):
+class SummarizeItemsTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         item = library.Item()
@@ -1395,7 +1396,7 @@ class SummarizeItemsTest(_common.TestCase):
         self.assertEqual(summary, "3 items, G 2, F 1, 4kbps, 32:42, 2.9 KiB")
 
 
-class PathFormatTest(_common.TestCase):
+class PathFormatTest(BeetsTestCase):
     def test_custom_paths_prepend(self):
         default_formats = ui.get_path_formats()
 
@@ -1408,7 +1409,7 @@ class PathFormatTest(_common.TestCase):
 
 
 @_common.slow_test()
-class PluginTest(_common.TestCase, TestHelper):
+class PluginTest(BeetsTestCase):
     def test_plugin_command_from_pluginpath(self):
         config["pluginpath"] = [_common.PLUGINPATH]
         config["plugins"] = ["test"]
@@ -1416,7 +1417,7 @@ class PluginTest(_common.TestCase, TestHelper):
 
 
 @_common.slow_test()
-class CompletionTest(_common.TestCase, TestHelper):
+class CompletionTest(BeetsTestCase):
     def test_completion(self):
         # Load plugin commands
         config["pluginpath"] = [_common.PLUGINPATH]
@@ -1652,7 +1653,7 @@ class CommonOptionsParserTest(unittest.TestCase, TestHelper):
         )
 
 
-class EncodingTest(_common.TestCase):
+class EncodingTest(BeetsTestCase):
     """Tests for the `terminal_encoding` config option and our
     `_in_encoding` and `_out_encoding` utility functions.
     """

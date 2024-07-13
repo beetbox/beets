@@ -26,7 +26,12 @@ import responses
 from beets import config, importer, library, logging, util
 from beets.autotag import AlbumInfo, AlbumMatch
 from beets.test import _common
-from beets.test.helper import CleanupModulesMixin, FetchImageHelper, capture_log
+from beets.test.helper import (
+    BeetsTestCase,
+    CleanupModulesMixin,
+    FetchImageHelper,
+    capture_log,
+)
 from beets.util import syspath
 from beets.util.artresizer import ArtResizer
 from beetsplug import fetchart
@@ -44,7 +49,7 @@ class Settings:
             setattr(self, k, v)
 
 
-class UseThePlugin(CleanupModulesMixin, _common.TestCase):
+class UseThePlugin(CleanupModulesMixin, BeetsTestCase):
     modules = (fetchart.__name__, ArtResizer.__module__)
 
     def setUp(self):
@@ -977,14 +982,14 @@ class ArtForAlbumTest(UseThePlugin):
         self._assert_image_operated(self.IMG_348x348, self.RESIZE_OP, True)
 
 
-class DeprecatedConfigTest(_common.TestCase):
+class DeprecatedConfigTest(BeetsTestCase):
     """While refactoring the plugin, the remote_priority option was deprecated,
     and a new codepath should translate its effect. Check that it actually does
     so.
     """
 
     # If we subclassed UseThePlugin, the configuration change would either be
-    # overwritten by _common.TestCase or be set after constructing the
+    # overwritten by BeetsTestCase or be set after constructing the
     # plugin object
     def setUp(self):
         super().setUp()
@@ -995,7 +1000,7 @@ class DeprecatedConfigTest(_common.TestCase):
         self.assertEqual(type(self.plugin.sources[-1]), fetchart.FileSystem)
 
 
-class EnforceRatioConfigTest(_common.TestCase):
+class EnforceRatioConfigTest(BeetsTestCase):
     """Throw some data at the regexes."""
 
     def _load_with_config(self, values, should_raise):

@@ -32,14 +32,14 @@ import beets.library
 from beets import config, plugins, util
 from beets.test import _common
 from beets.test._common import item
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase, LibTestCase, TestHelper
 from beets.util import bytestring_path, syspath
 
 # Shortcut to path normalization.
 np = util.normpath
 
 
-class LoadTest(_common.LibTestCase):
+class LoadTest(LibTestCase):
     def test_load_restores_data_from_db(self):
         original_title = self.i.title
         self.i.title = "something"
@@ -53,7 +53,7 @@ class LoadTest(_common.LibTestCase):
         self.assertNotIn("artist", self.i._dirty)
 
 
-class StoreTest(_common.LibTestCase):
+class StoreTest(LibTestCase):
     def test_store_changes_database_value(self):
         self.i.year = 1987
         self.i.store()
@@ -94,7 +94,7 @@ class StoreTest(_common.LibTestCase):
         self.assertNotIn("flex1", album.items()[0])
 
 
-class AddTest(_common.TestCase):
+class AddTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.lib = beets.library.Library(":memory:")
@@ -126,14 +126,14 @@ class AddTest(_common.TestCase):
         self.assertEqual(new_grouping, self.i.grouping)
 
 
-class RemoveTest(_common.LibTestCase):
+class RemoveTest(LibTestCase):
     def test_remove_deletes_from_db(self):
         self.i.remove()
         c = self.lib._connection().execute("select * from items")
         self.assertIsNone(c.fetchone())
 
 
-class GetSetTest(_common.TestCase):
+class GetSetTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.i = item()
@@ -169,7 +169,7 @@ class GetSetTest(_common.TestCase):
         self.assertIsNone(i.get("flexx"))
 
 
-class DestinationTest(_common.TestCase):
+class DestinationTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         # default directory is ~/Music and the only reason why it was switched
@@ -181,10 +181,6 @@ class DestinationTest(_common.TestCase):
     def tearDown(self):
         super().tearDown()
         self.lib._connection().close()
-
-        # Reset config if it was changed in test cases
-        config.clear()
-        config.read(user=False, defaults=True)
 
     def test_directory_works_with_trailing_slash(self):
         self.lib.directory = b"one/"
@@ -551,7 +547,7 @@ class DestinationTest(_common.TestCase):
         self.assertEqual(self.i.destination(), np("one/foo/two"))
 
 
-class ItemFormattedMappingTest(_common.LibTestCase):
+class ItemFormattedMappingTest(LibTestCase):
     def test_formatted_item_value(self):
         formatted = self.i.formatted()
         self.assertEqual(formatted["artist"], "the artist")
@@ -624,7 +620,7 @@ class PathFormattingMixin:
         self.assertEqual(actual, dest)
 
 
-class DestinationFunctionTest(_common.TestCase, PathFormattingMixin):
+class DestinationFunctionTest(BeetsTestCase, PathFormattingMixin):
     def setUp(self):
         super().setUp()
         self.lib = beets.library.Library(":memory:")
@@ -733,7 +729,7 @@ class DestinationFunctionTest(_common.TestCase, PathFormattingMixin):
         self._assert_dest(b"/base/Alice & Bob")
 
 
-class DisambiguationTest(_common.TestCase, PathFormattingMixin):
+class DisambiguationTest(BeetsTestCase, PathFormattingMixin):
     def setUp(self):
         super().setUp()
         self.lib = beets.library.Library(":memory:")
@@ -822,7 +818,7 @@ class DisambiguationTest(_common.TestCase, PathFormattingMixin):
         self._assert_dest(b"/base/foo/the title", self.i1)
 
 
-class SingletonDisambiguationTest(_common.TestCase, PathFormattingMixin):
+class SingletonDisambiguationTest(BeetsTestCase, PathFormattingMixin):
     def setUp(self):
         super().setUp()
         self.lib = beets.library.Library(":memory:")
@@ -907,7 +903,7 @@ class SingletonDisambiguationTest(_common.TestCase, PathFormattingMixin):
         self._assert_dest(b"/base/foo/the title", self.i1)
 
 
-class PluginDestinationTest(_common.TestCase):
+class PluginDestinationTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
@@ -959,7 +955,7 @@ class PluginDestinationTest(_common.TestCase):
         self._assert_dest(b"the artist bar_baz")
 
 
-class AlbumInfoTest(_common.TestCase):
+class AlbumInfoTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.lib = beets.library.Library(":memory:")
@@ -1064,7 +1060,7 @@ class AlbumInfoTest(_common.TestCase):
         self.assertEqual(i.album, ai.album)
 
 
-class ArtDestinationTest(_common.TestCase):
+class ArtDestinationTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         config["art_filename"] = "artimage"
@@ -1092,7 +1088,7 @@ class ArtDestinationTest(_common.TestCase):
         self.assertIn(b"artYimage", art)
 
 
-class PathStringTest(_common.TestCase):
+class PathStringTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.lib = beets.library.Library(":memory:")
@@ -1178,7 +1174,7 @@ class PathStringTest(_common.TestCase):
         self.assertTrue(isinstance(alb.artpath, bytes))
 
 
-class MtimeTest(_common.TestCase):
+class MtimeTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.ipath = os.path.join(self.temp_dir, b"testfile.mp3")
@@ -1216,7 +1212,7 @@ class MtimeTest(_common.TestCase):
         self.assertGreaterEqual(self.i.mtime, self._mtime())
 
 
-class ImportTimeTest(_common.TestCase):
+class ImportTimeTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.lib = beets.library.Library(":memory:")
@@ -1232,7 +1228,7 @@ class ImportTimeTest(_common.TestCase):
         self.assertGreater(self.singleton.added, 0)
 
 
-class TemplateTest(_common.LibTestCase):
+class TemplateTest(LibTestCase):
     def test_year_formatted_in_template(self):
         self.i.year = 123
         self.i.store()
@@ -1262,7 +1258,7 @@ class TemplateTest(_common.LibTestCase):
         self.assertEqual(f"{item:$tagada}", "togodo")
 
 
-class UnicodePathTest(_common.LibTestCase):
+class UnicodePathTest(LibTestCase):
     def test_unicode_path(self):
         self.i.path = os.path.join(_common.RSRC, "unicode\u2019d.mp3".encode())
         # If there are any problems with unicode paths, we will raise
