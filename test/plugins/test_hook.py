@@ -19,8 +19,7 @@ import tempfile
 import unittest
 
 from beets import config, plugins
-from beets.test import _common
-from beets.test.helper import TestHelper, capture_log
+from beets.test.helper import BeetsTestCase, capture_log
 
 
 def get_temporary_path():
@@ -30,7 +29,7 @@ def get_temporary_path():
     return os.path.join(temporary_directory, temporary_name)
 
 
-class HookTest(_common.TestCase, TestHelper):
+class HookTest(BeetsTestCase):
     TEST_HOOK_COUNT = 5
 
     def setUp(self):

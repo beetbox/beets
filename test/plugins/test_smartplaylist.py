@@ -23,14 +23,13 @@ from beets import config
 from beets.dbcore import OrQuery
 from beets.dbcore.query import FixedFieldSort, MultipleSort, NullSort
 from beets.library import Album, Item, parse_query_string
-from beets.test import _common
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 from beets.ui import UserError
 from beets.util import CHAR_REPLACE, bytestring_path, syspath
 from beetsplug.smartplaylist import SmartPlaylistPlugin
 
 
-class SmartPlaylistTest(_common.TestCase):
+class SmartPlaylistTest(BeetsTestCase):
     def test_build_queries(self):
         spl = SmartPlaylistPlugin()
         self.assertIsNone(spl._matched_playlists)
@@ -339,7 +338,7 @@ class SmartPlaylistTest(_common.TestCase):
         self.assertEqual(content, b"http://beets:8337/item/3/file\n")
 
 
-class SmartPlaylistCLITest(_common.TestCase, TestHelper):
+class SmartPlaylistCLITest(BeetsTestCase):
     def setUp(self):
         self.setup_beets()
 

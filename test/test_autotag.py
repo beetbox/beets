@@ -22,11 +22,11 @@ from beets import autotag, config
 from beets.autotag import AlbumInfo, TrackInfo, match
 from beets.autotag.hooks import Distance, string_dist
 from beets.library import Item
-from beets.test import _common
+from beets.test.helper import BeetsTestCase
 from beets.util import plurality
 
 
-class PluralityTest(_common.TestCase):
+class PluralityTest(BeetsTestCase):
     def test_plurality_consensus(self):
         objs = [1, 1, 1, 1]
         obj, freq = plurality(objs)
@@ -146,7 +146,7 @@ def _clear_weights():
     Distance.__dict__["_weights"].cache = {}
 
 
-class DistanceTest(_common.TestCase):
+class DistanceTest(BeetsTestCase):
     def tearDown(self):
         super().tearDown()
         _clear_weights()
@@ -330,7 +330,7 @@ class DistanceTest(_common.TestCase):
         )
 
 
-class TrackDistanceTest(_common.TestCase):
+class TrackDistanceTest(BeetsTestCase):
     def test_identical_tracks(self):
         item = _make_item("one", 1)
         info = _make_trackinfo()[0]
@@ -358,7 +358,7 @@ class TrackDistanceTest(_common.TestCase):
         self.assertEqual(dist, 0.0)
 
 
-class AlbumDistanceTest(_common.TestCase):
+class AlbumDistanceTest(BeetsTestCase):
     def _mapping(self, items, info):
         out = {}
         for i, t in zip(items, info.tracks):
@@ -664,7 +664,7 @@ class ApplyTestUtil:
         autotag.apply_metadata(info, mapping)
 
 
-class ApplyTest(_common.TestCase, ApplyTestUtil):
+class ApplyTest(BeetsTestCase, ApplyTestUtil):
     def setUp(self):
         super().setUp()
 
@@ -925,7 +925,7 @@ class ApplyTest(_common.TestCase, ApplyTestUtil):
         self.assertEqual(self.items[0].data_source, "MusicBrainz")
 
 
-class ApplyCompilationTest(_common.TestCase, ApplyTestUtil):
+class ApplyCompilationTest(BeetsTestCase, ApplyTestUtil):
     def setUp(self):
         super().setUp()
 
@@ -1073,7 +1073,7 @@ class StringDistanceTest(unittest.TestCase):
         self.assertEqual(dist, 0.0)
 
 
-class EnumTest(_common.TestCase):
+class EnumTest(BeetsTestCase):
     """
     Test Enum Subclasses defined in beets.util.enumeration
     """

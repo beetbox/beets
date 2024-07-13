@@ -25,10 +25,11 @@ import beets.library
 from beets import util
 from beets.test import _common
 from beets.test._common import item, touch
+from beets.test.helper import BeetsTestCase
 from beets.util import MoveOperation, bytestring_path, syspath
 
 
-class MoveTest(_common.TestCase):
+class MoveTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
@@ -207,7 +208,7 @@ class MoveTest(_common.TestCase):
         self.assertEqual(self.i.path, util.normpath(self.dest))
 
 
-class HelperTest(_common.TestCase):
+class HelperTest(BeetsTestCase):
     def test_ancestry_works_on_file(self):
         p = "/a/b/c"
         a = ["/", "/a", "/a/b"]
@@ -244,7 +245,7 @@ class HelperTest(_common.TestCase):
         self.assertEqual(util.path_as_posix(p), a)
 
 
-class AlbumFileTest(_common.TestCase):
+class AlbumFileTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
@@ -311,7 +312,7 @@ class AlbumFileTest(_common.TestCase):
         self.assertIn(b"testotherdir", self.i.path)
 
 
-class ArtFileTest(_common.TestCase):
+class ArtFileTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
@@ -485,7 +486,7 @@ class ArtFileTest(_common.TestCase):
         self.assertExists(oldartpath)
 
 
-class RemoveTest(_common.TestCase):
+class RemoveTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
@@ -546,7 +547,7 @@ class RemoveTest(_common.TestCase):
 
 
 # Tests that we can "delete" nonexistent files.
-class SoftRemoveTest(_common.TestCase):
+class SoftRemoveTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
@@ -564,7 +565,7 @@ class SoftRemoveTest(_common.TestCase):
             self.fail("OSError when removing path")
 
 
-class SafeMoveCopyTest(_common.TestCase):
+class SafeMoveCopyTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
@@ -612,7 +613,7 @@ class SafeMoveCopyTest(_common.TestCase):
         self.assertExists(self.path)
 
 
-class PruneTest(_common.TestCase):
+class PruneTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
@@ -632,7 +633,7 @@ class PruneTest(_common.TestCase):
         self.assertNotExists(self.sub)
 
 
-class WalkTest(_common.TestCase):
+class WalkTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
@@ -666,7 +667,7 @@ class WalkTest(_common.TestCase):
         self.assertEqual(res[0], (self.base, [], []))
 
 
-class UniquePathTest(_common.TestCase):
+class UniquePathTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
@@ -694,7 +695,7 @@ class UniquePathTest(_common.TestCase):
         self.assertEqual(path, os.path.join(self.base, b"x.3.mp3"))
 
 
-class MkDirAllTest(_common.TestCase):
+class MkDirAllTest(BeetsTestCase):
     def test_parent_exists(self):
         path = os.path.join(self.temp_dir, b"foo", b"bar", b"baz", b"qux.mp3")
         util.mkdirall(path)

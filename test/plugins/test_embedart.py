@@ -47,7 +47,6 @@ class EmbedartCliTest(TestHelper, FetchImageHelper):
     abbey_differentpath = os.path.join(_common.RSRC, b"abbey-different.jpg")
 
     def setUp(self):
-        self.io = _common.DummyIO()
         self.io.install()
         self.setup_beets()  # Converter is threaded
         self.load_plugins("embedart")

@@ -22,8 +22,8 @@ import unittest
 from mediafile import MediaFile
 
 from beets import util
-from beets.test import _common, helper
-from beets.test.helper import capture_log, control_stdin
+from beets.test import _common
+from beets.test.helper import BeetsTestCase, capture_log, control_stdin
 from beets.util import bytestring_path, displayable_path
 
 
@@ -33,7 +33,7 @@ def shell_quote(text):
     return shlex.quote(text)
 
 
-class TestHelper(helper.TestHelper):
+class ConvertMixin:
     def tagged_copy_cmd(self, tag):
         """Return a conversion command that copies files and appends
         `tag` to the copy.
@@ -84,8 +84,12 @@ class TestHelper(helper.TestHelper):
             )
 
 
+class ConvertTestCase(BeetsTestCase, ConvertMixin):
+    pass
+
+
 @_common.slow_test()
-class ImportConvertTest(_common.TestCase, TestHelper):
+class ImportConvertTest(ConvertTestCase):
     def setUp(self):
         self.setup_beets(disk=True)  # Converter is threaded
         self.importer = self.create_importer()
@@ -163,7 +167,7 @@ class ConvertCommand:
 
 
 @_common.slow_test()
-class ConvertCliTest(_common.TestCase, TestHelper, ConvertCommand):
+class ConvertCliTest(ConvertTestCase, ConvertCommand):
     def setUp(self):
         self.setup_beets(disk=True)  # Converter is threaded
         self.album = self.add_album_fixture(ext="ogg")
@@ -310,7 +314,7 @@ class ConvertCliTest(_common.TestCase, TestHelper, ConvertCommand):
 
 
 @_common.slow_test()
-class NeverConvertLossyFilesTest(_common.TestCase, TestHelper, ConvertCommand):
+class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
     """Test the effect of the `never_convert_lossy_files` option."""
 
     def setUp(self):

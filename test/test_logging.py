@@ -10,10 +10,10 @@ import beets.logging as blog
 import beetsplug
 from beets import plugins, ui
 from beets.test import _common, helper
-from beets.test._common import TestCase
+from beets.test.helper import BeetsTestCase
 
 
-class LoggingTest(TestCase):
+class LoggingTest(BeetsTestCase):
     def test_logging_management(self):
         l1 = log.getLogger("foo123")
         l2 = blog.getLogger("foo123")
@@ -162,7 +162,7 @@ class LoggingLevelTest(unittest.TestCase, helper.TestHelper):
 
 
 @_common.slow_test()
-class ConcurrentEventsTest(TestCase, helper.TestHelper):
+class ConcurrentEventsTest(BeetsTestCase):
     """Similar to LoggingLevelTest but lower-level and focused on multiple
     events interaction. Since this is a bit heavy we don't do it in
     LoggingLevelTest.

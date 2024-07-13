@@ -15,7 +15,6 @@
 """Some common functionality for beets' test cases."""
 
 import os
-import shutil
 import sys
 import tempfile
 import unittest
@@ -183,70 +182,6 @@ class Assertions:
             util.normpath(b),
             f"paths are not equal: {a!r} and {b!r}",
         )
-
-
-# A test harness for all beets tests.
-# Provides temporary, isolated configuration.
-class TestCase(unittest.TestCase, Assertions):
-    """A unittest.TestCase subclass that saves and restores beets'
-    global configuration. This allows tests to make temporary
-    modifications that will then be automatically removed when the test
-    completes. Also provides some additional assertion methods, a
-    temporary directory, and a DummyIO.
-    """
-
-    def setUp(self):
-        # A "clean" source list including only the defaults.
-        beets.config.sources = []
-        beets.config.read(user=False, defaults=True)
-
-        # Direct paths to a temporary directory. Tests can also use this
-        # temporary directory.
-        self.temp_dir = util.bytestring_path(tempfile.mkdtemp())
-
-        beets.config["statefile"] = os.fsdecode(
-            os.path.join(self.temp_dir, b"state.pickle")
-        )
-        beets.config["library"] = os.fsdecode(
-            os.path.join(self.temp_dir, b"library.db")
-        )
-        beets.config["directory"] = os.fsdecode(
-            os.path.join(self.temp_dir, b"libdir")
-        )
-
-        # Set $HOME, which is used by Confuse to create directories.
-        self._old_home = os.environ.get("HOME")
-        os.environ["HOME"] = os.fsdecode(self.temp_dir)
-
-        # Initialize, but don't install, a DummyIO.
-        self.io = DummyIO()
-
-    def tearDown(self):
-        if os.path.isdir(syspath(self.temp_dir)):
-            shutil.rmtree(syspath(self.temp_dir))
-        if self._old_home is None:
-            del os.environ["HOME"]
-        else:
-            os.environ["HOME"] = self._old_home
-        self.io.restore()
-
-        beets.config.clear()
-        beets.config._materialized = False
-
-
-class LibTestCase(TestCase):
-    """A test case that includes an in-memory library object (`lib`) and
-    an item added to the library (`i`).
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.lib = beets.library.Library(":memory:")
-        self.i = item(self.lib)
-
-    def tearDown(self):
-        self.lib._connection().close()
-        super().tearDown()
 
 
 # Mock I/O.

@@ -24,6 +24,7 @@ from unittest.mock import Mock, patch
 
 from beets import util
 from beets.test import _common
+from beets.test.helper import BeetsTestCase
 
 
 class UtilTest(unittest.TestCase):
@@ -157,7 +158,7 @@ class UtilTest(unittest.TestCase):
         pass
 
 
-class PathConversionTest(_common.TestCase):
+class PathConversionTest(BeetsTestCase):
     def test_syspath_windows_format(self):
         with _common.platform_windows():
             path = os.path.join("a", "b", "c")
@@ -200,7 +201,7 @@ class PathConversionTest(_common.TestCase):
         self.assertEqual(outpath, "C:\\caf\xe9".encode())
 
 
-class PathTruncationTest(_common.TestCase):
+class PathTruncationTest(BeetsTestCase):
     def test_truncate_bytestring(self):
         with _common.platform_posix():
             p = util.truncate_path(b"abcde/fgh", 4)

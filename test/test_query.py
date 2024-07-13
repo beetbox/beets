@@ -31,6 +31,7 @@ from beets.dbcore.query import (
 )
 from beets.library import Item, Library
 from beets.test import _common, helper
+from beets.test.helper import BeetsTestCase, LibTestCase
 from beets.util import syspath
 
 # Because the absolute path begins with something like C:, we
@@ -48,7 +49,7 @@ class TestHelper(helper.TestHelper):
         self.assertNotIn(item.id, result_ids)
 
 
-class AnyFieldQueryTest(_common.LibTestCase):
+class AnyFieldQueryTest(LibTestCase):
     def test_no_restriction(self):
         q = dbcore.query.AnyFieldQuery(
             "title",
@@ -92,7 +93,7 @@ class AssertsMixin:
 
 # A test case class providing a library with some dummy data and some
 # assertions involving that data.
-class DummyDataTestCase(_common.TestCase, AssertsMixin):
+class DummyDataTestCase(BeetsTestCase, AssertsMixin):
     def setUp(self):
         super().setUp()
         self.lib = beets.library.Library(":memory:")
@@ -418,7 +419,7 @@ class GetTest(DummyDataTestCase):
         self.assertIsInstance(raised.exception, ParsingError)
 
 
-class MatchTest(_common.TestCase):
+class MatchTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.item = _common.item()
@@ -487,7 +488,7 @@ class MatchTest(_common.TestCase):
         self.assertNotEqual(q3, q4)
 
 
-class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
+class PathQueryTest(LibTestCase, TestHelper, AssertsMixin):
     def setUp(self):
         super().setUp()
 
@@ -871,7 +872,7 @@ class NoneQueryTest(unittest.TestCase, TestHelper):
         self.assertInResult(item, matched)
 
 
-class NotQueryMatchTest(_common.TestCase):
+class NotQueryMatchTest(BeetsTestCase):
     """Test `query.NotQuery` matching against a single item, using the same
     cases and assertions as on `MatchTest`, plus assertion on the negated
     queries (ie. assertTrue(q) -> assertFalse(NotQuery(q))).
@@ -1129,7 +1130,7 @@ class NotQueryTest(DummyDataTestCase):
                 pass
 
 
-class RelatedQueriesTest(_common.TestCase, AssertsMixin):
+class RelatedQueriesTest(BeetsTestCase, AssertsMixin):
     """Test album-level queries with track-level filters and vice-versa."""
 
     def setUp(self):
