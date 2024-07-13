@@ -31,7 +31,7 @@ from beets.dbcore.query import (
 )
 from beets.library import Item, Library
 from beets.test import _common
-from beets.test.helper import BeetsTestCase, LibTestCase
+from beets.test.helper import BeetsTestCase, ItemInDBTestCase
 from beets.util import syspath
 
 # Because the absolute path begins with something like C:, we
@@ -55,7 +55,7 @@ class AssertsMixin:
         self.assertNotIn(item.id, result_ids)
 
 
-class AnyFieldQueryTest(LibTestCase):
+class AnyFieldQueryTest(ItemInDBTestCase):
     def test_no_restriction(self):
         q = dbcore.query.AnyFieldQuery(
             "title",
@@ -486,7 +486,7 @@ class MatchTest(BeetsTestCase):
         self.assertNotEqual(q3, q4)
 
 
-class PathQueryTest(LibTestCase, AssertsMixin):
+class PathQueryTest(ItemInDBTestCase, AssertsMixin):
     def setUp(self):
         super().setUp()
 

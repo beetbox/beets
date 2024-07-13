@@ -32,14 +32,14 @@ import beets.library
 from beets import config, plugins, util
 from beets.test import _common
 from beets.test._common import item
-from beets.test.helper import BeetsTestCase, LibTestCase
+from beets.test.helper import BeetsTestCase, ItemInDBTestCase
 from beets.util import bytestring_path, syspath
 
 # Shortcut to path normalization.
 np = util.normpath
 
 
-class LoadTest(LibTestCase):
+class LoadTest(ItemInDBTestCase):
     def test_load_restores_data_from_db(self):
         original_title = self.i.title
         self.i.title = "something"
@@ -53,7 +53,7 @@ class LoadTest(LibTestCase):
         self.assertNotIn("artist", self.i._dirty)
 
 
-class StoreTest(LibTestCase):
+class StoreTest(ItemInDBTestCase):
     def test_store_changes_database_value(self):
         self.i.year = 1987
         self.i.store()
@@ -126,7 +126,7 @@ class AddTest(BeetsTestCase):
         self.assertEqual(new_grouping, self.i.grouping)
 
 
-class RemoveTest(LibTestCase):
+class RemoveTest(ItemInDBTestCase):
     def test_remove_deletes_from_db(self):
         self.i.remove()
         c = self.lib._connection().execute("select * from items")
@@ -547,7 +547,7 @@ class DestinationTest(BeetsTestCase):
         self.assertEqual(self.i.destination(), np("one/foo/two"))
 
 
-class ItemFormattedMappingTest(LibTestCase):
+class ItemFormattedMappingTest(ItemInDBTestCase):
     def test_formatted_item_value(self):
         formatted = self.i.formatted()
         self.assertEqual(formatted["artist"], "the artist")
@@ -1228,7 +1228,7 @@ class ImportTimeTest(BeetsTestCase):
         self.assertGreater(self.singleton.added, 0)
 
 
-class TemplateTest(LibTestCase):
+class TemplateTest(ItemInDBTestCase):
     def test_year_formatted_in_template(self):
         self.i.year = 123
         self.i.store()
@@ -1258,7 +1258,7 @@ class TemplateTest(LibTestCase):
         self.assertEqual(f"{item:$tagada}", "togodo")
 
 
-class UnicodePathTest(LibTestCase):
+class UnicodePathTest(ItemInDBTestCase):
     def test_unicode_path(self):
         self.i.path = os.path.join(_common.RSRC, "unicode\u2019d.mp3".encode())
         # If there are any problems with unicode paths, we will raise

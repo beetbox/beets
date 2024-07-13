@@ -25,7 +25,7 @@ from beets.dbcore.query import (
     InvalidQueryArgumentValueError,
     _parse_periods,
 )
-from beets.test.helper import LibTestCase
+from beets.test.helper import ItemInDBTestCase
 
 
 def _date(string):
@@ -152,7 +152,7 @@ def _parsetime(s):
     return time.mktime(datetime.strptime(s, "%Y-%m-%d %H:%M").timetuple())
 
 
-class DateQueryTest(LibTestCase):
+class DateQueryTest(ItemInDBTestCase):
     def setUp(self):
         super().setUp()
         self.i.added = _parsetime("2013-03-30 22:21")
@@ -187,7 +187,7 @@ class DateQueryTest(LibTestCase):
         self.assertEqual(len(matched), 0)
 
 
-class DateQueryTestRelative(LibTestCase):
+class DateQueryTestRelative(ItemInDBTestCase):
     def setUp(self):
         super().setUp()
 
@@ -233,7 +233,7 @@ class DateQueryTestRelative(LibTestCase):
         self.assertEqual(len(matched), 0)
 
 
-class DateQueryTestRelativeMore(LibTestCase):
+class DateQueryTestRelativeMore(ItemInDBTestCase):
     def setUp(self):
         super().setUp()
         self.i.added = _parsetime(datetime.now().strftime("%Y-%m-%d %H:%M"))
