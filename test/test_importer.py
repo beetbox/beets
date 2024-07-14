@@ -311,7 +311,7 @@ class ImportSingletonTest(ImportTestCase):
     def setUp(self):
         super().setUp()
         self.prepare_album_for_import(1)
-        self.setup_importer(singletons=True)
+        self.importer = self.setup_singleton_importer()
         self.matcher = AutotagStub().install()
 
     def tearDown(self):
@@ -560,7 +560,7 @@ class ImportTest(ImportTestCase):
     def test_empty_directory_singleton_warning(self):
         import_dir = os.path.join(self.temp_dir, b"empty")
         self.touch(b"non-audio", dir=import_dir)
-        self.setup_importer(import_dir=import_dir, singletons=True)
+        self.setup_singleton_importer(import_dir=import_dir)
         with capture_log() as logs:
             self.importer.run()
 
@@ -1251,8 +1251,8 @@ class ImportDuplicateSingletonTest(ImportTestCase):
 
         # Import session
         self.prepare_album_for_import(1)
-        self.importer = self.setup_importer(
-            duplicate_keys={"album": "artist title"}, singletons=True
+        self.importer = self.setup_singleton_importer(
+            duplicate_keys={"album": "artist title"}
         )
 
     def test_remove_duplicate(self):
@@ -1351,8 +1351,8 @@ class ResumeImportTest(ImportTestCase):
     @patch("beets.plugins.send")
     def test_resume_singleton(self, plugins_send):
         self.prepare_album_for_import(2)
-        self.importer = self.setup_importer(
-            autotag=False, resume=True, singletons=True
+        self.importer = self.setup_singleton_importer(
+            autotag=False, resume=True
         )
 
         # Aborts import after one track. This also ensures that we skip
@@ -1718,10 +1718,8 @@ class ImportPretendTest(ImportTestCase):
         os.makedirs(syspath(path))
         self.empty_path = path
 
-    def __run(self, import_paths, singletons=True):
-        self.setup_importer(singletons=singletons)
+    def __run(self, import_paths):
         self.importer.paths = import_paths
-
         with capture_log() as logs:
             self.importer.run()
 
@@ -1733,6 +1731,7 @@ class ImportPretendTest(ImportTestCase):
         return logs
 
     def test_import_singletons_pretend(self):
+        self.importer = self.setup_singleton_importer()
         logs = self.__run(self.import_paths)
 
         self.assertEqual(
@@ -1744,7 +1743,8 @@ class ImportPretendTest(ImportTestCase):
         )
 
     def test_import_album_pretend(self):
-        logs = self.__run(self.import_paths, singletons=False)
+        self.importer = self.setup_importer()
+        logs = self.__run(self.import_paths)
 
         self.assertEqual(
             logs,
@@ -1757,6 +1757,7 @@ class ImportPretendTest(ImportTestCase):
         )
 
     def test_import_pretend_empty(self):
+        self.importer = self.setup_importer()
         logs = self.__run([self.empty_path])
 
         self.assertEqual(
@@ -1907,9 +1908,8 @@ class ImportMusicBrainzIdTest(ImportTestCase):
         self.assertEqual(self.lib.albums().get().album, "VALID_RELEASE_1")
 
     def test_one_mbid_one_singleton(self):
-        self.setup_importer(
-            search_ids=[self.MB_RECORDING_PREFIX + self.ID_RECORDING_0],
-            singletons=True,
+        self.setup_singleton_importer(
+            search_ids=[self.MB_RECORDING_PREFIX + self.ID_RECORDING_0]
         )
 
         self.importer.add_choice(importer.action.APPLY)
@@ -1917,12 +1917,11 @@ class ImportMusicBrainzIdTest(ImportTestCase):
         self.assertEqual(self.lib.items().get().title, "VALID_RECORDING_0")
 
     def test_several_mbid_one_singleton(self):
-        self.setup_importer(
+        self.setup_singleton_importer(
             search_ids=[
                 self.MB_RECORDING_PREFIX + self.ID_RECORDING_0,
                 self.MB_RECORDING_PREFIX + self.ID_RECORDING_1,
-            ],
-            singletons=True,
+            ]
         )
 
         self.importer.add_choice(2)  # Pick the 2nd best match (recording 1).
