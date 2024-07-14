@@ -18,6 +18,7 @@
 
 import os
 import shutil
+from typing import ClassVar
 
 from mediafile import MediaFile
 
@@ -28,12 +29,23 @@ from beets.util import bytestring_path, displayable_path, syspath
 from beetsplug.filefilter import FileFilterPlugin
 
 
-class FileFilterPluginTest(ImportTestCase):
+class FileFilterPluginMixin(ImportTestCase):
+    singletons: ClassVar[bool]
+
     def setUp(self):
         super().setUp()
         self.__create_import_dir(2)
         self._setup_import_session()
         config["import"]["pretend"] = True
+
+        import_files = [self.import_dir]
+        self._setup_import_session(singletons=self.singletons)
+        self.importer.paths = import_files
+
+    def tearDown(self):
+        self.unload_plugins()
+        FileFilterPlugin.listeners = None
+        super().tearDown()
 
     def __copy_file(self, dest_path, metadata):
         # Copy files
@@ -89,25 +101,22 @@ class FileFilterPluginTest(ImportTestCase):
             self.__copy_file(dest_path, metadata)
             self.misc_paths.append(dest_path)
 
-    def __run(self, expected_lines, singletons=False):
+    def _run(self, expected_lines):
         self.load_plugins("filefilter")
-
-        import_files = [self.import_dir]
-        self._setup_import_session(singletons=singletons)
-        self.importer.paths = import_files
-
         with capture_log() as logs:
             self.importer.run()
-        self.unload_plugins()
-        FileFilterPlugin.listeners = None
 
         logs = [line for line in logs if not line.startswith("Sending event:")]
 
         self.assertEqual(logs, expected_lines)
 
+
+class FileFilterPluginNonSingletonTest(FileFilterPluginMixin):
+    singletons = False
+
     def test_import_default(self):
         """The default configuration should import everything."""
-        self.__run(
+        self._run(
             [
                 "Album: %s" % displayable_path(self.artist_path),
                 "  %s" % displayable_path(self.artist_paths[0]),
@@ -123,14 +132,14 @@ class FileFilterPluginTest(ImportTestCase):
 
     def test_import_nothing(self):
         config["filefilter"]["path"] = "not_there"
-        self.__run(
+        self._run(
             ["No files imported from %s" % displayable_path(self.import_dir)]
         )
 
     # Global options
     def test_import_global(self):
         config["filefilter"]["path"] = ".*track_1.*\\.mp3"
-        self.__run(
+        self._run(
             [
                 "Album: %s" % displayable_path(self.artist_path),
                 "  %s" % displayable_path(self.artist_paths[0]),
@@ -138,18 +147,10 @@ class FileFilterPluginTest(ImportTestCase):
                 "  %s" % displayable_path(self.misc_paths[0]),
             ]
         )
-        self.__run(
-            [
-                "Singleton: %s" % displayable_path(self.artist_paths[0]),
-                "Singleton: %s" % displayable_path(self.misc_paths[0]),
-            ],
-            singletons=True,
-        )
 
-    # Album options
     def test_import_album(self):
         config["filefilter"]["album_path"] = ".*track_1.*\\.mp3"
-        self.__run(
+        self._run(
             [
                 "Album: %s" % displayable_path(self.artist_path),
                 "  %s" % displayable_path(self.artist_paths[0]),
@@ -157,29 +158,10 @@ class FileFilterPluginTest(ImportTestCase):
                 "  %s" % displayable_path(self.misc_paths[0]),
             ]
         )
-        self.__run(
-            [
-                "Singleton: %s" % displayable_path(self.artist_paths[0]),
-                "Singleton: %s" % displayable_path(self.artist_paths[1]),
-                "Singleton: %s" % displayable_path(self.album_paths[0]),
-                "Singleton: %s" % displayable_path(self.album_paths[1]),
-                "Singleton: %s" % displayable_path(self.misc_paths[0]),
-                "Singleton: %s" % displayable_path(self.misc_paths[1]),
-            ],
-            singletons=True,
-        )
 
-    # Singleton options
     def test_import_singleton(self):
         config["filefilter"]["singleton_path"] = ".*track_1.*\\.mp3"
-        self.__run(
-            [
-                "Singleton: %s" % displayable_path(self.artist_paths[0]),
-                "Singleton: %s" % displayable_path(self.misc_paths[0]),
-            ],
-            singletons=True,
-        )
-        self.__run(
+        self._run(
             [
                 "Album: %s" % displayable_path(self.artist_path),
                 "  %s" % displayable_path(self.artist_paths[0]),
@@ -196,8 +178,7 @@ class FileFilterPluginTest(ImportTestCase):
     # Album and singleton options
     def test_import_both(self):
         config["filefilter"]["album_path"] = ".*track_1.*\\.mp3"
-        config["filefilter"]["singleton_path"] = ".*track_2.*\\.mp3"
-        self.__run(
+        self._run(
             [
                 "Album: %s" % displayable_path(self.artist_path),
                 "  %s" % displayable_path(self.artist_paths[0]),
@@ -205,10 +186,50 @@ class FileFilterPluginTest(ImportTestCase):
                 "  %s" % displayable_path(self.misc_paths[0]),
             ]
         )
-        self.__run(
+
+
+class FileFilterPluginSingletonTest(FileFilterPluginMixin):
+    singletons = True
+
+    def test_import_global(self):
+        config["filefilter"]["path"] = ".*track_1.*\\.mp3"
+        self._run(
+            [
+                "Singleton: %s" % displayable_path(self.artist_paths[0]),
+                "Singleton: %s" % displayable_path(self.misc_paths[0]),
+            ]
+        )
+
+    # Album options
+    def test_import_album(self):
+        config["filefilter"]["album_path"] = ".*track_1.*\\.mp3"
+        self._run(
+            [
+                "Singleton: %s" % displayable_path(self.artist_paths[0]),
+                "Singleton: %s" % displayable_path(self.artist_paths[1]),
+                "Singleton: %s" % displayable_path(self.album_paths[0]),
+                "Singleton: %s" % displayable_path(self.album_paths[1]),
+                "Singleton: %s" % displayable_path(self.misc_paths[0]),
+                "Singleton: %s" % displayable_path(self.misc_paths[1]),
+            ]
+        )
+
+    # Singleton options
+    def test_import_singleton(self):
+        config["filefilter"]["singleton_path"] = ".*track_1.*\\.mp3"
+        self._run(
+            [
+                "Singleton: %s" % displayable_path(self.artist_paths[0]),
+                "Singleton: %s" % displayable_path(self.misc_paths[0]),
+            ]
+        )
+
+    # Album and singleton options
+    def test_import_both(self):
+        config["filefilter"]["singleton_path"] = ".*track_2.*\\.mp3"
+        self._run(
             [
                 "Singleton: %s" % displayable_path(self.artist_paths[1]),
                 "Singleton: %s" % displayable_path(self.misc_paths[1]),
-            ],
-            singletons=True,
+            ]
         )
