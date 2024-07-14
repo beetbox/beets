@@ -521,10 +521,14 @@ class ImportHelper(TestHelper):
     importer: ImportSession
 
     @cached_property
-    def import_dir(self):
-        import_dir = os.path.join(self.temp_dir, b"import")
-        os.makedirs(syspath(import_dir), exist_ok=True)
-        return import_dir
+    def import_path(self) -> Path:
+        import_path = Path(os.fsdecode(self.temp_dir)) / "import"
+        import_path.mkdir(exist_ok=True)
+        return import_path
+
+    @cached_property
+    def import_dir(self) -> bytes:
+        return bytestring_path(self.import_path)
 
     def setUp(self):
         super().setUp()
@@ -538,13 +542,12 @@ class ImportHelper(TestHelper):
     def prepare_track_for_import(
         self,
         track_id: int,
-        album_path: bytes,
+        album_path: Path,
         album_id: int | None = None,
-    ) -> MediaFile:
-        filename = bytestring_path(f"track_{track_id}.mp3")
-        medium_path = os.path.join(album_path, filename)
-        shutil.copy(self.resource_path, syspath(medium_path))
-        medium = MediaFile(medium_path)
+    ) -> Path:
+        track_path = album_path / f"track_{track_id}.mp3"
+        shutil.copy(self.resource_path, track_path)
+        medium = MediaFile(track_path)
         medium.update(
             {
                 "album": "Tag Album" + (f" {album_id}" if album_id else ""),
@@ -558,11 +561,12 @@ class ImportHelper(TestHelper):
             }
         )
         medium.save()
-        return medium
+        self.import_media.append(medium)
+        return track_path
 
     def prepare_album_for_import(
         self, item_count: int, album_id: int | None = None
-    ) -> None:
+    ) -> list[Path]:
         """Create an album directory with media files to import.
 
         The directory has following layout
@@ -571,17 +575,14 @@ class ImportHelper(TestHelper):
             track_2.mp3
             track_3.mp3
         """
-        album_path = os.path.join(
-            self.import_dir,
-            bytestring_path(f"album_{album_id}" if album_id else "album"),
-        )
-        os.makedirs(syspath(album_path), exist_ok=True)
+        album_dir = f"album_{album_id}" if album_id else "album"
+        album_path = self.import_path / album_dir
+        album_path.mkdir(exist_ok=True)
 
-        mediums = [
+        return [
             self.prepare_track_for_import(tid, album_path, album_id=album_id)
             for tid in range(1, item_count + 1)
         ]
-        self.import_media.extend(mediums)
 
     def prepare_albums_for_import(self, count: int = 1) -> None:
         album_dirs = Path(os.fsdecode(self.import_dir)).glob("album_*")
@@ -590,7 +591,7 @@ class ImportHelper(TestHelper):
         for album_id in range(base_idx, count + base_idx):
             self.prepare_album_for_import(1, album_id=album_id)
 
-    def _get_import_session(self, import_dir: str) -> ImportSession:
+    def _get_import_session(self, import_dir: bytes) -> ImportSession:
         return ImportSessionFixture(
             self.lib,
             loghandler=None,
@@ -599,7 +600,7 @@ class ImportHelper(TestHelper):
         )
 
     def setup_importer(
-        self, import_dir: str | None = None, **kwargs
+        self, import_dir: bytes | None = None, **kwargs
     ) -> ImportSession:
         config["import"].set_args({**self.default_import_config, **kwargs})
         self.importer = self._get_import_session(import_dir or self.import_dir)
@@ -755,7 +756,7 @@ class TerminalImportMixin(ImportHelper):
 
     io: _common.DummyIO
 
-    def _get_import_session(self, import_dir: str) -> importer.ImportSession:
+    def _get_import_session(self, import_dir: bytes) -> importer.ImportSession:
         self.io.install()
         return TerminalImportSessionFixture(
             self.lib,
