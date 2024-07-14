@@ -23,6 +23,7 @@ import sys
 import unicodedata
 import unittest
 from io import StringIO
+from pathlib import Path
 from tarfile import TarFile
 from tempfile import mkstemp
 from unittest.mock import Mock, patch
@@ -1681,92 +1682,57 @@ class ReimportTest(ImportTestCase):
 class ImportPretendTest(ImportTestCase):
     """Test the pretend commandline option"""
 
-    def __init__(self, method_name="runTest"):
-        super().__init__(method_name)
-        self.matcher = None
-
     def setUp(self):
         super().setUp()
-        self.__create_import_dir()
-        self.__create_empty_import_dir()
-        self.setup_importer(pretend=True)
         self.matcher = AutotagStub().install()
         self.io.install()
+
+        self.album_track_path, *_ = self.prepare_album_for_import(1)
+        self.single_path = self.prepare_track_for_import(2, self.import_path)
+        self.album_path = self.album_track_path.parent
 
     def tearDown(self):
         super().tearDown()
         self.matcher.restore()
 
-    def __create_import_dir(self):
-        self.prepare_album_for_import(1)
-        resource_path = os.path.join(_common.RSRC, b"empty.mp3")
-        single_path = os.path.join(self.import_dir, b"track_2.mp3")
-        shutil.copy(syspath(resource_path), syspath(single_path))
-        self.import_paths = [
-            os.path.join(self.import_dir, b"album"),
-            single_path,
-        ]
-        self.import_files = [
-            displayable_path(
-                os.path.join(self.import_paths[0], b"track_1.mp3")
-            ),
-            displayable_path(single_path),
-        ]
-
-    def __create_empty_import_dir(self):
-        path = os.path.join(self.temp_dir, b"empty")
-        os.makedirs(syspath(path))
-        self.empty_path = path
-
-    def __run(self, import_paths):
-        self.importer.paths = import_paths
+    def __run(self, importer):
         with capture_log() as logs:
-            self.importer.run()
-
-        logs = [line for line in logs if not line.startswith("Sending event:")]
+            importer.run()
 
         self.assertEqual(len(self.lib.items()), 0)
         self.assertEqual(len(self.lib.albums()), 0)
 
-        return logs
+        return [line for line in logs if not line.startswith("Sending event:")]
 
     def test_import_singletons_pretend(self):
-        self.importer = self.setup_singleton_importer()
-        logs = self.__run(self.import_paths)
-
         self.assertEqual(
-            logs,
+            self.__run(self.setup_singleton_importer(pretend=True)),
             [
-                "Singleton: %s" % displayable_path(self.import_files[0]),
-                "Singleton: %s" % displayable_path(self.import_paths[1]),
+                f"Singleton: {self.single_path}",
+                f"Singleton: {self.album_track_path}",
             ],
         )
 
     def test_import_album_pretend(self):
-        self.importer = self.setup_importer()
-        logs = self.__run(self.import_paths)
-
         self.assertEqual(
-            logs,
+            self.__run(self.setup_importer(pretend=True)),
             [
-                "Album: %s" % displayable_path(self.import_paths[0]),
-                "  %s" % displayable_path(self.import_files[0]),
-                "Album: %s" % displayable_path(self.import_paths[1]),
-                "  %s" % displayable_path(self.import_paths[1]),
+                f"Album: {self.import_path}",
+                f"  {self.single_path}",
+                f"Album: {self.album_path}",
+                f"  {self.album_track_path}",
             ],
         )
 
     def test_import_pretend_empty(self):
-        self.importer = self.setup_importer()
-        logs = self.__run([self.empty_path])
+        empty_path = Path(os.fsdecode(self.temp_dir)) / "empty"
+        empty_path.mkdir()
+
+        importer = self.setup_importer(pretend=True, import_dir=empty_path)
 
         self.assertEqual(
-            logs,
-            [
-                "No files imported from {}".format(
-                    displayable_path(self.empty_path)
-                )
-            ],
+            self.__run(importer),
+            [f"No files imported from {empty_path}"],
         )
 
 
