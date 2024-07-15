@@ -750,7 +750,7 @@ class LRCLibLyricsTest(unittest.TestCase):
         self.assertIsNone(lyrics)
 
 
-class LRCLibIntegrationTest(LyricsAssertions):
+class LRCLibIntegrationTest(LyricsAssertions, unittest.TestCase):
     def setUp(self):
         self.plugin = lyrics.LyricsPlugin()
         lrclib.config = self.plugin.config
