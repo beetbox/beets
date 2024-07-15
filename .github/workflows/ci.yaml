@@ -60,7 +60,7 @@ jobs:
         if: matrix.platform == 'windows-latest'
         shell: pwsh
         run: |
-          choco install ffmpeg flac imagemagick -y --no-progress
+          choco install ffmpeg flac -y --no-progress
           if ($LASTEXITCODE -ne 0) {
             throw "Windows system dependency installation failed."
           }
