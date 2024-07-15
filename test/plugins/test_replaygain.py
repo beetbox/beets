@@ -84,12 +84,10 @@ class ThreadedImportMixin:
 
 class BackendMixin:
     plugin_config: ClassVar[dict[str, Any]]
-    has_r128_support: bool
 
 
 class GstBackendMixin(BackendMixin):
     plugin_config: ClassVar[dict[str, Any]] = {"backend": "gstreamer"}
-    has_r128_support = True
 
 
 class CmdBackendMixin(BackendMixin):
@@ -97,12 +95,132 @@ class CmdBackendMixin(BackendMixin):
         "backend": "command",
         "command": GAIN_PROG,
     }
-    has_r128_support = False
 
 
 class FfmpegBackendMixin(BackendMixin):
     plugin_config: ClassVar[dict[str, Any]] = {"backend": "ffmpeg"}
-    has_r128_support = True
+
+
+class R128Test:
+    def test_cli_does_not_skip_wrong_tag_type(self):
+        """Check that items that have tags of the wrong type won't be skipped."""
+        album_rg = self._add_album(1)
+        item_rg = album_rg.items()[0]
+
+        album_r128 = self._add_album(1, ext="opus")
+        item_r128 = album_r128.items()[0]
+
+        item_rg.r128_track_gain = 0.0
+        item_rg.store()
+
+        item_r128.rg_track_gain = 0.0
+        item_r128.rg_track_peak = 42.0
+        item_r128.store()
+
+        self.run_command("replaygain")
+        item_rg.load()
+        item_r128.load()
+
+        assert item_rg.rg_track_gain is not None
+        assert item_rg.rg_track_peak is not None
+        # FIXME: Should the plugin null this field?
+        # assert item_rg.r128_track_gain is None
+
+        assert item_r128.r128_track_gain is not None
+        # FIXME: Should the plugin null these fields?
+        # assert item_r128.rg_track_gain is None
+        # assert item_r128.rg_track_peak is None
+
+    def test_cli_writes_only_r128_tags(self):
+        album = self._add_album(2, ext="opus")
+
+        self.run_command("replaygain", "-a")
+
+        for item in album.items():
+            mediafile = MediaFile(item.path)
+            # does not write REPLAYGAIN_* tags
+            assert mediafile.rg_track_gain is None
+            assert mediafile.rg_album_gain is None
+            # writes R128_* tags
+            assert mediafile.r128_track_gain is not None
+            assert mediafile.r128_album_gain is not None
+
+    def test_targetlevel_has_effect(self):
+        album = self._add_album(1)
+        item = album.items()[0]
+
+        def analyse(target_level):
+            self.config["replaygain"]["targetlevel"] = target_level
+            self.run_command("replaygain", "-f")
+            item.load()
+            return item.rg_track_gain
+
+        gain_relative_to_84 = analyse(84)
+        gain_relative_to_89 = analyse(89)
+
+        assert gain_relative_to_84 != gain_relative_to_89
+
+    def test_r128_targetlevel_has_effect(self):
+        album = self._add_album(1, ext="opus")
+        item = album.items()[0]
+
+        def analyse(target_level):
+            self.config["replaygain"]["r128_targetlevel"] = target_level
+            self.run_command("replaygain", "-f")
+            item.load()
+            return item.r128_track_gain
+
+        gain_relative_to_84 = analyse(84)
+        gain_relative_to_89 = analyse(89)
+
+        assert gain_relative_to_84 != gain_relative_to_89
+
+    def test_r128_cli_skips_calculated_tracks(self):
+        album_r128 = self._add_album(1, ext="opus")
+        item_r128 = album_r128.items()[0]
+
+        self.run_command("replaygain")
+
+        item_r128.load()
+        assert item_r128.r128_track_gain is not None
+        assert item_r128.rg_track_gain is None
+        assert item_r128.rg_track_peak is None
+
+        item_r128.r128_track_gain += 1.0
+        item_r128.store()
+        r128_track_gain = item_r128.r128_track_gain
+
+        self.run_command("replaygain")
+
+        item_r128.load()
+        assert item_r128.r128_track_gain == r128_track_gain
+
+    def test_clears_wrong_tag_type(self):
+        """Check that items that have tags of the wrong type won't be skipped."""
+        album_rg = self._add_album(1)
+        item_rg = album_rg.items()[0]
+
+        album_r128 = self._add_album(1, ext="opus")
+        item_r128 = album_r128.items()[0]
+
+        item_r128.r128_track_gain = 0.0
+        item_r128.store()
+
+        item_rg.rg_track_gain = 0.0
+        item_rg.rg_track_peak = 42.0
+        item_rg.store()
+
+        self.run_command("replaygain")
+        item_rg.load()
+        item_r128.load()
+
+        assert item_rg.rg_track_gain is not None
+        assert item_rg.rg_track_peak is not None
+        assert item_rg.r128_track_gain is None
+
+        assert item_r128.r128_track_gain is not None
+        assert item_r128.rg_track_gain is None
+        assert item_r128.rg_track_peak is None
 
 
 class MetaflacBackendMixin(BackendMixin):
@@ -148,10 +266,6 @@ class ReplayGainCliTest(ReplayGainPluginHelper):
         album_rg = self._add_album(1)
         item_rg = album_rg.items()[0]
 
-        if self.has_r128_support:
-            album_r128 = self._add_album(1, ext="opus")
-            item_r128 = album_r128.items()[0]
-
         self.run_command("replaygain")
 
         item_rg.load()
@@ -165,61 +279,11 @@ class ReplayGainCliTest(ReplayGainPluginHelper):
         rg_track_gain = item_rg.rg_track_gain
         rg_track_peak = item_rg.rg_track_peak
 
-        if self.has_r128_support:
-            item_r128.load()
-            assert item_r128.r128_track_gain is not None
-            assert item_r128.rg_track_gain is None
-            assert item_r128.rg_track_peak is None
-
-            item_r128.r128_track_gain += 1.0
-            item_r128.store()
-            r128_track_gain = item_r128.r128_track_gain
-
         self.run_command("replaygain")
 
         item_rg.load()
         assert item_rg.rg_track_gain == rg_track_gain
         assert item_rg.rg_track_peak == rg_track_peak
-
-        if self.has_r128_support:
-            item_r128.load()
-            assert item_r128.r128_track_gain == r128_track_gain
-
-    def test_cli_does_not_skip_wrong_tag_type(self):
-        """Check that items that have tags of the wrong type won't be skipped."""
-        if not self.has_r128_support:
-            # This test is a lot less interesting if the backend cannot write
-            # both tag types.
-            pytest.skip(
-                f"r128 tags for opus not supported on backend {self.backend}"
-            )
-
-        album_rg = self._add_album(1)
-        item_rg = album_rg.items()[0]
-
-        album_r128 = self._add_album(1, ext="opus")
-        item_r128 = album_r128.items()[0]
-
-        item_rg.r128_track_gain = 0.0
-        item_rg.store()
-
-        item_r128.rg_track_gain = 0.0
-        item_r128.rg_track_peak = 42.0
-        item_r128.store()
-
-        self.run_command("replaygain")
-        item_rg.load()
-        item_r128.load()
-
-        assert item_rg.rg_track_gain is not None
-        assert item_rg.rg_track_peak is not None
-        # FIXME: Should the plugin null this field?
-        # assert item_rg.r128_track_gain is None
-
-        assert item_r128.r128_track_gain is not None
-        # FIXME: Should the plugin null these fields?
-        # assert item_r128.rg_track_gain is None
-        # assert item_r128.rg_track_peak is None
 
     def test_cli_saves_album_gain_to_file(self):
         self._add_album(2)
@@ -245,60 +309,6 @@ class ReplayGainCliTest(ReplayGainPluginHelper):
         assert max(gains) != 0.0
         assert max(peaks) != 0.0
 
-    def test_cli_writes_only_r128_tags(self):
-        if not self.has_r128_support:
-            pytest.skip(
-                f"r128 tags for opus not supported on backend {self.backend}"
-            )
-
-        album = self._add_album(2, ext="opus")
-
-        self.run_command("replaygain", "-a")
-
-        for item in album.items():
-            mediafile = MediaFile(item.path)
-            # does not write REPLAYGAIN_* tags
-            assert mediafile.rg_track_gain is None
-            assert mediafile.rg_album_gain is None
-            # writes R128_* tags
-            assert mediafile.r128_track_gain is not None
-            assert mediafile.r128_album_gain is not None
-
-    def test_targetlevel_has_effect(self):
-        album = self._add_album(1)
-        item = album.items()[0]
-
-        def analyse(target_level):
-            self.config["replaygain"]["targetlevel"] = target_level
-            self.run_command("replaygain", "-f")
-            item.load()
-            return item.rg_track_gain
-
-        gain_relative_to_84 = analyse(84)
-        gain_relative_to_89 = analyse(89)
-
-        assert gain_relative_to_84 != gain_relative_to_89
-
-    def test_r128_targetlevel_has_effect(self):
-        if not self.has_r128_support:
-            pytest.skip(
-                f"r128 tags for opus not supported on backend {self.backend}"
-            )
-
-        album = self._add_album(1, ext="opus")
-        item = album.items()[0]
-
-        def analyse(target_level):
-            self.config["replaygain"]["r128_targetlevel"] = target_level
-            self.run_command("replaygain", "-f")
-            item.load()
-            return item.r128_track_gain
-
-        gain_relative_to_84 = analyse(84)
-        gain_relative_to_89 = analyse(89)
-
-        assert gain_relative_to_84 != gain_relative_to_89
-
     def test_per_disc(self):
         # Use the per_disc option and add a little more concurrency.
         album = self._add_album(track_count=4, disc_count=3)
@@ -311,41 +321,9 @@ class ReplayGainCliTest(ReplayGainPluginHelper):
             assert item.rg_track_gain is not None
             assert item.rg_album_gain is not None
 
-    def test_clears_wrong_tag_type(self):
-        """Check that items that have tags of the wrong type won't be skipped."""
-        if not self.has_r128_support:
-            pytest.skip(
-                f"r128 tags for opus not supported on backend {self.backend}"
-            )
-
-        album_rg = self._add_album(1)
-        item_rg = album_rg.items()[0]
-
-        album_r128 = self._add_album(1, ext="opus")
-        item_r128 = album_r128.items()[0]
-
-        item_r128.r128_track_gain = 0.0
-        item_r128.store()
-
-        item_rg.rg_track_gain = 0.0
-        item_rg.rg_track_peak = 42.0
-        item_rg.store()
-
-        self.run_command("replaygain")
-        item_rg.load()
-        item_r128.load()
-
-        assert item_rg.rg_track_gain is not None
-        assert item_rg.rg_track_peak is not None
-        assert item_rg.r128_track_gain is None
-
-        assert item_r128.r128_track_gain is not None
-        assert item_r128.rg_track_gain is None
-        assert item_r128.rg_track_peak is None
-
 
 @SKIP_GSTREAMER
-class TestReplayGainGstCli(ReplayGainCliTest, GstBackendMixin):
+class TestReplayGainGstCli(R128Test, ReplayGainCliTest, GstBackendMixin):
     FNAME = "full"  # file contains only silence
 
 
@@ -355,12 +333,14 @@ class TestReplayGainCmdCli(ReplayGainCliTest, CmdBackendMixin):
 
 
 @SKIP_FFMPEG
-class TestReplayGainFfmpegCli(ReplayGainCliTest, FfmpegBackendMixin):
+class TestReplayGainFfmpegCli(R128Test, ReplayGainCliTest, FfmpegBackendMixin):
     FNAME = "full"  # file contains only silence
 
 
 @SKIP_FFMPEG
-class TestReplayGainFfmpegNoiseCli(ReplayGainCliTest, FfmpegBackendMixin):
+class TestReplayGainFfmpegNoiseCli(
+    R128Test, ReplayGainCliTest, FfmpegBackendMixin
+):
     FNAME = "whitenoise"
 
 
