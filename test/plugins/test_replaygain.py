@@ -31,17 +31,94 @@ def reset_replaygain(item):
 
 class GstBackendMixin:
     backend = "gstreamer"
-    has_r128_support = True
 
 
 class CmdBackendMixin:
     backend = "command"
-    has_r128_support = False
 
 
 class FfmpegBackendMixin:
     backend = "ffmpeg"
-    has_r128_support = True
+
+
+class R128Test:
+    def test_cli_does_not_skip_wrong_tag_type(self):
+        """Check that items that have tags of the wrong type won't be skipped."""
+        album_rg = self._add_album(1)
+        item_rg = album_rg.items()[0]
+
+        album_r128 = self._add_album(1, ext="opus")
+        item_r128 = album_r128.items()[0]
+
+        item_rg.r128_track_gain = 0.0
+        item_rg.store()
+
+        item_r128.rg_track_gain = 0.0
+        item_r128.rg_track_peak = 42.0
+        item_r128.store()
+
+        self.run_command("replaygain")
+        item_rg.load()
+        item_r128.load()
+
+        self.assertIsNotNone(item_rg.rg_track_gain)
+        self.assertIsNotNone(item_rg.rg_track_peak)
+        # FIXME: Should the plugin null this field?
+        # self.assertIsNone(item_rg.r128_track_gain)
+
+        self.assertIsNotNone(item_r128.r128_track_gain)
+        # FIXME: Should the plugin null these fields?
+        # self.assertIsNone(item_r128.rg_track_gain)
+        # self.assertIsNone(item_r128.rg_track_peak)
+
+    def test_cli_writes_only_r128_tags(self):
+        album = self._add_album(2, ext="opus")
+
+        self.run_command("replaygain", "-a")
+
+        for item in album.items():
+            mediafile = MediaFile(item.path)
+            # does not write REPLAYGAIN_* tags
+            self.assertIsNone(mediafile.rg_track_gain)
+            self.assertIsNone(mediafile.rg_album_gain)
+            # writes R128_* tags
+            self.assertIsNotNone(mediafile.r128_track_gain)
+            self.assertIsNotNone(mediafile.r128_album_gain)
+
+    def test_r128_targetlevel_has_effect(self):
+        album = self._add_album(1, ext="opus")
+        item = album.items()[0]
+
+        def analyse(target_level):
+            self.config["replaygain"]["r128_targetlevel"] = target_level
+            self.run_command("replaygain", "-f")
+            item.load()
+            return item.r128_track_gain
+
+        gain_relative_to_84 = analyse(84)
+        gain_relative_to_89 = analyse(89)
+
+        self.assertNotEqual(gain_relative_to_84, gain_relative_to_89)
+
+    def test_r128_cli_skips_calculated_tracks(self):
+        album_r128 = self._add_album(1, ext="opus")
+        item_r128 = album_r128.items()[0]
+
+        self.run_command("replaygain")
+
+        item_r128.load()
+        self.assertIsNotNone(item_r128.r128_track_gain)
+        self.assertIsNone(item_r128.rg_track_gain)
+        self.assertIsNone(item_r128.rg_track_peak)
+
+        item_r128.r128_track_gain += 1.0
+        item_r128.store()
+        r128_track_gain = item_r128.r128_track_gain
+
+        self.run_command("replaygain")
+
+        item_r128.load()
+        self.assertEqual(item_r128.r128_track_gain, r128_track_gain)
 
 
 class ReplayGainCliTestBase(TestHelper):
@@ -96,10 +173,6 @@ class ReplayGainCliTestBase(TestHelper):
         album_rg = self._add_album(1)
         item_rg = album_rg.items()[0]
 
-        if self.has_r128_support:
-            album_r128 = self._add_album(1, ext="opus")
-            item_r128 = album_r128.items()[0]
-
         self.run_command("replaygain")
 
         item_rg.load()
@@ -113,63 +186,11 @@ class ReplayGainCliTestBase(TestHelper):
         rg_track_gain = item_rg.rg_track_gain
         rg_track_peak = item_rg.rg_track_peak
 
-        if self.has_r128_support:
-            item_r128.load()
-            self.assertIsNotNone(item_r128.r128_track_gain)
-            self.assertIsNone(item_r128.rg_track_gain)
-            self.assertIsNone(item_r128.rg_track_peak)
-
-            item_r128.r128_track_gain += 1.0
-            item_r128.store()
-            r128_track_gain = item_r128.r128_track_gain
-
         self.run_command("replaygain")
 
         item_rg.load()
         self.assertEqual(item_rg.rg_track_gain, rg_track_gain)
         self.assertEqual(item_rg.rg_track_peak, rg_track_peak)
-
-        if self.has_r128_support:
-            item_r128.load()
-            self.assertEqual(item_r128.r128_track_gain, r128_track_gain)
-
-    def test_cli_does_not_skip_wrong_tag_type(self):
-        """Check that items that have tags of the wrong type won't be skipped."""
-        if not self.has_r128_support:
-            # This test is a lot less interesting if the backend cannot write
-            # both tag types.
-            self.skipTest(
-                "r128 tags for opus not supported on backend {}".format(
-                    self.backend
-                )
-            )
-
-        album_rg = self._add_album(1)
-        item_rg = album_rg.items()[0]
-
-        album_r128 = self._add_album(1, ext="opus")
-        item_r128 = album_r128.items()[0]
-
-        item_rg.r128_track_gain = 0.0
-        item_rg.store()
-
-        item_r128.rg_track_gain = 0.0
-        item_r128.rg_track_peak = 42.0
-        item_r128.store()
-
-        self.run_command("replaygain")
-        item_rg.load()
-        item_r128.load()
-
-        self.assertIsNotNone(item_rg.rg_track_gain)
-        self.assertIsNotNone(item_rg.rg_track_peak)
-        # FIXME: Should the plugin null this field?
-        # self.assertIsNone(item_rg.r128_track_gain)
-
-        self.assertIsNotNone(item_r128.r128_track_gain)
-        # FIXME: Should the plugin null these fields?
-        # self.assertIsNone(item_r128.rg_track_gain)
-        # self.assertIsNone(item_r128.rg_track_peak)
 
     def test_cli_saves_album_gain_to_file(self):
         self._add_album(2)
@@ -195,27 +216,6 @@ class ReplayGainCliTestBase(TestHelper):
         self.assertNotEqual(max(gains), 0.0)
         self.assertNotEqual(max(peaks), 0.0)
 
-    def test_cli_writes_only_r128_tags(self):
-        if not self.has_r128_support:
-            self.skipTest(
-                "r128 tags for opus not supported on backend {}".format(
-                    self.backend
-                )
-            )
-
-        album = self._add_album(2, ext="opus")
-
-        self.run_command("replaygain", "-a")
-
-        for item in album.items():
-            mediafile = MediaFile(item.path)
-            # does not write REPLAYGAIN_* tags
-            self.assertIsNone(mediafile.rg_track_gain)
-            self.assertIsNone(mediafile.rg_album_gain)
-            # writes R128_* tags
-            self.assertIsNotNone(mediafile.r128_track_gain)
-            self.assertIsNotNone(mediafile.r128_album_gain)
-
     def test_targetlevel_has_effect(self):
         album = self._add_album(1)
         item = album.items()[0]
@@ -225,28 +225,6 @@ class ReplayGainCliTestBase(TestHelper):
             self.run_command("replaygain", "-f")
             item.load()
             return item.rg_track_gain
-
-        gain_relative_to_84 = analyse(84)
-        gain_relative_to_89 = analyse(89)
-
-        self.assertNotEqual(gain_relative_to_84, gain_relative_to_89)
-
-    def test_r128_targetlevel_has_effect(self):
-        if not self.has_r128_support:
-            self.skipTest(
-                "r128 tags for opus not supported on backend {}".format(
-                    self.backend
-                )
-            )
-
-        album = self._add_album(1, ext="opus")
-        item = album.items()[0]
-
-        def analyse(target_level):
-            self.config["replaygain"]["r128_targetlevel"] = target_level
-            self.run_command("replaygain", "-f")
-            item.load()
-            return item.r128_track_gain
 
         gain_relative_to_84 = analyse(84)
         gain_relative_to_89 = analyse(89)
@@ -267,7 +245,7 @@ class ReplayGainCliTestBase(TestHelper):
 
 
 class ReplayGainGstCliTest(
-    ReplayGainCliTestBase, unittest.TestCase, GstBackendMixin
+    R128Test, ReplayGainCliTestBase, unittest.TestCase, GstBackendMixin
 ):
     FNAME = "full"  # file contains only silence
 
@@ -279,13 +257,13 @@ class ReplayGainCmdCliTest(
 
 
 class ReplayGainFfmpegCliTest(
-    ReplayGainCliTestBase, unittest.TestCase, FfmpegBackendMixin
+    R128Test, ReplayGainCliTestBase, unittest.TestCase, FfmpegBackendMixin
 ):
     FNAME = "full"  # file contains only silence
 
 
 class ReplayGainFfmpegNoiseCliTest(
-    ReplayGainCliTestBase, unittest.TestCase, FfmpegBackendMixin
+    R128Test, ReplayGainCliTestBase, unittest.TestCase, FfmpegBackendMixin
 ):
     FNAME = "whitenoise"
 
