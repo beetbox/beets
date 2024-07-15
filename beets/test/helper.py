@@ -565,7 +565,10 @@ class ImportHelper(TestHelper):
         return track_path
 
     def prepare_album_for_import(
-        self, item_count: int, album_id: int | None = None
+        self,
+        item_count: int,
+        album_id: int | None = None,
+        album_path: Path | None = None,
     ) -> list[Path]:
         """Create an album directory with media files to import.
 
@@ -575,8 +578,10 @@ class ImportHelper(TestHelper):
             track_2.mp3
             track_3.mp3
         """
-        album_dir = f"album_{album_id}" if album_id else "album"
-        album_path = self.import_path / album_dir
+        if not album_path:
+            album_dir = f"album_{album_id}" if album_id else "album"
+            album_path = self.import_path / album_dir
+
         album_path.mkdir(exist_ok=True)
 
         return [

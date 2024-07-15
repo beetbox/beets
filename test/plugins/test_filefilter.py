@@ -14,217 +14,87 @@
 
 """Tests for the `filefilter` plugin.
 """
-
-
-import os
-import shutil
-
-from mediafile import MediaFile
-
 from beets import config
-from beets.test import _common
-from beets.test.helper import ImportTestCase, capture_log
-from beets.util import bytestring_path, displayable_path, syspath
+from beets.test.helper import ImportTestCase
+from beets.util import bytestring_path
 from beetsplug.filefilter import FileFilterPlugin
 
 
 class FileFilterPluginMixin(ImportTestCase):
     def setUp(self):
         super().setUp()
-        self.__create_import_dir(2)
+        self.prepare_tracks_for_import()
 
     def tearDown(self):
         self.unload_plugins()
         FileFilterPlugin.listeners = None
         super().tearDown()
 
-    def __copy_file(self, dest_path, metadata):
-        # Copy files
-        resource_path = os.path.join(_common.RSRC, b"full.mp3")
-        shutil.copy(syspath(resource_path), syspath(dest_path))
-        medium = MediaFile(dest_path)
-        # Set metadata
-        for attr in metadata:
-            setattr(medium, attr, metadata[attr])
-        medium.save()
-
-    def __create_import_dir(self, count):
-        self.artist_path = os.path.join(self.import_dir, b"artist")
-        self.album_path = os.path.join(self.artist_path, b"album")
-        self.misc_path = os.path.join(self.import_dir, b"misc")
-        os.makedirs(syspath(self.album_path))
-        os.makedirs(syspath(self.misc_path))
-
-        metadata = {
-            "artist": "Tag Artist",
-            "album": "Tag Album",
-            "albumartist": None,
-            "mb_trackid": None,
-            "mb_albumid": None,
-            "comp": None,
+    def prepare_tracks_for_import(self):
+        self.album_track, self.other_album_track, self.single_track = (
+            bytestring_path(self.prepare_album_for_import(1, album_path=p)[0])
+            for p in [
+                self.import_path / "album",
+                self.import_path / "other_album",
+                self.import_path,
+            ]
+        )
+        self.all_tracks = {
+            self.album_track,
+            self.other_album_track,
+            self.single_track,
         }
-        self.album_paths = []
-        for i in range(count):
-            metadata["track"] = i + 1
-            metadata["title"] = "Tag Track Album %d" % (i + 1)
-            track_file = bytestring_path("%02d - track.mp3" % (i + 1))
-            dest_path = os.path.join(self.album_path, track_file)
-            self.__copy_file(dest_path, metadata)
-            self.album_paths.append(dest_path)
 
-        self.artist_paths = []
-        metadata["album"] = None
-        for i in range(count):
-            metadata["track"] = i + 10
-            metadata["title"] = "Tag Track Artist %d" % (i + 1)
-            track_file = bytestring_path("track_%d.mp3" % (i + 1))
-            dest_path = os.path.join(self.artist_path, track_file)
-            self.__copy_file(dest_path, metadata)
-            self.artist_paths.append(dest_path)
-
-        self.misc_paths = []
-        for i in range(count):
-            metadata["artist"] = "Artist %d" % (i + 42)
-            metadata["track"] = i + 5
-            metadata["title"] = "Tag Track Misc %d" % (i + 1)
-            track_file = bytestring_path("track_%d.mp3" % (i + 1))
-            dest_path = os.path.join(self.misc_path, track_file)
-            self.__copy_file(dest_path, metadata)
-            self.misc_paths.append(dest_path)
-
-    def _run(self, expected_lines):
+    def _run(self, expected_album_count, expected_paths):
         self.load_plugins("filefilter")
-        with capture_log() as logs:
-            self.importer.run()
 
-        logs = [line for line in logs if not line.startswith("Sending event:")]
+        self.importer.run()
 
-        self.assertEqual(logs, expected_lines)
+        self.assertEqual(len(self.lib.albums()), expected_album_count)
+        self.assertEqual({i.path for i in self.lib.items()}, expected_paths)
 
 
 class FileFilterPluginNonSingletonTest(FileFilterPluginMixin):
     def setUp(self):
         super().setUp()
-        self.importer = self.setup_importer(pretend=True)
+        self.importer = self.setup_importer(autotag=False, copy=False)
 
     def test_import_default(self):
         """The default configuration should import everything."""
-        self._run(
-            [
-                "Album: %s" % displayable_path(self.artist_path),
-                "  %s" % displayable_path(self.artist_paths[0]),
-                "  %s" % displayable_path(self.artist_paths[1]),
-                "Album: %s" % displayable_path(self.album_path),
-                "  %s" % displayable_path(self.album_paths[0]),
-                "  %s" % displayable_path(self.album_paths[1]),
-                "Album: %s" % displayable_path(self.misc_path),
-                "  %s" % displayable_path(self.misc_paths[0]),
-                "  %s" % displayable_path(self.misc_paths[1]),
-            ]
-        )
+        self._run(3, self.all_tracks)
 
     def test_import_nothing(self):
         config["filefilter"]["path"] = "not_there"
-        self._run(
-            ["No files imported from %s" % displayable_path(self.import_dir)]
-        )
+        self._run(0, set())
 
-    # Global options
-    def test_import_global(self):
-        config["filefilter"]["path"] = ".*track_1.*\\.mp3"
-        self._run(
-            [
-                "Album: %s" % displayable_path(self.artist_path),
-                "  %s" % displayable_path(self.artist_paths[0]),
-                "Album: %s" % displayable_path(self.misc_path),
-                "  %s" % displayable_path(self.misc_paths[0]),
-            ]
-        )
+    def test_global_config(self):
+        config["filefilter"]["path"] = ".*album.*"
+        self._run(2, {self.album_track, self.other_album_track})
 
-    def test_import_album(self):
-        config["filefilter"]["album_path"] = ".*track_1.*\\.mp3"
-        self._run(
-            [
-                "Album: %s" % displayable_path(self.artist_path),
-                "  %s" % displayable_path(self.artist_paths[0]),
-                "Album: %s" % displayable_path(self.misc_path),
-                "  %s" % displayable_path(self.misc_paths[0]),
-            ]
-        )
+    def test_album_config(self):
+        config["filefilter"]["album_path"] = ".*other_album.*"
+        self._run(1, {self.other_album_track})
 
-    def test_import_singleton(self):
-        config["filefilter"]["singleton_path"] = ".*track_1.*\\.mp3"
-        self._run(
-            [
-                "Album: %s" % displayable_path(self.artist_path),
-                "  %s" % displayable_path(self.artist_paths[0]),
-                "  %s" % displayable_path(self.artist_paths[1]),
-                "Album: %s" % displayable_path(self.album_path),
-                "  %s" % displayable_path(self.album_paths[0]),
-                "  %s" % displayable_path(self.album_paths[1]),
-                "Album: %s" % displayable_path(self.misc_path),
-                "  %s" % displayable_path(self.misc_paths[0]),
-                "  %s" % displayable_path(self.misc_paths[1]),
-            ]
-        )
-
-    # Album and singleton options
-    def test_import_both(self):
-        config["filefilter"]["album_path"] = ".*track_1.*\\.mp3"
-        self._run(
-            [
-                "Album: %s" % displayable_path(self.artist_path),
-                "  %s" % displayable_path(self.artist_paths[0]),
-                "Album: %s" % displayable_path(self.misc_path),
-                "  %s" % displayable_path(self.misc_paths[0]),
-            ]
-        )
+    def test_singleton_config(self):
+        """Check that singleton configuration is ignored for album import."""
+        config["filefilter"]["singleton_path"] = ".*other_album.*"
+        self._run(3, self.all_tracks)
 
 
 class FileFilterPluginSingletonTest(FileFilterPluginMixin):
     def setUp(self):
         super().setUp()
-        self.importer = self.setup_singleton_importer(pretend=True)
+        self.importer = self.setup_singleton_importer(autotag=False, copy=False)
 
-    def test_import_global(self):
-        config["filefilter"]["path"] = ".*track_1.*\\.mp3"
-        self._run(
-            [
-                "Singleton: %s" % displayable_path(self.artist_paths[0]),
-                "Singleton: %s" % displayable_path(self.misc_paths[0]),
-            ]
-        )
+    def test_global_config(self):
+        config["filefilter"]["path"] = ".*album.*"
+        self._run(0, {self.album_track, self.other_album_track})
 
-    # Album options
-    def test_import_album(self):
-        config["filefilter"]["album_path"] = ".*track_1.*\\.mp3"
-        self._run(
-            [
-                "Singleton: %s" % displayable_path(self.artist_paths[0]),
-                "Singleton: %s" % displayable_path(self.artist_paths[1]),
-                "Singleton: %s" % displayable_path(self.album_paths[0]),
-                "Singleton: %s" % displayable_path(self.album_paths[1]),
-                "Singleton: %s" % displayable_path(self.misc_paths[0]),
-                "Singleton: %s" % displayable_path(self.misc_paths[1]),
-            ]
-        )
+    def test_album_config(self):
+        """Check that album configuration is ignored for singleton import."""
+        config["filefilter"]["album_path"] = ".*other_album.*"
+        self._run(0, self.all_tracks)
 
-    # Singleton options
-    def test_import_singleton(self):
-        config["filefilter"]["singleton_path"] = ".*track_1.*\\.mp3"
-        self._run(
-            [
-                "Singleton: %s" % displayable_path(self.artist_paths[0]),
-                "Singleton: %s" % displayable_path(self.misc_paths[0]),
-            ]
-        )
-
-    # Album and singleton options
-    def test_import_both(self):
-        config["filefilter"]["singleton_path"] = ".*track_2.*\\.mp3"
-        self._run(
-            [
-                "Singleton: %s" % displayable_path(self.artist_paths[1]),
-                "Singleton: %s" % displayable_path(self.misc_paths[1]),
-            ]
-        )
+    def test_singleton_config(self):
+        config["filefilter"]["singleton_path"] = ".*other_album.*"
+        self._run(0, {self.other_album_track})
