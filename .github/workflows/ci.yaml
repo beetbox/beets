@@ -60,6 +60,11 @@ jobs:
         if: matrix.platform == 'windows-latest'
         shell: pwsh
         run: |
+          choco install ffmpeg flac imagemagick -y --no-progress
+          if ($LASTEXITCODE -ne 0) {
+            throw "Windows system dependency installation failed."
+          }
+
           $maxAttempts = 3
           for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
             # mp3gain's Chocolatey install script pulls from a flaky SourceForge
@@ -82,7 +87,7 @@ jobs:
             ffmpeg \
             flac \
             gobject-introspection \
-            gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good \
             imagemagick \
             libcairo2-dev \
             libgirepository-2.0-dev \
