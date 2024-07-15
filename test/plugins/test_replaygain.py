@@ -13,12 +13,13 @@
 # included in all copies or substantial portions of the Software.
 
 
+import shutil
 import unittest
 
 from mediafile import MediaFile
 
 from beets import config
-from beets.test.helper import TestHelper, has_program
+from beets.test.helper import TestHelper
 from beetsplug.replaygain import (
     FatalGstreamerPluginReplayGainError,
     GStreamerBackend,
@@ -32,12 +33,12 @@ try:
 except (ImportError, ValueError):
     GST_AVAILABLE = False
 
-if any(has_program(cmd, ["-v"]) for cmd in ["mp3gain", "aacgain"]):
+if shutil.which("mp3gain") or shutil.which("aacgain"):
     GAIN_PROG_AVAILABLE = True
 else:
     GAIN_PROG_AVAILABLE = False
 
-FFMPEG_AVAILABLE = has_program("ffmpeg", ["-version"])
+FFMPEG_AVAILABLE = shutil.which("ffmpeg")
 
 
 def reset_replaygain(item):

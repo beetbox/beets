@@ -34,13 +34,7 @@ from beets import config, importer, logging, util
 from beets.autotag import AlbumInfo, AlbumMatch, TrackInfo
 from beets.importer import albums_in_dir
 from beets.test import _common
-from beets.test.helper import (
-    AutotagStub,
-    ImportHelper,
-    TestHelper,
-    capture_log,
-    has_program,
-)
+from beets.test.helper import AutotagStub, ImportHelper, TestHelper, capture_log
 from beets.util import bytestring_path, displayable_path, syspath
 
 
@@ -327,7 +321,7 @@ class ImportTarTest(ImportZipTest):
         return path
 
 
-@unittest.skipIf(not has_program("unrar"), "unrar program not found")
+@unittest.skipIf(not shutil.which("unrar"), "unrar program not found")
 class ImportRarTest(ImportZipTest):
     def create_archive(self):
         return os.path.join(_common.RSRC, b"archive.rar")

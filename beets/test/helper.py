@@ -18,8 +18,6 @@ information or mock the environment.
 - The `control_stdin` and `capture_stdout` context managers allow one to
   interact with the user interface.
 
-- `has_program` checks the presence of a command on the system.
-
 - The `generate_album_info` and `generate_track_info` functions return
   fixtures to be used when mocking the autotagger.
 
@@ -34,7 +32,6 @@ from __future__ import annotations
 import os
 import os.path
 import shutil
-import subprocess
 import sys
 from contextlib import contextmanager
 from enum import Enum
@@ -124,22 +121,6 @@ def _convert_args(args):
             args[i] = elem.decode(util.arg_encoding())
 
     return args
-
-
-def has_program(cmd, args=["--version"]):
-    """Returns `True` if `cmd` can be executed."""
-    full_cmd = _convert_args([cmd] + args)
-    try:
-        with open(os.devnull, "wb") as devnull:
-            subprocess.check_call(
-                full_cmd, stderr=devnull, stdout=devnull, stdin=devnull
-            )
-    except OSError:
-        return False
-    except subprocess.CalledProcessError:
-        return False
-    else:
-        return True
 
 
 class TestHelper:

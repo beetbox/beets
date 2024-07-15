@@ -30,12 +30,7 @@ from mediafile import MediaFile
 from beets import autotag, config, library, plugins, ui, util
 from beets.autotag.match import distance
 from beets.test import _common
-from beets.test.helper import (
-    TestHelper,
-    capture_stdout,
-    control_stdin,
-    has_program,
-)
+from beets.test.helper import TestHelper, capture_stdout, control_stdin
 from beets.ui import commands
 from beets.util import MoveOperation, syspath
 
@@ -1416,6 +1411,7 @@ class PluginTest(_common.TestCase, TestHelper):
 
 
 @_common.slow_test()
+@unittest.skipIf(not shutil.which("bash"), "bash not available")
 class CompletionTest(_common.TestCase, TestHelper):
     def test_completion(self):
         # Load plugin commands
@@ -1430,8 +1426,6 @@ class CompletionTest(_common.TestCase, TestHelper):
         # Open a `bash` process to run the tests in. We'll pipe in bash
         # commands via stdin.
         cmd = os.environ.get("BEETS_TEST_SHELL", "/bin/bash --norc").split()
-        if not has_program(cmd[0]):
-            self.skipTest("bash not available")
         tester = subprocess.Popen(
             cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, env=env
         )
