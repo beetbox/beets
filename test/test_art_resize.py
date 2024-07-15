@@ -114,7 +114,6 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, _common.TestCase, TestHelper):
         """Test PIL resize function is lowering file size."""
         self._test_img_resize(PILBackend())
 
-    @unittest.skipUnless(IMBackend.available(), "ImageMagick not available")
     def test_im_file_resize(self):
         """Test IM resize function is lowering file size."""
         self._test_img_resize(IMBackend())
@@ -131,7 +130,6 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, _common.TestCase, TestHelper):
         with Image.open(path) as img:
             self.assertNotIn("progression", img.info)
 
-    @unittest.skipUnless(IMBackend.available(), "ImageMagick not available")
     def test_im_file_deinterlace(self):
         """Test ImageMagick deinterlace function.
 
