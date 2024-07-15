@@ -39,7 +39,7 @@ jobs:
             gstreamer1.0-plugins-good \
             libgirepository1.0-dev \
             mp3gain
-          poetry install --extras replaygain
+          poetry install --extras replaygain --extras embedart
 
       - name: Install Python dependencies
         run: poetry install --only=main,test
