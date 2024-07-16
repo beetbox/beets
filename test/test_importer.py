@@ -36,6 +36,7 @@ from beets.test import _common
 from beets.test.helper import (
     NEEDS_FFPROBE,
     NEEDS_REFLINK,
+    RUNNING_IN_CI,
     AsIsImporterMixin,
     AutotagImportHelper,
     AutotagImportTestCase,
@@ -256,7 +257,7 @@ class TestImportTar(TestImportZip):
 
 
 @pytest.mark.skipif(
-    not (is_importable("rarfile") and shutil.which("unrar")),
+    not (is_importable("rarfile") and shutil.which("unrar") and RUNNING_IN_CI),
     reason="rarfile or unrar program not found",
 )
 class TestImportRar(TestImportZip):
@@ -264,7 +265,10 @@ class TestImportRar(TestImportZip):
         return _common.RSRC / "archive.rar"
 
 
-@pytest.mark.skipif(not is_importable("py7zr"), reason="py7zr is not available")
+@pytest.mark.skipif(
+    not (is_importable("py7zr") and RUNNING_IN_CI),
+    reason="py7zr is not available",
+)
 class TestImport7z(TestImportZip):
     def create_archive(self):
         return _common.RSRC / "archive.7z"
