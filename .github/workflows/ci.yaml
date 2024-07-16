@@ -110,7 +110,8 @@ jobs:
             libgirepository-2.0-dev \
             mp3gain \
             pandoc \
-            python3-gst-1.0
+            python3-gst-1.0 \
+            unrar
 
       - name: Get changed lyrics files
         id: lyrics-update
@@ -128,16 +129,41 @@ jobs:
 
       - if: ${{ env.IS_MAIN_PYTHON != 'true' }}
         name: Test without coverage
+        shell: bash
         run: |
-          poe install --group test --extra autobpm --extra discogs --extra embedart --extra lyrics --extra replaygain --extra reflink --extra fetchart --extra chroma --extra sonosupdate
+          poe install \
+            --group test \
+            --extra autobpm \
+            --extra discogs \
+            --extra embedart \
+            --extra import \
+            --extra lyrics \
+            --extra replaygain \
+            --extra reflink \
+            --extra fetchart \
+            --extra chroma \
+            --extra sonosupdate
           poe test
 
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
         name: Test with coverage
+        shell: bash
         env:
           LYRICS_UPDATED: ${{ steps.lyrics-update.outputs.any_changed }}
         run: |
-          poe install --group test --extra autobpm --extra discogs --extra embedart --extra lyrics --extra replaygain --extra reflink --extra fetchart --extra chroma --extra sonosupdate --group docs
+          poe install \
+            --group test \
+            --group docs \
+            --extra autobpm \
+            --extra discogs \
+            --extra embedart \
+            --extra import \
+            --extra lyrics \
+            --extra replaygain \
+            --extra reflink \
+            --extra fetchart \
+            --extra chroma \
+            --extra sonosupdate
           poe docs
           poe test-with-coverage
 
