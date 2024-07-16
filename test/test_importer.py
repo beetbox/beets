@@ -321,7 +321,6 @@ class ImportTarTest(ImportZipTest):
         return path
 
 
-@unittest.skipIf(not shutil.which("unrar"), "unrar program not found")
 class ImportRarTest(ImportZipTest):
     def create_archive(self):
         return os.path.join(_common.RSRC, b"archive.rar")
