@@ -56,6 +56,22 @@ jobs:
       - name: Install Python tools
         run: uv tool install "poethepoet>=0.26,<0.47.0"
 
+      - name: Set up MSYS2 with bash-completion
+        if: matrix.platform == 'windows-latest'
+        id: msys2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MSYS
+          update: true
+          install: bash-completion
+
+      - name: Configure MSYS2 environment
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          "MSYS2_ROOT=${{ steps.msys2.outputs.msys2-location }}" >> $env:GITHUB_ENV
+          "BEETS_TEST_SHELL=${{ steps.msys2.outputs.msys2-location }}\usr\bin\bash.exe --norc" >> $env:GITHUB_ENV
+
       - name: Install system dependencies on Windows
         if: matrix.platform == 'windows-latest'
         shell: pwsh
@@ -84,6 +100,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install --yes --no-install-recommends \
+            bash-completion \
             ffmpeg \
             flac \
             gobject-introspection \
