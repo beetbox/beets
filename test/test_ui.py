@@ -1411,7 +1411,6 @@ class PluginTest(_common.TestCase, TestHelper):
 
 
 @_common.slow_test()
-@unittest.skipIf(not shutil.which("bash"), "bash not available")
 class CompletionTest(_common.TestCase, TestHelper):
     def test_completion(self):
         # Load plugin commands
@@ -1436,12 +1435,12 @@ class CompletionTest(_common.TestCase, TestHelper):
                 bash_completion = path
                 break
         else:
-            self.skipTest("bash-completion script not found")
+            self.fail("bash-completion script not found")
         try:
             with open(util.syspath(bash_completion), "rb") as f:
                 tester.stdin.writelines(f)
         except OSError:
-            self.skipTest("could not read bash-completion script")
+            self.fail("could not read bash-completion script")
 
         # Load completion script.
         self.io.install()

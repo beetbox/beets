@@ -34,6 +34,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install \
+            bash-completion \
             ffmpeg \
             gobject-introspection \
             gstreamer1.0-plugins-good \
