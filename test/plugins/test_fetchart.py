@@ -42,11 +42,12 @@ class FetchartCliTest(unittest.TestCase, TestHelper):
 
     def hide_file_windows(self):
         hidden_mask = 2
-        success = ctypes.windll.kernel32.SetFileAttributesW(
-            self.cover_path, hidden_mask
+        self.assertTrue(
+            ctypes.windll.kernel32.SetFileAttributesW(
+                self.cover_path, hidden_mask
+            ),
+            "Could not set file attributes",
         )
-        if not success:
-            self.skipTest("unable to set file attributes")
 
     def test_set_art_from_folder(self):
         self.touch(b"c\xc3\xb6ver.jpg", dir=self.album.path, content="IMAGE")
