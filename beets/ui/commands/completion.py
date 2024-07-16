@@ -4,16 +4,33 @@ from __future__ import annotations
 
 import os
 import re
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from beets import library, logging, plugins, ui
-from beets.util import syspath
 
 if TYPE_CHECKING:
     import optparse
     from collections.abc import Iterator, Sequence
 
     from beets.library import Library
+
+BASH_COMPLETION_PATHS: list[str | Path] = [
+    "/etc/bash_completion",
+    "/usr/share/bash-completion/bash_completion",
+    "/usr/local/share/bash-completion/bash_completion",
+    # SmartOS
+    "/opt/local/share/bash-completion/bash_completion",
+    # Homebrew (before bash-completion2)
+    "/usr/local/etc/bash_completion",
+]
+if msys2_root := os.environ.get("MSYS2_ROOT"):
+    BASH_COMPLETION_PATHS.append(
+        Path(msys2_root) / "usr/share/bash-completion/bash_completion"
+    )
+BASH_COMPLETION_PATH = next(
+    (p for p in map(Path, BASH_COMPLETION_PATHS) if p.is_file()), None
+)
 
 
 # Global logger.
@@ -27,7 +44,7 @@ def print_completion(
 
     for line in completion_script(default_commands + plugins.commands()):
         ui.print_(line, end="")
-    if not any(os.path.isfile(syspath(p)) for p in BASH_COMPLETION_PATHS):
+    if not BASH_COMPLETION_PATH:
         log.warning(
             "Warning: Unable to find the bash-completion package. "
             "Command line completion might not work."
@@ -40,17 +57,6 @@ completion_cmd = ui.Subcommand(
 )
 completion_cmd.func = print_completion
 completion_cmd.hide = True
-
-
-BASH_COMPLETION_PATHS = [
-    b"/etc/bash_completion",
-    b"/usr/share/bash-completion/bash_completion",
-    b"/usr/local/share/bash-completion/bash_completion",
-    # SmartOS
-    b"/opt/local/share/bash-completion/bash_completion",
-    # Homebrew (before bash-completion2)
-    b"/usr/local/etc/bash_completion",
-]
 
 
 def completion_script(commands: Sequence[ui.Subcommand]) -> Iterator[str]:
