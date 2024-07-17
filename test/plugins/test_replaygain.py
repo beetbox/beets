@@ -19,7 +19,12 @@ from typing import ClassVar
 from mediafile import MediaFile
 
 from beets import config
-from beets.test.helper import AsIsImporterMixin, ImportTestCase, has_program
+from beets.test.helper import (
+    AsIsImporterMixin,
+    ImportTestCase,
+    PluginMixin,
+    has_program,
+)
 from beetsplug.replaygain import (
     FatalGstreamerPluginReplayGainError,
     GStreamerBackend,
@@ -52,8 +57,11 @@ def reset_replaygain(item):
     item.store()
 
 
-class ReplayGainTestCase(ImportTestCase):
+class ReplayGainTestCase(PluginMixin, ImportTestCase):
     db_on_disk = True
+    plugin = "replaygain"
+    preload_plugin = False
+
     backend: ClassVar[str]
 
     def setUp(self):
@@ -63,14 +71,7 @@ class ReplayGainTestCase(ImportTestCase):
         super().setUp()
         self.config["replaygain"]["backend"] = self.backend
 
-        try:
-            self.load_plugins("replaygain")
-        except Exception:
-            self.tearDown()
-
-    def tearDown(self):
-        self.unload_plugins()
-        super().tearDown()
+        self.load_plugins()
 
 
 class ThreadedImportMixin:

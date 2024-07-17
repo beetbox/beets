@@ -221,41 +221,6 @@ class TestHelper(_common.Assertions):
         beets.config.clear()
         beets.config._materialized = False
 
-    def load_plugins(self, *plugins):
-        """Load and initialize plugins by names.
-
-        Similar setting a list of plugins in the configuration. Make
-        sure you call ``unload_plugins()`` afterwards.
-        """
-        # FIXME this should eventually be handled by a plugin manager
-        plugins = (self.plugin,) if hasattr(self, "plugin") else plugins
-        beets.config["plugins"] = plugins
-        beets.plugins.load_plugins(plugins)
-        beets.plugins.find_plugins()
-
-        # Take a backup of the original _types and _queries to restore
-        # when unloading.
-        Item._original_types = dict(Item._types)
-        Album._original_types = dict(Album._types)
-        Item._types.update(beets.plugins.types(Item))
-        Album._types.update(beets.plugins.types(Album))
-
-        Item._original_queries = dict(Item._queries)
-        Album._original_queries = dict(Album._queries)
-        Item._queries.update(beets.plugins.named_queries(Item))
-        Album._queries.update(beets.plugins.named_queries(Album))
-
-    def unload_plugins(self):
-        """Unload all plugins and remove them from the configuration."""
-        # FIXME this should eventually be handled by a plugin manager
-        beets.config["plugins"] = []
-        beets.plugins._classes = set()
-        beets.plugins._instances = {}
-        Item._types = getattr(Item, "_original_types", {})
-        Album._types = getattr(Album, "_original_types", {})
-        Item._queries = getattr(Item, "_original_queries", {})
-        Album._queries = getattr(Album, "_original_queries", {})
-
     # Library fixtures methods
 
     def create_item(self, **values):
@@ -485,14 +450,53 @@ class ItemInDBTestCase(BeetsTestCase):
 
 class PluginMixin:
     plugin: ClassVar[str]
+    preload_plugin: ClassVar[bool] = True
 
     def setUp(self):
         super().setUp()
-        self.load_plugins()
+        if self.preload_plugin:
+            self.load_plugins()
 
     def tearDown(self):
         super().tearDown()
         self.unload_plugins()
+
+    def load_plugins(self, *plugins: str) -> None:
+        """Load and initialize plugins by names.
+
+        Similar setting a list of plugins in the configuration. Make
+        sure you call ``unload_plugins()`` afterwards.
+        """
+        # FIXME this should eventually be handled by a plugin manager
+        plugins = (self.plugin,) if hasattr(self, "plugin") else plugins
+        beets.config["plugins"] = plugins
+        beets.plugins.load_plugins(plugins)
+        beets.plugins.find_plugins()
+
+        # Take a backup of the original _types and _queries to restore
+        # when unloading.
+        Item._original_types = dict(Item._types)
+        Album._original_types = dict(Album._types)
+        Item._types.update(beets.plugins.types(Item))
+        Album._types.update(beets.plugins.types(Album))
+
+        Item._original_queries = dict(Item._queries)
+        Album._original_queries = dict(Album._queries)
+        Item._queries.update(beets.plugins.named_queries(Item))
+        Album._queries.update(beets.plugins.named_queries(Album))
+
+    def unload_plugins(self) -> None:
+        """Unload all plugins and remove them from the configuration."""
+        # FIXME this should eventually be handled by a plugin manager
+        for plugin_class in beets.plugins._instances:
+            plugin_class.listeners = None
+        beets.config["plugins"] = []
+        beets.plugins._classes = set()
+        beets.plugins._instances = {}
+        Item._types = getattr(Item, "_original_types", {})
+        Album._types = getattr(Album, "_original_types", {})
+        Item._queries = getattr(Item, "_original_queries", {})
+        Album._queries = getattr(Album, "_original_queries", {})
 
 
 class PluginTestCase(PluginMixin, BeetsTestCase):
