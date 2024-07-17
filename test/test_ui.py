@@ -32,6 +32,7 @@ from beets.autotag.match import distance
 from beets.test import _common
 from beets.test.helper import (
     BeetsTestCase,
+    PluginTestCase,
     capture_stdout,
     control_stdin,
     has_program,
@@ -824,7 +825,15 @@ class ImportTest(BeetsTestCase):
 
 
 @_common.slow_test()
-class ConfigTest(BeetsTestCase):
+class TestPluginTestCase(PluginTestCase):
+    plugin = "test"
+
+    def setUp(self):
+        super().setUp()
+        config["pluginpath"] = [_common.PLUGINPATH]
+
+
+class ConfigTest(TestPluginTestCase):
     def setUp(self):
         super().setUp()
 
@@ -865,13 +874,11 @@ class ConfigTest(BeetsTestCase):
         self.env_patcher.start()
 
         self._reset_config()
-        self.load_plugins()
 
     def tearDown(self):
         self.env_patcher.stop()
         commands.default_commands.pop()
         os.chdir(syspath(self._orig_cwd))
-        self.unload_plugins()
         super().tearDown()
 
     def _make_test_cmd(self):
@@ -1064,6 +1071,7 @@ class ConfigTest(BeetsTestCase):
 
         self.run_command("--config", cli_config_path, "plugin", lib=None)
         self.assertTrue(plugins.find_plugins()[0].is_test_plugin)
+        self.unload_plugins()
 
     def test_beetsdir_config(self):
         os.environ["BEETSDIR"] = os.fsdecode(self.beetsdir)
@@ -1385,20 +1393,14 @@ class PathFormatTest(BeetsTestCase):
 
 
 @_common.slow_test()
-class PluginTest(BeetsTestCase):
+class PluginTest(TestPluginTestCase):
     def test_plugin_command_from_pluginpath(self):
-        config["pluginpath"] = [_common.PLUGINPATH]
-        config["plugins"] = ["test"]
         self.run_command("test", lib=None)
 
 
 @_common.slow_test()
-class CompletionTest(BeetsTestCase):
+class CompletionTest(TestPluginTestCase):
     def test_completion(self):
-        # Load plugin commands
-        config["pluginpath"] = [_common.PLUGINPATH]
-        config["plugins"] = ["test"]
-
         # Do not load any other bash completion scripts on the system.
         env = dict(os.environ)
         env["BASH_COMPLETION_DIR"] = os.devnull
@@ -1456,11 +1458,6 @@ class CommonOptionsParserCliTest(BeetsTestCase):
         self.item.path = b"xxx/yyy"
         self.lib.add(self.item)
         self.lib.add_album([self.item])
-        self.load_plugins()
-
-    def tearDown(self):
-        self.unload_plugins()
-        super().tearDown()
 
     def test_base(self):
         l = self.run_with_output("ls")

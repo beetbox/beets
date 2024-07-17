@@ -251,10 +251,10 @@ class TestHelper(_common.Assertions):
         beets.config["plugins"] = []
         beets.plugins._classes = set()
         beets.plugins._instances = {}
-        Item._types = Item._original_types
-        Album._types = Album._original_types
-        Item._queries = Item._original_queries
-        Album._queries = Album._original_queries
+        Item._types = getattr(Item, "_original_types", {})
+        Album._types = getattr(Album, "_original_types", {})
+        Item._queries = getattr(Item, "_original_queries", {})
+        Album._queries = getattr(Album, "_original_queries", {})
 
     # Library fixtures methods
 
