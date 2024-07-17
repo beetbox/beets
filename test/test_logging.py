@@ -82,13 +82,6 @@ class LoggingLevelTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
         beetsplug.dummy = self.DummyModule
         super().setUp()
 
-    def tearDown(self):
-        super().tearDown()
-        del beetsplug.dummy
-        sys.modules.pop("beetsplug.dummy")
-        self.DummyModule.DummyPlugin.listeners = None
-        self.DummyModule.DummyPlugin._raw_listeners = None
-
     def test_command_level0(self):
         self.config["verbose"] = 0
         with helper.capture_log() as logs:

@@ -15,20 +15,17 @@
 """Tests for the `filefilter` plugin.
 """
 from beets import config
-from beets.test.helper import ImportTestCase
+from beets.test.helper import ImportTestCase, PluginMixin
 from beets.util import bytestring_path
-from beetsplug.filefilter import FileFilterPlugin
 
 
-class FileFilterPluginMixin(ImportTestCase):
+class FileFilterPluginMixin(PluginMixin, ImportTestCase):
+    plugin = "filefilter"
+    preload_plugin = False
+
     def setUp(self):
         super().setUp()
         self.prepare_tracks_for_import()
-
-    def tearDown(self):
-        self.unload_plugins()
-        FileFilterPlugin.listeners = None
-        super().tearDown()
 
     def prepare_tracks_for_import(self):
         self.album_track, self.other_album_track, self.single_track = (

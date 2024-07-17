@@ -19,7 +19,7 @@ import tempfile
 import unittest
 
 from beets import config, plugins
-from beets.test.helper import BeetsTestCase, capture_log
+from beets.test.helper import BeetsTestCase, PluginMixin, capture_log
 
 
 def get_temporary_path():
@@ -29,12 +29,10 @@ def get_temporary_path():
     return os.path.join(temporary_directory, temporary_name)
 
 
-class HookTest(BeetsTestCase):
+class HookTest(PluginMixin, BeetsTestCase):
+    plugin = "hook"
+    preload_plugin = False
     TEST_HOOK_COUNT = 5
-
-    def tearDown(self):
-        self.unload_plugins()
-        super().tearDown()
 
     def _add_hook(self, event, command):
         hook = {"event": event, "command": command}

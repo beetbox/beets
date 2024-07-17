@@ -3,12 +3,15 @@
 from mediafile import MediaFile
 
 from beets.library import Item
-from beets.test.helper import BeetsTestCase, control_stdin
+from beets.test.helper import BeetsTestCase, PluginMixin, control_stdin
 from beets.util import syspath
 from beetsplug.zero import ZeroPlugin
 
 
-class ZeroPluginTest(BeetsTestCase):
+class ZeroPluginTest(PluginMixin, BeetsTestCase):
+    plugin = "zero"
+    preload_plugin = False
+
     def setUp(self):
         super().setUp()
         self.config["zero"] = {
@@ -16,11 +19,6 @@ class ZeroPluginTest(BeetsTestCase):
             "keep_fields": [],
             "update_database": False,
         }
-
-    def tearDown(self):
-        ZeroPlugin.listeners = None
-        super().tearDown()
-        self.unload_plugins()
 
     def test_no_patterns(self):
         self.config["zero"]["fields"] = ["comments", "month"]

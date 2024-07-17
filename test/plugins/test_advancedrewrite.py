@@ -16,16 +16,15 @@
 """
 
 
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import BeetsTestCase, PluginMixin
 from beets.ui import UserError
 
 PLUGIN_NAME = "advancedrewrite"
 
 
-class AdvancedRewritePluginTest(BeetsTestCase):
-    def tearDown(self):
-        self.unload_plugins()
-        super().tearDown()
+class AdvancedRewritePluginTest(PluginMixin, BeetsTestCase):
+    plugin = "advancedrewrite"
+    preload_plugin = False
 
     def test_simple_rewrite_example(self):
         self.config[PLUGIN_NAME] = [

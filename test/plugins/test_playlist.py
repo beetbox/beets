@@ -18,10 +18,13 @@ from shlex import quote
 
 import beets
 from beets.test import _common
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import PluginTestCase
 
 
-class PlaylistTestCase(BeetsTestCase):
+class PlaylistTestCase(PluginTestCase):
+    plugin = "playlist"
+    preload_plugin = False
+
     def setUp(self):
         super().setUp()
 
@@ -77,14 +80,10 @@ class PlaylistTestCase(BeetsTestCase):
         self.config["playlist"]["playlist_dir"] = self.playlist_dir
 
         self.setup_test()
-        self.load_plugins("playlist")
+        self.load_plugins()
 
     def setup_test(self):
         raise NotImplementedError
-
-    def tearDown(self):
-        self.unload_plugins()
-        super().tearDown()
 
 
 class PlaylistQueryTest:

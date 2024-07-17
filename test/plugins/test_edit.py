@@ -26,7 +26,6 @@ from beets.test.helper import (
     TerminalImportMixin,
     control_stdin,
 )
-from beetsplug.edit import EditPlugin
 
 
 class ModifyFileMocker:
@@ -134,10 +133,6 @@ class EditCommandTest(EditMixin, BeetsTestCase):
         self.items_orig = [
             {f: item[f] for f in item._fields} for item in self.album.items()
         ]
-
-    def tearDown(self):
-        EditPlugin.listeners = None
-        super().tearDown()
 
     def assertCounts(  # noqa
         self,
@@ -338,7 +333,6 @@ class EditDuringImporterTestCase(
         self.matcher.matching = AutotagStub.GOOD
 
     def tearDown(self):
-        EditPlugin.listeners = None
         super().tearDown()
         self.matcher.restore()
 
