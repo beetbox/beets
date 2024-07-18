@@ -14,8 +14,6 @@
 
 
 import os
-import shutil
-import tempfile
 import unittest
 from shlex import quote
 
@@ -72,7 +70,10 @@ class PlaylistTestHelper(helper.TestHelper):
         self.lib.add(i3)
         self.lib.add_album([i3])
 
-        self.playlist_dir = tempfile.mkdtemp()
+        self.playlist_dir = os.path.join(
+            os.fsdecode(self.temp_dir), "playlists"
+        )
+        os.makedirs(self.playlist_dir)
         self.config["directory"] = self.music_dir
         self.config["playlist"]["playlist_dir"] = self.playlist_dir
 
@@ -84,7 +85,6 @@ class PlaylistTestHelper(helper.TestHelper):
 
     def tearDown(self):
         self.unload_plugins()
-        shutil.rmtree(self.playlist_dir)
         self.teardown_beets()
 
 

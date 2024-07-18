@@ -29,6 +29,7 @@ information or mock the environment.
 - The `TestHelper` class encapsulates various fixtures that can be set up.
 """
 
+from __future__ import annotations
 
 import os
 import os.path
@@ -39,7 +40,9 @@ from contextlib import contextmanager
 from enum import Enum
 from io import StringIO
 from tempfile import mkdtemp, mkstemp
+from typing import ClassVar
 
+import responses
 from mediafile import Image, MediaFile
 
 import beets
@@ -49,7 +52,12 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.library import Album, Item, Library
 from beets.test import _common
 from beets.ui.commands import TerminalImportSession
-from beets.util import MoveOperation, bytestring_path, syspath
+from beets.util import (
+    MoveOperation,
+    bytestring_path,
+    clean_module_tempdir,
+    syspath,
+)
 
 
 class LogCapture(logging.Handler):
@@ -397,18 +405,14 @@ class TestHelper:
         return self.lib.add_album(items)
 
     def create_mediafile_fixture(self, ext="mp3", images=[]):
-        """Copies a fixture mediafile with the extension to a temporary
-        location and returns the path.
-
-        It keeps track of the created locations and will delete the with
-        `remove_mediafile_fixtures()`
+        """Copy a fixture mediafile with the extension to `temp_dir`.
 
         `images` is a subset of 'png', 'jpg', and 'tiff'. For each
         specified extension a cover art image is added to the media
         file.
         """
         src = os.path.join(_common.RSRC, util.bytestring_path("full." + ext))
-        handle, path = mkstemp()
+        handle, path = mkstemp(dir=self.temp_dir)
         path = bytestring_path(path)
         os.close(handle)
         shutil.copyfile(syspath(src), syspath(path))
@@ -424,16 +428,7 @@ class TestHelper:
             mediafile.images = imgs
             mediafile.save()
 
-        if not hasattr(self, "_mediafile_fixtures"):
-            self._mediafile_fixtures = []
-        self._mediafile_fixtures.append(path)
-
         return path
-
-    def remove_mediafile_fixtures(self):
-        if hasattr(self, "_mediafile_fixtures"):
-            for path in self._mediafile_fixtures:
-                os.remove(syspath(path))
 
     def _get_item_count(self):
         if not hasattr(self, "__item_count"):
@@ -925,3 +920,39 @@ class AutotagStub:
             albumtype="soundtrack",
             data_source="match_source",
         )
+
+
+class FetchImageHelper:
+    """Helper mixin for mocking requests when fetching images
+    with remote art sources.
+    """
+
+    @responses.activate
+    def run(self, *args, **kwargs):
+        super().run(*args, **kwargs)
+
+    IMAGEHEADER = {
+        "image/jpeg": b"\x00" * 6 + b"JFIF",
+        "image/png": b"\211PNG\r\n\032\n",
+    }
+
+    def mock_response(self, url, content_type="image/jpeg", file_type=None):
+        if file_type is None:
+            file_type = content_type
+        responses.add(
+            responses.GET,
+            url,
+            content_type=content_type,
+            # imghdr reads 32 bytes
+            body=self.IMAGEHEADER.get(file_type, b"").ljust(32, b"\x00"),
+        )
+
+
+class CleanupModulesMixin:
+    modules: ClassVar[tuple[str, ...]]
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        """Remove files created by the plugin."""
+        for module in cls.modules:
+            clean_module_tempdir(module)

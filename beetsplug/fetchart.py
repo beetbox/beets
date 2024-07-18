@@ -19,14 +19,13 @@ import os
 import re
 from collections import OrderedDict
 from contextlib import closing
-from tempfile import NamedTemporaryFile
 
 import confuse
 import requests
 from mediafile import image_mime_type
 
 from beets import config, importer, plugins, ui, util
-from beets.util import bytestring_path, sorted_walk, syspath
+from beets.util import bytestring_path, get_temp_filename, sorted_walk, syspath
 from beets.util.artresizer import ArtResizer
 
 try:
@@ -412,17 +411,17 @@ class RemoteArtSource(ArtSource):
                         ext,
                     )
 
-                suffix = os.fsdecode(ext)
-                with NamedTemporaryFile(suffix=suffix, delete=False) as fh:
+                filename = get_temp_filename(__name__, suffix=ext.decode())
+                with open(filename, "wb") as fh:
                     # write the first already loaded part of the image
                     fh.write(header)
                     # download the remaining part of the image
                     for chunk in data:
                         fh.write(chunk)
                 self._log.debug(
-                    "downloaded art to: {0}", util.displayable_path(fh.name)
+                    "downloaded art to: {0}", util.displayable_path(filename)
                 )
-                candidate.path = util.bytestring_path(fh.name)
+                candidate.path = util.bytestring_path(filename)
                 return
 
         except (OSError, requests.RequestException, TypeError) as exc:
