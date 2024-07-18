@@ -37,6 +37,7 @@ from beets.test.helper import (
     AutotagStub,
     ImportHelper,
     TerminalImportSessionSetup,
+    TestHelper,
 )
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.id_extractors import (
@@ -46,7 +47,7 @@ from beets.util.id_extractors import (
 )
 
 
-class TestHelper(helper.TestHelper):
+class PluginLoaderTestCase(unittest.TestCase, TestHelper):
     def setup_plugin_loader(self):
         # FIXME the mocking code is horrific, but this is the lowest and
         # earliest level of the plugin mechanism we can hook into.
@@ -68,8 +69,6 @@ class TestHelper(helper.TestHelper):
     def register_plugin(self, plugin_class):
         self._plugin_classes.add(plugin_class)
 
-
-class ItemTypesTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self.setup_plugin_loader()
 
@@ -77,6 +76,8 @@ class ItemTypesTest(unittest.TestCase, TestHelper):
         self.teardown_plugin_loader()
         self.teardown_beets()
 
+
+class ItemTypesTest(PluginLoaderTestCase):
     def test_flex_field_type(self):
         class RatingPlugin(plugins.BeetsPlugin):
             item_types = {"rating": types.Float()}
@@ -102,20 +103,15 @@ class ItemTypesTest(unittest.TestCase, TestHelper):
         self.assertNotIn("aaa", out)
 
 
-class ItemWriteTest(unittest.TestCase, TestHelper):
+class ItemWriteTest(PluginLoaderTestCase):
     def setUp(self):
-        self.setup_plugin_loader()
-        self.setup_beets()
+        super().setUp()
 
         class EventListenerPlugin(plugins.BeetsPlugin):
             pass
 
         self.event_listener_plugin = EventListenerPlugin()
         self.register_plugin(EventListenerPlugin)
-
-    def tearDown(self):
-        self.teardown_plugin_loader()
-        self.teardown_beets()
 
     def test_change_tags(self):
         def on_write(item=None, path=None, tags=None):
@@ -134,15 +130,7 @@ class ItemWriteTest(unittest.TestCase, TestHelper):
         self.event_listener_plugin.register_listener(event, func)
 
 
-class ItemTypeConflictTest(unittest.TestCase, TestHelper):
-    def setUp(self):
-        self.setup_plugin_loader()
-        self.setup_beets()
-
-    def tearDown(self):
-        self.teardown_plugin_loader()
-        self.teardown_beets()
-
+class ItemTypeConflictTest(PluginLoaderTestCase):
     def test_mismatch(self):
         class EventListenerPlugin(plugins.BeetsPlugin):
             item_types = {"duplicate": types.INTEGER}
@@ -170,16 +158,11 @@ class ItemTypeConflictTest(unittest.TestCase, TestHelper):
         self.assertIsNotNone(plugins.types(Item))
 
 
-class EventsTest(unittest.TestCase, ImportHelper, TestHelper):
+class EventsTest(ImportHelper, PluginLoaderTestCase):
     def setUp(self):
-        self.setup_plugin_loader()
-        self.setup_beets()
+        super().setUp()
         self.__create_import_dir(2)
         config["import"]["pretend"] = True
-
-    def tearDown(self):
-        self.teardown_plugin_loader()
-        self.teardown_beets()
 
     def __copy_file(self, dest_path, metadata):
         # Copy files
@@ -301,14 +284,7 @@ class HelpersTest(unittest.TestCase):
         )
 
 
-class ListenersTest(unittest.TestCase, TestHelper):
-    def setUp(self):
-        self.setup_plugin_loader()
-
-    def tearDown(self):
-        self.teardown_plugin_loader()
-        self.teardown_beets()
-
+class ListenersTest(PluginLoaderTestCase):
     def test_register(self):
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):
@@ -428,11 +404,10 @@ class ListenersTest(unittest.TestCase, TestHelper):
 
 
 class PromptChoicesTest(
-    TerminalImportSessionSetup, unittest.TestCase, ImportHelper, TestHelper
+    TerminalImportSessionSetup, ImportHelper, PluginLoaderTestCase
 ):
     def setUp(self):
-        self.setup_plugin_loader()
-        self.setup_beets()
+        super().setUp()
         self._create_import_dir(3)
         self._setup_import_session()
         self.matcher = AutotagStub().install()
@@ -443,9 +418,8 @@ class PromptChoicesTest(
         self.mock_input_options = self.input_options_patcher.start()
 
     def tearDown(self):
+        super().tearDown()
         self.input_options_patcher.stop()
-        self.teardown_plugin_loader()
-        self.teardown_beets()
         self.matcher.restore()
 
     def test_plugin_choices_in_ui_input_options_album(self):
