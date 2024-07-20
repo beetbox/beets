@@ -328,12 +328,16 @@ class SmartPlaylistPlugin(BeetsPlugin):
                     for entry in m3us[m3u]:
                         item = entry.item
                         if entry.uri == "m3u":
-                            entry.uri = os.path.relpath(item.path, os.path.dirname(m3u_path))
+                            entry.uri = os.path.relpath(
+                                item.path, os.path.dirname(m3u_path)
+                            )
                             if self.config["forward_slash"].get():
                                 item_uri = path_as_posix(item_uri)
                             if self.config["urlencode"]:
-                                 item_uri = bytestring_path(pathname2url(item_uri))
-                                 item_uri = prefix + item_uri
+                                item_uri = bytestring_path(
+                                    pathname2url(item_uri)
+                                )
+                                item_uri = prefix + item_uri
                         comment = ""
                         if extm3u:
                             attr = [(k, entry.item[k]) for k in keys]
