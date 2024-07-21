@@ -48,6 +48,8 @@ Other changes:
   documentation is changed, and they only check the changed files. When
   dependencies are updated (``poetry.lock``), then the entire code base is
   checked.
+* The long-deprecated `beets.util.confit` module has been removed.  This may
+  cause extremely outdated external plugins to fail to load.
 
 2.0.0 (May 30, 2024)
 --------------------
