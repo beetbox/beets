@@ -16,8 +16,8 @@
 This module provides `pytest`-based fixtures for testing Beets.
 """
 
-from collections.abc import Iterator
 from pathlib import Path
+from typing import Iterator
 
 import pytest
 from confuse import Configuration
