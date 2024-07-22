@@ -34,7 +34,7 @@ import optparse
 import os
 import textwrap
 from pathlib import Path
-from typing import Iterable, Optional, cast
+from typing import Dict, Iterable, List, Optional, cast
 
 import beets.ui.commands
 from beets import library, ui
@@ -197,7 +197,7 @@ class FishScript(io.StringIO):
     def complete(
         self,
         values: Optional[str] = None,
-        conditions: Optional[list[str]] = None,
+        conditions: Optional[List[str]] = None,
         long: Optional[str] = None,
         short: Optional[str] = None,
         required: Optional[bool] = None,
@@ -250,7 +250,7 @@ class FishScript(io.StringIO):
 
 
 class FishPlugin(BeetsPlugin):
-    def commands(self) -> list[ui.Subcommand]:
+    def commands(self) -> List[ui.Subcommand]:
         cmd = ui.Subcommand(
             "fish", help="generate a completion script for the Fish shell"
         )
@@ -289,11 +289,11 @@ class FishPlugin(BeetsPlugin):
         self,
         lib: library.Library,
         opts: optparse.Values,
-        args: list[str],
+        args: List[str],
     ):
         # Get the user-provided options.
         include_fields = not getattr(opts, "noFields")
-        extra_comp_fields = cast(list[str], getattr(opts, "extravalues") or [])
+        extra_comp_fields = cast(List[str], getattr(opts, "extravalues") or [])
         output = Path(getattr(opts, "output"))
         assert len(args) == 0
 
@@ -311,7 +311,7 @@ class FishPlugin(BeetsPlugin):
         script.complete(files=False)
 
         # The commands supported by 'beet', including from plugins.
-        commands: list[ui.Subcommand] = [
+        commands: List[ui.Subcommand] = [
             *beets.ui.commands.default_commands,
             *beets.ui.commands.plugins.commands(),
         ]
@@ -377,7 +377,7 @@ class FishPlugin(BeetsPlugin):
 
         if extra_comp_fields:
             # The set of values for every user-specified extra field.
-            extra_values: dict[str, set[str]] = dict.fromkeys(
+            extra_values: Dict[str, set[str]] = dict.fromkeys(
                 extra_comp_fields, set()
             )
             for item in lib.items():
