@@ -363,7 +363,7 @@ class FishPlugin(BeetsPlugin):
             }
 
             # The completions include a ':' as it always follows.
-            field_comps = (f"{f}:" for f in fields)
+            field_comps = sorted(f"{f}:" for f in fields)
             script.set_array("__fish_beet_flds", field_comps)
             in_command = "__fish_beet_subcommand"
             not_in_value = "not __fish_beet_metadata_param"
@@ -382,12 +382,15 @@ class FishPlugin(BeetsPlugin):
                 for key, val in extra_values.items():
                     val.add(str(item[key]))
 
-            for field, values in extra_values.items():
+            for field in sorted(extra_values.keys()):
+                values = extra_values[field]
                 field_text = fish_escape(field, style="var")
                 value_array = f"__fish_beet_field_{field_text}"
                 # The field name is explicit since we are adding to the token the user
                 # is actively writing to -- usually we only examine the preceding ones.
-                script.set_array(value_array, (f"{field}:{v}" for v in values))
+                script.set_array(
+                    value_array, sorted(f"{field}:{v}" for v in values)
+                )
                 in_command = "__fish_beet_subcommand"
                 in_value = f"__fish_beet_metadata_param {fish_escape(field)}"
                 script.complete(
