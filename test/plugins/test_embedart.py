@@ -40,7 +40,7 @@ def require_artresizer_compare(test):
     return wrapper
 
 
-class EmbedartCliTest(TestHelper, FetchImageHelper):
+class EmbedartCliTest(TestHelper, FetchImageHelper, unittest.TestCase):
     small_artpath = os.path.join(_common.RSRC, b"image-2x3.jpg")
     abbey_artpath = os.path.join(_common.RSRC, b"abbey.jpg")
     abbey_similarpath = os.path.join(_common.RSRC, b"abbey-similar.jpg")

@@ -33,8 +33,17 @@ jobs:
         if: matrix.platform == 'ubuntu-latest'
         run: |
           sudo apt update
-          sudo apt install ffmpeg gobject-introspection libgirepository1.0-dev
-          poetry install --extras replaygain
+          sudo apt install \
+            bash-completion \
+            ffmpeg \
+            gobject-introspection \
+            gstreamer1.0-plugins-good \
+            libgirepository1.0-dev \
+            mp3gain
+          poetry install \
+            --extras embedart \
+            --extras lyrics \
+            --extras replaygain
 
       - name: Install Python dependencies
         run: poetry install --only=main,test

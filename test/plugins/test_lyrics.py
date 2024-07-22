@@ -249,16 +249,12 @@ yaml_path = os.path.join(_common.RSRC, b"lyricstext.yaml")
 LYRICS_TEXTS = confuse.load_yaml(yaml_path)
 
 
-class LyricsGoogleBaseTest(unittest.TestCase):
+class LyricsTestCase(unittest.TestCase):
     def setUp(self):
-        """Set up configuration."""
-        try:
-            __import__("bs4")
-        except ImportError:
-            self.skipTest("Beautiful Soup 4 not available")
+        self.plugin = lyrics.LyricsPlugin()
 
 
-class LyricsPluginSourcesTest(LyricsGoogleBaseTest, LyricsAssertions):
+class LyricsPluginSourcesTest(LyricsTestCase, LyricsAssertions):
     """Check that beets google custom search engine sources are correctly
     scraped.
     """
@@ -346,10 +342,6 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest, LyricsAssertions):
         ),
     ]
 
-    def setUp(self):
-        LyricsGoogleBaseTest.setUp(self)
-        self.plugin = lyrics.LyricsPlugin()
-
     @unittest.skipUnless(
         os.environ.get("INTEGRATION_TEST", "0") == "1",
         "integration testing not enabled",
@@ -383,7 +375,7 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest, LyricsAssertions):
             self.assertLyricsContentOk(s["title"], res, url)
 
 
-class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest, LyricsAssertions):
+class LyricsGooglePluginMachineryTest(LyricsTestCase, LyricsAssertions):
     """Test scraping heuristics on a fake html page."""
 
     source = dict(
@@ -392,11 +384,6 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest, LyricsAssertions):
         title="Beets song",
         path="/lyrics/beetssong",
     )
-
-    def setUp(self):
-        """Set up configuration"""
-        LyricsGoogleBaseTest.setUp(self)
-        self.plugin = lyrics.LyricsPlugin()
 
     @patch.object(lyrics.Backend, "fetch_url", MockFetchUrl())
     def test_mocked_source_ok(self):
@@ -461,22 +448,8 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest, LyricsAssertions):
 # test Genius backend
 
 
-class GeniusBaseTest(unittest.TestCase):
-    def setUp(self):
-        """Set up configuration."""
-        try:
-            __import__("bs4")
-        except ImportError:
-            self.skipTest("Beautiful Soup 4 not available")
-
-
-class GeniusScrapeLyricsFromHtmlTest(GeniusBaseTest):
+class GeniusScrapeLyricsFromHtmlTest(LyricsTestCase):
     """tests Genius._scrape_lyrics_from_html()"""
-
-    def setUp(self):
-        """Set up configuration"""
-        GeniusBaseTest.setUp(self)
-        self.plugin = lyrics.LyricsPlugin()
 
     def test_no_lyrics_div(self):
         """Ensure we don't crash when the scraping the html for a genius page
@@ -507,13 +480,8 @@ class GeniusScrapeLyricsFromHtmlTest(GeniusBaseTest):
     # TODO: find an example of a lyrics page with multiple divs and test it
 
 
-class GeniusFetchTest(GeniusBaseTest):
+class GeniusFetchTest(LyricsTestCase):
     """tests Genius.fetch()"""
-
-    def setUp(self):
-        """Set up configuration"""
-        GeniusBaseTest.setUp(self)
-        self.plugin = lyrics.LyricsPlugin()
 
     @patch.object(lyrics.Genius, "_scrape_lyrics_from_html")
     @patch.object(lyrics.Backend, "fetch_url", return_value=True)
@@ -567,22 +535,12 @@ class GeniusFetchTest(GeniusBaseTest):
 # test Tekstowo
 
 
-class TekstowoBaseTest(unittest.TestCase):
-    def setUp(self):
-        """Set up configuration."""
-        try:
-            __import__("bs4")
-        except ImportError:
-            self.skipTest("Beautiful Soup 4 not available")
-
-
-class TekstowoExtractLyricsTest(TekstowoBaseTest):
+class TekstowoExtractLyricsTest(LyricsTestCase):
     """tests Tekstowo.extract_lyrics()"""
 
     def setUp(self):
         """Set up configuration"""
-        TekstowoBaseTest.setUp(self)
-        self.plugin = lyrics.LyricsPlugin()
+        super().setUp()
         tekstowo.config = self.plugin.config
 
     def test_good_lyrics(self):
@@ -628,13 +586,8 @@ class TekstowoExtractLyricsTest(TekstowoBaseTest):
         )
 
 
-class TekstowoParseSearchResultsTest(TekstowoBaseTest):
+class TekstowoParseSearchResultsTest(LyricsTestCase):
     """tests Tekstowo.parse_search_results()"""
-
-    def setUp(self):
-        """Set up configuration"""
-        TekstowoBaseTest.setUp(self)
-        self.plugin = lyrics.LyricsPlugin()
 
     def test_multiple_results(self):
         """Ensure we are able to scrape a page with multiple search results"""
@@ -659,13 +612,12 @@ class TekstowoParseSearchResultsTest(TekstowoBaseTest):
         self.assertEqual(tekstowo.parse_search_results(mock(url)), None)
 
 
-class TekstowoIntegrationTest(TekstowoBaseTest, LyricsAssertions):
+class TekstowoIntegrationTest(LyricsTestCase, LyricsAssertions):
     """Tests Tekstowo lyric source with real requests"""
 
     def setUp(self):
         """Set up configuration"""
-        TekstowoBaseTest.setUp(self)
-        self.plugin = lyrics.LyricsPlugin()
+        super().setUp()
         tekstowo.config = self.plugin.config
 
     @unittest.skipUnless(
@@ -693,9 +645,9 @@ class TekstowoIntegrationTest(TekstowoBaseTest, LyricsAssertions):
 # test LRCLib backend
 
 
-class LRCLibLyricsTest(unittest.TestCase):
+class LRCLibLyricsTest(LyricsTestCase):
     def setUp(self):
-        self.plugin = lyrics.LyricsPlugin()
+        super().setUp()
         lrclib.config = self.plugin.config
 
     @patch("beetsplug.lyrics.requests.get")
@@ -750,9 +702,9 @@ class LRCLibLyricsTest(unittest.TestCase):
         self.assertIsNone(lyrics)
 
 
-class LRCLibIntegrationTest(LyricsAssertions):
+class LRCLibIntegrationTest(LyricsTestCase, LyricsAssertions):
     def setUp(self):
-        self.plugin = lyrics.LyricsPlugin()
+        super().setUp()
         lrclib.config = self.plugin.config
 
     @unittest.skipUnless(

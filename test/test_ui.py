@@ -30,12 +30,7 @@ from mediafile import MediaFile
 from beets import autotag, config, library, plugins, ui, util
 from beets.autotag.match import distance
 from beets.test import _common
-from beets.test.helper import (
-    TestHelper,
-    capture_stdout,
-    control_stdin,
-    has_program,
-)
+from beets.test.helper import TestHelper, capture_stdout, control_stdin
 from beets.ui import commands
 from beets.util import MoveOperation, syspath
 
@@ -1430,8 +1425,6 @@ class CompletionTest(_common.TestCase, TestHelper):
         # Open a `bash` process to run the tests in. We'll pipe in bash
         # commands via stdin.
         cmd = os.environ.get("BEETS_TEST_SHELL", "/bin/bash --norc").split()
-        if not has_program(cmd[0]):
-            self.skipTest("bash not available")
         tester = subprocess.Popen(
             cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, env=env
         )
@@ -1442,12 +1435,12 @@ class CompletionTest(_common.TestCase, TestHelper):
                 bash_completion = path
                 break
         else:
-            self.skipTest("bash-completion script not found")
+            self.fail("bash-completion script not found")
         try:
             with open(util.syspath(bash_completion), "rb") as f:
                 tester.stdin.writelines(f)
         except OSError:
-            self.skipTest("could not read bash-completion script")
+            self.fail("could not read bash-completion script")
 
         # Load completion script.
         self.io.install()

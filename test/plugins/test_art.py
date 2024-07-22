@@ -884,21 +884,12 @@ class ArtForAlbumTest(UseThePlugin):
             self.plugin.art_for_album(self.album, [""], True)
             self.assertEqual(mock_operation.called, should_operate)
 
-    def _require_backend(self):
-        """Skip the test if the art resizer doesn't have ImageMagick or
-        PIL (so comparisons and measurements are unavailable).
-        """
-        if not ArtResizer.shared.local:
-            self.skipTest("ArtResizer has no local imaging backend available")
-
     def test_respect_minwidth(self):
-        self._require_backend()
         self.plugin.minwidth = 300
         self._assertImageIsValidArt(self.IMG_225x225, False)
         self._assertImageIsValidArt(self.IMG_348x348, True)
 
     def test_respect_enforce_ratio_yes(self):
-        self._require_backend()
         self.plugin.enforce_ratio = True
         self._assertImageIsValidArt(self.IMG_500x490, False)
         self._assertImageIsValidArt(self.IMG_225x225, True)
@@ -908,60 +899,50 @@ class ArtForAlbumTest(UseThePlugin):
         self._assertImageIsValidArt(self.IMG_500x490, True)
 
     def test_respect_enforce_ratio_px_above(self):
-        self._require_backend()
         self.plugin.enforce_ratio = True
         self.plugin.margin_px = 5
         self._assertImageIsValidArt(self.IMG_500x490, False)
 
     def test_respect_enforce_ratio_px_below(self):
-        self._require_backend()
         self.plugin.enforce_ratio = True
         self.plugin.margin_px = 15
         self._assertImageIsValidArt(self.IMG_500x490, True)
 
     def test_respect_enforce_ratio_percent_above(self):
-        self._require_backend()
         self.plugin.enforce_ratio = True
         self.plugin.margin_percent = (500 - 490) / 500 * 0.5
         self._assertImageIsValidArt(self.IMG_500x490, False)
 
     def test_respect_enforce_ratio_percent_below(self):
-        self._require_backend()
         self.plugin.enforce_ratio = True
         self.plugin.margin_percent = (500 - 490) / 500 * 1.5
         self._assertImageIsValidArt(self.IMG_500x490, True)
 
     def test_resize_if_necessary(self):
-        self._require_backend()
         self.plugin.maxwidth = 300
         self._assert_image_operated(self.IMG_225x225, self.RESIZE_OP, False)
         self._assert_image_operated(self.IMG_348x348, self.RESIZE_OP, True)
 
     def test_fileresize(self):
-        self._require_backend()
         self.plugin.max_filesize = self.IMG_225x225_SIZE // 2
         self._assert_image_operated(self.IMG_225x225, self.RESIZE_OP, True)
 
     def test_fileresize_if_necessary(self):
-        self._require_backend()
         self.plugin.max_filesize = self.IMG_225x225_SIZE
         self._assert_image_operated(self.IMG_225x225, self.RESIZE_OP, False)
         self._assertImageIsValidArt(self.IMG_225x225, True)
 
     def test_fileresize_no_scale(self):
-        self._require_backend()
         self.plugin.maxwidth = 300
         self.plugin.max_filesize = self.IMG_225x225_SIZE // 2
         self._assert_image_operated(self.IMG_225x225, self.RESIZE_OP, True)
 
     def test_fileresize_and_scale(self):
-        self._require_backend()
         self.plugin.maxwidth = 200
         self.plugin.max_filesize = self.IMG_225x225_SIZE // 2
         self._assert_image_operated(self.IMG_225x225, self.RESIZE_OP, True)
 
     def test_deinterlace(self):
-        self._require_backend()
         self.plugin.deinterlace = True
         self._assert_image_operated(self.IMG_225x225, self.DEINTERLACE_OP, True)
         self.plugin.deinterlace = False
@@ -970,7 +951,6 @@ class ArtForAlbumTest(UseThePlugin):
         )
 
     def test_deinterlace_and_resize(self):
-        self._require_backend()
         self.plugin.maxwidth = 300
         self.plugin.deinterlace = True
         self._assert_image_operated(self.IMG_348x348, self.DEINTERLACE_OP, True)
