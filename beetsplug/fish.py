@@ -143,20 +143,22 @@ def fish_config_dir() -> Path:
 # See: 'escape_string_script()' on GitHub: 'fish-shell/fish-shell',
 #   'src/common.rs', as of '936f7d9b8d3faeb49de4e617d76eaedabce09aaa'.
 ESCAPE_SCRIPT_TABLE = str.maketrans(
-    {
-        "\t": "\\t",
-        "\n": "\\n",
-        "\b": "\\b",
-        "\r": "\\r",
-        "\\": "\\\\",
-        "\x1b": "\\e",
-        "'": "\\'",
-        '"': '\\"',
-        "\x7f": "\\x7F",
-    }
-    | {c: f"\\{c}" for c in "&$ #<>()[]{}?*|;%~"}
-    | {chr(i): f"\\x{i:02X}" for i in range(26)}
-    | {chr(0xF600 + i): f"\\X{i:02X}" for i in range(256)}
+    dict(
+        [
+            ("\t", "\\t"),
+            ("\n", "\\n"),
+            ("\b", "\\b"),
+            ("\r", "\\r"),
+            ("\\", "\\\\"),
+            ("\x1b", "\\e"),
+            ("'", "\\'"),
+            ('"', '\\"'),
+            ("\x7f", "\\x7F"),
+            *[(c, f"\\{c}") for c in "&$ #<>()[]{}?*|;%~"],
+            *[(chr(i), f"\\x{i:02X}") for i in range(26)],
+            *[(chr(0xF600 + i), f"\\X{i:02X}") for i in range(256)],
+        ]
+    )
 )
 
 
