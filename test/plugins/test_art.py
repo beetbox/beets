@@ -66,11 +66,8 @@ class CAAHelper:
     MBID_RELEASE = "rid"
     MBID_GROUP = "rgid"
 
-    RELEASE_URL = f"coverartarchive.org/release/{MBID_RELEASE}"
-    GROUP_URL = f"coverartarchive.org/release-group/{MBID_GROUP}"
-
-    RELEASE_URL = "https://" + RELEASE_URL
-    GROUP_URL = "https://" + GROUP_URL
+    RELEASE_URL = f"https://coverartarchive.org/release/{MBID_RELEASE}"
+    GROUP_URL = f"https://coverartarchive.org/release-group/{MBID_GROUP}"
 
     RESPONSE_RELEASE = """{
     "images": [

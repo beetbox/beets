@@ -228,8 +228,8 @@ class BeatportRelease(BeatportObject):
         if "category" in data:
             self.category = data["category"]
         if "slug" in data:
-            self.url = (
-                f"https://beatport.com/release/{data['slug']}/{data['id']}"
+            self.url = "https://beatport.com/release/{}/{}".format(
+                data["slug"], data["id"]
             )
         self.genre = data.get("genre")
 
@@ -256,7 +256,9 @@ class BeatportTrack(BeatportObject):
             except ValueError:
                 pass
         if "slug" in data:
-            self.url = f"https://beatport.com/track/{data['slug']}/{data['id']}"
+            self.url = "https://beatport.com/track/{}/{}".format(
+                data["slug"], data["id"]
+            )
         self.track_number = data.get("trackNumber")
         self.bpm = data.get("bpm")
         self.initial_key = str((data.get("key") or {}).get("shortName"))
