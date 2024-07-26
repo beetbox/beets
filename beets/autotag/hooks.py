@@ -267,8 +267,6 @@ class TrackInfo(AttrDict):
 # Candidate distance scoring.
 
 # Parameters for string distance function.
-# Words that can be moved to the end of a string using a comma.
-SD_END_REPLACE = re.compile(r"^(.*), (the|a|an)$")
 # Reduced weights for certain portions of the string.
 SD_PATTERNS = [
     (r"^the ", 0.1),
@@ -311,17 +309,24 @@ def string_dist(str1: Optional[str], str2: Optional[str]) -> float:
     if str1 is None or str2 is None:
         return 1.0
 
+    # Make all following comparison case-insensitive.
     str1 = str1.lower()
     str2 = str2.lower()
 
     # Don't penalize strings that move certain words to the end. For
     # example, "the something" should be considered equal to
     # "something, the".
-    def replacer(m: re.Match[str]) -> str:
-        return f"{m.group(2)} {m.group(1)}"
+    def switch_article(string: str) -> str:
+        if ", " not in string:
+            return string
+        [title, article] = string.rsplit(", ", maxsplit=1)
+        if article in ["the", "a", "an"]:
+            return f"{article} {title}"
+        else:
+            return string
 
-    str1 = re.sub(SD_END_REPLACE, replacer, str1)
-    str2 = re.sub(SD_END_REPLACE, replacer, str2)
+    str1 = switch_article(str1)
+    str2 = switch_article(str2)
 
     # Perform a couple of basic normalizing substitutions.
     for pat, repl in SD_REPLACE:
