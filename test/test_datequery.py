@@ -139,7 +139,7 @@ class DateIntervalTest(unittest.TestCase):
             date = _date(date_pattern)
         (start, end) = _parse_periods(interval_pattern)
         interval = DateInterval.from_periods(start, end)
-        self.assertTrue(interval.contains(date))
+        assert interval.contains(date)
 
     def assertExcludes(self, interval_pattern, date_pattern):  # noqa
         date = _date(date_pattern)
@@ -170,7 +170,7 @@ class DateQueryTest(ItemInDBTestCase):
 
     def test_single_month_match_slow(self):
         query = DateQuery("added", "2013-03")
-        self.assertTrue(query.match(self.i))
+        assert query.match(self.i)
 
     def test_single_month_nonmatch_slow(self):
         query = DateQuery("added", "2013-04")
@@ -212,7 +212,7 @@ class DateQueryTestRelative(ItemInDBTestCase):
 
     def test_single_month_match_slow(self):
         query = DateQuery("added", self._now.strftime("%Y-%m"))
-        self.assertTrue(query.match(self.i))
+        assert query.match(self.i)
 
     def test_single_month_nonmatch_slow(self):
         query = DateQuery(

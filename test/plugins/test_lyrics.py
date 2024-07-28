@@ -379,7 +379,7 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest, LyricsAssertions):
         for s in sources:
             url = s["url"] + s["path"]
             res = lyrics.scrape_lyrics_from_html(raw_backend.fetch_url(url))
-            self.assertTrue(google.is_lyrics(res), url)
+            assert google.is_lyrics(res), url
             self.assertLyricsContentOk(s["title"], res, url)
 
 
@@ -403,7 +403,7 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest, LyricsAssertions):
         """Test that lyrics of the mocked page are correctly scraped"""
         url = self.source["url"] + self.source["path"]
         res = lyrics.scrape_lyrics_from_html(raw_backend.fetch_url(url))
-        self.assertTrue(google.is_lyrics(res), url)
+        assert google.is_lyrics(res), url
         self.assertLyricsContentOk(self.source["title"], res, url)
 
     @patch.object(lyrics.Backend, "fetch_url", MockFetchUrl())
@@ -419,12 +419,9 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest, LyricsAssertions):
         soup = BeautifulSoup(
             html, "html.parser", parse_only=SoupStrainer("title")
         )
-        self.assertTrue(
-            google.is_page_candidate(
-                url, soup.title.string, s["title"], s["artist"]
-            ),
-            url,
-        )
+        assert google.is_page_candidate(
+            url, soup.title.string, s["title"], s["artist"]
+        ), url
 
     def test_is_page_candidate_fuzzy_match(self):
         """Test matching html page title with song infos -- when song infos are
@@ -435,10 +432,9 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest, LyricsAssertions):
         url_title = "example.com | Beats song by John doe"
 
         # very small diffs (typo) are ok eg 'beats' vs 'beets' with same artist
-        self.assertTrue(
-            google.is_page_candidate(url, url_title, s["title"], s["artist"]),
-            url,
-        )
+        assert google.is_page_candidate(
+            url, url_title, s["title"], s["artist"]
+        ), url
         # reject different title
         url_title = "example.com | seets bong lyrics by John doe"
         self.assertFalse(

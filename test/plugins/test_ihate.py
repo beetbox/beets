@@ -20,11 +20,11 @@ class IHatePluginTest(unittest.TestCase):
 
         # 1 query match.
         match_pattern = ["artist:bad_artist", "artist:TestArtist"]
-        self.assertTrue(IHatePlugin.do_i_hate_this(task, match_pattern))
+        assert IHatePlugin.do_i_hate_this(task, match_pattern)
 
         # 2 query matches, either should trigger.
         match_pattern = ["album:test", "artist:testartist"]
-        self.assertTrue(IHatePlugin.do_i_hate_this(task, match_pattern))
+        assert IHatePlugin.do_i_hate_this(task, match_pattern)
 
         # Query is blocked by AND clause.
         match_pattern = ["album:notthis genre:testgenre"]
@@ -42,4 +42,4 @@ class IHatePluginTest(unittest.TestCase):
             "album:testalbum genre:testgenre",
             "artist:testartist album:notthis",
         ]
-        self.assertTrue(IHatePlugin.do_i_hate_this(task, match_pattern))
+        assert IHatePlugin.do_i_hate_this(task, match_pattern)

@@ -146,7 +146,7 @@ class MoveTest(BeetsTestCase):
 
         try:
             self.i.move(operation=MoveOperation.COPY)
-            self.assertTrue(os.access(syspath(self.i.path), os.W_OK))
+            assert os.access(syspath(self.i.path), os.W_OK)
         finally:
             # Make everything writable so it can be cleaned up.
             os.chmod(syspath(self.path), 0o777)
@@ -166,7 +166,7 @@ class MoveTest(BeetsTestCase):
     def test_link_arrives(self):
         self.i.move(operation=MoveOperation.LINK)
         self.assertExists(self.dest)
-        self.assertTrue(os.path.islink(syspath(self.dest)))
+        assert os.path.islink(syspath(self.dest))
         self.assertEqual(
             bytestring_path(os.readlink(syspath(self.dest))),
             self.path,
@@ -188,9 +188,9 @@ class MoveTest(BeetsTestCase):
         self.assertExists(self.dest)
         s1 = os.stat(syspath(self.path))
         s2 = os.stat(syspath(self.dest))
-        self.assertTrue(
-            (s1[stat.ST_INO], s1[stat.ST_DEV])
-            == (s2[stat.ST_INO], s2[stat.ST_DEV])
+        assert (s1[stat.ST_INO], s1[stat.ST_DEV]) == (
+            s2[stat.ST_INO],
+            s2[stat.ST_DEV],
         )
 
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
@@ -265,7 +265,7 @@ class AlbumFileTest(BeetsTestCase):
         self.ai.store()
         self.i.load()
 
-        self.assertTrue(b"newAlbumName" in self.i.path)
+        assert b"newAlbumName" in self.i.path
 
     def test_albuminfo_move_moves_file(self):
         oldpath = self.i.path
@@ -295,8 +295,8 @@ class AlbumFileTest(BeetsTestCase):
         self.ai.store()
         self.i.load()
 
-        self.assertTrue(os.path.exists(oldpath))
-        self.assertTrue(os.path.exists(self.i.path))
+        assert os.path.exists(oldpath)
+        assert os.path.exists(self.i.path)
 
     def test_albuminfo_move_to_custom_dir(self):
         self.ai.move(basedir=self.otherdir)
@@ -437,8 +437,8 @@ class ArtFileTest(BeetsTestCase):
             ai.set_art(newart)
 
             mode = stat.S_IMODE(os.stat(syspath(ai.artpath)).st_mode)
-            self.assertTrue(mode & stat.S_IRGRP)
-            self.assertTrue(os.access(syspath(ai.artpath), os.W_OK))
+            assert mode & stat.S_IRGRP
+            assert os.access(syspath(ai.artpath), os.W_OK)
 
         finally:
             # Make everything writable so it can be cleaned up.
@@ -454,7 +454,7 @@ class ArtFileTest(BeetsTestCase):
         self.ai.items()[0].move()
 
         artpath = self.lib.albums()[0].artpath
-        self.assertTrue(b"different_album" in artpath)
+        assert b"different_album" in artpath
         self.assertExists(artpath)
         self.assertNotExists(oldartpath)
 

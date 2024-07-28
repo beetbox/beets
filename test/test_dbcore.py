@@ -455,7 +455,7 @@ class FormatTest(unittest.TestCase):
         model = ModelFixture1()
         model.other_field = "caf\xe9".encode()
         value = model.formatted().get("other_field")
-        self.assertTrue(isinstance(value, str))
+        assert isinstance(value, str)
         self.assertEqual(value, "caf\xe9")
 
     def test_format_unset_field(self):

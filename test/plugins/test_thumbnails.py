@@ -74,7 +74,7 @@ class ThumbnailsTest(BeetsTestCase):
         mock_os.path.exists = exists
         plugin = ThumbnailsPlugin()
         mock_os.makedirs.assert_called_once_with(syspath(NORMAL_DIR))
-        self.assertTrue(plugin._check_local_ok())
+        assert plugin._check_local_ok()
 
         # test metadata writer function
         mock_os.path.exists = lambda _: True
@@ -86,7 +86,7 @@ class ThumbnailsTest(BeetsTestCase):
 
         mock_artresizer.shared.local = True
         mock_artresizer.shared.can_write_metadata = True
-        self.assertTrue(ThumbnailsPlugin()._check_local_ok())
+        assert ThumbnailsPlugin()._check_local_ok()
 
         # test URI getter function
         giouri_inst = mock_giouri.return_value

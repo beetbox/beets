@@ -114,16 +114,16 @@ class SmartPlaylistTest(BeetsTestCase):
 
         query = Mock()
         query.match.side_effect = {i: True}.__getitem__
-        self.assertTrue(spl.matches(i, query, None))
+        assert spl.matches(i, query, None)
         self.assertFalse(spl.matches(a, query, None))
 
         a_query = Mock()
         a_query.match.side_effect = {a: True}.__getitem__
         self.assertFalse(spl.matches(i, None, a_query))
-        self.assertTrue(spl.matches(a, None, a_query))
+        assert spl.matches(a, None, a_query)
 
-        self.assertTrue(spl.matches(i, query, a_query))
-        self.assertTrue(spl.matches(a, query, a_query))
+        assert spl.matches(i, query, a_query)
+        assert spl.matches(a, query, a_query)
 
     def test_db_changes(self):
         spl = SmartPlaylistPlugin()

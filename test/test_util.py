@@ -163,8 +163,8 @@ class PathConversionTest(BeetsTestCase):
         with _common.platform_windows():
             path = os.path.join("a", "b", "c")
             outpath = util.syspath(path)
-        self.assertTrue(isinstance(outpath, str))
-        self.assertTrue(outpath.startswith("\\\\?\\"))
+        assert isinstance(outpath, str)
+        assert outpath.startswith("\\\\?\\")
 
     def test_syspath_windows_format_unc_path(self):
         # The \\?\ prefix on Windows behaves differently with UNC
@@ -172,7 +172,7 @@ class PathConversionTest(BeetsTestCase):
         path = "\\\\server\\share\\file.mp3"
         with _common.platform_windows():
             outpath = util.syspath(path)
-        self.assertTrue(isinstance(outpath, str))
+        assert isinstance(outpath, str)
         self.assertEqual(outpath, "\\\\?\\UNC\\server\\share\\file.mp3")
 
     def test_syspath_posix_unchanged(self):
