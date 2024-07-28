@@ -594,14 +594,14 @@ class UpdateTest(BeetsTestCase):
         )
 
     def test_delete_removes_item(self):
-        self.assertTrue(list(self.lib.items()))
+        assert list(self.lib.items())
         util.remove(self.i.path)
         util.remove(self.i2.path)
         self._update()
         self.assertFalse(list(self.lib.items()))
 
     def test_delete_removes_album(self):
-        self.assertTrue(self.lib.albums())
+        assert self.lib.albums()
         util.remove(self.i.path)
         util.remove(self.i2.path)
         self._update()
@@ -1070,7 +1070,7 @@ class ConfigTest(TestPluginTestCase):
             file.write("plugins: test")
 
         self.run_command("--config", cli_config_path, "plugin", lib=None)
-        self.assertTrue(plugins.find_plugins()[0].is_test_plugin)
+        assert plugins.find_plugins()[0].is_test_plugin
         self.unload_plugins()
 
     def test_beetsdir_config(self):
@@ -1151,13 +1151,13 @@ class ShowModelChangeTest(BeetsTestCase):
     def test_string_fixed_field_change(self):
         self.b.title = "x"
         change, out = self._show()
-        self.assertTrue(change)
+        assert change
         self.assertIn("title", out)
 
     def test_int_fixed_field_change(self):
         self.b.track = 9
         change, out = self._show()
-        self.assertTrue(change)
+        assert change
         self.assertIn("track", out)
 
     def test_floats_close_to_identical(self):
@@ -1171,7 +1171,7 @@ class ShowModelChangeTest(BeetsTestCase):
         self.a.length = 1.00001
         self.b.length = 2.00001
         change, out = self._show()
-        self.assertTrue(change)
+        assert change
         self.assertIn("length", out)
 
     def test_both_values_shown(self):
@@ -1241,27 +1241,27 @@ class ShowChangeTest(BeetsTestCase):
     def test_item_data_change(self):
         self.items[0].title = "different"
         msg = self._show_change()
-        self.assertTrue("different" in msg and "the title" in msg)
+        assert "different" in msg and "the title" in msg
 
     def test_item_data_change_with_unicode(self):
         self.items[0].title = "caf\xe9"
         msg = self._show_change()
-        self.assertTrue("caf\xe9" in msg and "the title" in msg)
+        assert "caf\xe9" in msg and "the title" in msg
 
     def test_album_data_change_with_unicode(self):
         msg = self._show_change(cur_artist="caf\xe9", cur_album="another album")
-        self.assertTrue("caf\xe9" in msg and "the artist" in msg)
+        assert "caf\xe9" in msg and "the artist" in msg
 
     def test_item_data_change_title_missing(self):
         self.items[0].title = ""
         msg = re.sub(r"  +", " ", self._show_change())
-        self.assertTrue("file.mp3" in msg and "the title" in msg)
+        assert "file.mp3" in msg and "the title" in msg
 
     def test_item_data_change_title_missing_with_unicode_filename(self):
         self.items[0].title = ""
         self.items[0].path = "/path/to/caf\xe9.mp3".encode()
         msg = re.sub(r"  +", " ", self._show_change())
-        self.assertTrue("caf\xe9.mp3" in msg or "caf.mp3" in msg)
+        assert "caf\xe9.mp3" in msg or "caf.mp3" in msg
 
     def test_colorize(self):
         self.assertEqual("test", ui.uncolorize("test"))
@@ -1530,7 +1530,7 @@ class CommonOptionsParserTest(BeetsTestCase):
         parser = ui.CommonOptionsParser()
         self.assertFalse(parser._album_flags)
         parser.add_album_option()
-        self.assertTrue(bool(parser._album_flags))
+        assert bool(parser._album_flags)
 
         self.assertEqual(parser.parse_args([]), ({"album": None}, []))
         self.assertEqual(parser.parse_args(["-a"]), ({"album": True}, []))

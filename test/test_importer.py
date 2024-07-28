@@ -184,7 +184,7 @@ class NonAutotaggedImportTest(AsIsImporterMixin, ImportTestCase):
                 util.bytestring_path(f"{mediafile.title}.mp3"),
             )
             self.assertExists(filename)
-            self.assertTrue(os.path.islink(syspath(filename)))
+            assert os.path.islink(syspath(filename))
             self.assert_equal_path(
                 util.bytestring_path(os.readlink(syspath(filename))),
                 mediafile.path,
@@ -203,9 +203,9 @@ class NonAutotaggedImportTest(AsIsImporterMixin, ImportTestCase):
             self.assertExists(filename)
             s1 = os.stat(syspath(mediafile.path))
             s2 = os.stat(syspath(filename))
-            self.assertTrue(
-                (s1[stat.ST_INO], s1[stat.ST_DEV])
-                == (s2[stat.ST_INO], s2[stat.ST_DEV])
+            assert (s1[stat.ST_INO], s1[stat.ST_DEV]) == (
+                s2[stat.ST_INO],
+                s2[stat.ST_DEV],
             )
 
     @unittest.skipUnless(_common.HAVE_REFLINK, "need reflinks")
@@ -711,7 +711,7 @@ class ImportCompilationTest(ImportTestCase):
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
         for item in self.lib.items():
-            self.assertTrue(item.comp)
+            assert item.comp
 
     def test_asis_sets_majority_albumartist(self):
         self.import_media[0].artist = "Other Artist"
@@ -786,7 +786,7 @@ class ImportCompilationTest(ImportTestCase):
                     item.artists, ["Another Artist", "Another Artist 2"]
                 )
 
-        self.assertTrue(asserted_multi_artists_0 and asserted_multi_artists_1)
+        assert asserted_multi_artists_0 and asserted_multi_artists_1
 
 
 class ImportExistingTest(ImportTestCase):
@@ -1037,7 +1037,7 @@ class InferAlbumDataTest(BeetsTestCase):
 
         self.task.align_album_level_fields()
 
-        self.assertTrue(self.items[0].comp)
+        assert self.items[0].comp
         self.assertEqual(self.items[0].albumartist, "Various Artists")
 
     def test_asis_comp_applied_to_all_items(self):
@@ -1048,7 +1048,7 @@ class InferAlbumDataTest(BeetsTestCase):
         self.task.align_album_level_fields()
 
         for item in self.items:
-            self.assertTrue(item.comp)
+            assert item.comp
             self.assertEqual(item.albumartist, "Various Artists")
 
     def test_asis_majority_artist_single_artist(self):

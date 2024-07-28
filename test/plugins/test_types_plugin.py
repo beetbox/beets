@@ -85,7 +85,7 @@ class TypesPluginTest(PluginTestCase):
         # Set true
         self.modify("mybool=1", "artist:true")
         true.load()
-        self.assertTrue(true["mybool"])
+        assert true["mybool"]
 
         # Set false
         self.modify("mybool=false", "artist:false")

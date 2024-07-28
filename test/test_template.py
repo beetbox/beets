@@ -53,8 +53,8 @@ class ParseTest(unittest.TestCase):
 
     def _assert_symbol(self, obj, ident):
         """Assert that an object is a Symbol with the given identifier."""
-        self.assertTrue(
-            isinstance(obj, functemplate.Symbol), "not a Symbol: %s" % repr(obj)
+        assert isinstance(obj, functemplate.Symbol), "not a Symbol: %s" % repr(
+            obj
         )
         self.assertEqual(
             obj.ident,
@@ -66,9 +66,7 @@ class ParseTest(unittest.TestCase):
         """Assert that an object is a Call with the given identifier and
         argument count.
         """
-        self.assertTrue(
-            isinstance(obj, functemplate.Call), "not a Call: %s" % repr(obj)
-        )
+        assert isinstance(obj, functemplate.Call), "not a Call: %s" % repr(obj)
         self.assertEqual(
             obj.ident,
             ident,
@@ -277,7 +275,7 @@ class EvalTest(unittest.TestCase):
 
     def test_function_call_exception(self):
         res = self._eval("%lower{a,b,c,d,e}")
-        self.assertTrue(isinstance(res, str))
+        assert isinstance(res, str)
 
     def test_function_returning_integer(self):
         self.assertEqual(self._eval("%len{foo}"), "3")

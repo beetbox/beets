@@ -354,7 +354,7 @@ class DestinationTest(BeetsTestCase):
         with _common.platform_posix():
             self.i.track = 1
             name = self.i.formatted().get("track")
-        self.assertTrue(name.startswith("0"))
+        assert name.startswith("0")
 
     def test_get_formatted_uses_kbps_bitrate(self):
         with _common.platform_posix():
@@ -372,7 +372,7 @@ class DestinationTest(BeetsTestCase):
         with _common.platform_posix():
             self.i.added = 1368302461.210265
             val = self.i.formatted().get("added")
-        self.assertTrue(val.startswith("2013"))
+        assert val.startswith("2013")
 
     def test_get_formatted_none(self):
         with _common.platform_posix():
@@ -1071,15 +1071,15 @@ class PathStringTest(BeetsTestCase):
         self.i = item(self.lib)
 
     def test_item_path_is_bytestring(self):
-        self.assertTrue(isinstance(self.i.path, bytes))
+        assert isinstance(self.i.path, bytes)
 
     def test_fetched_item_path_is_bytestring(self):
         i = list(self.lib.items())[0]
-        self.assertTrue(isinstance(i.path, bytes))
+        assert isinstance(i.path, bytes)
 
     def test_unicode_path_becomes_bytestring(self):
         self.i.path = "unicodepath"
-        self.assertTrue(isinstance(self.i.path, bytes))
+        assert isinstance(self.i.path, bytes)
 
     def test_unicode_in_database_becomes_bytestring(self):
         self.lib._connection().execute(
@@ -1089,7 +1089,7 @@ class PathStringTest(BeetsTestCase):
             (self.i.id, "somepath"),
         )
         i = list(self.lib.items())[0]
-        self.assertTrue(isinstance(i.path, bytes))
+        assert isinstance(i.path, bytes)
 
     def test_special_chars_preserved_in_database(self):
         path = "b\xe1r".encode()
@@ -1110,13 +1110,13 @@ class PathStringTest(BeetsTestCase):
     def test_destination_returns_bytestring(self):
         self.i.artist = "b\xe1r"
         dest = self.i.destination()
-        self.assertTrue(isinstance(dest, bytes))
+        assert isinstance(dest, bytes)
 
     def test_art_destination_returns_bytestring(self):
         self.i.artist = "b\xe1r"
         alb = self.lib.add_album([self.i])
         dest = alb.art_destination("image.jpg")
-        self.assertTrue(isinstance(dest, bytes))
+        assert isinstance(dest, bytes)
 
     def test_artpath_stores_special_chars(self):
         path = b"b\xe1r"
@@ -1129,17 +1129,17 @@ class PathStringTest(BeetsTestCase):
     def test_sanitize_path_with_special_chars(self):
         path = "b\xe1r?"
         new_path = util.sanitize_path(path)
-        self.assertTrue(new_path.startswith("b\xe1r"))
+        assert new_path.startswith("b\xe1r")
 
     def test_sanitize_path_returns_unicode(self):
         path = "b\xe1r?"
         new_path = util.sanitize_path(path)
-        self.assertTrue(isinstance(new_path, str))
+        assert isinstance(new_path, str)
 
     def test_unicode_artpath_becomes_bytestring(self):
         alb = self.lib.add_album([self.i])
         alb.artpath = "somep\xe1th"
-        self.assertTrue(isinstance(alb.artpath, bytes))
+        assert isinstance(alb.artpath, bytes)
 
     def test_unicode_artpath_in_database_decoded(self):
         alb = self.lib.add_album([self.i])
@@ -1147,7 +1147,7 @@ class PathStringTest(BeetsTestCase):
             "update albums set artpath=? where id=?", ("somep\xe1th", alb.id)
         )
         alb = self.lib.get_album(alb.id)
-        self.assertTrue(isinstance(alb.artpath, bytes))
+        assert isinstance(alb.artpath, bytes)
 
 
 class MtimeTest(BeetsTestCase):

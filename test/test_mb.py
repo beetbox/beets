@@ -342,7 +342,7 @@ class MBAlbumInfoTest(BeetsTestCase):
         release = self._make_release(None)
         release["artist-credit"][0]["artist"]["id"] = mb.VARIOUS_ARTISTS_ID
         d = mb.album_info(release)
-        self.assertTrue(d.va)
+        assert d.va
 
     def test_parse_artist_sort_name(self):
         release = self._make_release(None)

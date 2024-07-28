@@ -146,8 +146,8 @@ class EditCommandTest(EditMixin, BeetsTestCase):
         self.assertEqual(len(self.lib.albums()), album_count)
         self.assertEqual(len(self.lib.items()), track_count)
         self.assertEqual(mock_write.call_count, write_call_count)
-        self.assertTrue(
-            all(i.title.startswith(title_starts_with) for i in self.lib.items())
+        assert all(
+            i.title.startswith(title_starts_with) for i in self.lib.items()
         )
 
     def test_title_edit_discard(self, mock_write):
@@ -366,9 +366,7 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
                 "mb_albumartistids",
             ],
         )
-        self.assertTrue(
-            all("Edited Track" in i.title for i in self.lib.items())
-        )
+        assert all("Edited Track" in i.title for i in self.lib.items())
 
         # Ensure album is *not* fetched from a candidate.
         self.assertEqual(self.lib.albums()[0].mb_albumid, "")
@@ -391,7 +389,7 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
             [],
             self.IGNORED + ["albumartist", "mb_albumartistid"],
         )
-        self.assertTrue(all("Tag Track" in i.title for i in self.lib.items()))
+        assert all("Tag Track" in i.title for i in self.lib.items())
 
         # Ensure album is *not* fetched from a candidate.
         self.assertEqual(self.lib.albums()[0].mb_albumid, "")
@@ -409,10 +407,8 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
 
         # Check that 'title' field is modified, and other fields come from
         # the candidate.
-        self.assertTrue(
-            all("Edited Track " in i.title for i in self.lib.items())
-        )
-        self.assertTrue(all("match " in i.mb_trackid for i in self.lib.items()))
+        assert all("Edited Track " in i.title for i in self.lib.items())
+        assert all("match " in i.mb_trackid for i in self.lib.items())
 
         # Ensure album is fetched from a candidate.
         self.assertIn("albumid", self.lib.albums()[0].mb_albumid)
@@ -439,10 +435,8 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
 
         # Check that 'title' field is modified, and other fields come from
         # the candidate.
-        self.assertTrue(
-            all("Edited Track " in i.title for i in self.lib.items())
-        )
-        self.assertTrue(all("match " in i.mb_trackid for i in self.lib.items()))
+        assert all("Edited Track " in i.title for i in self.lib.items())
+        assert all("match " in i.mb_trackid for i in self.lib.items())
 
         # Ensure album is fetched from a candidate.
         self.assertIn("albumid", self.lib.albums()[0].mb_albumid)
@@ -460,10 +454,8 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
 
         # Check that 'title' field is modified, and other fields come from
         # the candidate.
-        self.assertTrue(
-            all("Edited Track " in i.title for i in self.lib.items())
-        )
-        self.assertTrue(all("match " in i.mb_trackid for i in self.lib.items()))
+        assert all("Edited Track " in i.title for i in self.lib.items())
+        assert all("match " in i.mb_trackid for i in self.lib.items())
 
         # Ensure album is fetched from a candidate.
         self.assertIn("albumid", self.lib.albums()[0].mb_albumid)
@@ -481,10 +473,8 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
 
         # Check that 'title' field is modified, and other fields come from
         # the candidate.
-        self.assertTrue(
-            all("Edited Track " in i.title for i in self.lib.items())
-        )
-        self.assertTrue(all("match " in i.mb_trackid for i in self.lib.items()))
+        assert all("Edited Track " in i.title for i in self.lib.items())
+        assert all("match " in i.mb_trackid for i in self.lib.items())
 
 
 @_common.slow_test()
@@ -511,6 +501,4 @@ class EditDuringImporterSingletonTest(EditDuringImporterTestCase):
             ["title"],
             self.IGNORED + ["albumartist", "mb_albumartistid"],
         )
-        self.assertTrue(
-            all("Edited Track" in i.title for i in self.lib.items())
-        )
+        assert all("Edited Track" in i.title for i in self.lib.items())

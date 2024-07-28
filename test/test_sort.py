@@ -527,6 +527,6 @@ class NonExistingFieldTest(DummyDataTestCase):
             "-bar+", beets.library.Item
         )
         self.assertEqual(len(query.subqueries), 1)
-        self.assertTrue(isinstance(query.subqueries[0], dbcore.query.TrueQuery))
-        self.assertTrue(isinstance(sort, dbcore.query.SlowFieldSort))
+        assert isinstance(query.subqueries[0], dbcore.query.TrueQuery)
+        assert isinstance(sort, dbcore.query.SlowFieldSort)
         self.assertEqual(sort.field, "-bar")

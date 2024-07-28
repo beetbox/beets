@@ -104,7 +104,7 @@ class HookCommandTest(HookTestCase):
                     plugins.send(event, path=path)
                 else:
                     plugins.send(event)
-                self.assertTrue(os.path.isfile(path))
+                assert os.path.isfile(path)
 
     @unittest.skipIf(sys.platform == "win32", "win32")
     def test_hook_no_arguments(self):

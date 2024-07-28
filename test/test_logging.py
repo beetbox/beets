@@ -48,7 +48,7 @@ class LoggingTest(BeetsTestCase):
 
         l.warning("foo {0} {bar}", "oof", bar="baz")
         handler.flush()
-        self.assertTrue(stream.getvalue(), "foo oof baz")
+        assert stream.getvalue(), "foo oof baz"
 
 
 class LoggingLevelTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
@@ -217,7 +217,7 @@ class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
             t1.start()  # blocked. t1 tested its log level
             while dp.t1_step != 1:
                 check_dp_exc()
-            self.assertTrue(t1.is_alive())
+            assert t1.is_alive()
             self.assertEqual(dp._log.level, log.NOTSET)
 
             self.config["verbose"] = 2
@@ -225,7 +225,7 @@ class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
             t2.start()  # blocked. t2 tested its log level
             while dp.t2_step != 1:
                 check_dp_exc()
-            self.assertTrue(t2.is_alive())
+            assert t2.is_alive()
             self.assertEqual(dp._log.level, log.NOTSET)
 
             dp.lock1.release()  # dummy_event1 tests its log level + finishes
@@ -233,7 +233,7 @@ class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
                 check_dp_exc()
             t1.join(0.1)
             self.assertFalse(t1.is_alive())
-            self.assertTrue(t2.is_alive())
+            assert t2.is_alive()
             self.assertEqual(dp._log.level, log.NOTSET)
 
             dp.lock2.release()  # dummy_event2 tests its log level + finishes

@@ -308,7 +308,7 @@ class ArtSimilarityTest(unittest.TestCase):
 
     def test_compare_success_similar(self, mock_extract, mock_subprocess):
         self._mock_popens(mock_extract, mock_subprocess, 0, "10", "err")
-        self.assertTrue(self._similarity(20))
+        assert self._similarity(20)
 
     def test_compare_success_different(self, mock_extract, mock_subprocess):
         self._mock_popens(mock_extract, mock_subprocess, 0, "10", "err")
@@ -316,7 +316,7 @@ class ArtSimilarityTest(unittest.TestCase):
 
     def test_compare_status1_similar(self, mock_extract, mock_subprocess):
         self._mock_popens(mock_extract, mock_subprocess, 1, "out", "10")
-        self.assertTrue(self._similarity(20))
+        assert self._similarity(20)
 
     def test_compare_status1_different(self, mock_extract, mock_subprocess):
         self._mock_popens(mock_extract, mock_subprocess, 1, "out", "10")

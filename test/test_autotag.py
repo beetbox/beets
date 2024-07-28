@@ -69,7 +69,7 @@ class PluralityTest(BeetsTestCase):
         likelies, consensus = match.current_metadata(items)
         self.assertEqual(likelies["artist"], "The Beatles")
         self.assertEqual(likelies["album"], "The White Album")
-        self.assertTrue(consensus["artist"])
+        assert consensus["artist"]
 
     def test_albumartist_consensus(self):
         items = [
@@ -464,7 +464,7 @@ class AlbumDistanceTest(BeetsTestCase):
             va=False,
         )
         dist = self._dist(items, info)
-        self.assertTrue(0 < dist < 0.2)
+        assert 0 < dist < 0.2
 
     def test_two_medium_release(self):
         items = []
@@ -993,8 +993,8 @@ class ApplyCompilationTest(BeetsTestCase, ApplyTestUtil):
         va_info = self.info.copy()
         va_info.va = True
         self._apply(info=va_info)
-        self.assertTrue(self.items[0].comp)
-        self.assertTrue(self.items[1].comp)
+        assert self.items[0].comp
+        assert self.items[1].comp
 
 
 class StringDistanceTest(unittest.TestCase):

@@ -377,10 +377,8 @@ class BPDTestHelper(PluginTestCase):
 
     def _assert_ok(self, *responses):
         for response in responses:
-            self.assertTrue(response is not None)
-            self.assertTrue(
-                response.ok, "Response failed: {}".format(response.err_data)
-            )
+            assert response is not None
+            assert response.ok, "Response failed: {}".format(response.err_data)
 
     def _assert_failed(self, response, code, pos=None):
         """Check that a command failed with a specific error code. If this

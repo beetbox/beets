@@ -152,9 +152,7 @@ class Assertions:
     """A mixin with additional unit test assertions."""
 
     def assertExists(self, path):  # noqa
-        self.assertTrue(
-            os.path.exists(syspath(path)), f"file does not exist: {path!r}"
-        )
+        assert os.path.exists(syspath(path)), f"file does not exist: {path!r}"
 
     def assertNotExists(self, path):  # noqa
         self.assertFalse(
@@ -163,17 +161,15 @@ class Assertions:
 
     def assertIsFile(self, path):  # noqa
         self.assertExists(path)
-        self.assertTrue(
-            os.path.isfile(syspath(path)),
-            "path exists, but is not a regular file: {!r}".format(path),
-        )
+        assert os.path.isfile(
+            syspath(path)
+        ), "path exists, but is not a regular file: {!r}".format(path)
 
     def assertIsDir(self, path):  # noqa
         self.assertExists(path)
-        self.assertTrue(
-            os.path.isdir(syspath(path)),
-            "path exists, but is not a directory: {!r}".format(path),
-        )
+        assert os.path.isdir(
+            syspath(path)
+        ), "path exists, but is not a directory: {!r}".format(path)
 
     def assert_equal_path(self, a, b):
         """Check that two paths are equal."""

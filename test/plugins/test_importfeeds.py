@@ -27,7 +27,7 @@ class ImportfeedsTestTest(BeetsTestCase):
         playlist_path = os.path.join(
             self.feeds_dir, os.listdir(self.feeds_dir)[0]
         )
-        self.assertTrue(playlist_path.endswith("album_name.m3u"))
+        assert playlist_path.endswith("album_name.m3u")
         with open(playlist_path) as playlist:
             self.assertIn(item_path, playlist.read())
 
@@ -47,8 +47,8 @@ class ImportfeedsTestTest(BeetsTestCase):
             self.feeds_dir, config["importfeeds"]["m3u_name"].get()
         )
         playlist_subdir = os.path.dirname(playlist)
-        self.assertTrue(os.path.isdir(playlist_subdir))
-        self.assertTrue(os.path.isfile(playlist))
+        assert os.path.isdir(playlist_subdir)
+        assert os.path.isfile(playlist)
 
     def test_playlist_per_session(self):
         config["importfeeds"]["formats"] = "m3u_session"
@@ -63,6 +63,6 @@ class ImportfeedsTestTest(BeetsTestCase):
         self.importfeeds.album_imported(self.lib, album)
         date = datetime.datetime.now().strftime("%Y%m%d_%Hh%M")
         playlist = os.path.join(self.feeds_dir, f"imports_{date}.m3u")
-        self.assertTrue(os.path.isfile(playlist))
+        assert os.path.isfile(playlist)
         with open(playlist) as playlist_contents:
             self.assertIn(item_path, playlist_contents.read())

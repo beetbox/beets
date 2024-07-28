@@ -49,7 +49,7 @@ class IPFSPluginTest(PluginTestCase):
                     found = True
             except AttributeError:
                 pass
-        self.assertTrue(found)
+        assert found
 
     def mk_test_album(self):
         items = [_common.item() for _ in range(3)]
