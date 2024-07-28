@@ -24,11 +24,8 @@ import pytest
 from beets.library import Library
 from beetsplug.fish import FishPlugin
 
-# Tell 'pytest' to pull in Beets' test fixtures.
-pytest_plugins = "beets.test.fixtures"
 
-
-@pytest.fixture(scope="function")
+@pytest.fixture
 def fish_plugin() -> FishPlugin:
     """
     A fixture returning an instance of the `fish` plugin.
