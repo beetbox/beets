@@ -27,15 +27,15 @@ from beets.library import Library
 
 
 @pytest.fixture(scope="session")
-def resource_dir() -> Path:
+def resource_dir(pytestconfig: pytest.Config) -> Path:
     """
     A fixture returning the resource directory for tests.
     """
 
-    return Path(__file__).parents[2] / "test" / "rsrc"
+    return pytestconfig.rootpath / "test" / "rsrc"
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def config(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -67,9 +67,9 @@ def config(
     beets.config._materialized = False
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def library(
-    tmp_path: Path,
+    tmp_path_factory: pytest.TempPathFactory,
     config: Configuration,
     monkeypatch: pytest.MonkeyPatch,
 ) -> Iterator[Library]:
@@ -78,8 +78,7 @@ def library(
     """
 
     # Beets needs a location to store library contents.
-    lib_dir = tmp_path / "lib_dir"
-    lib_dir.mkdir(exist_ok=False)
+    lib_dir = tmp_path_factory.mktemp("lib_dir")
     monkeypatch.setenv("BEETSDIR", str(lib_dir))
 
     # Create the Beets library object.
