@@ -29,7 +29,16 @@ from beets.library import Library
 @pytest.fixture(scope="session")
 def resource_dir(pytestconfig: pytest.Config) -> Path:
     """
-    A fixture returning the resource directory for tests.
+    The resource directory for tests.
+
+    Tests requiring external data (e.g. audio files) can place them within the
+    resource directory (located at `test/rsrc` in the repository) and then find
+    them relative to the returned path.
+
+    If the tests for a particular component or plugin require several files,
+    they should be placed within an appropriately named subdirectory.
+
+    :return: the path to `test/rsrc` in the repository.
     """
 
     return pytestconfig.rootpath / "test" / "rsrc"
@@ -41,7 +50,18 @@ def config(
     monkeypatch: pytest.MonkeyPatch,
 ) -> Iterator[Configuration]:
     """
-    A fixture for Beets configuration.
+    Prepare a pristine configuration for Beets.
+
+    This will construct and return a fresh configuration object for Beets,
+    containing the default settings for the Beets library and first-party
+    plugins.
+
+    Currently, Beets internally stores configuration in the `beets.config`
+    global variable.  This fixture will reset it to the same configuration
+    object that is returned.  Modifications in the object returned by this
+    fixture will be reflected in `beets.config`.  However, it is recommended
+    to avoid the global variable and work directly with the returned object
+    whenever possible.
     """
 
     # 'confuse' looks at `HOME`, so we set it to a tmpdir.
@@ -68,15 +88,11 @@ def config(
 
 
 @pytest.fixture
+@pytest.mark.usefixtures("config")
 def library(
     tmp_path_factory: pytest.TempPathFactory,
-    config: Configuration,
     monkeypatch: pytest.MonkeyPatch,
 ) -> Iterator[Library]:
-    """
-    A fixture for the Beets library.
-    """
-
     # Beets needs a location to store library contents.
     lib_dir = tmp_path_factory.mktemp("lib_dir")
     monkeypatch.setenv("BEETSDIR", str(lib_dir))
