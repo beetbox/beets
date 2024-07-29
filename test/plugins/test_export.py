@@ -52,7 +52,7 @@ class ExportPluginTest(PluginTestCase):
         out = self.execute_command(format_type="json", artist=item1.artist)
         json_data = json.loads(out)[0]
         for key, val in self.test_values.items():
-            self.assertIn(key, json_data)
+            assert key in json_data
             self.assertEqual(val, json_data[key])
 
     def test_jsonlines_output(self):
@@ -60,7 +60,7 @@ class ExportPluginTest(PluginTestCase):
         out = self.execute_command(format_type="jsonlines", artist=item1.artist)
         json_data = json.loads(out)
         for key, val in self.test_values.items():
-            self.assertIn(key, json_data)
+            assert key in json_data
             self.assertEqual(val, json_data[key])
 
     def test_csv_output(self):
@@ -82,5 +82,5 @@ class ExportPluginTest(PluginTestCase):
             for details in track:
                 tag = details.tag
                 txt = details.text
-                self.assertIn(tag, self.test_values, msg=tag)
+                assert tag in self.test_values, tag
                 self.assertEqual(self.test_values[tag], txt, msg=txt)

@@ -95,7 +95,7 @@ class ItemTypesTest(PluginLoaderTestCase):
 
         # Match in range
         out = self.run_with_output("ls", "rating:1..3")
-        self.assertIn("aaa", out)
+        assert "aaa" in out
 
         # Don't match out of range
         out = self.run_with_output("ls", "rating:3..5")

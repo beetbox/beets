@@ -411,7 +411,7 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
         assert all("match " in i.mb_trackid for i in self.lib.items())
 
         # Ensure album is fetched from a candidate.
-        self.assertIn("albumid", self.lib.albums()[0].mb_albumid)
+        assert "albumid" in self.lib.albums()[0].mb_albumid
 
     def test_edit_retag_apply(self):
         """Import the album using a candidate, then retag and edit and apply
@@ -439,7 +439,7 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
         assert all("match " in i.mb_trackid for i in self.lib.items())
 
         # Ensure album is fetched from a candidate.
-        self.assertIn("albumid", self.lib.albums()[0].mb_albumid)
+        assert "albumid" in self.lib.albums()[0].mb_albumid
 
     def test_edit_discard_candidate(self):
         """Edit the album field for all items in the library, discard changes,
@@ -458,7 +458,7 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
         assert all("match " in i.mb_trackid for i in self.lib.items())
 
         # Ensure album is fetched from a candidate.
-        self.assertIn("albumid", self.lib.albums()[0].mb_albumid)
+        assert "albumid" in self.lib.albums()[0].mb_albumid
 
     def test_edit_apply_candidate_singleton(self):
         """Edit the album field for all items in the library, apply changes,

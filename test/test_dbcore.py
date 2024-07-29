@@ -314,14 +314,14 @@ class ModelTest(unittest.TestCase):
     def test_delete_flexattr(self):
         model = ModelFixture1()
         model["foo"] = "bar"
-        self.assertIn("foo", model)
+        assert "foo" in model
         del model["foo"]
         self.assertNotIn("foo", model)
 
     def test_delete_flexattr_via_dot(self):
         model = ModelFixture1()
         model["foo"] = "bar"
-        self.assertIn("foo", model)
+        assert "foo" in model
         del model.foo
         self.assertNotIn("foo", model)
 
@@ -377,7 +377,7 @@ class ModelTest(unittest.TestCase):
         model1.add(self.db)
 
         model2 = self.db._get(ModelFixture1, model1.id)
-        self.assertIn("flex_field", model2)
+        assert "flex_field" in model2
 
         del model1["flex_field"]
         model1.store()

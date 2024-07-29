@@ -79,9 +79,9 @@ class SpotifyPluginTest(BeetsTestCase):
 
         params = _params(responses.calls[0].request.url)
         query = params["q"][0]
-        self.assertIn("duifhjslkef", query)
-        self.assertIn("artist:ujydfsuihse", query)
-        self.assertIn("album:lkajsdflakjsd", query)
+        assert "duifhjslkef" in query
+        assert "artist:ujydfsuihse" in query
+        assert "album:lkajsdflakjsd" in query
         self.assertEqual(params["type"], ["track"])
 
     @responses.activate
@@ -114,9 +114,9 @@ class SpotifyPluginTest(BeetsTestCase):
 
         params = _params(responses.calls[0].request.url)
         query = params["q"][0]
-        self.assertIn("Happy", query)
-        self.assertIn("artist:Pharrell Williams", query)
-        self.assertIn("album:Despicable Me 2", query)
+        assert "Happy" in query
+        assert "artist:Pharrell Williams" in query
+        assert "album:Despicable Me 2" in query
         self.assertEqual(params["type"], ["track"])
 
     @responses.activate

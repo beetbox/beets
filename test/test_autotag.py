@@ -42,7 +42,7 @@ class PluralityTest(BeetsTestCase):
     def test_plurality_conflict(self):
         objs = [1, 1, 2, 2, 3]
         obj, freq = plurality(objs)
-        self.assertIn(obj, (1, 2))
+        assert obj in (1, 2)
         self.assertEqual(freq, 2)
 
     def test_plurality_empty_sequence_raises_error(self):

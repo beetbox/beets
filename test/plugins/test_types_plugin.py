@@ -38,7 +38,7 @@ class TypesPluginTest(PluginTestCase):
 
         # Match in range
         out = self.list("myint:1..3")
-        self.assertIn("aaa", out)
+        assert "aaa" in out
 
     def test_album_integer_modify_and_query(self):
         self.config["types"] = {"myint": "int"}
@@ -54,7 +54,7 @@ class TypesPluginTest(PluginTestCase):
 
         # Match in range
         out = self.list_album("myint:1..3")
-        self.assertIn("aaa", out)
+        assert "aaa" in out
 
     def test_float_modify_and_query(self):
         self.config["types"] = {"myfloat": "float"}
@@ -70,7 +70,7 @@ class TypesPluginTest(PluginTestCase):
 
         # Match in range
         out = self.list("myfloat:-10..0")
-        self.assertIn("aaa", out)
+        assert "aaa" in out
 
     def test_bool_modify_and_query(self):
         self.config["types"] = {"mybool": "bool"}
@@ -101,7 +101,7 @@ class TypesPluginTest(PluginTestCase):
         # Dealing with unset fields?
         # self.assertEqual('false False', out)
         # out = self.list('mybool:', '$artist $mybool')
-        # self.assertIn('unset $mybool', out)
+        # assert 'unset $mybool' in out
 
     def test_date_modify_and_query(self):
         self.config["types"] = {"mydate": "date"}
@@ -170,9 +170,10 @@ class TypesPluginTest(PluginTestCase):
         )
 
         bool_template = "%ifdef{starred,Starred: $starred,Not starred}"
-        self.assertIn(
-            with_fields.evaluate_template(bool_template).lower(),
-            ("starred: true", "starred: yes", "starred: y"),
+        assert with_fields.evaluate_template(bool_template).lower() in (
+            "starred: true",
+            "starred: yes",
+            "starred: y",
         )
         self.assertEqual(
             without_fields.evaluate_template(bool_template), "Not starred"

@@ -71,7 +71,7 @@ class BareascPluginTest(PluginTestCase):
         with capture_stdout() as output:
             self.run_command("bareasc", "with accents")
 
-        self.assertIn("Antonin Dvorak", output.getvalue())
+        assert "Antonin Dvorak" in output.getvalue()
 
     def test_bareasc_format_output(self):
         """Bare-ASCII version of list -f command - check output."""

@@ -29,7 +29,7 @@ class ImportfeedsTestTest(BeetsTestCase):
         )
         assert playlist_path.endswith("album_name.m3u")
         with open(playlist_path) as playlist:
-            self.assertIn(item_path, playlist.read())
+            assert item_path in playlist.read()
 
     def test_playlist_in_subdir(self):
         config["importfeeds"]["formats"] = "m3u"
@@ -65,4 +65,4 @@ class ImportfeedsTestTest(BeetsTestCase):
         playlist = os.path.join(self.feeds_dir, f"imports_{date}.m3u")
         assert os.path.isfile(playlist)
         with open(playlist) as playlist_contents:
-            self.assertIn(item_path, playlist_contents.read())
+            assert item_path in playlist_contents.read()

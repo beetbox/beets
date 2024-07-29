@@ -556,7 +556,7 @@ class ImportTest(ImportTestCase):
             self.importer.run()
 
         import_dir = displayable_path(import_dir)
-        self.assertIn(f"No files imported from {import_dir}", logs)
+        assert f"No files imported from {import_dir}" in logs
 
     def test_empty_directory_singleton_warning(self):
         import_dir = os.path.join(self.temp_dir, b"empty")
@@ -566,7 +566,7 @@ class ImportTest(ImportTestCase):
             self.importer.run()
 
         import_dir = displayable_path(import_dir)
-        self.assertIn(f"No files imported from {import_dir}", logs)
+        assert f"No files imported from {import_dir}" in logs
 
     def test_asis_no_data_source(self):
         assert self.lib.items().get() is None
@@ -1317,14 +1317,14 @@ class TagLogTest(BeetsTestCase):
         handler = logging.StreamHandler(sio)
         session = _common.import_session(loghandler=handler)
         session.tag_log("status", "path")
-        self.assertIn("status path", sio.getvalue())
+        assert "status path" in sio.getvalue()
 
     def test_tag_log_unicode(self):
         sio = StringIO()
         handler = logging.StreamHandler(sio)
         session = _common.import_session(loghandler=handler)
         session.tag_log("status", "caf\xe9")  # send unicode
-        self.assertIn("status caf\xe9", sio.getvalue())
+        assert "status caf\xe9" in sio.getvalue()
 
 
 class ResumeImportTest(ImportTestCase):
@@ -1440,10 +1440,10 @@ class AlbumsInDirTest(BeetsTestCase):
         found = []
         for _, album in albums_in_dir(self.base):
             found.append(re.search(rb"album(.)song", album[0]).group(1))
-        self.assertIn(b"1", found)
-        self.assertIn(b"2", found)
-        self.assertIn(b"3", found)
-        self.assertIn(b"4", found)
+        assert b"1" in found
+        assert b"2" in found
+        assert b"3" in found
+        assert b"4" in found
 
     def test_finds_multiple_songs(self):
         for _, album in albums_in_dir(self.base):

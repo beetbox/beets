@@ -56,7 +56,7 @@ class ListTest(BeetsTestCase):
 
     def test_list_outputs_item(self):
         stdout = self._run_list()
-        self.assertIn("the title", stdout.getvalue())
+        assert "the title" in stdout.getvalue()
 
     def test_list_unicode_query(self):
         self.item.title = "na\xefve"
@@ -65,7 +65,7 @@ class ListTest(BeetsTestCase):
 
         stdout = self._run_list(["na\xefve"])
         out = stdout.getvalue()
-        self.assertIn("na\xefve", out)
+        assert "na\xefve" in out
 
     def test_list_item_path(self):
         stdout = self._run_list(fmt="$path")
@@ -85,17 +85,17 @@ class ListTest(BeetsTestCase):
 
     def test_list_uses_track_artist(self):
         stdout = self._run_list()
-        self.assertIn("the artist", stdout.getvalue())
+        assert "the artist" in stdout.getvalue()
         self.assertNotIn("the album artist", stdout.getvalue())
 
     def test_list_album_uses_album_artist(self):
         stdout = self._run_list(album=True)
         self.assertNotIn("the artist", stdout.getvalue())
-        self.assertIn("the album artist", stdout.getvalue())
+        assert "the album artist" in stdout.getvalue()
 
     def test_list_item_format_artist(self):
         stdout = self._run_list(fmt="$artist")
-        self.assertIn("the artist", stdout.getvalue())
+        assert "the artist" in stdout.getvalue()
 
     def test_list_item_format_multiple(self):
         stdout = self._run_list(fmt="$artist - $album - $year")
@@ -105,7 +105,7 @@ class ListTest(BeetsTestCase):
 
     def test_list_album_format(self):
         stdout = self._run_list(album=True, fmt="$genre")
-        self.assertIn("the genre", stdout.getvalue())
+        assert "the genre" in stdout.getvalue()
         self.assertNotIn("the album", stdout.getvalue())
 
 
@@ -235,7 +235,7 @@ class ModifyTest(BeetsTestCase):
     def test_move(self):
         self.modify("title=newTitle")
         item = self.lib.items().get()
-        self.assertIn(b"newTitle", item.path)
+        assert b"newTitle" in item.path
 
     def test_not_move(self):
         self.modify("--nomove", "title=newTitle")
@@ -317,7 +317,7 @@ class ModifyTest(BeetsTestCase):
         self.modify("--album", "album=newAlbum")
         item = self.lib.items().get()
         item.read()
-        self.assertIn(b"newAlbum", item.path)
+        assert b"newAlbum" in item.path
 
     def test_album_not_move(self):
         self.modify("--nomove", "--album", "album=newAlbum")
@@ -439,7 +439,7 @@ class WriteTest(BeetsTestCase):
 
         output = self.write_cmd()
 
-        self.assertIn(f"{old_title} -> new title", output)
+        assert f"{old_title} -> new title" in output
 
 
 class MoveTest(BeetsTestCase):
@@ -478,54 +478,54 @@ class MoveTest(BeetsTestCase):
     def test_move_item(self):
         self._move()
         self.i.load()
-        self.assertIn(b"libdir", self.i.path)
+        assert b"libdir" in self.i.path
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
 
     def test_copy_item(self):
         self._move(copy=True)
         self.i.load()
-        self.assertIn(b"libdir", self.i.path)
+        assert b"libdir" in self.i.path
         self.assertExists(self.i.path)
         self.assertExists(self.itempath)
 
     def test_move_album(self):
         self._move(album=True)
         self.i.load()
-        self.assertIn(b"libdir", self.i.path)
+        assert b"libdir" in self.i.path
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
 
     def test_copy_album(self):
         self._move(copy=True, album=True)
         self.i.load()
-        self.assertIn(b"libdir", self.i.path)
+        assert b"libdir" in self.i.path
         self.assertExists(self.i.path)
         self.assertExists(self.itempath)
 
     def test_move_item_custom_dir(self):
         self._move(dest=self.otherdir)
         self.i.load()
-        self.assertIn(b"testotherdir", self.i.path)
+        assert b"testotherdir" in self.i.path
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
 
     def test_move_album_custom_dir(self):
         self._move(dest=self.otherdir, album=True)
         self.i.load()
-        self.assertIn(b"testotherdir", self.i.path)
+        assert b"testotherdir" in self.i.path
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
 
     def test_pretend_move_item(self):
         self._move(dest=self.otherdir, pretend=True)
         self.i.load()
-        self.assertIn(b"srcfile", self.i.path)
+        assert b"srcfile" in self.i.path
 
     def test_pretend_move_album(self):
         self._move(album=True, pretend=True)
         self.i.load()
-        self.assertIn(b"srcfile", self.i.path)
+        assert b"srcfile" in self.i.path
 
     def test_export_item_custom_dir(self):
         self._move(dest=self.otherdir, export=True)
@@ -542,7 +542,7 @@ class MoveTest(BeetsTestCase):
     def test_pretend_export_item(self):
         self._move(dest=self.otherdir, pretend=True, export=True)
         self.i.load()
-        self.assertIn(b"srcfile", self.i.path)
+        assert b"srcfile" in self.i.path
         self.assertNotExists(self.otherdir)
 
 
@@ -629,7 +629,7 @@ class UpdateTest(BeetsTestCase):
         mf.save()
         self._update(move=True)
         item = self.lib.items().get()
-        self.assertIn(b"differentTitle", item.path)
+        assert b"differentTitle" in item.path
 
     def test_modified_metadata_not_moved(self):
         mf = MediaFile(syspath(self.i.path))
@@ -646,7 +646,7 @@ class UpdateTest(BeetsTestCase):
         mf.save()
         self._update(move=True, fields=["title"])
         item = self.lib.items().get()
-        self.assertIn(b"differentTitle", item.path)
+        assert b"differentTitle" in item.path
         self.assertNotEqual(item.genre, "differentGenre")
 
     def test_selective_modified_metadata_not_moved(self):
@@ -665,7 +665,7 @@ class UpdateTest(BeetsTestCase):
         mf.save()
         self._update(move=True)
         item = self.lib.items().get()
-        self.assertIn(b"differentAlbum", item.path)
+        assert b"differentAlbum" in item.path
 
     def test_modified_album_metadata_art_moved(self):
         artpath = self.album.artpath
@@ -684,7 +684,7 @@ class UpdateTest(BeetsTestCase):
         mf.save()
         self._update(move=True, fields=["album"])
         item = self.lib.items().get()
-        self.assertIn(b"differentAlbum", item.path)
+        assert b"differentAlbum" in item.path
         self.assertNotEqual(item.genre, "differentGenre")
 
     def test_selective_modified_album_metadata_not_moved(self):
@@ -1152,13 +1152,13 @@ class ShowModelChangeTest(BeetsTestCase):
         self.b.title = "x"
         change, out = self._show()
         assert change
-        self.assertIn("title", out)
+        assert "title" in out
 
     def test_int_fixed_field_change(self):
         self.b.track = 9
         change, out = self._show()
         assert change
-        self.assertIn("track", out)
+        assert "track" in out
 
     def test_floats_close_to_identical(self):
         self.a.length = 1.00001
@@ -1172,14 +1172,14 @@ class ShowModelChangeTest(BeetsTestCase):
         self.b.length = 2.00001
         change, out = self._show()
         assert change
-        self.assertIn("length", out)
+        assert "length" in out
 
     def test_both_values_shown(self):
         self.a.title = "foo"
         self.b.title = "bar"
         change, out = self._show()
-        self.assertIn("foo", out)
-        self.assertIn("bar", out)
+        assert "foo" in out
+        assert "bar" in out
 
 
 class ShowChangeTest(BeetsTestCase):
@@ -1228,15 +1228,15 @@ class ShowChangeTest(BeetsTestCase):
 
     def test_null_change(self):
         msg = self._show_change()
-        self.assertIn("match (90.0%)", msg)
-        self.assertIn("album, artist", msg)
+        assert "match (90.0%)" in msg
+        assert "album in artist", msg
 
     def test_album_data_change(self):
         msg = self._show_change(
             cur_artist="another artist", cur_album="another album"
         )
-        self.assertIn("another artist -> the artist", msg)
-        self.assertIn("another album -> the album", msg)
+        assert "another artist -> the artist" in msg
+        assert "another album -> the album" in msg
 
     def test_item_data_change(self):
         self.items[0].title = "different"
@@ -1317,8 +1317,8 @@ class ShowChangeTest(BeetsTestCase):
                 cur_artist=long_name, cur_album="another album"
             )
             # _common.log.info("Message:{}".format(msg))
-            self.assertIn("artist: another artist", msg)
-            self.assertIn("  -> the artist", msg)
+            assert "artist: another artist" in msg
+            assert "  -> the artist" in msg
             self.assertNotIn("another album -> the album", msg)
 
     def test_item_data_change_wrap_column(self):
@@ -1329,7 +1329,7 @@ class ShowChangeTest(BeetsTestCase):
             long_title = "a track with a" + (" very" * 10) + " long name"
             self.items[0].title = long_title
             msg = self._show_change()
-            self.assertIn("(#1) a track (1:00) -> (#1) the title (0:00)", msg)
+            assert "(#1) a track (1:00) -> (#1) the title (0:00)" in msg
 
     def test_item_data_change_wrap_newline(self):
         # Patch ui.term_width to force wrapping
@@ -1338,8 +1338,8 @@ class ShowChangeTest(BeetsTestCase):
             long_title = "a track with a" + (" very" * 10) + " long name"
             self.items[0].title = long_title
             msg = self._show_change()
-            self.assertIn("(#1) a track with", msg)
-            self.assertIn("     -> (#1) the title (0:00)", msg)
+            assert "(#1) a track with" in msg
+            assert "     -> (#1) the title (0:00)" in msg
 
 
 @patch("beets.library.Item.try_filesize", Mock(return_value=987))
@@ -1499,30 +1499,30 @@ class CommonOptionsParserCliTest(BeetsTestCase):
 
     def test_help(self):
         l = self.run_with_output("help")
-        self.assertIn("Usage:", l)
+        assert "Usage:" in l
 
         l = self.run_with_output("help", "list")
-        self.assertIn("Usage:", l)
+        assert "Usage:" in l
 
         with self.assertRaises(ui.UserError):
             self.run_command("help", "this.is.not.a.real.command")
 
     def test_stats(self):
         l = self.run_with_output("stats")
-        self.assertIn("Approximate total size:", l)
+        assert "Approximate total size:" in l
 
         # # Need to have more realistic library setup for this to work
         # l = self.run_with_output('stats', '-e')
-        # self.assertIn('Total size:', l)
+        # assert 'Total size:' in l
 
     def test_version(self):
         l = self.run_with_output("version")
-        self.assertIn("Python version", l)
-        self.assertIn("no plugins loaded", l)
+        assert "Python version" in l
+        assert "no plugins loaded" in l
 
         # # Need to have plugin loaded
         # l = self.run_with_output('version')
-        # self.assertIn('plugins: ', l)
+        # assert 'plugins: ' in l
 
 
 class CommonOptionsParserTest(BeetsTestCase):

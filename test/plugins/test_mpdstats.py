@@ -44,7 +44,7 @@ class MPDStatsTest(PluginTestCase):
 
         self.assertEqual(str(mpdstats.get_item(item_path)), str(item))
         assert mpdstats.get_item("/some/non-existing/path") is None
-        self.assertIn("item not found:", log.info.call_args[0][0])
+        assert "item not found:" in log.info.call_args[0][0]
 
     FAKE_UNKNOWN_STATE = "some-unknown-one"
     STATUSES = [

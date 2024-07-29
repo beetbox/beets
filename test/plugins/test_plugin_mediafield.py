@@ -117,9 +117,9 @@ class ExtendedFieldTestMixin(BeetsTestCase):
     def test_invalid_descriptor(self):
         with self.assertRaises(ValueError) as cm:
             mediafile.MediaFile.add_field("somekey", True)
-        self.assertIn("must be an instance of MediaField", str(cm.exception))
+        assert "must be an instance of MediaField" in str(cm.exception)
 
     def test_overwrite_property(self):
         with self.assertRaises(ValueError) as cm:
             mediafile.MediaFile.add_field("artist", mediafile.MediaField())
-        self.assertIn('property "artist" already exists', str(cm.exception))
+        assert 'property "artist" already exists' in str(cm.exception)
