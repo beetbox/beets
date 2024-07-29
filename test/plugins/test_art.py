@@ -605,7 +605,7 @@ class CoverArtArchiveTest(UseThePlugin, CAAHelper):
         candidates = list(self.source.get(album, self.settings, []))
         self.assertEqual(len(candidates), 3)
         for candidate in candidates:
-            self.assertNotIn(f"-{maxwidth}.jpg", candidate.url)
+            assert f"-{maxwidth}.jpg" not in candidate.url
 
 
 class FanartTVTest(UseThePlugin):

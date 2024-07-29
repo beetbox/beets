@@ -81,16 +81,16 @@ class ListTest(BeetsTestCase):
 
     def test_list_album_omits_title(self):
         stdout = self._run_list(album=True)
-        self.assertNotIn("the title", stdout.getvalue())
+        assert "the title" not in stdout.getvalue()
 
     def test_list_uses_track_artist(self):
         stdout = self._run_list()
         assert "the artist" in stdout.getvalue()
-        self.assertNotIn("the album artist", stdout.getvalue())
+        assert "the album artist" not in stdout.getvalue()
 
     def test_list_album_uses_album_artist(self):
         stdout = self._run_list(album=True)
-        self.assertNotIn("the artist", stdout.getvalue())
+        assert "the artist" not in stdout.getvalue()
         assert "the album artist" in stdout.getvalue()
 
     def test_list_item_format_artist(self):
@@ -106,7 +106,7 @@ class ListTest(BeetsTestCase):
     def test_list_album_format(self):
         stdout = self._run_list(album=True, fmt="$genre")
         assert "the genre" in stdout.getvalue()
-        self.assertNotIn("the album", stdout.getvalue())
+        assert "the album" not in stdout.getvalue()
 
 
 class RemoveTest(BeetsTestCase):
@@ -240,13 +240,13 @@ class ModifyTest(BeetsTestCase):
     def test_not_move(self):
         self.modify("--nomove", "title=newTitle")
         item = self.lib.items().get()
-        self.assertNotIn(b"newTitle", item.path)
+        assert b"newTitle" not in item.path
 
     def test_no_write_no_move(self):
         self.modify("--nomove", "--nowrite", "title=newTitle")
         item = self.lib.items().get()
         item.read()
-        self.assertNotIn(b"newTitle", item.path)
+        assert b"newTitle" not in item.path
         self.assertNotEqual(item.title, "newTitle")
 
     def test_update_mtime(self):
@@ -323,7 +323,7 @@ class ModifyTest(BeetsTestCase):
         self.modify("--nomove", "--album", "album=newAlbum")
         item = self.lib.items().get()
         item.read()
-        self.assertNotIn(b"newAlbum", item.path)
+        assert b"newAlbum" not in item.path
 
     def test_modify_album_formatted(self):
         item = self.lib.items().get()
@@ -352,7 +352,7 @@ class ModifyTest(BeetsTestCase):
 
         self.modify("flexattr!")
         item = self.lib.items().get()
-        self.assertNotIn("flexattr", item)
+        assert "flexattr" not in item
 
     @unittest.skip("not yet implemented")
     def test_delete_initial_key_tag(self):
@@ -637,7 +637,7 @@ class UpdateTest(BeetsTestCase):
         mf.save()
         self._update(move=False)
         item = self.lib.items().get()
-        self.assertNotIn(b"differentTitle", item.path)
+        assert b"differentTitle" not in item.path
 
     def test_selective_modified_metadata_moved(self):
         mf = MediaFile(syspath(self.i.path))
@@ -656,7 +656,7 @@ class UpdateTest(BeetsTestCase):
         mf.save()
         self._update(move=False, fields=["title"])
         item = self.lib.items().get()
-        self.assertNotIn(b"differentTitle", item.path)
+        assert b"differentTitle" not in item.path
         self.assertNotEqual(item.genre, "differentGenre")
 
     def test_modified_album_metadata_moved(self):
@@ -694,7 +694,7 @@ class UpdateTest(BeetsTestCase):
         mf.save()
         self._update(move=True, fields=["genre"])
         item = self.lib.items().get()
-        self.assertNotIn(b"differentAlbum", item.path)
+        assert b"differentAlbum" not in item.path
         self.assertEqual(item.genre, "differentGenre")
 
     def test_mtime_match_skips_update(self):
@@ -1319,7 +1319,7 @@ class ShowChangeTest(BeetsTestCase):
             # _common.log.info("Message:{}".format(msg))
             assert "artist: another artist" in msg
             assert "  -> the artist" in msg
-            self.assertNotIn("another album -> the album", msg)
+            assert "another album -> the album" not in msg
 
     def test_item_data_change_wrap_column(self):
         # Patch ui.term_width to force wrapping

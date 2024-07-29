@@ -316,14 +316,14 @@ class ModelTest(unittest.TestCase):
         model["foo"] = "bar"
         assert "foo" in model
         del model["foo"]
-        self.assertNotIn("foo", model)
+        assert "foo" not in model
 
     def test_delete_flexattr_via_dot(self):
         model = ModelFixture1()
         model["foo"] = "bar"
         assert "foo" in model
         del model.foo
-        self.assertNotIn("foo", model)
+        assert "foo" not in model
 
     def test_delete_flexattr_persists(self):
         model = ModelFixture1()
@@ -336,7 +336,7 @@ class ModelTest(unittest.TestCase):
         model.store()
 
         model = self.db._get(ModelFixture1, model.id)
-        self.assertNotIn("foo", model)
+        assert "foo" not in model
 
     def test_delete_non_existent_attribute(self):
         model = ModelFixture1()
@@ -383,7 +383,7 @@ class ModelTest(unittest.TestCase):
         model1.store()
 
         model2.load()
-        self.assertNotIn("flex_field", model2)
+        assert "flex_field" not in model2
 
     def test_check_db_fails(self):
         with self.assertRaisesRegex(ValueError, "no database"):
