@@ -37,7 +37,7 @@ class InfoTest(PluginTestCase):
         assert "albumartist: AAA" in out
         assert "disctitle: DDD" in out
         assert "genres: a; b; c" in out
-        self.assertNotIn("composer:", out)
+        assert "composer:" not in out
 
     def test_item_query(self):
         item1, item2 = self.add_item_fixtures(count=2)
@@ -50,7 +50,7 @@ class InfoTest(PluginTestCase):
         assert displayable_path(item1.path) in out
         assert "album: xxxx" in out
 
-        self.assertNotIn(displayable_path(item2.path), out)
+        assert displayable_path(item2.path) not in out
 
     def test_item_library_query(self):
         (item,) = self.add_item_fixtures()

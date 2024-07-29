@@ -461,7 +461,7 @@ class BPDQueryTest(BPDTestHelper):
             )
         self._assert_ok(*responses)
         self.assertEqual("1", responses[1].data["Id"])
-        self.assertNotIn("Id", responses[3].data)
+        assert "Id" not in responses[3].data
 
     def test_cmd_currentsong_tagtypes(self):
         with self.run_bpd() as client:
@@ -703,7 +703,7 @@ class BPDPlaybackTest(BPDTestHelper):
             response = client.send_command("crossfade", "0.5")
         self._assert_failed(responses, bpd.ERROR_ARG, pos=3)
         self._assert_failed(response, bpd.ERROR_ARG)
-        self.assertNotIn("xfade", responses[0].data)
+        assert "xfade" not in responses[0].data
         self.assertAlmostEqual(123, int(responses[2].data["xfade"]))
 
     def test_cmd_mixrampdb(self):
@@ -723,7 +723,7 @@ class BPDPlaybackTest(BPDTestHelper):
             )
         self._assert_failed(responses, bpd.ERROR_ARG, pos=4)
         self.assertAlmostEqual(2, float(responses[1].data["mixrampdelay"]))
-        self.assertNotIn("mixrampdelay", responses[3].data)
+        assert "mixrampdelay" not in responses[3].data
 
     def test_cmd_setvol(self):
         with self.run_bpd() as client:
@@ -814,7 +814,7 @@ class BPDControlTest(BPDTestHelper):
             )
         self._assert_ok(*responses)
         self.assertEqual("stop", responses[2].data["state"])
-        self.assertNotIn("Id", responses[3].data)
+        assert "Id" not in responses[3].data
 
     def test_cmd_next(self):
         with self.run_bpd() as client:

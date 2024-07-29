@@ -52,7 +52,7 @@ class AssertsMixin:
 
     def assertNotInResult(self, item, results):  # noqa
         result_ids = [i.id for i in results]
-        self.assertNotIn(item.id, result_ids)
+        assert item.id not in result_ids
 
 
 class AnyFieldQueryTest(ItemInDBTestCase):

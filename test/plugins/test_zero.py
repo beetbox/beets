@@ -226,7 +226,7 @@ class ZeroPluginTest(PluginTestCase):
 
         z = ZeroPlugin()
 
-        self.assertNotIn("id", z.fields_to_progs)
+        assert "id" not in z.fields_to_progs
 
     def test_fields_removes_preserved_tags(self):
         self.config["zero"]["fields"] = ["year id"]
@@ -234,7 +234,7 @@ class ZeroPluginTest(PluginTestCase):
 
         z = ZeroPlugin()
 
-        self.assertNotIn("id", z.fields_to_progs)
+        assert "id" not in z.fields_to_progs
 
     def test_empty_query_n_response_no_changes(self):
         item = self.add_item_fixture(

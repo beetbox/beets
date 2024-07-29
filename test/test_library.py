@@ -50,7 +50,7 @@ class LoadTest(ItemInDBTestCase):
         self.i.artist = "something"
         assert "artist" in self.i._dirty
         self.i.load()
-        self.assertNotIn("artist", self.i._dirty)
+        assert "artist" not in self.i._dirty
 
 
 class StoreTest(ItemInDBTestCase):
@@ -78,7 +78,7 @@ class StoreTest(ItemInDBTestCase):
     def test_store_clears_dirty_flags(self):
         self.i.composer = "tvp"
         self.i.store()
-        self.assertNotIn("composer", self.i._dirty)
+        assert "composer" not in self.i._dirty
 
     def test_store_album_cascades_flex_deletes(self):
         album = _common.album()
@@ -90,8 +90,8 @@ class StoreTest(ItemInDBTestCase):
         self.lib.add(item)
         del album.flex1
         album.store()
-        self.assertNotIn("flex1", album)
-        self.assertNotIn("flex1", album.items()[0])
+        assert "flex1" not in album
+        assert "flex1" not in album.items()[0]
 
 
 class AddTest(BeetsTestCase):
@@ -147,7 +147,7 @@ class GetSetTest(BeetsTestCase):
 
     def test_set_does_not_dirty_if_value_unchanged(self):
         self.i.title = self.i.title
-        self.assertNotIn("title", self.i._dirty)
+        assert "title" not in self.i._dirty
 
     def test_invalid_field_raises_attributeerror(self):
         self.assertRaises(AttributeError, getattr, self.i, "xyzzy")
@@ -160,7 +160,7 @@ class GetSetTest(BeetsTestCase):
         album.store()
 
         assert "flex" in i
-        self.assertNotIn("flex", i.keys(with_album=False))
+        assert "flex" not in i.keys(with_album=False)
         self.assertEqual(i["flex"], "foo")
         self.assertEqual(i.get("flex"), "foo")
         assert i.get("flex", with_album=False) is None
@@ -233,13 +233,13 @@ class DestinationTest(BeetsTestCase):
         dest = self.i.destination()
         assert b"one" in dest
         assert b"two" in dest
-        self.assertNotIn(b"one/two", dest)
+        assert b"one/two" not in dest
 
     def test_destination_escapes_leading_dot(self):
         self.i.album = ".something"
         dest = self.i.destination()
         assert b"something" in dest
-        self.assertNotIn(b"/.something", dest)
+        assert b"/.something" not in dest
 
     def test_destination_preserves_legitimate_slashes(self):
         self.i.artist = "one"
@@ -263,10 +263,10 @@ class DestinationTest(BeetsTestCase):
         self.i.title = "one \\ two / three.mp3"
         with _common.platform_windows():
             p = self.i.destination()
-        self.assertNotIn(b"one \\ two", p)
-        self.assertNotIn(b"one / two", p)
-        self.assertNotIn(b"two \\ three", p)
-        self.assertNotIn(b"two / three", p)
+        assert b"one \\ two" not in p
+        assert b"one / two" not in p
+        assert b"two \\ three" not in p
+        assert b"two / three" not in p
 
     def test_path_with_format(self):
         self.lib.path_formats = [("default", "$artist/$album ($format)")]
@@ -427,7 +427,7 @@ class DestinationTest(BeetsTestCase):
             self.i.title = "h\u0259d"
             self.lib.path_formats = [("default", "$title")]
             p = self.i.destination()
-            self.assertNotIn(b"?", p)
+            assert b"?" not in p
             # We use UTF-8 to encode Windows paths now.
             assert "h\u0259d".encode() in p
         finally:

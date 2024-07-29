@@ -471,7 +471,7 @@ class ArtFileTest(BeetsTestCase):
         self.i.move()
 
         artpath = self.lib.albums()[0].artpath
-        self.assertNotIn(b"different_album", artpath)
+        assert b"different_album" not in artpath
         self.assertEqual(artpath, oldartpath)
         self.assertExists(oldartpath)
 

@@ -89,7 +89,7 @@ class ItemTypesTest(PluginLoaderTestCase):
 
         # Do not match unset values
         out = self.run_with_output("ls", "rating:1..3")
-        self.assertNotIn("aaa", out)
+        assert "aaa" not in out
 
         self.run_command("modify", "rating=2", "--yes")
 
@@ -99,7 +99,7 @@ class ItemTypesTest(PluginLoaderTestCase):
 
         # Don't match out of range
         out = self.run_with_output("ls", "rating:3..5")
-        self.assertNotIn("aaa", out)
+        assert "aaa" not in out
 
 
 class ItemWriteTest(PluginLoaderTestCase):

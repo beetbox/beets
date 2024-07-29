@@ -123,7 +123,7 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
         from PIL import Image
 
         with Image.open(path) as img:
-            self.assertNotIn("progression", img.info)
+            assert "progression" not in img.info
 
     @unittest.skipUnless(IMBackend.available(), "ImageMagick not available")
     def test_im_file_deinterlace(self):

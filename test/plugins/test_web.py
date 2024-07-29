@@ -100,7 +100,7 @@ class WebPluginTest(ItemInDBTestCase):
         res_json = json.loads(response.data.decode("utf-8"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertNotIn("path", res_json)
+        assert "path" not in res_json
 
     def test_config_include_artpaths_false(self):
         web.app.config["INCLUDE_PATHS"] = False
@@ -108,7 +108,7 @@ class WebPluginTest(ItemInDBTestCase):
         res_json = json.loads(response.data.decode("utf-8"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertNotIn("artpath", res_json)
+        assert "artpath" not in res_json
 
     def test_get_all_items(self):
         response = self.client.get("/item/")

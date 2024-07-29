@@ -58,7 +58,7 @@ class LyricsPluginTest(unittest.TestCase):
 
         item = Item(artist="Alice feats Bob", title="song")
         assert ("Alice feats Bob", ["song"]) in lyrics.search_pairs(item)
-        self.assertNotIn(("Alice", ["song"]), lyrics.search_pairs(item))
+        assert ("Alice", ["song"]) not in lyrics.search_pairs(item)
 
         item = Item(artist="Alice featuring Bob", title="song")
         assert ("Alice featuring Bob", ["song"]) in lyrics.search_pairs(item)
@@ -129,8 +129,8 @@ class LyricsPluginTest(unittest.TestCase):
         assert ("A", ["Song featuring B"]) in lyrics.search_pairs(item)
 
         item = Item(title="Song and B", artist="A")
-        self.assertNotIn(("A", ["Song"]), lyrics.search_pairs(item))
         assert ("A", ["Song and B"]) in lyrics.search_pairs(item)
+        assert ("A", ["Song"]) not in lyrics.search_pairs(item)
 
         item = Item(title="Song: B", artist="A")
         assert ("A", ["Song"]) in lyrics.search_pairs(item)

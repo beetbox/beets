@@ -88,7 +88,7 @@ class LoggingLevelTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
             self.run_command("dummy")
         assert "dummy: warning cmd" in logs
         assert "dummy: info cmd" in logs
-        self.assertNotIn("dummy: debug cmd", logs)
+        assert "dummy: debug cmd" not in logs
 
     def test_command_level1(self):
         self.config["verbose"] = 1
@@ -111,8 +111,8 @@ class LoggingLevelTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
         with helper.capture_log() as logs:
             plugins.send("dummy_event")
         assert "dummy: warning listener" in logs
-        self.assertNotIn("dummy: info listener", logs)
-        self.assertNotIn("dummy: debug listener", logs)
+        assert "dummy: info listener" not in logs
+        assert "dummy: debug listener" not in logs
 
     def test_listener_level1(self):
         self.config["verbose"] = 1
@@ -120,7 +120,7 @@ class LoggingLevelTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
             plugins.send("dummy_event")
         assert "dummy: warning listener" in logs
         assert "dummy: info listener" in logs
-        self.assertNotIn("dummy: debug listener", logs)
+        assert "dummy: debug listener" not in logs
 
     def test_listener_level2(self):
         self.config["verbose"] = 2
@@ -135,8 +135,8 @@ class LoggingLevelTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
         with helper.capture_log() as logs:
             self.run_asis_importer()
         assert "dummy: warning import_stage" in logs
-        self.assertNotIn("dummy: info import_stage", logs)
-        self.assertNotIn("dummy: debug import_stage", logs)
+        assert "dummy: info import_stage" not in logs
+        assert "dummy: debug import_stage" not in logs
 
     def test_import_stage_level1(self):
         self.config["verbose"] = 1
@@ -144,7 +144,7 @@ class LoggingLevelTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
             self.run_asis_importer()
         assert "dummy: warning import_stage" in logs
         assert "dummy: info import_stage" in logs
-        self.assertNotIn("dummy: debug import_stage", logs)
+        assert "dummy: debug import_stage" not in logs
 
     def test_import_stage_level2(self):
         self.config["verbose"] = 2
