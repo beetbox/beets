@@ -43,7 +43,7 @@ from functools import cached_property
 from io import StringIO
 from pathlib import Path
 from tempfile import mkdtemp, mkstemp
-from typing import ClassVar
+from typing import Any, ClassVar
 from unittest.mock import patch
 
 import responses
@@ -497,6 +497,19 @@ class PluginMixin:
         Album._types = getattr(Album, "_original_types", {})
         Item._queries = getattr(Item, "_original_queries", {})
         Album._queries = getattr(Album, "_original_queries", {})
+
+    @contextmanager
+    def configure_plugin(self, config: list[Any] | dict[str, Any]):
+        if isinstance(config, list):
+            beets.config[self.plugin] = config
+        else:
+            for key, value in config.items():
+                beets.config[self.plugin][key] = value
+        self.load_plugins(self.plugin)
+
+        yield
+
+        self.unload_plugins()
 
 
 class PluginTestCase(PluginMixin, BeetsTestCase):

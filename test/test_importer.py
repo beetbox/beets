@@ -1687,7 +1687,7 @@ class ImportPretendTest(ImportTestCase):
         self.matcher = AutotagStub().install()
         self.io.install()
 
-        self.album_track_path, *_ = self.prepare_album_for_import(1)
+        self.album_track_path = self.prepare_album_for_import(1)[0]
         self.single_path = self.prepare_track_for_import(2, self.import_path)
         self.album_path = self.album_track_path.parent
 
