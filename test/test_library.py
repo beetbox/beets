@@ -963,7 +963,7 @@ class AlbumInfoTest(BeetsTestCase):
         c = self.lib._connection().cursor()
         c.execute("select * from albums where album=?", (self.i.album,))
         # Cursor should only return one row.
-        self.assertIsNotNone(c.fetchone())
+        assert c.fetchone() is not None
         assert c.fetchone() is None
 
     def test_individual_tracks_have_no_albuminfo(self):
@@ -976,7 +976,7 @@ class AlbumInfoTest(BeetsTestCase):
     def test_get_album_by_id(self):
         ai = self.lib.get_album(self.i)
         ai = self.lib.get_album(self.i.id)
-        self.assertIsNotNone(ai)
+        assert ai is not None
 
     def test_album_items_consistent(self):
         ai = self.lib.get_album(self.i)

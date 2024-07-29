@@ -154,7 +154,7 @@ class ItemTypeConflictTest(PluginLoaderTestCase):
         self.advent_listener_plugin = AdventListenerPlugin
         self.register_plugin(EventListenerPlugin)
         self.register_plugin(AdventListenerPlugin)
-        self.assertIsNotNone(plugins.types(Item))
+        assert plugins.types(Item) is not None
 
 
 class EventsTest(PluginImportTestCase):

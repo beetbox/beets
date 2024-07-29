@@ -675,7 +675,7 @@ class UpdateTest(BeetsTestCase):
         self._update(move=True)
         album = self.lib.albums()[0]
         self.assertNotEqual(artpath, album.artpath)
-        self.assertIsNotNone(album.artpath)
+        assert album.artpath is not None
 
     def test_selective_modified_album_metadata_moved(self):
         mf = MediaFile(syspath(self.i.path))

@@ -488,7 +488,7 @@ class GeniusScrapeLyricsFromHtmlTest(GeniusBaseTest):
         url = "https://genius.com/Ttng-chinchilla-lyrics"
         mock = MockFetchUrl()
         lyrics = genius._scrape_lyrics_from_html(mock(url))
-        self.assertIsNotNone(lyrics)
+        assert lyrics is not None
         self.assertEqual(lyrics.count("\n"), 28)
 
     def test_good_lyrics_multiple_divs(self):
@@ -496,7 +496,7 @@ class GeniusScrapeLyricsFromHtmlTest(GeniusBaseTest):
         url = "https://genius.com/2pac-all-eyez-on-me-lyrics"
         mock = MockFetchUrl()
         lyrics = genius._scrape_lyrics_from_html(mock(url))
-        self.assertIsNotNone(lyrics)
+        assert lyrics is not None
         self.assertEqual(lyrics.count("\n"), 133)
 
     # TODO: find an example of a lyrics page with multiple divs and test it
@@ -540,12 +540,12 @@ class GeniusFetchTest(GeniusBaseTest):
         ) as mock_json:
             # genius uses zero-width-spaces (\u200B) for lowercase
             # artists so we make sure we can match those
-            self.assertIsNotNone(genius.fetch("blackbear", "Idfc"))
+            assert genius.fetch("blackbear", "Idfc") is not None
             mock_fetch_url.assert_called_once_with("blackbear_url")
             mock_scrape.assert_called_once_with(True)
 
             # genius uses the hyphen minus (\u002D) as their dash
-            self.assertIsNotNone(genius.fetch("El-p", "Idfc"))
+            assert genius.fetch("El-p", "Idfc") is not None
             mock_fetch_url.assert_called_with("El-p_url")
             mock_scrape.assert_called_with(True)
 
@@ -584,8 +584,9 @@ class TekstowoExtractLyricsTest(TekstowoBaseTest):
         """Ensure we are able to scrape a page with lyrics"""
         url = "https://www.tekstowo.pl/piosenka,24kgoldn,city_of_angels_1.html"
         mock = MockFetchUrl()
-        self.assertIsNotNone(
+        assert (
             tekstowo.extract_lyrics(mock(url), "24kGoldn", "City of Angels")
+            is not None
         )
 
     def test_no_lyrics(self):

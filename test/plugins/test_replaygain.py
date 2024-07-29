@@ -146,8 +146,8 @@ class ReplayGainCliTest:
             self.skipTest("decoder plugins could not be loaded.")
 
         for item in self.lib.items():
-            self.assertIsNotNone(item.rg_track_peak)
-            self.assertIsNotNone(item.rg_track_gain)
+            assert item.rg_track_peak is not None
+            assert item.rg_track_gain is not None
             mediafile = MediaFile(item.path)
             self.assertAlmostEqual(
                 mediafile.rg_track_peak, item.rg_track_peak, places=6
@@ -167,8 +167,8 @@ class ReplayGainCliTest:
         self.run_command("replaygain")
 
         item_rg.load()
-        self.assertIsNotNone(item_rg.rg_track_gain)
-        self.assertIsNotNone(item_rg.rg_track_peak)
+        assert item_rg.rg_track_gain is not None
+        assert item_rg.rg_track_peak is not None
         assert item_rg.r128_track_gain is None
 
         item_rg.rg_track_gain += 1.0
@@ -179,7 +179,7 @@ class ReplayGainCliTest:
 
         if self.has_r128_support:
             item_r128.load()
-            self.assertIsNotNone(item_r128.r128_track_gain)
+            assert item_r128.r128_track_gain is not None
             assert item_r128.rg_track_gain is None
             assert item_r128.rg_track_peak is None
 
@@ -225,12 +225,12 @@ class ReplayGainCliTest:
         item_rg.load()
         item_r128.load()
 
-        self.assertIsNotNone(item_rg.rg_track_gain)
-        self.assertIsNotNone(item_rg.rg_track_peak)
+        assert item_rg.rg_track_gain is not None
+        assert item_rg.rg_track_peak is not None
         # FIXME: Should the plugin null this field?
         # assert item_rg.r128_track_gain is None
 
-        self.assertIsNotNone(item_r128.r128_track_gain)
+        assert item_r128.r128_track_gain is not None
         # FIXME: Should the plugin null these fields?
         # assert item_r128.rg_track_gain is None
         # assert item_r128.rg_track_peak is None
@@ -277,8 +277,8 @@ class ReplayGainCliTest:
             assert mediafile.rg_track_gain is None
             assert mediafile.rg_album_gain is None
             # writes R128_* tags
-            self.assertIsNotNone(mediafile.r128_track_gain)
-            self.assertIsNotNone(mediafile.r128_album_gain)
+            assert mediafile.r128_track_gain is not None
+            assert mediafile.r128_album_gain is not None
 
     def test_targetlevel_has_effect(self):
         album = self._add_album(1)
@@ -326,8 +326,8 @@ class ReplayGainCliTest:
         # FIXME: Add fixtures with known track/album gain (within a suitable
         # tolerance) so that we can actually check per-disc operation here.
         for item in album.items():
-            self.assertIsNotNone(item.rg_track_gain)
-            self.assertIsNotNone(item.rg_album_gain)
+            assert item.rg_track_gain is not None
+            assert item.rg_album_gain is not None
 
 
 @unittest.skipIf(not GST_AVAILABLE, "gstreamer cannot be found")
@@ -365,8 +365,8 @@ class ImportTest(AsIsImporterMixin):
             # FIXME: Add fixtures with known track/album gain (within a
             # suitable tolerance) so that we can actually check correct
             # operation here.
-            self.assertIsNotNone(item.rg_track_gain)
-            self.assertIsNotNone(item.rg_album_gain)
+            assert item.rg_track_gain is not None
+            assert item.rg_album_gain is not None
 
 
 @unittest.skipIf(not GST_AVAILABLE, "gstreamer cannot be found")

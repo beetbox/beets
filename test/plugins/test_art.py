@@ -214,7 +214,7 @@ class FetchImageTest(FetchImageTestCase):
     def test_jpeg_type_returns_path(self):
         self.mock_response(self.URL, "image/jpeg")
         self.source.fetch_image(self.candidate, self.settings)
-        self.assertIsNotNone(self.candidate.path)
+        assert self.candidate.path is not None
 
     def test_extension_set_by_content_type(self):
         self.mock_response(self.URL, "image/png")
@@ -294,7 +294,7 @@ class CombinedTest(FetchImageTestCase, CAAHelper):
         self.mock_response(self.AMAZON_URL)
         album = _common.Bag(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, None)
-        self.assertIsNotNone(candidate)
+        assert candidate is not None
 
     def test_main_interface_returns_none_for_missing_asin_and_path(self):
         album = _common.Bag()
@@ -306,14 +306,14 @@ class CombinedTest(FetchImageTestCase, CAAHelper):
         self.mock_response(self.AMAZON_URL)
         album = _common.Bag(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [self.dpath])
-        self.assertIsNotNone(candidate)
+        assert candidate is not None
         self.assertEqual(candidate.path, os.path.join(self.dpath, b"art.jpg"))
 
     def test_main_interface_falls_back_to_amazon(self):
         self.mock_response(self.AMAZON_URL)
         album = _common.Bag(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [self.dpath])
-        self.assertIsNotNone(candidate)
+        assert candidate is not None
         assert not candidate.path.startswith(self.dpath)
 
     def test_main_interface_tries_amazon_before_aao(self):
@@ -346,7 +346,7 @@ class CombinedTest(FetchImageTestCase, CAAHelper):
             asin=self.ASIN,
         )
         candidate = self.plugin.art_for_album(album, None)
-        self.assertIsNotNone(candidate)
+        assert candidate is not None
         self.assertEqual(len(responses.calls), 3)
         self.assertEqual(responses.calls[0].request.url, self.RELEASE_URL)
 
@@ -361,7 +361,7 @@ class CombinedTest(FetchImageTestCase, CAAHelper):
         candidate = self.plugin.art_for_album(
             album, [self.dpath], local_only=True
         )
-        self.assertIsNotNone(candidate)
+        assert candidate is not None
         self.assertEqual(candidate.path, os.path.join(self.dpath, b"art.jpg"))
         self.assertEqual(len(responses.calls), 0)
 
