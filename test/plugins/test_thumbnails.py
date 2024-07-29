@@ -91,12 +91,10 @@ class ThumbnailsTest(BeetsTestCase):
         # test URI getter function
         giouri_inst = mock_giouri.return_value
         giouri_inst.available = True
-        self.assertEqual(ThumbnailsPlugin().get_uri, giouri_inst.uri)
+        assert ThumbnailsPlugin().get_uri == giouri_inst.uri
 
         giouri_inst.available = False
-        self.assertEqual(
-            ThumbnailsPlugin().get_uri.__self__.__class__, PathlibURI
-        )
+        assert ThumbnailsPlugin().get_uri.__self__.__class__ == PathlibURI
 
     @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok")
     @patch("beetsplug.thumbnails.ArtResizer")
@@ -159,7 +157,7 @@ class ThumbnailsTest(BeetsTestCase):
         mock_os.stat.side_effect = os_stat
 
         plugin.make_cover_thumbnail(album, 12345, thumbnail_dir)
-        self.assertEqual(mock_resize.call_count, 0)
+        assert mock_resize.call_count == 0
 
         # and with force
         plugin.config["force"] = True
@@ -173,17 +171,19 @@ class ThumbnailsTest(BeetsTestCase):
         album = Mock(path=tmp, artpath=os.path.join(tmp, b"cover.jpg"))
         plugin.make_dolphin_cover_thumbnail(album)
         with open(os.path.join(tmp, b".directory"), "rb") as f:
-            self.assertEqual(
-                f.read().splitlines(), [b"[Desktop Entry]", b"Icon=./cover.jpg"]
-            )
+            assert f.read().splitlines() == [
+                b"[Desktop Entry]",
+                b"Icon=./cover.jpg",
+            ]
 
         # not rewritten when it already exists (yup that's a big limitation)
         album.artpath = b"/my/awesome/art.tiff"
         plugin.make_dolphin_cover_thumbnail(album)
         with open(os.path.join(tmp, b".directory"), "rb") as f:
-            self.assertEqual(
-                f.read().splitlines(), [b"[Desktop Entry]", b"Icon=./cover.jpg"]
-            )
+            assert f.read().splitlines() == [
+                b"[Desktop Entry]",
+                b"Icon=./cover.jpg",
+            ]
 
         rmtree(syspath(tmp))
 
@@ -199,20 +199,20 @@ class ThumbnailsTest(BeetsTestCase):
         # no art
         album = Mock(artpath=None)
         plugin.process_album(album)
-        self.assertEqual(get_size.call_count, 0)
-        self.assertEqual(make_dolphin.call_count, 0)
+        assert get_size.call_count == 0
+        assert make_dolphin.call_count == 0
 
         # cannot get art size
         album.artpath = b"/path/to/art"
         get_size.return_value = None
         plugin.process_album(album)
         get_size.assert_called_once_with(b"/path/to/art")
-        self.assertEqual(make_cover.call_count, 0)
+        assert make_cover.call_count == 0
 
         # dolphin tests
         plugin.config["dolphin"] = False
         plugin.process_album(album)
-        self.assertEqual(make_dolphin.call_count, 0)
+        assert make_dolphin.call_count == 0
 
         plugin.config["dolphin"] = True
         plugin.process_album(album)
@@ -253,9 +253,9 @@ class ThumbnailsTest(BeetsTestCase):
     def test_thumbnail_file_name(self, mock_basedir):
         plug = ThumbnailsPlugin()
         plug.get_uri = Mock(return_value="file:///my/uri")
-        self.assertEqual(
-            plug.thumbnail_file_name(b"idontcare"),
-            b"9488f5797fbe12ffb316d607dfd93d04.png",
+        assert (
+            plug.thumbnail_file_name(b"idontcare")
+            == b"9488f5797fbe12ffb316d607dfd93d04.png"
         )
 
     def test_uri(self):
@@ -263,12 +263,12 @@ class ThumbnailsTest(BeetsTestCase):
         if not gio.available:
             self.skipTest("GIO library not found")
 
-        self.assertEqual(gio.uri("/foo"), "file:///")  # silent fail
-        self.assertEqual(gio.uri(b"/foo"), "file:///foo")
-        self.assertEqual(gio.uri(b"/foo!"), "file:///foo!")
-        self.assertEqual(
-            gio.uri(b"/music/\xec\x8b\xb8\xec\x9d\xb4"),
-            "file:///music/%EC%8B%B8%EC%9D%B4",
+        assert gio.uri("/foo") == "file:///"  # silent fail
+        assert gio.uri(b"/foo") == "file:///foo"
+        assert gio.uri(b"/foo!") == "file:///foo!"
+        assert (
+            gio.uri(b"/music/\xec\x8b\xb8\xec\x9d\xb4")
+            == "file:///music/%EC%8B%B8%EC%9D%B4"
         )
 
 

@@ -41,10 +41,10 @@ WIN32_NO_IMPLICIT_PATHS = "Implicit paths are not supported on Windows"
 
 class AssertsMixin:
     def assert_items_matched(self, results, titles):
-        self.assertEqual({i.title for i in results}, set(titles))
+        assert {i.title for i in results} == set(titles)
 
     def assert_albums_matched(self, results, albums):
-        self.assertEqual({a.album for a in results}, set(albums))
+        assert {a.album for a in results} == set(albums)
 
     def assertInResult(self, item, results):  # noqa
         result_ids = [i.id for i in results]
@@ -62,13 +62,13 @@ class AnyFieldQueryTest(ItemInDBTestCase):
             beets.library.Item._fields.keys(),
             dbcore.query.SubstringQuery,
         )
-        self.assertEqual(self.lib.items(q).get().title, "the title")
+        assert self.lib.items(q).get().title == "the title"
 
     def test_restriction_completeness(self):
         q = dbcore.query.AnyFieldQuery(
             "title", ["title"], dbcore.query.SubstringQuery
         )
-        self.assertEqual(self.lib.items(q).get().title, "the title")
+        assert self.lib.items(q).get().title == "the title"
 
     def test_restriction_soundness(self):
         q = dbcore.query.AnyFieldQuery(
@@ -83,7 +83,7 @@ class AnyFieldQueryTest(ItemInDBTestCase):
         q2 = dbcore.query.AnyFieldQuery(
             "foo", ["bar"], dbcore.query.SubstringQuery
         )
-        self.assertEqual(q1, q2)
+        assert q1 == q2
 
         q2.query_class = None
         self.assertNotEqual(q1, q2)
@@ -356,19 +356,19 @@ class GetTest(DummyDataTestCase):
         q = "xyzzy:nonsense"
         results = self.lib.items(q)
         titles = [i.title for i in results]
-        self.assertEqual(titles, [])
+        assert titles == []
 
     def test_unknown_field_name_no_results_in_album_query(self):
         q = "xyzzy:nonsense"
         results = self.lib.albums(q)
         names = [a.album for a in results]
-        self.assertEqual(names, [])
+        assert names == []
 
     def test_item_field_name_matches_nothing_in_album_query(self):
         q = "format:nonsense"
         results = self.lib.albums(q)
         names = [a.album for a in results]
-        self.assertEqual(names, [])
+        assert names == []
 
     def test_unicode_query(self):
         item = self.lib.items().get()
@@ -479,7 +479,7 @@ class MatchTest(BeetsTestCase):
         q2 = dbcore.query.MatchQuery("foo", "bar")
         q3 = dbcore.query.MatchQuery("foo", "baz")
         q4 = dbcore.query.StringFieldQuery("foo", "bar")
-        self.assertEqual(q1, q2)
+        assert q1 == q2
         self.assertNotEqual(q1, q3)
         self.assertNotEqual(q1, q4)
         self.assertNotEqual(q3, q4)
@@ -731,21 +731,21 @@ class IntQueryTest(BeetsTestCase):
     def test_exact_value_match(self):
         item = self.add_item(bpm=120)
         matched = self.lib.items("bpm:120").get()
-        self.assertEqual(item.id, matched.id)
+        assert item.id == matched.id
 
     def test_range_match(self):
         item = self.add_item(bpm=120)
         self.add_item(bpm=130)
 
         matched = self.lib.items("bpm:110..125")
-        self.assertEqual(1, len(matched))
-        self.assertEqual(item.id, matched.get().id)
+        assert 1 == len(matched)
+        assert item.id == matched.get().id
 
     def test_flex_range_match(self):
         Item._types = {"myint": types.Integer()}
         item = self.add_item(myint=2)
         matched = self.lib.items("myint:2").get()
-        self.assertEqual(item.id, matched.id)
+        assert item.id == matched.id
 
     def test_flex_dont_match_missing(self):
         Item._types = {"myint": types.Integer()}
@@ -815,11 +815,11 @@ class BoolQueryTest(BeetsTestCase, AssertsMixin):
 class DefaultSearchFieldsTest(DummyDataTestCase):
     def test_albums_matches_album(self):
         albums = list(self.lib.albums("baz"))
-        self.assertEqual(len(albums), 1)
+        assert len(albums) == 1
 
     def test_albums_matches_albumartist(self):
         albums = list(self.lib.albums(["album artist"]))
-        self.assertEqual(len(albums), 1)
+        assert len(albums) == 1
 
     def test_items_matches_title(self):
         items = self.lib.items("beets")
@@ -953,15 +953,14 @@ class NotQueryTest(DummyDataTestCase):
         all_titles = {i.title for i in self.lib.items()}
         q_results = {i.title for i in self.lib.items(q)}
         not_q_results = {i.title for i in self.lib.items(not_q)}
-        self.assertEqual(q_results.union(not_q_results), all_titles)
-        self.assertEqual(q_results.intersection(not_q_results), set())
+        assert q_results.union(not_q_results) == all_titles
+        assert q_results.intersection(not_q_results) == set()
 
         # round trip
         not_not_q = dbcore.query.NotQuery(not_q)
-        self.assertEqual(
-            {i.title for i in self.lib.items(q)},
-            {i.title for i in self.lib.items(not_not_q)},
-        )
+        assert {i.title for i in self.lib.items(q)} == {
+            i.title for i in self.lib.items(not_not_q)
+        }
 
     def test_type_and(self):
         # not(a and b) <-> not(a) or not(b)
@@ -1114,10 +1113,9 @@ class NotQueryTest(DummyDataTestCase):
             q_slow = dbcore.query.NotQuery(klass(*(args + [False])))
 
             try:
-                self.assertEqual(
-                    [i.title for i in self.lib.items(q_fast)],
-                    [i.title for i in self.lib.items(q_slow)],
-                )
+                assert [i.title for i in self.lib.items(q_fast)] == [
+                    i.title for i in self.lib.items(q_slow)
+                ]
             except NotImplementedError:
                 # ignore classes that do not provide `fast` implementation
                 pass

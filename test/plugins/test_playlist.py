@@ -90,13 +90,7 @@ class PlaylistQueryTest:
     def test_name_query_with_absolute_paths_in_playlist(self):
         q = "playlist:absolute"
         results = self.lib.items(q)
-        self.assertEqual(
-            {i.title for i in results},
-            {
-                "some item",
-                "another item",
-            },
-        )
+        assert {i.title for i in results} == {"some item", "another item"}
 
     def test_path_query_with_absolute_paths_in_playlist(self):
         q = "playlist:{}".format(
@@ -108,24 +102,12 @@ class PlaylistQueryTest:
             )
         )
         results = self.lib.items(q)
-        self.assertEqual(
-            {i.title for i in results},
-            {
-                "some item",
-                "another item",
-            },
-        )
+        assert {i.title for i in results} == {"some item", "another item"}
 
     def test_name_query_with_relative_paths_in_playlist(self):
         q = "playlist:relative"
         results = self.lib.items(q)
-        self.assertEqual(
-            {i.title for i in results},
-            {
-                "some item",
-                "another item",
-            },
-        )
+        assert {i.title for i in results} == {"some item", "another item"}
 
     def test_path_query_with_relative_paths_in_playlist(self):
         q = "playlist:{}".format(
@@ -137,18 +119,12 @@ class PlaylistQueryTest:
             )
         )
         results = self.lib.items(q)
-        self.assertEqual(
-            {i.title for i in results},
-            {
-                "some item",
-                "another item",
-            },
-        )
+        assert {i.title for i in results} == {"some item", "another item"}
 
     def test_name_query_with_nonexisting_playlist(self):
         q = "playlist:nonexisting"
         results = self.lib.items(q)
-        self.assertEqual(set(results), set())
+        assert set(results) == set()
 
     def test_path_query_with_nonexisting_playlist(self):
         q = "playlist:{}".format(
@@ -161,7 +137,7 @@ class PlaylistQueryTest:
             )
         )
         results = self.lib.items(q)
-        self.assertEqual(set(results), set())
+        assert set(results) == set()
 
 
 class PlaylistTestRelativeToLib(PlaylistQueryTest, PlaylistTestCase):
@@ -313,28 +289,22 @@ class PlaylistTestItemMoved(PlaylistUpdateTest, PlaylistTestCase):
         with open(playlist_path) as f:
             lines = [line.strip() for line in f.readlines()]
 
-        self.assertEqual(
-            lines,
-            [
-                os.path.join(self.music_dir, "a", "b", "c.mp3"),
-                os.path.join(self.music_dir, "g", "h", "i.mp3"),
-                os.path.join(self.music_dir, "nonexisting.mp3"),
-            ],
-        )
+        assert lines == [
+            os.path.join(self.music_dir, "a", "b", "c.mp3"),
+            os.path.join(self.music_dir, "g", "h", "i.mp3"),
+            os.path.join(self.music_dir, "nonexisting.mp3"),
+        ]
 
         # Check playlist with relative paths
         playlist_path = os.path.join(self.playlist_dir, "relative.m3u")
         with open(playlist_path) as f:
             lines = [line.strip() for line in f.readlines()]
 
-        self.assertEqual(
-            lines,
-            [
-                os.path.join("a", "b", "c.mp3"),
-                os.path.join("g", "h", "i.mp3"),
-                "nonexisting.mp3",
-            ],
-        )
+        assert lines == [
+            os.path.join("a", "b", "c.mp3"),
+            os.path.join("g", "h", "i.mp3"),
+            "nonexisting.mp3",
+        ]
 
 
 class PlaylistTestItemRemoved(PlaylistUpdateTest, PlaylistTestCase):
@@ -365,23 +335,14 @@ class PlaylistTestItemRemoved(PlaylistUpdateTest, PlaylistTestCase):
         with open(playlist_path) as f:
             lines = [line.strip() for line in f.readlines()]
 
-        self.assertEqual(
-            lines,
-            [
-                os.path.join(self.music_dir, "a", "b", "c.mp3"),
-                os.path.join(self.music_dir, "nonexisting.mp3"),
-            ],
-        )
+        assert lines == [
+            os.path.join(self.music_dir, "a", "b", "c.mp3"),
+            os.path.join(self.music_dir, "nonexisting.mp3"),
+        ]
 
         # Check playlist with relative paths
         playlist_path = os.path.join(self.playlist_dir, "relative.m3u")
         with open(playlist_path) as f:
             lines = [line.strip() for line in f.readlines()]
 
-        self.assertEqual(
-            lines,
-            [
-                os.path.join("a", "b", "c.mp3"),
-                "nonexisting.mp3",
-            ],
-        )
+        assert lines == [os.path.join("a", "b", "c.mp3"), "nonexisting.mp3"]

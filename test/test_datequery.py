@@ -161,12 +161,12 @@ class DateQueryTest(ItemInDBTestCase):
     def test_single_month_match_fast(self):
         query = DateQuery("added", "2013-03")
         matched = self.lib.items(query)
-        self.assertEqual(len(matched), 1)
+        assert len(matched) == 1
 
     def test_single_month_nonmatch_fast(self):
         query = DateQuery("added", "2013-04")
         matched = self.lib.items(query)
-        self.assertEqual(len(matched), 0)
+        assert len(matched) == 0
 
     def test_single_month_match_slow(self):
         query = DateQuery("added", "2013-03")
@@ -179,12 +179,12 @@ class DateQueryTest(ItemInDBTestCase):
     def test_single_day_match_fast(self):
         query = DateQuery("added", "2013-03-30")
         matched = self.lib.items(query)
-        self.assertEqual(len(matched), 1)
+        assert len(matched) == 1
 
     def test_single_day_nonmatch_fast(self):
         query = DateQuery("added", "2013-03-31")
         matched = self.lib.items(query)
-        self.assertEqual(len(matched), 0)
+        assert len(matched) == 0
 
 
 class DateQueryTestRelative(ItemInDBTestCase):
@@ -201,14 +201,14 @@ class DateQueryTestRelative(ItemInDBTestCase):
     def test_single_month_match_fast(self):
         query = DateQuery("added", self._now.strftime("%Y-%m"))
         matched = self.lib.items(query)
-        self.assertEqual(len(matched), 1)
+        assert len(matched) == 1
 
     def test_single_month_nonmatch_fast(self):
         query = DateQuery(
             "added", (self._now + timedelta(days=30)).strftime("%Y-%m")
         )
         matched = self.lib.items(query)
-        self.assertEqual(len(matched), 0)
+        assert len(matched) == 0
 
     def test_single_month_match_slow(self):
         query = DateQuery("added", self._now.strftime("%Y-%m"))
@@ -223,14 +223,14 @@ class DateQueryTestRelative(ItemInDBTestCase):
     def test_single_day_match_fast(self):
         query = DateQuery("added", self._now.strftime("%Y-%m-%d"))
         matched = self.lib.items(query)
-        self.assertEqual(len(matched), 1)
+        assert len(matched) == 1
 
     def test_single_day_nonmatch_fast(self):
         query = DateQuery(
             "added", (self._now + timedelta(days=1)).strftime("%Y-%m-%d")
         )
         matched = self.lib.items(query)
-        self.assertEqual(len(matched), 0)
+        assert len(matched) == 0
 
 
 class DateQueryTestRelativeMore(ItemInDBTestCase):
@@ -243,37 +243,37 @@ class DateQueryTestRelativeMore(ItemInDBTestCase):
         for timespan in ["d", "w", "m", "y"]:
             query = DateQuery("added", "-4" + timespan + "..+4" + timespan)
             matched = self.lib.items(query)
-            self.assertEqual(len(matched), 1)
+            assert len(matched) == 1
 
     def test_relative_fail(self):
         for timespan in ["d", "w", "m", "y"]:
             query = DateQuery("added", "-2" + timespan + "..-1" + timespan)
             matched = self.lib.items(query)
-            self.assertEqual(len(matched), 0)
+            assert len(matched) == 0
 
     def test_start_relative(self):
         for timespan in ["d", "w", "m", "y"]:
             query = DateQuery("added", "-4" + timespan + "..")
             matched = self.lib.items(query)
-            self.assertEqual(len(matched), 1)
+            assert len(matched) == 1
 
     def test_start_relative_fail(self):
         for timespan in ["d", "w", "m", "y"]:
             query = DateQuery("added", "4" + timespan + "..")
             matched = self.lib.items(query)
-            self.assertEqual(len(matched), 0)
+            assert len(matched) == 0
 
     def test_end_relative(self):
         for timespan in ["d", "w", "m", "y"]:
             query = DateQuery("added", "..+4" + timespan)
             matched = self.lib.items(query)
-            self.assertEqual(len(matched), 1)
+            assert len(matched) == 1
 
     def test_end_relative_fail(self):
         for timespan in ["d", "w", "m", "y"]:
             query = DateQuery("added", "..-4" + timespan)
             matched = self.lib.items(query)
-            self.assertEqual(len(matched), 0)
+            assert len(matched) == 0
 
 
 class DateQueryConstructTest(unittest.TestCase):
@@ -302,18 +302,18 @@ class DateQueryConstructTest(unittest.TestCase):
 
     def test_datetime_uppercase_t_separator(self):
         date_query = DateQuery("added", "2000-01-01T12")
-        self.assertEqual(date_query.interval.start, datetime(2000, 1, 1, 12))
-        self.assertEqual(date_query.interval.end, datetime(2000, 1, 1, 13))
+        assert date_query.interval.start == datetime(2000, 1, 1, 12)
+        assert date_query.interval.end == datetime(2000, 1, 1, 13)
 
     def test_datetime_lowercase_t_separator(self):
         date_query = DateQuery("added", "2000-01-01t12")
-        self.assertEqual(date_query.interval.start, datetime(2000, 1, 1, 12))
-        self.assertEqual(date_query.interval.end, datetime(2000, 1, 1, 13))
+        assert date_query.interval.start == datetime(2000, 1, 1, 12)
+        assert date_query.interval.end == datetime(2000, 1, 1, 13)
 
     def test_datetime_space_separator(self):
         date_query = DateQuery("added", "2000-01-01 12")
-        self.assertEqual(date_query.interval.start, datetime(2000, 1, 1, 12))
-        self.assertEqual(date_query.interval.end, datetime(2000, 1, 1, 13))
+        assert date_query.interval.start == datetime(2000, 1, 1, 12)
+        assert date_query.interval.end == datetime(2000, 1, 1, 13)
 
     def test_datetime_invalid_separator(self):
         with self.assertRaises(InvalidQueryArgumentValueError):

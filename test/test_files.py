@@ -107,19 +107,19 @@ class MoveTest(BeetsTestCase):
 
     def test_move_changes_path(self):
         self.i.move()
-        self.assertEqual(self.i.path, util.normpath(self.dest))
+        assert self.i.path == util.normpath(self.dest)
 
     def test_copy_already_at_destination(self):
         self.i.move()
         old_path = self.i.path
         self.i.move(operation=MoveOperation.COPY)
-        self.assertEqual(self.i.path, old_path)
+        assert self.i.path == old_path
 
     def test_move_already_at_destination(self):
         self.i.move()
         old_path = self.i.path
         self.i.move()
-        self.assertEqual(self.i.path, old_path)
+        assert self.i.path == old_path
 
     def test_move_file_with_colon(self):
         self.i.artist = "C:DOS"
@@ -160,17 +160,14 @@ class MoveTest(BeetsTestCase):
 
         self.i.move()
         self.assertNotEqual(self.i.path, dest)
-        self.assertEqual(os.path.dirname(self.i.path), os.path.dirname(dest))
+        assert os.path.dirname(self.i.path) == os.path.dirname(dest)
 
     @unittest.skipUnless(_common.HAVE_SYMLINK, "need symlinks")
     def test_link_arrives(self):
         self.i.move(operation=MoveOperation.LINK)
         self.assertExists(self.dest)
         assert os.path.islink(syspath(self.dest))
-        self.assertEqual(
-            bytestring_path(os.readlink(syspath(self.dest))),
-            self.path,
-        )
+        assert bytestring_path(os.readlink(syspath(self.dest))) == self.path
 
     @unittest.skipUnless(_common.HAVE_SYMLINK, "need symlinks")
     def test_link_does_not_depart(self):
@@ -180,7 +177,7 @@ class MoveTest(BeetsTestCase):
     @unittest.skipUnless(_common.HAVE_SYMLINK, "need symlinks")
     def test_link_changes_path(self):
         self.i.move(operation=MoveOperation.LINK)
-        self.assertEqual(self.i.path, util.normpath(self.dest))
+        assert self.i.path == util.normpath(self.dest)
 
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_hardlink_arrives(self):
@@ -201,44 +198,44 @@ class MoveTest(BeetsTestCase):
     @unittest.skipUnless(_common.HAVE_HARDLINK, "need hardlinks")
     def test_hardlink_changes_path(self):
         self.i.move(operation=MoveOperation.HARDLINK)
-        self.assertEqual(self.i.path, util.normpath(self.dest))
+        assert self.i.path == util.normpath(self.dest)
 
 
 class HelperTest(BeetsTestCase):
     def test_ancestry_works_on_file(self):
         p = "/a/b/c"
         a = ["/", "/a", "/a/b"]
-        self.assertEqual(util.ancestry(p), a)
+        assert util.ancestry(p) == a
 
     def test_ancestry_works_on_dir(self):
         p = "/a/b/c/"
         a = ["/", "/a", "/a/b", "/a/b/c"]
-        self.assertEqual(util.ancestry(p), a)
+        assert util.ancestry(p) == a
 
     def test_ancestry_works_on_relative(self):
         p = "a/b/c"
         a = ["a", "a/b"]
-        self.assertEqual(util.ancestry(p), a)
+        assert util.ancestry(p) == a
 
     def test_components_works_on_file(self):
         p = "/a/b/c"
         a = ["/", "a", "b", "c"]
-        self.assertEqual(util.components(p), a)
+        assert util.components(p) == a
 
     def test_components_works_on_dir(self):
         p = "/a/b/c/"
         a = ["/", "a", "b", "c"]
-        self.assertEqual(util.components(p), a)
+        assert util.components(p) == a
 
     def test_components_works_on_relative(self):
         p = "a/b/c"
         a = ["a", "b", "c"]
-        self.assertEqual(util.components(p), a)
+        assert util.components(p) == a
 
     def test_forward_slash(self):
         p = rb"C:\a\b\c"
         a = rb"C:/a/b/c"
-        self.assertEqual(util.path_as_posix(p), a)
+        assert util.path_as_posix(p) == a
 
 
 class AlbumFileTest(BeetsTestCase):
@@ -419,7 +416,7 @@ class ArtFileTest(BeetsTestCase):
         # Set the art.
         ai.set_art(newart)
         self.assertNotEqual(artdest, ai.artpath)
-        self.assertEqual(os.path.dirname(artdest), os.path.dirname(ai.artpath))
+        assert os.path.dirname(artdest) == os.path.dirname(ai.artpath)
 
     def test_setart_sets_permissions(self):
         util.remove(self.art)
@@ -472,7 +469,7 @@ class ArtFileTest(BeetsTestCase):
 
         artpath = self.lib.albums()[0].artpath
         assert b"different_album" not in artpath
-        self.assertEqual(artpath, oldartpath)
+        assert artpath == oldartpath
         self.assertExists(oldartpath)
 
 
@@ -633,25 +630,25 @@ class WalkTest(BeetsTestCase):
 
     def test_sorted_files(self):
         res = list(util.sorted_walk(self.base))
-        self.assertEqual(len(res), 2)
-        self.assertEqual(res[0], (self.base, [b"d"], [b"x", b"y"]))
-        self.assertEqual(res[1], (os.path.join(self.base, b"d"), [], [b"z"]))
+        assert len(res) == 2
+        assert res[0] == (self.base, [b"d"], [b"x", b"y"])
+        assert res[1] == (os.path.join(self.base, b"d"), [], [b"z"])
 
     def test_ignore_file(self):
         res = list(util.sorted_walk(self.base, (b"x",)))
-        self.assertEqual(len(res), 2)
-        self.assertEqual(res[0], (self.base, [b"d"], [b"y"]))
-        self.assertEqual(res[1], (os.path.join(self.base, b"d"), [], [b"z"]))
+        assert len(res) == 2
+        assert res[0] == (self.base, [b"d"], [b"y"])
+        assert res[1] == (os.path.join(self.base, b"d"), [], [b"z"])
 
     def test_ignore_directory(self):
         res = list(util.sorted_walk(self.base, (b"d",)))
-        self.assertEqual(len(res), 1)
-        self.assertEqual(res[0], (self.base, [], [b"x", b"y"]))
+        assert len(res) == 1
+        assert res[0] == (self.base, [], [b"x", b"y"])
 
     def test_ignore_everything(self):
         res = list(util.sorted_walk(self.base, (b"*",)))
-        self.assertEqual(len(res), 1)
-        self.assertEqual(res[0], (self.base, [], []))
+        assert len(res) == 1
+        assert res[0] == (self.base, [], [])
 
 
 class UniquePathTest(BeetsTestCase):
@@ -667,19 +664,19 @@ class UniquePathTest(BeetsTestCase):
 
     def test_new_file_unchanged(self):
         path = util.unique_path(os.path.join(self.base, b"z.mp3"))
-        self.assertEqual(path, os.path.join(self.base, b"z.mp3"))
+        assert path == os.path.join(self.base, b"z.mp3")
 
     def test_conflicting_file_appends_1(self):
         path = util.unique_path(os.path.join(self.base, b"y.mp3"))
-        self.assertEqual(path, os.path.join(self.base, b"y.1.mp3"))
+        assert path == os.path.join(self.base, b"y.1.mp3")
 
     def test_conflicting_file_appends_higher_number(self):
         path = util.unique_path(os.path.join(self.base, b"x.mp3"))
-        self.assertEqual(path, os.path.join(self.base, b"x.3.mp3"))
+        assert path == os.path.join(self.base, b"x.3.mp3")
 
     def test_conflicting_file_with_number_increases_number(self):
         path = util.unique_path(os.path.join(self.base, b"x.1.mp3"))
-        self.assertEqual(path, os.path.join(self.base, b"x.3.mp3"))
+        assert path == os.path.join(self.base, b"x.3.mp3")
 
 
 class MkDirAllTest(BeetsTestCase):

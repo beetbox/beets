@@ -115,4 +115,4 @@ class InfoTest(PluginTestCase):
             "--format",
             "$track. $title - $artist ($length)",
         )
-        self.assertEqual("02. tïtle 0 - the artist (0:01)\n", out)
+        assert "02. tïtle 0 - the artist (0:01)\n" == out

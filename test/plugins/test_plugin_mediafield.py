@@ -59,7 +59,7 @@ class ExtendedFieldTestMixin(BeetsTestCase):
             mf.save()
 
             mf = mediafile.MediaFile(mf.path)
-            self.assertEqual(mf.customtag, "F#")
+            assert mf.customtag == "F#"
 
         finally:
             delattr(mediafile.MediaFile, "customtag")
@@ -75,7 +75,7 @@ class ExtendedFieldTestMixin(BeetsTestCase):
             mf.save()
 
             mf = mediafile.MediaFile(mf.path)
-            self.assertEqual(mf.customlisttag, ["a", "b"])
+            assert mf.customlisttag == ["a", "b"]
 
         finally:
             delattr(mediafile.MediaFile, "customlisttag")
@@ -92,7 +92,7 @@ class ExtendedFieldTestMixin(BeetsTestCase):
             item = Item(path=mf.path, customtag="Gb")
             item.write()
             mf = mediafile.MediaFile(mf.path)
-            self.assertEqual(mf.customtag, "Gb")
+            assert mf.customtag == "Gb"
 
         finally:
             delattr(mediafile.MediaFile, "customtag")
@@ -108,7 +108,7 @@ class ExtendedFieldTestMixin(BeetsTestCase):
             mf.save()
 
             item = Item.from_path(mf.path)
-            self.assertEqual(item["customtag"], "F#")
+            assert item["customtag"] == "F#"
 
         finally:
             delattr(mediafile.MediaFile, "customtag")

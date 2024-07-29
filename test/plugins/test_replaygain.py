@@ -190,12 +190,12 @@ class ReplayGainCliTest:
         self.run_command("replaygain")
 
         item_rg.load()
-        self.assertEqual(item_rg.rg_track_gain, rg_track_gain)
-        self.assertEqual(item_rg.rg_track_peak, rg_track_peak)
+        assert item_rg.rg_track_gain == rg_track_gain
+        assert item_rg.rg_track_peak == rg_track_peak
 
         if self.has_r128_support:
             item_r128.load()
-            self.assertEqual(item_r128.r128_track_gain, r128_track_gain)
+            assert item_r128.r128_track_gain == r128_track_gain
 
     def test_cli_does_not_skip_wrong_tag_type(self):
         """Check that items that have tags of the wrong type won't be skipped."""
@@ -253,8 +253,8 @@ class ReplayGainCliTest:
             gains.append(mediafile.rg_album_gain)
 
         # Make sure they are all the same
-        self.assertEqual(max(peaks), min(peaks))
-        self.assertEqual(max(gains), min(gains))
+        assert max(peaks) == min(peaks)
+        assert max(gains) == min(gains)
 
         self.assertNotEqual(max(gains), 0.0)
         self.assertNotEqual(max(peaks), 0.0)

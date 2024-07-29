@@ -69,7 +69,7 @@ class ListTest(BeetsTestCase):
 
     def test_list_item_path(self):
         stdout = self._run_list(fmt="$path")
-        self.assertEqual(stdout.getvalue().strip(), "xxx/yyy")
+        assert stdout.getvalue().strip() == "xxx/yyy"
 
     def test_list_album_outputs_something(self):
         stdout = self._run_list(album=True)
@@ -77,7 +77,7 @@ class ListTest(BeetsTestCase):
 
     def test_list_album_path(self):
         stdout = self._run_list(album=True, fmt="$path")
-        self.assertEqual(stdout.getvalue().strip(), "xxx")
+        assert stdout.getvalue().strip() == "xxx"
 
     def test_list_album_omits_title(self):
         stdout = self._run_list(album=True)
@@ -99,9 +99,7 @@ class ListTest(BeetsTestCase):
 
     def test_list_item_format_multiple(self):
         stdout = self._run_list(fmt="$artist - $album - $year")
-        self.assertEqual(
-            "the artist - the album - 0001", stdout.getvalue().strip()
-        )
+        assert "the artist - the album - 0001" == stdout.getvalue().strip()
 
     def test_list_album_format(self):
         stdout = self._run_list(album=True, fmt="$genre")
@@ -125,26 +123,26 @@ class RemoveTest(BeetsTestCase):
         self.io.addinput("y")
         commands.remove_items(self.lib, "", False, False, False)
         items = self.lib.items()
-        self.assertEqual(len(list(items)), 0)
+        assert len(list(items)) == 0
         self.assertExists(self.i.path)
 
     def test_remove_items_with_delete(self):
         self.io.addinput("y")
         commands.remove_items(self.lib, "", False, True, False)
         items = self.lib.items()
-        self.assertEqual(len(list(items)), 0)
+        assert len(list(items)) == 0
         self.assertNotExists(self.i.path)
 
     def test_remove_items_with_force_no_delete(self):
         commands.remove_items(self.lib, "", False, False, True)
         items = self.lib.items()
-        self.assertEqual(len(list(items)), 0)
+        assert len(list(items)) == 0
         self.assertExists(self.i.path)
 
     def test_remove_items_with_force_delete(self):
         commands.remove_items(self.lib, "", False, True, True)
         items = self.lib.items()
-        self.assertEqual(len(list(items)), 0)
+        assert len(list(items)) == 0
         self.assertNotExists(self.i.path)
 
     def test_remove_items_select_with_delete(self):
@@ -156,7 +154,7 @@ class RemoveTest(BeetsTestCase):
             self.io.addinput(s)
         commands.remove_items(self.lib, "", False, True, False)
         items = self.lib.items()
-        self.assertEqual(len(list(items)), 1)
+        assert len(list(items)) == 1
         # There is probably no guarantee that the items are queried in any
         # spcecific order, thus just ensure that exactly one was removed.
         # To improve upon this, self.io would need to have the capability to
@@ -164,7 +162,7 @@ class RemoveTest(BeetsTestCase):
         num_existing = 0
         num_existing += 1 if os.path.exists(syspath(self.i.path)) else 0
         num_existing += 1 if os.path.exists(syspath(i2.path)) else 0
-        self.assertEqual(num_existing, 1)
+        assert num_existing == 1
 
     def test_remove_albums_select_with_delete(self):
         a1 = self.add_album_fixture()
@@ -172,18 +170,18 @@ class RemoveTest(BeetsTestCase):
         path1 = a1.items()[0].path
         path2 = a2.items()[0].path
         items = self.lib.items()
-        self.assertEqual(len(list(items)), 3)
+        assert len(list(items)) == 3
 
         for s in ("s", "y", "n"):
             self.io.addinput(s)
         commands.remove_items(self.lib, "", True, True, False)
         items = self.lib.items()
-        self.assertEqual(len(list(items)), 2)  # incl. the item from setUp()
+        assert len(list(items)) == 2  # incl. the item from setUp()
         # See test_remove_items_select_with_delete()
         num_existing = 0
         num_existing += 1 if os.path.exists(syspath(path1)) else 0
         num_existing += 1 if os.path.exists(syspath(path2)) else 0
-        self.assertEqual(num_existing, 1)
+        assert num_existing == 1
 
 
 class ModifyTest(BeetsTestCase):
@@ -204,27 +202,27 @@ class ModifyTest(BeetsTestCase):
     def test_modify_item(self):
         self.modify("title=newTitle")
         item = self.lib.items().get()
-        self.assertEqual(item.title, "newTitle")
+        assert item.title == "newTitle"
 
     def test_modify_item_abort(self):
         item = self.lib.items().get()
         title = item.title
         self.modify_inp("n", "title=newTitle")
         item = self.lib.items().get()
-        self.assertEqual(item.title, title)
+        assert item.title == title
 
     def test_modify_item_no_change(self):
         title = "Tracktitle"
         item = self.add_item_fixture(title=title)
         self.modify_inp("y", "title", f"title={title}")
         item = self.lib.items(title).get()
-        self.assertEqual(item.title, title)
+        assert item.title == title
 
     def test_modify_write_tags(self):
         self.modify("title=newTitle")
         item = self.lib.items().get()
         item.read()
-        self.assertEqual(item.title, "newTitle")
+        assert item.title == "newTitle"
 
     def test_modify_dont_write_tags(self):
         self.modify("--nowrite", "title=newTitle")
@@ -256,14 +254,14 @@ class ModifyTest(BeetsTestCase):
         self.modify("title=newTitle")
         item.load()
         self.assertNotEqual(old_mtime, item.mtime)
-        self.assertEqual(item.current_mtime(), item.mtime)
+        assert item.current_mtime() == item.mtime
 
     def test_reset_mtime_with_no_write(self):
         item = self.item
 
         self.modify("--nowrite", "title=newTitle")
         item.load()
-        self.assertEqual(0, item.mtime)
+        assert 0 == item.mtime
 
     def test_selective_modify(self):
         title = "Tracktitle"
@@ -279,8 +277,8 @@ class ModifyTest(BeetsTestCase):
         )
         original_items = self.lib.items(f"artist:{original_artist}")
         new_items = self.lib.items(f"artist:{new_artist}")
-        self.assertEqual(len(list(original_items)), 3)
-        self.assertEqual(len(list(new_items)), 7)
+        assert len(list(original_items)) == 3
+        assert len(list(new_items)) == 7
 
     def test_modify_formatted(self):
         for i in range(0, 3):
@@ -292,26 +290,26 @@ class ModifyTest(BeetsTestCase):
         for item in items:
             orig_title = item.title
             item.load()
-            self.assertEqual(item.title, f"{orig_title} - append")
+            assert item.title == f"{orig_title} - append"
 
     # Album Tests
 
     def test_modify_album(self):
         self.modify("--album", "album=newAlbum")
         album = self.lib.albums().get()
-        self.assertEqual(album.album, "newAlbum")
+        assert album.album == "newAlbum"
 
     def test_modify_album_write_tags(self):
         self.modify("--album", "album=newAlbum")
         item = self.lib.items().get()
         item.read()
-        self.assertEqual(item.album, "newAlbum")
+        assert item.album == "newAlbum"
 
     def test_modify_album_dont_write_tags(self):
         self.modify("--album", "--nowrite", "album=newAlbum")
         item = self.lib.items().get()
         item.read()
-        self.assertEqual(item.album, "the album")
+        assert item.album == "the album"
 
     def test_album_move(self):
         self.modify("--album", "album=newAlbum")
@@ -330,7 +328,7 @@ class ModifyTest(BeetsTestCase):
         orig_album = item.album
         self.modify("--album", "album=${album} - append")
         item.load()
-        self.assertEqual(item.album, f"{orig_album} - append")
+        assert item.album == f"{orig_album} - append"
 
     # Misc
 
@@ -338,12 +336,12 @@ class ModifyTest(BeetsTestCase):
         self.modify("initial_key=C#m")
         item = self.lib.items().get()
         mediafile = MediaFile(syspath(item.path))
-        self.assertEqual(mediafile.initial_key, "C#m")
+        assert mediafile.initial_key == "C#m"
 
     def test_set_flexattr(self):
         self.modify("flexattr=testAttr")
         item = self.lib.items().get()
-        self.assertEqual(item.flexattr, "testAttr")
+        assert item.flexattr == "testAttr"
 
     def test_remove_flexattr(self):
         item = self.lib.items().get()
@@ -362,7 +360,7 @@ class ModifyTest(BeetsTestCase):
         item.store()
 
         mediafile = MediaFile(syspath(item.path))
-        self.assertEqual(mediafile.initial_key, "C#m")
+        assert mediafile.initial_key == "C#m"
 
         self.modify("initial_key!")
         mediafile = MediaFile(syspath(item.path))
@@ -372,29 +370,29 @@ class ModifyTest(BeetsTestCase):
         (query, mods, dels) = commands.modify_parse_args(
             ["title:oldTitle", "title=newTitle"]
         )
-        self.assertEqual(query, ["title:oldTitle"])
-        self.assertEqual(mods, {"title": "newTitle"})
+        assert query == ["title:oldTitle"]
+        assert mods == {"title": "newTitle"}
 
     def test_arg_parsing_delete(self):
         (query, mods, dels) = commands.modify_parse_args(
             ["title:oldTitle", "title!"]
         )
-        self.assertEqual(query, ["title:oldTitle"])
-        self.assertEqual(dels, ["title"])
+        assert query == ["title:oldTitle"]
+        assert dels == ["title"]
 
     def test_arg_parsing_query_with_exclaimation(self):
         (query, mods, dels) = commands.modify_parse_args(
             ["title:oldTitle!", "title=newTitle!"]
         )
-        self.assertEqual(query, ["title:oldTitle!"])
-        self.assertEqual(mods, {"title": "newTitle!"})
+        assert query == ["title:oldTitle!"]
+        assert mods == {"title": "newTitle!"}
 
     def test_arg_parsing_equals_in_value(self):
         (query, mods, dels) = commands.modify_parse_args(
             ["title:foo=bar", "title=newTitle"]
         )
-        self.assertEqual(query, ["title:foo=bar"])
-        self.assertEqual(mods, {"title": "newTitle"})
+        assert query == ["title:foo=bar"]
+        assert mods == {"title": "newTitle"}
 
 
 class WriteTest(BeetsTestCase):
@@ -407,11 +405,11 @@ class WriteTest(BeetsTestCase):
         item.store()
 
         item = self.lib.items().get()
-        self.assertEqual(item.mtime, 0)
+        assert item.mtime == 0
 
         self.write_cmd()
         item = self.lib.items().get()
-        self.assertEqual(item.mtime, item.current_mtime())
+        assert item.mtime == item.current_mtime()
 
     def test_non_metadata_field_unchanged(self):
         """Changing a non-"tag" field like `bitrate` and writing should
@@ -427,7 +425,7 @@ class WriteTest(BeetsTestCase):
 
         output = self.write_cmd()
 
-        self.assertEqual(output, "")
+        assert output == ""
 
     def test_write_metadata_field(self):
         item = self.add_item_fixture()
@@ -530,13 +528,13 @@ class MoveTest(BeetsTestCase):
     def test_export_item_custom_dir(self):
         self._move(dest=self.otherdir, export=True)
         self.i.load()
-        self.assertEqual(self.i.path, self.itempath)
+        assert self.i.path == self.itempath
         self.assertExists(self.otherdir)
 
     def test_export_album_custom_dir(self):
         self._move(dest=self.otherdir, album=True, export=True)
         self.i.load()
-        self.assertEqual(self.i.path, self.itempath)
+        assert self.i.path == self.itempath
         self.assertExists(self.otherdir)
 
     def test_pretend_export_item(self):
@@ -621,7 +619,7 @@ class UpdateTest(BeetsTestCase):
         mf.save()
         self._update()
         item = self.lib.items().get()
-        self.assertEqual(item.title, "differentTitle")
+        assert item.title == "differentTitle"
 
     def test_modified_metadata_moved(self):
         mf = MediaFile(syspath(self.i.path))
@@ -695,7 +693,7 @@ class UpdateTest(BeetsTestCase):
         self._update(move=True, fields=["genre"])
         item = self.lib.items().get()
         assert b"differentAlbum" not in item.path
-        self.assertEqual(item.genre, "differentGenre")
+        assert item.genre == "differentGenre"
 
     def test_mtime_match_skips_update(self):
         mf = MediaFile(syspath(self.i.path))
@@ -708,7 +706,7 @@ class UpdateTest(BeetsTestCase):
 
         self._update(reset_mtime=False)
         item = self.lib.items().get()
-        self.assertEqual(item.title, "full")
+        assert item.title == "full"
 
     def test_multivalued_albumtype_roundtrip(self):
         # https://github.com/beetbox/beets/issues/4528
@@ -726,14 +724,14 @@ class UpdateTest(BeetsTestCase):
         album.try_sync(write=True, move=False)
 
         album.load()
-        self.assertEqual(album.albumtype, correct_albumtype)
-        self.assertEqual(album.albumtypes, correct_albumtypes)
+        assert album.albumtype == correct_albumtype
+        assert album.albumtypes == correct_albumtypes
 
         self._update()
 
         album.load()
-        self.assertEqual(album.albumtype, correct_albumtype)
-        self.assertEqual(album.albumtypes, correct_albumtypes)
+        assert album.albumtype == correct_albumtype
+        assert album.albumtypes == correct_albumtypes
 
     def test_modified_metadata_excluded(self):
         mf = MediaFile(syspath(self.i.path))
@@ -821,7 +819,7 @@ class ImportTest(BeetsTestCase):
         with open(logfile, mode="w") as fp:
             fp.write(logfile_content)
         actual_paths = list(commands._paths_from_logfile(logfile))
-        self.assertEqual(actual_paths, expected_paths)
+        assert actual_paths == expected_paths
 
 
 @_common.slow_test()
@@ -906,8 +904,8 @@ class ConfigTest(TestPluginTestCase):
 
         self.run_command("test", lib=None)
         key, template = self.test_cmd.lib.path_formats[0]
-        self.assertEqual(key, "x")
-        self.assertEqual(template.original, "y")
+        assert key == "x"
+        assert template.original == "y"
 
     def test_default_paths_preserved(self):
         default_formats = ui.get_path_formats()
@@ -917,9 +915,9 @@ class ConfigTest(TestPluginTestCase):
             config.write("paths: {x: y}")
         self.run_command("test", lib=None)
         key, template = self.test_cmd.lib.path_formats[0]
-        self.assertEqual(key, "x")
-        self.assertEqual(template.original, "y")
-        self.assertEqual(self.test_cmd.lib.path_formats[1:], default_formats)
+        assert key == "x"
+        assert template.original == "y"
+        assert self.test_cmd.lib.path_formats[1:] == default_formats
 
     def test_nonexistant_db(self):
         with self.write_config_file() as config:
@@ -933,7 +931,7 @@ class ConfigTest(TestPluginTestCase):
             file.write("anoption: value")
 
         self.run_command("test", lib=None)
-        self.assertEqual(config["anoption"].get(), "value")
+        assert config["anoption"].get() == "value"
 
     def test_replacements_parsed(self):
         with self.write_config_file() as config:
@@ -942,7 +940,7 @@ class ConfigTest(TestPluginTestCase):
         self.run_command("test", lib=None)
         replacements = self.test_cmd.lib.replacements
         repls = [(p.pattern, s) for p, s in replacements]  # Compare patterns.
-        self.assertEqual(repls, [("[xy]", "z")])
+        assert repls == [("[xy]", "z")]
 
     def test_multiple_replacements_parsed(self):
         with self.write_config_file() as config:
@@ -950,20 +948,14 @@ class ConfigTest(TestPluginTestCase):
         self.run_command("test", lib=None)
         replacements = self.test_cmd.lib.replacements
         repls = [(p.pattern, s) for p, s in replacements]
-        self.assertEqual(
-            repls,
-            [
-                ("[xy]", "z"),
-                ("foo", "bar"),
-            ],
-        )
+        assert repls == [("[xy]", "z"), ("foo", "bar")]
 
     def test_cli_config_option(self):
         config_path = os.path.join(self.temp_dir, b"config.yaml")
         with open(config_path, "w") as file:
             file.write("anoption: value")
         self.run_command("--config", config_path, "test", lib=None)
-        self.assertEqual(config["anoption"].get(), "value")
+        assert config["anoption"].get() == "value"
 
     def test_cli_config_file_overwrites_user_defaults(self):
         with open(self.user_config_path, "w") as file:
@@ -973,7 +965,7 @@ class ConfigTest(TestPluginTestCase):
         with open(cli_config_path, "w") as file:
             file.write("anoption: cli overwrite")
         self.run_command("--config", cli_config_path, "test", lib=None)
-        self.assertEqual(config["anoption"].get(), "cli overwrite")
+        assert config["anoption"].get() == "cli overwrite"
 
     def test_cli_config_file_overwrites_beetsdir_defaults(self):
         os.environ["BEETSDIR"] = os.fsdecode(self.beetsdir)
@@ -985,7 +977,7 @@ class ConfigTest(TestPluginTestCase):
         with open(cli_config_path, "w") as file:
             file.write("anoption: cli overwrite")
         self.run_command("--config", cli_config_path, "test", lib=None)
-        self.assertEqual(config["anoption"].get(), "cli overwrite")
+        assert config["anoption"].get() == "cli overwrite"
 
     #    @unittest.skip('Difficult to implement with optparse')
     #    def test_multiple_cli_config_files(self):
@@ -1000,8 +992,8 @@ class ConfigTest(TestPluginTestCase):
     #
     #        self.run_command('--config', cli_config_path_1,
     #                      '--config', cli_config_path_2, 'test', lib=None)
-    #        self.assertEqual(config['first'].get(), 'value')
-    #        self.assertEqual(config['second'].get(), 'value')
+    #        assert config['first'].get() == 'value'
+    #        assert config['second'].get() == 'value'
     #
     #    @unittest.skip('Difficult to implement with optparse')
     #    def test_multiple_cli_config_overwrite(self):
@@ -1017,7 +1009,7 @@ class ConfigTest(TestPluginTestCase):
     #
     #        self.run_command('--config', cli_config_path,
     #                      '--config', cli_overwrite_config_path, 'test')
-    #        self.assertEqual(config['anoption'].get(), 'cli overwrite')
+    #        assert config['anoption'].get() == 'cli overwrite'
 
     # FIXME: fails on windows
     @unittest.skipIf(sys.platform == "win32", "win32")
@@ -1081,7 +1073,7 @@ class ConfigTest(TestPluginTestCase):
             file.write("anoption: overwrite")
 
         config.read()
-        self.assertEqual(config["anoption"].get(), "overwrite")
+        assert config["anoption"].get() == "overwrite"
 
     def test_beetsdir_points_to_file_error(self):
         beetsdir = os.path.join(self.temp_dir, b"beetsfile")
@@ -1146,7 +1138,7 @@ class ShowModelChangeTest(BeetsTestCase):
     def test_identical(self):
         change, out = self._show()
         assert not change
-        self.assertEqual(out, "")
+        assert out == ""
 
     def test_string_fixed_field_change(self):
         self.b.title = "x"
@@ -1165,7 +1157,7 @@ class ShowModelChangeTest(BeetsTestCase):
         self.b.length = 1.00005
         change, out = self._show()
         assert not change
-        self.assertEqual(out, "")
+        assert out == ""
 
     def test_floats_different(self):
         self.a.length = 1.00001
@@ -1229,7 +1221,7 @@ class ShowChangeTest(BeetsTestCase):
     def test_null_change(self):
         msg = self._show_change()
         assert "match (90.0%)" in msg
-        assert "album in artist", msg
+        assert "album, artist" in msg
 
     def test_album_data_change(self):
         msg = self._show_change(
@@ -1264,28 +1256,28 @@ class ShowChangeTest(BeetsTestCase):
         assert "caf\xe9.mp3" in msg or "caf.mp3" in msg
 
     def test_colorize(self):
-        self.assertEqual("test", ui.uncolorize("test"))
+        assert "test" == ui.uncolorize("test")
         txt = ui.uncolorize("\x1b[31mtest\x1b[39;49;00m")
-        self.assertEqual("test", txt)
+        assert "test" == txt
         txt = ui.uncolorize("\x1b[31mtest\x1b[39;49;00m test")
-        self.assertEqual("test test", txt)
+        assert "test test" == txt
         txt = ui.uncolorize("\x1b[31mtest\x1b[39;49;00mtest")
-        self.assertEqual("testtest", txt)
+        assert "testtest" == txt
         txt = ui.uncolorize("test \x1b[31mtest\x1b[39;49;00m test")
-        self.assertEqual("test test test", txt)
+        assert "test test test" == txt
 
     def test_color_split(self):
         exp = ("test", "")
         res = ui.color_split("test", 5)
-        self.assertEqual(exp, res)
+        assert exp == res
         exp = ("\x1b[31mtes\x1b[39;49;00m", "\x1b[31mt\x1b[39;49;00m")
         res = ui.color_split("\x1b[31mtest\x1b[39;49;00m", 3)
-        self.assertEqual(exp, res)
+        assert exp == res
 
     def test_split_into_lines(self):
         # Test uncolored text
         txt = ui.split_into_lines("test test test", [5, 5, 5])
-        self.assertEqual(txt, ["test", "test", "test"])
+        assert txt == ["test", "test", "test"]
         # Test multiple colored texts
         colored_text = "\x1b[31mtest \x1b[39;49;00m" * 3
         split_txt = [
@@ -1294,18 +1286,18 @@ class ShowChangeTest(BeetsTestCase):
             "\x1b[31mtest\x1b[39;49;00m",
         ]
         txt = ui.split_into_lines(colored_text, [5, 5, 5])
-        self.assertEqual(txt, split_txt)
+        assert txt == split_txt
         # Test single color, multi space text
         colored_text = "\x1b[31m test test test \x1b[39;49;00m"
         txt = ui.split_into_lines(colored_text, [5, 5, 5])
-        self.assertEqual(txt, split_txt)
+        assert txt == split_txt
         # Test single color, different spacing
         colored_text = "\x1b[31mtest\x1b[39;49;00mtest test test"
         # ToDo: fix color_len to handle mid-text color escapes, and thus
         # split colored texts over newlines (potentially with dashes?)
         split_txt = ["\x1b[31mtest\x1b[39;49;00mt", "est", "test", "test"]
         txt = ui.split_into_lines(colored_text, [5, 5, 5])
-        self.assertEqual(txt, split_txt)
+        assert txt == split_txt
 
     def test_album_data_change_wrap_newline(self):
         # Patch ui.term_width to force wrapping
@@ -1354,30 +1346,30 @@ class SummarizeItemsTest(BeetsTestCase):
 
     def test_summarize_item(self):
         summary = commands.summarize_items([], True)
-        self.assertEqual(summary, "")
+        assert summary == ""
 
         summary = commands.summarize_items([self.item], True)
-        self.assertEqual(summary, "F, 4kbps, 10:54, 987.0 B")
+        assert summary == "F, 4kbps, 10:54, 987.0 B"
 
     def test_summarize_items(self):
         summary = commands.summarize_items([], False)
-        self.assertEqual(summary, "0 items")
+        assert summary == "0 items"
 
         summary = commands.summarize_items([self.item], False)
-        self.assertEqual(summary, "1 items, F, 4kbps, 10:54, 987.0 B")
+        assert summary == "1 items, F, 4kbps, 10:54, 987.0 B"
 
         # make a copy of self.item
         i2 = self.item.copy()
 
         summary = commands.summarize_items([self.item, i2], False)
-        self.assertEqual(summary, "2 items, F, 4kbps, 21:48, 1.9 KiB")
+        assert summary == "2 items, F, 4kbps, 21:48, 1.9 KiB"
 
         i2.format = "G"
         summary = commands.summarize_items([self.item, i2], False)
-        self.assertEqual(summary, "2 items, F 1, G 1, 4kbps, 21:48, 1.9 KiB")
+        assert summary == "2 items, F 1, G 1, 4kbps, 21:48, 1.9 KiB"
 
         summary = commands.summarize_items([self.item, i2, i2], False)
-        self.assertEqual(summary, "3 items, G 2, F 1, 4kbps, 32:42, 2.9 KiB")
+        assert summary == "3 items, G 2, F 1, 4kbps, 32:42, 2.9 KiB"
 
 
 class PathFormatTest(BeetsTestCase):
@@ -1387,9 +1379,9 @@ class PathFormatTest(BeetsTestCase):
         config["paths"] = {"foo": "bar"}
         pf = ui.get_path_formats()
         key, tmpl = pf[0]
-        self.assertEqual(key, "foo")
-        self.assertEqual(tmpl.original, "bar")
-        self.assertEqual(pf[1:], default_formats)
+        assert key == "foo"
+        assert tmpl.original == "bar"
+        assert pf[1:] == default_formats
 
 
 @_common.slow_test()
@@ -1461,41 +1453,41 @@ class CommonOptionsParserCliTest(BeetsTestCase):
 
     def test_base(self):
         l = self.run_with_output("ls")
-        self.assertEqual(l, "the artist - the album - the title\n")
+        assert l == "the artist - the album - the title\n"
 
         l = self.run_with_output("ls", "-a")
-        self.assertEqual(l, "the album artist - the album\n")
+        assert l == "the album artist - the album\n"
 
     def test_path_option(self):
         l = self.run_with_output("ls", "-p")
-        self.assertEqual(l, "xxx/yyy\n")
+        assert l == "xxx/yyy\n"
 
         l = self.run_with_output("ls", "-a", "-p")
-        self.assertEqual(l, "xxx\n")
+        assert l == "xxx\n"
 
     def test_format_option(self):
         l = self.run_with_output("ls", "-f", "$artist")
-        self.assertEqual(l, "the artist\n")
+        assert l == "the artist\n"
 
         l = self.run_with_output("ls", "-a", "-f", "$albumartist")
-        self.assertEqual(l, "the album artist\n")
+        assert l == "the album artist\n"
 
     def test_format_option_unicode(self):
         l = self.run_with_output(
             b"ls", b"-f", "caf\xe9".encode(util.arg_encoding())
         )
-        self.assertEqual(l, "caf\xe9\n")
+        assert l == "caf\xe9\n"
 
     def test_root_format_option(self):
         l = self.run_with_output(
             "--format-item", "$artist", "--format-album", "foo", "ls"
         )
-        self.assertEqual(l, "the artist\n")
+        assert l == "the artist\n"
 
         l = self.run_with_output(
             "--format-item", "foo", "--format-album", "$albumartist", "ls", "-a"
         )
-        self.assertEqual(l, "the album artist\n")
+        assert l == "the album artist\n"
 
     def test_help(self):
         l = self.run_with_output("help")
@@ -1532,9 +1524,9 @@ class CommonOptionsParserTest(BeetsTestCase):
         parser.add_album_option()
         assert bool(parser._album_flags)
 
-        self.assertEqual(parser.parse_args([]), ({"album": None}, []))
-        self.assertEqual(parser.parse_args(["-a"]), ({"album": True}, []))
-        self.assertEqual(parser.parse_args(["--album"]), ({"album": True}, []))
+        assert parser.parse_args([]) == ({"album": None}, [])
+        assert parser.parse_args(["-a"]) == ({"album": True}, [])
+        assert parser.parse_args(["--album"]) == ({"album": True}, [])
 
     def test_path_option(self):
         parser = ui.CommonOptionsParser()
@@ -1542,19 +1534,20 @@ class CommonOptionsParserTest(BeetsTestCase):
         assert not parser._album_flags
 
         config["format_item"].set("$foo")
-        self.assertEqual(parser.parse_args([]), ({"path": None}, []))
-        self.assertEqual(config["format_item"].as_str(), "$foo")
+        assert parser.parse_args([]) == ({"path": None}, [])
+        assert config["format_item"].as_str() == "$foo"
 
-        self.assertEqual(
-            parser.parse_args(["-p"]), ({"path": True, "format": "$path"}, [])
+        assert parser.parse_args(["-p"]) == (
+            {"path": True, "format": "$path"},
+            [],
         )
-        self.assertEqual(
-            parser.parse_args(["--path"]),
-            ({"path": True, "format": "$path"}, []),
+        assert parser.parse_args(["--path"]) == (
+            {"path": True, "format": "$path"},
+            [],
         )
 
-        self.assertEqual(config["format_item"].as_str(), "$path")
-        self.assertEqual(config["format_album"].as_str(), "$path")
+        assert config["format_item"].as_str() == "$path"
+        assert config["format_album"].as_str() == "$path"
 
     def test_format_option(self):
         parser = ui.CommonOptionsParser()
@@ -1562,18 +1555,17 @@ class CommonOptionsParserTest(BeetsTestCase):
         assert not parser._album_flags
 
         config["format_item"].set("$foo")
-        self.assertEqual(parser.parse_args([]), ({"format": None}, []))
-        self.assertEqual(config["format_item"].as_str(), "$foo")
+        assert parser.parse_args([]) == ({"format": None}, [])
+        assert config["format_item"].as_str() == "$foo"
 
-        self.assertEqual(
-            parser.parse_args(["-f", "$bar"]), ({"format": "$bar"}, [])
-        )
-        self.assertEqual(
-            parser.parse_args(["--format", "$baz"]), ({"format": "$baz"}, [])
+        assert parser.parse_args(["-f", "$bar"]) == ({"format": "$bar"}, [])
+        assert parser.parse_args(["--format", "$baz"]) == (
+            {"format": "$baz"},
+            [],
         )
 
-        self.assertEqual(config["format_item"].as_str(), "$baz")
-        self.assertEqual(config["format_album"].as_str(), "$baz")
+        assert config["format_item"].as_str() == "$baz"
+        assert config["format_album"].as_str() == "$baz"
 
     def test_format_option_with_target(self):
         with self.assertRaises(KeyError):
@@ -1585,12 +1577,10 @@ class CommonOptionsParserTest(BeetsTestCase):
         config["format_item"].set("$item")
         config["format_album"].set("$album")
 
-        self.assertEqual(
-            parser.parse_args(["-f", "$bar"]), ({"format": "$bar"}, [])
-        )
+        assert parser.parse_args(["-f", "$bar"]) == ({"format": "$bar"}, [])
 
-        self.assertEqual(config["format_item"].as_str(), "$bar")
-        self.assertEqual(config["format_album"].as_str(), "$album")
+        assert config["format_item"].as_str() == "$bar"
+        assert config["format_album"].as_str() == "$album"
 
     def test_format_option_with_album(self):
         parser = ui.CommonOptionsParser()
@@ -1601,22 +1591,22 @@ class CommonOptionsParserTest(BeetsTestCase):
         config["format_album"].set("$album")
 
         parser.parse_args(["-f", "$bar"])
-        self.assertEqual(config["format_item"].as_str(), "$bar")
-        self.assertEqual(config["format_album"].as_str(), "$album")
+        assert config["format_item"].as_str() == "$bar"
+        assert config["format_album"].as_str() == "$album"
 
         parser.parse_args(["-a", "-f", "$foo"])
-        self.assertEqual(config["format_item"].as_str(), "$bar")
-        self.assertEqual(config["format_album"].as_str(), "$foo")
+        assert config["format_item"].as_str() == "$bar"
+        assert config["format_album"].as_str() == "$foo"
 
         parser.parse_args(["-f", "$foo2", "-a"])
-        self.assertEqual(config["format_album"].as_str(), "$foo2")
+        assert config["format_album"].as_str() == "$foo2"
 
     def test_add_all_common_options(self):
         parser = ui.CommonOptionsParser()
         parser.add_all_common_options()
-        self.assertEqual(
-            parser.parse_args([]),
-            ({"album": None, "path": None, "format": None}, []),
+        assert parser.parse_args([]) == (
+            {"album": None, "path": None, "format": None},
+            [],
         )
 
 
@@ -1627,18 +1617,18 @@ class EncodingTest(BeetsTestCase):
 
     def out_encoding_overridden(self):
         config["terminal_encoding"] = "fake_encoding"
-        self.assertEqual(ui._out_encoding(), "fake_encoding")
+        assert ui._out_encoding() == "fake_encoding"
 
     def in_encoding_overridden(self):
         config["terminal_encoding"] = "fake_encoding"
-        self.assertEqual(ui._in_encoding(), "fake_encoding")
+        assert ui._in_encoding() == "fake_encoding"
 
     def out_encoding_default_utf8(self):
         with patch("sys.stdout") as stdout:
             stdout.encoding = None
-            self.assertEqual(ui._out_encoding(), "utf-8")
+            assert ui._out_encoding() == "utf-8"
 
     def in_encoding_default_utf8(self):
         with patch("sys.stdin") as stdin:
             stdin.encoding = None
-            self.assertEqual(ui._in_encoding(), "utf-8")
+            assert ui._in_encoding() == "utf-8"

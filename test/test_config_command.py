@@ -37,15 +37,15 @@ class ConfigCommandTest(BeetsTestCase):
     def test_show_user_config(self):
         output = self._run_with_yaml_output("config", "-c")
 
-        self.assertEqual(output["option"], "value")
-        self.assertEqual(output["password"], "password_value")
+        assert output["option"] == "value"
+        assert output["password"] == "password_value"
 
     def test_show_user_config_with_defaults(self):
         output = self._run_with_yaml_output("config", "-dc")
 
-        self.assertEqual(output["option"], "value")
-        self.assertEqual(output["password"], "password_value")
-        self.assertEqual(output["library"], "lib")
+        assert output["option"] == "value"
+        assert output["password"] == "password_value"
+        assert output["library"] == "lib"
         assert not output["import"]["timid"]
 
     def test_show_user_config_with_cli(self):
@@ -53,36 +53,36 @@ class ConfigCommandTest(BeetsTestCase):
             "--config", self.cli_config_path, "config"
         )
 
-        self.assertEqual(output["library"], "lib")
-        self.assertEqual(output["option"], "cli overwrite")
+        assert output["library"] == "lib"
+        assert output["option"] == "cli overwrite"
 
     def test_show_redacted_user_config(self):
         output = self._run_with_yaml_output("config")
 
-        self.assertEqual(output["option"], "value")
-        self.assertEqual(output["password"], "REDACTED")
+        assert output["option"] == "value"
+        assert output["password"] == "REDACTED"
 
     def test_show_redacted_user_config_with_defaults(self):
         output = self._run_with_yaml_output("config", "-d")
 
-        self.assertEqual(output["option"], "value")
-        self.assertEqual(output["password"], "REDACTED")
+        assert output["option"] == "value"
+        assert output["password"] == "REDACTED"
         assert not output["import"]["timid"]
 
     def test_config_paths(self):
         output = self.run_with_output("config", "-p")
 
         paths = output.split("\n")
-        self.assertEqual(len(paths), 2)
-        self.assertEqual(paths[0], self.config_path)
+        assert len(paths) == 2
+        assert paths[0] == self.config_path
 
     def test_config_paths_with_cli(self):
         output = self.run_with_output(
             "--config", self.cli_config_path, "config", "-p"
         )
         paths = output.split("\n")
-        self.assertEqual(len(paths), 3)
-        self.assertEqual(paths[0], self.cli_config_path)
+        assert len(paths) == 3
+        assert paths[0] == self.cli_config_path
 
     def test_edit_config_with_visual_or_editor_env(self):
         os.environ["EDITOR"] = "myeditor"

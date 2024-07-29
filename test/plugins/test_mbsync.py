@@ -61,14 +61,14 @@ class MbsyncCliTest(PluginTestCase):
         assert "Sending event: trackinfo_received" in logs
 
         item.load()
-        self.assertEqual(item.title, "singleton info")
+        assert item.title == "singleton info"
 
         album_item.load()
-        self.assertEqual(album_item.title, "track info")
-        self.assertEqual(album_item.mb_trackid, "track id")
+        assert album_item.title == "track info"
+        assert album_item.mb_trackid == "track id"
 
         album.load()
-        self.assertEqual(album.album, "album info")
+        assert album.album == "album info"
 
     def test_message_when_skipping(self):
         config["format_item"] = "$artist - $album - $title"
@@ -89,13 +89,13 @@ class MbsyncCliTest(PluginTestCase):
             "mbsync: Skipping album with no mb_albumid: "
             + "album info - album info"
         )
-        self.assertEqual(e, logs[0])
+        assert e == logs[0]
 
         # custom format
         with capture_log("beets.mbsync") as logs:
             self.run_command("mbsync", "-f", "'$album'")
         e = "mbsync: Skipping album with no mb_albumid: 'album info'"
-        self.assertEqual(e, logs[0])
+        assert e == logs[0]
 
         # restore the config
         config["format_item"] = "$artist - $album - $title"
@@ -119,13 +119,13 @@ class MbsyncCliTest(PluginTestCase):
             "mbsync: Skipping singleton with no mb_trackid: "
             + "album info - album info - old title"
         )
-        self.assertEqual(e, logs[0])
+        assert e == logs[0]
 
         # custom format
         with capture_log("beets.mbsync") as logs:
             self.run_command("mbsync", "-f", "'$title'")
         e = "mbsync: Skipping singleton with no mb_trackid: 'old title'"
-        self.assertEqual(e, logs[0])
+        assert e == logs[0]
 
     def test_message_when_invalid(self):
         config["format_item"] = "$artist - $album - $title"
@@ -149,13 +149,13 @@ class MbsyncCliTest(PluginTestCase):
             "mbsync: Skipping album with invalid mb_albumid: "
             + "album info - album info"
         )
-        self.assertEqual(e, logs[0])
+        assert e == logs[0]
 
         # custom format
         with capture_log("beets.mbsync") as logs:
             self.run_command("mbsync", "-f", "'$album'")
         e = "mbsync: Skipping album with invalid mb_albumid: 'album info'"
-        self.assertEqual(e, logs[0])
+        assert e == logs[0]
 
         # restore the config
         config["format_item"] = "$artist - $album - $title"
@@ -180,10 +180,10 @@ class MbsyncCliTest(PluginTestCase):
             "mbsync: Skipping singleton with invalid mb_trackid: "
             + "album info - album info - old title"
         )
-        self.assertEqual(e, logs[0])
+        assert e == logs[0]
 
         # custom format
         with capture_log("beets.mbsync") as logs:
             self.run_command("mbsync", "-f", "'$title'")
         e = "mbsync: Skipping singleton with invalid mb_trackid: 'old title'"
-        self.assertEqual(e, logs[0])
+        assert e == logs[0]

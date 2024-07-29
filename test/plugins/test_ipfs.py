@@ -30,7 +30,7 @@ class IPFSPluginTest(PluginTestCase):
         ipfs = IPFSPlugin()
         added_albums = ipfs.ipfs_added_albums(self.lib, self.lib.path)
         added_album = added_albums.get_album(1)
-        self.assertEqual(added_album.ipfs, test_album.ipfs)
+        assert added_album.ipfs == test_album.ipfs
         found = False
         want_item = test_album.items()[2]
         for check_item in added_album.items():
@@ -41,11 +41,12 @@ class IPFSPluginTest(PluginTestCase):
                     )
                     want_path = "/ipfs/{}/{}".format(test_album.ipfs, ipfs_item)
                     want_path = bytestring_path(want_path)
-                    self.assertEqual(check_item.path, want_path)
-                    self.assertEqual(
-                        check_item.get("ipfs", with_album=False), want_item.ipfs
+                    assert check_item.path == want_path
+                    assert (
+                        check_item.get("ipfs", with_album=False)
+                        == want_item.ipfs
                     )
-                    self.assertEqual(check_item.title, want_item.title)
+                    assert check_item.title == want_item.title
                     found = True
             except AttributeError:
                 pass

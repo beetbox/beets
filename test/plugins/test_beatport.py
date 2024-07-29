@@ -530,38 +530,32 @@ class BeatportTest(BeetsTestCase):
 
     # Test BeatportRelease.
     def test_album_name_applied(self):
-        self.assertEqual(self.album.name, self.test_album["album"])
+        assert self.album.name == self.test_album["album"]
 
     def test_catalog_number_applied(self):
-        self.assertEqual(
-            self.album.catalog_number, self.test_album["catalognum"]
-        )
+        assert self.album.catalog_number == self.test_album["catalognum"]
 
     def test_label_applied(self):
-        self.assertEqual(self.album.label_name, self.test_album["label"])
+        assert self.album.label_name == self.test_album["label"]
 
     def test_category_applied(self):
-        self.assertEqual(self.album.category, "Release")
+        assert self.album.category == "Release"
 
     def test_album_url_applied(self):
-        self.assertEqual(
-            self.album.url, "https://beatport.com/release/charade/1742984"
-        )
+        assert self.album.url == "https://beatport.com/release/charade/1742984"
 
     # Test BeatportTrack.
     def test_title_applied(self):
         for track, test_track in zip(self.tracks, self.test_tracks):
-            self.assertEqual(track.name, test_track.title)
+            assert track.name == test_track.title
 
     def test_mix_name_applied(self):
         for track, test_track in zip(self.tracks, self.test_tracks):
-            self.assertEqual(track.mix_name, test_track.mix_name)
+            assert track.mix_name == test_track.mix_name
 
     def test_length_applied(self):
         for track, test_track in zip(self.tracks, self.test_tracks):
-            self.assertEqual(
-                int(track.length.total_seconds()), int(test_track.length)
-            )
+            assert int(track.length.total_seconds()) == int(test_track.length)
 
     def test_track_url_applied(self):
         # Specify beatport ids here because an 'item.id' is beets-internal.
@@ -575,22 +569,25 @@ class BeatportTest(BeetsTestCase):
         ]
         # Concatenate with 'id' to pass strict equality test.
         for track, test_track, id in zip(self.tracks, self.test_tracks, ids):
-            self.assertEqual(
-                track.url,
-                "https://beatport.com/track/" + test_track.url + "/" + str(id),
+            assert (
+                track.url
+                == "https://beatport.com/track/"
+                + test_track.url
+                + "/"
+                + str(id)
             )
 
     def test_bpm_applied(self):
         for track, test_track in zip(self.tracks, self.test_tracks):
-            self.assertEqual(track.bpm, test_track.bpm)
+            assert track.bpm == test_track.bpm
 
     def test_initial_key_applied(self):
         for track, test_track in zip(self.tracks, self.test_tracks):
-            self.assertEqual(track.initial_key, test_track.initial_key)
+            assert track.initial_key == test_track.initial_key
 
     def test_genre_applied(self):
         for track, test_track in zip(self.tracks, self.test_tracks):
-            self.assertEqual(track.genre, test_track.genre)
+            assert track.genre == test_track.genre
 
 
 class BeatportResponseEmptyTest(BeetsTestCase):
@@ -632,7 +629,7 @@ class BeatportResponseEmptyTest(BeetsTestCase):
     def test_response_tracks_empty(self):
         response_tracks = []
         tracks = [beatport.BeatportTrack(t) for t in response_tracks]
-        self.assertEqual(tracks, [])
+        assert tracks == []
 
     def test_sub_genre_empty_fallback(self):
         """No 'sub_genre' is provided. Test if fallback to 'genre' works."""
@@ -641,9 +638,7 @@ class BeatportResponseEmptyTest(BeetsTestCase):
 
         self.test_tracks[0]["subGenres"] = []
 
-        self.assertEqual(
-            tracks[0].genre, self.test_tracks[0]["genres"][0]["name"]
-        )
+        assert tracks[0].genre == self.test_tracks[0]["genres"][0]["name"]
 
     def test_genre_empty(self):
         """No 'genre' is provided. Test if 'sub_genre' is applied."""
@@ -652,6 +647,4 @@ class BeatportResponseEmptyTest(BeetsTestCase):
 
         self.test_tracks[0]["genres"] = []
 
-        self.assertEqual(
-            tracks[0].genre, self.test_tracks[0]["subGenres"][0]["name"]
-        )
+        assert tracks[0].genre == self.test_tracks[0]["subGenres"][0]["name"]

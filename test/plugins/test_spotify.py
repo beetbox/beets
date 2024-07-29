@@ -75,14 +75,14 @@ class SpotifyPluginTest(BeetsTestCase):
             length=10,
         )
         item.add(self.lib)
-        self.assertEqual([], self.spotify._match_library_tracks(self.lib, ""))
+        assert [] == self.spotify._match_library_tracks(self.lib, "")
 
         params = _params(responses.calls[0].request.url)
         query = params["q"][0]
         assert "duifhjslkef" in query
         assert "artist:ujydfsuihse" in query
         assert "album:lkajsdflakjsd" in query
-        self.assertEqual(params["type"], ["track"])
+        assert params["type"] == ["track"]
 
     @responses.activate
     def test_track_request(self):
@@ -108,8 +108,8 @@ class SpotifyPluginTest(BeetsTestCase):
         )
         item.add(self.lib)
         results = self.spotify._match_library_tracks(self.lib, "Happy")
-        self.assertEqual(1, len(results))
-        self.assertEqual("6NPVjNh8Jhru9xOmyQigds", results[0]["id"])
+        assert 1 == len(results)
+        assert "6NPVjNh8Jhru9xOmyQigds" == results[0]["id"]
         self.spotify._output_match_results(results)
 
         params = _params(responses.calls[0].request.url)
@@ -117,7 +117,7 @@ class SpotifyPluginTest(BeetsTestCase):
         assert "Happy" in query
         assert "artist:Pharrell Williams" in query
         assert "album:Despicable Me 2" in query
-        self.assertEqual(params["type"], ["track"])
+        assert params["type"] == ["track"]
 
     @responses.activate
     def test_track_for_id(self):
@@ -174,5 +174,5 @@ class SpotifyPluginTest(BeetsTestCase):
         item.add(self.lib)
 
         results = self.spotify._match_library_tracks(self.lib, "Happy")
-        self.assertEqual(1, len(results))
-        self.assertEqual("6NPVjNh8Jhru9xOmyQigds", results[0]["id"])
+        assert 1 == len(results)
+        assert "6NPVjNh8Jhru9xOmyQigds" == results[0]["id"]

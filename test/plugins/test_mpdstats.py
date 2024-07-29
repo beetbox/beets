@@ -42,7 +42,7 @@ class MPDStatsTest(PluginTestCase):
         log = Mock()
         mpdstats = MPDStats(self.lib, log)
 
-        self.assertEqual(str(mpdstats.get_item(item_path)), str(item))
+        assert str(mpdstats.get_item(item_path)) == str(item)
         assert mpdstats.get_item("/some/non-existing/path") is None
         assert "item not found:" in log.info.call_args[0][0]
 
