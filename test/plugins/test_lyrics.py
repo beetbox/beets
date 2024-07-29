@@ -45,34 +45,32 @@ class LyricsPluginTest(unittest.TestCase):
 
     def test_search_artist(self):
         item = Item(artist="Alice ft. Bob", title="song")
-        self.assertIn(("Alice ft. Bob", ["song"]), lyrics.search_pairs(item))
-        self.assertIn(("Alice", ["song"]), lyrics.search_pairs(item))
+        assert ("Alice ft. Bob", ["song"]) in lyrics.search_pairs(item)
+        assert ("Alice", ["song"]) in lyrics.search_pairs(item)
 
         item = Item(artist="Alice feat Bob", title="song")
-        self.assertIn(("Alice feat Bob", ["song"]), lyrics.search_pairs(item))
-        self.assertIn(("Alice", ["song"]), lyrics.search_pairs(item))
+        assert ("Alice feat Bob", ["song"]) in lyrics.search_pairs(item)
+        assert ("Alice", ["song"]) in lyrics.search_pairs(item)
 
         item = Item(artist="Alice feat. Bob", title="song")
-        self.assertIn(("Alice feat. Bob", ["song"]), lyrics.search_pairs(item))
-        self.assertIn(("Alice", ["song"]), lyrics.search_pairs(item))
+        assert ("Alice feat. Bob", ["song"]) in lyrics.search_pairs(item)
+        assert ("Alice", ["song"]) in lyrics.search_pairs(item)
 
         item = Item(artist="Alice feats Bob", title="song")
-        self.assertIn(("Alice feats Bob", ["song"]), lyrics.search_pairs(item))
+        assert ("Alice feats Bob", ["song"]) in lyrics.search_pairs(item)
         self.assertNotIn(("Alice", ["song"]), lyrics.search_pairs(item))
 
         item = Item(artist="Alice featuring Bob", title="song")
-        self.assertIn(
-            ("Alice featuring Bob", ["song"]), lyrics.search_pairs(item)
-        )
-        self.assertIn(("Alice", ["song"]), lyrics.search_pairs(item))
+        assert ("Alice featuring Bob", ["song"]) in lyrics.search_pairs(item)
+        assert ("Alice", ["song"]) in lyrics.search_pairs(item)
 
         item = Item(artist="Alice & Bob", title="song")
-        self.assertIn(("Alice & Bob", ["song"]), lyrics.search_pairs(item))
-        self.assertIn(("Alice", ["song"]), lyrics.search_pairs(item))
+        assert ("Alice & Bob", ["song"]) in lyrics.search_pairs(item)
+        assert ("Alice", ["song"]) in lyrics.search_pairs(item)
 
         item = Item(artist="Alice and Bob", title="song")
-        self.assertIn(("Alice and Bob", ["song"]), lyrics.search_pairs(item))
-        self.assertIn(("Alice", ["song"]), lyrics.search_pairs(item))
+        assert ("Alice and Bob", ["song"]) in lyrics.search_pairs(item)
+        assert ("Alice", ["song"]) in lyrics.search_pairs(item)
 
         item = Item(artist="Alice and Bob", title="song")
         self.assertEqual(
@@ -81,8 +79,8 @@ class LyricsPluginTest(unittest.TestCase):
 
     def test_search_artist_sort(self):
         item = Item(artist="CHVRCHΞS", title="song", artist_sort="CHVRCHES")
-        self.assertIn(("CHVRCHΞS", ["song"]), lyrics.search_pairs(item))
-        self.assertIn(("CHVRCHES", ["song"]), lyrics.search_pairs(item))
+        assert ("CHVRCHΞS", ["song"]) in lyrics.search_pairs(item)
+        assert ("CHVRCHES", ["song"]) in lyrics.search_pairs(item)
 
         # Make sure that the original artist name is still the first entry
         self.assertEqual(
@@ -92,8 +90,8 @@ class LyricsPluginTest(unittest.TestCase):
         item = Item(
             artist="横山克", title="song", artist_sort="Masaru Yokoyama"
         )
-        self.assertIn(("横山克", ["song"]), lyrics.search_pairs(item))
-        self.assertIn(("Masaru Yokoyama", ["song"]), lyrics.search_pairs(item))
+        assert ("横山克", ["song"]) in lyrics.search_pairs(item)
+        assert ("Masaru Yokoyama", ["song"]) in lyrics.search_pairs(item)
 
         # Make sure that the original artist name is still the first entry
         self.assertEqual(
@@ -102,41 +100,41 @@ class LyricsPluginTest(unittest.TestCase):
 
     def test_search_pairs_multi_titles(self):
         item = Item(title="1 / 2", artist="A")
-        self.assertIn(("A", ["1 / 2"]), lyrics.search_pairs(item))
-        self.assertIn(("A", ["1", "2"]), lyrics.search_pairs(item))
+        assert ("A", ["1 / 2"]) in lyrics.search_pairs(item)
+        assert ("A", ["1", "2"]) in lyrics.search_pairs(item)
 
         item = Item(title="1/2", artist="A")
-        self.assertIn(("A", ["1/2"]), lyrics.search_pairs(item))
-        self.assertIn(("A", ["1", "2"]), lyrics.search_pairs(item))
+        assert ("A", ["1/2"]) in lyrics.search_pairs(item)
+        assert ("A", ["1", "2"]) in lyrics.search_pairs(item)
 
     def test_search_pairs_titles(self):
         item = Item(title="Song (live)", artist="A")
-        self.assertIn(("A", ["Song"]), lyrics.search_pairs(item))
-        self.assertIn(("A", ["Song (live)"]), lyrics.search_pairs(item))
+        assert ("A", ["Song"]) in lyrics.search_pairs(item)
+        assert ("A", ["Song (live)"]) in lyrics.search_pairs(item)
 
         item = Item(title="Song (live) (new)", artist="A")
-        self.assertIn(("A", ["Song"]), lyrics.search_pairs(item))
-        self.assertIn(("A", ["Song (live) (new)"]), lyrics.search_pairs(item))
+        assert ("A", ["Song"]) in lyrics.search_pairs(item)
+        assert ("A", ["Song (live) (new)"]) in lyrics.search_pairs(item)
 
         item = Item(title="Song (live (new))", artist="A")
-        self.assertIn(("A", ["Song"]), lyrics.search_pairs(item))
-        self.assertIn(("A", ["Song (live (new))"]), lyrics.search_pairs(item))
+        assert ("A", ["Song"]) in lyrics.search_pairs(item)
+        assert ("A", ["Song (live (new))"]) in lyrics.search_pairs(item)
 
         item = Item(title="Song ft. B", artist="A")
-        self.assertIn(("A", ["Song"]), lyrics.search_pairs(item))
-        self.assertIn(("A", ["Song ft. B"]), lyrics.search_pairs(item))
+        assert ("A", ["Song"]) in lyrics.search_pairs(item)
+        assert ("A", ["Song ft. B"]) in lyrics.search_pairs(item)
 
         item = Item(title="Song featuring B", artist="A")
-        self.assertIn(("A", ["Song"]), lyrics.search_pairs(item))
-        self.assertIn(("A", ["Song featuring B"]), lyrics.search_pairs(item))
+        assert ("A", ["Song"]) in lyrics.search_pairs(item)
+        assert ("A", ["Song featuring B"]) in lyrics.search_pairs(item)
 
         item = Item(title="Song and B", artist="A")
         self.assertNotIn(("A", ["Song"]), lyrics.search_pairs(item))
-        self.assertIn(("A", ["Song and B"]), lyrics.search_pairs(item))
+        assert ("A", ["Song and B"]) in lyrics.search_pairs(item)
 
         item = Item(title="Song: B", artist="A")
-        self.assertIn(("A", ["Song"]), lyrics.search_pairs(item))
-        self.assertIn(("A", ["Song: B"]), lyrics.search_pairs(item))
+        assert ("A", ["Song"]) in lyrics.search_pairs(item)
+        assert ("A", ["Song: B"]) in lyrics.search_pairs(item)
 
     def test_remove_credits(self):
         self.assertEqual(

@@ -442,7 +442,7 @@ class ITunesStoreTest(UseThePlugin):
         with capture_log("beets.test_art") as logs:
             with self.assertRaises(StopIteration):
                 next(self.source.get(self.album, self.settings, []))
-        self.assertIn(expected, logs[1])
+        assert expected in logs[1]
 
     def test_itunesstore_requestexception(self):
         responses.add(
@@ -456,7 +456,7 @@ class ITunesStoreTest(UseThePlugin):
         with capture_log("beets.test_art") as logs:
             with self.assertRaises(StopIteration):
                 next(self.source.get(self.album, self.settings, []))
-        self.assertIn(expected, logs[1])
+        assert expected in logs[1]
 
     def test_itunesstore_fallback_match(self):
         json = """{
@@ -489,7 +489,7 @@ class ITunesStoreTest(UseThePlugin):
         with capture_log("beets.test_art") as logs:
             with self.assertRaises(StopIteration):
                 next(self.source.get(self.album, self.settings, []))
-        self.assertIn(expected, logs[1])
+        assert expected in logs[1]
 
     def test_itunesstore_returns_no_result_when_error_received(self):
         json = '{"error": {"errors": [{"reason": "some reason"}]}}'
@@ -499,7 +499,7 @@ class ITunesStoreTest(UseThePlugin):
         with capture_log("beets.test_art") as logs:
             with self.assertRaises(StopIteration):
                 next(self.source.get(self.album, self.settings, []))
-        self.assertIn(expected, logs[1])
+        assert expected in logs[1]
 
     def test_itunesstore_returns_no_result_with_malformed_response(self):
         json = """bla blup"""
@@ -509,7 +509,7 @@ class ITunesStoreTest(UseThePlugin):
         with capture_log("beets.test_art") as logs:
             with self.assertRaises(StopIteration):
                 next(self.source.get(self.album, self.settings, []))
-        self.assertIn(expected, logs[1])
+        assert expected in logs[1]
 
 
 class GoogleImageTest(UseThePlugin):
@@ -584,7 +584,7 @@ class CoverArtArchiveTest(UseThePlugin, CAAHelper):
         candidates = list(self.source.get(album, self.settings, []))
         self.assertEqual(len(candidates), 3)
         for candidate in candidates:
-            self.assertIn(f"-{maxwidth}.jpg", candidate.url)
+            assert f"-{maxwidth}.jpg" in candidate.url
 
     def test_caa_finds_image_if_maxwidth_is_set_and_thumbnails_is_empty(self):
         # CAA provides pre-sized thumbnails of width 250px, 500px, and 1200px

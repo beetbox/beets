@@ -364,7 +364,7 @@ class DGAlbumInfoTest(BeetsTestCase):
             d = DiscogsPlugin().get_album_info(release)
 
         self.assertEqual(d, None)
-        self.assertIn("Release does not contain the required fields", logs[0])
+        assert "Release does not contain the required fields" in logs[0]
 
     def test_album_for_id(self):
         """Test parsing for a valid Discogs release_id"""

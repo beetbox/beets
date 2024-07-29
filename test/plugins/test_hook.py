@@ -44,26 +44,24 @@ class HookLogsTest(HookTestCase):
 
     def test_hook_empty_command(self):
         with self._configure_logs("") as logs:
-            self.assertIn('hook: invalid command ""', logs)
+            assert 'hook: invalid command ""' in logs
 
     # FIXME: fails on windows
     @unittest.skipIf(sys.platform == "win32", "win32")
     def test_hook_non_zero_exit(self):
         with self._configure_logs('sh -c "exit 1"') as logs:
-            self.assertIn(
-                "hook: hook for test_event exited with status 1", logs
-            )
+            assert "hook: hook for test_event exited with status 1" in logs
 
     def test_hook_non_existent_command(self):
         with self._configure_logs("non-existent-command") as logs:
             logs = "\n".join(logs)
 
-        self.assertIn("hook: hook for test_event failed: ", logs)
+        assert "hook: hook for test_event failed: " in logs
         # The error message is different for each OS. Unfortunately the text is
         # different in each case, where the only shared text is the string
         # 'file' and substring 'Err'
-        self.assertIn("Err", logs)
-        self.assertIn("file", logs)
+        assert "Err" in logs
+        assert "file" in logs
 
 
 class HookCommandTest(HookTestCase):

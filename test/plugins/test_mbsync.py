@@ -57,8 +57,8 @@ class MbsyncCliTest(PluginTestCase):
         with capture_log() as logs:
             self.run_command("mbsync")
 
-        self.assertIn("Sending event: albuminfo_received", logs)
-        self.assertIn("Sending event: trackinfo_received", logs)
+        assert "Sending event: albuminfo_received" in logs
+        assert "Sending event: trackinfo_received" in logs
 
         item.load()
         self.assertEqual(item.title, "singleton info")

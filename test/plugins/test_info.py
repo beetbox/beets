@@ -33,10 +33,10 @@ class InfoTest(PluginTestCase):
         mediafile.save()
 
         out = self.run_with_output("info", path)
-        self.assertIn(displayable_path(path), out)
-        self.assertIn("albumartist: AAA", out)
-        self.assertIn("disctitle: DDD", out)
-        self.assertIn("genres: a; b; c", out)
+        assert displayable_path(path) in out
+        assert "albumartist: AAA" in out
+        assert "disctitle: DDD" in out
+        assert "genres: a; b; c" in out
         self.assertNotIn("composer:", out)
 
     def test_item_query(self):
@@ -47,8 +47,8 @@ class InfoTest(PluginTestCase):
         item1.store()
 
         out = self.run_with_output("info", "album:yyyy")
-        self.assertIn(displayable_path(item1.path), out)
-        self.assertIn("album: xxxx", out)
+        assert displayable_path(item1.path) in out
+        assert "album: xxxx" in out
 
         self.assertNotIn(displayable_path(item2.path), out)
 
@@ -58,8 +58,8 @@ class InfoTest(PluginTestCase):
         item.store()
 
         out = self.run_with_output("info", "--library", "album:xxxx")
-        self.assertIn(displayable_path(item.path), out)
-        self.assertIn("album: xxxx", out)
+        assert displayable_path(item.path) in out
+        assert "album: xxxx" in out
 
     def test_collect_item_and_path(self):
         path = self.create_mediafile_fixture()
@@ -76,9 +76,9 @@ class InfoTest(PluginTestCase):
         mediafile.save()
 
         out = self.run_with_output("info", "--summarize", "album:AAA", path)
-        self.assertIn("album: AAA", out)
-        self.assertIn("tracktotal: 5", out)
-        self.assertIn("title: [various]", out)
+        assert "album: AAA" in out
+        assert "tracktotal: 5" in out
+        assert "title: [various]" in out
 
     def test_collect_item_and_path_with_multi_values(self):
         path = self.create_mediafile_fixture()
@@ -101,11 +101,11 @@ class InfoTest(PluginTestCase):
         mediafile.save()
 
         out = self.run_with_output("info", "--summarize", "album:AAA", path)
-        self.assertIn("album: AAA", out)
-        self.assertIn("tracktotal: 5", out)
-        self.assertIn("title: [various]", out)
-        self.assertIn("albumartists: [various]", out)
-        self.assertIn("artists: Artist A; Artist Z", out)
+        assert "album: AAA" in out
+        assert "tracktotal: 5" in out
+        assert "title: [various]" in out
+        assert "albumartists: [various]" in out
+        assert "artists: Artist A; Artist Z" in out
 
     def test_custom_format(self):
         self.add_item_fixtures()

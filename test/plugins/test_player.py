@@ -1034,7 +1034,7 @@ class BPDDatabaseTest(BPDTestHelper):
                 "lsinfo", response2.data["directory"]
             )
             self._assert_ok(response3)
-        self.assertIn(self.item1.title, response3.data["Title"])
+        assert self.item1.title in response3.data["Title"]
 
     def test_cmd_count(self):
         with self.run_bpd() as client:

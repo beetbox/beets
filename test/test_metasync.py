@@ -84,19 +84,19 @@ class MetaSyncTest(PluginTestCase):
 
     def test_load_item_types(self):
         # This test also verifies that the MetaSources have loaded correctly
-        self.assertIn("amarok_score", Item._types)
-        self.assertIn("itunes_rating", Item._types)
+        assert "amarok_score" in Item._types
+        assert "itunes_rating" in Item._types
 
     def test_pretend_sync_from_itunes(self):
         out = self.run_with_output("metasync", "-p")
 
-        self.assertIn("itunes_rating: 60 -> 80", out)
-        self.assertIn("itunes_rating: 100", out)
-        self.assertIn("itunes_playcount: 31", out)
-        self.assertIn("itunes_skipcount: 3", out)
-        self.assertIn("itunes_lastplayed: 2015-05-04 12:20:51", out)
-        self.assertIn("itunes_lastskipped: 2015-02-05 15:41:04", out)
-        self.assertIn("itunes_dateadded: 2014-04-24 09:28:38", out)
+        assert "itunes_rating: 60 -> 80" in out
+        assert "itunes_rating: 100" in out
+        assert "itunes_playcount: 31" in out
+        assert "itunes_skipcount: 3" in out
+        assert "itunes_lastplayed: 2015-05-04 12:20:51" in out
+        assert "itunes_lastskipped: 2015-02-05 15:41:04" in out
+        assert "itunes_dateadded: 2014-04-24 09:28:38" in out
         self.assertEqual(self.lib.items()[0].itunes_rating, 60)
 
     def test_sync_from_itunes(self):

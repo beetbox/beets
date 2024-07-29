@@ -124,20 +124,20 @@ class MoveTest(BeetsTestCase):
     def test_move_file_with_colon(self):
         self.i.artist = "C:DOS"
         self.i.move()
-        self.assertIn("C_DOS", self.i.path.decode())
+        assert "C_DOS" in self.i.path.decode()
 
     def test_move_file_with_multiple_colons(self):
         # print(beets.config["replace"])
         self.i.artist = "COM:DOS"
         self.i.move()
-        self.assertIn("COM_DOS", self.i.path.decode())
+        assert "COM_DOS" in self.i.path.decode()
 
     def test_move_file_with_colon_alt_separator(self):
         old = beets.config["drive_sep_replace"]
         beets.config["drive_sep_replace"] = "0"
         self.i.artist = "C:DOS"
         self.i.move()
-        self.assertIn("C0DOS", self.i.path.decode())
+        assert "C0DOS" in self.i.path.decode()
         beets.config["drive_sep_replace"] = old
 
     def test_read_only_file_copied_writable(self):
@@ -302,7 +302,7 @@ class AlbumFileTest(BeetsTestCase):
         self.ai.move(basedir=self.otherdir)
         self.i.load()
         self.ai.store()
-        self.assertIn(b"testotherdir", self.i.path)
+        assert b"testotherdir" in self.i.path
 
 
 class ArtFileTest(BeetsTestCase):
@@ -352,7 +352,7 @@ class ArtFileTest(BeetsTestCase):
         self.assertNotExists(self.art)
         newart = self.lib.get_album(self.i).artpath
         self.assertExists(newart)
-        self.assertIn(b"testotherdir", newart)
+        assert b"testotherdir" in newart
 
     def test_setart_copies_image(self):
         util.remove(self.art)

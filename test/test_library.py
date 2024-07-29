@@ -48,7 +48,7 @@ class LoadTest(ItemInDBTestCase):
 
     def test_load_clears_dirty_flags(self):
         self.i.artist = "something"
-        self.assertIn("artist", self.i._dirty)
+        assert "artist" in self.i._dirty
         self.i.load()
         self.assertNotIn("artist", self.i._dirty)
 
@@ -143,7 +143,7 @@ class GetSetTest(BeetsTestCase):
 
     def test_set_sets_dirty_flag(self):
         self.i.comp = not self.i.comp
-        self.assertIn("comp", self.i._dirty)
+        assert "comp" in self.i._dirty
 
     def test_set_does_not_dirty_if_value_unchanged(self):
         self.i.title = self.i.title
@@ -159,7 +159,7 @@ class GetSetTest(BeetsTestCase):
         album["flex"] = "foo"
         album.store()
 
-        self.assertIn("flex", i)
+        assert "flex" in i
         self.assertNotIn("flex", i.keys(with_album=False))
         self.assertEqual(i["flex"], "foo")
         self.assertEqual(i.get("flex"), "foo")
@@ -231,21 +231,21 @@ class DestinationTest(BeetsTestCase):
     def test_destination_escapes_slashes(self):
         self.i.album = "one/two"
         dest = self.i.destination()
-        self.assertIn(b"one", dest)
-        self.assertIn(b"two", dest)
+        assert b"one" in dest
+        assert b"two" in dest
         self.assertNotIn(b"one/two", dest)
 
     def test_destination_escapes_leading_dot(self):
         self.i.album = ".something"
         dest = self.i.destination()
-        self.assertIn(b"something", dest)
+        assert b"something" in dest
         self.assertNotIn(b"/.something", dest)
 
     def test_destination_preserves_legitimate_slashes(self):
         self.i.artist = "one"
         self.i.album = "two"
         dest = self.i.destination()
-        self.assertIn(os.path.join(b"one", b"two"), dest)
+        assert os.path.join(b"one", b"two") in dest
 
     def test_destination_long_names_truncated(self):
         self.i.title = "X" * 300
@@ -271,7 +271,7 @@ class DestinationTest(BeetsTestCase):
     def test_path_with_format(self):
         self.lib.path_formats = [("default", "$artist/$album ($format)")]
         p = self.i.destination()
-        self.assertIn(b"(FLAC)", p)
+        assert b"(FLAC)" in p
 
     def test_heterogeneous_album_gets_single_directory(self):
         i1, i2 = item(), item()
@@ -429,7 +429,7 @@ class DestinationTest(BeetsTestCase):
             p = self.i.destination()
             self.assertNotIn(b"?", p)
             # We use UTF-8 to encode Windows paths now.
-            self.assertIn("h\u0259d".encode(), p)
+            assert "h\u0259d".encode() in p
         finally:
             sys.getfilesystemencoding = oldfunc
 
@@ -1052,7 +1052,7 @@ class ArtDestinationTest(BeetsTestCase):
     def test_art_filename_respects_setting(self):
         art = self.ai.art_destination("something.jpg")
         new_art = bytestring_path("%sartimage.jpg" % os.path.sep)
-        self.assertIn(new_art, art)
+        assert new_art in art
 
     def test_art_path_in_item_dir(self):
         art = self.ai.art_destination("something.jpg")
@@ -1062,7 +1062,7 @@ class ArtDestinationTest(BeetsTestCase):
     def test_art_path_sanitized(self):
         config["art_filename"] = "artXimage"
         art = self.ai.art_destination("something.jpg")
-        self.assertIn(b"artYimage", art)
+        assert b"artYimage" in art
 
 
 class PathStringTest(BeetsTestCase):

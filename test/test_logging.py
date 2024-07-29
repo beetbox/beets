@@ -86,31 +86,31 @@ class LoggingLevelTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
         self.config["verbose"] = 0
         with helper.capture_log() as logs:
             self.run_command("dummy")
-        self.assertIn("dummy: warning cmd", logs)
-        self.assertIn("dummy: info cmd", logs)
+        assert "dummy: warning cmd" in logs
+        assert "dummy: info cmd" in logs
         self.assertNotIn("dummy: debug cmd", logs)
 
     def test_command_level1(self):
         self.config["verbose"] = 1
         with helper.capture_log() as logs:
             self.run_command("dummy")
-        self.assertIn("dummy: warning cmd", logs)
-        self.assertIn("dummy: info cmd", logs)
-        self.assertIn("dummy: debug cmd", logs)
+        assert "dummy: warning cmd" in logs
+        assert "dummy: info cmd" in logs
+        assert "dummy: debug cmd" in logs
 
     def test_command_level2(self):
         self.config["verbose"] = 2
         with helper.capture_log() as logs:
             self.run_command("dummy")
-        self.assertIn("dummy: warning cmd", logs)
-        self.assertIn("dummy: info cmd", logs)
-        self.assertIn("dummy: debug cmd", logs)
+        assert "dummy: warning cmd" in logs
+        assert "dummy: info cmd" in logs
+        assert "dummy: debug cmd" in logs
 
     def test_listener_level0(self):
         self.config["verbose"] = 0
         with helper.capture_log() as logs:
             plugins.send("dummy_event")
-        self.assertIn("dummy: warning listener", logs)
+        assert "dummy: warning listener" in logs
         self.assertNotIn("dummy: info listener", logs)
         self.assertNotIn("dummy: debug listener", logs)
 
@@ -118,23 +118,23 @@ class LoggingLevelTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
         self.config["verbose"] = 1
         with helper.capture_log() as logs:
             plugins.send("dummy_event")
-        self.assertIn("dummy: warning listener", logs)
-        self.assertIn("dummy: info listener", logs)
+        assert "dummy: warning listener" in logs
+        assert "dummy: info listener" in logs
         self.assertNotIn("dummy: debug listener", logs)
 
     def test_listener_level2(self):
         self.config["verbose"] = 2
         with helper.capture_log() as logs:
             plugins.send("dummy_event")
-        self.assertIn("dummy: warning listener", logs)
-        self.assertIn("dummy: info listener", logs)
-        self.assertIn("dummy: debug listener", logs)
+        assert "dummy: warning listener" in logs
+        assert "dummy: info listener" in logs
+        assert "dummy: debug listener" in logs
 
     def test_import_stage_level0(self):
         self.config["verbose"] = 0
         with helper.capture_log() as logs:
             self.run_asis_importer()
-        self.assertIn("dummy: warning import_stage", logs)
+        assert "dummy: warning import_stage" in logs
         self.assertNotIn("dummy: info import_stage", logs)
         self.assertNotIn("dummy: debug import_stage", logs)
 
@@ -142,17 +142,17 @@ class LoggingLevelTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
         self.config["verbose"] = 1
         with helper.capture_log() as logs:
             self.run_asis_importer()
-        self.assertIn("dummy: warning import_stage", logs)
-        self.assertIn("dummy: info import_stage", logs)
+        assert "dummy: warning import_stage" in logs
+        assert "dummy: info import_stage" in logs
         self.assertNotIn("dummy: debug import_stage", logs)
 
     def test_import_stage_level2(self):
         self.config["verbose"] = 2
         with helper.capture_log() as logs:
             self.run_asis_importer()
-        self.assertIn("dummy: warning import_stage", logs)
-        self.assertIn("dummy: info import_stage", logs)
-        self.assertIn("dummy: debug import_stage", logs)
+        assert "dummy: warning import_stage" in logs
+        assert "dummy: info import_stage" in logs
+        assert "dummy: debug import_stage" in logs
 
 
 @_common.slow_test()
@@ -266,10 +266,10 @@ class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
         with helper.capture_log() as logs:
             self.run_asis_importer()
         for l in logs:
-            self.assertIn("import", l)
-            self.assertIn("album", l)
+            assert "import" in l
+            assert "album" in l
 
         blog.getLogger("beets").set_global_level(blog.DEBUG)
         with helper.capture_log() as logs:
             self.run_asis_importer()
-        self.assertIn("Sending event: database_change", logs)
+        assert "Sending event: database_change" in logs

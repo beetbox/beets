@@ -48,7 +48,7 @@ class AssertsMixin:
 
     def assertInResult(self, item, results):  # noqa
         result_ids = [i.id for i in results]
-        self.assertIn(item.id, result_ids)
+        assert item.id in result_ids
 
     def assertNotInResult(self, item, results):  # noqa
         result_ids = [i.id for i in results]
@@ -406,13 +406,13 @@ class GetTest(DummyDataTestCase):
     def test_invalid_query(self):
         with self.assertRaises(InvalidQueryArgumentValueError) as raised:
             dbcore.query.NumericQuery("year", "199a")
-        self.assertIn("not an int", str(raised.exception))
+        assert "not an int" in str(raised.exception)
 
         with self.assertRaises(InvalidQueryArgumentValueError) as raised:
             dbcore.query.RegexpQuery("year", "199(")
         exception_text = str(raised.exception)
-        self.assertIn("not a regular expression", exception_text)
-        self.assertIn("unterminated subpattern", exception_text)
+        assert "not a regular expression" in exception_text
+        assert "unterminated subpattern" in exception_text
         self.assertIsInstance(raised.exception, ParsingError)
 
 
