@@ -74,7 +74,7 @@ class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
         self.run_command("embedart", "-f", self.small_artpath)
         mediafile = MediaFile(syspath(item.path))
         # make sure that images array is empty (nothing embedded)
-        self.assertFalse(mediafile.images)
+        assert not mediafile.images
 
     def test_embed_art_from_file(self):
         self._setup_data()
@@ -140,7 +140,7 @@ class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
             os.remove(syspath(tmp_path))
 
         mediafile = MediaFile(syspath(album.items()[0].path))
-        self.assertFalse(mediafile.images)  # No image added.
+        assert not mediafile.images  # No image added.
 
     @require_artresizer_compare
     def test_reject_different_art(self):
@@ -209,7 +209,7 @@ class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
         self.io.addinput("y")
         self.run_command("clearart")
         mediafile = MediaFile(syspath(item.path))
-        self.assertFalse(mediafile.images)
+        assert not mediafile.images
 
     def test_clear_art_with_no_input(self):
         self._setup_data()
@@ -254,7 +254,7 @@ class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
         self.mock_response("http://example.com/test.html", "text/html")
         self.run_command("embedart", "-y", "-u", "http://example.com/test.html")
         mediafile = MediaFile(syspath(item.path))
-        self.assertFalse(mediafile.images)
+        assert not mediafile.images
 
 
 class DummyArtResizer(ArtResizer):
@@ -312,7 +312,7 @@ class ArtSimilarityTest(unittest.TestCase):
 
     def test_compare_success_different(self, mock_extract, mock_subprocess):
         self._mock_popens(mock_extract, mock_subprocess, 0, "10", "err")
-        self.assertFalse(self._similarity(5))
+        assert not self._similarity(5)
 
     def test_compare_status1_similar(self, mock_extract, mock_subprocess):
         self._mock_popens(mock_extract, mock_subprocess, 1, "out", "10")
@@ -320,7 +320,7 @@ class ArtSimilarityTest(unittest.TestCase):
 
     def test_compare_status1_different(self, mock_extract, mock_subprocess):
         self._mock_popens(mock_extract, mock_subprocess, 1, "out", "10")
-        self.assertFalse(self._similarity(5))
+        assert not self._similarity(5)
 
     def test_compare_failed(self, mock_extract, mock_subprocess):
         self._mock_popens(mock_extract, mock_subprocess, 2, "out", "10")

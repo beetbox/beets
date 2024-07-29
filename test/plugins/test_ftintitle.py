@@ -167,5 +167,5 @@ class FtInTitlePluginTest(unittest.TestCase):
         assert ftintitle.contains_feat("Alice & Bob")
         assert ftintitle.contains_feat("Alice and Bob")
         assert ftintitle.contains_feat("Alice With Bob")
-        self.assertFalse(ftintitle.contains_feat("Alice defeat Bob"))
-        self.assertFalse(ftintitle.contains_feat("Aliceft.Bob"))
+        assert not ftintitle.contains_feat("Alice defeat Bob")
+        assert not ftintitle.contains_feat("Aliceft.Bob")

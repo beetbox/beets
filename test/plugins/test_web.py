@@ -378,7 +378,7 @@ class WebPluginTest(ItemInDBTestCase):
         self.assertEqual(response.status_code, 404)
 
         # Check the file has gone
-        self.assertFalse(os.path.exists(ipath))
+        assert not os.path.exists(ipath)
 
     def test_delete_item_query(self):
         web.app.config["READONLY"] = False

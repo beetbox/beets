@@ -58,7 +58,7 @@ class ThumbnailsTest(BeetsTestCase):
         mock_artresizer.shared.local = False
         mock_artresizer.shared.can_write_metadata = False
         plugin = ThumbnailsPlugin()
-        self.assertFalse(plugin._check_local_ok())
+        assert not plugin._check_local_ok()
 
         # test dirs creation
         mock_artresizer.shared.local = True

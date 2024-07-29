@@ -45,7 +45,7 @@ class SpotifyPluginTest(BeetsTestCase):
 
     def test_args(self):
         opts = ArgumentsMock("fail", True)
-        self.assertFalse(self.spotify._parse_opts(opts))
+        assert not self.spotify._parse_opts(opts)
         opts = ArgumentsMock("list", False)
         assert self.spotify._parse_opts(opts)
 

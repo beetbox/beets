@@ -388,7 +388,7 @@ class BPDTestHelper(PluginTestCase):
             previous_commands = response[0:pos]
             self._assert_ok(*previous_commands)
             response = response[pos]
-        self.assertFalse(response.ok)
+        assert not response.ok
         if pos is not None:
             self.assertEqual(pos, response.err_data[1])
         if code is not None:

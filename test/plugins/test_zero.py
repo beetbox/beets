@@ -82,7 +82,7 @@ class ZeroPluginTest(PluginTestCase):
             item.write()
 
         mf = MediaFile(syspath(path))
-        self.assertFalse(mf.images)
+        assert not mf.images
 
     def test_auto_false(self):
         item = self.add_item_fixture(year=2000)

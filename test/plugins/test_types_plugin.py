@@ -90,7 +90,7 @@ class TypesPluginTest(PluginTestCase):
         # Set false
         self.modify("mybool=false", "artist:false")
         false.load()
-        self.assertFalse(false["mybool"])
+        assert not false["mybool"]
 
         # Query bools
         out = self.list("mybool:true", "$artist $mybool")

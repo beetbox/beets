@@ -305,7 +305,7 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
     def test_playlist_pretend(self):
         self.run_convert("--playlist", "playlist.m3u8", "--pretend")
         m3u_created = os.path.join(self.convert_dest, b"playlist.m3u8")
-        self.assertFalse(os.path.exists(m3u_created))
+        assert not os.path.exists(m3u_created)
 
 
 @_common.slow_test()

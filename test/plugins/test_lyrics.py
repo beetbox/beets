@@ -163,7 +163,7 @@ class LyricsPluginTest(unittest.TestCase):
                      of mywickedsongtext brand"""
         ]
         for t in texts:
-            self.assertFalse(google.is_lyrics(t))
+            assert not google.is_lyrics(t)
 
     def test_slugify(self):
         text = "http://site.com/\xe7afe-au_lait(boisson)"
@@ -195,7 +195,7 @@ class LyricsPluginTest(unittest.TestCase):
         )
 
     def test_missing_lyrics(self):
-        self.assertFalse(google.is_lyrics(LYRICS_TEXTS["missing_texts"]))
+        assert not google.is_lyrics(LYRICS_TEXTS["missing_texts"])
 
 
 def url_to_filename(url):
@@ -437,10 +437,9 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest, LyricsAssertions):
         ), url
         # reject different title
         url_title = "example.com | seets bong lyrics by John doe"
-        self.assertFalse(
-            google.is_page_candidate(url, url_title, s["title"], s["artist"]),
-            url,
-        )
+        assert not google.is_page_candidate(
+            url, url_title, s["title"], s["artist"]
+        ), url
 
     def test_is_page_candidate_special_chars(self):
         """Ensure that `is_page_candidate` doesn't crash when the artist

@@ -145,7 +145,7 @@ class DateIntervalTest(unittest.TestCase):
         date = _date(date_pattern)
         (start, end) = _parse_periods(interval_pattern)
         interval = DateInterval.from_periods(start, end)
-        self.assertFalse(interval.contains(date))
+        assert not interval.contains(date)
 
 
 def _parsetime(s):
@@ -174,7 +174,7 @@ class DateQueryTest(ItemInDBTestCase):
 
     def test_single_month_nonmatch_slow(self):
         query = DateQuery("added", "2013-04")
-        self.assertFalse(query.match(self.i))
+        assert not query.match(self.i)
 
     def test_single_day_match_fast(self):
         query = DateQuery("added", "2013-03-30")
@@ -218,7 +218,7 @@ class DateQueryTestRelative(ItemInDBTestCase):
         query = DateQuery(
             "added", (self._now + timedelta(days=30)).strftime("%Y-%m")
         )
-        self.assertFalse(query.match(self.i))
+        assert not query.match(self.i)
 
     def test_single_day_match_fast(self):
         query = DateQuery("added", self._now.strftime("%Y-%m-%d"))
