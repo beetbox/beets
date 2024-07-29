@@ -209,7 +209,7 @@ class FetchImageTest(FetchImageTestCase):
     def test_invalid_type_returns_none(self):
         self.mock_response(self.URL, "image/watercolour")
         self.source.fetch_image(self.candidate, self.settings)
-        self.assertIsNone(self.candidate.path)
+        assert self.candidate.path is None
 
     def test_jpeg_type_returns_path(self):
         self.mock_response(self.URL, "image/jpeg")
@@ -299,7 +299,7 @@ class CombinedTest(FetchImageTestCase, CAAHelper):
     def test_main_interface_returns_none_for_missing_asin_and_path(self):
         album = _common.Bag()
         candidate = self.plugin.art_for_album(album, None)
-        self.assertIsNone(candidate)
+        assert candidate is None
 
     def test_main_interface_gives_precedence_to_fs_art(self):
         _common.touch(os.path.join(self.dpath, b"art.jpg"))
@@ -873,7 +873,7 @@ class ArtForAlbumTest(UseThePlugin):
             self.assertEqual(candidate.path, self.image_file)
             self.assertExists(candidate.path)
         else:
-            self.assertIsNone(candidate)
+            assert candidate is None
 
     def _assert_image_operated(self, image_file, operation, should_operate):
         self.image_file = image_file

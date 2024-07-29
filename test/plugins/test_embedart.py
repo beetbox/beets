@@ -324,18 +324,18 @@ class ArtSimilarityTest(unittest.TestCase):
 
     def test_compare_failed(self, mock_extract, mock_subprocess):
         self._mock_popens(mock_extract, mock_subprocess, 2, "out", "10")
-        self.assertIsNone(self._similarity(20))
+        assert self._similarity(20) is None
 
     def test_compare_parsing_error(self, mock_extract, mock_subprocess):
         self._mock_popens(mock_extract, mock_subprocess, 0, "foo", "bar")
-        self.assertIsNone(self._similarity(20))
+        assert self._similarity(20) is None
 
     def test_compare_parsing_error_and_failure(
         self, mock_extract, mock_subprocess
     ):
         self._mock_popens(mock_extract, mock_subprocess, 1, "foo", "bar")
-        self.assertIsNone(self._similarity(20))
+        assert self._similarity(20) is None
 
     def test_convert_failure(self, mock_extract, mock_subprocess):
         self._mock_popens(mock_extract, mock_subprocess, convert_status=1)
-        self.assertIsNone(self._similarity(20))
+        assert self._similarity(20) is None

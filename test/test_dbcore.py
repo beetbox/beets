@@ -364,7 +364,7 @@ class ModelTest(unittest.TestCase):
     def test_null_value_stays_none_for_untyped_field(self):
         model = ModelFixture1()
         model.foo = None
-        self.assertIsNone(model.foo)
+        assert model.foo is None
 
     def test_normalization_for_typed_flex_fields(self):
         model = ModelFixture1()
@@ -759,6 +759,7 @@ class ResultsIteratorTest(unittest.TestCase):
             objs[100]
 
     def test_no_results(self):
-        self.assertIsNone(
+        assert (
             self.db._fetch(ModelFixture1, dbcore.query.FalseQuery()).get()
+            is None
         )

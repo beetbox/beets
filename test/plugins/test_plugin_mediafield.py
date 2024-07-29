@@ -87,7 +87,7 @@ class ExtendedFieldTestMixin(BeetsTestCase):
 
         try:
             mf = self._mediafile_fixture("empty")
-            self.assertIsNone(mf.customtag)
+            assert mf.customtag is None
 
             item = Item(path=mf.path, customtag="Gb")
             item.write()

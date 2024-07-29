@@ -50,7 +50,7 @@ class SpotifyPluginTest(BeetsTestCase):
         assert self.spotify._parse_opts(opts)
 
     def test_empty_query(self):
-        self.assertIsNone(self.spotify._match_library_tracks(self.lib, "1=2"))
+        assert self.spotify._match_library_tracks(self.lib, "1=2") is None
 
     @responses.activate
     def test_missing_request(self):

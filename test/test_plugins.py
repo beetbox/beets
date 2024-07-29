@@ -577,7 +577,7 @@ class ParseSpotifyIDTest(unittest.TestCase):
     def test_parse_id_non_id_returns_none(self):
         id_string = "blah blah"
         out = MetadataSourcePlugin._get_id("album", id_string, spotify_id_regex)
-        self.assertIsNone(out)
+        assert out is None
 
     def test_parse_id_url_finds_id(self):
         id_string = "39WqpoPgZxygo6YQjehLJJ"
@@ -595,7 +595,7 @@ class ParseDeezerIDTest(unittest.TestCase):
     def test_parse_id_non_id_returns_none(self):
         id_string = "blah blah"
         out = MetadataSourcePlugin._get_id("album", id_string, deezer_id_regex)
-        self.assertIsNone(out)
+        assert out is None
 
     def test_parse_id_url_finds_id(self):
         id_string = "176356382"
@@ -617,7 +617,7 @@ class ParseBeatportIDTest(unittest.TestCase):
         out = MetadataSourcePlugin._get_id(
             "album", id_string, beatport_id_regex
         )
-        self.assertIsNone(out)
+        assert out is None
 
     def test_parse_id_url_finds_id(self):
         id_string = "3089651"

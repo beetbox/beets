@@ -74,7 +74,7 @@ class AnyFieldQueryTest(ItemInDBTestCase):
         q = dbcore.query.AnyFieldQuery(
             "title", ["artist"], dbcore.query.SubstringQuery
         )
-        self.assertIsNone(self.lib.items(q).get())
+        assert self.lib.items(q).get() is None
 
     def test_eq(self):
         q1 = dbcore.query.AnyFieldQuery(
@@ -751,12 +751,12 @@ class IntQueryTest(BeetsTestCase):
         Item._types = {"myint": types.Integer()}
         self.add_item()
         matched = self.lib.items("myint:2").get()
-        self.assertIsNone(matched)
+        assert matched is None
 
     def test_no_substring_match(self):
         self.add_item(bpm=120)
         matched = self.lib.items("bpm:12").get()
-        self.assertIsNone(matched)
+        assert matched is None
 
 
 class BoolQueryTest(BeetsTestCase, AssertsMixin):

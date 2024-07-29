@@ -365,7 +365,7 @@ class ArtFileTest(BeetsTestCase):
         ai = self.lib.add_album((i2,))
         i2.move(operation=MoveOperation.COPY)
 
-        self.assertIsNone(ai.artpath)
+        assert ai.artpath is None
         ai.set_art(newart)
         self.assertExists(ai.artpath)
 

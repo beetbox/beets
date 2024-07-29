@@ -366,7 +366,7 @@ class ModifyTest(BeetsTestCase):
 
         self.modify("initial_key!")
         mediafile = MediaFile(syspath(item.path))
-        self.assertIsNone(mediafile.initial_key)
+        assert mediafile.initial_key is None
 
     def test_arg_parsing_colon_query(self):
         (query, mods, dels) = commands.modify_parse_args(
