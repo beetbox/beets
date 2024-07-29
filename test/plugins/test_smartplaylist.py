@@ -109,17 +109,17 @@ class SmartPlaylistTest(BeetsTestCase):
         a = MagicMock(Album)
         i = MagicMock(Item)
 
-        self.assertFalse(spl.matches(i, None, None))
-        self.assertFalse(spl.matches(a, None, None))
+        assert not spl.matches(i, None, None)
+        assert not spl.matches(a, None, None)
 
         query = Mock()
         query.match.side_effect = {i: True}.__getitem__
         assert spl.matches(i, query, None)
-        self.assertFalse(spl.matches(a, query, None))
+        assert not spl.matches(a, query, None)
 
         a_query = Mock()
         a_query.match.side_effect = {a: True}.__getitem__
-        self.assertFalse(spl.matches(i, None, a_query))
+        assert not spl.matches(i, None, a_query)
         assert spl.matches(a, None, a_query)
 
         assert spl.matches(i, query, a_query)

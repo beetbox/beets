@@ -314,7 +314,7 @@ class CombinedTest(FetchImageTestCase, CAAHelper):
         album = _common.Bag(asin=self.ASIN)
         candidate = self.plugin.art_for_album(album, [self.dpath])
         self.assertIsNotNone(candidate)
-        self.assertFalse(candidate.path.startswith(self.dpath))
+        assert not candidate.path.startswith(self.dpath)
 
     def test_main_interface_tries_amazon_before_aao(self):
         self.mock_response(self.AMAZON_URL)

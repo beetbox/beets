@@ -58,7 +58,7 @@ class PluralityTest(BeetsTestCase):
         likelies, consensus = match.current_metadata(items)
         self.assertEqual(likelies["artist"], "The Beatles")
         self.assertEqual(likelies["album"], "The White Album")
-        self.assertFalse(consensus["artist"])
+        assert not consensus["artist"]
 
     def test_current_metadata_artist_consensus(self):
         items = [
@@ -79,7 +79,7 @@ class PluralityTest(BeetsTestCase):
         ]
         likelies, consensus = match.current_metadata(items)
         self.assertEqual(likelies["artist"], "aartist")
-        self.assertFalse(consensus["artist"])
+        assert not consensus["artist"]
 
     def test_current_metadata_likelies(self):
         fields = [
@@ -986,8 +986,8 @@ class ApplyCompilationTest(BeetsTestCase, ApplyTestUtil):
 
     def test_va_flag_cleared_does_not_set_comp(self):
         self._apply()
-        self.assertFalse(self.items[0].comp)
-        self.assertFalse(self.items[1].comp)
+        assert not self.items[0].comp
+        assert not self.items[1].comp
 
     def test_va_flag_sets_comp(self):
         va_info = self.info.copy()

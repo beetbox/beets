@@ -387,7 +387,7 @@ class GetTest(DummyDataTestCase):
     def test_numeric_search_negative(self):
         q = dbcore.query.NumericQuery("year", "1999")
         results = self.lib.items(q)
-        self.assertFalse(results)
+        assert not results
 
     def test_album_field_fallback(self):
         self.album["albumflex"] = "foo"
@@ -427,7 +427,7 @@ class MatchTest(BeetsTestCase):
 
     def test_regex_match_negative(self):
         q = dbcore.query.RegexpQuery("album", "^album$")
-        self.assertFalse(q.match(self.item))
+        assert not q.match(self.item)
 
     def test_regex_match_non_string_value(self):
         q = dbcore.query.RegexpQuery("disc", "^6$")
@@ -439,7 +439,7 @@ class MatchTest(BeetsTestCase):
 
     def test_substring_match_negative(self):
         q = dbcore.query.SubstringQuery("album", "ablum")
-        self.assertFalse(q.match(self.item))
+        assert not q.match(self.item)
 
     def test_substring_match_non_string_value(self):
         q = dbcore.query.SubstringQuery("disc", "6")
@@ -453,7 +453,7 @@ class MatchTest(BeetsTestCase):
 
     def test_exact_match_nocase_negative(self):
         q = dbcore.query.StringQuery("genre", "genre")
-        self.assertFalse(q.match(self.item))
+        assert not q.match(self.item)
 
     def test_year_match_positive(self):
         q = dbcore.query.NumericQuery("year", "1")
@@ -461,7 +461,7 @@ class MatchTest(BeetsTestCase):
 
     def test_year_match_negative(self):
         q = dbcore.query.NumericQuery("year", "10")
-        self.assertFalse(q.match(self.item))
+        assert not q.match(self.item)
 
     def test_bitrate_range_positive(self):
         q = dbcore.query.NumericQuery("bitrate", "100000..200000")
@@ -469,7 +469,7 @@ class MatchTest(BeetsTestCase):
 
     def test_bitrate_range_negative(self):
         q = dbcore.query.NumericQuery("bitrate", "200000..300000")
-        self.assertFalse(q.match(self.item))
+        assert not q.match(self.item)
 
     def test_open_range(self):
         dbcore.query.NumericQuery("bitrate", "100000..")
@@ -698,7 +698,7 @@ class PathQueryTest(ItemInDBTestCase, AssertsMixin):
         assert is_path_query(parent)
 
         # Some non-existent path.
-        self.assertFalse(is_path_query(path_str + "baz"))
+        assert not is_path_query(path_str + "baz")
 
     def test_detect_relative_path(self):
         """Test detection of implicit path queries based on whether or

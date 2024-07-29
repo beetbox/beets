@@ -298,7 +298,6 @@ class ListenersTest(PluginLoaderTestCase):
 
     @patch("beets.plugins.find_plugins")
     def test_listener_params(self, mock_find_plugins):
-        test = self
 
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):
@@ -325,7 +324,7 @@ class ListenersTest(PluginLoaderTestCase):
                 pass
 
             def dummy5(self, bar):
-                test.assertFalse(True)
+                assert not True
 
             # more complex examples
 
@@ -338,7 +337,7 @@ class ListenersTest(PluginLoaderTestCase):
                 test.assertEqual(kwargs, {})
 
             def dummy8(self, foo, bar, **kwargs):
-                test.assertFalse(True)
+                assert not True
 
             def dummy9(self, **kwargs):
                 test.assertEqual(kwargs, {"foo": 5})

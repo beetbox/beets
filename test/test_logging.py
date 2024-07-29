@@ -232,7 +232,7 @@ class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
             while dp.t1_step != 2:
                 check_dp_exc()
             t1.join(0.1)
-            self.assertFalse(t1.is_alive())
+            assert not t1.is_alive()
             assert t2.is_alive()
             self.assertEqual(dp._log.level, log.NOTSET)
 
@@ -240,7 +240,7 @@ class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
             while dp.t2_step != 2:
                 check_dp_exc()
             t2.join(0.1)
-            self.assertFalse(t2.is_alive())
+            assert not t2.is_alive()
 
         except Exception:
             print("Alive threads:", threading.enumerate())

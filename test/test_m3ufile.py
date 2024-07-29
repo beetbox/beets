@@ -147,4 +147,4 @@ class M3UFileTest(unittest.TestCase):
         the_playlist_file = path.join(RSRC, b"playlist_non_ext.m3u")
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.load()
-        self.assertFalse(m3ufile.extm3u)
+        assert not m3ufile.extm3u

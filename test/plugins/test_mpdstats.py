@@ -31,8 +31,8 @@ class MPDStatsTest(PluginTestCase):
         log = Mock()
         mpdstats = MPDStats(self.lib, log)
 
-        self.assertFalse(mpdstats.update_rating(item, True))
-        self.assertFalse(mpdstats.update_rating(None, True))
+        assert not mpdstats.update_rating(item, True)
+        assert not mpdstats.update_rating(None, True)
 
     def test_get_item(self):
         item_path = util.normpath("/foo/bar.flac")

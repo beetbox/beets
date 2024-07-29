@@ -329,14 +329,14 @@ class MBAlbumInfoTest(BeetsTestCase):
     def test_no_release_date(self):
         release = self._make_release(None)
         d = mb.album_info(release)
-        self.assertFalse(d.original_year)
-        self.assertFalse(d.original_month)
-        self.assertFalse(d.original_day)
+        assert not d.original_year
+        assert not d.original_month
+        assert not d.original_day
 
     def test_various_artists_defaults_false(self):
         release = self._make_release(None)
         d = mb.album_info(release)
-        self.assertFalse(d.va)
+        assert not d.va
 
     def test_detect_various_artists(self):
         release = self._make_release(None)
@@ -842,13 +842,13 @@ class MBLibraryTest(unittest.TestCase):
     def test_match_track_empty(self):
         with mock.patch("musicbrainzngs.search_recordings") as p:
             til = list(mb.match_track(" ", " "))
-            self.assertFalse(p.called)
+            assert not p.called
             self.assertEqual(til, [])
 
     def test_match_album_empty(self):
         with mock.patch("musicbrainzngs.search_releases") as p:
             ail = list(mb.match_album(" ", " "))
-            self.assertFalse(p.called)
+            assert not p.called
             self.assertEqual(ail, [])
 
     def test_follow_pseudo_releases(self):

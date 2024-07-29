@@ -46,7 +46,7 @@ class ConfigCommandTest(BeetsTestCase):
         self.assertEqual(output["option"], "value")
         self.assertEqual(output["password"], "password_value")
         self.assertEqual(output["library"], "lib")
-        self.assertFalse(output["import"]["timid"])
+        assert not output["import"]["timid"]
 
     def test_show_user_config_with_cli(self):
         output = self._run_with_yaml_output(
@@ -67,7 +67,7 @@ class ConfigCommandTest(BeetsTestCase):
 
         self.assertEqual(output["option"], "value")
         self.assertEqual(output["password"], "REDACTED")
-        self.assertFalse(output["import"]["timid"])
+        assert not output["import"]["timid"]
 
     def test_config_paths(self):
         output = self.run_with_output("config", "-p")

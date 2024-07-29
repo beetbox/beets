@@ -155,9 +155,7 @@ class Assertions:
         assert os.path.exists(syspath(path)), f"file does not exist: {path!r}"
 
     def assertNotExists(self, path):  # noqa
-        self.assertFalse(
-            os.path.exists(syspath(path)), f"file exists: {path!r}"
-        )
+        assert not os.path.exists(syspath(path)), f"file exists: {path!r}"
 
     def assertIsFile(self, path):  # noqa
         self.assertExists(path)

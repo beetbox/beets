@@ -598,14 +598,14 @@ class UpdateTest(BeetsTestCase):
         util.remove(self.i.path)
         util.remove(self.i2.path)
         self._update()
-        self.assertFalse(list(self.lib.items()))
+        assert not list(self.lib.items())
 
     def test_delete_removes_album(self):
         assert self.lib.albums()
         util.remove(self.i.path)
         util.remove(self.i2.path)
         self._update()
-        self.assertFalse(self.lib.albums())
+        assert not self.lib.albums()
 
     def test_delete_removes_album_art(self):
         artpath = self.album.artpath
@@ -1096,7 +1096,7 @@ class ConfigTest(TestPluginTestCase):
             file.write("anoption: value")
 
         config.read()
-        self.assertFalse(config["anoption"].exists())
+        assert not config["anoption"].exists()
 
     def test_default_config_paths_resolve_relative_to_beetsdir(self):
         os.environ["BEETSDIR"] = os.fsdecode(self.beetsdir)
@@ -1145,7 +1145,7 @@ class ShowModelChangeTest(BeetsTestCase):
 
     def test_identical(self):
         change, out = self._show()
-        self.assertFalse(change)
+        assert not change
         self.assertEqual(out, "")
 
     def test_string_fixed_field_change(self):
@@ -1164,7 +1164,7 @@ class ShowModelChangeTest(BeetsTestCase):
         self.a.length = 1.00001
         self.b.length = 1.00005
         change, out = self._show()
-        self.assertFalse(change)
+        assert not change
         self.assertEqual(out, "")
 
     def test_floats_different(self):
@@ -1440,10 +1440,10 @@ class CompletionTest(TestPluginTestCase):
         with open(test_script_name, "rb") as test_script_file:
             tester.stdin.writelines(test_script_file)
         out, err = tester.communicate()
-        self.assertFalse(
-            tester.returncode != 0 or out != b"completion tests passed\n",
-            f"test/test_completion.sh did not execute properly. "
-            f'Output:{out.decode("utf-8")}',
+        assert tester.returncode == 0
+        assert out == b"completion tests passed\n", (
+            "test/test_completion.sh did not execute properly. "
+            f'Output:{out.decode("utf-8")}'
         )
 
 
@@ -1528,7 +1528,7 @@ class CommonOptionsParserCliTest(BeetsTestCase):
 class CommonOptionsParserTest(BeetsTestCase):
     def test_album_option(self):
         parser = ui.CommonOptionsParser()
-        self.assertFalse(parser._album_flags)
+        assert not parser._album_flags
         parser.add_album_option()
         assert bool(parser._album_flags)
 
@@ -1539,7 +1539,7 @@ class CommonOptionsParserTest(BeetsTestCase):
     def test_path_option(self):
         parser = ui.CommonOptionsParser()
         parser.add_path_option()
-        self.assertFalse(parser._album_flags)
+        assert not parser._album_flags
 
         config["format_item"].set("$foo")
         self.assertEqual(parser.parse_args([]), ({"path": None}, []))
@@ -1559,7 +1559,7 @@ class CommonOptionsParserTest(BeetsTestCase):
     def test_format_option(self):
         parser = ui.CommonOptionsParser()
         parser.add_format_option()
-        self.assertFalse(parser._album_flags)
+        assert not parser._album_flags
 
         config["format_item"].set("$foo")
         self.assertEqual(parser.parse_args([]), ({"format": None}, []))

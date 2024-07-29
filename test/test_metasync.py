@@ -105,7 +105,7 @@ class MetaSyncTest(PluginTestCase):
         self.assertEqual(self.lib.items()[0].itunes_rating, 80)
         self.assertEqual(self.lib.items()[0].itunes_playcount, 0)
         self.assertEqual(self.lib.items()[0].itunes_skipcount, 3)
-        self.assertFalse(hasattr(self.lib.items()[0], "itunes_lastplayed"))
+        assert not hasattr(self.lib.items()[0], "itunes_lastplayed")
         self.assertEqual(
             self.lib.items()[0].itunes_lastskipped,
             _parsetime("2015-02-05 15:41:04"),
@@ -126,4 +126,4 @@ class MetaSyncTest(PluginTestCase):
             self.lib.items()[1].itunes_dateadded,
             _parsetime("2014-04-24 09:28:38"),
         )
-        self.assertFalse(hasattr(self.lib.items()[1], "itunes_lastskipped"))
+        assert not hasattr(self.lib.items()[1], "itunes_lastskipped")

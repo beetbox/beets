@@ -1027,7 +1027,7 @@ class InferAlbumDataTest(BeetsTestCase):
     def test_asis_homogenous_single_artist(self):
         self.task.set_choice(importer.action.ASIS)
         self.task.align_album_level_fields()
-        self.assertFalse(self.items[0].comp)
+        assert not self.items[0].comp
         self.assertEqual(self.items[0].albumartist, self.items[2].artist)
 
     def test_asis_heterogenous_va(self):
@@ -1057,7 +1057,7 @@ class InferAlbumDataTest(BeetsTestCase):
 
         self.task.align_album_level_fields()
 
-        self.assertFalse(self.items[0].comp)
+        assert not self.items[0].comp
         self.assertEqual(self.items[0].albumartist, self.items[2].artist)
 
     def test_asis_track_albumartist_override(self):
@@ -1099,7 +1099,7 @@ class InferAlbumDataTest(BeetsTestCase):
         self.task.items = self.items
         self.task.set_choice(importer.action.ASIS)
         self.task.align_album_level_fields()
-        self.assertFalse(self.items[0].comp)
+        assert not self.items[0].comp
 
 
 def match_album_mock(*args, **kwargs):
