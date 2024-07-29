@@ -94,7 +94,7 @@ class EditMixin(PluginMixin):
                 for field in lib_item._fields
                 if lib_item[field] != item[field]
             ]
-            self.assertEqual(set(diff_fields).difference(allowed), set(fields))
+            assert set(diff_fields).difference(allowed) == set(fields)
 
     def run_mocked_interpreter(self, modify_file_args={}, stdin=[]):
         """Run the edit command during an import session, with mocked stdin and
@@ -143,9 +143,9 @@ class EditCommandTest(EditMixin, BeetsTestCase):
         title_starts_with="",
     ):
         """Several common assertions on Album, Track and call counts."""
-        self.assertEqual(len(self.lib.albums()), album_count)
-        self.assertEqual(len(self.lib.items()), track_count)
-        self.assertEqual(mock_write.call_count, write_call_count)
+        assert len(self.lib.albums()) == album_count
+        assert len(self.lib.items()) == track_count
+        assert mock_write.call_count == write_call_count
         assert all(
             i.title.startswith(title_starts_with) for i in self.lib.items()
         )
@@ -199,9 +199,7 @@ class EditCommandTest(EditMixin, BeetsTestCase):
         self.assertItemFieldsModified(
             list(self.album.items())[:-1], self.items_orig[:-1], []
         )
-        self.assertEqual(
-            list(self.album.items())[-1].title, "modified t\u00eftle 9"
-        )
+        assert list(self.album.items())[-1].title == "modified t\u00eftle 9"
 
     def test_noedit(self, mock_write):
         """Do not edit anything."""
@@ -234,7 +232,7 @@ class EditCommandTest(EditMixin, BeetsTestCase):
         )
         # Ensure album is *not* modified.
         self.album.load()
-        self.assertEqual(self.album.album, "\u00e4lbum")
+        assert self.album.album == "\u00e4lbum"
 
     def test_single_edit_add_field(self, mock_write):
         """Edit the yaml file appending an extra field to the first item, then
@@ -247,7 +245,7 @@ class EditCommandTest(EditMixin, BeetsTestCase):
             ["a"],
         )
 
-        self.assertEqual(self.lib.items("id:2")[0].foo, "bar")
+        assert self.lib.items("id:2")[0].foo == "bar"
         # Even though a flexible attribute was written (which is not directly
         # written to the tags), write should still be called since templates
         # might use it.
@@ -266,7 +264,7 @@ class EditCommandTest(EditMixin, BeetsTestCase):
 
         self.album.load()
         self.assertCounts(mock_write, write_call_count=self.TRACK_COUNT)
-        self.assertEqual(self.album.album, "modified \u00e4lbum")
+        assert self.album.album == "modified \u00e4lbum"
         self.assertItemFieldsModified(
             self.album.items(), self.items_orig, ["album", "mtime"]
         )
@@ -282,7 +280,7 @@ class EditCommandTest(EditMixin, BeetsTestCase):
 
         self.album.load()
         self.assertCounts(mock_write, write_call_count=self.TRACK_COUNT)
-        self.assertEqual(self.album.albumartist, "the modified album artist")
+        assert self.album.albumartist == "the modified album artist"
         self.assertItemFieldsModified(
             self.album.items(), self.items_orig, ["albumartist", "mtime"]
         )
@@ -369,7 +367,7 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
         assert all("Edited Track" in i.title for i in self.lib.items())
 
         # Ensure album is *not* fetched from a candidate.
-        self.assertEqual(self.lib.albums()[0].mb_albumid, "")
+        assert self.lib.albums()[0].mb_albumid == ""
 
     def test_edit_discard_asis(self):
         """Edit the album field for all items in the library, discard changes,
@@ -392,7 +390,7 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
         assert all("Tag Track" in i.title for i in self.lib.items())
 
         # Ensure album is *not* fetched from a candidate.
-        self.assertEqual(self.lib.albums()[0].mb_albumid, "")
+        assert self.lib.albums()[0].mb_albumid == ""
 
     def test_edit_apply_candidate(self):
         """Edit the album field for all items in the library, apply changes,

@@ -53,7 +53,7 @@ class ExportPluginTest(PluginTestCase):
         json_data = json.loads(out)[0]
         for key, val in self.test_values.items():
             assert key in json_data
-            self.assertEqual(val, json_data[key])
+            assert val == json_data[key]
 
     def test_jsonlines_output(self):
         item1 = self.create_item()
@@ -61,7 +61,7 @@ class ExportPluginTest(PluginTestCase):
         json_data = json.loads(out)
         for key, val in self.test_values.items():
             assert key in json_data
-            self.assertEqual(val, json_data[key])
+            assert val == json_data[key]
 
     def test_csv_output(self):
         item1 = self.create_item()
@@ -71,7 +71,7 @@ class ExportPluginTest(PluginTestCase):
         vals = re.split(",|\r", csv_list[1])
         for index, column in enumerate(head):
             assert self.test_values.get(column, None) is not None
-            self.assertEqual(vals[index], self.test_values[column])
+            assert vals[index] == self.test_values[column]
 
     def test_xml_output(self):
         item1 = self.create_item()
@@ -83,4 +83,4 @@ class ExportPluginTest(PluginTestCase):
                 tag = details.tag
                 txt = details.text
                 assert tag in self.test_values, tag
-                self.assertEqual(self.test_values[tag], txt, msg=txt)
+                assert self.test_values[tag] == txt, txt

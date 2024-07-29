@@ -64,7 +64,7 @@ class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
         self.io.addinput("y")
         self.run_command("embedart", "-f", self.small_artpath)
         mediafile = MediaFile(syspath(item.path))
-        self.assertEqual(mediafile.images[0].data, self.image_data)
+        assert mediafile.images[0].data == self.image_data
 
     def test_embed_art_from_file_with_no_input(self):
         self._setup_data()
@@ -82,7 +82,7 @@ class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
         item = album.items()[0]
         self.run_command("embedart", "-y", "-f", self.small_artpath)
         mediafile = MediaFile(syspath(item.path))
-        self.assertEqual(mediafile.images[0].data, self.image_data)
+        assert mediafile.images[0].data == self.image_data
 
     def test_embed_art_from_album(self):
         self._setup_data()
@@ -92,7 +92,7 @@ class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
         album.store()
         self.run_command("embedart", "-y")
         mediafile = MediaFile(syspath(item.path))
-        self.assertEqual(mediafile.images[0].data, self.image_data)
+        assert mediafile.images[0].data == self.image_data
 
     def test_embed_art_remove_art_file(self):
         self._setup_data()
@@ -152,12 +152,10 @@ class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
         self.run_command("embedart", "-y", "-f", self.abbey_differentpath)
         mediafile = MediaFile(syspath(item.path))
 
-        self.assertEqual(
-            mediafile.images[0].data,
-            self.image_data,
-            "Image written is not {}".format(
-                displayable_path(self.abbey_artpath)
-            ),
+        assert (
+            mediafile.images[0].data == self.image_data
+        ), "Image written is not {}".format(
+            displayable_path(self.abbey_artpath)
         )
 
     @require_artresizer_compare
@@ -170,12 +168,10 @@ class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
         self.run_command("embedart", "-y", "-f", self.abbey_similarpath)
         mediafile = MediaFile(syspath(item.path))
 
-        self.assertEqual(
-            mediafile.images[0].data,
-            self.image_data,
-            "Image written is not {}".format(
-                displayable_path(self.abbey_similarpath)
-            ),
+        assert (
+            mediafile.images[0].data == self.image_data
+        ), "Image written is not {}".format(
+            displayable_path(self.abbey_similarpath)
         )
 
     def test_non_ascii_album_path(self):
@@ -220,7 +216,7 @@ class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
         self.io.addinput("n")
         self.run_command("clearart")
         mediafile = MediaFile(syspath(item.path))
-        self.assertEqual(mediafile.images[0].data, self.image_data)
+        assert mediafile.images[0].data == self.image_data
 
     def test_embed_art_from_url_with_yes_input(self):
         self._setup_data()
@@ -230,10 +226,9 @@ class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
         self.io.addinput("y")
         self.run_command("embedart", "-u", "http://example.com/test.jpg")
         mediafile = MediaFile(syspath(item.path))
-        self.assertEqual(
-            mediafile.images[0].data,
-            self.IMAGEHEADER.get("image/jpeg").ljust(32, b"\x00"),
-        )
+        assert mediafile.images[0].data == self.IMAGEHEADER.get(
+            "image/jpeg"
+        ).ljust(32, b"\x00")
 
     def test_embed_art_from_url_png(self):
         self._setup_data()
@@ -242,10 +237,9 @@ class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
         self.mock_response("http://example.com/test.png", "image/png")
         self.run_command("embedart", "-y", "-u", "http://example.com/test.png")
         mediafile = MediaFile(syspath(item.path))
-        self.assertEqual(
-            mediafile.images[0].data,
-            self.IMAGEHEADER.get("image/png").ljust(32, b"\x00"),
-        )
+        assert mediafile.images[0].data == self.IMAGEHEADER.get(
+            "image/png"
+        ).ljust(32, b"\x00")
 
     def test_embed_art_from_url_not_image(self):
         self._setup_data()

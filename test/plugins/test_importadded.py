@@ -79,9 +79,9 @@ class ImportAddedTest(PluginMixin, ImportTestCase):
     def assertAlbumImport(self):  # noqa
         self.importer.run()
         album = self.lib.albums().get()
-        self.assertEqual(album.added, self.min_mtime)
+        assert album.added == self.min_mtime
         for item in album.items():
-            self.assertEqual(item.added, self.min_mtime)
+            assert item.added == self.min_mtime
 
     def test_import_album_with_added_dates(self):
         self.assertAlbumImport()
@@ -97,7 +97,7 @@ class ImportAddedTest(PluginMixin, ImportTestCase):
         self.config["importadded"]["preserve_mtimes"] = True
         self.importer.run()
         album = self.lib.albums().get()
-        self.assertEqual(album.added, self.min_mtime)
+        assert album.added == self.min_mtime
         for item in album.items():
             self.assertEqualTimes(item.added, self.min_mtime)
             mediafile_mtime = os.path.getmtime(self.find_media_file(item).path)

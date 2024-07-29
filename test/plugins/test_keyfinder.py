@@ -32,7 +32,7 @@ class KeyFinderTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
         self.run_command("keyfinder")
 
         item.load()
-        self.assertEqual(item["initial_key"], "C#m")
+        assert item["initial_key"] == "C#m"
         command_output.assert_called_with(
             ["KeyFinder", "-f", util.syspath(item.path)]
         )
@@ -42,7 +42,7 @@ class KeyFinderTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
         self.run_asis_importer()
 
         item = self.lib.items().get()
-        self.assertEqual(item["initial_key"], "C#m")
+        assert item["initial_key"] == "C#m"
 
     def test_force_overwrite(self, command_output):
         self.config["keyfinder"]["overwrite"] = True
@@ -54,7 +54,7 @@ class KeyFinderTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
         self.run_command("keyfinder")
 
         item.load()
-        self.assertEqual(item["initial_key"], "C#m")
+        assert item["initial_key"] == "C#m"
 
     def test_do_not_overwrite(self, command_output):
         item = Item(path="/file", initial_key="F")
@@ -64,7 +64,7 @@ class KeyFinderTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
         self.run_command("keyfinder")
 
         item.load()
-        self.assertEqual(item["initial_key"], "F")
+        assert item["initial_key"] == "F"
 
     def test_no_key(self, command_output):
         item = Item(path="/file")

@@ -30,13 +30,13 @@ from beets.test.helper import BeetsTestCase
 class UtilTest(unittest.TestCase):
     def test_open_anything(self):
         with _common.system_mock("Windows"):
-            self.assertEqual(util.open_anything(), "start")
+            assert util.open_anything() == "start"
 
         with _common.system_mock("Darwin"):
-            self.assertEqual(util.open_anything(), "open")
+            assert util.open_anything() == "open"
 
         with _common.system_mock("Tagada"):
-            self.assertEqual(util.open_anything(), "xdg-open")
+            assert util.open_anything() == "xdg-open"
 
     @patch("os.execlp")
     @patch("beets.util.open_anything")
@@ -78,47 +78,30 @@ class UtilTest(unittest.TestCase):
     def test_sanitize_path_works_on_empty_string(self):
         with _common.platform_posix():
             p = util.sanitize_path("")
-        self.assertEqual(p, "")
+        assert p == ""
 
     def test_sanitize_with_custom_replace_overrides_built_in_sub(self):
         with _common.platform_posix():
-            p = util.sanitize_path(
-                "a/.?/b",
-                [
-                    (re.compile(r"foo"), "bar"),
-                ],
-            )
-        self.assertEqual(p, "a/.?/b")
+            p = util.sanitize_path("a/.?/b", [(re.compile(r"foo"), "bar")])
+        assert p == "a/.?/b"
 
     def test_sanitize_with_custom_replace_adds_replacements(self):
         with _common.platform_posix():
-            p = util.sanitize_path(
-                "foo/bar",
-                [
-                    (re.compile(r"foo"), "bar"),
-                ],
-            )
-        self.assertEqual(p, "bar/bar")
+            p = util.sanitize_path("foo/bar", [(re.compile(r"foo"), "bar")])
+        assert p == "bar/bar"
 
     @unittest.skip("unimplemented: #359")
     def test_sanitize_empty_component(self):
         with _common.platform_posix():
-            p = util.sanitize_path(
-                "foo//bar",
-                [
-                    (re.compile(r"^$"), "_"),
-                ],
-            )
-        self.assertEqual(p, "foo/_/bar")
+            p = util.sanitize_path("foo//bar", [(re.compile(r"^$"), "_")])
+        assert p == "foo/_/bar"
 
     @unittest.skipIf(sys.platform == "win32", "win32")
     def test_convert_command_args_keeps_undecodeable_bytes(self):
         arg = b"\x82"  # non-ascii bytes
         cmd_args = util.convert_command_args([arg])
 
-        self.assertEqual(
-            cmd_args[0], arg.decode(util.arg_encoding(), "surrogateescape")
-        )
+        assert cmd_args[0] == arg.decode(util.arg_encoding(), "surrogateescape")
 
     @patch("beets.util.subprocess.Popen")
     def test_command_output(self, mock_popen):
@@ -130,8 +113,8 @@ class UtilTest(unittest.TestCase):
         mock_popen.side_effect = popen_fail
         with self.assertRaises(subprocess.CalledProcessError) as exc_context:
             util.command_output(["taga", "\xc3\xa9"])
-        self.assertEqual(exc_context.exception.returncode, 1)
-        self.assertEqual(exc_context.exception.cmd, "taga \xc3\xa9")
+        assert exc_context.exception.returncode == 1
+        assert exc_context.exception.cmd == "taga \xc3\xa9"
 
     def test_case_sensitive_default(self):
         path = util.bytestring_path(
@@ -140,10 +123,7 @@ class UtilTest(unittest.TestCase):
             )
         )
 
-        self.assertEqual(
-            util.case_sensitive(path),
-            platform.system() != "Windows",
-        )
+        assert util.case_sensitive(path) == (platform.system() != "Windows")
 
     @unittest.skipIf(sys.platform == "win32", "fs is not case sensitive")
     def test_case_sensitive_detects_sensitive(self):
@@ -173,13 +153,13 @@ class PathConversionTest(BeetsTestCase):
         with _common.platform_windows():
             outpath = util.syspath(path)
         assert isinstance(outpath, str)
-        self.assertEqual(outpath, "\\\\?\\UNC\\server\\share\\file.mp3")
+        assert outpath == "\\\\?\\UNC\\server\\share\\file.mp3"
 
     def test_syspath_posix_unchanged(self):
         with _common.platform_posix():
             path = os.path.join("a", "b", "c")
             outpath = util.syspath(path)
-        self.assertEqual(path, outpath)
+        assert path == outpath
 
     def _windows_bytestring_path(self, path):
         old_gfse = sys.getfilesystemencoding
@@ -193,26 +173,26 @@ class PathConversionTest(BeetsTestCase):
     def test_bytestring_path_windows_encodes_utf8(self):
         path = "caf\xe9"
         outpath = self._windows_bytestring_path(path)
-        self.assertEqual(path, outpath.decode("utf-8"))
+        assert path == outpath.decode("utf-8")
 
     def test_bytesting_path_windows_removes_magic_prefix(self):
         path = "\\\\?\\C:\\caf\xe9"
         outpath = self._windows_bytestring_path(path)
-        self.assertEqual(outpath, "C:\\caf\xe9".encode())
+        assert outpath == "C:\\caf\xe9".encode()
 
 
 class PathTruncationTest(BeetsTestCase):
     def test_truncate_bytestring(self):
         with _common.platform_posix():
             p = util.truncate_path(b"abcde/fgh", 4)
-        self.assertEqual(p, b"abcd/fgh")
+        assert p == b"abcd/fgh"
 
     def test_truncate_unicode(self):
         with _common.platform_posix():
             p = util.truncate_path("abcde/fgh", 4)
-        self.assertEqual(p, "abcd/fgh")
+        assert p == "abcd/fgh"
 
     def test_truncate_preserves_extension(self):
         with _common.platform_posix():
             p = util.truncate_path("abcde/fgh.ext", 5)
-        self.assertEqual(p, "abcde/f.ext")
+        assert p == "abcde/f.ext"

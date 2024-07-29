@@ -35,7 +35,7 @@ class AlbumTypesPluginTest(PluginTestCase):
         album = self._create_album(album_types=["ep", "remix"])
         subject = AlbumTypesPlugin()
         result = subject._atypes(album)
-        self.assertEqual("(EP)(Remix)", result)
+        assert "(EP)(Remix)" == result
         return
 
     def test_returns_only_specified_types(self):
@@ -46,7 +46,7 @@ class AlbumTypesPluginTest(PluginTestCase):
         album = self._create_album(album_types=["ep", "remix", "soundtrack"])
         subject = AlbumTypesPlugin()
         result = subject._atypes(album)
-        self.assertEqual("(EP)", result)
+        assert "(EP)" == result
 
     def test_respects_type_order(self):
         """Tests if the types are returned in the same order as config."""
@@ -56,7 +56,7 @@ class AlbumTypesPluginTest(PluginTestCase):
         album = self._create_album(album_types=["ep", "remix"])
         subject = AlbumTypesPlugin()
         result = subject._atypes(album)
-        self.assertEqual("(Remix)(EP)", result)
+        assert "(Remix)(EP)" == result
         return
 
     def test_ignores_va(self):
@@ -71,7 +71,7 @@ class AlbumTypesPluginTest(PluginTestCase):
         )
         subject = AlbumTypesPlugin()
         result = subject._atypes(album)
-        self.assertEqual("(OST)", result)
+        assert "(OST)" == result
 
     def test_respects_defaults(self):
         """Tests if the plugin uses the default values if config not given."""
@@ -88,7 +88,7 @@ class AlbumTypesPluginTest(PluginTestCase):
         )
         subject = AlbumTypesPlugin()
         result = subject._atypes(album)
-        self.assertEqual("[EP][Single][OST][Live][Remix]", result)
+        assert "[EP][Single][OST][Live][Remix]" == result
 
     def _set_config(
         self,

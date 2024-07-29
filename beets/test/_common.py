@@ -171,11 +171,9 @@ class Assertions:
 
     def assert_equal_path(self, a, b):
         """Check that two paths are equal."""
-        self.assertEqual(
-            util.normpath(a),
-            util.normpath(b),
-            f"paths are not equal: {a!r} and {b!r}",
-        )
+        a_bytes, b_bytes = util.normpath(a), util.normpath(b)
+
+        assert a_bytes == b_bytes, f"{a_bytes=} != {b_bytes=}"
 
 
 # Mock I/O.

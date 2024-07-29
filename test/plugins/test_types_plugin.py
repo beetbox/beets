@@ -30,11 +30,11 @@ class TypesPluginTest(PluginTestCase):
 
         # Do not match unset values
         out = self.list("myint:1..3")
-        self.assertEqual("", out)
+        assert "" == out
 
         self.modify("myint=2")
         item.load()
-        self.assertEqual(item["myint"], 2)
+        assert item["myint"] == 2
 
         # Match in range
         out = self.list("myint:1..3")
@@ -46,11 +46,11 @@ class TypesPluginTest(PluginTestCase):
 
         # Do not match unset values
         out = self.list_album("myint:1..3")
-        self.assertEqual("", out)
+        assert "" == out
 
         self.modify("-a", "myint=2")
         album.load()
-        self.assertEqual(album["myint"], 2)
+        assert album["myint"] == 2
 
         # Match in range
         out = self.list_album("myint:1..3")
@@ -62,11 +62,11 @@ class TypesPluginTest(PluginTestCase):
 
         # Do not match unset values
         out = self.list("myfloat:10..0")
-        self.assertEqual("", out)
+        assert "" == out
 
         self.modify("myfloat=-9.1")
         item.load()
-        self.assertEqual(item["myfloat"], -9.1)
+        assert item["myfloat"] == -9.1
 
         # Match in range
         out = self.list("myfloat:-10..0")
@@ -80,7 +80,7 @@ class TypesPluginTest(PluginTestCase):
 
         # Do not match unset values
         out = self.list("mybool:true, mybool:false")
-        self.assertEqual("", out)
+        assert "" == out
 
         # Set true
         self.modify("mybool=1", "artist:true")
@@ -94,12 +94,12 @@ class TypesPluginTest(PluginTestCase):
 
         # Query bools
         out = self.list("mybool:true", "$artist $mybool")
-        self.assertEqual("true True", out)
+        assert "true True" == out
 
         out = self.list("mybool:false", "$artist $mybool")
 
         # Dealing with unset fields?
-        # self.assertEqual('false False', out)
+        # assert 'false False' == out
         # out = self.list('mybool:', '$artist $mybool')
         # assert 'unset $mybool' in out
 
@@ -112,23 +112,23 @@ class TypesPluginTest(PluginTestCase):
 
         # Do not match unset values
         out = self.list("mydate:..2000")
-        self.assertEqual("", out)
+        assert "" == out
 
         self.modify("mydate=1999-01-01", "artist:prince")
         old.load()
-        self.assertEqual(old["mydate"], mktime(1999, 1, 1))
+        assert old["mydate"] == mktime(1999, 1, 1)
 
         self.modify("mydate=1999-12-30", "artist:britney")
         new.load()
-        self.assertEqual(new["mydate"], mktime(1999, 12, 30))
+        assert new["mydate"] == mktime(1999, 12, 30)
 
         # Match in range
         out = self.list("mydate:..1999-07", "$artist $mydate")
-        self.assertEqual("prince 1999-01-01", out)
+        assert "prince 1999-01-01" == out
 
         # FIXME some sort of timezone issue here
         # out = self.list('mydate:1999-12-30', '$artist $mydate')
-        # self.assertEqual('britney 1999-12-30', out)
+        # assert 'britney 1999-12-30' == out
 
     def test_unknown_type_error(self):
         self.config["types"] = {"flex": "unkown type"}
@@ -154,20 +154,12 @@ class TypesPluginTest(PluginTestCase):
         without_fields = self.add_item(artist="britney")
 
         int_template = "%ifdef{playcount,Play count: $playcount,Not played}"
-        self.assertEqual(
-            with_fields.evaluate_template(int_template), "Play count: 10"
-        )
-        self.assertEqual(
-            without_fields.evaluate_template(int_template), "Not played"
-        )
+        assert with_fields.evaluate_template(int_template) == "Play count: 10"
+        assert without_fields.evaluate_template(int_template) == "Not played"
 
         float_template = "%ifdef{rating,Rating: $rating,Not rated}"
-        self.assertEqual(
-            with_fields.evaluate_template(float_template), "Rating: 5.0"
-        )
-        self.assertEqual(
-            without_fields.evaluate_template(float_template), "Not rated"
-        )
+        assert with_fields.evaluate_template(float_template) == "Rating: 5.0"
+        assert without_fields.evaluate_template(float_template) == "Not rated"
 
         bool_template = "%ifdef{starred,Starred: $starred,Not starred}"
         assert with_fields.evaluate_template(bool_template).lower() in (
@@ -175,9 +167,7 @@ class TypesPluginTest(PluginTestCase):
             "starred: yes",
             "starred: y",
         )
-        self.assertEqual(
-            without_fields.evaluate_template(bool_template), "Not starred"
-        )
+        assert without_fields.evaluate_template(bool_template) == "Not starred"
 
     def modify(self, *args):
         return self.run_with_output(

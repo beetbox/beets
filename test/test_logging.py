@@ -21,19 +21,19 @@ class LoggingTest(BeetsTestCase):
     def test_logging_management(self):
         l1 = log.getLogger("foo123")
         l2 = blog.getLogger("foo123")
-        self.assertEqual(l1, l2)
-        self.assertEqual(l1.__class__, log.Logger)
+        assert l1 == l2
+        assert l1.__class__ == log.Logger
 
         l3 = blog.getLogger("bar123")
         l4 = log.getLogger("bar123")
-        self.assertEqual(l3, l4)
-        self.assertEqual(l3.__class__, blog.BeetsLogger)
+        assert l3 == l4
+        assert l3.__class__ == blog.BeetsLogger
         self.assertIsInstance(
             l3, (blog.StrFormatLogger, blog.ThreadLocalLevelLogger)
         )
 
         l5 = l3.getChild("shalala")
-        self.assertEqual(l5.__class__, blog.BeetsLogger)
+        assert l5.__class__ == blog.BeetsLogger
 
         l6 = blog.getLogger()
         self.assertNotEqual(l1, l6)
@@ -182,20 +182,20 @@ class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
 
         def listener1(self):
             try:
-                self.test_case.assertEqual(self._log.level, log.INFO)
+                assert self._log.level == log.INFO
                 self.t1_step = 1
                 self.lock1.acquire()
-                self.test_case.assertEqual(self._log.level, log.INFO)
+                assert self._log.level == log.INFO
                 self.t1_step = 2
             except Exception as e:
                 self.exc = e
 
         def listener2(self):
             try:
-                self.test_case.assertEqual(self._log.level, log.DEBUG)
+                assert self._log.level == log.DEBUG
                 self.t2_step = 1
                 self.lock2.acquire()
-                self.test_case.assertEqual(self._log.level, log.DEBUG)
+                assert self._log.level == log.DEBUG
                 self.t2_step = 2
             except Exception as e:
                 self.exc = e
@@ -210,7 +210,7 @@ class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
         try:
             dp.lock1.acquire()
             dp.lock2.acquire()
-            self.assertEqual(dp._log.level, log.NOTSET)
+            assert dp._log.level == log.NOTSET
 
             self.config["verbose"] = 1
             t1 = threading.Thread(target=dp.listeners["dummy_event1"][0])
@@ -218,7 +218,7 @@ class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
             while dp.t1_step != 1:
                 check_dp_exc()
             assert t1.is_alive()
-            self.assertEqual(dp._log.level, log.NOTSET)
+            assert dp._log.level == log.NOTSET
 
             self.config["verbose"] = 2
             t2 = threading.Thread(target=dp.listeners["dummy_event2"][0])
@@ -226,7 +226,7 @@ class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
             while dp.t2_step != 1:
                 check_dp_exc()
             assert t2.is_alive()
-            self.assertEqual(dp._log.level, log.NOTSET)
+            assert dp._log.level == log.NOTSET
 
             dp.lock1.release()  # dummy_event1 tests its log level + finishes
             while dp.t1_step != 2:
@@ -234,7 +234,7 @@ class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
             t1.join(0.1)
             assert not t1.is_alive()
             assert t2.is_alive()
-            self.assertEqual(dp._log.level, log.NOTSET)
+            assert dp._log.level == log.NOTSET
 
             dp.lock2.release()  # dummy_event2 tests its log level + finishes
             while dp.t2_step != 2:
@@ -260,7 +260,7 @@ class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
         blog.getLogger("beets").set_global_level(blog.WARNING)
         with helper.capture_log() as logs:
             self.run_asis_importer()
-        self.assertEqual(logs, [])
+        assert logs == []
 
         blog.getLogger("beets").set_global_level(blog.INFO)
         with helper.capture_log() as logs:

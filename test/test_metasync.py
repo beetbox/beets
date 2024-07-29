@@ -97,33 +97,29 @@ class MetaSyncTest(PluginTestCase):
         assert "itunes_lastplayed: 2015-05-04 12:20:51" in out
         assert "itunes_lastskipped: 2015-02-05 15:41:04" in out
         assert "itunes_dateadded: 2014-04-24 09:28:38" in out
-        self.assertEqual(self.lib.items()[0].itunes_rating, 60)
+        assert self.lib.items()[0].itunes_rating == 60
 
     def test_sync_from_itunes(self):
         self.run_command("metasync")
 
-        self.assertEqual(self.lib.items()[0].itunes_rating, 80)
-        self.assertEqual(self.lib.items()[0].itunes_playcount, 0)
-        self.assertEqual(self.lib.items()[0].itunes_skipcount, 3)
+        assert self.lib.items()[0].itunes_rating == 80
+        assert self.lib.items()[0].itunes_playcount == 0
+        assert self.lib.items()[0].itunes_skipcount == 3
         assert not hasattr(self.lib.items()[0], "itunes_lastplayed")
-        self.assertEqual(
-            self.lib.items()[0].itunes_lastskipped,
-            _parsetime("2015-02-05 15:41:04"),
+        assert self.lib.items()[0].itunes_lastskipped == _parsetime(
+            "2015-02-05 15:41:04"
         )
-        self.assertEqual(
-            self.lib.items()[0].itunes_dateadded,
-            _parsetime("2014-04-24 09:28:38"),
+        assert self.lib.items()[0].itunes_dateadded == _parsetime(
+            "2014-04-24 09:28:38"
         )
 
-        self.assertEqual(self.lib.items()[1].itunes_rating, 100)
-        self.assertEqual(self.lib.items()[1].itunes_playcount, 31)
-        self.assertEqual(self.lib.items()[1].itunes_skipcount, 0)
-        self.assertEqual(
-            self.lib.items()[1].itunes_lastplayed,
-            _parsetime("2015-05-04 12:20:51"),
+        assert self.lib.items()[1].itunes_rating == 100
+        assert self.lib.items()[1].itunes_playcount == 31
+        assert self.lib.items()[1].itunes_skipcount == 0
+        assert self.lib.items()[1].itunes_lastplayed == _parsetime(
+            "2015-05-04 12:20:51"
         )
-        self.assertEqual(
-            self.lib.items()[1].itunes_dateadded,
-            _parsetime("2014-04-24 09:28:38"),
+        assert self.lib.items()[1].itunes_dateadded == _parsetime(
+            "2014-04-24 09:28:38"
         )
         assert not hasattr(self.lib.items()[1], "itunes_lastskipped")

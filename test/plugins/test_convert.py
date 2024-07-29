@@ -64,12 +64,8 @@ class ConvertMixin:
         self.assertIsFile(path)
         with open(path, "rb") as f:
             f.seek(-len(display_tag), os.SEEK_END)
-            self.assertEqual(
-                f.read(),
-                tag,
-                "{} is not tagged with {}".format(
-                    displayable_path(path), display_tag
-                ),
+            assert f.read() == tag, "{} is not tagged with {}".format(
+                displayable_path(path), display_tag
             )
 
     def assertNoFileTag(self, path, tag):  # noqa
@@ -129,12 +125,10 @@ class ImportConvertTest(AsIsImporterMixin, ImportHelper, ConvertTestCase):
         self.run_asis_importer()
         for path in self.importer.paths:
             for root, dirnames, filenames in os.walk(path):
-                self.assertEqual(
-                    len(fnmatch.filter(filenames, "*.mp3")),
-                    0,
-                    "Non-empty import directory {}".format(
-                        util.displayable_path(path)
-                    ),
+                assert (
+                    len(fnmatch.filter(filenames, "*.mp3")) == 0
+                ), "Non-empty import directory {}".format(
+                    util.displayable_path(path)
                 )
 
     def get_count_of_import_files(self):
@@ -208,13 +202,13 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
         self.assertNotExists(converted)
 
     def test_convert_keep_new(self):
-        self.assertEqual(os.path.splitext(self.item.path)[1], b".ogg")
+        assert os.path.splitext(self.item.path)[1] == b".ogg"
 
         with control_stdin("y"):
             self.run_convert("--keep-new")
 
         self.item.load()
-        self.assertEqual(os.path.splitext(self.item.path)[1], b".mp3")
+        assert os.path.splitext(self.item.path)[1] == b".mp3"
 
     def test_format_option(self):
         with control_stdin("y"):
@@ -234,14 +228,14 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
             self.run_convert()
         converted = os.path.join(self.convert_dest, b"converted.mp3")
         mediafile = MediaFile(converted)
-        self.assertEqual(mediafile.images[0].data, image_data)
+        assert mediafile.images[0].data == image_data
 
     def test_skip_existing(self):
         converted = os.path.join(self.convert_dest, b"converted.mp3")
         self.touch(converted, content="XXX")
         self.run_convert("--yes")
         with open(converted) as f:
-            self.assertEqual(f.read(), "XXX")
+            assert f.read() == "XXX"
 
     def test_pretend(self):
         self.run_convert("--pretend")
@@ -251,7 +245,7 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
     def test_empty_query(self):
         with capture_log("beets.convert") as logs:
             self.run_convert("An impossible query")
-        self.assertEqual(logs[0], "convert: Empty query result.")
+        assert logs[0] == "convert: Empty query result."
 
     def test_no_transcode_when_maxbr_set_high_and_different_formats(self):
         self.config["convert"]["max_bitrate"] = 5000

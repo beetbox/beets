@@ -45,8 +45,8 @@ class QueryTest(BeetsTestCase):
         self, num_items, num_albums, q=(), album=False, also_items=True
     ):
         items, albums = commands._do_query(self.lib, q, album, also_items)
-        self.assertEqual(len(items), num_items)
-        self.assertEqual(len(albums), num_albums)
+        assert len(items) == num_items
+        assert len(albums) == num_albums
 
     def test_query_empty(self):
         with self.assertRaises(ui.UserError):
@@ -101,5 +101,5 @@ class FieldsTest(ItemInDBTestCase):
         self.remove_keys(items, output)
         self.remove_keys(albums, output)
 
-        self.assertEqual(len(items), 0)
-        self.assertEqual(len(albums), 0)
+        assert len(items) == 0
+        assert len(albums) == 0

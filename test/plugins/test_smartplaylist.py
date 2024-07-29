@@ -36,8 +36,8 @@ class SmartPlaylistTest(BeetsTestCase):
 
         config["smartplaylist"]["playlists"].set([])
         spl.build_queries()
-        self.assertEqual(spl._matched_playlists, set())
-        self.assertEqual(spl._unmatched_playlists, set())
+        assert spl._matched_playlists == set()
+        assert spl._unmatched_playlists == set()
 
         config["smartplaylist"]["playlists"].set(
             [
@@ -47,7 +47,7 @@ class SmartPlaylistTest(BeetsTestCase):
             ]
         )
         spl.build_queries()
-        self.assertEqual(spl._matched_playlists, set())
+        assert spl._matched_playlists == set()
         foo_foo = parse_query_string("FOO foo", Item)
         baz_baz = parse_query_string("BAZ baz", Item)
         baz_baz2 = parse_query_string("BAZ baz", Album)
@@ -57,14 +57,11 @@ class SmartPlaylistTest(BeetsTestCase):
                 parse_query_string("BAR bar2", Album)[0],
             )
         )
-        self.assertEqual(
-            spl._unmatched_playlists,
-            {
-                ("foo", foo_foo, (None, None)),
-                ("baz", baz_baz, baz_baz2),
-                ("bar", (None, None), (bar_bar, None)),
-            },
-        )
+        assert spl._unmatched_playlists == {
+            ("foo", foo_foo, (None, None)),
+            ("baz", baz_baz, baz_baz2),
+            ("bar", (None, None), (bar_bar, None)),
+        }
 
     def test_build_queries_with_sorts(self):
         spl = SmartPlaylistPlugin()
@@ -88,19 +85,16 @@ class SmartPlaylistTest(BeetsTestCase):
         spl.build_queries()
         sorts = {name: sort for name, (_, sort), _ in spl._unmatched_playlists}
 
-        asseq = self.assertEqual  # less cluttered code
         sort = FixedFieldSort  # short cut since we're only dealing with this
-        asseq(sorts["no_sort"], NullSort())
-        asseq(sorts["one_sort"], sort("year"))
-        asseq(sorts["only_empty_sorts"], None)
-        asseq(sorts["one_non_empty_sort"], sort("year"))
-        asseq(
-            sorts["multiple_sorts"],
-            MultipleSort([sort("year"), sort("genre", False)]),
+        assert sorts["no_sort"] == NullSort()
+        assert sorts["one_sort"] == sort("year")
+        assert sorts["only_empty_sorts"] is None
+        assert sorts["one_non_empty_sort"] == sort("year")
+        assert sorts["multiple_sorts"] == MultipleSort(
+            [sort("year"), sort("genre", False)]
         )
-        asseq(
-            sorts["mixed"],
-            MultipleSort([sort("year"), sort("genre"), sort("id", False)]),
+        assert sorts["mixed"] == MultipleSort(
+            [sort("year"), sort("genre"), sort("id", False)]
         )
 
     def test_matches(self):
@@ -138,18 +132,18 @@ class SmartPlaylistTest(BeetsTestCase):
 
         spl.matches = Mock(return_value=False)
         spl.db_change(None, "nothing")
-        self.assertEqual(spl._unmatched_playlists, {pl1, pl2, pl3})
-        self.assertEqual(spl._matched_playlists, set())
+        assert spl._unmatched_playlists == {pl1, pl2, pl3}
+        assert spl._matched_playlists == set()
 
         spl.matches.side_effect = lambda _, q, __: q == "q3"
         spl.db_change(None, "matches 3")
-        self.assertEqual(spl._unmatched_playlists, {pl1, pl2})
-        self.assertEqual(spl._matched_playlists, {pl3})
+        assert spl._unmatched_playlists == {pl1, pl2}
+        assert spl._matched_playlists == {pl3}
 
         spl.matches.side_effect = lambda _, q, __: q == "q1"
         spl.db_change(None, "matches 3")
-        self.assertEqual(spl._matched_playlists, {pl1, pl3})
-        self.assertEqual(spl._unmatched_playlists, {pl2})
+        assert spl._matched_playlists == {pl1, pl3}
+        assert spl._unmatched_playlists == {pl2}
 
     def test_playlist_update(self):
         spl = SmartPlaylistPlugin()
@@ -187,7 +181,7 @@ class SmartPlaylistTest(BeetsTestCase):
             content = f.read()
         rmtree(syspath(dir))
 
-        self.assertEqual(content, b"/tagada.mp3\n")
+        assert content == b"/tagada.mp3\n"
 
     def test_playlist_update_output_extm3u(self):
         spl = SmartPlaylistPlugin()
@@ -232,11 +226,11 @@ class SmartPlaylistTest(BeetsTestCase):
             content = f.read()
         rmtree(syspath(dir))
 
-        self.assertEqual(
-            content,
-            b"#EXTM3U\n"
+        assert (
+            content
+            == b"#EXTM3U\n"
             + b"#EXTINF:300,fake artist - fake title\n"
-            + b"http://beets:8337/files/tagada.mp3\n",
+            + b"http://beets:8337/files/tagada.mp3\n"
         )
 
     def test_playlist_update_output_extm3u_fields(self):
@@ -284,11 +278,11 @@ class SmartPlaylistTest(BeetsTestCase):
             content = f.read()
         rmtree(syspath(dir))
 
-        self.assertEqual(
-            content,
-            b"#EXTM3U\n"
+        assert (
+            content
+            == b"#EXTM3U\n"
             + b'#EXTINF:300 id="456" genre="Fake Genre",Fake Artist - fake Title\n'
-            + b"/tagada.mp3\n",
+            + b"/tagada.mp3\n"
         )
 
     def test_playlist_update_uri_format(self):
@@ -334,7 +328,7 @@ class SmartPlaylistTest(BeetsTestCase):
             content = f.read()
         rmtree(syspath(dir))
 
-        self.assertEqual(content, b"http://beets:8337/item/3/file\n")
+        assert content == b"http://beets:8337/item/3/file\n"
 
 
 class SmartPlaylistCLITest(PluginTestCase):
@@ -360,15 +354,15 @@ class SmartPlaylistCLITest(PluginTestCase):
         m3u_path = path.join(self.temp_dir, b"my_playlist.m3u")
         self.assertExists(m3u_path)
         with open(syspath(m3u_path), "rb") as f:
-            self.assertEqual(f.read(), self.item.path + b"\n")
+            assert f.read() == self.item.path + b"\n"
         remove(syspath(m3u_path))
 
         self.run_with_output("splupdate", "my_playlist.m3u")
         with open(syspath(m3u_path), "rb") as f:
-            self.assertEqual(f.read(), self.item.path + b"\n")
+            assert f.read() == self.item.path + b"\n"
         remove(syspath(m3u_path))
 
         self.run_with_output("splupdate")
         for name in (b"my_playlist.m3u", b"all.m3u"):
             with open(path.join(self.temp_dir, name), "rb") as f:
-                self.assertEqual(f.read(), self.item.path + b"\n")
+                assert f.read() == self.item.path + b"\n"

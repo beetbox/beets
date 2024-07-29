@@ -140,7 +140,7 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
             syspath(path, prefix=False),
         ]
         out = command_output(cmd).stdout
-        self.assertEqual(out, b"None")
+        assert out == b"None"
 
     @patch("beets.util.artresizer.util")
     def test_write_metadata_im(self, mock_util):

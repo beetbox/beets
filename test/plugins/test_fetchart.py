@@ -32,9 +32,9 @@ class FetchartCliTest(PluginTestCase):
         self.cover_path = os.path.join(self.album.path, b"mycover.jpg")
 
     def check_cover_is_stored(self):
-        self.assertEqual(self.album["artpath"], self.cover_path)
+        assert self.album["artpath"] == self.cover_path
         with open(util.syspath(self.cover_path)) as f:
-            self.assertEqual(f.read(), "IMAGE")
+            assert f.read() == "IMAGE"
 
     def hide_file_windows(self):
         hidden_mask = 2

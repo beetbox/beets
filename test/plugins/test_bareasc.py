@@ -80,4 +80,4 @@ class BareascPluginTest(PluginTestCase):
                 "bareasc", "with accents", "-f", "$artist:: $title"
             )
 
-        self.assertEqual("Antonin Dvorak:: with accents\n", output.getvalue())
+        assert "Antonin Dvorak:: with accents\n" == output.getvalue()
