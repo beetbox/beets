@@ -481,7 +481,7 @@ class GeniusScrapeLyricsFromHtmlTest(GeniusBaseTest):
         # expected return value None
         url = "https://genius.com/sample"
         mock = MockFetchUrl()
-        self.assertIsNone(genius._scrape_lyrics_from_html(mock(url)))
+        assert genius._scrape_lyrics_from_html(mock(url)) is None
 
     def test_good_lyrics(self):
         """Ensure we are able to scrape a page with lyrics"""
@@ -550,11 +550,11 @@ class GeniusFetchTest(GeniusBaseTest):
             mock_scrape.assert_called_with(True)
 
             # test no matching artist
-            self.assertIsNone(genius.fetch("doesntexist", "none"))
+            assert genius.fetch("doesntexist", "none") is None
 
             # test invalid json
             mock_json.return_value = None
-            self.assertIsNone(genius.fetch("blackbear", "Idfc"))
+            assert genius.fetch("blackbear", "Idfc") is None
 
     # TODO: add integration test hitting real api
 
@@ -734,7 +734,7 @@ class LRCLibLyricsTest(unittest.TestCase):
 
         lyrics = lrclib.fetch("la", "la", "la", 999)
 
-        self.assertIsNone(lyrics)
+        assert lyrics is None
 
     @patch("beetsplug.lyrics.requests.get")
     def test_fetch_exception(self, mock_get):
@@ -742,7 +742,7 @@ class LRCLibLyricsTest(unittest.TestCase):
 
         lyrics = lrclib.fetch("la", "la", "la", 999)
 
-        self.assertIsNone(lyrics)
+        assert lyrics is None
 
 
 class LRCLibIntegrationTest(LyricsAssertions):
@@ -764,12 +764,9 @@ class LRCLibIntegrationTest(LyricsAssertions):
     )
     def test_instrumental_track(self):
         lyrics = lrclib.fetch(
-            "Kelly Bailey",
-            "Black Mesa Inbound",
-            "Half Life 2 Soundtrack",
-            134,
+            "Kelly Bailey", "Black Mesa Inbound", "Half Life 2 Soundtrack", 134
         )
-        self.assertIsNone(lyrics)
+        assert lyrics is None
 
     @unittest.skipUnless(
         os.environ.get("INTEGRATION_TEST", "0") == "1",
@@ -777,7 +774,7 @@ class LRCLibIntegrationTest(LyricsAssertions):
     )
     def test_nonexistent_track(self):
         lyrics = lrclib.fetch("blah", "blah", "blah", 999)
-        self.assertIsNone(lyrics)
+        assert lyrics is None
 
 
 # test utilities

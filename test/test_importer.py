@@ -90,8 +90,8 @@ class ScrubbedImportTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
         for item in self.lib.items():
             imported_file = os.path.join(item.path)
             imported_file = MediaFile(imported_file)
-            self.assertIsNone(imported_file.artist)
-            self.assertIsNone(imported_file.album)
+            assert imported_file.artist is None
+            assert imported_file.album is None
 
 
 @_common.slow_test()
@@ -320,18 +320,18 @@ class ImportSingletonTest(ImportTestCase):
         self.matcher.restore()
 
     def test_apply_asis_adds_track(self):
-        self.assertIsNone(self.lib.items().get())
+        assert self.lib.items().get() is None
 
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
         self.assertEqual(self.lib.items().get().title, "Tag Track 1")
 
     def test_apply_asis_does_not_add_album(self):
-        self.assertIsNone(self.lib.albums().get())
+        assert self.lib.albums().get() is None
 
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
-        self.assertIsNone(self.lib.albums().get())
+        assert self.lib.albums().get() is None
 
     def test_apply_asis_adds_singleton_path(self):
         self.assert_lib_dir_empty()
@@ -341,7 +341,7 @@ class ImportSingletonTest(ImportTestCase):
         self.assert_file_in_lib(b"singletons", b"Tag Track 1.mp3")
 
     def test_apply_candidate_adds_track(self):
-        self.assertIsNone(self.lib.items().get())
+        assert self.lib.items().get() is None
 
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
@@ -350,7 +350,7 @@ class ImportSingletonTest(ImportTestCase):
     def test_apply_candidate_does_not_add_album(self):
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
-        self.assertIsNone(self.lib.albums().get())
+        assert self.lib.albums().get() is None
 
     def test_apply_candidate_adds_singleton_path(self):
         self.assert_lib_dir_empty()
@@ -362,7 +362,7 @@ class ImportSingletonTest(ImportTestCase):
     def test_skip_does_not_add_first_track(self):
         self.importer.add_choice(importer.action.SKIP)
         self.importer.run()
-        self.assertIsNone(self.lib.items().get())
+        assert self.lib.items().get() is None
 
     def test_skip_adds_other_tracks(self):
         self.prepare_album_for_import(2)
@@ -401,7 +401,7 @@ class ImportSingletonTest(ImportTestCase):
         }
 
         # As-is item import.
-        self.assertIsNone(self.lib.albums().get())
+        assert self.lib.albums().get() is None
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
 
@@ -414,7 +414,7 @@ class ImportSingletonTest(ImportTestCase):
             item.remove()
 
         # Autotagged.
-        self.assertIsNone(self.lib.albums().get())
+        assert self.lib.albums().get() is None
         self.importer.clear_choices()
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
@@ -441,14 +441,14 @@ class ImportTest(ImportTestCase):
         self.matcher.restore()
 
     def test_apply_asis_adds_album(self):
-        self.assertIsNone(self.lib.albums().get())
+        assert self.lib.albums().get() is None
 
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
         self.assertEqual(self.lib.albums().get().album, "Tag Album")
 
     def test_apply_asis_adds_tracks(self):
-        self.assertIsNone(self.lib.items().get())
+        assert self.lib.items().get() is None
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
         self.assertEqual(self.lib.items().get().title, "Tag Track 1")
@@ -461,14 +461,14 @@ class ImportTest(ImportTestCase):
         self.assert_file_in_lib(b"Tag Artist", b"Tag Album", b"Tag Track 1.mp3")
 
     def test_apply_candidate_adds_album(self):
-        self.assertIsNone(self.lib.albums().get())
+        assert self.lib.albums().get() is None
 
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
         self.assertEqual(self.lib.albums().get().album, "Applied Album")
 
     def test_apply_candidate_adds_tracks(self):
-        self.assertIsNone(self.lib.items().get())
+        assert self.lib.items().get() is None
 
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
@@ -532,7 +532,7 @@ class ImportTest(ImportTestCase):
     def test_skip_does_not_add_track(self):
         self.importer.add_choice(importer.action.SKIP)
         self.importer.run()
-        self.assertIsNone(self.lib.items().get())
+        assert self.lib.items().get() is None
 
     def test_skip_non_album_dirs(self):
         self.assertIsDir(os.path.join(self.import_dir, b"album"))
@@ -569,7 +569,7 @@ class ImportTest(ImportTestCase):
         self.assertIn(f"No files imported from {import_dir}", logs)
 
     def test_asis_no_data_source(self):
-        self.assertIsNone(self.lib.items().get())
+        assert self.lib.items().get() is None
 
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
@@ -590,7 +590,7 @@ class ImportTest(ImportTestCase):
         }
 
         # As-is album import.
-        self.assertIsNone(self.lib.albums().get())
+        assert self.lib.albums().get() is None
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
 
@@ -613,7 +613,7 @@ class ImportTest(ImportTestCase):
             album.remove()
 
         # Autotagged.
-        self.assertIsNone(self.lib.albums().get())
+        assert self.lib.albums().get() is None
         self.importer.clear_choices()
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
@@ -650,15 +650,15 @@ class ImportTracksTest(ImportTestCase):
         self.matcher.restore()
 
     def test_apply_tracks_adds_singleton_track(self):
-        self.assertIsNone(self.lib.items().get())
-        self.assertIsNone(self.lib.albums().get())
+        assert self.lib.items().get() is None
+        assert self.lib.albums().get() is None
 
         self.importer.add_choice(importer.action.TRACKS)
         self.importer.add_choice(importer.action.APPLY)
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
         self.assertEqual(self.lib.items().get().title, "Applied Track 1")
-        self.assertIsNone(self.lib.albums().get())
+        assert self.lib.albums().get() is None
 
     def test_apply_tracks_adds_singleton_path(self):
         self.assert_lib_dir_empty()

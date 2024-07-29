@@ -25,8 +25,8 @@ class ZeroPluginTest(PluginTestCase):
             item.write()
 
         mf = MediaFile(syspath(item.path))
-        self.assertIsNone(mf.comments)
-        self.assertIsNone(mf.month)
+        assert mf.comments is None
+        assert mf.month is None
         self.assertEqual(mf.title, "Title")
         self.assertEqual(mf.year, 2000)
 
@@ -40,7 +40,7 @@ class ZeroPluginTest(PluginTestCase):
             item.write()
 
         mf = MediaFile(syspath(item.path))
-        self.assertIsNone(mf.comments)
+        assert mf.comments is None
 
     def test_pattern_nomatch(self):
         item = self.add_item_fixture(comments="recorded at place")
@@ -112,7 +112,7 @@ class ZeroPluginTest(PluginTestCase):
 
         self.assertEqual(item["year"], 2016)
         self.assertEqual(mf.year, 2016)
-        self.assertIsNone(mf.comments)
+        assert mf.comments is None
         self.assertEqual(item["comments"], "")
 
     def test_subcommand_update_database_false(self):
@@ -133,7 +133,7 @@ class ZeroPluginTest(PluginTestCase):
         self.assertEqual(item["year"], 2016)
         self.assertEqual(mf.year, 2016)
         self.assertEqual(item["comments"], "test comment")
-        self.assertIsNone(mf.comments)
+        assert mf.comments is None
 
     def test_subcommand_query_include(self):
         item = self.add_item_fixture(
@@ -150,7 +150,7 @@ class ZeroPluginTest(PluginTestCase):
         mf = MediaFile(syspath(item.path))
 
         self.assertEqual(mf.year, 2016)
-        self.assertIsNone(mf.comments)
+        assert mf.comments is None
 
     def test_subcommand_query_exclude(self):
         item = self.add_item_fixture(
@@ -216,7 +216,7 @@ class ZeroPluginTest(PluginTestCase):
             z = ZeroPlugin()
             z.write_event(item, item.path, tags)
 
-        self.assertIsNone(tags["comments"])
+        assert tags["comments"] is None
         self.assertEqual(tags["year"], 2016)
 
     def test_keep_fields_removes_preserved_tags(self):

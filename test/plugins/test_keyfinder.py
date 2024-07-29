@@ -74,4 +74,4 @@ class KeyFinderTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
         self.run_command("keyfinder")
 
         item.load()
-        self.assertIsNone(item["initial_key"])
+        assert item["initial_key"] is None

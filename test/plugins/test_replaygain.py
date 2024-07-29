@@ -129,11 +129,11 @@ class ReplayGainCliTest:
         self._add_album(2)
 
         for item in self.lib.items():
-            self.assertIsNone(item.rg_track_peak)
-            self.assertIsNone(item.rg_track_gain)
+            assert item.rg_track_peak is None
+            assert item.rg_track_gain is None
             mediafile = MediaFile(item.path)
-            self.assertIsNone(mediafile.rg_track_peak)
-            self.assertIsNone(mediafile.rg_track_gain)
+            assert mediafile.rg_track_peak is None
+            assert mediafile.rg_track_gain is None
 
         self.run_command("replaygain")
 
@@ -169,7 +169,7 @@ class ReplayGainCliTest:
         item_rg.load()
         self.assertIsNotNone(item_rg.rg_track_gain)
         self.assertIsNotNone(item_rg.rg_track_peak)
-        self.assertIsNone(item_rg.r128_track_gain)
+        assert item_rg.r128_track_gain is None
 
         item_rg.rg_track_gain += 1.0
         item_rg.rg_track_peak += 1.0
@@ -180,8 +180,8 @@ class ReplayGainCliTest:
         if self.has_r128_support:
             item_r128.load()
             self.assertIsNotNone(item_r128.r128_track_gain)
-            self.assertIsNone(item_r128.rg_track_gain)
-            self.assertIsNone(item_r128.rg_track_peak)
+            assert item_r128.rg_track_gain is None
+            assert item_r128.rg_track_peak is None
 
             item_r128.r128_track_gain += 1.0
             item_r128.store()
@@ -228,20 +228,20 @@ class ReplayGainCliTest:
         self.assertIsNotNone(item_rg.rg_track_gain)
         self.assertIsNotNone(item_rg.rg_track_peak)
         # FIXME: Should the plugin null this field?
-        # self.assertIsNone(item_rg.r128_track_gain)
+        # assert item_rg.r128_track_gain is None
 
         self.assertIsNotNone(item_r128.r128_track_gain)
         # FIXME: Should the plugin null these fields?
-        # self.assertIsNone(item_r128.rg_track_gain)
-        # self.assertIsNone(item_r128.rg_track_peak)
+        # assert item_r128.rg_track_gain is None
+        # assert item_r128.rg_track_peak is None
 
     def test_cli_saves_album_gain_to_file(self):
         self._add_album(2)
 
         for item in self.lib.items():
             mediafile = MediaFile(item.path)
-            self.assertIsNone(mediafile.rg_album_peak)
-            self.assertIsNone(mediafile.rg_album_gain)
+            assert mediafile.rg_album_peak is None
+            assert mediafile.rg_album_gain is None
 
         self.run_command("replaygain", "-a")
 
@@ -274,8 +274,8 @@ class ReplayGainCliTest:
         for item in album.items():
             mediafile = MediaFile(item.path)
             # does not write REPLAYGAIN_* tags
-            self.assertIsNone(mediafile.rg_track_gain)
-            self.assertIsNone(mediafile.rg_album_gain)
+            assert mediafile.rg_track_gain is None
+            assert mediafile.rg_album_gain is None
             # writes R128_* tags
             self.assertIsNotNone(mediafile.r128_track_gain)
             self.assertIsNotNone(mediafile.r128_album_gain)

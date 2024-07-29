@@ -129,7 +129,7 @@ class RemoveTest(ItemInDBTestCase):
     def test_remove_deletes_from_db(self):
         self.i.remove()
         c = self.lib._connection().execute("select * from items")
-        self.assertIsNone(c.fetchone())
+        assert c.fetchone() is None
 
 
 class GetSetTest(BeetsTestCase):
@@ -163,8 +163,8 @@ class GetSetTest(BeetsTestCase):
         self.assertNotIn("flex", i.keys(with_album=False))
         self.assertEqual(i["flex"], "foo")
         self.assertEqual(i.get("flex"), "foo")
-        self.assertIsNone(i.get("flex", with_album=False))
-        self.assertIsNone(i.get("flexx"))
+        assert i.get("flex", with_album=False) is None
+        assert i.get("flexx") is None
 
 
 class DestinationTest(BeetsTestCase):
@@ -964,14 +964,14 @@ class AlbumInfoTest(BeetsTestCase):
         c.execute("select * from albums where album=?", (self.i.album,))
         # Cursor should only return one row.
         self.assertIsNotNone(c.fetchone())
-        self.assertIsNone(c.fetchone())
+        assert c.fetchone() is None
 
     def test_individual_tracks_have_no_albuminfo(self):
         i2 = item()
         i2.album = "aTotallyDifferentAlbum"
         self.lib.add(i2)
         ai = self.lib.get_album(i2)
-        self.assertIsNone(ai)
+        assert ai is None
 
     def test_get_album_by_id(self):
         ai = self.lib.get_album(self.i)

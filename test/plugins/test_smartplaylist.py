@@ -31,8 +31,8 @@ from beetsplug.smartplaylist import SmartPlaylistPlugin
 class SmartPlaylistTest(BeetsTestCase):
     def test_build_queries(self):
         spl = SmartPlaylistPlugin()
-        self.assertIsNone(spl._matched_playlists)
-        self.assertIsNone(spl._unmatched_playlists)
+        assert spl._matched_playlists is None
+        assert spl._unmatched_playlists is None
 
         config["smartplaylist"]["playlists"].set([])
         spl.build_queries()
