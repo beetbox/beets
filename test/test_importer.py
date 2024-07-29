@@ -1343,11 +1343,11 @@ class ResumeImportTest(ImportTestCase):
 
         self.importer.run()
         self.assertEqual(len(self.lib.albums()), 1)
-        self.assertIsNotNone(self.lib.albums("album:'Album 1'").get())
+        assert self.lib.albums("album:'Album 1'").get() is not None
 
         self.importer.run()
         self.assertEqual(len(self.lib.albums()), 2)
-        self.assertIsNotNone(self.lib.albums("album:'Album 2'").get())
+        assert self.lib.albums("album:'Album 2'").get() is not None
 
     @patch("beets.plugins.send")
     def test_resume_singleton(self, plugins_send):
@@ -1366,11 +1366,11 @@ class ResumeImportTest(ImportTestCase):
 
         self.importer.run()
         self.assertEqual(len(self.lib.items()), 1)
-        self.assertIsNotNone(self.lib.items("title:'Track 1'").get())
+        assert self.lib.items("title:'Track 1'").get() is not None
 
         self.importer.run()
         self.assertEqual(len(self.lib.items()), 2)
-        self.assertIsNotNone(self.lib.items("title:'Track 1'").get())
+        assert self.lib.items("title:'Track 1'").get() is not None
 
 
 class IncrementalImportTest(AsIsImporterMixin, ImportTestCase):

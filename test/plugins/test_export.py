@@ -70,7 +70,7 @@ class ExportPluginTest(PluginTestCase):
         head = re.split(",", csv_list[0])
         vals = re.split(",|\r", csv_list[1])
         for index, column in enumerate(head):
-            self.assertIsNotNone(self.test_values.get(column, None))
+            assert self.test_values.get(column, None) is not None
             self.assertEqual(vals[index], self.test_values[column])
 
     def test_xml_output(self):

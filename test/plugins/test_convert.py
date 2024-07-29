@@ -121,7 +121,7 @@ class ImportConvertTest(AsIsImporterMixin, ImportHelper, ConvertTestCase):
         self.run_asis_importer()
 
         item = self.lib.items().get()
-        self.assertIsNotNone(item)
+        assert item is not None
         self.assertIsFile(item.path)
 
     def test_delete_originals(self):
