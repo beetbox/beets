@@ -25,7 +25,7 @@ from beets.dbcore.query import (
     InvalidQueryArgumentValueError,
     _parse_periods,
 )
-from beets.test import _common
+from beets.test.helper import ItemInDBTestCase
 
 
 def _date(string):
@@ -152,7 +152,7 @@ def _parsetime(s):
     return time.mktime(datetime.strptime(s, "%Y-%m-%d %H:%M").timetuple())
 
 
-class DateQueryTest(_common.LibTestCase):
+class DateQueryTest(ItemInDBTestCase):
     def setUp(self):
         super().setUp()
         self.i.added = _parsetime("2013-03-30 22:21")
@@ -187,7 +187,7 @@ class DateQueryTest(_common.LibTestCase):
         self.assertEqual(len(matched), 0)
 
 
-class DateQueryTestRelative(_common.LibTestCase):
+class DateQueryTestRelative(ItemInDBTestCase):
     def setUp(self):
         super().setUp()
 
@@ -233,7 +233,7 @@ class DateQueryTestRelative(_common.LibTestCase):
         self.assertEqual(len(matched), 0)
 
 
-class DateQueryTestRelativeMore(_common.LibTestCase):
+class DateQueryTestRelativeMore(ItemInDBTestCase):
     def setUp(self):
         super().setUp()
         self.i.added = _parsetime(datetime.now().strftime("%Y-%m-%d %H:%M"))
@@ -318,11 +318,3 @@ class DateQueryConstructTest(unittest.TestCase):
     def test_datetime_invalid_separator(self):
         with self.assertRaises(InvalidQueryArgumentValueError):
             DateQuery("added", "2000-01-01x12")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

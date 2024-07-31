@@ -13,22 +13,14 @@
 # included in all copies or substantial portions of the Software.
 
 
-import unittest
-
 from mediafile import MediaFile
 
-from beets.test.helper import TestHelper
+from beets.test.helper import PluginTestCase
 from beets.util import displayable_path
 
 
-class InfoTest(unittest.TestCase, TestHelper):
-    def setUp(self):
-        self.setup_beets()
-        self.load_plugins("info")
-
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
+class InfoTest(PluginTestCase):
+    plugin = "info"
 
     def test_path(self):
         path = self.create_mediafile_fixture()
@@ -124,11 +116,3 @@ class InfoTest(unittest.TestCase, TestHelper):
             "$track. $title - $artist ($length)",
         )
         self.assertEqual("02. tïtle 0 - the artist (0:01)\n", out)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

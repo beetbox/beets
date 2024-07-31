@@ -3,21 +3,21 @@
 
 """Tests for the 'bareasc' plugin."""
 
-import unittest
 
 from beets import logging
-from beets.test.helper import TestHelper, capture_stdout
+from beets.test.helper import PluginTestCase, capture_stdout
 
 
-class BareascPluginTest(unittest.TestCase, TestHelper):
+class BareascPluginTest(PluginTestCase):
     """Test bare ASCII query matching."""
+
+    plugin = "bareasc"
 
     def setUp(self):
         """Set up test environment for bare ASCII query matching."""
-        self.setup_beets()
+        super().setUp()
         self.log = logging.getLogger("beets.web")
         self.config["bareasc"]["prefix"] = "#"
-        self.load_plugins("bareasc")
 
         # Add library elements. Note that self.lib.add overrides any "id=<n>"
         # and assigns the next free id number.
@@ -26,9 +26,6 @@ class BareascPluginTest(unittest.TestCase, TestHelper):
         self.add_item(title="with umlaut", album_id=2, artist="Brüggen")
         self.add_item(title="without umlaut or e", artist="Bruggen")
         self.add_item(title="without umlaut with e", artist="Brueggen")
-
-    def tearDown(self):
-        self.teardown_beets()
 
     def test_bareasc_search(self):
         test_cases = [
@@ -84,12 +81,3 @@ class BareascPluginTest(unittest.TestCase, TestHelper):
             )
 
         self.assertEqual("Antonin Dvorak:: with accents\n", output.getvalue())
-
-
-def suite():
-    """loader."""
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

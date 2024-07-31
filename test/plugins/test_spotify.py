@@ -1,15 +1,13 @@
 """Tests for the 'spotify' plugin"""
 
 import os
-import unittest
 from urllib.parse import parse_qs, urlparse
 
 import responses
 
-from beets import config
 from beets.library import Item
 from beets.test import _common
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 from beetsplug import spotify
 
 
@@ -25,11 +23,10 @@ def _params(url):
     return parse_qs(urlparse(url).query)
 
 
-class SpotifyPluginTest(_common.TestCase, TestHelper):
+class SpotifyPluginTest(BeetsTestCase):
     @responses.activate
     def setUp(self):
-        config.clear()
-        self.setup_beets()
+        super().setUp()
         responses.add(
             responses.POST,
             spotify.SpotifyPlugin.oauth_token_url,
@@ -45,9 +42,6 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
         self.spotify = spotify.SpotifyPlugin()
         opts = ArgumentsMock("list", False)
         self.spotify._parse_opts(opts)
-
-    def tearDown(self):
-        self.teardown_beets()
 
     def test_args(self):
         opts = ArgumentsMock("fail", True)
@@ -182,11 +176,3 @@ class SpotifyPluginTest(_common.TestCase, TestHelper):
         results = self.spotify._match_library_tracks(self.lib, "Happy")
         self.assertEqual(1, len(results))
         self.assertEqual("6NPVjNh8Jhru9xOmyQigds", results[0]["id"])
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

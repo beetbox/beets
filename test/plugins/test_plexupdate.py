@@ -1,12 +1,12 @@
-import unittest
-
 import responses
 
-from beets.test.helper import TestHelper
+from beets.test.helper import PluginTestCase
 from beetsplug.plexupdate import get_music_section, update_plex
 
 
-class PlexUpdateTest(unittest.TestCase, TestHelper):
+class PlexUpdateTest(PluginTestCase):
+    plugin = "plexupdate"
+
     def add_response_get_music_section(self, section_name="Music"):
         """Create response for mocking the get_music_section function."""
 
@@ -73,14 +73,9 @@ class PlexUpdateTest(unittest.TestCase, TestHelper):
         )
 
     def setUp(self):
-        self.setup_beets()
-        self.load_plugins("plexupdate")
+        super().setUp()
 
         self.config["plex"] = {"host": "localhost", "port": 32400}
-
-    def tearDown(self):
-        self.teardown_beets()
-        self.unload_plugins()
 
     @responses.activate
     def test_get_music_section(self):
@@ -135,11 +130,3 @@ class PlexUpdateTest(unittest.TestCase, TestHelper):
             ).status_code,
             200,
         )
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

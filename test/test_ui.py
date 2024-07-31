@@ -31,7 +31,8 @@ from beets import autotag, config, library, plugins, ui, util
 from beets.autotag.match import distance
 from beets.test import _common
 from beets.test.helper import (
-    TestHelper,
+    BeetsTestCase,
+    PluginTestCase,
     capture_stdout,
     control_stdin,
     has_program,
@@ -40,9 +41,9 @@ from beets.ui import commands
 from beets.util import MoveOperation, syspath
 
 
-class ListTest(unittest.TestCase):
+class ListTest(BeetsTestCase):
     def setUp(self):
-        self.lib = library.Library(":memory:")
+        super().setUp()
         self.item = _common.item()
         self.item.path = "xxx/yyy"
         self.lib.add(self.item)
@@ -108,17 +109,13 @@ class ListTest(unittest.TestCase):
         self.assertNotIn("the album", stdout.getvalue())
 
 
-class RemoveTest(_common.TestCase, TestHelper):
+class RemoveTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
         self.io.install()
 
-        self.libdir = os.path.join(self.temp_dir, b"testlibdir")
-        os.mkdir(syspath(self.libdir))
-
         # Copy a file into the library.
-        self.lib = library.Library(":memory:", self.libdir)
         self.item_path = os.path.join(_common.RSRC, b"full.mp3")
         self.i = library.Item.from_path(self.item_path)
         self.lib.add(self.i)
@@ -189,14 +186,11 @@ class RemoveTest(_common.TestCase, TestHelper):
         self.assertEqual(num_existing, 1)
 
 
-class ModifyTest(unittest.TestCase, TestHelper):
+class ModifyTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.album = self.add_album_fixture()
         [self.item] = self.album.items()
-
-    def tearDown(self):
-        self.teardown_beets()
 
     def modify_inp(self, inp, *args):
         with control_stdin(inp):
@@ -403,13 +397,7 @@ class ModifyTest(unittest.TestCase, TestHelper):
         self.assertEqual(mods, {"title": "newTitle"})
 
 
-class WriteTest(unittest.TestCase, TestHelper):
-    def setUp(self):
-        self.setup_beets()
-
-    def tearDown(self):
-        self.teardown_beets()
-
+class WriteTest(BeetsTestCase):
     def write_cmd(self, *args):
         return self.run_with_output("write", *args)
 
@@ -454,14 +442,11 @@ class WriteTest(unittest.TestCase, TestHelper):
         self.assertIn(f"{old_title} -> new title", output)
 
 
-class MoveTest(_common.TestCase):
+class MoveTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
         self.io.install()
-
-        self.libdir = os.path.join(self.temp_dir, b"testlibdir")
-        os.mkdir(syspath(self.libdir))
 
         self.itempath = os.path.join(self.libdir, b"srcfile")
         shutil.copy(
@@ -470,7 +455,6 @@ class MoveTest(_common.TestCase):
         )
 
         # Add a file to the library but don't copy it in yet.
-        self.lib = library.Library(":memory:", self.libdir)
         self.i = library.Item.from_path(self.itempath)
         self.lib.add(self.i)
         self.album = self.lib.add_album([self.i])
@@ -494,28 +478,28 @@ class MoveTest(_common.TestCase):
     def test_move_item(self):
         self._move()
         self.i.load()
-        self.assertIn(b"testlibdir", self.i.path)
+        self.assertIn(b"libdir", self.i.path)
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
 
     def test_copy_item(self):
         self._move(copy=True)
         self.i.load()
-        self.assertIn(b"testlibdir", self.i.path)
+        self.assertIn(b"libdir", self.i.path)
         self.assertExists(self.i.path)
         self.assertExists(self.itempath)
 
     def test_move_album(self):
         self._move(album=True)
         self.i.load()
-        self.assertIn(b"testlibdir", self.i.path)
+        self.assertIn(b"libdir", self.i.path)
         self.assertExists(self.i.path)
         self.assertNotExists(self.itempath)
 
     def test_copy_album(self):
         self._move(copy=True, album=True)
         self.i.load()
-        self.assertIn(b"testlibdir", self.i.path)
+        self.assertIn(b"libdir", self.i.path)
         self.assertExists(self.i.path)
         self.assertExists(self.itempath)
 
@@ -562,16 +546,13 @@ class MoveTest(_common.TestCase):
         self.assertNotExists(self.otherdir)
 
 
-class UpdateTest(_common.TestCase):
+class UpdateTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
         self.io.install()
 
-        self.libdir = os.path.join(self.temp_dir, b"testlibdir")
-
         # Copy a file into the library.
-        self.lib = library.Library(":memory:", self.libdir)
         item_path = os.path.join(_common.RSRC, b"full.mp3")
         item_path_two = os.path.join(_common.RSRC, b"full.flac")
         self.i = library.Item.from_path(item_path)
@@ -763,7 +744,7 @@ class UpdateTest(_common.TestCase):
         self.assertNotEqual(item.lyrics, "new lyrics")
 
 
-class PrintTest(_common.TestCase):
+class PrintTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.io.install()
@@ -802,7 +783,7 @@ class PrintTest(_common.TestCase):
                 del os.environ["LC_CTYPE"]
 
 
-class ImportTest(_common.TestCase):
+class ImportTest(BeetsTestCase):
     def test_quiet_timid_disallowed(self):
         config["import"]["quiet"] = True
         config["import"]["timid"] = True
@@ -844,19 +825,24 @@ class ImportTest(_common.TestCase):
 
 
 @_common.slow_test()
-class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
+class TestPluginTestCase(PluginTestCase):
+    plugin = "test"
+
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
+        config["pluginpath"] = [_common.PLUGINPATH]
+
+
+class ConfigTest(TestPluginTestCase):
+    def setUp(self):
+        super().setUp()
 
         # Don't use the BEETSDIR from `helper`. Instead, we point the home
         # directory there. Some tests will set `BEETSDIR` themselves.
         del os.environ["BEETSDIR"]
-        self._old_home = os.environ.get("HOME")
-        os.environ["HOME"] = os.fsdecode(self.temp_dir)
 
         # Also set APPDATA, the Windows equivalent of setting $HOME.
-        self._old_appdata = os.environ.get("APPDATA")
-        os.environ["APPDATA"] = os.fsdecode(
+        appdata_dir = os.fsdecode(
             os.path.join(self.temp_dir, b"AppData", b"Roaming")
         )
 
@@ -866,8 +852,8 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
 
         # Default user configuration
         if platform.system() == "Windows":
-            self.user_config_dir = os.path.join(
-                self.temp_dir, b"AppData", b"Roaming", b"beets"
+            self.user_config_dir = os.fsencode(
+                os.path.join(appdata_dir, "beets")
             )
         else:
             self.user_config_dir = os.path.join(
@@ -881,21 +867,19 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         # Custom BEETSDIR
         self.beetsdir = os.path.join(self.temp_dir, b"beetsdir")
         os.makedirs(syspath(self.beetsdir))
+        self.env_patcher = patch(
+            "os.environ",
+            {"HOME": os.fsdecode(self.temp_dir), "APPDATA": appdata_dir},
+        )
+        self.env_patcher.start()
 
         self._reset_config()
-        self.load_plugins()
 
     def tearDown(self):
+        self.env_patcher.stop()
         commands.default_commands.pop()
         os.chdir(syspath(self._orig_cwd))
-        if self._old_home is not None:
-            os.environ["HOME"] = self._old_home
-        if self._old_appdata is None:
-            del os.environ["APPDATA"]
-        else:
-            os.environ["APPDATA"] = self._old_appdata
-        self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
 
     def _make_test_cmd(self):
         test_cmd = ui.Subcommand("test", help="test")
@@ -1087,6 +1071,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
 
         self.run_command("--config", cli_config_path, "plugin", lib=None)
         self.assertTrue(plugins.find_plugins()[0].is_test_plugin)
+        self.unload_plugins()
 
     def test_beetsdir_config(self):
         os.environ["BEETSDIR"] = os.fsdecode(self.beetsdir)
@@ -1145,7 +1130,7 @@ class ConfigTest(unittest.TestCase, TestHelper, _common.Assertions):
         )
 
 
-class ShowModelChangeTest(_common.TestCase):
+class ShowModelChangeTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.io.install()
@@ -1197,7 +1182,7 @@ class ShowModelChangeTest(_common.TestCase):
         self.assertIn("bar", out)
 
 
-class ShowChangeTest(_common.TestCase):
+class ShowChangeTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.io.install()
@@ -1358,7 +1343,7 @@ class ShowChangeTest(_common.TestCase):
 
 
 @patch("beets.library.Item.try_filesize", Mock(return_value=987))
-class SummarizeItemsTest(_common.TestCase):
+class SummarizeItemsTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         item = library.Item()
@@ -1395,7 +1380,7 @@ class SummarizeItemsTest(_common.TestCase):
         self.assertEqual(summary, "3 items, G 2, F 1, 4kbps, 32:42, 2.9 KiB")
 
 
-class PathFormatTest(_common.TestCase):
+class PathFormatTest(BeetsTestCase):
     def test_custom_paths_prepend(self):
         default_formats = ui.get_path_formats()
 
@@ -1408,20 +1393,14 @@ class PathFormatTest(_common.TestCase):
 
 
 @_common.slow_test()
-class PluginTest(_common.TestCase, TestHelper):
+class PluginTest(TestPluginTestCase):
     def test_plugin_command_from_pluginpath(self):
-        config["pluginpath"] = [_common.PLUGINPATH]
-        config["plugins"] = ["test"]
         self.run_command("test", lib=None)
 
 
 @_common.slow_test()
-class CompletionTest(_common.TestCase, TestHelper):
+class CompletionTest(TestPluginTestCase):
     def test_completion(self):
-        # Load plugin commands
-        config["pluginpath"] = [_common.PLUGINPATH]
-        config["plugins"] = ["test"]
-
         # Do not load any other bash completion scripts on the system.
         env = dict(os.environ)
         env["BASH_COMPLETION_DIR"] = os.devnull
@@ -1468,22 +1447,17 @@ class CompletionTest(_common.TestCase, TestHelper):
         )
 
 
-class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):
+class CommonOptionsParserCliTest(BeetsTestCase):
     """Test CommonOptionsParser and formatting LibModel formatting on 'list'
     command.
     """
 
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.item = _common.item()
         self.item.path = b"xxx/yyy"
         self.lib.add(self.item)
         self.lib.add_album([self.item])
-        self.load_plugins()
-
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
 
     def test_base(self):
         l = self.run_with_output("ls")
@@ -1551,13 +1525,7 @@ class CommonOptionsParserCliTest(unittest.TestCase, TestHelper):
         # self.assertIn('plugins: ', l)
 
 
-class CommonOptionsParserTest(unittest.TestCase, TestHelper):
-    def setUp(self):
-        self.setup_beets()
-
-    def tearDown(self):
-        self.teardown_beets()
-
+class CommonOptionsParserTest(BeetsTestCase):
     def test_album_option(self):
         parser = ui.CommonOptionsParser()
         self.assertFalse(parser._album_flags)
@@ -1652,7 +1620,7 @@ class CommonOptionsParserTest(unittest.TestCase, TestHelper):
         )
 
 
-class EncodingTest(_common.TestCase):
+class EncodingTest(BeetsTestCase):
     """Tests for the `terminal_encoding` config option and our
     `_in_encoding` and `_out_encoding` utility functions.
     """
@@ -1674,11 +1642,3 @@ class EncodingTest(_common.TestCase):
         with patch("sys.stdin") as stdin:
             stdin.encoding = None
             self.assertEqual(ui._in_encoding(), "utf-8")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

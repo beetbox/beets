@@ -1,13 +1,11 @@
 """Tests for the 'the' plugin"""
 
-import unittest
-
 from beets import config
-from beets.test import _common
+from beets.test.helper import BeetsTestCase
 from beetsplug.the import FORMAT, PATTERN_A, PATTERN_THE, ThePlugin
 
 
-class ThePluginTest(_common.TestCase):
+class ThePluginTest(BeetsTestCase):
     def test_unthe_with_default_patterns(self):
         self.assertEqual(ThePlugin().unthe("", PATTERN_THE), "")
         self.assertEqual(
@@ -61,11 +59,3 @@ class ThePluginTest(_common.TestCase):
         config["the"]["patterns"] = [PATTERN_THE, PATTERN_A]
         config["the"]["format"] = "{1} ({0})"
         self.assertEqual(ThePlugin().the_template_func("The A"), "The (A)")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

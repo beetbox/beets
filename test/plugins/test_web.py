@@ -4,15 +4,15 @@ import json
 import os.path
 import platform
 import shutil
-import unittest
 
 from beets import logging
 from beets.library import Album, Item
 from beets.test import _common
+from beets.test.helper import ItemInDBTestCase
 from beetsplug import web
 
 
-class WebPluginTest(_common.LibTestCase):
+class WebPluginTest(ItemInDBTestCase):
     def setUp(self):
         super().setUp()
         self.log = logging.getLogger("beets.web")
@@ -676,11 +676,3 @@ class WebPluginTest(_common.LibTestCase):
         response = self.client.get("/item/" + str(item_id) + "/file")
 
         self.assertEqual(response.status_code, 200)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

@@ -22,8 +22,14 @@ import unittest
 from mediafile import MediaFile
 
 from beets import util
-from beets.test import _common, helper
-from beets.test.helper import capture_log, control_stdin
+from beets.test import _common
+from beets.test.helper import (
+    AsIsImporterMixin,
+    ImportHelper,
+    PluginTestCase,
+    capture_log,
+    control_stdin,
+)
 from beets.util import bytestring_path, displayable_path
 
 
@@ -33,7 +39,7 @@ def shell_quote(text):
     return shlex.quote(text)
 
 
-class TestHelper(helper.TestHelper):
+class ConvertMixin:
     def tagged_copy_cmd(self, tag):
         """Return a conversion command that copies files and appends
         `tag` to the copy.
@@ -84,13 +90,15 @@ class TestHelper(helper.TestHelper):
             )
 
 
-@_common.slow_test()
-class ImportConvertTest(_common.TestCase, TestHelper):
-    def setUp(self):
-        self.setup_beets(disk=True)  # Converter is threaded
-        self.importer = self.create_importer()
-        self.load_plugins("convert")
+class ConvertTestCase(ConvertMixin, PluginTestCase):
+    db_on_disk = True
+    plugin = "convert"
 
+
+@_common.slow_test()
+class ImportConvertTest(AsIsImporterMixin, ImportHelper, ConvertTestCase):
+    def setUp(self):
+        super().setUp()
         self.config["convert"] = {
             "dest": os.path.join(self.temp_dir, b"convert"),
             "command": self.tagged_copy_cmd("convert"),
@@ -100,12 +108,8 @@ class ImportConvertTest(_common.TestCase, TestHelper):
             "quiet": False,
         }
 
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
-
     def test_import_converted(self):
-        self.importer.run()
+        self.run_asis_importer()
         item = self.lib.items().get()
         self.assertFileTag(item.path, "convert")
 
@@ -114,7 +118,7 @@ class ImportConvertTest(_common.TestCase, TestHelper):
     def test_import_original_on_convert_error(self):
         # `false` exits with non-zero code
         self.config["convert"]["command"] = "false"
-        self.importer.run()
+        self.run_asis_importer()
 
         item = self.lib.items().get()
         self.assertIsNotNone(item)
@@ -122,7 +126,7 @@ class ImportConvertTest(_common.TestCase, TestHelper):
 
     def test_delete_originals(self):
         self.config["convert"]["delete_originals"] = True
-        self.importer.run()
+        self.run_asis_importer()
         for path in self.importer.paths:
             for root, dirnames, filenames in os.walk(path):
                 self.assertEqual(
@@ -163,12 +167,11 @@ class ConvertCommand:
 
 
 @_common.slow_test()
-class ConvertCliTest(_common.TestCase, TestHelper, ConvertCommand):
+class ConvertCliTest(ConvertTestCase, ConvertCommand):
     def setUp(self):
-        self.setup_beets(disk=True)  # Converter is threaded
+        super().setUp()
         self.album = self.add_album_fixture(ext="ogg")
         self.item = self.album.items()[0]
-        self.load_plugins("convert")
 
         self.convert_dest = bytestring_path(
             os.path.join(self.temp_dir, b"convert_dest")
@@ -186,10 +189,6 @@ class ConvertCliTest(_common.TestCase, TestHelper, ConvertCommand):
                 },
             },
         }
-
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
 
     def test_convert(self):
         with control_stdin("y"):
@@ -310,12 +309,11 @@ class ConvertCliTest(_common.TestCase, TestHelper, ConvertCommand):
 
 
 @_common.slow_test()
-class NeverConvertLossyFilesTest(_common.TestCase, TestHelper, ConvertCommand):
+class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
     """Test the effect of the `never_convert_lossy_files` option."""
 
     def setUp(self):
-        self.setup_beets(disk=True)  # Converter is threaded
-        self.load_plugins("convert")
+        super().setUp()
 
         self.convert_dest = os.path.join(self.temp_dir, b"convert_dest")
         self.config["convert"] = {
@@ -327,10 +325,6 @@ class NeverConvertLossyFilesTest(_common.TestCase, TestHelper, ConvertCommand):
                 "mp3": self.tagged_copy_cmd("mp3"),
             },
         }
-
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
 
     def test_transcode_from_lossless(self):
         [item] = self.add_item_fixtures(ext="flac")
@@ -353,11 +347,3 @@ class NeverConvertLossyFilesTest(_common.TestCase, TestHelper, ConvertCommand):
             self.run_convert_path(item.path)
         converted = os.path.join(self.convert_dest, b"converted.ogg")
         self.assertNoFileTag(converted, "mp3")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

@@ -13,20 +13,20 @@
 
 """Tests for the 'limit' plugin."""
 
-import unittest
 
-from beets.test.helper import TestHelper
+from beets.test.helper import PluginTestCase
 
 
-class LimitPluginTest(unittest.TestCase, TestHelper):
+class LimitPluginTest(PluginTestCase):
     """Unit tests for LimitPlugin
 
     Note: query prefix tests do not work correctly with `run_with_output`.
     """
 
+    plugin = "limit"
+
     def setUp(self):
-        self.setup_beets()
-        self.load_plugins("limit")
+        super().setUp()
 
         # we'll create an even number of tracks in the library
         self.num_test_items = 10
@@ -45,10 +45,6 @@ class LimitPluginTest(unittest.TestCase, TestHelper):
         # range filter on the track number
         self.track_head_range = "track:.." + str(self.num_limit)
         self.track_tail_range = "track:" + str(self.num_limit + 1) + ".."
-
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
 
     def test_no_limit(self):
         """Returns all when there is no limit or filter."""
@@ -97,11 +93,3 @@ class LimitPluginTest(unittest.TestCase, TestHelper):
         incorrect_order = self.num_limit_prefix + " " + self.track_tail_range
         result = self.lib.items(incorrect_order)
         self.assertEqual(len(result), 0)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

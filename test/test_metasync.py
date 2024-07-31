@@ -16,12 +16,11 @@
 import os
 import platform
 import time
-import unittest
 from datetime import datetime
 
 from beets.library import Item
 from beets.test import _common
-from beets.test.helper import TestHelper
+from beets.test.helper import PluginTestCase
 
 
 def _parsetime(s):
@@ -32,15 +31,15 @@ def _is_windows():
     return platform.system() == "Windows"
 
 
-class MetaSyncTest(_common.TestCase, TestHelper):
+class MetaSyncTest(PluginTestCase):
+    plugin = "metasync"
     itunes_library_unix = os.path.join(_common.RSRC, b"itunes_library_unix.xml")
     itunes_library_windows = os.path.join(
         _common.RSRC, b"itunes_library_windows.xml"
     )
 
     def setUp(self):
-        self.setup_beets()
-        self.load_plugins("metasync")
+        super().setUp()
 
         self.config["metasync"]["source"] = "itunes"
 
@@ -82,10 +81,6 @@ class MetaSyncTest(_common.TestCase, TestHelper):
 
         for item in items:
             self.lib.add(item)
-
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
 
     def test_load_item_types(self):
         # This test also verifies that the MetaSources have loaded correctly
@@ -132,11 +127,3 @@ class MetaSyncTest(_common.TestCase, TestHelper):
             _parsetime("2014-04-24 09:28:38"),
         )
         self.assertFalse(hasattr(self.lib.items()[1], "itunes_lastskipped"))
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

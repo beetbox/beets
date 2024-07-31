@@ -13,26 +13,17 @@
 
 
 import os
-import unittest
 from unittest.mock import Mock, patch
 
-from beets import library
 from beets.test import _common
-from beets.test.helper import TestHelper
+from beets.test.helper import PluginTestCase
 from beets.util import _fsencoding, bytestring_path
 from beetsplug.ipfs import IPFSPlugin
 
 
 @patch("beets.util.command_output", Mock())
-class IPFSPluginTest(unittest.TestCase, TestHelper):
-    def setUp(self):
-        self.setup_beets()
-        self.load_plugins("ipfs")
-        self.lib = library.Library(":memory:")
-
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
+class IPFSPluginTest(PluginTestCase):
+    plugin = "ipfs"
 
     def test_stored_hashes(self):
         test_album = self.mk_test_album()
@@ -87,11 +78,3 @@ class IPFSPluginTest(unittest.TestCase, TestHelper):
         album.store(inherit=False)
 
         return album
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

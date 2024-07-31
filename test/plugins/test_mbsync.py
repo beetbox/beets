@@ -13,27 +13,20 @@
 # included in all copies or substantial portions of the Software.
 
 
-import unittest
 from unittest.mock import patch
 
 from beets import config
 from beets.library import Item
 from beets.test.helper import (
-    TestHelper,
+    PluginTestCase,
     capture_log,
     generate_album_info,
     generate_track_info,
 )
 
 
-class MbsyncCliTest(unittest.TestCase, TestHelper):
-    def setUp(self):
-        self.setup_beets()
-        self.load_plugins("mbsync")
-
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
+class MbsyncCliTest(PluginTestCase):
+    plugin = "mbsync"
 
     @patch("beets.autotag.mb.album_for_id")
     @patch("beets.autotag.mb.track_for_id")
@@ -194,11 +187,3 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
             self.run_command("mbsync", "-f", "'$title'")
         e = "mbsync: Skipping singleton with invalid mb_trackid: 'old title'"
         self.assertEqual(e, logs[0])
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

@@ -17,19 +17,12 @@
 
 import unittest
 
-from beets.test.helper import TestHelper
+from beets.test.helper import PluginTestCase
 from beetsplug import ftintitle
 
 
-class FtInTitlePluginFunctional(unittest.TestCase, TestHelper):
-    def setUp(self):
-        """Set up configuration"""
-        self.setup_beets()
-        self.load_plugins("ftintitle")
-
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
+class FtInTitlePluginFunctional(PluginTestCase):
+    plugin = "ftintitle"
 
     def _ft_add_item(self, path, artist, title, aartist):
         return self.add_item(
@@ -176,11 +169,3 @@ class FtInTitlePluginTest(unittest.TestCase):
         self.assertTrue(ftintitle.contains_feat("Alice With Bob"))
         self.assertFalse(ftintitle.contains_feat("Alice defeat Bob"))
         self.assertFalse(ftintitle.contains_feat("Aliceft.Bob"))
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

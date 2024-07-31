@@ -14,12 +14,11 @@
 
 
 import os.path
-import unittest
 from shutil import rmtree
 from tempfile import mkdtemp
 from unittest.mock import Mock, call, patch
 
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 from beets.util import bytestring_path, syspath
 from beetsplug.thumbnails import (
     LARGE_DIR,
@@ -30,13 +29,7 @@ from beetsplug.thumbnails import (
 )
 
 
-class ThumbnailsTest(unittest.TestCase, TestHelper):
-    def setUp(self):
-        self.setup_beets()
-
-    def tearDown(self):
-        self.teardown_beets()
-
+class ThumbnailsTest(BeetsTestCase):
     @patch("beetsplug.thumbnails.ArtResizer")
     @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok")
     @patch("beetsplug.thumbnails.os.stat")
@@ -287,11 +280,3 @@ class TestPathlibURI:
 
         # test it won't break if we pass it bytes for a path
         test_uri.uri(b"/")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

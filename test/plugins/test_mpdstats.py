@@ -13,23 +13,16 @@
 # included in all copies or substantial portions of the Software.
 
 
-import unittest
 from unittest.mock import ANY, Mock, call, patch
 
 from beets import util
 from beets.library import Item
-from beets.test.helper import TestHelper
+from beets.test.helper import PluginTestCase
 from beetsplug.mpdstats import MPDStats
 
 
-class MPDStatsTest(unittest.TestCase, TestHelper):
-    def setUp(self):
-        self.setup_beets()
-        self.load_plugins("mpdstats")
-
-    def tearDown(self):
-        self.teardown_beets()
-        self.unload_plugins()
+class MPDStatsTest(PluginTestCase):
+    plugin = "mpdstats"
 
     def test_update_rating(self):
         item = Item(title="title", path="", id=1)
@@ -88,11 +81,3 @@ class MPDStatsTest(unittest.TestCase, TestHelper):
         log.info.assert_has_calls(
             [call("pause"), call("playing {0}", ANY), call("stop")]
         )
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

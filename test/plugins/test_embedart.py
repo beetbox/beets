@@ -24,7 +24,7 @@ from mediafile import MediaFile
 
 from beets import art, config, logging, ui
 from beets.test import _common
-from beets.test.helper import FetchImageHelper, TestHelper
+from beets.test.helper import BeetsTestCase, FetchImageHelper, PluginMixin
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
 
@@ -40,27 +40,22 @@ def require_artresizer_compare(test):
     return wrapper
 
 
-class EmbedartCliTest(TestHelper, FetchImageHelper):
+class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
+    plugin = "embedart"
     small_artpath = os.path.join(_common.RSRC, b"image-2x3.jpg")
     abbey_artpath = os.path.join(_common.RSRC, b"abbey.jpg")
     abbey_similarpath = os.path.join(_common.RSRC, b"abbey-similar.jpg")
     abbey_differentpath = os.path.join(_common.RSRC, b"abbey-different.jpg")
 
     def setUp(self):
-        self.io = _common.DummyIO()
+        super().setUp()  # Converter is threaded
         self.io.install()
-        self.setup_beets()  # Converter is threaded
-        self.load_plugins("embedart")
 
     def _setup_data(self, artpath=None):
         if not artpath:
             artpath = self.small_artpath
         with open(syspath(artpath), "rb") as f:
             self.image_data = f.read()
-
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
 
     def test_embed_art_from_file_with_yes_input(self):
         self._setup_data()
@@ -344,11 +339,3 @@ class ArtSimilarityTest(unittest.TestCase):
     def test_convert_failure(self, mock_extract, mock_subprocess):
         self._mock_popens(mock_extract, mock_subprocess, convert_status=1)
         self.assertIsNone(self._similarity(20))
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

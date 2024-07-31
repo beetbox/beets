@@ -762,11 +762,3 @@ class ResultsIteratorTest(unittest.TestCase):
         self.assertIsNone(
             self.db._fetch(ModelFixture1, dbcore.query.FalseQuery()).get()
         )
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

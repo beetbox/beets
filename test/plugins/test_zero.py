@@ -1,32 +1,18 @@
 """Tests for the 'zero' plugin"""
 
-import unittest
-
 from mediafile import MediaFile
 
 from beets.library import Item
-from beets.test.helper import TestHelper, control_stdin
+from beets.test.helper import PluginTestCase, control_stdin
 from beets.util import syspath
 from beetsplug.zero import ZeroPlugin
 
 
-class ZeroPluginTest(unittest.TestCase, TestHelper):
-    def setUp(self):
-        self.setup_beets()
-        self.config["zero"] = {
-            "fields": [],
-            "keep_fields": [],
-            "update_database": False,
-        }
-
-    def tearDown(self):
-        ZeroPlugin.listeners = None
-        self.teardown_beets()
-        self.unload_plugins()
+class ZeroPluginTest(PluginTestCase):
+    plugin = "zero"
+    preload_plugin = False
 
     def test_no_patterns(self):
-        self.config["zero"]["fields"] = ["comments", "month"]
-
         item = self.add_item_fixture(
             comments="test comment",
             title="Title",
@@ -35,8 +21,8 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         )
         item.write()
 
-        self.load_plugins("zero")
-        item.write()
+        with self.configure_plugin({"fields": ["comments", "month"]}):
+            item.write()
 
         mf = MediaFile(syspath(item.path))
         self.assertIsNone(mf.comments)
@@ -45,76 +31,67 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(mf.year, 2000)
 
     def test_pattern_match(self):
-        self.config["zero"]["fields"] = ["comments"]
-        self.config["zero"]["comments"] = ["encoded by"]
-
         item = self.add_item_fixture(comments="encoded by encoder")
         item.write()
 
-        self.load_plugins("zero")
-        item.write()
+        with self.configure_plugin(
+            {"fields": ["comments"], "comments": ["encoded by"]}
+        ):
+            item.write()
 
         mf = MediaFile(syspath(item.path))
         self.assertIsNone(mf.comments)
 
     def test_pattern_nomatch(self):
-        self.config["zero"]["fields"] = ["comments"]
-        self.config["zero"]["comments"] = ["encoded by"]
-
         item = self.add_item_fixture(comments="recorded at place")
         item.write()
 
-        self.load_plugins("zero")
-        item.write()
+        with self.configure_plugin(
+            {"fields": ["comments"], "comments": ["encoded_by"]}
+        ):
+            item.write()
 
         mf = MediaFile(syspath(item.path))
         self.assertEqual(mf.comments, "recorded at place")
 
     def test_do_not_change_database(self):
-        self.config["zero"]["fields"] = ["year"]
-
         item = self.add_item_fixture(year=2000)
         item.write()
 
-        self.load_plugins("zero")
-        item.write()
+        with self.configure_plugin({"fields": ["year"]}):
+            item.write()
 
         self.assertEqual(item["year"], 2000)
 
     def test_change_database(self):
-        self.config["zero"]["fields"] = ["year"]
-        self.config["zero"]["update_database"] = True
-
         item = self.add_item_fixture(year=2000)
         item.write()
 
-        self.load_plugins("zero")
-        item.write()
+        with self.configure_plugin(
+            {"fields": ["year"], "update_database": True}
+        ):
+            item.write()
 
         self.assertEqual(item["year"], 0)
 
     def test_album_art(self):
-        self.config["zero"]["fields"] = ["images"]
-
         path = self.create_mediafile_fixture(images=["jpg"])
         item = Item.from_path(path)
 
-        self.load_plugins("zero")
-        item.write()
+        with self.configure_plugin({"fields": ["images"]}):
+            item.write()
 
         mf = MediaFile(syspath(path))
         self.assertFalse(mf.images)
 
     def test_auto_false(self):
-        self.config["zero"]["fields"] = ["year"]
-        self.config["zero"]["update_database"] = True
-        self.config["zero"]["auto"] = False
-
         item = self.add_item_fixture(year=2000)
         item.write()
 
-        self.load_plugins("zero")
-        item.write()
+        with self.configure_plugin(
+            {"fields": ["year"], "update_database": True, "auto": False}
+        ):
+            item.write()
 
         self.assertEqual(item["year"], 2000)
 
@@ -124,12 +101,10 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         )
         item.write()
         item_id = item.id
-        self.config["zero"]["fields"] = ["comments"]
-        self.config["zero"]["update_database"] = True
-        self.config["zero"]["auto"] = False
 
-        self.load_plugins("zero")
-        with control_stdin("y"):
+        with self.configure_plugin(
+            {"fields": ["comments"], "update_database": True, "auto": False}
+        ), control_stdin("y"):
             self.run_command("zero")
 
         mf = MediaFile(syspath(item.path))
@@ -147,12 +122,9 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         item.write()
         item_id = item.id
 
-        self.config["zero"]["fields"] = ["comments"]
-        self.config["zero"]["update_database"] = False
-        self.config["zero"]["auto"] = False
-
-        self.load_plugins("zero")
-        with control_stdin("y"):
+        with self.configure_plugin(
+            {"fields": ["comments"], "update_database": False, "auto": False}
+        ), control_stdin("y"):
             self.run_command("zero")
 
         mf = MediaFile(syspath(item.path))
@@ -170,12 +142,10 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
 
         item.write()
 
-        self.config["zero"]["fields"] = ["comments"]
-        self.config["zero"]["update_database"] = False
-        self.config["zero"]["auto"] = False
-
-        self.load_plugins("zero")
-        self.run_command("zero", "year: 2016")
+        with self.configure_plugin(
+            {"fields": ["comments"], "update_database": False, "auto": False}
+        ):
+            self.run_command("zero", "year: 2016")
 
         mf = MediaFile(syspath(item.path))
 
@@ -189,12 +159,10 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
 
         item.write()
 
-        self.config["zero"]["fields"] = ["comments"]
-        self.config["zero"]["update_database"] = False
-        self.config["zero"]["auto"] = False
-
-        self.load_plugins("zero")
-        self.run_command("zero", "year: 0000")
+        with self.configure_plugin(
+            {"fields": ["comments"], "update_database": False, "auto": False}
+        ):
+            self.run_command("zero", "year: 0000")
 
         mf = MediaFile(syspath(item.path))
 
@@ -209,8 +177,7 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
 
         item_id = item.id
 
-        self.load_plugins("zero")
-        with control_stdin("y"):
+        with self.configure_plugin({"fields": []}), control_stdin("y"):
             self.run_command("zero")
 
         item = self.lib.get_item(item_id)
@@ -225,11 +192,10 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(mf.year, 2016)
 
         item_id = item.id
-        self.config["zero"]["fields"] = ["year"]
-        self.config["zero"]["keep_fields"] = ["comments"]
 
-        self.load_plugins("zero")
-        with control_stdin("y"):
+        with self.configure_plugin(
+            {"fields": ["year"], "keep_fields": ["comments"]}
+        ), control_stdin("y"):
             self.run_command("zero")
 
         item = self.lib.get_item(item_id)
@@ -239,18 +205,17 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
 
     def test_keep_fields(self):
         item = self.add_item_fixture(year=2016, comments="test comment")
-        self.config["zero"]["keep_fields"] = ["year"]
-        self.config["zero"]["fields"] = None
-        self.config["zero"]["update_database"] = True
-
         tags = {
             "comments": "test comment",
             "year": 2016,
         }
-        self.load_plugins("zero")
 
-        z = ZeroPlugin()
-        z.write_event(item, item.path, tags)
+        with self.configure_plugin(
+            {"fields": None, "keep_fields": ["year"], "update_database": True}
+        ):
+            z = ZeroPlugin()
+            z.write_event(item, item.path, tags)
+
         self.assertIsNone(tags["comments"])
         self.assertEqual(tags["year"], 2016)
 
@@ -277,12 +242,9 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         )
         item.write()
         item_id = item.id
-        self.config["zero"]["fields"] = ["comments"]
-        self.config["zero"]["update_database"] = True
-        self.config["zero"]["auto"] = False
-
-        self.load_plugins("zero")
-        with control_stdin("n"):
+        with self.configure_plugin(
+            {"fields": ["comments"], "update_database": True, "auto": False}
+        ), control_stdin("n"):
             self.run_command("zero")
 
         mf = MediaFile(syspath(item.path))
@@ -292,11 +254,3 @@ class ZeroPluginTest(unittest.TestCase, TestHelper):
         self.assertEqual(mf.year, 2016)
         self.assertEqual(mf.comments, "test comment")
         self.assertEqual(item["comments"], "test comment")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

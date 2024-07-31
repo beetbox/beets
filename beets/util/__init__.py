@@ -387,7 +387,7 @@ def _fsencoding() -> str:
     return encoding
 
 
-def bytestring_path(path: Bytes_or_String) -> bytes:
+def bytestring_path(path: PathLike) -> bytes:
     """Given a path, which is either a bytes or a unicode, returns a str
     path (ensuring that we never deal with Unicode pathnames). Path should be
     bytes but has safeguards for strings to be converted.
@@ -396,17 +396,21 @@ def bytestring_path(path: Bytes_or_String) -> bytes:
     if isinstance(path, bytes):
         return path
 
+    str_path = str(path)
+
     # On Windows, remove the magic prefix added by `syspath`. This makes
     # ``bytestring_path(syspath(X)) == X``, i.e., we can safely
     # round-trip through `syspath`.
-    if os.path.__name__ == "ntpath" and path.startswith(WINDOWS_MAGIC_PREFIX):
-        path = path[len(WINDOWS_MAGIC_PREFIX) :]
+    if os.path.__name__ == "ntpath" and str_path.startswith(
+        WINDOWS_MAGIC_PREFIX
+    ):
+        str_path = str_path[len(WINDOWS_MAGIC_PREFIX) :]
 
     # Try to encode with default encodings, but fall back to utf-8.
     try:
-        return path.encode(_fsencoding())
+        return str_path.encode(_fsencoding())
     except (UnicodeError, LookupError):
-        return path.encode("utf-8")
+        return str_path.encode("utf-8")
 
 
 PATH_SEP: bytes = bytestring_path(os.sep)
@@ -434,39 +438,27 @@ def displayable_path(
         return path.decode("utf-8", "ignore")
 
 
-def syspath(path: Bytes_or_String, prefix: bool = True) -> Bytes_or_String:
+def syspath(path: PathLike, prefix: bool = True) -> str:
     """Convert a path for use by the operating system. In particular,
     paths on Windows must receive a magic prefix and must be converted
     to Unicode before they are sent to the OS. To disable the magic
     prefix on Windows, set `prefix` to False---but only do this if you
     *really* know what you're doing.
     """
+    str_path = os.fsdecode(path)
     # Don't do anything if we're not on windows
     if os.path.__name__ != "ntpath":
-        return path
-
-    if not isinstance(path, str):
-        # Beets currently represents Windows paths internally with UTF-8
-        # arbitrarily. But earlier versions used MBCS because it is
-        # reported as the FS encoding by Windows. Try both.
-        try:
-            path = path.decode("utf-8")
-        except UnicodeError:
-            # The encoding should always be MBCS, Windows' broken
-            # Unicode representation.
-            assert isinstance(path, bytes)
-            encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
-            path = path.decode(encoding, "replace")
+        return str_path
 
     # Add the magic prefix if it isn't already there.
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
-    if prefix and not path.startswith(WINDOWS_MAGIC_PREFIX):
-        if path.startswith("\\\\"):
+    if prefix and not str_path.startswith(WINDOWS_MAGIC_PREFIX):
+        if str_path.startswith("\\\\"):
             # UNC path. Final path should look like \\?\UNC\...
-            path = "UNC" + path[1:]
-        path = WINDOWS_MAGIC_PREFIX + path
+            str_path = "UNC" + str_path[1:]
+        str_path = WINDOWS_MAGIC_PREFIX + str_path
 
-    return path
+    return str_path
 
 
 def samefile(p1: bytes, p2: bytes) -> bool:

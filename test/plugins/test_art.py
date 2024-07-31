@@ -17,16 +17,20 @@
 
 import os
 import shutil
-import unittest
 from unittest.mock import patch
 
 import confuse
 import responses
 
-from beets import config, importer, library, logging, util
+from beets import config, importer, logging, util
 from beets.autotag import AlbumInfo, AlbumMatch
 from beets.test import _common
-from beets.test.helper import CleanupModulesMixin, FetchImageHelper, capture_log
+from beets.test.helper import (
+    BeetsTestCase,
+    CleanupModulesMixin,
+    FetchImageHelper,
+    capture_log,
+)
 from beets.util import syspath
 from beets.util.artresizer import ArtResizer
 from beetsplug import fetchart
@@ -44,7 +48,7 @@ class Settings:
             setattr(self, k, v)
 
 
-class UseThePlugin(CleanupModulesMixin, _common.TestCase):
+class UseThePlugin(CleanupModulesMixin, BeetsTestCase):
     modules = (fetchart.__name__, ArtResizer.__module__)
 
     def setUp(self):
@@ -731,16 +735,12 @@ class ArtImporterTest(UseThePlugin):
         self.plugin.art_for_album = art_for_album
 
         # Test library.
-        self.libpath = os.path.join(self.temp_dir, b"tmplib.blb")
-        self.libdir = os.path.join(self.temp_dir, b"tmplib")
-        os.mkdir(syspath(self.libdir))
         os.mkdir(syspath(os.path.join(self.libdir, b"album")))
         itempath = os.path.join(self.libdir, b"album", b"test.mp3")
         shutil.copyfile(
             syspath(os.path.join(_common.RSRC, b"full.mp3")),
             syspath(itempath),
         )
-        self.lib = library.Library(self.libpath)
         self.i = _common.item()
         self.i.path = itempath
         self.album = self.lib.add_album([self.i])
@@ -763,7 +763,6 @@ class ArtImporterTest(UseThePlugin):
         self.task.set_choice(AlbumMatch(0, info, {}, set(), set()))
 
     def tearDown(self):
-        self.lib._connection().close()
         super().tearDown()
         self.plugin.art_for_album = self.old_afa
 
@@ -977,14 +976,14 @@ class ArtForAlbumTest(UseThePlugin):
         self._assert_image_operated(self.IMG_348x348, self.RESIZE_OP, True)
 
 
-class DeprecatedConfigTest(_common.TestCase):
+class DeprecatedConfigTest(BeetsTestCase):
     """While refactoring the plugin, the remote_priority option was deprecated,
     and a new codepath should translate its effect. Check that it actually does
     so.
     """
 
     # If we subclassed UseThePlugin, the configuration change would either be
-    # overwritten by _common.TestCase or be set after constructing the
+    # overwritten by BeetsTestCase or be set after constructing the
     # plugin object
     def setUp(self):
         super().setUp()
@@ -995,7 +994,7 @@ class DeprecatedConfigTest(_common.TestCase):
         self.assertEqual(type(self.plugin.sources[-1]), fetchart.FileSystem)
 
 
-class EnforceRatioConfigTest(_common.TestCase):
+class EnforceRatioConfigTest(BeetsTestCase):
     """Throw some data at the regexes."""
 
     def _load_with_config(self, values, should_raise):
@@ -1016,11 +1015,3 @@ class EnforceRatioConfigTest(_common.TestCase):
     def test_percent(self):
         self._load_with_config("0% 0.00% 5.1% 5% 100%".split(), False)
         self._load_with_config("00% 1.234% foo5% 100.1%".split(), True)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")
