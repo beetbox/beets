@@ -32,14 +32,14 @@ import beets.library
 from beets import config, plugins, util
 from beets.test import _common
 from beets.test._common import item
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase, ItemInDBTestCase
 from beets.util import bytestring_path, syspath
 
 # Shortcut to path normalization.
 np = util.normpath
 
 
-class LoadTest(_common.LibTestCase):
+class LoadTest(ItemInDBTestCase):
     def test_load_restores_data_from_db(self):
         original_title = self.i.title
         self.i.title = "something"
@@ -53,7 +53,7 @@ class LoadTest(_common.LibTestCase):
         self.assertNotIn("artist", self.i._dirty)
 
 
-class StoreTest(_common.LibTestCase):
+class StoreTest(ItemInDBTestCase):
     def test_store_changes_database_value(self):
         self.i.year = 1987
         self.i.store()
@@ -94,10 +94,9 @@ class StoreTest(_common.LibTestCase):
         self.assertNotIn("flex1", album.items()[0])
 
 
-class AddTest(_common.TestCase):
+class AddTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
-        self.lib = beets.library.Library(":memory:")
         self.i = item()
 
     def test_item_add_inserts_row(self):
@@ -126,14 +125,14 @@ class AddTest(_common.TestCase):
         self.assertEqual(new_grouping, self.i.grouping)
 
 
-class RemoveTest(_common.LibTestCase):
+class RemoveTest(ItemInDBTestCase):
     def test_remove_deletes_from_db(self):
         self.i.remove()
         c = self.lib._connection().execute("select * from items")
         self.assertIsNone(c.fetchone())
 
 
-class GetSetTest(_common.TestCase):
+class GetSetTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.i = item()
@@ -155,9 +154,8 @@ class GetSetTest(_common.TestCase):
 
     def test_album_fallback(self):
         # integration test of item-album fallback
-        lib = beets.library.Library(":memory:")
-        i = item(lib)
-        album = lib.add_album([i])
+        i = item(self.lib)
+        album = self.lib.add_album([i])
         album["flex"] = "foo"
         album.store()
 
@@ -169,22 +167,16 @@ class GetSetTest(_common.TestCase):
         self.assertIsNone(i.get("flexx"))
 
 
-class DestinationTest(_common.TestCase):
+class DestinationTest(BeetsTestCase):
+    """Confirm tests handle temporary directory path containing '.'"""
+
+    def create_temp_dir(self, **kwargs):
+        kwargs["prefix"] = "."
+        super().create_temp_dir(**kwargs)
+
     def setUp(self):
         super().setUp()
-        # default directory is ~/Music and the only reason why it was switched
-        # to ~/.Music is to confirm that tests works well when path to
-        # temporary directory contains .
-        self.lib = beets.library.Library(":memory:", "~/.Music")
         self.i = item(self.lib)
-
-    def tearDown(self):
-        super().tearDown()
-        self.lib._connection().close()
-
-        # Reset config if it was changed in test cases
-        config.clear()
-        config.read(user=False, defaults=True)
 
     def test_directory_works_with_trailing_slash(self):
         self.lib.directory = b"one/"
@@ -551,7 +543,7 @@ class DestinationTest(_common.TestCase):
         self.assertEqual(self.i.destination(), np("one/foo/two"))
 
 
-class ItemFormattedMappingTest(_common.LibTestCase):
+class ItemFormattedMappingTest(ItemInDBTestCase):
     def test_formatted_item_value(self):
         formatted = self.i.formatted()
         self.assertEqual(formatted["artist"], "the artist")
@@ -624,17 +616,12 @@ class PathFormattingMixin:
         self.assertEqual(actual, dest)
 
 
-class DestinationFunctionTest(_common.TestCase, PathFormattingMixin):
+class DestinationFunctionTest(BeetsTestCase, PathFormattingMixin):
     def setUp(self):
         super().setUp()
-        self.lib = beets.library.Library(":memory:")
         self.lib.directory = b"/base"
         self.lib.path_formats = [("default", "path")]
         self.i = item(self.lib)
-
-    def tearDown(self):
-        super().tearDown()
-        self.lib._connection().close()
 
     def test_upper_case_literal(self):
         self._setf("%upper{foo}")
@@ -733,10 +720,9 @@ class DestinationFunctionTest(_common.TestCase, PathFormattingMixin):
         self._assert_dest(b"/base/Alice & Bob")
 
 
-class DisambiguationTest(_common.TestCase, PathFormattingMixin):
+class DisambiguationTest(BeetsTestCase, PathFormattingMixin):
     def setUp(self):
         super().setUp()
-        self.lib = beets.library.Library(":memory:")
         self.lib.directory = b"/base"
         self.lib.path_formats = [("default", "path")]
 
@@ -749,10 +735,6 @@ class DisambiguationTest(_common.TestCase, PathFormattingMixin):
         self.lib._connection().commit()
 
         self._setf("foo%aunique{albumartist album,year}/$title")
-
-    def tearDown(self):
-        super().tearDown()
-        self.lib._connection().close()
 
     def test_unique_expands_to_disambiguating_year(self):
         self._assert_dest(b"/base/foo [2001]/the title", self.i1)
@@ -822,10 +804,9 @@ class DisambiguationTest(_common.TestCase, PathFormattingMixin):
         self._assert_dest(b"/base/foo/the title", self.i1)
 
 
-class SingletonDisambiguationTest(_common.TestCase, PathFormattingMixin):
+class SingletonDisambiguationTest(BeetsTestCase, PathFormattingMixin):
     def setUp(self):
         super().setUp()
-        self.lib = beets.library.Library(":memory:")
         self.lib.directory = b"/base"
         self.lib.path_formats = [("default", "path")]
 
@@ -838,10 +819,6 @@ class SingletonDisambiguationTest(_common.TestCase, PathFormattingMixin):
         self.lib._connection().commit()
 
         self._setf("foo/$title%sunique{artist title,year}")
-
-    def tearDown(self):
-        super().tearDown()
-        self.lib._connection().close()
 
     def test_sunique_expands_to_disambiguating_year(self):
         self._assert_dest(b"/base/foo/the title [2001]", self.i1)
@@ -907,7 +884,7 @@ class SingletonDisambiguationTest(_common.TestCase, PathFormattingMixin):
         self._assert_dest(b"/base/foo/the title", self.i1)
 
 
-class PluginDestinationTest(_common.TestCase):
+class PluginDestinationTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
@@ -923,7 +900,6 @@ class PluginDestinationTest(_common.TestCase):
         self.old_field_getters = plugins.item_field_getters
         plugins.item_field_getters = field_getters
 
-        self.lib = beets.library.Library(":memory:")
         self.lib.directory = b"/base"
         self.lib.path_formats = [("default", "$artist $foo")]
         self.i = item(self.lib)
@@ -959,10 +935,9 @@ class PluginDestinationTest(_common.TestCase):
         self._assert_dest(b"the artist bar_baz")
 
 
-class AlbumInfoTest(_common.TestCase):
+class AlbumInfoTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
-        self.lib = beets.library.Library(":memory:")
         self.i = item()
         self.lib.add_album((self.i,))
 
@@ -1064,14 +1039,12 @@ class AlbumInfoTest(_common.TestCase):
         self.assertEqual(i.album, ai.album)
 
 
-class ArtDestinationTest(_common.TestCase):
+class ArtDestinationTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         config["art_filename"] = "artimage"
         config["replace"] = {"X": "Y"}
-        self.lib = beets.library.Library(
-            ":memory:", replacements=[(re.compile("X"), "Y")]
-        )
+        self.lib.replacements = [(re.compile("X"), "Y")]
         self.i = item(self.lib)
         self.i.path = self.i.destination()
         self.ai = self.lib.add_album((self.i,))
@@ -1092,10 +1065,9 @@ class ArtDestinationTest(_common.TestCase):
         self.assertIn(b"artYimage", art)
 
 
-class PathStringTest(_common.TestCase):
+class PathStringTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
-        self.lib = beets.library.Library(":memory:")
         self.i = item(self.lib)
 
     def test_item_path_is_bytestring(self):
@@ -1178,7 +1150,7 @@ class PathStringTest(_common.TestCase):
         self.assertTrue(isinstance(alb.artpath, bytes))
 
 
-class MtimeTest(_common.TestCase):
+class MtimeTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.ipath = os.path.join(self.temp_dir, b"testfile.mp3")
@@ -1187,7 +1159,6 @@ class MtimeTest(_common.TestCase):
             syspath(self.ipath),
         )
         self.i = beets.library.Item.from_path(self.ipath)
-        self.lib = beets.library.Library(":memory:")
         self.lib.add(self.i)
 
     def tearDown(self):
@@ -1216,11 +1187,7 @@ class MtimeTest(_common.TestCase):
         self.assertGreaterEqual(self.i.mtime, self._mtime())
 
 
-class ImportTimeTest(_common.TestCase):
-    def setUp(self):
-        super().setUp()
-        self.lib = beets.library.Library(":memory:")
-
+class ImportTimeTest(BeetsTestCase):
     def added(self):
         self.track = item()
         self.album = self.lib.add_album((self.track,))
@@ -1232,7 +1199,7 @@ class ImportTimeTest(_common.TestCase):
         self.assertGreater(self.singleton.added, 0)
 
 
-class TemplateTest(_common.LibTestCase):
+class TemplateTest(ItemInDBTestCase):
     def test_year_formatted_in_template(self):
         self.i.year = 123
         self.i.store()
@@ -1262,7 +1229,7 @@ class TemplateTest(_common.LibTestCase):
         self.assertEqual(f"{item:$tagada}", "togodo")
 
 
-class UnicodePathTest(_common.LibTestCase):
+class UnicodePathTest(ItemInDBTestCase):
     def test_unicode_path(self):
         self.i.path = os.path.join(_common.RSRC, "unicode\u2019d.mp3".encode())
         # If there are any problems with unicode paths, we will raise
@@ -1271,13 +1238,7 @@ class UnicodePathTest(_common.LibTestCase):
         self.i.write()
 
 
-class WriteTest(unittest.TestCase, TestHelper):
-    def setUp(self):
-        self.setup_beets()
-
-    def tearDown(self):
-        self.teardown_beets()
-
+class WriteTest(BeetsTestCase):
     def test_write_nonexistant(self):
         item = self.create_item()
         item.path = b"/path/does/not/exist"
@@ -1359,13 +1320,7 @@ class ItemReadTest(unittest.TestCase):
             item.read("/thisfiledoesnotexist")
 
 
-class FilesizeTest(unittest.TestCase, TestHelper):
-    def setUp(self):
-        self.setup_beets()
-
-    def tearDown(self):
-        self.teardown_beets()
-
+class FilesizeTest(BeetsTestCase):
     def test_filesize(self):
         item = self.add_item_fixture()
         self.assertNotEqual(item.filesize, 0)
@@ -1437,11 +1392,3 @@ class LibraryFieldTypesTest(unittest.TestCase):
         beets.config["format_raw_length"] = True
         self.assertEqual(61.23, t.format(61.23))
         self.assertEqual(3601.23, t.format(3601.23))
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

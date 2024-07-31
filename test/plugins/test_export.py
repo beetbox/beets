@@ -18,22 +18,18 @@
 
 import json
 import re  # used to test csv format
-import unittest
 from xml.etree import ElementTree
 from xml.etree.ElementTree import Element
 
-from beets.test.helper import TestHelper
+from beets.test.helper import PluginTestCase
 
 
-class ExportPluginTest(unittest.TestCase, TestHelper):
+class ExportPluginTest(PluginTestCase):
+    plugin = "export"
+
     def setUp(self):
-        self.setup_beets()
-        self.load_plugins("export")
+        super().setUp()
         self.test_values = {"title": "xtitle", "album": "xalbum"}
-
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
 
     def execute_command(self, format_type, artist):
         query = ",".join(self.test_values.keys())
@@ -88,11 +84,3 @@ class ExportPluginTest(unittest.TestCase, TestHelper):
                 txt = details.text
                 self.assertIn(tag, self.test_values, msg=tag)
                 self.assertEqual(self.test_values[tag], txt, msg=txt)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

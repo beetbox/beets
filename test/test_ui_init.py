@@ -17,16 +17,15 @@
 
 import os
 import shutil
-import unittest
 from copy import deepcopy
 from random import random
 
 from beets import config, ui
 from beets.test import _common
-from beets.test.helper import control_stdin
+from beets.test.helper import BeetsTestCase, ItemInDBTestCase, control_stdin
 
 
-class InputMethodsTest(_common.TestCase):
+class InputMethodsTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.io.install()
@@ -90,10 +89,7 @@ class InputMethodsTest(_common.TestCase):
         self.assertEqual(items, ["1", "3"])
 
 
-class InitTest(_common.LibTestCase):
-    def setUp(self):
-        super().setUp()
-
+class InitTest(ItemInDBTestCase):
     def test_human_bytes(self):
         tests = [
             (0, "0.0 B"),
@@ -129,7 +125,7 @@ class InitTest(_common.LibTestCase):
             self.assertEqual(h, ui.human_seconds(i))
 
 
-class ParentalDirCreation(_common.TestCase):
+class ParentalDirCreation(BeetsTestCase):
     def test_create_yes(self):
         non_exist_path = _common.os.fsdecode(
             os.path.join(self.temp_dir, b"nonexist", str(random()).encode())
@@ -163,11 +159,3 @@ class ParentalDirCreation(_common.TestCase):
                 if lib:
                     lib._close()
                 raise OSError("Parent directories should not be created.")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

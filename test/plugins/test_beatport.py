@@ -15,16 +15,14 @@
 """Tests for the 'beatport' plugin.
 """
 
-import unittest
 from datetime import timedelta
 
-from beets import library
 from beets.test import _common
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 from beetsplug import beatport
 
 
-class BeatportTest(_common.TestCase, TestHelper):
+class BeatportTest(BeetsTestCase):
     def _make_release_response(self):
         """Returns a dict that mimics a response from the beatport API.
 
@@ -450,9 +448,7 @@ class BeatportTest(_common.TestCase, TestHelper):
         return results
 
     def setUp(self):
-        self.setup_beets()
-        self.load_plugins("beatport")
-        self.lib = library.Library(":memory:")
+        super().setUp()
 
         # Set up 'album'.
         response_release = self._make_release_response()
@@ -467,10 +463,6 @@ class BeatportTest(_common.TestCase, TestHelper):
 
         # Set up 'test_tracks'
         self.test_tracks = self.test_album.items()
-
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
 
     def mk_test_album(self):
         items = [_common.item() for _ in range(6)]
@@ -601,7 +593,7 @@ class BeatportTest(_common.TestCase, TestHelper):
             self.assertEqual(track.genre, test_track.genre)
 
 
-class BeatportResponseEmptyTest(_common.TestCase, TestHelper):
+class BeatportResponseEmptyTest(BeetsTestCase):
     def _make_tracks_response(self):
         results = [
             {
@@ -628,9 +620,7 @@ class BeatportResponseEmptyTest(_common.TestCase, TestHelper):
         return results
 
     def setUp(self):
-        self.setup_beets()
-        self.load_plugins("beatport")
-        self.lib = library.Library(":memory:")
+        super().setUp()
 
         # Set up 'tracks'.
         self.response_tracks = self._make_tracks_response()
@@ -638,10 +628,6 @@ class BeatportResponseEmptyTest(_common.TestCase, TestHelper):
 
         # Make alias to be congruent with class `BeatportTest`.
         self.test_tracks = self.response_tracks
-
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
 
     def test_response_tracks_empty(self):
         response_tracks = []
@@ -669,11 +655,3 @@ class BeatportResponseEmptyTest(_common.TestCase, TestHelper):
         self.assertEqual(
             tracks[0].genre, self.test_tracks[0]["subGenres"][0]["name"]
         )
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

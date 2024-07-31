@@ -13,7 +13,6 @@
 # included in all copies or substantial portions of the Software.
 
 
-import unittest
 from os import fsdecode, path, remove
 from shutil import rmtree
 from tempfile import mkdtemp
@@ -23,14 +22,13 @@ from beets import config
 from beets.dbcore import OrQuery
 from beets.dbcore.query import FixedFieldSort, MultipleSort, NullSort
 from beets.library import Album, Item, parse_query_string
-from beets.test import _common
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase, PluginTestCase
 from beets.ui import UserError
 from beets.util import CHAR_REPLACE, bytestring_path, syspath
 from beetsplug.smartplaylist import SmartPlaylistPlugin
 
 
-class SmartPlaylistTest(_common.TestCase):
+class SmartPlaylistTest(BeetsTestCase):
     def test_build_queries(self):
         spl = SmartPlaylistPlugin()
         self.assertIsNone(spl._matched_playlists)
@@ -339,9 +337,11 @@ class SmartPlaylistTest(_common.TestCase):
         self.assertEqual(content, b"http://beets:8337/item/3/file\n")
 
 
-class SmartPlaylistCLITest(_common.TestCase, TestHelper):
+class SmartPlaylistCLITest(PluginTestCase):
+    plugin = "smartplaylist"
+
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
 
         self.item = self.add_item()
         config["smartplaylist"]["playlists"].set(
@@ -351,11 +351,6 @@ class SmartPlaylistCLITest(_common.TestCase, TestHelper):
             ]
         )
         config["smartplaylist"]["playlist_dir"].set(fsdecode(self.temp_dir))
-        self.load_plugins("smartplaylist")
-
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
 
     def test_splupdate(self):
         with self.assertRaises(UserError):
@@ -377,11 +372,3 @@ class SmartPlaylistCLITest(_common.TestCase, TestHelper):
         for name in (b"my_playlist.m3u", b"all.m3u"):
             with open(path.join(self.temp_dir, name), "rb") as f:
                 self.assertEqual(f.read(), self.item.path + b"\n")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

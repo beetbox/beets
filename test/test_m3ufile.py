@@ -148,12 +148,3 @@ class M3UFileTest(unittest.TestCase):
         m3ufile = M3UFile(the_playlist_file)
         m3ufile.load()
         self.assertFalse(m3ufile.extm3u)
-
-
-def suite():
-    """This testsuite's main function."""
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

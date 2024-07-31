@@ -1,16 +1,15 @@
 import os
-import unittest
 from unittest.mock import patch
 
 import yaml
 
 from beets import config, ui
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 
 
-class ConfigCommandTest(unittest.TestCase, TestHelper):
+class ConfigCommandTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         for k in ("VISUAL", "EDITOR"):
             if k in os.environ:
                 del os.environ[k]
@@ -30,9 +29,6 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
         config.clear()
         config["password"].redact = True
         config._materialized = False
-
-    def tearDown(self):
-        self.teardown_beets()
 
     def _run_with_yaml_output(self, *args):
         output = self.run_with_output(*args)
@@ -131,11 +127,3 @@ class ConfigCommandTest(unittest.TestCase, TestHelper):
         with patch("os.execlp") as execlp:
             self.run_command("config", "-e")
         execlp.assert_called_once_with("myeditor", "myeditor", self.config_path)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

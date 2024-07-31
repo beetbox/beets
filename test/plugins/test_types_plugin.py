@@ -14,22 +14,15 @@
 
 
 import time
-import unittest
 from datetime import datetime
 
 from confuse import ConfigValueError
 
-from beets.test.helper import TestHelper
+from beets.test.helper import PluginTestCase
 
 
-class TypesPluginTest(unittest.TestCase, TestHelper):
-    def setUp(self):
-        self.setup_beets()
-        self.load_plugins("types")
-
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
+class TypesPluginTest(PluginTestCase):
+    plugin = "types"
 
     def test_integer_modify_and_query(self):
         self.config["types"] = {"myint": "int"}
@@ -199,11 +192,3 @@ class TypesPluginTest(unittest.TestCase, TestHelper):
 
 def mktime(*args):
     return time.mktime(datetime(*args).timetuple())
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

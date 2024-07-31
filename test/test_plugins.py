@@ -15,7 +15,6 @@
 
 import itertools
 import os
-import shutil
 import unittest
 from unittest.mock import ANY, Mock, patch
 
@@ -32,14 +31,10 @@ from beets.importer import (
 from beets.library import Item
 from beets.plugins import MetadataSourcePlugin
 from beets.test import helper
-from beets.test._common import RSRC
-from beets.test.helper import (
-    AutotagStub,
-    ImportHelper,
-    TerminalImportSessionSetup,
-    TestHelper,
-)
-from beets.util import bytestring_path, displayable_path, syspath
+from beets.test.helper import AutotagStub, ImportHelper
+from beets.test.helper import PluginTestCase as BasePluginTestCase
+from beets.test.helper import TerminalImportMixin
+from beets.util import displayable_path, syspath
 from beets.util.id_extractors import (
     beatport_id_regex,
     deezer_id_regex,
@@ -47,11 +42,10 @@ from beets.util.id_extractors import (
 )
 
 
-class PluginLoaderTestCase(unittest.TestCase, TestHelper):
+class PluginLoaderTestCase(BasePluginTestCase):
     def setup_plugin_loader(self):
         # FIXME the mocking code is horrific, but this is the lowest and
         # earliest level of the plugin mechanism we can hook into.
-        self.load_plugins()
         self._plugin_loader_patch = patch("beets.plugins.load_plugins")
         self._plugin_classes = set()
         load_plugins = self._plugin_loader_patch.start()
@@ -60,21 +54,26 @@ class PluginLoaderTestCase(unittest.TestCase, TestHelper):
             plugins._classes.update(self._plugin_classes)
 
         load_plugins.side_effect = myload
-        self.setup_beets()
 
     def teardown_plugin_loader(self):
         self._plugin_loader_patch.stop()
-        self.unload_plugins()
 
     def register_plugin(self, plugin_class):
         self._plugin_classes.add(plugin_class)
 
     def setUp(self):
         self.setup_plugin_loader()
+        super().setUp()
 
     def tearDown(self):
         self.teardown_plugin_loader()
-        self.teardown_beets()
+        super().tearDown()
+
+
+class PluginImportTestCase(ImportHelper, PluginLoaderTestCase):
+    def setUp(self):
+        super().setUp()
+        self.prepare_album_for_import(2)
 
 
 class ItemTypesTest(PluginLoaderTestCase):
@@ -158,55 +157,15 @@ class ItemTypeConflictTest(PluginLoaderTestCase):
         self.assertIsNotNone(plugins.types(Item))
 
 
-class EventsTest(ImportHelper, PluginLoaderTestCase):
+class EventsTest(PluginImportTestCase):
     def setUp(self):
         super().setUp()
-        self.__create_import_dir(2)
-        config["import"]["pretend"] = True
-
-    def __copy_file(self, dest_path, metadata):
-        # Copy files
-        resource_path = os.path.join(RSRC, b"full.mp3")
-        shutil.copy(syspath(resource_path), syspath(dest_path))
-        medium = MediaFile(dest_path)
-        # Set metadata
-        for attr in metadata:
-            setattr(medium, attr, metadata[attr])
-        medium.save()
-
-    def __create_import_dir(self, count):
-        self.import_dir = os.path.join(self.temp_dir, b"testsrcdir")
-        if os.path.isdir(syspath(self.import_dir)):
-            shutil.rmtree(syspath(self.import_dir))
-
-        self.album_path = os.path.join(self.import_dir, b"album")
-        os.makedirs(self.album_path)
-
-        metadata = {
-            "artist": "Tag Artist",
-            "album": "Tag Album",
-            "albumartist": None,
-            "mb_trackid": None,
-            "mb_albumid": None,
-            "comp": None,
-        }
-        self.file_paths = []
-        for i in range(count):
-            metadata["track"] = i + 1
-            metadata["title"] = "Tag Title Album %d" % (i + 1)
-            track_file = bytestring_path("%02d - track.mp3" % (i + 1))
-            dest_path = os.path.join(self.album_path, track_file)
-            self.__copy_file(dest_path, metadata)
-            self.file_paths.append(dest_path)
 
     def test_import_task_created(self):
-        import_files = [self.import_dir]
-        self._setup_import_session(singletons=False)
-        self.importer.paths = import_files
+        self.importer = self.setup_importer(pretend=True)
 
         with helper.capture_log() as logs:
             self.importer.run()
-        self.unload_plugins()
 
         # Exactly one event should have been imported (for the album).
         # Sentinels do not get emitted.
@@ -219,8 +178,8 @@ class EventsTest(ImportHelper, PluginLoaderTestCase):
                 "Album: {}".format(
                     displayable_path(os.path.join(self.import_dir, b"album"))
                 ),
-                "  {}".format(displayable_path(self.file_paths[0])),
-                "  {}".format(displayable_path(self.file_paths[1])),
+                "  {}".format(displayable_path(self.import_media[0].path)),
+                "  {}".format(displayable_path(self.import_media[1].path)),
             ],
         )
 
@@ -250,13 +209,10 @@ class EventsTest(ImportHelper, PluginLoaderTestCase):
         to_singleton_plugin = ToSingletonPlugin
         self.register_plugin(to_singleton_plugin)
 
-        import_files = [self.import_dir]
-        self._setup_import_session(singletons=False)
-        self.importer.paths = import_files
+        self.importer = self.setup_importer(pretend=True)
 
         with helper.capture_log() as logs:
             self.importer.run()
-        self.unload_plugins()
 
         # Exactly one event should have been imported (for the album).
         # Sentinels do not get emitted.
@@ -266,8 +222,12 @@ class EventsTest(ImportHelper, PluginLoaderTestCase):
         self.assertEqual(
             logs,
             [
-                "Singleton: {}".format(displayable_path(self.file_paths[0])),
-                "Singleton: {}".format(displayable_path(self.file_paths[1])),
+                "Singleton: {}".format(
+                    displayable_path(self.import_media[0].path)
+                ),
+                "Singleton: {}".format(
+                    displayable_path(self.import_media[1].path)
+                ),
             ],
         )
 
@@ -403,13 +363,10 @@ class ListenersTest(PluginLoaderTestCase):
         plugins.send("event9", foo=5)
 
 
-class PromptChoicesTest(
-    TerminalImportSessionSetup, ImportHelper, PluginLoaderTestCase
-):
+class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
     def setUp(self):
         super().setUp()
-        self._create_import_dir(3)
-        self._setup_import_session()
+        self.setup_importer()
         self.matcher = AutotagStub().install()
         # keep track of ui.input_option() calls
         self.input_options_patcher = patch(
@@ -668,11 +625,3 @@ class ParseBeatportIDTest(unittest.TestCase):
         id_url = "https://www.beatport.com/release/album-name/%s" % id_string
         out = MetadataSourcePlugin._get_id("album", id_url, beatport_id_regex)
         self.assertEqual(out, id_string)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

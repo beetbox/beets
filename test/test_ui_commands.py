@@ -18,27 +18,15 @@
 
 import os
 import shutil
-import unittest
 
 from beets import library, ui
 from beets.test import _common
+from beets.test.helper import BeetsTestCase, ItemInDBTestCase
 from beets.ui import commands
 from beets.util import syspath
 
 
-class QueryTest(_common.TestCase):
-    def setUp(self):
-        super().setUp()
-
-        self.libdir = os.path.join(self.temp_dir, b"testlibdir")
-        os.mkdir(syspath(self.libdir))
-
-        # Add a file to the library but don't copy it in yet.
-        self.lib = library.Library(":memory:", self.libdir)
-
-        # Alternate destination directory.
-        # self.otherdir = os.path.join(self.temp_dir, b"testotherdir")
-
+class QueryTest(BeetsTestCase):
     def add_item(self, filename=b"srcfile", templatefile=b"full.mp3"):
         itempath = os.path.join(self.libdir, filename)
         shutil.copy(
@@ -87,7 +75,7 @@ class QueryTest(_common.TestCase):
         self.check_do_query(0, 2, album=True, also_items=False)
 
 
-class FieldsTest(_common.LibTestCase):
+class FieldsTest(ItemInDBTestCase):
     def setUp(self):
         super().setUp()
 
@@ -115,11 +103,3 @@ class FieldsTest(_common.LibTestCase):
 
         self.assertEqual(len(items), 0)
         self.assertEqual(len(albums), 0)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

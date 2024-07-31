@@ -15,17 +15,15 @@
 """Tests for discogs plugin.
 """
 
-import unittest
 
 from beets import config
-from beets.test import _common
 from beets.test._common import Bag
-from beets.test.helper import capture_log
+from beets.test.helper import BeetsTestCase, capture_log
 from beets.util.id_extractors import extract_discogs_id_regex
 from beetsplug.discogs import DiscogsPlugin
 
 
-class DGAlbumInfoTest(_common.TestCase):
+class DGAlbumInfoTest(BeetsTestCase):
     def _make_release(self, tracks=None):
         """Returns a Bag that mimics a discogs_client.Release. The list
         of elements on the returned Bag is incomplete, including just
@@ -425,11 +423,3 @@ class DGAlbumInfoTest(_common.TestCase):
         d = DiscogsPlugin().get_album_info(release)
         self.assertEqual(d.genre, "GENRE1, GENRE2")
         self.assertEqual(d.style, None)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

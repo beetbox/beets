@@ -20,26 +20,22 @@ import sys
 import unittest
 from unittest.mock import ANY, patch
 
-from beets.test.helper import CleanupModulesMixin, TestHelper, control_stdin
+from beets.test.helper import CleanupModulesMixin, PluginTestCase, control_stdin
 from beets.ui import UserError
 from beets.util import open_anything
 from beetsplug.play import PlayPlugin
 
 
 @patch("beetsplug.play.util.interactive_open")
-class PlayPluginTest(CleanupModulesMixin, unittest.TestCase, TestHelper):
+class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
     modules = (PlayPlugin.__module__,)
+    plugin = "play"
 
     def setUp(self):
-        self.setup_beets()
-        self.load_plugins("play")
+        super().setUp()
         self.item = self.add_item(album="a nice älbum", title="aNiceTitle")
         self.lib.add_album([self.item])
         self.config["play"]["command"] = "echo"
-
-    def tearDown(self):
-        self.teardown_beets()
-        self.unload_plugins()
 
     def run_and_assert(
         self,
@@ -145,11 +141,3 @@ class PlayPluginTest(CleanupModulesMixin, unittest.TestCase, TestHelper):
 
         with self.assertRaises(UserError):
             self.run_command("play", "title:aNiceTitle")
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

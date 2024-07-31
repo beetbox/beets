@@ -15,22 +15,18 @@
 """Tests for the 'lastgenre' plugin."""
 
 
-import unittest
 from unittest.mock import Mock
 
 from beets import config
 from beets.test import _common
-from beets.test.helper import TestHelper
+from beets.test.helper import BeetsTestCase
 from beetsplug import lastgenre
 
 
-class LastGenrePluginTest(unittest.TestCase, TestHelper):
+class LastGenrePluginTest(BeetsTestCase):
     def setUp(self):
-        self.setup_beets()
+        super().setUp()
         self.plugin = lastgenre.LastGenrePlugin()
-
-    def tearDown(self):
-        self.teardown_beets()
 
     def _setup_config(
         self, whitelist=False, canonical=False, count=1, prefer_specific=False
@@ -233,11 +229,3 @@ class LastGenrePluginTest(unittest.TestCase, TestHelper):
         tags = ("electronic", "ambient", "chillout")
         res = self.plugin._sort_by_depth(tags)
         self.assertEqual(res, ["ambient", "electronic"])
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

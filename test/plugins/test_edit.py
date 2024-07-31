@@ -13,7 +13,6 @@
 # included in all copies or substantial portions of the Software.
 
 import codecs
-import unittest
 from unittest.mock import patch
 
 from beets.dbcore.query import TrueQuery
@@ -21,12 +20,12 @@ from beets.library import Item
 from beets.test import _common
 from beets.test.helper import (
     AutotagStub,
-    ImportHelper,
-    TerminalImportSessionSetup,
-    TestHelper,
+    BeetsTestCase,
+    ImportTestCase,
+    PluginMixin,
+    TerminalImportMixin,
     control_stdin,
 )
-from beetsplug.edit import EditPlugin
 
 
 class ModifyFileMocker:
@@ -73,8 +72,10 @@ class ModifyFileMocker:
             f.write(contents)
 
 
-class EditMixin:
+class EditMixin(PluginMixin):
     """Helper containing some common functionality used for the Edit tests."""
+
+    plugin = "edit"
 
     def assertItemFieldsModified(  # noqa
         self, library_items, items, fields=[], allowed=["path"]
@@ -115,7 +116,7 @@ class EditMixin:
 
 @_common.slow_test()
 @patch("beets.library.Item.write")
-class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
+class EditCommandTest(EditMixin, BeetsTestCase):
     """Black box tests for `beetsplug.edit`. Command line interaction is
     simulated using `test.helper.control_stdin()`, and yaml editing via an
     external editor is simulated using `ModifyFileMocker`.
@@ -125,19 +126,13 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
     TRACK_COUNT = 10
 
     def setUp(self):
-        self.setup_beets()
-        self.load_plugins("edit")
+        super().setUp()
         # Add an album, storing the original fields for comparison.
         self.album = self.add_album_fixture(track_count=self.TRACK_COUNT)
         self.album_orig = {f: self.album[f] for f in self.album._fields}
         self.items_orig = [
             {f: item[f] for f in item._fields} for item in self.album.items()
         ]
-
-    def tearDown(self):
-        EditPlugin.listeners = None
-        self.teardown_beets()
-        self.unload_plugins()
 
     def assertCounts(  # noqa
         self,
@@ -322,41 +317,39 @@ class EditCommandTest(unittest.TestCase, TestHelper, EditMixin):
 
 
 @_common.slow_test()
-class EditDuringImporterTest(
-    TerminalImportSessionSetup,
-    unittest.TestCase,
-    ImportHelper,
-    TestHelper,
-    EditMixin,
+class EditDuringImporterTestCase(
+    EditMixin, TerminalImportMixin, ImportTestCase
 ):
     """TODO"""
 
     IGNORED = ["added", "album_id", "id", "mtime", "path"]
 
     def setUp(self):
-        self.setup_beets()
-        self.load_plugins("edit")
+        super().setUp()
         # Create some mediafiles, and store them for comparison.
-        self._create_import_dir(3)
-        self.items_orig = [Item.from_path(f.path) for f in self.media_files]
+        self.prepare_album_for_import(1)
+        self.items_orig = [Item.from_path(f.path) for f in self.import_media]
         self.matcher = AutotagStub().install()
         self.matcher.matching = AutotagStub.GOOD
-        self.config["import"]["timid"] = True
 
     def tearDown(self):
-        EditPlugin.listeners = None
-        self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
         self.matcher.restore()
+
+
+@_common.slow_test()
+class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
+    def setUp(self):
+        super().setUp()
+        self.importer = self.setup_importer()
 
     def test_edit_apply_asis(self):
         """Edit the album field for all items in the library, apply changes,
         using the original item tags.
         """
-        self._setup_import_session()
         # Edit track titles.
         self.run_mocked_interpreter(
-            {"replacements": {"Tag Title": "Edited Title"}},
+            {"replacements": {"Tag Track": "Edited Track"}},
             # eDit, Apply changes.
             ["d", "a"],
         )
@@ -374,7 +367,7 @@ class EditDuringImporterTest(
             ],
         )
         self.assertTrue(
-            all("Edited Title" in i.title for i in self.lib.items())
+            all("Edited Track" in i.title for i in self.lib.items())
         )
 
         # Ensure album is *not* fetched from a candidate.
@@ -384,10 +377,9 @@ class EditDuringImporterTest(
         """Edit the album field for all items in the library, discard changes,
         using the original item tags.
         """
-        self._setup_import_session()
         # Edit track titles.
         self.run_mocked_interpreter(
-            {"replacements": {"Tag Title": "Edited Title"}},
+            {"replacements": {"Tag Track": "Edited Track"}},
             # eDit, Cancel, Use as-is.
             ["d", "c", "u"],
         )
@@ -399,7 +391,7 @@ class EditDuringImporterTest(
             [],
             self.IGNORED + ["albumartist", "mb_albumartistid"],
         )
-        self.assertTrue(all("Tag Title" in i.title for i in self.lib.items()))
+        self.assertTrue(all("Tag Track" in i.title for i in self.lib.items()))
 
         # Ensure album is *not* fetched from a candidate.
         self.assertEqual(self.lib.albums()[0].mb_albumid, "")
@@ -408,10 +400,9 @@ class EditDuringImporterTest(
         """Edit the album field for all items in the library, apply changes,
         using a candidate.
         """
-        self._setup_import_session()
         # Edit track titles.
         self.run_mocked_interpreter(
-            {"replacements": {"Applied Title": "Edited Title"}},
+            {"replacements": {"Applied Track": "Edited Track"}},
             # edit Candidates, 1, Apply changes.
             ["c", "1", "a"],
         )
@@ -419,7 +410,7 @@ class EditDuringImporterTest(
         # Check that 'title' field is modified, and other fields come from
         # the candidate.
         self.assertTrue(
-            all("Edited Title " in i.title for i in self.lib.items())
+            all("Edited Track " in i.title for i in self.lib.items())
         )
         self.assertTrue(all("match " in i.mb_trackid for i in self.lib.items()))
 
@@ -430,7 +421,6 @@ class EditDuringImporterTest(
         """Import the album using a candidate, then retag and edit and apply
         changes.
         """
-        self._setup_import_session()
         self.run_mocked_interpreter(
             {},
             # 1, Apply changes.
@@ -442,7 +432,7 @@ class EditDuringImporterTest(
         self.importer.paths = []
         self.importer.query = TrueQuery()
         self.run_mocked_interpreter(
-            {"replacements": {"Applied Title": "Edited Title"}},
+            {"replacements": {"Applied Track": "Edited Track"}},
             # eDit, Apply changes.
             ["d", "a"],
         )
@@ -450,7 +440,7 @@ class EditDuringImporterTest(
         # Check that 'title' field is modified, and other fields come from
         # the candidate.
         self.assertTrue(
-            all("Edited Title " in i.title for i in self.lib.items())
+            all("Edited Track " in i.title for i in self.lib.items())
         )
         self.assertTrue(all("match " in i.mb_trackid for i in self.lib.items()))
 
@@ -461,10 +451,9 @@ class EditDuringImporterTest(
         """Edit the album field for all items in the library, discard changes,
         using a candidate.
         """
-        self._setup_import_session()
         # Edit track titles.
         self.run_mocked_interpreter(
-            {"replacements": {"Applied Title": "Edited Title"}},
+            {"replacements": {"Applied Track": "Edited Track"}},
             # edit Candidates, 1, Apply changes.
             ["c", "1", "a"],
         )
@@ -472,21 +461,45 @@ class EditDuringImporterTest(
         # Check that 'title' field is modified, and other fields come from
         # the candidate.
         self.assertTrue(
-            all("Edited Title " in i.title for i in self.lib.items())
+            all("Edited Track " in i.title for i in self.lib.items())
         )
         self.assertTrue(all("match " in i.mb_trackid for i in self.lib.items()))
 
         # Ensure album is fetched from a candidate.
         self.assertIn("albumid", self.lib.albums()[0].mb_albumid)
 
+    def test_edit_apply_candidate_singleton(self):
+        """Edit the album field for all items in the library, apply changes,
+        using a candidate and singleton mode.
+        """
+        # Edit track titles.
+        self.run_mocked_interpreter(
+            {"replacements": {"Applied Track": "Edited Track"}},
+            # edit Candidates, 1, Apply changes, aBort.
+            ["c", "1", "a", "b"],
+        )
+
+        # Check that 'title' field is modified, and other fields come from
+        # the candidate.
+        self.assertTrue(
+            all("Edited Track " in i.title for i in self.lib.items())
+        )
+        self.assertTrue(all("match " in i.mb_trackid for i in self.lib.items()))
+
+
+@_common.slow_test()
+class EditDuringImporterSingletonTest(EditDuringImporterTestCase):
+    def setUp(self):
+        super().setUp()
+        self.importer = self.setup_singleton_importer()
+
     def test_edit_apply_asis_singleton(self):
         """Edit the album field for all items in the library, apply changes,
         using the original item tags and singleton mode.
         """
-        self._setup_import_session(singletons=True)
         # Edit track titles.
         self.run_mocked_interpreter(
-            {"replacements": {"Tag Title": "Edited Title"}},
+            {"replacements": {"Tag Track": "Edited Track"}},
             # eDit, Apply changes, aBort.
             ["d", "a", "b"],
         )
@@ -499,32 +512,5 @@ class EditDuringImporterTest(
             self.IGNORED + ["albumartist", "mb_albumartistid"],
         )
         self.assertTrue(
-            all("Edited Title" in i.title for i in self.lib.items())
+            all("Edited Track" in i.title for i in self.lib.items())
         )
-
-    def test_edit_apply_candidate_singleton(self):
-        """Edit the album field for all items in the library, apply changes,
-        using a candidate and singleton mode.
-        """
-        self._setup_import_session()
-        # Edit track titles.
-        self.run_mocked_interpreter(
-            {"replacements": {"Applied Title": "Edited Title"}},
-            # edit Candidates, 1, Apply changes, aBort.
-            ["c", "1", "a", "b"],
-        )
-
-        # Check that 'title' field is modified, and other fields come from
-        # the candidate.
-        self.assertTrue(
-            all("Edited Title " in i.title for i in self.lib.items())
-        )
-        self.assertTrue(all("match " in i.mb_trackid for i in self.lib.items()))
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

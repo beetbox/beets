@@ -32,7 +32,7 @@ from unittest import mock
 import confuse
 import yaml
 
-from beets.test.helper import TestHelper
+from beets.test.helper import PluginTestCase
 from beets.util import bluelet
 from beetsplug import bpd
 
@@ -277,10 +277,12 @@ def start_server(args, assigned_port, listener_patch):
     beets.ui.main(args)
 
 
-class BPDTestHelper(unittest.TestCase, TestHelper):
+class BPDTestHelper(PluginTestCase):
+    db_on_disk = True
+    plugin = "bpd"
+
     def setUp(self):
-        self.setup_beets(disk=True)
-        self.load_plugins("bpd")
+        super().setUp()
         self.item1 = self.add_item(
             title="Track One Title",
             track=1,
@@ -294,10 +296,6 @@ class BPDTestHelper(unittest.TestCase, TestHelper):
             artist="Artist Name",
         )
         self.lib.add_album([self.item1, self.item2])
-
-    def tearDown(self):
-        self.teardown_beets()
-        self.unload_plugins()
 
     @contextmanager
     def run_bpd(
@@ -1195,11 +1193,3 @@ class BPDPeersTest(BPDTestHelper):
         },
         expectedFailure=True,
     )
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

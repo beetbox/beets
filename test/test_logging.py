@@ -3,17 +3,21 @@
 import logging as log
 import sys
 import threading
-import unittest
 from io import StringIO
 
 import beets.logging as blog
 import beetsplug
 from beets import plugins, ui
 from beets.test import _common, helper
-from beets.test._common import TestCase
+from beets.test.helper import (
+    AsIsImporterMixin,
+    BeetsTestCase,
+    ImportTestCase,
+    PluginMixin,
+)
 
 
-class LoggingTest(TestCase):
+class LoggingTest(BeetsTestCase):
     def test_logging_management(self):
         l1 = log.getLogger("foo123")
         l2 = blog.getLogger("foo123")
@@ -47,7 +51,9 @@ class LoggingTest(TestCase):
         self.assertTrue(stream.getvalue(), "foo oof baz")
 
 
-class LoggingLevelTest(unittest.TestCase, helper.TestHelper):
+class LoggingLevelTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
+    plugin = "dummy"
+
     class DummyModule:
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):
@@ -74,16 +80,7 @@ class LoggingLevelTest(unittest.TestCase, helper.TestHelper):
     def setUp(self):
         sys.modules["beetsplug.dummy"] = self.DummyModule
         beetsplug.dummy = self.DummyModule
-        self.setup_beets()
-        self.load_plugins("dummy")
-
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
-        del beetsplug.dummy
-        sys.modules.pop("beetsplug.dummy")
-        self.DummyModule.DummyPlugin.listeners = None
-        self.DummyModule.DummyPlugin._raw_listeners = None
+        super().setUp()
 
     def test_command_level0(self):
         self.config["verbose"] = 0
@@ -136,8 +133,7 @@ class LoggingLevelTest(unittest.TestCase, helper.TestHelper):
     def test_import_stage_level0(self):
         self.config["verbose"] = 0
         with helper.capture_log() as logs:
-            importer = self.create_importer()
-            importer.run()
+            self.run_asis_importer()
         self.assertIn("dummy: warning import_stage", logs)
         self.assertNotIn("dummy: info import_stage", logs)
         self.assertNotIn("dummy: debug import_stage", logs)
@@ -145,8 +141,7 @@ class LoggingLevelTest(unittest.TestCase, helper.TestHelper):
     def test_import_stage_level1(self):
         self.config["verbose"] = 1
         with helper.capture_log() as logs:
-            importer = self.create_importer()
-            importer.run()
+            self.run_asis_importer()
         self.assertIn("dummy: warning import_stage", logs)
         self.assertIn("dummy: info import_stage", logs)
         self.assertNotIn("dummy: debug import_stage", logs)
@@ -154,19 +149,20 @@ class LoggingLevelTest(unittest.TestCase, helper.TestHelper):
     def test_import_stage_level2(self):
         self.config["verbose"] = 2
         with helper.capture_log() as logs:
-            importer = self.create_importer()
-            importer.run()
+            self.run_asis_importer()
         self.assertIn("dummy: warning import_stage", logs)
         self.assertIn("dummy: info import_stage", logs)
         self.assertIn("dummy: debug import_stage", logs)
 
 
 @_common.slow_test()
-class ConcurrentEventsTest(TestCase, helper.TestHelper):
+class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
     """Similar to LoggingLevelTest but lower-level and focused on multiple
     events interaction. Since this is a bit heavy we don't do it in
     LoggingLevelTest.
     """
+
+    db_on_disk = True
 
     class DummyPlugin(plugins.BeetsPlugin):
         def __init__(self, test_case):
@@ -203,12 +199,6 @@ class ConcurrentEventsTest(TestCase, helper.TestHelper):
                 self.t2_step = 2
             except Exception as e:
                 self.exc = e
-
-    def setUp(self):
-        self.setup_beets(disk=True)
-
-    def tearDown(self):
-        self.teardown_beets()
 
     def test_concurrent_events(self):
         dp = self.DummyPlugin(self)
@@ -269,28 +259,17 @@ class ConcurrentEventsTest(TestCase, helper.TestHelper):
 
         blog.getLogger("beets").set_global_level(blog.WARNING)
         with helper.capture_log() as logs:
-            importer = self.create_importer()
-            importer.run()
+            self.run_asis_importer()
         self.assertEqual(logs, [])
 
         blog.getLogger("beets").set_global_level(blog.INFO)
         with helper.capture_log() as logs:
-            importer = self.create_importer()
-            importer.run()
+            self.run_asis_importer()
         for l in logs:
             self.assertIn("import", l)
             self.assertIn("album", l)
 
         blog.getLogger("beets").set_global_level(blog.DEBUG)
         with helper.capture_log() as logs:
-            importer = self.create_importer()
-            importer.run()
+            self.run_asis_importer()
         self.assertIn("Sending event: database_change", logs)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

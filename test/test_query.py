@@ -29,8 +29,9 @@ from beets.dbcore.query import (
     NoneQuery,
     ParsingError,
 )
-from beets.library import Item, Library
-from beets.test import _common, helper
+from beets.library import Item
+from beets.test import _common
+from beets.test.helper import BeetsTestCase, ItemInDBTestCase
 from beets.util import syspath
 
 # Because the absolute path begins with something like C:, we
@@ -38,7 +39,13 @@ from beets.util import syspath
 WIN32_NO_IMPLICIT_PATHS = "Implicit paths are not supported on Windows"
 
 
-class TestHelper(helper.TestHelper):
+class AssertsMixin:
+    def assert_items_matched(self, results, titles):
+        self.assertEqual({i.title for i in results}, set(titles))
+
+    def assert_albums_matched(self, results, albums):
+        self.assertEqual({a.album for a in results}, set(albums))
+
     def assertInResult(self, item, results):  # noqa
         result_ids = [i.id for i in results]
         self.assertIn(item.id, result_ids)
@@ -48,7 +55,7 @@ class TestHelper(helper.TestHelper):
         self.assertNotIn(item.id, result_ids)
 
 
-class AnyFieldQueryTest(_common.LibTestCase):
+class AnyFieldQueryTest(ItemInDBTestCase):
     def test_no_restriction(self):
         q = dbcore.query.AnyFieldQuery(
             "title",
@@ -82,20 +89,11 @@ class AnyFieldQueryTest(_common.LibTestCase):
         self.assertNotEqual(q1, q2)
 
 
-class AssertsMixin:
-    def assert_items_matched(self, results, titles):
-        self.assertEqual({i.title for i in results}, set(titles))
-
-    def assert_albums_matched(self, results, albums):
-        self.assertEqual({a.album for a in results}, set(albums))
-
-
 # A test case class providing a library with some dummy data and some
 # assertions involving that data.
-class DummyDataTestCase(_common.TestCase, AssertsMixin):
+class DummyDataTestCase(BeetsTestCase, AssertsMixin):
     def setUp(self):
         super().setUp()
-        self.lib = beets.library.Library(":memory:")
         items = [_common.item() for _ in range(3)]
         items[0].title = "foo bar"
         items[0].artist = "one"
@@ -418,7 +416,7 @@ class GetTest(DummyDataTestCase):
         self.assertIsInstance(raised.exception, ParsingError)
 
 
-class MatchTest(_common.TestCase):
+class MatchTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
         self.item = _common.item()
@@ -487,7 +485,7 @@ class MatchTest(_common.TestCase):
         self.assertNotEqual(q3, q4)
 
 
-class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
+class PathQueryTest(ItemInDBTestCase, AssertsMixin):
     def setUp(self):
         super().setUp()
 
@@ -725,11 +723,9 @@ class PathQueryTest(_common.LibTestCase, TestHelper, AssertsMixin):
             os.chdir(cur_dir)
 
 
-class IntQueryTest(unittest.TestCase, TestHelper):
-    def setUp(self):
-        self.lib = Library(":memory:")
-
+class IntQueryTest(BeetsTestCase):
     def tearDown(self):
+        super().tearDown()
         Item._types = {}
 
     def test_exact_value_match(self):
@@ -763,12 +759,13 @@ class IntQueryTest(unittest.TestCase, TestHelper):
         self.assertIsNone(matched)
 
 
-class BoolQueryTest(unittest.TestCase, TestHelper):
+class BoolQueryTest(BeetsTestCase, AssertsMixin):
     def setUp(self):
-        self.lib = Library(":memory:")
+        super().setUp()
         Item._types = {"flexbool": types.Boolean()}
 
     def tearDown(self):
+        super().tearDown()
         Item._types = {}
 
     def test_parse_true(self):
@@ -833,10 +830,7 @@ class DefaultSearchFieldsTest(DummyDataTestCase):
         self.assert_items_matched(items, [])
 
 
-class NoneQueryTest(unittest.TestCase, TestHelper):
-    def setUp(self):
-        self.lib = Library(":memory:")
-
+class NoneQueryTest(BeetsTestCase, AssertsMixin):
     def test_match_singletons(self):
         singleton = self.add_item()
         album_item = self.add_album().items().get()
@@ -871,7 +865,7 @@ class NoneQueryTest(unittest.TestCase, TestHelper):
         self.assertInResult(item, matched)
 
 
-class NotQueryMatchTest(_common.TestCase):
+class NotQueryMatchTest(BeetsTestCase):
     """Test `query.NotQuery` matching against a single item, using the same
     cases and assertions as on `MatchTest`, plus assertion on the negated
     queries (ie. assertTrue(q) -> assertFalse(NotQuery(q))).
@@ -1129,12 +1123,11 @@ class NotQueryTest(DummyDataTestCase):
                 pass
 
 
-class RelatedQueriesTest(_common.TestCase, AssertsMixin):
+class RelatedQueriesTest(BeetsTestCase, AssertsMixin):
     """Test album-level queries with track-level filters and vice-versa."""
 
     def setUp(self):
         super().setUp()
-        self.lib = beets.library.Library(":memory:")
 
         albums = []
         for album_idx in range(1, 3):
@@ -1168,11 +1161,3 @@ class RelatedQueriesTest(_common.TestCase, AssertsMixin):
         q = "catalognum:ABC Album1"
         results = self.lib.albums(q)
         self.assert_albums_matched(results, ["Album1"])
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

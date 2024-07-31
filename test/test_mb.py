@@ -20,10 +20,10 @@ from unittest import mock
 
 from beets import config
 from beets.autotag import mb
-from beets.test import _common
+from beets.test.helper import BeetsTestCase
 
 
-class MBAlbumInfoTest(_common.TestCase):
+class MBAlbumInfoTest(BeetsTestCase):
     def _make_release(
         self,
         date_str="2009",
@@ -662,7 +662,7 @@ class MBAlbumInfoTest(_common.TestCase):
         self.assertEqual(t[1].trackdisambig, "SECOND TRACK")
 
 
-class ParseIDTest(_common.TestCase):
+class ParseIDTest(BeetsTestCase):
     def test_parse_id_correct(self):
         id_string = "28e32c71-1450-463e-92bf-e0a46446fc11"
         out = mb._parse_id(id_string)
@@ -680,7 +680,7 @@ class ParseIDTest(_common.TestCase):
         self.assertEqual(out, id_string)
 
 
-class ArtistFlatteningTest(_common.TestCase):
+class ArtistFlatteningTest(BeetsTestCase):
     def _credit_dict(self, suffix=""):
         return {
             "artist": {
@@ -1077,11 +1077,3 @@ class MBLibraryTest(unittest.TestCase):
             gp.side_effect = side_effect
             album = mb.album_for_id("d2a6f856-b553-40a0-ac54-a321e8e2da02")
             self.assertIsNone(album.country)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

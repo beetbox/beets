@@ -16,10 +16,9 @@
 """Tests for the `importadded` plugin."""
 
 import os
-import unittest
 
 from beets import importer
-from beets.test.helper import AutotagStub, ImportHelper
+from beets.test.helper import AutotagStub, ImportTestCase, PluginMixin
 from beets.util import displayable_path, syspath
 from beetsplug.importadded import ImportAddedPlugin
 
@@ -40,34 +39,33 @@ def modify_mtimes(paths, offset=-60000):
         os.utime(syspath(path), (mstat.st_atime, mstat.st_mtime + offset * i))
 
 
-class ImportAddedTest(unittest.TestCase, ImportHelper):
+class ImportAddedTest(PluginMixin, ImportTestCase):
     # The minimum mtime of the files to be imported
+    plugin = "importadded"
     min_mtime = None
 
     def setUp(self):
         preserve_plugin_listeners()
-        self.setup_beets()
-        self.load_plugins("importadded")
-        self._create_import_dir(2)
+        super().setUp()
+        self.prepare_album_for_import(2)
         # Different mtimes on the files to be imported in order to test the
         # plugin
-        modify_mtimes(mfile.path for mfile in self.media_files)
+        modify_mtimes(mfile.path for mfile in self.import_media)
         self.min_mtime = min(
-            os.path.getmtime(mfile.path) for mfile in self.media_files
+            os.path.getmtime(mfile.path) for mfile in self.import_media
         )
         self.matcher = AutotagStub().install()
         self.matcher.macthin = AutotagStub.GOOD
-        self._setup_import_session()
+        self.importer = self.setup_importer()
         self.importer.add_choice(importer.action.APPLY)
 
     def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
         self.matcher.restore()
 
     def find_media_file(self, item):
         """Find the pre-import MediaFile for an Item"""
-        for m in self.media_files:
+        for m in self.import_media:
             if m.title.replace("Tag", "Applied") == item.title:
                 return m
         raise AssertionError(
@@ -115,7 +113,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         # Newer Item path mtimes as if Beets had modified them
         modify_mtimes(items_added_before.keys(), offset=10000)
         # Reimport
-        self._setup_import_session(import_dir=album.path)
+        self.setup_importer(import_dir=self.libdir)
         self.importer.run()
         # Verify the reimported items
         album = self.lib.albums().get()
@@ -156,8 +154,7 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
         # Newer Item path mtimes as if Beets had modified them
         modify_mtimes(items_added_before.keys(), offset=10000)
         # Reimport
-        import_dir = os.path.dirname(list(items_added_before.keys())[0])
-        self._setup_import_session(import_dir=import_dir, singletons=True)
+        self.setup_importer(import_dir=self.libdir, singletons=True)
         self.importer.run()
         # Verify the reimported items
         items_added_after = {item.path: item.added for item in self.lib.items()}
@@ -168,11 +165,3 @@ class ImportAddedTest(unittest.TestCase, ImportHelper):
                 "reimport modified Item.added for "
                 + displayable_path(item_path),
             )
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

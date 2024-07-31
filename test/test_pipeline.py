@@ -230,11 +230,3 @@ class StageDecoratorTest(unittest.TestCase):
         self.assertEqual(
             list(pl.pull()), [{"x": True}, {"a": False, "x": True}]
         )
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")

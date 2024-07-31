@@ -14,11 +14,17 @@
 
 
 import unittest
+from typing import ClassVar
 
 from mediafile import MediaFile
 
 from beets import config
-from beets.test.helper import TestHelper, has_program
+from beets.test.helper import (
+    AsIsImporterMixin,
+    ImportTestCase,
+    PluginMixin,
+    has_program,
+)
 from beetsplug.replaygain import (
     FatalGstreamerPluginReplayGainError,
     GStreamerBackend,
@@ -49,6 +55,29 @@ def reset_replaygain(item):
     item["r128_album_gain"] = None
     item.write()
     item.store()
+
+
+class ReplayGainTestCase(PluginMixin, ImportTestCase):
+    db_on_disk = True
+    plugin = "replaygain"
+    preload_plugin = False
+
+    backend: ClassVar[str]
+
+    def setUp(self):
+        # Implemented by Mixins, see above. This may decide to skip the test.
+        self.test_backend()
+
+        super().setUp()
+        self.config["replaygain"]["backend"] = self.backend
+
+        self.load_plugins()
+
+
+class ThreadedImportMixin:
+    def setUp(self):
+        super().setUp()
+        self.config["threaded"] = True
 
 
 class GstBackendMixin:
@@ -85,21 +114,8 @@ class FfmpegBackendMixin:
         pass
 
 
-class ReplayGainCliTestBase(TestHelper):
+class ReplayGainCliTest:
     FNAME: str
-
-    def setUp(self):
-        # Implemented by Mixins, see above. This may decide to skip the test.
-        self.test_backend()
-
-        self.setup_beets(disk=True)
-        self.config["replaygain"]["backend"] = self.backend
-
-        try:
-            self.load_plugins("replaygain")
-        except Exception:
-            self.teardown_beets()
-            self.unload_plugins()
 
     def _add_album(self, *args, **kwargs):
         # Use a file with non-zero volume (most test assets are total silence)
@@ -108,10 +124,6 @@ class ReplayGainCliTestBase(TestHelper):
             reset_replaygain(item)
 
         return album
-
-    def tearDown(self):
-        self.teardown_beets()
-        self.unload_plugins()
 
     def test_cli_saves_track_gain(self):
         self._add_album(2)
@@ -320,57 +332,35 @@ class ReplayGainCliTestBase(TestHelper):
 
 @unittest.skipIf(not GST_AVAILABLE, "gstreamer cannot be found")
 class ReplayGainGstCliTest(
-    ReplayGainCliTestBase, unittest.TestCase, GstBackendMixin
+    ReplayGainCliTest, ReplayGainTestCase, GstBackendMixin
 ):
     FNAME = "full"  # file contains only silence
 
 
 @unittest.skipIf(not GAIN_PROG_AVAILABLE, "no *gain command found")
 class ReplayGainCmdCliTest(
-    ReplayGainCliTestBase, unittest.TestCase, CmdBackendMixin
+    ReplayGainCliTest, ReplayGainTestCase, CmdBackendMixin
 ):
     FNAME = "full"  # file contains only silence
 
 
 @unittest.skipIf(not FFMPEG_AVAILABLE, "ffmpeg cannot be found")
 class ReplayGainFfmpegCliTest(
-    ReplayGainCliTestBase, unittest.TestCase, FfmpegBackendMixin
+    ReplayGainCliTest, ReplayGainTestCase, FfmpegBackendMixin
 ):
     FNAME = "full"  # file contains only silence
 
 
 @unittest.skipIf(not FFMPEG_AVAILABLE, "ffmpeg cannot be found")
 class ReplayGainFfmpegNoiseCliTest(
-    ReplayGainCliTestBase, unittest.TestCase, FfmpegBackendMixin
+    ReplayGainCliTest, ReplayGainTestCase, FfmpegBackendMixin
 ):
     FNAME = "whitenoise"
 
 
-class ImportTest(TestHelper):
-    threaded = False
-
-    def setUp(self):
-        # Implemented by Mixins, see above. This may decide to skip the test.
-        self.test_backend()
-
-        self.setup_beets(disk=True)
-        self.config["threaded"] = self.threaded
-        self.config["replaygain"]["backend"] = self.backend
-
-        try:
-            self.load_plugins("replaygain")
-        except Exception:
-            self.teardown_beets()
-            self.unload_plugins()
-
-        self.importer = self.create_importer()
-
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
-
+class ImportTest(AsIsImporterMixin):
     def test_import_converted(self):
-        self.importer.run()
+        self.run_asis_importer()
         for item in self.lib.items():
             # FIXME: Add fixtures with known track/album gain (within a
             # suitable tolerance) so that we can actually check correct
@@ -380,32 +370,24 @@ class ImportTest(TestHelper):
 
 
 @unittest.skipIf(not GST_AVAILABLE, "gstreamer cannot be found")
-class ReplayGainGstImportTest(ImportTest, unittest.TestCase, GstBackendMixin):
+class ReplayGainGstImportTest(ImportTest, ReplayGainTestCase, GstBackendMixin):
     pass
 
 
 @unittest.skipIf(not GAIN_PROG_AVAILABLE, "no *gain command found")
-class ReplayGainCmdImportTest(ImportTest, unittest.TestCase, CmdBackendMixin):
+class ReplayGainCmdImportTest(ImportTest, ReplayGainTestCase, CmdBackendMixin):
     pass
 
 
 @unittest.skipIf(not FFMPEG_AVAILABLE, "ffmpeg cannot be found")
 class ReplayGainFfmpegImportTest(
-    ImportTest, unittest.TestCase, FfmpegBackendMixin
+    ImportTest, ReplayGainTestCase, FfmpegBackendMixin
 ):
     pass
 
 
 @unittest.skipIf(not FFMPEG_AVAILABLE, "ffmpeg cannot be found")
 class ReplayGainFfmpegThreadedImportTest(
-    ImportTest, unittest.TestCase, FfmpegBackendMixin
+    ThreadedImportMixin, ImportTest, ReplayGainTestCase, FfmpegBackendMixin
 ):
-    threaded = True
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")
+    pass
