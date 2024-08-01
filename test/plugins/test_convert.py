@@ -335,3 +335,49 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
             self.run_convert_path(item.path)
         converted = os.path.join(self.convert_dest, b"converted.ogg")
         self.assertNoFileTag(converted, "mp3")
+
+
+@_common.slow_test()
+class NoConvertTest(ConvertTestCase, ConvertCommand):
+    """Test the effect of the `no_convert` option."""
+
+    def setUp(self):
+        super().setUp()
+
+        self.convert_dest = os.path.join(self.temp_dir, b"convert_dest")
+        self.config["convert"] = {
+            "dest": self.convert_dest,
+            "no_convert": "format:OGG",
+            "paths": {"default": "converted"},
+            "format": "mp3",
+            "formats": {
+                "mp3": self.tagged_copy_cmd("mp3"),
+            },
+        }
+
+    def test_no_transcode_when_no_convert_set(self):
+        [item] = self.add_item_fixtures(ext="ogg")
+        with control_stdin("y"):
+            self.run_convert_path(item.path)
+        converted = os.path.join(self.convert_dest, b"converted.mp3")
+        self.assertFalse(os.path.exists(converted))
+
+    def test_no_transcode_when_multi_no_convert_set(self):
+        self.config["convert"]["no_convert"] = "format:OGG bitrate:..256"
+        [item] = self.add_item_fixtures(ext="ogg")
+        item.bitrate = 128
+        item.store()
+        with control_stdin("y"):
+            self.run_convert_path(item.path)
+        converted = os.path.join(self.convert_dest, b"converted.mp3")
+        self.assertFalse(os.path.exists(converted))
+
+    def test_transcode_when_multi_no_convert_set_partial_match(self):
+        self.config["convert"]["no_convert"] = "format:OGG bitrate:..256"
+        [item] = self.add_item_fixtures(ext="ogg")
+        item.bitrate = 320
+        item.store()
+        with control_stdin("y"):
+            self.run_convert_path(item.path)
+        converted = os.path.join(self.convert_dest, b"converted.mp3")
+        self.assertTrue(os.path.exists(converted))
