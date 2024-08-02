@@ -90,7 +90,6 @@ class AlbumInfo(AttrDict):
         artists: Optional[List[str]] = None,
         artists_ids: Optional[List[str]] = None,
         asin: Optional[str] = None,
-        albumtype: Optional[str] = None,
         albumtypes: Optional[List[str]] = None,
         va: bool = False,
         year: Optional[int] = None,
@@ -133,7 +132,6 @@ class AlbumInfo(AttrDict):
         self.artists_ids = artists_ids or []
         self.tracks = tracks
         self.asin = asin
-        self.albumtype = albumtype
         self.albumtypes = albumtypes or []
         self.va = va
         self.year = year
@@ -178,7 +176,6 @@ class AlbumInfo(AttrDict):
         for fld in [
             "album",
             "artist",
-            "albumtype",
             "label",
             "barcode",
             "artist_sort",
