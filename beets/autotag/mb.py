@@ -372,7 +372,6 @@ def track_info(
     for extra_trackdata in extra_trackdatas:
         info.update(extra_trackdata)
 
-    info.decode()
     return info
 
 
@@ -683,7 +682,6 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
     for extra_albumdata in extra_albumdatas:
         info.update(extra_albumdata)
 
-    info.decode()
     return info
 
 
