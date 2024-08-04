@@ -168,42 +168,6 @@ class AlbumInfo(AttrDict):
         self.discogs_artistid = discogs_artistid
         self.update(kwargs)
 
-    # Work around a bug in python-musicbrainz-ngs that causes some
-    # strings to be bytes rather than Unicode.
-    # https://github.com/alastair/python-musicbrainz-ngs/issues/85
-    def decode(self, codec: str = "utf-8"):
-        """Ensure that all string attributes on this object, and the
-        constituent `TrackInfo` objects, are decoded to Unicode.
-        """
-        for fld in [
-            "album",
-            "artist",
-            "albumtype",
-            "label",
-            "barcode",
-            "artist_sort",
-            "catalognum",
-            "script",
-            "language",
-            "country",
-            "style",
-            "genre",
-            "albumstatus",
-            "albumdisambig",
-            "releasegroupdisambig",
-            "artist_credit",
-            "media",
-            "discogs_albumid",
-            "discogs_labelid",
-            "discogs_artistid",
-        ]:
-            value = getattr(self, fld)
-            if isinstance(value, bytes):
-                setattr(self, fld, value.decode(codec, "ignore"))
-
-        for track in self.tracks:
-            track.decode(codec)
-
     def copy(self) -> AlbumInfo:
         dupe = AlbumInfo([])
         dupe.update(self)
@@ -293,24 +257,6 @@ class TrackInfo(AttrDict):
         self.genre = genre
         self.album = album
         self.update(kwargs)
-
-    # As above, work around a bug in python-musicbrainz-ngs.
-    def decode(self, codec="utf-8"):
-        """Ensure that all string attributes on this object are decoded
-        to Unicode.
-        """
-        for fld in [
-            "title",
-            "artist",
-            "medium",
-            "artist_sort",
-            "disctitle",
-            "artist_credit",
-            "media",
-        ]:
-            value = getattr(self, fld)
-            if isinstance(value, bytes):
-                setattr(self, fld, value.decode(codec, "ignore"))
 
     def copy(self) -> TrackInfo:
         dupe = TrackInfo()
