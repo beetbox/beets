@@ -77,7 +77,7 @@ class ExportPluginTest(PluginTestCase):
         item1 = self.create_item()
         out = self.execute_command(format_type="xml", artist=item1.artist)
         library = ElementTree.fromstring(out)
-        self.assertIsInstance(library, Element)
+        assert isinstance(library, Element)
         for track in library[0]:
             for details in track:
                 tag = details.tag

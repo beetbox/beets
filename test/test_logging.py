@@ -28,7 +28,7 @@ class LoggingTest(BeetsTestCase):
         l4 = log.getLogger("bar123")
         assert l3 == l4
         assert l3.__class__ == blog.BeetsLogger
-        self.assertIsInstance(
+        assert isinstance(
             l3, (blog.StrFormatLogger, blog.ThreadLocalLevelLogger)
         )
 

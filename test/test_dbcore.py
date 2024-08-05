@@ -498,12 +498,12 @@ class FormattedMappingTest(unittest.TestCase):
 class ParseTest(unittest.TestCase):
     def test_parse_fixed_field(self):
         value = ModelFixture1._parse("field_one", "2")
-        self.assertIsInstance(value, int)
+        assert isinstance(value, int)
         assert value == 2
 
     def test_parse_flex_field(self):
         value = ModelFixture1._parse("some_float_field", "2")
-        self.assertIsInstance(value, float)
+        assert isinstance(value, float)
         assert value == 2.0
 
     def test_parse_untyped_field(self):
@@ -583,28 +583,28 @@ class QueryFromStringsTest(unittest.TestCase):
 
     def test_zero_parts(self):
         q = self.qfs([])
-        self.assertIsInstance(q, dbcore.query.AndQuery)
+        assert isinstance(q, dbcore.query.AndQuery)
         assert len(q.subqueries) == 1
-        self.assertIsInstance(q.subqueries[0], dbcore.query.TrueQuery)
+        assert isinstance(q.subqueries[0], dbcore.query.TrueQuery)
 
     def test_two_parts(self):
         q = self.qfs(["foo", "bar:baz"])
-        self.assertIsInstance(q, dbcore.query.AndQuery)
+        assert isinstance(q, dbcore.query.AndQuery)
         assert len(q.subqueries) == 2
-        self.assertIsInstance(q.subqueries[0], dbcore.query.AnyFieldQuery)
-        self.assertIsInstance(q.subqueries[1], dbcore.query.SubstringQuery)
+        assert isinstance(q.subqueries[0], dbcore.query.AnyFieldQuery)
+        assert isinstance(q.subqueries[1], dbcore.query.SubstringQuery)
 
     def test_parse_fixed_type_query(self):
         q = self.qfs(["field_one:2..3"])
-        self.assertIsInstance(q.subqueries[0], dbcore.query.NumericQuery)
+        assert isinstance(q.subqueries[0], dbcore.query.NumericQuery)
 
     def test_parse_flex_type_query(self):
         q = self.qfs(["some_float_field:2..3"])
-        self.assertIsInstance(q.subqueries[0], dbcore.query.NumericQuery)
+        assert isinstance(q.subqueries[0], dbcore.query.NumericQuery)
 
     def test_empty_query_part(self):
         q = self.qfs([""])
-        self.assertIsInstance(q.subqueries[0], dbcore.query.TrueQuery)
+        assert isinstance(q.subqueries[0], dbcore.query.TrueQuery)
 
 
 class SortFromStringsTest(unittest.TestCase):
@@ -616,31 +616,31 @@ class SortFromStringsTest(unittest.TestCase):
 
     def test_zero_parts(self):
         s = self.sfs([])
-        self.assertIsInstance(s, dbcore.query.NullSort)
+        assert isinstance(s, dbcore.query.NullSort)
         assert s == dbcore.query.NullSort()
 
     def test_one_parts(self):
         s = self.sfs(["field+"])
-        self.assertIsInstance(s, dbcore.query.Sort)
+        assert isinstance(s, dbcore.query.Sort)
 
     def test_two_parts(self):
         s = self.sfs(["field+", "another_field-"])
-        self.assertIsInstance(s, dbcore.query.MultipleSort)
+        assert isinstance(s, dbcore.query.MultipleSort)
         assert len(s.sorts) == 2
 
     def test_fixed_field_sort(self):
         s = self.sfs(["field_one+"])
-        self.assertIsInstance(s, dbcore.query.FixedFieldSort)
+        assert isinstance(s, dbcore.query.FixedFieldSort)
         assert s == dbcore.query.FixedFieldSort("field_one")
 
     def test_flex_field_sort(self):
         s = self.sfs(["flex_field+"])
-        self.assertIsInstance(s, dbcore.query.SlowFieldSort)
+        assert isinstance(s, dbcore.query.SlowFieldSort)
         assert s == dbcore.query.SlowFieldSort("flex_field")
 
     def test_special_sort(self):
         s = self.sfs(["some_sort+"])
-        self.assertIsInstance(s, SortFixture)
+        assert isinstance(s, SortFixture)
 
 
 class ParseSortedQueryTest(unittest.TestCase):
@@ -652,44 +652,44 @@ class ParseSortedQueryTest(unittest.TestCase):
 
     def test_and_query(self):
         q, s = self.psq("foo bar")
-        self.assertIsInstance(q, dbcore.query.AndQuery)
-        self.assertIsInstance(s, dbcore.query.NullSort)
+        assert isinstance(q, dbcore.query.AndQuery)
+        assert isinstance(s, dbcore.query.NullSort)
         assert len(q.subqueries) == 2
 
     def test_or_query(self):
         q, s = self.psq("foo , bar")
-        self.assertIsInstance(q, dbcore.query.OrQuery)
-        self.assertIsInstance(s, dbcore.query.NullSort)
+        assert isinstance(q, dbcore.query.OrQuery)
+        assert isinstance(s, dbcore.query.NullSort)
         assert len(q.subqueries) == 2
 
     def test_no_space_before_comma_or_query(self):
         q, s = self.psq("foo, bar")
-        self.assertIsInstance(q, dbcore.query.OrQuery)
-        self.assertIsInstance(s, dbcore.query.NullSort)
+        assert isinstance(q, dbcore.query.OrQuery)
+        assert isinstance(s, dbcore.query.NullSort)
         assert len(q.subqueries) == 2
 
     def test_no_spaces_or_query(self):
         q, s = self.psq("foo,bar")
-        self.assertIsInstance(q, dbcore.query.AndQuery)
-        self.assertIsInstance(s, dbcore.query.NullSort)
+        assert isinstance(q, dbcore.query.AndQuery)
+        assert isinstance(s, dbcore.query.NullSort)
         assert len(q.subqueries) == 1
 
     def test_trailing_comma_or_query(self):
         q, s = self.psq("foo , bar ,")
-        self.assertIsInstance(q, dbcore.query.OrQuery)
-        self.assertIsInstance(s, dbcore.query.NullSort)
+        assert isinstance(q, dbcore.query.OrQuery)
+        assert isinstance(s, dbcore.query.NullSort)
         assert len(q.subqueries) == 3
 
     def test_leading_comma_or_query(self):
         q, s = self.psq(", foo , bar")
-        self.assertIsInstance(q, dbcore.query.OrQuery)
-        self.assertIsInstance(s, dbcore.query.NullSort)
+        assert isinstance(q, dbcore.query.OrQuery)
+        assert isinstance(s, dbcore.query.NullSort)
         assert len(q.subqueries) == 3
 
     def test_only_direction(self):
         q, s = self.psq("-")
-        self.assertIsInstance(q, dbcore.query.AndQuery)
-        self.assertIsInstance(s, dbcore.query.NullSort)
+        assert isinstance(q, dbcore.query.AndQuery)
+        assert isinstance(s, dbcore.query.NullSort)
         assert len(q.subqueries) == 1
 
 
