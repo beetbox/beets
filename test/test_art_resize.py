@@ -77,8 +77,9 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
         )
         self.assertExists(im_a)
         # target size was achieved
-        self.assertLess(
-            os.stat(syspath(im_a)).st_size, os.stat(syspath(im_95_qual)).st_size
+        assert (
+            os.stat(syspath(im_a)).st_size
+            < os.stat(syspath(im_95_qual)).st_size
         )
 
         # Attempt with lower initial quality
@@ -98,8 +99,9 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
         )
         self.assertExists(im_b)
         # Check high (initial) quality still gives a smaller filesize
-        self.assertLess(
-            os.stat(syspath(im_b)).st_size, os.stat(syspath(im_75_qual)).st_size
+        assert (
+            os.stat(syspath(im_b)).st_size
+            < os.stat(syspath(im_75_qual)).st_size
         )
 
     @unittest.skipUnless(PILBackend.available(), "PIL not available")

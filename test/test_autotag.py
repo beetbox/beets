@@ -280,7 +280,7 @@ class DistanceTest(BeetsTestCase):
         assert len(dist) == 2
         assert list(dist) == [("album", 0.2), ("medium", 0.2)]
         assert dist == 0.4
-        self.assertLess(dist, 1.0)
+        assert dist < 1.0
         self.assertGreater(dist, 0.0)
         assert dist - 0.4 == 0.0
         assert 0.4 - dist == 0.0
@@ -395,7 +395,7 @@ class AlbumDistanceTest(BeetsTestCase):
         dist = self._dist(items, info)
         assert dist != 0
         # Make sure the distance is not too great
-        self.assertLess(dist, 0.2)
+        assert dist < 0.2
 
     def test_global_artists_differ(self):
         items = []
@@ -990,17 +990,17 @@ class StringDistanceTest(unittest.TestCase):
     def test_leading_the_has_lower_weight(self):
         dist1 = string_dist("XXX Band Name", "Band Name")
         dist2 = string_dist("The Band Name", "Band Name")
-        self.assertLess(dist2, dist1)
+        assert dist2 < dist1
 
     def test_parens_have_lower_weight(self):
         dist1 = string_dist("One .Two.", "One")
         dist2 = string_dist("One (Two)", "One")
-        self.assertLess(dist2, dist1)
+        assert dist2 < dist1
 
     def test_brackets_have_lower_weight(self):
         dist1 = string_dist("One .Two.", "One")
         dist2 = string_dist("One [Two]", "One")
-        self.assertLess(dist2, dist1)
+        assert dist2 < dist1
 
     def test_ep_label_has_zero_weight(self):
         dist = string_dist("My Song (EP)", "My Song")
@@ -1009,7 +1009,7 @@ class StringDistanceTest(unittest.TestCase):
     def test_featured_has_lower_weight(self):
         dist1 = string_dist("My Song blah Someone", "My Song")
         dist2 = string_dist("My Song feat Someone", "My Song")
-        self.assertLess(dist2, dist1)
+        assert dist2 < dist1
 
     def test_postfix_the(self):
         dist = string_dist("The Song Title", "Song Title, The")
@@ -1055,9 +1055,9 @@ class EnumTest(BeetsTestCase):
         OrderedEnumClass = match.OrderedEnum(  # noqa
             "OrderedEnumTest", ["a", "b", "c"]
         )
-        self.assertLess(OrderedEnumClass.a, OrderedEnumClass.b)
-        self.assertLess(OrderedEnumClass.a, OrderedEnumClass.c)
-        self.assertLess(OrderedEnumClass.b, OrderedEnumClass.c)
+        assert OrderedEnumClass.a < OrderedEnumClass.b
+        assert OrderedEnumClass.a < OrderedEnumClass.c
+        assert OrderedEnumClass.b < OrderedEnumClass.c
         self.assertGreater(OrderedEnumClass.b, OrderedEnumClass.a)
         self.assertGreater(OrderedEnumClass.c, OrderedEnumClass.a)
         self.assertGreater(OrderedEnumClass.c, OrderedEnumClass.b)
