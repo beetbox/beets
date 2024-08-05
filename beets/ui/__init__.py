@@ -66,9 +66,7 @@ class UserError(Exception):
     nonrecoverable errors to the user.
     """
 
-
 # Encoding utilities.
-
 
 def _in_encoding():
     """Get the encoding to use for *inputting* strings from the console."""
