@@ -153,26 +153,26 @@ class Assertions:
 
     def assertExists(self, path):  # noqa
         self.assertTrue(
-            os.path.exists(syspath(path)), f"file does not exist: {path!r}"
+            os.path.exists(syspath(path)), f"file does not exist: {repr(path)}"
         )
 
     def assertNotExists(self, path):  # noqa
         self.assertFalse(
-            os.path.exists(syspath(path)), f"file exists: {path!r}"
+            os.path.exists(syspath(path)), f"file exists: {repr(path)}"
         )
 
     def assertIsFile(self, path):  # noqa
         self.assertExists(path)
         self.assertTrue(
             os.path.isfile(syspath(path)),
-            "path exists, but is not a regular file: {!r}".format(path),
+            f"path exists, but is not a regular file: {repr(path)}",
         )
 
     def assertIsDir(self, path):  # noqa
         self.assertExists(path)
         self.assertTrue(
             os.path.isdir(syspath(path)),
-            "path exists, but is not a directory: {!r}".format(path),
+            f"path exists, but is not a directory: {repr(path)}",
         )
 
     def assert_equal_path(self, a, b):
@@ -180,7 +180,7 @@ class Assertions:
         self.assertEqual(
             util.normpath(a),
             util.normpath(b),
-            f"paths are not equal: {a!r} and {b!r}",
+            f"paths are not equal: {repr(a)} and {repr(b)}",
         )
 
 
@@ -194,7 +194,7 @@ class InputException(Exception):
     def __str__(self):
         msg = "Attempt to read with no input provided."
         if self.output is not None:
-            msg += f" Output: {self.output!r}"
+            msg += f" Output: {repr(self.output)}"
         return msg
 
 

@@ -48,7 +48,7 @@ def edit(filename, log):
         subprocess.call(cmd)
     except OSError as exc:
         raise ui.UserError(
-            "could not run editor command {!r}: {}".format(cmd[0], exc)
+            f"could not run editor command {repr(cmd[0])}: {exc}"
         )
 
 
@@ -72,9 +72,7 @@ def load(s):
         for d in yaml.safe_load_all(s):
             if not isinstance(d, dict):
                 raise ParseError(
-                    "each entry must be a dictionary; found {}".format(
-                        type(d).__name__
-                    )
+                    f"each entry must be a dictionary; found {type(d).__name__}"
                 )
 
             # Convert all keys to strings. They started out as strings,

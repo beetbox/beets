@@ -456,18 +456,14 @@ class CoverArtArchive(RemoteArtSource):
             try:
                 response = self.request(url)
             except requests.RequestException:
-                self._log.debug(
-                    "{}: error receiving response".format(self.NAME)
-                )
+                self._log.debug(f"{self.NAME}: error receiving response")
                 return
 
             try:
                 data = response.json()
             except ValueError:
                 self._log.debug(
-                    "{}: error loading response: {}".format(
-                        self.NAME, response.text
-                    )
+                    f"{self.NAME}: error loading response: {response.text}"
                 )
                 return
 
@@ -601,9 +597,7 @@ class GoogleImages(RemoteArtSource):
         try:
             data = response.json()
         except ValueError:
-            self._log.debug(
-                "google: error loading response: {}".format(response.text)
-            )
+            self._log.debug(f"google: error loading response: {response.text}")
             return
 
         if "error" in data:
@@ -1071,9 +1065,7 @@ class LastFM(RemoteArtSource):
                             url=images[size], size=self.SIZES[size]
                         )
         except ValueError:
-            self._log.debug(
-                "lastfm: error loading response: {}".format(response.text)
-            )
+            self._log.debug(f"lastfm: error loading response: {response.text}")
             return
 
 
@@ -1112,9 +1104,7 @@ class Spotify(RemoteArtSource):
             ]
             yield self._candidate(url=image_url, match=Candidate.MATCH_EXACT)
         except ValueError:
-            self._log.debug(
-                "Spotify: error loading response: {}".format(response.text)
-            )
+            self._log.debug(f"Spotify: error loading response: {response.text}")
             return
 
 

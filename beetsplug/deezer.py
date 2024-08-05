@@ -113,7 +113,7 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         else:
             raise ui.UserError(
                 "Invalid `release_date` returned "
-                "by {} API: '{}'".format(self.data_source, release_date)
+                f"by {self.data_source} API: '{release_date}'"
             )
         tracks_obj = self.fetch_data(self.album_url + deezer_id + "/tracks")
         if tracks_obj is None:
