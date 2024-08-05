@@ -12,6 +12,9 @@ New features:
   `beet list -a title:something` or `beet list artpath:cover`. Consequently
   album queries involving `path` field have been sped up, like `beet list -a
   path:/path/`.
+* :doc:`/plugins/substitute`: Allow the replacement string to use capture groups
+  from the match. It is thus possible to create more general rules, applying to
+  many different artists at once.
 
 Bug fixes:
 
