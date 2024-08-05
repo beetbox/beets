@@ -13,6 +13,7 @@ New features:
   album queries involving `path` field have been sped up, like `beet list -a
   path:/path/`.
 
+* Ability to use relative_to as "m3u" to set playlist files as relative to where each playlist is at, including subdirectories.
 Bug fixes:
 
 * Improved naming of temporary files by separating the random part with the file extension.
