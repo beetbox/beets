@@ -36,7 +36,7 @@ class LoggingTest(BeetsTestCase):
         assert l5.__class__ == blog.BeetsLogger
 
         l6 = blog.getLogger()
-        self.assertNotEqual(l1, l6)
+        assert l1 != l6
 
     def test_str_format_logging(self):
         l = blog.getLogger("baz123")

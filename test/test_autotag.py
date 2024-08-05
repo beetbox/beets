@@ -228,7 +228,7 @@ class DistanceTest(BeetsTestCase):
         sdist = string_dist("abc", "bcd")
         dist.add_string("string", "abc", "bcd")
         assert dist._penalties["string"] == [sdist]
-        self.assertNotEqual(dist._penalties["string"], [0])
+        assert dist._penalties["string"] != [0]
 
     def test_add_string_none(self):
         dist = Distance()
@@ -342,14 +342,14 @@ class TrackDistanceTest(BeetsTestCase):
         item = _make_item("foo", 1)
         info = _make_trackinfo()[0]
         dist = match.track_distance(item, info, incl_artist=True)
-        self.assertNotEqual(dist, 0.0)
+        assert dist != 0.0
 
     def test_different_artist(self):
         item = _make_item("one", 1)
         item.artist = "foo"
         info = _make_trackinfo()[0]
         dist = match.track_distance(item, info, incl_artist=True)
-        self.assertNotEqual(dist, 0.0)
+        assert dist != 0.0
 
     def test_various_artists_tolerated(self):
         item = _make_item("one", 1)
@@ -393,7 +393,7 @@ class AlbumDistanceTest(BeetsTestCase):
             va=False,
         )
         dist = self._dist(items, info)
-        self.assertNotEqual(dist, 0)
+        assert dist != 0
         # Make sure the distance is not too great
         self.assertLess(dist, 0.2)
 
@@ -408,7 +408,7 @@ class AlbumDistanceTest(BeetsTestCase):
             tracks=_make_trackinfo(),
             va=False,
         )
-        self.assertNotEqual(self._dist(items, info), 0)
+        assert self._dist(items, info) != 0
 
     def test_comp_track_artists_match(self):
         items = []
@@ -451,7 +451,7 @@ class AlbumDistanceTest(BeetsTestCase):
             tracks=_make_trackinfo(),
             va=True,
         )
-        self.assertNotEqual(self._dist(items, info), 0)
+        assert self._dist(items, info) != 0
 
     def test_tracks_out_of_order(self):
         items = []
@@ -977,7 +977,7 @@ class StringDistanceTest(unittest.TestCase):
 
     def test_different_strings(self):
         dist = string_dist("Some String", "Totally Different")
-        self.assertNotEqual(dist, 0.0)
+        assert dist != 0.0
 
     def test_punctuation_ignored(self):
         dist = string_dist("Some String", "Some.String!")

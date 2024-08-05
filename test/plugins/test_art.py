@@ -869,7 +869,7 @@ class ArtForAlbumTest(UseThePlugin):
         candidate = self.plugin.art_for_album(self.album, [""], True)
 
         if should_exist:
-            self.assertNotEqual(candidate, None)
+            assert candidate is not None
             assert candidate.path == self.image_file
             self.assertExists(candidate.path)
         else:

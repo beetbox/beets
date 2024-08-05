@@ -161,7 +161,7 @@ class MoveTest(BeetsTestCase):
         touch(dest)
 
         self.i.move()
-        self.assertNotEqual(self.i.path, dest)
+        assert self.i.path != dest
         assert os.path.dirname(self.i.path) == os.path.dirname(dest)
 
     @unittest.skipUnless(_common.HAVE_SYMLINK, "need symlinks")
@@ -336,7 +336,7 @@ class ArtFileTest(BeetsTestCase):
         self.ai.move()
         self.i.load()
 
-        self.assertNotEqual(self.i.path, oldpath)
+        assert self.i.path != oldpath
         self.assertNotExists(self.art)
         newart = self.lib.get_album(self.i).art_destination(self.art)
         self.assertExists(newart)
@@ -417,7 +417,7 @@ class ArtFileTest(BeetsTestCase):
 
         # Set the art.
         ai.set_art(newart)
-        self.assertNotEqual(artdest, ai.artpath)
+        assert artdest != ai.artpath
         assert os.path.dirname(artdest) == os.path.dirname(ai.artpath)
 
     def test_setart_sets_permissions(self):

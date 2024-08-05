@@ -256,8 +256,8 @@ class ReplayGainCliTest:
         assert max(peaks) == min(peaks)
         assert max(gains) == min(gains)
 
-        self.assertNotEqual(max(gains), 0.0)
-        self.assertNotEqual(max(peaks), 0.0)
+        assert max(gains) != 0.0
+        assert max(peaks) != 0.0
 
     def test_cli_writes_only_r128_tags(self):
         if not self.has_r128_support:
@@ -293,7 +293,7 @@ class ReplayGainCliTest:
         gain_relative_to_84 = analyse(84)
         gain_relative_to_89 = analyse(89)
 
-        self.assertNotEqual(gain_relative_to_84, gain_relative_to_89)
+        assert gain_relative_to_84 != gain_relative_to_89
 
     def test_r128_targetlevel_has_effect(self):
         if not self.has_r128_support:
@@ -315,7 +315,7 @@ class ReplayGainCliTest:
         gain_relative_to_84 = analyse(84)
         gain_relative_to_89 = analyse(89)
 
-        self.assertNotEqual(gain_relative_to_84, gain_relative_to_89)
+        assert gain_relative_to_84 != gain_relative_to_89
 
     def test_per_disc(self):
         # Use the per_disc option and add a little more concurrency.

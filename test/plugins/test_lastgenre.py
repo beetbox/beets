@@ -124,7 +124,7 @@ class LastGenrePluginTest(BeetsTestCase):
         tree still has to be loaded.
         """
         self._setup_config(prefer_specific=True, canonical=False)
-        self.assertNotEqual(self.plugin.c14n_branches, [])
+        assert self.plugin.c14n_branches != []
 
     def test_prefer_specific_without_canonical(self):
         """Prefer_specific works without canonical."""

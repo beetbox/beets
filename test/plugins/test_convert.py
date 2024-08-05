@@ -77,12 +77,8 @@ class ConvertMixin:
         self.assertIsFile(path)
         with open(path, "rb") as f:
             f.seek(-len(tag), os.SEEK_END)
-            self.assertNotEqual(
-                f.read(),
-                tag,
-                "{} is unexpectedly tagged with {}".format(
-                    displayable_path(path), display_tag
-                ),
+            assert f.read() != tag, "{} is unexpectedly tagged with {}".format(
+                displayable_path(path), display_tag
             )
 
 
