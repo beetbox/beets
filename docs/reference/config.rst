@@ -276,6 +276,21 @@ Either ``yes`` or ``no``, indicating whether matched albums should have their
 That is, if this option is turned on, then ``year`` will always equal
 ``original_year`` and so on. Default: ``no``.
 
+.. _overwrite_null:
+
+overwrite_null
+~~~~~~~~~~~~~~
+
+In some situations, data for a particular field is not available, and it ends up being
+set to an empty value (an empty string).  To allow such fields to be overwritten once
+the appropriate data does become available (e.g. by a re-import or a manual update),
+the name of the metadata field can be added to the list `album` (for albums) or `track`
+(for tracks).  For example::
+
+    overwrite_null:
+        album: ["albumid"]
+        track: ["title", "date"]
+
 .. _artist_credit:
 
 artist_credit
