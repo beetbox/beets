@@ -252,7 +252,7 @@ class DestinationTest(BeetsTestCase):
         self.i.title = "X" * 300
         self.i.artist = "Y" * 300
         for c in self.i.destination().split(util.PATH_SEP):
-            self.assertLessEqual(len(c), 255)
+            assert len(c) <= 255
 
     def test_destination_long_names_keep_extension(self):
         self.i.title = "X" * 300
@@ -1172,7 +1172,7 @@ class MtimeTest(BeetsTestCase):
 
     def test_mtime_reset_on_db_modify(self):
         self.i.title = "something else"
-        self.assertLess(self.i.mtime, self._mtime())
+        assert self.i.mtime < self._mtime()
 
     def test_mtime_up_to_date_after_write(self):
         self.i.title = "something else"

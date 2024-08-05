@@ -107,7 +107,7 @@ class SortFixedFieldTest(DummyDataTestCase):
         q = ""
         sort = dbcore.query.FixedFieldSort("year", True)
         results = self.lib.items(q, sort)
-        self.assertLessEqual(results[0]["year"], results[1]["year"])
+        assert results[0]["year"] <= results[1]["year"]
         assert results[0]["year"] == 2001
         # same thing with query string
         q = "year+"
@@ -135,11 +135,11 @@ class SortFixedFieldTest(DummyDataTestCase):
         sort.add_sort(s1)
         sort.add_sort(s2)
         results = self.lib.items(q, sort)
-        self.assertLessEqual(results[0]["album"], results[1]["album"])
-        self.assertLessEqual(results[1]["album"], results[2]["album"])
+        assert results[0]["album"] <= results[1]["album"]
+        assert results[1]["album"] <= results[2]["album"]
         assert results[0]["album"] == "Baz"
         assert results[1]["album"] == "Baz"
-        self.assertLessEqual(results[0]["year"], results[1]["year"])
+        assert results[0]["year"] <= results[1]["year"]
         # same thing with query string
         q = "album+ year+"
         results2 = self.lib.items(q)
@@ -161,7 +161,7 @@ class SortFlexFieldTest(DummyDataTestCase):
         q = ""
         sort = dbcore.query.SlowFieldSort("flex1", True)
         results = self.lib.items(q, sort)
-        self.assertLessEqual(results[0]["flex1"], results[1]["flex1"])
+        assert results[0]["flex1"] <= results[1]["flex1"]
         assert results[0]["flex1"] == "Flex1-0"
         # same thing with query string
         q = "flex1+"
@@ -195,7 +195,7 @@ class SortFlexFieldTest(DummyDataTestCase):
         self.assertGreaterEqual(results[1]["flex2"], results[2]["flex2"])
         assert results[0]["flex2"] == "Flex2-A"
         assert results[1]["flex2"] == "Flex2-A"
-        self.assertLessEqual(results[0]["flex1"], results[1]["flex1"])
+        assert results[0]["flex1"] <= results[1]["flex1"]
         # same thing with query string
         q = "flex2- flex1+"
         results2 = self.lib.items(q)
@@ -208,7 +208,7 @@ class SortAlbumFixedFieldTest(DummyDataTestCase):
         q = ""
         sort = dbcore.query.FixedFieldSort("year", True)
         results = self.lib.albums(q, sort)
-        self.assertLessEqual(results[0]["year"], results[1]["year"])
+        assert results[0]["year"] <= results[1]["year"]
         assert results[0]["year"] == 2001
         # same thing with query string
         q = "year+"
@@ -236,11 +236,11 @@ class SortAlbumFixedFieldTest(DummyDataTestCase):
         sort.add_sort(s1)
         sort.add_sort(s2)
         results = self.lib.albums(q, sort)
-        self.assertLessEqual(results[0]["genre"], results[1]["genre"])
-        self.assertLessEqual(results[1]["genre"], results[2]["genre"])
+        assert results[0]["genre"] <= results[1]["genre"]
+        assert results[1]["genre"] <= results[2]["genre"]
         assert results[1]["genre"] == "Rock"
         assert results[2]["genre"] == "Rock"
-        self.assertLessEqual(results[1]["album"], results[2]["album"])
+        assert results[1]["album"] <= results[2]["album"]
         # same thing with query string
         q = "genre+ album+"
         results2 = self.lib.albums(q)
@@ -253,8 +253,8 @@ class SortAlbumFlexFieldTest(DummyDataTestCase):
         q = ""
         sort = dbcore.query.SlowFieldSort("flex1", True)
         results = self.lib.albums(q, sort)
-        self.assertLessEqual(results[0]["flex1"], results[1]["flex1"])
-        self.assertLessEqual(results[1]["flex1"], results[2]["flex1"])
+        assert results[0]["flex1"] <= results[1]["flex1"]
+        assert results[1]["flex1"] <= results[2]["flex1"]
         # same thing with query string
         q = "flex1+"
         results2 = self.lib.albums(q)
@@ -281,11 +281,11 @@ class SortAlbumFlexFieldTest(DummyDataTestCase):
         sort.add_sort(s1)
         sort.add_sort(s2)
         results = self.lib.albums(q, sort)
-        self.assertLessEqual(results[0]["flex2"], results[1]["flex2"])
-        self.assertLessEqual(results[1]["flex2"], results[2]["flex2"])
+        assert results[0]["flex2"] <= results[1]["flex2"]
+        assert results[1]["flex2"] <= results[2]["flex2"]
         assert results[0]["flex2"] == "Flex2-A"
         assert results[1]["flex2"] == "Flex2-A"
-        self.assertLessEqual(results[0]["flex1"], results[1]["flex1"])
+        assert results[0]["flex1"] <= results[1]["flex1"]
         # same thing with query string
         q = "flex2+ flex1+"
         results2 = self.lib.albums(q)
@@ -298,8 +298,8 @@ class SortAlbumComputedFieldTest(DummyDataTestCase):
         q = ""
         sort = dbcore.query.SlowFieldSort("path", True)
         results = self.lib.albums(q, sort)
-        self.assertLessEqual(results[0]["path"], results[1]["path"])
-        self.assertLessEqual(results[1]["path"], results[2]["path"])
+        assert results[0]["path"] <= results[1]["path"]
+        assert results[1]["path"] <= results[2]["path"]
         # same thing with query string
         q = "path+"
         results2 = self.lib.albums(q)
@@ -328,8 +328,8 @@ class SortCombinedFieldTest(DummyDataTestCase):
         sort.add_sort(s1)
         sort.add_sort(s2)
         results = self.lib.albums(q, sort)
-        self.assertLessEqual(results[0]["path"], results[1]["path"])
-        self.assertLessEqual(results[1]["path"], results[2]["path"])
+        assert results[0]["path"] <= results[1]["path"]
+        assert results[1]["path"] <= results[2]["path"]
         q = "path+ year+"
         results2 = self.lib.albums(q)
         for r1, r2 in zip(results, results2):
@@ -343,9 +343,9 @@ class SortCombinedFieldTest(DummyDataTestCase):
         sort.add_sort(s1)
         sort.add_sort(s2)
         results = self.lib.albums(q, sort)
-        self.assertLessEqual(results[0]["year"], results[1]["year"])
-        self.assertLessEqual(results[1]["year"], results[2]["year"])
-        self.assertLessEqual(results[0]["path"], results[1]["path"])
+        assert results[0]["year"] <= results[1]["year"]
+        assert results[1]["year"] <= results[2]["year"]
+        assert results[0]["path"] <= results[1]["path"]
         q = "year+ path+"
         results2 = self.lib.albums(q)
         for r1, r2 in zip(results, results2):
@@ -355,7 +355,7 @@ class SortCombinedFieldTest(DummyDataTestCase):
 class ConfigSortTest(DummyDataTestCase):
     def test_default_sort_item(self):
         results = list(self.lib.items())
-        self.assertLess(results[0].artist, results[1].artist)
+        assert results[0].artist < results[1].artist
 
     def test_config_opposite_sort_item(self):
         config["sort_item"] = "artist-"
@@ -364,7 +364,7 @@ class ConfigSortTest(DummyDataTestCase):
 
     def test_default_sort_album(self):
         results = list(self.lib.albums())
-        self.assertLess(results[0].albumartist, results[1].albumartist)
+        assert results[0].albumartist < results[1].albumartist
 
     def test_config_opposite_sort_album(self):
         config["sort_album"] = "albumartist-"
@@ -517,7 +517,9 @@ class NonExistingFieldTest(DummyDataTestCase):
         If a string ends with a sorting suffix, it takes precedence over the
         NotQuery parsing.
         """
-        query, sort = beets.library.parse_query_string("-bar+", beets.library.Item)
+        query, sort = beets.library.parse_query_string(
+            "-bar+", beets.library.Item
+        )
         assert len(query.subqueries) == 1
         assert isinstance(query.subqueries[0], dbcore.query.TrueQuery)
         assert isinstance(sort, dbcore.query.SlowFieldSort)
