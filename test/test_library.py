@@ -1309,7 +1309,7 @@ class ItemReadTest(unittest.TestCase):
         item = beets.library.Item()
         with pytest.raises(beets.library.ReadError) as exc_info:
             item.read(unreadable)
-        self.assertIsInstance(exc_info.value.reason, UnreadableFileError)
+        assert isinstance(exc_info.value.reason, UnreadableFileError)
 
     def test_nonexistent_raise_read_error(self):
         item = beets.library.Item()
