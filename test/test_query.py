@@ -21,6 +21,8 @@ import unittest
 from contextlib import contextmanager
 from functools import partial
 
+import pytest
+
 import beets.library
 from beets import dbcore, util
 from beets.dbcore import types
@@ -395,25 +397,15 @@ class GetTest(DummyDataTestCase):
 
         q = "albumflex:foo"
         results = self.lib.items(q)
-        self.assert_items_matched(
-            results,
-            [
-                "foo bar",
-                "baz qux",
-            ],
-        )
+        self.assert_items_matched(results, ["foo bar", "baz qux"])
 
     def test_invalid_query(self):
-        with self.assertRaises(InvalidQueryArgumentValueError) as raised:
+        with pytest.raises(InvalidQueryArgumentValueError, match="not an int"):
             dbcore.query.NumericQuery("year", "199a")
-        assert "not an int" in str(raised.exception)
 
-        with self.assertRaises(InvalidQueryArgumentValueError) as raised:
+        msg_match = r"not a regular expression.*unterminated subpattern"
+        with pytest.raises(ParsingError, match=msg_match):
             dbcore.query.RegexpQuery("year", "199(")
-        exception_text = str(raised.exception)
-        assert "not a regular expression" in exception_text
-        assert "unterminated subpattern" in exception_text
-        self.assertIsInstance(raised.exception, ParsingError)
 
 
 class MatchTest(BeetsTestCase):

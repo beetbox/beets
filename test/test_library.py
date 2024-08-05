@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Tests for non-query database functions of Item.
-"""
+"""Tests for non-query database functions of Item."""
 
 import os
 import os.path
@@ -25,6 +24,7 @@ import time
 import unicodedata
 import unittest
 
+import pytest
 from mediafile import MediaFile, UnreadableFileError
 
 import beets.dbcore.query
@@ -150,7 +150,8 @@ class GetSetTest(BeetsTestCase):
         assert "title" not in self.i._dirty
 
     def test_invalid_field_raises_attributeerror(self):
-        self.assertRaises(AttributeError, getattr, self.i, "xyzzy")
+        with pytest.raises(AttributeError):
+            self.i.xyzzy
 
     def test_album_fallback(self):
         # integration test of item-album fallback
@@ -547,7 +548,7 @@ class ItemFormattedMappingTest(ItemInDBTestCase):
 
     def test_get_unset_field(self):
         formatted = self.i.formatted()
-        with self.assertRaises(KeyError):
+        with pytest.raises(KeyError):
             formatted["other_field"]
 
     def test_get_method_with_default(self):
@@ -1239,7 +1240,7 @@ class WriteTest(BeetsTestCase):
     def test_write_nonexistant(self):
         item = self.create_item()
         item.path = b"/path/does/not/exist"
-        with self.assertRaises(beets.library.ReadError):
+        with pytest.raises(beets.library.ReadError):
             item.write()
 
     def test_no_write_permission(self):
@@ -1248,7 +1249,8 @@ class WriteTest(BeetsTestCase):
         os.chmod(path, stat.S_IRUSR)
 
         try:
-            self.assertRaises(beets.library.WriteError, item.write)
+            with pytest.raises(beets.library.WriteError):
+                item.write()
 
         finally:
             # Restore write permissions so the file can be cleaned up.
@@ -1307,13 +1309,13 @@ class ItemReadTest(unittest.TestCase):
     def test_unreadable_raise_read_error(self):
         unreadable = os.path.join(_common.RSRC, b"image-2x3.png")
         item = beets.library.Item()
-        with self.assertRaises(beets.library.ReadError) as cm:
+        with pytest.raises(beets.library.ReadError) as exc_info:
             item.read(unreadable)
-        self.assertIsInstance(cm.exception.reason, UnreadableFileError)
+        self.assertIsInstance(exc_info.value.reason, UnreadableFileError)
 
     def test_nonexistent_raise_read_error(self):
         item = beets.library.Item()
-        with self.assertRaises(beets.library.ReadError):
+        with pytest.raises(beets.library.ReadError):
             item.read("/thisfiledoesnotexist")
 
 
@@ -1329,12 +1331,11 @@ class FilesizeTest(BeetsTestCase):
 
 class ParseQueryTest(unittest.TestCase):
     def test_parse_invalid_query_string(self):
-        with self.assertRaises(beets.dbcore.InvalidQueryError) as raised:
+        with pytest.raises(beets.dbcore.query.ParsingError):
             beets.library.parse_query_string('foo"', None)
-        self.assertIsInstance(raised.exception, beets.dbcore.query.ParsingError)
 
     def test_parse_bytes(self):
-        with self.assertRaises(AssertionError):
+        with pytest.raises(AssertionError):
             beets.library.parse_query_string(b"query", None)
 
 

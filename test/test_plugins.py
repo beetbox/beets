@@ -18,6 +18,7 @@ import os
 import unittest
 from unittest.mock import ANY, Mock, patch
 
+import pytest
 from mediafile import MediaFile
 
 from beets import config, plugins, ui
@@ -141,7 +142,8 @@ class ItemTypeConflictTest(PluginLoaderTestCase):
         self.advent_listener_plugin = AdventListenerPlugin
         self.register_plugin(EventListenerPlugin)
         self.register_plugin(AdventListenerPlugin)
-        self.assertRaises(plugins.PluginConflictException, plugins.types, Item)
+        with pytest.raises(plugins.PluginConflictException):
+            plugins.types(Item)
 
     def test_match(self):
         class EventListenerPlugin(plugins.BeetsPlugin):
@@ -333,13 +335,13 @@ class ListenersTest(PluginLoaderTestCase):
         plugins.send("event3", foo=5)
         plugins.send("event4", foo=5)
 
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             plugins.send("event5", foo=5)
 
         plugins.send("event6", foo=5)
         plugins.send("event7", foo=5)
 
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             plugins.send("event8", foo=5)
 
         plugins.send("event9", foo=5)

@@ -17,6 +17,8 @@
 
 import unittest
 
+import pytest
+
 from beets.util import pipeline
 
 
@@ -121,17 +123,20 @@ class ExceptionTest(unittest.TestCase):
         self.pl = pipeline.Pipeline((_produce(), _exc_work(), _consume(self.l)))
 
     def test_run_sequential(self):
-        self.assertRaises(ExceptionFixture, self.pl.run_sequential)
+        with pytest.raises(ExceptionFixture):
+            self.pl.run_sequential()
 
     def test_run_parallel(self):
-        self.assertRaises(ExceptionFixture, self.pl.run_parallel)
+        with pytest.raises(ExceptionFixture):
+            self.pl.run_parallel()
 
     def test_pull(self):
         pl = pipeline.Pipeline((_produce(), _exc_work()))
         pull = pl.pull()
         for i in range(3):
             next(pull)
-        self.assertRaises(ExceptionFixture, pull.__next__)
+        with pytest.raises(ExceptionFixture):
+            next(pull)
 
 
 class ParallelExceptionTest(unittest.TestCase):
@@ -142,7 +147,8 @@ class ParallelExceptionTest(unittest.TestCase):
         )
 
     def test_run_parallel(self):
-        self.assertRaises(ExceptionFixture, self.pl.run_parallel)
+        with pytest.raises(ExceptionFixture):
+            self.pl.run_parallel()
 
 
 class ConstrainedThreadedPipelineTest(unittest.TestCase):
@@ -158,7 +164,8 @@ class ConstrainedThreadedPipelineTest(unittest.TestCase):
         # Raise an exception in a constrained pipeline.
         l = []
         pl = pipeline.Pipeline((_produce(1000), _exc_work(), _consume(l)))
-        self.assertRaises(ExceptionFixture, pl.run_parallel, 1)
+        with pytest.raises(ExceptionFixture):
+            pl.run_parallel(1)
 
     def test_constrained_parallel(self):
         l = []

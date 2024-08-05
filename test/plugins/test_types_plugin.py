@@ -16,6 +16,7 @@
 import time
 from datetime import datetime
 
+import pytest
 from confuse import ConfigValueError
 
 from beets.test.helper import PluginTestCase
@@ -132,7 +133,7 @@ class TypesPluginTest(PluginTestCase):
 
     def test_unknown_type_error(self):
         self.config["types"] = {"flex": "unkown type"}
-        with self.assertRaises(ConfigValueError):
+        with pytest.raises(ConfigValueError):
             self.run_command("ls")
 
     def test_template_if_def(self):

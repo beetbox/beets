@@ -20,6 +20,8 @@ import sys
 import unittest
 from unittest.mock import ANY, patch
 
+import pytest
+
 from beets.test.helper import CleanupModulesMixin, PluginTestCase, control_stdin
 from beets.ui import UserError
 from beets.util import open_anything
@@ -139,5 +141,5 @@ class PlayPluginTest(CleanupModulesMixin, PluginTestCase):
     def test_command_failed(self, open_mock):
         open_mock.side_effect = OSError("some reason")
 
-        with self.assertRaises(UserError):
+        with pytest.raises(UserError):
             self.run_command("play", "title:aNiceTitle")

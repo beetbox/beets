@@ -19,6 +19,8 @@
 import os
 import shutil
 
+import pytest
+
 from beets import library, ui
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, ItemInDBTestCase
@@ -49,11 +51,11 @@ class QueryTest(BeetsTestCase):
         assert len(albums) == num_albums
 
     def test_query_empty(self):
-        with self.assertRaises(ui.UserError):
+        with pytest.raises(ui.UserError):
             commands._do_query(self.lib, (), False)
 
     def test_query_empty_album(self):
-        with self.assertRaises(ui.UserError):
+        with pytest.raises(ui.UserError):
             commands._do_query(self.lib, (), True)
 
     def test_query_item(self):
