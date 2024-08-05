@@ -18,6 +18,7 @@ Bug fixes:
 * Improved naming of temporary files by separating the random part with the file extension.
 * Fixed the ``auto`` value for the :ref:`reflink` config option.
 * Fixed lyrics plugin only getting part of the lyrics from ``Genius.com`` :bug:`4815`
+* Fixed the ``no_convert`` option of the convert plugin stopping conversion when there is only a partial match.
 
 For packagers:
 
