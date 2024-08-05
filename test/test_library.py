@@ -1168,7 +1168,7 @@ class MtimeTest(BeetsTestCase):
         return int(os.path.getmtime(self.ipath))
 
     def test_mtime_initially_up_to_date(self):
-        self.assertGreaterEqual(self.i.mtime, self._mtime())
+        assert self.i.mtime >= self._mtime()
 
     def test_mtime_reset_on_db_modify(self):
         self.i.title = "something else"
@@ -1177,24 +1177,24 @@ class MtimeTest(BeetsTestCase):
     def test_mtime_up_to_date_after_write(self):
         self.i.title = "something else"
         self.i.write()
-        self.assertGreaterEqual(self.i.mtime, self._mtime())
+        assert self.i.mtime >= self._mtime()
 
     def test_mtime_up_to_date_after_read(self):
         self.i.title = "something else"
         self.i.read()
-        self.assertGreaterEqual(self.i.mtime, self._mtime())
+        assert self.i.mtime >= self._mtime()
 
 
 class ImportTimeTest(BeetsTestCase):
     def added(self):
         self.track = item()
         self.album = self.lib.add_album((self.track,))
-        self.assertGreater(self.album.added, 0)
-        self.assertGreater(self.track.added, 0)
+        assert self.album.added > 0
+        assert self.track.added > 0
 
     def test_atime_for_singleton(self):
         self.singleton = item(self.lib)
-        self.assertGreater(self.singleton.added, 0)
+        assert self.singleton.added > 0
 
 
 class TemplateTest(ItemInDBTestCase):

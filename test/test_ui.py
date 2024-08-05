@@ -74,7 +74,7 @@ class ListTest(BeetsTestCase):
 
     def test_list_album_outputs_something(self):
         stdout = self._run_list(album=True)
-        self.assertGreater(len(stdout.getvalue()), 0)
+        assert len(stdout.getvalue()) > 0
 
     def test_list_album_path(self):
         stdout = self._run_list(album=True, fmt="$path")

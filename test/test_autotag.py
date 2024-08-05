@@ -281,7 +281,7 @@ class DistanceTest(BeetsTestCase):
         assert list(dist) == [("album", 0.2), ("medium", 0.2)]
         assert dist == 0.4
         assert dist < 1.0
-        self.assertGreater(dist, 0.0)
+        assert dist > 0.0
         assert dist - 0.4 == 0.0
         assert 0.4 - dist == 0.0
         assert float(dist) == 0.4
@@ -1058,6 +1058,6 @@ class EnumTest(BeetsTestCase):
         assert OrderedEnumClass.a < OrderedEnumClass.b
         assert OrderedEnumClass.a < OrderedEnumClass.c
         assert OrderedEnumClass.b < OrderedEnumClass.c
-        self.assertGreater(OrderedEnumClass.b, OrderedEnumClass.a)
-        self.assertGreater(OrderedEnumClass.c, OrderedEnumClass.a)
-        self.assertGreater(OrderedEnumClass.c, OrderedEnumClass.b)
+        assert OrderedEnumClass.b > OrderedEnumClass.a
+        assert OrderedEnumClass.c > OrderedEnumClass.a
+        assert OrderedEnumClass.c > OrderedEnumClass.b

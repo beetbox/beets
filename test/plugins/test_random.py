@@ -76,4 +76,4 @@ class RandomTest(TestHelper, unittest.TestCase):
         mean2, stdev2, median2 = experiment("track")
         self.assertAlmostEqual(0, median1, delta=1)
         self.assertAlmostEqual(len(self.items) // 2, median2, delta=1)
-        self.assertGreater(stdev2, stdev1)
+        assert stdev2 > stdev1

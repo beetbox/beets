@@ -244,7 +244,7 @@ class TransactionTest(unittest.TestCase):
                 "VALUES (?);".format(ModelFixture1._table),
                 (111,),
             )
-        self.assertGreater(self.db.revision, old_rev)
+        assert self.db.revision > old_rev
 
     def test_query_no_increase_revision(self):
         old_rev = self.db.revision
@@ -280,14 +280,14 @@ class ModelTest(unittest.TestCase):
         model.add(self.db)
         model.store()
         assert model._revision == self.db.revision
-        self.assertGreater(self.db.revision, old_rev)
+        assert self.db.revision > old_rev
 
         mid_rev = self.db.revision
         model2 = ModelFixture1()
         model2.add(self.db)
         model2.store()
-        self.assertGreater(model2._revision, mid_rev)
-        self.assertGreater(self.db.revision, model._revision)
+        assert model2._revision > mid_rev
+        assert self.db.revision > model._revision
 
         # revision changed, so the model should be re-loaded
         model.load()
