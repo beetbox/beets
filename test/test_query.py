@@ -88,7 +88,7 @@ class AnyFieldQueryTest(ItemInDBTestCase):
         assert q1 == q2
 
         q2.query_class = None
-        self.assertNotEqual(q1, q2)
+        assert q1 != q2
 
 
 # A test case class providing a library with some dummy data and some
@@ -472,9 +472,9 @@ class MatchTest(BeetsTestCase):
         q3 = dbcore.query.MatchQuery("foo", "baz")
         q4 = dbcore.query.StringFieldQuery("foo", "bar")
         assert q1 == q2
-        self.assertNotEqual(q1, q3)
-        self.assertNotEqual(q1, q4)
-        self.assertNotEqual(q3, q4)
+        assert q1 != q3
+        assert q1 != q4
+        assert q3 != q4
 
 
 class PathQueryTest(ItemInDBTestCase, AssertsMixin):

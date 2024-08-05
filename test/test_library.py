@@ -563,7 +563,7 @@ class ItemFormattedMappingTest(ItemInDBTestCase):
         album = self.lib.add_album([self.i])
         album["artist"] = "foo"
         album.store()
-        self.assertNotEqual("foo", self.i.formatted().get("artist"))
+        assert "foo" != self.i.formatted().get("artist")
 
     def test_album_flex_field(self):
         album = self.lib.add_album([self.i])
@@ -997,7 +997,7 @@ class AlbumInfoTest(BeetsTestCase):
         ai.store()
         i = self.lib.items()[0]
         assert i.albumartist == "myNewArtist"
-        self.assertNotEqual(i.artist, "myNewArtist")
+        assert i.artist != "myNewArtist"
 
     def test_albuminfo_change_artist_does_change_items(self):
         ai = self.lib.get_album(self.i)
@@ -1011,7 +1011,7 @@ class AlbumInfoTest(BeetsTestCase):
         ai.artist = "myNewArtist"
         ai.store(inherit=False)
         i = self.lib.items()[0]
-        self.assertNotEqual(i.artist, "myNewArtist")
+        assert i.artist != "myNewArtist"
 
     def test_albuminfo_remove_removes_items(self):
         item_id = self.i.id
@@ -1262,19 +1262,17 @@ class WriteTest(BeetsTestCase):
         shutil.copy(syspath(item.path), syspath(custom_path))
 
         item["artist"] = "new artist"
-        self.assertNotEqual(
-            MediaFile(syspath(custom_path)).artist, "new artist"
-        )
-        self.assertNotEqual(MediaFile(syspath(item.path)).artist, "new artist")
+        assert MediaFile(syspath(custom_path)).artist != "new artist"
+        assert MediaFile(syspath(item.path)).artist != "new artist"
 
         item.write(custom_path)
         assert MediaFile(syspath(custom_path)).artist == "new artist"
-        self.assertNotEqual(MediaFile(syspath(item.path)).artist, "new artist")
+        assert MediaFile(syspath(item.path)).artist != "new artist"
 
     def test_write_custom_tags(self):
         item = self.add_item_fixture(artist="old artist")
         item.write(tags={"artist": "new artist"})
-        self.assertNotEqual(item.artist, "new artist")
+        assert item.artist != "new artist"
         assert MediaFile(syspath(item.path)).artist == "new artist"
 
     def test_write_multi_tags(self):
@@ -1322,7 +1320,7 @@ class ItemReadTest(unittest.TestCase):
 class FilesizeTest(BeetsTestCase):
     def test_filesize(self):
         item = self.add_item_fixture()
-        self.assertNotEqual(item.filesize, 0)
+        assert item.filesize != 0
 
     def test_nonexistent_file(self):
         item = beets.library.Item()

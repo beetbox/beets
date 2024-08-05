@@ -352,7 +352,7 @@ class ModelTest(unittest.TestCase):
         model.some_boolean_field = True
 
         for field, type_ in model._fields.items():
-            self.assertNotEqual(model[field], type_.null)
+            assert model[field] != type_.null
 
         for field, type_ in model._fields.items():
             del model[field]
