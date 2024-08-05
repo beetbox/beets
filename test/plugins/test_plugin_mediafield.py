@@ -19,6 +19,7 @@ import os
 import shutil
 
 import mediafile
+import pytest
 
 from beets.library import Item
 from beets.plugins import BeetsPlugin
@@ -115,11 +116,13 @@ class ExtendedFieldTestMixin(BeetsTestCase):
             Item._media_fields.remove("customtag")
 
     def test_invalid_descriptor(self):
-        with self.assertRaises(ValueError) as cm:
+        with pytest.raises(
+            ValueError, match="must be an instance of MediaField"
+        ):
             mediafile.MediaFile.add_field("somekey", True)
-        assert "must be an instance of MediaField" in str(cm.exception)
 
     def test_overwrite_property(self):
-        with self.assertRaises(ValueError) as cm:
+        with pytest.raises(
+            ValueError, match='property "artist" already exists'
+        ):
             mediafile.MediaFile.add_field("artist", mediafile.MediaField())
-        assert 'property "artist" already exists' in str(cm.exception)

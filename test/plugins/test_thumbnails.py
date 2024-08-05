@@ -18,6 +18,8 @@ from shutil import rmtree
 from tempfile import mkdtemp
 from unittest.mock import Mock, call, patch
 
+import pytest
+
 from beets.test.helper import BeetsTestCase
 from beets.util import bytestring_path, syspath
 from beetsplug.thumbnails import (
@@ -81,7 +83,7 @@ class ThumbnailsTest(BeetsTestCase):
 
         mock_artresizer.shared.local = True
         mock_artresizer.shared.can_write_metadata = False
-        with self.assertRaises(RuntimeError):
+        with pytest.raises(RuntimeError):
             ThumbnailsPlugin()
 
         mock_artresizer.shared.local = True

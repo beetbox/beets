@@ -19,6 +19,8 @@ import time
 import unittest
 from datetime import datetime, timedelta
 
+import pytest
+
 from beets.dbcore.query import (
     DateInterval,
     DateQuery,
@@ -278,11 +280,11 @@ class DateQueryTestRelativeMore(ItemInDBTestCase):
 
 class DateQueryConstructTest(unittest.TestCase):
     def test_long_numbers(self):
-        with self.assertRaises(InvalidQueryArgumentValueError):
+        with pytest.raises(InvalidQueryArgumentValueError):
             DateQuery("added", "1409830085..1412422089")
 
     def test_too_many_components(self):
-        with self.assertRaises(InvalidQueryArgumentValueError):
+        with pytest.raises(InvalidQueryArgumentValueError):
             DateQuery("added", "12-34-56-78")
 
     def test_invalid_date_query(self):
@@ -297,7 +299,7 @@ class DateQueryConstructTest(unittest.TestCase):
             "..2aa",
         ]
         for q in q_list:
-            with self.assertRaises(InvalidQueryArgumentValueError):
+            with pytest.raises(InvalidQueryArgumentValueError):
                 DateQuery("added", q)
 
     def test_datetime_uppercase_t_separator(self):
@@ -316,5 +318,5 @@ class DateQueryConstructTest(unittest.TestCase):
         assert date_query.interval.end == datetime(2000, 1, 1, 13)
 
     def test_datetime_invalid_separator(self):
-        with self.assertRaises(InvalidQueryArgumentValueError):
+        with pytest.raises(InvalidQueryArgumentValueError):
             DateQuery("added", "2000-01-01x12")

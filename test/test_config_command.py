@@ -1,6 +1,7 @@
 import os
 from unittest.mock import patch
 
+import pytest
 import yaml
 
 from beets import config, ui
@@ -110,12 +111,11 @@ class ConfigCommandTest(BeetsTestCase):
         )
 
     def test_config_editor_not_found(self):
-        with self.assertRaises(ui.UserError) as user_error:
+        msg_match = "Could not edit configuration.*here is problem"
+        with pytest.raises(ui.UserError, match=msg_match):
             with patch("os.execlp") as execlp:
                 execlp.side_effect = OSError("here is problem")
                 self.run_command("config", "-e")
-        assert "Could not edit configuration" in str(user_error.exception)
-        assert "here is problem" in str(user_error.exception)
 
     def test_edit_invalid_config_file(self):
         with open(self.config_path, "w") as file:

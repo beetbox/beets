@@ -15,6 +15,8 @@
 """Tests for the 'bucket' plugin."""
 
 
+import pytest
+
 from beets import config, ui
 from beets.test.helper import BeetsTestCase
 from beetsplug import bucket
@@ -136,21 +138,21 @@ class BucketPluginTest(BeetsTestCase):
 
     def test_bad_alpha_range_def(self):
         """If bad alpha range definition, a UserError is raised."""
-        with self.assertRaises(ui.UserError):
+        with pytest.raises(ui.UserError):
             self._setup_config(bucket_alpha=["$%"])
 
     def test_bad_year_range_def_no4digits(self):
         """If bad year range definition, a UserError is raised.
         Range origin must be expressed on 4 digits.
         """
-        with self.assertRaises(ui.UserError):
+        with pytest.raises(ui.UserError):
             self._setup_config(bucket_year=["62-64"])
 
     def test_bad_year_range_def_nodigits(self):
         """If bad year range definition, a UserError is raised.
         At least the range origin must be declared.
         """
-        with self.assertRaises(ui.UserError):
+        with pytest.raises(ui.UserError):
             self._setup_config(bucket_year=["nodigits"])
 
     def check_span_from_str(self, sstr, dfrom, dto):

@@ -20,6 +20,7 @@ import shutil
 from unittest.mock import patch
 
 import confuse
+import pytest
 import responses
 
 from beets import config, importer, logging, util
@@ -251,17 +252,17 @@ class FSArtTest(UseThePlugin):
 
     def test_non_image_file_not_identified(self):
         _common.touch(os.path.join(self.dpath, b"a.txt"))
-        with self.assertRaises(StopIteration):
+        with pytest.raises(StopIteration):
             next(self.source.get(None, self.settings, [self.dpath]))
 
     def test_cautious_skips_fallback(self):
         _common.touch(os.path.join(self.dpath, b"a.jpg"))
         self.settings.cautious = True
-        with self.assertRaises(StopIteration):
+        with pytest.raises(StopIteration):
             next(self.source.get(None, self.settings, [self.dpath]))
 
     def test_empty_dir(self):
-        with self.assertRaises(StopIteration):
+        with pytest.raises(StopIteration):
             next(self.source.get(None, self.settings, [self.dpath]))
 
     def test_precedence_amongst_correct_files(self):
@@ -398,7 +399,7 @@ class AAOTest(UseThePlugin):
     def test_aao_scraper_returns_no_result_when_no_image_present(self):
         self.mock_response(self.AAO_URL, "blah blah")
         album = _common.Bag(asin=self.ASIN)
-        with self.assertRaises(StopIteration):
+        with pytest.raises(StopIteration):
             next(self.source.get(album, self.settings, []))
 
 
@@ -440,7 +441,7 @@ class ITunesStoreTest(UseThePlugin):
         expected = "got no results"
 
         with capture_log("beets.test_art") as logs:
-            with self.assertRaises(StopIteration):
+            with pytest.raises(StopIteration):
                 next(self.source.get(self.album, self.settings, []))
         assert expected in logs[1]
 
@@ -454,7 +455,7 @@ class ITunesStoreTest(UseThePlugin):
         expected = "iTunes search failed: 404 Client Error"
 
         with capture_log("beets.test_art") as logs:
-            with self.assertRaises(StopIteration):
+            with pytest.raises(StopIteration):
                 next(self.source.get(self.album, self.settings, []))
         assert expected in logs[1]
 
@@ -487,7 +488,7 @@ class ITunesStoreTest(UseThePlugin):
         expected = "Malformed itunes candidate"
 
         with capture_log("beets.test_art") as logs:
-            with self.assertRaises(StopIteration):
+            with pytest.raises(StopIteration):
                 next(self.source.get(self.album, self.settings, []))
         assert expected in logs[1]
 
@@ -497,7 +498,7 @@ class ITunesStoreTest(UseThePlugin):
         expected = "not found in json. Fields are"
 
         with capture_log("beets.test_art") as logs:
-            with self.assertRaises(StopIteration):
+            with pytest.raises(StopIteration):
                 next(self.source.get(self.album, self.settings, []))
         assert expected in logs[1]
 
@@ -507,7 +508,7 @@ class ITunesStoreTest(UseThePlugin):
         expected = "Could not decode json response:"
 
         with capture_log("beets.test_art") as logs:
-            with self.assertRaises(StopIteration):
+            with pytest.raises(StopIteration):
                 next(self.source.get(self.album, self.settings, []))
         assert expected in logs[1]
 
@@ -538,14 +539,14 @@ class GoogleImageTest(UseThePlugin):
         album = _common.Bag(albumartist="some artist", album="some album")
         json = '{"error": {"errors": [{"reason": "some reason"}]}}'
         self.mock_response(fetchart.GoogleImages.URL, json)
-        with self.assertRaises(StopIteration):
+        with pytest.raises(StopIteration):
             next(self.source.get(album, self.settings, []))
 
     def test_google_art_returns_no_result_with_malformed_response(self):
         album = _common.Bag(albumartist="some artist", album="some album")
         json = """bla blup"""
         self.mock_response(fetchart.GoogleImages.URL, json)
-        with self.assertRaises(StopIteration):
+        with pytest.raises(StopIteration):
             next(self.source.get(album, self.settings, []))
 
 
@@ -695,7 +696,7 @@ class FanartTVTest(UseThePlugin):
             fetchart.FanartTV.API_ALBUMS + "thereleasegroupid",
             self.RESPONSE_ERROR,
         )
-        with self.assertRaises(StopIteration):
+        with pytest.raises(StopIteration):
             next(self.source.get(album, self.settings, []))
 
     def test_fanarttv_returns_no_result_with_malformed_response(self):
@@ -704,7 +705,7 @@ class FanartTVTest(UseThePlugin):
             fetchart.FanartTV.API_ALBUMS + "thereleasegroupid",
             self.RESPONSE_MALFORMED,
         )
-        with self.assertRaises(StopIteration):
+        with pytest.raises(StopIteration):
             next(self.source.get(album, self.settings, []))
 
     def test_fanarttv_only_other_images(self):
@@ -714,7 +715,7 @@ class FanartTVTest(UseThePlugin):
             fetchart.FanartTV.API_ALBUMS + "thereleasegroupid",
             self.RESPONSE_NO_ART,
         )
-        with self.assertRaises(StopIteration):
+        with pytest.raises(StopIteration):
             next(self.source.get(album, self.settings, []))
 
 
@@ -1000,7 +1001,7 @@ class EnforceRatioConfigTest(BeetsTestCase):
         if should_raise:
             for v in values:
                 config["fetchart"]["enforce_ratio"] = v
-                with self.assertRaises(confuse.ConfigValueError):
+                with pytest.raises(confuse.ConfigValueError):
                     fetchart.FetchArtPlugin()
         else:
             for v in values:

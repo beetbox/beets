@@ -20,6 +20,8 @@ from os import path
 from shutil import rmtree
 from tempfile import mkdtemp
 
+import pytest
+
 from beets.test._common import RSRC
 from beets.util import bytestring_path
 from beets.util.m3u import EmptyPlaylistError, M3UFile
@@ -33,7 +35,7 @@ class M3UFileTest(unittest.TestCase):
         tempdir = bytestring_path(mkdtemp())
         the_playlist_file = path.join(tempdir, b"playlist.m3u8")
         m3ufile = M3UFile(the_playlist_file)
-        with self.assertRaises(EmptyPlaylistError):
+        with pytest.raises(EmptyPlaylistError):
             m3ufile.write()
         rmtree(tempdir)
 

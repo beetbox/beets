@@ -18,6 +18,8 @@
 import re
 import unittest
 
+import pytest
+
 from beets import autotag, config
 from beets.autotag import AlbumInfo, TrackInfo, match
 from beets.autotag.hooks import Distance, string_dist
@@ -46,7 +48,7 @@ class PluralityTest(BeetsTestCase):
         assert freq == 2
 
     def test_plurality_empty_sequence_raises_error(self):
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             plurality([])
 
     def test_current_metadata_finds_pluralities(self):

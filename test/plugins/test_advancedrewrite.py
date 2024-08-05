@@ -16,6 +16,8 @@
 """
 
 
+import pytest
+
 from beets.test.helper import PluginTestCase
 from beets.ui import UserError
 
@@ -87,16 +89,16 @@ class AdvancedRewritePluginTest(PluginTestCase):
             assert item.artists == ["유빈", "미미"]
 
     def test_fail_when_replacements_empty(self):
-        with self.assertRaises(
+        with pytest.raises(
             UserError,
-            msg="Advanced rewrites must have at least one replacement",
+            match="Advanced rewrites must have at least one replacement",
         ), self.configure_plugin([{"match": "artist:A", "replacements": {}}]):
             pass
 
     def test_fail_when_rewriting_single_valued_field_with_list(self):
-        with self.assertRaises(
+        with pytest.raises(
             UserError,
-            msg="Field artist is not a multi-valued field but a list was given: C, D",
+            match="Field artist is not a multi-valued field but a list was given: C, D",
         ), self.configure_plugin(
             [
                 {

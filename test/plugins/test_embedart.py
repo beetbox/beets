@@ -20,6 +20,7 @@ import unittest
 from test.test_art_resize import DummyIMBackend
 from unittest.mock import MagicMock, patch
 
+import pytest
 from mediafile import MediaFile
 
 from beets import art, config, logging, ui
@@ -122,7 +123,7 @@ class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
     def test_art_file_missing(self):
         self.add_album_fixture()
         logging.getLogger("beets.embedart").setLevel(logging.DEBUG)
-        with self.assertRaises(ui.UserError):
+        with pytest.raises(ui.UserError):
             self.run_command("embedart", "-y", "-f", "/doesnotexist")
 
     def test_embed_non_image_file(self):

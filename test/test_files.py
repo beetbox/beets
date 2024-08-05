@@ -21,6 +21,8 @@ import stat
 import unittest
 from os.path import join
 
+import pytest
+
 import beets.library
 from beets import util
 from beets.test import _common
@@ -576,16 +578,16 @@ class SafeMoveCopyTest(BeetsTestCase):
         self.assertExists(self.path)
 
     def test_unsuccessful_move(self):
-        with self.assertRaises(util.FilesystemError):
+        with pytest.raises(util.FilesystemError):
             util.move(self.path, self.otherpath)
 
     def test_unsuccessful_copy(self):
-        with self.assertRaises(util.FilesystemError):
+        with pytest.raises(util.FilesystemError):
             util.copy(self.path, self.otherpath)
 
     @unittest.skipUnless(_common.HAVE_REFLINK, "need reflink")
     def test_unsuccessful_reflink(self):
-        with self.assertRaises(util.FilesystemError):
+        with pytest.raises(util.FilesystemError):
             util.reflink(self.path, self.otherpath)
 
     def test_self_move(self):

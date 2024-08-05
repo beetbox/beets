@@ -29,6 +29,7 @@ from tempfile import mkstemp
 from unittest.mock import Mock, patch
 from zipfile import ZipFile
 
+import pytest
 from mediafile import MediaFile
 
 from beets import config, importer, logging, util
@@ -574,7 +575,7 @@ class ImportTest(ImportTestCase):
         self.importer.add_choice(importer.action.ASIS)
         self.importer.run()
 
-        with self.assertRaises(AttributeError):
+        with pytest.raises(AttributeError):
             self.lib.items().get().data_source
 
     def test_set_fields(self):

@@ -24,6 +24,7 @@ import sys
 import unittest
 from unittest.mock import Mock, patch
 
+import pytest
 from confuse import ConfigError
 from mediafile import MediaFile
 
@@ -785,7 +786,8 @@ class ImportTest(BeetsTestCase):
     def test_quiet_timid_disallowed(self):
         config["import"]["quiet"] = True
         config["import"]["timid"] = True
-        self.assertRaises(ui.UserError, commands.import_files, None, [], None)
+        with pytest.raises(ui.UserError):
+            commands.import_files(None, [], None)
 
     def test_parse_paths_from_logfile(self):
         if os.path.__name__ == "ntpath":
@@ -923,7 +925,7 @@ class ConfigTest(TestPluginTestCase):
         with self.write_config_file() as config:
             config.write("library: /xxx/yyy/not/a/real/path")
 
-        with self.assertRaises(ui.UserError):
+        with pytest.raises(ui.UserError):
             self.run_command("test", lib=None)
 
     def test_user_config_file(self):
@@ -1079,7 +1081,8 @@ class ConfigTest(TestPluginTestCase):
         beetsdir = os.path.join(self.temp_dir, b"beetsfile")
         open(beetsdir, "a").close()
         os.environ["BEETSDIR"] = os.fsdecode(beetsdir)
-        self.assertRaises(ConfigError, self.run_command, "test")
+        with pytest.raises(ConfigError):
+            self.run_command("test")
 
     def test_beetsdir_config_does_not_load_default_user_config(self):
         os.environ["BEETSDIR"] = os.fsdecode(self.beetsdir)
@@ -1496,7 +1499,7 @@ class CommonOptionsParserCliTest(BeetsTestCase):
         l = self.run_with_output("help", "list")
         assert "Usage:" in l
 
-        with self.assertRaises(ui.UserError):
+        with pytest.raises(ui.UserError):
             self.run_command("help", "this.is.not.a.real.command")
 
     def test_stats(self):
@@ -1568,7 +1571,7 @@ class CommonOptionsParserTest(BeetsTestCase):
         assert config["format_album"].as_str() == "$baz"
 
     def test_format_option_with_target(self):
-        with self.assertRaises(KeyError):
+        with pytest.raises(KeyError):
             ui.CommonOptionsParser().add_format_option(target="thingy")
 
         parser = ui.CommonOptionsParser()

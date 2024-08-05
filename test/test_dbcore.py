@@ -20,6 +20,8 @@ import sqlite3
 import unittest
 from tempfile import mkstemp
 
+import pytest
+
 from beets import dbcore
 from beets.test import _common
 
@@ -340,7 +342,7 @@ class ModelTest(unittest.TestCase):
 
     def test_delete_non_existent_attribute(self):
         model = ModelFixture1()
-        with self.assertRaises(KeyError):
+        with pytest.raises(KeyError):
             del model["foo"]
 
     def test_delete_fixed_attribute(self):
@@ -386,21 +388,21 @@ class ModelTest(unittest.TestCase):
         assert "flex_field" not in model2
 
     def test_check_db_fails(self):
-        with self.assertRaisesRegex(ValueError, "no database"):
+        with pytest.raises(ValueError, match="no database"):
             dbcore.Model()._check_db()
-        with self.assertRaisesRegex(ValueError, "no id"):
+        with pytest.raises(ValueError, match="no id"):
             ModelFixture1(self.db)._check_db()
 
         dbcore.Model(self.db)._check_db(need_id=False)
 
     def test_missing_field(self):
-        with self.assertRaises(AttributeError):
+        with pytest.raises(AttributeError):
             ModelFixture1(self.db).nonExistingKey
 
     def test_computed_field(self):
         model = ModelFixtureWithGetters()
         assert model.aComputedField == "thing"
-        with self.assertRaisesRegex(KeyError, "computed field .+ deleted"):
+        with pytest.raises(KeyError, match="computed field .+ deleted"):
             del model.aComputedField
 
     def test_items(self):
@@ -413,11 +415,11 @@ class ModelTest(unittest.TestCase):
     def test_delete_internal_field(self):
         model = dbcore.Model()
         del model._db
-        with self.assertRaises(AttributeError):
+        with pytest.raises(AttributeError):
             model._db
 
     def test_parse_nonstring(self):
-        with self.assertRaisesRegex(TypeError, "must be a string"):
+        with pytest.raises(TypeError, match="must be a string"):
             dbcore.Model._parse(None, 42)
 
 
@@ -479,7 +481,7 @@ class FormattedMappingTest(unittest.TestCase):
     def test_get_unset_field(self):
         model = ModelFixture1()
         formatted = model.formatted()
-        with self.assertRaises(KeyError):
+        with pytest.raises(KeyError):
             formatted["other_field"]
 
     def test_get_method_with_default(self):
@@ -755,7 +757,7 @@ class ResultsIteratorTest(unittest.TestCase):
 
     def test_out_of_range(self):
         objs = self.db._fetch(ModelFixture1)
-        with self.assertRaises(IndexError):
+        with pytest.raises(IndexError):
             objs[100]
 
     def test_no_results(self):

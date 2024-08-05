@@ -18,6 +18,8 @@ from shutil import rmtree
 from tempfile import mkdtemp
 from unittest.mock import MagicMock, Mock, PropertyMock
 
+import pytest
+
 from beets import config
 from beets.dbcore import OrQuery
 from beets.dbcore.query import FixedFieldSort, MultipleSort, NullSort
@@ -347,7 +349,7 @@ class SmartPlaylistCLITest(PluginTestCase):
         config["smartplaylist"]["playlist_dir"].set(fsdecode(self.temp_dir))
 
     def test_splupdate(self):
-        with self.assertRaises(UserError):
+        with pytest.raises(UserError):
             self.run_with_output("splupdate", "tagada")
 
         self.run_with_output("splupdate", "my_playlist")

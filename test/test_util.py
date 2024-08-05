@@ -22,6 +22,8 @@ import sys
 import unittest
 from unittest.mock import Mock, patch
 
+import pytest
+
 from beets import util
 from beets.test import _common
 from beets.test.helper import BeetsTestCase
@@ -111,10 +113,10 @@ class UtilTest(unittest.TestCase):
             return m
 
         mock_popen.side_effect = popen_fail
-        with self.assertRaises(subprocess.CalledProcessError) as exc_context:
+        with pytest.raises(subprocess.CalledProcessError) as exc_info:
             util.command_output(["taga", "\xc3\xa9"])
-        assert exc_context.exception.returncode == 1
-        assert exc_context.exception.cmd == "taga \xc3\xa9"
+        assert exc_info.value.returncode == 1
+        assert exc_info.value.cmd == "taga \xc3\xa9"
 
     def test_case_sensitive_default(self):
         path = util.bytestring_path(
