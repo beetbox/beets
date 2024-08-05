@@ -44,14 +44,6 @@ class AssertsMixin:
     def assert_albums_matched(self, results, albums):
         assert {a.album for a in results} == set(albums)
 
-    def assertInResult(self, item, results):
-        result_ids = [i.id for i in results]
-        assert item.id in result_ids
-
-    def assertNotInResult(self, item, results):
-        result_ids = [i.id for i in results]
-        assert item.id not in result_ids
-
 
 # A test case class providing a library with some dummy data and some
 # assertions involving that data.
@@ -477,44 +469,44 @@ class BoolQueryTest(BeetsTestCase, AssertsMixin):
         item_true = self.add_item(comp=True)
         item_false = self.add_item(comp=False)
         matched = self.lib.items("comp:true")
-        self.assertInResult(item_true, matched)
-        self.assertNotInResult(item_false, matched)
+        assert item_true.id in {i.id for i in matched}
+        assert item_false.id not in {i.id for i in matched}
 
     def test_flex_parse_true(self):
         item_true = self.add_item(flexbool=True)
         item_false = self.add_item(flexbool=False)
         matched = self.lib.items("flexbool:true")
-        self.assertInResult(item_true, matched)
-        self.assertNotInResult(item_false, matched)
+        assert item_true.id in {i.id for i in matched}
+        assert item_false.id not in {i.id for i in matched}
 
     def test_flex_parse_false(self):
         item_true = self.add_item(flexbool=True)
         item_false = self.add_item(flexbool=False)
         matched = self.lib.items("flexbool:false")
-        self.assertInResult(item_false, matched)
-        self.assertNotInResult(item_true, matched)
+        assert item_false.id in {i.id for i in matched}
+        assert item_true.id not in {i.id for i in matched}
 
     def test_flex_parse_1(self):
         item_true = self.add_item(flexbool=True)
         item_false = self.add_item(flexbool=False)
         matched = self.lib.items("flexbool:1")
-        self.assertInResult(item_true, matched)
-        self.assertNotInResult(item_false, matched)
+        assert item_true.id in {i.id for i in matched}
+        assert item_false.id not in {i.id for i in matched}
 
     def test_flex_parse_0(self):
         item_true = self.add_item(flexbool=True)
         item_false = self.add_item(flexbool=False)
         matched = self.lib.items("flexbool:0")
-        self.assertInResult(item_false, matched)
-        self.assertNotInResult(item_true, matched)
+        assert item_false.id in {i.id for i in matched}
+        assert item_true.id not in {i.id for i in matched}
 
     def test_flex_parse_any_string(self):
         # TODO this should be the other way around
         item_true = self.add_item(flexbool=True)
         item_false = self.add_item(flexbool=False)
         matched = self.lib.items("flexbool:something")
-        self.assertInResult(item_false, matched)
-        self.assertNotInResult(item_true, matched)
+        assert item_false.id in {i.id for i in matched}
+        assert item_true.id not in {i.id for i in matched}
 
 
 class DefaultSearchFieldsTest(DummyDataTestCase):
@@ -541,33 +533,33 @@ class NoneQueryTest(BeetsTestCase, AssertsMixin):
         album_item = self.add_album().items().get()
 
         matched = self.lib.items(NoneQuery("album_id"))
-        self.assertInResult(singleton, matched)
-        self.assertNotInResult(album_item, matched)
+        assert singleton.id in {i.id for i in matched}
+        assert album_item.id not in {i.id for i in matched}
 
     def test_match_after_set_none(self):
         item = self.add_item(rg_track_gain=0)
         matched = self.lib.items(NoneQuery("rg_track_gain"))
-        self.assertNotInResult(item, matched)
+        assert item.id not in {i.id for i in matched}
 
         item["rg_track_gain"] = None
         item.store()
         matched = self.lib.items(NoneQuery("rg_track_gain"))
-        self.assertInResult(item, matched)
+        assert item.id in {i.id for i in matched}
 
     def test_match_slow(self):
         item = self.add_item()
         matched = self.lib.items(NoneQuery("rg_track_peak", fast=False))
-        self.assertInResult(item, matched)
+        assert item.id in {i.id for i in matched}
 
     def test_match_slow_after_set_none(self):
         item = self.add_item(rg_track_gain=0)
         matched = self.lib.items(NoneQuery("rg_track_gain", fast=False))
-        self.assertNotInResult(item, matched)
+        assert item.id not in {i.id for i in matched}
 
         item["rg_track_gain"] = None
         item.store()
         matched = self.lib.items(NoneQuery("rg_track_gain", fast=False))
-        self.assertInResult(item, matched)
+        assert item.id in {i.id for i in matched}
 
 
 class NotQueryMatchTest(unittest.TestCase):
