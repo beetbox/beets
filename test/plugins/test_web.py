@@ -4,6 +4,7 @@ import json
 import os.path
 import platform
 import shutil
+from collections import Counter
 
 from beets import logging
 from beets.library import Album, Item
@@ -220,7 +221,7 @@ class WebPluginTest(ItemInDBTestCase):
 
         assert response.status_code == 200
         response_albums = [album["album"] for album in res_json["albums"]]
-        self.assertCountEqual(response_albums, ["album", "other album"])
+        assert Counter(response_albums) == {"album": 1, "other album": 1}
 
     def test_get_single_album_by_id(self):
         response = self.client.get("/album/2")
@@ -236,7 +237,7 @@ class WebPluginTest(ItemInDBTestCase):
 
         assert response.status_code == 200
         response_albums = [album["album"] for album in res_json["albums"]]
-        self.assertCountEqual(response_albums, ["album", "other album"])
+        assert Counter(response_albums) == {"album": 1, "other album": 1}
 
     def test_get_album_empty_query(self):
         response = self.client.get("/album/query/")
