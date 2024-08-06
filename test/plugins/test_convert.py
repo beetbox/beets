@@ -58,13 +58,18 @@ class ConvertMixin:
             shell_quote(sys.executable), shell_quote(stub), tag
         )
 
+    def assert_is_file(self, path):
+        path = Path(os.fsdecode(path))
+        assert path.exists()
+        assert path.is_file()
+
     def assertFileTag(self, path, tag):
         """Assert that the path is a file and the files content ends
         with `tag`.
         """
         display_tag = tag
         tag = tag.encode("utf-8")
-        self.assertIsFile(path)
+        self.assert_is_file(path)
         with open(path, "rb") as f:
             f.seek(-len(display_tag), os.SEEK_END)
             assert f.read() == tag, (
@@ -77,7 +82,7 @@ class ConvertMixin:
         """
         display_tag = tag
         tag = tag.encode("utf-8")
-        self.assertIsFile(path)
+        self.assert_is_file(path)
         with open(path, "rb") as f:
             f.seek(-len(tag), os.SEEK_END)
             assert f.read() != tag, (
@@ -117,7 +122,7 @@ class ImportConvertTest(AsIsImporterMixin, ImportHelper, ConvertTestCase):
 
         item = self.lib.items().get()
         assert item is not None
-        self.assertIsFile(item.path)
+        self.assert_is_file(item.path)
 
     def test_delete_originals(self):
         self.config["convert"]["delete_originals"] = True
