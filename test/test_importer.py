@@ -411,7 +411,7 @@ class ImportTest(PathsMixin, AutotagImportTestCase):
         assert not self.lib.items()
 
     def test_skip_non_album_dirs(self):
-        self.assertIsDir(os.path.join(self.import_dir, b"album"))
+        assert (self.import_path / "album").exists()
         self.touch(b"cruft", dir=self.import_dir)
         self.importer.add_choice(importer.Action.APPLY)
         self.importer.run()
