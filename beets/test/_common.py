@@ -18,7 +18,6 @@ import os
 import sys
 import unittest
 from contextlib import contextmanager
-from pathlib import Path
 
 import beets
 import beets.library
@@ -114,11 +113,6 @@ def import_session(lib=None, loghandler=None, paths=[], query=[], cli=False):
 
 class Assertions:
     """A mixin with additional unit test assertions."""
-
-    def assertIsDir(self, path):
-        path = Path(os.fsdecode(path))
-        assert path.exists()
-        assert path.is_dir()
 
     def assert_equal_path(self, a, b):
         """Check that two paths are equal."""
