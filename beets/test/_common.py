@@ -115,11 +115,6 @@ def import_session(lib=None, loghandler=None, paths=[], query=[], cli=False):
 class Assertions:
     """A mixin with additional unit test assertions."""
 
-    def assertIsFile(self, path):
-        path = Path(os.fsdecode(path))
-        assert path.exists()
-        assert path.is_file()
-
     def assertIsDir(self, path):
         path = Path(os.fsdecode(path))
         assert path.exists()
