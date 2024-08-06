@@ -62,9 +62,7 @@ class BareascPluginTest(PluginTestCase):
         for query, expected_titles in test_cases:
             with self.subTest(query=query, expected_titles=expected_titles):
                 items = self.lib.items(query)
-                self.assertListEqual(
-                    [item.title for item in items], expected_titles
-                )
+                assert [item.title for item in items] == expected_titles
 
     def test_bareasc_list_output(self):
         """Bare-ASCII version of list command - check output."""
