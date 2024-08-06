@@ -18,6 +18,7 @@ import os.path
 import re
 import sys
 import unittest
+from pathlib import Path
 
 import pytest
 from mediafile import MediaFile
@@ -32,7 +33,6 @@ from beets.test.helper import (
     capture_log,
     control_stdin,
 )
-from beets.util import displayable_path
 from beetsplug import convert
 
 
@@ -58,36 +58,11 @@ class ConvertMixin:
             shell_quote(sys.executable), shell_quote(stub), tag
         )
 
-    def assert_is_file(self, path):
-        path = Path(os.fsdecode(path))
+    def file_endswith(self, path: Path, tag: str):
+        """Check the path is a file and if its content ends with `tag`."""
         assert path.exists()
         assert path.is_file()
-
-    def assertFileTag(self, path, tag):
-        """Assert that the path is a file and the files content ends
-        with `tag`.
-        """
-        display_tag = tag
-        tag = tag.encode("utf-8")
-        self.assert_is_file(path)
-        with open(path, "rb") as f:
-            f.seek(-len(display_tag), os.SEEK_END)
-            assert f.read() == tag, (
-                f"{displayable_path(path)} is not tagged with {display_tag}"
-            )
-
-    def assertNoFileTag(self, path, tag):
-        """Assert that the path is a file and the files content does not
-        end with `tag`.
-        """
-        display_tag = tag
-        tag = tag.encode("utf-8")
-        self.assert_is_file(path)
-        with open(path, "rb") as f:
-            f.seek(-len(tag), os.SEEK_END)
-            assert f.read() != tag, (
-                f"{displayable_path(path)} is unexpectedly tagged with {display_tag}"
-            )
+        return path.read_bytes().endswith(tag.encode("utf-8"))
 
 
 class ConvertTestCase(ConvertMixin, PluginTestCase):
@@ -111,7 +86,7 @@ class ImportConvertTest(AsIsImporterMixin, ImportHelper, ConvertTestCase):
     def test_import_converted(self):
         self.run_asis_importer()
         item = self.lib.items().get()
-        self.assertFileTag(item.filepath, "convert")
+        assert self.file_endswith(item.filepath, "convert")
 
     # FIXME: fails on windows
     @unittest.skipIf(sys.platform == "win32", "win32")
@@ -122,7 +97,7 @@ class ImportConvertTest(AsIsImporterMixin, ImportHelper, ConvertTestCase):
 
         item = self.lib.items().get()
         assert item is not None
-        self.assert_is_file(item.path)
+        assert item.filepath.is_file()
 
     def test_delete_originals(self):
         self.config["convert"]["delete_originals"] = True
@@ -183,11 +158,11 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
     def test_convert(self):
         with control_stdin("y"):
             self.run_convert()
-        self.assertFileTag(self.converted_mp3, "mp3")
+        assert self.file_endswith(self.converted_mp3, "mp3")
 
     def test_convert_with_auto_confirmation(self):
         self.run_convert("--yes")
-        self.assertFileTag(self.converted_mp3, "mp3")
+        assert self.file_endswith(self.converted_mp3, "mp3")
 
     def test_reject_confirmation(self):
         with control_stdin("n"):
@@ -206,7 +181,7 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
     def test_format_option(self):
         with control_stdin("y"):
             self.run_convert("--format", "opus")
-        self.assertFileTag(self.convert_dest / "converted.ops", "opus")
+        assert self.file_endswith(self.convert_dest / "converted.ops", "opus")
 
     def test_embed_album_art(self):
         self.config["convert"]["embed"] = True
@@ -241,38 +216,42 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
         self.config["convert"]["max_bitrate"] = 5000
         with control_stdin("y"):
             self.run_convert()
-        self.assertFileTag(self.converted_mp3, "mp3")
+        assert self.file_endswith(self.converted_mp3, "mp3")
 
     def test_transcode_when_maxbr_set_low_and_different_formats(self):
         self.config["convert"]["max_bitrate"] = 5
         with control_stdin("y"):
             self.run_convert()
-        self.assertFileTag(self.converted_mp3, "mp3")
+        assert self.file_endswith(self.converted_mp3, "mp3")
 
     def test_transcode_when_maxbr_set_to_none_and_different_formats(self):
         with control_stdin("y"):
             self.run_convert()
-        self.assertFileTag(self.converted_mp3, "mp3")
+        assert self.file_endswith(self.converted_mp3, "mp3")
 
     def test_no_transcode_when_maxbr_set_high_and_same_formats(self):
         self.config["convert"]["max_bitrate"] = 5000
         self.config["convert"]["format"] = "ogg"
         with control_stdin("y"):
             self.run_convert()
-        self.assertNoFileTag(self.convert_dest / "converted.ogg", "ogg")
+        assert not self.file_endswith(
+            self.convert_dest / "converted.ogg", "ogg"
+        )
 
     def test_transcode_when_maxbr_set_low_and_same_formats(self):
         self.config["convert"]["max_bitrate"] = 5
         self.config["convert"]["format"] = "ogg"
         with control_stdin("y"):
             self.run_convert()
-        self.assertFileTag(self.convert_dest / "converted.ogg", "ogg")
+        assert self.file_endswith(self.convert_dest / "converted.ogg", "ogg")
 
     def test_transcode_when_maxbr_set_to_none_and_same_formats(self):
         self.config["convert"]["format"] = "ogg"
         with control_stdin("y"):
             self.run_convert()
-        self.assertNoFileTag(self.convert_dest / "converted.ogg", "ogg")
+        assert not self.file_endswith(
+            self.convert_dest / "converted.ogg", "ogg"
+        )
 
     def test_playlist(self):
         with control_stdin("y"):
@@ -307,7 +286,7 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
         with control_stdin("y"):
             self.run_convert_path(item)
         converted = self.convert_dest / "converted.mp3"
-        self.assertFileTag(converted, "mp3")
+        assert self.file_endswith(converted, "mp3")
 
     def test_transcode_from_lossy(self):
         self.config["convert"]["never_convert_lossy_files"] = False
@@ -315,14 +294,14 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
         with control_stdin("y"):
             self.run_convert_path(item)
         converted = self.convert_dest / "converted.mp3"
-        self.assertFileTag(converted, "mp3")
+        assert self.file_endswith(converted, "mp3")
 
     def test_transcode_from_lossy_prevented(self):
         [item] = self.add_item_fixtures(ext="ogg")
         with control_stdin("y"):
             self.run_convert_path(item)
         converted = self.convert_dest / "converted.ogg"
-        self.assertNoFileTag(converted, "mp3")
+        assert not self.file_endswith(converted, "mp3")
 
 
 class TestNoConvert:
