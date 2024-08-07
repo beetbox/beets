@@ -68,22 +68,23 @@ class ImportAddedTest(PluginMixin, AutotagImportTestCase):
             "No MediaFile found for Item " + displayable_path(item.path)
         )
 
-    def assertAlbumImport(self):
+    def test_import_album_with_added_dates(self):
         self.importer.run()
+
         album = self.lib.albums().get()
         assert album.added == self.min_mtime
         for item in album.items():
             assert item.added == self.min_mtime
 
-    def test_import_album_with_added_dates(self):
-        self.assertAlbumImport()
-
     def test_import_album_inplace_with_added_dates(self):
         self.config["import"]["copy"] = False
-        self.config["import"]["move"] = False
-        self.config["import"]["link"] = False
-        self.config["import"]["hardlink"] = False
-        self.assertAlbumImport()
+
+        self.importer.run()
+
+        album = self.lib.albums().get()
+        assert album.added == self.min_mtime
+        for item in album.items():
+            assert item.added == self.min_mtime
 
     def test_import_album_with_preserved_mtimes(self):
         self.config["importadded"]["preserve_mtimes"] = True
