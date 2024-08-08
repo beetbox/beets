@@ -1,5 +1,5 @@
 # This file is part of beets.
-# Copyright 2024, Lars Kruse
+# Copyright 2024, Arav K.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -13,8 +13,8 @@
 # included in all copies or substantial portions of the Software.
 
 """
-This module contains components of beets' test environment, which may be of use
-for testing procedures of external libraries or programs.  For example the
-'TestHelper' class may be useful for creating an in-memory beets library filled
-with a few example items.
+Automatic configuration for `pytest`.
 """
+
+# Pull in Beets' test fixtures.
+pytest_plugins = "beets.test.fixtures"
