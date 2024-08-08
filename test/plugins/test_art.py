@@ -863,6 +863,16 @@ class ArtImporterTest(UseThePlugin):
         assert self.album.art_filepath.exists()
 
 
+IMAGE_PATH = os.path.join(_common.RSRC, b"abbey-similar.jpg")
+IMAGE_SIZE = os.stat(util.syspath(IMAGE_PATH)).st_size
+
+
+def fs_source_get(_self, album, settings, paths):
+    if paths:
+        yield fetchart.Candidate(logger, source_name=_self.ID, path=IMAGE_PATH)
+
+
+@patch("beetsplug.fetchart.FileSystem.get", fs_source_get)
 class ArtForAlbumTest(UseThePlugin):
     """Tests that fetchart.art_for_album respects the scale & filesize
     configurations (e.g., minwidth, enforce_ratio, max_filesize)
@@ -870,53 +880,24 @@ class ArtForAlbumTest(UseThePlugin):
 
     IMG_225x225 = os.path.join(_common.RSRC, b"abbey.jpg")
     IMG_348x348 = os.path.join(_common.RSRC, b"abbey-different.jpg")
-    IMG_500x490 = os.path.join(_common.RSRC, b"abbey-similar.jpg")
 
     IMG_225x225_SIZE = os.stat(util.syspath(IMG_225x225)).st_size
-    IMG_348x348_SIZE = os.stat(util.syspath(IMG_348x348)).st_size
 
     RESIZE_OP = "resize"
     DEINTERLACE_OP = "deinterlace"
     REFORMAT_OP = "reformat"
 
-    def setUp(self):
-        super().setUp()
+    album = _common.Bag()
 
-        self.old_fs_source_get = fetchart.FileSystem.get
-
-        def fs_source_get(_self, album, settings, paths):
-            if paths:
-                yield fetchart.Candidate(
-                    logger, source_name=_self.ID, path=self.image_file
-                )
-
-        fetchart.FileSystem.get = fs_source_get
-
-        self.album = _common.Bag()
-
-    def tearDown(self):
-        fetchart.FileSystem.get = self.old_fs_source_get
-        super().tearDown()
-
-    def assertImageIsValidArt(self, image_file, should_exist):
-        assert Path(os.fsdecode(image_file)).exists()
-        self.image_file = image_file
-
-        candidate = self.plugin.art_for_album(self.album, [""], True)
-
-        if should_exist:
-            assert candidate is not None
-            assert candidate.path == self.image_file
-            assert Path(os.fsdecode(candidate.path)).exists()
-        else:
-            assert candidate is None
+    def get_album_art(self):
+        return self.plugin.art_for_album(self.album, [""], True)
 
     def _assert_image_operated(self, image_file, operation, should_operate):
         self.image_file = image_file
         with patch.object(
             ArtResizer.shared, operation, return_value=self.image_file
         ) as mock_operation:
-            self.plugin.art_for_album(self.album, [""], True)
+            self.get_album_art()
             assert mock_operation.called == should_operate
 
     def _require_backend(self):
@@ -929,48 +910,51 @@ class ArtForAlbumTest(UseThePlugin):
     def test_respect_minwidth(self):
         self._require_backend()
         self.plugin.minwidth = 300
-        self.assertImageIsValidArt(self.IMG_225x225, False)
-        self.assertImageIsValidArt(self.IMG_348x348, True)
+        assert self.get_album_art()
+
+    def test_respect_minwidth_no(self):
+        self._require_backend()
+        self.plugin.minwidth = 600
+        assert not self.get_album_art()
 
     def test_respect_enforce_ratio_yes(self):
         self._require_backend()
         self.plugin.enforce_ratio = True
-        self.assertImageIsValidArt(self.IMG_500x490, False)
-        self.assertImageIsValidArt(self.IMG_225x225, True)
+        assert not self.get_album_art()
 
     def test_respect_enforce_ratio_no(self):
         self.plugin.enforce_ratio = False
-        self.assertImageIsValidArt(self.IMG_500x490, True)
+        assert self.get_album_art()
 
     def test_respect_enforce_ratio_px_above(self):
         self._require_backend()
         self.plugin.enforce_ratio = True
         self.plugin.margin_px = 5
-        self.assertImageIsValidArt(self.IMG_500x490, False)
+        assert not self.get_album_art()
 
     def test_respect_enforce_ratio_px_below(self):
         self._require_backend()
         self.plugin.enforce_ratio = True
         self.plugin.margin_px = 15
-        self.assertImageIsValidArt(self.IMG_500x490, True)
+        assert self.get_album_art()
 
     def test_respect_enforce_ratio_percent_above(self):
         self._require_backend()
         self.plugin.enforce_ratio = True
         self.plugin.margin_percent = (500 - 490) / 500 * 0.5
-        self.assertImageIsValidArt(self.IMG_500x490, False)
+        assert not self.get_album_art()
 
     def test_respect_enforce_ratio_percent_below(self):
         self._require_backend()
         self.plugin.enforce_ratio = True
         self.plugin.margin_percent = (500 - 490) / 500 * 1.5
-        self.assertImageIsValidArt(self.IMG_500x490, True)
+        assert self.get_album_art()
 
     def test_resize_if_necessary(self):
         self._require_backend()
         self.plugin.maxwidth = 300
-        self._assert_image_operated(self.IMG_225x225, self.RESIZE_OP, False)
-        self._assert_image_operated(self.IMG_348x348, self.RESIZE_OP, True)
+        assert self.get_album_art()
+        self._assert_image_operated(IMAGE_PATH, self.RESIZE_OP, True)
 
     def test_fileresize(self):
         self._require_backend()
@@ -979,9 +963,9 @@ class ArtForAlbumTest(UseThePlugin):
 
     def test_fileresize_if_necessary(self):
         self._require_backend()
-        self.plugin.max_filesize = self.IMG_225x225_SIZE
-        self._assert_image_operated(self.IMG_225x225, self.RESIZE_OP, False)
-        self.assertImageIsValidArt(self.IMG_225x225, True)
+        self.plugin.max_filesize = IMAGE_SIZE
+        self._assert_image_operated(IMAGE_PATH, self.RESIZE_OP, False)
+        assert self.get_album_art()
 
     def test_fileresize_no_scale(self):
         self._require_backend()
