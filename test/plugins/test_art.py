@@ -863,137 +863,132 @@ class ArtImporterTest(UseThePlugin):
         assert self.album.art_filepath.exists()
 
 
-IMAGE_PATH = os.path.join(_common.RSRC, b"abbey-similar.jpg")
-IMAGE_SIZE = os.stat(util.syspath(IMAGE_PATH)).st_size
+class AlbumArtOperationTestCase(UseThePlugin):
+    """Base test case for album art operations.
 
-
-def fs_source_get(_self, album, settings, paths):
-    if paths:
-        yield fetchart.Candidate(logger, source_name=_self.ID, path=IMAGE_PATH)
-
-
-@patch("beetsplug.fetchart.FileSystem.get", fs_source_get)
-class ArtForAlbumTest(UseThePlugin):
-    """Tests that fetchart.art_for_album respects the scale & filesize
-    configurations (e.g., minwidth, enforce_ratio, max_filesize)
+    Provides common setup for testing album art processing operations by setting
+    up a mock filesystem source that returns a predefined test image.
     """
 
-    IMG_225x225 = os.path.join(_common.RSRC, b"abbey.jpg")
-    IMG_348x348 = os.path.join(_common.RSRC, b"abbey-different.jpg")
+    IMAGE_PATH = os.path.join(_common.RSRC, b"abbey-similar.jpg")
+    IMAGE_FILESIZE = os.stat(util.syspath(IMAGE_PATH)).st_size
+    IMAGE_WIDTH = 500
+    IMAGE_HEIGHT = 490
+    IMAGE_WIDTH_HEIGHT_DIFF = IMAGE_WIDTH - IMAGE_HEIGHT
 
-    IMG_225x225_SIZE = os.stat(util.syspath(IMG_225x225)).st_size
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
 
-    RESIZE_OP = "resize"
-    DEINTERLACE_OP = "deinterlace"
-    REFORMAT_OP = "reformat"
+        def fs_source_get(_self, album, settings, paths):
+            if paths:
+                yield fetchart.Candidate(
+                    logger, source_name=_self.ID, path=cls.IMAGE_PATH
+                )
 
-    album = _common.Bag()
+        patch("beetsplug.fetchart.FileSystem.get", fs_source_get).start()
+        cls.addClassCleanup(patch.stopall)
 
     def get_album_art(self):
-        return self.plugin.art_for_album(self.album, [""], True)
+        return self.plugin.art_for_album(_common.Bag(), [""], True)
 
-    def _assert_image_operated(self, image_file, operation, should_operate):
-        self.image_file = image_file
-        with patch.object(
-            ArtResizer.shared, operation, return_value=self.image_file
-        ) as mock_operation:
-            self.get_album_art()
-            assert mock_operation.called == should_operate
 
-    def _require_backend(self):
-        """Skip the test if the art resizer doesn't have ImageMagick or
-        PIL (so comparisons and measurements are unavailable).
-        """
-        if not ArtResizer.shared.local:
-            self.skipTest("ArtResizer has no local imaging backend available")
+class AlbumArtOperationConfigurationTest(AlbumArtOperationTestCase):
+    """Check that scale & filesize configuration is respected.
 
-    def test_respect_minwidth(self):
-        self._require_backend()
-        self.plugin.minwidth = 300
+    Depending on `minwidth`, `enforce_ratio`, `margin_px`, and `margin_percent`
+    configuration the plugin should or should not return an art candidate.
+    """
+
+    def test_minwidth(self):
+        self.plugin.minwidth = self.IMAGE_WIDTH / 2
         assert self.get_album_art()
 
-    def test_respect_minwidth_no(self):
-        self._require_backend()
-        self.plugin.minwidth = 600
+        self.plugin.minwidth = self.IMAGE_WIDTH * 2
         assert not self.get_album_art()
 
-    def test_respect_enforce_ratio_yes(self):
-        self._require_backend()
+    def test_enforce_ratio(self):
         self.plugin.enforce_ratio = True
         assert not self.get_album_art()
 
-    def test_respect_enforce_ratio_no(self):
         self.plugin.enforce_ratio = False
         assert self.get_album_art()
 
-    def test_respect_enforce_ratio_px_above(self):
-        self._require_backend()
+    def test_enforce_ratio_with_px_margin(self):
         self.plugin.enforce_ratio = True
-        self.plugin.margin_px = 5
+
+        self.plugin.margin_px = self.IMAGE_WIDTH_HEIGHT_DIFF * 0.5
         assert not self.get_album_art()
 
-    def test_respect_enforce_ratio_px_below(self):
-        self._require_backend()
-        self.plugin.enforce_ratio = True
-        self.plugin.margin_px = 15
+        self.plugin.margin_px = self.IMAGE_WIDTH_HEIGHT_DIFF * 1.5
         assert self.get_album_art()
 
-    def test_respect_enforce_ratio_percent_above(self):
-        self._require_backend()
+    def test_enforce_ratio_with_percent_margin(self):
         self.plugin.enforce_ratio = True
-        self.plugin.margin_percent = (500 - 490) / 500 * 0.5
+        diff_by_width = self.IMAGE_WIDTH_HEIGHT_DIFF / self.IMAGE_WIDTH
+
+        self.plugin.margin_percent = diff_by_width * 0.5
         assert not self.get_album_art()
 
-    def test_respect_enforce_ratio_percent_below(self):
-        self._require_backend()
-        self.plugin.enforce_ratio = True
-        self.plugin.margin_percent = (500 - 490) / 500 * 1.5
+        self.plugin.margin_percent = diff_by_width * 1.5
         assert self.get_album_art()
 
-    def test_resize_if_necessary(self):
-        self._require_backend()
-        self.plugin.maxwidth = 300
+
+class AlbumArtPerformOperationTest(AlbumArtOperationTestCase):
+    """Test that the art is resized and deinterlaced if necessary."""
+
+    def setUp(self):
+        super().setUp()
+        self.resizer_mock = patch.object(
+            ArtResizer.shared, "resize", return_value=self.IMAGE_PATH
+        ).start()
+        self.deinterlacer_mock = patch.object(
+            ArtResizer.shared, "deinterlace", return_value=self.IMAGE_PATH
+        ).start()
+
+    def test_resize(self):
+        self.plugin.maxwidth = self.IMAGE_WIDTH / 2
         assert self.get_album_art()
-        self._assert_image_operated(IMAGE_PATH, self.RESIZE_OP, True)
+        assert self.resizer_mock.called
 
-    def test_fileresize(self):
-        self._require_backend()
-        self.plugin.max_filesize = self.IMG_225x225_SIZE // 2
-        self._assert_image_operated(self.IMG_225x225, self.RESIZE_OP, True)
-
-    def test_fileresize_if_necessary(self):
-        self._require_backend()
-        self.plugin.max_filesize = IMAGE_SIZE
-        self._assert_image_operated(IMAGE_PATH, self.RESIZE_OP, False)
+    def test_file_resized(self):
+        self.plugin.max_filesize = self.IMAGE_FILESIZE // 2
         assert self.get_album_art()
+        assert self.resizer_mock.called
 
-    def test_fileresize_no_scale(self):
-        self._require_backend()
-        self.plugin.maxwidth = 300
-        self.plugin.max_filesize = self.IMG_225x225_SIZE // 2
-        self._assert_image_operated(self.IMG_225x225, self.RESIZE_OP, True)
+    def test_file_not_resized(self):
+        self.plugin.max_filesize = self.IMAGE_FILESIZE
+        assert self.get_album_art()
+        assert not self.resizer_mock.called
 
-    def test_fileresize_and_scale(self):
-        self._require_backend()
-        self.plugin.maxwidth = 200
-        self.plugin.max_filesize = self.IMG_225x225_SIZE // 2
-        self._assert_image_operated(self.IMG_225x225, self.RESIZE_OP, True)
+    def test_file_resized_but_not_scaled(self):
+        self.plugin.maxwidth = self.IMAGE_WIDTH * 2
+        self.plugin.max_filesize = self.IMAGE_FILESIZE // 2
+        assert self.get_album_art()
+        assert self.resizer_mock.called
 
-    def test_deinterlace(self):
-        self._require_backend()
+    def test_file_resized_and_scaled(self):
+        self.plugin.maxwidth = self.IMAGE_WIDTH / 2
+        self.plugin.max_filesize = self.IMAGE_FILESIZE // 2
+        assert self.get_album_art()
+        assert self.resizer_mock.called
+
+    def test_deinterlaced(self):
         self.plugin.deinterlace = True
-        self._assert_image_operated(self.IMG_225x225, self.DEINTERLACE_OP, True)
+        assert self.get_album_art()
+        assert self.deinterlacer_mock.called
+
+    def test_not_deinterlaced(self):
         self.plugin.deinterlace = False
-        self._assert_image_operated(
-            self.IMG_225x225, self.DEINTERLACE_OP, False
-        )
+        assert self.get_album_art()
+        assert not self.deinterlacer_mock.called
 
-    def test_deinterlace_and_resize(self):
-        self._require_backend()
-        self.plugin.maxwidth = 300
+    def test_deinterlaced_and_resized(self):
+        self.plugin.maxwidth = self.IMAGE_WIDTH / 2
         self.plugin.deinterlace = True
-        self._assert_image_operated(self.IMG_348x348, self.DEINTERLACE_OP, True)
-        self._assert_image_operated(self.IMG_348x348, self.RESIZE_OP, True)
+        assert self.get_album_art()
+        assert self.deinterlacer_mock.called
+        assert self.resizer_mock.called
 
 
 class DeprecatedConfigTest(unittest.TestCase):
