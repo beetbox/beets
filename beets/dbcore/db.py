@@ -17,15 +17,17 @@
 from __future__ import annotations
 
 import contextlib
+import functools
 import os
 import re
 import sqlite3
+import sys
 import threading
 import time
 from abc import ABC
 from collections import defaultdict
 from collections.abc import Generator, Iterable, Iterator, Mapping, Sequence
-from sqlite3 import Connection
+from sqlite3 import Connection, sqlite_version_info
 from typing import TYPE_CHECKING, Any, AnyStr, Callable, Generic
 
 from typing_extensions import TypeVar  # default value support
@@ -1125,9 +1127,16 @@ class Database:
 
             return bytestring
 
-        conn.create_function("regexp", 2, regexp)
-        conn.create_function("unidecode", 1, unidecode)
-        conn.create_function("bytelower", 1, bytelower)
+        create_function = conn.create_function
+        if sys.version_info >= (3, 8) and sqlite_version_info >= (3, 8, 3):
+            # Let sqlite make extra optimizations
+            create_function = functools.partial(
+                conn.create_function, deterministic=True
+            )
+
+        create_function("regexp", 2, regexp)
+        create_function("unidecode", 1, unidecode)
+        create_function("bytelower", 1, bytelower)
 
     def _close(self):
         """Close the all connections to the underlying SQLite database
