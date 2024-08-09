@@ -14,7 +14,7 @@
 """Uses Librosa to calculate the `bpm` field.
 """
 
-
+from numpy import round
 from librosa import beat, load
 from soundfile import LibsndfileError
 
