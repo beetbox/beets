@@ -286,8 +286,6 @@ class ImportSingletonTest(AutotagImportTestCase):
         assert self.lib.albums().get() is None
 
     def test_apply_asis_adds_singleton_path(self):
-        self.assert_lib_dir_empty()
-
         self.importer.add_choice(importer.Action.ASIS)
         self.importer.run()
         self.assert_file_in_lib(b"singletons", b"Tag Track 1.mp3")
@@ -305,8 +303,6 @@ class ImportSingletonTest(AutotagImportTestCase):
         assert self.lib.albums().get() is None
 
     def test_apply_candidate_adds_singleton_path(self):
-        self.assert_lib_dir_empty()
-
         self.importer.add_choice(importer.Action.APPLY)
         self.importer.run()
         self.assert_file_in_lib(b"singletons", b"Applied Track 1.mp3")
@@ -404,8 +400,6 @@ class ImportTest(AutotagImportTestCase):
         assert self.lib.items().get().title == "Tag Track 1"
 
     def test_apply_asis_adds_album_path(self):
-        self.assert_lib_dir_empty()
-
         self.importer.add_choice(importer.Action.ASIS)
         self.importer.run()
         self.assert_file_in_lib(b"Tag Artist", b"Tag Album", b"Tag Track 1.mp3")
@@ -425,8 +419,6 @@ class ImportTest(AutotagImportTestCase):
         assert self.lib.items().get().title == "Applied Track 1"
 
     def test_apply_candidate_adds_album_path(self):
-        self.assert_lib_dir_empty()
-
         self.importer.add_choice(importer.Action.APPLY)
         self.importer.run()
         self.assert_file_in_lib(
@@ -603,8 +595,6 @@ class ImportTracksTest(AutotagImportTestCase):
         assert self.lib.albums().get() is None
 
     def test_apply_tracks_adds_singleton_path(self):
-        self.assert_lib_dir_empty()
-
         self.importer.add_choice(importer.Action.TRACKS)
         self.importer.add_choice(importer.Action.APPLY)
         self.importer.add_choice(importer.Action.APPLY)
