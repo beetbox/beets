@@ -23,12 +23,20 @@ from tempfile import mkstemp
 import pytest
 
 from beets import dbcore
+from beets.dbcore.db import DBCustomFunctionError
 from beets.library import LibModel
 from beets.test import _common
 from beets.util import cached_classproperty
 
 # Fixture: concrete database and model classes. For migration tests, we
 # have multiple models with different numbers of fields.
+
+
+@pytest.fixture
+def db(model):
+    db = model(":memory:")
+    yield db
+    db._connection().close()
 
 
 class SortFixture(dbcore.query.FieldSort):
@@ -784,3 +792,25 @@ class ResultsIteratorTest(unittest.TestCase):
             self.db._fetch(ModelFixture1, dbcore.query.FalseQuery()).get()
             is None
         )
+
+
+class TestException:
+    @pytest.mark.parametrize("model", [DatabaseFixture1])
+    @pytest.mark.filterwarnings(
+        "ignore: .*plz_raise.*: pytest.PytestUnraisableExceptionWarning"
+    )
+    @pytest.mark.filterwarnings(
+        "error: .*: pytest.PytestUnraisableExceptionWarning"
+    )
+    def test_custom_function_error(self, db: DatabaseFixture1):
+        def plz_raise():
+            raise Exception("i haz raized")
+
+        db._connection().create_function("plz_raise", 0, plz_raise)
+
+        with db.transaction() as tx:
+            tx.mutate("insert into test (field_one) values (1)")
+
+        with pytest.raises(DBCustomFunctionError):
+            with db.transaction() as tx:
+                tx.query("select * from test where plz_raise()")
