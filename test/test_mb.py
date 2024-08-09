@@ -12,10 +12,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Tests for MusicBrainz API wrapper.
-"""
+"""Tests for MusicBrainz API wrapper."""
 
-import unittest
 from unittest import mock
 
 from beets import config
@@ -761,7 +759,7 @@ class ArtistFlatteningTest(BeetsTestCase):
         assert flat == ("ALIASfr_P", "ALIASSORTfr_P", "CREDIT")
 
 
-class MBLibraryTest(unittest.TestCase):
+class MBLibraryTest(BeetsTestCase):
     def test_match_track(self):
         with mock.patch("musicbrainzngs.search_recordings") as p:
             p.return_value = {
