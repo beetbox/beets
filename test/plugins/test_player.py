@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Tests for BPD's implementation of the MPD protocol.
-"""
+"""Tests for BPD's implementation of the MPD protocol."""
 
 import importlib.util
 import multiprocessing as mp
@@ -30,6 +29,7 @@ from contextlib import contextmanager
 from unittest import mock
 
 import confuse
+import pytest
 import yaml
 
 from beets.test.helper import PluginTestCase
@@ -703,13 +703,13 @@ class BPDPlaybackTest(BPDTestHelper):
         self._assert_failed(responses, bpd.ERROR_ARG, pos=3)
         self._assert_failed(response, bpd.ERROR_ARG)
         assert "xfade" not in responses[0].data
-        self.assertAlmostEqual(123, int(responses[2].data["xfade"]))
+        assert 123 == pytest.approx(int(responses[2].data["xfade"]))
 
     def test_cmd_mixrampdb(self):
         with self.run_bpd() as client:
             responses = client.send_commands(("mixrampdb", "-17"), ("status",))
         self._assert_ok(*responses)
-        self.assertAlmostEqual(-17, float(responses[1].data["mixrampdb"]))
+        assert -17 == pytest.approx(float(responses[1].data["mixrampdb"]))
 
     def test_cmd_mixrampdelay(self):
         with self.run_bpd() as client:
@@ -721,7 +721,7 @@ class BPDPlaybackTest(BPDTestHelper):
                 ("mixrampdelay", "-2"),
             )
         self._assert_failed(responses, bpd.ERROR_ARG, pos=4)
-        self.assertAlmostEqual(2, float(responses[1].data["mixrampdelay"]))
+        assert 2 == pytest.approx(float(responses[1].data["mixrampdelay"]))
         assert "mixrampdelay" not in responses[3].data
 
     def test_cmd_setvol(self):
@@ -753,7 +753,7 @@ class BPDPlaybackTest(BPDTestHelper):
                 ("replay_gain_mode", "notanoption"),
             )
         self._assert_failed(responses, bpd.ERROR_ARG, pos=2)
-        self.assertAlmostEqual("track", responses[1].data["replay_gain_mode"])
+        assert "track" == responses[1].data["replay_gain_mode"]
 
 
 class BPDControlTest(BPDTestHelper):

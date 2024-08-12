@@ -16,6 +16,7 @@
 import unittest
 from typing import ClassVar
 
+import pytest
 from mediafile import MediaFile
 
 from beets import config
@@ -149,11 +150,11 @@ class ReplayGainCliTest:
             assert item.rg_track_peak is not None
             assert item.rg_track_gain is not None
             mediafile = MediaFile(item.path)
-            self.assertAlmostEqual(
-                mediafile.rg_track_peak, item.rg_track_peak, places=6
+            assert mediafile.rg_track_peak == pytest.approx(
+                item.rg_track_peak, abs=1e-6
             )
-            self.assertAlmostEqual(
-                mediafile.rg_track_gain, item.rg_track_gain, places=2
+            assert mediafile.rg_track_gain == pytest.approx(
+                item.rg_track_gain, abs=1e-2
             )
 
     def test_cli_skips_calculated_tracks(self):
