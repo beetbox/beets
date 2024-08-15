@@ -12,6 +12,9 @@ New features:
   `beet list -a title:something` or `beet list artpath:cover`. Consequently
   album queries involving `path` field have been sped up, like `beet list -a
   path:/path/`.
+* :doc:`plugins/autobpm`: Add new configuration option ``beat_track_kwargs``
+  which enables adjusting keyword arguments supplied to librosa's
+  ``beat_track`` function call.
 
 Bug fixes:
 

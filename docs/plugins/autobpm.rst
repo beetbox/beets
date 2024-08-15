@@ -28,5 +28,14 @@ configuration file. The available options are:
 - **overwrite**: Calculate a BPM even for files that already have a
   `bpm` value.
   Default: ``no``.
+- **beat_track_kwargs**: Any extra keyword arguments that you would like to
+  provide to librosa's `beat_track`_ function call, for example:
+
+.. code-block:: yaml
+
+    autobpm:
+      beat_track_kwargs:
+        start_bpm: 160
 
 .. _Librosa: https://github.com/librosa/librosa/
+.. _beat_track: https://librosa.org/doc/latest/generated/librosa.beat.beat_track.html
