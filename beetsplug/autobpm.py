@@ -11,9 +11,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Uses Librosa to calculate the `bpm` field.
-"""
-
+"""Uses Librosa to calculate the `bpm` field."""
 
 from librosa import beat, load
 from soundfile import LibsndfileError
@@ -78,7 +76,7 @@ class AutoBPMPlugin(BeetsPlugin):
                 )
                 continue
 
-            tempo, _ = beat.beat_track(y=y, sr=sr)
+            (tempo, *_), _ = beat.beat_track(y=y, sr=sr)
             bpm = round(tempo)
             item["bpm"] = bpm
             self._log.info(
