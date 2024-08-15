@@ -13,6 +13,8 @@
 
 """Uses Librosa to calculate the `bpm` field."""
 
+from typing import Iterable
+
 from librosa import beat, load
 from soundfile import LibsndfileError
 
@@ -27,6 +29,7 @@ class AutoBPMPlugin(BeetsPlugin):
             {
                 "auto": True,
                 "overwrite": False,
+                "beat_track_kwargs": {},
             }
         )
 
@@ -76,8 +79,9 @@ class AutoBPMPlugin(BeetsPlugin):
                 )
                 continue
 
-            (tempo, *_), _ = beat.beat_track(y=y, sr=sr)
-            bpm = round(tempo)
+            kwargs = self.config["beat_track_kwargs"].flatten()
+            tempo, _ = beat.beat_track(y=y, sr=sr, **kwargs)
+            bpm = round(tempo[0] if isinstance(tempo, Iterable) else tempo)
             item["bpm"] = bpm
             self._log.info(
                 "added computed bpm {0} for {1}",
