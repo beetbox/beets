@@ -26,7 +26,6 @@ For packagers:
 * The `typing_extensions` is required for Python 3.10 and below.
 
 Other changes:
-
 * :doc:`contributing`: The project now uses `poetry` for packaging and
   dependency management. This change affects project management and mostly
   affects beets developers. Please see updates in :ref:`getting-the-source` and
@@ -50,6 +49,10 @@ Other changes:
   checked.
 * The long-deprecated `beets.util.confit` module has been removed.  This may
   cause extremely outdated external plugins to fail to load.
+* :doc:`plugins/autobpm`: Add plugin dependencies to `pyproject.toml` under
+  the `autobpm` extra and update the plugin installation instructions in the
+  docs.
+  :bug:`5185`
 
 2.0.0 (May 30, 2024)
 --------------------
@@ -350,7 +353,7 @@ Bug fixes:
   :bug:`4947`
 * Fix bug where unimported plugin would not ignore children directories of
   ignored directories.
-  :bug:`5130` 
+  :bug:`5130`
 * Fix bug where some plugin commands hang indefinitely due to a missing
   `requests` timeout.
 * Fix cover art resizing logic to support multiple steps of resizing
