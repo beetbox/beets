@@ -18,6 +18,10 @@ Bug fixes:
 * Improved naming of temporary files by separating the random part with the file extension.
 * Fixed the ``auto`` value for the :ref:`reflink` config option.
 * Fixed lyrics plugin only getting part of the lyrics from ``Genius.com`` :bug:`4815`
+* :doc:`plugins/autobpm`: Fix the ``TypeError`` where tempo was being returned
+  as a numpy array. Update ``librosa`` dependency constraint to prevent similar
+  issues in the future.
+  :bug:`5289`
 
 For packagers:
 
@@ -26,6 +30,7 @@ For packagers:
 * The `typing_extensions` is required for Python 3.10 and below.
 
 Other changes:
+
 * :doc:`contributing`: The project now uses `poetry` for packaging and
   dependency management. This change affects project management and mostly
   affects beets developers. Please see updates in :ref:`getting-the-source` and

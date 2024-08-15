@@ -48,7 +48,7 @@ dbus-python = { version = "*", optional = true }
 flask = { version = "*", optional = true }
 flask-cors = { version = "*", optional = true }
 langdetect = { version = "*", optional = true }
-librosa = { version = ">=0.10.2.post1", optional = true }
+librosa = { version = "^0.10.2.post1", optional = true }
 mutagen = { version = ">=1.33", optional = true }
 Pillow = { version = "*", optional = true }
 py7zr = { version = "*", optional = true }
