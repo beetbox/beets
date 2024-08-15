@@ -60,6 +60,10 @@ Other changes:
 * :doc:`plugins/autobpm`: Add plugin dependencies to `pyproject.toml` under
   the `autobpm` extra and update the plugin installation instructions in the
   docs.
+  Since importing the bpm calculation functionality from ``librosa`` takes
+  around 4 seconds, update the plugin to only do so when it actually needs to
+  calculate the bpm. Previously this import was being done immediately, so
+  every ``beet`` invocation was being delayed by a couple of seconds.
   :bug:`5185`
 
 2.0.0 (May 30, 2024)
