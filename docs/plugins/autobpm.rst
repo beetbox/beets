@@ -6,8 +6,15 @@ of a track from its audio data and store it in the `bpm` field of your
 database. It does so automatically when importing music or through
 the ``beet autobpm [QUERY]`` command.
 
-To use the ``autobpm`` plugin, enable it in your configuration (see
-:ref:`using-plugins`).
+Install
+-------
+
+To use the ``autobpm`` plugin, first enable it in your configuration (see
+:ref:`using-plugins`). Then, install ``beets`` with ``autobpm`` extra
+
+.. code-block:: bash
+
+    pip install "beets[autobpm]"
 
 Configuration
 -------------
