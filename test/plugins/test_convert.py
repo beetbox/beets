@@ -64,9 +64,9 @@ class ConvertMixin:
         self.assertIsFile(path)
         with open(path, "rb") as f:
             f.seek(-len(display_tag), os.SEEK_END)
-            assert f.read() == tag, "{} is not tagged with {}".format(
-                displayable_path(path), display_tag
-            )
+            assert (
+                f.read() == tag
+            ), f"{displayable_path(path)} is not tagged with {display_tag}"
 
     def assertNoFileTag(self, path, tag):  # noqa
         """Assert that the path is a file and the files content does not
@@ -77,9 +77,9 @@ class ConvertMixin:
         self.assertIsFile(path)
         with open(path, "rb") as f:
             f.seek(-len(tag), os.SEEK_END)
-            assert f.read() != tag, "{} is unexpectedly tagged with {}".format(
-                displayable_path(path), display_tag
-            )
+            assert (
+                f.read() != tag
+            ), f"{displayable_path(path)} is unexpectedly tagged with {display_tag}"
 
 
 class ConvertTestCase(ConvertMixin, PluginTestCase):
@@ -123,9 +123,7 @@ class ImportConvertTest(AsIsImporterMixin, ImportHelper, ConvertTestCase):
             for root, dirnames, filenames in os.walk(path):
                 assert (
                     len(fnmatch.filter(filenames, "*.mp3")) == 0
-                ), "Non-empty import directory {}".format(
-                    util.displayable_path(path)
-                )
+                ), f"Non-empty import directory {util.displayable_path(path)}"
 
     def get_count_of_import_files(self):
         import_file_count = 0

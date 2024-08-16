@@ -155,9 +155,7 @@ class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
 
         assert (
             mediafile.images[0].data == self.image_data
-        ), "Image written is not {}".format(
-            displayable_path(self.abbey_artpath)
-        )
+        ), f"Image written is not {displayable_path(self.abbey_artpath)}"
 
     @require_artresizer_compare
     def test_accept_similar_art(self):
@@ -171,9 +169,7 @@ class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
 
         assert (
             mediafile.images[0].data == self.image_data
-        ), "Image written is not {}".format(
-            displayable_path(self.abbey_similarpath)
-        )
+        ), f"Image written is not {displayable_path(self.abbey_similarpath)}"
 
     def test_non_ascii_album_path(self):
         resource_path = os.path.join(_common.RSRC, b"image.mp3")

@@ -98,16 +98,13 @@ class PluralityTest(BeetsTestCase):
             "media",
             "albumdisambig",
         ]
-        items = [
-            Item(**{f: "{}_{}".format(f, i or 1) for f in fields})
-            for i in range(5)
-        ]
+        items = [Item(**{f: f"{f}_{i or 1}" for f in fields}) for i in range(5)]
         likelies, _ = match.current_metadata(items)
         for f in fields:
             if isinstance(likelies[f], int):
                 assert likelies[f] == 0
             else:
-                assert likelies[f] == "%s_1" % f
+                assert likelies[f] == f"{f}_1"
 
 
 def _make_item(title, track, artist="some artist"):

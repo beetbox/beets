@@ -53,30 +53,18 @@ class ParseTest(unittest.TestCase):
 
     def _assert_symbol(self, obj, ident):
         """Assert that an object is a Symbol with the given identifier."""
-        assert isinstance(obj, functemplate.Symbol), "not a Symbol: %s" % repr(
-            obj
-        )
-        assert obj.ident == ident, "wrong identifier: %s vs. %s" % (
-            repr(obj.ident),
-            repr(ident),
-        )
+        assert isinstance(obj, functemplate.Symbol), f"not a Symbol: {obj}"
+        assert obj.ident == ident, f"wrong identifier: {obj.ident} vs. {ident}"
 
     def _assert_call(self, obj, ident, numargs):
         """Assert that an object is a Call with the given identifier and
         argument count.
         """
-        assert isinstance(obj, functemplate.Call), "not a Call: %s" % repr(obj)
-        assert obj.ident == ident, "wrong identifier: %s vs. %s" % (
-            repr(obj.ident),
-            repr(ident),
-        )
+        assert isinstance(obj, functemplate.Call), f"not a Call: {obj}"
+        assert obj.ident == ident, f"wrong identifier: {obj.ident} vs. {ident}"
         assert (
             len(obj.args) == numargs
-        ), "wrong argument count in %s: %i vs. %i" % (
-            repr(obj.ident),
-            len(obj.args),
-            numargs,
-        )
+        ), f"wrong argument count in {obj.ident}: {len(obj.args)} vs. {numargs}"
 
     def test_plain_text(self):
         assert list(_normparse("hello world")) == ["hello world"]

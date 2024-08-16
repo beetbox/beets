@@ -690,7 +690,7 @@ class PathQueryTest(ItemInDBTestCase, AssertsMixin):
         assert is_path_query(parent)
 
         # Some non-existent path.
-        assert not is_path_query(path_str + "baz")
+        assert not is_path_query(f"{path_str}baz")
 
     def test_detect_relative_path(self):
         """Test detection of implicit path queries based on whether or
