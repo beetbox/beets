@@ -41,7 +41,7 @@ Bug fixes:
   :bug:`5289`
 * :doc:`plugins/discogs`: Fix the ``TypeError`` when there is no description.
 * Fixed the convert plugin ``no_convert`` option so that it no longer treats "and" and "or" queries the same.
-  To maintain existing previous behaviour add commas between your query keywords. For help see :ref:`combiningqueries`.
+  To maintain previous behaviour add commas between your query keywords. For help see :ref:`combiningqueries`.
 
 For packagers:
 
