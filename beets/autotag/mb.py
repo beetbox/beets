@@ -19,6 +19,7 @@ from __future__ import annotations
 import re
 import traceback
 from collections import Counter
+from itertools import product
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, cast
 from urllib.parse import urljoin
 
@@ -618,65 +619,37 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
         )
 
     # We might find links to external sources (Discogs, Bandcamp, ...)
-    if any(
-        config["musicbrainz"]["external_ids"].get().values()
-    ) and release.get("url-relation-list"):
-        discogs_url, bandcamp_url, spotify_url = None, None, None
-        deezer_url, beatport_url, tidal_url = None, None, None
-        fetch_discogs, fetch_bandcamp, fetch_spotify = False, False, False
-        fetch_deezer, fetch_beatport, fetch_tidal = False, False, False
+    external_ids = config["musicbrainz"]["external_ids"].get()
+    wanted_sources = {site for site, wanted in external_ids.items() if wanted}
+    if wanted_sources and (url_rels := release.get("url-relation-list")):
+        urls = {}
 
-        if config["musicbrainz"]["external_ids"]["discogs"].get():
-            fetch_discogs = True
-        if config["musicbrainz"]["external_ids"]["bandcamp"].get():
-            fetch_bandcamp = True
-        if config["musicbrainz"]["external_ids"]["spotify"].get():
-            fetch_spotify = True
-        if config["musicbrainz"]["external_ids"]["deezer"].get():
-            fetch_deezer = True
-        if config["musicbrainz"]["external_ids"]["beatport"].get():
-            fetch_beatport = True
-        if config["musicbrainz"]["external_ids"]["tidal"].get():
-            fetch_tidal = True
+        for source, url in product(wanted_sources, url_rels):
+            if f"{source}.com" in (target := url["target"]):
+                urls[source] = target
+                log.debug(
+                    "Found link to {} release via MusicBrainz",
+                    source.capitalize(),
+                )
 
-        for url in release["url-relation-list"]:
-            if fetch_discogs and url["type"] == "discogs":
-                log.debug("Found link to Discogs release via MusicBrainz")
-                discogs_url = url["target"]
-            if fetch_bandcamp and "bandcamp.com" in url["target"]:
-                log.debug("Found link to Bandcamp release via MusicBrainz")
-                bandcamp_url = url["target"]
-            if fetch_spotify and "spotify.com" in url["target"]:
-                log.debug("Found link to Spotify album via MusicBrainz")
-                spotify_url = url["target"]
-            if fetch_deezer and "deezer.com" in url["target"]:
-                log.debug("Found link to Deezer album via MusicBrainz")
-                deezer_url = url["target"]
-            if fetch_beatport and "beatport.com" in url["target"]:
-                log.debug("Found link to Beatport release via MusicBrainz")
-                beatport_url = url["target"]
-            if fetch_tidal and "tidal.com" in url["target"]:
-                log.debug("Found link to Tidal release via MusicBrainz")
-                tidal_url = url["target"]
-
-        if discogs_url:
-            info.discogs_albumid = extract_discogs_id_regex(discogs_url)
-        if bandcamp_url:
-            info.bandcamp_album_id = bandcamp_url
-        if spotify_url:
+        if "discogs" in urls:
+            info.discogs_albumid = extract_discogs_id_regex(urls["discogs"])
+        if "bandcamp" in urls:
+            info.bandcamp_album_id = urls["bandcamp"]
+        if "spotify" in urls:
             info.spotify_album_id = MetadataSourcePlugin._get_id(
-                "album", spotify_url, spotify_id_regex
+                "album", urls["spotify"], spotify_id_regex
             )
-        if deezer_url:
+        if "deezer" in urls:
             info.deezer_album_id = MetadataSourcePlugin._get_id(
-                "album", deezer_url, deezer_id_regex
+                "album", urls["deezer"], deezer_id_regex
             )
-        if beatport_url:
+        if "beatport" in urls:
             info.beatport_album_id = MetadataSourcePlugin._get_id(
-                "album", beatport_url, beatport_id_regex
+                "album", urls["beatport"], beatport_id_regex
             )
-        if tidal_url:
-            info.tidal_album_id = tidal_url.split("/")[-1]
+        if "tidal" in urls:
+            info.tidal_album_id = urls["tidal"].split("/")[-1]
 
     extra_albumdatas = plugins.send("mb_album_extract", data=release)
     for extra_albumdata in extra_albumdatas:
