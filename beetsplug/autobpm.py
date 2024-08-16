@@ -19,7 +19,6 @@ from typing import Iterable
 
 import librosa
 
-from beets import util
 from beets.importer import ImportTask
 from beets.library import Item, Library
 from beets.plugins import BeetsPlugin
@@ -55,45 +54,28 @@ class AutoBPMPlugin(BeetsPlugin):
 
     def calculate_bpm(self, items: list[Item], write: bool = False) -> None:
         for item in items:
-            if item["bpm"]:
-                self._log.info(
-                    "found bpm {0} for {1}",
-                    item["bpm"],
-                    util.displayable_path(item.path),
-                )
+            path = item.filepath
+            if bpm := item.bpm:
+                self._log.info("BPM for {} already exists: {}", path, bpm)
                 if not self.config["overwrite"]:
                     continue
 
             try:
-                y, sr = librosa.load(
-                    util.syspath(item.path), res_type="kaiser_fast"
-                )
+                y, sr = librosa.load(item.filepath, res_type="kaiser_fast")
             except Exception as exc:
-                self._log.error(
-                    "Failed to load {0}: {1}",
-                    util.displayable_path(item.path),
-                    exc,
-                )
+                self._log.error("Failed to load {}: {}", path, exc)
                 continue
 
             kwargs = self.config["beat_track_kwargs"].flatten()
             try:
                 tempo, _ = librosa.beat.beat_track(y=y, sr=sr, **kwargs)
             except Exception as exc:
-                self._log.error(
-                    "Failed to measure BPM for {0}: {1}",
-                    util.displayable_path(item.path),
-                    exc,
-                )
+                self._log.error("Failed to measure BPM for {}: {}", path, exc)
                 continue
 
             bpm = round(tempo[0] if isinstance(tempo, Iterable) else tempo)
             item["bpm"] = bpm
-            self._log.info(
-                "added computed bpm {0} for {1}",
-                bpm,
-                util.displayable_path(item.path),
-            )
+            self._log.info("Computed BPM for {}: {}", path, bpm)
 
             if write:
                 item.try_write()
