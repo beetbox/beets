@@ -38,7 +38,7 @@ class AutoBPMPlugin(BeetsPlugin):
             }
         )
 
-        if self.config["auto"].get(bool):
+        if self.config["auto"]:
             self.import_stages = [self.imported]
 
     def commands(self) -> list[Subcommand]:
@@ -55,8 +55,6 @@ class AutoBPMPlugin(BeetsPlugin):
         self.calculate_bpm(task.imported_items())
 
     def calculate_bpm(self, items: list[Item], write: bool = False) -> None:
-        overwrite = self.config["overwrite"].get(bool)
-
         for item in items:
             if item["bpm"]:
                 self._log.info(
@@ -64,7 +62,7 @@ class AutoBPMPlugin(BeetsPlugin):
                     item["bpm"],
                     util.displayable_path(item.path),
                 )
-                if not overwrite:
+                if not self.config["overwrite"]:
                     continue
 
             try:
