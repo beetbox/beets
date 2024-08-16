@@ -452,13 +452,13 @@ class PluginMixin:
     plugin: ClassVar[str]
     preload_plugin: ClassVar[bool] = True
 
-    def setUp(self):
-        super().setUp()
+    def setup_beets(self):
+        super().setup_beets()
         if self.preload_plugin:
             self.load_plugins()
 
-    def tearDown(self):
-        super().tearDown()
+    def teardown_beets(self):
+        super().teardown_beets()
         self.unload_plugins()
 
     def load_plugins(self, *plugins: str) -> None:
