@@ -175,11 +175,9 @@ class EventsTest(PluginImportTestCase):
 
         logs = [line for line in logs if not line.startswith("Sending event:")]
         assert logs == [
-            "Album: {}".format(
-                displayable_path(os.path.join(self.import_dir, b"album"))
-            ),
-            "  {}".format(displayable_path(self.import_media[0].path)),
-            "  {}".format(displayable_path(self.import_media[1].path)),
+            f'Album: {displayable_path(os.path.join(self.import_dir, b"album"))}',
+            f"  {displayable_path(self.import_media[0].path)}",
+            f"  {displayable_path(self.import_media[1].path)}",
         ]
 
     def test_import_task_created_with_plugin(self):
@@ -219,8 +217,8 @@ class EventsTest(PluginImportTestCase):
 
         logs = [line for line in logs if not line.startswith("Sending event:")]
         assert logs == [
-            "Singleton: {}".format(displayable_path(self.import_media[0].path)),
-            "Singleton: {}".format(displayable_path(self.import_media[1].path)),
+            f"Singleton: {displayable_path(self.import_media[0].path)}",
+            f"Singleton: {displayable_path(self.import_media[1].path)}",
         ]
 
 

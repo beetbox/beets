@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Tests for the 'beatport' plugin.
-"""
+"""Tests for the 'beatport' plugin."""
 
 from datetime import timedelta
 
@@ -570,11 +569,7 @@ class BeatportTest(BeetsTestCase):
         # Concatenate with 'id' to pass strict equality test.
         for track, test_track, id in zip(self.tracks, self.test_tracks, ids):
             assert (
-                track.url
-                == "https://beatport.com/track/"
-                + test_track.url
-                + "/"
-                + str(id)
+                track.url == f"https://beatport.com/track/{test_track.url}/{id}"
             )
 
     def test_bpm_applied(self):
