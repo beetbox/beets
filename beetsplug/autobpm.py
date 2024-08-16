@@ -18,7 +18,6 @@ from __future__ import annotations
 from typing import Iterable
 
 import librosa
-from soundfile import LibsndfileError
 
 from beets import util
 from beets.importer import ImportTask
@@ -69,23 +68,25 @@ class AutoBPMPlugin(BeetsPlugin):
                 y, sr = librosa.load(
                     util.syspath(item.path), res_type="kaiser_fast"
                 )
-            except LibsndfileError as exc:
+            except Exception as exc:
                 self._log.error(
-                    "LibsndfileError: failed to load {0} {1}",
-                    util.displayable_path(item.path),
-                    exc,
-                )
-                continue
-            except ValueError as exc:
-                self._log.error(
-                    "ValueError: failed to load {0} {1}",
+                    "Failed to load {0}: {1}",
                     util.displayable_path(item.path),
                     exc,
                 )
                 continue
 
             kwargs = self.config["beat_track_kwargs"].flatten()
-            tempo, _ = librosa.beat.beat_track(y=y, sr=sr, **kwargs)
+            try:
+                tempo, _ = librosa.beat.beat_track(y=y, sr=sr, **kwargs)
+            except Exception as exc:
+                self._log.error(
+                    "Failed to measure BPM for {0}: {1}",
+                    util.displayable_path(item.path),
+                    exc,
+                )
+                continue
+
             bpm = round(tempo[0] if isinstance(tempo, Iterable) else tempo)
             item["bpm"] = bpm
             self._log.info(
