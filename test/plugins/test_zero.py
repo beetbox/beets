@@ -25,10 +25,10 @@ class ZeroPluginTest(PluginTestCase):
             item.write()
 
         mf = MediaFile(syspath(item.path))
-        self.assertIsNone(mf.comments)
-        self.assertIsNone(mf.month)
-        self.assertEqual(mf.title, "Title")
-        self.assertEqual(mf.year, 2000)
+        assert mf.comments is None
+        assert mf.month is None
+        assert mf.title == "Title"
+        assert mf.year == 2000
 
     def test_pattern_match(self):
         item = self.add_item_fixture(comments="encoded by encoder")
@@ -40,7 +40,7 @@ class ZeroPluginTest(PluginTestCase):
             item.write()
 
         mf = MediaFile(syspath(item.path))
-        self.assertIsNone(mf.comments)
+        assert mf.comments is None
 
     def test_pattern_nomatch(self):
         item = self.add_item_fixture(comments="recorded at place")
@@ -52,7 +52,7 @@ class ZeroPluginTest(PluginTestCase):
             item.write()
 
         mf = MediaFile(syspath(item.path))
-        self.assertEqual(mf.comments, "recorded at place")
+        assert mf.comments == "recorded at place"
 
     def test_do_not_change_database(self):
         item = self.add_item_fixture(year=2000)
@@ -61,7 +61,7 @@ class ZeroPluginTest(PluginTestCase):
         with self.configure_plugin({"fields": ["year"]}):
             item.write()
 
-        self.assertEqual(item["year"], 2000)
+        assert item["year"] == 2000
 
     def test_change_database(self):
         item = self.add_item_fixture(year=2000)
@@ -72,7 +72,7 @@ class ZeroPluginTest(PluginTestCase):
         ):
             item.write()
 
-        self.assertEqual(item["year"], 0)
+        assert item["year"] == 0
 
     def test_album_art(self):
         path = self.create_mediafile_fixture(images=["jpg"])
@@ -82,7 +82,7 @@ class ZeroPluginTest(PluginTestCase):
             item.write()
 
         mf = MediaFile(syspath(path))
-        self.assertFalse(mf.images)
+        assert not mf.images
 
     def test_auto_false(self):
         item = self.add_item_fixture(year=2000)
@@ -93,7 +93,7 @@ class ZeroPluginTest(PluginTestCase):
         ):
             item.write()
 
-        self.assertEqual(item["year"], 2000)
+        assert item["year"] == 2000
 
     def test_subcommand_update_database_true(self):
         item = self.add_item_fixture(
@@ -110,10 +110,10 @@ class ZeroPluginTest(PluginTestCase):
         mf = MediaFile(syspath(item.path))
         item = self.lib.get_item(item_id)
 
-        self.assertEqual(item["year"], 2016)
-        self.assertEqual(mf.year, 2016)
-        self.assertIsNone(mf.comments)
-        self.assertEqual(item["comments"], "")
+        assert item["year"] == 2016
+        assert mf.year == 2016
+        assert mf.comments is None
+        assert item["comments"] == ""
 
     def test_subcommand_update_database_false(self):
         item = self.add_item_fixture(
@@ -130,10 +130,10 @@ class ZeroPluginTest(PluginTestCase):
         mf = MediaFile(syspath(item.path))
         item = self.lib.get_item(item_id)
 
-        self.assertEqual(item["year"], 2016)
-        self.assertEqual(mf.year, 2016)
-        self.assertEqual(item["comments"], "test comment")
-        self.assertIsNone(mf.comments)
+        assert item["year"] == 2016
+        assert mf.year == 2016
+        assert item["comments"] == "test comment"
+        assert mf.comments is None
 
     def test_subcommand_query_include(self):
         item = self.add_item_fixture(
@@ -149,8 +149,8 @@ class ZeroPluginTest(PluginTestCase):
 
         mf = MediaFile(syspath(item.path))
 
-        self.assertEqual(mf.year, 2016)
-        self.assertIsNone(mf.comments)
+        assert mf.year == 2016
+        assert mf.comments is None
 
     def test_subcommand_query_exclude(self):
         item = self.add_item_fixture(
@@ -166,14 +166,14 @@ class ZeroPluginTest(PluginTestCase):
 
         mf = MediaFile(syspath(item.path))
 
-        self.assertEqual(mf.year, 2016)
-        self.assertEqual(mf.comments, "test comment")
+        assert mf.year == 2016
+        assert mf.comments == "test comment"
 
     def test_no_fields(self):
         item = self.add_item_fixture(year=2016)
         item.write()
         mediafile = MediaFile(syspath(item.path))
-        self.assertEqual(mediafile.year, 2016)
+        assert mediafile.year == 2016
 
         item_id = item.id
 
@@ -182,14 +182,14 @@ class ZeroPluginTest(PluginTestCase):
 
         item = self.lib.get_item(item_id)
 
-        self.assertEqual(item["year"], 2016)
-        self.assertEqual(mediafile.year, 2016)
+        assert item["year"] == 2016
+        assert mediafile.year == 2016
 
     def test_whitelist_and_blacklist(self):
         item = self.add_item_fixture(year=2016)
         item.write()
         mf = MediaFile(syspath(item.path))
-        self.assertEqual(mf.year, 2016)
+        assert mf.year == 2016
 
         item_id = item.id
 
@@ -200,8 +200,8 @@ class ZeroPluginTest(PluginTestCase):
 
         item = self.lib.get_item(item_id)
 
-        self.assertEqual(item["year"], 2016)
-        self.assertEqual(mf.year, 2016)
+        assert item["year"] == 2016
+        assert mf.year == 2016
 
     def test_keep_fields(self):
         item = self.add_item_fixture(year=2016, comments="test comment")
@@ -216,8 +216,8 @@ class ZeroPluginTest(PluginTestCase):
             z = ZeroPlugin()
             z.write_event(item, item.path, tags)
 
-        self.assertIsNone(tags["comments"])
-        self.assertEqual(tags["year"], 2016)
+        assert tags["comments"] is None
+        assert tags["year"] == 2016
 
     def test_keep_fields_removes_preserved_tags(self):
         self.config["zero"]["keep_fields"] = ["year"]
@@ -226,7 +226,7 @@ class ZeroPluginTest(PluginTestCase):
 
         z = ZeroPlugin()
 
-        self.assertNotIn("id", z.fields_to_progs)
+        assert "id" not in z.fields_to_progs
 
     def test_fields_removes_preserved_tags(self):
         self.config["zero"]["fields"] = ["year id"]
@@ -234,7 +234,7 @@ class ZeroPluginTest(PluginTestCase):
 
         z = ZeroPlugin()
 
-        self.assertNotIn("id", z.fields_to_progs)
+        assert "id" not in z.fields_to_progs
 
     def test_empty_query_n_response_no_changes(self):
         item = self.add_item_fixture(
@@ -250,7 +250,7 @@ class ZeroPluginTest(PluginTestCase):
         mf = MediaFile(syspath(item.path))
         item = self.lib.get_item(item_id)
 
-        self.assertEqual(item["year"], 2016)
-        self.assertEqual(mf.year, 2016)
-        self.assertEqual(mf.comments, "test comment")
-        self.assertEqual(item["comments"], "test comment")
+        assert item["year"] == 2016
+        assert mf.year == 2016
+        assert mf.comments == "test comment"
+        assert item["comments"] == "test comment"

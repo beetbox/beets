@@ -42,38 +42,38 @@ class FtInTitlePluginFunctional(PluginTestCase):
         item = self._ft_add_item("/", "Alice ft Bob", "Song 1", "Alice")
         self.run_command("ftintitle", "-d")
         item.load()
-        self.assertEqual(item["artist"], "Alice")
-        self.assertEqual(item["title"], "Song 1")
+        assert item["artist"] == "Alice"
+        assert item["title"] == "Song 1"
 
     def test_functional_not_found(self):
         item = self._ft_add_item("/", "Alice ft Bob", "Song 1", "George")
         self.run_command("ftintitle", "-d")
         item.load()
         # item should be unchanged
-        self.assertEqual(item["artist"], "Alice ft Bob")
-        self.assertEqual(item["title"], "Song 1")
+        assert item["artist"] == "Alice ft Bob"
+        assert item["title"] == "Song 1"
 
     def test_functional_custom_format(self):
         self._ft_set_config("feat. {0}")
         item = self._ft_add_item("/", "Alice ft Bob", "Song 1", "Alice")
         self.run_command("ftintitle")
         item.load()
-        self.assertEqual(item["artist"], "Alice")
-        self.assertEqual(item["title"], "Song 1 feat. Bob")
+        assert item["artist"] == "Alice"
+        assert item["title"] == "Song 1 feat. Bob"
 
         self._ft_set_config("featuring {0}")
         item = self._ft_add_item("/", "Alice feat. Bob", "Song 1", "Alice")
         self.run_command("ftintitle")
         item.load()
-        self.assertEqual(item["artist"], "Alice")
-        self.assertEqual(item["title"], "Song 1 featuring Bob")
+        assert item["artist"] == "Alice"
+        assert item["title"] == "Song 1 featuring Bob"
 
         self._ft_set_config("with {0}")
         item = self._ft_add_item("/", "Alice feat Bob", "Song 1", "Alice")
         self.run_command("ftintitle")
         item.load()
-        self.assertEqual(item["artist"], "Alice")
-        self.assertEqual(item["title"], "Song 1 with Bob")
+        assert item["artist"] == "Alice"
+        assert item["title"] == "Song 1 with Bob"
 
 
 class FtInTitlePluginTest(unittest.TestCase):
@@ -139,33 +139,33 @@ class FtInTitlePluginTest(unittest.TestCase):
             feat_part = ftintitle.find_feat_part(
                 test_case["artist"], test_case["album_artist"]
             )
-            self.assertEqual(feat_part, test_case["feat_part"])
+            assert feat_part == test_case["feat_part"]
 
     def test_split_on_feat(self):
         parts = ftintitle.split_on_feat("Alice ft. Bob")
-        self.assertEqual(parts, ("Alice", "Bob"))
+        assert parts == ("Alice", "Bob")
         parts = ftintitle.split_on_feat("Alice feat Bob")
-        self.assertEqual(parts, ("Alice", "Bob"))
+        assert parts == ("Alice", "Bob")
         parts = ftintitle.split_on_feat("Alice feat. Bob")
-        self.assertEqual(parts, ("Alice", "Bob"))
+        assert parts == ("Alice", "Bob")
         parts = ftintitle.split_on_feat("Alice featuring Bob")
-        self.assertEqual(parts, ("Alice", "Bob"))
+        assert parts == ("Alice", "Bob")
         parts = ftintitle.split_on_feat("Alice & Bob")
-        self.assertEqual(parts, ("Alice", "Bob"))
+        assert parts == ("Alice", "Bob")
         parts = ftintitle.split_on_feat("Alice and Bob")
-        self.assertEqual(parts, ("Alice", "Bob"))
+        assert parts == ("Alice", "Bob")
         parts = ftintitle.split_on_feat("Alice With Bob")
-        self.assertEqual(parts, ("Alice", "Bob"))
+        assert parts == ("Alice", "Bob")
         parts = ftintitle.split_on_feat("Alice defeat Bob")
-        self.assertEqual(parts, ("Alice defeat Bob", None))
+        assert parts == ("Alice defeat Bob", None)
 
     def test_contains_feat(self):
-        self.assertTrue(ftintitle.contains_feat("Alice ft. Bob"))
-        self.assertTrue(ftintitle.contains_feat("Alice feat. Bob"))
-        self.assertTrue(ftintitle.contains_feat("Alice feat Bob"))
-        self.assertTrue(ftintitle.contains_feat("Alice featuring Bob"))
-        self.assertTrue(ftintitle.contains_feat("Alice & Bob"))
-        self.assertTrue(ftintitle.contains_feat("Alice and Bob"))
-        self.assertTrue(ftintitle.contains_feat("Alice With Bob"))
-        self.assertFalse(ftintitle.contains_feat("Alice defeat Bob"))
-        self.assertFalse(ftintitle.contains_feat("Aliceft.Bob"))
+        assert ftintitle.contains_feat("Alice ft. Bob")
+        assert ftintitle.contains_feat("Alice feat. Bob")
+        assert ftintitle.contains_feat("Alice feat Bob")
+        assert ftintitle.contains_feat("Alice featuring Bob")
+        assert ftintitle.contains_feat("Alice & Bob")
+        assert ftintitle.contains_feat("Alice and Bob")
+        assert ftintitle.contains_feat("Alice With Bob")
+        assert not ftintitle.contains_feat("Alice defeat Bob")
+        assert not ftintitle.contains_feat("Aliceft.Bob")

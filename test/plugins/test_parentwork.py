@@ -105,9 +105,7 @@ class ParentWorkIntegrationTest(PluginTestCase):
         self.run_command("parentwork")
 
         item.load()
-        self.assertEqual(
-            item["mb_parentworkid"], "32c8943f-1b27-3a23-8660-4567f4847c94"
-        )
+        assert item["mb_parentworkid"] == "32c8943f-1b27-3a23-8660-4567f4847c94"
 
     @unittest.skipUnless(
         os.environ.get("INTEGRATION_TEST", "0") == "1",
@@ -128,9 +126,7 @@ class ParentWorkIntegrationTest(PluginTestCase):
         self.run_command("parentwork")
 
         item.load()
-        self.assertEqual(
-            item["mb_parentworkid"], "32c8943f-1b27-3a23-8660-4567f4847c94"
-        )
+        assert item["mb_parentworkid"] == "32c8943f-1b27-3a23-8660-4567f4847c94"
 
     @unittest.skipUnless(
         os.environ.get("INTEGRATION_TEST", "0") == "1",
@@ -152,7 +148,7 @@ class ParentWorkIntegrationTest(PluginTestCase):
         self.run_command("parentwork")
 
         item.load()
-        self.assertEqual(item["mb_parentworkid"], "XXX")
+        assert item["mb_parentworkid"] == "XXX"
 
     # test different cases, still with Matthew Passion Ouverture or Mozart
     # requiem
@@ -163,13 +159,13 @@ class ParentWorkIntegrationTest(PluginTestCase):
     )
     def test_direct_parent_work_real(self):
         mb_workid = "2e4a3668-458d-3b2a-8be2-0b08e0d8243a"
-        self.assertEqual(
-            "f04b42df-7251-4d86-a5ee-67cfa49580d1",
-            parentwork.direct_parent_id(mb_workid)[0],
+        assert (
+            "f04b42df-7251-4d86-a5ee-67cfa49580d1"
+            == parentwork.direct_parent_id(mb_workid)[0]
         )
-        self.assertEqual(
-            "45afb3b2-18ac-4187-bc72-beb1b1c194ba",
-            parentwork.work_parent_id(mb_workid)[0],
+        assert (
+            "45afb3b2-18ac-4187-bc72-beb1b1c194ba"
+            == parentwork.work_parent_id(mb_workid)[0]
         )
 
 
@@ -195,7 +191,7 @@ class ParentWorkTest(PluginTestCase):
         self.run_command("parentwork")
 
         item.load()
-        self.assertEqual(item["mb_parentworkid"], "3")
+        assert item["mb_parentworkid"] == "3"
 
     def test_force(self):
         self.config["parentwork"]["force"] = True
@@ -211,7 +207,7 @@ class ParentWorkTest(PluginTestCase):
         self.run_command("parentwork")
 
         item.load()
-        self.assertEqual(item["mb_parentworkid"], "3")
+        assert item["mb_parentworkid"] == "3"
 
     def test_no_force(self):
         self.config["parentwork"]["force"] = False
@@ -227,8 +223,8 @@ class ParentWorkTest(PluginTestCase):
         self.run_command("parentwork")
 
         item.load()
-        self.assertEqual(item["mb_parentworkid"], "XXX")
+        assert item["mb_parentworkid"] == "XXX"
 
     def test_direct_parent_work(self):
-        self.assertEqual("2", parentwork.direct_parent_id("1")[0])
-        self.assertEqual("3", parentwork.work_parent_id("1")[0])
+        assert "2" == parentwork.direct_parent_id("1")[0]
+        assert "3" == parentwork.work_parent_id("1")[0]

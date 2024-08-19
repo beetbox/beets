@@ -16,6 +16,8 @@
 """
 
 
+import pytest
+
 from beets.test.helper import PluginTestCase
 from beets.ui import UserError
 
@@ -35,7 +37,7 @@ class AdvancedRewritePluginTest(PluginTestCase):
                 albumartist="ODD EYE CIRCLE",
             )
 
-            self.assertEqual(item.artist, "이달의 소녀 오드아이써클")
+            assert item.artist == "이달의 소녀 오드아이써클"
 
     def test_advanced_rewrite_example(self):
         with self.configure_plugin(
@@ -63,12 +65,12 @@ class AdvancedRewritePluginTest(PluginTestCase):
             )
 
             # Assert that all replacements were applied to item_a
-            self.assertEqual("이달의 소녀 오드아이써클", item_a.artist)
-            self.assertEqual("LOONA / ODD EYE CIRCLE", item_a.artist_sort)
-            self.assertEqual("LOONA / ODD EYE CIRCLE", item_a.albumartist_sort)
+            assert "이달의 소녀 오드아이써클" == item_a.artist
+            assert "LOONA / ODD EYE CIRCLE" == item_a.artist_sort
+            assert "LOONA / ODD EYE CIRCLE" == item_a.albumartist_sort
 
             # Assert that no replacements were applied to item_b
-            self.assertEqual("ODD EYE CIRCLE", item_b.artist)
+            assert "ODD EYE CIRCLE" == item_b.artist
 
     def test_advanced_rewrite_example_with_multi_valued_field(self):
         with self.configure_plugin(
@@ -84,19 +86,19 @@ class AdvancedRewritePluginTest(PluginTestCase):
                 artists=["배유빈", "김미현"],
             )
 
-            self.assertEqual(item.artists, ["유빈", "미미"])
+            assert item.artists == ["유빈", "미미"]
 
     def test_fail_when_replacements_empty(self):
-        with self.assertRaises(
+        with pytest.raises(
             UserError,
-            msg="Advanced rewrites must have at least one replacement",
+            match="Advanced rewrites must have at least one replacement",
         ), self.configure_plugin([{"match": "artist:A", "replacements": {}}]):
             pass
 
     def test_fail_when_rewriting_single_valued_field_with_list(self):
-        with self.assertRaises(
+        with pytest.raises(
             UserError,
-            msg="Field artist is not a multi-valued field but a list was given: C, D",
+            match="Field artist is not a multi-valued field but a list was given: C, D",
         ), self.configure_plugin(
             [
                 {
@@ -115,7 +117,7 @@ class AdvancedRewritePluginTest(PluginTestCase):
             ]
         ):
             item = self.add_item(artist="A", albumartist="A")
-            self.assertEqual(item.artist, "B")
+            assert item.artist == "B"
 
             item = self.add_item(artist="C", albumartist="C", album="C")
-            self.assertEqual(item.artist, "D")
+            assert item.artist == "D"

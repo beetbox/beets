@@ -19,6 +19,7 @@ import os
 import shutil
 
 import mediafile
+import pytest
 
 from beets.library import Item
 from beets.plugins import BeetsPlugin
@@ -59,7 +60,7 @@ class ExtendedFieldTestMixin(BeetsTestCase):
             mf.save()
 
             mf = mediafile.MediaFile(mf.path)
-            self.assertEqual(mf.customtag, "F#")
+            assert mf.customtag == "F#"
 
         finally:
             delattr(mediafile.MediaFile, "customtag")
@@ -75,7 +76,7 @@ class ExtendedFieldTestMixin(BeetsTestCase):
             mf.save()
 
             mf = mediafile.MediaFile(mf.path)
-            self.assertEqual(mf.customlisttag, ["a", "b"])
+            assert mf.customlisttag == ["a", "b"]
 
         finally:
             delattr(mediafile.MediaFile, "customlisttag")
@@ -87,12 +88,12 @@ class ExtendedFieldTestMixin(BeetsTestCase):
 
         try:
             mf = self._mediafile_fixture("empty")
-            self.assertIsNone(mf.customtag)
+            assert mf.customtag is None
 
             item = Item(path=mf.path, customtag="Gb")
             item.write()
             mf = mediafile.MediaFile(mf.path)
-            self.assertEqual(mf.customtag, "Gb")
+            assert mf.customtag == "Gb"
 
         finally:
             delattr(mediafile.MediaFile, "customtag")
@@ -108,18 +109,20 @@ class ExtendedFieldTestMixin(BeetsTestCase):
             mf.save()
 
             item = Item.from_path(mf.path)
-            self.assertEqual(item["customtag"], "F#")
+            assert item["customtag"] == "F#"
 
         finally:
             delattr(mediafile.MediaFile, "customtag")
             Item._media_fields.remove("customtag")
 
     def test_invalid_descriptor(self):
-        with self.assertRaises(ValueError) as cm:
+        with pytest.raises(
+            ValueError, match="must be an instance of MediaField"
+        ):
             mediafile.MediaFile.add_field("somekey", True)
-        self.assertIn("must be an instance of MediaField", str(cm.exception))
 
     def test_overwrite_property(self):
-        with self.assertRaises(ValueError) as cm:
+        with pytest.raises(
+            ValueError, match='property "artist" already exists'
+        ):
             mediafile.MediaFile.add_field("artist", mediafile.MediaField())
-        self.assertIn('property "artist" already exists', str(cm.exception))
