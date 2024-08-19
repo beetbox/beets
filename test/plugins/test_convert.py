@@ -64,13 +64,9 @@ class ConvertMixin:
         self.assertIsFile(path)
         with open(path, "rb") as f:
             f.seek(-len(display_tag), os.SEEK_END)
-            self.assertEqual(
-                f.read(),
-                tag,
-                "{} is not tagged with {}".format(
-                    displayable_path(path), display_tag
-                ),
-            )
+            assert (
+                f.read() == tag
+            ), f"{displayable_path(path)} is not tagged with {display_tag}"
 
     def assertNoFileTag(self, path, tag):  # noqa
         """Assert that the path is a file and the files content does not
@@ -81,13 +77,9 @@ class ConvertMixin:
         self.assertIsFile(path)
         with open(path, "rb") as f:
             f.seek(-len(tag), os.SEEK_END)
-            self.assertNotEqual(
-                f.read(),
-                tag,
-                "{} is unexpectedly tagged with {}".format(
-                    displayable_path(path), display_tag
-                ),
-            )
+            assert (
+                f.read() != tag
+            ), f"{displayable_path(path)} is unexpectedly tagged with {display_tag}"
 
 
 class ConvertTestCase(ConvertMixin, PluginTestCase):
@@ -121,7 +113,7 @@ class ImportConvertTest(AsIsImporterMixin, ImportHelper, ConvertTestCase):
         self.run_asis_importer()
 
         item = self.lib.items().get()
-        self.assertIsNotNone(item)
+        assert item is not None
         self.assertIsFile(item.path)
 
     def test_delete_originals(self):
@@ -129,13 +121,9 @@ class ImportConvertTest(AsIsImporterMixin, ImportHelper, ConvertTestCase):
         self.run_asis_importer()
         for path in self.importer.paths:
             for root, dirnames, filenames in os.walk(path):
-                self.assertEqual(
-                    len(fnmatch.filter(filenames, "*.mp3")),
-                    0,
-                    "Non-empty import directory {}".format(
-                        util.displayable_path(path)
-                    ),
-                )
+                assert (
+                    len(fnmatch.filter(filenames, "*.mp3")) == 0
+                ), f"Non-empty import directory {util.displayable_path(path)}"
 
     def get_count_of_import_files(self):
         import_file_count = 0
@@ -208,13 +196,13 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
         self.assertNotExists(converted)
 
     def test_convert_keep_new(self):
-        self.assertEqual(os.path.splitext(self.item.path)[1], b".ogg")
+        assert os.path.splitext(self.item.path)[1] == b".ogg"
 
         with control_stdin("y"):
             self.run_convert("--keep-new")
 
         self.item.load()
-        self.assertEqual(os.path.splitext(self.item.path)[1], b".mp3")
+        assert os.path.splitext(self.item.path)[1] == b".mp3"
 
     def test_format_option(self):
         with control_stdin("y"):
@@ -234,14 +222,14 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
             self.run_convert()
         converted = os.path.join(self.convert_dest, b"converted.mp3")
         mediafile = MediaFile(converted)
-        self.assertEqual(mediafile.images[0].data, image_data)
+        assert mediafile.images[0].data == image_data
 
     def test_skip_existing(self):
         converted = os.path.join(self.convert_dest, b"converted.mp3")
         self.touch(converted, content="XXX")
         self.run_convert("--yes")
         with open(converted) as f:
-            self.assertEqual(f.read(), "XXX")
+            assert f.read() == "XXX"
 
     def test_pretend(self):
         self.run_convert("--pretend")
@@ -251,7 +239,7 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
     def test_empty_query(self):
         with capture_log("beets.convert") as logs:
             self.run_convert("An impossible query")
-        self.assertEqual(logs[0], "convert: Empty query result.")
+        assert logs[0] == "convert: Empty query result."
 
     def test_no_transcode_when_maxbr_set_high_and_different_formats(self):
         self.config["convert"]["max_bitrate"] = 5000
@@ -300,12 +288,12 @@ class ConvertCliTest(ConvertTestCase, ConvertCommand):
         with control_stdin("y"):
             self.run_convert("--playlist", "playlist.m3u8")
             m3u_created = os.path.join(self.convert_dest, b"playlist.m3u8")
-        self.assertTrue(os.path.exists(m3u_created))
+        assert os.path.exists(m3u_created)
 
     def test_playlist_pretend(self):
         self.run_convert("--playlist", "playlist.m3u8", "--pretend")
         m3u_created = os.path.join(self.convert_dest, b"playlist.m3u8")
-        self.assertFalse(os.path.exists(m3u_created))
+        assert not os.path.exists(m3u_created)
 
 
 @_common.slow_test()

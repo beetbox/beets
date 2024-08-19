@@ -77,8 +77,9 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
         )
         self.assertExists(im_a)
         # target size was achieved
-        self.assertLess(
-            os.stat(syspath(im_a)).st_size, os.stat(syspath(im_95_qual)).st_size
+        assert (
+            os.stat(syspath(im_a)).st_size
+            < os.stat(syspath(im_95_qual)).st_size
         )
 
         # Attempt with lower initial quality
@@ -98,8 +99,9 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
         )
         self.assertExists(im_b)
         # Check high (initial) quality still gives a smaller filesize
-        self.assertLess(
-            os.stat(syspath(im_b)).st_size, os.stat(syspath(im_75_qual)).st_size
+        assert (
+            os.stat(syspath(im_b)).st_size
+            < os.stat(syspath(im_75_qual)).st_size
         )
 
     @unittest.skipUnless(PILBackend.available(), "PIL not available")
@@ -123,7 +125,7 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
         from PIL import Image
 
         with Image.open(path) as img:
-            self.assertNotIn("progression", img.info)
+            assert "progression" not in img.info
 
     @unittest.skipUnless(IMBackend.available(), "ImageMagick not available")
     def test_im_file_deinterlace(self):
@@ -140,7 +142,7 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
             syspath(path, prefix=False),
         ]
         out = command_output(cmd).stdout
-        self.assertEqual(out, b"None")
+        assert out == b"None"
 
     @patch("beets.util.artresizer.util")
     def test_write_metadata_im(self, mock_util):

@@ -19,6 +19,8 @@
 import os
 import shutil
 
+import pytest
+
 from beets import library, ui
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, ItemInDBTestCase
@@ -45,15 +47,15 @@ class QueryTest(BeetsTestCase):
         self, num_items, num_albums, q=(), album=False, also_items=True
     ):
         items, albums = commands._do_query(self.lib, q, album, also_items)
-        self.assertEqual(len(items), num_items)
-        self.assertEqual(len(albums), num_albums)
+        assert len(items) == num_items
+        assert len(albums) == num_albums
 
     def test_query_empty(self):
-        with self.assertRaises(ui.UserError):
+        with pytest.raises(ui.UserError):
             commands._do_query(self.lib, (), False)
 
     def test_query_empty_album(self):
-        with self.assertRaises(ui.UserError):
+        with pytest.raises(ui.UserError):
             commands._do_query(self.lib, (), True)
 
     def test_query_item(self):
@@ -101,5 +103,5 @@ class FieldsTest(ItemInDBTestCase):
         self.remove_keys(items, output)
         self.remove_keys(albums, output)
 
-        self.assertEqual(len(items), 0)
-        self.assertEqual(len(albums), 0)
+        assert len(items) == 0
+        assert len(albums) == 0

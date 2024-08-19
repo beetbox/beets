@@ -83,7 +83,7 @@ class PlexUpdateTest(PluginTestCase):
         self.add_response_get_music_section()
 
         # Test if section key is "2" out of the mocking data.
-        self.assertEqual(
+        assert (
             get_music_section(
                 self.config["plex"]["host"],
                 self.config["plex"]["port"],
@@ -91,8 +91,8 @@ class PlexUpdateTest(PluginTestCase):
                 self.config["plex"]["library_name"].get(),
                 self.config["plex"]["secure"],
                 self.config["plex"]["ignore_cert_errors"],
-            ),
-            "2",
+            )
+            == "2"
         )
 
     @responses.activate
@@ -100,7 +100,7 @@ class PlexUpdateTest(PluginTestCase):
         # Adding response.
         self.add_response_get_music_section("My Music Library")
 
-        self.assertEqual(
+        assert (
             get_music_section(
                 self.config["plex"]["host"],
                 self.config["plex"]["port"],
@@ -108,8 +108,8 @@ class PlexUpdateTest(PluginTestCase):
                 "My Music Library",
                 self.config["plex"]["secure"],
                 self.config["plex"]["ignore_cert_errors"],
-            ),
-            "2",
+            )
+            == "2"
         )
 
     @responses.activate
@@ -119,7 +119,7 @@ class PlexUpdateTest(PluginTestCase):
         self.add_response_update_plex()
 
         # Testing status code of the mocking request.
-        self.assertEqual(
+        assert (
             update_plex(
                 self.config["plex"]["host"],
                 self.config["plex"]["port"],
@@ -127,6 +127,6 @@ class PlexUpdateTest(PluginTestCase):
                 self.config["plex"]["library_name"].get(),
                 self.config["plex"]["secure"],
                 self.config["plex"]["ignore_cert_errors"],
-            ).status_code,
-            200,
+            ).status_code
+            == 200
         )

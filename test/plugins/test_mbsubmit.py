@@ -51,7 +51,7 @@ class MBSubmitPluginTest(PluginMixin, TerminalImportMixin, ImportTestCase):
             "01. Tag Track 1 - Tag Artist (0:01)\n"
             "02. Tag Track 2 - Tag Artist (0:01)"
         )
-        self.assertIn(tracklist, output.getvalue())
+        assert tracklist in output.getvalue()
 
     def test_print_tracks_output_as_tracks(self):
         """Test the output of the "print tracks" choice, as singletons."""
@@ -66,4 +66,4 @@ class MBSubmitPluginTest(PluginMixin, TerminalImportMixin, ImportTestCase):
         tracklist = (
             "Open files with Picard? " "02. Tag Track 2 - Tag Artist (0:01)"
         )
-        self.assertIn(tracklist, output.getvalue())
+        assert tracklist in output.getvalue()

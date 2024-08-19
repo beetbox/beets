@@ -32,9 +32,9 @@ class FetchartCliTest(PluginTestCase):
         self.cover_path = os.path.join(self.album.path, b"mycover.jpg")
 
     def check_cover_is_stored(self):
-        self.assertEqual(self.album["artpath"], self.cover_path)
+        assert self.album["artpath"] == self.cover_path
         with open(util.syspath(self.cover_path)) as f:
-            self.assertEqual(f.read(), "IMAGE")
+            assert f.read() == "IMAGE"
 
     def hide_file_windows(self):
         hidden_mask = 2
@@ -56,14 +56,14 @@ class FetchartCliTest(PluginTestCase):
         os.makedirs(os.path.join(self.album.path, b"mycover.jpg"))
         self.run_command("fetchart")
         self.album.load()
-        self.assertIsNone(self.album["artpath"])
+        assert self.album["artpath"] is None
 
     def test_filesystem_does_not_pick_up_ignored_file(self):
         self.touch(b"co_ver.jpg", dir=self.album.path, content="IMAGE")
         self.config["ignore"] = ["*_*"]
         self.run_command("fetchart")
         self.album.load()
-        self.assertIsNone(self.album["artpath"])
+        assert self.album["artpath"] is None
 
     def test_filesystem_picks_up_non_ignored_file(self):
         self.touch(b"cover.jpg", dir=self.album.path, content="IMAGE")
@@ -80,7 +80,7 @@ class FetchartCliTest(PluginTestCase):
         self.config["ignore_hidden"] = True
         self.run_command("fetchart")
         self.album.load()
-        self.assertIsNone(self.album["artpath"])
+        assert self.album["artpath"] is None
 
     def test_filesystem_picks_up_non_hidden_file(self):
         self.touch(b"cover.jpg", dir=self.album.path, content="IMAGE")

@@ -152,36 +152,28 @@ class Assertions:
     """A mixin with additional unit test assertions."""
 
     def assertExists(self, path):  # noqa
-        self.assertTrue(
-            os.path.exists(syspath(path)), f"file does not exist: {path!r}"
-        )
+        assert os.path.exists(syspath(path)), f"file does not exist: {path!r}"
 
     def assertNotExists(self, path):  # noqa
-        self.assertFalse(
-            os.path.exists(syspath(path)), f"file exists: {path!r}"
-        )
+        assert not os.path.exists(syspath(path)), f"file exists: {path!r}"
 
     def assertIsFile(self, path):  # noqa
         self.assertExists(path)
-        self.assertTrue(
-            os.path.isfile(syspath(path)),
-            "path exists, but is not a regular file: {!r}".format(path),
-        )
+        assert os.path.isfile(
+            syspath(path)
+        ), "path exists, but is not a regular file: {!r}".format(path)
 
     def assertIsDir(self, path):  # noqa
         self.assertExists(path)
-        self.assertTrue(
-            os.path.isdir(syspath(path)),
-            "path exists, but is not a directory: {!r}".format(path),
-        )
+        assert os.path.isdir(
+            syspath(path)
+        ), "path exists, but is not a directory: {!r}".format(path)
 
     def assert_equal_path(self, a, b):
         """Check that two paths are equal."""
-        self.assertEqual(
-            util.normpath(a),
-            util.normpath(b),
-            f"paths are not equal: {a!r} and {b!r}",
-        )
+        a_bytes, b_bytes = util.normpath(a), util.normpath(b)
+
+        assert a_bytes == b_bytes, f"{a_bytes=} != {b_bytes=}"
 
 
 # Mock I/O.

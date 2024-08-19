@@ -18,6 +18,7 @@ import os
 import unittest
 from unittest.mock import ANY, Mock, patch
 
+import pytest
 from mediafile import MediaFile
 
 from beets import config, plugins, ui
@@ -89,17 +90,17 @@ class ItemTypesTest(PluginLoaderTestCase):
 
         # Do not match unset values
         out = self.run_with_output("ls", "rating:1..3")
-        self.assertNotIn("aaa", out)
+        assert "aaa" not in out
 
         self.run_command("modify", "rating=2", "--yes")
 
         # Match in range
         out = self.run_with_output("ls", "rating:1..3")
-        self.assertIn("aaa", out)
+        assert "aaa" in out
 
         # Don't match out of range
         out = self.run_with_output("ls", "rating:3..5")
-        self.assertNotIn("aaa", out)
+        assert "aaa" not in out
 
 
 class ItemWriteTest(PluginLoaderTestCase):
@@ -123,7 +124,7 @@ class ItemWriteTest(PluginLoaderTestCase):
         item.write()
 
         mediafile = MediaFile(syspath(item.path))
-        self.assertEqual(mediafile.artist, "YYY")
+        assert mediafile.artist == "YYY"
 
     def register_listener(self, event, func):
         self.event_listener_plugin.register_listener(event, func)
@@ -141,7 +142,8 @@ class ItemTypeConflictTest(PluginLoaderTestCase):
         self.advent_listener_plugin = AdventListenerPlugin
         self.register_plugin(EventListenerPlugin)
         self.register_plugin(AdventListenerPlugin)
-        self.assertRaises(plugins.PluginConflictException, plugins.types, Item)
+        with pytest.raises(plugins.PluginConflictException):
+            plugins.types(Item)
 
     def test_match(self):
         class EventListenerPlugin(plugins.BeetsPlugin):
@@ -154,7 +156,7 @@ class ItemTypeConflictTest(PluginLoaderTestCase):
         self.advent_listener_plugin = AdventListenerPlugin
         self.register_plugin(EventListenerPlugin)
         self.register_plugin(AdventListenerPlugin)
-        self.assertIsNotNone(plugins.types(Item))
+        assert plugins.types(Item) is not None
 
 
 class EventsTest(PluginImportTestCase):
@@ -169,19 +171,14 @@ class EventsTest(PluginImportTestCase):
 
         # Exactly one event should have been imported (for the album).
         # Sentinels do not get emitted.
-        self.assertEqual(logs.count("Sending event: import_task_created"), 1)
+        assert logs.count("Sending event: import_task_created") == 1
 
         logs = [line for line in logs if not line.startswith("Sending event:")]
-        self.assertEqual(
-            logs,
-            [
-                "Album: {}".format(
-                    displayable_path(os.path.join(self.import_dir, b"album"))
-                ),
-                "  {}".format(displayable_path(self.import_media[0].path)),
-                "  {}".format(displayable_path(self.import_media[1].path)),
-            ],
-        )
+        assert logs == [
+            f'Album: {displayable_path(os.path.join(self.import_dir, b"album"))}',
+            f"  {displayable_path(self.import_media[0].path)}",
+            f"  {displayable_path(self.import_media[1].path)}",
+        ]
 
     def test_import_task_created_with_plugin(self):
         class ToSingletonPlugin(plugins.BeetsPlugin):
@@ -216,32 +213,22 @@ class EventsTest(PluginImportTestCase):
 
         # Exactly one event should have been imported (for the album).
         # Sentinels do not get emitted.
-        self.assertEqual(logs.count("Sending event: import_task_created"), 1)
+        assert logs.count("Sending event: import_task_created") == 1
 
         logs = [line for line in logs if not line.startswith("Sending event:")]
-        self.assertEqual(
-            logs,
-            [
-                "Singleton: {}".format(
-                    displayable_path(self.import_media[0].path)
-                ),
-                "Singleton: {}".format(
-                    displayable_path(self.import_media[1].path)
-                ),
-            ],
-        )
+        assert logs == [
+            f"Singleton: {displayable_path(self.import_media[0].path)}",
+            f"Singleton: {displayable_path(self.import_media[1].path)}",
+        ]
 
 
 class HelpersTest(unittest.TestCase):
     def test_sanitize_choices(self):
-        self.assertEqual(
-            plugins.sanitize_choices(["A", "Z"], ("A", "B")), ["A"]
-        )
-        self.assertEqual(plugins.sanitize_choices(["A", "A"], ("A")), ["A"])
-        self.assertEqual(
-            plugins.sanitize_choices(["D", "*", "A"], ("A", "B", "C", "D")),
-            ["D", "B", "C", "A"],
-        )
+        assert plugins.sanitize_choices(["A", "Z"], ("A", "B")) == ["A"]
+        assert plugins.sanitize_choices(["A", "A"], ("A")) == ["A"]
+        assert plugins.sanitize_choices(
+            ["D", "*", "A"], ("A", "B", "C", "D")
+        ) == ["D", "B", "C", "A"]
 
 
 class ListenersTest(PluginLoaderTestCase):
@@ -256,17 +243,13 @@ class ListenersTest(PluginLoaderTestCase):
                 pass
 
         d = DummyPlugin()
-        self.assertEqual(DummyPlugin._raw_listeners["cli_exit"], [d.dummy])
+        assert DummyPlugin._raw_listeners["cli_exit"] == [d.dummy]
 
         d2 = DummyPlugin()
-        self.assertEqual(
-            DummyPlugin._raw_listeners["cli_exit"], [d.dummy, d2.dummy]
-        )
+        assert DummyPlugin._raw_listeners["cli_exit"] == [d.dummy, d2.dummy]
 
         d.register_listener("cli_exit", d2.dummy)
-        self.assertEqual(
-            DummyPlugin._raw_listeners["cli_exit"], [d.dummy, d2.dummy]
-        )
+        assert DummyPlugin._raw_listeners["cli_exit"] == [d.dummy, d2.dummy]
 
     @patch("beets.plugins.find_plugins")
     @patch("inspect.getfullargspec")
@@ -298,7 +281,6 @@ class ListenersTest(PluginLoaderTestCase):
 
     @patch("beets.plugins.find_plugins")
     def test_listener_params(self, mock_find_plugins):
-        test = self
 
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):
@@ -311,10 +293,10 @@ class ListenersTest(PluginLoaderTestCase):
                     self.register_listener(f"event{i}", meth)
 
             def dummy1(self, foo):
-                test.assertEqual(foo, 5)
+                assert foo == 5
 
             def dummy2(self, foo=None):
-                test.assertEqual(foo, 5)
+                assert foo == 5
 
             def dummy3(self):
                 # argument cut off
@@ -325,23 +307,23 @@ class ListenersTest(PluginLoaderTestCase):
                 pass
 
             def dummy5(self, bar):
-                test.assertFalse(True)
+                assert not True
 
             # more complex examples
 
             def dummy6(self, foo, bar=None):
-                test.assertEqual(foo, 5)
-                test.assertEqual(bar, None)
+                assert foo == 5
+                assert bar is None
 
             def dummy7(self, foo, **kwargs):
-                test.assertEqual(foo, 5)
-                test.assertEqual(kwargs, {})
+                assert foo == 5
+                assert kwargs == {}
 
             def dummy8(self, foo, bar, **kwargs):
-                test.assertFalse(True)
+                assert not True
 
             def dummy9(self, **kwargs):
-                test.assertEqual(kwargs, {"foo": 5})
+                assert kwargs == {"foo": 5}
 
         d = DummyPlugin()
         mock_find_plugins.return_value = (d,)
@@ -351,13 +333,13 @@ class ListenersTest(PluginLoaderTestCase):
         plugins.send("event3", foo=5)
         plugins.send("event4", foo=5)
 
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             plugins.send("event5", foo=5)
 
         plugins.send("event6", foo=5)
         plugins.send("event7", foo=5)
 
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             plugins.send("event8", foo=5)
 
         plugins.send("event9", foo=5)
@@ -521,10 +503,10 @@ class PromptChoicesTest(TerminalImportMixin, PluginImportTestCase):
         with patch.object(DummyPlugin, "foo", autospec=True) as mock_foo:
             with helper.control_stdin("\n".join(["f", "s"])):
                 self.importer.run()
-            self.assertEqual(mock_foo.call_count, 1)
+            assert mock_foo.call_count == 1
 
         # input_options should be called twice, as foo() returns None
-        self.assertEqual(self.mock_input_options.call_count, 2)
+        assert self.mock_input_options.call_count == 2
         self.mock_input_options.assert_called_with(
             opts, default="a", require=ANY
         )
@@ -573,36 +555,36 @@ class ParseSpotifyIDTest(unittest.TestCase):
     def test_parse_id_correct(self):
         id_string = "39WqpoPgZxygo6YQjehLJJ"
         out = MetadataSourcePlugin._get_id("album", id_string, spotify_id_regex)
-        self.assertEqual(out, id_string)
+        assert out == id_string
 
     def test_parse_id_non_id_returns_none(self):
         id_string = "blah blah"
         out = MetadataSourcePlugin._get_id("album", id_string, spotify_id_regex)
-        self.assertIsNone(out)
+        assert out is None
 
     def test_parse_id_url_finds_id(self):
         id_string = "39WqpoPgZxygo6YQjehLJJ"
         id_url = "https://open.spotify.com/album/%s" % id_string
         out = MetadataSourcePlugin._get_id("album", id_url, spotify_id_regex)
-        self.assertEqual(out, id_string)
+        assert out == id_string
 
 
 class ParseDeezerIDTest(unittest.TestCase):
     def test_parse_id_correct(self):
         id_string = "176356382"
         out = MetadataSourcePlugin._get_id("album", id_string, deezer_id_regex)
-        self.assertEqual(out, id_string)
+        assert out == id_string
 
     def test_parse_id_non_id_returns_none(self):
         id_string = "blah blah"
         out = MetadataSourcePlugin._get_id("album", id_string, deezer_id_regex)
-        self.assertIsNone(out)
+        assert out is None
 
     def test_parse_id_url_finds_id(self):
         id_string = "176356382"
         id_url = "https://www.deezer.com/album/%s" % id_string
         out = MetadataSourcePlugin._get_id("album", id_url, deezer_id_regex)
-        self.assertEqual(out, id_string)
+        assert out == id_string
 
 
 class ParseBeatportIDTest(unittest.TestCase):
@@ -611,17 +593,17 @@ class ParseBeatportIDTest(unittest.TestCase):
         out = MetadataSourcePlugin._get_id(
             "album", id_string, beatport_id_regex
         )
-        self.assertEqual(out, id_string)
+        assert out == id_string
 
     def test_parse_id_non_id_returns_none(self):
         id_string = "blah blah"
         out = MetadataSourcePlugin._get_id(
             "album", id_string, beatport_id_regex
         )
-        self.assertIsNone(out)
+        assert out is None
 
     def test_parse_id_url_finds_id(self):
         id_string = "3089651"
         id_url = "https://www.beatport.com/release/album-name/%s" % id_string
         out = MetadataSourcePlugin._get_id("album", id_url, beatport_id_regex)
-        self.assertEqual(out, id_string)
+        assert out == id_string

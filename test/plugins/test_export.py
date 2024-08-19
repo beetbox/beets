@@ -52,16 +52,16 @@ class ExportPluginTest(PluginTestCase):
         out = self.execute_command(format_type="json", artist=item1.artist)
         json_data = json.loads(out)[0]
         for key, val in self.test_values.items():
-            self.assertIn(key, json_data)
-            self.assertEqual(val, json_data[key])
+            assert key in json_data
+            assert val == json_data[key]
 
     def test_jsonlines_output(self):
         item1 = self.create_item()
         out = self.execute_command(format_type="jsonlines", artist=item1.artist)
         json_data = json.loads(out)
         for key, val in self.test_values.items():
-            self.assertIn(key, json_data)
-            self.assertEqual(val, json_data[key])
+            assert key in json_data
+            assert val == json_data[key]
 
     def test_csv_output(self):
         item1 = self.create_item()
@@ -70,17 +70,17 @@ class ExportPluginTest(PluginTestCase):
         head = re.split(",", csv_list[0])
         vals = re.split(",|\r", csv_list[1])
         for index, column in enumerate(head):
-            self.assertIsNotNone(self.test_values.get(column, None))
-            self.assertEqual(vals[index], self.test_values[column])
+            assert self.test_values.get(column, None) is not None
+            assert vals[index] == self.test_values[column]
 
     def test_xml_output(self):
         item1 = self.create_item()
         out = self.execute_command(format_type="xml", artist=item1.artist)
         library = ElementTree.fromstring(out)
-        self.assertIsInstance(library, Element)
+        assert isinstance(library, Element)
         for track in library[0]:
             for details in track:
                 tag = details.tag
                 txt = details.text
-                self.assertIn(tag, self.test_values, msg=tag)
-                self.assertEqual(self.test_values[tag], txt, msg=txt)
+                assert tag in self.test_values, tag
+                assert self.test_values[tag] == txt, txt

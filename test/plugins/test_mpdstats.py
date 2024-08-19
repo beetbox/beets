@@ -31,8 +31,8 @@ class MPDStatsTest(PluginTestCase):
         log = Mock()
         mpdstats = MPDStats(self.lib, log)
 
-        self.assertFalse(mpdstats.update_rating(item, True))
-        self.assertFalse(mpdstats.update_rating(None, True))
+        assert not mpdstats.update_rating(item, True)
+        assert not mpdstats.update_rating(None, True)
 
     def test_get_item(self):
         item_path = util.normpath("/foo/bar.flac")
@@ -42,9 +42,9 @@ class MPDStatsTest(PluginTestCase):
         log = Mock()
         mpdstats = MPDStats(self.lib, log)
 
-        self.assertEqual(str(mpdstats.get_item(item_path)), str(item))
-        self.assertIsNone(mpdstats.get_item("/some/non-existing/path"))
-        self.assertIn("item not found:", log.info.call_args[0][0])
+        assert str(mpdstats.get_item(item_path)) == str(item)
+        assert mpdstats.get_item("/some/non-existing/path") is None
+        assert "item not found:" in log.info.call_args[0][0]
 
     FAKE_UNKNOWN_STATE = "some-unknown-one"
     STATUSES = [

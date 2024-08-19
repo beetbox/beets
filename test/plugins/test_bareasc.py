@@ -62,16 +62,14 @@ class BareascPluginTest(PluginTestCase):
         for query, expected_titles in test_cases:
             with self.subTest(query=query, expected_titles=expected_titles):
                 items = self.lib.items(query)
-                self.assertListEqual(
-                    [item.title for item in items], expected_titles
-                )
+                assert [item.title for item in items] == expected_titles
 
     def test_bareasc_list_output(self):
         """Bare-ASCII version of list command - check output."""
         with capture_stdout() as output:
             self.run_command("bareasc", "with accents")
 
-        self.assertIn("Antonin Dvorak", output.getvalue())
+        assert "Antonin Dvorak" in output.getvalue()
 
     def test_bareasc_format_output(self):
         """Bare-ASCII version of list -f command - check output."""
@@ -80,4 +78,4 @@ class BareascPluginTest(PluginTestCase):
                 "bareasc", "with accents", "-f", "$artist:: $title"
             )
 
-        self.assertEqual("Antonin Dvorak:: with accents\n", output.getvalue())
+        assert "Antonin Dvorak:: with accents\n" == output.getvalue()
