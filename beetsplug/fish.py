@@ -34,7 +34,7 @@ import optparse
 import os
 import textwrap
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, cast
+from typing import Dict, Iterable, List, Optional, Set, cast
 
 import beets.ui.commands
 from beets import library, ui
@@ -270,6 +270,7 @@ class FishPlugin(BeetsPlugin):
             "-e",
             "--extravalues",
             action="append",
+            default=[],
             type="choice",
             choices=library.Item.all_keys() + library.Album.all_keys(),
             help="complete the known values of the specified metadata fields",
@@ -292,10 +293,13 @@ class FishPlugin(BeetsPlugin):
         args: List[str],
     ):
         # Get the user-provided options.
-        include_fields = not getattr(opts, "noFields")
-        extra_comp_fields = cast(List[str], getattr(opts, "extravalues") or [])
-        output = Path(getattr(opts, "output"))
-        assert len(args) == 0
+        include_fields = not opts.noFields
+        extra_comp_fields = cast(List[str], opts.extravalues)
+        output = Path(opts.output)
+
+        if len(args) != 0:
+            print("The 'fish' command does not accept any arguments!")
+            exit(1)
 
         # Try to ensure we will be able to write the output file.
         output.parent.mkdir(parents=True, exist_ok=True)
@@ -377,7 +381,7 @@ class FishPlugin(BeetsPlugin):
 
         if extra_comp_fields:
             # The set of values for every user-specified extra field.
-            extra_values: Dict[str, set[str]] = dict.fromkeys(
+            extra_values: Dict[str, Set[str]] = dict.fromkeys(
                 extra_comp_fields, set()
             )
             for item in lib.items():
