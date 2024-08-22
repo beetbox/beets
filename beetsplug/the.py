@@ -16,6 +16,7 @@
 
 
 import re
+from typing import List
 
 from beets.plugins import BeetsPlugin
 
@@ -28,7 +29,7 @@ FORMAT = "{0}, {1}"
 
 
 class ThePlugin(BeetsPlugin):
-    patterns = []
+    patterns: List[str] = []
 
     def __init__(self):
         super().__init__()

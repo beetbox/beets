@@ -13,10 +13,10 @@
 # included in all copies or substantial portions of the Software.
 
 """Miscellaneous utility functions."""
+from __future__ import annotations
 
 import errno
 import fnmatch
-import functools
 import os
 import platform
 import re
@@ -27,9 +27,11 @@ import sys
 import tempfile
 import traceback
 from collections import Counter, namedtuple
+from contextlib import suppress
 from enum import Enum
 from logging import Logger
 from multiprocessing.pool import ThreadPool
+from pathlib import Path
 from typing import (
     Any,
     AnyStr,
@@ -46,7 +48,11 @@ from typing import (
     Union,
 )
 
-from typing_extensions import TypeAlias
+if sys.version_info >= (3, 10):
+    from typing import TypeAlias
+else:
+    from typing_extensions import TypeAlias
+
 from unidecode import unidecode
 
 from beets.util import hidden
@@ -55,6 +61,7 @@ MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = "\\\\?\\"
 T = TypeVar("T")
 Bytes_or_String: TypeAlias = Union[str, bytes]
+PathLike = Union[str, bytes, Path]
 
 
 class HumanReadableException(Exception):
@@ -380,7 +387,7 @@ def _fsencoding() -> str:
     return encoding
 
 
-def bytestring_path(path: Bytes_or_String) -> bytes:
+def bytestring_path(path: PathLike) -> bytes:
     """Given a path, which is either a bytes or a unicode, returns a str
     path (ensuring that we never deal with Unicode pathnames). Path should be
     bytes but has safeguards for strings to be converted.
@@ -389,17 +396,21 @@ def bytestring_path(path: Bytes_or_String) -> bytes:
     if isinstance(path, bytes):
         return path
 
+    str_path = str(path)
+
     # On Windows, remove the magic prefix added by `syspath`. This makes
     # ``bytestring_path(syspath(X)) == X``, i.e., we can safely
     # round-trip through `syspath`.
-    if os.path.__name__ == "ntpath" and path.startswith(WINDOWS_MAGIC_PREFIX):
-        path = path[len(WINDOWS_MAGIC_PREFIX) :]
+    if os.path.__name__ == "ntpath" and str_path.startswith(
+        WINDOWS_MAGIC_PREFIX
+    ):
+        str_path = str_path[len(WINDOWS_MAGIC_PREFIX) :]
 
     # Try to encode with default encodings, but fall back to utf-8.
     try:
-        return path.encode(_fsencoding())
+        return str_path.encode(_fsencoding())
     except (UnicodeError, LookupError):
-        return path.encode("utf-8")
+        return str_path.encode("utf-8")
 
 
 PATH_SEP: bytes = bytestring_path(os.sep)
@@ -427,39 +438,27 @@ def displayable_path(
         return path.decode("utf-8", "ignore")
 
 
-def syspath(path: Bytes_or_String, prefix: bool = True) -> Bytes_or_String:
+def syspath(path: PathLike, prefix: bool = True) -> str:
     """Convert a path for use by the operating system. In particular,
     paths on Windows must receive a magic prefix and must be converted
     to Unicode before they are sent to the OS. To disable the magic
     prefix on Windows, set `prefix` to False---but only do this if you
     *really* know what you're doing.
     """
+    str_path = os.fsdecode(path)
     # Don't do anything if we're not on windows
     if os.path.__name__ != "ntpath":
-        return path
-
-    if not isinstance(path, str):
-        # Beets currently represents Windows paths internally with UTF-8
-        # arbitrarily. But earlier versions used MBCS because it is
-        # reported as the FS encoding by Windows. Try both.
-        try:
-            path = path.decode("utf-8")
-        except UnicodeError:
-            # The encoding should always be MBCS, Windows' broken
-            # Unicode representation.
-            assert isinstance(path, bytes)
-            encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
-            path = path.decode(encoding, "replace")
+        return str_path
 
     # Add the magic prefix if it isn't already there.
     # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
-    if prefix and not path.startswith(WINDOWS_MAGIC_PREFIX):
-        if path.startswith("\\\\"):
+    if prefix and not str_path.startswith(WINDOWS_MAGIC_PREFIX):
+        if str_path.startswith("\\\\"):
             # UNC path. Final path should look like \\?\UNC\...
-            path = "UNC" + path[1:]
-        path = WINDOWS_MAGIC_PREFIX + path
+            str_path = "UNC" + str_path[1:]
+        str_path = WINDOWS_MAGIC_PREFIX + str_path
 
-    return path
+    return str_path
 
 
 def samefile(p1: bytes, p2: bytes) -> bool:
@@ -526,7 +525,7 @@ def move(path: bytes, dest: bytes, replace: bool = False):
         dirname = os.path.dirname(bytestring_path(dest))
         tmp = tempfile.NamedTemporaryFile(
             suffix=syspath(b".beets", prefix=False),
-            prefix=syspath(b"." + basename, prefix=False),
+            prefix=syspath(b"." + basename + b".", prefix=False),
             dir=syspath(dirname),
             delete=False,
         )
@@ -804,21 +803,6 @@ def legalize_path(
     return second_stage_path, retruncated
 
 
-def py3_path(path: Union[bytes, str]) -> str:
-    """Convert a bytestring path to Unicode.
-
-    This helps deal with APIs on Python 3 that *only* accept Unicode
-    (i.e., `str` objects). I philosophically disagree with this
-    decision, because paths are sadly bytes on Unix, but that's the way
-    it is. So this function helps us "smuggle" the true bytes data
-    through APIs that took Python 3's Unicode mandate too seriously.
-    """
-    if isinstance(path, str):
-        return path
-    assert isinstance(path, bytes)
-    return os.fsdecode(path)
-
-
 def str2bool(value: str) -> bool:
     """Returns a boolean reflecting a human-entered string."""
     return value.lower() in ("yes", "1", "true", "t", "y")
@@ -847,41 +831,6 @@ def plurality(objs: Sequence[T]) -> T:
     if not c:
         raise ValueError("sequence must be non-empty")
     return c.most_common(1)[0]
-
-
-def cpu_count() -> int:
-    """Return the number of hardware thread contexts (cores or SMT
-    threads) in the system.
-    """
-    # Adapted from the soundconverter project:
-    # https://github.com/kassoulet/soundconverter
-    if sys.platform == "win32":
-        try:
-            num = int(os.environ["NUMBER_OF_PROCESSORS"])
-        except (ValueError, KeyError):
-            num = 0
-    elif sys.platform == "darwin":
-        try:
-            num = int(
-                command_output(
-                    [
-                        "/usr/sbin/sysctl",
-                        "-n",
-                        "hw.ncpu",
-                    ]
-                ).stdout
-            )
-        except (ValueError, OSError, subprocess.CalledProcessError):
-            num = 0
-    else:
-        try:
-            num = os.sysconf("SC_NPROCESSORS_ONLN")
-        except (ValueError, OSError, AttributeError):
-            num = 0
-    if num >= 1:
-        return num
-    else:
-        return 1
 
 
 def convert_command_args(args: List[bytes]) -> List[str]:
@@ -938,7 +887,7 @@ def command_output(
     if proc.returncode:
         raise subprocess.CalledProcessError(
             returncode=proc.returncode,
-            cmd=" ".join(cmd),
+            cmd=" ".join(map(str, cmd)),
             output=stdout + stderr,
         )
     return CommandOutput(stdout, stderr)
@@ -1108,24 +1057,61 @@ def par_map(transform: Callable, items: Iterable):
     pool.join()
 
 
-def lazy_property(func: Callable) -> Callable:
-    """A decorator that creates a lazily evaluated property. On first access,
-    the property is assigned the return value of `func`. This first value is
-    stored, so that future accesses do not have to evaluate `func` again.
-
-    This behaviour is useful when `func` is expensive to evaluate, and it is
-    not certain that the result will be needed.
+class cached_classproperty:  # noqa: N801
+    """A decorator implementing a read-only property that is *lazy* in
+    the sense that the getter is only invoked once. Subsequent accesses
+    through *any* instance use the cached result.
     """
-    field_name = "_" + func.__name__
 
-    @property
-    @functools.wraps(func)
-    def wrapper(self):
-        if hasattr(self, field_name):
-            return getattr(self, field_name)
+    def __init__(self, getter):
+        self.getter = getter
+        self.cache = {}
 
-        value = func(self)
-        setattr(self, field_name, value)
-        return value
+    def __get__(self, instance, owner):
+        if owner not in self.cache:
+            self.cache[owner] = self.getter(owner)
 
-    return wrapper
+        return self.cache[owner]
+
+
+def get_module_tempdir(module: str) -> Path:
+    """Return the temporary directory for the given module.
+
+    The directory is created within the `/tmp/beets/<module>` directory on
+    Linux (or the equivalent temporary directory on other systems).
+
+    Dots in the module name are replaced by underscores.
+    """
+    module = module.replace("beets.", "").replace(".", "_")
+    return Path(tempfile.gettempdir()) / "beets" / module
+
+
+def clean_module_tempdir(module: str) -> None:
+    """Clean the temporary directory for the given module."""
+    tempdir = get_module_tempdir(module)
+    shutil.rmtree(tempdir, ignore_errors=True)
+    with suppress(OSError):
+        # remove parent (/tmp/beets) directory if it is empty
+        tempdir.parent.rmdir()
+
+
+def get_temp_filename(
+    module: str,
+    prefix: str = "",
+    path: PathLike | None = None,
+    suffix: str = "",
+) -> bytes:
+    """Return temporary filename for the given module and prefix.
+
+    The filename starts with the given `prefix`.
+    If 'suffix' is given, it is used a the file extension.
+    If 'path' is given, we use the same suffix.
+    """
+    if not suffix and path:
+        suffix = Path(os.fsdecode(path)).suffix
+
+    tempdir = get_module_tempdir(module)
+    tempdir.mkdir(parents=True, exist_ok=True)
+
+    _, filename = tempfile.mkstemp(dir=tempdir, prefix=prefix, suffix=suffix)
+    return bytestring_path(filename)

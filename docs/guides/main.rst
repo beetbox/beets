@@ -10,7 +10,7 @@ Installing
 ----------
 
 You will need Python.
-Beets works on Python 3.7 or later.
+Beets works on Python 3.8 or later.
 
 * **macOS** 11 (Big Sur) includes Python 3.8 out of the box.
   You can opt for a more recent Python installing it via `Homebrew`_
@@ -98,7 +98,7 @@ Installing on Windows
 Installing beets on Windows can be tricky. Following these steps might help you
 get it right:
 
-1. If you don't have it, `install Python`_ (you want at least Python 3.7). The
+1. If you don't have it, `install Python`_ (you want at least Python 3.8). The
    installer should give you the option to "add Python to PATH." Check this
    box. If you do that, you can skip the next step.
 

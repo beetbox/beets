@@ -19,14 +19,13 @@ import os
 import re
 from collections import OrderedDict
 from contextlib import closing
-from tempfile import NamedTemporaryFile
 
 import confuse
 import requests
 from mediafile import image_mime_type
 
 from beets import config, importer, plugins, ui, util
-from beets.util import bytestring_path, py3_path, sorted_walk, syspath
+from beets.util import bytestring_path, get_temp_filename, sorted_walk, syspath
 from beets.util.artresizer import ArtResizer
 
 try:
@@ -67,9 +66,14 @@ class Candidate:
         self.match = match
         self.size = size
 
-    def _validate(self, plugin):
+    def _validate(self, plugin, skip_check_for=None):
         """Determine whether the candidate artwork is valid based on
         its dimensions (width and ratio).
+
+        `skip_check_for` is a check or list of checks to skip. This is used to
+        avoid redundant checks when the candidate has already been
+        validated for a particular operation without changing
+        plugin configuration.
 
         Return `CANDIDATE_BAD` if the file is unusable.
         Return `CANDIDATE_EXACT` if the file is usable as-is.
@@ -81,6 +85,11 @@ class Candidate:
         """
         if not self.path:
             return self.CANDIDATE_BAD
+
+        if skip_check_for is None:
+            skip_check_for = []
+        if isinstance(skip_check_for, int):
+            skip_check_for = [skip_check_for]
 
         if not (
             plugin.enforce_ratio
@@ -180,30 +189,51 @@ class Candidate:
                     plugin.cover_format,
                 )
 
-        if downscale:
+        if downscale and (self.CANDIDATE_DOWNSCALE not in skip_check_for):
             return self.CANDIDATE_DOWNSCALE
-        elif downsize:
-            return self.CANDIDATE_DOWNSIZE
-        elif plugin.deinterlace:
-            return self.CANDIDATE_DEINTERLACE
-        elif reformat:
+        if reformat and (self.CANDIDATE_REFORMAT not in skip_check_for):
             return self.CANDIDATE_REFORMAT
-        else:
-            return self.CANDIDATE_EXACT
+        if plugin.deinterlace and (
+            self.CANDIDATE_DEINTERLACE not in skip_check_for
+        ):
+            return self.CANDIDATE_DEINTERLACE
+        if downsize and (self.CANDIDATE_DOWNSIZE not in skip_check_for):
+            return self.CANDIDATE_DOWNSIZE
+        return self.CANDIDATE_EXACT
 
-    def validate(self, plugin):
-        self.check = self._validate(plugin)
+    def validate(self, plugin, skip_check_for=None):
+        self.check = self._validate(plugin, skip_check_for)
         return self.check
 
     def resize(self, plugin):
-        if self.check == self.CANDIDATE_DOWNSCALE:
+        """Resize the candidate artwork according to the plugin's
+        configuration until it is valid or no further resizing is
+        possible.
+        """
+        # validate the candidate in case it hasn't been done yet
+        current_check = self.validate(plugin)
+        checks_performed = []
+
+        # we don't want to resize the image if it's valid or bad
+        while current_check not in [self.CANDIDATE_BAD, self.CANDIDATE_EXACT]:
+            self._resize(plugin, current_check)
+            checks_performed.append(current_check)
+            current_check = self.validate(
+                plugin, skip_check_for=checks_performed
+            )
+
+    def _resize(self, plugin, check=None):
+        """Resize the candidate artwork according to the plugin's
+        configuration and the specified check.
+        """
+        if check == self.CANDIDATE_DOWNSCALE:
             self.path = ArtResizer.shared.resize(
                 plugin.maxwidth,
                 self.path,
                 quality=plugin.quality,
                 max_filesize=plugin.max_filesize,
             )
-        elif self.check == self.CANDIDATE_DOWNSIZE:
+        elif check == self.CANDIDATE_DOWNSIZE:
             # dimensions are correct, so maxwidth is set to maximum dimension
             self.path = ArtResizer.shared.resize(
                 max(self.size),
@@ -211,9 +241,9 @@ class Candidate:
                 quality=plugin.quality,
                 max_filesize=plugin.max_filesize,
             )
-        elif self.check == self.CANDIDATE_DEINTERLACE:
+        elif check == self.CANDIDATE_DEINTERLACE:
             self.path = ArtResizer.shared.deinterlace(self.path)
-        elif self.check == self.CANDIDATE_REFORMAT:
+        elif check == self.CANDIDATE_REFORMAT:
             self.path = ArtResizer.shared.reformat(
                 self.path,
                 plugin.cover_format,
@@ -239,6 +269,8 @@ def _logged_get(log, *args, **kwargs):
     for arg in ("stream", "verify", "proxies", "cert", "timeout"):
         if arg in kwargs:
             send_kwargs[arg] = req_kwargs.pop(arg)
+    if "timeout" not in send_kwargs:
+        send_kwargs["timeout"] = 10
 
     # Our special logging message parameter.
     if "message" in kwargs:
@@ -379,17 +411,17 @@ class RemoteArtSource(ArtSource):
                         ext,
                     )
 
-                suffix = py3_path(ext)
-                with NamedTemporaryFile(suffix=suffix, delete=False) as fh:
+                filename = get_temp_filename(__name__, suffix=ext.decode())
+                with open(filename, "wb") as fh:
                     # write the first already loaded part of the image
                     fh.write(header)
                     # download the remaining part of the image
                     for chunk in data:
                         fh.write(chunk)
                 self._log.debug(
-                    "downloaded art to: {0}", util.displayable_path(fh.name)
+                    "downloaded art to: {0}", util.displayable_path(filename)
                 )
-                candidate.path = util.bytestring_path(fh.name)
+                candidate.path = util.bytestring_path(filename)
                 return
 
         except (OSError, requests.RequestException, TypeError) as exc:
@@ -1067,7 +1099,7 @@ class Spotify(RemoteArtSource):
             self._log.debug("Fetchart: no Spotify album ID found")
             return
         try:
-            response = requests.get(url)
+            response = requests.get(url, timeout=10)
             response.raise_for_status()
         except requests.RequestException as e:
             self._log.debug("Error: " + str(e))

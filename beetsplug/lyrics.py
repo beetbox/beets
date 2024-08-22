@@ -267,6 +267,7 @@ class Backend:
                     headers={
                         "User-Agent": USER_AGENT,
                     },
+                    timeout=10,
                 )
         except requests.RequestException as exc:
             self._log.debug("lyrics request failed: {0}", exc)
@@ -293,7 +294,11 @@ class LRCLib(Backend):
         }
 
         try:
-            response = requests.get(self.base_url, params=params)
+            response = requests.get(
+                self.base_url,
+                params=params,
+                timeout=10,
+            )
             data = response.json()
         except (requests.RequestException, json.decoder.JSONDecodeError) as exc:
             self._log.debug("LRCLib API request failed: {0}", exc)
@@ -410,7 +415,10 @@ class Genius(Backend):
         data = {"q": title + " " + artist.lower()}
         try:
             response = requests.get(
-                search_url, params=data, headers=self.headers
+                search_url,
+                params=data,
+                headers=self.headers,
+                timeout=10,
             )
         except requests.RequestException as exc:
             self._log.debug("Genius API request failed: {0}", exc)
@@ -440,40 +448,51 @@ class Genius(Backend):
         # Sometimes, though, it packages the lyrics into separate divs, most
         # likely for easier ad placement
 
-        lyrics_div = soup.find("div", {"data-lyrics-container": True})
-
-        if lyrics_div:
-            self.replace_br(lyrics_div)
-
-        if not lyrics_div:
+        lyrics_divs = soup.find_all("div", {"data-lyrics-container": True})
+        if not lyrics_divs:
             self._log.debug("Received unusual song page html")
-            verse_div = soup.find("div", class_=re.compile("Lyrics__Container"))
-            if not verse_div:
-                if soup.find(
-                    "div",
-                    class_=re.compile("LyricsPlaceholder__Message"),
-                    string="This song is an instrumental",
-                ):
-                    self._log.debug("Detected instrumental")
-                    return "[Instrumental]"
-                else:
-                    self._log.debug("Couldn't scrape page using known layouts")
-                    return None
-
-            lyrics_div = verse_div.parent
+            return self._try_extracting_lyrics_from_non_data_lyrics_container(
+                soup
+            )
+        lyrics = ""
+        for lyrics_div in lyrics_divs:
             self.replace_br(lyrics_div)
+            lyrics += lyrics_div.get_text() + "\n\n"
+        while lyrics[-1] == "\n":
+            lyrics = lyrics[:-1]
+        return lyrics
 
-            ads = lyrics_div.find_all(
-                "div", class_=re.compile("InreadAd__Container")
-            )
-            for ad in ads:
-                ad.replace_with("\n")
+    def _try_extracting_lyrics_from_non_data_lyrics_container(self, soup):
+        """Extract lyrics from a div without attribute data-lyrics-container
+        This is the second most common layout on genius.com
+        """
+        verse_div = soup.find("div", class_=re.compile("Lyrics__Container"))
+        if not verse_div:
+            if soup.find(
+                "div",
+                class_=re.compile("LyricsPlaceholder__Message"),
+                string="This song is an instrumental",
+            ):
+                self._log.debug("Detected instrumental")
+                return "[Instrumental]"
+            else:
+                self._log.debug("Couldn't scrape page using known layouts")
+                return None
 
-            footers = lyrics_div.find_all(
-                "div", class_=re.compile("Lyrics__Footer")
-            )
-            for footer in footers:
-                footer.replace_with("")
+        lyrics_div = verse_div.parent
+        self.replace_br(lyrics_div)
+
+        ads = lyrics_div.find_all(
+            "div", class_=re.compile("InreadAd__Container")
+        )
+        for ad in ads:
+            ad.replace_with("\n")
+
+        footers = lyrics_div.find_all(
+            "div", class_=re.compile("Lyrics__Footer")
+        )
+        for footer in footers:
+            footer.replace_with("")
         return lyrics_div.get_text()
 
 
@@ -868,7 +887,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
         oauth_url = "https://datamarket.accesscontrol.windows.net/v2/OAuth2-13"
         oauth_token = json.loads(
             requests.post(
-                oauth_url, data=urllib.parse.urlencode(params)
+                oauth_url,
+                data=urllib.parse.urlencode(params),
+                timeout=10,
             ).content
         )
         if "access_token" in oauth_token:
@@ -1092,7 +1113,9 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 "Translate?text=%s&to=%s" % ("|".join(text_lines), to_lang)
             )
             r = requests.get(
-                url, headers={"Authorization ": self.bing_auth_token}
+                url,
+                headers={"Authorization ": self.bing_auth_token},
+                timeout=10,
             )
             if r.status_code != 200:
                 self._log.debug(

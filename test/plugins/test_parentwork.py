@@ -20,7 +20,7 @@ import unittest
 from unittest.mock import patch
 
 from beets.library import Item
-from beets.test.helper import TestHelper
+from beets.test.helper import PluginTestCase
 from beetsplug import parentwork
 
 work = {
@@ -85,15 +85,8 @@ def mock_workid_response(mbid, includes):
         return p_work
 
 
-class ParentWorkIntegrationTest(unittest.TestCase, TestHelper):
-    def setUp(self):
-        """Set up configuration"""
-        self.setup_beets()
-        self.load_plugins("parentwork")
-
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
+class ParentWorkIntegrationTest(PluginTestCase):
+    plugin = "parentwork"
 
     # test how it works with real musicbrainz data
     @unittest.skipUnless(
@@ -112,9 +105,7 @@ class ParentWorkIntegrationTest(unittest.TestCase, TestHelper):
         self.run_command("parentwork")
 
         item.load()
-        self.assertEqual(
-            item["mb_parentworkid"], "32c8943f-1b27-3a23-8660-4567f4847c94"
-        )
+        assert item["mb_parentworkid"] == "32c8943f-1b27-3a23-8660-4567f4847c94"
 
     @unittest.skipUnless(
         os.environ.get("INTEGRATION_TEST", "0") == "1",
@@ -135,9 +126,7 @@ class ParentWorkIntegrationTest(unittest.TestCase, TestHelper):
         self.run_command("parentwork")
 
         item.load()
-        self.assertEqual(
-            item["mb_parentworkid"], "32c8943f-1b27-3a23-8660-4567f4847c94"
-        )
+        assert item["mb_parentworkid"] == "32c8943f-1b27-3a23-8660-4567f4847c94"
 
     @unittest.skipUnless(
         os.environ.get("INTEGRATION_TEST", "0") == "1",
@@ -159,7 +148,7 @@ class ParentWorkIntegrationTest(unittest.TestCase, TestHelper):
         self.run_command("parentwork")
 
         item.load()
-        self.assertEqual(item["mb_parentworkid"], "XXX")
+        assert item["mb_parentworkid"] == "XXX"
 
     # test different cases, still with Matthew Passion Ouverture or Mozart
     # requiem
@@ -170,29 +159,29 @@ class ParentWorkIntegrationTest(unittest.TestCase, TestHelper):
     )
     def test_direct_parent_work_real(self):
         mb_workid = "2e4a3668-458d-3b2a-8be2-0b08e0d8243a"
-        self.assertEqual(
-            "f04b42df-7251-4d86-a5ee-67cfa49580d1",
-            parentwork.direct_parent_id(mb_workid)[0],
+        assert (
+            "f04b42df-7251-4d86-a5ee-67cfa49580d1"
+            == parentwork.direct_parent_id(mb_workid)[0]
         )
-        self.assertEqual(
-            "45afb3b2-18ac-4187-bc72-beb1b1c194ba",
-            parentwork.work_parent_id(mb_workid)[0],
+        assert (
+            "45afb3b2-18ac-4187-bc72-beb1b1c194ba"
+            == parentwork.work_parent_id(mb_workid)[0]
         )
 
 
-class ParentWorkTest(unittest.TestCase, TestHelper):
+class ParentWorkTest(PluginTestCase):
+    plugin = "parentwork"
+
     def setUp(self):
         """Set up configuration"""
-        self.setup_beets()
-        self.load_plugins("parentwork")
+        super().setUp()
         self.patcher = patch(
             "musicbrainzngs.get_work_by_id", side_effect=mock_workid_response
         )
         self.patcher.start()
 
     def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
+        super().tearDown()
         self.patcher.stop()
 
     def test_normal_case(self):
@@ -202,7 +191,7 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
         self.run_command("parentwork")
 
         item.load()
-        self.assertEqual(item["mb_parentworkid"], "3")
+        assert item["mb_parentworkid"] == "3"
 
     def test_force(self):
         self.config["parentwork"]["force"] = True
@@ -218,7 +207,7 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
         self.run_command("parentwork")
 
         item.load()
-        self.assertEqual(item["mb_parentworkid"], "3")
+        assert item["mb_parentworkid"] == "3"
 
     def test_no_force(self):
         self.config["parentwork"]["force"] = False
@@ -234,16 +223,8 @@ class ParentWorkTest(unittest.TestCase, TestHelper):
         self.run_command("parentwork")
 
         item.load()
-        self.assertEqual(item["mb_parentworkid"], "XXX")
+        assert item["mb_parentworkid"] == "XXX"
 
     def test_direct_parent_work(self):
-        self.assertEqual("2", parentwork.direct_parent_id("1")[0])
-        self.assertEqual("3", parentwork.work_parent_id("1")[0])
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")
+        assert "2" == parentwork.direct_parent_id("1")[0]
+        assert "3" == parentwork.work_parent_id("1")[0]

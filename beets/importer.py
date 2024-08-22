@@ -1136,7 +1136,7 @@ class ArchiveImportTask(SentinelImportTask):
             return False
 
         for path_test, _ in cls.handlers():
-            if path_test(util.py3_path(path)):
+            if path_test(os.fsdecode(path)):
                 return True
         return False
 
@@ -1186,11 +1186,11 @@ class ArchiveImportTask(SentinelImportTask):
         `toppath` to that directory.
         """
         for path_test, handler_class in self.handlers():
-            if path_test(util.py3_path(self.toppath)):
+            if path_test(os.fsdecode(self.toppath)):
                 break
 
         extract_to = mkdtemp()
-        archive = handler_class(util.py3_path(self.toppath), mode="r")
+        archive = handler_class(os.fsdecode(self.toppath), mode="r")
         try:
             archive.extractall(extract_to)
 
@@ -1684,6 +1684,8 @@ def manipulate_files(session, task):
             operation = MoveOperation.LINK
         elif session.config["hardlink"]:
             operation = MoveOperation.HARDLINK
+        elif session.config["reflink"] == "auto":
+            operation = MoveOperation.REFLINK_AUTO
         elif session.config["reflink"]:
             operation = MoveOperation.REFLINK
         else:

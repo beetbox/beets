@@ -22,7 +22,6 @@ calls (`debug`, `info`, etc).
 
 
 import logging
-import sys
 import threading
 from copy import copy
 
@@ -84,12 +83,7 @@ class StrFormatLogger(logging.Logger):
         m = self._LogMessage(msg, args, kwargs)
 
         stacklevel = kwargs.pop("stacklevel", 1)
-        if sys.version_info >= (3, 8):
-            stacklevel = {"stacklevel": stacklevel}
-        else:
-            # Simply ignore this when not supported by current Python version.
-            # Can be dropped when we remove support for Python 3.7.
-            stacklevel = {}
+        stacklevel = {"stacklevel": stacklevel}
 
         return super()._log(
             level,

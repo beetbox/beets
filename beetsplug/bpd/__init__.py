@@ -27,6 +27,7 @@ import sys
 import time
 import traceback
 from string import Template
+from typing import List
 
 from mediafile import MediaFile
 
@@ -1059,7 +1060,7 @@ class Command:
             raise BPDError(ERROR_SYSTEM, "server error", self.name)
 
 
-class CommandList(list):
+class CommandList(List[Command]):
     """A list of commands issued by the client for processing by the
     server. May be verbose, in which case the response is delimited, or
     not. Should be a list of `Command` objects.

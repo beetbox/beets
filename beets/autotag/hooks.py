@@ -28,6 +28,7 @@ from typing import (
     List,
     Optional,
     Tuple,
+    TypeVar,
     Union,
     cast,
 )
@@ -38,24 +39,26 @@ from unidecode import unidecode
 from beets import config, logging, plugins
 from beets.autotag import mb
 from beets.library import Item
-from beets.util import as_string
+from beets.util import as_string, cached_classproperty
 
 log = logging.getLogger("beets")
 
+V = TypeVar("V")
+
 
 # Classes used to represent candidate options.
-class AttrDict(dict):
+class AttrDict(Dict[str, V]):
     """A dictionary that supports attribute ("dot") access, so `d.field`
     is equivalent to `d['field']`.
     """
 
-    def __getattr__(self, attr):
+    def __getattr__(self, attr: str) -> V:
         if attr in self:
-            return self.get(attr)
+            return self[attr]
         else:
             raise AttributeError
 
-    def __setattr__(self, key, value):
+    def __setattr__(self, key: str, value: V):
         self.__setitem__(key, value)
 
     def __hash__(self):
@@ -79,7 +82,7 @@ class AlbumInfo(AttrDict):
     # TYPING: are all of these correct? I've assumed optional strings
     def __init__(
         self,
-        tracks: List["TrackInfo"],
+        tracks: List[TrackInfo],
         album: Optional[str] = None,
         album_id: Optional[str] = None,
         artist: Optional[str] = None,
@@ -165,43 +168,7 @@ class AlbumInfo(AttrDict):
         self.discogs_artistid = discogs_artistid
         self.update(kwargs)
 
-    # Work around a bug in python-musicbrainz-ngs that causes some
-    # strings to be bytes rather than Unicode.
-    # https://github.com/alastair/python-musicbrainz-ngs/issues/85
-    def decode(self, codec: str = "utf-8"):
-        """Ensure that all string attributes on this object, and the
-        constituent `TrackInfo` objects, are decoded to Unicode.
-        """
-        for fld in [
-            "album",
-            "artist",
-            "albumtype",
-            "label",
-            "barcode",
-            "artist_sort",
-            "catalognum",
-            "script",
-            "language",
-            "country",
-            "style",
-            "genre",
-            "albumstatus",
-            "albumdisambig",
-            "releasegroupdisambig",
-            "artist_credit",
-            "media",
-            "discogs_albumid",
-            "discogs_labelid",
-            "discogs_artistid",
-        ]:
-            value = getattr(self, fld)
-            if isinstance(value, bytes):
-                setattr(self, fld, value.decode(codec, "ignore"))
-
-        for track in self.tracks:
-            track.decode(codec)
-
-    def copy(self) -> "AlbumInfo":
+    def copy(self) -> AlbumInfo:
         dupe = AlbumInfo([])
         dupe.update(self)
         dupe.tracks = [track.copy() for track in self.tracks]
@@ -291,25 +258,7 @@ class TrackInfo(AttrDict):
         self.album = album
         self.update(kwargs)
 
-    # As above, work around a bug in python-musicbrainz-ngs.
-    def decode(self, codec="utf-8"):
-        """Ensure that all string attributes on this object are decoded
-        to Unicode.
-        """
-        for fld in [
-            "title",
-            "artist",
-            "medium",
-            "artist_sort",
-            "disctitle",
-            "artist_credit",
-            "media",
-        ]:
-            value = getattr(self, fld)
-            if isinstance(value, bytes):
-                setattr(self, fld, value.decode(codec, "ignore"))
-
-    def copy(self) -> "TrackInfo":
+    def copy(self) -> TrackInfo:
         dupe = TrackInfo()
         dupe.update(self)
         return dupe
@@ -410,23 +359,6 @@ def string_dist(str1: Optional[str], str2: Optional[str]) -> float:
     return base_dist + penalty
 
 
-class LazyClassProperty:
-    """A decorator implementing a read-only property that is *lazy* in
-    the sense that the getter is only invoked once. Subsequent accesses
-    through *any* instance use the cached result.
-    """
-
-    def __init__(self, getter):
-        self.getter = getter
-        self.computed = False
-
-    def __get__(self, obj, owner):
-        if not self.computed:
-            self.value = self.getter(owner)
-            self.computed = True
-        return self.value
-
-
 @total_ordering
 class Distance:
     """Keeps track of multiple distance penalties. Provides a single
@@ -438,7 +370,7 @@ class Distance:
         self._penalties = {}
         self.tracks: Dict[TrackInfo, Distance] = {}
 
-    @LazyClassProperty
+    @cached_classproperty
     def _weights(cls) -> Dict[str, float]:  # noqa: N805
         """A dictionary from keys to floating-point weights."""
         weights_view = config["match"]["distance_weights"]
@@ -545,7 +477,7 @@ class Distance:
 
     # Adding components.
 
-    def _eq(self, value1: Union[re.Pattern, Any], value2: Any) -> bool:
+    def _eq(self, value1: Union[re.Pattern[str], Any], value2: Any) -> bool:
         """Returns True if `value1` is equal to `value2`. `value1` may
         be a compiled regular expression, in which case it will be
         matched against `value2`.
