@@ -1654,6 +1654,12 @@ class ReimportTest(ImportTestCase):
         if new_artpath != old_artpath:
             self.assertNotExists(old_artpath)
 
+    def test_reimported_album_has_new_flexattr(self):
+        self._setup_session()
+        assert self._album().get("bandcamp_album_id") is None
+        self.importer.run()
+        assert self._album().bandcamp_album_id == "bc_url"
+
     def test_reimported_album_not_preserves_flexattr(self):
         self._setup_session()
         assert self._album().data_source == "original_source"
