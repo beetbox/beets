@@ -964,6 +964,7 @@ class AutotagStub:
             artist_id="artistid" + id,
             albumtype="soundtrack",
             data_source="match_source",
+            bandcamp_album_id="bc_url",
         )
 
 

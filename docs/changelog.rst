@@ -21,6 +21,10 @@ Bug fixes:
 * Improved naming of temporary files by separating the random part with the file extension.
 * Fixed the ``auto`` value for the :ref:`reflink` config option.
 * Fixed lyrics plugin only getting part of the lyrics from ``Genius.com`` :bug:`4815`
+* Album flexible fields are now correctly saved. For instance MusicBrainz external links
+  such as `bandcamp_album_id` will be available on albums in addition to tracks.
+  For albums already in your library, a re-import is required for the fields to be added.
+  Such a re-import can be done with, in this case, `beet import -L data_source:=MusicBrainz`.
 * :doc:`plugins/autobpm`: Fix the ``TypeError`` where tempo was being returned
   as a numpy array. Update ``librosa`` dependency constraint to prevent similar
   issues in the future.
