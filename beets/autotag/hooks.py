@@ -17,7 +17,6 @@
 from __future__ import annotations
 
 import re
-from collections import namedtuple
 from functools import total_ordering
 from typing import (
     Any,
@@ -26,6 +25,7 @@ from typing import (
     Iterable,
     Iterator,
     List,
+    NamedTuple,
     Optional,
     Tuple,
     TypeVar,
@@ -589,11 +589,18 @@ class Distance:
 
 # Structures that compose all the information for a candidate match.
 
-AlbumMatch = namedtuple(
-    "AlbumMatch", ["distance", "info", "mapping", "extra_items", "extra_tracks"]
-)
 
-TrackMatch = namedtuple("TrackMatch", ["distance", "info"])
+class AlbumMatch(NamedTuple):
+    distance: Distance
+    info: AlbumInfo
+    mapping: Dict[Item, TrackInfo]
+    extra_items: List[Item]
+    extra_tracks: List[TrackInfo]
+
+
+class TrackMatch(NamedTuple):
+    distance: Distance
+    info: TrackInfo
 
 
 # Aggregation of sources.

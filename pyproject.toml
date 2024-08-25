@@ -22,10 +22,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: Implementation :: CPython",
 ]
-packages = [
-    { include = "beets" },
-    { include = "beetsplug" },
-]
+packages = [{ include = "beets" }, { include = "beetsplug" }]
 
 [tool.poetry.urls]
 Changelog = "https://github.com/beetbox/beets/blob/master/docs/changelog.rst"
@@ -109,15 +106,17 @@ tomli = ">=2.0.1"
 
 [tool.poetry.extras]
 # inline comments note required external / non-python dependencies
-absubmit = ["requests"] # extractor binary from https://acousticbrainz.org/download
+absubmit = [
+    "requests",
+] # extractor binary from https://acousticbrainz.org/download
 aura = ["flask", "flask-cors", "Pillow"]
 # badfiles # mp3val and flac
 beatport = ["requests-oauthlib"]
-bpd = ["PyGObject"] # python-gi and GStreamer 1.0+
-chroma = ["pyacoustid"] # chromaprint or fpcalc
+bpd = ["PyGObject"]              # python-gi and GStreamer 1.0+
+chroma = ["pyacoustid"]          # chromaprint or fpcalc
 # convert # ffmpeg
 discogs = ["python3-discogs-client"]
-embedart = ["Pillow"] # ImageMagick
+embedart = ["Pillow"]                                             # ImageMagick
 embyupdate = ["requests"]
 fetchart = ["beautifulsoup4", "langdetect", "Pillow", "requests"]
 import = ["py7zr", "rarfile"]

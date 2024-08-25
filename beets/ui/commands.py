@@ -19,10 +19,10 @@ interface.
 
 import os
 import re
-from collections import Counter, namedtuple
+from collections import Counter
 from itertools import chain
 from platform import python_version
-from typing import Sequence
+from typing import Any, NamedTuple, Sequence
 
 import beets
 from beets import autotag, config, importer, library, logging, plugins, ui, util
@@ -47,7 +47,6 @@ from beets.util import (
 from . import _store_dict
 
 VARIOUS_ARTISTS = "Various Artists"
-PromptChoice = namedtuple("PromptChoice", ["short", "long", "callback"])
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -665,7 +664,7 @@ class AlbumChange(ChangeRepresentation):
         """
         # Tracks.
         # match is an AlbumMatch named tuple, mapping is a dict
-        # Sort the pairs by the track_info index (at index 1 of the namedtuple)
+        # Sort the pairs by the track_info index (at index 1 of the NamedTuple)
         pairs = list(self.match.mapping.items())
         pairs.sort(key=lambda item_and_track_info: item_and_track_info[1].index)
         # Build up LHS and RHS for track difference display. The `lines` list
@@ -838,6 +837,12 @@ def _summary_judgment(rec):
     elif action == importer.action.ASIS:
         print_("Importing as-is.")
     return action
+
+
+class PromptChoice(NamedTuple):
+    short: str
+    long: str
+    callback: Any
 
 
 def choose_candidate(
