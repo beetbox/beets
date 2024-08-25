@@ -19,12 +19,12 @@ releases and tracks.
 
 import datetime
 import re
-from collections import namedtuple
 from typing import (
     Any,
     Dict,
     Iterable,
     List,
+    NamedTuple,
     Optional,
     Sequence,
     Tuple,
@@ -76,7 +76,10 @@ class Recommendation(OrderedEnum):
 # consists of a list of possible candidates (i.e., AlbumInfo or TrackInfo
 # objects) and a recommendation value.
 
-Proposal = namedtuple("Proposal", ("candidates", "recommendation"))
+
+class Proposal(NamedTuple):
+    candidates: List[Any]
+    recommendation: Recommendation
 
 
 # Primary matching functionality.
