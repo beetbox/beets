@@ -21,6 +21,7 @@ import re
 import traceback
 from collections import defaultdict
 from functools import wraps
+from typing import Any, Dict
 
 import mediafile
 
@@ -291,7 +292,7 @@ def load_plugins(names=()):
             )
 
 
-_instances = {}
+_instances: Dict[Any, Any] = {}
 
 
 def find_plugins():
