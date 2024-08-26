@@ -48,6 +48,7 @@ dbus-python = { version = "*", optional = true }
 flask = { version = "*", optional = true }
 flask-cors = { version = "*", optional = true }
 langdetect = { version = "*", optional = true }
+librosa = { version = "^0.10.2.post1", optional = true }
 mutagen = { version = ">=1.33", optional = true }
 Pillow = { version = "*", optional = true }
 py7zr = { version = "*", optional = true }
@@ -60,6 +61,7 @@ pyxdg = { version = "*", optional = true }
 rarfile = { version = "*", optional = true }
 reflink = { version = "*", optional = true }
 requests = { version = "*", optional = true }
+resampy = {version = ">=0.4.3", optional = true}
 requests-oauthlib = { version = ">=0.6.1", optional = true }
 soco = { version = "*", optional = true }
 
@@ -111,6 +113,7 @@ tomli = ">=2.0.1"
 # inline comments note required external / non-python dependencies
 absubmit = ["requests"] # extractor binary from https://acousticbrainz.org/download
 aura = ["flask", "flask-cors", "Pillow"]
+autobpm = ["librosa", "resampy"]
 # badfiles # mp3val and flac
 beatport = ["requests-oauthlib"]
 bpd = ["PyGObject"] # python-gi and GStreamer 1.0+
