@@ -663,7 +663,7 @@ class AlbumChange(ChangeRepresentation):
         suggests for them.
         """
         # Tracks.
-        # match is an AlbumMatch named tuple, mapping is a dict
+        # match is an AlbumMatch NamedTuple, mapping is a dict
         # Sort the pairs by the track_info index (at index 1 of the NamedTuple)
         pairs = list(self.match.mapping.items())
         pairs.sort(key=lambda item_and_track_info: item_and_track_info[1].index)
