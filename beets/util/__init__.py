@@ -298,7 +298,7 @@ def fnmatch_all(names: Sequence[bytes], patterns: Sequence[bytes]) -> bool:
 def prune_dirs(
     path: str,
     root: Optional[Bytes_or_String] = None,
-    clutter: Sequence[Bytes_or_String] = [".DS_Store", "Thumbs.db"],
+    clutter: Sequence[str] = (".DS_Store", "Thumbs.db"),
 ):
     """If path is an empty directory, then remove it. Recursively remove
     path's ancestry up to root (which is never removed) where there are
@@ -330,7 +330,7 @@ def prune_dirs(
         if not os.path.exists(directory):
             # Directory gone already.
             continue
-        clutter = [bytestring_path(c) for c in clutter]
+        clutter: List[bytes] = [bytestring_path(c) for c in clutter]
         match_paths = [bytestring_path(d) for d in os.listdir(directory)]
         try:
             if fnmatch_all(match_paths, clutter):
@@ -439,18 +439,14 @@ def displayable_path(
         return path.decode("utf-8", "ignore")
 
 
-def syspath(path: Optional[PathLike], prefix: bool = True) -> str:
+def syspath(path: PathLike, prefix: bool = True) -> str:
     """Convert a path for use by the operating system. In particular,
     paths on Windows must receive a magic prefix and must be converted
     to Unicode before they are sent to the OS. To disable the magic
     prefix on Windows, set `prefix` to False---but only do this if you
     *really* know what you're doing.
     """
-    if path is None:
-        raise ValueError("The path cannot be None")
-
     str_path = os.fsdecode(path)
-
     # Don't do anything if we're not on windows
     if os.path.__name__ != "ntpath":
         return str_path
@@ -760,7 +756,7 @@ def legalize_path(
     length: int,
     extension: bytes,
     fragment: bool,
-) -> Tuple[Bytes_or_String, bool]:
+) -> Tuple[Union[Bytes_or_String, bool]]:
     """Given a path-like Unicode string, produce a legal path. Return
     the path and a flag indicating whether some replacements had to be
     ignored (see below).
@@ -827,7 +823,7 @@ def as_string(value: Any) -> str:
         return str(value)
 
 
-def plurality(objs: Sequence[T]) -> Tuple[T, int]:
+def plurality(objs: Sequence[T]) -> T:
     """Given a sequence of hashble objects, returns the object that
     is most common in the set and the its number of appearance. The
     sequence must contain at least one object.
@@ -838,7 +834,7 @@ def plurality(objs: Sequence[T]) -> Tuple[T, int]:
     return c.most_common(1)[0]
 
 
-def convert_command_args(args: Sequence[Bytes_or_String]) -> List[str]:
+def convert_command_args(args: List[bytes]) -> List[str]:
     """Convert command arguments, which may either be `bytes` or `str`
     objects, to uniformly surrogate-escaped strings."""
     assert isinstance(args, list)
@@ -858,7 +854,7 @@ class CommandOutput(NamedTuple):
 
 
 def command_output(
-    cmd: Sequence[Bytes_or_String],
+    cmd: List[Bytes_or_String],
     shell: bool = False,
 ) -> CommandOutput:
     """Runs the command and returns its output after it has exited.
@@ -1040,7 +1036,7 @@ def asciify_path(path: str, sep_replace: str) -> str:
     # if this platform has an os.altsep, change it to os.sep.
     if os.altsep:
         path = path.replace(os.altsep, os.sep)
-    path_components: Sequence[Bytes_or_String] = path.split(os.sep)
+    path_components: List[Bytes_or_String] = path.split(os.sep)
     for index, item in enumerate(path_components):
         path_components[index] = unidecode(item).replace(os.sep, sep_replace)
         if os.altsep:
