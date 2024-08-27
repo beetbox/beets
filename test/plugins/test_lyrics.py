@@ -15,7 +15,9 @@
 """Tests for the 'lyrics' plugin."""
 
 import os
+import re
 from functools import partial
+from http import HTTPStatus
 
 import pytest
 
@@ -411,8 +413,16 @@ class TestLRCLibLyrics(LyricsBackend):
         return "lrclib"
 
     @pytest.fixture
-    def fetch_lyrics(self, backend, requests_mock, response_data):
-        requests_mock.get(backend.base_url, json=response_data)
+    def respone_data(self):
+        return {}
+
+    @pytest.fixture
+    def request_kwargs(self, response_data):
+        return {"json": response_data}
+
+    @pytest.fixture
+    def fetch_lyrics(self, backend, requests_mock, request_kwargs):
+        requests_mock.get(backend.base_url, **request_kwargs)
 
         return partial(backend.fetch, "la", "la", "la", self.ITEM_DURATION)
 
@@ -456,3 +466,19 @@ class TestLRCLibLyrics(LyricsBackend):
     @pytest.mark.parametrize("plugin_config", [{"synced": True}])
     def test_fetch_lyrics(self, fetch_lyrics, expected_lyrics):
         assert fetch_lyrics() == expected_lyrics
+
+    @pytest.mark.parametrize(
+        "request_kwargs, expected_log_match",
+        [
+            (
+                {"status_code": HTTPStatus.BAD_GATEWAY},
+                r"LRCLib: Request error: 502",
+            ),
+            ({"text": "invalid"}, r"LRCLib: Could not decode.*JSON"),
+        ],
+    )
+    def test_error(self, caplog, fetch_lyrics, expected_log_match):
+        assert fetch_lyrics() is None
+        assert caplog.messages
+        assert (last_log := caplog.messages[-1])
+        assert re.search(expected_log_match, last_log, re.I)
