@@ -16,11 +16,14 @@
 libraries.
 """
 
-from collections import namedtuple
+from typing import Any, Dict, NamedTuple
 
 from beets import util
 
-Node = namedtuple("Node", ["files", "dirs"])
+
+class Node(NamedTuple):
+    files: Dict[str, Any]
+    dirs: Dict[str, Any]
 
 
 def _insert(node, path, itemid):
