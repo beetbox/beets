@@ -78,7 +78,7 @@ class Recommendation(OrderedEnum):
 
 
 class Proposal(NamedTuple):
-    candidates: Sequence[AlbumMatch | TrackMatch]
+    candidates: Sequence[Union[AlbumMatch, TrackMatch]]
     recommendation: Recommendation
 
 
