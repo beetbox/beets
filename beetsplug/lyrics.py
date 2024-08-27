@@ -893,8 +893,10 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 "dist_thresh": 0.11,
                 "google_API_key": None,
                 "google_engine_ID": "009217259823014548361:lndtuqkycfu",
-                "genius_api_key": "Ryq93pUGm8bM6eUWwD_M3NOFFDAtp2yEE7W"
-                "76V-uFL5jks5dNvcGCdarqFjDhP9c",
+                "genius_api_key": (
+                    "Ryq93pUGm8bM6eUWwD_M3NOFFDAtp2yEE7W"
+                    "76V-uFL5jks5dNvcGCdarqFjDhP9c"
+                ),
                 "fallback": None,
                 "force": False,
                 "local": False,
