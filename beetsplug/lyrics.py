@@ -284,6 +284,19 @@ class LRCLibItem(TypedDict):
 class LRCLib(Backend):
     base_url = "https://lrclib.net/api/search"
 
+    def warn(self, message: str, *args) -> None:
+        """Log a warning message with the class name."""
+        self._log.warning(f"{self.__class__.__name__}: {message}", *args)
+
+    def fetch_json(self, *args, **kwargs):
+        """Wrap the request method to raise an exception on HTTP errors."""
+        kwargs.setdefault("timeout", 10)
+        kwargs.setdefault("headers", {"User-Agent": USER_AGENT})
+        r = requests.get(*args, **kwargs)
+        r.raise_for_status()
+
+        return r.json()
+
     @staticmethod
     def get_rank(
         target_duration: float, item: LRCLibItem
@@ -327,25 +340,21 @@ class LRCLib(Backend):
             params["duration"] = length
 
         try:
-            response = requests.get(
-                self.base_url,
-                params=params,
-                timeout=10,
-            )
-            data: list[LRCLibItem] = response.json()
-        except (requests.RequestException, json.decoder.JSONDecodeError) as exc:
-            self._log.debug("LRCLib API request failed: {0}", exc)
-            return None
+            data = self.fetch_json(self.base_url, params=params)
+        except requests.JSONDecodeError:
+            self.warn("Could not decode response JSON data")
+        except requests.RequestException as exc:
+            self.warn("Request error: {}", exc)
+        else:
+            if data:
+                item = self.pick_lyrics(length, data)
 
-        if not data:
-            return None
+                if self.config["synced"] and (synced := item["syncedLyrics"]):
+                    return synced
 
-        item = self.pick_lyrics(length, data)
+                return item["plainLyrics"]
 
-        if self.config["synced"] and (synced_lyrics := item["syncedLyrics"]):
-            return synced_lyrics
-
-        return item["plainLyrics"]
+        return None
 
 
 class DirectBackend(Backend):
