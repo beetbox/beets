@@ -56,7 +56,7 @@ configuration file. The available options are:
   sources known to be scrapeable.
 - **sources**: List of sources to search for lyrics. An asterisk ``*`` expands
   to all available sources.
-  Default: ``google genius tekstowo lrclib``, i.e., all the available sources. The
+  Default: ``lrclib google genius tekstowo``, i.e., all the available sources. The
   ``google`` source will be automatically deactivated if no ``google_API_key``
   is setup.
   The ``google``, ``genius``, and ``tekstowo`` sources will only be enabled if

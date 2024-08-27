@@ -783,7 +783,7 @@ class Google(Backend):
 
 
 class LyricsPlugin(plugins.BeetsPlugin):
-    SOURCES = ["google", "musixmatch", "genius", "tekstowo", "lrclib"]
+    SOURCES = ["lrclib", "google", "musixmatch", "genius", "tekstowo"]
     SOURCE_BACKENDS = {
         "google": Google,
         "musixmatch": MusiXmatch,

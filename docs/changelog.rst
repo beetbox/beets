@@ -51,6 +51,8 @@ Bug fixes:
 * :doc:`plugins/lyrics`: Fix fetching lyrics from ``lrclib`` source. Instead of
   attempting to fetch lyrics for a specific album, artist, title and duration
   combination, the plugin now performs a search which yields many results.
+  Update the default ``sources`` configuration to prioritize ``lrclib`` over
+  other sources since it returns reliable results quicker than others.
   :bug:`5102`
 
 For packagers:
