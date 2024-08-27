@@ -26,7 +26,7 @@ import subprocess
 import sys
 import tempfile
 import traceback
-from collections import Counter, namedtuple
+from collections import Counter
 from contextlib import suppress
 from enum import Enum
 from logging import Logger
@@ -40,6 +40,7 @@ from typing import (
     Iterable,
     List,
     MutableSequence,
+    NamedTuple,
     Optional,
     Pattern,
     Sequence,
@@ -847,7 +848,9 @@ def convert_command_args(args: List[bytes]) -> List[str]:
 
 
 # stdout and stderr as bytes
-CommandOutput = namedtuple("CommandOutput", ("stdout", "stderr"))
+class CommandOutput(NamedTuple):
+    stdout: bytes
+    stderr: bytes
 
 
 def command_output(
