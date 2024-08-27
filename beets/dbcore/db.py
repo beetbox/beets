@@ -322,7 +322,7 @@ class Model(ABC):
     """
 
     @cached_classproperty
-    def _relation(cls) -> Model:
+    def _relation(cls) -> type[Model]:
         """The model that this model is closely related to."""
         return cls
 
