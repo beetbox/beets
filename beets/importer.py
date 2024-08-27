@@ -60,8 +60,7 @@ HISTORY_KEY = "taghistory"
 # def extend_reimport_fresh_fields_item():
 #     importer.REIMPORT_FRESH_FIELDS_ITEM.extend(['tidal_track_popularity']
 # )
-REIMPORT_FRESH_FIELDS_ALBUM = ["data_source"]
-REIMPORT_FRESH_FIELDS_ITEM = [
+REIMPORT_FRESH_FIELDS_ALBUM = [
     "data_source",
     "bandcamp_album_id",
     "spotify_album_id",
@@ -69,6 +68,7 @@ REIMPORT_FRESH_FIELDS_ITEM = [
     "beatport_album_id",
     "tidal_album_id",
 ]
+REIMPORT_FRESH_FIELDS_ITEM = list(REIMPORT_FRESH_FIELDS_ALBUM)
 
 # Global logger.
 log = logging.getLogger("beets")
@@ -815,9 +815,16 @@ class ImportTask(BaseImportTask):
         with lib.transaction():
             self.record_replaced(lib)
             self.remove_replaced(lib)
+
             self.album = lib.add_album(self.imported_items())
-            if "data_source" in self.imported_items()[0]:
-                self.album.data_source = self.imported_items()[0].data_source
+            if self.choice_flag == action.APPLY:
+                # Copy album flexible fields to the DB
+                # TODO: change the flow so we create the `Album` object earlier,
+                #   and we can move this into `self.apply_metadata`, just like
+                #   is done for tracks.
+                autotag.apply_album_metadata(self.match.info, self.album)
+                self.album.store()
+
             self.reimport_metadata(lib)
 
     def record_replaced(self, lib):
