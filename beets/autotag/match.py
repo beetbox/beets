@@ -17,6 +17,7 @@ releases and tracks.
 """
 
 
+from __future__ import annotations
 import datetime
 import re
 from typing import (
@@ -78,7 +79,7 @@ class Recommendation(OrderedEnum):
 
 
 class Proposal(NamedTuple):
-    candidates: Sequence[Union[AlbumMatch, TrackMatch]]
+    candidates: Sequence[AlbumMatch | TrackMatch]
     recommendation: Recommendation
 
 
@@ -354,7 +355,7 @@ def match_by_id(items: Iterable[Item]):
 
 
 def _recommendation(
-    results: Sequence[Union[AlbumMatch, TrackMatch]],
+    results: Sequence[AlbumMatch | TrackMatch],
 ) -> Recommendation:
     """Given a sorted list of AlbumMatch or TrackMatch objects, return a
     recommendation based on the results' distances.
