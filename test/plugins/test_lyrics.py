@@ -20,7 +20,6 @@ import re
 import unittest
 from unittest.mock import MagicMock, patch
 
-import confuse
 import pytest
 import requests
 
@@ -195,7 +194,13 @@ class LyricsPluginTest(unittest.TestCase):
         assert lyrics._scrape_merge_paragraphs(text) == "one\ntwo\nthree"
 
     def test_missing_lyrics(self):
-        assert not google.is_lyrics(LYRICS_TEXTS["missing_texts"])
+        lyrics = """
+Lyricsmania staff is working hard for you to add $TITLE lyrics as soon
+as they'll be released by $ARTIST, check back soon!
+In case you have the lyrics to $TITLE and want to send them to us, fill out
+the following form.
+"""
+        assert not google.is_lyrics(lyrics)
 
 
 def url_to_filename(url):
@@ -225,8 +230,6 @@ class MockFetchUrl:
 
 
 LYRICS_ROOT_DIR = os.path.join(_common.RSRC, b"lyrics")
-yaml_path = os.path.join(_common.RSRC, b"lyricstext.yaml")
-LYRICS_TEXTS = confuse.load_yaml(yaml_path)
 
 
 class LyricsGoogleBaseTest(unittest.TestCase):
