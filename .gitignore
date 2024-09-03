@@ -1,3 +1,6 @@
+auth/
+youtube-service-key.json
+
 # general hidden files/directories
 .DS_Store
 .idea
