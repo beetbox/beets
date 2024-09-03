@@ -12,12 +12,23 @@ New features:
   `beet list -a title:something` or `beet list artpath:cover`. Consequently
   album queries involving `path` field have been sped up, like `beet list -a
   path:/path/`.
+* :doc:`plugins/autobpm`: Add new configuration option ``beat_track_kwargs``
+  which enables adjusting keyword arguments supplied to librosa's
+  ``beat_track`` function call.
 
 Bug fixes:
 
 * Improved naming of temporary files by separating the random part with the file extension.
 * Fixed the ``auto`` value for the :ref:`reflink` config option.
 * Fixed lyrics plugin only getting part of the lyrics from ``Genius.com`` :bug:`4815`
+* Album flexible fields are now correctly saved. For instance MusicBrainz external links
+  such as `bandcamp_album_id` will be available on albums in addition to tracks.
+  For albums already in your library, a re-import is required for the fields to be added.
+  Such a re-import can be done with, in this case, `beet import -L data_source:=MusicBrainz`.
+* :doc:`plugins/autobpm`: Fix the ``TypeError`` where tempo was being returned
+  as a numpy array. Update ``librosa`` dependency constraint to prevent similar
+  issues in the future.
+  :bug:`5289`
 
 For packagers:
 
@@ -50,6 +61,14 @@ Other changes:
   checked.
 * The long-deprecated `beets.util.confit` module has been removed.  This may
   cause extremely outdated external plugins to fail to load.
+* :doc:`plugins/autobpm`: Add plugin dependencies to `pyproject.toml` under
+  the `autobpm` extra and update the plugin installation instructions in the
+  docs.
+  Since importing the bpm calculation functionality from ``librosa`` takes
+  around 4 seconds, update the plugin to only do so when it actually needs to
+  calculate the bpm. Previously this import was being done immediately, so
+  every ``beet`` invocation was being delayed by a couple of seconds.
+  :bug:`5185`
 
 2.0.0 (May 30, 2024)
 --------------------
@@ -350,7 +369,7 @@ Bug fixes:
   :bug:`4947`
 * Fix bug where unimported plugin would not ignore children directories of
   ignored directories.
-  :bug:`5130` 
+  :bug:`5130`
 * Fix bug where some plugin commands hang indefinitely due to a missing
   `requests` timeout.
 * Fix cover art resizing logic to support multiple steps of resizing
