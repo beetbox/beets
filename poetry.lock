@@ -2524,7 +2524,7 @@ files = [
 name = "reflink"
 version = "0.2.2"
 description = "Python reflink wraps around platform specific reflink implementations"
-optional = false
+optional = true
 python-versions = "*"
 files = [
     {file = "reflink-0.2.2-cp36-cp36m-win32.whl", hash = "sha256:8435c7153af4d6e66dc8acb48a9372c8ec6f978a09cdf7b57cd6656d969e343a"},
@@ -3188,4 +3188,4 @@ web = ["flask", "flask-cors"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4"
-content-hash = "863a8a4fb3e20fe6688394c02614f7c296d239e7d7ecfb4af04926a92de7610c"
+content-hash = "b24bff904f040cb57c9496a2d1ce129459123372a739b58baf6de973a6a41571"
