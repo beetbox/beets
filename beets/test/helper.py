@@ -42,7 +42,7 @@ from enum import Enum
 from functools import cached_property
 from io import StringIO
 from pathlib import Path
-from tempfile import mkdtemp, mkstemp
+from tempfile import gettempdir, mkdtemp, mkstemp
 from typing import Any, ClassVar
 from unittest.mock import patch
 
@@ -145,6 +145,20 @@ def has_program(cmd, args=["--version"]):
         return False
     else:
         return True
+
+
+def check_reflink_support(path: str) -> bool:
+    try:
+        import reflink
+    except ImportError:
+        return False
+
+    return reflink.supported_at(path)
+
+
+NEEDS_REFLINK = unittest.skipUnless(
+    check_reflink_support(gettempdir()), "no reflink support for libdir"
+)
 
 
 class TestHelper(_common.Assertions):
