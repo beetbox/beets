@@ -86,12 +86,10 @@ class MoveTest(BeetsTestCase):
         self.i.move(operation=MoveOperation.COPY)
         self.assertExists(self.path)
 
-    @NEEDS_REFLINK
     def test_reflink_arrives(self):
         self.i.move(operation=MoveOperation.REFLINK_AUTO)
         self.assertExists(self.dest)
 
-    @NEEDS_REFLINK
     def test_reflink_does_not_depart(self):
         self.i.move(operation=MoveOperation.REFLINK_AUTO)
         self.assertExists(self.path)
@@ -584,7 +582,6 @@ class SafeMoveCopyTest(BeetsTestCase):
         with pytest.raises(util.FilesystemError):
             util.copy(self.path, self.otherpath)
 
-    @NEEDS_REFLINK
     def test_unsuccessful_reflink(self):
         with pytest.raises(util.FilesystemError):
             util.reflink(self.path, self.otherpath)
