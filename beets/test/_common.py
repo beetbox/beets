@@ -16,7 +16,6 @@
 
 import os
 import sys
-import tempfile
 import unittest
 from contextlib import contextmanager
 
@@ -65,13 +64,6 @@ _item_ident = 0
 # OS feature test.
 HAVE_SYMLINK = sys.platform != "win32"
 HAVE_HARDLINK = sys.platform != "win32"
-
-try:
-    import reflink
-
-    HAVE_REFLINK = reflink.supported_at(tempfile.gettempdir())
-except ImportError:
-    HAVE_REFLINK = False
 
 
 def item(lib=None):
