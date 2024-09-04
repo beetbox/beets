@@ -29,6 +29,7 @@ For more information about writing completions for Fish, please see
 <https://fishshell.com/docs/current/completions.html>.
 """
 
+from __future__ import annotations
 
 import io
 import optparse
