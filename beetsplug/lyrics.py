@@ -30,6 +30,7 @@ from typing import TYPE_CHECKING, ClassVar
 from urllib.parse import quote, urlencode
 
 import requests
+from typing_extensions import TypedDict
 from unidecode import unidecode
 
 import beets
@@ -266,12 +267,55 @@ class Backend:
         raise NotImplementedError
 
 
+class LRCLibItem(TypedDict):
+    """Lyrics data item returned by the LRCLib API."""
+
+    id: int
+    name: str
+    trackName: str
+    artistName: str
+    albumName: str
+    duration: float
+    instrumental: bool
+    plainLyrics: str
+    syncedLyrics: str | None
+
+
 class LRCLib(Backend):
-    base_url = "https://lrclib.net/api/get"
+    base_url = "https://lrclib.net/api/search"
+
+    @staticmethod
+    def get_rank(
+        target_duration: float, item: LRCLibItem
+    ) -> tuple[float, bool]:
+        """Rank the given lyrics item.
+
+        Return a tuple with the following values:
+        1. Absolute difference between lyrics and target duration
+        2. Boolean telling whether synced lyrics are available.
+        """
+        return (
+            abs(item["duration"] - target_duration),
+            not item["syncedLyrics"],
+        )
+
+    @classmethod
+    def pick_lyrics(
+        cls, target_duration: float, data: list[LRCLibItem]
+    ) -> LRCLibItem:
+        """Return best matching lyrics item from the given list.
+
+        Best lyrics match is the one that has the closest duration to
+        ``target_duration`` and has synced lyrics available.
+
+        Note that the incoming list is guaranteed to be non-empty.
+        """
+        return min(data, key=lambda item: cls.get_rank(target_duration, item))
 
     def fetch(
         self, artist: str, title: str, album: str, length: int
     ) -> str | None:
+        """Fetch lyrics for the given artist, title, and album."""
         params: dict[str, str | int] = {
             "artist_name": artist,
             "track_name": title,
@@ -288,15 +332,20 @@ class LRCLib(Backend):
                 params=params,
                 timeout=10,
             )
-            data = response.json()
+            data: list[LRCLibItem] = response.json()
         except (requests.RequestException, json.decoder.JSONDecodeError) as exc:
             self._log.debug("LRCLib API request failed: {0}", exc)
             return None
 
-        if self.config["synced"]:
-            return data.get("syncedLyrics")
+        if not data:
+            return None
 
-        return data.get("plainLyrics")
+        item = self.pick_lyrics(length, data)
+
+        if self.config["synced"] and (synced_lyrics := item["syncedLyrics"]):
+            return synced_lyrics
+
+        return item["plainLyrics"]
 
 
 class DirectBackend(Backend):

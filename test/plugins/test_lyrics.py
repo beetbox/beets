@@ -228,7 +228,7 @@ class TestLyricsSources(LyricsBackendTest):
     def test_backend_source(self, lyrics_plugin, lyrics_page: LyricsPage):
         """Test parsed lyrics from each of the configured lyrics pages."""
         lyrics = lyrics_plugin.get_lyrics(
-            lyrics_page.artist, lyrics_page.track_title, "", 0
+            lyrics_page.artist, lyrics_page.track_title, "", 186
         )
 
         assert lyrics
@@ -340,32 +340,35 @@ class TestTekstowoLyrics(LyricsBackendTest):
         assert bool(backend.extract_lyrics(lyrics_html)) == expecting_lyrics
 
 
+LYRICS_DURATION = 950
+
+
+def lyrics_match(**overrides):
+    return {
+        "duration": LYRICS_DURATION,
+        "syncedLyrics": "synced",
+        "plainLyrics": "plain",
+        **overrides,
+    }
+
+
 class TestLRCLibLyrics(LyricsBackendTest):
+    ITEM_DURATION = 999
+
     @pytest.fixture(scope="class")
     def backend_name(self):
         return "lrclib"
 
     @pytest.fixture
     def fetch_lyrics(self, backend, requests_mock, response_data):
-        requests_mock.get(lyrics.LRCLib.base_url, json=response_data)
+        requests_mock.get(backend.base_url, json=response_data)
 
-        return partial(backend.fetch, "la", "la", "la", 0)
+        return partial(backend.fetch, "la", "la", "la", self.ITEM_DURATION)
 
-    @pytest.mark.parametrize(
-        "response_data",
-        [
-            {
-                "syncedLyrics": "[00:00.00] la la la",
-                "plainLyrics": "la la la",
-            }
-        ],
-    )
+    @pytest.mark.parametrize("response_data", [[lyrics_match()]])
     @pytest.mark.parametrize(
         "plugin_config, expected_lyrics",
-        [
-            ({"synced": True}, "[00:00.00] la la la"),
-            ({"synced": False}, "la la la"),
-        ],
+        [({"synced": True}, "synced"), ({"synced": False}, "plain")],
     )
     def test_synced_config_option(self, fetch_lyrics, expected_lyrics):
         assert fetch_lyrics() == expected_lyrics
@@ -373,21 +376,34 @@ class TestLRCLibLyrics(LyricsBackendTest):
     @pytest.mark.parametrize(
         "response_data, expected_lyrics",
         [
+            pytest.param([], None, id="handle non-matching lyrics"),
             pytest.param(
-                {"syncedLyrics": "", "plainLyrics": "la la la"},
-                "la la la",
-                id="pick plain lyrics",
+                [lyrics_match()], "synced", id="synced when available"
             ),
             pytest.param(
-                {
-                    "statusCode": 404,
-                    "error": "Not Found",
-                    "message": "Failed to find specified track",
-                },
-                None,
-                id="not found",
+                [lyrics_match(syncedLyrics=None)],
+                "plain",
+                id="plain by default",
+            ),
+            pytest.param(
+                [
+                    lyrics_match(
+                        duration=ITEM_DURATION,
+                        syncedLyrics=None,
+                        plainLyrics="plain with closer duration",
+                    ),
+                    lyrics_match(syncedLyrics="synced", plainLyrics="plain 2"),
+                ],
+                "plain with closer duration",
+                id="prefer closer duration",
+            ),
+            pytest.param(
+                [lyrics_match(syncedLyrics=None), lyrics_match()],
+                "synced",
+                id="prefer match with synced lyrics",
             ),
         ],
     )
+    @pytest.mark.parametrize("plugin_config", [{"synced": True}])
     def test_fetch_lyrics(self, fetch_lyrics, expected_lyrics):
         assert fetch_lyrics() == expected_lyrics
