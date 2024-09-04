@@ -600,13 +600,13 @@ Defaults to ``no``.
 
 This kind of clone is only available on certain filesystems: for example,
 btrfs and APFS. For more details on filesystem support, see the `pyreflink`_
-documentation.  Note that you need to install ``pyreflink``, either through
+documentation. Note that you need to install ``pyreflink``, either through
 ``python -m pip install beets[reflink]`` or ``python -m pip install reflink``.
 
 The option is ignored if ``move`` is enabled (i.e., beets can move or
 copy files but it doesn't make sense to do both).
 
-.. _file clones: https://blogs.oracle.com/otn/save-disk-space-on-linux-by-cloning-files-on-btrfs-and-ocfs2
+.. _file clones: https://en.wikipedia.org/wiki/Copy-on-write
 .. _pyreflink: https://reflink.readthedocs.io/en/latest/
 
 resume
