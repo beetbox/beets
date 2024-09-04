@@ -48,6 +48,10 @@ Bug fixes:
 * :doc:`plugins/lyrics`: Do not attempt to search for lyrics if either the
   artist or title is missing and ignore ``artist_sort`` value if it is empty.
   :bug:`2635`
+* :doc:`plugins/lyrics`: Fix fetching lyrics from ``lrclib`` source. Instead of
+  attempting to fetch lyrics for a specific album, artist, title and duration
+  combination, the plugin now performs a search which yields many results.
+  :bug:`5102`
 
 For packagers:
 
