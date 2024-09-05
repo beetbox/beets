@@ -50,7 +50,7 @@ class YouTubePlugin(BeetsPlugin):
         self.retrieve_command = Subcommand('retrieve_yt', help='get playlist(s) from youtube')
         self.retrieve_command.parser.add_option('--type', dest='playlist_type', choices=['pl', 'mm'], default='mm', help="process 'pl' playlists or regular genre/subgenre playlists")
         self.retrieve_command.parser.add_option('--no-db', action='store_true', help='Do not add retrieved info to the database')
-        self.retrieve_command.parser.add_option('-n', '--playlist-name', dest='playlist_name', help='Name of the playlist to retrieve')
+        self.retrieve_command.parser.add_option('--n', dest='playlist_name', help='Name of the playlist to retrieve')
         self.retrieve_command.func = self.retrieve_info
 
         self.register_listener('library_opened', self.setup)
@@ -148,16 +148,22 @@ class YouTubePlugin(BeetsPlugin):
         playlist_name = opts.playlist_name
         playlist_type = opts.playlist_type
 
-        # Get playlists to process
+        # PLYALISTS TO PROCESS
+        # all
         all_playlists = self._get_all_playlists()
-        playlists_to_process = [pl for pl in all_playlists if not playlist_name or pl['playlist_name'] == playlist_name]
-        playlists_to_process = [pl for pl in playlists_to_process if ' pl ' in pl['playlist_name']] if playlist_type=='pl' else [pl for pl in playlists_to_process if ' pl ' not in pl['playlist_name'] 
-                                                                                                                                 and 'mm -' in pl['playlist_name']
-                                                                                                                                 and pl['playlist_name'] not in str(self.config['pl_to_skip']).split(',')]
+        # filter mm playlists 
+        playlists_to_process = [playlist for playlist in all_playlists if playlist['playlist_name'][:2] == str(self.config['valid_pl_prefix'])]
+        # filter ignore
+        playlists_to_process = [playlist for playlist in playlists_to_process if playlist['playlist_name'] not in str(self.config['pl_to_skip']).split(",")]                
+        # filter type
+        playlists_to_process = [playlist for playlist in playlists_to_process if playlist_type in playlist['playlist_name']] if playlist_type else playlists_to_process
+        # filter name
+        playlists_to_process = [playlist for playlist in playlists_to_process if playlist_name.lower() in playlist['playlist_name'].lower()] if playlist_name else playlists_to_process
         
         print("PROCESSING")
         for pl in playlists_to_process:
             print(pl['playlist_name'])
+
 
         for playlist in playlists_to_process:
             playlist_name = playlist['playlist_name']
@@ -177,7 +183,8 @@ class YouTubePlugin(BeetsPlugin):
                         continue
 
                     # extract info
-                    song_data = self._parse_track_item(item, lib, opts, playlist_name, playlist_type)
+                    song_data = self._parse_track_item(lib, opts, item, playlist, playlist_type)
+
 
                     print(title)
                     for k, v in song_data.items():
@@ -248,6 +255,9 @@ class YouTubePlugin(BeetsPlugin):
 
     def _parse_track_item(self, lib, opts, item, playlist, playlist_type) -> Dict:
         song_data = dict()
+
+        # get title
+        title = item['title']
         # fix title if artist is hidden in the topic 
         if ' - Topic' in item['channel']:
             a = item['channel'].split('- Topic')[0].strip()

@@ -47,9 +47,9 @@ class SpotifyCustomPlugin(BeetsPlugin):
         self.add_command.func = self.add_to_playlist
 
         self.retrieve_command = Subcommand('retrieve_sf', help='Retrieve all playlists and their tracks')
-        self.retrieve_command.parser.add_option('--type', dest='playlist_type', choices=['pl', 'mm'], default='mm', help="process 'pl' playlists or regular genre/subgenre playlists")
+        self.retrieve_command.parser.add_option('--type', dest='playlist_type', choices=['pl', 'mm'], default=None, help="process 'pl' playlists or regular genre/subgenre playlists")
         self.retrieve_command.parser.add_option('--no-db', action='store_true', help='Do not add retrieved info to the database')
-        self.retrieve_command.parser.add_option('-n', '--playlist-name', dest='playlist_name', help='Name of the playlist to retrieve')
+        self.retrieve_command.parser.add_option('--n', dest='playlist_name', help='Name of the playlist to retrieve')
         self.retrieve_command.func = self.retrieve_info
 
         self.register_listener('library_opened', self.setup)
@@ -96,12 +96,17 @@ class SpotifyCustomPlugin(BeetsPlugin):
         playlist_name = opts.playlist_name
         playlist_type = opts.playlist_type
 
-        # Get playlists to process
+        # PLYALISTS TO PROCESS
+        # all
         all_playlists = self._get_all_playlists()
-        playlists_to_process = [playlist for playlist in all_playlists if not playlist_name or playlist['playlist_name'] == playlist_name]
-        playlists_to_process = [pl for pl in playlists_to_process if ' pl ' in pl['playlist_name']] if playlist_type=='pl' else [pl for pl in playlists_to_process if ' pl ' not in pl['playlist_name'] 
-                                                                                                                            and 'mm -' in pl['playlist_name']
-                                                                                                                            and pl['playlist_name'] not in str(self.config['pl_to_skip']).split(',')]
+        # filter mm playlists 
+        playlists_to_process = [playlist for playlist in all_playlists if playlist['playlist_name'][:2] == str(self.config['valid_pl_prefix'])]
+        # filter ignore
+        playlists_to_process = [playlist for playlist in playlists_to_process if playlist['playlist_name'] not in str(self.config['pl_to_skip']).split(",")]                
+        # filter type
+        playlists_to_process = [playlist for playlist in playlists_to_process if playlist_type in playlist['playlist_name']] if playlist_type else playlists_to_process
+        # filter name
+        playlists_to_process = [playlist for playlist in playlists_to_process if playlist_name.lower() in playlist['playlist_name'].lower()] if playlist_name else playlists_to_process
         
         print("PROCESSING")
         for pl in playlists_to_process:
