@@ -130,7 +130,9 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         """
         # In case the artist is kept, do not update the artist fields.
         if keep_in_artist_field:
-            self._log.info("artist: {0} -> {1}", item.artist, item.artist)
+            self._log.info(
+                "artist: {0} (Not changing due to keep_in_artist)", item.artist
+            )
         else:
             self._log.info("artist: {0} -> {1}", item.artist, item.albumartist)
             item.artist = item.albumartist
