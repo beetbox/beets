@@ -13,27 +13,20 @@
 # included in all copies or substantial portions of the Software.
 
 
-import unittest
 from unittest.mock import patch
 
 from beets import config
 from beets.library import Item
 from beets.test.helper import (
-    TestHelper,
+    PluginTestCase,
     capture_log,
     generate_album_info,
     generate_track_info,
 )
 
 
-class MbsyncCliTest(unittest.TestCase, TestHelper):
-    def setUp(self):
-        self.setup_beets()
-        self.load_plugins("mbsync")
-
-    def tearDown(self):
-        self.unload_plugins()
-        self.teardown_beets()
+class MbsyncCliTest(PluginTestCase):
+    plugin = "mbsync"
 
     @patch("beets.autotag.mb.album_for_id")
     @patch("beets.autotag.mb.track_for_id")
@@ -64,18 +57,18 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
         with capture_log() as logs:
             self.run_command("mbsync")
 
-        self.assertIn("Sending event: albuminfo_received", logs)
-        self.assertIn("Sending event: trackinfo_received", logs)
+        assert "Sending event: albuminfo_received" in logs
+        assert "Sending event: trackinfo_received" in logs
 
         item.load()
-        self.assertEqual(item.title, "singleton info")
+        assert item.title == "singleton info"
 
         album_item.load()
-        self.assertEqual(album_item.title, "track info")
-        self.assertEqual(album_item.mb_trackid, "track id")
+        assert album_item.title == "track info"
+        assert album_item.mb_trackid == "track id"
 
         album.load()
-        self.assertEqual(album.album, "album info")
+        assert album.album == "album info"
 
     def test_message_when_skipping(self):
         config["format_item"] = "$artist - $album - $title"
@@ -96,13 +89,13 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
             "mbsync: Skipping album with no mb_albumid: "
             + "album info - album info"
         )
-        self.assertEqual(e, logs[0])
+        assert e == logs[0]
 
         # custom format
         with capture_log("beets.mbsync") as logs:
             self.run_command("mbsync", "-f", "'$album'")
         e = "mbsync: Skipping album with no mb_albumid: 'album info'"
-        self.assertEqual(e, logs[0])
+        assert e == logs[0]
 
         # restore the config
         config["format_item"] = "$artist - $album - $title"
@@ -126,13 +119,13 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
             "mbsync: Skipping singleton with no mb_trackid: "
             + "album info - album info - old title"
         )
-        self.assertEqual(e, logs[0])
+        assert e == logs[0]
 
         # custom format
         with capture_log("beets.mbsync") as logs:
             self.run_command("mbsync", "-f", "'$title'")
         e = "mbsync: Skipping singleton with no mb_trackid: 'old title'"
-        self.assertEqual(e, logs[0])
+        assert e == logs[0]
 
     def test_message_when_invalid(self):
         config["format_item"] = "$artist - $album - $title"
@@ -156,13 +149,13 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
             "mbsync: Skipping album with invalid mb_albumid: "
             + "album info - album info"
         )
-        self.assertEqual(e, logs[0])
+        assert e == logs[0]
 
         # custom format
         with capture_log("beets.mbsync") as logs:
             self.run_command("mbsync", "-f", "'$album'")
         e = "mbsync: Skipping album with invalid mb_albumid: 'album info'"
-        self.assertEqual(e, logs[0])
+        assert e == logs[0]
 
         # restore the config
         config["format_item"] = "$artist - $album - $title"
@@ -187,18 +180,10 @@ class MbsyncCliTest(unittest.TestCase, TestHelper):
             "mbsync: Skipping singleton with invalid mb_trackid: "
             + "album info - album info - old title"
         )
-        self.assertEqual(e, logs[0])
+        assert e == logs[0]
 
         # custom format
         with capture_log("beets.mbsync") as logs:
             self.run_command("mbsync", "-f", "'$title'")
         e = "mbsync: Skipping singleton with invalid mb_trackid: 'old title'"
-        self.assertEqual(e, logs[0])
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")
+        assert e == logs[0]
