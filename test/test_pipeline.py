@@ -17,6 +17,8 @@
 
 import unittest
 
+import pytest
+
 from beets.util import pipeline
 
 
@@ -78,20 +80,20 @@ class SimplePipelineTest(unittest.TestCase):
 
     def test_run_sequential(self):
         self.pl.run_sequential()
-        self.assertEqual(self.l, [0, 2, 4, 6, 8])
+        assert self.l == [0, 2, 4, 6, 8]
 
     def test_run_parallel(self):
         self.pl.run_parallel()
-        self.assertEqual(self.l, [0, 2, 4, 6, 8])
+        assert self.l == [0, 2, 4, 6, 8]
 
     def test_pull(self):
         pl = pipeline.Pipeline((_produce(), _work()))
-        self.assertEqual(list(pl.pull()), [0, 2, 4, 6, 8])
+        assert list(pl.pull()) == [0, 2, 4, 6, 8]
 
     def test_pull_chain(self):
         pl = pipeline.Pipeline((_produce(), _work()))
         pl2 = pipeline.Pipeline((pl.pull(), _work()))
-        self.assertEqual(list(pl2.pull()), [0, 4, 8, 12, 16])
+        assert list(pl2.pull()) == [0, 4, 8, 12, 16]
 
 
 class ParallelStageTest(unittest.TestCase):
@@ -103,16 +105,16 @@ class ParallelStageTest(unittest.TestCase):
 
     def test_run_sequential(self):
         self.pl.run_sequential()
-        self.assertEqual(self.l, [0, 2, 4, 6, 8])
+        assert self.l == [0, 2, 4, 6, 8]
 
     def test_run_parallel(self):
         self.pl.run_parallel()
         # Order possibly not preserved; use set equality.
-        self.assertEqual(set(self.l), {0, 2, 4, 6, 8})
+        assert set(self.l) == {0, 2, 4, 6, 8}
 
     def test_pull(self):
         pl = pipeline.Pipeline((_produce(), (_work(), _work())))
-        self.assertEqual(list(pl.pull()), [0, 2, 4, 6, 8])
+        assert list(pl.pull()) == [0, 2, 4, 6, 8]
 
 
 class ExceptionTest(unittest.TestCase):
@@ -121,17 +123,20 @@ class ExceptionTest(unittest.TestCase):
         self.pl = pipeline.Pipeline((_produce(), _exc_work(), _consume(self.l)))
 
     def test_run_sequential(self):
-        self.assertRaises(ExceptionFixture, self.pl.run_sequential)
+        with pytest.raises(ExceptionFixture):
+            self.pl.run_sequential()
 
     def test_run_parallel(self):
-        self.assertRaises(ExceptionFixture, self.pl.run_parallel)
+        with pytest.raises(ExceptionFixture):
+            self.pl.run_parallel()
 
     def test_pull(self):
         pl = pipeline.Pipeline((_produce(), _exc_work()))
         pull = pl.pull()
         for i in range(3):
             next(pull)
-        self.assertRaises(ExceptionFixture, pull.__next__)
+        with pytest.raises(ExceptionFixture):
+            next(pull)
 
 
 class ParallelExceptionTest(unittest.TestCase):
@@ -142,7 +147,8 @@ class ParallelExceptionTest(unittest.TestCase):
         )
 
     def test_run_parallel(self):
-        self.assertRaises(ExceptionFixture, self.pl.run_parallel)
+        with pytest.raises(ExceptionFixture):
+            self.pl.run_parallel()
 
 
 class ConstrainedThreadedPipelineTest(unittest.TestCase):
@@ -152,13 +158,14 @@ class ConstrainedThreadedPipelineTest(unittest.TestCase):
         pl = pipeline.Pipeline((_produce(1000), _work(), _consume(l)))
         # ... with only a single queue slot.
         pl.run_parallel(1)
-        self.assertEqual(l, [i * 2 for i in range(1000)])
+        assert l == [i * 2 for i in range(1000)]
 
     def test_constrained_exception(self):
         # Raise an exception in a constrained pipeline.
         l = []
         pl = pipeline.Pipeline((_produce(1000), _exc_work(), _consume(l)))
-        self.assertRaises(ExceptionFixture, pl.run_parallel, 1)
+        with pytest.raises(ExceptionFixture):
+            pl.run_parallel(1)
 
     def test_constrained_parallel(self):
         l = []
@@ -166,7 +173,7 @@ class ConstrainedThreadedPipelineTest(unittest.TestCase):
             (_produce(1000), (_work(), _work()), _consume(l))
         )
         pl.run_parallel(1)
-        self.assertEqual(set(l), {i * 2 for i in range(1000)})
+        assert set(l) == {i * 2 for i in range(1000)}
 
 
 class BubbleTest(unittest.TestCase):
@@ -176,15 +183,15 @@ class BubbleTest(unittest.TestCase):
 
     def test_run_sequential(self):
         self.pl.run_sequential()
-        self.assertEqual(self.l, [0, 2, 4, 8])
+        assert self.l == [0, 2, 4, 8]
 
     def test_run_parallel(self):
         self.pl.run_parallel()
-        self.assertEqual(self.l, [0, 2, 4, 8])
+        assert self.l == [0, 2, 4, 8]
 
     def test_pull(self):
         pl = pipeline.Pipeline((_produce(), _bub_work()))
-        self.assertEqual(list(pl.pull()), [0, 2, 4, 8])
+        assert list(pl.pull()) == [0, 2, 4, 8]
 
 
 class MultiMessageTest(unittest.TestCase):
@@ -196,15 +203,15 @@ class MultiMessageTest(unittest.TestCase):
 
     def test_run_sequential(self):
         self.pl.run_sequential()
-        self.assertEqual(self.l, [0, 0, 1, -1, 2, -2, 3, -3, 4, -4])
+        assert self.l == [0, 0, 1, -1, 2, -2, 3, -3, 4, -4]
 
     def test_run_parallel(self):
         self.pl.run_parallel()
-        self.assertEqual(self.l, [0, 0, 1, -1, 2, -2, 3, -3, 4, -4])
+        assert self.l == [0, 0, 1, -1, 2, -2, 3, -3, 4, -4]
 
     def test_pull(self):
         pl = pipeline.Pipeline((_produce(), _multi_work()))
-        self.assertEqual(list(pl.pull()), [0, 0, 1, -1, 2, -2, 3, -3, 4, -4])
+        assert list(pl.pull()) == [0, 0, 1, -1, 2, -2, 3, -3, 4, -4]
 
 
 class StageDecoratorTest(unittest.TestCase):
@@ -214,7 +221,7 @@ class StageDecoratorTest(unittest.TestCase):
             return i + n
 
         pl = pipeline.Pipeline([iter([1, 2, 3]), add(2)])
-        self.assertEqual(list(pl.pull()), [3, 4, 5])
+        assert list(pl.pull()) == [3, 4, 5]
 
     def test_mutator_stage_decorator(self):
         @pipeline.mutator_stage
@@ -222,19 +229,6 @@ class StageDecoratorTest(unittest.TestCase):
             item[key] = True
 
         pl = pipeline.Pipeline(
-            [
-                iter([{"x": False}, {"a": False}]),
-                setkey("x"),
-            ]
+            [iter([{"x": False}, {"a": False}]), setkey("x")]
         )
-        self.assertEqual(
-            list(pl.pull()), [{"x": True}, {"a": False, "x": True}]
-        )
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")
+        assert list(pl.pull()) == [{"x": True}, {"a": False, "x": True}]

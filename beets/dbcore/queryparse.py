@@ -152,14 +152,15 @@ def construct_query_part(
     # Field queries get constructed according to the name of the field
     # they are querying.
     else:
-        key = key.lower()
-        if key in model_cls.shared_db_fields:
+        field = table = key.lower()
+        if field in model_cls.shared_db_fields:
             # This field exists in both tables, so SQLite will encounter
             # an OperationalError if we try to query it in a join.
             # Using an explicit table name resolves this.
-            key = f"{model_cls._table}.{key}"
+            table = f"{model_cls._table}.{field}"
 
-        out_query = query_class(key, pattern, key in model_cls.all_db_fields)
+        field_in_db = field in model_cls.all_db_fields
+        out_query = query_class(table, pattern, field_in_db)
 
     # Apply negation.
     if negate:

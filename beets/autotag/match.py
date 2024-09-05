@@ -17,14 +17,16 @@ releases and tracks.
 """
 
 
+from __future__ import annotations
+
 import datetime
 import re
-from collections import namedtuple
 from typing import (
     Any,
     Dict,
     Iterable,
     List,
+    NamedTuple,
     Optional,
     Sequence,
     Tuple,
@@ -76,7 +78,10 @@ class Recommendation(OrderedEnum):
 # consists of a list of possible candidates (i.e., AlbumInfo or TrackInfo
 # objects) and a recommendation value.
 
-Proposal = namedtuple("Proposal", ("candidates", "recommendation"))
+
+class Proposal(NamedTuple):
+    candidates: Sequence[AlbumMatch | TrackMatch]
+    recommendation: Recommendation
 
 
 # Primary matching functionality.
@@ -351,7 +356,7 @@ def match_by_id(items: Iterable[Item]):
 
 
 def _recommendation(
-    results: Sequence[Union[AlbumMatch, TrackMatch]],
+    results: Sequence[AlbumMatch | TrackMatch],
 ) -> Recommendation:
     """Given a sorted list of AlbumMatch or TrackMatch objects, return a
     recommendation based on the results' distances.

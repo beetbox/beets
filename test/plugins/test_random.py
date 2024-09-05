@@ -20,11 +20,13 @@ import math
 import unittest
 from random import Random
 
+import pytest
+
 from beets import random
 from beets.test.helper import TestHelper
 
 
-class RandomTest(unittest.TestCase, TestHelper):
+class RandomTest(TestHelper, unittest.TestCase):
     def setUp(self):
         self.lib = None
         self.artist1 = "Artist 1"
@@ -36,9 +38,6 @@ class RandomTest(unittest.TestCase, TestHelper):
             self.items.append(self.create_item(artist=self.artist2))
         self.random_gen = Random()
         self.random_gen.seed(12345)
-
-    def tearDown(self):
-        pass
 
     def _stats(self, data):
         mean = sum(data) / len(data)
@@ -77,14 +76,6 @@ class RandomTest(unittest.TestCase, TestHelper):
 
         mean1, stdev1, median1 = experiment("artist")
         mean2, stdev2, median2 = experiment("track")
-        self.assertAlmostEqual(0, median1, delta=1)
-        self.assertAlmostEqual(len(self.items) // 2, median2, delta=1)
-        self.assertGreater(stdev2, stdev1)
-
-
-def suite():
-    return unittest.TestLoader().loadTestsFromName(__name__)
-
-
-if __name__ == "__main__":
-    unittest.main(defaultTest="suite")
+        assert 0 == pytest.approx(median1, abs=1)
+        assert len(self.items) // 2 == pytest.approx(median2, abs=1)
+        assert stdev2 > stdev1
