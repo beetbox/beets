@@ -624,7 +624,7 @@ def reflink(
         return
 
     if os.path.exists(syspath(dest)) and not replace:
-        raise FilesystemError("file exists", "rename", (path, dest))
+        raise FilesystemError("target exists", "rename", (path, dest))
 
     if fallback:
         with suppress(Exception):

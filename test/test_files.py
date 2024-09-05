@@ -583,7 +583,7 @@ class SafeMoveCopyTest(BeetsTestCase):
             util.copy(self.path, self.otherpath)
 
     def test_unsuccessful_reflink(self):
-        with pytest.raises(util.FilesystemError):
+        with pytest.raises(util.FilesystemError, match="target exists"):
             util.reflink(self.path, self.otherpath)
 
     def test_self_move(self):
