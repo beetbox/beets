@@ -121,7 +121,7 @@ class SongStringParser(BeetsPlugin):
     def commands(self):
         return [self.custom_gpt_command]
 
-    def send_gpt_request(self, lib, opts, args):
+    def send_gpt_request(self, args):
         results = list()
         for song_string in args:
             try:
