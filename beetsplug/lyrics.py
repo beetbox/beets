@@ -28,8 +28,8 @@ from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from functools import cached_property, partial, total_ordering
 from http import HTTPStatus
-from typing import TYPE_CHECKING, ClassVar, Iterable, Iterator
-from urllib.parse import quote, urlparse
+from typing import TYPE_CHECKING, Any, ClassVar, Iterable, Iterator
+from urllib.parse import quote, urlencode, urlparse
 
 import requests
 from typing_extensions import TypedDict
@@ -57,6 +57,8 @@ try:
     HAS_LANGDETECT = True
 except ImportError:
     HAS_LANGDETECT = False
+
+JSONDict = dict[str, Any]
 
 DIV_RE = re.compile(r"<(/?)div>?", re.I)
 COMMENT_RE = re.compile(r"<!--.*-->", re.S)
@@ -258,14 +260,37 @@ else:
 class RequestHandler:
     _log: beets.logging.Logger
 
-    def fetch_text(self, url: str, **kwargs) -> str:
+    def debug(self, message: str, *args) -> None:
+        """Log a debug message with the class name."""
+        self._log.debug(f"{self.__class__.__name__}: {message}", *args)
+
+    def info(self, message: str, *args) -> None:
+        """Log an info message with the class name."""
+        self._log.info(f"{self.__class__.__name__}: {message}", *args)
+
+    def warn(self, message: str, *args) -> None:
+        """Log warning with the class name."""
+        self._log.warning(f"{self.__class__.__name__}: {message}", *args)
+
+    @staticmethod
+    def format_url(url: str, params: JSONDict | None) -> str:
+        if not params:
+            return url
+
+        return f"{url}?{urlencode(params)}"
+
+    def fetch_text(
+        self, url: str, params: JSONDict | None = None, **kwargs
+    ) -> str:
         """Return text / HTML data from the given URL."""
-        self._log.debug("Fetching HTML from {}", url)
+        url = self.format_url(url, params)
+        self.debug("Fetching HTML from {}", url)
         return r_session.get(url, **kwargs).text
 
-    def fetch_json(self, url: str, **kwargs):
+    def fetch_json(self, url: str, params: JSONDict | None = None, **kwargs):
         """Return JSON data from the given URL."""
-        self._log.debug("Fetching JSON from {}", url)
+        url = self.format_url(url, params)
+        self.debug("Fetching JSON from {}", url)
         return r_session.get(url, **kwargs).json()
 
     @contextmanager
@@ -273,9 +298,9 @@ class RequestHandler:
         try:
             yield
         except requests.JSONDecodeError:
-            self._log.warning("Could not decode response JSON data")
+            self.warn("Could not decode response JSON data")
         except requests.RequestException as exc:
-            self._log.warning("Request error: {}", exc)
+            self.warn("Request error: {}", exc)
 
 
 class Backend(RequestHandler):
@@ -377,10 +402,6 @@ class LRCLib(Backend):
     GET_URL = f"{BASE_URL}/get"
     SEARCH_URL = f"{BASE_URL}/search"
 
-    def warn(self, message: str, *args) -> None:
-        """Log a warning message with the class name."""
-        self._log.warning(f"{self.__class__.__name__}: {message}", *args)
-
     def fetch_candidates(
         self, artist: str, title: str, album: str, length: int
     ) -> Iterator[list[LRCLibItem]]:
@@ -415,13 +436,12 @@ class LRCLib(Backend):
         """Fetch lyrics text for the given song data."""
         evaluate_item = partial(LRCLyrics.make, target_duration=length)
 
-        try:
-            for group in self.fetch_candidates(artist, title, album, length):
-                candidates = [evaluate_item(item) for item in group]
-                if item := self.pick_best_match(candidates):
-                    return item.get_text(self.config["synced"])
-        except StopIteration:
-            return None
+        for group in self.fetch_candidates(artist, title, album, length):
+            candidates = [evaluate_item(item) for item in group]
+            if item := self.pick_best_match(candidates):
+                return item.get_text(self.config["synced"])
+
+        return None
 
 
 class DirectBackend(Backend):
@@ -463,9 +483,7 @@ class MusiXmatch(DirectBackend):
 
         html = self.fetch_text(url)
         if "We detected that your IP is blocked" in html:
-            self._log.warning(
-                "we are blocked at MusixMatch: url %s failed" % url
-            )
+            self.warn("Failed: Blocked IP address")
             return None
         html_parts = html.split('<p class="mxm-lyrics__content')
         # Sometimes lyrics come in 2 or more parts
@@ -507,7 +525,7 @@ class SearchBackend(Backend):
         if math.isclose(max_dist, self.dist_thresh, abs_tol=0.4):
             # log out the candidate that did not make it but was close.
             # This may show a matching candidate with some noise in the name
-            self._log.debug(
+            self.debug(
                 "({}, {}) does not match ({}, {}) but dist was close: {:.2f}",
                 artist,
                 title,
@@ -542,9 +560,6 @@ class Genius(SearchBackend):
         then attempt to scrape that url for the lyrics.
         """
         json = self._search(artist, title)
-        if not json:
-            self._log.debug("Genius API request returned invalid JSON")
-            return None
 
         check = partial(self.check_match, artist, title)
         for hit in json["response"]["hits"]:
@@ -588,7 +603,7 @@ class Genius(SearchBackend):
 
         lyrics_divs = soup.find_all("div", {"data-lyrics-container": True})
         if not lyrics_divs:
-            self._log.debug("Received unusual song page html")
+            self.debug("Received unusual song page html")
             return self._try_extracting_lyrics_from_non_data_lyrics_container(
                 soup
             )
@@ -611,10 +626,10 @@ class Genius(SearchBackend):
                 class_=re.compile("LyricsPlaceholder__Message"),
                 string="This song is an instrumental",
             ):
-                self._log.debug("Detected instrumental")
+                self.debug("Detected instrumental")
                 return INSTRUMENTAL_LYRICS
             else:
-                self._log.debug("Couldn't scrape page using known layouts")
+                self.debug("Couldn't scrape page using known layouts")
                 return None
 
         lyrics_div = verse_div.parent
@@ -653,6 +668,8 @@ class Tekstowo(DirectBackend):
             return self.extract_lyrics(
                 self.fetch_text(self.build_url(artist, title))
             )
+
+        return None
 
     def extract_lyrics(self, html: str) -> str | None:
         html = _scrape_strip_cruft(html)
@@ -747,7 +764,7 @@ class Google(SearchBackend):
         bad_triggers_occ = []
         nb_lines = text.count("\n")
         if nb_lines <= 1:
-            self._log.debug("Ignoring too short lyrics '{0}'", text)
+            self.debug("Ignoring too short lyrics '{}'", text)
             return False
         elif nb_lines < 5:
             bad_triggers_occ.append("too_short")
@@ -766,7 +783,7 @@ class Google(SearchBackend):
             )
 
         if bad_triggers_occ:
-            self._log.debug("Bad triggers detected: {0}", bad_triggers_occ)
+            self.debug("Bad triggers detected: {}", bad_triggers_occ)
         return len(bad_triggers_occ) < 2
 
     def slugify(self, text):
@@ -779,7 +796,7 @@ class Google(SearchBackend):
             text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore")
             text = str(re.sub(r"[-\s]+", " ", text.decode("utf-8")))
         except UnicodeDecodeError:
-            self._log.exception("Failing to normalize '{0}'", text)
+            self.debug("Failed to normalize '{}'", text)
         return text
 
     BY_TRANS = ["by", "par", "de", "von"]
@@ -831,7 +848,7 @@ class Google(SearchBackend):
                     continue
 
                 if self.is_lyrics(lyrics, artist):
-                    self._log.debug("got lyrics from {0}", item["displayLink"])
+                    self.debug("Got lyrics from {}", item["displayLink"])
                     return lyrics
 
         return None
@@ -900,9 +917,7 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
                 # configuration includes `google`. This way, the source
                 # is silent by default but can be enabled just by
                 # setting an API key.
-                self._log.debug(
-                    "Disabling google source: " "no API key configured."
-                )
+                self.debug("Disabling google source: " "no API key configured.")
                 sources.remove("google")
 
         self.config["bing_lang_from"] = [
@@ -910,15 +925,14 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
         ]
 
         if not HAS_LANGDETECT and self.config["bing_client_secret"].get():
-            self._log.warning(
-                "To use bing translations, you need to "
-                "install the langdetect module. See the "
-                "documentation for further details."
+            self.warn(
+                "To use bing translations, you need to install the langdetect "
+                "module. See the documentation for further details."
             )
 
         self.backends = [
-            self.SOURCE_BACKENDS[source](self.config, self._log)
-            for source in sources
+            self.SOURCE_BACKENDS[s](self.config, self._log.getChild(s))
+            for s in sources
         ]
 
     def sanitize_bs_sources(self, sources):
@@ -948,8 +962,6 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
         with self.handle_request():
             r = r_session.post(oauth_url, params=params)
             return r.json()["access_token"]
-
-        return None
 
     def commands(self):
         cmd = ui.Subcommand("lyrics", help="fetch song lyrics")
@@ -1095,7 +1107,7 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
         """
         # Skip if the item already has lyrics.
         if not force and item.lyrics:
-            self._log.info("lyrics already present: {0}", item)
+            self.info("Lyrics already present: {}", item)
             return
 
         lyrics_matches = []
@@ -1111,7 +1123,7 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
         lyrics = "\n\n---\n\n".join(filter(None, lyrics_matches))
 
         if lyrics:
-            self._log.info("fetched lyrics: {0}", item)
+            self.info("Lyrics found: {}", item)
             if HAS_LANGDETECT and self.config["bing_client_secret"].get():
                 lang_from = langdetect.detect(lyrics)
                 if self.config["bing_lang_to"].get() != lang_from and (
@@ -1122,7 +1134,7 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
                         lyrics, self.config["bing_lang_to"]
                     )
         else:
-            self._log.info("lyrics not found: {0}", item)
+            self.info("Lyrics not found: {}", item)
             fallback = self.config["fallback"].get()
             if fallback:
                 lyrics = fallback
@@ -1137,13 +1149,10 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
         """Fetch lyrics, trying each source in turn. Return a string or
         None if no lyrics were found.
         """
+        self.info("Fetching lyrics for {} - {}", artist, title)
         for backend in self.backends:
             with backend.handle_request():
                 if lyrics := backend.fetch(artist, title, *args):
-                    self._log.debug(
-                        "got lyrics from backend: {0}",
-                        backend.__class__.__name__,
-                    )
                     return _scrape_strip_cruft(lyrics, True)
 
         return None
@@ -1152,7 +1161,7 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
         from xml.etree import ElementTree
 
         if not (token := self.bing_access_token):
-            self._log.warning(
+            self.warn(
                 "Could not get Bing Translate API access token. "
                 "Check your 'bing_client_secret' password."
             )
