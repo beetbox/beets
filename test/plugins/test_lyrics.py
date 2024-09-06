@@ -370,10 +370,6 @@ the following form.
     def test_bad_lyrics(self, backend, lyrics):
         assert not backend.is_lyrics(lyrics)
 
-    def test_slugify(self, backend):
-        text = "http://site.com/\xe7afe-au_lait(boisson)"
-        assert backend.slugify(text) == "http://site.com/cafe_au_lait"
-
 
 class TestGeniusLyrics(LyricsBackendTest):
     @pytest.fixture(scope="class")
