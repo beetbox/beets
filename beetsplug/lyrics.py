@@ -23,7 +23,6 @@ import math
 import os.path
 import re
 import struct
-import unicodedata
 from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from functools import cached_property, partial, total_ordering
@@ -222,7 +221,7 @@ def search_pairs(item):
     return itertools.product(artists, multi_titles)
 
 
-def slug(text):
+def slug(text: str) -> str:
     """Make a URL-safe, human-readable version of the given text
 
     This will do the following:
@@ -232,10 +231,6 @@ def slug(text):
     3. strip whitespace
     4. replace other non-word characters with dashes
     5. strip extra dashes
-
-    This somewhat duplicates the :func:`Google.slugify` function but
-    slugify is not as generic as this one, which can be reused
-    elsewhere.
     """
     return re.sub(r"\W+", "-", unidecode(text).lower().strip()).strip("-")
 
@@ -728,19 +723,6 @@ class Google(SearchBackend):
             self.debug("Bad triggers detected: {}", bad_triggers_occ)
         return len(bad_triggers_occ) < 2
 
-    def slugify(self, text):
-        """Normalize a string and remove non-alphanumeric characters."""
-        text = re.sub(r"[-'_\s]", "_", text)
-        text = re.sub(r"_+", "_", text).strip("_")
-        pat = r"([^,\(]*)\((.*?)\)"  # Remove content within parentheses
-        text = re.sub(pat, r"\g<1>", text).strip()
-        try:
-            text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore")
-            text = str(re.sub(r"[-\s]+", " ", text.decode("utf-8")))
-        except UnicodeDecodeError:
-            self.debug("Failed to normalize '{}'", text)
-        return text
-
     BY_TRANS = ["by", "par", "de", "von"]
     LYRICS_TRANS = ["lyrics", "paroles", "letras", "liedtexte"]
 
@@ -750,23 +732,24 @@ class Google(SearchBackend):
         """Return True if the URL title makes it a good candidate to be a
         page that contains lyrics of title by artist.
         """
-        title_slug = self.slugify(title.lower())
-        url_title_slug = self.slugify(url_title.lower())
+        title_slug = slug(title)
+        url_title_slug = slug(url_title)
         if title_slug in url_title_slug:
             return True
 
-        artist = self.slugify(artist.lower())
+        artist = slug(artist)
         sitename = urlparse(url_link).netloc
 
         # or try extracting song title from URL title and check if
         # they are close enough
         tokens = (
-            [by + "_" + artist for by in self.BY_TRANS]
+            [by + "-" + artist for by in self.BY_TRANS]
             + [artist, sitename, sitename.replace("www.", "")]
             + self.LYRICS_TRANS
         )
-        tokens = [re.escape(t) for t in tokens]
-        song_title = re.sub("(%s)" % "|".join(tokens), "", url_title_slug)
+        song_title = re.sub(
+            "(%s)" % "|".join(tokens), "", url_title_slug
+        ).strip("-")
 
         return self.check_match(artist, title_slug, artist, song_title)
 
