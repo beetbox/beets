@@ -8,6 +8,8 @@ Changelog goes here! Please add your entry to the bottom of one of the lists bel
 
 New features:
 
+* New template function added: ``%capitalize``. Converts the first letter of
+  the text to uppercase and the rest to lowercase.
 * Ability to query albums with track db fields and vice-versa, for example
   `beet list -a title:something` or `beet list artpath:cover`. Consequently
   album queries involving `path` field have been sped up, like `beet list -a

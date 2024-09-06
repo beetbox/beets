@@ -629,6 +629,10 @@ class DestinationFunctionTest(BeetsTestCase, PathFormattingMixin):
         self._setf("%upper{$title}")
         self._assert_dest(b"/base/THE TITLE")
 
+    def test_capitalize_variable(self):
+        self._setf("%capitalize{$title}")
+        self._assert_dest(b"/base/The title")
+
     def test_title_case_variable(self):
         self._setf("%title{$title}")
         self._assert_dest(b"/base/The Title")
