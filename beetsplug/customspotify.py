@@ -16,13 +16,10 @@ import re
 from beets import config
 from beets.dbcore.types import String
 
-class SpotifyCustomPlugin(BeetsPlugin):
+class SpotifyPlugin(BeetsPlugin):
 
     def __init__(self):
-        super(SpotifyCustomPlugin, self).__init__()
-
-
-
+        super(SpotifyPlugin, self).__init__()
 
 
         self.config.add({
@@ -49,8 +46,8 @@ class SpotifyCustomPlugin(BeetsPlugin):
         self.retrieve_command = Subcommand('retrieve_sf', help='Retrieve all playlists and their tracks')
         self.retrieve_command.parser.add_option('--type', dest='playlist_type', choices=['pl', 'mm'], default=None, help="process 'pl' playlists or regular genre/subgenre playlists")
         self.retrieve_command.parser.add_option('--no-db', action='store_true', help='Do not add retrieved info to the database')
-        self.retrieve_command.parser.add_option('--n', dest='playlist_name', help='Name of the playlist to retrieve')
-        self.retrieve_command.func = self.retrieve_info
+        self.retrieve_command.parser.add_option('--name', dest='playlist_name', help='Name of the playlist to retrieve')
+        self.retrieve_command.func = self.retrieve_info_cli
 
         self.register_listener('library_opened', self.setup)
 
@@ -86,15 +83,22 @@ class SpotifyCustomPlugin(BeetsPlugin):
             );
             """)
 
-
-    
     # GET PLAYLIST INFO FROM API
-    
-    def retrieve_info(self, lib, opts, args):
+    def retrieve_info_cli(self, lib, opts, args):
+
+        lib = lib
+        print("HIER")
+        print(lib)
+        print()
         # CLI arguments
         no_db = opts.no_db
         playlist_name = opts.playlist_name
         playlist_type = opts.playlist_type
+        return self.retrieve_info(lib, playlist_name=playlist_name, playlist_type=playlist_type, no_db=no_db)
+
+    def retrieve_info(self, lib, playlist_name=None, playlist_type=None, no_db=None):
+
+        items = list()
 
         # PLYALISTS TO PROCESS
         # all
@@ -128,19 +132,20 @@ class SpotifyCustomPlugin(BeetsPlugin):
                     song_data['playlist_name'] = playlist_name
                     song_data['playlist_id'] = playlist['spotify_id']
 
-
                     # DATABASE 
                     if not no_db:
                         # UPSERT SONG
-                        song_id = self._store_item(lib, song_data, update_genre=True)
+                        item = self._store_item(lib, song_data, update_genre=True)
+                        items.append(item)
                         # UPSERT PLAYLIST
                         playlist_id = self._store_playlist(lib, playlist)
                         # PLAYLIST_ITEM  RELATION
-                        self._store_playlist_relation(lib, song_id, playlist_id)
+                        self._store_playlist_relation(lib, item.id, playlist_id)
             else:
                 print(f"Playlist '{playlist_name}' not found.")
                 self._log.info(f"Playlist '{playlist_name}' not found.")
-    
+
+        return items
 
     def _get_all_playlists(self) -> List[Dict[str, str]]:
         playlists = []
