@@ -14,6 +14,9 @@ New features:
   `beet list -a title:something` or `beet list artpath:cover`. Consequently
   album queries involving `path` field have been sped up, like `beet list -a
   path:/path/`.
+* New `keep_in_artist` option for the :doc:`plugins/ftintitle` plugin, which
+  allows keeping the "feat." part in the artist metadata while still changing
+  the title.
 * :doc:`plugins/autobpm`: Add new configuration option ``beat_track_kwargs``
   which enables adjusting keyword arguments supplied to librosa's
   ``beat_track`` function call.
