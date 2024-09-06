@@ -230,9 +230,9 @@ class TestLyricsPlugin(LyricsPluginMixin):
         [
             (
                 {"status_code": HTTPStatus.BAD_GATEWAY},
-                r"lyrics: Request error: 502",
+                r"LRCLib: Request error: 502",
             ),
-            ({"text": "invalid"}, r"lyrics: Could not decode.*JSON"),
+            ({"text": "invalid"}, r"LRCLib: Could not decode.*JSON"),
         ],
     )
     def test_error_handling(
@@ -243,7 +243,7 @@ class TestLyricsPlugin(LyricsPluginMixin):
         request_kwargs,
         expected_log_match,
     ):
-        """Errors are logged with the plugin name."""
+        """Errors are logged with the backend name."""
         requests_mock.get(lyrics.LRCLib.GET_URL, **request_kwargs)
 
         assert lyrics_plugin.get_lyrics("", "", "", 0.0) is None
