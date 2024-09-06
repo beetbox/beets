@@ -33,10 +33,13 @@ class FtInTitlePluginFunctional(PluginTestCase):
             albumartist=aartist,
         )
 
-    def _ft_set_config(self, ftformat, drop=False, auto=True):
+    def _ft_set_config(
+        self, ftformat, drop=False, auto=True, keep_in_artist=False
+    ):
         self.config["ftintitle"]["format"] = ftformat
         self.config["ftintitle"]["drop"] = drop
         self.config["ftintitle"]["auto"] = auto
+        self.config["ftintitle"]["keep_in_artist"] = keep_in_artist
 
     def test_functional_drop(self):
         item = self._ft_add_item("/", "Alice ft Bob", "Song 1", "Alice")
@@ -74,6 +77,20 @@ class FtInTitlePluginFunctional(PluginTestCase):
         item.load()
         assert item["artist"] == "Alice"
         assert item["title"] == "Song 1 with Bob"
+
+    def test_functional_keep_in_artist(self):
+        self._ft_set_config("feat. {0}", keep_in_artist=True)
+        item = self._ft_add_item("/", "Alice ft Bob", "Song 1", "Alice")
+        self.run_command("ftintitle")
+        item.load()
+        self.assertEqual(item["artist"], "Alice ft Bob")
+        self.assertEqual(item["title"], "Song 1 feat. Bob")
+
+        item = self._ft_add_item("/", "Alice ft Bob", "Song 1", "Alice")
+        self.run_command("ftintitle", "-d")
+        item.load()
+        self.assertEqual(item["artist"], "Alice ft Bob")
+        self.assertEqual(item["title"], "Song 1")
 
 
 class FtInTitlePluginTest(unittest.TestCase):
