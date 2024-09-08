@@ -3242,4 +3242,4 @@ web = ["flask", "flask-cors"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4"
-content-hash = "b24bff904f040cb57c9496a2d1ce129459123372a739b58baf6de973a6a41571"
+content-hash = "09b64b25f3ff363a3c31d44fd99e4c07309b27dda65523f9ec3d1279ca3a3143"
