@@ -281,11 +281,11 @@ That is, if this option is turned on, then ``year`` will always equal
 overwrite_null
 ~~~~~~~~~~~~~~
 
-In some situations, data for a particular field is not available, and it ends up being
-set to an empty value (an empty string).  To allow such fields to be overwritten once
-the appropriate data does become available (e.g. by a re-import or a manual update),
-the name of the metadata field can be added to the list `album` (for albums) or `track`
-(for tracks).  For example::
+This confusingly-named option indicates which fields have meaningful `null` values.  If
+an album or track field is in the corresponding list, then an existing value for this
+field in an item in the database can be overwritten with `null`.  By default, however,
+`null` is interpreted as information about the field being unavailable, so it would not
+overwrite existing values.  For example::
 
     overwrite_null:
         album: ["albumid"]
