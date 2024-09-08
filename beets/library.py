@@ -26,6 +26,7 @@ import unicodedata
 from functools import cached_property
 from pathlib import Path
 
+import platformdirs
 from mediafile import MediaFile, UnreadableFileError
 
 import beets
@@ -1601,14 +1602,20 @@ class Library(dbcore.Database):
     def __init__(
         self,
         path="library.blb",
-        directory="~/Music",
+        directory: str | None = None,
         path_formats=((PF_KEY_DEFAULT, "$artist/$album/$track $title"),),
         replacements=None,
     ):
         timeout = beets.config["timeout"].as_number()
         super().__init__(path, timeout=timeout)
 
-        self.directory = bytestring_path(normpath(directory))
+        if directory is not None:
+            self.directory = normpath(directory)
+        else:
+            # Use the appropriate platform-specific fallback directory.
+            music_dir = platformdirs.user_music_path()
+            self.directory = bytestring_path(music_dir)
+
         self.path_formats = path_formats
         self.replacements = replacements
 
