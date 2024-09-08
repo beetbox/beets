@@ -344,10 +344,10 @@ environment variable ``SKIP_SLOW_TESTS``, for example::
 Coverage
 ^^^^^^^^
 
-Coverage is measured automatically when running the tests. If you find it takes
-a while to calculate, disable it::
+The ``test`` command does not include coverage as it slows down testing. In
+order to measure it, use the ``test-with-coverage`` task
 
-    $ poe test --no-cov
+    $ poe test-with-coverage [pytest options]
 
 You are welcome to explore coverage by opening the HTML report in
 ``.reports/html/index.html``.
