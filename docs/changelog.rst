@@ -20,6 +20,9 @@ New features:
 * :doc:`plugins/autobpm`: Add new configuration option ``beat_track_kwargs``
   which enables adjusting keyword arguments supplied to librosa's
   ``beat_track`` function call.
+* Beets now uses ``platformdirs`` to determine the default music directory.
+  This location varies between systems -- for example, users can configure it
+  on Unix systems via ``user-dirs.dirs(5)``.
 
 Bug fixes:
 
