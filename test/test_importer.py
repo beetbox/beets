@@ -13,8 +13,8 @@
 # included in all copies or substantial portions of the Software.
 
 
-"""Tests for the general importer functionality.
-"""
+"""Tests for the general importer functionality."""
+
 import os
 import re
 import shutil
@@ -37,6 +37,7 @@ from beets.autotag import AlbumInfo, AlbumMatch, TrackInfo
 from beets.importer import albums_in_dir
 from beets.test import _common
 from beets.test.helper import (
+    NEEDS_REFLINK,
     AsIsImporterMixin,
     AutotagStub,
     BeetsTestCase,
@@ -209,7 +210,7 @@ class NonAutotaggedImportTest(AsIsImporterMixin, ImportTestCase):
                 s2[stat.ST_DEV],
             )
 
-    @unittest.skipUnless(_common.HAVE_REFLINK, "need reflinks")
+    @NEEDS_REFLINK
     def test_import_reflink_arrives(self):
         # Detecting reflinks is currently tricky due to various fs
         # implementations, we'll just check the file exists.
@@ -392,7 +393,7 @@ class ImportSingletonTest(ImportTestCase):
         assert len(self.lib.albums()) == 2
 
     def test_set_fields(self):
-        genre = "\U0001F3B7 Jazz"
+        genre = "\U0001f3b7 Jazz"
         collection = "To Listen"
 
         config["import"]["set_fields"] = {
@@ -579,7 +580,7 @@ class ImportTest(ImportTestCase):
             self.lib.items().get().data_source
 
     def test_set_fields(self):
-        genre = "\U0001F3B7 Jazz"
+        genre = "\U0001f3b7 Jazz"
         collection = "To Listen"
         comments = "managed by beets"
 
