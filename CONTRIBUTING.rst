@@ -274,14 +274,13 @@ There are a few coding conventions we use in beets:
 Style
 -----
 
-We follow `black`_ formatting and `google's docstring format`_.
+We use `ruff`_ to format and lint the codebase.
 
-Use ``poe check-format`` and ``poe lint`` to check your code for style and
+Run ``poe check-format`` and ``poe lint`` to check your code for style and
 linting errors. Running ``poe format`` will automatically format your code
 according to the specifications required by the project.
 
-.. _black: https://black.readthedocs.io/en/stable/
-.. _google's docstring format: https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings
+.. _ruff: https://docs.astral.sh/ruff/
 
 Handling Paths
 --------------

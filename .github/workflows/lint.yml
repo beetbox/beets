@@ -60,7 +60,7 @@ jobs:
           cache: poetry
 
       - name: Install dependencies
-        run: poetry install --only=format
+        run: poetry install --only=lint
 
       - name: Check code formatting
         # the job output will contain colored diffs with what needs adjusting
