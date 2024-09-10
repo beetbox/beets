@@ -416,7 +416,9 @@ class DiscogsPlugin(BeetsPlugin):
         albumtype = media = label = catalogno = labelid = None
         if result.data.get("formats"):
             albumtype = (
-                ", ".join(str(result.data["formats"][0].get("descriptions", [])))
+                ", ".join(
+                    str(result.data["formats"][0].get("descriptions", []))
+                )
                 or None
             )
             media = result.data["formats"][0]["name"]
