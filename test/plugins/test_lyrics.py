@@ -328,7 +328,7 @@ class TestGoogleLyrics(LyricsBackendTest):
 
     def test_mocked_source_ok(self, backend, lyrics_html):
         """Test that lyrics of the mocked page are correctly scraped"""
-        result = lyrics.scrape_lyrics_from_html(lyrics_html).lower()
+        result = backend.scrape_lyrics(lyrics_html).lower()
 
         assert result
         assert backend.is_lyrics(result)
@@ -390,7 +390,7 @@ class TestGeniusLyrics(LyricsBackendTest):
         ],
     )  # fmt: skip
     def test_scrape(self, backend, lyrics_html, expected_line_count):
-        result = backend._scrape_lyrics_from_html(lyrics_html) or ""
+        result = backend.scrape_lyrics(lyrics_html) or ""
 
         assert len(result.splitlines()) == expected_line_count
 
@@ -411,7 +411,7 @@ class TestTekstowoLyrics(LyricsBackendTest):
         ],
     )
     def test_scrape(self, backend, lyrics_html, expecting_lyrics):
-        assert bool(backend.extract_lyrics(lyrics_html)) == expecting_lyrics
+        assert bool(backend.scrape_lyrics(lyrics_html)) == expecting_lyrics
 
 
 LYRICS_DURATION = 950
