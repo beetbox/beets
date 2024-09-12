@@ -36,7 +36,7 @@ import optparse
 import os
 import textwrap
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Set, cast
+from typing import Iterable
 
 import beets.ui.commands
 from beets import library, ui
@@ -198,12 +198,12 @@ class FishScript(io.StringIO):
 
     def complete(
         self,
-        values: Optional[str] = None,
-        conditions: Optional[List[str]] = None,
-        long: Optional[str] = None,
-        short: Optional[str] = None,
-        required: Optional[bool] = None,
-        description: Optional[str] = None,
+        values: str | None = None,
+        conditions: list[str] | None = None,
+        long: str | None = None,
+        short: str | None = None,
+        required: bool | None = None,
+        description: str | None = None,
         files: bool = False,
     ):
         """
@@ -231,11 +231,11 @@ class FishScript(io.StringIO):
 
     def complete_global(
         self,
-        long: Optional[str] = None,
-        short: Optional[str] = None,
-        values: Optional[str] = None,
+        long: str | None = None,
+        short: str | None = None,
+        values: str | None = None,
         files: bool = False,
-        description: Optional[str] = None,
+        description: str | None = None,
     ):
         """
         Add a completion for a global Beets option.
@@ -252,7 +252,7 @@ class FishScript(io.StringIO):
 
 
 class FishPlugin(BeetsPlugin):
-    def commands(self) -> List[ui.Subcommand]:
+    def commands(self) -> list[ui.Subcommand]:
         cmd = ui.Subcommand(
             "fish", help="generate a completion script for the Fish shell"
         )
@@ -292,11 +292,11 @@ class FishPlugin(BeetsPlugin):
         self,
         lib: library.Library,
         opts: optparse.Values,
-        args: List[str],
+        args: list[str],
     ):
         # Get the user-provided options.
         include_fields = not opts.noFields
-        extra_comp_fields = cast(List[str], opts.extravalues)
+        extra_comp_fields: list[str] = opts.extravalues
         output = Path(opts.output)
 
         if len(args) != 0:
@@ -317,7 +317,7 @@ class FishPlugin(BeetsPlugin):
         script.complete(files=False)
 
         # The commands supported by 'beet', including from plugins.
-        commands: List[ui.Subcommand] = [
+        commands: list[ui.Subcommand] = [
             *beets.ui.commands.default_commands,
             *beets.ui.commands.plugins.commands(),
         ]
@@ -383,7 +383,7 @@ class FishPlugin(BeetsPlugin):
 
         if extra_comp_fields:
             # The set of values for every user-specified extra field.
-            extra_values: Dict[str, Set[str]] = dict.fromkeys(
+            extra_values: dict[str, set[str]] = dict.fromkeys(
                 extra_comp_fields, set()
             )
             for item in lib.items():
