@@ -417,7 +417,7 @@ class DiscogsPlugin(BeetsPlugin):
         if result.data.get("formats"):
             albumtype = (
                 ", ".join(
-                    str(result.data["formats"][0].get("descriptions", []))
+                    list(result.data["formats"][0].get("descriptions", []))
                 )
                 or None
             )
