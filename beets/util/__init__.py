@@ -38,18 +38,17 @@ from typing import (
     Any,
     AnyStr,
     Callable,
-    Iterable,
     Iterator,
-    List,
-    MutableSequence,
     NamedTuple,
-    Optional,
     Pattern,
     Sequence,
-    Tuple,
     TypeVar,
     Union,
 )
+
+from unidecode import unidecode
+
+from beets.util import hidden
 
 if TYPE_CHECKING:
     from logging import Logger
@@ -59,15 +58,13 @@ if sys.version_info >= (3, 10):
 else:
     from typing_extensions import TypeAlias
 
-from unidecode import unidecode
-
-from beets.util import hidden
 
 MAX_FILENAME_LENGTH = 200
 WINDOWS_MAGIC_PREFIX = "\\\\?\\"
 T = TypeVar("T")
-BytesOrStr: TypeAlias = Union[str, bytes]
-PathLike = Union[str, bytes, Path]
+BytesOrStr = Union[str, bytes]
+PathLike = Union[BytesOrStr, Path]
+Replacements: TypeAlias = "Sequence[tuple[Pattern[str], str]]"
 
 
 class HumanReadableException(Exception):
@@ -176,7 +173,7 @@ def normpath(path: bytes) -> bytes:
     return bytestring_path(str_path)
 
 
-def ancestry(path: AnyStr) -> List[AnyStr]:
+def ancestry(path: AnyStr) -> list[AnyStr]:
     """Return a list consisting of path's parent directory, its
     grandparent, and so on. For instance:
 
@@ -185,7 +182,7 @@ def ancestry(path: AnyStr) -> List[AnyStr]:
 
     The argument should *not* be the result of a call to `syspath`.
     """
-    out: List[AnyStr] = []
+    out: list[AnyStr] = []
     last_path = None
     while path:
         path = os.path.dirname(path)
@@ -204,8 +201,8 @@ def sorted_walk(
     path: AnyStr,
     ignore: Sequence[bytes] = (),
     ignore_hidden: bool = False,
-    logger: Optional[Logger] = None,
-) -> Iterator[Tuple[bytes, Sequence[bytes], Sequence[bytes]]]:
+    logger: Logger | None = None,
+) -> Iterator[tuple[bytes, Sequence[bytes], Sequence[bytes]]]:
     """Like `os.walk`, but yields things in case-insensitive sorted,
     breadth-first order.  Directory and file names matching any glob
     pattern in `ignore` are skipped. If `logger` is provided, then
@@ -301,7 +298,7 @@ def fnmatch_all(names: Sequence[bytes], patterns: Sequence[bytes]) -> bool:
 
 def prune_dirs(
     path: bytes,
-    root: Optional[bytes] = None,
+    root: bytes | None = None,
     clutter: Sequence[str] = (".DS_Store", "Thumbs.db"),
 ):
     """If path is an empty directory, then remove it. Recursively remove
@@ -346,7 +343,7 @@ def prune_dirs(
             break
 
 
-def components(path: AnyStr) -> MutableSequence[AnyStr]:
+def components(path: AnyStr) -> list[AnyStr]:
     """Return a list of the path components in path. For instance:
 
        >>> components(b'/a/b/c')
@@ -422,8 +419,7 @@ PATH_SEP: bytes = bytestring_path(os.sep)
 
 
 def displayable_path(
-    path: Union[bytes, str, Tuple[Union[bytes, str], ...]],
-    separator: str = "; ",
+    path: BytesOrStr | tuple[BytesOrStr, ...], separator: str = "; "
 ) -> str:
     """Attempts to decode a bytestring path to a unicode object for the
     purpose of displaying it to the user. If the `path` argument is a
@@ -688,7 +684,7 @@ def unique_path(path: bytes) -> bytes:
 # Unix. They are forbidden here because they cause problems on Samba
 # shares, which are sufficiently common as to cause frequent problems.
 # https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx
-CHAR_REPLACE: List[Tuple[Pattern[str], str]] = [
+CHAR_REPLACE = [
     (re.compile(r"[\\/]"), "_"),  # / and \ -- forbidden everywhere.
     (re.compile(r"^\."), "_"),  # Leading dot (hidden files on Unix).
     (re.compile(r"[\x00-\x1f]"), ""),  # Control characters.
@@ -698,10 +694,7 @@ CHAR_REPLACE: List[Tuple[Pattern[str], str]] = [
 ]
 
 
-def sanitize_path(
-    path: str,
-    replacements: Optional[Sequence[Tuple[Pattern[str], str]]] = None,
-) -> str:
+def sanitize_path(path: str, replacements: Replacements | None = None) -> str:
     """Takes a path (as a Unicode string) and makes sure that it is
     legal. Returns a new path. Only works with fragments; won't work
     reliably on Windows when a path begins with a drive letter. Path
@@ -741,11 +734,11 @@ def truncate_path(path: AnyStr, length: int = MAX_FILENAME_LENGTH) -> AnyStr:
 
 def _legalize_stage(
     path: str,
-    replacements: Optional[Sequence[Tuple[Pattern[str], str]]],
+    replacements: Replacements | None,
     length: int,
     extension: str,
     fragment: bool,
-) -> Tuple[BytesOrStr, bool]:
+) -> tuple[BytesOrStr, bool]:
     """Perform a single round of path legalization steps
     (sanitation/replacement, encoding from Unicode to bytes,
     extension-appending, and truncation). Return the path (Unicode if
@@ -771,11 +764,11 @@ def _legalize_stage(
 
 def legalize_path(
     path: str,
-    replacements: Optional[Sequence[Tuple[Pattern[str], str]]],
+    replacements: Replacements | None,
     length: int,
     extension: bytes,
     fragment: bool,
-) -> Tuple[BytesOrStr, bool]:
+) -> tuple[BytesOrStr, bool]:
     """Given a path-like Unicode string, produce a legal path. Return
     the path and a flag indicating whether some replacements had to be
     ignored (see below).
@@ -842,7 +835,7 @@ def as_string(value: Any) -> str:
         return str(value)
 
 
-def plurality(objs: Sequence[T]) -> Tuple[T, int]:
+def plurality(objs: Sequence[T]) -> tuple[T, int]:
     """Given a sequence of hashble objects, returns the object that
     is most common in the set and the its number of appearance. The
     sequence must contain at least one object.
@@ -853,7 +846,7 @@ def plurality(objs: Sequence[T]) -> Tuple[T, int]:
     return c.most_common(1)[0]
 
 
-def convert_command_args(args: List[BytesOrStr]) -> List[str]:
+def convert_command_args(args: list[BytesOrStr]) -> list[str]:
     """Convert command arguments, which may either be `bytes` or `str`
     objects, to uniformly surrogate-escaped strings."""
     assert isinstance(args, list)
@@ -872,7 +865,7 @@ class CommandOutput(NamedTuple):
     stderr: bytes
 
 
-def command_output(cmd: List[BytesOrStr], shell: bool = False) -> CommandOutput:
+def command_output(cmd: list[BytesOrStr], shell: bool = False) -> CommandOutput:
     """Runs the command and returns its output after it has exited.
 
     Returns a CommandOutput. The attributes ``stdout`` and ``stderr`` contain
@@ -1052,7 +1045,7 @@ def asciify_path(path: str, sep_replace: str) -> str:
     # if this platform has an os.altsep, change it to os.sep.
     if os.altsep:
         path = path.replace(os.altsep, os.sep)
-    path_components: List[str] = path.split(os.sep)
+    path_components: list[str] = path.split(os.sep)
     for index, item in enumerate(path_components):
         path_components[index] = unidecode(item).replace(os.sep, sep_replace)
         if os.altsep:
@@ -1062,7 +1055,7 @@ def asciify_path(path: str, sep_replace: str) -> str:
     return os.sep.join(path_components)
 
 
-def par_map(transform: Callable[[T], Any], items: Iterable[T]) -> None:
+def par_map(transform: Callable[[T], Any], items: Sequence[T]) -> None:
     """Apply the function `transform` to all the elements in the
     iterable `items`, like `map(transform, items)` but with no return
     value.
