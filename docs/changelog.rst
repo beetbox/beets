@@ -34,6 +34,7 @@ Bug fixes:
   as a numpy array. Update ``librosa`` dependency constraint to prevent similar
   issues in the future.
   :bug:`5289`
+* Fixed changed double to single quotes in two queries to work with DSQLITE_DQS=0.
 
 For packagers:
 

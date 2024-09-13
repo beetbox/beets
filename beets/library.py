@@ -313,7 +313,7 @@ class SmartArtistSort(dbcore.query.Sort):
         collate = "COLLATE NOCASE" if self.case_insensitive else ""
         return (
             "(CASE {0}_sort WHEN NULL THEN {0} "
-            'WHEN "" THEN {0} '
+            "WHEN '' THEN {0} "
             "ELSE {0}_sort END) {1} {2}"
         ).format(field, collate, order)
 
