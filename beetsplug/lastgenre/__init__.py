@@ -102,7 +102,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "fallback": None,
                 "canonical": False,
                 "source": "album",
-                "force": True,
+                "force": False,
+                "keep_allowed": True,
                 "auto": True,
                 "separator": ", ",
                 "prefer_specific": False,
@@ -385,6 +386,20 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             dest="force",
             action="store_true",
             help="re-download genre when already present",
+        )
+        lastgenre_cmd.parser.add_option(
+            "-k",
+            "--keep-allowed",
+            dest="keep_allowed",
+            action="store_true",
+            help="keep already present genres when whitelisted",
+        )
+        lastgenre_cmd.parser.add_option(
+            "-K",
+            "--keep-any",
+            dest="keep_allowed",
+            action="store_false",
+            help="keep any already present genres",
         )
         lastgenre_cmd.parser.add_option(
             "-s",
