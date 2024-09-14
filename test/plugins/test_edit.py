@@ -349,13 +349,8 @@ class EditDuringImporterNonSingletonTest(EditDuringImporterTestCase):
         self.assertItemFieldsModified(
             self.lib.items(),
             self.items_orig,
-            ["title"],
-            self.IGNORED
-            + [
-                "albumartist",
-                "mb_albumartistid",
-                "mb_albumartistids",
-            ],
+            ["title", "albumartist", "albumartists"],
+            self.IGNORED + ["mb_albumartistid", "mb_albumartistids"],
         )
         assert all("Edited Track" in i.title for i in self.lib.items())
 
