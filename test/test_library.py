@@ -34,7 +34,7 @@ from beets.library import Album
 from beets.test import _common
 from beets.test._common import item
 from beets.test.helper import BeetsTestCase, ItemInDBTestCase
-from beets.util import bytestring_path, syspath
+from beets.util import as_string, bytestring_path, syspath
 
 # Shortcut to path normalization.
 np = util.normpath
@@ -411,14 +411,14 @@ class DestinationTest(BeetsTestCase):
     def test_unicode_normalized_nfd_on_mac(self):
         instr = unicodedata.normalize("NFC", "caf\xe9")
         self.lib.path_formats = [("default", instr)]
-        dest = self.i.destination(platform="darwin", fragment=True)
-        assert dest == unicodedata.normalize("NFD", instr)
+        dest = self.i.destination(platform="darwin", relative_to_libdir=True)
+        assert as_string(dest) == unicodedata.normalize("NFD", instr)
 
     def test_unicode_normalized_nfc_on_linux(self):
         instr = unicodedata.normalize("NFD", "caf\xe9")
         self.lib.path_formats = [("default", instr)]
-        dest = self.i.destination(platform="linux", fragment=True)
-        assert dest == unicodedata.normalize("NFC", instr)
+        dest = self.i.destination(platform="linux", relative_to_libdir=True)
+        assert as_string(dest) == unicodedata.normalize("NFC", instr)
 
     def test_non_mbcs_characters_on_windows(self):
         oldfunc = sys.getfilesystemencoding
@@ -436,8 +436,8 @@ class DestinationTest(BeetsTestCase):
     def test_unicode_extension_in_fragment(self):
         self.lib.path_formats = [("default", "foo")]
         self.i.path = util.bytestring_path("bar.caf\xe9")
-        dest = self.i.destination(platform="linux", fragment=True)
-        assert dest == "foo.caf\xe9"
+        dest = self.i.destination(platform="linux", relative_to_libdir=True)
+        assert as_string(dest) == "foo.caf\xe9"
 
     def test_asciify_and_replace(self):
         config["asciify_paths"] = True
