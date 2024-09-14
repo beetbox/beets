@@ -307,21 +307,20 @@ def apply_metadata(
 
         # MusicBrainz IDs.
         item.mb_trackid = track_info.track_id
-        item.mb_releasetrackid = track_info.release_track_id
-        item.mb_albumid = album_info.album_id
-        if track_info.artist_id:
-            item.mb_artistid = track_info.artist_id
-        else:
-            item.mb_artistid = album_info.artist_id
+        item.mb_releasetrackid = track_info.release_track_id or item.mb_trackid
 
-        if track_info.artists_ids:
-            item.mb_artistids = track_info.artists_ids
-        else:
-            item.mb_artistids = album_info.artists_ids
+        item.mb_albumid = album_info.album_id
+        item.mb_releasegroupid = album_info.releasegroup_id
 
         item.mb_albumartistid = album_info.artist_id
-        item.mb_albumartistids = album_info.artists_ids
-        item.mb_releasegroupid = album_info.releasegroup_id
+        item.mb_albumartistids = album_info.artists_ids or (
+            [ai] if (ai := item.mb_albumartistid) else []
+        )
+
+        item.mb_artistid = track_info.artist_id or item.mb_albumartistid
+        item.mb_artistids = track_info.artists_ids or (
+            [iai] if (iai := item.mb_artistid) else []
+        )
 
         # Compilation flag.
         item.comp = album_info.va
