@@ -462,17 +462,6 @@ class DestinationTest(BeetsTestCase):
         self.i.album = "bar"
         assert self.i.destination() == np("base/ber/foo")
 
-    def test_destination_with_replacements_argument(self):
-        self.lib.directory = b"base"
-        self.lib.replacements = [(re.compile(r"a"), "f")]
-        self.lib.path_formats = [("default", "$album/$title")]
-        self.i.title = "foo"
-        self.i.album = "bar"
-        replacements = [(re.compile(r"a"), "e")]
-        assert self.i.destination(replacements=replacements) == np(
-            "base/ber/foo"
-        )
-
     @unittest.skip("unimplemented: #359")
     def test_destination_with_empty_component(self):
         self.lib.directory = b"base"
