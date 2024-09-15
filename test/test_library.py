@@ -23,6 +23,7 @@ import sys
 import time
 import unicodedata
 import unittest
+from unittest.mock import patch
 
 import pytest
 from mediafile import MediaFile, UnreadableFileError
@@ -411,13 +412,15 @@ class DestinationTest(BeetsTestCase):
     def test_unicode_normalized_nfd_on_mac(self):
         instr = unicodedata.normalize("NFC", "caf\xe9")
         self.lib.path_formats = [("default", instr)]
-        dest = self.i.destination(platform="darwin", relative_to_libdir=True)
+        with patch("sys.platform", "darwin"):
+            dest = self.i.destination(relative_to_libdir=True)
         assert as_string(dest) == unicodedata.normalize("NFD", instr)
 
     def test_unicode_normalized_nfc_on_linux(self):
         instr = unicodedata.normalize("NFD", "caf\xe9")
         self.lib.path_formats = [("default", instr)]
-        dest = self.i.destination(platform="linux", relative_to_libdir=True)
+        with patch("sys.platform", "linux"):
+            dest = self.i.destination(relative_to_libdir=True)
         assert as_string(dest) == unicodedata.normalize("NFC", instr)
 
     def test_non_mbcs_characters_on_windows(self):
@@ -436,7 +439,8 @@ class DestinationTest(BeetsTestCase):
     def test_unicode_extension_in_fragment(self):
         self.lib.path_formats = [("default", "foo")]
         self.i.path = util.bytestring_path("bar.caf\xe9")
-        dest = self.i.destination(platform="linux", relative_to_libdir=True)
+        with patch("sys.platform", "linux"):
+            dest = self.i.destination(relative_to_libdir=True)
         assert as_string(dest) == "foo.caf\xe9"
 
     def test_asciify_and_replace(self):
