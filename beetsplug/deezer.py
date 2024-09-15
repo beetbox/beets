@@ -288,12 +288,16 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             self._log.error(
-                "Error fetching data from {} API\n Error: {}", self.data_source, e
+                "Error fetching data from {} API\n Error: {}",
+                self.data_source,
+                e,
             )
             return None
         except requests.exceptions.HTTPError as e:
             self._log.error(
-                "HTTP error fetching data from {} API\n Error: {}", self.data_source, e
+                "HTTP error fetching data from {} API\n Error: {}",
+                self.data_source,
+                e,
             )
             return None
         response_data = response.json().get("data", [])
