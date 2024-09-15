@@ -1784,6 +1784,11 @@ class DefaultTemplateFunctions:
         return s.upper()
 
     @staticmethod
+    def tmpl_capitalize(s):
+        """Converts to a capitalized string."""
+        return s.capitalize()
+
+    @staticmethod
     def tmpl_title(s):
         """Convert a string to title case."""
         return string.capwords(s)

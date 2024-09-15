@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Test file manipulation functionality of Item.
-"""
+"""Test file manipulation functionality of Item."""
 
 import os
 import shutil
@@ -27,7 +26,7 @@ import beets.library
 from beets import util
 from beets.test import _common
 from beets.test._common import item, touch
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import NEEDS_REFLINK, BeetsTestCase
 from beets.util import MoveOperation, bytestring_path, syspath
 
 
@@ -87,22 +86,20 @@ class MoveTest(BeetsTestCase):
         self.i.move(operation=MoveOperation.COPY)
         self.assertExists(self.path)
 
-    @unittest.skipUnless(_common.HAVE_REFLINK, "need reflink")
     def test_reflink_arrives(self):
         self.i.move(operation=MoveOperation.REFLINK_AUTO)
         self.assertExists(self.dest)
 
-    @unittest.skipUnless(_common.HAVE_REFLINK, "need reflink")
     def test_reflink_does_not_depart(self):
         self.i.move(operation=MoveOperation.REFLINK_AUTO)
         self.assertExists(self.path)
 
-    @unittest.skipUnless(_common.HAVE_REFLINK, "need reflink")
+    @NEEDS_REFLINK
     def test_force_reflink_arrives(self):
         self.i.move(operation=MoveOperation.REFLINK)
         self.assertExists(self.dest)
 
-    @unittest.skipUnless(_common.HAVE_REFLINK, "need reflink")
+    @NEEDS_REFLINK
     def test_force_reflink_does_not_depart(self):
         self.i.move(operation=MoveOperation.REFLINK)
         self.assertExists(self.path)
@@ -286,7 +283,7 @@ class AlbumFileTest(BeetsTestCase):
         self.assertExists(oldpath)
         self.assertExists(self.i.path)
 
-    @unittest.skipUnless(_common.HAVE_REFLINK, "need reflink")
+    @NEEDS_REFLINK
     def test_albuminfo_move_reflinks_file(self):
         oldpath = self.i.path
         self.ai.album = "newAlbumName"
@@ -571,7 +568,7 @@ class SafeMoveCopyTest(BeetsTestCase):
         self.assertExists(self.dest)
         self.assertExists(self.path)
 
-    @unittest.skipUnless(_common.HAVE_REFLINK, "need reflink")
+    @NEEDS_REFLINK
     def test_successful_reflink(self):
         util.reflink(self.path, self.dest)
         self.assertExists(self.dest)
@@ -585,9 +582,8 @@ class SafeMoveCopyTest(BeetsTestCase):
         with pytest.raises(util.FilesystemError):
             util.copy(self.path, self.otherpath)
 
-    @unittest.skipUnless(_common.HAVE_REFLINK, "need reflink")
     def test_unsuccessful_reflink(self):
-        with pytest.raises(util.FilesystemError):
+        with pytest.raises(util.FilesystemError, match="target exists"):
             util.reflink(self.path, self.otherpath)
 
     def test_self_move(self):
