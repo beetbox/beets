@@ -1027,7 +1027,6 @@ class Item(LibModel):
         basedir=None,
         platform=None,
         path_formats=None,
-        replacements=None,
     ) -> bytes:
         """Return the path in the library directory designated for the item
         (i.e., where the file ought to be).
@@ -1039,8 +1038,6 @@ class Item(LibModel):
         platform = platform or sys.platform
         basedir = basedir or db.directory
         path_formats = path_formats or db.path_formats
-        if replacements is None:
-            replacements = self._db.replacements
 
         # Use a path format based on a query, falling back on the
         # default.
@@ -1084,10 +1081,7 @@ class Item(LibModel):
             maxlen = util.max_filename_length(db.directory)
 
         lib_path_str, fallback = util.legalize_path(
-            subpath,
-            replacements,
-            maxlen,
-            os.path.splitext(self.path)[1],
+            subpath, db.replacements, maxlen, os.path.splitext(self.path)[1]
         )
         if fallback:
             # Print an error message if legalization fell back to
