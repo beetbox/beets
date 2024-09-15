@@ -111,6 +111,22 @@ Last.fm returns both of those tags, lastgenre is going to use the most
 popular, which is often the most generic (in this case ``folk``). By setting
 ``prefer_specific`` to true, lastgenre would use ``americana`` instead.
 
+Handling pre-populated tags
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The ``force`` and ``keep_allowed`` options control how pre-existing genres are
+handled. By default, the plugin fetches new genres for empty tags only
+(``force: no``), and keeps whitelisted genres in pre-populated tags
+(``keep_allowed: yes``).
+
+To write new genres to empty tags and keep *any* pre-existing tag content
+as-is, set ``force: no`` and ``keep_allowed: no``.
+
+To *overwrite* any content of pre-populated tags, set ``force: yes`` and
+``keep_allowed: no``.
+
+To *combine* newly fetched last.fm genres with whitelisted pre-existing genres,
+set ``force: yes`` and ``keep_allowed: yes``.
+
 Configuration
 -------------
 
@@ -128,9 +144,14 @@ configuration file. The available options are:
 - **fallback**: A string if to use a fallback genre when no genre is found.
   You can use the empty string ``''`` to reset the genre.
   Default: None.
-- **force**: By default, beets will always fetch new genres, even if the files
-  already have one. To instead leave genres in place in when they pass the
-  whitelist, set the ``force`` option to ``no``.
+- **force**: By default, lastgenre will fetch new genres for empty tags and
+  leave pre-existing content in place. When changing this option to ``yes``
+  also adjust the ``keep_allowed`` option to your preference (see `Handling
+  pre-populated tags`_).
+  Default: ``no``.
+- **keep_allowed**: By default, whitelisted genres remain in pre-populated
+  tags. When changing this optio to ``yes``, also ajdust the ``force``
+  option to your preference (see `Handling pre-populated tags`_).
   Default: ``yes``.
 - **min_weight**: Minimum popularity factor below which genres are discarded.
   Default: 10.
