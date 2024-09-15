@@ -1077,7 +1077,6 @@ class Item(LibModel):
         self,
         relative_to_libdir=False,
         basedir=None,
-        platform=None,
         path_formats=None,
     ) -> bytes:
         """Return the path in the library directory designated for the item
@@ -1087,7 +1086,6 @@ class Item(LibModel):
         library's base directory for the destination.
         """
         db = self._check_db()
-        platform = platform or sys.platform
         basedir = basedir or db.directory
         path_formats = path_formats or db.path_formats
 
@@ -1117,7 +1115,7 @@ class Item(LibModel):
         subpath = self.evaluate_template(subpath_tmpl, True)
 
         # Prepare path for output: normalize Unicode characters.
-        if platform == "darwin":
+        if sys.platform == "darwin":
             subpath = unicodedata.normalize("NFD", subpath)
         else:
             subpath = unicodedata.normalize("NFC", subpath)
