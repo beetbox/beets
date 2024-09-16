@@ -32,6 +32,7 @@ from beets.autotag.match import distance
 from beets.test import _common
 from beets.test.helper import (
     BeetsTestCase,
+    IOMixin,
     PluginTestCase,
     capture_stdout,
     control_stdin,
@@ -107,11 +108,9 @@ class ListTest(BeetsTestCase):
         assert "the album" not in stdout.getvalue()
 
 
-class RemoveTest(BeetsTestCase):
+class RemoveTest(IOMixin, BeetsTestCase):
     def setUp(self):
         super().setUp()
-
-        self.io.install()
 
         # Copy a file into the library.
         self.item_path = os.path.join(_common.RSRC, b"full.mp3")
@@ -444,8 +443,6 @@ class MoveTest(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
-        self.io.install()
-
         self.itempath = os.path.join(self.libdir, b"srcfile")
         shutil.copy(
             syspath(os.path.join(_common.RSRC, b"full.mp3")),
@@ -544,11 +541,9 @@ class MoveTest(BeetsTestCase):
         self.assertNotExists(self.otherdir)
 
 
-class UpdateTest(BeetsTestCase):
+class UpdateTest(IOMixin, BeetsTestCase):
     def setUp(self):
         super().setUp()
-
-        self.io.install()
 
         # Copy a file into the library.
         item_path = os.path.join(_common.RSRC, b"full.mp3")
@@ -742,11 +737,7 @@ class UpdateTest(BeetsTestCase):
         assert item.lyrics != "new lyrics"
 
 
-class PrintTest(BeetsTestCase):
-    def setUp(self):
-        super().setUp()
-        self.io.install()
-
+class PrintTest(IOMixin, BeetsTestCase):
     def test_print_without_locale(self):
         lang = os.environ.get("LANG")
         if lang:
@@ -1120,10 +1111,9 @@ class ConfigTest(TestPluginTestCase):
         )
 
 
-class ShowModelChangeTest(BeetsTestCase):
+class ShowModelChangeTest(IOMixin, BeetsTestCase):
     def setUp(self):
         super().setUp()
-        self.io.install()
         self.a = _common.item()
         self.b = _common.item()
         self.a.path = self.b.path
@@ -1172,10 +1162,9 @@ class ShowModelChangeTest(BeetsTestCase):
         assert "bar" in out
 
 
-class ShowChangeTest(BeetsTestCase):
+class ShowChangeTest(IOMixin, BeetsTestCase):
     def setUp(self):
         super().setUp()
-        self.io.install()
 
         self.items = [_common.item()]
         self.items[0].track = 1
@@ -1397,7 +1386,7 @@ class PluginTest(TestPluginTestCase):
     os.environ.get("GITHUB_ACTIONS") == "true" and sys.platform == "linux",
     reason="Completion is for some reason unhappy on Ubuntu 24.04 in CI",
 )
-class CompletionTest(TestPluginTestCase):
+class CompletionTest(IOMixin, TestPluginTestCase):
     def test_completion(self):
         # Do not load any other bash completion scripts on the system.
         env = dict(os.environ)
@@ -1427,7 +1416,6 @@ class CompletionTest(TestPluginTestCase):
             self.skipTest("could not read bash-completion script")
 
         # Load completion script.
-        self.io.install()
         self.run_command("completion", lib=None)
         completion_script = self.io.getoutput().encode("utf-8")
         self.io.restore()
