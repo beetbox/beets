@@ -43,6 +43,7 @@ from beets.test.helper import (
     AutotagStub,
     BeetsTestCase,
     ImportTestCase,
+    IOMixin,
     PluginMixin,
     capture_log,
     has_program,
@@ -1588,13 +1589,11 @@ class ReimportTest(AutotagImportTestCase):
         assert self._album().data_source == "match_source"
 
 
-class ImportPretendTest(AutotagImportTestCase):
+class ImportPretendTest(IOMixin, AutotagImportTestCase):
     """Test the pretend commandline option"""
 
     def setUp(self):
         super().setUp()
-        self.io.install()
-
         self.album_track_path = self.prepare_album_for_import(1)[0]
         self.single_path = self.prepare_track_for_import(2, self.import_path)
         self.album_path = self.album_track_path.parent

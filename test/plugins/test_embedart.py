@@ -24,7 +24,12 @@ from mediafile import MediaFile
 
 from beets import art, config, logging, ui
 from beets.test import _common
-from beets.test.helper import BeetsTestCase, FetchImageHelper, PluginMixin
+from beets.test.helper import (
+    BeetsTestCase,
+    FetchImageHelper,
+    IOMixin,
+    PluginMixin,
+)
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
 from test.test_art_resize import DummyIMBackend
@@ -68,16 +73,12 @@ def require_artresizer_compare(test):
     return wrapper
 
 
-class EmbedartCliTest(PluginMixin, FetchImageHelper, BeetsTestCase):
+class EmbedartCliTest(IOMixin, PluginMixin, FetchImageHelper, BeetsTestCase):
     plugin = "embedart"
     small_artpath = os.path.join(_common.RSRC, b"image-2x3.jpg")
     abbey_artpath = os.path.join(_common.RSRC, b"abbey.jpg")
     abbey_similarpath = os.path.join(_common.RSRC, b"abbey-similar.jpg")
     abbey_differentpath = os.path.join(_common.RSRC, b"abbey-different.jpg")
-
-    def setUp(self):
-        super().setUp()  # Converter is threaded
-        self.io.install()
 
     def _setup_data(self, artpath=None):
         if not artpath:
