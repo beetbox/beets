@@ -804,9 +804,13 @@ class ArtImporterTest(UseThePlugin):
         self.assertExists(self.art_file)
 
     def test_delete_original_file(self):
-        self.plugin.src_removed = True
-        self._fetch_art(True)
-        self.assertNotExists(self.art_file)
+        prev_move = config["import"]["move"].get()
+        try:
+            config["import"]["move"] = True
+            self._fetch_art(True)
+            self.assertNotExists(self.art_file)
+        finally:
+            config["import"]["move"] = prev_move
 
     def test_do_not_delete_original_if_already_in_place(self):
         artdest = os.path.join(os.path.dirname(self.i.path), b"cover.jpg")
