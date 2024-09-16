@@ -163,6 +163,20 @@ NEEDS_REFLINK = unittest.skipUnless(
 )
 
 
+class IOMixin:
+    @cached_property
+    def io(self) -> _common.DummyIO:
+        return _common.DummyIO()
+
+    def setUp(self):
+        super().setUp()
+        self.io.install()
+
+    def tearDown(self):
+        super().tearDown()
+        self.io.restore()
+
+
 class TestHelper(_common.Assertions, ConfigMixin):
     """Helper mixin for high-level cli and plugin tests.
 
@@ -215,12 +229,8 @@ class TestHelper(_common.Assertions, ConfigMixin):
             dbpath = ":memory:"
         self.lib = Library(dbpath, self.libdir)
 
-        # Initialize, but don't install, a DummyIO.
-        self.io = _common.DummyIO()
-
     def teardown_beets(self):
         self.env_patcher.stop()
-        self.io.restore()
         self.lib._close()
         self.remove_temp_dir()
 
@@ -759,7 +769,7 @@ class TerminalImportSessionFixture(TerminalImportSession):
             self._add_choice_input()
 
 
-class TerminalImportMixin(ImportHelper):
+class TerminalImportMixin(IOMixin, ImportHelper):
     """Provides_a terminal importer for the import session."""
 
     io: _common.DummyIO
