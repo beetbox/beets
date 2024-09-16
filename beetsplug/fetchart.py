@@ -1252,10 +1252,6 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         self.cautious = self.config["cautious"].get(bool)
         self.store_source = self.config["store_source"].get(bool)
 
-        self.src_removed = config["import"]["delete"].get(bool) or config[
-            "import"
-        ]["move"].get(bool)
-
         self.cover_format = self.config["cover_format"].get(
             confuse.Optional(str)
         )
@@ -1296,6 +1292,10 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
             ART_SOURCES[s](self._log, self.config, match_by=[c])
             for s, c in sources
         ]
+
+    @staticmethod
+    def _is_source_file_removal_enabled():
+        return config["import"]["delete"] or config["import"]["move"]
 
     # Asynchronous; after music is added to the library.
     def fetch_art(self, session, task):
@@ -1339,10 +1339,11 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         """Place the discovered art in the filesystem."""
         if task in self.art_candidates:
             candidate = self.art_candidates.pop(task)
+            removal_enabled = FetchArtPlugin._is_source_file_removal_enabled()
 
-            self._set_art(task.album, candidate, not self.src_removed)
+            self._set_art(task.album, candidate, not removal_enabled)
 
-            if self.src_removed:
+            if removal_enabled:
                 task.prune(candidate.path)
 
     # Manual album art fetching.
