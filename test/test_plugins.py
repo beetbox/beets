@@ -32,9 +32,8 @@ from beets.importer import (
 from beets.library import Item
 from beets.plugins import MetadataSourcePlugin
 from beets.test import helper
-from beets.test.helper import AutotagStub, ImportHelper
+from beets.test.helper import AutotagStub, ImportHelper, TerminalImportMixin
 from beets.test.helper import PluginTestCase as BasePluginTestCase
-from beets.test.helper import TerminalImportMixin
 from beets.util import displayable_path, syspath
 from beets.util.id_extractors import (
     beatport_id_regex,
@@ -142,7 +141,7 @@ class ItemTypeConflictTest(PluginLoaderTestCase):
         self.advent_listener_plugin = AdventListenerPlugin
         self.register_plugin(EventListenerPlugin)
         self.register_plugin(AdventListenerPlugin)
-        with pytest.raises(plugins.PluginConflictException):
+        with pytest.raises(plugins.PluginConflictError):
             plugins.types(Item)
 
     def test_match(self):

@@ -85,10 +85,10 @@ class FieldsTest(ItemInDBTestCase):
         super().tearDown()
         self.io.restore()
 
-    def remove_keys(self, l, text):
+    def remove_keys(self, keys, text):
         for i in text:
             try:
-                l.remove(i)
+                keys.remove(i)
             except ValueError:
                 pass
 

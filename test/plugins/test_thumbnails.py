@@ -33,9 +33,9 @@ from beetsplug.thumbnails import (
 
 class ThumbnailsTest(BeetsTestCase):
     @patch("beetsplug.thumbnails.ArtResizer")
-    @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok")
+    @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok", Mock())
     @patch("beetsplug.thumbnails.os.stat")
-    def test_add_tags(self, mock_stat, _, mock_artresizer):
+    def test_add_tags(self, mock_stat, mock_artresizer):
         plugin = ThumbnailsPlugin()
         plugin.get_uri = Mock(
             side_effect={b"/path/to/cover": "COVER_URI"}.__getitem__
@@ -98,13 +98,13 @@ class ThumbnailsTest(BeetsTestCase):
         giouri_inst.available = False
         assert ThumbnailsPlugin().get_uri.__self__.__class__ == PathlibURI
 
-    @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok")
+    @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok", Mock())
     @patch("beetsplug.thumbnails.ArtResizer")
     @patch("beetsplug.thumbnails.util")
     @patch("beetsplug.thumbnails.os")
     @patch("beetsplug.thumbnails.shutil")
     def test_make_cover_thumbnail(
-        self, mock_shutils, mock_os, mock_util, mock_artresizer, _
+        self, mock_shutils, mock_os, mock_util, mock_artresizer
     ):
         thumbnail_dir = os.path.normpath(b"/thumbnail/dir")
         md5_file = os.path.join(thumbnail_dir, b"md5")
@@ -166,8 +166,8 @@ class ThumbnailsTest(BeetsTestCase):
         plugin.make_cover_thumbnail(album, 12345, thumbnail_dir)
         mock_resize.assert_called_once_with(12345, path_to_art, md5_file)
 
-    @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok")
-    def test_make_dolphin_cover_thumbnail(self, _):
+    @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok", Mock())
+    def test_make_dolphin_cover_thumbnail(self):
         plugin = ThumbnailsPlugin()
         tmp = bytestring_path(mkdtemp())
         album = Mock(path=tmp, artpath=os.path.join(tmp, b"cover.jpg"))
@@ -189,9 +189,9 @@ class ThumbnailsTest(BeetsTestCase):
 
         rmtree(syspath(tmp))
 
-    @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok")
+    @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok", Mock())
     @patch("beetsplug.thumbnails.ArtResizer")
-    def test_process_album(self, mock_artresizer, _):
+    def test_process_album(self, mock_artresizer):
         get_size = mock_artresizer.shared.get_size
 
         plugin = ThumbnailsPlugin()
@@ -234,9 +234,9 @@ class ThumbnailsTest(BeetsTestCase):
             any_order=True,
         )
 
-    @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok")
+    @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok", Mock())
     @patch("beetsplug.thumbnails.decargs")
-    def test_invokations(self, mock_decargs, _):
+    def test_invokations(self, mock_decargs):
         plugin = ThumbnailsPlugin()
         plugin.process_album = Mock()
         album = Mock()

@@ -17,7 +17,6 @@ import os.path
 import shutil
 import tempfile
 import unittest
-from test.test_art_resize import DummyIMBackend
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -28,6 +27,7 @@ from beets.test import _common
 from beets.test.helper import BeetsTestCase, FetchImageHelper, PluginMixin
 from beets.util import bytestring_path, displayable_path, syspath
 from beets.util.artresizer import ArtResizer
+from test.test_art_resize import DummyIMBackend
 
 
 def require_artresizer_compare(test):

@@ -253,6 +253,7 @@ max-line-length = 88
 [tool.ruff.lint.flake8-pytest-style]
 fixture-parentheses = false
 mark-parentheses = false
+parametrize-names-type = "csv"
 
 [tool.ruff.lint.flake8-unused-arguments]
 ignore-variadic-names = true

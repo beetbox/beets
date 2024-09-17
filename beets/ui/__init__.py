@@ -1864,7 +1864,7 @@ def main(args=None):
         message = exc.args[0] if exc.args else None
         log.error("error: {0}", message)
         sys.exit(1)
-    except util.HumanReadableException as exc:
+    except util.HumanReadableError as exc:
         exc.log(log)
         sys.exit(1)
     except library.FileOperationError as exc:

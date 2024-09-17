@@ -47,7 +47,7 @@ class PluralityTest(BeetsTestCase):
         assert freq == 2
 
     def test_plurality_empty_sequence_raises_error(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="must be non-empty"):
             plurality([])
 
     def test_current_metadata_finds_pluralities(self):

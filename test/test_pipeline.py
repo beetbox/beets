@@ -33,14 +33,14 @@ def _work():
         i *= 2
 
 
-def _consume(l):
+def _consume(result):
     while True:
         i = yield
-        l.append(i)
+        result.append(i)
 
 
 # A worker that raises an exception.
-class ExceptionFixture(Exception):
+class PipelineError(Exception):
     pass
 
 
@@ -49,7 +49,7 @@ def _exc_work(num=3):
     while True:
         i = yield i
         if i == num:
-            raise ExceptionFixture()
+            raise PipelineError()
         i *= 2
 
 
@@ -74,16 +74,18 @@ def _multi_work():
 
 class SimplePipelineTest(unittest.TestCase):
     def setUp(self):
-        self.l = []
-        self.pl = pipeline.Pipeline((_produce(), _work(), _consume(self.l)))
+        self.result = []
+        self.pl = pipeline.Pipeline(
+            (_produce(), _work(), _consume(self.result))
+        )
 
     def test_run_sequential(self):
         self.pl.run_sequential()
-        assert self.l == [0, 2, 4, 6, 8]
+        assert self.result == [0, 2, 4, 6, 8]
 
     def test_run_parallel(self):
         self.pl.run_parallel()
-        assert self.l == [0, 2, 4, 6, 8]
+        assert self.result == [0, 2, 4, 6, 8]
 
     def test_pull(self):
         pl = pipeline.Pipeline((_produce(), _work()))
@@ -97,19 +99,19 @@ class SimplePipelineTest(unittest.TestCase):
 
 class ParallelStageTest(unittest.TestCase):
     def setUp(self):
-        self.l = []
+        self.result = []
         self.pl = pipeline.Pipeline(
-            (_produce(), (_work(), _work()), _consume(self.l))
+            (_produce(), (_work(), _work()), _consume(self.result))
         )
 
     def test_run_sequential(self):
         self.pl.run_sequential()
-        assert self.l == [0, 2, 4, 6, 8]
+        assert self.result == [0, 2, 4, 6, 8]
 
     def test_run_parallel(self):
         self.pl.run_parallel()
         # Order possibly not preserved; use set equality.
-        assert set(self.l) == {0, 2, 4, 6, 8}
+        assert set(self.result) == {0, 2, 4, 6, 8}
 
     def test_pull(self):
         pl = pipeline.Pipeline((_produce(), (_work(), _work())))
@@ -118,15 +120,17 @@ class ParallelStageTest(unittest.TestCase):
 
 class ExceptionTest(unittest.TestCase):
     def setUp(self):
-        self.l = []
-        self.pl = pipeline.Pipeline((_produce(), _exc_work(), _consume(self.l)))
+        self.result = []
+        self.pl = pipeline.Pipeline(
+            (_produce(), _exc_work(), _consume(self.result))
+        )
 
     def test_run_sequential(self):
-        with pytest.raises(ExceptionFixture):
+        with pytest.raises(PipelineError):
             self.pl.run_sequential()
 
     def test_run_parallel(self):
-        with pytest.raises(ExceptionFixture):
+        with pytest.raises(PipelineError):
             self.pl.run_parallel()
 
     def test_pull(self):
@@ -134,59 +138,65 @@ class ExceptionTest(unittest.TestCase):
         pull = pl.pull()
         for i in range(3):
             next(pull)
-        with pytest.raises(ExceptionFixture):
+        with pytest.raises(PipelineError):
             next(pull)
 
 
 class ParallelExceptionTest(unittest.TestCase):
     def setUp(self):
-        self.l = []
+        self.result = []
         self.pl = pipeline.Pipeline(
-            (_produce(), (_exc_work(), _exc_work()), _consume(self.l))
+            (_produce(), (_exc_work(), _exc_work()), _consume(self.result))
         )
 
     def test_run_parallel(self):
-        with pytest.raises(ExceptionFixture):
+        with pytest.raises(PipelineError):
             self.pl.run_parallel()
 
 
 class ConstrainedThreadedPipelineTest(unittest.TestCase):
+    def setUp(self):
+        self.result = []
+
     def test_constrained(self):
-        l = []
         # Do a "significant" amount of work...
-        pl = pipeline.Pipeline((_produce(1000), _work(), _consume(l)))
+        self.pl = pipeline.Pipeline(
+            (_produce(1000), _work(), _consume(self.result))
+        )
         # ... with only a single queue slot.
-        pl.run_parallel(1)
-        assert l == [i * 2 for i in range(1000)]
+        self.pl.run_parallel(1)
+        assert self.result == [i * 2 for i in range(1000)]
 
     def test_constrained_exception(self):
         # Raise an exception in a constrained pipeline.
-        l = []
-        pl = pipeline.Pipeline((_produce(1000), _exc_work(), _consume(l)))
-        with pytest.raises(ExceptionFixture):
-            pl.run_parallel(1)
+        self.pl = pipeline.Pipeline(
+            (_produce(1000), _exc_work(), _consume(self.result))
+        )
+        with pytest.raises(PipelineError):
+            self.pl.run_parallel(1)
 
     def test_constrained_parallel(self):
-        l = []
-        pl = pipeline.Pipeline(
-            (_produce(1000), (_work(), _work()), _consume(l))
+        self.pl = pipeline.Pipeline(
+            (_produce(1000), (_work(), _work()), _consume(self.result))
         )
-        pl.run_parallel(1)
-        assert set(l) == {i * 2 for i in range(1000)}
+        self.pl.run_parallel(1)
+        assert set(self.result) == {i * 2 for i in range(1000)}
 
 
 class BubbleTest(unittest.TestCase):
     def setUp(self):
-        self.l = []
-        self.pl = pipeline.Pipeline((_produce(), _bub_work(), _consume(self.l)))
+        self.result = []
+        self.pl = pipeline.Pipeline(
+            (_produce(), _bub_work(), _consume(self.result))
+        )
 
     def test_run_sequential(self):
         self.pl.run_sequential()
-        assert self.l == [0, 2, 4, 8]
+        assert self.result == [0, 2, 4, 8]
 
     def test_run_parallel(self):
         self.pl.run_parallel()
-        assert self.l == [0, 2, 4, 8]
+        assert self.result == [0, 2, 4, 8]
 
     def test_pull(self):
         pl = pipeline.Pipeline((_produce(), _bub_work()))
@@ -195,18 +205,18 @@ class BubbleTest(unittest.TestCase):
 
 class MultiMessageTest(unittest.TestCase):
     def setUp(self):
-        self.l = []
+        self.result = []
         self.pl = pipeline.Pipeline(
-            (_produce(), _multi_work(), _consume(self.l))
+            (_produce(), _multi_work(), _consume(self.result))
         )
 
     def test_run_sequential(self):
         self.pl.run_sequential()
-        assert self.l == [0, 0, 1, -1, 2, -2, 3, -3, 4, -4]
+        assert self.result == [0, 0, 1, -1, 2, -2, 3, -3, 4, -4]
 
     def test_run_parallel(self):
         self.pl.run_parallel()
-        assert self.l == [0, 0, 1, -1, 2, -2, 3, -3, 4, -4]
+        assert self.result == [0, 0, 1, -1, 2, -2, 3, -3, 4, -4]
 
     def test_pull(self):
         pl = pipeline.Pipeline((_produce(), _multi_work()))

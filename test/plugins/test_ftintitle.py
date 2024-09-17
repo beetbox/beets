@@ -82,14 +82,14 @@ class FtInTitlePluginFunctional(PluginTestCase):
         item = self._ft_add_item("/", "Alice ft Bob", "Song 1", "Alice")
         self.run_command("ftintitle")
         item.load()
-        self.assertEqual(item["artist"], "Alice ft Bob")
-        self.assertEqual(item["title"], "Song 1 feat. Bob")
+        assert item["artist"] == "Alice ft Bob"
+        assert item["title"] == "Song 1 feat. Bob"
 
         item = self._ft_add_item("/", "Alice ft Bob", "Song 1", "Alice")
         self.run_command("ftintitle", "-d")
         item.load()
-        self.assertEqual(item["artist"], "Alice ft Bob")
-        self.assertEqual(item["title"], "Song 1")
+        assert item["artist"] == "Alice ft Bob"
+        assert item["title"] == "Song 1"
 
 
 class FtInTitlePluginTest(unittest.TestCase):

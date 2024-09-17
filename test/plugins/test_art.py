@@ -994,7 +994,7 @@ class DeprecatedConfigTest(BeetsTestCase):
         self.plugin = fetchart.FetchArtPlugin()
 
     def test_moves_filesystem_to_end(self):
-        assert type(self.plugin.sources[-1]) == fetchart.FileSystem
+        assert isinstance(self.plugin.sources[-1], fetchart.FileSystem)
 
 
 class EnforceRatioConfigTest(BeetsTestCase):
