@@ -281,7 +281,6 @@ class ListenersTest(PluginLoaderTestCase):
 
     @patch("beets.plugins.find_plugins")
     def test_listener_params(self, mock_find_plugins):
-
         class DummyPlugin(plugins.BeetsPlugin):
             def __init__(self):
                 super().__init__()

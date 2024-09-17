@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""List duplicate tracks or albums.
-"""
+"""List duplicate tracks or albums."""
 
 import os
 import shlex

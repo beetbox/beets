@@ -14,7 +14,6 @@
 
 """Tests for the play plugin"""
 
-
 import os
 import sys
 import unittest

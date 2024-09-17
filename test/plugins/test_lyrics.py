@@ -14,7 +14,6 @@
 
 """Tests for the 'lyrics' plugin."""
 
-
 import itertools
 import os
 import re
@@ -509,14 +508,14 @@ class GeniusFetchTest(GeniusBaseTest):
                         {
                             "result": {
                                 "primary_artist": {
-                                    "name": "\u200Bblackbear",
+                                    "name": "\u200bblackbear",
                                 },
                                 "url": "blackbear_url",
                             }
                         },
                         {
                             "result": {
-                                "primary_artist": {"name": "El\u002Dp"},
+                                "primary_artist": {"name": "El\u002dp"},
                                 "url": "El-p_url",
                             }
                         },
@@ -786,10 +785,10 @@ class SlugTests(unittest.TestCase):
         assert lyrics.slug(text) == "cafe-au-lait-boisson"
         text = "Multiple  spaces -- and symbols! -- merged"
         assert lyrics.slug(text) == "multiple-spaces-and-symbols-merged"
-        text = "\u200Bno-width-space"
+        text = "\u200bno-width-space"
         assert lyrics.slug(text) == "no-width-space"
 
         # variations of dashes should get standardized
-        dashes = ["\u200D", "\u2010"]
+        dashes = ["\u200d", "\u2010"]
         for dash1, dash2 in itertools.combinations(dashes, 2):
             assert lyrics.slug(dash1) == lyrics.slug(dash2)

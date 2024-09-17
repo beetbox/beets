@@ -12,8 +12,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Searches for albums in the MusicBrainz database.
-"""
+"""Searches for albums in the MusicBrainz database."""
+
 from __future__ import annotations
 
 import re

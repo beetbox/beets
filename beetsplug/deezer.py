@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Adds Deezer release and track search support to the autotagger
-"""
+"""Adds Deezer release and track search support to the autotagger"""
 
 import collections
 import time
@@ -112,8 +111,8 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
             day = None
         else:
             raise ui.UserError(
-                "Invalid `release_date` returned "
-                "by {} API: '{}'".format(self.data_source, release_date)
+                f"Invalid `release_date` returned by {self.data_source} API: "
+                f"{release_date!r}"
             )
         tracks_obj = self.fetch_data(self.album_url + deezer_id + "/tracks")
         if tracks_obj is None:

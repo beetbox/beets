@@ -20,7 +20,6 @@ use {}-style formatting and can interpolate keywords arguments to the logging
 calls (`debug`, `info`, etc).
 """
 
-
 import logging
 import threading
 from copy import copy

@@ -14,7 +14,6 @@
 
 """Support for beets plugins."""
 
-
 import abc
 import inspect
 import re

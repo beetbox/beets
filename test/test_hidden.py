@@ -14,7 +14,6 @@
 
 """Tests for the 'hidden' utility."""
 
-
 import ctypes
 import errno
 import subprocess

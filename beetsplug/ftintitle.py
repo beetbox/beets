@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Moves "featured" artists to the title from the artist field.
-"""
+"""Moves "featured" artists to the title from the artist field."""
 
 import re
 

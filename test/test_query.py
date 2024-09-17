@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Various tests for querying the library database.
-"""
+"""Various tests for querying the library database."""
 
 import os
 import sys

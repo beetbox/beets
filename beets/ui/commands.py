@@ -16,7 +16,6 @@
 interface.
 """
 
-
 import os
 import re
 from collections import Counter
@@ -1317,8 +1316,7 @@ def import_files(lib, paths, query):
             loghandler = logging.FileHandler(logpath, encoding="utf-8")
         except OSError:
             raise ui.UserError(
-                "could not open log file for writing: "
-                "{}".format(displayable_path(logpath))
+                f"Could not open log file for writing: {displayable_path(logpath)}"
             )
     else:
         loghandler = None

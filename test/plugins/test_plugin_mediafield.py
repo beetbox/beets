@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Tests the facility that lets plugins add custom field to MediaFile.
-"""
+"""Tests the facility that lets plugins add custom field to MediaFile."""
 
 import os
 import shutil

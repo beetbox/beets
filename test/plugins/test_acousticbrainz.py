@@ -12,9 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Tests for the 'acousticbrainz' plugin.
-"""
-
+"""Tests for the 'acousticbrainz' plugin."""
 
 import json
 import os.path

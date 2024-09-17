@@ -14,7 +14,6 @@
 
 """Tests for the 'parentwork' plugin."""
 
-
 import os
 import unittest
 from unittest.mock import patch
