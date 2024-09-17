@@ -15,9 +15,10 @@
 
 import os
 import sys
-from test.plugins import test_lyrics
 
 import requests
+
+from test.plugins import test_lyrics
 
 
 def mkdir_p(path):

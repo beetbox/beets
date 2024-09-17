@@ -1026,7 +1026,7 @@ def manual_id(session, task):
 
 def abort_action(session, task):
     """A prompt choice callback that aborts the importer."""
-    raise importer.ImportAbort()
+    raise importer.ImportAbortError()
 
 
 class TerminalImportSession(importer.ImportSession):
@@ -1056,7 +1056,7 @@ class TerminalImportSession(importer.ImportSession):
         if len(actions) == 1:
             return actions[0]
         elif len(actions) > 1:
-            raise plugins.PluginConflictException(
+            raise plugins.PluginConflictError(
                 "Only one handler for `import_task_before_choice` may return "
                 "an action."
             )

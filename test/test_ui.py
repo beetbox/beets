@@ -1235,21 +1235,25 @@ class ShowChangeTest(BeetsTestCase):
     def test_item_data_change(self):
         self.items[0].title = "different"
         msg = self._show_change()
-        assert "different" in msg and "the title" in msg
+        assert "different" in msg
+        assert "the title" in msg
 
     def test_item_data_change_with_unicode(self):
         self.items[0].title = "caf\xe9"
         msg = self._show_change()
-        assert "caf\xe9" in msg and "the title" in msg
+        assert "caf\xe9" in msg
+        assert "the title" in msg
 
     def test_album_data_change_with_unicode(self):
         msg = self._show_change(cur_artist="caf\xe9", cur_album="another album")
-        assert "caf\xe9" in msg and "the artist" in msg
+        assert "caf\xe9" in msg
+        assert "the artist" in msg
 
     def test_item_data_change_title_missing(self):
         self.items[0].title = ""
         msg = re.sub(r"  +", " ", self._show_change())
-        assert "file.mp3" in msg and "the title" in msg
+        assert "file.mp3" in msg
+        assert "the title" in msg
 
     def test_item_data_change_title_missing_with_unicode_filename(self):
         self.items[0].title = ""
@@ -1454,69 +1458,69 @@ class CommonOptionsParserCliTest(BeetsTestCase):
         self.lib.add_album([self.item])
 
     def test_base(self):
-        l = self.run_with_output("ls")
-        assert l == "the artist - the album - the title\n"
+        output = self.run_with_output("ls")
+        assert output == "the artist - the album - the title\n"
 
-        l = self.run_with_output("ls", "-a")
-        assert l == "the album artist - the album\n"
+        output = self.run_with_output("ls", "-a")
+        assert output == "the album artist - the album\n"
 
     def test_path_option(self):
-        l = self.run_with_output("ls", "-p")
-        assert l == "xxx/yyy\n"
+        output = self.run_with_output("ls", "-p")
+        assert output == "xxx/yyy\n"
 
-        l = self.run_with_output("ls", "-a", "-p")
-        assert l == "xxx\n"
+        output = self.run_with_output("ls", "-a", "-p")
+        assert output == "xxx\n"
 
     def test_format_option(self):
-        l = self.run_with_output("ls", "-f", "$artist")
-        assert l == "the artist\n"
+        output = self.run_with_output("ls", "-f", "$artist")
+        assert output == "the artist\n"
 
-        l = self.run_with_output("ls", "-a", "-f", "$albumartist")
-        assert l == "the album artist\n"
+        output = self.run_with_output("ls", "-a", "-f", "$albumartist")
+        assert output == "the album artist\n"
 
     def test_format_option_unicode(self):
-        l = self.run_with_output(
+        output = self.run_with_output(
             b"ls", b"-f", "caf\xe9".encode(util.arg_encoding())
         )
-        assert l == "caf\xe9\n"
+        assert output == "caf\xe9\n"
 
     def test_root_format_option(self):
-        l = self.run_with_output(
+        output = self.run_with_output(
             "--format-item", "$artist", "--format-album", "foo", "ls"
         )
-        assert l == "the artist\n"
+        assert output == "the artist\n"
 
-        l = self.run_with_output(
+        output = self.run_with_output(
             "--format-item", "foo", "--format-album", "$albumartist", "ls", "-a"
         )
-        assert l == "the album artist\n"
+        assert output == "the album artist\n"
 
     def test_help(self):
-        l = self.run_with_output("help")
-        assert "Usage:" in l
+        output = self.run_with_output("help")
+        assert "Usage:" in output
 
-        l = self.run_with_output("help", "list")
-        assert "Usage:" in l
+        output = self.run_with_output("help", "list")
+        assert "Usage:" in output
 
         with pytest.raises(ui.UserError):
             self.run_command("help", "this.is.not.a.real.command")
 
     def test_stats(self):
-        l = self.run_with_output("stats")
-        assert "Approximate total size:" in l
+        output = self.run_with_output("stats")
+        assert "Approximate total size:" in output
 
         # # Need to have more realistic library setup for this to work
-        # l = self.run_with_output('stats', '-e')
-        # assert 'Total size:' in l
+        # output = self.run_with_output('stats', '-e')
+        # assert 'Total size:' in output
 
     def test_version(self):
-        l = self.run_with_output("version")
-        assert "Python version" in l
-        assert "no plugins loaded" in l
+        output = self.run_with_output("version")
+        assert "Python version" in output
+        assert "no plugins loaded" in output
 
         # # Need to have plugin loaded
-        # l = self.run_with_output('version')
-        # assert 'plugins: ' in l
+        # output = self.run_with_output('version')
+        # assert 'plugins: ' in output
 
 
 class CommonOptionsParserTest(BeetsTestCase):

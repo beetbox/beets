@@ -54,7 +54,7 @@ FIELDS_TO_MB_KEYS = {
 musicbrainzngs.set_useragent("beets", beets.__version__, "https://beets.io/")
 
 
-class MusicBrainzAPIError(util.HumanReadableException):
+class MusicBrainzAPIError(util.HumanReadableError):
     """An error while talking to MusicBrainz. The `query` field is the
     parameter to the action and may have any type.
     """

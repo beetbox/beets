@@ -67,7 +67,7 @@ PathLike = Union[BytesOrStr, Path]
 Replacements: TypeAlias = "Sequence[tuple[Pattern[str], str]]"
 
 
-class HumanReadableException(Exception):
+class HumanReadableError(Exception):
     """An Exception that can include a human-readable error message to
     be logged without a traceback. Can preserve a traceback for
     debugging purposes as well.
@@ -123,7 +123,7 @@ class HumanReadableException(Exception):
         logger.error("{0}: {1}", self.error_kind, self.args[0])
 
 
-class FilesystemError(HumanReadableException):
+class FilesystemError(HumanReadableError):
     """An error that occurred while performing a filesystem manipulation
     via a function in this module. The `paths` field is a sequence of
     pathnames involved in the operation.

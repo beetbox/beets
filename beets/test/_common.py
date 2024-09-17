@@ -171,7 +171,7 @@ class Assertions:
 # Mock I/O.
 
 
-class InputException(Exception):
+class InputError(Exception):
     def __init__(self, output=None):
         self.output = output
 
@@ -218,9 +218,9 @@ class DummyIn:
     def readline(self):
         if not self.buf:
             if self.out:
-                raise InputException(self.out.get())
+                raise InputError(self.out.get())
             else:
-                raise InputException()
+                raise InputError()
         self.reads += 1
         return self.buf.pop(0)
 

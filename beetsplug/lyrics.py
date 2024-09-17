@@ -1061,7 +1061,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
             if any(lyrics):
                 break
 
-        lyrics = "\n\n---\n\n".join([l for l in lyrics if l])
+        lyrics = "\n\n---\n\n".join(filter(None, lyrics))
 
         if lyrics:
             self._log.info("fetched lyrics: {0}", item)
