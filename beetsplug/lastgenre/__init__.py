@@ -303,6 +303,25 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             "track", LASTFM.get_track, obj.artist, obj.title
         )
 
+    def _get_existing_genres(self, obj, separator):
+        """Return a list of genres for this Item or Album."""
+        if isinstance(obj, library.Item):
+            item_genre = obj.get("genre", with_album=False).split(separator)
+        else:
+            item_genre = obj.get("genre").split(separator)
+
+        if any(item_genre):
+            return item_genre
+        return []
+
+    def _dedup_genres(self, genres, whitelist_only=True):
+        """Return a list of deduplicated genres. Depending on the
+        whitelist_only option, gives filtered or unfiltered results."""
+        if whitelist_only:
+            return deduplicate([g for g in genres if self._is_allowed(g)])
+        else:
+            return deduplicate([g for g in genres])
+
     def _get_genre(self, obj):
         """Get the genre string for an Album or Item object based on
         self.sources. Return a `(genre, source)` pair. The
@@ -315,30 +334,47 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             - None
         """
 
-        # Shortcut to existing genre if not forcing.
-        if not self.config["force"]:
-            separator = self.config["separator"].get()
-            if isinstance(obj, library.Item):
-                genres = obj.get("genre", with_album=False).split(separator)
+        separator = self.config["separator"].get()
+        keep_genres = []
+
+        if self.config["force"]:
+            genres = self._get_existing_genres(obj, separator)
+            # Case 3 - Keep WHITELISTED. Combine with new.
+            # Case 1 - Keep None. Overwrite all.
+            if self.config['keep_allowed']:
+                keep_genres = self._dedup_genres(genres, whitelist_only=True)
             else:
-                genres = obj.get("genre").split(separator)
-            keep_allowed = deduplicate(
-                [g for g in genres if self._is_allowed(g)]
-            )
-            if keep_allowed:
-                return separator.join(keep_allowed), "keep"
+                keep_genres = None
+        else:
+            genres = self._get_existing_genres(obj, separator)
+            # Case 4 - Keep WHITELISTED. Handle empty.
+            # Case 2 - Keep ANY. Handle empty.
+            if genres and self.config['keep_allowed']:
+                keep_genres = self._dedup_genres(genres, whitelist_only=True)
+                return separator.join(keep_genres), "keep allowed"
+            elif genres and not self.config['keep_allowed']:
+                keep_genres = self._dedup_genres(genres)
+                return separator.join(keep_genres), "keep any"
+            # else: Move on, genre tag is empty.
 
         # Track genre (for Items only).
-        if isinstance(obj, library.Item):
-            if "track" in self.sources:
-                result = self.fetch_track_genre(obj)
-                if result:
-                    return result, "track"
+        if isinstance(obj, library.Item) and "track" in self.sources:
+            result = self.fetch_track_genre(obj)
+            if result and keep_genres:
+                results = result.split(separator)
+                combined_genres = deduplicate(keep_genres + results)
+                return separator.join(combined_genres), "keep + track"
+            elif result:
+                return result, "track"
 
         # Album genre.
         if "album" in self.sources:
             result = self.fetch_album_genre(obj)
-            if result:
+            if result and keep_genres:
+                results = result.split(separator)
+                combined_genres = deduplicate(keep_genres + results)
+                return separator.join(combined_genres), "keep + album"
+            elif result:
                 return result, "album"
 
         # Artist (or album artist) genre.
@@ -362,7 +398,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 if item_genres:
                     result, _ = plurality(item_genres)
 
-            if result:
+            if result and keep_genres:
+                results = result.split(separator)
+                combined_genres = deduplicate(keep_genres + results)
+                return separator.join(combined_genres), "keep + artist"
+            elif result:
                 return result, "artist"
 
         # Filter the existing genre.
