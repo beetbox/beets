@@ -14,7 +14,6 @@
 
 """Tests for the 'bucket' plugin."""
 
-
 import pytest
 
 from beets import config, ui

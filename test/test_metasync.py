@@ -69,12 +69,12 @@ class MetaSyncTest(PluginTestCase):
         items[1].album = "An Awesome Wave"
 
         if _is_windows():
-            items[0].path = (
-                "G:\\Music\\Alt-J\\An Awesome Wave\\03 Tessellate.mp3"
-            )
-            items[1].path = (
-                "G:\\Music\\Alt-J\\An Awesome Wave\\04 Breezeblocks.mp3"
-            )
+            items[
+                0
+            ].path = "G:\\Music\\Alt-J\\An Awesome Wave\\03 Tessellate.mp3"
+            items[
+                1
+            ].path = "G:\\Music\\Alt-J\\An Awesome Wave\\04 Breezeblocks.mp3"
         else:
             items[0].path = "/Music/Alt-J/An Awesome Wave/03 Tessellate.mp3"
             items[1].path = "/Music/Alt-J/An Awesome Wave/04 Breezeblocks.mp3"

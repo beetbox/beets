@@ -12,9 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Use command-line tools to check for audio file corruption.
-"""
-
+"""Use command-line tools to check for audio file corruption."""
 
 import errno
 import os

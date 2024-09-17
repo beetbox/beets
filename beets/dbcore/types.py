@@ -12,8 +12,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Representation of type information for DBCore model fields.
-"""
+"""Representation of type information for DBCore model fields."""
+
 import typing
 from abc import ABC
 from typing import Any, Generic, List, TypeVar, Union, cast

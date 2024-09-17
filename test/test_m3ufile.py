@@ -13,7 +13,6 @@
 # included in all copies or substantial portions of the Software.
 """Testsuite for the M3UFile class."""
 
-
 import sys
 import unittest
 from os import path

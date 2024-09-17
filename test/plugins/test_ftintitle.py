@@ -14,7 +14,6 @@
 
 """Tests for the 'ftintitle' plugin."""
 
-
 import unittest
 
 from beets.test.helper import PluginTestCase

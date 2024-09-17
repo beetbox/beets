@@ -1,5 +1,4 @@
-"""Tests for the 'permissions' plugin.
-"""
+"""Tests for the 'permissions' plugin."""
 
 import os
 import platform

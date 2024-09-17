@@ -3,7 +3,6 @@
 
 """Tests for the 'bareasc' plugin."""
 
-
 from beets import logging
 from beets.test.helper import PluginTestCase, capture_stdout
 

@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Tests for the command-line interface.
-"""
+"""Tests for the command-line interface."""
 
 import os
 import platform

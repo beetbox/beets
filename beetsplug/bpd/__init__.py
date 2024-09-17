@@ -17,7 +17,6 @@ Beets library. Attempts to implement a compatible protocol to allow
 use of the wide range of MPD clients.
 """
 
-
 import inspect
 import math
 import random

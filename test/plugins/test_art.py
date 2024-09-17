@@ -14,7 +14,6 @@
 
 """Tests for the album art fetchers."""
 
-
 import os
 import shutil
 from unittest.mock import patch

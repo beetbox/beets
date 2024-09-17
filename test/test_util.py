@@ -11,8 +11,7 @@
 #
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
-"""Tests for base utils from the beets.util package.
-"""
+"""Tests for base utils from the beets.util package."""
 
 import os
 import platform

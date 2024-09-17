@@ -627,8 +627,7 @@ class ImportTask(BaseImportTask):
             self.save_progress()
         if session.config["incremental"] and not (
             # Should we skip recording to incremental list?
-            self.skip
-            and session.config["incremental_skip_later"]
+            self.skip and session.config["incremental_skip_later"]
         ):
             self.save_history()
 

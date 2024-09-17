@@ -14,7 +14,6 @@
 
 """Tests for the 'albumtypes' plugin."""
 
-
 from typing import Sequence, Tuple
 
 from beets.autotag.mb import VARIOUS_ARTISTS_ID
