@@ -279,12 +279,20 @@ class DeezerPlugin(MetadataSourcePlugin, BeetsPlugin):
         if not query:
             return None
         self._log.debug(f"Searching {self.data_source} for '{query}'")
-        response = requests.get(
-            self.search_url + query_type,
-            params={"q": query},
-            timeout=10,
-        )
-        response.raise_for_status()
+        try:
+            response = requests.get(
+                self.search_url + query_type,
+                params={"q": query},
+                timeout=10,
+            )
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            self._log.error(
+                "Error fetching data from {} API\n Error: {}",
+                self.data_source,
+                e,
+            )
+            return None
         response_data = response.json().get("data", [])
         self._log.debug(
             "Found {} result(s) from {} for '{}'",
