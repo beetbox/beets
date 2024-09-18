@@ -34,6 +34,7 @@ Bug fixes:
   as a numpy array. Update ``librosa`` dependency constraint to prevent similar
   issues in the future.
   :bug:`5289`
+* :doc:`plugins/discogs`: Fixed the ``TypeError`` when there is no description.
 
 For packagers:
 
