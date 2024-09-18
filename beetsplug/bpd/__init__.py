@@ -738,13 +738,13 @@ class BaseServer:
 
     # Additions to the MPD protocol.
 
-    def cmd_crash_TypeError(self, conn):  # noqa: N802
+    def cmd_crash(self, conn):
         """Deliberately trigger a TypeError for testing purposes.
         We want to test that the server properly responds with ERROR_SYSTEM
         without crashing, and that this is not treated as ERROR_ARG (since it
         is caused by a programming error, not a protocol error).
         """
-        "a" + 2
+        raise TypeError
 
 
 class Connection:

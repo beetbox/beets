@@ -62,7 +62,7 @@ class PermissionsPluginTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
         for path in dirs_in_library(self.lib.directory, item.path):
             self.assertPerms(path, "dir", expect_success)
 
-    def assertPerms(self, path, typ, expect_success):  # noqa
+    def assertPerms(self, path, typ, expect_success):
         for x in [
             (True, self.exp_perms[expect_success][typ], "!="),
             (False, self.exp_perms[not expect_success][typ], "=="),
