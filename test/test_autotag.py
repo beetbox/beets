@@ -1040,20 +1040,3 @@ class StringDistanceTest(unittest.TestCase):
     def test_accented_characters(self):
         dist = string_dist("\xe9\xe1\xf1", "ean")
         assert dist == 0.0
-
-
-class EnumTest(BeetsTestCase):
-    """
-    Test Enum Subclasses defined in beets.util.enumeration
-    """
-
-    def test_ordered_enum(self):
-        OrderedEnumClass = match.OrderedEnum(  # noqa
-            "OrderedEnumTest", ["a", "b", "c"]
-        )
-        assert OrderedEnumClass.a < OrderedEnumClass.b
-        assert OrderedEnumClass.a < OrderedEnumClass.c
-        assert OrderedEnumClass.b < OrderedEnumClass.c
-        assert OrderedEnumClass.b > OrderedEnumClass.a
-        assert OrderedEnumClass.c > OrderedEnumClass.a
-        assert OrderedEnumClass.c > OrderedEnumClass.b

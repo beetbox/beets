@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import datetime
 import re
+from enum import IntEnum
 from typing import (
     Any,
     Dict,
@@ -47,7 +48,6 @@ from beets.autotag import (
 )
 from beets.library import Item
 from beets.util import plurality
-from beets.util.enumeration import OrderedEnum
 
 # Artist signals that indicate "various artists". These are used at the
 # album level to determine whether a given release is likely a VA
@@ -62,7 +62,7 @@ log = logging.getLogger("beets")
 # Recommendation enumeration.
 
 
-class Recommendation(OrderedEnum):
+class Recommendation(IntEnum):
     """Indicates a qualitative suggestion to the user about what should
     be done with a given match.
     """
