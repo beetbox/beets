@@ -1069,7 +1069,7 @@ def par_map(transform: Callable[[T], Any], items: Sequence[T]) -> None:
     pool.join()
 
 
-class cached_classproperty:  # noqa: N801
+class cached_classproperty:
     """A decorator implementing a read-only property that is *lazy* in
     the sense that the getter is only invoked once. Subsequent accesses
     through *any* instance use the cached result.

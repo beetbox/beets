@@ -260,3 +260,4 @@ ignore-variadic-names = true
 
 [tool.ruff.lint.pep8-naming]
 classmethod-decorators = ["cached_classproperty"]
+extend-ignore-names = ["assert*", "cached_classproperty"]

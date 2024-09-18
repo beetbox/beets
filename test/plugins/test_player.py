@@ -41,7 +41,7 @@ gstplayer = importlib.util.module_from_spec(
 )
 
 
-def _gstplayer_play(*_):  # noqa: 42
+def _gstplayer_play(*_):
     bpd.gstplayer._GstPlayer.playing = True
     return mock.DEFAULT
 
@@ -242,7 +242,7 @@ class MPCClient:
                 return line
 
 
-def implements(commands, expectedFailure=False):  # noqa: N803
+def implements(commands, fail=False):
     def _test(self):
         with self.run_bpd() as client:
             response = client.send_command("commands")
@@ -250,7 +250,7 @@ def implements(commands, expectedFailure=False):  # noqa: N803
         implemented = response.data["command"]
         assert commands.intersection(implemented) == commands
 
-    return unittest.expectedFailure(_test) if expectedFailure else _test
+    return unittest.expectedFailure(_test) if fail else _test
 
 
 bluelet_listener = bluelet.Listener
@@ -437,7 +437,7 @@ class BPDTest(BPDTestHelper):
 
     def test_system_error(self):
         with self.run_bpd() as client:
-            response = client.send_command("crash_TypeError")
+            response = client.send_command("crash")
         self._assert_failed(response, bpd.ERROR_SYSTEM)
 
     def test_empty_request(self):
@@ -763,7 +763,7 @@ class BPDControlTest(BPDTestHelper):
             "seekid",
             "seekcur",
         },
-        expectedFailure=True,
+        fail=True,
     )
 
     def test_cmd_play(self):
@@ -873,7 +873,7 @@ class BPDQueueTest(BPDTestHelper):
             "addtagid",
             "cleartagid",
         },
-        expectedFailure=True,
+        fail=True,
     )
 
     METADATA = {"Pos", "Time", "Id", "file", "duration"}
@@ -990,7 +990,7 @@ class BPDDatabaseTest(BPDTestHelper):
             "update",
             "rescan",
         },
-        expectedFailure=True,
+        fail=True,
     )
 
     def test_cmd_search(self):
@@ -1050,7 +1050,7 @@ class BPDMountsTest(BPDTestHelper):
             "listmounts",
             "listneighbors",
         },
-        expectedFailure=True,
+        fail=True,
     )
 
 
@@ -1059,7 +1059,7 @@ class BPDStickerTest(BPDTestHelper):
         {
             "sticker",
         },
-        expectedFailure=True,
+        fail=True,
     )
 
 
@@ -1142,7 +1142,7 @@ class BPDPartitionTest(BPDTestHelper):
             "listpartitions",
             "newpartition",
         },
-        expectedFailure=True,
+        fail=True,
     )
 
 
@@ -1154,7 +1154,7 @@ class BPDDeviceTest(BPDTestHelper):
             "toggleoutput",
             "outputs",
         },
-        expectedFailure=True,
+        fail=True,
     )
 
 
@@ -1166,7 +1166,7 @@ class BPDReflectionTest(BPDTestHelper):
             "notcommands",
             "urlhandlers",
         },
-        expectedFailure=True,
+        fail=True,
     )
 
     def test_cmd_decoders(self):
@@ -1187,5 +1187,5 @@ class BPDPeersTest(BPDTestHelper):
             "readmessages",
             "sendmessage",
         },
-        expectedFailure=True,
+        fail=True,
     )
