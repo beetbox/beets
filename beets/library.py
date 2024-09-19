@@ -1609,12 +1609,7 @@ class Library(dbcore.Database):
         timeout = beets.config["timeout"].as_number()
         super().__init__(path, timeout=timeout)
 
-        if directory is not None:
-            self.directory = normpath(directory)
-        else:
-            # Use the appropriate platform-specific fallback directory.
-            music_dir = platformdirs.user_music_path()
-            self.directory = bytestring_path(music_dir)
+        self.directory = normpath(directory or platformdirs.user_music_path())
 
         self.path_formats = path_formats
         self.replacements = replacements
