@@ -12,9 +12,9 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Tests for discogs plugin.
-"""
+"""Tests for discogs plugin."""
 
+import pytest
 
 from beets import config
 from beets.test._common import Bag
@@ -423,3 +423,26 @@ class DGAlbumInfoTest(BeetsTestCase):
         d = DiscogsPlugin().get_album_info(release)
         assert d.genre == "GENRE1, GENRE2"
         assert d.style is None
+
+
+@pytest.mark.parametrize(
+    "formats, expected_media, expected_albumtype",
+    [
+        (None, None, None),
+        (
+            [
+                {
+                    "descriptions": ['7"', "Single", "45 RPM"],
+                    "name": "Vinyl",
+                    "qty": 1,
+                }
+            ],
+            "Vinyl",
+            '7", Single, 45 RPM',
+        ),
+    ],
+)
+def test_get_media_and_albumtype(formats, expected_media, expected_albumtype):
+    result = DiscogsPlugin.get_media_and_albumtype(formats)
+
+    assert result == (expected_media, expected_albumtype)
