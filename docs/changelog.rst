@@ -23,18 +23,18 @@ New features:
 
 Bug fixes:
 
-* Improved naming of temporary files by separating the random part with the file extension.
-* Fixed the ``auto`` value for the :ref:`reflink` config option.
-* Fixed lyrics plugin only getting part of the lyrics from ``Genius.com`` :bug:`4815`
+* Improve naming of temporary files by separating the random part with the file extension.
+* Fix the ``auto`` value for the :ref:`reflink` config option.
+* Fix lyrics plugin only getting part of the lyrics from ``Genius.com`` :bug:`4815`
 * Album flexible fields are now correctly saved. For instance MusicBrainz external links
   such as `bandcamp_album_id` will be available on albums in addition to tracks.
   For albums already in your library, a re-import is required for the fields to be added.
   Such a re-import can be done with, in this case, `beet import -L data_source:=MusicBrainz`.
-* :doc:`plugins/autobpm`: Fixed the ``TypeError`` where tempo was being returned
-  as a numpy array. Updated ``librosa`` dependency constraint to prevent similar
+* :doc:`plugins/autobpm`: Fix the ``TypeError`` where tempo was being returned
+  as a numpy array. Update ``librosa`` dependency constraint to prevent similar
   issues in the future.
   :bug:`5289`
-* :doc:`plugins/discogs`: Fixed the ``TypeError`` when there is no description.
+* :doc:`plugins/discogs`: Fix the ``TypeError`` when there is no description.
 
 For packagers:
 
@@ -241,7 +241,6 @@ New features:
 
 Bug fixes:
 
-* :doc:`/plugins/deezer`: Improve requests error handling.
 * :doc:`/plugins/lastimport`: Improve error handling in the `process_tracks` function and enable it to be used with other plugins.
 * :doc:`/plugins/spotify`: Improve handling of ConnectionError.
 * :doc:`/plugins/deezer`: Improve Deezer plugin error handling and set requests timeout to 10 seconds.
