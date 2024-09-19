@@ -1032,7 +1032,7 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
         """
         # Skip if the item already has lyrics.
         if not force and item.lyrics:
-            self.info("Lyrics already present: {}", item)
+            self.info("🔵 Lyrics already present: {}", item)
             return
 
         lyrics_matches = []
@@ -1048,7 +1048,7 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
         lyrics = "\n\n---\n\n".join(filter(None, lyrics_matches))
 
         if lyrics:
-            self.info("Lyrics found: {}", item)
+            self.info("🟢 Found lyrics: {0}", item)
             if HAS_LANGDETECT and self.config["bing_client_secret"].get():
                 lang_from = langdetect.detect(lyrics)
                 if self.config["bing_lang_to"].get() != lang_from and (
@@ -1059,7 +1059,7 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
                         lyrics, self.config["bing_lang_to"]
                     )
         else:
-            self.info("Lyrics not found: {}", item)
+            self.info("🔴 Lyrics not found: {}", item)
             fallback = self.config["fallback"].get()
             if fallback:
                 lyrics = fallback
