@@ -16,6 +16,9 @@
 This module provides `pytest`-based fixtures for testing Beets.
 """
 
+from __future__ import annotations
+
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
 
@@ -23,7 +26,46 @@ import pytest
 from confuse import Configuration
 
 import beets
+import beets.util as util
 from beets.library import Library
+
+
+@contextmanager
+def setup_config(lib_dir: Path) -> Iterator[Configuration]:
+    # Initialize configuration.
+    config = beets.config
+    config.sources = []
+    config.read(user=False, defaults=True)
+
+    # Set configuration defaults.
+    config["plugins"] = []
+    config["verbose"] = 1
+    config["ui"]["color"] = False
+    config["threaded"] = False
+    config["directory"] = str(lib_dir)
+
+    # Provide the configuration to the test.
+    yield config
+
+    # Reset the global configuration state.
+    beets.config.clear()
+    beets.config._materialized = False
+
+
+@contextmanager
+def setup_library(
+    lib_dir: Path,
+    db_loc: Path | None = None,
+) -> Iterator[Library]:
+    # Create the Beets library object.
+    db_loc = util.bytestring_path(db_loc) if db_loc is not None else ":memory:"
+    lib = Library(db_loc, str(lib_dir))
+
+    # Provide the library to the test.
+    yield lib
+
+    # Clean up the library.
+    lib._close()
 
 
 @pytest.fixture(scope="session")
@@ -66,42 +108,19 @@ def config(
 
     # 'confuse' looks at `HOME`, so we set it to a tmpdir.
     monkeypatch.setenv("HOME", str(tmp_path))
-
-    # Initialize configuration.
-    config = beets.config
-    config.sources = []
-    config.read(user=False, defaults=True)
-
-    # Set configuration defaults.
-    config["plugins"] = []
-    config["verbose"] = 1
-    config["ui"]["color"] = False
-    config["threaded"] = False
-    config["directory"] = str(tmp_path)
-
-    # Provide the configuration to the test.
-    yield config
-
-    # Reset the global configuration state.
-    beets.config.clear()
-    beets.config._materialized = False
+    with setup_config(tmp_path / "libdir") as config:
+        yield config
 
 
 @pytest.fixture
 @pytest.mark.usefixtures("config")
 def library(
-    tmp_path_factory: pytest.TempPathFactory,
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> Iterator[Library]:
     # Beets needs a location to store library contents.
-    lib_dir = tmp_path_factory.mktemp("lib_dir")
+    lib_dir = tmp_path / "libdir"
     monkeypatch.setenv("BEETSDIR", str(lib_dir))
 
-    # Create the Beets library object.
-    lib = Library(":memory:", str(lib_dir))
-
-    # Provide the library to the test.
-    yield lib
-
-    # Clean up the library.
-    lib._close()
+    with setup_library(lib_dir, db_loc=None) as library:
+        yield library
