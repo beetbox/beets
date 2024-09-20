@@ -378,28 +378,24 @@ Writing Tests
 Writing tests is done by adding or modifying files in folder `test`_.
 Take a look at
 `https://github.com/beetbox/beets/blob/master/test/test_template.py#L224`_
-to get a basic view on how tests are written. We currently allow writing
-tests with either `unittest`_ or `pytest`_.
+to get a basic view on how tests are written. Since we are currently migrating
+the tests from `unittest`_ to `pytest`_, new tests should be written using
+`pytest`_. Contributions migrating existing tests are welcome!
 
-Any tests that involve sending out network traffic e.g. an external API
-call, should be skipped normally and run under our weekly `integration
-test`_ suite. These tests can be useful in detecting external changes
-that would affect ``beets``. In order to do this, simply add the
-following snippet before the applicable test case:
+External API requests under test should be mocked with `requests_mock`_,
+However, we still want to know whether external APIs are up and that they
+return expected responses, therefore we test them weekly with our `integration
+test`_ suite.
+
+In order to add such a test, mark your test with the ``integration_test`` marker
 
 .. code-block:: python
 
-    @unittest.skipUnless(
-        os.environ.get('INTEGRATION_TEST', '0') == '1',
-        'integration testing not enabled')
+  @pytest.mark.integration_test
+  def test_external_api_call():
+      ...
 
-If you do this, it is also advised to create a similar test that 'mocks'
-the network call and can be run under normal circumstances by our CI and
-others. See `unittest.mock`_ for more info.
-
--  **AVOID** using the ``start()`` and ``stop()`` methods of
-   ``mock.patch``, as they require manual cleanup. Use the annotation or
-   context manager forms instead.
+This way, the test will be run only in the integration test suite.
 
 .. _Codecov: https://codecov.io/github/beetbox/beets
 .. _pytest-random: https://github.com/klrmn/pytest-random
@@ -409,6 +405,6 @@ others. See `unittest.mock`_ for more info.
 .. _`https://github.com/beetbox/beets/blob/master/test/test_template.py#L224`: https://github.com/beetbox/beets/blob/master/test/test_template.py#L224
 .. _unittest: https://docs.python.org/3/library/unittest.html
 .. _integration test: https://github.com/beetbox/beets/actions?query=workflow%3A%22integration+tests%22
-.. _unittest.mock: https://docs.python.org/3/library/unittest.mock.html
+.. _requests-mock: https://requests-mock.readthedocs.io/en/latest/response.html
 .. _documentation: https://beets.readthedocs.io/en/stable/
 .. _vim: https://www.vim.org/

@@ -21,6 +21,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 import confuse
+import pytest
 import requests
 
 from beets import logging
@@ -335,10 +336,7 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest, LyricsAssertions):
         LyricsGoogleBaseTest.setUp(self)
         self.plugin = lyrics.LyricsPlugin()
 
-    @unittest.skipUnless(
-        os.environ.get("INTEGRATION_TEST", "0") == "1",
-        "integration testing not enabled",
-    )
+    @pytest.mark.integration_test
     def test_backend_sources_ok(self):
         """Test default backends with songs known to exist in respective
         databases.
@@ -351,10 +349,7 @@ class LyricsPluginSourcesTest(LyricsGoogleBaseTest, LyricsAssertions):
                 res = backend.fetch(s["artist"], s["title"])
                 self.assertLyricsContentOk(s["title"], res)
 
-    @unittest.skipUnless(
-        os.environ.get("INTEGRATION_TEST", "0") == "1",
-        "integration testing not enabled",
-    )
+    @pytest.mark.integration_test
     def test_google_sources_ok(self):
         """Test if lyrics present on websites registered in beets google custom
         search engine are correctly scraped.
@@ -649,19 +644,13 @@ class TekstowoIntegrationTest(TekstowoBaseTest, LyricsAssertions):
         self.plugin = lyrics.LyricsPlugin()
         tekstowo.config = self.plugin.config
 
-    @unittest.skipUnless(
-        os.environ.get("INTEGRATION_TEST", "0") == "1",
-        "integration testing not enabled",
-    )
+    @pytest.mark.integration_test
     def test_normal(self):
         """Ensure we can fetch a song's lyrics in the ordinary case"""
         lyrics = tekstowo.fetch("Boy in Space", "u n eye")
         self.assertLyricsContentOk("u n eye", lyrics)
 
-    @unittest.skipUnless(
-        os.environ.get("INTEGRATION_TEST", "0") == "1",
-        "integration testing not enabled",
-    )
+    @pytest.mark.integration_test
     def test_no_matching_results(self):
         """Ensure we fetch nothing if there are search results
         returned but no matches"""
@@ -736,28 +725,19 @@ class LRCLibIntegrationTest(LyricsAssertions):
         self.plugin = lyrics.LyricsPlugin()
         lrclib.config = self.plugin.config
 
-    @unittest.skipUnless(
-        os.environ.get("INTEGRATION_TEST", "0") == "1",
-        "integration testing not enabled",
-    )
+    @pytest.mark.integration_test
     def test_track_with_lyrics(self):
         lyrics = lrclib.fetch("Boy in Space", "u n eye", "Live EP", 160)
         self.assertLyricsContentOk("u n eye", lyrics)
 
-    @unittest.skipUnless(
-        os.environ.get("INTEGRATION_TEST", "0") == "1",
-        "integration testing not enabled",
-    )
+    @pytest.mark.integration_test
     def test_instrumental_track(self):
         lyrics = lrclib.fetch(
             "Kelly Bailey", "Black Mesa Inbound", "Half Life 2 Soundtrack", 134
         )
         assert lyrics is None
 
-    @unittest.skipUnless(
-        os.environ.get("INTEGRATION_TEST", "0") == "1",
-        "integration testing not enabled",
-    )
+    @pytest.mark.integration_test
     def test_nonexistent_track(self):
         lyrics = lrclib.fetch("blah", "blah", "blah", 999)
         assert lyrics is None
