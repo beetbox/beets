@@ -201,7 +201,7 @@ class LyricsBackendTest(PluginMixin):
         """
         title = "Lady Madonna"
 
-        lyrics = backend.fetch("The Beatles", title)
+        lyrics = backend.fetch("The Beatles", title, "", 0)
 
         assert lyrics
         assert PHRASE_BY_TITLE[title] in lyrics.lower()
@@ -366,7 +366,7 @@ class TestLRCLibLyrics(LyricsBackendTest):
     def fetch_lyrics(self, backend, requests_mock, response_data):
         requests_mock.get(lyrics.LRCLib.base_url, json=response_data)
 
-        return partial(backend.fetch, "la", "la", "la")
+        return partial(backend.fetch, "la", "la", "la", 0)
 
     @pytest.mark.parametrize(
         "response_data",
