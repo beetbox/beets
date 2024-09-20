@@ -109,6 +109,7 @@ class AlbumInfo(AttrDict):
         country: Optional[str] = None,
         style: Optional[str] = None,
         genre: Optional[str] = None,
+        genres: Optional[str] = None,
         albumstatus: Optional[str] = None,
         media: Optional[str] = None,
         albumdisambig: Optional[str] = None,
@@ -152,6 +153,7 @@ class AlbumInfo(AttrDict):
         self.country = country
         self.style = style
         self.genre = genre
+        self.genres = genres
         self.albumstatus = albumstatus
         self.media = media
         self.albumdisambig = albumdisambig
@@ -221,6 +223,7 @@ class TrackInfo(AttrDict):
         bpm: Optional[str] = None,
         initial_key: Optional[str] = None,
         genre: Optional[str] = None,
+        genres: Optional[str] = None,
         album: Optional[str] = None,
         **kwargs,
     ):
@@ -255,6 +258,7 @@ class TrackInfo(AttrDict):
         self.bpm = bpm
         self.initial_key = initial_key
         self.genre = genre
+        self.genres = genres
         self.album = album
         self.update(kwargs)
 

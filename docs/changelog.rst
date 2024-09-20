@@ -20,6 +20,7 @@ New features:
 * :doc:`plugins/autobpm`: Add new configuration option ``beat_track_kwargs``
   which enables adjusting keyword arguments supplied to librosa's
   ``beat_track`` function call.
+* New multi-value `genres` tag
 
 Bug fixes:
 
