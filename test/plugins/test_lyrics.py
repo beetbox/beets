@@ -207,7 +207,7 @@ class LyricsBackend(PluginMixin):
         """
         title = "Lady Madonna"
 
-        res = backend.fetch("The Beatles", title)
+        res = backend.fetch("The Beatles", title, "", 0.0)
 
         assert res
         assert PHRASE_BY_TITLE[title] in res.lower()
