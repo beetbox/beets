@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Various tests for querying the library database.
-"""
+"""Various tests for querying the library database."""
 
 import os
 import sys
@@ -48,11 +47,11 @@ class AssertsMixin:
     def assert_albums_matched(self, results, albums):
         assert {a.album for a in results} == set(albums)
 
-    def assertInResult(self, item, results):  # noqa
+    def assertInResult(self, item, results):
         result_ids = [i.id for i in results]
         assert item.id in result_ids
 
-    def assertNotInResult(self, item, results):  # noqa
+    def assertNotInResult(self, item, results):
         result_ids = [i.id for i in results]
         assert item.id not in result_ids
 
@@ -928,7 +927,7 @@ class NotQueryTest(DummyDataTestCase):
     - `test_get_yyy`: tests on query strings (similar to `GetTest`)
     """
 
-    def assertNegationProperties(self, q):  # noqa
+    def assertNegationProperties(self, q):
         """Given a Query `q`, assert that:
         - q OR not(q) == all items
         - q AND not(q) == 0

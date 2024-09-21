@@ -12,8 +12,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Searches for albums in the MusicBrainz database.
-"""
+"""Searches for albums in the MusicBrainz database."""
+
 from __future__ import annotations
 
 import re
@@ -54,7 +54,7 @@ FIELDS_TO_MB_KEYS = {
 musicbrainzngs.set_useragent("beets", beets.__version__, "https://beets.io/")
 
 
-class MusicBrainzAPIError(util.HumanReadableException):
+class MusicBrainzAPIError(util.HumanReadableError):
     """An error while talking to MusicBrainz. The `query` field is the
     parameter to the action and may have any type.
     """

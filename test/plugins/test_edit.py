@@ -77,7 +77,7 @@ class EditMixin(PluginMixin):
 
     plugin = "edit"
 
-    def assertItemFieldsModified(  # noqa
+    def assertItemFieldsModified(
         self, library_items, items, fields=[], allowed=["path"]
     ):
         """Assert that items in the library (`lib_items`) have different values
@@ -134,7 +134,7 @@ class EditCommandTest(EditMixin, BeetsTestCase):
             {f: item[f] for f in item._fields} for item in self.album.items()
         ]
 
-    def assertCounts(  # noqa
+    def assertCounts(
         self,
         mock_write,
         album_count=ALBUM_COUNT,

@@ -771,7 +771,8 @@ class ImportCompilationTest(ImportTestCase):
                 asserted_multi_artists_1 = True
                 assert item.artists == ["Another Artist", "Another Artist 2"]
 
-        assert asserted_multi_artists_0 and asserted_multi_artists_1
+        assert asserted_multi_artists_0
+        assert asserted_multi_artists_1
 
 
 class ImportExistingTest(ImportTestCase):
@@ -1320,7 +1321,7 @@ class ResumeImportTest(ImportTestCase):
         # the first album in the second try.
         def raise_exception(event, **kwargs):
             if event == "album_imported":
-                raise importer.ImportAbort
+                raise importer.ImportAbortError
 
         plugins_send.side_effect = raise_exception
 
@@ -1343,7 +1344,7 @@ class ResumeImportTest(ImportTestCase):
         # the first album in the second try.
         def raise_exception(event, **kwargs):
             if event == "item_imported":
-                raise importer.ImportAbort
+                raise importer.ImportAbortError
 
         plugins_send.side_effect = raise_exception
 

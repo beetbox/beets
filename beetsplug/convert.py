@@ -12,8 +12,8 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Converts tracks or albums to external directory
-"""
+"""Converts tracks or albums to external directory"""
+
 import logging
 import os
 import shlex
@@ -95,8 +95,9 @@ def should_transcode(item, fmt):
             query, _ = parse_query_string(query_string, Item)
             if query.match(item):
                 return False
-    if config["convert"]["never_convert_lossy_files"] and not (
-        item.format.lower() in LOSSLESS_FORMATS
+    if (
+        config["convert"]["never_convert_lossy_files"]
+        and item.format.lower() not in LOSSLESS_FORMATS
     ):
         return False
     maxbr = config["convert"]["max_bitrate"].get(Optional(int))

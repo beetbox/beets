@@ -12,9 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Test the advancedrewrite plugin for various configurations.
-"""
-
+"""Test the advancedrewrite plugin for various configurations."""
 
 import pytest
 

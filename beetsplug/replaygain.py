@@ -334,9 +334,7 @@ class FfmpegBackend(Backend):
                 task.target_level,
                 task.peak_method,
                 count_blocks=False,
-            )[
-                0
-            ]  # take only the gain, discarding number of gating blocks
+            )[0]  # take only the gain, discarding number of gating blocks
             for item in task.items
         ]
 

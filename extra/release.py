@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
-"""A utility script for automating the beets release process.
-"""
+"""A utility script for automating the beets release process."""
+
 from __future__ import annotations
 
 import re

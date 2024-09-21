@@ -39,14 +39,14 @@ class LoggingTest(BeetsTestCase):
         assert l1 != l6
 
     def test_str_format_logging(self):
-        l = blog.getLogger("baz123")
+        logger = blog.getLogger("baz123")
         stream = StringIO()
         handler = log.StreamHandler(stream)
 
-        l.addHandler(handler)
-        l.propagate = False
+        logger.addHandler(handler)
+        logger.propagate = False
 
-        l.warning("foo {0} {bar}", "oof", bar="baz")
+        logger.warning("foo {0} {bar}", "oof", bar="baz")
         handler.flush()
         assert stream.getvalue(), "foo oof baz"
 
@@ -265,9 +265,9 @@ class ConcurrentEventsTest(AsIsImporterMixin, ImportTestCase):
         blog.getLogger("beets").set_global_level(blog.INFO)
         with helper.capture_log() as logs:
             self.run_asis_importer()
-        for l in logs:
-            assert "import" in l
-            assert "album" in l
+        for line in logs:
+            assert "import" in line
+            assert "album" in line
 
         blog.getLogger("beets").set_global_level(blog.DEBUG)
         with helper.capture_log() as logs:

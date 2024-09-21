@@ -67,7 +67,7 @@ PathLike = Union[BytesOrStr, Path]
 Replacements: TypeAlias = "Sequence[tuple[Pattern[str], str]]"
 
 
-class HumanReadableException(Exception):
+class HumanReadableError(Exception):
     """An Exception that can include a human-readable error message to
     be logged without a traceback. Can preserve a traceback for
     debugging purposes as well.
@@ -123,7 +123,7 @@ class HumanReadableException(Exception):
         logger.error("{0}: {1}", self.error_kind, self.args[0])
 
 
-class FilesystemError(HumanReadableException):
+class FilesystemError(HumanReadableError):
     """An error that occurred while performing a filesystem manipulation
     via a function in this module. The `paths` field is a sequence of
     pathnames involved in the operation.
@@ -1069,7 +1069,7 @@ def par_map(transform: Callable[[T], Any], items: Sequence[T]) -> None:
     pool.join()
 
 
-class cached_classproperty:  # noqa: N801
+class cached_classproperty:
     """A decorator implementing a read-only property that is *lazy* in
     the sense that the getter is only invoked once. Subsequent accesses
     through *any* instance use the cached result.

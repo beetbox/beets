@@ -14,7 +14,6 @@
 
 """Moves patterns in path formats (suitable for moving articles)."""
 
-
 import re
 from typing import List
 

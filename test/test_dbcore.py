@@ -239,9 +239,7 @@ class TransactionTest(unittest.TestCase):
         old_rev = self.db.revision
         with self.db.transaction() as tx:
             tx.mutate(
-                "INSERT INTO {} "
-                "(field_one) "
-                "VALUES (?);".format(ModelFixture1._table),
+                f"INSERT INTO {ModelFixture1._table} (field_one) VALUES (?);",
                 (111,),
             )
         assert self.db.revision > old_rev
@@ -517,9 +515,7 @@ class QueryParseTest(unittest.TestCase):
             part,
             {"year": dbcore.query.NumericQuery},
             {":": dbcore.query.RegexpQuery},
-        )[
-            :-1
-        ]  # remove the negate flag
+        )[:-1]  # remove the negate flag
 
     def test_one_basic_term(self):
         q = "test"
