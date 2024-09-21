@@ -117,9 +117,10 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
     def imported(self, session, task):
         """Import hook for moving featuring artist automatically."""
         drop_feat = self.config["drop"].get(bool)
+        keep_in_artist_field = self.config["keep_in_artist"].get(bool)
 
         for item in task.imported_items():
-            self.ft_in_title(item, drop_feat)
+            self.ft_in_title(item, drop_feat, keep_in_artist_field)
             item.store()
 
     def update_metadata(self, item, feat_part, drop_feat, keep_in_artist_field):
