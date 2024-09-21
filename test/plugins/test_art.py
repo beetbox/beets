@@ -14,7 +14,6 @@
 
 """Tests for the album art fetchers."""
 
-
 import os
 import shutil
 from unittest.mock import patch
@@ -866,7 +865,7 @@ class ArtForAlbumTest(UseThePlugin):
         fetchart.FileSystem.get = self.old_fs_source_get
         super().tearDown()
 
-    def _assertImageIsValidArt(self, image_file, should_exist):  # noqa
+    def assertImageIsValidArt(self, image_file, should_exist):
         self.assertExists(image_file)
         self.image_file = image_file
 
@@ -897,42 +896,42 @@ class ArtForAlbumTest(UseThePlugin):
     def test_respect_minwidth(self):
         self._require_backend()
         self.plugin.minwidth = 300
-        self._assertImageIsValidArt(self.IMG_225x225, False)
-        self._assertImageIsValidArt(self.IMG_348x348, True)
+        self.assertImageIsValidArt(self.IMG_225x225, False)
+        self.assertImageIsValidArt(self.IMG_348x348, True)
 
     def test_respect_enforce_ratio_yes(self):
         self._require_backend()
         self.plugin.enforce_ratio = True
-        self._assertImageIsValidArt(self.IMG_500x490, False)
-        self._assertImageIsValidArt(self.IMG_225x225, True)
+        self.assertImageIsValidArt(self.IMG_500x490, False)
+        self.assertImageIsValidArt(self.IMG_225x225, True)
 
     def test_respect_enforce_ratio_no(self):
         self.plugin.enforce_ratio = False
-        self._assertImageIsValidArt(self.IMG_500x490, True)
+        self.assertImageIsValidArt(self.IMG_500x490, True)
 
     def test_respect_enforce_ratio_px_above(self):
         self._require_backend()
         self.plugin.enforce_ratio = True
         self.plugin.margin_px = 5
-        self._assertImageIsValidArt(self.IMG_500x490, False)
+        self.assertImageIsValidArt(self.IMG_500x490, False)
 
     def test_respect_enforce_ratio_px_below(self):
         self._require_backend()
         self.plugin.enforce_ratio = True
         self.plugin.margin_px = 15
-        self._assertImageIsValidArt(self.IMG_500x490, True)
+        self.assertImageIsValidArt(self.IMG_500x490, True)
 
     def test_respect_enforce_ratio_percent_above(self):
         self._require_backend()
         self.plugin.enforce_ratio = True
         self.plugin.margin_percent = (500 - 490) / 500 * 0.5
-        self._assertImageIsValidArt(self.IMG_500x490, False)
+        self.assertImageIsValidArt(self.IMG_500x490, False)
 
     def test_respect_enforce_ratio_percent_below(self):
         self._require_backend()
         self.plugin.enforce_ratio = True
         self.plugin.margin_percent = (500 - 490) / 500 * 1.5
-        self._assertImageIsValidArt(self.IMG_500x490, True)
+        self.assertImageIsValidArt(self.IMG_500x490, True)
 
     def test_resize_if_necessary(self):
         self._require_backend()
@@ -949,7 +948,7 @@ class ArtForAlbumTest(UseThePlugin):
         self._require_backend()
         self.plugin.max_filesize = self.IMG_225x225_SIZE
         self._assert_image_operated(self.IMG_225x225, self.RESIZE_OP, False)
-        self._assertImageIsValidArt(self.IMG_225x225, True)
+        self.assertImageIsValidArt(self.IMG_225x225, True)
 
     def test_fileresize_no_scale(self):
         self._require_backend()
@@ -995,7 +994,7 @@ class DeprecatedConfigTest(BeetsTestCase):
         self.plugin = fetchart.FetchArtPlugin()
 
     def test_moves_filesystem_to_end(self):
-        assert type(self.plugin.sources[-1]) == fetchart.FileSystem
+        assert isinstance(self.plugin.sources[-1], fetchart.FileSystem)
 
 
 class EnforceRatioConfigTest(BeetsTestCase):

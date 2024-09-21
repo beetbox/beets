@@ -14,10 +14,9 @@
 
 """Tests for the 'parentwork' plugin."""
 
-
-import os
-import unittest
 from unittest.mock import patch
+
+import pytest
 
 from beets.library import Item
 from beets.test.helper import PluginTestCase
@@ -85,14 +84,11 @@ def mock_workid_response(mbid, includes):
         return p_work
 
 
+@pytest.mark.integration_test
 class ParentWorkIntegrationTest(PluginTestCase):
     plugin = "parentwork"
 
     # test how it works with real musicbrainz data
-    @unittest.skipUnless(
-        os.environ.get("INTEGRATION_TEST", "0") == "1",
-        "integration testing not enabled",
-    )
     def test_normal_case_real(self):
         item = Item(
             path="/file",
@@ -107,10 +103,6 @@ class ParentWorkIntegrationTest(PluginTestCase):
         item.load()
         assert item["mb_parentworkid"] == "32c8943f-1b27-3a23-8660-4567f4847c94"
 
-    @unittest.skipUnless(
-        os.environ.get("INTEGRATION_TEST", "0") == "1",
-        "integration testing not enabled",
-    )
     def test_force_real(self):
         self.config["parentwork"]["force"] = True
         item = Item(
@@ -128,10 +120,6 @@ class ParentWorkIntegrationTest(PluginTestCase):
         item.load()
         assert item["mb_parentworkid"] == "32c8943f-1b27-3a23-8660-4567f4847c94"
 
-    @unittest.skipUnless(
-        os.environ.get("INTEGRATION_TEST", "0") == "1",
-        "integration testing not enabled",
-    )
     def test_no_force_real(self):
         self.config["parentwork"]["force"] = False
         item = Item(
@@ -153,10 +141,6 @@ class ParentWorkIntegrationTest(PluginTestCase):
     # test different cases, still with Matthew Passion Ouverture or Mozart
     # requiem
 
-    @unittest.skipUnless(
-        os.environ.get("INTEGRATION_TEST", "0") == "1",
-        "integration testing not enabled",
-    )
     def test_direct_parent_work_real(self):
         mb_workid = "2e4a3668-458d-3b2a-8be2-0b08e0d8243a"
         assert (

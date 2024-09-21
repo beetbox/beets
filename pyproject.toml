@@ -84,13 +84,8 @@ rarfile = "*"
 requests_oauthlib = "*"
 responses = ">=0.3.0"
 
-[tool.poetry.group.format.dependencies]
-isort = { version = "<5.14", extras = ["colors"] }
-black = ">=24.3,<25"
-
 [tool.poetry.group.lint.dependencies]
-flake8 = "*"
-pep8-naming = "*"
+ruff = ">=0.6.4"
 
 [tool.poetry.group.typing.dependencies]
 mypy = "*"
@@ -154,24 +149,6 @@ build-backend = "poetry.core.masonry.api"
 poethepoet = ">=0.26"
 poetry = ">=1.8"
 
-# We use a default path '.' to make black and isort behave like flake8 and
-# mypy do: they act on the entire codebase (flake8 does it by default, and
-# mypy follows our configuration) by default. Positional command-line arguments
-# override this. Therefore, locally you can run `poe check-format <some-path>`
-# to quickly check a specific path.
-#
-# Note: both tools respect .gitignore, therefore if we see them format
-# something unwanted locally, we should add these paths to .gitignore.
-[tool.poe.tasks._black]
-help = "Run black"
-cmd = "black $OPTS $path"
-args = { path = { help = "Path to blacken", positional = true, multiple = true, default = "." } }
-
-[tool.poe.tasks._isort]
-help = "Run isort"
-cmd = "isort $OPTS $path"
-args = { path = { help = "Path to isort", positional = true, multiple = true, default = "." } }
-
 [tool.poe.tasks.bump]
 help = "Bump project version and update relevant files"
 cmd = "python ./extra/release.py bump $version"
@@ -187,8 +164,7 @@ cmd = "make -C docs linkcheck"
 
 [tool.poe.tasks.check-format]
 help = "Check the code for style issues"
-ref = "format"
-env.OPTS = "--check --diff --color"
+cmd = "ruff format --check --diff"
 
 [tool.poe.tasks.check-types]
 help = "Check the code for typing issues. Accepts mypy options."
@@ -200,13 +176,11 @@ cmd = "make -C docs html"
 
 [tool.poe.tasks.format]
 help = "Format the codebase"
-ignore_fail = "return_non_zero"
-sequence = ["_black $path", "_isort $path"]
-args = { path = { help = "Path to format", positional = true, multiple = true, default = "." } }
+cmd = "ruff format"
 
 [tool.poe.tasks.lint]
-help = "Check the code for linting issues. Accepts flake8 options."
-cmd = "flake8"
+help = "Check the code for linting issues. Accepts ruff options."
+cmd = "ruff check"
 
 [tool.poe.tasks.update-dependencies]
 help = "Update dependencies to their latest versions."
@@ -249,13 +223,41 @@ done
 """
 interpreter = "zsh"
 
-[tool.black]
+[tool.ruff]
+target-version = "py38"
 line-length = 80
-target-version = ["py38", "py39", "py310", "py311"]
 
-[tool.isort]
-profile = "black"
-py_version = 38
-multi_line_output = 3
-line_length = 80
-indent = 4
+[tool.ruff.lint]
+select = [
+    # "ARG", # flake8-unused-arguments
+    # "C4", # flake8-comprehensions
+    "E", # pycodestyle
+    "F", # pyflakes
+    # "B", # flake8-bugbear
+    "I", # isort
+    "N", # pep8-naming
+    "PT", # flake8-pytest-style
+    # "RUF", # ruff
+    # "UP", # pyupgrade
+    "W", # pycodestyle
+]
+[tool.ruff.lint.per-file-ignores]
+"beets/**" = ["PT"]
+
+[tool.ruff.lint.isort]
+split-on-trailing-comma = false
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 88
+
+[tool.ruff.lint.flake8-pytest-style]
+fixture-parentheses = false
+mark-parentheses = false
+parametrize-names-type = "csv"
+
+[tool.ruff.lint.flake8-unused-arguments]
+ignore-variadic-names = true
+
+[tool.ruff.lint.pep8-naming]
+classmethod-decorators = ["cached_classproperty"]
+extend-ignore-names = ["assert*", "cached_classproperty"]

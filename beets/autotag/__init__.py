@@ -12,23 +12,38 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Facilities for automatically determining files' correct metadata.
-"""
+"""Facilities for automatically determining files' correct metadata."""
+
 from typing import Mapping, Sequence, Union
 
 from beets import config, logging
 from beets.library import Album, Item
 
 # Parts of external interface.
-from .hooks import (  # noqa
-    AlbumInfo,
-    AlbumMatch,
-    Distance,
-    TrackInfo,
-    TrackMatch,
+from .hooks import AlbumInfo, AlbumMatch, Distance, TrackInfo, TrackMatch
+from .match import (
+    Proposal,
+    Recommendation,
+    current_metadata,
+    tag_album,
+    tag_item,
 )
-from .match import Recommendation  # noqa
-from .match import Proposal, current_metadata, tag_album, tag_item  # noqa
+
+__all__ = [
+    "AlbumInfo",
+    "AlbumMatch",
+    "Distance",
+    "TrackInfo",
+    "TrackMatch",
+    "Proposal",
+    "Recommendation",
+    "apply_album_metadata",
+    "apply_item_metadata",
+    "apply_metadata",
+    "current_metadata",
+    "tag_album",
+    "tag_item",
+]
 
 # Global logger.
 log = logging.getLogger("beets")

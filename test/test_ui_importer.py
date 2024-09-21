@@ -18,9 +18,8 @@ test_importer module. But here the test importer inherits from
 ``TerminalImportSession``. So we test this class, too.
 """
 
-from test import test_importer
-
 from beets.test.helper import TerminalImportMixin
+from test import test_importer
 
 
 class NonAutotaggedImportTest(

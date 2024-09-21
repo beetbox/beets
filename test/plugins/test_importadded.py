@@ -74,11 +74,11 @@ class ImportAddedTest(PluginMixin, ImportTestCase):
             "No MediaFile found for Item " + displayable_path(item.path)
         )
 
-    def assertEqualTimes(self, first, second, msg=None):  # noqa
+    def assertEqualTimes(self, first, second, msg=None):
         """For comparing file modification times at a sufficient precision"""
         assert first == pytest.approx(second, rel=1e-4), msg
 
-    def assertAlbumImport(self):  # noqa
+    def assertAlbumImport(self):
         self.importer.run()
         album = self.lib.albums().get()
         assert album.added == self.min_mtime

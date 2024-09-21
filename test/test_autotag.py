@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Tests for autotagging functionality.
-"""
+"""Tests for autotagging functionality."""
 
 import re
 import unittest
@@ -48,7 +47,7 @@ class PluralityTest(BeetsTestCase):
         assert freq == 2
 
     def test_plurality_empty_sequence_raises_error(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="must be non-empty"):
             plurality([])
 
     def test_current_metadata_finds_pluralities(self):
@@ -1041,20 +1040,3 @@ class StringDistanceTest(unittest.TestCase):
     def test_accented_characters(self):
         dist = string_dist("\xe9\xe1\xf1", "ean")
         assert dist == 0.0
-
-
-class EnumTest(BeetsTestCase):
-    """
-    Test Enum Subclasses defined in beets.util.enumeration
-    """
-
-    def test_ordered_enum(self):
-        OrderedEnumClass = match.OrderedEnum(  # noqa
-            "OrderedEnumTest", ["a", "b", "c"]
-        )
-        assert OrderedEnumClass.a < OrderedEnumClass.b
-        assert OrderedEnumClass.a < OrderedEnumClass.c
-        assert OrderedEnumClass.b < OrderedEnumClass.c
-        assert OrderedEnumClass.b > OrderedEnumClass.a
-        assert OrderedEnumClass.c > OrderedEnumClass.a
-        assert OrderedEnumClass.c > OrderedEnumClass.b

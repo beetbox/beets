@@ -12,9 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Test module for file ui/commands.py
-"""
-
+"""Test module for file ui/commands.py"""
 
 import os
 import shutil
@@ -87,10 +85,10 @@ class FieldsTest(ItemInDBTestCase):
         super().tearDown()
         self.io.restore()
 
-    def remove_keys(self, l, text):
+    def remove_keys(self, keys, text):
         for i in text:
             try:
-                l.remove(i)
+                keys.remove(i)
             except ValueError:
                 pass
 

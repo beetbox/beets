@@ -14,7 +14,6 @@
 
 """A namespace package for beets plugins."""
 
-
 # Make this a namespace package.
 from pkgutil import extend_path
 

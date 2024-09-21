@@ -143,19 +143,19 @@ def import_session(lib=None, loghandler=None, paths=[], query=[], cli=False):
 class Assertions:
     """A mixin with additional unit test assertions."""
 
-    def assertExists(self, path):  # noqa
+    def assertExists(self, path):
         assert os.path.exists(syspath(path)), f"file does not exist: {path!r}"
 
-    def assertNotExists(self, path):  # noqa
+    def assertNotExists(self, path):
         assert not os.path.exists(syspath(path)), f"file exists: {path!r}"
 
-    def assertIsFile(self, path):  # noqa
+    def assertIsFile(self, path):
         self.assertExists(path)
         assert os.path.isfile(
             syspath(path)
         ), "path exists, but is not a regular file: {!r}".format(path)
 
-    def assertIsDir(self, path):  # noqa
+    def assertIsDir(self, path):
         self.assertExists(path)
         assert os.path.isdir(
             syspath(path)
@@ -171,7 +171,7 @@ class Assertions:
 # Mock I/O.
 
 
-class InputException(Exception):
+class InputError(Exception):
     def __init__(self, output=None):
         self.output = output
 
@@ -218,9 +218,9 @@ class DummyIn:
     def readline(self):
         if not self.buf:
             if self.out:
-                raise InputException(self.out.get())
+                raise InputError(self.out.get())
             else:
-                raise InputException()
+                raise InputError()
         self.reads += 1
         return self.buf.pop(0)
 

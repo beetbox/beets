@@ -55,7 +55,7 @@ class ConvertMixin:
             shell_quote(sys.executable), shell_quote(stub), tag
         )
 
-    def assertFileTag(self, path, tag):  # noqa
+    def assertFileTag(self, path, tag):
         """Assert that the path is a file and the files content ends
         with `tag`.
         """
@@ -68,7 +68,7 @@ class ConvertMixin:
                 f.read() == tag
             ), f"{displayable_path(path)} is not tagged with {display_tag}"
 
-    def assertNoFileTag(self, path, tag):  # noqa
+    def assertNoFileTag(self, path, tag):
         """Assert that the path is a file and the files content does not
         end with `tag`.
         """

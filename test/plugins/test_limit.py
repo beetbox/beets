@@ -13,7 +13,6 @@
 
 """Tests for the 'limit' plugin."""
 
-
 from beets.test.helper import PluginTestCase
 
 

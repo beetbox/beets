@@ -16,7 +16,6 @@
 interface.
 """
 
-
 import os
 import re
 from collections import Counter
@@ -1027,7 +1026,7 @@ def manual_id(session, task):
 
 def abort_action(session, task):
     """A prompt choice callback that aborts the importer."""
-    raise importer.ImportAbort()
+    raise importer.ImportAbortError()
 
 
 class TerminalImportSession(importer.ImportSession):
@@ -1057,7 +1056,7 @@ class TerminalImportSession(importer.ImportSession):
         if len(actions) == 1:
             return actions[0]
         elif len(actions) > 1:
-            raise plugins.PluginConflictException(
+            raise plugins.PluginConflictError(
                 "Only one handler for `import_task_before_choice` may return "
                 "an action."
             )
@@ -1317,8 +1316,7 @@ def import_files(lib, paths, query):
             loghandler = logging.FileHandler(logpath, encoding="utf-8")
         except OSError:
             raise ui.UserError(
-                "could not open log file for writing: "
-                "{}".format(displayable_path(logpath))
+                f"Could not open log file for writing: {displayable_path(logpath)}"
             )
     else:
         loghandler = None
