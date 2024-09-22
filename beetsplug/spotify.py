@@ -624,7 +624,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             spotify_ids = [track_data["id"] for track_data in results]
             if self.config["mode"].get() == "open":
                 self._log.info(
-                    f"Attempting to open {self.data_source} with playlist"
+                    "Attempting to open {} with playlist", self.data_source
                 )
                 spotify_url = "spotify:trackset:Playlist:" + ",".join(
                     spotify_ids

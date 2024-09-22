@@ -455,14 +455,14 @@ class CoverArtArchive(RemoteArtSource):
             try:
                 response = self.request(url)
             except requests.RequestException:
-                self._log.debug(f"{self.NAME}: error receiving response")
+                self._log.debug("{}: error receiving response", self.NAME)
                 return
 
             try:
                 data = response.json()
             except ValueError:
                 self._log.debug(
-                    f"{self.NAME}: error loading response: {response.text}"
+                    "{}: error loading response: {}", self.NAME, response.text
                 )
                 return
 
@@ -596,7 +596,7 @@ class GoogleImages(RemoteArtSource):
         try:
             data = response.json()
         except ValueError:
-            self._log.debug(f"google: error loading response: {response.text}")
+            self._log.debug("google: error loading response: {}", response.text)
             return
 
         if "error" in data:
@@ -1064,7 +1064,7 @@ class LastFM(RemoteArtSource):
                             url=images[size], size=self.SIZES[size]
                         )
         except ValueError:
-            self._log.debug(f"lastfm: error loading response: {response.text}")
+            self._log.debug("lastfm: error loading response: {}", response.text)
             return
 
 
@@ -1123,14 +1123,14 @@ class CoverArtUrl(RemoteArtSource):
                 image_url = album.cover_art_url
             else:
                 image_url = album.items().get().cover_art_url
-            self._log.debug(f"Cover art URL {image_url} found for {album}")
+            self._log.debug("Cover art URL {} found for {}", image_url, album)
         except (AttributeError, TypeError):
-            self._log.debug(f"Cover art URL not found for {album}")
+            self._log.debug("Cover art URL not found for {}", album)
             return
         if image_url:
             yield self._candidate(url=image_url, match=Candidate.MATCH_EXACT)
         else:
-            self._log.debug(f"Cover art URL not found for {album}")
+            self._log.debug("Cover art URL not found for {}", album)
             return
 
 

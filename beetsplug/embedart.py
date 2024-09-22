@@ -149,7 +149,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                     with open(tempimg, "wb") as f:
                         f.write(response.content)
                 except Exception as e:
-                    self._log.error(f"Unable to save image: {e}")
+                    self._log.error("Unable to save image: {}", e)
                     return
                 items = lib.items(decargs(args))
                 # Confirm with user.

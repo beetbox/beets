@@ -509,10 +509,10 @@ class FfmpegBackend(Backend):
                 if self._parse_float(b"M: " + line[1]) >= gating_threshold:
                     n_blocks += 1
             self._log.debug(
-                f"{item}: {n_blocks} blocks over {gating_threshold} LUFS"
+                "{}: {} blocks over {} LUFS", item, n_blocks, gating_threshold
             )
 
-        self._log.debug(f"{item}: gain {gain} LU, peak {peak}")
+        self._log.debug("{}: gain {} LU, peak {}", item, gain, peak)
 
         return Gain(gain, peak), n_blocks
 
@@ -1527,14 +1527,18 @@ class ReplayGainPlugin(BeetsPlugin):
             if opts.album:
                 albums = lib.albums(ui.decargs(args))
                 self._log.info(
-                    f"Analyzing {len(albums)} albums ~ {self.backend_name} backend..."
+                    "Analyzing {} albums ~ {} backend...",
+                    len(albums),
+                    self.backend_name,
                 )
                 for album in albums:
                     self.handle_album(album, write, force)
             else:
                 items = lib.items(ui.decargs(args))
                 self._log.info(
-                    f"Analyzing {len(items)} tracks ~ {self.backend_name} backend..."
+                    "Analyzing {} tracks ~ {} backend...",
+                    len(items),
+                    self.backend_name,
                 )
                 for item in items:
                     self.handle_track(item, write, force)
