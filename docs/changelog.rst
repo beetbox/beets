@@ -26,6 +26,8 @@ New features:
 
 Bug fixes:
 
+* The detection of a "feat. X" part now also matches such parts if they are in
+  parentheses or brackets. :bug:`5436`
 * Improve naming of temporary files by separating the random part with the file extension.
 * Fix the ``auto`` value for the :ref:`reflink` config option.
 * Fix lyrics plugin only getting part of the lyrics from ``Genius.com`` :bug:`4815`
