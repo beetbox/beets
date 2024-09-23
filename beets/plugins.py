@@ -518,7 +518,7 @@ def feat_tokens(for_artist=True):
     feat_words = ["ft", "featuring", "feat", "feat.", "ft."]
     if for_artist:
         feat_words += ["with", "vs", "and", "con", "&"]
-    return r"(?<=[\s,(,\[])(?:{})(?=\s)".format(
+    return r"(?<=[\s(\[])(?:{})(?=\s)".format(
         "|".join(re.escape(x) for x in feat_words)
     )
 
