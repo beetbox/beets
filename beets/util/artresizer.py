@@ -320,35 +320,49 @@ class PILBackend(LocalBackend):
         """
         self.version()
 
-    def resize(
-        self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0
+    def convert(
+        self,
+        source,
+        target=None,
+        maxwidth=0,
+        quality=0,
+        max_filesize=0,
+        deinterlaced=None,
     ):
-        """Resize using Python Imaging Library (PIL).  Return the output path
-        of resized image.
+        """Adjust image using Python Imaging Library (PIL). Return the output path
+        of adjusted image.
         """
-        if not path_out:
-            path_out = get_temp_filename(__name__, "resize_PIL_", path_in)
+        if not target:
+            target = get_temp_filename(__name__, "convert_PIL_", source)
 
         from PIL import Image
 
-        log.debug(
-            "artresizer: PIL resizing {0} to {1}",
-            displayable_path(path_in),
-            displayable_path(path_out),
-        )
-
         try:
-            im = Image.open(syspath(path_in))
-            size = maxwidth, maxwidth
-            im.thumbnail(size, Image.Resampling.LANCZOS)
+            im = Image.open(syspath(source))
+
+            if maxwidth > 0:
+                size = maxwidth, maxwidth
+                im.thumbnail(size, Image.Resampling.LANCZOS)
 
             if quality == 0:
                 # Use PIL's default quality.
                 quality = -1
 
-            # progressive=False only affects JPEGs and is the default,
-            # but we include it here for explicitness.
-            im.save(os.fsdecode(path_out), quality=quality, progressive=False)
+            progressive = None
+
+            if deinterlaced:
+                progressive = False
+            elif deinterlaced is False:
+                progressive = True
+
+            if progressive is not None:
+                im.save(
+                    os.fsdecode(target),
+                    quality=quality,
+                    progressive=progressive,
+                )
+            else:
+                im.save(os.fsdecode(target), quality=quality)
 
             if max_filesize > 0:
                 # If maximum filesize is set, we attempt to lower the quality
@@ -358,38 +372,40 @@ class PILBackend(LocalBackend):
                     lower_qual = quality
                 else:
                     lower_qual = 95
+
                 for i in range(5):
                     # 5 attempts is an arbitrary choice
-                    filesize = os.stat(syspath(path_out)).st_size
+                    filesize = os.stat(syspath(target)).st_size
                     log.debug("PIL Pass {0} : Output size: {1}B", i, filesize)
                     if filesize <= max_filesize:
-                        return path_out
+                        return target
                     # The relationship between filesize & quality will be
                     # image dependent.
                     lower_qual -= 10
                     # Restrict quality dropping below 10
                     if lower_qual < 10:
                         lower_qual = 10
+
                     # Use optimize flag to improve filesize decrease
                     im.save(
-                        os.fsdecode(path_out),
+                        os.fsdecode(target),
                         quality=lower_qual,
                         optimize=True,
-                        progressive=False,
+                        progressive=progressive,
                     )
                 log.warning(
                     "PIL Failed to resize file to below {0}B", max_filesize
                 )
-                return path_out
+                return target
 
             else:
-                return path_out
+                return target
         except OSError:
             log.error(
-                "PIL cannot create thumbnail for '{0}'",
-                displayable_path(path_in),
+                "PIL cannot make adjustments to '{0}'",
+                displayable_path(source),
             )
-            return path_in
+            return source
 
     def get_size(self, path_in):
         from PIL import Image
@@ -402,20 +418,6 @@ class PILBackend(LocalBackend):
                 "PIL could not read file {}: {}", displayable_path(path_in), exc
             )
             return None
-
-    def deinterlace(self, path_in, path_out=None):
-        if not path_out:
-            path_out = get_temp_filename(__name__, "deinterlace_PIL_", path_in)
-
-        from PIL import Image
-
-        try:
-            im = Image.open(syspath(path_in))
-            im.save(os.fsdecode(path_out), progressive=False)
-            return path_out
-        except OSError:
-            # FIXME: Should probably issue a warning?
-            return path_in
 
     def get_format(self, filepath):
         from PIL import Image, UnidentifiedImageError
