@@ -123,56 +123,41 @@ class IMBackend(LocalBackend):
             self.identify_cmd = ["magick", "identify"]
             self.compare_cmd = ["magick", "compare"]
 
-    def resize(
-        self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0
+    def convert(
+        self,
+        source,
+        target=None,
+        maxwidth=0,
+        quality=0,
+        max_filesize=0,
+        deinterlaced=None,
     ):
-        """Resize using ImageMagick.
+        if not target:
+            target = get_temp_filename(__name__, "convert_IM_", source)
 
-        Use the ``magick`` program or ``convert`` on older versions. Return
-        the output path of resized image.
-        """
-        if not path_out:
-            path_out = get_temp_filename(__name__, "resize_IM_", path_in)
-
-        log.debug(
-            "artresizer: ImageMagick resizing {0} to {1}",
-            displayable_path(path_in),
-            displayable_path(path_out),
-        )
-
-        # "-resize WIDTHx>" shrinks images with the width larger
-        # than the given width while maintaining the aspect ratio
-        # with regards to the height.
-        # ImageMagick already seems to default to no interlace, but we include
-        # it here for the sake of explicitness.
         cmd = self.convert_cmd + [
-            syspath(path_in, prefix=False),
-            "-resize",
-            f"{maxwidth}x>",
-            "-interlace",
-            "none",
+            syspath(source, prefix=False),
+            *(["-resize", f"{maxwidth}x>"] if maxwidth > 0 else []),
+            *(["-quality", f"{quality}"] if quality > 0 else []),
+            *(
+                ["-define", f"jpeg:extent={max_filesize}b"]
+                if max_filesize > 0
+                else []
+            ),
+            *(["-interlace", "none"] if deinterlaced else []),
+            syspath(target, prefix=False),
         ]
-
-        if quality > 0:
-            cmd += ["-quality", f"{quality}"]
-
-        # "-define jpeg:extent=SIZEb" sets the target filesize for imagemagick
-        # to SIZE in bytes.
-        if max_filesize > 0:
-            cmd += ["-define", f"jpeg:extent={max_filesize}b"]
-
-        cmd.append(syspath(path_out, prefix=False))
 
         try:
             util.command_output(cmd)
         except subprocess.CalledProcessError:
             log.warning(
                 "artresizer: IM convert failed for {0}",
-                displayable_path(path_in),
+                displayable_path(source),
             )
-            return path_in
+            return source
 
-        return path_out
+        return target
 
     def get_size(self, path_in):
         cmd = self.identify_cmd + [
@@ -198,24 +183,6 @@ class IMBackend(LocalBackend):
         except IndexError:
             log.warning("Could not understand IM output: {0!r}", out)
             return None
-
-    def deinterlace(self, path_in, path_out=None):
-        if not path_out:
-            path_out = get_temp_filename(__name__, "deinterlace_IM_", path_in)
-
-        cmd = self.convert_cmd + [
-            syspath(path_in, prefix=False),
-            "-interlace",
-            "none",
-            syspath(path_out, prefix=False),
-        ]
-
-        try:
-            util.command_output(cmd)
-            return path_out
-        except subprocess.CalledProcessError:
-            # FIXME: Should probably issue a warning?
-            return path_in
 
     def get_format(self, filepath):
         cmd = self.identify_cmd + ["-format", "%[magick]", syspath(filepath)]
