@@ -524,36 +524,43 @@ class ArtResizer(metaclass=Shareable):
         else:
             return "WEBPROXY"
 
-    def resize(
-        self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0
-    ):
-        """Manipulate an image file according to the method, returning a
-        new path. For PIL or IMAGEMAGIC methods, resizes the image to a
-        temporary file and encodes with the specified quality level.
-        For WEBPROXY, returns `path_in` unmodified.
-        """
-        if self.local:
-            return self.local_method.resize(
-                maxwidth,
-                path_in,
-                path_out,
-                quality=quality,
-                max_filesize=max_filesize,
-            )
-        else:
-            # Handled by `proxy_url` already.
-            return path_in
-
-    def deinterlace(self, path_in, path_out=None):
-        """Deinterlace an image.
-
-        Only available locally.
-        """
-        if self.local:
-            return self.local_method.deinterlace(path_in, path_out)
-        else:
+    def convert(self, source, **kwargs):
+        if not self.local:
             # FIXME: Should probably issue a warning?
-            return path_in
+            return source
+        
+        params = {}
+
+        if "new_format" in kwargs:
+            new_format = kwargs["new_format"].lower()
+            # A nonexhaustive map of image "types" to extensions overrides
+            new_format = {
+                "jpeg": "jpg",
+            }.get(new_format, new_format)
+
+            fname, ext = os.path.splitext(source)
+
+            target = fname + b"." + new_format.encode("utf8")
+            params['target'] = target
+
+        if "maxwidth" in kwargs and kwargs["maxwidth"] > 0:
+            params["maxwidth"] = kwargs["maxwidth"]
+
+        if "quality" in kwargs and kwargs["quality"] > 0:
+            params["quality"] = kwargs["quality"]
+
+        if "max_filesize" in kwargs and kwargs["max_filesize"] > 0:
+            params["max_filesize"] = kwargs["max_filesize"]
+
+        if "deinterlaced" in kwargs:
+            params["deinterlaced"] = kwargs["deinterlaced"]
+
+        try:
+            result_path = self.local_method.convert(source, **params)
+        finally:
+            if result_path != source:
+                os.unlink(source)
+        return result_path
 
     def proxy_url(self, maxwidth, url, quality=0):
         """Modifies an image URL according the method, returning a new
@@ -595,37 +602,6 @@ class ArtResizer(metaclass=Shareable):
         else:
             # FIXME: Should probably issue a warning?
             return None
-
-    def reformat(self, path_in, new_format, deinterlaced=True):
-        """Converts image to desired format, updating its extension, but
-        keeping the same filename.
-
-        Only available locally.
-        """
-        if not self.local:
-            # FIXME: Should probably issue a warning?
-            return path_in
-
-        new_format = new_format.lower()
-        # A nonexhaustive map of image "types" to extensions overrides
-        new_format = {
-            "jpeg": "jpg",
-        }.get(new_format, new_format)
-
-        fname, ext = os.path.splitext(path_in)
-        path_new = fname + b"." + new_format.encode("utf8")
-
-        # allows the exception to propagate, while still making sure a changed
-        # file path was removed
-        result_path = path_in
-        try:
-            result_path = self.local_method.convert_format(
-                path_in, path_new, deinterlaced
-            )
-        finally:
-            if result_path != path_in:
-                os.unlink(path_in)
-        return result_path
 
     @property
     def can_compare(self):
