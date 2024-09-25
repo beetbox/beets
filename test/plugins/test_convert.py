@@ -360,7 +360,7 @@ class NoConvertTest(ConvertTestCase, ConvertCommand):
         with control_stdin("y"):
             self.run_convert_path(item.path)
         converted = os.path.join(self.convert_dest, b"converted.mp3")
-        self.assertFalse(os.path.exists(converted))
+        self.assertNotExists(converted)
 
     def test_no_transcode_when_and_query_no_convert_set(self):
         self.config["convert"]["no_convert"] = "format:OGG bitrate:..256"
@@ -370,7 +370,7 @@ class NoConvertTest(ConvertTestCase, ConvertCommand):
         with control_stdin("y"):
             self.run_convert_path(item.path)
         converted = os.path.join(self.convert_dest, b"converted.mp3")
-        self.assertFalse(os.path.exists(converted))
+        self.assertNotExists(converted)
 
     def test_transcode_when_and_query_no_convert_set_partial_match(self):
         self.config["convert"]["no_convert"] = "format:OGG bitrate:..256"
@@ -380,7 +380,7 @@ class NoConvertTest(ConvertTestCase, ConvertCommand):
         with control_stdin("y"):
             self.run_convert_path(item.path)
         converted = os.path.join(self.convert_dest, b"converted.mp3")
-        self.assertTrue(os.path.exists(converted))
+        self.assertExists(converted)
 
     def test_no_transcode_when_or_query_no_convert_set_partial_match(self):
         self.config["convert"]["no_convert"] = "format:OGG , bitrate:..256"
@@ -390,4 +390,4 @@ class NoConvertTest(ConvertTestCase, ConvertCommand):
         with control_stdin("y"):
             self.run_convert_path(item.path)
         converted = os.path.join(self.convert_dest, b"converted.mp3")
-        self.assertFalse(os.path.exists(converted))
+        self.assertNotExists(converted)
