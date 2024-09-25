@@ -687,7 +687,7 @@ class ArtResizer:
         if not self.local:
             # FIXME: Should probably issue a warning?
             return source
-        
+
         params = {}
 
         if "new_format" in kwargs:
@@ -700,7 +700,7 @@ class ArtResizer:
             fname, ext = os.path.splitext(source)
 
             target = fname + b"." + new_format.encode("utf8")
-            params['target'] = target
+            params["target"] = target
 
         if "maxwidth" in kwargs and kwargs["maxwidth"] > 0:
             params["maxwidth"] = kwargs["maxwidth"]

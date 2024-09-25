@@ -53,17 +53,6 @@ CONTENT_TYPES = {"image/jpeg": [b"jpg", b"jpeg"], "image/png": [b"png"]}
 IMAGE_EXTENSIONS = [ext for exts in CONTENT_TYPES.values() for ext in exts]
 
 
-class ImageAction(Enum):
-    """Indicates whether an image is useable or requires post-processing."""
-
-    BAD = 0
-    EXACT = 1
-    DOWNSCALE = 2
-    DOWNSIZE = 3
-    DEINTERLACE = 4
-    REFORMAT = 5
-
-
 class MetadataMatch(Enum):
     """Indicates whether a `Candidate` matches the search criteria exactly."""
 
@@ -92,33 +81,46 @@ class Candidate:
         self.path = path
         self.url = url
         self.source_name = source_name
-        self._check: None | ImageAction = None
+        self._check: None | bool = None
         self.match = match
         self.size = size
+
+    def should_downscale(self, plugin: FetchArtPlugin) -> bool:
+        return plugin.maxwidth and self.size[0] > plugin.maxwidth
+
+    def should_downsize(
+        self,
+        plugin: FetchArtPlugin,
+        filesize: int,
+    ) -> bool:
+        if plugin.max_filesize:
+            return filesize > plugin.max_filesize
+        return False
+
+    def should_reformat(
+        self,
+        plugin: FetchArtPlugin,
+        fmt: str | None,
+    ):
+        if plugin.cover_format:
+            return fmt != plugin.cover_format
+        return False
+
+    def should_deinterlace(self, plugin: FetchArtPlugin) -> bool:
+        return plugin.deinterlace
 
     def _validate(
         self,
         plugin: FetchArtPlugin,
-        skip_check_for: None | list[ImageAction] = None,
-    ) -> ImageAction:
-        """Determine whether the candidate artwork is valid based on
-        its dimensions (width and ratio).
+    ) -> bool:
+        """Determine whether the candidate artwork is valid for conversion
+        based on its dimensions (width and ratio).
 
-        `skip_check_for` is a check or list of checks to skip. This is used to
-        avoid redundant checks when the candidate has already been
-        validated for a particular operation without changing
-        plugin configuration.
-
-        Return `ImageAction.BAD` if the file is unusable.
-        Return `ImageAction.EXACT` if the file is usable as-is.
-        Return `ImageAction.DOWNSCALE` if the file must be rescaled.
-        Return `ImageAction.DOWNSIZE` if the file must be resized, and possibly
-            also rescaled.
-        Return `ImageAction.DEINTERLACE` if the file must be deinterlaced.
-        Return `ImageAction.REFORMAT` if the file has to be converted.
+        Return False if the file is unusable.
+        Otherwise, return True.
         """
         if not self.path:
-            return ImageAction.BAD
+            return False
 
         if not (
             plugin.enforce_ratio
@@ -128,7 +130,7 @@ class Candidate:
             or plugin.deinterlace
             or plugin.cover_format
         ):
-            return ImageAction.EXACT
+            return True
 
         # get_size returns None if no local imaging backend is available
         if not self.size:
@@ -143,7 +145,7 @@ class Candidate:
                 "`enforce_ratio` and `max_filesize` "
                 "may be violated."
             )
-            return ImageAction.EXACT
+            return True
 
         short_edge = min(self.size)
         long_edge = max(self.size)
@@ -153,7 +155,7 @@ class Candidate:
             self._log.debug(
                 "image too small ({} < {.minwidth})", self.size[0], plugin
             )
-            return ImageAction.BAD
+            return False
 
         # Check aspect ratio.
         edge_diff = long_edge - short_edge
@@ -167,7 +169,7 @@ class Candidate:
                         short_edge,
                         plugin,
                     )
-                    return ImageAction.BAD
+                    return False
             elif plugin.margin_percent:
                 margin_px = plugin.margin_percent * long_edge
                 if edge_diff > margin_px:
@@ -178,120 +180,61 @@ class Candidate:
                         short_edge,
                         margin_px,
                     )
-                    return ImageAction.BAD
+                    return False
             elif edge_diff:
                 # also reached for margin_px == 0 and margin_percent == 0.0
                 self._log.debug(
                     "image is not square ({} != {})", self.size[0], self.size[1]
                 )
-                return ImageAction.BAD
+                return False
 
-        # Check maximum dimension.
-        downscale = False
-        if plugin.maxwidth and self.size[0] > plugin.maxwidth:
-            self._log.debug(
-                "image needs rescaling ({} > {.maxwidth})", self.size[0], plugin
-            )
-            downscale = True
-
-        # Check filesize.
-        downsize = False
-        if plugin.max_filesize:
-            filesize = os.stat(syspath(self.path)).st_size
-            if filesize > plugin.max_filesize:
-                self._log.debug(
-                    "image needs resizing ({}B > {.max_filesize}B)",
-                    filesize,
-                    plugin,
-                )
-                downsize = True
-
-        # Check image format
-        reformat = False
-        if plugin.cover_format:
-            fmt = ArtResizer.shared.get_format(self.path)
-            reformat = fmt != plugin.cover_format
-            if reformat:
-                self._log.debug(
-                    "image needs reformatting: {} -> {.cover_format}",
-                    fmt,
-                    plugin,
-                )
-
-        skip_check_for = skip_check_for or []
-
-        if downscale and (ImageAction.DOWNSCALE not in skip_check_for):
-            return ImageAction.DOWNSCALE
-        if reformat and (ImageAction.REFORMAT not in skip_check_for):
-            return ImageAction.REFORMAT
-        if plugin.deinterlace and (
-            ImageAction.DEINTERLACE not in skip_check_for
-        ):
-            return ImageAction.DEINTERLACE
-        if downsize and (ImageAction.DOWNSIZE not in skip_check_for):
-            return ImageAction.DOWNSIZE
-        return ImageAction.EXACT
+        return True
 
     def validate(
         self,
         plugin: FetchArtPlugin,
-        skip_check_for: None | list[ImageAction] = None,
-    ) -> ImageAction:
-        self._check = self._validate(plugin, skip_check_for)
+    ) -> bool:
+        self._check = self._validate(plugin)
         return self._check
 
-    def resize(self, plugin: FetchArtPlugin) -> None:
-        """Resize the candidate artwork according to the plugin's
-        configuration until it is valid or no further resizing is
-        possible.
+    def convert(self, plugin: FetchArtPlugin) -> None:
+        """Runs the ArtResizer's convert command on the candidate
+        if the maxwidth, max_filesize, cover_format, or deinterlace
+        options are passed in and valid. FetchArtPlugin handles
+        validation.
         """
-        # validate the candidate in case it hasn't been done yet
-        current_check = self.validate(plugin)
-        checks_performed = []
+        convert_params = {}
 
-        # we don't want to resize the image if it's valid or bad
-        while current_check not in [ImageAction.BAD, ImageAction.EXACT]:
-            self._resize(plugin, current_check)
-            checks_performed.append(current_check)
-            current_check = self.validate(
-                plugin, skip_check_for=checks_performed
+        if self.should_downscale(plugin):
+            self._log.debug(
+                "image needs rescaling ({} > {})", self.size[0], plugin.maxwidth
             )
+            convert_params.maxwidth = plugin.maxwidth
 
-    def _resize(
-        self, plugin: FetchArtPlugin, check: None | ImageAction = None
-    ) -> None:
-        """Resize the candidate artwork according to the plugin's
-        configuration and the specified check.
-        """
-        # This must only be called when _validate returned something other than
-        # ImageAction.Bad or ImageAction.EXACT; then path and size are known.
-        assert self.path is not None
-        assert self.size is not None
+        filesize = os.stat(syspath(self.path)).st_size
+        if self.should_downsize(plugin, filesize):
+            self._log.debug(
+                "image needs resizing ({}B > {}B)",
+                filesize,
+                plugin.max_filesize,
+            )
+            convert_params.max_filesize = plugin.max_filesize
 
-        if check == ImageAction.DOWNSCALE:
-            self.path = ArtResizer.shared.resize(
-                plugin.maxwidth,
-                self.path,
-                quality=plugin.quality,
-                max_filesize=plugin.max_filesize,
+        fmt = ArtResizer.shared.get_format(self.path)
+        if self.should_reformat(plugin, fmt):
+            self._log.debug(
+                "image needs reformatting: {} -> {}",
+                fmt,
+                plugin.cover_format,
             )
-        elif check == ImageAction.DOWNSIZE:
-            # dimensions are correct, so maxwidth is set to maximum dimension
-            self.path = ArtResizer.shared.resize(
-                max(self.size),
-                self.path,
-                quality=plugin.quality,
-                max_filesize=plugin.max_filesize,
-            )
-        elif check == ImageAction.DEINTERLACE:
-            self.path = ArtResizer.shared.deinterlace(self.path)
-        elif check == ImageAction.REFORMAT:
-            self.path = ArtResizer.shared.reformat(
-                self.path,
-                # TODO: fix this gnarly logic to remove the need for type ignore
-                plugin.cover_format,  # type: ignore[arg-type]
-                deinterlaced=plugin.deinterlace,
-            )
+            convert_params.new_format = plugin.cover_format
+
+        if self.should_deinterlace(plugin):
+            self._log.debug("image needs deinterlacing")
+            convert_params.deinterlace = plugin.deinterlace
+
+        if convert_params:
+            self.path = ArtResizer.shared.convert(self.path, **convert_params)
 
 
 def _logged_get(log: Logger, *args, **kwargs) -> requests.Response:
@@ -1562,7 +1505,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                 # fulfill the requirements
                 for candidate in source.get(album, self, paths):
                     source.fetch_image(candidate, self)
-                    if candidate.validate(self) != ImageAction.BAD:
+                    if candidate.validate(self):
                         out = candidate
                         assert out.path is not None  # help mypy
                         self._log.debug(
@@ -1575,7 +1518,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                     break
 
         if out:
-            out.resize(self)
+            out.convert(self)
 
         return out
 
