@@ -96,13 +96,14 @@ class LocalBackend(ABC):
             return False
 
     @abstractmethod
-    def resize(
+    def convert(
         self,
-        maxwidth: int,
-        path_in: bytes,
-        path_out: bytes | None = None,
+        source: bytes,
+        target: bytes | None = None,
+        maxwidth: int = 0,
         quality: int = 0,
         max_filesize: int = 0,
+        deinterlaced: bool | None = None,
     ) -> bytes:
         """Resize an image to the given width and return the output path.
 
@@ -242,62 +243,42 @@ class IMBackend(LocalBackend):
             self.identify_cmd = ["magick", "identify"]
             self.compare_cmd = ["magick", "compare"]
 
-    def resize(
+    def convert(
         self,
-        maxwidth: int,
-        path_in: bytes,
-        path_out: bytes | None = None,
-        quality: int = 0,
-        max_filesize: int = 0,
-    ) -> bytes:
-        """Resize using ImageMagick.
+        source,
+        target=None,
+        maxwidth=0,
+        quality=0,
+        max_filesize=0,
+        deinterlaced=None,
+    ):
+        if not target:
+            target = get_temp_filename(__name__, "convert_IM_", source)
 
-        Use the ``magick`` program or ``convert`` on older versions. Return
-        the output path of resized image.
-        """
-        if not path_out:
-            path_out = get_temp_filename(__name__, "resize_IM_", path_in)
-
-        log.debug(
-            "artresizer: ImageMagick resizing {} to {}",
-            displayable_path(path_in),
-            displayable_path(path_out),
-        )
-
-        # "-resize WIDTHx>" shrinks images with the width larger
-        # than the given width while maintaining the aspect ratio
-        # with regards to the height.
-        # ImageMagick already seems to default to no interlace, but we include
-        # it here for the sake of explicitness.
-        cmd: list[str] = [
+        cmd = [
             *self.convert_cmd,
-            syspath(path_in, prefix=False),
-            "-resize",
-            f"{maxwidth}x>",
-            "-interlace",
-            "none",
+            syspath(source, prefix=False),
+            *(["-resize", f"{maxwidth}x>"] if maxwidth > 0 else []),
+            *(["-quality", f"{quality}"] if quality > 0 else []),
+            *(
+                ["-define", f"jpeg:extent={max_filesize}b"]
+                if max_filesize > 0
+                else []
+            ),
+            *(["-interlace", "none"] if deinterlaced else []),
+            syspath(target, prefix=False),
         ]
-
-        if quality > 0:
-            cmd += ["-quality", f"{quality}"]
-
-        # "-define jpeg:extent=SIZEb" sets the target filesize for imagemagick
-        # to SIZE in bytes.
-        if max_filesize > 0:
-            cmd += ["-define", f"jpeg:extent={max_filesize}b"]
-
-        cmd.append(syspath(path_out, prefix=False))
 
         try:
             util.command_output(cmd)
         except subprocess.CalledProcessError:
             log.warning(
-                "artresizer: IM convert failed for {}",
-                displayable_path(path_in),
+                "artresizer: IM convert failed for {0}",
+                displayable_path(source),
             )
-            return path_in
+            return source
 
-        return path_out
+        return target
 
     def get_size(self, path_in: bytes) -> tuple[int, int] | None:
         cmd: list[str] = [
@@ -325,37 +306,8 @@ class IMBackend(LocalBackend):
             log.warning("Could not understand IM output: {0!r}", out)
             return None
 
-        if len(size) != 2:
-            log.warning("Could not understand IM output: {0!r}", out)
-            return None
-
-        return size
-
-    def deinterlace(
-        self,
-        path_in: bytes,
-        path_out: bytes | None = None,
-    ) -> bytes:
-        if not path_out:
-            path_out = get_temp_filename(__name__, "deinterlace_IM_", path_in)
-
-        cmd = [
-            *self.convert_cmd,
-            syspath(path_in, prefix=False),
-            "-interlace",
-            "none",
-            syspath(path_out, prefix=False),
-        ]
-
-        try:
-            util.command_output(cmd)
-            return path_out
-        except subprocess.CalledProcessError:
-            # FIXME: Should probably issue a warning?
-            return path_in
-
-    def get_format(self, path_in: bytes) -> str | None:
-        cmd = [*self.identify_cmd, "-format", "%[magick]", syspath(path_in)]
+    def get_format(self, filepath):
+        cmd = self.identify_cmd + ["-format", "%[magick]", syspath(filepath)]
 
         try:
             # Image formats should really only be ASCII strings such as "PNG",
