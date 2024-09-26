@@ -143,8 +143,8 @@ def resize_image(log, imagepath, maxwidth, quality):
         maxwidth,
         quality,
     )
-    imagepath = ArtResizer.shared.resize(
-        maxwidth, syspath(imagepath), quality=quality
+    imagepath = ArtResizer.shared.convert(
+        syspath(imagepath), maxwidth=maxwidth, quality=quality
     )
     return imagepath
 

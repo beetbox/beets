@@ -105,7 +105,8 @@ class LocalBackend(ABC):
         max_filesize: int = 0,
         deinterlaced: bool | None = None,
     ) -> bytes:
-        """Resize an image to the given width and return the output path.
+        """Resize, downscale, reformat, and/or deinterlace an image to the
+        given parameters and return the output path.
 
         On error, logs a warning and returns `path_in`.
         """
@@ -114,18 +115,6 @@ class LocalBackend(ABC):
     @abstractmethod
     def get_size(self, path_in: bytes) -> tuple[int, int] | None:
         """Return the (width, height) of the image or None if unavailable."""
-        pass
-
-    @abstractmethod
-    def deinterlace(
-        self,
-        path_in: bytes,
-        path_out: bytes | None = None,
-    ) -> bytes:
-        """Remove interlacing from an image and return the output path.
-
-        On error, logs a warning and returns `path_in`.
-        """
         pass
 
     @abstractmethod

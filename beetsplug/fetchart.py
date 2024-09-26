@@ -203,13 +203,16 @@ class Candidate:
         options are passed in and valid. FetchArtPlugin handles
         validation.
         """
+
+        assert self._check is not False
+
         convert_params = {}
 
         if self.should_downscale(plugin):
             self._log.debug(
                 "image needs rescaling ({} > {})", self.size[0], plugin.maxwidth
             )
-            convert_params.maxwidth = plugin.maxwidth
+            convert_params['maxwidth'] = plugin.maxwidth
 
         filesize = os.stat(syspath(self.path)).st_size
         if self.should_downsize(plugin, filesize):
@@ -218,7 +221,7 @@ class Candidate:
                 filesize,
                 plugin.max_filesize,
             )
-            convert_params.max_filesize = plugin.max_filesize
+            convert_params['max_filesize'] = plugin.max_filesize
 
         fmt = ArtResizer.shared.get_format(self.path)
         if self.should_reformat(plugin, fmt):
@@ -227,11 +230,11 @@ class Candidate:
                 fmt,
                 plugin.cover_format,
             )
-            convert_params.new_format = plugin.cover_format
+            convert_params['new_format'] = plugin.cover_format
 
         if self.should_deinterlace(plugin):
             self._log.debug("image needs deinterlacing")
-            convert_params.deinterlace = plugin.deinterlace
+            convert_params['deinterlace'] = plugin.deinterlace
 
         if convert_params:
             self.path = ArtResizer.shared.convert(self.path, **convert_params)

@@ -113,7 +113,7 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
             self.IMG_225x225,
             target=target_jpg,
         )
-        self.assertEqual(b"PNG", backend.get_format(im_png))
+        self.assertEqual("PNG", backend.get_format(im_png))
 
         # check reformat converts png to jpg with deinterlaced and maxwidth option
         fname, ext = os.path.splitext(self.IMG_225x225_PNG)
@@ -122,7 +122,7 @@ class ArtResizerFileSizeTest(CleanupModulesMixin, BeetsTestCase):
             self.IMG_225x225_PNG, maxwidth=225, target=target_png
         )
 
-        self.assertEqual(b"JPEG", backend.get_format(im_jpg_deinterlaced))
+        self.assertEqual("JPEG", backend.get_format(im_jpg_deinterlaced))
         self._test_img_deinterlaced(backend, im_jpg_deinterlaced)
 
     def _test_img_deinterlaced(self, backend, path):
