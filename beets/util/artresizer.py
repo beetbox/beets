@@ -193,22 +193,6 @@ class IMBackend(LocalBackend):
             # FIXME: Should probably issue a warning?
             return None
 
-    def convert_format(self, source, target, deinterlaced):
-        cmd = self.convert_cmd + [
-            syspath(source),
-            *(["-interlace", "none"] if deinterlaced else []),
-            syspath(target),
-        ]
-
-        try:
-            subprocess.check_call(
-                cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL
-            )
-            return target
-        except subprocess.CalledProcessError:
-            # FIXME: Should probably issue a warning?
-            return source
-
     @property
     def can_compare(self):
         return self.version() > (6, 8, 7)
@@ -433,23 +417,6 @@ class PILBackend(LocalBackend):
         ):
             log.exception("failed to detect image format for {}", filepath)
             return None
-
-    def convert_format(self, source, target, deinterlaced):
-        from PIL import Image, UnidentifiedImageError
-
-        try:
-            with Image.open(syspath(source)) as im:
-                im.save(os.fsdecode(target), progressive=not deinterlaced)
-                return target
-        except (
-            ValueError,
-            TypeError,
-            UnidentifiedImageError,
-            FileNotFoundError,
-            OSError,
-        ):
-            log.exception("failed to convert image {} -> {}", source, target)
-            return source
 
     @property
     def can_compare(self):
