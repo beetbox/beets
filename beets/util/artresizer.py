@@ -123,56 +123,41 @@ class IMBackend(LocalBackend):
             self.identify_cmd = ["magick", "identify"]
             self.compare_cmd = ["magick", "compare"]
 
-    def resize(
-        self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0
+    def convert(
+        self,
+        source,
+        target=None,
+        maxwidth=0,
+        quality=0,
+        max_filesize=0,
+        deinterlaced=None,
     ):
-        """Resize using ImageMagick.
+        if not target:
+            target = get_temp_filename(__name__, "convert_IM_", source)
 
-        Use the ``magick`` program or ``convert`` on older versions. Return
-        the output path of resized image.
-        """
-        if not path_out:
-            path_out = get_temp_filename(__name__, "resize_IM_", path_in)
-
-        log.debug(
-            "artresizer: ImageMagick resizing {0} to {1}",
-            displayable_path(path_in),
-            displayable_path(path_out),
-        )
-
-        # "-resize WIDTHx>" shrinks images with the width larger
-        # than the given width while maintaining the aspect ratio
-        # with regards to the height.
-        # ImageMagick already seems to default to no interlace, but we include
-        # it here for the sake of explicitness.
         cmd = self.convert_cmd + [
-            syspath(path_in, prefix=False),
-            "-resize",
-            f"{maxwidth}x>",
-            "-interlace",
-            "none",
+            syspath(source, prefix=False),
+            *(["-resize", f"{maxwidth}x>"] if maxwidth > 0 else []),
+            *(["-quality", f"{quality}"] if quality > 0 else []),
+            *(
+                ["-define", f"jpeg:extent={max_filesize}b"]
+                if max_filesize > 0
+                else []
+            ),
+            *(["-interlace", "none"] if deinterlaced else []),
+            syspath(target, prefix=False),
         ]
-
-        if quality > 0:
-            cmd += ["-quality", f"{quality}"]
-
-        # "-define jpeg:extent=SIZEb" sets the target filesize for imagemagick
-        # to SIZE in bytes.
-        if max_filesize > 0:
-            cmd += ["-define", f"jpeg:extent={max_filesize}b"]
-
-        cmd.append(syspath(path_out, prefix=False))
 
         try:
             util.command_output(cmd)
         except subprocess.CalledProcessError:
             log.warning(
                 "artresizer: IM convert failed for {0}",
-                displayable_path(path_in),
+                displayable_path(source),
             )
-            return path_in
+            return source
 
-        return path_out
+        return target
 
     def get_size(self, path_in):
         cmd = self.identify_cmd + [
@@ -199,24 +184,6 @@ class IMBackend(LocalBackend):
             log.warning("Could not understand IM output: {0!r}", out)
             return None
 
-    def deinterlace(self, path_in, path_out=None):
-        if not path_out:
-            path_out = get_temp_filename(__name__, "deinterlace_IM_", path_in)
-
-        cmd = self.convert_cmd + [
-            syspath(path_in, prefix=False),
-            "-interlace",
-            "none",
-            syspath(path_out, prefix=False),
-        ]
-
-        try:
-            util.command_output(cmd)
-            return path_out
-        except subprocess.CalledProcessError:
-            # FIXME: Should probably issue a warning?
-            return path_in
-
     def get_format(self, filepath):
         cmd = self.identify_cmd + ["-format", "%[magick]", syspath(filepath)]
 
@@ -225,22 +192,6 @@ class IMBackend(LocalBackend):
         except subprocess.CalledProcessError:
             # FIXME: Should probably issue a warning?
             return None
-
-    def convert_format(self, source, target, deinterlaced):
-        cmd = self.convert_cmd + [
-            syspath(source),
-            *(["-interlace", "none"] if deinterlaced else []),
-            syspath(target),
-        ]
-
-        try:
-            subprocess.check_call(
-                cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL
-            )
-            return target
-        except subprocess.CalledProcessError:
-            # FIXME: Should probably issue a warning?
-            return source
 
     @property
     def can_compare(self):
@@ -353,35 +304,49 @@ class PILBackend(LocalBackend):
         """
         self.version()
 
-    def resize(
-        self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0
+    def convert(
+        self,
+        source,
+        target=None,
+        maxwidth=0,
+        quality=0,
+        max_filesize=0,
+        deinterlaced=None,
     ):
-        """Resize using Python Imaging Library (PIL).  Return the output path
-        of resized image.
+        """Adjust image using Python Imaging Library (PIL). Return the output path
+        of adjusted image.
         """
-        if not path_out:
-            path_out = get_temp_filename(__name__, "resize_PIL_", path_in)
+        if not target:
+            target = get_temp_filename(__name__, "convert_PIL_", source)
 
         from PIL import Image
 
-        log.debug(
-            "artresizer: PIL resizing {0} to {1}",
-            displayable_path(path_in),
-            displayable_path(path_out),
-        )
-
         try:
-            im = Image.open(syspath(path_in))
-            size = maxwidth, maxwidth
-            im.thumbnail(size, Image.Resampling.LANCZOS)
+            im = Image.open(syspath(source))
+
+            if maxwidth > 0:
+                size = maxwidth, maxwidth
+                im.thumbnail(size, Image.Resampling.LANCZOS)
 
             if quality == 0:
                 # Use PIL's default quality.
                 quality = -1
 
-            # progressive=False only affects JPEGs and is the default,
-            # but we include it here for explicitness.
-            im.save(os.fsdecode(path_out), quality=quality, progressive=False)
+            progressive = None
+
+            if deinterlaced:
+                progressive = False
+            elif deinterlaced is False:
+                progressive = True
+
+            if progressive is not None:
+                im.save(
+                    os.fsdecode(target),
+                    quality=quality,
+                    progressive=progressive,
+                )
+            else:
+                im.save(os.fsdecode(target), quality=quality)
 
             if max_filesize > 0:
                 # If maximum filesize is set, we attempt to lower the quality
@@ -391,38 +356,40 @@ class PILBackend(LocalBackend):
                     lower_qual = quality
                 else:
                     lower_qual = 95
+
                 for i in range(5):
                     # 5 attempts is an arbitrary choice
-                    filesize = os.stat(syspath(path_out)).st_size
+                    filesize = os.stat(syspath(target)).st_size
                     log.debug("PIL Pass {0} : Output size: {1}B", i, filesize)
                     if filesize <= max_filesize:
-                        return path_out
+                        return target
                     # The relationship between filesize & quality will be
                     # image dependent.
                     lower_qual -= 10
                     # Restrict quality dropping below 10
                     if lower_qual < 10:
                         lower_qual = 10
+
                     # Use optimize flag to improve filesize decrease
                     im.save(
-                        os.fsdecode(path_out),
+                        os.fsdecode(target),
                         quality=lower_qual,
                         optimize=True,
-                        progressive=False,
+                        progressive=progressive,
                     )
                 log.warning(
                     "PIL Failed to resize file to below {0}B", max_filesize
                 )
-                return path_out
+                return target
 
             else:
-                return path_out
+                return target
         except OSError:
             log.error(
-                "PIL cannot create thumbnail for '{0}'",
-                displayable_path(path_in),
+                "PIL cannot make adjustments to '{0}'",
+                displayable_path(source),
             )
-            return path_in
+            return source
 
     def get_size(self, path_in):
         from PIL import Image
@@ -435,20 +402,6 @@ class PILBackend(LocalBackend):
                 "PIL could not read file {}: {}", displayable_path(path_in), exc
             )
             return None
-
-    def deinterlace(self, path_in, path_out=None):
-        if not path_out:
-            path_out = get_temp_filename(__name__, "deinterlace_PIL_", path_in)
-
-        from PIL import Image
-
-        try:
-            im = Image.open(syspath(path_in))
-            im.save(os.fsdecode(path_out), progressive=False)
-            return path_out
-        except OSError:
-            # FIXME: Should probably issue a warning?
-            return path_in
 
     def get_format(self, filepath):
         from PIL import Image, UnidentifiedImageError
@@ -464,23 +417,6 @@ class PILBackend(LocalBackend):
         ):
             log.exception("failed to detect image format for {}", filepath)
             return None
-
-    def convert_format(self, source, target, deinterlaced):
-        from PIL import Image, UnidentifiedImageError
-
-        try:
-            with Image.open(syspath(source)) as im:
-                im.save(os.fsdecode(target), progressive=not deinterlaced)
-                return target
-        except (
-            ValueError,
-            TypeError,
-            UnidentifiedImageError,
-            FileNotFoundError,
-            OSError,
-        ):
-            log.exception("failed to convert image {} -> {}", source, target)
-            return source
 
     @property
     def can_compare(self):
@@ -555,36 +491,44 @@ class ArtResizer(metaclass=Shareable):
         else:
             return "WEBPROXY"
 
-    def resize(
-        self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0
-    ):
-        """Manipulate an image file according to the method, returning a
-        new path. For PIL or IMAGEMAGIC methods, resizes the image to a
-        temporary file and encodes with the specified quality level.
-        For WEBPROXY, returns `path_in` unmodified.
-        """
-        if self.local:
-            return self.local_method.resize(
-                maxwidth,
-                path_in,
-                path_out,
-                quality=quality,
-                max_filesize=max_filesize,
-            )
-        else:
-            # Handled by `proxy_url` already.
-            return path_in
-
-    def deinterlace(self, path_in, path_out=None):
-        """Deinterlace an image.
-
-        Only available locally.
-        """
-        if self.local:
-            return self.local_method.deinterlace(path_in, path_out)
-        else:
+    def convert(self, source, **kwargs):
+        if not self.local:
             # FIXME: Should probably issue a warning?
-            return path_in
+            return source
+
+        params = {}
+
+        if "new_format" in kwargs:
+            new_format = kwargs["new_format"].lower()
+            # A nonexhaustive map of image "types" to extensions overrides
+            new_format = {
+                "jpeg": "jpg",
+            }.get(new_format, new_format)
+
+            fname, ext = os.path.splitext(source)
+
+            target = fname + b"." + new_format.encode("utf8")
+            params["target"] = target
+
+        if "maxwidth" in kwargs and kwargs["maxwidth"] > 0:
+            params["maxwidth"] = kwargs["maxwidth"]
+
+        if "quality" in kwargs and kwargs["quality"] > 0:
+            params["quality"] = kwargs["quality"]
+
+        if "max_filesize" in kwargs and kwargs["max_filesize"] > 0:
+            params["max_filesize"] = kwargs["max_filesize"]
+
+        if "deinterlaced" in kwargs:
+            params["deinterlaced"] = kwargs["deinterlaced"]
+
+        result_path = source
+        try:
+            result_path = self.local_method.convert(source, **params)
+        finally:
+            if result_path != source:
+                os.unlink(source)
+        return result_path
 
     def proxy_url(self, maxwidth, url, quality=0):
         """Modifies an image URL according the method, returning a new
@@ -626,37 +570,6 @@ class ArtResizer(metaclass=Shareable):
         else:
             # FIXME: Should probably issue a warning?
             return None
-
-    def reformat(self, path_in, new_format, deinterlaced=True):
-        """Converts image to desired format, updating its extension, but
-        keeping the same filename.
-
-        Only available locally.
-        """
-        if not self.local:
-            # FIXME: Should probably issue a warning?
-            return path_in
-
-        new_format = new_format.lower()
-        # A nonexhaustive map of image "types" to extensions overrides
-        new_format = {
-            "jpeg": "jpg",
-        }.get(new_format, new_format)
-
-        fname, ext = os.path.splitext(path_in)
-        path_new = fname + b"." + new_format.encode("utf8")
-
-        # allows the exception to propagate, while still making sure a changed
-        # file path was removed
-        result_path = path_in
-        try:
-            result_path = self.local_method.convert_format(
-                path_in, path_new, deinterlaced
-            )
-        finally:
-            if result_path != path_in:
-                os.unlink(path_in)
-        return result_path
 
     @property
     def can_compare(self):

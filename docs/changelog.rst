@@ -40,6 +40,7 @@ Bug fixes:
   issues in the future.
   :bug:`5289`
 * :doc:`plugins/discogs`: Fix the ``TypeError`` when there is no description.
+* Fixed fetchart plugin issue where some image manipulation options conflicted with each other. :bug:`4452`
 
 For packagers:
 
@@ -80,6 +81,9 @@ Other changes:
   calculate the bpm. Previously this import was being done immediately, so
   every ``beet`` invocation was being delayed by a couple of seconds.
   :bug:`5185`
+* :doc:`plugins/fetchart`: Consolidated fetchart image manipulation options to
+  be handled all in one place. See
+  https://github.com/beetbox/beets/pull/4133#issuecomment-968268133
 
 2.0.0 (May 30, 2024)
 --------------------
