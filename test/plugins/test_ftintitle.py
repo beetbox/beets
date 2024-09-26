@@ -175,7 +175,7 @@ class FtInTitlePluginTest(unittest.TestCase):
         parts = ftintitle.split_on_feat("Alice defeat Bob")
         assert parts == ("Alice defeat Bob", None)
 
-    def test_contains_feat(self):
+    def test_contains_feat_artist(self):
         assert ftintitle.contains_feat("Alice ft. Bob")
         assert ftintitle.contains_feat("Alice feat. Bob")
         assert ftintitle.contains_feat("Alice feat Bob")
@@ -190,3 +190,16 @@ class FtInTitlePluginTest(unittest.TestCase):
         assert not ftintitle.contains_feat("Alice defeat Bob")
         assert not ftintitle.contains_feat("Aliceft.Bob")
         assert not ftintitle.contains_feat("Alice (defeat Bob)")
+
+    def test_contains_feat_title(self):
+        assert ftintitle.contains_feat(
+            "Live and Let Go (feat. Alice)", for_artist=False
+        )
+        assert ftintitle.contains_feat(
+            "Live and Let Go [feat. Alice]", for_artist=False
+        )
+        assert ftintitle.contains_feat(
+            "Live and Let Go feat. Alice", for_artist=False
+        )
+        assert not ftintitle.contains_feat("Live and Let Go", for_artist=False)
+        assert not ftintitle.contains_feat("Come With Me", for_artist=False)
