@@ -122,19 +122,6 @@ class LocalBackend(ABC):
         """Return the image format (e.g., 'PNG') or None if undetectable."""
         pass
 
-    @abstractmethod
-    def convert_format(
-        self,
-        source: bytes,
-        target: bytes,
-        deinterlaced: bool,
-    ) -> bytes:
-        """Convert an image to a new format and return the new file path.
-
-        On error, logs a warning and returns `source`.
-        """
-        pass
-
     @property
     def can_compare(self) -> bool:
         """Indicate whether image comparison is supported by this backend."""
@@ -306,28 +293,6 @@ class IMBackend(LocalBackend):
         except (subprocess.CalledProcessError, UnicodeError):
             # FIXME: Should probably issue a warning?
             return None
-
-    def convert_format(
-        self,
-        source: bytes,
-        target: bytes,
-        deinterlaced: bool,
-    ) -> bytes:
-        cmd = [
-            *self.convert_cmd,
-            syspath(source),
-            *(["-interlace", "none"] if deinterlaced else []),
-            syspath(target),
-        ]
-
-        try:
-            subprocess.check_call(
-                cmd, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL
-            )
-            return target
-        except subprocess.CalledProcessError:
-            # FIXME: Should probably issue a warning?
-            return source
 
     @property
     def can_compare(self) -> bool:
@@ -576,28 +541,6 @@ class PILBackend(LocalBackend):
         ):
             log.exception("failed to detect image format for {}", path_in)
             return None
-
-    def convert_format(
-        self,
-        source: bytes,
-        target: bytes,
-        deinterlaced: bool,
-    ) -> bytes:
-        from PIL import Image, UnidentifiedImageError
-
-        try:
-            with Image.open(syspath(source)) as im:
-                im.save(os.fsdecode(target), progressive=not deinterlaced)
-                return target
-        except (
-            ValueError,
-            TypeError,
-            UnidentifiedImageError,
-            FileNotFoundError,
-            OSError,
-        ):
-            log.exception("failed to convert image {} -> {}", source, target)
-            return source
 
     @property
     def can_compare(self) -> bool:
