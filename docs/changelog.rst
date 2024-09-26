@@ -26,6 +26,8 @@ New features:
 
 Bug fixes:
 
+* The detection of a "feat. X" part in a song title does not produce any false
+  positives caused by words like "and" or "with" anymore. :bug:`5441`
 * The detection of a "feat. X" part now also matches such parts if they are in
   parentheses or brackets. :bug:`5436`
 * Improve naming of temporary files by separating the random part with the file extension.
