@@ -35,9 +35,15 @@ def split_on_feat(artist):
         return tuple(parts)
 
 
-def contains_feat(title):
+def contains_feat(title, for_artist=True):
     """Determine whether the title contains a "featured" marker."""
-    return bool(re.search(plugins.feat_tokens(), title, flags=re.IGNORECASE))
+    return bool(
+        re.search(
+            plugins.feat_tokens(for_artist=for_artist),
+            title,
+            flags=re.IGNORECASE,
+        )
+    )
 
 
 def find_feat_part(artist, albumartist):
@@ -143,7 +149,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
 
         # Only update the title if it does not already contain a featured
         # artist and if we do not drop featuring information.
-        if not drop_feat and not contains_feat(item.title):
+        if not drop_feat and not contains_feat(item.title, for_artist=False):
             feat_format = self.config["format"].as_str()
             new_format = feat_format.format(feat_part)
             new_title = f"{item.title} {new_format}"
