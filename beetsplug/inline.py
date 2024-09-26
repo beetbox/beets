@@ -32,12 +32,12 @@ class InlineError(Exception):
         )
 
 
-def _compile_func(body):
+def _compile_func(body, args=""):
     """Given Python code for a function body, return a compiled
     callable that invokes that code.
     """
     body = body.replace("\n", "\n    ")
-    body = f"def {FUNC_NAME}():\n    {body}"
+    body = f"def {FUNC_NAME}({args}):\n    {body}"
     code = compile(body, "inline", "exec")
     env = {}
     eval(code, env)
@@ -84,7 +84,7 @@ class InlinePlugin(BeetsPlugin):
         except SyntaxError:
             # Fall back to a function body.
             try:
-                func = _compile_func(python_code)
+                func = _compile_func(python_code, args="db_obj")
             except SyntaxError:
                 self._log.error(
                     "syntax error in inline field definition:\n{}",
@@ -111,6 +111,7 @@ class InlinePlugin(BeetsPlugin):
             # For expressions, just evaluate and return the result.
             def _expr_func(obj):
                 values = _dict_for(obj)
+                values["db_obj"] = obj
                 try:
                     return eval(code, values)
                 except Exception as exc:
@@ -124,7 +125,7 @@ class InlinePlugin(BeetsPlugin):
                 old_globals = dict(func.__globals__)
                 func.__globals__.update(_dict_for(obj))
                 try:
-                    return func()
+                    return func(obj)
                 except Exception as exc:
                     raise InlineError(python_code, exc)
                 finally:

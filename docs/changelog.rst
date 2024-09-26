@@ -26,6 +26,9 @@ New features
       after upgrading to trigger the migration. Only then you can safely move
       the library to a new location.
 
+- :doc:`plugins/inline`: Add access to the ``album`` or ``item`` object as
+  ``db_obj`` in inline fields.
+
 Bug fixes
 ~~~~~~~~~
 
