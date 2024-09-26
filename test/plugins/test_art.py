@@ -844,9 +844,9 @@ class ArtForAlbumTest(UseThePlugin):
     IMG_225x225_SIZE = os.stat(util.syspath(IMG_225x225)).st_size
     IMG_348x348_SIZE = os.stat(util.syspath(IMG_348x348)).st_size
 
-    RESIZE_OP = "resize"
-    DEINTERLACE_OP = "deinterlace"
-    REFORMAT_OP = "reformat"
+    RESIZE_OP = "convert"
+    DEINTERLACE_OP = "convert"
+    REFORMAT_OP = "convert"
 
     def setUp(self):
         super().setUp()
