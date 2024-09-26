@@ -703,6 +703,7 @@ class ArtResizer:
         if "deinterlaced" in kwargs:
             params["deinterlaced"] = kwargs["deinterlaced"]
 
+        result_path = source
         try:
             result_path = self.local_method.convert(source, **params)
         finally:
