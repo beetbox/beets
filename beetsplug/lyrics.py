@@ -1060,15 +1060,13 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
                     )
         else:
             self.info("🔴 Lyrics not found: {}", item)
-            fallback = self.config["fallback"].get()
-            if fallback:
-                lyrics = fallback
-            else:
-                return
-        item.lyrics = lyrics
-        if write:
-            item.try_write()
-        item.store()
+            lyrics = self.config["fallback"].get()
+
+        if lyrics not in {None, item.lyrics}:
+            item.lyrics = lyrics
+            if write:
+                item.try_write()
+            item.store()
 
     def get_lyrics(self, artist: str, title: str, *args) -> str | None:
         """Fetch lyrics, trying each source in turn. Return a string or
