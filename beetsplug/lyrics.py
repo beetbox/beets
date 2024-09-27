@@ -70,6 +70,7 @@ URL_CHARACTERS = {
     "\u2026": "...",
 }
 USER_AGENT = f"beets/{beets.__version__}"
+INSTRUMENTAL_LYRICS = "[Instrumental]"
 
 # The content for the base index.rst generated in ReST mode.
 REST_INDEX_TEMPLATE = """Lyrics
@@ -371,6 +372,9 @@ class LRCLib(Backend):
             if data:
                 item = self.pick_lyrics(length, data)
 
+                if item["instrumental"]:
+                    return INSTRUMENTAL_LYRICS
+
                 if self.config["synced"] and (synced := item["syncedLyrics"]):
                     return synced
 
@@ -543,7 +547,7 @@ class Genius(Backend):
                 string="This song is an instrumental",
             ):
                 self._log.debug("Detected instrumental")
-                return "[Instrumental]"
+                return INSTRUMENTAL_LYRICS
             else:
                 self._log.debug("Couldn't scrape page using known layouts")
                 return None

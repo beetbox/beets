@@ -398,6 +398,7 @@ LYRICS_DURATION = 950
 
 def lyrics_match(**overrides):
     return {
+        "instrumental": False,
         "duration": LYRICS_DURATION,
         "syncedLyrics": "synced",
         "plainLyrics": "plain",
@@ -439,6 +440,11 @@ class TestLRCLibLyrics(LyricsBackend):
         [
             _p([], None, id="handle non-matching lyrics"),
             _p([lyrics_match()], "synced", id="synced when available"),
+            _p(
+                [lyrics_match(instrumental=True)],
+                "[Instrumental]",
+                id="instrumental track",
+            ),
             _p(
                 [lyrics_match(syncedLyrics=None)],
                 "plain",
