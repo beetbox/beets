@@ -312,11 +312,8 @@ class SmartArtistSort(dbcore.query.Sort):
         order = "ASC" if self.ascending else "DESC"
         field = "albumartist" if self.album else "artist"
         collate = "COLLATE NOCASE" if self.case_insensitive else ""
-        return (
-            "(CASE {0}_sort WHEN NULL THEN {0} "
-            'WHEN "" THEN {0} '
-            "ELSE {0}_sort END) {1} {2}"
-        ).format(field, collate, order)
+
+        return f"COALESCE(NULLIF({field}_sort, ''), {field}) {collate} {order}"
 
     def sort(self, objs):
         if self.album:

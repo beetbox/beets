@@ -40,6 +40,8 @@ Bug fixes:
   issues in the future.
   :bug:`5289`
 * :doc:`plugins/discogs`: Fix the ``TypeError`` when there is no description.
+* Fix double-quoted string literals in SQL queries
+  :bug:`4709`
 
 For packagers:
 
