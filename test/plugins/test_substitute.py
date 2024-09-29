@@ -14,7 +14,6 @@
 
 """Test the substitute plugin regex functionality."""
 
-import pytest
 
 from beets.test.helper import PluginTestCase
 from beetsplug.substitute import Substitute
@@ -57,7 +56,8 @@ class SubstitutePluginTest(PluginTestCase):
         with self.configure_plugin(
             { ".*jimi hendrix.*": "Jimi Hendrix" }
         ):
-            assert Substitute().tmpl_substitute("The Jimi Hendrix Experience") == "Jimi Hendrix"
+            result = Substitute().tmpl_substitute("The Jimi Hendrix Experience")
+            assert result == "Jimi Hendrix"
 
     def test_regex_capture_group(self):
         with self.configure_plugin(
@@ -65,11 +65,12 @@ class SubstitutePluginTest(PluginTestCase):
         ):
             cases = [
                 ("King Creosote & Jon Hopkins", "King Creosote"),
-                ("Michael Hurley, The Holy Modal Rounders, Jeffrey Frederick & The Clamtones", "Michael Hurley"),
+                ("Michael Hurley, The Holy Modal Rounders,"
+                  + "Jeffrey Frederick & The Clamtones", "Michael Hurley"),
                 ("James Yorkston and the Athletes", "James Yorkston")
             ]
-            for case in cases:
-                assert Substitute().tmpl_substitute(case[0]) == case[1]
+            for input, expected in cases:
+                assert Substitute().tmpl_substitute(input) == expected
 
     def test_partial_substitution(self):
         with self.configure_plugin(
@@ -95,5 +96,5 @@ class SubstitutePluginTest(PluginTestCase):
                 ("a", "b"),
                 ("b", "c"),
             ]
-            for case in cases:
-                assert Substitute().tmpl_substitute(case[0]) == case[1]
+            for input, expected in cases:
+                assert Substitute().tmpl_substitute(input) == expected
