@@ -14,11 +14,11 @@
 
 """Test the substitute plugin regex functionality."""
 
-
 from beets.test.helper import PluginTestCase
 from beetsplug.substitute import Substitute
 
 PLUGIN_NAME = "substitute"
+
 
 class SubstitutePluginTest(PluginTestCase):
     plugin = "substitute"
@@ -32,42 +32,33 @@ class SubstitutePluginTest(PluginTestCase):
                 "c": "d",
             }
         ):
-            cases = [
-                ("a", "b"),
-                ("b", "c"),
-                ("c", "d")
-            ]
+            cases = [("a", "b"), ("b", "c"), ("c", "d")]
             for input, expected in cases:
                 assert Substitute().tmpl_substitute(input) == expected
 
     def test_case_insensitivity(self):
-        with self.configure_plugin(
-            { "a": "b" }
-        ):
+        with self.configure_plugin({"a": "b"}):
             assert Substitute().tmpl_substitute("A") == "b"
 
     def test_unmatched_input_preserved(self):
-        with self.configure_plugin(
-            { "a": "b" }
-        ):
+        with self.configure_plugin({"a": "b"}):
             assert Substitute().tmpl_substitute("c") == "c"
 
     def test_regex_to_static(self):
-        with self.configure_plugin(
-            { ".*jimi hendrix.*": "Jimi Hendrix" }
-        ):
+        with self.configure_plugin({".*jimi hendrix.*": "Jimi Hendrix"}):
             result = Substitute().tmpl_substitute("The Jimi Hendrix Experience")
             assert result == "Jimi Hendrix"
 
     def test_regex_capture_group(self):
-        with self.configure_plugin(
-            { "^(.*?)(,| &| and).*": r"\1" }
-        ):
+        with self.configure_plugin({"^(.*?)(,| &| and).*": r"\1"}):
             cases = [
                 ("King Creosote & Jon Hopkins", "King Creosote"),
-                ("Michael Hurley, The Holy Modal Rounders,"
-                  + "Jeffrey Frederick & The Clamtones", "Michael Hurley"),
-                ("James Yorkston and the Athletes", "James Yorkston")
+                (
+                    "Michael Hurley, The Holy Modal Rounders, Jeffrey Frederick & "
+                    + "The Clamtones",
+                    "Michael Hurley",
+                ),
+                ("James Yorkston and the Athletes", "James Yorkston"),
             ]
             for input, expected in cases:
                 assert Substitute().tmpl_substitute(input) == expected
@@ -83,7 +74,6 @@ class SubstitutePluginTest(PluginTestCase):
             ]
             for input, expected in cases:
                 assert Substitute().tmpl_substitute(input) == expected
-
 
     def test_break_on_first_match(self):
         with self.configure_plugin(
