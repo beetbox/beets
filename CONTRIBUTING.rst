@@ -237,7 +237,7 @@ There are a few coding conventions we use in beets:
    .. code-block:: python
 
        with g.lib.transaction() as tx:
-             rows = tx.query("SELECT DISTINCT '{0}'' FROM '{1}'' ORDER BY '{2}'""
+             rows = tx.query("SELECT DISTINCT '{0}' FROM '{1}' ORDER BY '{2}'"
                              .format(field, model._table, sort_field))
 
    To fetch Item objects from the database, use lib.items(…) and supply
