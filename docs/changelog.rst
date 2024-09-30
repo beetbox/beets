@@ -42,6 +42,8 @@ Bug fixes:
   issues in the future.
   :bug:`5289`
 * :doc:`plugins/discogs`: Fix the ``TypeError`` when there is no description.
+* Remove single quotes from all SQL queries
+  :bug:`4709`
 
 For packagers:
 
