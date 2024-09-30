@@ -1040,8 +1040,8 @@ class FixedFieldSort(FieldSort):
         if self.case_insensitive:
             field = (
                 "(CASE "
-                'WHEN TYPEOF({0})="text" THEN LOWER({0}) '
-                'WHEN TYPEOF({0})="blob" THEN LOWER({0}) '
+                "WHEN TYPEOF({0})='text' THEN LOWER({0}) "
+                "WHEN TYPEOF({0})='blob' THEN LOWER({0}) "
                 "ELSE {0} END)".format(self.field)
             )
         else:
