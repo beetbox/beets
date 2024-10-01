@@ -37,7 +37,13 @@ def split_on_feat(artist):
 
 def contains_feat(title):
     """Determine whether the title contains a "featured" marker."""
-    return bool(re.search(plugins.feat_tokens(), title, flags=re.IGNORECASE))
+    return bool(
+        re.search(
+            plugins.feat_tokens(for_artist=False),
+            title,
+            flags=re.IGNORECASE,
+        )
+    )
 
 
 def find_feat_part(artist, albumartist):
