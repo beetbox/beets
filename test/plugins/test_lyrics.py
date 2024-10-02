@@ -199,7 +199,7 @@ class LyricsBackendTest(PluginMixin):
             encoding="utf-8"
         )
 
-    @pytest.mark.integration_test
+    @pytest.mark.on_lyrics_update
     def test_backend_source(self, backend):
         """Test default backends with a song known to exist in respective
         databases.
@@ -229,7 +229,7 @@ class TestGoogleLyrics(LyricsBackendTest):
     def file_name(self):
         return "examplecom/beetssong"
 
-    @pytest.mark.integration_test
+    @pytest.mark.on_lyrics_update
     @pytest.mark.parametrize(
         "title, url",
         [
@@ -325,7 +325,7 @@ class TestGeniusLyrics(LyricsBackendTest):
         return "genius"
 
     @xfail_on_ci("Genius returns 403 FORBIDDEN")
-    @pytest.mark.integration_test
+    @pytest.mark.on_lyrics_update
     def test_backend_source(self, backend):
         super().test_backend_source(backend)
 

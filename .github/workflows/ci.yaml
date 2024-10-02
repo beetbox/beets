@@ -35,6 +35,14 @@ jobs:
           sudo apt update
           sudo apt install ffmpeg gobject-introspection libcairo2-dev libgirepository1.0-dev pandoc
 
+      - name: Get changed lyrics files
+        id: lyrics-update
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            beetsplug/lyrics.py
+            test/plugins/test_lyrics.py
+
       - name: Add pytest annotator
         uses: liskin/gh-problem-matcher-wrap@v3
         with:
@@ -49,6 +57,8 @@ jobs:
 
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
         name: Test with coverage
+        env:
+          LYRICS_UPDATED: ${{ steps.lyrics-update.outputs.any_changed }}
         run: |
           poetry install --extras=autobpm --extras=lyrics --extras=docs --extras=replaygain --extras=reflink
           poe docs
