@@ -44,13 +44,13 @@ jobs:
       - if: ${{ env.IS_MAIN_PYTHON != 'true' }}
         name: Test without coverage
         run: |
-          poetry install --extras=autobpm
+          poetry install --extras=autobpm --extras=lyrics
           poe test
 
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
         name: Test with coverage
         run: |
-          poetry install --extras=autobpm --extras=docs --extras=replaygain --extras=reflink
+          poetry install --extras=autobpm --extras=lyrics --extras=docs --extras=replaygain --extras=reflink
           poe docs
           poe test-with-coverage
 
