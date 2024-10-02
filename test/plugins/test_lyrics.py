@@ -30,12 +30,26 @@ from beets.test import _common
 from beets.util import bytestring_path
 from beetsplug import lyrics
 
+PHRASE_BY_TITLE = {
+    "Lady Madonna": "friday night arrives without a suitcase",
+    "Jazz'n'blues": "as i check my balance i kiss the screen",
+    "Beets song": "via plugins, beets becomes a panacea",
+}
+
 log = logging.getLogger("beets.test_lyrics")
 raw_backend = lyrics.Backend({}, log)
 google = lyrics.Google(MagicMock(), log)
 genius = lyrics.Genius(MagicMock(), log)
 tekstowo = lyrics.Tekstowo(MagicMock(), log)
 lrclib = lyrics.LRCLib(MagicMock(), log)
+
+
+def xfail_on_ci(msg: str) -> pytest.MarkDecorator:
+    return pytest.mark.xfail(
+        bool(os.environ.get("GITHUB_ACTIONS")),
+        reason=msg,
+        raises=AssertionError,
+    )
 
 
 class LyricsPluginTest(unittest.TestCase):
@@ -210,26 +224,6 @@ class MockFetchUrl:
         return content
 
 
-class LyricsAssertions:
-    """A mixin with lyrics-specific assertions."""
-
-    def assertLyricsContentOk(self, title, text, msg=""):  # noqa: N802
-        """Compare lyrics text to expected lyrics for given title."""
-        if not text:
-            return
-
-        keywords = set(LYRICS_TEXTS[google.slugify(title)].split())
-        words = {x.strip(".?, ()") for x in text.lower().split()}
-
-        if not keywords <= words:
-            details = (
-                f"{keywords!r} is not a subset of {words!r}."
-                f" Words only in expected set {keywords - words!r},"
-                f" Words only in result set {words - keywords!r}."
-            )
-            self.fail(f"{details} : {msg}")
-
-
 LYRICS_ROOT_DIR = os.path.join(_common.RSRC, b"lyrics")
 yaml_path = os.path.join(_common.RSRC, b"lyricstext.yaml")
 LYRICS_TEXTS = confuse.load_yaml(yaml_path)
@@ -244,126 +238,68 @@ class LyricsGoogleBaseTest(unittest.TestCase):
             self.skipTest("Beautiful Soup 4 not available")
 
 
-class LyricsPluginSourcesTest(LyricsGoogleBaseTest, LyricsAssertions):
-    """Check that beets google custom search engine sources are correctly
-    scraped.
-    """
-
-    DEFAULT_SONG = dict(artist="The Beatles", title="Lady Madonna")
-
-    DEFAULT_SOURCES = [
-        # dict(artist=u'Santana', title=u'Black magic woman',
-        #      backend=lyrics.MusiXmatch),
-        dict(
-            DEFAULT_SONG,
-            backend=lyrics.Genius,
-            # GitHub actions is on some form of Cloudflare blacklist.
-            skip=os.environ.get("GITHUB_ACTIONS") == "true",
-        ),
-        dict(artist="Boy In Space", title="u n eye", backend=lyrics.Tekstowo),
-    ]
-
-    GOOGLE_SOURCES = [
-        dict(
-            DEFAULT_SONG,
-            url="http://www.absolutelyrics.com",
-            path="/lyrics/view/the_beatles/lady_madonna",
-        ),
-        dict(
-            DEFAULT_SONG,
-            url="http://www.azlyrics.com",
-            path="/lyrics/beatles/ladymadonna.html",
-            # AZLyrics returns a 403 on GitHub actions.
-            skip=os.environ.get("GITHUB_ACTIONS") == "true",
-        ),
-        dict(
-            DEFAULT_SONG,
-            url="http://www.chartlyrics.com",
-            path="/_LsLsZ7P4EK-F-LD4dJgDQ/Lady+Madonna.aspx",
-        ),
-        # dict(DEFAULT_SONG,
-        #      url=u'http://www.elyricsworld.com',
-        #      path=u'/lady_madonna_lyrics_beatles.html'),
-        dict(
-            url="http://www.lacoccinelle.net",
-            artist="Jacques Brel",
-            title="Amsterdam",
-            path="/paroles-officielles/275679.html",
-        ),
-        dict(
-            DEFAULT_SONG, url="http://letras.mus.br/", path="the-beatles/275/"
-        ),
-        dict(
-            DEFAULT_SONG,
-            url="http://www.lyricsmania.com/",
-            path="lady_madonna_lyrics_the_beatles.html",
-        ),
-        dict(
-            DEFAULT_SONG,
-            url="http://www.lyricsmode.com",
-            path="/lyrics/b/beatles/lady_madonna.html",
-        ),
-        dict(
-            url="http://www.lyricsontop.com",
-            artist="Amy Winehouse",
-            title="Jazz'n'blues",
-            path="/amy-winehouse-songs/jazz-n-blues-lyrics.html",
-        ),
-        # dict(DEFAULT_SONG,
-        #      url='http://www.metrolyrics.com/',
-        #      path='lady-madonna-lyrics-beatles.html'),
-        # dict(url='http://www.musica.com/', path='letras.asp?letra=2738',
-        #      artist=u'Santana', title=u'Black magic woman'),
-        dict(
-            url="http://www.paroles.net/",
-            artist="Lilly Wood & the prick",
-            title="Hey it's ok",
-            path="lilly-wood-the-prick/paroles-hey-it-s-ok",
-        ),
-        dict(
-            DEFAULT_SONG,
-            url="http://www.songlyrics.com",
-            path="/the-beatles/lady-madonna-lyrics",
-        ),
-        dict(
-            DEFAULT_SONG,
-            url="http://www.sweetslyrics.com",
-            path="/761696.The%20Beatles%20-%20Lady%20Madonna.html",
-        ),
-    ]
-
-    def setUp(self):
-        LyricsGoogleBaseTest.setUp(self)
-        self.plugin = lyrics.LyricsPlugin()
-
-    @pytest.mark.integration_test
-    def test_backend_sources_ok(self):
-        """Test default backends with songs known to exist in respective
-        databases.
-        """
-        # Don't test any sources marked as skipped.
-        sources = [s for s in self.DEFAULT_SOURCES if not s.get("skip", False)]
-        for s in sources:
-            with self.subTest(s["backend"].__name__):
-                backend = s["backend"](self.plugin.config, self.plugin._log)
-                res = backend.fetch(s["artist"], s["title"])
-                self.assertLyricsContentOk(s["title"], res)
-
-    @pytest.mark.integration_test
-    def test_google_sources_ok(self):
+@pytest.mark.integration_test
+class TestSources:
+    @pytest.mark.parametrize(
+        "title, url",
+        [
+            *(
+                ("Lady Madonna", url)
+                for url in (
+                    "http://www.chartlyrics.com/_LsLsZ7P4EK-F-LD4dJgDQ/Lady+Madonna.aspx",  # noqa: E501
+                    "http://www.absolutelyrics.com/lyrics/view/the_beatles/lady_madonna",  # noqa: E501
+                    "https://www.letras.mus.br/the-beatles/275/",
+                    "https://www.lyricsmania.com/lady_madonna_lyrics_the_beatles.html",
+                    "https://www.lyricsmode.com/lyrics/b/beatles/lady_madonna.html",
+                    "https://www.paroles.net/the-beatles/paroles-lady-madonna",
+                    "https://www.songlyrics.com/the-beatles/lady-madonna-lyrics/",
+                    "https://sweetslyrics.com/the-beatles/lady-madonna-lyrics",
+                    "https://www.musica.com/letras.asp?letra=59862",
+                    "https://www.lacoccinelle.net/259956-the-beatles-lady-madonna.html",
+                )
+            ),
+            _p(
+                "Lady Madonna",
+                "https://www.azlyrics.com/lyrics/beatles/ladymadonna.html",
+                marks=xfail_on_ci("AZLyrics is blocked by Cloudflare"),
+            ),
+            (
+                "Jazz'n'blues",
+                "https://www.lyricsontop.com/amy-winehouse-songs/jazz-n-blues-lyrics.html",  # noqa: E501
+            ),
+        ],
+    )
+    def test_google_source(self, title, url):
         """Test if lyrics present on websites registered in beets google custom
         search engine are correctly scraped.
         """
-        # Don't test any sources marked as skipped.
-        sources = [s for s in self.GOOGLE_SOURCES if not s.get("skip", False)]
-        for s in sources:
-            url = s["url"] + s["path"]
-            res = lyrics.scrape_lyrics_from_html(raw_backend.fetch_url(url))
-            assert google.is_lyrics(res), url
-            self.assertLyricsContentOk(s["title"], res, url)
+        response = raw_backend.fetch_url(url)
+        result = lyrics.scrape_lyrics_from_html(response).lower()
+
+        assert google.is_lyrics(result)
+        assert PHRASE_BY_TITLE[title] in result
+
+    @pytest.mark.parametrize(
+        "backend",
+        [
+            pytest.param(lyrics.Genius, marks=skip_ci),
+            lyrics.Tekstowo,
+            lyrics.LRCLib,
+            # lyrics.MusiXmatch,
+        ],
+    )
+    def test_backend_source(self, backend):
+        """Test default backends with a song known to exist in respective
+        databases.
+        """
+        plugin = lyrics.LyricsPlugin()
+        backend = backend(plugin.config, plugin._log)
+        title = "Lady Madonna"
+        res = backend.fetch("The Beatles", title)
+        assert PHRASE_BY_TITLE[title] in res.lower()
 
 
-class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest, LyricsAssertions):
+class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest):
     """Test scraping heuristics on a fake html page."""
 
     source = dict(
@@ -384,7 +320,7 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest, LyricsAssertions):
         url = self.source["url"] + self.source["path"]
         res = lyrics.scrape_lyrics_from_html(raw_backend.fetch_url(url))
         assert google.is_lyrics(res), url
-        self.assertLyricsContentOk(self.source["title"], res, url)
+        assert PHRASE_BY_TITLE[self.source["title"]] in res.lower()
 
     @patch.object(lyrics.Backend, "fetch_url", MockFetchUrl())
     def test_is_page_candidate_exact_match(self):
@@ -536,8 +472,6 @@ class GeniusFetchTest(GeniusBaseTest):
             mock_json.return_value = None
             assert genius.fetch("blackbear", "Idfc") is None
 
-    # TODO: add integration test hitting real api
-
 
 # test Tekstowo
 
@@ -576,31 +510,6 @@ class TekstowoExtractLyricsTest(TekstowoBaseTest):
         )
         mock = MockFetchUrl()
         assert not tekstowo.extract_lyrics(mock(url))
-
-
-class TekstowoIntegrationTest(TekstowoBaseTest, LyricsAssertions):
-    """Tests Tekstowo lyric source with real requests"""
-
-    def setUp(self):
-        """Set up configuration"""
-        TekstowoBaseTest.setUp(self)
-        self.plugin = lyrics.LyricsPlugin()
-        tekstowo.config = self.plugin.config
-
-    @pytest.mark.integration_test
-    def test_normal(self):
-        """Ensure we can fetch a song's lyrics in the ordinary case"""
-        lyrics = tekstowo.fetch("Boy in Space", "u n eye")
-        self.assertLyricsContentOk("u n eye", lyrics)
-
-    @pytest.mark.integration_test
-    def test_no_matching_results(self):
-        """Ensure we fetch nothing if there are search results
-        returned but no matches"""
-        # https://github.com/beetbox/beets/issues/4406
-        # expected return value None
-        lyrics = tekstowo.fetch("Kelly Bailey", "Black Mesa Inbound")
-        assert lyrics is None
 
 
 # test LRCLib backend
@@ -660,29 +569,6 @@ class LRCLibLyricsTest(unittest.TestCase):
 
         lyrics = lrclib.fetch("la", "la", "la", 999)
 
-        assert lyrics is None
-
-
-class LRCLibIntegrationTest(LyricsAssertions):
-    def setUp(self):
-        self.plugin = lyrics.LyricsPlugin()
-        lrclib.config = self.plugin.config
-
-    @pytest.mark.integration_test
-    def test_track_with_lyrics(self):
-        lyrics = lrclib.fetch("Boy in Space", "u n eye", "Live EP", 160)
-        self.assertLyricsContentOk("u n eye", lyrics)
-
-    @pytest.mark.integration_test
-    def test_instrumental_track(self):
-        lyrics = lrclib.fetch(
-            "Kelly Bailey", "Black Mesa Inbound", "Half Life 2 Soundtrack", 134
-        )
-        assert lyrics is None
-
-    @pytest.mark.integration_test
-    def test_nonexistent_track(self):
-        lyrics = lrclib.fetch("blah", "blah", "blah", 999)
         assert lyrics is None
 
 
