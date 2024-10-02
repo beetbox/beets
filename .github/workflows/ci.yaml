@@ -37,7 +37,7 @@ jobs:
           poetry install --extras=replaygain --extras=reflink
 
       - name: Install Python dependencies
-        run: poetry install --only=main,test --extras=autobpm
+        run: poetry install --only=main,test --extras=autobpm --extras=lyrics
 
       - if: ${{ env.IS_MAIN_PYTHON != 'true' }}
         name: Test without coverage

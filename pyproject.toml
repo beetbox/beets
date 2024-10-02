@@ -81,6 +81,7 @@ python3-discogs-client = ">=2.3.15"
 py7zr = "*"
 pyxdg = "*"
 rarfile = "*"
+requests-mock = ">=1.12.1"
 requests_oauthlib = "*"
 responses = ">=0.3.0"
 
