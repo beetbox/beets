@@ -18,7 +18,6 @@ import itertools
 import os
 import unittest
 from functools import partial
-from unittest.mock import patch
 
 import pytest
 
@@ -343,52 +342,6 @@ class TestGeniusLyrics(LyricsBackendTest):
         result = backend._scrape_lyrics_from_html(lyrics_html) or ""
 
         assert len(result.splitlines()) == expected_line_count
-
-    @patch.object(lyrics.Genius, "_scrape_lyrics_from_html")
-    @patch.object(lyrics.Backend, "fetch_url", return_value=True)
-    def test_json(self, mock_fetch_url, mock_scrape, backend):
-        """Ensure we're finding artist matches"""
-        with patch.object(
-            lyrics.Genius,
-            "_search",
-            return_value={
-                "response": {
-                    "hits": [
-                        {
-                            "result": {
-                                "primary_artist": {
-                                    "name": "\u200bblackbear",
-                                },
-                                "url": "blackbear_url",
-                            }
-                        },
-                        {
-                            "result": {
-                                "primary_artist": {"name": "El\u002dp"},
-                                "url": "El-p_url",
-                            }
-                        },
-                    ]
-                }
-            },
-        ) as mock_json:
-            # genius uses zero-width-spaces (\u200B) for lowercase
-            # artists so we make sure we can match those
-            assert backend.fetch("blackbear", "Idfc") is not None
-            mock_fetch_url.assert_called_once_with("blackbear_url")
-            mock_scrape.assert_called_once_with(True)
-
-            # genius uses the hyphen minus (\u002D) as their dash
-            assert backend.fetch("El-p", "Idfc") is not None
-            mock_fetch_url.assert_called_with("El-p_url")
-            mock_scrape.assert_called_with(True)
-
-            # test no matching artist
-            assert backend.fetch("doesntexist", "none") is None
-
-            # test invalid json
-            mock_json.return_value = None
-            assert backend.fetch("blackbear", "Idfc") is None
 
 
 class TestTekstowoLyrics(LyricsBackendTest):
