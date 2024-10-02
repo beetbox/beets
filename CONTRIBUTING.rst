@@ -382,7 +382,7 @@ to get a basic view on how tests are written. Since we are currently migrating
 the tests from `unittest`_ to `pytest`_, new tests should be written using
 `pytest`_. Contributions migrating existing tests are welcome!
 
-External API requests under test should be mocked with `requests_mock`_,
+External API requests under test should be mocked with `requests-mock`_,
 However, we still want to know whether external APIs are up and that they
 return expected responses, therefore we test them weekly with our `integration
 test`_ suite.
