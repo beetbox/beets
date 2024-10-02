@@ -14,9 +14,7 @@
 
 """Tests for the 'lyrics' plugin."""
 
-import itertools
 import os
-import unittest
 from functools import partial
 
 import pytest
@@ -42,11 +40,7 @@ def xfail_on_ci(msg: str) -> pytest.MarkDecorator:
     )
 
 
-class LyricsPluginTest(unittest.TestCase):
-    def setUp(self):
-        """Set up configuration."""
-        lyrics.LyricsPlugin()
-
+class TestLyricsUtils:
     def test_search_artist(self):
         item = Item(artist="Alice ft. Bob", title="song")
         assert ("Alice ft. Bob", ["song"]) in lyrics.search_pairs(item)
@@ -170,6 +164,24 @@ class LyricsPluginTest(unittest.TestCase):
     def test_scrape_merge_paragraphs(self):
         text = "one</p>   <p class='myclass'>two</p><p>three"
         assert lyrics._scrape_merge_paragraphs(text) == "one\ntwo\nthree"
+
+    @pytest.mark.parametrize(
+        "text, expected",
+        [
+            ("test", "test"),
+            ("Mørdag", "mordag"),
+            ("l'été c'est fait pour jouer", "l-ete-c-est-fait-pour-jouer"),
+            ("\xe7afe au lait (boisson)", "cafe-au-lait-boisson"),
+            ("Multiple  spaces -- and symbols! -- merged", "multiple-spaces-and-symbols-merged"),  # noqa: E501
+            ("\u200bno-width-space", "no-width-space"),
+            ("El\u002dp", "el-p"),
+            ("\u200bblackbear", "blackbear"),
+            ("\u200d", ""),
+            ("\u2010", ""),
+        ],
+    )  # fmt: skip
+    def test_slug(self, text, expected):
+        assert lyrics.slug(text) == expected
 
 
 @pytest.fixture(scope="module")
@@ -414,34 +426,3 @@ class TestLRCLibLyrics(LyricsBackendTest):
     )
     def test_fetch_lyrics(self, fetch_lyrics, expected_lyrics):
         assert fetch_lyrics() == expected_lyrics
-
-
-# test utilities
-
-
-class SlugTests(unittest.TestCase):
-    def test_slug(self):
-        # plain ascii passthrough
-        text = "test"
-        assert lyrics.slug(text) == "test"
-
-        # german unicode and capitals
-        text = "Mørdag"
-        assert lyrics.slug(text) == "mordag"
-
-        # more accents and quotes
-        text = "l'été c'est fait pour jouer"
-        assert lyrics.slug(text) == "l-ete-c-est-fait-pour-jouer"
-
-        # accents, parens and spaces
-        text = "\xe7afe au lait (boisson)"
-        assert lyrics.slug(text) == "cafe-au-lait-boisson"
-        text = "Multiple  spaces -- and symbols! -- merged"
-        assert lyrics.slug(text) == "multiple-spaces-and-symbols-merged"
-        text = "\u200bno-width-space"
-        assert lyrics.slug(text) == "no-width-space"
-
-        # variations of dashes should get standardized
-        dashes = ["\u200d", "\u2010"]
-        for dash1, dash2 in itertools.combinations(dashes, 2):
-            assert lyrics.slug(dash1) == lyrics.slug(dash2)
