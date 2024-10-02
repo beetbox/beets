@@ -87,6 +87,8 @@ Other changes:
   calculate the bpm. Previously this import was being done immediately, so
   every ``beet`` invocation was being delayed by a couple of seconds.
   :bug:`5185`
+* :doc:`plugins/lyrics`: Update ``tekstowo`` backend search URL to use HTTPs
+  and to avoid redirects, which speeds up the response three times.
 
 2.0.0 (May 30, 2024)
 --------------------

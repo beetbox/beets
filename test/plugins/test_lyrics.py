@@ -660,7 +660,7 @@ class TekstowoParseSearchResultsTest(TekstowoBaseTest):
         mock = MockFetchUrl()
         assert (
             tekstowo.parse_search_results(mock(url))
-            == "http://www.tekstowo.pl/piosenka,juice_wrld,"
+            == "https://www.tekstowo.pl/piosenka,juice_wrld,"
             "lucid_dreams__remix__ft__lil_uzi_vert.html"
         )
 

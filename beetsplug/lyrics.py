@@ -243,7 +243,7 @@ class Backend:
         return urllib.parse.quote(s)
 
     def build_url(self, artist, title):
-        return self.URL_PATTERN % (
+        return self.URL_PATTERN.format(
             self._encode(artist.title()),
             self._encode(title.title()),
         )
@@ -318,7 +318,7 @@ class MusiXmatch(Backend):
         r"[\]\}]": ")",
     }
 
-    URL_PATTERN = "https://www.musixmatch.com/lyrics/%s/%s"
+    URL_PATTERN = "https://www.musixmatch.com/lyrics/{}/{}"
 
     @classmethod
     def _encode(cls, s):
@@ -520,8 +520,8 @@ class Genius(SearchBackend):
 
 class Tekstowo(SearchBackend):
     # Fetch lyrics from Tekstowo.pl.
-    BASE_URL = "http://www.tekstowo.pl"
-    URL_PATTERN = BASE_URL + "/wyszukaj.html?search-title=%s&search-artist=%s"
+    BASE_URL = "https://www.tekstowo.pl"
+    URL_PATTERN = BASE_URL + "/szukaj,{}+{}.html"
 
     def fetch(self, artist, title, album=None, length=None):
         url = self.build_url(title, artist)
