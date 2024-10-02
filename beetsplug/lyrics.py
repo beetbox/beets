@@ -536,6 +536,8 @@ def _scrape_strip_cruft(html, plain_text_out=False):
     html = BREAK_RE.sub("\n", html)  # <br> eats up surrounding '\n'.
     html = re.sub(r"(?s)<(script).*?</\1>", "", html)  # Strip script tags.
     html = re.sub("\u2005", " ", html)  # replace unicode with regular space
+    html = re.sub("<aside .+?</aside>", "", html)  # remove Google Ads tags
+    html = re.sub(r"</?(em|strong)[^>]*>", "", html)  # remove italics / bold
 
     if plain_text_out:  # Strip remaining HTML tags
         html = COMMENT_RE.sub("", html)
