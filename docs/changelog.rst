@@ -8,6 +8,7 @@ Changelog goes here! Please add your entry to the bottom of one of the lists bel
 
 New features:
 
+* :doc:`plugins/importhistory`: Added plugin
 * New template function added: ``%capitalize``. Converts the first letter of
   the text to uppercase and the rest to lowercase.
 * Ability to query albums with track db fields and vice-versa, for example
