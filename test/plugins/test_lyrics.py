@@ -93,38 +93,42 @@ class TestLyricsUtils:
 
         assert list(actual_titles) == [title, *expected_extra_titles]
 
-    def test_remove_credits(self):
-        assert (
-            lyrics.remove_credits(
-                """It's close to midnight
-                                     Lyrics brought by example.com"""
-            )
-            == "It's close to midnight"
-        )
-        assert lyrics.remove_credits("""Lyrics brought by example.com""") == ""
+    @pytest.mark.parametrize(
+        "initial_lyrics, expected",
+        [
+            ("Verse\nLyrics credit in the last line", "Verse"),
+            ("Lyrics credit in the first line\nVerse", "Verse"),
+            (
+                """Verse
+                Lyrics mentioned somewhere in the middle
+                Verse""",
+                """Verse
+                Lyrics mentioned somewhere in the middle
+                Verse""",
+            ),
+        ],
+    )
+    def test_remove_credits(self, initial_lyrics, expected):
+        assert lyrics.remove_credits(initial_lyrics) == expected
 
-        # don't remove 2nd verse for the only reason it contains 'lyrics' word
-        text = """Look at all the shit that i done bought her
-                  See lyrics ain't nothin
-                  if the beat aint crackin"""
-        assert lyrics.remove_credits(text) == text
-
-    def test_scrape_strip_cruft(self):
-        text = """<!--lyrics below-->
+    @pytest.mark.parametrize(
+        "initial_text, expected",
+        [
+            (
+                """<!--lyrics below-->
                   &nbsp;one
                   <br class='myclass'>
                   two  !
                   <br><br \\>
-                  <blink>four</blink>"""
-        assert lyrics._scrape_strip_cruft(text, True) == "one\ntwo !\n\nfour"
-
-    def test_scrape_strip_scripts(self):
-        text = """foo<script>bar</script>baz"""
-        assert lyrics._scrape_strip_cruft(text, True) == "foobaz"
-
-    def test_scrape_strip_tag_in_comment(self):
-        text = """foo<!--<bar>-->qux"""
-        assert lyrics._scrape_strip_cruft(text, True) == "fooqux"
+                  <blink>four</blink>""",
+                "one\ntwo !\n\nfour",
+            ),
+            ("foo<script>bar</script>baz", "foobaz"),
+            ("foo<!--<bar>-->qux", "fooqux"),
+        ],
+    )
+    def test_scrape_strip_cruft(self, initial_text, expected):
+        assert lyrics._scrape_strip_cruft(initial_text, True) == expected
 
     def test_scrape_merge_paragraphs(self):
         text = "one</p>   <p class='myclass'>two</p><p>three"
