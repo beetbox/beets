@@ -41,21 +41,36 @@ def xfail_on_ci(msg: str) -> pytest.MarkDecorator:
 
 
 class TestLyricsUtils:
-    unexpected_empty_artist = pytest.mark.xfail(
-        reason="Empty artist '' should not be present"
+    @pytest.mark.parametrize(
+        "artist, title",
+        [
+            ("Artist", ""),
+            ("", "Title"),
+            (" ", ""),
+            ("", " "),
+            ("", ""),
+        ],
     )
+    def test_search_empty(self, artist, title):
+        actual_pairs = lyrics.search_pairs(Item(artist=artist, title=title))
+
+        assert not list(actual_pairs)
 
     @pytest.mark.parametrize(
         "artist, artist_sort, expected_extra_artists",
         [
-            _p("Alice ft. Bob", "", ["Alice"], marks=unexpected_empty_artist),
-            _p("Alice feat Bob", "", ["Alice"], marks=unexpected_empty_artist),
-            _p("Alice feat. Bob", "", ["Alice"], marks=unexpected_empty_artist),
-            _p("Alice feats Bob", "", [], marks=unexpected_empty_artist),
-            _p("Alice featuring Bob", "", ["Alice"], marks=unexpected_empty_artist),
-            _p("Alice & Bob", "", ["Alice"], marks=unexpected_empty_artist),
-            _p("Alice and Bob", "", ["Alice"], marks=unexpected_empty_artist),
-            _p("Alice", "", [], marks=unexpected_empty_artist),
+            ("Alice ft. Bob", "", ["Alice"]),
+            ("Alice feat Bob", "", ["Alice"]),
+            ("Alice feat. Bob", "", ["Alice"]),
+            ("Alice feats Bob", "", []),
+            ("Alice featuring Bob", "", ["Alice"]),
+            ("Alice & Bob", "", ["Alice"]),
+            ("Alice and Bob", "", ["Alice"]),
+            ("Alice", "", []),
+            ("Alice", "Alice", []),
+            ("Alice", "alice", []),
+            ("Alice", "alice ", []),
+            ("Alice", "Alice A", ["Alice A"]),
             ("CHVRCHΞS", "CHVRCHES", ["CHVRCHES"]),
             ("横山克", "Masaru Yokoyama", ["Masaru Yokoyama"]),
         ],
