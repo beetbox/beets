@@ -152,7 +152,13 @@ def search_pairs(item):
                 alternatives.append(match.group(1))
         return alternatives
 
-    title, artist, artist_sort = item.title, item.artist, item.artist_sort
+    title, artist, artist_sort = (
+        item.title.strip(),
+        item.artist.strip(),
+        item.artist_sort.strip(),
+    )
+    if not title or not artist:
+        return ()
 
     patterns = [
         # Remove any featuring artists from the artists name
@@ -161,7 +167,7 @@ def search_pairs(item):
     artists = generate_alternatives(artist, patterns)
     # Use the artist_sort as fallback only if it differs from artist to avoid
     # repeated remote requests with the same search terms
-    if artist != artist_sort:
+    if artist_sort and artist.lower() != artist_sort.lower():
         artists.append(artist_sort)
 
     patterns = [
