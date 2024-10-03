@@ -45,6 +45,9 @@ Bug fixes:
   configuration for each test case. This fixes the issue where some tests
   failed because they read developers' local lyrics configuration.
   :bug:`5133`
+* :doc:`plugins/lyrics`: Do not attempt to search for lyrics if either the
+  artist or title is missing and ignore ``artist_sort`` value if it is empty.
+  :bug:`2635`
 
 For packagers:
 
