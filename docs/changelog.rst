@@ -23,6 +23,7 @@ New features:
 * Beets now uses ``platformdirs`` to determine the default music directory.
   This location varies between systems -- for example, users can configure it
   on Unix systems via ``user-dirs.dirs(5)``.
+* The autotagger matches the file name if the track has no ``title`` metadata.
 
 Bug fixes:
 
