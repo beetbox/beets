@@ -303,7 +303,7 @@ class LRCLib(Backend):
             return None
 
         if self.config["synced"]:
-            return data.get("syncedLyrics")
+            return data.get("syncedLyrics") or data.get("plainLyrics")
 
         return data.get("plainLyrics")
 
