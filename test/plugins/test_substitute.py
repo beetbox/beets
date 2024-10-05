@@ -14,7 +14,7 @@
 
 """Test the substitute plugin regex functionality."""
 
-from beets.test.helper import PluginTestCase
+from beets.test.helper import PluginTestCase, capture_log
 from beetsplug.substitute import Substitute
 
 PLUGIN_NAME = "substitute"
@@ -26,31 +26,31 @@ class SubstitutePluginTest(PluginTestCase):
 
     def test_simple_substitute(self):
         with self.configure_plugin(
-            {
-                "a": "b",
-                "b": "c",
-                "c": "d",
-            }
+            [
+                {"a": "b"},
+                {"b": "c"},
+                {"c": "d"},
+            ]
         ):
             cases = [("a", "b"), ("b", "c"), ("c", "d")]
             for input, expected in cases:
                 assert Substitute().tmpl_substitute(input) == expected
 
     def test_case_insensitivity(self):
-        with self.configure_plugin({"a": "b"}):
+        with self.configure_plugin([{"a": "b"}]):
             assert Substitute().tmpl_substitute("A") == "b"
 
     def test_unmatched_input_preserved(self):
-        with self.configure_plugin({"a": "b"}):
+        with self.configure_plugin([{"a": "b"}]):
             assert Substitute().tmpl_substitute("c") == "c"
 
     def test_regex_to_static(self):
-        with self.configure_plugin({".*jimi hendrix.*": "Jimi Hendrix"}):
+        with self.configure_plugin([{".*jimi hendrix.*": "Jimi Hendrix"}]):
             result = Substitute().tmpl_substitute("The Jimi Hendrix Experience")
             assert result == "Jimi Hendrix"
 
     def test_regex_capture_group(self):
-        with self.configure_plugin({"^(.*?)(,| &| and).*": r"\1"}):
+        with self.configure_plugin([{"^(.*?)(,| &| and).*": r"\1"}]):
             cases = [
                 ("King Creosote & Jon Hopkins", "King Creosote"),
                 (
@@ -64,11 +64,7 @@ class SubstitutePluginTest(PluginTestCase):
                 assert Substitute().tmpl_substitute(input) == expected
 
     def test_partial_substitution(self):
-        with self.configure_plugin(
-            {
-                r"\.": "",
-            }
-        ):
+        with self.configure_plugin([{r"\.": ""}]):
             cases = [
                 ("U.N.P.O.C.", "UNPOC"),
             ]
@@ -77,10 +73,10 @@ class SubstitutePluginTest(PluginTestCase):
 
     def test_break_on_first_match(self):
         with self.configure_plugin(
-            {
-                "a": "b",
-                "[ab]": "c",
-            }
+            [
+                {"a": "b"},
+                {"[ab]": "c"},
+            ]
         ):
             cases = [
                 ("a", "b"),
@@ -88,3 +84,33 @@ class SubstitutePluginTest(PluginTestCase):
             ]
             for input, expected in cases:
                 assert Substitute().tmpl_substitute(input) == expected
+
+    def test_deprecated_config(self):
+        with self.configure_plugin(
+            {
+                "a": "b",
+                "b": "c",
+                "c": "d",
+            }
+        ):
+            cases = [("a", "b"), ("b", "c"), ("c", "d")]
+            for input, expected in cases:
+                assert Substitute().tmpl_substitute(input) == expected
+
+    def test_deprecated_config_warning(self):
+        with capture_log() as logs:
+            with self.configure_plugin(
+                {
+                    "a": "b",
+                    "b": "c",
+                    "c": "d",
+                }
+            ):
+                assert any(
+                    [
+                        "Unordered configuration is deprecated, as it leads to"
+                        + " unpredictable behaviour on overlapping rules"
+                        in log
+                        for log in logs
+                    ]
+                )

@@ -9,12 +9,12 @@ Experience to be sorted into the same folder as solo Hendrix albums.
 This plugin is intended as a replacement for the ``rewrite`` plugin. While
 the ``rewrite`` plugin modifies the metadata, this plugin does not.
 
-Enable the ``substitute`` plugin (see :ref:`using-plugins`), then make a ``substitute:`` section in your config file to contain your rules.
+Enable the ``substitute`` plugin (see :ref:`using-plugins`), then make a ``substitute:`` section in your config file to contain a list of your rules.
 Each rule consists of a case-insensitive regular expression pattern, and a
 replacement string. For example, you might use:
 
     substitute:
-        .*jimi hendrix.*: Jimi Hendrix
+      - .*jimi hendrix.*: Jimi Hendrix
 
 The replacement can be an expression utilising the matched regex, allowing us
 to create more general rules. Say for example, we want to sort all albums by
@@ -23,7 +23,7 @@ everything before the first ``,``, `` &`` or `` and``, and use this capture
 group in the output, discarding the rest of the string.
 
     substitute:
-        ^(.*?)(,| &| and).*: \1
+      - ^(.*?)(,| &| and).*: \1
 
 This would handle all the below cases in a single rule:
 
