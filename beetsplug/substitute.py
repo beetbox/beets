@@ -18,6 +18,7 @@ Uses user-specified substitution rules to canonicalize names for path formats.
 """
 
 import re
+import textwrap
 
 from beets.plugins import BeetsPlugin
 
@@ -34,8 +35,9 @@ class Substitute(BeetsPlugin):
         """Do the actual replacing."""
         if text:
             for pattern, replacement in self.substitute_rules:
-                if pattern.match(text.lower()):
-                    return replacement
+                new_text, subs_made = re.subn(pattern, replacement, text)
+                if subs_made > 0:
+                    return new_text
             return text
         else:
             return ""
@@ -46,11 +48,32 @@ class Substitute(BeetsPlugin):
         Get the configuration, register template function and create list of
         substitute rules.
         """
-        super().__init__()
+        super(Substitute, self).__init__()
         self.substitute_rules = []
         self.template_funcs["substitute"] = self.tmpl_substitute
 
-        for key, view in self.config.items():
-            value = view.as_str()
-            pattern = re.compile(key.lower())
+        if isinstance(self.config.get(), dict):
+            self._log.warning(
+                "Unordered configuration is deprecated, as it leads to"
+                + " unpredictable behaviour on overlapping rules.\n"
+                + textwrap.dedent(
+                    """
+                    Old syntax:
+                      substitute:
+                        a: b
+                        c: d
+
+                    New syntax:
+                      substitute:
+                      - a: b
+                      - c: d
+                    """
+                )
+            )
+            pairs = [(key, view.as_str()) for key, view in self.config.items()]
+        else:
+            pairs = self.config.as_pairs()
+
+        for key, value in pairs:
+            pattern = re.compile(key, flags=re.IGNORECASE)
             self.substitute_rules.append((pattern, value))
