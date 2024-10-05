@@ -48,34 +48,32 @@ class Substitute(BeetsPlugin):
         Get the configuration, register template function and create list of
         substitute rules.
         """
-        super().__init__()
+        super(Substitute, self).__init__()
         self.substitute_rules = []
         self.template_funcs["substitute"] = self.tmpl_substitute
 
-        match self.config.get():
-            case list():
-                pairs = self.config.as_pairs()
-            case dict():
-                pairs = [
-                    (key, view.as_str()) for key, view in self.config.items()
-                ]
-                self._log.warning(
-                    "Unordered configuration is deprecated, as it leads to"
-                    + " unpredictable behaviour on overlapping rules.\n"
-                    + textwrap.dedent(
-                        """
-                        Old syntax:
-                          substitute:
-                            a: b
-                            c: d
+        if isinstance(self.config.get(), dict):
+            self._log.warning(
+                "Unordered configuration is deprecated, as it leads to"
+                + " unpredictable behaviour on overlapping rules.\n"
+                + textwrap.dedent(
+                    """
+                    Old syntax:
+                      substitute:
+                        a: b
+                        c: d
 
-                        New syntax:
-                          substitute:
-                          - a: b
-                          - c: d
-                        """
-                    )
+                    New syntax:
+                      substitute:
+                      - a: b
+                      - c: d
+                    """
                 )
+            )
+            pairs = [(key, view.as_str()) for key, view in self.config.items()]
+        else:
+            pairs = self.config.as_pairs()
+
         for key, value in pairs:
             pattern = re.compile(key, flags=re.IGNORECASE)
             self.substitute_rules.append((pattern, value))
