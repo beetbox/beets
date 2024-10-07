@@ -125,15 +125,6 @@ def close_session():
 # Utilities.
 
 
-def extract_text_between(html, start_marker, end_marker):
-    try:
-        _, html = html.split(start_marker, 1)
-        html, _ = html.split(end_marker, 1)
-    except ValueError:
-        return ""
-    return html
-
-
 def search_pairs(item):
     """Yield a pairs of artists and titles to search for.
 
@@ -433,7 +424,7 @@ class MusiXmatch(DirectBackend):
         # Sometimes lyrics come in 2 or more parts
         lyrics_parts = []
         for html_part in html_parts:
-            lyrics_parts.append(extract_text_between(html_part, ">", "</p>"))
+            lyrics_parts.append(re.sub(r"^[^>]+>|</p>.*", "", html_part))
         lyrics = "\n".join(lyrics_parts)
         lyrics = lyrics.strip(',"').replace("\\n", "\n")
         # another odd case: sometimes only that string remains, for
