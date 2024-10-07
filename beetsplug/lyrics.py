@@ -22,10 +22,10 @@ import itertools
 import math
 import os.path
 import re
-import struct
 from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from functools import cached_property, partial, total_ordering
+from html import unescape
 from http import HTTPStatus
 from typing import TYPE_CHECKING, ClassVar, Iterable, Iterator
 from urllib.parse import quote, urlparse
@@ -123,27 +123,6 @@ def close_session():
 
 
 # Utilities.
-
-
-def unichar(i):
-    try:
-        return chr(i)
-    except ValueError:
-        return struct.pack("i", i).decode("utf-32")
-
-
-def unescape(text):
-    """Resolve &#xxx; HTML entities (and some others)."""
-    if isinstance(text, bytes):
-        text = text.decode("utf-8", "ignore")
-    out = text.replace("&nbsp;", " ")
-
-    def replchar(m):
-        num = m.group(1)
-        return unichar(int(num))
-
-    out = re.sub("&#(\\d+);", replchar, out)
-    return out
 
 
 def extract_text_between(html, start_marker, end_marker):
