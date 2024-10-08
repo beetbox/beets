@@ -265,13 +265,13 @@ class TestGoogleLyrics(LyricsBackend):
                 for url in (
                     "http://www.chartlyrics.com/_LsLsZ7P4EK-F-LD4dJgDQ/Lady+Madonna.aspx",  # noqa: E501
                     "http://www.absolutelyrics.com/lyrics/view/the_beatles/lady_madonna",  # noqa: E501
-                    "https://letras.mus.br/the-beatles/275/",
+                    "https://www.letras.mus.br/the-beatles/275/",
                     "https://www.lyricsmania.com/lady_madonna_lyrics_the_beatles.html",
                     "https://www.lyricsmode.com/lyrics/b/beatles/lady_madonna.html",
                     "https://www.paroles.net/the-beatles/paroles-lady-madonna",
-                    "https://www.songlyrics.com/the-beatles/lady-madonna-lyrics",
-                    "https://www.sweetslyrics.com/761696.The%20Beatles%20-%20Lady%20Madonna.html",  # noqa: E501
-                    "http://www.musica.com/letras.asp?letra=59862",
+                    "https://www.songlyrics.com/the-beatles/lady-madonna-lyrics/",
+                    "https://sweetslyrics.com/the-beatles/lady-madonna-lyrics",
+                    "https://www.musica.com/letras.asp?letra=59862",
                     "https://www.lacoccinelle.net/259956-the-beatles-lady-madonna.html",
                 )
             ),
