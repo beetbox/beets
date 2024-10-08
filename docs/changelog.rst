@@ -44,6 +44,9 @@ Bug fixes:
 * :doc:`plugins/discogs`: Fix the ``TypeError`` when there is no description.
 * Remove single quotes from all SQL queries
   :bug:`4709`
+* :doc:`plugins/lyrics`: Fix the issue with ``genius`` backend not being able
+  to match lyrics when there was a slight variation in the artist name.
+  :bug:`4791`
 
 For packagers:
 
