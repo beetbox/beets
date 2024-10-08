@@ -15,7 +15,9 @@
 """Tests for the 'lyrics' plugin."""
 
 import os
+import re
 from functools import partial
+from http import HTTPStatus
 
 import pytest
 
@@ -205,7 +207,7 @@ class LyricsBackend(PluginMixin):
         """
         title = "Lady Madonna"
 
-        res = backend.fetch("The Beatles", title)
+        res = backend.fetch("The Beatles", title, "", 180.0)
 
         assert res
         assert PHRASE_BY_TITLE[title] in res.lower()
@@ -391,32 +393,45 @@ class TestTekstowoLyrics(LyricsBackend):
         assert backend.parse_search_results(lyrics_html) == expected_url
 
 
+LYRICS_DURATION = 950
+
+
+def lyrics_match(**overrides):
+    return {
+        "instrumental": False,
+        "duration": LYRICS_DURATION,
+        "syncedLyrics": "synced",
+        "plainLyrics": "plain",
+        **overrides,
+    }
+
+
 class TestLRCLibLyrics(LyricsBackend):
+    ITEM_DURATION = 999
+
     @pytest.fixture(scope="class")
     def backend_name(self):
         return "lrclib"
 
     @pytest.fixture
-    def fetch_lyrics(self, backend, requests_mock, response_data):
-        requests_mock.get(lyrics.LRCLib.base_url, json=response_data)
+    def respone_data(self):
+        return {}
 
-        return partial(backend.fetch, "la", "la", "la")
+    @pytest.fixture
+    def request_kwargs(self, response_data):
+        return {"json": response_data}
 
-    @pytest.mark.parametrize(
-        "response_data",
-        [
-            {
-                "syncedLyrics": "[00:00.00] la la la",
-                "plainLyrics": "la la la",
-            }
-        ],
-    )
+    @pytest.fixture
+    def fetch_lyrics(self, backend, requests_mock, request_kwargs):
+        requests_mock.get(backend.GET_URL, status_code=HTTPStatus.NOT_FOUND)
+        requests_mock.get(backend.SEARCH_URL, **request_kwargs)
+
+        return partial(backend.fetch, "la", "la", "la", self.ITEM_DURATION)
+
+    @pytest.mark.parametrize("response_data", [[lyrics_match()]])
     @pytest.mark.parametrize(
         "plugin_config, expected_lyrics",
-        [
-            ({"synced": True}, "[00:00.00] la la la"),
-            ({"synced": False}, "la la la"),
-        ],
+        [({"synced": True}, "synced"), ({"synced": False}, "plain")],
     )
     def test_synced_config_option(self, fetch_lyrics, expected_lyrics):
         assert fetch_lyrics() == expected_lyrics
@@ -424,21 +439,54 @@ class TestLRCLibLyrics(LyricsBackend):
     @pytest.mark.parametrize(
         "response_data, expected_lyrics",
         [
+            _p([], None, id="handle non-matching lyrics"),
+            _p([lyrics_match()], "synced", id="synced when available"),
+            _p([lyrics_match(duration=1)], None, id="none: duration too short"),
             _p(
-                {"syncedLyrics": "", "plainLyrics": "la la la"},
-                "la la la",
-                id="pick plain lyrics",
+                [lyrics_match(instrumental=True)],
+                "[Instrumental]",
+                id="instrumental track",
             ),
             _p(
-                {
-                    "statusCode": 404,
-                    "error": "Not Found",
-                    "message": "Failed to find specified track",
-                },
-                None,
-                id="not found",
+                [lyrics_match(syncedLyrics=None)],
+                "plain",
+                id="plain by default",
+            ),
+            _p(
+                [
+                    lyrics_match(
+                        duration=ITEM_DURATION,
+                        syncedLyrics=None,
+                        plainLyrics="plain with closer duration",
+                    ),
+                    lyrics_match(syncedLyrics="synced", plainLyrics="plain 2"),
+                ],
+                "plain with closer duration",
+                id="prefer closer duration",
+            ),
+            _p(
+                [lyrics_match(syncedLyrics=None), lyrics_match()],
+                "synced",
+                id="prefer match with synced lyrics",
             ),
         ],
     )
+    @pytest.mark.parametrize("plugin_config", [{"synced": True}])
     def test_fetch_lyrics(self, fetch_lyrics, expected_lyrics):
         assert fetch_lyrics() == expected_lyrics
+
+    @pytest.mark.parametrize(
+        "request_kwargs, expected_log_match",
+        [
+            (
+                {"status_code": HTTPStatus.BAD_GATEWAY},
+                r"LRCLib: Request error: 502",
+            ),
+            ({"text": "invalid"}, r"LRCLib: Could not decode.*JSON"),
+        ],
+    )
+    def test_error(self, caplog, fetch_lyrics, expected_log_match):
+        assert fetch_lyrics() is None
+        assert caplog.messages
+        assert (last_log := caplog.messages[-1])
+        assert re.search(expected_log_match, last_log, re.I)
