@@ -37,7 +37,15 @@ jobs:
           poetry install --extras=replaygain --extras=reflink
 
       - name: Install Python dependencies
-        run: poetry install --only=main,test --extras=autobpm
+        run: poetry install --only=main,test --extras=autobpm --extras=lyrics
+
+      - name: Get changed lyrics files
+        id: lyrics-update
+        uses: tj-actions/changed-files@v45
+        with:
+          files: |
+            beetsplug/lyrics.py
+            test/plugins/test_lyrics.py
 
       - if: ${{ env.IS_MAIN_PYTHON != 'true' }}
         name: Test without coverage
@@ -45,6 +53,8 @@ jobs:
 
       - if: ${{ env.IS_MAIN_PYTHON == 'true' }}
         name: Test with coverage
+        env:
+          LYRICS_UPDATED: ${{ steps.lyrics-update.outputs.any_changed }}
         uses: liskin/gh-problem-matcher-wrap@v3
         with:
           linters: pytest
