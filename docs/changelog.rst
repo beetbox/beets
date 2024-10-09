@@ -44,6 +44,9 @@ Bug fixes:
 * :doc:`plugins/discogs`: Fix the ``TypeError`` when there is no description.
 * Remove single quotes from all SQL queries
   :bug:`4709`
+* :doc:`plugins/lyrics`: Fix the issue with ``genius`` backend not being able
+  to match lyrics when there was a slight variation in the artist name.
+  :bug:`4791`
 
 For packagers:
 
@@ -84,6 +87,8 @@ Other changes:
   calculate the bpm. Previously this import was being done immediately, so
   every ``beet`` invocation was being delayed by a couple of seconds.
   :bug:`5185`
+* :doc:`plugins/lyrics`: Update ``tekstowo`` backend search URL to use HTTPs
+  and to avoid redirects, which speeds up the response three times.
 
 2.0.0 (May 30, 2024)
 --------------------
