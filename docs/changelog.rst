@@ -392,6 +392,9 @@ Bug fixes:
   `requests` timeout.
 * Fix cover art resizing logic to support multiple steps of resizing
   :bug:`5151`
+* Fix bug where matcher doesn't consider medium number when importing making
+  it difficult to import hybrid SACDs
+  :bug:`5148`
 
 For plugin developers:
 
