@@ -67,6 +67,9 @@ Bug fixes:
 * :doc:`plugins/lyrics`: Fix the issue with ``genius`` backend not being able
   to match lyrics when there is a slight variation in the artist name.
   :bug:`4791`
+* :doc:`plugins/lyrics`: Fix plugin crash when ``genius`` backend returns empty
+  lyrics.
+  :bug:`5583`
 
 For packagers:
 
