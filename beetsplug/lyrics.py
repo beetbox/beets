@@ -152,7 +152,13 @@ def search_pairs(item):
                 alternatives.append(match.group(1))
         return alternatives
 
-    title, artist, artist_sort = item.title, item.artist, item.artist_sort
+    title, artist, artist_sort = (
+        item.title.strip(),
+        item.artist.strip(),
+        item.artist_sort.strip(),
+    )
+    if not title or not artist:
+        return ()
 
     patterns = [
         # Remove any featuring artists from the artists name
@@ -161,7 +167,7 @@ def search_pairs(item):
     artists = generate_alternatives(artist, patterns)
     # Use the artist_sort as fallback only if it differs from artist to avoid
     # repeated remote requests with the same search terms
-    if artist != artist_sort:
+    if artist_sort and artist.lower() != artist_sort.lower():
         artists.append(artist_sort)
 
     patterns = [
@@ -536,6 +542,8 @@ def _scrape_strip_cruft(html, plain_text_out=False):
     html = BREAK_RE.sub("\n", html)  # <br> eats up surrounding '\n'.
     html = re.sub(r"(?s)<(script).*?</\1>", "", html)  # Strip script tags.
     html = re.sub("\u2005", " ", html)  # replace unicode with regular space
+    html = re.sub("<aside .+?</aside>", "", html)  # remove Google Ads tags
+    html = re.sub(r"</?(em|strong)[^>]*>", "", html)  # remove italics / bold
 
     if plain_text_out:  # Strip remaining HTML tags
         html = COMMENT_RE.sub("", html)
