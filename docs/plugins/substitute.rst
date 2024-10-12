@@ -14,6 +14,7 @@ Each rule consists of a case-insensitive regular expression pattern, and a
 replacement string. For example, you might use:
 
 .. code-block:: yaml
+
     substitute:
       - .*jimi hendrix.*: Jimi Hendrix
 
@@ -24,6 +25,7 @@ everything before the first ``,``, `` &`` or `` and``, and use this capture
 group in the output, discarding the rest of the string.
 
 .. code-block:: yaml
+
     substitute:
       - ^(.*?)(,| &| and).*: \1
 
@@ -37,5 +39,6 @@ This would handle all the below cases in a single rule:
 To apply the substitution, you have to call the function ``%substitute{}`` in the paths section. For example:
 
 .. code-block:: yaml
+
     paths:
-        default: %substitute{$albumartist}/$year - $album%aunique{}/$track - $title
+        default: \%substitute{$albumartist}/$year - $album\%aunique{}/$track - $title
