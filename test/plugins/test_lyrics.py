@@ -29,8 +29,6 @@ PHRASE_BY_TITLE = {
     "Beets song": "via plugins, beets becomes a panacea",
 }
 
-_p = pytest.param
-
 
 def xfail_on_ci(msg: str) -> pytest.MarkDecorator:
     return pytest.mark.xfail(
@@ -245,7 +243,7 @@ class TestGoogleLyrics(LyricsBackendTest):
                     "https://www.lacoccinelle.net/259956-the-beatles-lady-madonna.html",
                 )
             ),
-            _p(
+            pytest.param(
                 "Lady Madonna",
                 "https://www.azlyrics.com/lyrics/beatles/ladymadonna.html",
                 marks=xfail_on_ci("AZLyrics is blocked by Cloudflare"),
@@ -392,12 +390,12 @@ class TestLRCLibLyrics(LyricsBackendTest):
     @pytest.mark.parametrize(
         "response_data, expected_lyrics",
         [
-            _p(
+            pytest.param(
                 {"syncedLyrics": "", "plainLyrics": "la la la"},
                 "la la la",
                 id="pick plain lyrics",
             ),
-            _p(
+            pytest.param(
                 {
                     "statusCode": 404,
                     "error": "Not Found",
