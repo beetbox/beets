@@ -17,41 +17,42 @@
 from beets.test.helper import PluginTestCase, capture_log
 from beetsplug.substitute import Substitute
 
-PLUGIN_NAME = "substitute"
-
 
 class SubstitutePluginTest(PluginTestCase):
     plugin = "substitute"
     preload_plugin = False
 
+    def run_substitute(self, config, cases):
+        with self.configure_plugin(config):
+            for input, expected in cases:
+                assert Substitute().tmpl_substitute(input) == expected
+
     def test_simple_substitute(self):
-        with self.configure_plugin(
+        self.run_substitute(
             [
                 {"a": "b"},
                 {"b": "c"},
                 {"c": "d"},
-            ]
-        ):
-            cases = [("a", "b"), ("b", "c"), ("c", "d")]
-            for input, expected in cases:
-                assert Substitute().tmpl_substitute(input) == expected
+            ],
+            [("a", "b"), ("b", "c"), ("c", "d")],
+        )
 
     def test_case_insensitivity(self):
-        with self.configure_plugin([{"a": "b"}]):
-            assert Substitute().tmpl_substitute("A") == "b"
+        self.run_substitute([{"a": "b"}], [("A", "b")])
 
     def test_unmatched_input_preserved(self):
-        with self.configure_plugin([{"a": "b"}]):
-            assert Substitute().tmpl_substitute("c") == "c"
+        self.run_substitute([{"a": "b"}], [("c", "c")])
 
     def test_regex_to_static(self):
-        with self.configure_plugin([{".*jimi hendrix.*": "Jimi Hendrix"}]):
-            result = Substitute().tmpl_substitute("The Jimi Hendrix Experience")
-            assert result == "Jimi Hendrix"
+        self.run_substitute(
+            [{".*jimi hendrix.*": "Jimi Hendrix"}],
+            [("The Jimi Hendrix Experience", "Jimi Hendrix")],
+        )
 
     def test_regex_capture_group(self):
-        with self.configure_plugin([{"^(.*?)(,| &| and).*": r"\1"}]):
-            cases = [
+        self.run_substitute(
+            [{"^(.*?)(,| &| and).*": r"\1"}],
+            [
                 ("King Creosote & Jon Hopkins", "King Creosote"),
                 (
                     "Michael Hurley, The Holy Modal Rounders, Jeffrey Frederick & "
@@ -59,43 +60,33 @@ class SubstitutePluginTest(PluginTestCase):
                     "Michael Hurley",
                 ),
                 ("James Yorkston and the Athletes", "James Yorkston"),
-            ]
-            for input, expected in cases:
-                assert Substitute().tmpl_substitute(input) == expected
+            ],
+        )
 
     def test_partial_substitution(self):
-        with self.configure_plugin([{r"\.": ""}]):
-            cases = [
-                ("U.N.P.O.C.", "UNPOC"),
-            ]
-            for input, expected in cases:
-                assert Substitute().tmpl_substitute(input) == expected
+        self.run_substitute([{r"\.": ""}], [("U.N.P.O.C.", "UNPOC")])
 
     def test_break_on_first_match(self):
-        with self.configure_plugin(
+        self.run_substitute(
             [
                 {"a": "b"},
                 {"[ab]": "c"},
-            ]
-        ):
-            cases = [
+            ],
+            [
                 ("a", "b"),
                 ("b", "c"),
-            ]
-            for input, expected in cases:
-                assert Substitute().tmpl_substitute(input) == expected
+            ],
+        )
 
     def test_deprecated_config(self):
-        with self.configure_plugin(
+        self.run_substitute(
             {
                 "a": "b",
                 "b": "c",
                 "c": "d",
-            }
-        ):
-            cases = [("a", "b"), ("b", "c"), ("c", "d")]
-            for input, expected in cases:
-                assert Substitute().tmpl_substitute(input) == expected
+            },
+            [("a", "b"), ("b", "c"), ("c", "d")],
+        )
 
     def test_deprecated_config_warning(self):
         with capture_log() as logs:
