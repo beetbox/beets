@@ -564,10 +564,7 @@ class TekstowoExtractLyricsTest(TekstowoBaseTest):
         """Ensure we are able to scrape a page with lyrics"""
         url = "https://www.tekstowo.pl/piosenka,24kgoldn,city_of_angels_1.html"
         mock = MockFetchUrl()
-        assert (
-            tekstowo.extract_lyrics(mock(url), "24kGoldn", "City of Angels")
-            is not None
-        )
+        assert tekstowo.extract_lyrics(mock(url))
 
     def test_no_lyrics(self):
         """Ensure we don't crash when the scraping the html for a Tekstowo page
@@ -578,61 +575,7 @@ class TekstowoExtractLyricsTest(TekstowoBaseTest):
             "beethoven_piano_sonata_17_tempest_the_3rd_movement.html"
         )
         mock = MockFetchUrl()
-        assert (
-            tekstowo.extract_lyrics(
-                mock(url),
-                "Beethoven",
-                "Beethoven Piano Sonata 17" "Tempest The 3rd Movement",
-            )
-            is None
-        )
-
-    def test_song_no_match(self):
-        """Ensure we return None when a song does not match the search query"""
-        # https://github.com/beetbox/beets/issues/4406
-        # expected return value None
-        url = (
-            "https://www.tekstowo.pl/piosenka,bailey_bigger"
-            ",black_eyed_susan.html"
-        )
-        mock = MockFetchUrl()
-        assert (
-            tekstowo.extract_lyrics(
-                mock(url), "Kelly Bailey", "Black Mesa Inbound"
-            )
-            is None
-        )
-
-
-class TekstowoParseSearchResultsTest(TekstowoBaseTest):
-    """tests Tekstowo.parse_search_results()"""
-
-    def setUp(self):
-        """Set up configuration"""
-        TekstowoBaseTest.setUp(self)
-        self.plugin = lyrics.LyricsPlugin()
-
-    def test_multiple_results(self):
-        """Ensure we are able to scrape a page with multiple search results"""
-        url = (
-            "https://www.tekstowo.pl/szukaj,wykonawca,juice+wrld"
-            ",tytul,lucid+dreams.html"
-        )
-        mock = MockFetchUrl()
-        assert (
-            tekstowo.parse_search_results(mock(url))
-            == "http://www.tekstowo.pl/piosenka,juice_wrld,"
-            "lucid_dreams__remix__ft__lil_uzi_vert.html"
-        )
-
-    def test_no_results(self):
-        """Ensure we are able to scrape a page with no search results"""
-        url = (
-            "https://www.tekstowo.pl/szukaj,wykonawca,"
-            "agfdgja,tytul,agfdgafg.html"
-        )
-        mock = MockFetchUrl()
-        assert tekstowo.parse_search_results(mock(url)) is None
+        assert not tekstowo.extract_lyrics(mock(url))
 
 
 class TekstowoIntegrationTest(TekstowoBaseTest, LyricsAssertions):
