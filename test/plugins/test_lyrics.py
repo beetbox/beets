@@ -161,6 +161,42 @@ class TestLyricsUtils:
         assert lyrics.slug(text) == expected
 
 
+class TestSearchBackend:
+    @pytest.fixture
+    def backend(self, dist_thresh):
+        plugin = lyrics.LyricsPlugin()
+        plugin.config.set({"dist_thresh": dist_thresh})
+        return lyrics.SearchBackend(plugin.config, plugin._log)
+
+    @pytest.mark.parametrize(
+        "dist_thresh, target_artist, artist, should_match",
+        [
+            (0.11, "Target Artist", "Target Artist", True),
+            (0.11, "Target Artist", "Target Artis", True),
+            (0.11, "Target Artist", "Target Arti", False),
+            (0.11, "Psychonaut", "Psychonaut (BEL)", True),
+            (0.11, "beets song", "beats song", True),
+            (0.10, "beets song", "beats song", False),
+            (
+                0.11,
+                "Lucid Dreams (Forget Me)",
+                "Lucid Dreams (Remix) ft. Lil Uzi Vert",
+                False,
+            ),
+            (
+                0.12,
+                "Lucid Dreams (Forget Me)",
+                "Lucid Dreams (Remix) ft. Lil Uzi Vert",
+                True,
+            ),
+        ],
+    )
+    def test_check_match(self, backend, target_artist, artist, should_match):
+        assert (
+            backend.check_match(target_artist, "", artist, "") == should_match
+        )
+
+
 @pytest.fixture(scope="module")
 def lyrics_root_dir(pytestconfig: pytest.Config):
     return pytestconfig.rootpath / "test" / "rsrc" / "lyrics"
@@ -275,10 +311,10 @@ class TestGoogleLyrics(LyricsBackendTest):
         self, backend, lyrics_html, url_title, artist, should_be_candidate
     ):
         result = backend.is_page_candidate(
+            artist,
+            self.TITLE,
             "http://www.example.com/lyrics/beetssong",
             url_title,
-            self.TITLE,
-            artist,
         )
         assert bool(result) == should_be_candidate
 

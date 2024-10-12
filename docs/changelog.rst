@@ -23,6 +23,10 @@ New features:
 * Beets now uses ``platformdirs`` to determine the default music directory.
   This location varies between systems -- for example, users can configure it
   on Unix systems via ``user-dirs.dirs(5)``.
+* :doc:`plugins/lyrics`: Add new configuration option ``dist_thresh`` to
+  control the maximum allowed distance between the lyrics search result and the
+  tagged item's artist and title. This is useful for preventing false positives
+  when fetching lyrics.
 
 Bug fixes:
 
@@ -61,6 +65,9 @@ Bug fixes:
   ``lrclib`` over other sources since it returns reliable results quicker than
   others.
   :bug:`5102`
+* :doc:`plugins/lyrics`: Fix the issue with ``genius`` backend not being able
+  to match lyrics when there was a slight variation in the artist name.
+  :bug:`4791`
 
 For packagers:
 
