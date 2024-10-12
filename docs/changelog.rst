@@ -44,6 +44,9 @@ Bug fixes:
 * :doc:`plugins/discogs`: Fix the ``TypeError`` when there is no description.
 * Remove single quotes from all SQL queries
   :bug:`4709`
+* :doc:`plugins/lyrics`: Update ``tekstowo`` backend to fetch lyrics directly
+  since recent updates to their website made it unsearchable.
+  :bug:`5456`
 
 For packagers:
 
