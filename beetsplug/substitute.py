@@ -35,7 +35,7 @@ class Substitute(BeetsPlugin):
         """Do the actual replacing."""
         if text:
             for pattern, replacement in self.substitute_rules:
-                new_text, subs_made = re.subn(pattern, replacement, text)
+                new_text, subs_made = pattern.subn(replacement, text)
                 if subs_made > 0:
                     return new_text
             return text
@@ -48,7 +48,7 @@ class Substitute(BeetsPlugin):
         Get the configuration, register template function and create list of
         substitute rules.
         """
-        super(Substitute, self).__init__()
+        super().__init__()
         self.substitute_rules = []
         self.template_funcs["substitute"] = self.tmpl_substitute
 
@@ -70,7 +70,7 @@ class Substitute(BeetsPlugin):
                     """
                 )
             )
-            pairs = [(key, view.as_str()) for key, view in self.config.items()]
+            pairs = self.config.flatten().items()
         else:
             pairs = self.config.as_pairs()
 
