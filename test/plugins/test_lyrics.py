@@ -202,7 +202,7 @@ def lyrics_root_dir(pytestconfig: pytest.Config):
     return pytestconfig.rootpath / "test" / "rsrc" / "lyrics"
 
 
-class LyricsBackendTest(PluginMixin):
+class LyricsPluginMixin(PluginMixin):
     plugin = "lyrics"
 
     @pytest.fixture
@@ -218,6 +218,42 @@ class LyricsBackendTest(PluginMixin):
 
         return lyrics.LyricsPlugin()
 
+
+class TestLyricsPlugin(LyricsPluginMixin):
+    @pytest.fixture
+    def backend_name(self):
+        """Return lyrics configuration to test."""
+        return "lrclib"
+
+    @pytest.mark.parametrize(
+        "request_kwargs, expected_log_match",
+        [
+            (
+                {"status_code": HTTPStatus.BAD_GATEWAY},
+                r"lyrics: Request error: 502",
+            ),
+            ({"text": "invalid"}, r"lyrics: Could not decode.*JSON"),
+        ],
+    )
+    def test_error_handling(
+        self,
+        requests_mock,
+        lyrics_plugin,
+        caplog,
+        request_kwargs,
+        expected_log_match,
+    ):
+        """Errors are logged with the plugin name."""
+        requests_mock.get(lyrics.LRCLib.GET_URL, **request_kwargs)
+
+        assert lyrics_plugin.get_lyrics("", "", "", 0.0) is None
+        assert caplog.messages
+        last_log = caplog.messages[-1]
+        assert last_log
+        assert re.search(expected_log_match, last_log, re.I)
+
+
+class LyricsBackendTest(LyricsPluginMixin):
     @pytest.fixture
     def backend(self, lyrics_plugin):
         """Return a lyrics backend instance."""
@@ -399,13 +435,9 @@ class TestLRCLibLyrics(LyricsBackendTest):
         return "lrclib"
 
     @pytest.fixture
-    def request_kwargs(self, response_data):
-        return {"json": response_data}
-
-    @pytest.fixture
-    def fetch_lyrics(self, backend, requests_mock, request_kwargs):
+    def fetch_lyrics(self, backend, requests_mock, response_data):
         requests_mock.get(backend.GET_URL, status_code=HTTPStatus.NOT_FOUND)
-        requests_mock.get(backend.SEARCH_URL, **request_kwargs)
+        requests_mock.get(backend.SEARCH_URL, json=response_data)
 
         return partial(backend.fetch, "la", "la", "la", self.ITEM_DURATION)
 
@@ -463,19 +495,3 @@ class TestLRCLibLyrics(LyricsBackendTest):
     @pytest.mark.parametrize("plugin_config", [{"synced": True}])
     def test_fetch_lyrics(self, fetch_lyrics, expected_lyrics):
         assert fetch_lyrics() == expected_lyrics
-
-    @pytest.mark.parametrize(
-        "request_kwargs, expected_log_match",
-        [
-            (
-                {"status_code": HTTPStatus.BAD_GATEWAY},
-                r"LRCLib: Request error: 502",
-            ),
-            ({"text": "invalid"}, r"LRCLib: Could not decode.*JSON"),
-        ],
-    )
-    def test_error(self, caplog, fetch_lyrics, expected_log_match):
-        assert fetch_lyrics() is None
-        assert caplog.messages
-        assert (last_log := caplog.messages[-1])
-        assert re.search(expected_log_match, last_log, re.I)
