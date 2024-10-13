@@ -28,7 +28,7 @@ from functools import cached_property, partial, total_ordering
 from html import unescape
 from http import HTTPStatus
 from typing import TYPE_CHECKING, ClassVar, Iterable, Iterator, NamedTuple
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 import requests
 from unidecode import unidecode
@@ -484,6 +484,10 @@ class SearchResult(NamedTuple):
     title: str
     url: str
 
+    @property
+    def source(self) -> str:
+        return urlparse(self.url).netloc
+
 
 class SearchBackend(SoupMixin, Backend):
     REQUIRES_BS = True
@@ -646,6 +650,8 @@ class Google(SearchBackend):
     #: Split cleaned up URL title into artist and title parts.
     URL_TITLE_PARTS_RE = re.compile(r" +(?:[ :|-]+|par|by) +")
 
+    SOURCE_DIST_FACTOR = {"www.azlyrics.com": 0.5, "www.songlyrics.com": 0.6}
+
     @classmethod
     def pre_process_html(cls, html: str) -> str:
         """Pre-process the HTML content before scraping."""
@@ -713,6 +719,14 @@ class Google(SearchBackend):
         )
         for item in data.get("items", []):
             yield self.make_search_result(artist, title, item)
+
+    def get_results(self, *args) -> Iterable[SearchResult]:
+        """Try results from preferred sources first."""
+        for result in sorted(
+            super().get_results(*args),
+            key=lambda r: self.SOURCE_DIST_FACTOR.get(r.source, 1),
+        ):
+            yield result
 
     @classmethod
     def scrape(cls, html: str) -> str | None:
