@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from typing_extensions import TypeAlias, TypedDict
+from typing_extensions import NotRequired, TypeAlias, TypedDict
 
 JSONDict: TypeAlias = "dict[str, Any]"
 
@@ -84,3 +84,32 @@ class GeniusAPI:
 
     class Search(TypedDict):
         response: GeniusAPI.SearchResponse
+
+
+class GoogleCustomSearchAPI:
+    class Response(TypedDict):
+        """Search response from the Google Custom Search API.
+
+        If the search returns no results, the :attr:`items` field is not found.
+        """
+
+        items: NotRequired[list[GoogleCustomSearchAPI.Item]]
+
+    class Item(TypedDict):
+        """A Google Custom Search API result item.
+
+        :attr:`title` field is shown to the user in the search interface, thus
+        it gets truncated with an ellipsis for longer queries. For most
+        results, the full title is available as ``og:title`` metatag found
+        under the :attr:`pagemap` field. Note neither this metatag nor the
+        ``pagemap`` field is guaranteed to be present in the data.
+        """
+
+        title: str
+        link: str
+        pagemap: NotRequired[GoogleCustomSearchAPI.Pagemap]
+
+    class Pagemap(TypedDict):
+        """Pagemap data with a single meta tags dict in a list."""
+
+        metatags: list[JSONDict]
