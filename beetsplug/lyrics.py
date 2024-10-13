@@ -27,7 +27,7 @@ from dataclasses import dataclass
 from functools import cached_property, partial, total_ordering
 from html import unescape
 from http import HTTPStatus
-from typing import TYPE_CHECKING, ClassVar, Iterable, Iterator
+from typing import TYPE_CHECKING, ClassVar, Iterable, Iterator, NamedTuple
 from urllib.parse import quote, urlparse
 
 import requests
@@ -427,6 +427,12 @@ class MusiXmatch(DirectBackend):
         return lyrics
 
 
+class SearchResult(NamedTuple):
+    artist: str
+    title: str
+    url: str
+
+
 class SearchBackend(Backend):
     REQUIRES_BS = True
 
@@ -435,12 +441,12 @@ class SearchBackend(Backend):
         return self.config["dist_thresh"].get(float)
 
     def check_match(
-        self, target_artist: str, target_title: str, artist: str, title: str
+        self, target_artist: str, target_title: str, result: SearchResult
     ) -> bool:
-        """Check if the given artist and title are 'good enough' match."""
+        """Check if the given search result is a 'good enough' match."""
         max_dist = max(
-            string_dist(target_artist, artist),
-            string_dist(target_title, title),
+            string_dist(target_artist, result.artist),
+            string_dist(target_title, result.title),
         )
 
         if (max_dist := round(max_dist, 2)) <= self.dist_thresh:
@@ -451,8 +457,8 @@ class SearchBackend(Backend):
             # This may show a matching candidate with some noise in the name
             self.debug(
                 "({}, {}) does not match ({}, {}) but dist was close: {:.2f}",
-                artist,
-                title,
+                result.artist,
+                result.title,
                 target_artist,
                 target_title,
                 max_dist,
@@ -460,61 +466,62 @@ class SearchBackend(Backend):
 
         return False
 
+    def search(self, artist: str, title: str) -> Iterable[SearchResult]:
+        """Search for the given query and yield search results."""
+        raise NotImplementedError
+
+    def get_results(self, artist: str, title: str) -> Iterable[SearchResult]:
+        check_match = partial(self.check_match, artist, title)
+        for candidate in self.search(artist, title):
+            if check_match(candidate):
+                yield candidate
+
+    def fetch(self, artist: str, title: str, *_) -> str | None:
+        """Fetch lyrics for the given artist and title."""
+        for result in self.get_results(artist, title):
+            if lyrics := self.scrape(self.fetch_text(result.url)):
+                return lyrics
+
+        return None
+
+    @classmethod
+    def scrape(cls, html: str) -> str | None:
+        """Scrape the lyrics from the given HTML."""
+        raise NotImplementedError
+
 
 class Genius(SearchBackend):
     """Fetch lyrics from Genius via genius-api.
 
-    Simply adapted from
-    bigishdata.com/2016/09/27/getting-song-lyrics-from-geniuss-api-scraping/
+    Because genius doesn't allow accessing lyrics via the api, we first query
+    the api for a url matching our artist & title, then scrape the HTML text
+    for the JSON data containing the lyrics.
+
+    Adapted from
+    bigishdata.com/2016/09/27/getting-song-lyrics-from-geniuss-api-scraping
     """
 
+    SEARCH_URL = "https://api.genius.com/search"
     LYRICS_IN_JSON_RE = re.compile(r'(?<=.\\"html\\":\\").*?(?=(?<!\\)\\")')
     remove_backslash = partial(re.compile(r"\\(?=[^\\])").sub, "")
-
-    base_url = "https://api.genius.com"
-    search_url = f"{base_url}/search"
 
     @cached_property
     def headers(self) -> dict[str, str]:
         return {"Authorization": f'Bearer {self.config["genius_api_key"]}'}
 
-    def fetch(self, artist: str, title: str, *_) -> str | None:
-        """Fetch lyrics from genius.com
-
-        Because genius doesn't allow accessing lyrics via the api,
-        we first query the api for a url matching our artist & title,
-        then attempt to scrape that url for the lyrics.
-        """
-
-        data = self.fetch_json(
-            self.search_url,
-            params={"q": f"{artist} {title}".lower()},
+    def search(self, artist: str, title: str) -> Iterable[SearchResult]:
+        search_data: GeniusAPI.Search = self.fetch_json(
+            self.SEARCH_URL,
+            params={"q": f"{artist} {title}"},
             headers=self.headers,
         )
-        if (url := self.find_lyrics_url(data, artist, title)) and (
-            lyrics := self.scrape_lyrics(self.fetch_text(url))
-        ):
-            return collapse_newlines(lyrics)
+        for r in (hit["result"] for hit in search_data["response"]["hits"]):
+            yield SearchResult(r["artist_names"], r["title"], r["url"])
 
-        return None
-
-    def find_lyrics_url(
-        self, data: GeniusAPI.Search, artist: str, title: str
-    ) -> str | None:
-        """Find URL to the lyrics of the given artist and title.
-
-        https://docs.genius.com/#search-h2.
-        """
-        check = partial(self.check_match, artist, title)
-        for result in (hit["result"] for hit in data["response"]["hits"]):
-            if check(result["artist_names"], result["title"]):
-                return result["url"]
-
-        return None
-
-    def scrape_lyrics(self, html: str) -> str | None:
-        if m := self.LYRICS_IN_JSON_RE.search(html):
-            html_text = self.remove_backslash(m[0]).replace(r"\n", "\n")
+    @classmethod
+    def scrape(cls, html: str) -> str | None:
+        if m := cls.LYRICS_IN_JSON_RE.search(html):
+            html_text = cls.remove_backslash(m[0]).replace(r"\n", "\n")
             return get_soup(html_text).get_text().strip()
 
         return None
@@ -536,11 +543,12 @@ class Tekstowo(DirectBackend):
         # We are expecting to receive a 404 since we are guessing the URL.
         # Thus suppress the error so that it does not end up in the logs.
         with suppress(NotFoundError):
-            return self.scrape_lyrics(
-                self.fetch_text(self.build_url(artist, title))
-            )
+            return self.scrape(self.fetch_text(self.build_url(artist, title)))
 
-    def scrape_lyrics(self, html: str) -> str | None:
+        return None
+
+    @classmethod
+    def scrape(cls, html: str) -> str | None:
         soup = get_soup(html)
 
         if lyrics_div := soup.select_one("div.song-text > div.inner-text"):
@@ -599,16 +607,6 @@ class Google(SearchBackend):
 
     SEARCH_URL = "https://www.googleapis.com/customsearch/v1"
 
-    @staticmethod
-    def scrape_lyrics(html: str) -> str | None:
-        soup = get_soup(html)
-
-        # Get the longest text element (if any).
-        strings = sorted(soup.stripped_strings, key=len, reverse=True)
-        if strings:
-            return strings[0]
-        return None
-
     def is_lyrics(self, text, artist=None):
         """Determine whether the text seems to be valid lyrics."""
         if not text:
@@ -641,17 +639,11 @@ class Google(SearchBackend):
     BY_TRANS = ["by", "par", "de", "von"]
     LYRICS_TRANS = ["lyrics", "paroles", "letras", "liedtexte"]
 
-    def is_page_candidate(
-        self, artist: str, title: str, url_link: str, url_title: str
-    ) -> bool:
-        """Return True if the URL title makes it a good candidate to be a
-        page that contains lyrics of title by artist.
-        """
-        title_slug = slug(title)
+    def make_search_result(
+        self, artist: str, url_link: str, url_title: str
+    ) -> SearchResult:
+        """Parse artist and title from the URL title and return a search result."""
         url_title_slug = slug(url_title)
-        if title_slug in url_title_slug:
-            return True
-
         artist = slug(artist)
         sitename = urlparse(url_link).netloc
 
@@ -666,30 +658,42 @@ class Google(SearchBackend):
             "(%s)" % "|".join(tokens), "", url_title_slug
         ).strip("-")
 
-        return self.check_match(artist, title_slug, artist, song_title)
+        return SearchResult(artist, song_title, url_link)
 
-    def fetch(self, artist: str, title: str, *_) -> str | None:
+    def search(self, artist: str, title: str) -> Iterable[SearchResult]:
         params = {
             "key": self.config["google_API_key"].as_str(),
             "cx": self.config["google_engine_ID"].as_str(),
             "q": f"{artist} {title}",
         }
 
-        check_candidate = partial(self.is_page_candidate, artist, title)
-        for item in self.fetch_json(self.SEARCH_URL, params=params).get(
-            "items", []
-        ):
-            url_link = item["link"]
-            if not check_candidate(url_link, item.get("title", "")):
-                continue
+        data = self.fetch_json(self.SEARCH_URL, params=params)
+        for item in data.get("items", []):
+            yield self.make_search_result(artist, item["link"], item["title"])
+
+    def get_results(self, artist: str, title: str) -> Iterable[SearchResult]:
+        return super().get_results(artist, slug(title))
+
+    def fetch(self, artist: str, title: str, *_) -> str | None:
+        for result in self.get_results(artist, title):
             with self.handle_request():
-                lyrics = self.scrape_lyrics(self.fetch_text(url_link))
+                lyrics = self.scrape(self.fetch_text(result.url))
                 if not lyrics:
                     continue
 
                 if self.is_lyrics(lyrics, artist):
-                    self.debug("Got lyrics from {}", item["displayLink"])
+                    self.debug(
+                        "Got lyrics from {}", urlparse(result.url).netloc
+                    )
                     return lyrics
+
+        return None
+
+    @classmethod
+    def scrape(cls, html: str) -> str | None:
+        # Get the longest text element (if any).
+        if strings := sorted(get_soup(html).stripped_strings, key=len):
+            return strings[-1]
 
         return None
 
