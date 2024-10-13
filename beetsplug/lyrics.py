@@ -57,7 +57,6 @@ try:
 except ImportError:
     HAS_LANGDETECT = False
 
-BREAK_RE = re.compile(r"\n?\s*<br([\s|/][^>]*)*>\s*\n?", re.I)
 USER_AGENT = f"beets/{beets.__version__}"
 INSTRUMENTAL_LYRICS = "[Instrumental]"
 
@@ -222,9 +221,15 @@ class RequestHandler:
         self._log.warning(f"{self.__class__.__name__}: {message}", *args)
 
     def fetch_text(self, url: str, **kwargs) -> str:
-        """Return text / HTML data from the given URL."""
+        """Return text / HTML data from the given URL.
+
+        Set the encoding to None to let requests handle it because some sites
+        set it incorrectly.
+        """
         self.debug("Fetching HTML from {}", url)
-        return r_session.get(url, **kwargs).text
+        r = r_session.get(url, **kwargs)
+        r.encoding = None
+        return r.text
 
     def fetch_json(self, url: str, **kwargs):
         """Return JSON data from the given URL."""
@@ -427,13 +432,60 @@ class MusiXmatch(DirectBackend):
         return lyrics
 
 
+class Html:
+    collapse_space = partial(re.compile(r"(^| ) +", re.M).sub, r"\1")
+    expand_br = partial(re.compile(r"\s*<br[^>]*>\s*", re.I).sub, "\n")
+    #: two newlines between paragraphs on the same line (musica, letras.mus.br)
+    merge_blocks = partial(re.compile(r"(?<!>)</p><p[^>]*>").sub, "\n\n")
+    #: a single new line between paragraphs on separate lines
+    #: (paroles.net, sweetslyrics.com, lacoccinelle.net)
+    merge_lines = partial(re.compile(r"</p>\s+<p[^>]*>(?!___)").sub, "\n")
+    #: remove empty divs (lacoccinelle.net)
+    remove_empty_divs = partial(re.compile(r"<div[^>]*>\s*</div>").sub, "")
+    #: remove Google Ads tags (musica.com)
+    remove_aside = partial(re.compile("<aside .+?</aside>").sub, "")
+    #: remove adslot-Content_1 div from the lyrics text (paroles.net)
+    remove_adslot = partial(
+        re.compile(r"\n</div>[^\n]+-- Content_\d+ --.*?\n<div>", re.S).sub,
+        "\n",
+    )
+    #: remove text formatting (azlyrics.com, lacocinelle.net)
+    remove_formatting = partial(
+        re.compile(r" *</?(i|em|pre|strong)[^>]*>").sub, ""
+    )
+
+    @classmethod
+    def normalize_space(cls, text: str) -> str:
+        text = unescape(text).replace("\r", "").replace("\xa0", " ")
+        return cls.collapse_space(cls.expand_br(text))
+
+    @classmethod
+    def remove_ads(cls, text: str) -> str:
+        return cls.remove_adslot(cls.remove_aside(text))
+
+    @classmethod
+    def merge_paragraphs(cls, text: str) -> str:
+        return cls.merge_blocks(cls.merge_lines(cls.remove_empty_divs(text)))
+
+
+class SoupMixin:
+    @classmethod
+    def pre_process_html(cls, html: str) -> str:
+        """Pre-process the HTML content before scraping."""
+        return Html.normalize_space(html)
+
+    @classmethod
+    def get_soup(cls, html: str) -> BeautifulSoup:
+        return BeautifulSoup(cls.pre_process_html(html), "html.parser")
+
+
 class SearchResult(NamedTuple):
     artist: str
     title: str
     url: str
 
 
-class SearchBackend(Backend):
+class SearchBackend(SoupMixin, Backend):
     REQUIRES_BS = True
 
     @cached_property
@@ -524,12 +576,12 @@ class Genius(SearchBackend):
     def scrape(cls, html: str) -> str | None:
         if m := cls.LYRICS_IN_JSON_RE.search(html):
             html_text = cls.remove_backslash(m[0]).replace(r"\n", "\n")
-            return get_soup(html_text).get_text().strip()
+            return cls.get_soup(html_text).get_text().strip()
 
         return None
 
 
-class Tekstowo(DirectBackend):
+class Tekstowo(SoupMixin, DirectBackend):
     """Fetch lyrics from Tekstowo.pl."""
 
     REQUIRES_BS = True
@@ -551,43 +603,12 @@ class Tekstowo(DirectBackend):
 
     @classmethod
     def scrape(cls, html: str) -> str | None:
-        soup = get_soup(html)
+        soup = cls.get_soup(html)
 
         if lyrics_div := soup.select_one("div.song-text > div.inner-text"):
             return lyrics_div.get_text()
 
         return None
-
-
-collapse_newlines = partial(re.compile(r"\n{3,}").sub, r"\n\n")
-
-
-def _scrape_strip_cruft(html: str) -> str:
-    """Clean up HTML"""
-    html = unescape(html)
-
-    html = html.replace("\r", "\n")  # Normalize EOL.
-    html = re.sub(r" +", " ", html)  # Whitespaces collapse.
-    html = BREAK_RE.sub("\n", html)  # <br> eats up surrounding '\n'.
-    html = re.sub(r"(?s)<(script).*?</\1>", "", html)  # Strip script tags.
-    html = re.sub("\u2005", " ", html)  # replace unicode with regular space
-    html = re.sub("<aside .+?</aside>", "", html)  # remove Google Ads tags
-    html = re.sub(r"</?(em|strong)[^>]*>", "", html)  # remove italics / bold
-
-    html = "\n".join([x.strip() for x in html.strip().split("\n")])
-    return collapse_newlines(html)
-
-
-def _scrape_merge_paragraphs(html):
-    html = re.sub(r"</p>\s*<p(\s*[^>]*)>", "\n", html)
-    return re.sub(r"<div .*>\s*</div>", "\n", html)
-
-
-def get_soup(html: str) -> BeautifulSoup:
-    html = _scrape_strip_cruft(html)
-    html = _scrape_merge_paragraphs(html)
-
-    return BeautifulSoup(html, "html.parser")
 
 
 class Google(SearchBackend):
@@ -624,6 +645,12 @@ class Google(SearchBackend):
     )
     #: Split cleaned up URL title into artist and title parts.
     URL_TITLE_PARTS_RE = re.compile(r" +(?:[ :|-]+|par|by) +")
+
+    @classmethod
+    def pre_process_html(cls, html: str) -> str:
+        """Pre-process the HTML content before scraping."""
+        html = Html.remove_ads(super().pre_process_html(html))
+        return Html.remove_formatting(Html.merge_paragraphs(html))
 
     def fetch_text(self, *args, **kwargs) -> str:
         """Handle an error so that we can continue with the next URL."""
@@ -690,7 +717,7 @@ class Google(SearchBackend):
     @classmethod
     def scrape(cls, html: str) -> str | None:
         # Get the longest text element (if any).
-        if strings := sorted(get_soup(html).stripped_strings, key=len):
+        if strings := sorted(cls.get_soup(html).stripped_strings, key=len):
             return strings[-1]
 
         return None
