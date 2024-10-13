@@ -102,28 +102,6 @@ class TestLyricsUtils:
         assert list(actual_titles) == [title, *expected_extra_titles]
 
     @pytest.mark.parametrize(
-        "initial_text, expected",
-        [
-            (
-                """<!--lyrics below-->
-                  &nbsp;one
-                  <br class='myclass'>
-                  two  !
-                  <br><br \\>
-                  <blink>four</blink>""",
-                "<!--lyrics below-->\none\ntwo !\n\n<blink>four</blink>",
-            ),
-            ("foo<script>bar</script>baz", "foobaz"),
-        ],
-    )
-    def test_scrape_strip_cruft(self, initial_text, expected):
-        assert lyrics._scrape_strip_cruft(initial_text) == expected
-
-    def test_scrape_merge_paragraphs(self):
-        text = "one</p>   <p class='myclass'>two</p><p>three"
-        assert lyrics._scrape_merge_paragraphs(text) == "one\ntwo\nthree"
-
-    @pytest.mark.parametrize(
         "text, expected",
         [
             ("test", "test"),
@@ -140,6 +118,25 @@ class TestLyricsUtils:
     )  # fmt: skip
     def test_slug(self, text, expected):
         assert lyrics.slug(text) == expected
+
+
+class TestHtml:
+    def test_scrape_strip_cruft(self):
+        initial = """<!--lyrics below-->
+                  &nbsp;one
+                  <br class='myclass'>
+                  two  !
+                  <br><br \\>
+                  <blink>four</blink>"""
+        expected = "<!--lyrics below-->\none\ntwo !\n\n<blink>four</blink>"
+
+        assert lyrics.Html.normalize_space(initial) == expected
+
+    def test_scrape_merge_paragraphs(self):
+        text = "one</p>   <p class='myclass'>two</p><p>three"
+        expected = "one\ntwo\n\nthree"
+
+        assert lyrics.Html.merge_paragraphs(text) == expected
 
 
 class TestSearchBackend:
