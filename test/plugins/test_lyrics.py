@@ -191,9 +191,9 @@ class TestSearchBackend:
         ],
     )
     def test_check_match(self, backend, target_artist, artist, should_match):
-        assert (
-            backend.check_match(target_artist, "", artist, "") == should_match
-        )
+        result = lyrics.SearchResult(artist, "", "")
+
+        assert backend.check_match(target_artist, "", result) == should_match
 
 
 @pytest.fixture(scope="module")
@@ -327,31 +327,32 @@ class TestGoogleLyrics(LyricsBackendTest):
 
     def test_mocked_source_ok(self, backend, lyrics_html):
         """Test that lyrics of the mocked page are correctly scraped"""
-        result = backend.scrape_lyrics(lyrics_html).lower()
+        result = backend.scrape(lyrics_html).lower()
 
         assert result
         assert backend.is_lyrics(result)
         assert PHRASE_BY_TITLE[self.TITLE] in result
 
     @pytest.mark.parametrize(
-        "url_title, artist, should_be_candidate",
+        "url_title, artist, expected_title",
         [
-            ("John Doe - beets song Lyrics", "John Doe", True),
-            ("example.com | Beats song by John doe", "John Doe", True),
-            ("example.com | seets bong lyrics by John doe", "John Doe", False),
-            ("foo", "Sun O)))", False),
+            ("John Doe - beets song Lyrics", "John Doe", "beets-song"),
+            ("example.com | Beats song by John doe", "John Doe", "beats-song"),
+            (
+                "example.com | seets bong lyrics by John doe",
+                "John Doe",
+                "seets-bong",
+            ),
+            ("foo", "Sun O)))", "foo"),
         ],
     )
-    def test_is_page_candidate(
-        self, backend, lyrics_html, url_title, artist, should_be_candidate
+    def test_make_search_result(
+        self, backend, url_title, artist, expected_title
     ):
-        result = backend.is_page_candidate(
-            artist,
-            self.TITLE,
-            "http://www.example.com/lyrics/beetssong",
-            url_title,
+        result = backend.make_search_result(
+            artist, "https://example.com", url_title
         )
-        assert bool(result) == should_be_candidate
+        assert result.title == expected_title
 
     @pytest.mark.parametrize(
         "lyrics",
@@ -385,7 +386,7 @@ class TestGeniusLyrics(LyricsBackendTest):
         ],
     )  # fmt: skip
     def test_scrape(self, backend, lyrics_html, expected_line_count):
-        result = backend.scrape_lyrics(lyrics_html) or ""
+        result = backend.scrape(lyrics_html) or ""
 
         assert len(result.splitlines()) == expected_line_count
 
@@ -406,7 +407,7 @@ class TestTekstowoLyrics(LyricsBackendTest):
         ],
     )
     def test_scrape(self, backend, lyrics_html, expecting_lyrics):
-        assert bool(backend.scrape_lyrics(lyrics_html)) == expecting_lyrics
+        assert bool(backend.scrape(lyrics_html)) == expecting_lyrics
 
 
 LYRICS_DURATION = 950
