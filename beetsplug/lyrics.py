@@ -100,6 +100,10 @@ class NotFoundError(requests.exceptions.HTTPError):
     pass
 
 
+class CaptchaError(requests.exceptions.HTTPError):
+    pass
+
+
 class TimeoutSession(requests.Session):
     def request(self, *args, **kwargs):
         """Wrap the request method to raise an exception on HTTP errors."""
@@ -107,6 +111,9 @@ class TimeoutSession(requests.Session):
         r = super().request(*args, **kwargs)
         if r.status_code == HTTPStatus.NOT_FOUND:
             raise NotFoundError("HTTP Error: Not Found", response=r)
+        if 300 <= r.status_code < 400:
+            raise CaptchaError("Captcha is required", response=r)
+
         r.raise_for_status()
 
         return r
@@ -652,6 +659,8 @@ class Google(SearchBackend):
 
     SOURCE_DIST_FACTOR = {"www.azlyrics.com": 0.5, "www.songlyrics.com": 0.6}
 
+    ignored_domains: set[str] = set()
+
     @classmethod
     def pre_process_html(cls, html: str) -> str:
         """Pre-process the HTML content before scraping."""
@@ -660,8 +669,13 @@ class Google(SearchBackend):
 
     def fetch_text(self, *args, **kwargs) -> str:
         """Handle an error so that we can continue with the next URL."""
+        kwargs.setdefault("allow_redirects", False)
         with self.handle_request():
-            return super().fetch_text(*args, **kwargs)
+            try:
+                return super().fetch_text(*args, **kwargs)
+            except CaptchaError:
+                self.ignored_domains.add(urlparse(args[0]).netloc)
+                raise
 
     @staticmethod
     def get_part_dist(artist: str, title: str, part: str) -> float:
@@ -726,7 +740,8 @@ class Google(SearchBackend):
             super().get_results(*args),
             key=lambda r: self.SOURCE_DIST_FACTOR.get(r.source, 1),
         ):
-            yield result
+            if result.source not in self.ignored_domains:
+                yield result
 
     @classmethod
     def scrape(cls, html: str) -> str | None:
