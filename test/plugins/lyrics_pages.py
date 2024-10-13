@@ -223,6 +223,20 @@ lyrics_pages = [
         Mademoiselle Madonna, couchée sur votre lit
         Listen to the music playing in your head.
         Vous écoutez la musique qui joue dans votre tête
+
+        Tuesday afternoon is never ending.
+        Le mardi après-midi n'en finit pas
+        Wednesday morning papers didn't come.
+        Le mercredi matin les journaux ne sont pas arrivés
+        Thursday night you stockings needed mending.
+        Jeudi soir, vos bas avaient besoin d'être réparés
+        See how they run.
+        Regardez comme ils filent
+
+        Lady Madonna, children at your feet.
+        Mademoiselle Madonna, les enfants à vos pieds
+        Wonder how you manage to make ends meet.
+        Je me demande comment vous vous débrouillez pour joindre les deux bouts
         """,
         url_title="Paroles et traduction The Beatles : Lady Madonna - paroles de chanson",  # noqa: E501
     ),
@@ -235,29 +249,35 @@ lyrics_pages = [
         Children at your feet
         Wonder how you manage
         To make ends meet
+
         Who finds the money
         When you pay the rent?
         Did you think that money
         Was Heaven sent?
+
         Friday night arrives without a suitcase
         Sunday morning creeping like a nun
         Monday's child has learned
         To tie his bootlace
         See how they run
+
         Lady Madonna
         Baby at your breast
         Wonders how you manage
         To feed the rest
         See how they run
+
         Lady Madonna
         Lying on the bed
         Listen to the music
         Playing in your head
+
         Tuesday afternoon is neverending
         Wednesday morning papers didn't come
         Thursday night your stockings
         Needed mending
         See how they run
+
         Lady Madonna
         Children at your feet
         Wonder how you manage
@@ -415,24 +435,29 @@ lyrics_pages = [
     LyricsPage.make(
         "https://www.musica.com/letras.asp?letra=59862",
         """
-        Lady Madonna
         Lady Madonna, children at your feet
         Wonder how you manage to make ends meet
         Who finds the money when you pay the rent?
         Did you think that money was heaven sent?
+
         Friday night arrives without a suitcase
         Sunday morning creeping like a nun
         Monday's child has learned to tie his bootlace
         See how they run
+
         Lady Madonna, baby at your breast
         Wonders how you manage to feed the rest
+
         See how they run
+
         Lady Madonna lying on the bed
         Listen to the music playing in your head
+
         Tuesday afternoon is never ending
         Wednesday morning papers didn't come
         Thursday night your stockings needed mending
         See how they run
+
         Lady Madonna, children at your feet
         Wonder how you manage to make ends meet
         """,
@@ -457,6 +482,14 @@ lyrics_pages = [
         See how they run.
         Lady Madonna, lying on the bed,
         Listen to the music playing in your head.
+
+        Tuesday afternoon is never ending.
+        Wednesday morning papers didn't come.
+        Thursday night your stockings needed mending.
+        See how they run.
+
+        Lady Madonna, children at your feet.
+        Wonder how you manage to make ends meet.
         """,
         url_title="Paroles Lady Madonna par The Beatles - Lyrics - Paroles.net",
     ),
