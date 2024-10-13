@@ -28,7 +28,7 @@ from functools import cached_property, partial, total_ordering
 from html import unescape
 from http import HTTPStatus
 from typing import TYPE_CHECKING, ClassVar, Iterable, Iterator, NamedTuple
-from urllib.parse import quote, urlparse
+from urllib.parse import quote
 
 import requests
 from unidecode import unidecode
@@ -41,7 +41,7 @@ if TYPE_CHECKING:
     from beets.importer import ImportTask
     from beets.library import Item
 
-    from ._typing import GeniusAPI, LRCLibAPI
+    from ._typing import GeniusAPI, GoogleCustomSearchAPI, LRCLibAPI
 
 try:
     from bs4 import BeautifulSoup
@@ -479,7 +479,9 @@ class SearchBackend(Backend):
     def fetch(self, artist: str, title: str, *_) -> str | None:
         """Fetch lyrics for the given artist and title."""
         for result in self.get_results(artist, title):
-            if lyrics := self.scrape(self.fetch_text(result.url)):
+            if (html := self.fetch_text(result.url)) and (
+                lyrics := self.scrape(html)
+            ):
                 return lyrics
 
         return None
@@ -557,20 +559,6 @@ class Tekstowo(DirectBackend):
         return None
 
 
-def remove_credits(text):
-    """Remove first/last line of text if it contains the word 'lyrics'
-    eg 'Lyrics by songsdatabase.com'
-    """
-    textlines = text.split("\n")
-    credits = None
-    for i in (0, -1):
-        if textlines and "lyrics" in textlines[i].lower():
-            credits = textlines.pop(i)
-    if credits:
-        text = "\n".join(textlines)
-    return text
-
-
 collapse_newlines = partial(re.compile(r"\n{3,}").sub, r"\n\n")
 
 
@@ -607,87 +595,97 @@ class Google(SearchBackend):
 
     SEARCH_URL = "https://www.googleapis.com/customsearch/v1"
 
-    def is_lyrics(self, text, artist=None):
-        """Determine whether the text seems to be valid lyrics."""
-        if not text:
-            return False
-        bad_triggers_occ = []
-        nb_lines = text.count("\n")
-        if nb_lines <= 1:
-            self.debug("Ignoring too short lyrics '{}'", text)
-            return False
-        elif nb_lines < 5:
-            bad_triggers_occ.append("too_short")
-        else:
-            # Lyrics look legit, remove credits to avoid being penalized
-            # further down
-            text = remove_credits(text)
+    #: Exclude some letras.mus.br pages which do not contain lyrics.
+    EXCLUDE_PAGES = [
+        "significado.html",
+        "traduccion.html",
+        "traducao.html",
+        "significados.html",
+    ]
 
-        bad_triggers = ["lyrics", "copyright", "property", "links"]
-        if artist:
-            bad_triggers += [artist]
+    #: Regular expression to match noise in the URL title.
+    URL_TITLE_NOISE_RE = re.compile(
+        r"""
+\b
+(
+      paroles(\ et\ traduction|\ de\ chanson)?
+    | letras?(\ de)?
+    | liedtexte
+    | original\ song\ full\ text\.
+    | official
+    | 20[12]\d\ version
+    | (absolute\ |az)?lyrics(\ complete)?
+    | www\S+
+    | \S+\.(com|net|mus\.br)
+)
+([^\w.]|$)
+""",
+        re.IGNORECASE | re.VERBOSE,
+    )
+    #: Split cleaned up URL title into artist and title parts.
+    URL_TITLE_PARTS_RE = re.compile(r" +(?:[ :|-]+|par|by) +")
 
-        for item in bad_triggers:
-            bad_triggers_occ += [item] * len(
-                re.findall(r"\W%s\W" % item, text, re.I)
-            )
+    def fetch_text(self, *args, **kwargs) -> str:
+        """Handle an error so that we can continue with the next URL."""
+        with self.handle_request():
+            return super().fetch_text(*args, **kwargs)
 
-        if bad_triggers_occ:
-            self.debug("Bad triggers detected: {}", bad_triggers_occ)
-        return len(bad_triggers_occ) < 2
+    @staticmethod
+    def get_part_dist(artist: str, title: str, part: str) -> float:
+        """Return the distance between the given part and the artist and title.
 
-    BY_TRANS = ["by", "par", "de", "von"]
-    LYRICS_TRANS = ["lyrics", "paroles", "letras", "liedtexte"]
+        A number between -1 and 1 is returned, where -1 means the part is
+        closer to the artist and 1 means it is closer to the title.
+        """
+        return string_dist(artist, part) - string_dist(title, part)
 
+    @classmethod
     def make_search_result(
-        self, artist: str, url_link: str, url_title: str
+        cls, artist: str, title: str, item: GoogleCustomSearchAPI.Item
     ) -> SearchResult:
         """Parse artist and title from the URL title and return a search result."""
-        url_title_slug = slug(url_title)
-        artist = slug(artist)
-        sitename = urlparse(url_link).netloc
-
-        # or try extracting song title from URL title and check if
-        # they are close enough
-        tokens = (
-            [by + "-" + artist for by in self.BY_TRANS]
-            + [artist, sitename, sitename.replace("www.", "")]
-            + self.LYRICS_TRANS
+        url_title = (
+            # get full title from metatags if available
+            item.get("pagemap", {}).get("metatags", [{}])[0].get("og:title")
+            # default to the dispolay title
+            or item["title"]
         )
-        song_title = re.sub(
-            "(%s)" % "|".join(tokens), "", url_title_slug
-        ).strip("-")
+        clean_title = cls.URL_TITLE_NOISE_RE.sub("", url_title).strip(" .-|")
+        # split it into parts which may be part of the artist or the title
+        # `dict.fromkeys` removes duplicates keeping the order
+        parts = list(dict.fromkeys(cls.URL_TITLE_PARTS_RE.split(clean_title)))
 
-        return SearchResult(artist, song_title, url_link)
+        if len(parts) == 1:
+            part = parts[0]
+            if m := re.search(rf"(?i)\W*({re.escape(title)})\W*", part):
+                # artist and title may not have a separator
+                result_title = m[1]
+                result_artist = part.replace(m[0], "")
+            else:
+                # assume that this is the title
+                result_artist, result_title = "", parts[0]
+        else:
+            # sort parts by their similarity to the artist
+            parts.sort(key=lambda p: cls.get_part_dist(artist, title, p))
+            result_artist, result_title = parts[0], " ".join(parts[1:])
+
+        return SearchResult(result_artist, result_title, item["link"])
 
     def search(self, artist: str, title: str) -> Iterable[SearchResult]:
         params = {
             "key": self.config["google_API_key"].as_str(),
             "cx": self.config["google_engine_ID"].as_str(),
             "q": f"{artist} {title}",
+            "siteSearch": "www.musixmatch.com",
+            "siteSearchFilter": "e",
+            "excludeTerms": ", ".join(self.EXCLUDE_PAGES),
         }
 
-        data = self.fetch_json(self.SEARCH_URL, params=params)
+        data: GoogleCustomSearchAPI.Response = self.fetch_json(
+            self.SEARCH_URL, params=params
+        )
         for item in data.get("items", []):
-            yield self.make_search_result(artist, item["link"], item["title"])
-
-    def get_results(self, artist: str, title: str) -> Iterable[SearchResult]:
-        return super().get_results(artist, slug(title))
-
-    def fetch(self, artist: str, title: str, *_) -> str | None:
-        for result in self.get_results(artist, title):
-            with self.handle_request():
-                lyrics = self.scrape(self.fetch_text(result.url))
-                if not lyrics:
-                    continue
-
-                if self.is_lyrics(lyrics, artist):
-                    self.debug(
-                        "Got lyrics from {}", urlparse(result.url).netloc
-                    )
-                    return lyrics
-
-        return None
+            yield self.make_search_result(artist, title, item)
 
     @classmethod
     def scrape(cls, html: str) -> str | None:
