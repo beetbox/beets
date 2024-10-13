@@ -253,12 +253,22 @@ class RequestHandler:
             self.warn("Request error: {}", exc)
 
 
-class Backend(RequestHandler):
-    REQUIRES_BS = False
+class BackendClass(type):
+    """Metaclass for the :class:`Backend` class."""
 
+    @property
+    def name(cls) -> str:
+        return cls.__name__.lower()
+
+
+class Backend(RequestHandler, metaclass=BackendClass):
     def __init__(self, config, log):
         self._log = log
         self.config = config
+
+    @cached_property
+    def enabled(self) -> bool:
+        return True
 
     def fetch(
         self, artist: str, title: str, album: str, length: int
@@ -380,8 +390,8 @@ class LRCLib(Backend):
             return None
 
 
-class DirectBackend(Backend):
-    """A backend for fetching lyrics directly."""
+class DirectMixin:
+    """A backend mixin for fetching lyrics directly."""
 
     URL_TEMPLATE: ClassVar[str]  #: May include formatting placeholders
 
@@ -395,7 +405,7 @@ class DirectBackend(Backend):
         return cls.URL_TEMPLATE.format(*map(cls.encode, args))
 
 
-class MusiXmatch(DirectBackend):
+class MusiXmatch(DirectMixin, Backend):
     URL_TEMPLATE = "https://www.musixmatch.com/lyrics/{}/{}"
 
     REPLACEMENTS = {
@@ -475,7 +485,15 @@ class Html:
         return cls.merge_blocks(cls.merge_lines(cls.remove_empty_divs(text)))
 
 
-class SoupMixin:
+class SoupBackend(Backend):
+    @cached_property
+    def enabled(self) -> bool:
+        if HAS_BEAUTIFUL_SOUP:
+            return True
+
+        self.warn("Disabling source: missing beautifulsoup4 module")
+        return False
+
     @classmethod
     def pre_process_html(cls, html: str) -> str:
         """Pre-process the HTML content before scraping."""
@@ -496,9 +514,7 @@ class SearchResult(NamedTuple):
         return urlparse(self.url).netloc
 
 
-class SearchBackend(SoupMixin, Backend):
-    REQUIRES_BS = True
-
+class SearchBackend(SoupBackend):
     @cached_property
     def dist_thresh(self) -> float:
         return self.config["dist_thresh"].get(float)
@@ -592,10 +608,9 @@ class Genius(SearchBackend):
         return None
 
 
-class Tekstowo(SoupMixin, DirectBackend):
+class Tekstowo(DirectMixin, SoupBackend):
     """Fetch lyrics from Tekstowo.pl."""
 
-    REQUIRES_BS = True
     URL_TEMPLATE = "https://www.tekstowo.pl/piosenka,{},{}.html"
 
     non_alpha_to_underscore = partial(re.compile(r"\W").sub, "_")
@@ -658,6 +673,16 @@ class Google(SearchBackend):
     SOURCE_DIST_FACTOR = {"www.azlyrics.com": 0.5, "www.songlyrics.com": 0.6}
 
     ignored_domains: set[str] = set()
+
+    @cached_property
+    def enabled(self) -> bool:
+        if super().enabled:
+            if self.config["google_API_key"].get():
+                return True
+
+            self.warn("Disabling source: no API key configured.")
+
+        return False
 
     @classmethod
     def pre_process_html(cls, html: str) -> str:
@@ -750,15 +775,20 @@ class Google(SearchBackend):
         return None
 
 
+BACKENDS = [LRCLib, Google, Genius, Tekstowo, MusiXmatch]
+
+
 class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
-    SOURCES = ["lrclib", "google", "musixmatch", "genius", "tekstowo"]
-    SOURCE_BACKENDS = {
-        "google": Google,
-        "musixmatch": MusiXmatch,
-        "genius": Genius,
-        "tekstowo": Tekstowo,
-        "lrclib": LRCLib,
-    }
+    @cached_property
+    def backends(self) -> list[Backend]:
+        user_sources = self.config["sources"].get()
+        backend_by_name = {b.name: b for b in BACKENDS}
+        chosen = plugins.sanitize_choices(user_sources, backend_by_name)
+        return [
+            b
+            for c in chosen
+            if (b := backend_by_name[c](self.config, self._log)).enabled
+        ]
 
     def __init__(self):
         super().__init__()
@@ -782,7 +812,7 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
                 "synced": False,
                 # Musixmatch is disabled by default as they are currently blocking
                 # requests with the beets user agent.
-                "sources": [s for s in self.SOURCES if s != "musixmatch"],
+                "sources": [b.name for b in BACKENDS if b != MusiXmatch],
             }
         )
         self.config["bing_client_secret"].redact = True
@@ -799,23 +829,6 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
         # open yet.
         self.rest = None
 
-        available_sources = list(self.SOURCES)
-        sources = plugins.sanitize_choices(
-            self.config["sources"].as_str_seq(), available_sources
-        )
-
-        if not HAS_BEAUTIFUL_SOUP:
-            sources = self.sanitize_bs_sources(sources)
-
-        if "google" in sources:
-            if not self.config["google_API_key"].get():
-                # We log a *debug* message here because the default
-                # configuration includes `google`. This way, the source
-                # is silent by default but can be enabled just by
-                # setting an API key.
-                self.debug("Disabling google source: " "no API key configured.")
-                sources.remove("google")
-
         self.config["bing_lang_from"] = [
             x.lower() for x in self.config["bing_lang_from"].as_str_seq()
         ]
@@ -825,25 +838,6 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
                 "To use bing translations, you need to install the langdetect "
                 "module. See the documentation for further details."
             )
-
-        self.backends = [
-            self.SOURCE_BACKENDS[s](self.config, self._log.getChild(s))
-            for s in sources
-        ]
-
-    def sanitize_bs_sources(self, sources):
-        enabled_sources = []
-        for source in sources:
-            if self.SOURCE_BACKENDS[source].REQUIRES_BS:
-                self._log.debug(
-                    "To use the %s lyrics source, you must "
-                    "install the beautifulsoup4 module. See "
-                    "the documentation for further details." % source
-                )
-            else:
-                enabled_sources.append(source)
-
-        return enabled_sources
 
     @cached_property
     def bing_access_token(self) -> str | None:
