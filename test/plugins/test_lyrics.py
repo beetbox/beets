@@ -102,24 +102,6 @@ class TestLyricsUtils:
         assert list(actual_titles) == [title, *expected_extra_titles]
 
     @pytest.mark.parametrize(
-        "initial_lyrics, expected",
-        [
-            ("Verse\nLyrics credit in the last line", "Verse"),
-            ("Lyrics credit in the first line\nVerse", "Verse"),
-            (
-                """Verse
-                Lyrics mentioned somewhere in the middle
-                Verse""",
-                """Verse
-                Lyrics mentioned somewhere in the middle
-                Verse""",
-            ),
-        ],
-    )
-    def test_remove_credits(self, initial_lyrics, expected):
-        assert lyrics.remove_credits(initial_lyrics) == expected
-
-    @pytest.mark.parametrize(
         "initial_text, expected",
         [
             (
@@ -311,8 +293,6 @@ class TestLyricsSources(LyricsBackendTest):
 class TestGoogleLyrics(LyricsBackendTest):
     """Test scraping heuristics on a fake html page."""
 
-    TITLE = "Beets song"
-
     @pytest.fixture(scope="class")
     def backend_name(self):
         return "google"
@@ -325,51 +305,55 @@ class TestGoogleLyrics(LyricsBackendTest):
     def file_name(self):
         return "examplecom/beetssong"
 
+    @pytest.fixture
+    def search_item(self, url_title, url):
+        return {"title": url_title, "link": url}
+
     def test_mocked_source_ok(self, backend, lyrics_html):
         """Test that lyrics of the mocked page are correctly scraped"""
         result = backend.scrape(lyrics_html).lower()
 
         assert result
-        assert backend.is_lyrics(result)
-        assert PHRASE_BY_TITLE[self.TITLE] in result
+        assert PHRASE_BY_TITLE["Beets song"] in result
 
     @pytest.mark.parametrize(
-        "url_title, artist, expected_title",
+        "url_title, expected_artist, expected_title",
         [
-            ("John Doe - beets song Lyrics", "John Doe", "beets-song"),
-            ("example.com | Beats song by John doe", "John Doe", "beats-song"),
+            ("Artist - beets song Lyrics", "Artist", "beets song"),
+            ("www.azlyrics.com | Beats song by Artist", "Artist", "Beats song"),
+            ("lyric.com | seets bong lyrics by Artist", "Artist", "seets bong"),
+            ("foo", "", "foo"),
+            ("Artist - Beets Song lyrics | AZLyrics", "Artist", "Beets Song"),
+            ("Letra de Artist - Beets Song", "Artist", "Beets Song"),
+            ("Letra de Artist - Beets ...", "Artist", "Beets"),
+            ("Artist Beets Song", "Artist", "Beets Song"),
+            ("BeetsSong - Artist", "Artist", "BeetsSong"),
+            ("Artist - BeetsSong", "Artist", "BeetsSong"),
+            ("Beets Song", "", "Beets Song"),
+            ("Beets Song Artist", "Artist", "Beets Song"),
             (
-                "example.com | seets bong lyrics by John doe",
-                "John Doe",
-                "seets-bong",
+                "BeetsSong (feat. Other & Another) - Artist",
+                "Artist",
+                "BeetsSong (feat. Other & Another)",
             ),
-            ("foo", "Sun O)))", "foo"),
+            (
+                (
+                    "Beets song lyrics by Artist - original song full text. "
+                    "Official Beets song lyrics, 2024 version | LyricsMode.com"
+                ),
+                "Artist",
+                "Beets song",
+            ),
         ],
     )
+    @pytest.mark.parametrize("url", ["http://doesntmatter.com"])
     def test_make_search_result(
-        self, backend, url_title, artist, expected_title
+        self, backend, search_item, expected_artist, expected_title
     ):
-        result = backend.make_search_result(
-            artist, "https://example.com", url_title
-        )
-        assert result.title == expected_title
+        result = backend.make_search_result("Artist", "Beets song", search_item)
 
-    @pytest.mark.parametrize(
-        "lyrics",
-        [
-            "LyricsMania.com - Copyright (c) 2013 - All Rights Reserved",
-            """All material found on this site is property\n
-                     of mywickedsongtext brand""",
-            """
-Lyricsmania staff is working hard for you to add $TITLE lyrics as soon
-as they'll be released by $ARTIST, check back soon!
-In case you have the lyrics to $TITLE and want to send them to us, fill out
-the following form.
-""",
-        ],
-    )
-    def test_bad_lyrics(self, backend, lyrics):
-        assert not backend.is_lyrics(lyrics)
+        assert result.artist == expected_artist
+        assert result.title == expected_title
 
 
 class TestGeniusLyrics(LyricsBackendTest):
