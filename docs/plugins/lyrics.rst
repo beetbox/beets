@@ -42,6 +42,12 @@ configuration file. The available options are:
   Default: ``[]``
 - **bing_lang_to**: Language to translate lyrics into.
   Default: None.
+- **dist_thresh**: The maximum distance between the artist and title
+  combination of the music file and lyrics candidate to consider them a match.
+  Lower values will make the plugin more strict, higher values will make it
+  more lenient. This does not apply to the ``lrclib`` backend as it matches
+  durations.
+  Default: ``0.11``.
 - **fallback**: By default, the file will be left unchanged when no lyrics are
   found. Use the empty string ``''`` to reset the lyrics in such a case.
   Default: None.

@@ -16,7 +16,6 @@
 
 from __future__ import annotations
 
-import difflib
 import errno
 import itertools
 import json
@@ -25,9 +24,9 @@ import re
 import struct
 import unicodedata
 import warnings
-from functools import partial
+from functools import cached_property, partial
 from typing import ClassVar
-from urllib.parse import quote, urlencode
+from urllib.parse import quote, urlencode, urlparse
 
 import requests
 from unidecode import unidecode
@@ -50,6 +49,7 @@ except ImportError:
 
 import beets
 from beets import plugins, ui
+from beets.autotag.hooks import string_dist
 
 DIV_RE = re.compile(r"<(/?)div>?", re.I)
 COMMENT_RE = re.compile(r"<!--.*-->", re.S)
@@ -345,14 +345,42 @@ class MusiXmatch(DirectBackend):
         return lyrics
 
 
-class Genius(Backend):
+class SearchBackend(Backend):
+    REQUIRES_BS = True
+
+    @cached_property
+    def dist_thresh(self) -> float:
+        return self.config["dist_thresh"].get(float)
+
+    def check_match(
+        self, target_artist: str, target_title: str, artist: str, title: str
+    ) -> bool:
+        """Check if the given artist and title are 'good enough' match."""
+        max_dist = max(
+            string_dist(target_artist, artist),
+            string_dist(target_title, title),
+        )
+        if round(max_dist, 2) <= self.dist_thresh:
+            return True
+
+        self._log.warning(
+            "({}, {}) pair does not match ({}, {}), dist {:.2f} > expected {:.2f}",
+            artist,
+            title,
+            target_artist,
+            target_title,
+            max_dist,
+            self.dist_thresh,
+        )
+        return False
+
+
+class Genius(SearchBackend):
     """Fetch lyrics from Genius via genius-api.
 
     Simply adapted from
     bigishdata.com/2016/09/27/getting-song-lyrics-from-geniuss-api-scraping/
     """
-
-    REQUIRES_BS = True
 
     base_url = "https://api.genius.com"
 
@@ -376,19 +404,15 @@ class Genius(Backend):
             self._log.debug("Genius API request returned invalid JSON")
             return None
 
-        # find a matching artist in the json
+        check = partial(self.check_match, artist, title)
         for hit in json["response"]["hits"]:
-            hit_artist = hit["result"]["primary_artist"]["name"]
-
-            if slug(hit_artist) == slug(artist):
-                html = self.fetch_url(hit["result"]["url"])
+            result = hit["result"]
+            if check(result["primary_artist"]["name"], result["title"]):
+                html = self.fetch_url(result["url"])
                 if not html:
                     return None
                 return self._scrape_lyrics_from_html(html)
 
-        self._log.debug(
-            "Genius failed to find a matching artist for '{0}'", artist
-        )
         return None
 
     def _search(self, artist, title):
@@ -582,15 +606,8 @@ def scrape_lyrics_from_html(html):
         return None
 
 
-class Google(Backend):
+class Google(SearchBackend):
     """Fetch lyrics from Google search results."""
-
-    REQUIRES_BS = True
-
-    def __init__(self, config, log):
-        super().__init__(config, log)
-        self.api_key = config["google_API_key"].as_str()
-        self.engine_id = config["google_engine_ID"].as_str()
 
     def is_lyrics(self, text, artist=None):
         """Determine whether the text seems to be valid lyrics."""
@@ -637,20 +654,19 @@ class Google(Backend):
     BY_TRANS = ["by", "par", "de", "von"]
     LYRICS_TRANS = ["lyrics", "paroles", "letras", "liedtexte"]
 
-    def is_page_candidate(self, url_link, url_title, title, artist):
+    def is_page_candidate(
+        self, artist: str, title: str, url_link: str, url_title: str
+    ) -> bool:
         """Return True if the URL title makes it a good candidate to be a
         page that contains lyrics of title by artist.
         """
-        title = self.slugify(title.lower())
-        artist = self.slugify(artist.lower())
-        sitename = re.search(
-            "//([^/]+)/.*", self.slugify(url_link.lower())
-        ).group(1)
-        url_title = self.slugify(url_title.lower())
-
-        # Check if URL title contains song title (exact match)
-        if url_title.find(title) != -1:
+        title_slug = self.slugify(title.lower())
+        url_title_slug = self.slugify(url_title.lower())
+        if title_slug in url_title_slug:
             return True
+
+        artist = self.slugify(artist.lower())
+        sitename = urlparse(url_link).netloc
 
         # or try extracting song title from URL title and check if
         # they are close enough
@@ -660,18 +676,15 @@ class Google(Backend):
             + self.LYRICS_TRANS
         )
         tokens = [re.escape(t) for t in tokens]
-        song_title = re.sub("(%s)" % "|".join(tokens), "", url_title)
+        song_title = re.sub("(%s)" % "|".join(tokens), "", url_title_slug)
 
-        song_title = song_title.strip("_|")
-        typo_ratio = 0.9
-        ratio = difflib.SequenceMatcher(None, song_title, title).ratio()
-        return ratio >= typo_ratio
+        return self.check_match(artist, title_slug, artist, song_title)
 
     def fetch(self, artist, title, album=None, length=None):
         query = f"{artist} {title}"
         url = "https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s" % (
-            self.api_key,
-            self.engine_id,
+            self.config["google_API_key"].as_str(),
+            self.config["google_engine_ID"].as_str(),
             quote(query.encode("utf-8")),
         )
 
@@ -688,24 +701,21 @@ class Google(Backend):
             self._log.debug("google backend error: {0}", reason)
             return None
 
-        if "items" in data.keys():
-            for item in data["items"]:
-                url_link = item["link"]
-                url_title = item.get("title", "")
-                if not self.is_page_candidate(
-                    url_link, url_title, title, artist
-                ):
-                    continue
-                html = self.fetch_url(url_link)
-                if not html:
-                    continue
-                lyrics = scrape_lyrics_from_html(html)
-                if not lyrics:
-                    continue
+        check_candidate = partial(self.is_page_candidate, artist, title)
+        for item in data.get("items", []):
+            url_link = item["link"]
+            if not check_candidate(url_link, item.get("title", "")):
+                continue
+            html = self.fetch_url(url_link)
+            if not html:
+                continue
+            lyrics = scrape_lyrics_from_html(html)
+            if not lyrics:
+                continue
 
-                if self.is_lyrics(lyrics, artist):
-                    self._log.debug("got lyrics from {0}", item["displayLink"])
-                    return lyrics
+            if self.is_lyrics(lyrics, artist):
+                self._log.debug("got lyrics from {0}", item["displayLink"])
+                return lyrics
 
         return None
 
@@ -729,6 +739,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 "bing_client_secret": None,
                 "bing_lang_from": [],
                 "bing_lang_to": None,
+                "dist_thresh": 0.11,
                 "google_API_key": None,
                 "google_engine_ID": "009217259823014548361:lndtuqkycfu",
                 "genius_api_key": "Ryq93pUGm8bM6eUWwD_M3NOFFDAtp2yEE7W"
@@ -740,7 +751,6 @@ class LyricsPlugin(plugins.BeetsPlugin):
                 # Musixmatch is disabled by default as they are currently blocking
                 # requests with the beets user agent.
                 "sources": [s for s in self.SOURCES if s != "musixmatch"],
-                "dist_thresh": 0.1,
             }
         )
         self.config["bing_client_secret"].redact = True

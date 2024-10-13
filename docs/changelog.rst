@@ -47,6 +47,9 @@ Bug fixes:
 * :doc:`plugins/lyrics`: Update ``tekstowo`` backend to fetch lyrics directly
   since recent updates to their website made it unsearchable.
   :bug:`5456`
+* :doc:`plugins/lyrics`: Fix the issue with ``genius`` backend not being able
+  to match lyrics when there was a slight variation in the artist name.
+  :bug:`4791`
 
 For packagers:
 

@@ -18,7 +18,7 @@ import itertools
 import os
 import re
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import confuse
 import pytest
@@ -31,11 +31,12 @@ from beets.util import bytestring_path
 from beetsplug import lyrics
 
 log = logging.getLogger("beets.test_lyrics")
-raw_backend = lyrics.Backend({}, log)
-google = lyrics.Google(MagicMock(), log)
-genius = lyrics.Genius(MagicMock(), log)
-tekstowo = lyrics.Tekstowo(MagicMock(), log)
-lrclib = lyrics.LRCLib(MagicMock(), log)
+plugin = lyrics.LyricsPlugin()
+raw_backend = lyrics.Backend(plugin.config, log)
+google = lyrics.Google(plugin.config, log)
+genius = lyrics.Genius(plugin.config, log)
+tekstowo = lyrics.Tekstowo(plugin.config, log)
+lrclib = lyrics.LRCLib(plugin.config, log)
 
 
 class LyricsPluginTest(unittest.TestCase):
@@ -244,6 +245,42 @@ class LyricsGoogleBaseTest(unittest.TestCase):
             self.skipTest("Beautiful Soup 4 not available")
 
 
+class TestSearchBackend:
+    @pytest.fixture
+    def backend(self, dist_thresh):
+        plugin = lyrics.LyricsPlugin()
+        plugin.config.set({"dist_thresh": dist_thresh})
+        return lyrics.SearchBackend(plugin.config, plugin._log)
+
+    @pytest.mark.parametrize(
+        "dist_thresh, target_artist, artist, should_match",
+        [
+            (0.11, "Target Artist", "Target Artist", True),
+            (0.11, "Target Artist", "Target Artis", True),
+            (0.11, "Target Artist", "Target Arti", False),
+            (0.11, "Psychonaut", "Psychonaut (BEL)", True),
+            (0.11, "beets song", "beats song", True),
+            (0.10, "beets song", "beats song", False),
+            (
+                0.11,
+                "Lucid Dreams (Forget Me)",
+                "Lucid Dreams (Remix) ft. Lil Uzi Vert",
+                False,
+            ),
+            (
+                0.12,
+                "Lucid Dreams (Forget Me)",
+                "Lucid Dreams (Remix) ft. Lil Uzi Vert",
+                True,
+            ),
+        ],
+    )
+    def test_check_match(self, backend, target_artist, artist, should_match):
+        assert (
+            backend.check_match(target_artist, "", artist, "") == should_match
+        )
+
+
 class LyricsPluginSourcesTest(LyricsGoogleBaseTest, LyricsAssertions):
     """Check that beets google custom search engine sources are correctly
     scraped.
@@ -400,7 +437,7 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest, LyricsAssertions):
             html, "html.parser", parse_only=SoupStrainer("title")
         )
         assert google.is_page_candidate(
-            url, soup.title.string, s["title"], s["artist"]
+            s["artist"], s["title"], url, soup.title.string
         ), url
 
     def test_is_page_candidate_fuzzy_match(self):
@@ -413,12 +450,12 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest, LyricsAssertions):
 
         # very small diffs (typo) are ok eg 'beats' vs 'beets' with same artist
         assert google.is_page_candidate(
-            url, url_title, s["title"], s["artist"]
+            s["artist"], s["title"], url, url_title
         ), url
         # reject different title
         url_title = "example.com | seets bong lyrics by John doe"
         assert not google.is_page_candidate(
-            url, url_title, s["title"], s["artist"]
+            s["artist"], s["title"], url, url_title
         ), url
 
     def test_is_page_candidate_special_chars(self):
@@ -430,7 +467,7 @@ class LyricsGooglePluginMachineryTest(LyricsGoogleBaseTest, LyricsAssertions):
         url = s["url"] + s["path"]
         url_title = "foo"
 
-        google.is_page_candidate(url, url_title, s["title"], "Sunn O)))")
+        google.is_page_candidate("Sunn O)))", s["title"], url, url_title)
 
 
 # test Genius backend
@@ -506,12 +543,14 @@ class GeniusFetchTest(GeniusBaseTest):
                                     "name": "\u200bblackbear",
                                 },
                                 "url": "blackbear_url",
+                                "title": "Idfc",
                             }
                         },
                         {
                             "result": {
                                 "primary_artist": {"name": "El\u002dp"},
                                 "url": "El-p_url",
+                                "title": "Idfc",
                             }
                         },
                     ]
