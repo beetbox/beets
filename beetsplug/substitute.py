@@ -18,7 +18,6 @@ Uses user-specified substitution rules to canonicalize names for path formats.
 """
 
 import re
-import textwrap
 
 from beets.plugins import BeetsPlugin
 
@@ -49,31 +48,8 @@ class Substitute(BeetsPlugin):
         substitute rules.
         """
         super().__init__()
-        self.substitute_rules = []
         self.template_funcs["substitute"] = self.tmpl_substitute
-
-        if isinstance(self.config.get(), dict):
-            self._log.warning(
-                "Unordered configuration is deprecated, as it leads to"
-                + " unpredictable behaviour on overlapping rules.\n"
-                + textwrap.dedent(
-                    """
-                    Old syntax:
-                      substitute:
-                        a: b
-                        c: d
-
-                    New syntax:
-                      substitute:
-                      - a: b
-                      - c: d
-                    """
-                )
-            )
-            pairs = self.config.flatten().items()
-        else:
-            pairs = self.config.as_pairs()
-
-        for key, value in pairs:
-            pattern = re.compile(key, flags=re.IGNORECASE)
-            self.substitute_rules.append((pattern, value))
+        self.substitute_rules = [
+            (re.compile(key, flags=re.IGNORECASE), value)
+            for key, value in self.config.flatten().items()
+        ]
