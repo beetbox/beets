@@ -24,6 +24,7 @@ New features:
   This location varies between systems -- for example, users can configure it
   on Unix systems via ``user-dirs.dirs(5)``.
 
+* Ability to use relative_to as "m3u" to set playlist files as relative to where each playlist is at, including subdirectories.
 Bug fixes:
 
 * :doc:`plugins/ftintitle`: The detection of a "feat. X" part in a song title does not produce any false
