@@ -58,17 +58,12 @@ log = logging.getLogger("beets")
 log.propagate = True
 log.setLevel(logging.DEBUG)
 
-# Dummy item creation.
-_item_ident = 0
-
 # OS feature test.
 HAVE_SYMLINK = sys.platform != "win32"
 HAVE_HARDLINK = sys.platform != "win32"
 
 
 def item(lib=None):
-    global _item_ident
-    _item_ident += 1
     i = beets.library.Item(
         title="the title",
         artist="the artist",
@@ -93,7 +88,6 @@ def item(lib=None):
         comments="the comments",
         bpm=8,
         comp=True,
-        path=f"somepath{_item_ident}",
         length=60.0,
         bitrate=128000,
         format="FLAC",

@@ -713,10 +713,6 @@ class ImportSessionFixture(ImportSession):
 
     default_resolution = "REMOVE"
 
-    def add_resolution(self, resolution):
-        assert isinstance(resolution, self.Resolution)
-        self._resolutions.append(resolution)
-
     def resolve_duplicate(self, task, found_duplicates):
         try:
             res = self._resolutions.pop(0)
@@ -769,12 +765,10 @@ class TerminalImportSessionFixture(TerminalImportSession):
             self.io.addinput("T")
         elif choice == importer.action.SKIP:
             self.io.addinput("S")
-        elif isinstance(choice, int):
+        else:
             self.io.addinput("M")
             self.io.addinput(str(choice))
             self._add_choice_input()
-        else:
-            raise Exception("Unknown choice %s" % choice)
 
 
 class TerminalImportMixin(ImportHelper):
