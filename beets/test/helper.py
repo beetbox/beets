@@ -20,9 +20,6 @@ information or mock the environment.
 
 - `has_program` checks the presence of a command on the system.
 
-- The `generate_album_info` and `generate_track_info` functions return
-  fixtures to be used when mocking the autotagger.
-
 - The `ImportSessionFixture` allows one to run importer code while
   controlling the interactions through code.
 
@@ -801,82 +798,6 @@ class TerminalImportMixin(ImportHelper):
             io=self.io,
             paths=[import_dir],
         )
-
-
-def generate_album_info(album_id, track_values):
-    """Return `AlbumInfo` populated with mock data.
-
-    Sets the album info's `album_id` field is set to the corresponding
-    argument. For each pair (`id`, `values`) in `track_values` the `TrackInfo`
-    from `generate_track_info` is added to the album info's `tracks` field.
-    Most other fields of the album and track info are set to "album
-    info" and "track info", respectively.
-    """
-    tracks = [generate_track_info(id, values) for id, values in track_values]
-    album = AlbumInfo(
-        album_id="album info",
-        album="album info",
-        artist="album info",
-        artist_id="album info",
-        tracks=tracks,
-    )
-    for field in ALBUM_INFO_FIELDS:
-        setattr(album, field, "album info")
-
-    return album
-
-
-ALBUM_INFO_FIELDS = [
-    "album",
-    "album_id",
-    "artist",
-    "artist_id",
-    "asin",
-    "albumtype",
-    "va",
-    "label",
-    "barcode",
-    "artist_sort",
-    "releasegroup_id",
-    "catalognum",
-    "language",
-    "country",
-    "albumstatus",
-    "media",
-    "albumdisambig",
-    "releasegroupdisambig",
-    "artist_credit",
-    "data_source",
-    "data_url",
-]
-
-
-def generate_track_info(track_id="track info", values={}):
-    """Return `TrackInfo` populated with mock data.
-
-    The `track_id` field is set to the corresponding argument. All other
-    string fields are set to "track info".
-    """
-    track = TrackInfo(
-        title="track info",
-        track_id=track_id,
-    )
-    for field in TRACK_INFO_FIELDS:
-        setattr(track, field, "track info")
-    for field, value in values.items():
-        setattr(track, field, value)
-    return track
-
-
-TRACK_INFO_FIELDS = [
-    "artist",
-    "artist_id",
-    "artist_sort",
-    "disctitle",
-    "artist_credit",
-    "data_source",
-    "data_url",
-]
 
 
 class AutotagStub:
