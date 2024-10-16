@@ -78,3 +78,13 @@ class SubstitutePluginTest(PluginTestCase):
                 ("b", "y"),
             ],
         )
+
+    def test_rules_applied_in_sequence(self):
+        self.run_substitute(
+            {"a": "b", "b": "c", "d": "a"},
+            [
+                ("a", "c"),
+                ("b", "c"),
+                ("d", "a"),
+            ],
+        )
