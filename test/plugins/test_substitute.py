@@ -30,18 +30,18 @@ class SubstitutePluginTest(PluginTestCase):
     def test_simple_substitute(self):
         self.run_substitute(
             {
-                "a": "b",
-                "b": "c",
-                "c": "d",
+                "a": "x",
+                "b": "y",
+                "c": "z",
             },
-            [("a", "b"), ("b", "c"), ("c", "d")],
+            [("a", "x"), ("b", "y"), ("c", "z")],
         )
 
     def test_case_insensitivity(self):
-        self.run_substitute({"a": "b"}, [("A", "b")])
+        self.run_substitute({"a": "x"}, [("A", "x")])
 
     def test_unmatched_input_preserved(self):
-        self.run_substitute({"a": "b"}, [("c", "c")])
+        self.run_substitute({"a": "x"}, [("c", "c")])
 
     def test_regex_to_static(self):
         self.run_substitute(
@@ -66,11 +66,12 @@ class SubstitutePluginTest(PluginTestCase):
     def test_partial_substitution(self):
         self.run_substitute({r"\.": ""}, [("U.N.P.O.C.", "UNPOC")])
 
-    def test_break_on_first_match(self):
+    def test_rules_applied_in_definition_order(self):
         self.run_substitute(
             {
                 "a": "x",
                 "[ab]": "y",
+                "b": "z",
             },
             [
                 ("a", "x"),
