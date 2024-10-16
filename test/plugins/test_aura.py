@@ -91,6 +91,7 @@ class TestAuraResponse:
                 "artist": item.artist,
                 "size": Path(os.fsdecode(item.path)).stat().st_size,
                 "title": item.title,
+                "track": 1,
             },
             "relationships": {
                 "albums": {"data": [{"id": str(album.id), "type": "album"}]},
