@@ -110,30 +110,6 @@ def item(lib=None):
     return i
 
 
-def album(lib=None):
-    global _item_ident
-    _item_ident += 1
-    i = beets.library.Album(
-        artpath=None,
-        albumartist="some album artist",
-        albumartist_sort="some sort album artist",
-        albumartist_credit="some album artist credit",
-        album="the album",
-        genre="the genre",
-        year=2014,
-        month=2,
-        day=5,
-        tracktotal=0,
-        disctotal=1,
-        comp=False,
-        mb_albumid="someID-1",
-        mb_albumartistid="someID-1",
-    )
-    if lib:
-        lib.add(i)
-    return i
-
-
 # Dummy import session.
 def import_session(lib=None, loghandler=None, paths=[], query=[], cli=False):
     cls = commands.TerminalImportSession if cli else importer.ImportSession
