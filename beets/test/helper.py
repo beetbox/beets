@@ -246,16 +246,15 @@ class TestHelper(_common.Assertions):
 
         The item is attached to the database from `self.lib`.
         """
-        item_count = self._get_item_count()
         values_ = {
             "title": "t\u00eftle {0}",
             "artist": "the \u00e4rtist",
             "album": "the \u00e4lbum",
-            "track": item_count,
+            "track": 1,
             "format": "MP3",
         }
         values_.update(values)
-        values_["title"] = values_["title"].format(item_count)
+        values_["title"] = values_["title"].format(1)
         values_["db"] = self.lib
         item = Item(**values_)
         if "path" not in values:
@@ -371,12 +370,6 @@ class TestHelper(_common.Assertions):
             mediafile.save()
 
         return path
-
-    def _get_item_count(self):
-        if not hasattr(self, "__item_count"):
-            count = 0
-        self.__item_count = count + 1
-        return count
 
     # Running beets commands
 
