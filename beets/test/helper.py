@@ -51,7 +51,7 @@ from mediafile import Image, MediaFile
 
 import beets
 import beets.plugins
-from beets import autotag, config, importer, logging, util
+from beets import autotag, importer, logging, util
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.importer import ImportSession
 from beets.library import Album, Item, Library
@@ -156,12 +156,27 @@ def check_reflink_support(path: str) -> bool:
     return reflink.supported_at(path)
 
 
+class ConfigMixin:
+    @cached_property
+    def config(self) -> beets.IncludeLazyConfig:
+        """Base beets configuration for tests."""
+        config = beets.config
+        config.sources = []
+        config.read(user=False, defaults=True)
+
+        config["plugins"] = []
+        config["verbose"] = 1
+        config["ui"]["color"] = False
+        config["threaded"] = False
+        return config
+
+
 NEEDS_REFLINK = unittest.skipUnless(
     check_reflink_support(gettempdir()), "no reflink support for libdir"
 )
 
 
-class TestHelper(_common.Assertions):
+class TestHelper(_common.Assertions, ConfigMixin):
     """Helper mixin for high-level cli and plugin tests.
 
     This mixin provides methods to isolate beets' global state provide
@@ -187,8 +202,6 @@ class TestHelper(_common.Assertions):
         - ``libdir`` Path to a subfolder of ``temp_dir``, containing the
           library's media files. Same as ``config['directory']``.
 
-        - ``config`` The global configuration used by beets.
-
         - ``lib`` Library instance created with the settings from
           ``config``.
 
@@ -204,15 +217,6 @@ class TestHelper(_common.Assertions):
             },
         )
         self.env_patcher.start()
-
-        self.config = beets.config
-        self.config.sources = []
-        self.config.read(user=False, defaults=True)
-
-        self.config["plugins"] = []
-        self.config["verbose"] = 1
-        self.config["ui"]["color"] = False
-        self.config["threaded"] = False
 
         self.libdir = os.path.join(self.temp_dir, b"libdir")
         os.mkdir(syspath(self.libdir))
@@ -232,8 +236,6 @@ class TestHelper(_common.Assertions):
         self.io.restore()
         self.lib._close()
         self.remove_temp_dir()
-        beets.config.clear()
-        beets.config._materialized = False
 
     # Library fixtures methods
 
@@ -462,7 +464,7 @@ class ItemInDBTestCase(BeetsTestCase):
         self.i = _common.item(self.lib)
 
 
-class PluginMixin:
+class PluginMixin(ConfigMixin):
     plugin: ClassVar[str]
     preload_plugin: ClassVar[bool] = True
 
@@ -483,7 +485,7 @@ class PluginMixin:
         """
         # FIXME this should eventually be handled by a plugin manager
         plugins = (self.plugin,) if hasattr(self, "plugin") else plugins
-        beets.config["plugins"] = plugins
+        self.config["plugins"] = plugins
         beets.plugins.load_plugins(plugins)
         beets.plugins.find_plugins()
 
@@ -504,7 +506,7 @@ class PluginMixin:
         # FIXME this should eventually be handled by a plugin manager
         for plugin_class in beets.plugins._instances:
             plugin_class.listeners = None
-        beets.config["plugins"] = []
+        self.config["plugins"] = []
         beets.plugins._classes = set()
         beets.plugins._instances = {}
         Item._types = getattr(Item, "_original_types", {})
@@ -515,10 +517,10 @@ class PluginMixin:
     @contextmanager
     def configure_plugin(self, config: list[Any] | dict[str, Any]):
         if isinstance(config, list):
-            beets.config[self.plugin] = config
+            self.config[self.plugin] = config
         else:
             for key, value in config.items():
-                beets.config[self.plugin][key] = value
+                self.config[self.plugin][key] = value
         self.load_plugins(self.plugin)
 
         yield
@@ -638,7 +640,7 @@ class ImportHelper(TestHelper):
     def setup_importer(
         self, import_dir: bytes | None = None, **kwargs
     ) -> ImportSession:
-        config["import"].set_args({**self.default_import_config, **kwargs})
+        self.config["import"].set_args({**self.default_import_config, **kwargs})
         self.importer = self._get_import_session(import_dir or self.import_dir)
         return self.importer
 
