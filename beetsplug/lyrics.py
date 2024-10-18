@@ -25,8 +25,11 @@ import re
 import struct
 import unicodedata
 import warnings
-from functools import partial
-from typing import TYPE_CHECKING, ClassVar
+from contextlib import suppress
+from dataclasses import dataclass
+from functools import cached_property, partial, total_ordering
+from http import HTTPStatus
+from typing import TYPE_CHECKING, ClassVar, Iterable, Iterator
 from urllib.parse import quote, urlencode
 
 import requests
@@ -96,6 +99,10 @@ epub_exclude_files = ['search.html']
 epub_tocdepth = 1
 epub_tocdup = False
 """
+
+
+class NotFoundError(requests.exceptions.HTTPError):
+    pass
 
 
 # Utilities.
@@ -276,14 +283,80 @@ class LRCLibItem(TypedDict):
     trackName: str
     artistName: str
     albumName: str
-    duration: float
+    duration: float | None
     instrumental: bool
     plainLyrics: str
     syncedLyrics: str | None
 
 
+@dataclass
+@total_ordering
+class LRCLyrics:
+    #: Percentage tolerance for max duration difference between lyrics and item.
+    DURATION_DIFF_TOLERANCE = 0.05
+
+    target_duration: float
+    duration: float
+    instrumental: bool
+    plain: str
+    synced: str | None
+
+    def __le__(self, other: LRCLyrics) -> bool:
+        """Compare two lyrics items by their score."""
+        return self.dist < other.dist
+
+    @classmethod
+    def make(cls, candidate: LRCLibItem, target_duration: float) -> LRCLyrics:
+        return cls(
+            target_duration,
+            candidate["duration"] or 0.0,
+            candidate["instrumental"],
+            candidate["plainLyrics"],
+            candidate["syncedLyrics"],
+        )
+
+    @cached_property
+    def duration_dist(self) -> float:
+        """Return the absolute difference between lyrics and target duration."""
+        return abs(self.duration - self.target_duration)
+
+    @cached_property
+    def is_valid(self) -> bool:
+        """Return whether the lyrics item is valid.
+        Lyrics duration must be within the tolerance defined by
+        :attr:`DURATION_DIFF_TOLERANCE`.
+        """
+        return (
+            self.duration_dist
+            <= self.target_duration * self.DURATION_DIFF_TOLERANCE
+        )
+
+    @cached_property
+    def dist(self) -> tuple[float, bool]:
+        """Distance/score of the given lyrics item.
+
+        Return a tuple with the following values:
+        1. Absolute difference between lyrics and target duration
+        2. Boolean telling whether synced lyrics are available.
+
+        Best lyrics match is the one that has the closest duration to
+        ``target_duration`` and has synced lyrics available.
+        """
+        return self.duration_dist, not self.synced
+
+    def get_text(self, want_synced: bool) -> str:
+        if self.instrumental:
+            return INSTRUMENTAL_LYRICS
+
+        return self.synced if want_synced and self.synced else self.plain
+
+
 class LRCLib(Backend):
-    base_url = "https://lrclib.net/api/search"
+    """Fetch lyrics from the LRCLib API."""
+
+    BASE_URL = "https://lrclib.net/api"
+    GET_URL = f"{BASE_URL}/get"
+    SEARCH_URL = f"{BASE_URL}/search"
 
     def warn(self, message: str, *args) -> None:
         """Log a warning message with the class name."""
@@ -294,69 +367,54 @@ class LRCLib(Backend):
         kwargs.setdefault("timeout", 10)
         kwargs.setdefault("headers", {"User-Agent": USER_AGENT})
         r = requests.get(*args, **kwargs)
+        if r.status_code == HTTPStatus.NOT_FOUND:
+            raise NotFoundError("HTTP Error: Not Found", response=r)
         r.raise_for_status()
 
         return r.json()
 
-    @staticmethod
-    def get_rank(
-        target_duration: float, item: LRCLibItem
-    ) -> tuple[float, bool]:
-        """Rank the given lyrics item.
+    def fetch_candidates(
+        self, artist: str, title: str, album: str, length: int
+    ) -> Iterator[list[LRCLibItem]]:
+        """Yield lyrics candidates for the given song data.
 
-        Return a tuple with the following values:
-        1. Absolute difference between lyrics and target duration
-        2. Boolean telling whether synced lyrics are available.
+        Firstly, attempt to GET lyrics directly, and then search the API if
+        lyrics are not found or the duration does not match.
+
+        Return an iterator over lists of candidates.
         """
-        return (
-            abs(item["duration"] - target_duration),
-            not item["syncedLyrics"],
-        )
+        base_params = {"artist_name": artist, "track_name": title}
+        get_params = {**base_params, "duration": length}
+        if album:
+            get_params["album_name"] = album
+
+        with suppress(NotFoundError):
+            yield [self.fetch_json(self.GET_URL, params=get_params)]
+
+        yield self.fetch_json(self.SEARCH_URL, params=base_params)
 
     @classmethod
-    def pick_lyrics(
-        cls, target_duration: float, data: list[LRCLibItem]
-    ) -> LRCLibItem:
-        """Return best matching lyrics item from the given list.
-
-        Best lyrics match is the one that has the closest duration to
-        ``target_duration`` and has synced lyrics available.
-
-        Note that the incoming list is guaranteed to be non-empty.
-        """
-        return min(data, key=lambda item: cls.get_rank(target_duration, item))
+    def pick_best_match(cls, lyrics: Iterable[LRCLyrics]) -> LRCLyrics | None:
+        """Return best matching lyrics item from the given list."""
+        return min((li for li in lyrics if li.is_valid), default=None)
 
     def fetch(
         self, artist: str, title: str, album: str, length: int
     ) -> str | None:
-        """Fetch lyrics for the given artist, title, and album."""
-        params: dict[str, str | int] = {
-            "artist_name": artist,
-            "track_name": title,
-        }
-        if album:
-            params["album_name"] = album
-
-        if length:
-            params["duration"] = length
-
+        """Fetch lyrics text for the given song data."""
+        fetch = partial(self.fetch_candidates, artist, title, album, length)
+        make = partial(LRCLyrics.make, target_duration=length)
+        pick = self.pick_best_match
         try:
-            data = self.fetch_json(self.base_url, params=params)
+            return next(
+                filter(None, map(pick, (map(make, x) for x in fetch())))
+            ).get_text(self.config["synced"])
+        except StopIteration:
+            pass
         except requests.JSONDecodeError:
             self.warn("Could not decode response JSON data")
         except requests.RequestException as exc:
             self.warn("Request error: {}", exc)
-        else:
-            if data:
-                item = self.pick_lyrics(length, data)
-
-                if item["instrumental"]:
-                    return INSTRUMENTAL_LYRICS
-
-                if self.config["synced"] and (synced := item["syncedLyrics"]):
-                    return synced
-
-                return item["plainLyrics"]
 
         return None
 
