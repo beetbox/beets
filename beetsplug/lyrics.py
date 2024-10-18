@@ -231,7 +231,7 @@ class Backend:
         self._log = log
         self.config = config
 
-    def fetch_url(self, url):
+    def fetch_url(self, url, **kwargs):
         """Retrieve the content at a given URL, or return None if the source
         is unreachable.
         """
@@ -249,6 +249,7 @@ class Backend:
                         "User-Agent": USER_AGENT,
                     },
                     timeout=10,
+                    **kwargs,
                 )
         except requests.RequestException as exc:
             self._log.debug("lyrics request failed: {0}", exc)
@@ -604,11 +605,7 @@ class Google(Backend):
     """Fetch lyrics from Google search results."""
 
     REQUIRES_BS = True
-
-    def __init__(self, config, log):
-        super().__init__(config, log)
-        self.api_key = config["google_API_key"].as_str()
-        self.engine_id = config["google_engine_ID"].as_str()
+    SEARCH_URL = "https://www.googleapis.com/customsearch/v1"
 
     def is_lyrics(self, text, artist=None):
         """Determine whether the text seems to be valid lyrics."""
@@ -686,14 +683,13 @@ class Google(Backend):
         return ratio >= typo_ratio
 
     def fetch(self, artist: str, title: str, *_) -> str | None:
-        query = f"{artist} {title}"
-        url = "https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s" % (
-            self.api_key,
-            self.engine_id,
-            quote(query.encode("utf-8")),
-        )
+        params = {
+            "key": self.config["google_API_key"].as_str(),
+            "cx": self.config["google_engine_ID"].as_str(),
+            "q": f"{artist} {title}",
+        }
 
-        data = self.fetch_url(url)
+        data = self.fetch_url(self.SEARCH_URL, params=params)
         if not data:
             self._log.debug("google backend returned no data")
             return None
