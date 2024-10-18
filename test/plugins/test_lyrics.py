@@ -16,6 +16,7 @@
 
 import os
 from functools import partial
+from urllib.parse import urlparse
 
 import pytest
 
@@ -224,45 +225,99 @@ class TestGoogleLyrics(LyricsBackendTest):
     def file_name(self):
         return "examplecom/beetssong"
 
+    @pytest.fixture
+    def response_data(self, url_title, url):
+        return {
+            "items": [
+                {
+                    "title": url_title,
+                    "link": url,
+                    "displayLink": urlparse(url).netloc,
+                }
+            ]
+        }
+
+    @pytest.fixture
+    def fetch_lyrics(
+        self, backend, requests_mock, response_data, artist, title
+    ):
+        requests_mock.get(backend.SEARCH_URL, json=response_data)
+        requests_mock.real_http = True
+
+        return partial(backend.fetch, artist, title)
+
     @pytest.mark.on_lyrics_update
     @pytest.mark.parametrize(
-        "title, url",
+        "artist, title, url_title, url",
         [
             *(
-                ("Lady Madonna", url)
-                for url in (
-                    "http://www.chartlyrics.com/_LsLsZ7P4EK-F-LD4dJgDQ/Lady+Madonna.aspx",  # noqa: E501
-                    "http://www.absolutelyrics.com/lyrics/view/the_beatles/lady_madonna",  # noqa: E501
-                    "https://www.letras.mus.br/the-beatles/275/",
-                    "https://www.lyricsmania.com/lady_madonna_lyrics_the_beatles.html",
-                    "https://www.lyricsmode.com/lyrics/b/beatles/lady_madonna.html",
-                    "https://www.paroles.net/the-beatles/paroles-lady-madonna",
-                    "https://www.songlyrics.com/the-beatles/lady-madonna-lyrics/",
-                    "https://sweetslyrics.com/the-beatles/lady-madonna-lyrics",
-                    "https://www.musica.com/letras.asp?letra=59862",
-                    "https://www.lacoccinelle.net/259956-the-beatles-lady-madonna.html",
+                ("The Beatles", "Lady Madonna", url_title, url)
+                for url_title, url in (
+                    (
+                        "The Beatles Lady Madonna lyrics",
+                        "http://www.chartlyrics.com/_LsLsZ7P4EK-F-LD4dJgDQ/Lady+Madonna.aspx",
+                    ),
+                    (
+                        "Lady Madonna Lyrics :: The Beatles - Absolute Lyrics",
+                        "http://www.absolutelyrics.com/lyrics/view/the_beatles/lady_madonna",
+                    ),
+                    (
+                        "Lady Madonna - The Beatles - LETRAS.MUS.BR",
+                        "https://www.letras.mus.br/the-beatles/275/",
+                    ),
+                    (
+                        "The Beatles - Lady Madonna Lyrics",
+                        "https://www.lyricsmania.com/lady_madonna_lyrics_the_beatles.html",
+                    ),
+                    (
+                        "Lady Madonna lyrics by The Beatles - original song full text. Official Lady Madonna lyrics, 2024 version | LyricsMode.com",  # noqa: E501
+                        "https://www.lyricsmode.com/lyrics/b/beatles/lady_madonna.html",
+                    ),
+                    (
+                        "Paroles Lady Madonna par The Beatles - Lyrics - Paroles.net",
+                        "https://www.paroles.net/the-beatles/paroles-lady-madonna",
+                    ),
+                    (
+                        "THE BEATLES - LADY MADONNA LYRICS",
+                        "https://www.songlyrics.com/the-beatles/lady-madonna-lyrics/",
+                    ),
+                    (
+                        "The Beatles - Lady Madonna",
+                        "https://sweetslyrics.com/the-beatles/lady-madonna-lyrics",
+                    ),
+                    (
+                        "Lady Madonna - Letra - The Beatles - Musica.com",
+                        "https://www.musica.com/letras.asp?letra=59862",
+                    ),
+                    (
+                        "Paroles et traduction The Beatles : Lady Madonna - paroles de chanson",  # noqa: E501
+                        "https://www.lacoccinelle.net/259956-the-beatles-lady-madonna.html",
+                    ),
                 )
             ),
             pytest.param(
+                "The Beatles",
                 "Lady Madonna",
+                "The Beatles - Lady Madonna Lyrics | AZLyrics.com",
                 "https://www.azlyrics.com/lyrics/beatles/ladymadonna.html",
                 marks=xfail_on_ci("AZLyrics is blocked by Cloudflare"),
             ),
             (
+                "Amy Winehouse",
                 "Jazz'n'blues",
-                "https://www.lyricsontop.com/amy-winehouse-songs/jazz-n-blues-lyrics.html",  # noqa: E501
+                "Amy Winehouse - Jazz N' Blues lyrics complete",
+                "https://www.lyricsontop.com/amy-winehouse-songs/jazz-n-blues-lyrics.html",
             ),
         ],
     )
-    def test_backend_source(self, backend, title, url):
+    def test_backend_source(self, fetch_lyrics, title):
         """Test if lyrics present on websites registered in beets google custom
         search engine are correctly scraped.
         """
-        response = backend.fetch_url(url)
-        result = lyrics.scrape_lyrics_from_html(response).lower()
+        lyrics = fetch_lyrics()
 
-        assert backend.is_lyrics(result)
-        assert PHRASE_BY_TITLE[title] in result
+        assert lyrics
+        assert PHRASE_BY_TITLE[title].lower() in lyrics.lower()
 
     def test_mocked_source_ok(self, backend, lyrics_html):
         """Test that lyrics of the mocked page are correctly scraped"""
