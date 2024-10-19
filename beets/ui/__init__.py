@@ -1858,6 +1858,14 @@ def main(args=None):
     """Run the main command-line interface for beets. Includes top-level
     exception handlers that print friendly error messages.
     """
+    if "AppData\\Local\\Microsoft\\WindowsApps" in sys.exec_prefix:
+        log.error(
+            "error: beets is unable to use the Microsoft Store version of Python. Please install Python from python.org."
+        )
+        log.error(
+            "error: More details can be found here https://beets.readthedocs.io/en/stable/guides/main.html"
+        )
+        sys.exit(1)
     try:
         _raw_main(args)
     except UserError as exc:
