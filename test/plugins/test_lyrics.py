@@ -279,11 +279,12 @@ class TestLyricsSources(LyricsBackendTest):
 
     def test_backend_source(self, lyrics_plugin, lyrics_page: LyricsPage):
         """Test parsed lyrics from each of the configured lyrics pages."""
-        lyrics = lyrics_plugin.get_lyrics(
+        lyrics_info = lyrics_plugin.get_lyrics(
             lyrics_page.artist, lyrics_page.track_title, "", 186
         )
 
-        assert lyrics
+        assert lyrics_info
+        lyrics, _ = lyrics_info.split("\n\nSource: ")
         assert lyrics == lyrics_page.lyrics
 
 
@@ -400,6 +401,7 @@ LYRICS_DURATION = 950
 
 def lyrics_match(**overrides):
     return {
+        "id": 1,
         "instrumental": False,
         "duration": LYRICS_DURATION,
         "syncedLyrics": "synced",
@@ -428,7 +430,9 @@ class TestLRCLibLyrics(LyricsBackendTest):
         [({"synced": True}, "synced"), ({"synced": False}, "plain")],
     )
     def test_synced_config_option(self, fetch_lyrics, expected_lyrics):
-        assert fetch_lyrics() == expected_lyrics
+        lyrics, _ = fetch_lyrics()
+
+        assert lyrics == expected_lyrics
 
     @pytest.mark.parametrize(
         "response_data, expected_lyrics",
@@ -475,4 +479,10 @@ class TestLRCLibLyrics(LyricsBackendTest):
     )
     @pytest.mark.parametrize("plugin_config", [{"synced": True}])
     def test_fetch_lyrics(self, fetch_lyrics, expected_lyrics):
-        assert fetch_lyrics() == expected_lyrics
+        lyrics_info = fetch_lyrics()
+        if lyrics_info is None:
+            assert expected_lyrics is None
+        else:
+            lyrics, _ = fetch_lyrics()
+
+            assert lyrics == expected_lyrics
