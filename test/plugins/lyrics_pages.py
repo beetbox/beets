@@ -278,21 +278,20 @@ lyrics_pages = [
         [00:39.18] See how they run
         [00:43.33] Lady Madonna, baby at your breast
         [00:48.50] Wonders how you manage to feed the rest
-        [00:52.54]
+
         [01:01.32] Ba-ba, ba-ba, ba-ba, ba-ba-ba
         [01:05.03] Ba-ba, ba-ba, ba-ba, ba, ba-ba, ba-ba
         [01:09.58] Ba-ba, ba-ba, ba-ba, ba-ba-ba
         [01:14.27] See how they run
         [01:19.05] Lady Madonna, lying on the bed
         [01:22.99] Listen to the music playing in your head
-        [01:27.92]
+
         [01:36.33] Tuesday afternoon is never ending
         [01:40.47] Wednesday morning papers didn't come
         [01:44.76] Thursday night your stockings needed mending
         [01:49.35] See how they run
         [01:53.73] Lady Madonna, children at your feet
         [01:58.65] Wonder how you manage to make ends meet
-        [02:06.04]
         """,
     ),
     LyricsPage.make(

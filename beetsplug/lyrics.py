@@ -294,6 +294,9 @@ class LRCLibItem(TypedDict):
 class LRCLyrics:
     #: Percentage tolerance for max duration difference between lyrics and item.
     DURATION_DIFF_TOLERANCE = 0.05
+    remove_empty_times = partial(
+        re.compile(r"^\[\d+:\d+.\d+\] *$", re.M).sub, ""
+    )
 
     target_duration: float
     duration: float
@@ -348,7 +351,10 @@ class LRCLyrics:
         if self.instrumental:
             return INSTRUMENTAL_LYRICS
 
-        return self.synced if want_synced and self.synced else self.plain
+        if want_synced and self.synced:
+            return self.remove_empty_times(self.synced).strip()
+
+        return self.plain
 
 
 class LRCLib(Backend):

@@ -373,10 +373,23 @@ class TestLRCLibLyrics(LyricsBackendTest):
 
         return partial(backend.fetch, "la", "la", "la", self.ITEM_DURATION)
 
-    @pytest.mark.parametrize("response_data", [[lyrics_match()]])
+    @pytest.mark.parametrize(
+        "response_data",
+        [
+            [
+                lyrics_match(
+                    plainLyrics="plain",
+                    syncedLyrics="[00:00.00] synced\n[00:01.00] ",
+                )
+            ]
+        ],
+    )
     @pytest.mark.parametrize(
         "plugin_config, expected_lyrics",
-        [({"synced": True}, "synced"), ({"synced": False}, "plain")],
+        [
+            ({"synced": True}, "[00:00.00] synced"),  # empty timestamp is gone
+            ({"synced": False}, "plain"),
+        ],
     )
     def test_synced_config_option(self, fetch_lyrics, expected_lyrics):
         assert fetch_lyrics() == expected_lyrics
