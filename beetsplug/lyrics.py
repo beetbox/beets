@@ -59,9 +59,6 @@ except ImportError:
 
 JSONDict = dict[str, Any]
 
-DIV_RE = re.compile(r"<(/?)div>?", re.I)
-COMMENT_RE = re.compile(r"<!--.*-->", re.S)
-TAG_RE = re.compile(r"<[^>]*>")
 BREAK_RE = re.compile(r"\n?\s*<br([\s|/][^>]*)*>\s*\n?", re.I)
 USER_AGENT = f"beets/{beets.__version__}"
 INSTRUMENTAL_LYRICS = "[Instrumental]"
@@ -552,8 +549,11 @@ class Genius(SearchBackend):
         check = partial(self.check_match, artist, title)
         for hit in json["response"]["hits"]:
             result = hit["result"]
-            if check(result["primary_artist"]["name"], result["title"]):
-                return self.scrape_lyrics(self.fetch_text(hit["result"]["url"]))
+            url = hit["result"]["url"]
+            if check(result["primary_artist"]["name"], result["title"]) and (
+                lyrics := self.scrape_lyrics(self.fetch_text(url))
+            ):
+                return collapse_newlines(lyrics)
 
         return None
 
@@ -670,7 +670,10 @@ def remove_credits(text):
     return text
 
 
-def _scrape_strip_cruft(html, plain_text_out=False):
+collapse_newlines = partial(re.compile(r"\n{3,}").sub, r"\n\n")
+
+
+def _scrape_strip_cruft(html: str) -> str:
     """Clean up HTML"""
     html = unescape(html)
 
@@ -682,13 +685,8 @@ def _scrape_strip_cruft(html, plain_text_out=False):
     html = re.sub("<aside .+?</aside>", "", html)  # remove Google Ads tags
     html = re.sub(r"</?(em|strong)[^>]*>", "", html)  # remove italics / bold
 
-    if plain_text_out:  # Strip remaining HTML tags
-        html = COMMENT_RE.sub("", html)
-        html = TAG_RE.sub("", html)
-
     html = "\n".join([x.strip() for x in html.strip().split("\n")])
-    html = re.sub(r"\n{3,}", r"\n\n", html)
-    return html
+    return collapse_newlines(html)
 
 
 def _scrape_merge_paragraphs(html):
@@ -1114,7 +1112,7 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
         for backend in self.backends:
             with backend.handle_request():
                 if lyrics := backend.fetch(artist, title, *args):
-                    return _scrape_strip_cruft(lyrics, True)
+                    return lyrics
 
         return None
 
