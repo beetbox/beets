@@ -522,6 +522,7 @@ lyrics_pages = [
         Wonder how you manage to make ends meet
         """,
         url_title="THE BEATLES - LADY MADONNA LYRICS",
+        marks=[xfail_on_ci("Songlyrics is blocked by Cloudflare")],
     ),
     LyricsPage.make(
         "https://sweetslyrics.com/the-beatles/lady-madonna-lyrics",
