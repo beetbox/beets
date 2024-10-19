@@ -109,7 +109,7 @@ get it right:
    should open the "System Properties" screen, then select the "Advanced" tab, 
    then hit the "Environmental Variables..." button, and then look for the PATH 
    variable in the table. Add the following to the end of the variable's value: 
-   ``;C:\Python37;C:\Python37\Scripts``. You may need to adjust these paths to 
+   ``;C:\Python38;C:\Python38\Scripts``. You may need to adjust these paths to 
    point to your Python installation.
 
 3. Now install beets by running: ``pip install beets``
