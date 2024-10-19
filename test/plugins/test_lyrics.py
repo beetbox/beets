@@ -14,9 +14,7 @@
 
 """Tests for the 'lyrics' plugin."""
 
-import os
 from functools import partial
-from urllib.parse import urlparse
 
 import pytest
 
@@ -24,19 +22,13 @@ from beets.library import Item
 from beets.test.helper import PluginMixin
 from beetsplug import lyrics
 
+from .lyrics_pages import LyricsPage, lyrics_pages
+
 PHRASE_BY_TITLE = {
     "Lady Madonna": "friday night arrives without a suitcase",
     "Jazz'n'blues": "as i check my balance i kiss the screen",
     "Beets song": "via plugins, beets becomes a panacea",
 }
-
-
-def xfail_on_ci(msg: str) -> pytest.MarkDecorator:
-    return pytest.mark.xfail(
-        bool(os.environ.get("GITHUB_ACTIONS")),
-        reason=msg,
-        raises=AssertionError,
-    )
 
 
 class TestLyricsUtils:
@@ -181,12 +173,16 @@ class LyricsBackendTest(PluginMixin):
         return {}
 
     @pytest.fixture
-    def backend(self, backend_name, plugin_config):
-        """Set configuration and returns the backend instance."""
+    def lyrics_plugin(self, backend_name, plugin_config):
+        """Set configuration and returns the plugin's instance."""
         plugin_config["sources"] = [backend_name]
         self.config[self.plugin].set(plugin_config)
 
-        lyrics_plugin = lyrics.LyricsPlugin()
+        return lyrics.LyricsPlugin()
+
+    @pytest.fixture
+    def backend(self, lyrics_plugin):
+        """Return a lyrics backend instance."""
         return lyrics_plugin.backends[0]
 
     @pytest.fixture
@@ -195,17 +191,48 @@ class LyricsBackendTest(PluginMixin):
             encoding="utf-8"
         )
 
-    @pytest.mark.on_lyrics_update
-    def test_backend_source(self, backend):
-        """Test default backends with a song known to exist in respective
-        databases.
-        """
-        title = "Lady Madonna"
 
-        lyrics = backend.fetch("The Beatles", title, "", 0)
+@pytest.mark.on_lyrics_update
+class TestLyricsSources(LyricsBackendTest):
+    @pytest.fixture(scope="class")
+    def plugin_config(self):
+        return {"google_API_key": "test", "synced": True}
+
+    @pytest.fixture(
+        params=[pytest.param(lp, marks=lp.marks) for lp in lyrics_pages],
+        ids=str,
+    )
+    def lyrics_page(self, request):
+        return request.param
+
+    @pytest.fixture
+    def backend_name(self, lyrics_page):
+        return lyrics_page.backend
+
+    @pytest.fixture(autouse=True)
+    def _patch_google_search(self, requests_mock, lyrics_page):
+        """Mock the Google Search API to return the lyrics page under test."""
+        requests_mock.real_http = True
+
+        data = {
+            "items": [
+                {
+                    "title": lyrics_page.url_title,
+                    "link": lyrics_page.url,
+                    "displayLink": lyrics_page.root_url,
+                }
+            ]
+        }
+        requests_mock.get(lyrics.Google.SEARCH_URL, json=data)
+
+    def test_backend_source(self, lyrics_plugin, lyrics_page: LyricsPage):
+        """Test parsed lyrics from each of the configured lyrics pages."""
+        lyrics = lyrics_plugin.get_lyrics(
+            lyrics_page.artist, lyrics_page.track_title, "", 0
+        )
 
         assert lyrics
-        assert PHRASE_BY_TITLE[title] in lyrics.lower()
+        assert lyrics == lyrics_page.lyrics
 
 
 class TestGoogleLyrics(LyricsBackendTest):
@@ -224,100 +251,6 @@ class TestGoogleLyrics(LyricsBackendTest):
     @pytest.fixture(scope="class")
     def file_name(self):
         return "examplecom/beetssong"
-
-    @pytest.fixture
-    def response_data(self, url_title, url):
-        return {
-            "items": [
-                {
-                    "title": url_title,
-                    "link": url,
-                    "displayLink": urlparse(url).netloc,
-                }
-            ]
-        }
-
-    @pytest.fixture
-    def fetch_lyrics(
-        self, backend, requests_mock, response_data, artist, title
-    ):
-        requests_mock.get(backend.SEARCH_URL, json=response_data)
-        requests_mock.real_http = True
-
-        return partial(backend.fetch, artist, title)
-
-    @pytest.mark.on_lyrics_update
-    @pytest.mark.parametrize(
-        "artist, title, url_title, url",
-        [
-            *(
-                ("The Beatles", "Lady Madonna", url_title, url)
-                for url_title, url in (
-                    (
-                        "The Beatles Lady Madonna lyrics",
-                        "http://www.chartlyrics.com/_LsLsZ7P4EK-F-LD4dJgDQ/Lady+Madonna.aspx",
-                    ),
-                    (
-                        "Lady Madonna Lyrics :: The Beatles - Absolute Lyrics",
-                        "http://www.absolutelyrics.com/lyrics/view/the_beatles/lady_madonna",
-                    ),
-                    (
-                        "Lady Madonna - The Beatles - LETRAS.MUS.BR",
-                        "https://www.letras.mus.br/the-beatles/275/",
-                    ),
-                    (
-                        "The Beatles - Lady Madonna Lyrics",
-                        "https://www.lyricsmania.com/lady_madonna_lyrics_the_beatles.html",
-                    ),
-                    (
-                        "Lady Madonna lyrics by The Beatles - original song full text. Official Lady Madonna lyrics, 2024 version | LyricsMode.com",  # noqa: E501
-                        "https://www.lyricsmode.com/lyrics/b/beatles/lady_madonna.html",
-                    ),
-                    (
-                        "Paroles Lady Madonna par The Beatles - Lyrics - Paroles.net",
-                        "https://www.paroles.net/the-beatles/paroles-lady-madonna",
-                    ),
-                    (
-                        "THE BEATLES - LADY MADONNA LYRICS",
-                        "https://www.songlyrics.com/the-beatles/lady-madonna-lyrics/",
-                    ),
-                    (
-                        "The Beatles - Lady Madonna",
-                        "https://sweetslyrics.com/the-beatles/lady-madonna-lyrics",
-                    ),
-                    (
-                        "Lady Madonna - Letra - The Beatles - Musica.com",
-                        "https://www.musica.com/letras.asp?letra=59862",
-                    ),
-                    (
-                        "Paroles et traduction The Beatles : Lady Madonna - paroles de chanson",  # noqa: E501
-                        "https://www.lacoccinelle.net/259956-the-beatles-lady-madonna.html",
-                    ),
-                )
-            ),
-            pytest.param(
-                "The Beatles",
-                "Lady Madonna",
-                "The Beatles - Lady Madonna Lyrics | AZLyrics.com",
-                "https://www.azlyrics.com/lyrics/beatles/ladymadonna.html",
-                marks=xfail_on_ci("AZLyrics is blocked by Cloudflare"),
-            ),
-            (
-                "Amy Winehouse",
-                "Jazz'n'blues",
-                "Amy Winehouse - Jazz N' Blues lyrics complete",
-                "https://www.lyricsontop.com/amy-winehouse-songs/jazz-n-blues-lyrics.html",
-            ),
-        ],
-    )
-    def test_backend_source(self, fetch_lyrics, title):
-        """Test if lyrics present on websites registered in beets google custom
-        search engine are correctly scraped.
-        """
-        lyrics = fetch_lyrics()
-
-        assert lyrics
-        assert PHRASE_BY_TITLE[title].lower() in lyrics.lower()
 
     def test_mocked_source_ok(self, backend, lyrics_html):
         """Test that lyrics of the mocked page are correctly scraped"""
@@ -373,11 +306,6 @@ class TestGeniusLyrics(LyricsBackendTest):
     @pytest.fixture(scope="class")
     def backend_name(self):
         return "genius"
-
-    @pytest.mark.on_lyrics_update
-    @xfail_on_ci("Genius returns 403 FORBIDDEN in CI")
-    def test_backend_source(self, backend):
-        super().test_backend_source(backend)
 
     @pytest.mark.parametrize(
         "file_name, expected_line_count",
