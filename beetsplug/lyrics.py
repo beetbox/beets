@@ -272,7 +272,7 @@ class Backend(RequestHandler, metaclass=BackendClass):
 
     def fetch(
         self, artist: str, title: str, album: str, length: int
-    ) -> str | None:
+    ) -> tuple[str, str] | None:
         raise NotImplementedError
 
 
@@ -283,6 +283,7 @@ class LRCLyrics:
     DURATION_DIFF_TOLERANCE = 0.05
 
     target_duration: float
+    id: int
     duration: float
     instrumental: bool
     plain: str
@@ -298,6 +299,7 @@ class LRCLyrics:
     ) -> LRCLyrics:
         return cls(
             target_duration,
+            candidate["id"],
             candidate["duration"] or 0.0,
             candidate["instrumental"],
             candidate["plainLyrics"],
@@ -377,17 +379,19 @@ class LRCLib(Backend):
 
     def fetch(
         self, artist: str, title: str, album: str, length: int
-    ) -> str | None:
+    ) -> tuple[str, str] | None:
         """Fetch lyrics text for the given song data."""
         fetch = partial(self.fetch_candidates, artist, title, album, length)
         make = partial(LRCLyrics.make, target_duration=length)
         pick = self.pick_best_match
         try:
-            return next(
+            item = next(
                 filter(None, map(pick, (map(make, x) for x in fetch())))
-            ).get_text(self.config["synced"])
+            )
         except StopIteration:
             return None
+
+        return item.get_text(self.config["synced"]), f"{self.GET_URL}/{item.id}"
 
 
 class DirectMixin:
@@ -424,7 +428,7 @@ class MusiXmatch(DirectMixin, Backend):
 
         return quote(unidecode(text))
 
-    def fetch(self, artist: str, title: str, *_) -> str | None:
+    def fetch(self, artist: str, title: str, *_) -> tuple[str, str] | None:
         url = self.build_url(artist, title)
 
         html = self.fetch_text(url)
@@ -446,7 +450,7 @@ class MusiXmatch(DirectMixin, Backend):
         # sometimes there are non-existent lyrics with some content
         if "Lyrics | Musixmatch" in lyrics:
             return None
-        return lyrics
+        return lyrics, url
 
 
 class Html:
@@ -555,13 +559,13 @@ class SearchBackend(SoupBackend):
             if check_match(candidate):
                 yield candidate
 
-    def fetch(self, artist: str, title: str, *_) -> str | None:
+    def fetch(self, artist: str, title: str, *_) -> tuple[str, str] | None:
         """Fetch lyrics for the given artist and title."""
         for result in self.get_results(artist, title):
             if (html := self.fetch_text(result.url)) and (
                 lyrics := self.scrape(html)
             ):
-                return lyrics
+                return lyrics, result.url
 
         return None
 
@@ -619,11 +623,15 @@ class Tekstowo(DirectMixin, SoupBackend):
     def encode(cls, text: str) -> str:
         return cls.non_alpha_to_underscore(unidecode(text.lower()))
 
-    def fetch(self, artist: str, title: str, *_) -> str | None:
+    def fetch(self, artist: str, title: str, *_) -> tuple[str, str] | None:
+        url = self.build_url(artist, title)
         # We are expecting to receive a 404 since we are guessing the URL.
         # Thus suppress the error so that it does not end up in the logs.
         with suppress(NotFoundError):
-            return self.scrape(self.fetch_text(self.build_url(artist, title)))
+            if lyrics := self.scrape(self.fetch_text(url)):
+                return lyrics, url
+
+        return None
 
     @classmethod
     def scrape(cls, html: str) -> str | None:
@@ -1040,8 +1048,9 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
         self.info("Fetching lyrics for {} - {}", artist, title)
         for backend in self.backends:
             with backend.handle_request():
-                if lyrics := backend.fetch(artist, title, *args):
-                    return lyrics
+                if lyrics_info := backend.fetch(artist, title, *args):
+                    lyrics, url = lyrics_info
+                    return f"{lyrics}\n\nSource: {url}"
 
         return None
 
