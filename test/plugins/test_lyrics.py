@@ -129,14 +129,13 @@ class TestLyricsUtils:
                   two  !
                   <br><br \\>
                   <blink>four</blink>""",
-                "one\ntwo !\n\nfour",
+                "<!--lyrics below-->\none\ntwo !\n\n<blink>four</blink>",
             ),
             ("foo<script>bar</script>baz", "foobaz"),
-            ("foo<!--<bar>-->qux", "fooqux"),
         ],
     )
     def test_scrape_strip_cruft(self, initial_text, expected):
-        assert lyrics._scrape_strip_cruft(initial_text, True) == expected
+        assert lyrics._scrape_strip_cruft(initial_text) == expected
 
     def test_scrape_merge_paragraphs(self):
         text = "one</p>   <p class='myclass'>two</p><p>three"
