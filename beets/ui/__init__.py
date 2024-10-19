@@ -1860,8 +1860,8 @@ def main(args=None):
     """
     if "AppData\\Local\\Microsoft\\WindowsApps" in sys.exec_prefix:
         log.error(
-            "error: beets is unable to use the Microsoft Store version of Python. "
-            "Please install Python from python.org."
+            "error: beets is unable to use the Microsoft Store version of "
+            "Python. Please install Python from python.org."
         )
         log.error(
             "error: More details can be found here "
