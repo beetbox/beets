@@ -1,7 +1,7 @@
 name: Lint check
 run-name: Lint code
 on:
-  pull_request:
+  pull_request_target:
   push:
     branches:
       - master
