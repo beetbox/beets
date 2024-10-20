@@ -1,6 +1,6 @@
 name: Test
 on:
-  pull_request:
+  pull_request_target:
   push:
     branches:
       - master
