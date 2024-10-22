@@ -47,6 +47,9 @@ Bug fixes:
 * :doc:`plugins/lyrics`: Update ``tekstowo`` backend to fetch lyrics directly
   since recent updates to their website made it unsearchable.
   :bug:`5456`
+* Check if running python from the Microsoft Store and provide feedback to install
+  from python.org.
+  :bug:`5467`
 
 For packagers:
 
