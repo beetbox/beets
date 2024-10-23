@@ -16,6 +16,7 @@
 
 import beets.library
 from beets import config, dbcore
+from beets.library import Album
 from beets.test import _common
 from beets.test.helper import BeetsTestCase
 
@@ -26,28 +27,32 @@ class DummyDataTestCase(BeetsTestCase):
     def setUp(self):
         super().setUp()
 
-        albums = [_common.album() for _ in range(3)]
-        albums[0].album = "Album A"
-        albums[0].genre = "Rock"
-        albums[0].year = 2001
-        albums[0].flex1 = "Flex1-1"
-        albums[0].flex2 = "Flex2-A"
-        albums[0].albumartist = "Foo"
-        albums[0].albumartist_sort = None
-        albums[1].album = "Album B"
-        albums[1].genre = "Rock"
-        albums[1].year = 2001
-        albums[1].flex1 = "Flex1-2"
-        albums[1].flex2 = "Flex2-A"
-        albums[1].albumartist = "Bar"
-        albums[1].albumartist_sort = None
-        albums[2].album = "Album C"
-        albums[2].genre = "Jazz"
-        albums[2].year = 2005
-        albums[2].flex1 = "Flex1-1"
-        albums[2].flex2 = "Flex2-B"
-        albums[2].albumartist = "Baz"
-        albums[2].albumartist_sort = None
+        albums = [
+            Album(
+                album="Album A",
+                genre="Rock",
+                year=2001,
+                flex1="Flex1-1",
+                flex2="Flex2-A",
+                albumartist="Foo",
+            ),
+            Album(
+                album="Album B",
+                genre="Rock",
+                year=2001,
+                flex1="Flex1-2",
+                flex2="Flex2-A",
+                albumartist="Bar",
+            ),
+            Album(
+                album="Album C",
+                genre="Jazz",
+                year=2005,
+                flex1="Flex1-1",
+                flex2="Flex2-B",
+                albumartist="Baz",
+            ),
+        ]
         for album in albums:
             self.lib.add(album)
 
@@ -378,14 +383,14 @@ class CaseSensitivityTest(DummyDataTestCase, BeetsTestCase):
     def setUp(self):
         super().setUp()
 
-        album = _common.album()
-        album.album = "album"
-        album.genre = "alternative"
-        album.year = "2001"
-        album.flex1 = "flex1"
-        album.flex2 = "flex2-A"
-        album.albumartist = "bar"
-        album.albumartist_sort = None
+        album = Album(
+            album="album",
+            genre="alternative",
+            year="2001",
+            flex1="flex1",
+            flex2="flex2-A",
+            albumartist="bar",
+        )
         self.lib.add(album)
 
         item = _common.item()
