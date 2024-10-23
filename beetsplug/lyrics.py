@@ -348,7 +348,10 @@ class LRCLyrics:
         if self.instrumental:
             return INSTRUMENTAL_LYRICS
 
-        return self.synced if want_synced and self.synced else self.plain
+        if want_synced and self.synced:
+            return "\n".join(map(str.strip, self.synced.splitlines()))
+
+        return self.plain
 
 
 class LRCLib(Backend):
