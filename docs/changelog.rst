@@ -253,6 +253,8 @@ New features:
 
 Bug fixes:
 
+* Improve ListenBrainz error handling.
+  :bug:`5459`
 * :doc:`/plugins/deezer`: Improve requests error handling.
 * :doc:`/plugins/lastimport`: Improve error handling in the `process_tracks` function and enable it to be used with other plugins.
 * :doc:`/plugins/spotify`: Improve handling of ConnectionError.
