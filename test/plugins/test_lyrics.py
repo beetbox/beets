@@ -294,7 +294,7 @@ class TestGoogleLyrics(LyricsBackendTest):
     def backend_name(self):
         return "google"
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def plugin_config(self):
         return {"google_API_key": "test"}
 
@@ -305,6 +305,10 @@ class TestGoogleLyrics(LyricsBackendTest):
     @pytest.fixture
     def search_item(self, url_title, url):
         return {"title": url_title, "link": url}
+
+    @pytest.mark.parametrize("plugin_config", [{}])
+    def test_disabled_without_api_key(self, lyrics_plugin):
+        assert not lyrics_plugin.backends
 
     def test_mocked_source_ok(self, backend, lyrics_html):
         """Test that lyrics of the mocked page are correctly scraped"""
