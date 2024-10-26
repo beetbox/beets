@@ -30,7 +30,9 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING, ClassVar, Iterable, Iterator, NamedTuple
 from urllib.parse import quote, urlparse
 
+import langdetect
 import requests
+from bs4 import BeautifulSoup
 from unidecode import unidecode
 
 import beets
@@ -42,20 +44,6 @@ if TYPE_CHECKING:
     from beets.library import Item
 
     from ._typing import GeniusAPI, GoogleCustomSearchAPI, LRCLibAPI
-
-try:
-    from bs4 import BeautifulSoup
-
-    HAS_BEAUTIFUL_SOUP = True
-except ImportError:
-    HAS_BEAUTIFUL_SOUP = False
-
-try:
-    import langdetect
-
-    HAS_LANGDETECT = True
-except ImportError:
-    HAS_LANGDETECT = False
 
 USER_AGENT = f"beets/{beets.__version__}"
 INSTRUMENTAL_LYRICS = "[Instrumental]"
@@ -254,8 +242,6 @@ class RequestHandler:
 
 
 class Backend(RequestHandler):
-    REQUIRES_BS = False
-
     def __init__(self, config, log):
         self._log = log
         self.config = config
@@ -497,8 +483,6 @@ class SearchResult(NamedTuple):
 
 
 class SearchBackend(SoupMixin, Backend):
-    REQUIRES_BS = True
-
     @cached_property
     def dist_thresh(self) -> float:
         return self.config["dist_thresh"].get(float)
@@ -595,7 +579,6 @@ class Genius(SearchBackend):
 class Tekstowo(SoupMixin, DirectBackend):
     """Fetch lyrics from Tekstowo.pl."""
 
-    REQUIRES_BS = True
     URL_TEMPLATE = "https://www.tekstowo.pl/piosenka,{},{}.html"
 
     non_alpha_to_underscore = partial(re.compile(r"\W").sub, "_")
@@ -806,9 +789,6 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
             self.config["sources"].as_str_seq(), available_sources
         )
 
-        if not HAS_BEAUTIFUL_SOUP:
-            sources = self.sanitize_bs_sources(sources)
-
         if "google" in sources:
             if not self.config["google_API_key"].get():
                 # We log a *debug* message here because the default
@@ -822,30 +802,10 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
             x.lower() for x in self.config["bing_lang_from"].as_str_seq()
         ]
 
-        if not HAS_LANGDETECT and self.config["bing_client_secret"].get():
-            self.warn(
-                "To use bing translations, you need to install the langdetect "
-                "module. See the documentation for further details."
-            )
-
         self.backends = [
             self.SOURCE_BACKENDS[s](self.config, self._log.getChild(s))
             for s in sources
         ]
-
-    def sanitize_bs_sources(self, sources):
-        enabled_sources = []
-        for source in sources:
-            if self.SOURCE_BACKENDS[source].REQUIRES_BS:
-                self._log.debug(
-                    "To use the %s lyrics source, you must "
-                    "install the beautifulsoup4 module. See "
-                    "the documentation for further details." % source
-                )
-            else:
-                enabled_sources.append(source)
-
-        return enabled_sources
 
     @cached_property
     def bing_access_token(self) -> str | None:
@@ -1022,7 +982,7 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
 
         if lyrics:
             self.info("🟢 Found lyrics: {0}", item)
-            if HAS_LANGDETECT and self.config["bing_client_secret"].get():
+            if self.config["bing_client_secret"].get():
                 lang_from = langdetect.detect(lyrics)
                 if self.config["bing_lang_to"].get() != lang_from and (
                     not self.config["bing_lang_from"]
