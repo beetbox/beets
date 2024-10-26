@@ -148,6 +148,27 @@ lyrics_pages = [
         url_title="The Beatles Lady Madonna lyrics",
     ),
     LyricsPage.make(
+        "https://www.dainuzodziai.lt/m/mergaites-nori-mylet-atlanta/",
+        """
+        Jos nesuspėja skriet paskui vėją
+        Bangos į krantą grąžina jas vėl
+        Jos karštą saulę paliesti norėjo
+        Ant kranto palikę visas negandas
+
+        Bet jos nori mylėt
+        Jos nenori liūdėt
+        Leisk mergaitėms mylėt
+        Kaip jos moka mylėt
+        Koks vakaras šiltas ir nieko nestinga
+        Veidus apšviečia žaisminga šviesa
+        Jos buvo laimingos prie jūros kur liko
+        Tik vėjas išmokęs visas jų dainas
+        """,
+        artist="Atlanta",
+        track_title="Mergaitės Nori Mylėt",
+        url_title="Mergaitės nori mylėt – Atlanta | Dainų Žodžiai",
+    ),
+    LyricsPage.make(
         "https://genius.com/The-beatles-lady-madonna-lyrics",
         """
         [Intro: Instrumental]

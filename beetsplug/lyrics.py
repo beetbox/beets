@@ -445,7 +445,9 @@ class Html:
     #: (paroles.net, sweetslyrics.com, lacoccinelle.net)
     merge_lines = partial(re.compile(r"</p>\s+<p[^>]*>(?!___)").sub, "\n")
     #: remove empty divs (lacoccinelle.net)
-    remove_empty_divs = partial(re.compile(r"<div[^>]*>\s*</div>").sub, "")
+    remove_empty_tags = partial(
+        re.compile(r"(<(div|span)[^>]*>\s*</\2>)").sub, ""
+    )
     #: remove Google Ads tags (musica.com)
     remove_aside = partial(re.compile("<aside .+?</aside>").sub, "")
     #: remove adslot-Content_1 div from the lyrics text (paroles.net)
@@ -469,7 +471,7 @@ class Html:
 
     @classmethod
     def merge_paragraphs(cls, text: str) -> str:
-        return cls.merge_blocks(cls.merge_lines(cls.remove_empty_divs(text)))
+        return cls.merge_blocks(cls.merge_lines(cls.remove_empty_tags(text)))
 
 
 class SoupMixin:
@@ -641,6 +643,7 @@ class Google(SearchBackend):
       paroles(\ et\ traduction|\ de\ chanson)?
     | letras?(\ de)?
     | liedtexte
+    | dainų\ žodžiai
     | original\ song\ full\ text\.
     | official
     | 20[12]\d\ version
