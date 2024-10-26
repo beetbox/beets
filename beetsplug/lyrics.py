@@ -241,7 +241,14 @@ class RequestHandler:
             self.warn("Request error: {}", exc)
 
 
-class Backend(RequestHandler):
+class BackendClass(type):
+    @property
+    def name(cls) -> str:
+        """Return lowercase name of the backend class."""
+        return cls.__name__.lower()
+
+
+class Backend(RequestHandler, metaclass=BackendClass):
     def __init__(self, config, log):
         self._log = log
         self.config = config
@@ -736,14 +743,20 @@ class Google(SearchBackend):
 
 
 class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
-    SOURCES = ["lrclib", "google", "musixmatch", "genius", "tekstowo"]
-    SOURCE_BACKENDS = {
-        "google": Google,
-        "musixmatch": MusiXmatch,
-        "genius": Genius,
-        "tekstowo": Tekstowo,
-        "lrclib": LRCLib,
+    BACKEND_BY_NAME = {
+        b.name: b for b in [LRCLib, Google, Genius, Tekstowo, MusiXmatch]
     }
+
+    @cached_property
+    def backends(self) -> list[Backend]:
+        user_sources = self.config["sources"].get()
+
+        chosen = plugins.sanitize_choices(user_sources, self.BACKEND_BY_NAME)
+        if "google" in chosen and not self.config["google_API_key"].get():
+            self.warn("Disabling Google source: no API key configured.")
+            chosen.remove("google")
+
+        return [self.BACKEND_BY_NAME[c](self.config, self._log) for c in chosen]
 
     def __init__(self):
         super().__init__()
@@ -767,7 +780,9 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
                 "synced": False,
                 # Musixmatch is disabled by default as they are currently blocking
                 # requests with the beets user agent.
-                "sources": [s for s in self.SOURCES if s != "musixmatch"],
+                "sources": [
+                    n for n in self.BACKEND_BY_NAME if n != "musixmatch"
+                ],
             }
         )
         self.config["bing_client_secret"].redact = True
@@ -784,27 +799,8 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
         # open yet.
         self.rest = None
 
-        available_sources = list(self.SOURCES)
-        sources = plugins.sanitize_choices(
-            self.config["sources"].as_str_seq(), available_sources
-        )
-
-        if "google" in sources:
-            if not self.config["google_API_key"].get():
-                # We log a *debug* message here because the default
-                # configuration includes `google`. This way, the source
-                # is silent by default but can be enabled just by
-                # setting an API key.
-                self.debug("Disabling google source: " "no API key configured.")
-                sources.remove("google")
-
         self.config["bing_lang_from"] = [
             x.lower() for x in self.config["bing_lang_from"].as_str_seq()
-        ]
-
-        self.backends = [
-            self.SOURCE_BACKENDS[s](self.config, self._log.getChild(s))
-            for s in sources
         ]
 
     @cached_property
