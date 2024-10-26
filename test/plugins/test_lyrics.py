@@ -583,7 +583,7 @@ class TestTranslation:
         requests_mock.post(lyrics.Translator.TRANSLATE_URL, json=callback)
 
     @pytest.mark.parametrize(
-        "initial_lyrics, expected",
+        "new_lyrics, old_lyrics, expected",
         [
             pytest.param(
                 """
@@ -592,6 +592,7 @@ class TestTranslation:
                 My body wouldn't let me hide it (Hide it)
                 No matter what, I wouldn't fold (Wouldn't fold, wouldn't fold)
                 Ridin' through the thunder, lightnin'""",
+                "",
                 """
                 [Refrain: Doja Cat] / [Refrain : Doja Cat]
                 Hard for me to let you go (Let you go, let you go) / Difficile pour moi de te laisser partir (Te laisser partir, te laisser partir)
@@ -607,6 +608,7 @@ class TestTranslation:
                 [00:01.00] Some more synced lyrics
 
                 Source: https://lrclib.net/api/123""",
+                "",
                 """
                 [00:00.00] Some synced lyrics / Quelques paroles synchronisées
                 [00:00:50]
@@ -617,17 +619,24 @@ class TestTranslation:
             ),
             pytest.param(
                 "Quelques paroles",
+                "",
                 "Quelques paroles",
                 id="already in the target language",
             ),
+            pytest.param(
+                "Some lyrics",
+                "Some lyrics / Some translation",
+                "Some lyrics / Some translation",
+                id="already translated",
+            ),
         ],
     )
-    def test_translate(self, initial_lyrics, expected):
+    def test_translate(self, new_lyrics, old_lyrics, expected):
         plugin = lyrics.LyricsPlugin()
         bing = lyrics.Translator(plugin._log, "123", "FR", ["EN"])
 
         assert bing.translate(
-            textwrap.dedent(initial_lyrics)
+            textwrap.dedent(new_lyrics), old_lyrics
         ) == textwrap.dedent(expected)
 
 
