@@ -18,10 +18,13 @@ import os.path
 import re
 import sys
 import unittest
+import pytest
 
 from mediafile import MediaFile
 
 from beets import util
+from beetsplug import convert
+from beets.library import Item
 from beets.test import _common
 from beets.test.helper import (
     AsIsImporterMixin,
@@ -337,57 +340,20 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
         self.assertNoFileTag(converted, "mp3")
 
 
-@_common.slow_test()
-class NoConvertTest(ConvertTestCase, ConvertCommand):
+class TestNoConvert:
     """Test the effect of the `no_convert` option."""
 
-    def setUp(self):
-        super().setUp()
+    @pytest.mark.parametrize(
+        "config_value, should_skip",
+        [
+            ("", False),
+            ("bitrate:320", False),
+            ("bitrate:320 format:ogg", False),
+            ("bitrate:320 , format:ogg", True),
+        ],
+    )
 
-        self.convert_dest = os.path.join(self.temp_dir, b"convert_dest")
-        self.config["convert"] = {
-            "dest": self.convert_dest,
-            "no_convert": "format:OGG",
-            "paths": {"default": "converted"},
-            "format": "mp3",
-            "formats": {
-                "mp3": self.tagged_copy_cmd("mp3"),
-            },
-        }
-
-    def test_no_transcode_when_no_convert_set(self):
-        [item] = self.add_item_fixtures(ext="ogg")
-        with control_stdin("y"):
-            self.run_convert_path(item.path)
-        converted = os.path.join(self.convert_dest, b"converted.mp3")
-        self.assertNotExists(converted)
-
-    def test_no_transcode_when_and_query_no_convert_set(self):
-        self.config["convert"]["no_convert"] = "format:OGG bitrate:..256"
-        [item] = self.add_item_fixtures(ext="ogg")
-        item.bitrate = 128
-        item.store()
-        with control_stdin("y"):
-            self.run_convert_path(item.path)
-        converted = os.path.join(self.convert_dest, b"converted.mp3")
-        self.assertNotExists(converted)
-
-    def test_transcode_when_and_query_no_convert_set_partial_match(self):
-        self.config["convert"]["no_convert"] = "format:OGG bitrate:..256"
-        [item] = self.add_item_fixtures(ext="ogg")
-        item.bitrate = 320
-        item.store()
-        with control_stdin("y"):
-            self.run_convert_path(item.path)
-        converted = os.path.join(self.convert_dest, b"converted.mp3")
-        self.assertExists(converted)
-
-    def test_no_transcode_when_or_query_no_convert_set_partial_match(self):
-        self.config["convert"]["no_convert"] = "format:OGG , bitrate:..256"
-        [item] = self.add_item_fixtures(ext="ogg")
-        item.bitrate = 320
-        item.store()
-        with control_stdin("y"):
-            self.run_convert_path(item.path)
-        converted = os.path.join(self.convert_dest, b"converted.mp3")
-        self.assertNotExists(converted)
+    def test_no_convert_skip(self, config_value, should_skip):
+        item = Item(format="ogg", bitrate=256)
+        convert.config["convert"]["no_convert"] = config_value
+        assert convert.in_no_convert(item) == should_skip

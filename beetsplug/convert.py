@@ -84,17 +84,20 @@ def get_format(fmt=None):
 
     return (command.encode("utf-8"), extension.encode("utf-8"))
 
+def in_no_convert(item: Item) -> bool:
+    no_convert_query = config["convert"]["no_convert"].as_str()
 
+    if no_convert_query:
+        query, _ = parse_query_string(no_convert_query, Item)
+        return query.match(item)
+    else:
+        return False
+    
 def should_transcode(item, fmt):
     """Determine whether the item should be transcoded as part of
     conversion (i.e., its bitrate is high or it has the wrong format).
     """
-    no_convert_query = config["convert"]["no_convert"].as_str()
-    if no_convert_query:
-        query, _ = parse_query_string(no_convert_query, Item)
-        if query.match(item):
-            return False
-    if (
+    if in_no_convert(item) or (
         config["convert"]["never_convert_lossy_files"]
         and item.format.lower() not in LOSSLESS_FORMATS
     ):
