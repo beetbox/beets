@@ -18,12 +18,11 @@ import os.path
 import re
 import sys
 import unittest
-import pytest
 
+import pytest
 from mediafile import MediaFile
 
 from beets import util
-from beetsplug import convert
 from beets.library import Item
 from beets.test import _common
 from beets.test.helper import (
@@ -34,6 +33,7 @@ from beets.test.helper import (
     control_stdin,
 )
 from beets.util import bytestring_path, displayable_path
+from beetsplug import convert
 
 
 def shell_quote(text):
@@ -352,7 +352,6 @@ class TestNoConvert:
             ("bitrate:320 , format:ogg", True),
         ],
     )
-
     def test_no_convert_skip(self, config_value, should_skip):
         item = Item(format="ogg", bitrate=256)
         convert.config["convert"]["no_convert"] = config_value
