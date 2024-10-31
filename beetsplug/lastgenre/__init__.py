@@ -376,7 +376,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             genres = self._get_existing_genres(obj, separator)
             # Case 3 - Keep WHITELISTED. Combine with new.
             # Case 1 - Keep None. Overwrite all.
-            if self.config['keep_allowed']:
+            if self.config["keep_allowed"]:
                 keep_genres = self._dedup_genres(genres, whitelist_only=True)
             else:
                 keep_genres = None
@@ -384,10 +384,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             genres = self._get_existing_genres(obj, separator)
             # Case 4 - Keep WHITELISTED. Handle empty.
             # Case 2 - Keep ANY. Handle empty.
-            if genres and self.config['keep_allowed']:
+            if genres and self.config["keep_allowed"]:
                 keep_genres = self._dedup_genres(genres, whitelist_only=True)
                 return separator.join(keep_genres), "keep allowed"
-            elif genres and not self.config['keep_allowed']:
+            elif genres and not self.config["keep_allowed"]:
                 keep_genres = self._dedup_genres(genres)
                 return separator.join(keep_genres), "keep any"
             # else: Move on, genre tag is empty.
