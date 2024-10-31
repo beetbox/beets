@@ -322,16 +322,51 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         else:
             return deduplicate([g for g in genres])
 
+    def _combine_and_label_genres(
+        self, new_genres: str, keep_genres: list, separator: str, log_label: str
+    ) -> tuple:
+        """Combines genres and returns them with a logging label.
+
+        Parameters:
+            new_genres (str): The new genre string result to process.
+            keep_genres (list): Existing genres to combine with new ones
+            separator (str): Separator used to split and join genre strings.
+            log_label (str): A label (like "track", "album") we possibly
+                combine with a prefix. For example resulting in something like
+                "keep + track" or just "track".
+
+        Returns:
+            tuple: A tuple containing the combined genre string and the "logging
+            label".
+        """
+        if new_genres and keep_genres:
+            split_genres = new_genres.split(separator)
+            combined_genres = deduplicate(keep_genres + split_genres)
+            return separator.join(combined_genres), f"keep + {log_label}"
+        elif new_genres:
+            return new_genres, log_label
+        return "", log_label
+
     def _get_genre(self, obj):
-        """Get the genre string for an Album or Item object based on
-        self.sources. Return a `(genre, source)` pair. The
-        prioritization order is:
+        """Get the final genre string for an Album or Item object
+
+        `self.sources` specifies allowed genre sources, prioritized as follows:
             - track (for Items only)
             - album
             - artist
             - original
             - fallback
             - None
+
+        Parameters:
+            obj: Either an Album or Item object.
+
+         Returns:
+             tuple: A `(genre, label)` pair, where `label` is a string used for
+                logging that describes the result. For example, "keep + artist"
+                indicates that existing genres were combined with new last.fm
+                genres, while "artist" means only new last.fm genres are
+                included.
         """
 
         separator = self.config["separator"].get()
@@ -341,7 +376,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             genres = self._get_existing_genres(obj, separator)
             # Case 3 - Keep WHITELISTED. Combine with new.
             # Case 1 - Keep None. Overwrite all.
-            if self.config['keep_allowed']:
+            if self.config["keep_allowed"]:
                 keep_genres = self._dedup_genres(genres, whitelist_only=True)
             else:
                 keep_genres = None
@@ -349,41 +384,35 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             genres = self._get_existing_genres(obj, separator)
             # Case 4 - Keep WHITELISTED. Handle empty.
             # Case 2 - Keep ANY. Handle empty.
-            if genres and self.config['keep_allowed']:
+            if genres and self.config["keep_allowed"]:
                 keep_genres = self._dedup_genres(genres, whitelist_only=True)
                 return separator.join(keep_genres), "keep allowed"
-            elif genres and not self.config['keep_allowed']:
+            elif genres and not self.config["keep_allowed"]:
                 keep_genres = self._dedup_genres(genres)
                 return separator.join(keep_genres), "keep any"
             # else: Move on, genre tag is empty.
 
         # Track genre (for Items only).
         if isinstance(obj, library.Item) and "track" in self.sources:
-            result = self.fetch_track_genre(obj)
-            if result and keep_genres:
-                results = result.split(separator)
-                combined_genres = deduplicate(keep_genres + results)
-                return separator.join(combined_genres), "keep + track"
-            elif result:
-                return result, "track"
+            new_genres = self.fetch_track_genre(obj)
+            return self._combine_and_label_genres(
+                new_genres, keep_genres, separator, "track"
+            )
 
         # Album genre.
         if "album" in self.sources:
-            result = self.fetch_album_genre(obj)
-            if result and keep_genres:
-                results = result.split(separator)
-                combined_genres = deduplicate(keep_genres + results)
-                return separator.join(combined_genres), "keep + album"
-            elif result:
-                return result, "album"
+            new_genres = self.fetch_album_genre(obj)
+            return self._combine_and_label_genres(
+                new_genres, keep_genres, separator, "album"
+            )
 
         # Artist (or album artist) genre.
         if "artist" in self.sources:
-            result = None
+            new_genres = None
             if isinstance(obj, library.Item):
-                result = self.fetch_artist_genre(obj)
+                new_genres = self.fetch_artist_genre(obj)
             elif obj.albumartist != config["va_name"].as_str():
-                result = self.fetch_album_artist_genre(obj)
+                new_genres = self.fetch_album_artist_genre(obj)
             else:
                 # For "Various Artists", pick the most popular track genre.
                 item_genres = []
@@ -396,14 +425,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     if item_genre:
                         item_genres.append(item_genre)
                 if item_genres:
-                    result, _ = plurality(item_genres)
+                    new_genres, _ = plurality(item_genres)
 
-            if result and keep_genres:
-                results = result.split(separator)
-                combined_genres = deduplicate(keep_genres + results)
-                return separator.join(combined_genres), "keep + artist"
-            elif result:
-                return result, "artist"
+            return self._combine_and_label_genres(
+                new_genres, keep_genres, separator, "artist"
+            )
 
         # Filter the existing genre.
         if obj.genre:
