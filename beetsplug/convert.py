@@ -84,6 +84,7 @@ def get_format(fmt=None):
 
     return (command.encode("utf-8"), extension.encode("utf-8"))
 
+
 def in_no_convert(item: Item) -> bool:
     no_convert_query = config["convert"]["no_convert"].as_str()
 
@@ -92,7 +93,8 @@ def in_no_convert(item: Item) -> bool:
         return query.match(item)
     else:
         return False
-    
+
+
 def should_transcode(item, fmt):
     """Determine whether the item should be transcoded as part of
     conversion (i.e., its bitrate is high or it has the wrong format).
