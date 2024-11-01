@@ -166,6 +166,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         elif source == "artist":
             return ("artist",)
 
+    # More canonicalization and general helpers.
+
     def _get_depth(self, tag):
         """Find the depth of a tag in the genres tree."""
         depth = None
@@ -255,7 +257,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return True
         return False
 
-    # Cached entity lookups.
+    # Cached last.fm entity lookups.
 
     def _last_lookup(self, entity, method, *args):
         """Get a genre based on the named entity using the callable `method`
@@ -302,6 +304,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return self._last_lookup(
             "track", LASTFM.get_track, obj.artist, obj.title
         )
+
+    # Main processing: _get_genre() and helpers.
 
     def _get_existing_genres(self, obj, separator):
         """Return a list of genres for this Item or Album."""
@@ -443,6 +447,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return fallback, "fallback"
 
         return None, None
+
+    # Beets plugin hooks and CLI.
 
     def commands(self):
         lastgenre_cmd = ui.Subcommand("lastgenre", help="fetch genres")
