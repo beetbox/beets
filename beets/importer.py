@@ -606,7 +606,6 @@ class ImportTask(BaseImportTask):
         items = self.imported_items()
         for field, view in config["import"]["set_fields"].items():
             value = str(view.get())
-            print("EEE ", value)
             log.debug(
                 "Set field {1}={2} for {0}",
                 displayable_path(self.paths),
