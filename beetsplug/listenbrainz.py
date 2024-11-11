@@ -116,9 +116,13 @@ class ListenBrainzPlugin(BeetsPlugin):
                 mbid = self.get_mb_recording_id(track)
             tracks.append(
                 {
-                    "album": {"name": track["track_metadata"].get("release_name")},
+                    "album": {
+                        "name": track["track_metadata"].get("release_name")
+                    },
                     "name": track["track_metadata"].get("track_name"),
-                    "artist": {"name": track["track_metadata"].get("artist_name")},
+                    "artist": {
+                        "name": track["track_metadata"].get("artist_name")
+                    },
                     "mbid": mbid,
                     "release_mbid": mbid_mapping.get("release_mbid"),
                     "listened_at": track.get("listened_at"),
@@ -153,10 +157,14 @@ class ListenBrainzPlugin(BeetsPlugin):
             if playlist_info.get("creator") == "listenbrainz":
                 title = playlist_info.get("title")
                 self._log.debug(f"Playlist title: {title}")
-                playlist_type = "Exploration" if "Exploration" in title else "Jams"
+                playlist_type = (
+                    "Exploration" if "Exploration" in title else "Jams"
+                )
                 if "week of" in title:
                     date_str = title.split("week of ")[1].split(" ")[0]
-                    date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+                    date = datetime.datetime.strptime(
+                        date_str, "%Y-%m-%d"
+                    ).date()
                 else:
                     continue
                 identifier = playlist_info.get("identifier")
@@ -164,12 +172,16 @@ class ListenBrainzPlugin(BeetsPlugin):
                 listenbrainz_playlists.append(
                     {"type": playlist_type, "date": date, "identifier": id}
                 )
-        listenbrainz_playlists = sorted(listenbrainz_playlists, key=lambda x: x["type"])
+        listenbrainz_playlists = sorted(
+            listenbrainz_playlists, key=lambda x: x["type"]
+        )
         listenbrainz_playlists = sorted(
             listenbrainz_playlists, key=lambda x: x["date"], reverse=True
         )
         for playlist in listenbrainz_playlists:
-            self._log.debug(f'Playlist: {playlist["type"]} - {playlist["date"]}')
+            self._log.debug(
+                f'Playlist: {playlist["type"]} - {playlist["date"]}'
+            )
         return listenbrainz_playlists
 
     def get_playlist(self, identifier):
@@ -231,13 +243,17 @@ class ListenBrainzPlugin(BeetsPlugin):
         # Fetch all playlists
         playlists = self.get_listenbrainz_playlists()
         # Filter playlists by type
-        filtered_playlists = [p for p in playlists if p["type"] == playlist_type]
+        filtered_playlists = [
+            p for p in playlists if p["type"] == playlist_type
+        ]
         # Sort playlists by date in descending order
         sorted_playlists = sorted(
             filtered_playlists, key=lambda x: x["date"], reverse=True
         )
         # Select the most recent or older playlist based on the most_recent flag
-        selected_playlist = sorted_playlists[0] if most_recent else sorted_playlists[1]
+        selected_playlist = (
+            sorted_playlists[0] if most_recent else sorted_playlists[1]
+        )
         self._log.debug(
             f"Selected playlist: {selected_playlist['type']} - {selected_playlist['date']}"
         )
