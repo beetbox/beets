@@ -184,15 +184,14 @@ class ListenBrainzPlugin(BeetsPlugin):
             identifier = track.get("identifier")
             if isinstance(identifier, list):
                 identifier = identifier[0]
-            artist = track.get(
-                "creator", "Unknown artist"
-            )  # Set a default value if 'creator' key is not present
-            track_dict = {
-                "artist": artist,
-                "identifier": identifier.split("/")[-1],
-                "title": track.get("title"),
-            }
-            tracks.append(track_dict)
+
+            tracks.append(
+                {
+                    "artist": track.get("creator", "Unknown artist"),
+                    "identifier": identifier.split("/")[-1],
+                    "title": track.get("title"),
+                }
+            )
         return self.get_track_info(tracks)
 
     def get_track_info(self, tracks):
