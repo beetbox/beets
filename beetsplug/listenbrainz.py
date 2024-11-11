@@ -255,7 +255,8 @@ class ListenBrainzPlugin(BeetsPlugin):
             sorted_playlists[0] if most_recent else sorted_playlists[1]
         )
         self._log.debug(
-            f"Selected playlist: {selected_playlist['type']} - {selected_playlist['date']}"
+            f"Selected playlist: {selected_playlist['type']} "
+            f"- {selected_playlist['date']}"
         )
         # Fetch and return tracks from the selected playlist
         playlist = self.get_playlist(selected_playlist.get("identifier"))
