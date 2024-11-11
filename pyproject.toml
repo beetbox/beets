@@ -67,6 +67,9 @@ resampy = { version = ">=0.4.3", optional = true }
 requests-oauthlib = { version = ">=0.6.1", optional = true }
 soco = { version = "*", optional = true }
 
+pydata-sphinx-theme = { version = "*", optional = true }
+sphinx = { version = "*", optional = true }
+
 [tool.poetry.group.test.dependencies]
 beautifulsoup4 = "*"
 codecov = ">=2.1.13"
@@ -96,10 +99,6 @@ types-PyYAML = "*"
 types-requests = "*"
 types-urllib3 = "*"
 
-[tool.poetry.group.docs.dependencies]
-pydata-sphinx-theme = "*"
-sphinx = "*"
-
 [tool.poetry.group.release.dependencies]
 click = ">=8.1.7"
 packaging = ">=24.0"
@@ -115,6 +114,7 @@ beatport = ["requests-oauthlib"]
 bpd = ["PyGObject"] # python-gi and GStreamer 1.0+
 chroma = ["pyacoustid"] # chromaprint or fpcalc
 # convert # ffmpeg
+docs = ["pydata-sphinx-theme", "sphinx"]
 discogs = ["python3-discogs-client"]
 embedart = ["Pillow"] # ImageMagick
 embyupdate = ["requests"]
