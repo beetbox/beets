@@ -1,7 +1,7 @@
 name: Lint check
 run-name: Lint code
 on:
-  pull_request_target:
+  pull_request:
   push:
     branches:
       - master
@@ -125,7 +125,7 @@ jobs:
           cache: poetry
 
       - name: Install dependencies
-        run: poetry install --only=docs
+        run: poetry install --extras=docs
 
       - name: Add Sphinx problem matcher
         run: echo "::add-matcher::.github/sphinx-problem-matcher.json"

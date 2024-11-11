@@ -47,6 +47,10 @@ Bug fixes:
 * :doc:`plugins/lyrics`: Update ``tekstowo`` backend to fetch lyrics directly
   since recent updates to their website made it unsearchable.
   :bug:`5456`
+* :doc:`plugins/convert`: Fixed the convert plugin ``no_convert`` option so
+  that it no longer treats "and" and "or" queries the same. To maintain
+  previous behaviour add commas between your query keywords. For help see
+  :ref:`combiningqueries`.
 
 For packagers:
 
