@@ -51,7 +51,7 @@ Bug fixes:
   that it no longer treats "and" and "or" queries the same. To maintain
   previous behaviour add commas between your query keywords. For help see
   :ref:`combiningqueries`.
-* Fix the ``TypeError`` when ``import.set_fields`` is provided non-string values. :bug:`4840`
+* Fix the ``TypeError`` when :ref:`set_fields` is provided non-string values. :bug:`4840`
 
 For packagers:
 
