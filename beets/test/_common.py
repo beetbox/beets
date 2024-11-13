@@ -58,17 +58,12 @@ log = logging.getLogger("beets")
 log.propagate = True
 log.setLevel(logging.DEBUG)
 
-# Dummy item creation.
-_item_ident = 0
-
 # OS feature test.
 HAVE_SYMLINK = sys.platform != "win32"
 HAVE_HARDLINK = sys.platform != "win32"
 
 
 def item(lib=None):
-    global _item_ident
-    _item_ident += 1
     i = beets.library.Item(
         title="the title",
         artist="the artist",
@@ -93,7 +88,6 @@ def item(lib=None):
         comments="the comments",
         bpm=8,
         comp=True,
-        path=f"somepath{_item_ident}",
         length=60.0,
         bitrate=128000,
         format="FLAC",
@@ -104,30 +98,6 @@ def item(lib=None):
         mb_releasetrackid="someID-5",
         album_id=None,
         mtime=12345,
-    )
-    if lib:
-        lib.add(i)
-    return i
-
-
-def album(lib=None):
-    global _item_ident
-    _item_ident += 1
-    i = beets.library.Album(
-        artpath=None,
-        albumartist="some album artist",
-        albumartist_sort="some sort album artist",
-        albumartist_credit="some album artist credit",
-        album="the album",
-        genre="the genre",
-        year=2014,
-        month=2,
-        day=5,
-        tracktotal=0,
-        disctotal=1,
-        comp=False,
-        mb_albumid="someID-1",
-        mb_albumartistid="someID-1",
     )
     if lib:
         lib.add(i)
