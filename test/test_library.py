@@ -30,6 +30,7 @@ from mediafile import MediaFile, UnreadableFileError
 import beets.dbcore.query
 import beets.library
 from beets import config, plugins, util
+from beets.library import Album
 from beets.test import _common
 from beets.test._common import item
 from beets.test.helper import BeetsTestCase, ItemInDBTestCase
@@ -81,8 +82,7 @@ class StoreTest(ItemInDBTestCase):
         assert "composer" not in self.i._dirty
 
     def test_store_album_cascades_flex_deletes(self):
-        album = _common.album()
-        album.flex1 = "Flex-1"
+        album = Album(flex1="Flex-1")
         self.lib.add(album)
         item = _common.item()
         item.album_id = album.id
