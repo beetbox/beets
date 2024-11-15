@@ -900,7 +900,7 @@ class FetchImageHelper:
         super().run(*args, **kwargs)
 
     IMAGEHEADER = {
-        "image/jpeg": b"\x00" * 6 + b"JFIF",
+        "image/jpeg": b"\xff\xd8\xff" + b"\x00" * 3 + b"JFIF",
         "image/png": b"\211PNG\r\n\032\n",
     }
 
