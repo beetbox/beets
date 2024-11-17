@@ -17,8 +17,9 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable, Iterator
 from functools import total_ordering
-from typing import Any, Callable, Iterable, Iterator, NamedTuple, TypeVar, cast
+from typing import Any, Callable, NamedTuple, TypeVar, cast
 
 from jellyfish import levenshtein_distance
 from unidecode import unidecode
