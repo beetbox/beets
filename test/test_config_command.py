@@ -112,9 +112,10 @@ class ConfigCommandTest(BeetsTestCase):
 
     def test_config_editor_not_found(self):
         msg_match = "Could not edit configuration.*here is problem"
-        with patch(
-            "os.execlp", side_effect=OSError("here is problem")
-        ), pytest.raises(ui.UserError, match=msg_match):
+        with (
+            patch("os.execlp", side_effect=OSError("here is problem")),
+            pytest.raises(ui.UserError, match=msg_match),
+        ):
             self.run_command("config", "-e")
 
     def test_edit_invalid_config_file(self):

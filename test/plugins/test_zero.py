@@ -102,9 +102,12 @@ class ZeroPluginTest(PluginTestCase):
         item.write()
         item_id = item.id
 
-        with self.configure_plugin(
-            {"fields": ["comments"], "update_database": True, "auto": False}
-        ), control_stdin("y"):
+        with (
+            self.configure_plugin(
+                {"fields": ["comments"], "update_database": True, "auto": False}
+            ),
+            control_stdin("y"),
+        ):
             self.run_command("zero")
 
         mf = MediaFile(syspath(item.path))
@@ -122,9 +125,16 @@ class ZeroPluginTest(PluginTestCase):
         item.write()
         item_id = item.id
 
-        with self.configure_plugin(
-            {"fields": ["comments"], "update_database": False, "auto": False}
-        ), control_stdin("y"):
+        with (
+            self.configure_plugin(
+                {
+                    "fields": ["comments"],
+                    "update_database": False,
+                    "auto": False,
+                }
+            ),
+            control_stdin("y"),
+        ):
             self.run_command("zero")
 
         mf = MediaFile(syspath(item.path))
@@ -193,9 +203,12 @@ class ZeroPluginTest(PluginTestCase):
 
         item_id = item.id
 
-        with self.configure_plugin(
-            {"fields": ["year"], "keep_fields": ["comments"]}
-        ), control_stdin("y"):
+        with (
+            self.configure_plugin(
+                {"fields": ["year"], "keep_fields": ["comments"]}
+            ),
+            control_stdin("y"),
+        ):
             self.run_command("zero")
 
         item = self.lib.get_item(item_id)
@@ -242,9 +255,12 @@ class ZeroPluginTest(PluginTestCase):
         )
         item.write()
         item_id = item.id
-        with self.configure_plugin(
-            {"fields": ["comments"], "update_database": True, "auto": False}
-        ), control_stdin("n"):
+        with (
+            self.configure_plugin(
+                {"fields": ["comments"], "update_database": True, "auto": False}
+            ),
+            control_stdin("n"),
+        ):
             self.run_command("zero")
 
         mf = MediaFile(syspath(item.path))
