@@ -14,9 +14,11 @@
 
 """Parsing of strings into DBCore queries."""
 
+from __future__ import annotations
+
 import itertools
 import re
-from typing import Collection, Optional, Sequence
+from typing import Collection, Sequence
 
 from . import Model, query
 from .query import Sort
@@ -38,7 +40,7 @@ def parse_query_part(
     query_classes: dict[str, type[query.FieldQuery]] = {},
     prefixes: dict = {},
     default_class: type[query.SubstringQuery] = query.SubstringQuery,
-) -> tuple[Optional[str], str, type[query.FieldQuery], bool]:
+) -> tuple[str | None, str, type[query.FieldQuery], bool]:
     """Parse a single *query part*, which is a chunk of a complete query
     string representing a single criterion.
 

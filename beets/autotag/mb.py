@@ -20,7 +20,7 @@ import re
 import traceback
 from collections import Counter
 from itertools import product
-from typing import Any, Iterator, Optional, Sequence, cast
+from typing import Any, Iterator, Sequence, cast
 from urllib.parse import urljoin
 
 import musicbrainzngs
@@ -277,10 +277,10 @@ def _get_related_artist_names(relations, relation_type):
 
 def track_info(
     recording: dict,
-    index: Optional[int] = None,
-    medium: Optional[int] = None,
-    medium_index: Optional[int] = None,
-    medium_total: Optional[int] = None,
+    index: int | None = None,
+    medium: int | None = None,
+    medium_index: int | None = None,
+    medium_total: int | None = None,
 ) -> beets.autotag.hooks.TrackInfo:
     """Translates a MusicBrainz recording result dictionary into a beets
     ``TrackInfo`` object. Three parameters are optional and are used
@@ -661,8 +661,8 @@ def album_info(release: dict) -> beets.autotag.hooks.AlbumInfo:
 def match_album(
     artist: str,
     album: str,
-    tracks: Optional[int] = None,
-    extra_tags: Optional[dict[str, Any]] = None,
+    tracks: int | None = None,
+    extra_tags: dict[str, Any] | None = None,
 ) -> Iterator[beets.autotag.hooks.AlbumInfo]:
     """Searches for a single album ("release" in MusicBrainz parlance)
     and returns an iterator over AlbumInfo objects. May raise a
@@ -739,7 +739,7 @@ def match_track(
         yield track_info(recording)
 
 
-def _parse_id(s: str) -> Optional[str]:
+def _parse_id(s: str) -> str | None:
     """Search for a MusicBrainz ID in the given string and return it. If
     no ID can be found, return None.
     """
@@ -757,7 +757,7 @@ def _is_translation(r):
 
 def _find_actual_release_from_pseudo_release(
     pseudo_rel: dict,
-) -> Optional[dict]:
+) -> dict | None:
     try:
         relations = pseudo_rel["release"]["release-relation-list"]
     except KeyError:
@@ -776,7 +776,7 @@ def _find_actual_release_from_pseudo_release(
 
 def _merge_pseudo_and_actual_album(
     pseudo: beets.autotag.hooks.AlbumInfo, actual: beets.autotag.hooks.AlbumInfo
-) -> Optional[beets.autotag.hooks.AlbumInfo]:
+) -> beets.autotag.hooks.AlbumInfo | None:
     """
     Merges a pseudo release with its actual release.
 
@@ -814,7 +814,7 @@ def _merge_pseudo_and_actual_album(
     return merged
 
 
-def album_for_id(releaseid: str) -> Optional[beets.autotag.hooks.AlbumInfo]:
+def album_for_id(releaseid: str) -> beets.autotag.hooks.AlbumInfo | None:
     """Fetches an album by its MusicBrainz ID and returns an AlbumInfo
     object or None if the album is not found. May raise a
     MusicBrainzAPIError.
@@ -852,7 +852,7 @@ def album_for_id(releaseid: str) -> Optional[beets.autotag.hooks.AlbumInfo]:
         return release
 
 
-def track_for_id(releaseid: str) -> Optional[beets.autotag.hooks.TrackInfo]:
+def track_for_id(releaseid: str) -> beets.autotag.hooks.TrackInfo | None:
     """Fetches a track by its MusicBrainz ID. Returns a TrackInfo object
     or None if no track is found. May raise a MusicBrainzAPIError.
     """
