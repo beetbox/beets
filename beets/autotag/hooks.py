@@ -463,7 +463,7 @@ class Distance:
     def keys(self) -> list[str]:
         return [key for key, _ in self.items()]
 
-    def update(self, dist: "Distance"):
+    def update(self, dist: Distance):
         """Adds all the distance penalties from `dist`."""
         if not isinstance(dist, Distance):
             raise ValueError(
