@@ -23,13 +23,10 @@ import re
 from enum import IntEnum
 from typing import (
     Any,
-    Dict,
     Iterable,
-    List,
     NamedTuple,
     Optional,
     Sequence,
-    Tuple,
     TypeVar,
     Union,
     cast,
@@ -88,7 +85,7 @@ class Proposal(NamedTuple):
 
 def current_metadata(
     items: Iterable[Item],
-) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+) -> tuple[dict[str, Any], dict[str, Any]]:
     """Extract the likely current metadata for an album given a list of its
     items. Return two dictionaries:
      - The most common value for each field.
@@ -127,7 +124,7 @@ def current_metadata(
 def assign_items(
     items: Sequence[Item],
     tracks: Sequence[TrackInfo],
-) -> Tuple[Dict[Item, TrackInfo], List[Item], List[TrackInfo]]:
+) -> tuple[dict[Item, TrackInfo], list[Item], list[TrackInfo]]:
     """Given a list of Items and a list of TrackInfo objects, find the
     best mapping between them. Returns a mapping from Items to TrackInfo
     objects, a set of extra Items, and a set of extra TrackInfo
@@ -135,7 +132,7 @@ def assign_items(
     of objects of the two types.
     """
     # Construct the cost matrix.
-    costs: List[List[Distance]] = []
+    costs: list[list[Distance]] = []
     for item in items:
         row = []
         for track in tracks:
@@ -221,7 +218,7 @@ def track_distance(
 def distance(
     items: Sequence[Item],
     album_info: AlbumInfo,
-    mapping: Dict[Item, TrackInfo],
+    mapping: dict[Item, TrackInfo],
 ) -> Distance:
     """Determines how "significant" an album metadata change would be.
     Returns a Distance object. `album_info` is an AlbumInfo object
@@ -425,7 +422,7 @@ def _sort_candidates(candidates: Iterable[AnyMatch]) -> Sequence[AnyMatch]:
 
 def _add_candidate(
     items: Sequence[Item],
-    results: Dict[Any, AlbumMatch],
+    results: dict[Any, AlbumMatch],
     info: AlbumInfo,
 ):
     """Given a candidate AlbumInfo object, attempt to add the candidate
@@ -479,8 +476,8 @@ def tag_album(
     items,
     search_artist: Optional[str] = None,
     search_album: Optional[str] = None,
-    search_ids: List[str] = [],
-) -> Tuple[str, str, Proposal]:
+    search_ids: list[str] = [],
+) -> tuple[str, str, Proposal]:
     """Return a tuple of the current artist name, the current album
     name, and a `Proposal` containing `AlbumMatch` candidates.
 
@@ -505,7 +502,7 @@ def tag_album(
     log.debug("Tagging {0} - {1}", cur_artist, cur_album)
 
     # The output result, keys are the MB album ID.
-    candidates: Dict[Any, AlbumMatch] = {}
+    candidates: dict[Any, AlbumMatch] = {}
 
     # Search by explicit ID.
     if search_ids:
@@ -571,7 +568,7 @@ def tag_item(
     item,
     search_artist: Optional[str] = None,
     search_title: Optional[str] = None,
-    search_ids: Optional[List[str]] = None,
+    search_ids: Optional[list[str]] = None,
 ) -> Proposal:
     """Find metadata for a single track. Return a `Proposal` consisting
     of `TrackMatch` objects.

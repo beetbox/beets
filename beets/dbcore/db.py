@@ -30,18 +30,13 @@ from typing import (
     Any,
     AnyStr,
     Callable,
-    DefaultDict,
-    Dict,
     Generator,
     Generic,
     Iterable,
     Iterator,
-    List,
     Mapping,
     Optional,
     Sequence,
-    Tuple,
-    Type,
     TypeVar,
     Union,
     cast,
@@ -161,11 +156,11 @@ class LazyConvertDict:
     def __init__(self, model_cls: "Model"):
         """Initialize the object empty"""
         # FIXME: Dict[str, SQLiteType]
-        self._data: Dict[str, Any] = {}
+        self._data: dict[str, Any] = {}
         self.model_cls = model_cls
-        self._converted: Dict[str, Any] = {}
+        self._converted: dict[str, Any] = {}
 
-    def init(self, data: Dict[str, Any]):
+    def init(self, data: dict[str, Any]):
         """Set the base data that should be lazily converted"""
         self._data = data
 
@@ -195,7 +190,7 @@ class LazyConvertDict:
         if key in self._data:
             del self._data[key]
 
-    def keys(self) -> List[str]:
+    def keys(self) -> list[str]:
         """Get a list of available field names for this object."""
         return list(self._converted.keys()) + list(self._data.keys())
 
@@ -213,7 +208,7 @@ class LazyConvertDict:
         for key, value in values.items():
             self[key] = value
 
-    def items(self) -> Iterable[Tuple[str, Any]]:
+    def items(self) -> Iterable[tuple[str, Any]]:
         """Iterate over (key, value) pairs that this object contains.
         Computed fields are not included.
         """
@@ -286,7 +281,7 @@ class Model(ABC):
     """The flex field SQLite table name.
     """
 
-    _fields: Dict[str, types.Type] = {}
+    _fields: dict[str, types.Type] = {}
     """A mapping indicating available "fixed" fields on this type. The
     keys are field names and the values are `Type` objects.
     """
@@ -296,16 +291,16 @@ class Model(ABC):
     terms.
     """
 
-    _types: Dict[str, types.Type] = {}
+    _types: dict[str, types.Type] = {}
     """Optional Types for non-fixed (i.e., flexible and computed) fields.
     """
 
-    _sorts: Dict[str, Type[Sort]] = {}
+    _sorts: dict[str, type[Sort]] = {}
     """Optional named sort criteria. The keys are strings and the values
     are subclasses of `Sort`.
     """
 
-    _queries: Dict[str, Type[FieldQuery]] = {}
+    _queries: dict[str, type[FieldQuery]] = {}
     """Named queries that use a field-like `name:value` syntax but which
     do not relate to any specific field.
     """
@@ -348,7 +343,7 @@ class Model(ABC):
         return cls._relation._fields.keys() - cls.shared_db_fields
 
     @classmethod
-    def _getters(cls: Type["Model"]):
+    def _getters(cls: type["Model"]):
         """Return a mapping from field names to getter functions."""
         # We could cache this if it becomes a performance problem to
         # gather the getter mapping every time.
@@ -378,10 +373,10 @@ class Model(ABC):
 
     @classmethod
     def _awaken(
-        cls: Type[AnyModel],
+        cls: type[AnyModel],
         db: Optional[Database] = None,
-        fixed_values: Dict[str, Any] = {},
-        flex_values: Dict[str, Any] = {},
+        fixed_values: dict[str, Any] = {},
+        flex_values: dict[str, Any] = {},
     ) -> AnyModel:
         """Create an object with values drawn from the database.
 
@@ -537,7 +532,7 @@ class Model(ABC):
         for key, value in values.items():
             self[key] = value
 
-    def items(self) -> Iterator[Tuple[str, Any]]:
+    def items(self) -> Iterator[tuple[str, Any]]:
         """Iterate over (key, value) pairs that this object contains.
         Computed fields are not included.
         """
@@ -730,16 +725,16 @@ class Model(ABC):
         cls,
         field,
         pattern,
-        query_cls: Type[FieldQuery] = MatchQuery,
+        query_cls: type[FieldQuery] = MatchQuery,
     ) -> FieldQuery:
         """Get a `FieldQuery` for this model."""
         return query_cls(field, pattern, field in cls._fields)
 
     @classmethod
     def all_fields_query(
-        cls: Type["Model"],
+        cls: type["Model"],
         pats: Mapping,
-        query_cls: Type[FieldQuery] = MatchQuery,
+        query_cls: type[FieldQuery] = MatchQuery,
     ):
         """Get a query that matches many fields with different patterns.
 
@@ -764,8 +759,8 @@ class Results(Generic[AnyModel]):
 
     def __init__(
         self,
-        model_class: Type[AnyModel],
-        rows: List[Mapping],
+        model_class: type[AnyModel],
+        rows: list[Mapping],
         db: "Database",
         flex_rows,
         query: Optional[Query] = None,
@@ -800,7 +795,7 @@ class Results(Generic[AnyModel]):
 
         # The materialized objects corresponding to rows that have been
         # consumed.
-        self._objects: List[AnyModel] = []
+        self._objects: list[AnyModel] = []
 
     def _get_objects(self) -> Iterator[AnyModel]:
         """Construct and generate Model objects for they query. The
@@ -852,7 +847,7 @@ class Results(Generic[AnyModel]):
 
     def _get_indexed_flex_attrs(self) -> Mapping:
         """Index flexible attributes by the entity id they belong to"""
-        flex_values: Dict[int, Dict[str, Any]] = {}
+        flex_values: dict[int, dict[str, Any]] = {}
         for row in self.flex_rows:
             if row["entity_id"] not in flex_values:
                 flex_values[row["entity_id"]] = {}
@@ -861,7 +856,7 @@ class Results(Generic[AnyModel]):
 
         return flex_values
 
-    def _make_model(self, row, flex_values: Dict = {}) -> AnyModel:
+    def _make_model(self, row, flex_values: dict = {}) -> AnyModel:
         """Create a Model object for the given row"""
         cols = dict(row)
         values = {k: v for (k, v) in cols.items() if not k[:4] == "flex"}
@@ -951,7 +946,7 @@ class Transaction:
 
     def __exit__(
         self,
-        exc_type: Type[Exception],
+        exc_type: type[Exception],
         exc_value: Exception,
         traceback: TracebackType,
     ):
@@ -970,7 +965,7 @@ class Transaction:
             self._mutated = False
             self.db._db_lock.release()
 
-    def query(self, statement: str, subvals: Sequence = ()) -> List:
+    def query(self, statement: str, subvals: Sequence = ()) -> list:
         """Execute an SQL statement with substitution values and return
         a list of rows from the database.
         """
@@ -1010,7 +1005,7 @@ class Database:
     the backend.
     """
 
-    _models: Sequence[Type[Model]] = ()
+    _models: Sequence[type[Model]] = ()
     """The Model subclasses representing tables in this database.
     """
 
@@ -1031,9 +1026,9 @@ class Database:
         self.path = path
         self.timeout = timeout
 
-        self._connections: Dict[int, sqlite3.Connection] = {}
-        self._tx_stacks: DefaultDict[int, List[Transaction]] = defaultdict(list)
-        self._extensions: List[str] = []
+        self._connections: dict[int, sqlite3.Connection] = {}
+        self._tx_stacks: defaultdict[int, list[Transaction]] = defaultdict(list)
+        self._extensions: list[str] = []
 
         # A lock to protect the _connections and _tx_stacks maps, which
         # both map thread IDs to private resources.
@@ -1138,7 +1133,7 @@ class Database:
                 conn.close()
 
     @contextlib.contextmanager
-    def _tx_stack(self) -> Generator[List, None, None]:
+    def _tx_stack(self) -> Generator[list, None, None]:
         """A context manager providing access to the current thread's
         transaction stack. The context manager synchronizes access to
         the stack map. Transactions should never migrate across threads.
@@ -1231,7 +1226,7 @@ class Database:
 
     def _fetch(
         self,
-        model_cls: Type[AnyModel],
+        model_cls: type[AnyModel],
         query: Optional[Query] = None,
         sort: Optional[Sort] = None,
     ) -> Results[AnyModel]:
@@ -1289,7 +1284,7 @@ class Database:
 
     def _get(
         self,
-        model_cls: Type[AnyModel],
+        model_cls: type[AnyModel],
         id,
     ) -> Optional[AnyModel]:
         """Get a Model object by its id or None if the id does not

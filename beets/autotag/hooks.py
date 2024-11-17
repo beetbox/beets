@@ -21,13 +21,10 @@ from functools import total_ordering
 from typing import (
     Any,
     Callable,
-    Dict,
     Iterable,
     Iterator,
-    List,
     NamedTuple,
     Optional,
-    Tuple,
     TypeVar,
     Union,
     cast,
@@ -47,7 +44,7 @@ V = TypeVar("V")
 
 
 # Classes used to represent candidate options.
-class AttrDict(Dict[str, V]):
+class AttrDict(dict[str, V]):
     """A dictionary that supports attribute ("dot") access, so `d.field`
     is equivalent to `d['field']`.
     """
@@ -82,16 +79,16 @@ class AlbumInfo(AttrDict):
     # TYPING: are all of these correct? I've assumed optional strings
     def __init__(
         self,
-        tracks: List[TrackInfo],
+        tracks: list[TrackInfo],
         album: Optional[str] = None,
         album_id: Optional[str] = None,
         artist: Optional[str] = None,
         artist_id: Optional[str] = None,
-        artists: Optional[List[str]] = None,
-        artists_ids: Optional[List[str]] = None,
+        artists: Optional[list[str]] = None,
+        artists_ids: Optional[list[str]] = None,
         asin: Optional[str] = None,
         albumtype: Optional[str] = None,
-        albumtypes: Optional[List[str]] = None,
+        albumtypes: Optional[list[str]] = None,
         va: bool = False,
         year: Optional[int] = None,
         month: Optional[int] = None,
@@ -100,7 +97,7 @@ class AlbumInfo(AttrDict):
         barcode: Optional[str] = None,
         mediums: Optional[int] = None,
         artist_sort: Optional[str] = None,
-        artists_sort: Optional[List[str]] = None,
+        artists_sort: Optional[list[str]] = None,
         releasegroup_id: Optional[str] = None,
         release_group_title: Optional[str] = None,
         catalognum: Optional[str] = None,
@@ -114,7 +111,7 @@ class AlbumInfo(AttrDict):
         albumdisambig: Optional[str] = None,
         releasegroupdisambig: Optional[str] = None,
         artist_credit: Optional[str] = None,
-        artists_credit: Optional[List[str]] = None,
+        artists_credit: Optional[list[str]] = None,
         original_year: Optional[int] = None,
         original_month: Optional[int] = None,
         original_day: Optional[int] = None,
@@ -195,18 +192,18 @@ class TrackInfo(AttrDict):
         release_track_id: Optional[str] = None,
         artist: Optional[str] = None,
         artist_id: Optional[str] = None,
-        artists: Optional[List[str]] = None,
-        artists_ids: Optional[List[str]] = None,
+        artists: Optional[list[str]] = None,
+        artists_ids: Optional[list[str]] = None,
         length: Optional[float] = None,
         index: Optional[int] = None,
         medium: Optional[int] = None,
         medium_index: Optional[int] = None,
         medium_total: Optional[int] = None,
         artist_sort: Optional[str] = None,
-        artists_sort: Optional[List[str]] = None,
+        artists_sort: Optional[list[str]] = None,
         disctitle: Optional[str] = None,
         artist_credit: Optional[str] = None,
-        artists_credit: Optional[List[str]] = None,
+        artists_credit: Optional[list[str]] = None,
         data_source: Optional[str] = None,
         data_url: Optional[str] = None,
         media: Optional[str] = None,
@@ -368,10 +365,10 @@ class Distance:
 
     def __init__(self):
         self._penalties = {}
-        self.tracks: Dict[TrackInfo, Distance] = {}
+        self.tracks: dict[TrackInfo, Distance] = {}
 
     @cached_classproperty
-    def _weights(cls) -> Dict[str, float]:
+    def _weights(cls) -> dict[str, float]:
         """A dictionary from keys to floating-point weights."""
         weights_view = config["match"]["distance_weights"]
         weights = {}
@@ -407,7 +404,7 @@ class Distance:
             dist_raw += sum(penalty) * self._weights[key]
         return dist_raw
 
-    def items(self) -> List[Tuple[str, float]]:
+    def items(self) -> list[tuple[str, float]]:
         """Return a list of (key, dist) pairs, with `dist` being the
         weighted distance, sorted from highest to lowest. Does not
         include penalties with a zero value.
@@ -457,13 +454,13 @@ class Distance:
             return dist / dist_max
         return 0.0
 
-    def __iter__(self) -> Iterator[Tuple[str, float]]:
+    def __iter__(self) -> Iterator[tuple[str, float]]:
         return iter(self.items())
 
     def __len__(self) -> int:
         return len(self.items())
 
-    def keys(self) -> List[str]:
+    def keys(self) -> list[str]:
         return [key for key, _ in self.items()]
 
     def update(self, dist: "Distance"):
@@ -501,7 +498,7 @@ class Distance:
         self,
         key: str,
         value: Any,
-        options: Union[List[Any], Tuple[Any, ...], Any],
+        options: Union[list[Any], tuple[Any, ...], Any],
     ):
         """Adds a distance penalty of 1.0 if `value` doesn't match any
         of the values in `options`. If an option is a compiled regular
@@ -544,7 +541,7 @@ class Distance:
         self,
         key: str,
         value: Any,
-        options: Union[List[Any], Tuple[Any, ...], Any],
+        options: Union[list[Any], tuple[Any, ...], Any],
     ):
         """Adds a distance penalty that corresponds to the position at
         which `value` appears in `options`. A distance penalty of 0.0
@@ -593,9 +590,9 @@ class Distance:
 class AlbumMatch(NamedTuple):
     distance: Distance
     info: AlbumInfo
-    mapping: Dict[Item, TrackInfo]
-    extra_items: List[Item]
-    extra_tracks: List[TrackInfo]
+    mapping: dict[Item, TrackInfo]
+    extra_items: list[Item]
+    extra_tracks: list[TrackInfo]
 
 
 class TrackMatch(NamedTuple):
@@ -666,12 +663,12 @@ def invoke_mb(call_func: Callable, *args):
 
 @plugins.notify_info_yielded("albuminfo_received")
 def album_candidates(
-    items: List[Item],
+    items: list[Item],
     artist: str,
     album: str,
     va_likely: bool,
-    extra_tags: Dict,
-) -> Iterable[Tuple]:
+    extra_tags: dict,
+) -> Iterable[tuple]:
     """Search for album matches. ``items`` is a list of Item objects
     that make up the album. ``artist`` and ``album`` are the respective
     names (strings), which may be derived from the item list or may be
@@ -699,7 +696,7 @@ def album_candidates(
 
 
 @plugins.notify_info_yielded("trackinfo_received")
-def item_candidates(item: Item, artist: str, title: str) -> Iterable[Tuple]:
+def item_candidates(item: Item, artist: str, title: str) -> Iterable[tuple]:
     """Search for item matches. ``item`` is the Item to be matched.
     ``artist`` and ``title`` are strings and either reflect the item or
     are specified by the user.
