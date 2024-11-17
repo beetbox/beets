@@ -87,23 +87,29 @@ class AdvancedRewritePluginTest(PluginTestCase):
             assert item.artists == ["유빈", "미미"]
 
     def test_fail_when_replacements_empty(self):
-        with pytest.raises(
-            UserError,
-            match="Advanced rewrites must have at least one replacement",
-        ), self.configure_plugin([{"match": "artist:A", "replacements": {}}]):
+        with (
+            pytest.raises(
+                UserError,
+                match="Advanced rewrites must have at least one replacement",
+            ),
+            self.configure_plugin([{"match": "artist:A", "replacements": {}}]),
+        ):
             pass
 
     def test_fail_when_rewriting_single_valued_field_with_list(self):
-        with pytest.raises(
-            UserError,
-            match="Field artist is not a multi-valued field but a list was given: C, D",
-        ), self.configure_plugin(
-            [
-                {
-                    "match": "artist:'A & B'",
-                    "replacements": {"artist": ["C", "D"]},
-                },
-            ]
+        with (
+            pytest.raises(
+                UserError,
+                match="Field artist is not a multi-valued field but a list was given: C, D",  # noqa: E501
+            ),
+            self.configure_plugin(
+                [
+                    {
+                        "match": "artist:'A & B'",
+                        "replacements": {"artist": ["C", "D"]},
+                    },
+                ]
+            ),
         ):
             pass
 

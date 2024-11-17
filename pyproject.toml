@@ -240,7 +240,7 @@ done
 interpreter = "zsh"
 
 [tool.ruff]
-target-version = "py38"
+target-version = "py39"
 line-length = 80
 
 [tool.ruff.lint]
