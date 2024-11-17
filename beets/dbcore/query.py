@@ -29,7 +29,6 @@ from typing import (
     Generic,
     Iterator,
     MutableSequence,
-    Optional,
     Pattern,
     Sequence,
     TypeVar,
@@ -83,7 +82,7 @@ class Query(ABC):
         """Return a set with field names that this query operates on."""
         return set()
 
-    def clause(self) -> tuple[Optional[str], Sequence[Any]]:
+    def clause(self) -> tuple[str | None, Sequence[Any]]:
         """Generate an SQLite expression implementing the query.
 
         Return (clause, subvals) where clause is a valid sqlite
@@ -149,7 +148,7 @@ class FieldQuery(Query, Generic[P]):
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
         return self.field, ()
 
-    def clause(self) -> tuple[Optional[str], Sequence[SQLiteType]]:
+    def clause(self) -> tuple[str | None, Sequence[SQLiteType]]:
         if self.fast:
             return self.col_clause()
         else:
@@ -329,7 +328,7 @@ class BytesQuery(FieldQuery[bytes]):
     `MatchQuery` when matching on BLOB values.
     """
 
-    def __init__(self, field_name: str, pattern: Union[bytes, str, memoryview]):
+    def __init__(self, field_name: str, pattern: bytes | str | memoryview):
         # Use a buffer/memoryview representation of the pattern for SQLite
         # matching. This instructs SQLite to treat the blob as binary
         # rather than encoded Unicode.
@@ -364,7 +363,7 @@ class NumericQuery(FieldQuery[str]):
     a float.
     """
 
-    def _convert(self, s: str) -> Union[float, int, None]:
+    def _convert(self, s: str) -> float | int | None:
         """Convert a string to a numeric type (float or int).
 
         Return None if `s` is empty.
@@ -481,7 +480,7 @@ class CollectionQuery(Query):
     def clause_with_joiner(
         self,
         joiner: str,
-    ) -> tuple[Optional[str], Sequence[SQLiteType]]:
+    ) -> tuple[str | None, Sequence[SQLiteType]]:
         """Return a clause created by joining together the clauses of
         all subqueries with the string joiner (padded by spaces).
         """
@@ -532,7 +531,7 @@ class AnyFieldQuery(CollectionQuery):
         # TYPING ERROR
         super().__init__(subqueries)
 
-    def clause(self) -> tuple[Optional[str], Sequence[SQLiteType]]:
+    def clause(self) -> tuple[str | None, Sequence[SQLiteType]]:
         return self.clause_with_joiner("or")
 
     def match(self, obj: Model) -> bool:
@@ -571,7 +570,7 @@ class MutableCollectionQuery(CollectionQuery):
 class AndQuery(MutableCollectionQuery):
     """A conjunction of a list of other queries."""
 
-    def clause(self) -> tuple[Optional[str], Sequence[SQLiteType]]:
+    def clause(self) -> tuple[str | None, Sequence[SQLiteType]]:
         return self.clause_with_joiner("and")
 
     def match(self, obj: Model) -> bool:
@@ -581,7 +580,7 @@ class AndQuery(MutableCollectionQuery):
 class OrQuery(MutableCollectionQuery):
     """A conjunction of a list of other queries."""
 
-    def clause(self) -> tuple[Optional[str], Sequence[SQLiteType]]:
+    def clause(self) -> tuple[str | None, Sequence[SQLiteType]]:
         return self.clause_with_joiner("or")
 
     def match(self, obj: Model) -> bool:
@@ -601,7 +600,7 @@ class NotQuery(Query):
     def __init__(self, subquery):
         self.subquery = subquery
 
-    def clause(self) -> tuple[Optional[str], Sequence[SQLiteType]]:
+    def clause(self) -> tuple[str | None, Sequence[SQLiteType]]:
         clause, subvals = self.subquery.clause()
         if clause:
             return f"not ({clause})", subvals
@@ -646,7 +645,7 @@ class FalseQuery(Query):
 # Time/date queries.
 
 
-def _parse_periods(pattern: str) -> tuple[Optional[Period], Optional[Period]]:
+def _parse_periods(pattern: str) -> tuple[Period | None, Period | None]:
     """Parse a string containing two dates separated by two dots (..).
     Return a pair of `Period` objects.
     """
@@ -692,7 +691,7 @@ class Period:
         self.precision = precision
 
     @classmethod
-    def parse(cls: type[Period], string: str) -> Optional[Period]:
+    def parse(cls: type[Period], string: str) -> Period | None:
         """Parse a date and return a `Period` object or `None` if the
         string is empty, or raise an InvalidQueryArgumentValueError if
         the string cannot be parsed to a date.
@@ -711,7 +710,7 @@ class Period:
 
         def find_date_and_format(
             string: str,
-        ) -> Union[tuple[None, None], tuple[datetime, int]]:
+        ) -> tuple[None, None] | tuple[datetime, int]:
             for ord, format in enumerate(cls.date_formats):
                 for format_option in format:
                     try:
@@ -725,7 +724,7 @@ class Period:
         if not string:
             return None
 
-        date: Optional[datetime]
+        date: datetime | None
 
         # Check for a relative date.
         match_dq = re.match(cls.relative_re, string)
@@ -785,7 +784,7 @@ class DateInterval:
     A right endpoint of None means towards infinity.
     """
 
-    def __init__(self, start: Optional[datetime], end: Optional[datetime]):
+    def __init__(self, start: datetime | None, end: datetime | None):
         if start is not None and end is not None and not start < end:
             raise ValueError(
                 "start date {} is not before end date {}".format(start, end)
@@ -796,8 +795,8 @@ class DateInterval:
     @classmethod
     def from_periods(
         cls,
-        start: Optional[Period],
-        end: Optional[Period],
+        start: Period | None,
+        end: Period | None,
     ) -> DateInterval:
         """Create an interval with two Periods as the endpoints."""
         end_date = end.open_right_endpoint() if end is not None else None
@@ -871,7 +870,7 @@ class DurationQuery(NumericQuery):
     or M:SS time interval.
     """
 
-    def _convert(self, s: str) -> Optional[float]:
+    def _convert(self, s: str) -> float | None:
         """Convert a M:SS or numeric string to a float.
 
         Return None if `s` is empty.
@@ -898,7 +897,7 @@ class Sort:
     the database.
     """
 
-    def order_clause(self) -> Optional[str]:
+    def order_clause(self) -> str | None:
         """Generates a SQL fragment to be used in a ORDER BY clause, or
         None if no fragment is used (i.e., this is a slow sort).
         """
@@ -927,7 +926,7 @@ class Sort:
 class MultipleSort(Sort):
     """Sort that encapsulates multiple sub-sorts."""
 
-    def __init__(self, sorts: Optional[list[Sort]] = None):
+    def __init__(self, sorts: list[Sort] | None = None):
         self.sorts = sorts or []
 
     def add_sort(self, sort: Sort):
