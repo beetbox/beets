@@ -89,10 +89,7 @@ Other changes:
   :bug:`5185`
 * Changed `bitesize` label to `good first issue`. Our 
   [contribute](https://github.com/beetbox/beets/contribute) page is now
-  automatically populated with these issues. We are always looking for new
-  contributors! We pride ourselves on our friendliness, so whether you
-  are a novice coder or writer, or program professionally, we welcome
-  your contributions! :bug:`4855`
+  automatically populated with these issues. :bug:`4855`
 
 2.0.0 (May 30, 2024)
 --------------------
