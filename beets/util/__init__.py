@@ -28,20 +28,19 @@ import sys
 import tempfile
 import traceback
 from collections import Counter
+from collections.abc import Iterator, Sequence
 from contextlib import suppress
 from enum import Enum
 from importlib import import_module
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
+from re import Pattern
 from typing import (
     TYPE_CHECKING,
     Any,
     AnyStr,
     Callable,
-    Iterator,
     NamedTuple,
-    Pattern,
-    Sequence,
     TypeVar,
     Union,
 )

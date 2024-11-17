@@ -24,21 +24,10 @@ import threading
 import time
 from abc import ABC
 from collections import defaultdict
+from collections.abc import Generator, Iterable, Iterator, Mapping, Sequence
 from sqlite3 import Connection
 from types import TracebackType
-from typing import (
-    Any,
-    AnyStr,
-    Callable,
-    Generator,
-    Generic,
-    Iterable,
-    Iterator,
-    Mapping,
-    Sequence,
-    TypeVar,
-    cast,
-)
+from typing import Any, AnyStr, Callable, Generic, TypeVar, cast
 
 from unidecode import unidecode
 
@@ -1131,7 +1120,7 @@ class Database:
                 conn.close()
 
     @contextlib.contextmanager
-    def _tx_stack(self) -> Generator[list, None, None]:
+    def _tx_stack(self) -> Generator[list]:
         """A context manager providing access to the current thread's
         transaction stack. The context manager synchronizes access to
         the stack map. Transactions should never migrate across threads.

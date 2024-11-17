@@ -20,8 +20,9 @@ from __future__ import annotations
 
 import datetime
 import re
+from collections.abc import Iterable, Sequence
 from enum import IntEnum
-from typing import Any, Iterable, NamedTuple, Sequence, TypeVar, Union, cast
+from typing import Any, NamedTuple, TypeVar, Union, cast
 
 from munkres import Munkres
 

@@ -18,8 +18,9 @@ from __future__ import annotations
 import os.path
 import sys
 import unittest
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Callable, Iterator
+from typing import Callable
 
 from beets import plugins
 from beets.test.helper import PluginTestCase, capture_log

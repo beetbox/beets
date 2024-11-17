@@ -17,9 +17,10 @@
 import os
 import re
 import sys
+from collections.abc import Mapping
 from dataclasses import dataclass
 from mimetypes import guess_type
-from typing import ClassVar, Mapping
+from typing import ClassVar
 
 from flask import (
     Blueprint,

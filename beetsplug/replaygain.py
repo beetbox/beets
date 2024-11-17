@@ -26,11 +26,12 @@ import subprocess
 import sys
 import warnings
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from dataclasses import dataclass
 from logging import Logger
 from multiprocessing.pool import ThreadPool
 from threading import Event, Thread
-from typing import Any, Callable, Sequence, TypeVar, cast
+from typing import Any, Callable, TypeVar, cast
 
 from confuse import ConfigView
 

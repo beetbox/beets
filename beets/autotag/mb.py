@@ -19,8 +19,9 @@ from __future__ import annotations
 import re
 import traceback
 from collections import Counter
+from collections.abc import Iterator, Sequence
 from itertools import product
-from typing import Any, Iterator, Sequence, cast
+from typing import Any, cast
 from urllib.parse import urljoin
 
 import musicbrainzngs
