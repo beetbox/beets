@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import itertools
 import re
-from typing import Collection, Sequence
+from collections.abc import Collection, Sequence
 
 from . import Model, query
 from .query import Sort

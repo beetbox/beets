@@ -19,21 +19,12 @@ from __future__ import annotations
 import re
 import unicodedata
 from abc import ABC, abstractmethod
+from collections.abc import Collection, Iterator, MutableSequence, Sequence
 from datetime import datetime, timedelta
 from functools import reduce
 from operator import mul, or_
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Collection,
-    Generic,
-    Iterator,
-    MutableSequence,
-    Pattern,
-    Sequence,
-    TypeVar,
-    Union,
-)
+from re import Pattern
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, Union
 
 from beets import util
 
