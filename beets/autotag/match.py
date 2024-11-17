@@ -21,16 +21,7 @@ from __future__ import annotations
 import datetime
 import re
 from enum import IntEnum
-from typing import (
-    Any,
-    Iterable,
-    NamedTuple,
-    Optional,
-    Sequence,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import Any, Iterable, NamedTuple, Sequence, TypeVar, Union, cast
 
 from munkres import Munkres
 
@@ -474,8 +465,8 @@ def _add_candidate(
 
 def tag_album(
     items,
-    search_artist: Optional[str] = None,
-    search_album: Optional[str] = None,
+    search_artist: str | None = None,
+    search_album: str | None = None,
     search_ids: list[str] = [],
 ) -> tuple[str, str, Proposal]:
     """Return a tuple of the current artist name, the current album
@@ -566,9 +557,9 @@ def tag_album(
 
 def tag_item(
     item,
-    search_artist: Optional[str] = None,
-    search_title: Optional[str] = None,
-    search_ids: Optional[list[str]] = None,
+    search_artist: str | None = None,
+    search_title: str | None = None,
+    search_ids: list[str] | None = None,
 ) -> Proposal:
     """Find metadata for a single track. Return a `Proposal` consisting
     of `TrackMatch` objects.
@@ -581,7 +572,7 @@ def tag_item(
     # Holds candidates found so far: keys are MBIDs; values are
     # (distance, TrackInfo) pairs.
     candidates = {}
-    rec: Optional[Recommendation] = None
+    rec: Recommendation | None = None
 
     # First, try matching by MusicBrainz ID.
     trackids = search_ids or [t for t in [item.mb_trackid] if t]

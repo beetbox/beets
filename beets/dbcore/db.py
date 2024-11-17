@@ -35,10 +35,8 @@ from typing import (
     Iterable,
     Iterator,
     Mapping,
-    Optional,
     Sequence,
     TypeVar,
-    Union,
     cast,
 )
 
@@ -115,7 +113,7 @@ class FormattedMapping(Mapping[str, str]):
     def get(  # type: ignore
         self,
         key: str,
-        default: Optional[str] = None,
+        default: str | None = None,
     ) -> str:
         """Similar to Mapping.get(key, default), but always formats to str."""
         if default is None:
@@ -215,7 +213,7 @@ class LazyConvertDict:
         for key in self:
             yield key, self[key]
 
-    def get(self, key: str, default: Optional[Any] = None):
+    def get(self, key: str, default: Any | None = None):
         """Get the value for a given key or `default` if it does not
         exist.
         """
@@ -358,7 +356,7 @@ class Model(ABC):
 
     # Basic operation.
 
-    def __init__(self, db: Optional[Database] = None, **values):
+    def __init__(self, db: Database | None = None, **values):
         """Create a new object with an optional Database association and
         initial field values.
         """
@@ -374,7 +372,7 @@ class Model(ABC):
     @classmethod
     def _awaken(
         cls: type[AnyModel],
-        db: Optional[Database] = None,
+        db: Database | None = None,
         fixed_values: dict[str, Any] = {},
         flex_values: dict[str, Any] = {},
     ) -> AnyModel:
@@ -574,7 +572,7 @@ class Model(ABC):
 
     # Database interaction (CRUD methods).
 
-    def store(self, fields: Optional[Iterable[str]] = None):
+    def store(self, fields: Iterable[str] | None = None):
         """Save the object's metadata into the library database.
         :param fields: the fields to be stored. If not specified, all fields
         will be.
@@ -648,7 +646,7 @@ class Model(ABC):
                 f"DELETE FROM {self._flex_table} WHERE entity_id=?", (self.id,)
             )
 
-    def add(self, db: Optional[Database] = None):
+    def add(self, db: Database | None = None):
         """Add the object to the library database. This object must be
         associated with a database; you can provide one via the `db`
         parameter or use the currently associated database.
@@ -687,7 +685,7 @@ class Model(ABC):
 
     def evaluate_template(
         self,
-        template: Union[str, functemplate.Template],
+        template: str | functemplate.Template,
         for_path: bool = False,
     ) -> str:
         """Evaluate a template (a string or a `Template` object) using
@@ -763,7 +761,7 @@ class Results(Generic[AnyModel]):
         rows: list[Mapping],
         db: Database,
         flex_rows,
-        query: Optional[Query] = None,
+        query: Query | None = None,
         sort=None,
     ):
         """Create a result set that will construct objects of type
@@ -907,7 +905,7 @@ class Results(Generic[AnyModel]):
         except StopIteration:
             raise IndexError(f"result index {n} out of range")
 
-    def get(self) -> Optional[AnyModel]:
+    def get(self) -> AnyModel | None:
         """Return the first matching object, or None if no objects
         match.
         """
@@ -1105,7 +1103,7 @@ class Database:
                 value = value.decode()
             return re.search(pattern, str(value)) is not None
 
-        def bytelower(bytestring: Optional[AnyStr]) -> Optional[AnyStr]:
+        def bytelower(bytestring: AnyStr | None) -> AnyStr | None:
             """A custom ``bytelower`` sqlite function so we can compare
             bytestrings in a semi case insensitive fashion.
 
@@ -1227,8 +1225,8 @@ class Database:
     def _fetch(
         self,
         model_cls: type[AnyModel],
-        query: Optional[Query] = None,
-        sort: Optional[Sort] = None,
+        query: Query | None = None,
+        sort: Sort | None = None,
     ) -> Results[AnyModel]:
         """Fetch the objects of type `model_cls` matching the given
         query. The query may be given as a string, string sequence, a
@@ -1286,7 +1284,7 @@ class Database:
         self,
         model_cls: type[AnyModel],
         id,
-    ) -> Optional[AnyModel]:
+    ) -> AnyModel | None:
         """Get a Model object by its id or None if the id does not
         exist.
         """

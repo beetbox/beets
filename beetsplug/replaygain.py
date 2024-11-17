@@ -13,6 +13,8 @@
 # included in all copies or substantial portions of the Software.
 
 
+from __future__ import annotations
+
 import collections
 import enum
 import math
@@ -28,7 +30,7 @@ from dataclasses import dataclass
 from logging import Logger
 from multiprocessing.pool import ThreadPool
 from threading import Event, Thread
-from typing import Any, Callable, Optional, Sequence, TypeVar, Union, cast
+from typing import Any, Callable, Sequence, TypeVar, cast
 
 from confuse import ConfigView
 
@@ -121,9 +123,9 @@ class RgTask:
     def __init__(
         self,
         items: Sequence[Item],
-        album: Optional[Album],
+        album: Album | None,
         target_level: float,
-        peak_method: Optional[PeakMethod],
+        peak_method: PeakMethod | None,
         backend_name: str,
         log: Logger,
     ):
@@ -133,8 +135,8 @@ class RgTask:
         self.peak_method = peak_method
         self.backend_name = backend_name
         self._log = log
-        self.album_gain: Optional[Gain] = None
-        self.track_gains: Optional[list[Gain]] = None
+        self.album_gain: Gain | None = None
+        self.track_gains: list[Gain] | None = None
 
     def _store_track_gain(self, item: Item, track_gain: Gain):
         """Store track gain for a single item in the database."""
@@ -223,7 +225,7 @@ class R128Task(RgTask):
     def __init__(
         self,
         items: Sequence[Item],
-        album: Optional[Album],
+        album: Album | None,
         target_level: float,
         backend_name: str,
         log: Logger,
@@ -396,8 +398,8 @@ class FfmpegBackend(Backend):
         return task
 
     def _construct_cmd(
-        self, item: Item, peak_method: Optional[PeakMethod]
-    ) -> list[Union[str, bytes]]:
+        self, item: Item, peak_method: PeakMethod | None
+    ) -> list[str | bytes]:
         """Construct the shell command to analyse items."""
         return [
             self._ffmpeg_path,
@@ -420,7 +422,7 @@ class FfmpegBackend(Backend):
         self,
         item: Item,
         target_level: float,
-        peak_method: Optional[PeakMethod],
+        peak_method: PeakMethod | None,
         count_blocks: bool = True,
     ) -> tuple[Gain, int]:
         """Analyse item. Return a pair of a Gain object and the number
@@ -654,7 +656,7 @@ class CommandBackend(Backend):
         # tag-writing; this turns the mp3gain/aacgain tool into a gain
         # calculator rather than a tag manipulator because we take care
         # of changing tags ourselves.
-        cmd: list[Union[bytes, str]] = [self.command, "-o", "-s", "s"]
+        cmd: list[bytes | str] = [self.command, "-o", "-s", "s"]
         if self.noclip:
             # Adjust to avoid clipping.
             cmd = cmd + ["-k"]
@@ -1179,7 +1181,7 @@ class ExceptionWatcher(Thread):
                 #  whether `_stopevent` is set
                 pass
 
-    def join(self, timeout: Optional[float] = None):
+    def join(self, timeout: float | None = None):
         self._stopevent.set()
         Thread.join(self, timeout)
 
@@ -1319,7 +1321,7 @@ class ReplayGainPlugin(BeetsPlugin):
         self,
         items: Sequence[Item],
         use_r128: bool,
-        album: Optional[Album] = None,
+        album: Album | None = None,
     ) -> RgTask:
         if use_r128:
             return R128Task(
