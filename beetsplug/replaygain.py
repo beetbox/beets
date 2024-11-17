@@ -28,20 +28,7 @@ from dataclasses import dataclass
 from logging import Logger
 from multiprocessing.pool import ThreadPool
 from threading import Event, Thread
-from typing import (
-    Any,
-    Callable,
-    DefaultDict,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import Any, Callable, Optional, Sequence, TypeVar, Union, cast
 
 from confuse import ConfigView
 
@@ -69,7 +56,7 @@ class FatalGstreamerPluginReplayGainError(FatalReplayGainError):
     loading the required plugins."""
 
 
-def call(args: List[Any], log: Logger, **kwargs: Any):
+def call(args: list[Any], log: Logger, **kwargs: Any):
     """Execute the command and return its output or raise a
     ReplayGainError on failure.
     """
@@ -147,7 +134,7 @@ class RgTask:
         self.backend_name = backend_name
         self._log = log
         self.album_gain: Optional[Gain] = None
-        self.track_gains: Optional[List[Gain]] = None
+        self.track_gains: Optional[list[Gain]] = None
 
     def _store_track_gain(self, item: Item, track_gain: Gain):
         """Store track gain for a single item in the database."""
@@ -348,7 +335,7 @@ class FfmpegBackend(Backend):
 
         # analyse tracks
         # Gives a list of tuples (track_gain, track_n_blocks)
-        track_results: List[Tuple[Gain, int]] = [
+        track_results: list[tuple[Gain, int]] = [
             self._analyse_item(
                 item,
                 task.target_level,
@@ -358,7 +345,7 @@ class FfmpegBackend(Backend):
             for item in task.items
         ]
 
-        track_gains: List[Gain] = [tg for tg, _nb in track_results]
+        track_gains: list[Gain] = [tg for tg, _nb in track_results]
 
         # Album peak is maximum track peak
         album_peak = max(tg.peak for tg in track_gains)
@@ -410,7 +397,7 @@ class FfmpegBackend(Backend):
 
     def _construct_cmd(
         self, item: Item, peak_method: Optional[PeakMethod]
-    ) -> List[Union[str, bytes]]:
+    ) -> list[Union[str, bytes]]:
         """Construct the shell command to analyse items."""
         return [
             self._ffmpeg_path,
@@ -435,7 +422,7 @@ class FfmpegBackend(Backend):
         target_level: float,
         peak_method: Optional[PeakMethod],
         count_blocks: bool = True,
-    ) -> Tuple[Gain, int]:
+    ) -> tuple[Gain, int]:
         """Analyse item. Return a pair of a Gain object and the number
         of gating blocks above the threshold.
 
@@ -647,7 +634,7 @@ class CommandBackend(Backend):
         items: Sequence[Item],
         target_level: float,
         is_album: bool,
-    ) -> List[Gain]:
+    ) -> list[Gain]:
         """Computes the track or album gain of a list of items, returns
         a list of TrackGain objects.
 
@@ -667,7 +654,7 @@ class CommandBackend(Backend):
         # tag-writing; this turns the mp3gain/aacgain tool into a gain
         # calculator rather than a tag manipulator because we take care
         # of changing tags ourselves.
-        cmd: List[Union[bytes, str]] = [self.command, "-o", "-s", "s"]
+        cmd: list[Union[bytes, str]] = [self.command, "-o", "-s", "s"]
         if self.noclip:
             # Adjust to avoid clipping.
             cmd = cmd + ["-k"]
@@ -685,7 +672,7 @@ class CommandBackend(Backend):
             output, len(items) + (1 if is_album else 0)
         )
 
-    def parse_tool_output(self, text: bytes, num_lines: int) -> List[Gain]:
+    def parse_tool_output(self, text: bytes, num_lines: int) -> list[Gain]:
         """Given the tab-delimited output from an invocation of mp3gain
         or aacgain, parse the text and return a list of dictionaries
         containing information about each analyzed file.
@@ -771,7 +758,7 @@ class GStreamerBackend(Backend):
 
         self._main_loop = self.GLib.MainLoop()
 
-        self._files: List[bytes] = []
+        self._files: list[bytes] = []
 
     def _import_gst(self):
         """Import the necessary GObject-related modules and assign `Gst`
@@ -811,7 +798,7 @@ class GStreamerBackend(Backend):
         self._files = [i.path for i in items]
 
         # FIXME: Turn this into DefaultDict[bytes, Gain]
-        self._file_tags: DefaultDict[bytes, Dict[str, float]] = (
+        self._file_tags: collections.defaultdict[bytes, dict[str, float]] = (
             collections.defaultdict(dict)
         )
 
@@ -1199,13 +1186,13 @@ class ExceptionWatcher(Thread):
 
 # Main plugin logic.
 
-BACKEND_CLASSES: List[Type[Backend]] = [
+BACKEND_CLASSES: list[type[Backend]] = [
     CommandBackend,
     GStreamerBackend,
     AudioToolsBackend,
     FfmpegBackend,
 ]
-BACKENDS: Dict[str, Type[Backend]] = {b.NAME: b for b in BACKEND_CLASSES}
+BACKENDS: dict[str, type[Backend]] = {b.NAME: b for b in BACKEND_CLASSES}
 
 
 class ReplayGainPlugin(BeetsPlugin):
@@ -1375,7 +1362,7 @@ class ReplayGainPlugin(BeetsPlugin):
 
         self._log.info("analyzing {0}", album)
 
-        discs: Dict[int, List[Item]] = {}
+        discs: dict[int, list[Item]] = {}
         if self.config["per_disc"].get(bool):
             for item in album.items():
                 if discs.get(item.disc) is None:
@@ -1447,8 +1434,8 @@ class ReplayGainPlugin(BeetsPlugin):
     def _apply(
         self,
         func: Callable[..., AnyRgTask],
-        args: List[Any],
-        kwds: Dict[str, Any],
+        args: list[Any],
+        kwds: dict[str, Any],
         callback: Callable[[AnyRgTask], Any],
     ):
         if self.pool is not None:
@@ -1525,7 +1512,7 @@ class ReplayGainPlugin(BeetsPlugin):
         self,
         lib: Library,
         opts: optparse.Values,
-        args: List[str],
+        args: list[str],
     ):
         try:
             write = ui.should_write(opts.write)
@@ -1562,7 +1549,7 @@ class ReplayGainPlugin(BeetsPlugin):
             # Silence interrupt exceptions
             pass
 
-    def commands(self) -> List[ui.Subcommand]:
+    def commands(self) -> list[ui.Subcommand]:
         """Return the "replaygain" ui subcommand."""
         cmd = ui.Subcommand("replaygain", help="analyze for ReplayGain")
         cmd.parser.add_album_option()

@@ -16,7 +16,7 @@
 
 import typing
 from abc import ABC
-from typing import Any, Generic, List, TypeVar, Union, cast
+from typing import Any, Generic, TypeVar, Union, cast
 
 from beets.util import str2bool
 
@@ -49,11 +49,11 @@ class Type(ABC, Generic[T, N]):
     """The SQLite column type for the value.
     """
 
-    query: typing.Type[FieldQuery] = SubstringQuery
+    query: type[FieldQuery] = SubstringQuery
     """The `Query` subclass to be used when querying the field.
     """
 
-    model_type: typing.Type[T]
+    model_type: type[T]
     """The Python type that is used to represent the value in the model.
 
     The model is guaranteed to return a value of this type if the field
@@ -232,7 +232,7 @@ class BaseFloat(Type[float, N]):
     """
 
     sql = "REAL"
-    query: typing.Type[FieldQuery[Any]] = NumericQuery
+    query: type[FieldQuery[Any]] = NumericQuery
     model_type = float
 
     def __init__(self, digits: int = 1):
@@ -277,7 +277,7 @@ class String(BaseString[str, Any]):
     model_type = str
 
 
-class DelimitedString(BaseString[List[str], List[str]]):
+class DelimitedString(BaseString[list[str], list[str]]):
     """A list of Unicode strings, represented in-database by a single string
     containing delimiter-separated values.
     """
@@ -287,7 +287,7 @@ class DelimitedString(BaseString[List[str], List[str]]):
     def __init__(self, delimiter: str):
         self.delimiter = delimiter
 
-    def format(self, value: List[str]):
+    def format(self, value: list[str]):
         return self.delimiter.join(value)
 
     def parse(self, string: str):
@@ -295,7 +295,7 @@ class DelimitedString(BaseString[List[str], List[str]]):
             return []
         return string.split(self.delimiter)
 
-    def to_sql(self, model_value: List[str]):
+    def to_sql(self, model_value: list[str]):
         return self.delimiter.join(model_value)
 
 

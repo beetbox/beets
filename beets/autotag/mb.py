@@ -20,7 +20,7 @@ import re
 import traceback
 from collections import Counter
 from itertools import product
-from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, cast
+from typing import Any, Iterator, Optional, Sequence, cast
 from urllib.parse import urljoin
 
 import musicbrainzngs
@@ -131,7 +131,7 @@ def configure():
     )
 
 
-def _preferred_alias(aliases: List):
+def _preferred_alias(aliases: list):
     """Given an list of alias structures for an artist credit, select
     and return the user's preferred alias alias or None if no matching
     alias is found.
@@ -166,7 +166,7 @@ def _preferred_alias(aliases: List):
         return matches[0]
 
 
-def _preferred_release_event(release: Dict[str, Any]) -> Tuple[str, str]:
+def _preferred_release_event(release: dict[str, Any]) -> tuple[str, str]:
     """Given a release, select and return the user's preferred release
     event as a tuple of (country, release_date). Fall back to the
     default release event if a preferred event is not found.
@@ -186,8 +186,8 @@ def _preferred_release_event(release: Dict[str, Any]) -> Tuple[str, str]:
 
 
 def _multi_artist_credit(
-    credit: List[Dict], include_join_phrase: bool
-) -> Tuple[List[str], List[str], List[str]]:
+    credit: list[dict], include_join_phrase: bool
+) -> tuple[list[str], list[str], list[str]]:
     """Given a list representing an ``artist-credit`` block, accumulate
     data into a triple of joined artist name lists: canonical, sort, and
     credit.
@@ -234,7 +234,7 @@ def _multi_artist_credit(
     )
 
 
-def _flatten_artist_credit(credit: List[Dict]) -> Tuple[str, str, str]:
+def _flatten_artist_credit(credit: list[dict]) -> tuple[str, str, str]:
     """Given a list representing an ``artist-credit`` block, flatten the
     data into a triple of joined artist name strings: canonical, sort, and
     credit.
@@ -249,12 +249,12 @@ def _flatten_artist_credit(credit: List[Dict]) -> Tuple[str, str, str]:
     )
 
 
-def _artist_ids(credit: List[Dict]) -> List[str]:
+def _artist_ids(credit: list[dict]) -> list[str]:
     """
     Given a list representing an ``artist-credit``,
     return a list of artist IDs
     """
-    artist_ids: List[str] = []
+    artist_ids: list[str] = []
     for el in credit:
         if isinstance(el, dict):
             artist_ids.append(el["artist"]["id"])
@@ -276,7 +276,7 @@ def _get_related_artist_names(relations, relation_type):
 
 
 def track_info(
-    recording: Dict,
+    recording: dict,
     index: Optional[int] = None,
     medium: Optional[int] = None,
     medium_index: Optional[int] = None,
@@ -400,7 +400,7 @@ def _set_date_str(
                 setattr(info, key, date_num)
 
 
-def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
+def album_info(release: dict) -> beets.autotag.hooks.AlbumInfo:
     """Takes a MusicBrainz release result dictionary and returns a beets
     AlbumInfo object containing the interesting data about that release.
     """
@@ -662,7 +662,7 @@ def match_album(
     artist: str,
     album: str,
     tracks: Optional[int] = None,
-    extra_tags: Optional[Dict[str, Any]] = None,
+    extra_tags: Optional[dict[str, Any]] = None,
 ) -> Iterator[beets.autotag.hooks.AlbumInfo]:
     """Searches for a single album ("release" in MusicBrainz parlance)
     and returns an iterator over AlbumInfo objects. May raise a
@@ -756,8 +756,8 @@ def _is_translation(r):
 
 
 def _find_actual_release_from_pseudo_release(
-    pseudo_rel: Dict,
-) -> Optional[Dict]:
+    pseudo_rel: dict,
+) -> Optional[dict]:
     try:
         relations = pseudo_rel["release"]["release-relation-list"]
     except KeyError:
