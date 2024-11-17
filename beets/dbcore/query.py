@@ -692,7 +692,7 @@ class Period:
         self.precision = precision
 
     @classmethod
-    def parse(cls: type["Period"], string: str) -> Optional["Period"]:
+    def parse(cls: type[Period], string: str) -> Optional[Period]:
         """Parse a date and return a `Period` object or `None` if the
         string is empty, or raise an InvalidQueryArgumentValueError if
         the string cannot be parsed to a date.

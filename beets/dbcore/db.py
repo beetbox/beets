@@ -153,7 +153,7 @@ class FormattedMapping(Mapping[str, str]):
 class LazyConvertDict:
     """Lazily convert types for attributes fetched from the database"""
 
-    def __init__(self, model_cls: "Model"):
+    def __init__(self, model_cls: Model):
         """Initialize the object empty"""
         # FIXME: Dict[str, SQLiteType]
         self._data: dict[str, Any] = {}
@@ -343,7 +343,7 @@ class Model(ABC):
         return cls._relation._fields.keys() - cls.shared_db_fields
 
     @classmethod
-    def _getters(cls: type["Model"]):
+    def _getters(cls: type[Model]):
         """Return a mapping from field names to getter functions."""
         # We could cache this if it becomes a performance problem to
         # gather the getter mapping every time.
@@ -416,7 +416,7 @@ class Model(ABC):
 
         return self._db
 
-    def copy(self) -> "Model":
+    def copy(self) -> Model:
         """Create a copy of the model object.
 
         The field values and other state is duplicated, but the new copy
@@ -648,7 +648,7 @@ class Model(ABC):
                 f"DELETE FROM {self._flex_table} WHERE entity_id=?", (self.id,)
             )
 
-    def add(self, db: Optional["Database"] = None):
+    def add(self, db: Optional[Database] = None):
         """Add the object to the library database. This object must be
         associated with a database; you can provide one via the `db`
         parameter or use the currently associated database.
@@ -732,7 +732,7 @@ class Model(ABC):
 
     @classmethod
     def all_fields_query(
-        cls: type["Model"],
+        cls: type[Model],
         pats: Mapping,
         query_cls: type[FieldQuery] = MatchQuery,
     ):
@@ -761,7 +761,7 @@ class Results(Generic[AnyModel]):
         self,
         model_class: type[AnyModel],
         rows: list[Mapping],
-        db: "Database",
+        db: Database,
         flex_rows,
         query: Optional[Query] = None,
         sort=None,
@@ -928,10 +928,10 @@ class Transaction:
     current transaction.
     """
 
-    def __init__(self, db: "Database"):
+    def __init__(self, db: Database):
         self.db = db
 
-    def __enter__(self) -> "Transaction":
+    def __enter__(self) -> Transaction:
         """Begin a transaction. This transaction may be created while
         another is active in a different thread.
         """
