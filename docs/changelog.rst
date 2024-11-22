@@ -7,9 +7,19 @@ Unreleased
 ----------
 
 New features:
+
+* :doc:`/plugins/substitute`: Allow the replacement string to use capture groups
+  from the match. It is thus possible to create more general rules, applying to
+  many different artists at once.
+
 Bug fixes:
 For packagers:
+
 Other changes:
+
+* Changed `bitesize` label to `good first issue`. Our
+  [contribute](https://github.com/beetbox/beets/contribute) page is now
+  automatically populated with these issues. :bug:`4855`
 
 2.1.0 (November 22, 2024)
 -------------------------
@@ -31,9 +41,6 @@ New features:
 * Beets now uses ``platformdirs`` to determine the default music directory.
   This location varies between systems -- for example, users can configure it
   on Unix systems via ``user-dirs.dirs(5)``.
-* :doc:`/plugins/substitute`: Allow the replacement string to use capture groups
-  from the match. It is thus possible to create more general rules, applying to
-  many different artists at once.
 
 Bug fixes:
 
@@ -103,9 +110,6 @@ Other changes:
   calculate the bpm. Previously this import was being done immediately, so
   every ``beet`` invocation was being delayed by a couple of seconds.
   :bug:`5185`
-* Changed `bitesize` label to `good first issue`. Our 
-  [contribute](https://github.com/beetbox/beets/contribute) page is now
-  automatically populated with these issues. :bug:`4855`
 
 2.0.0 (May 30, 2024)
 --------------------
