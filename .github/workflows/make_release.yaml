@@ -106,7 +106,7 @@ jobs:
 
       - name: Tag the commit
         id: tag_version
-        uses: mathieudutour/github-tag-action@v6
+        uses: mathieudutour/github-tag-action@v6.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           custom_tag: ${{ env.NEW_VERSION }}
