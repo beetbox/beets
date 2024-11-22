@@ -7,6 +7,14 @@ Unreleased
 ----------
 
 New features:
+Bug fixes:
+For packagers:
+Other changes:
+
+2.1.0 (November 22, 2024)
+-------------------------
+
+New features:
 
 * New template function added: ``%capitalize``. Converts the first letter of
   the text to uppercase and the rest to lowercase.
