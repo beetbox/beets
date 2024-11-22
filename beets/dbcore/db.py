@@ -26,8 +26,7 @@ from abc import ABC
 from collections import defaultdict
 from collections.abc import Generator, Iterable, Iterator, Mapping, Sequence
 from sqlite3 import Connection
-from types import TracebackType
-from typing import Any, AnyStr, Callable, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Any, AnyStr, Callable, Generic, TypeVar, cast
 
 from unidecode import unidecode
 
@@ -44,6 +43,9 @@ from .query import (
     Sort,
     TrueQuery,
 )
+
+if TYPE_CHECKING:
+    from types import TracebackType
 
 
 class DBAccessError(Exception):

@@ -22,7 +22,7 @@ import datetime
 import re
 from collections.abc import Iterable, Sequence
 from enum import IntEnum
-from typing import Any, NamedTuple, TypeVar, Union, cast
+from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar, Union, cast
 
 from munkres import Munkres
 
@@ -35,8 +35,10 @@ from beets.autotag import (
     TrackMatch,
     hooks,
 )
-from beets.library import Item
 from beets.util import plurality
+
+if TYPE_CHECKING:
+    from beets.library import Item
 
 # Artist signals that indicate "various artists". These are used at the
 # album level to determine whether a given release is likely a VA
