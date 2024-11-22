@@ -56,7 +56,12 @@ jobs:
         run: sudo apt update && sudo apt install pandoc -y
 
       - name: Obtain the changelog
-        run: echo "changelog=$(poe changelog)" >> $GITHUB_OUTPUT
+        run: |
+          {
+            echo 'changelog<<EOF'
+            poe changelog
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
 
       - name: Build a binary wheel and a source tarball
         run: poetry build
