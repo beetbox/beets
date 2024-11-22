@@ -503,12 +503,8 @@ class PluginMixin:
         Album._queries = getattr(Album, "_original_queries", {})
 
     @contextmanager
-    def configure_plugin(self, config: list[Any] | dict[str, Any]):
-        if isinstance(config, list):
-            beets.config[self.plugin] = config
-        else:
-            for key, value in config.items():
-                beets.config[self.plugin][key] = value
+    def configure_plugin(self, config: Any):
+        beets.config[self.plugin].set(config)
         self.load_plugins(self.plugin)
 
         yield
