@@ -103,6 +103,9 @@ Other changes:
   calculate the bpm. Previously this import was being done immediately, so
   every ``beet`` invocation was being delayed by a couple of seconds.
   :bug:`5185`
+* Changed `bitesize` label to `good first issue`. Our 
+  [contribute](https://github.com/beetbox/beets/contribute) page is now
+  automatically populated with these issues. :bug:`4855`
 
 2.0.0 (May 30, 2024)
 --------------------
