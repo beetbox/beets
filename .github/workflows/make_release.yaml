@@ -98,7 +98,7 @@ jobs:
   make-github-release:
     name: Create GitHub release
     runs-on: ubuntu-latest
-    needs: publish-to-pypi
+    needs: [build, publish-to-pypi]
     env:
       CHANGELOG: ${{ needs.build.outputs.changelog }}
     steps:
@@ -114,7 +114,7 @@ jobs:
           custom_tag: ${{ env.NEW_VERSION }}
 
       - name: Download all the dists
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: python-package-distributions
           path: dist/
