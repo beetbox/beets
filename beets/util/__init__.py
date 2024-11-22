@@ -28,7 +28,6 @@ import sys
 import tempfile
 import traceback
 from collections import Counter
-from collections.abc import Iterator, Sequence
 from contextlib import suppress
 from enum import Enum
 from importlib import import_module
@@ -50,6 +49,7 @@ from unidecode import unidecode
 from beets.util import hidden
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
     from logging import Logger
 
 if sys.version_info >= (3, 10):

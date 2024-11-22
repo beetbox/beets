@@ -16,13 +16,16 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from typing import TYPE_CHECKING
 
 import librosa
 
-from beets.importer import ImportTask
-from beets.library import Item, Library
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, should_write
+
+if TYPE_CHECKING:
+    from beets.importer import ImportTask
+    from beets.library import Item, Library
 
 
 class AutoBPMPlugin(BeetsPlugin):

@@ -18,7 +18,6 @@ from __future__ import annotations
 import collections
 import enum
 import math
-import optparse
 import os
 import queue
 import signal
@@ -26,20 +25,24 @@ import subprocess
 import sys
 import warnings
 from abc import ABC, abstractmethod
-from collections.abc import Sequence
 from dataclasses import dataclass
-from logging import Logger
 from multiprocessing.pool import ThreadPool
 from threading import Event, Thread
-from typing import Any, Callable, TypeVar, cast
-
-from confuse import ConfigView
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 from beets import ui
-from beets.importer import ImportSession, ImportTask
-from beets.library import Album, Item, Library
 from beets.plugins import BeetsPlugin
 from beets.util import command_output, displayable_path, syspath
+
+if TYPE_CHECKING:
+    import optparse
+    from collections.abc import Sequence
+    from logging import Logger
+
+    from confuse import ConfigView
+
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Album, Item, Library
 
 # Utilities.
 
