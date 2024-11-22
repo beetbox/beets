@@ -13,6 +13,11 @@ New features:
   many different artists at once.
 
 Bug fixes:
+
+* Check if running python from the Microsoft Store and provide feedback to install
+  from python.org.
+  :bug:`5467`
+
 For packagers:
 
 Other changes:
