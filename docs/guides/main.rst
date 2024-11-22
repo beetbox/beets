@@ -136,7 +136,7 @@ Installing on ARM (Raspberry Pi and similar)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Beets on ARM devices is not recommended for Linux novices. If you are
-comfortable with light troubleshooting in tools like `pip`, `make`,
+comfortable with light troubleshooting in tools like ``pip``, ``make``,
 and beets' command-line binary dependencies (e.g. `ffmpeg` and
 `ImageMagick`), you will probably be okay on ARM devices like the
 Raspberry Pi. See [here](https://github.com/beetbox/beets/discussions/4910)
