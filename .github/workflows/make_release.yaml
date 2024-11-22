@@ -42,6 +42,8 @@ jobs:
     needs: increment-version
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.increment-version.outputs.commit_long_sha }}
       - name: Install Python tools
         uses: BrandonLWhite/pipx-install-action@v0.1.1
       - uses: actions/setup-python@v5
@@ -97,6 +99,10 @@ jobs:
     env:
       CHANGELOG: ${{ needs.build.outputs.changelog }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.increment-version.outputs.commit_long_sha }}
+
       - name: Tag the commit
         id: tag_version
         uses: mathieudutour/github-tag-action@v6
