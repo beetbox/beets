@@ -31,6 +31,9 @@ New features:
 * Beets now uses ``platformdirs`` to determine the default music directory.
   This location varies between systems -- for example, users can configure it
   on Unix systems via ``user-dirs.dirs(5)``.
+* :doc:`/plugins/substitute`: Allow the replacement string to use capture groups
+  from the match. It is thus possible to create more general rules, applying to
+  many different artists at once.
 
 Bug fixes:
 
