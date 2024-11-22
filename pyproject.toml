@@ -248,6 +248,7 @@ select = [
     "PT", # flake8-pytest-style
     # "RUF", # ruff
     # "UP", # pyupgrade
+    "TCH", # flake8-type-checking
     "W", # pycodestyle
 ]
 [tool.ruff.lint.per-file-ignores]

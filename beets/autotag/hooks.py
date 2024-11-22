@@ -17,17 +17,20 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Iterable, Iterator
 from functools import total_ordering
-from typing import Any, Callable, NamedTuple, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Callable, NamedTuple, TypeVar, cast
 
 from jellyfish import levenshtein_distance
 from unidecode import unidecode
 
 from beets import config, logging, plugins
 from beets.autotag import mb
-from beets.library import Item
 from beets.util import as_string, cached_classproperty
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator
+
+    from beets.library import Item
 
 log = logging.getLogger("beets")
 

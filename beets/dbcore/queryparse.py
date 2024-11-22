@@ -18,10 +18,14 @@ from __future__ import annotations
 
 import itertools
 import re
-from collections.abc import Collection, Sequence
+from typing import TYPE_CHECKING
 
 from . import Model, query
-from .query import Sort
+
+if TYPE_CHECKING:
+    from collections.abc import Collection, Sequence
+
+    from .query import Sort
 
 PARSE_QUERY_PART_REGEX = re.compile(
     # Non-capturing optional segment for the keyword.
