@@ -17,6 +17,9 @@ Bug fixes:
 * Check if running python from the Microsoft Store and provide feedback to install
   from python.org.
   :bug:`5467`
+* Fix bug where matcher doesn't consider medium number when importing. This makes
+  it difficult to import hybrid SACDs and other releases with duplicate tracks.
+  :bug:`5148`
 
 For packagers:
 
