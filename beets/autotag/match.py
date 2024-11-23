@@ -208,6 +208,10 @@ def track_distance(
     if item.mb_trackid:
         dist.add_expr("track_id", item.mb_trackid != track_info.track_id)
 
+    # Penalize mismatching disc numbers.
+    if track_info.medium and item.disc:
+        dist.add_expr("medium", item.disc != track_info.medium)
+
     # Plugins.
     dist.update(plugins.track_distance(item, track_info))
 
