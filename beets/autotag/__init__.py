@@ -113,12 +113,12 @@ SPECIAL_FIELDS = {
 def _apply_metadata(
     info: AlbumInfo | TrackInfo,
     db_obj: Album | Item,
-    nullable_fields: Sequence[str] = [],
+    null_fields: bool = True,
 ):
     """Set the db_obj's metadata to match the info."""
-    special_fields = SPECIAL_FIELDS[
-        "album" if isinstance(info, AlbumInfo) else "track"
-    ]
+    key = "album" if isinstance(info, AlbumInfo) else "track"
+    special_fields = set(SPECIAL_FIELDS[key])
+    nullable_fields = set(config["overwrite_null"][key].as_str_seq())
 
     for field, value in info.items():
         # We only overwrite fields that are not already hardcoded.
@@ -127,7 +127,7 @@ def _apply_metadata(
 
         # Don't overwrite fields with empty values unless the
         # field is explicitly allowed to be overwritten.
-        if value is None and field not in nullable_fields:
+        if null_fields and value is None and field not in nullable_fields:
             continue
 
         db_obj[field] = value
@@ -200,7 +200,7 @@ def apply_item_metadata(item: Item, track_info: TrackInfo):
 
 def apply_album_metadata(album_info: AlbumInfo, album: Album):
     """Set the album's metadata to match the AlbumInfo object."""
-    _apply_metadata(album_info, album)
+    _apply_metadata(album_info, album, null_fields=False)
     correct_list_fields(album)
 
 
@@ -314,16 +314,7 @@ def apply_metadata(
         # Track alt.
         item.track_alt = track_info.track_alt
 
-        _apply_metadata(
-            album_info,
-            item,
-            nullable_fields=config["overwrite_null"]["album"].as_str_seq(),
-        )
-
-        _apply_metadata(
-            track_info,
-            item,
-            nullable_fields=config["overwrite_null"]["track"].as_str_seq(),
-        )
+        _apply_metadata(album_info, item)
+        _apply_metadata(track_info, item)
 
         correct_list_fields(item)
