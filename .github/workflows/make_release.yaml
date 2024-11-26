@@ -40,6 +40,8 @@ jobs:
     name: Get changelog and build the distribution package
     runs-on: ubuntu-latest
     needs: increment-version
+    outputs:
+      changelog: ${{ steps.generate_changelog.outputs.changelog }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -59,6 +61,7 @@ jobs:
         run: sudo apt update && sudo apt install pandoc -y
 
       - name: Obtain the changelog
+        id: generate_changelog
         run: |
           {
             echo 'changelog<<EOF'
