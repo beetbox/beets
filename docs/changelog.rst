@@ -20,6 +20,8 @@ Bug fixes:
 * Fix bug where matcher doesn't consider medium number when importing. This makes
   it difficult to import hybrid SACDs and other releases with duplicate tracks.
   :bug:`5148`
+* Bring back test files and the manual to the source distribution tarball.
+  :bug:`5513`
 
 For packagers:
 
