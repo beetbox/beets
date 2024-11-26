@@ -26,6 +26,7 @@ packages = [
     { include = "beets" },
     { include = "beetsplug" },
 ]
+include = ["test", "man/**/*"] # extra files to include in the sdist
 
 [tool.poetry.urls]
 Changelog = "https://github.com/beetbox/beets/blob/master/docs/changelog.rst"
@@ -148,6 +149,15 @@ build-backend = "poetry.core.masonry.api"
 [tool.pipx-install]
 poethepoet = ">=0.26"
 poetry = ">=1.8"
+
+[tool.poe.tasks.build]
+help = "Build the package"
+shell = """
+make -C docs man
+rm -rf man
+mv docs/_build/man .
+poetry build
+"""
 
 [tool.poe.tasks.bump]
 help = "Bump project version and update relevant files"
