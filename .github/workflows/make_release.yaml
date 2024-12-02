@@ -67,7 +67,7 @@ jobs:
         run: |
           {
             echo 'changelog<<EOF'
-            poe changelog
+            poe --quiet changelog
             echo EOF
           } >> "$GITHUB_OUTPUT"
 
