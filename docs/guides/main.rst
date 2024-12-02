@@ -9,7 +9,7 @@ collection better.
 Installing
 ----------
 
-You will need Python.
+You will need FFmpeg and Python.
 Beets works on Python 3.8 or later.
 
 * **macOS** 11 (Big Sur) includes Python 3.8 out of the box.
@@ -75,6 +75,16 @@ beets``. You may want to follow `@b33ts`_ on Twitter to hear about progress on
 new versions.
 
 .. _@b33ts: https://twitter.com/b33ts
+
+Installing FFmpeg
+^^^^^^^^^^^^^^^^^
+
+It's likely there is a package maintained for your operating system of choice. Here are some guides:
+
+- `How to Install FFmpeg on Linux, MacOS and Windows <https://www.hostinger.com/tutorials/how-to-install-ffmpeg>`_
+- `How to Install FFmpeg on Windows <https://www.wikihow.com/Install-FFmpeg-on-Windows>`_
+- `How to Install FFmpeg on Ubuntu <https://phoenixnap.com/kb/install-ffmpeg-ubuntu>`_
+
 
 Installing by Hand on macOS 10.11 and Higher
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
