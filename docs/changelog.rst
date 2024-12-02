@@ -7,6 +7,14 @@ Unreleased
 ----------
 
 New features:
+Bug fixes:
+For packagers:
+Other changes:
+
+2.2.0 (December 02, 2024)
+-------------------------
+
+New features:
 
 * :doc:`/plugins/substitute`: Allow the replacement string to use capture groups
   from the match. It is thus possible to create more general rules, applying to
