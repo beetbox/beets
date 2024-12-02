@@ -132,6 +132,7 @@ jobs:
           artifacts: dist/*
       - name: Send release toot to Fosstodon
         uses: cbrgm/mastodon-github-action@v2
+        continue-on-error: true
         with:
           access-token: ${{ secrets.MASTODON_ACCESS_TOKEN }}
           url: ${{ secrets.MASTODON_URL }}
