@@ -13,6 +13,7 @@ from typing import Callable
 import click
 import tomli
 from packaging.version import Version, parse
+from typing_extensions import TypeAlias
 
 BASE = Path(__file__).parent.parent.absolute()
 PYPROJECT = BASE / "pyproject.toml"
@@ -23,6 +24,19 @@ version_header = r"\d+\.\d+\.\d+ \([^)]+\)"
 RST_LATEST_CHANGES = re.compile(
     rf"{version_header}\n--+\s+(.+?)\n\n+{version_header}", re.DOTALL
 )
+Replacement: TypeAlias = "tuple[str, str | Callable[[re.Match[str]], str]]"
+RST_REPLACEMENTS: list[Replacement] = [
+    (r"(?<=[\s(])`([^`]+)`(?=[^_])", r"``\1``"),  # ticks with verbatim ranges.
+    (r":bug:`(\d+)`", r":bug: (#\1)"),  # Issue numbers.
+    (r":user:`(\w+)`", r"@\1"),  # Users.
+]
+MD_REPLACEMENTS: list[Replacement] = [
+    (r"^  ( *- )", r"\1"),  # remove list indentation
+    (r"^(\w.+?):$", r"### \1"),  # make sections headers
+    (r"^- `/?plugins/(\w+)`:?", r"- Plugin **`\1`**:"),  # highlight plugins
+    (r"^- `(\w+)-cmd`:?", r"- Command **`\1`**:"),  # highlight commands
+    (r"### [^\n]+\n+(?=### )", ""),  # remove empty sections
+]
 
 
 def update_docs_config(text: str, new: Version) -> str:
@@ -95,18 +109,10 @@ def bump_version(new: Version) -> None:
 
 def rst2md(text: str) -> str:
     """Use Pandoc to convert text from ReST to Markdown."""
-    # Other backslashes with verbatim ranges.
-    rst = re.sub(r"(?<=[\s(])`([^`]+)`(?=[^_])", r"``\1``", text)
-
-    # Bug numbers.
-    rst = re.sub(r":bug:`(\d+)`", r":bug: (#\1)", rst)
-
-    # Users.
-    rst = re.sub(r":user:`(\w+)`", r"@\1", rst)
     return (
         subprocess.check_output(
-            ["/usr/bin/pandoc", "--from=rst", "--to=gfm", "--wrap=none"],
-            input=rst.encode(),
+            ["pandoc", "--from=rst", "--to=gfm", "--wrap=none"],
+            input=text.encode(),
         )
         .decode()
         .strip()
@@ -115,25 +121,18 @@ def rst2md(text: str) -> str:
 
 def changelog_as_markdown() -> str:
     """Get the latest changelog entry as hacked up Markdown."""
-    with CHANGELOG.open() as f:
-        contents = f.read()
+    contents = CHANGELOG.read_text()
 
     m = RST_LATEST_CHANGES.search(contents)
     rst = m.group(1) if m else ""
 
-    # Convert with Pandoc.
+    for pattern, repl in RST_REPLACEMENTS:
+        rst = re.sub(pattern, repl, rst, flags=re.M)
+
     md = rst2md(rst)
 
-    # Make sections stand out
-    md = re.sub(r"^(\w.+?):$", r"### \1", md, flags=re.M)
-
-    # Highlight plugin names
-    md = re.sub(
-        r"^- `/?plugins/(\w+)`:?", r"- Plugin **`\1`**:", md, flags=re.M
-    )
-
-    # Highlights command names.
-    md = re.sub(r"^- `(\w+)-cmd`:?", r"- Command **`\1`**:", md, flags=re.M)
+    for pattern, repl in MD_REPLACEMENTS:
+        md = re.sub(pattern, repl, md, flags=re.M)
 
     # sort list items alphabetically for each of the sections
     return MD_CHANGELOG_SECTION_LIST.sub(
