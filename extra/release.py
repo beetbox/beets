@@ -119,13 +119,15 @@ def rst2md(text: str) -> str:
     )
 
 
-def changelog_as_markdown() -> str:
+def get_changelog_contents() -> str | None:
+    if m := RST_LATEST_CHANGES.search(CHANGELOG.read_text()):
+        return m.group(1)
+
+    return None
+
+
+def changelog_as_markdown(rst: str) -> str:
     """Get the latest changelog entry as hacked up Markdown."""
-    contents = CHANGELOG.read_text()
-
-    m = RST_LATEST_CHANGES.search(contents)
-    rst = m.group(1) if m else ""
-
     for pattern, repl in RST_REPLACEMENTS:
         rst = re.sub(pattern, repl, rst, flags=re.M)
 
@@ -155,7 +157,8 @@ def bump(version: Version) -> None:
 @cli.command()
 def changelog():
     """Get the most recent version's changelog as Markdown."""
-    print(changelog_as_markdown())
+    if changelog := get_changelog_contents():
+        print(changelog_as_markdown(changelog))
 
 
 if __name__ == "__main__":
