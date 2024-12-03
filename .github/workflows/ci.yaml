@@ -29,12 +29,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: poetry
 
-      - name: Install PyGobject dependencies on Ubuntu
+      - name: Install PyGobject and release script dependencies on Ubuntu
         if: matrix.platform == 'ubuntu-latest'
         run: |
           sudo apt update
-          sudo apt install ffmpeg gobject-introspection libgirepository1.0-dev
-          poetry install --extras=replaygain --extras=reflink
+          sudo apt install ffmpeg gobject-introspection libgirepository1.0-dev pandoc
+          poetry install --with=release --extras=replaygain --extras=reflink
 
       - name: Install Python dependencies
         run: poetry install --only=main,test --extras=autobpm
