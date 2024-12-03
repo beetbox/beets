@@ -10,8 +10,6 @@ jobs:
       changelog: ${{ steps.generate_changelog.outputs.changelog }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: master
 
       - name: Install Python tools
         uses: BrandonLWhite/pipx-install-action@v0.1.1
