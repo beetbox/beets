@@ -26,6 +26,10 @@ def rst_changelog():
   :bug:`5467`
 * :ref:`list-cmd` Update.
 
+You can do something with this command::
+
+    $ do-something
+
 Bug fixes:
 
 * Some fix that refers to an issue.
@@ -64,6 +68,10 @@ def md_changelog():
 
 - Command **`list`**: Update.
 - Plugin **`substitute`**: Some substitute multi-line change. :bug: (\#5467)
+
+### You can do something with this command::
+
+    $ do-something
 
 ### Bug fixes
 
