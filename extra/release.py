@@ -64,8 +64,11 @@ Unreleased
 ----------
 
 New features:
+
 Bug fixes:
+
 For packagers:
+
 Other changes:
 
 {new_header}
