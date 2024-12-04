@@ -35,7 +35,8 @@ RST_REPLACEMENTS: list[Replacement] = [
 MD_REPLACEMENTS: list[Replacement] = [
     (r"^  (- )", r"\1"),  # remove indent from top-level bullet points
     (r"^ +(  - )", r"\1"),  # adjust nested bullet points indent
-    (r"^(\w[^\n]+):(?=\n\n[^ ])", r"### \1"),  # make sections headers
+    (r"^(\w[^\n]{,80}):(?=\n\n[^ ])", r"### \1"),  # format section headers
+    (r"^(\w[^\n]{81,}):(?=\n\n[^ ])", r"**\1**"),  # and bolden too long ones
     (r"^- `/?plugins/(\w+)`:?", r"- Plugin **`\1`**:"),  # highlight plugins
     (r"^- `(\w+)-cmd`:?", r"- Command **`\1`**:"),  # highlight commands
     (r"### [^\n]+\n+(?=### )", ""),  # remove empty sections
