@@ -19,6 +19,7 @@ from typing_extensions import TypeAlias
 BASE = Path(__file__).parent.parent.absolute()
 PYPROJECT = BASE / "pyproject.toml"
 CHANGELOG = BASE / "docs" / "changelog.rst"
+DOCS = "https://beets.readthedocs.io/en/stable"
 
 version_header = r"\d+\.\d+\.\d+ \([^)]+\)"
 RST_LATEST_CHANGES = re.compile(
@@ -28,7 +29,7 @@ Replacement: TypeAlias = "tuple[str, str | Callable[[re.Match[str]], str]]"
 RST_REPLACEMENTS: list[Replacement] = [
     (r"(?<=\n) {3,4}(?=\*)", "  "),  # fix indent of nested bullet points ...
     (r"(?<=\n) {5,6}(?=[\w:`])", "    "),  # ... and align wrapped text indent
-    (r"(?<=[\s(])`([^`]+)`(?=[^_])", r"``\1``"),  # ticks with verbatim ranges.
+    (r"(?<=[\s(])(`[^`]+`)(?!_)", r"`\1`"),  # double quotes for inline code
     (r":bug:`(\d+)`", r":bug: (#\1)"),  # Issue numbers.
     (r":user:`(\w+)`", r"\@\1"),  # Users.
 ]
@@ -37,8 +38,8 @@ MD_REPLACEMENTS: list[Replacement] = [
     (r"^ +(  - )", r"\1"),  # adjust nested bullet points indent
     (r"^(\w[^\n]{,80}):(?=\n\n[^ ])", r"### \1"),  # format section headers
     (r"^(\w[^\n]{81,}):(?=\n\n[^ ])", r"**\1**"),  # and bolden too long ones
-    (r"^- `/?plugins/(\w+)`:?", r"- Plugin **`\1`**:"),  # highlight plugins
-    (r"^- `(\w+)-cmd`:?", r"- Command **`\1`**:"),  # highlight commands
+    (r"^- `/?plugins/(\w+)`:?", rf"- Plugin [\1]({DOCS}/plugins/\1.html):"),
+    (r"^- `(\w+)-cmd`:?", rf"- Command [\1]({DOCS}/reference/cli.html#\1):"),
     (r"### [^\n]+\n+(?=### )", ""),  # remove empty sections
 ]
 order_bullet_points = partial(
