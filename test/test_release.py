@@ -45,6 +45,9 @@ Bug fixes:
   * First
   * Second
 
+Section naaaaaaaaaaaaaaaaaaaaaaaammmmmmmmmmmmmmmmeeeeeeeeeeeeeee with over 80
+characters:
+
 Empty section:
 
 Other changes:
@@ -84,6 +87,8 @@ You can do something with this command:
 - Some fix with its own bullet points using incorrect indentation:
   - First nested bullet point with some text that wraps to the next line
   - Second nested bullet point
+
+**Section naaaaaaaaaaaaaaaaaaaaaaaammmmmmmmmmmmmmmmeeeeeeeeeeeeeee with over 80 characters**
 
 ### Other changes
 
