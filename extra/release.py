@@ -7,6 +7,7 @@ from __future__ import annotations
 import re
 import subprocess
 from datetime import datetime, timezone
+from functools import partial
 from pathlib import Path
 from typing import Callable
 
@@ -19,7 +20,6 @@ BASE = Path(__file__).parent.parent.absolute()
 PYPROJECT = BASE / "pyproject.toml"
 CHANGELOG = BASE / "docs" / "changelog.rst"
 
-MD_CHANGELOG_SECTION_LIST = re.compile(r"- .+?(?=\n\n###|$)", re.DOTALL)
 version_header = r"\d+\.\d+\.\d+ \([^)]+\)"
 RST_LATEST_CHANGES = re.compile(
     rf"{version_header}\n--+\s+(.+?)\n\n+{version_header}", re.DOTALL
@@ -37,6 +37,10 @@ MD_REPLACEMENTS: list[Replacement] = [
     (r"^- `(\w+)-cmd`:?", r"- Command **`\1`**:"),  # highlight commands
     (r"### [^\n]+\n+(?=### )", ""),  # remove empty sections
 ]
+order_bullet_points = partial(
+    re.compile("(\n- .*?(?=\n(?! *- )|$))", flags=re.DOTALL).sub,
+    lambda m: "\n- ".join(sorted(m.group().split("\n- "))),
+)
 
 
 def update_docs_config(text: str, new: Version) -> str:
@@ -136,10 +140,9 @@ def changelog_as_markdown(rst: str) -> str:
     for pattern, repl in MD_REPLACEMENTS:
         md = re.sub(pattern, repl, md, flags=re.M)
 
-    # sort list items alphabetically for each of the sections
-    return MD_CHANGELOG_SECTION_LIST.sub(
-        lambda m: "\n".join(sorted(m.group().splitlines())), md
-    )
+    # order bullet points in each of the lists alphabetically to
+    # improve readability
+    return order_bullet_points(md)
 
 
 @click.group()
