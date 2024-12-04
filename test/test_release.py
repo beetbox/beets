@@ -31,6 +31,13 @@ Bug fixes:
 * Some fix that refers to an issue.
   :bug:`5467`
 * Some fix that mentions user :user:`username`.
+* Some fix with its own bullet points using incorrect indentation:
+   * First nested bullet point
+     with some text that wraps to the next line
+   * Second nested bullet point
+* Another fix with its own bullet points using correct indentation:
+  * First
+  * Second
 
 Empty section:
 
@@ -58,8 +65,19 @@ def md_changelog():
 
 ### Bug fixes
 
-- Some fix that mentions user @username.
 - Some fix that refers to an issue. :bug: (\#5467)
+
+- Some fix that mentions user @username.
+
+-   - Some fix with its own bullet points using incorrect indentation:
+        
+        - First nested bullet point with some text that wraps to the next line
+        - Second nested bullet point
+
+- Another fix with its own bullet points using correct indentation:
+    
+    - First
+    - Second
 
 ### Other changes
 
