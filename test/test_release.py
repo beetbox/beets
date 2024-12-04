@@ -63,9 +63,9 @@ def md_changelog():
 
 ### Other changes
 
+- Changed `bitesize` label to `good first issue`. Our [contribute](https://github.com/beetbox/beets/contribute) page is now automatically populated with these issues. :bug: (\#4855)
 
 # 2.1.0 (November 22, 2024)
-- Changed `bitesize` label to `good first issue`. Our [contribute](https://github.com/beetbox/beets/contribute) page is now automatically populated with these issues. :bug: (\#4855)
 
 ### Bug fixes
 
