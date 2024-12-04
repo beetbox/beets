@@ -7,8 +7,11 @@ Unreleased
 ----------
 
 New features:
+
 Bug fixes:
+
 For packagers:
+
 Other changes:
 
 2.2.0 (December 02, 2024)
