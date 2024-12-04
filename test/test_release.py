@@ -69,7 +69,7 @@ def md_changelog():
 - Command **`list`**: Update.
 - Plugin **`substitute`**: Some substitute multi-line change. :bug: (\#5467)
 
-### You can do something with this command::
+You can do something with this command:
 
     $ do-something
 

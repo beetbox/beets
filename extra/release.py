@@ -35,7 +35,7 @@ RST_REPLACEMENTS: list[Replacement] = [
 MD_REPLACEMENTS: list[Replacement] = [
     (r"^  (- )", r"\1"),  # remove indent from top-level bullet points
     (r"^ +(  - )", r"\1"),  # adjust nested bullet points indent
-    (r"^(\w.+?):$", r"### \1"),  # make sections headers
+    (r"^(\w[^\n]+):(?=\n\n[^ ])", r"### \1"),  # make sections headers
     (r"^- `/?plugins/(\w+)`:?", r"- Plugin **`\1`**:"),  # highlight plugins
     (r"^- `(\w+)-cmd`:?", r"- Command **`\1`**:"),  # highlight commands
     (r"### [^\n]+\n+(?=### )", ""),  # remove empty sections
@@ -142,7 +142,7 @@ def changelog_as_markdown(rst: str) -> str:
     md = rst2md(rst)
 
     for pattern, repl in MD_REPLACEMENTS:
-        md = re.sub(pattern, repl, md, flags=re.M)
+        md = re.sub(pattern, repl, md, flags=re.M | re.DOTALL)
 
     # order bullet points in each of the lists alphabetically to
     # improve readability
