@@ -26,12 +26,15 @@ RST_LATEST_CHANGES = re.compile(
 )
 Replacement: TypeAlias = "tuple[str, str | Callable[[re.Match[str]], str]]"
 RST_REPLACEMENTS: list[Replacement] = [
+    (r"(?<=\n) {3,4}(?=\*)", "  "),  # fix indent of nested bullet points ...
+    (r"(?<=\n) {5,6}(?=[\w:`])", "    "),  # ... and align wrapped text indent
     (r"(?<=[\s(])`([^`]+)`(?=[^_])", r"``\1``"),  # ticks with verbatim ranges.
     (r":bug:`(\d+)`", r":bug: (#\1)"),  # Issue numbers.
     (r":user:`(\w+)`", r"@\1"),  # Users.
 ]
 MD_REPLACEMENTS: list[Replacement] = [
-    (r"^  ( *- )", r"\1"),  # remove list indentation
+    (r"^  (- )", r"\1"),  # remove indent from top-level bullet points
+    (r"^ +(  - )", r"\1"),  # adjust nested bullet points indent
     (r"^(\w.+?):$", r"### \1"),  # make sections headers
     (r"^- `/?plugins/(\w+)`:?", r"- Plugin **`\1`**:"),  # highlight plugins
     (r"^- `(\w+)-cmd`:?", r"- Command **`\1`**:"),  # highlight commands
