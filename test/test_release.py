@@ -67,14 +67,12 @@ def md_changelog():
 
 ### Bug fixes
 
-- Some fix thanks to
-- Some fix that mentions user @username.
-- Some fix that refers to an issue. :bug: (\#5467)
-    1.    - bug  
-            (\#5467)
 - Another fix with its own bullet points using correct indentation:
   - First
   - Second
+- Some fix thanks to @username. :bug: (\#5467)
+- Some fix that mentions user @username.
+- Some fix that refers to an issue. :bug: (\#5467)
 - Some fix with its own bullet points using incorrect indentation:
   - First nested bullet point with some text that wraps to the next line
   - Second nested bullet point
