@@ -69,8 +69,8 @@ Bug fixes:
 def md_changelog():
     return r"""### New features
 
-- Command **`list`**: Update.
-- Plugin **`substitute`**: Some substitute multi-line change. :bug: (\#5467)
+- Command [list](https://beets.readthedocs.io/en/stable/reference/cli.html#list): Update.
+- Plugin [substitute](https://beets.readthedocs.io/en/stable/plugins/substitute.html): Some substitute multi-line change. :bug: (\#5467)
 
 You can do something with this command:
 
