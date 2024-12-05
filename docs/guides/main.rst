@@ -132,6 +132,19 @@ trouble or you have more detail to contribute here, please direct it to
 .. _install pip: https://pip.pypa.io/en/stable/installing/
 .. _get-pip.py: https://bootstrap.pypa.io/get-pip.py
 
+Installing on ARM (Raspberry Pi and similar)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Beets on ARM devices is not recommended for Linux novices. If you are
+comfortable with light troubleshooting in tools like ``pip``, ``make``,
+and beets' command-line binary dependencies (e.g. ``ffmpeg`` and
+``ImageMagick``), you will probably be okay on ARM devices like the
+Raspberry Pi. We have `notes for ARM`_ and an `older ARM reference`_.
+Beets is generally developed on x86-64 based devices, and most plugins
+target that platform as well.
+
+.. _notes for ARM: https://github.com/beetbox/beets/discussions/4910
+.. _older ARM reference: https://discourse.beets.io/t/diary-of-beets-on-arm-odroid-hc4-armbian/1993
 
 Configuring
 -----------
