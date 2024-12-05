@@ -137,8 +137,8 @@ Installing on ARM (Raspberry Pi and similar)
 
 Beets on ARM devices is not recommended for Linux novices. If you are
 comfortable with light troubleshooting in tools like ``pip``, ``make``,
-and beets' command-line binary dependencies (e.g. `ffmpeg` and
-`ImageMagick`), you will probably be okay on ARM devices like the
+and beets' command-line binary dependencies (e.g. ``ffmpeg`` and
+``ImageMagick``), you will probably be okay on ARM devices like the
 Raspberry Pi. We have `notes for ARM`_ and an `older ARM reference`_.
 Beets is generally developed on x86-64 based devices, and most plugins
 target that platform as well.
