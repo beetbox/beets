@@ -1,6 +1,6 @@
 name: Test
 on:
-  pull_request_target:
+  pull_request:
   push:
     branches:
       - master
@@ -75,4 +75,4 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           files: ./coverage.xml
-          use_oidc: true
+          use_oidc: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }}

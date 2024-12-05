@@ -605,7 +605,7 @@ class ImportTask(BaseImportTask):
         """
         items = self.imported_items()
         for field, view in config["import"]["set_fields"].items():
-            value = view.get()
+            value = str(view.get())
             log.debug(
                 "Set field {1}={2} for {0}",
                 displayable_path(self.paths),
@@ -1062,7 +1062,7 @@ class SingletonImportTask(ImportTask):
         values, for the singleton item.
         """
         for field, view in config["import"]["set_fields"].items():
-            value = view.get()
+            value = str(view.get())
             log.debug(
                 "Set field {1}={2} for {0}",
                 displayable_path(self.paths),

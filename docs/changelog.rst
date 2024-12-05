@@ -1,20 +1,57 @@
 Changelog
 =========
 
+Changelog goes here! Please add your entry to the bottom of one of the lists below!
+
 Unreleased
 ----------
 
-Changelog goes here! Please add your entry to the bottom of one of the lists below!
+New features:
+Bug fixes:
+For packagers:
+Other changes:
+
+2.2.0 (December 02, 2024)
+-------------------------
+
+New features:
+
+* :doc:`/plugins/substitute`: Allow the replacement string to use capture groups
+  from the match. It is thus possible to create more general rules, applying to
+  many different artists at once.
+
+Bug fixes:
+
+* Check if running python from the Microsoft Store and provide feedback to install
+  from python.org.
+  :bug:`5467`
+* Fix bug where matcher doesn't consider medium number when importing. This makes
+  it difficult to import hybrid SACDs and other releases with duplicate tracks.
+  :bug:`5148`
+* Bring back test files and the manual to the source distribution tarball.
+  :bug:`5513`
+
+For packagers:
+
+Other changes:
+
+* Changed `bitesize` label to `good first issue`. Our `contribute`_ page is now
+  automatically populated with these issues. :bug:`4855`
+
+.. _contribute: https://github.com/beetbox/beets/contribute
+
+2.1.0 (November 22, 2024)
+-------------------------
 
 New features:
 
 * New template function added: ``%capitalize``. Converts the first letter of
   the text to uppercase and the rest to lowercase.
 * Ability to query albums with track db fields and vice-versa, for example
-  `beet list -a title:something` or `beet list artpath:cover`. Consequently
-  album queries involving `path` field have been sped up, like `beet list -a
-  path:/path/`.
-* New `keep_in_artist` option for the :doc:`plugins/ftintitle` plugin, which
+  ``beet list -a title:something`` or ``beet list artpath:cover``. Consequently
+  album queries involving ``path`` field have been sped up, like ``beet list -a
+  path:/path/``.
+* :doc:`plugins/ftintitle`: New ``keep_in_artist`` option for the plugin, which
   allows keeping the "feat." part in the artist metadata while still changing
   the title.
 * :doc:`plugins/autobpm`: Add new configuration option ``beat_track_kwargs``
@@ -42,31 +79,36 @@ Bug fixes:
   issues in the future.
   :bug:`5289`
 * :doc:`plugins/discogs`: Fix the ``TypeError`` when there is no description.
-* Remove single quotes from all SQL queries
+* Use single quotes in all SQL queries
   :bug:`4709`
 * :doc:`plugins/lyrics`: Update ``tekstowo`` backend to fetch lyrics directly
   since recent updates to their website made it unsearchable.
   :bug:`5456`
+* :doc:`plugins/convert`: Fixed the convert plugin ``no_convert`` option so
+  that it no longer treats "and" and "or" queries the same. To maintain
+  previous behaviour add commas between your query keywords. For help see
+  :ref:`combiningqueries`.
+* Fix the ``TypeError`` when :ref:`set_fields` is provided non-string values. :bug:`4840`
 
 For packagers:
 
 * The minimum supported Python version is now 3.8.
-* The `beet` script has been removed from the repository.
-* The `typing_extensions` is required for Python 3.10 and below.
+* The ``beet`` script has been removed from the repository.
+* The ``typing_extensions`` is required for Python 3.10 and below.
 
 Other changes:
 
-* :doc:`contributing`: The project now uses `poetry` for packaging and
+* :doc:`contributing`: The project now uses ``poetry`` for packaging and
   dependency management. This change affects project management and mostly
   affects beets developers. Please see updates in :ref:`getting-the-source` and
   :ref:`testing` for more information.
-* :doc:`contributing`: Since `poetry` now manages local virtual environments,
-  `tox` has been replaced by a task runner `poethepoet`. This change affects
+* :doc:`contributing`: Since ``poetry`` now manages local virtual environments,
+  `tox` has been replaced by a task runner ``poethepoet``. This change affects
   beets developers and contributors. Please see updates in the
   :ref:`development-tools` section for more details. Type ``poe`` while in
   the project directory to see the available commands.
 * Installation instructions have been made consistent across plugins
-  documentation. Users should simply install `beets` with an `extra` of the
+  documentation. Users should simply install ``beets`` with an ``extra`` of the
   corresponding plugin name in order to install extra dependencies for that
   plugin.
 * GitHub workflows have been reorganised for clarity: style, linting, type and
@@ -77,10 +119,10 @@ Other changes:
   documentation is changed, and they only check the changed files. When
   dependencies are updated (``poetry.lock``), then the entire code base is
   checked.
-* The long-deprecated `beets.util.confit` module has been removed.  This may
+* The long-deprecated ``beets.util.confit`` module has been removed.  This may
   cause extremely outdated external plugins to fail to load.
-* :doc:`plugins/autobpm`: Add plugin dependencies to `pyproject.toml` under
-  the `autobpm` extra and update the plugin installation instructions in the
+* :doc:`plugins/autobpm`: Add plugin dependencies to ``pyproject.toml`` under
+  the ``autobpm`` extra and update the plugin installation instructions in the
   docs.
   Since importing the bpm calculation functionality from ``librosa`` takes
   around 4 seconds, update the plugin to only do so when it actually needs to
@@ -253,6 +295,8 @@ New features:
 
 Bug fixes:
 
+* Improve ListenBrainz error handling.
+  :bug:`5459`
 * :doc:`/plugins/deezer`: Improve requests error handling.
 * :doc:`/plugins/lastimport`: Improve error handling in the `process_tracks` function and enable it to be used with other plugins.
 * :doc:`/plugins/spotify`: Improve handling of ConnectionError.

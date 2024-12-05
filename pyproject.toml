@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "beets"
-version = "2.0.0"
+version = "2.2.0"
 description = "music tagger and library organizer"
 authors = ["Adrian Sampson <adrian@radbox.org>"]
 maintainers = ["Serene-Arc"]
@@ -26,6 +26,7 @@ packages = [
     { include = "beets" },
     { include = "beetsplug" },
 ]
+include = ["test", "man/**/*"] # extra files to include in the sdist
 
 [tool.poetry.urls]
 Changelog = "https://github.com/beetbox/beets/blob/master/docs/changelog.rst"
@@ -67,6 +68,9 @@ resampy = { version = ">=0.4.3", optional = true }
 requests-oauthlib = { version = ">=0.6.1", optional = true }
 soco = { version = "*", optional = true }
 
+pydata-sphinx-theme = { version = "*", optional = true }
+sphinx = { version = "*", optional = true }
+
 [tool.poetry.group.test.dependencies]
 beautifulsoup4 = "*"
 codecov = ">=2.1.13"
@@ -96,10 +100,6 @@ types-PyYAML = "*"
 types-requests = "*"
 types-urllib3 = "*"
 
-[tool.poetry.group.docs.dependencies]
-pydata-sphinx-theme = "*"
-sphinx = "*"
-
 [tool.poetry.group.release.dependencies]
 click = ">=8.1.7"
 packaging = ">=24.0"
@@ -115,6 +115,7 @@ beatport = ["requests-oauthlib"]
 bpd = ["PyGObject"] # python-gi and GStreamer 1.0+
 chroma = ["pyacoustid"] # chromaprint or fpcalc
 # convert # ffmpeg
+docs = ["pydata-sphinx-theme", "sphinx"]
 discogs = ["python3-discogs-client"]
 embedart = ["Pillow"] # ImageMagick
 embyupdate = ["requests"]
@@ -148,6 +149,15 @@ build-backend = "poetry.core.masonry.api"
 [tool.pipx-install]
 poethepoet = ">=0.26"
 poetry = ">=1.8"
+
+[tool.poe.tasks.build]
+help = "Build the package"
+shell = """
+make -C docs man
+rm -rf man
+mv docs/_build/man .
+poetry build
+"""
 
 [tool.poe.tasks.bump]
 help = "Bump project version and update relevant files"

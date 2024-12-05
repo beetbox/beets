@@ -19,9 +19,11 @@ import re
 import sys
 import unittest
 
+import pytest
 from mediafile import MediaFile
 
 from beets import util
+from beets.library import Item
 from beets.test import _common
 from beets.test.helper import (
     AsIsImporterMixin,
@@ -31,6 +33,7 @@ from beets.test.helper import (
     control_stdin,
 )
 from beets.util import bytestring_path, displayable_path
+from beetsplug import convert
 
 
 def shell_quote(text):
@@ -335,3 +338,21 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
             self.run_convert_path(item.path)
         converted = os.path.join(self.convert_dest, b"converted.ogg")
         self.assertNoFileTag(converted, "mp3")
+
+
+class TestNoConvert:
+    """Test the effect of the `no_convert` option."""
+
+    @pytest.mark.parametrize(
+        "config_value, should_skip",
+        [
+            ("", False),
+            ("bitrate:320", False),
+            ("bitrate:320 format:ogg", False),
+            ("bitrate:320 , format:ogg", True),
+        ],
+    )
+    def test_no_convert_skip(self, config_value, should_skip):
+        item = Item(format="ogg", bitrate=256)
+        convert.config["convert"]["no_convert"] = config_value
+        assert convert.in_no_convert(item) == should_skip

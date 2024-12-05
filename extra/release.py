@@ -40,7 +40,10 @@ def update_changelog(text: str, new: Version) -> str:
 Unreleased
 ----------
 
-Changelog goes here! Please add your entry to the bottom of one of the lists below!
+New features:
+Bug fixes:
+For packagers:
+Other changes:
 
 {new_header}
 {'-' * len(new_header)}
