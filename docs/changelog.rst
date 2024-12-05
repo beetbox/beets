@@ -7,12 +7,18 @@ Unreleased
 ----------
 
 New features:
+
 Bug fixes:
 
 * :doc:`plugins/lyrics`: LRCLib will fallback to plain lyrics if synced lyrics
   are not found and `synced` flag is set to `yes`.
+* Synchronise files included in the source distribution with what we used to
+  have before the introduction of Poetry.
+  :bug:`5531`
+  :bug:`5526`
 
 For packagers:
+
 Other changes:
 
 2.2.0 (December 02, 2024)
