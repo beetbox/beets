@@ -34,7 +34,8 @@ jobs:
         run: |
           sudo apt update
           sudo apt install ffmpeg gobject-introspection libgirepository1.0-dev pandoc
-          poetry install --with=release --extras=replaygain --extras=reflink
+          poetry install --with=release --extras=docs --extras=replaygain --extras=reflink
+          poe docs
 
       - name: Install Python dependencies
         run: poetry install --only=main,test --extras=autobpm
