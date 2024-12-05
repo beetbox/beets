@@ -7,8 +7,16 @@ Unreleased
 ----------
 
 New features:
+
 Bug fixes:
+
+* Synchronise files included in the source distribution with what we used to
+  have before the introduction of Poetry.
+  :bug:`5531`
+  :bug:`5526`
+
 For packagers:
+
 Other changes:
 
 2.2.0 (December 02, 2024)
