@@ -6,7 +6,8 @@ import sys
 
 import pytest
 
-from extra.release import changelog_as_markdown
+release = pytest.importorskip("extra.release")
+
 
 pytestmark = pytest.mark.skipif(
     not (
@@ -69,8 +70,8 @@ Bug fixes:
 def md_changelog():
     return r"""### New features
 
-- Command [list](https://beets.readthedocs.io/en/stable/reference/cli.html#list): Update.
-- Plugin [substitute](https://beets.readthedocs.io/en/stable/plugins/substitute.html): Some substitute multi-line change. :bug: (\#5467)
+- [Substitute Plugin](https://beets.readthedocs.io/en/stable/plugins/substitute.html): Some substitute multi-line change. :bug: (\#5467)
+- [list](https://beets.readthedocs.io/en/stable/reference/cli.html#list-cmd) Update.
 
 You can do something with this command:
 
@@ -102,6 +103,6 @@ You can do something with this command:
 
 
 def test_convert_rst_to_md(rst_changelog, md_changelog):
-    actual = changelog_as_markdown(rst_changelog)
+    actual = release.changelog_as_markdown(rst_changelog)
 
     assert actual == md_changelog
