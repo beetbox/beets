@@ -19,9 +19,10 @@ interface.
 import os
 import re
 from collections import Counter
+from collections.abc import Sequence
 from itertools import chain
 from platform import python_version
-from typing import Any, NamedTuple, Sequence
+from typing import Any, NamedTuple
 
 import beets
 from beets import autotag, config, importer, library, logging, plugins, ui, util

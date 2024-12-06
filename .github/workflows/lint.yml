@@ -7,7 +7,7 @@ on:
       - master
 
 env:
-  PYTHON_VERSION: 3.8
+  PYTHON_VERSION: 3.9
 
 jobs:
   changed-files:
@@ -131,7 +131,7 @@ jobs:
         run: echo "::add-matcher::.github/sphinx-problem-matcher.json"
 
       - name: Build docs
-        run: |
+        run: |-
           poe docs |& tee /tmp/output
           # fail the job if there are issues
           grep -q " WARNING:" /tmp/output && exit 1 || exit 0

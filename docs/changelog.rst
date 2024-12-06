@@ -6,6 +6,9 @@ Changelog goes here! Please add your entry to the bottom of one of the lists bel
 Unreleased
 ----------
 
+Beets now requires Python 3.9 or later since support for EOL Python 3.8 has
+been dropped.
+
 New features:
 Bug fixes:
 For packagers:
@@ -32,6 +35,8 @@ Bug fixes:
   :bug:`5513`
 
 For packagers:
+
+* The minimum supported Python version is now 3.9.
 
 Other changes:
 

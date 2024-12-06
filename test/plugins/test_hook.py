@@ -19,10 +19,13 @@ import os.path
 import sys
 import unittest
 from contextlib import contextmanager
-from typing import Callable, Iterator
+from typing import TYPE_CHECKING, Callable
 
 from beets import plugins
 from beets.test.helper import PluginTestCase, capture_log
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 class HookTestCase(PluginTestCase):

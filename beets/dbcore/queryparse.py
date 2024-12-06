@@ -14,12 +14,18 @@
 
 """Parsing of strings into DBCore queries."""
 
+from __future__ import annotations
+
 import itertools
 import re
-from typing import Collection, Dict, List, Optional, Sequence, Tuple, Type
+from typing import TYPE_CHECKING
 
 from . import Model, query
-from .query import Sort
+
+if TYPE_CHECKING:
+    from collections.abc import Collection, Sequence
+
+    from .query import Sort
 
 PARSE_QUERY_PART_REGEX = re.compile(
     # Non-capturing optional segment for the keyword.
@@ -35,10 +41,10 @@ PARSE_QUERY_PART_REGEX = re.compile(
 
 def parse_query_part(
     part: str,
-    query_classes: Dict[str, Type[query.FieldQuery]] = {},
-    prefixes: Dict = {},
-    default_class: Type[query.SubstringQuery] = query.SubstringQuery,
-) -> Tuple[Optional[str], str, Type[query.FieldQuery], bool]:
+    query_classes: dict[str, type[query.FieldQuery]] = {},
+    prefixes: dict = {},
+    default_class: type[query.SubstringQuery] = query.SubstringQuery,
+) -> tuple[str | None, str, type[query.FieldQuery], bool]:
     """Parse a single *query part*, which is a chunk of a complete query
     string representing a single criterion.
 
@@ -104,8 +110,8 @@ def parse_query_part(
 
 
 def construct_query_part(
-    model_cls: Type[Model],
-    prefixes: Dict,
+    model_cls: type[Model],
+    prefixes: dict,
     query_part: str,
 ) -> query.Query:
     """Parse a *query part* string and return a :class:`Query` object.
@@ -127,7 +133,7 @@ def construct_query_part(
 
     # Use `model_cls` to build up a map from field (or query) names to
     # `Query` classes.
-    query_classes: Dict[str, Type[query.FieldQuery]] = {}
+    query_classes: dict[str, type[query.FieldQuery]] = {}
     for k, t in itertools.chain(
         model_cls._fields.items(), model_cls._types.items()
     ):
@@ -171,9 +177,9 @@ def construct_query_part(
 
 # TYPING ERROR
 def query_from_strings(
-    query_cls: Type[query.CollectionQuery],
-    model_cls: Type[Model],
-    prefixes: Dict,
+    query_cls: type[query.CollectionQuery],
+    model_cls: type[Model],
+    prefixes: dict,
     query_parts: Collection[str],
 ) -> query.Query:
     """Creates a collection query of type `query_cls` from a list of
@@ -189,7 +195,7 @@ def query_from_strings(
 
 
 def construct_sort_part(
-    model_cls: Type[Model],
+    model_cls: type[Model],
     part: str,
     case_insensitive: bool = True,
 ) -> Sort:
@@ -220,7 +226,7 @@ def construct_sort_part(
 
 
 def sort_from_strings(
-    model_cls: Type[Model],
+    model_cls: type[Model],
     sort_parts: Sequence[str],
     case_insensitive: bool = True,
 ) -> Sort:
@@ -239,11 +245,11 @@ def sort_from_strings(
 
 
 def parse_sorted_query(
-    model_cls: Type[Model],
-    parts: List[str],
-    prefixes: Dict = {},
+    model_cls: type[Model],
+    parts: list[str],
+    prefixes: dict = {},
     case_insensitive: bool = True,
-) -> Tuple[query.Query, Sort]:
+) -> tuple[query.Query, Sort]:
     """Given a list of strings, create the `Query` and `Sort` that they
     represent.
     """
