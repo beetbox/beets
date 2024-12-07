@@ -8,6 +8,15 @@ Unreleased
 
 New features:
 Bug fixes:
+
+* Fix ambiguous column name ``sqlite3.OperationalError`` that occurs when
+  querying any* field, and a field that *only exists on the relation*, for
+  example::
+
+      beet list -a keyword title:foo
+
+  Listing albums that contain **keyword** and a track with **foo** in its title.
+
 For packagers:
 Other changes:
 

@@ -588,7 +588,7 @@ class QueryFromStringsTest(unittest.TestCase):
         q = self.qfs(["foo", "bar:baz"])
         assert isinstance(q, dbcore.query.AndQuery)
         assert len(q.subqueries) == 2
-        assert isinstance(q.subqueries[0], dbcore.query.AnyFieldQuery)
+        assert isinstance(q.subqueries[0], dbcore.query.OrQuery)
         assert isinstance(q.subqueries[1], dbcore.query.SubstringQuery)
 
     def test_parse_fixed_type_query(self):
