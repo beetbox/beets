@@ -7,8 +7,18 @@ Unreleased
 ----------
 
 New features:
+
 Bug fixes:
+
+* :ref:`write-cmd`: Fix the issue where for certain files differences in
+  ``mb_artistid``, ``mb_albumartistid`` and ``albumtype`` fields are shown on
+  every attempt to write tags.
+  :bug:`5265`
+  :bug:`5371`
+  :bug:`4715`
+
 For packagers:
+
 Other changes:
 
 2.2.0 (December 02, 2024)
