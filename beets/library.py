@@ -25,6 +25,7 @@ import time
 import unicodedata
 from functools import cached_property
 from pathlib import Path
+from typing import Mapping, Type
 
 import platformdirs
 from mediafile import MediaFile, UnreadableFileError
@@ -387,6 +388,10 @@ class LibModel(dbcore.Model):
     # Config key that specifies how an instance should be formatted.
     _format_config_key: str
 
+    @cached_classproperty
+    def writable_media_fields(cls) -> set[str]:
+        return set(MediaFile.fields()) & cls._fields.keys()
+
     def _template_funcs(self):
         funcs = DefaultTemplateFunctions(self, self._db).functions()
         funcs.update(plugins.template_funcs())
@@ -415,6 +420,52 @@ class LibModel(dbcore.Model):
 
     def __bytes__(self):
         return self.__str__().encode("utf-8")
+
+    # Convenient queries.
+
+    @classmethod
+    def field_query(
+        cls, field: str, pattern: str, query_cls: Type[dbcore.FieldQuery]
+    ) -> dbcore.Query:
+        """Get a `FieldQuery` for the given field on this model."""
+        fast = field in cls.all_db_fields
+        if field in cls.shared_db_fields:
+            # This field exists in both tables, so SQLite will encounter
+            # an OperationalError if we try to use it in a query.
+            # Using an explicit table name resolves this.
+            field = f"{cls._table}.{field}"
+
+        return query_cls(field, pattern, fast)
+
+    @classmethod
+    def any_field_query(cls, *args, **kwargs) -> dbcore.OrQuery:
+        return dbcore.OrQuery(
+            [cls.field_query(f, *args, **kwargs) for f in cls._search_fields]
+        )
+
+    @classmethod
+    def any_writable_media_field_query(cls, *args, **kwargs) -> dbcore.OrQuery:
+        fields = cls.writable_media_fields
+        return dbcore.OrQuery(
+            [cls.field_query(f, *args, **kwargs) for f in fields]
+        )
+
+    @classmethod
+    def match_all_query(
+        cls, pattern_by_field: Mapping[str, str]
+    ) -> dbcore.AndQuery:
+        """Get a query that matches many fields with different patterns.
+
+        `pattern_by_field` should be a mapping from field names to patterns.
+        The resulting query is a conjunction ("and") of per-field queries
+        for all of these field/pattern pairs.
+        """
+        return dbcore.AndQuery(
+            [
+                cls.field_query(f, p, dbcore.MatchQuery)
+                for f, p in pattern_by_field.items()
+            ]
+        )
 
 
 class FormattedItemMapping(dbcore.db.FormattedMapping):
@@ -1977,9 +2028,10 @@ class DefaultTemplateFunctions:
             subqueries.extend(initial_subqueries)
         for key in keys:
             value = db_item.get(key, "")
-            # Use slow queries for flexible attributes.
-            fast = key in item_keys
-            subqueries.append(dbcore.MatchQuery(key, value, fast))
+            subqueries.append(
+                db_item.field_query(key, value, dbcore.MatchQuery)
+            )
+
         query = dbcore.AndQuery(subqueries)
         ambigous_items = (
             self.lib.items(query)

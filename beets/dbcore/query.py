@@ -121,7 +121,10 @@ class Query(ABC):
         return hash(type(self))
 
 
-P = TypeVar("P")
+if TYPE_CHECKING:
+    P = TypeVar("P", default=Any)
+else:
+    P = TypeVar("P")
 SQLiteType = Union[str, bytes, float, int, memoryview]
 AnySQLiteType = TypeVar("AnySQLiteType", bound=SQLiteType)
 
@@ -512,50 +515,6 @@ class CollectionQuery(Query):
         However and for conveniences purposes, it can be hashed.
         """
         return reduce(mul, map(hash, self.subqueries), 1)
-
-
-class AnyFieldQuery(CollectionQuery):
-    """A query that matches if a given FieldQuery subclass matches in
-    any field. The individual field query class is provided to the
-    constructor.
-    """
-
-    @property
-    def field_names(self) -> Set[str]:
-        """Return a set with field names that this query operates on."""
-        return set(self.fields)
-
-    def __init__(self, pattern, fields, cls: Type[FieldQuery]):
-        self.pattern = pattern
-        self.fields = fields
-        self.query_class = cls
-
-        subqueries = []
-        for field in self.fields:
-            subqueries.append(cls(field, pattern, True))
-        # TYPING ERROR
-        super().__init__(subqueries)
-
-    def clause(self) -> Tuple[Optional[str], Sequence[SQLiteType]]:
-        return self.clause_with_joiner("or")
-
-    def match(self, obj: Model) -> bool:
-        for subq in self.subqueries:
-            if subq.match(obj):
-                return True
-        return False
-
-    def __repr__(self) -> str:
-        return (
-            f"{self.__class__.__name__}({self.pattern!r}, {self.fields!r}, "
-            f"{self.query_class.__name__})"
-        )
-
-    def __eq__(self, other) -> bool:
-        return super().__eq__(other) and self.query_class == other.query_class
-
-    def __hash__(self) -> int:
-        return hash((self.pattern, tuple(self.fields), self.query_class))
 
 
 class MutableCollectionQuery(CollectionQuery):
