@@ -7,8 +7,19 @@ Unreleased
 ----------
 
 New features:
+
 Bug fixes:
+
+* :doc:`plugins/lyrics`: Rewrite lyrics tests using pytest to provide isolated
+  configuration for each test case. This fixes the issue where some tests
+  failed because they read developers' local lyrics configuration.
+  :bug:`5133`
+* :doc:`plugins/lyrics`: Do not attempt to search for lyrics if either the
+  artist or title is missing and ignore ``artist_sort`` value if it is empty.
+  :bug:`2635`
+
 For packagers:
+
 Other changes:
 
 2.2.0 (December 02, 2024)
