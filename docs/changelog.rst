@@ -38,6 +38,9 @@ Bug fixes:
   request their own last.fm genre. Also log messages regarding what's been
   tagged are now more polished.
   :bug:`5582`
+* Fix ambiguous column name ``sqlite3.OperationalError`` that occured in album
+  queries that filtered album track titles, for example ``beet list -a keyword
+  title:foo``.
 
 For packagers:
 
