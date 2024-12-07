@@ -395,6 +395,12 @@ class LibModel(dbcore.Model["Library"]):
 
         return query_cls(field, pattern, fast)
 
+    @classmethod
+    def any_field_query(cls, *args, **kwargs) -> dbcore.OrQuery:
+        return dbcore.OrQuery(
+            [cls.field_query(f, *args, **kwargs) for f in cls._search_fields]
+        )
+
     def duplicates_query(self, fields: list[str]) -> dbcore.AndQuery:
         """Return a query for entities with same values in the given fields."""
         return dbcore.AndQuery(
