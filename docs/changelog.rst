@@ -8,6 +8,10 @@ Unreleased
 
 New features:
 Bug fixes:
+
+* :doc:`plugins/lyrics`: LRCLib will fallback to plain lyrics if synced lyrics
+  are not found and `synced` flag is set to `yes`.
+
 For packagers:
 Other changes:
 
