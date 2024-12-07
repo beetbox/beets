@@ -17,6 +17,8 @@ Beets library. Attempts to implement a compatible protocol to allow
 use of the wide range of MPD clients.
 """
 
+from __future__ import annotations
+
 import inspect
 import math
 import random
@@ -26,7 +28,7 @@ import sys
 import time
 import traceback
 from string import Template
-from typing import List
+from typing import TYPE_CHECKING, List
 
 import beets
 import beets.ui
@@ -34,6 +36,9 @@ from beets import dbcore, vfs
 from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import bluelet
+
+if TYPE_CHECKING:
+    from beets.dbcore.query import Query
 
 PROTOCOL_VERSION = "0.16.0"
 BUFSIZE = 1024
@@ -1403,7 +1408,7 @@ class Server(BaseServer):
         type "any"; if None, then an error is thrown.
         """
         if kv:  # At least one key-value pair.
-            queries = []
+            queries: list[Query] = []
             # Iterate pairwise over the arguments.
             it = iter(kv)
             for tag, value in zip(it, it):
@@ -1418,7 +1423,7 @@ class Server(BaseServer):
                         raise BPDError(ERROR_UNKNOWN, "no such tagtype")
                 else:
                     _, key = self._tagtype_lookup(tag)
-                    queries.append(query_type(key, value))
+                    queries.append(Item.field_query(key, value, query_type))
             return dbcore.query.AndQuery(queries)
         else:  # No key-value pairs.
             return dbcore.query.TrueQuery()
@@ -1481,7 +1486,9 @@ class Server(BaseServer):
         _, key = self._tagtype_lookup(tag)
         songs = 0
         playtime = 0.0
-        for item in self.lib.items(dbcore.query.MatchQuery(key, value)):
+        for item in self.lib.items(
+            Item.field_query(key, value, dbcore.query.MatchQuery)
+        ):
             songs += 1
             playtime += item.length
         yield "songs: " + str(songs)
