@@ -112,7 +112,7 @@ class Query(ABC):
         return hash(type(self))
 
 
-SQLiteType = Union[str, bytes, float, int, memoryview]
+SQLiteType = Union[str, bytes, float, int, memoryview, None]
 AnySQLiteType = TypeVar("AnySQLiteType", bound=SQLiteType)
 FieldQueryType = type["FieldQuery"]
 
@@ -481,7 +481,7 @@ class CollectionQuery(Query):
         all subqueries with the string joiner (padded by spaces).
         """
         clause_parts = []
-        subvals = []
+        subvals: list[SQLiteType] = []
         for subq in self.subqueries:
             subq_clause, subq_subvals = subq.clause()
             if not subq_clause:

@@ -22,7 +22,13 @@ from typing import Any, Generic, TypeVar, cast
 
 from beets.util import str2bool
 
-from .query import BooleanQuery, FieldQueryType, NumericQuery, SubstringQuery
+from .query import (
+    BooleanQuery,
+    FieldQueryType,
+    NumericQuery,
+    SQLiteType,
+    SubstringQuery,
+)
 
 
 class ModelType(typing.Protocol):
@@ -107,10 +113,7 @@ class Type(ABC, Generic[T, N]):
             # `self.model_type(value)`
             return cast(T, value)
 
-    def from_sql(
-        self,
-        sql_value: None | int | float | str | bytes,
-    ) -> T | N:
+    def from_sql(self, sql_value: SQLiteType) -> T | N:
         """Receives the value stored in the SQL backend and return the
         value to be stored in the model.
 
@@ -131,7 +134,7 @@ class Type(ABC, Generic[T, N]):
         else:
             return self.normalize(sql_value)
 
-    def to_sql(self, model_value: Any) -> None | int | float | str | bytes:
+    def to_sql(self, model_value: Any) -> SQLiteType:
         """Convert a value as stored in the model object to a value used
         by the database adapter.
         """

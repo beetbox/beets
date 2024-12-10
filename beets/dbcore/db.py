@@ -48,6 +48,8 @@ from .query import (
 if TYPE_CHECKING:
     from types import TracebackType
 
+    from .query import SQLiteType
+
     D = TypeVar("D", bound="Database", default=Any)
 else:
     D = TypeVar("D", bound="Database")
@@ -579,7 +581,7 @@ class Model(ABC, Generic[D]):
 
         # Build assignments for query.
         assignments = []
-        subvars = []
+        subvars: list[SQLiteType] = []
         for key in fields:
             if key != "id" and key in self._dirty:
                 self._dirty.remove(key)
@@ -959,14 +961,14 @@ class Transaction:
             self._mutated = False
             self.db._db_lock.release()
 
-    def query(self, statement: str, subvals: Sequence = ()) -> list:
+    def query(self, statement: str, subvals: Sequence[SQLiteType] = ()) -> list:
         """Execute an SQL statement with substitution values and return
         a list of rows from the database.
         """
         cursor = self.db._connection().execute(statement, subvals)
         return cursor.fetchall()
 
-    def mutate(self, statement: str, subvals: Sequence = ()) -> Any:
+    def mutate(self, statement: str, subvals: Sequence[SQLiteType] = ()) -> Any:
         """Execute an SQL statement with substitution values and return
         the row ID of the last affected row.
         """
