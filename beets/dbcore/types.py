@@ -22,7 +22,7 @@ from typing import Any, Generic, TypeVar, cast
 
 from beets.util import str2bool
 
-from .query import BooleanQuery, FieldQuery, NumericQuery, SubstringQuery
+from .query import BooleanQuery, FieldQueryType, NumericQuery, SubstringQuery
 
 
 class ModelType(typing.Protocol):
@@ -51,7 +51,7 @@ class Type(ABC, Generic[T, N]):
     """The SQLite column type for the value.
     """
 
-    query: type[FieldQuery] = SubstringQuery
+    query: FieldQueryType = SubstringQuery
     """The `Query` subclass to be used when querying the field.
     """
 
@@ -234,7 +234,7 @@ class BaseFloat(Type[float, N]):
     """
 
     sql = "REAL"
-    query: type[FieldQuery[Any]] = NumericQuery
+    query: FieldQueryType = NumericQuery
     model_type = float
 
     def __init__(self, digits: int = 1):

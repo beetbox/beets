@@ -30,6 +30,11 @@ from beets import util
 
 if TYPE_CHECKING:
     from beets.dbcore import Model
+    from beets.dbcore.db import AnyModel
+
+    P = TypeVar("P", default=Any)
+else:
+    P = TypeVar("P")
 
 
 class ParsingError(ValueError):
@@ -107,9 +112,9 @@ class Query(ABC):
         return hash(type(self))
 
 
-P = TypeVar("P")
 SQLiteType = Union[str, bytes, float, int, memoryview]
 AnySQLiteType = TypeVar("AnySQLiteType", bound=SQLiteType)
+FieldQueryType = type["FieldQuery"]
 
 
 class FieldQuery(Query, Generic[P]):
@@ -511,7 +516,7 @@ class AnyFieldQuery(CollectionQuery):
         """Return a set with field names that this query operates on."""
         return set(self.fields)
 
-    def __init__(self, pattern, fields, cls: type[FieldQuery]):
+    def __init__(self, pattern, fields, cls: FieldQueryType):
         self.pattern = pattern
         self.fields = fields
         self.query_class = cls

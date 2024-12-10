@@ -37,6 +37,7 @@ from . import types
 from .query import (
     AndQuery,
     FieldQuery,
+    FieldQueryType,
     MatchQuery,
     NullSort,
     Query,
@@ -293,7 +294,7 @@ class Model(ABC, Generic[D]):
     are subclasses of `Sort`.
     """
 
-    _queries: dict[str, type[FieldQuery]] = {}
+    _queries: dict[str, FieldQueryType] = {}
     """Named queries that use a field-like `name:value` syntax but which
     do not relate to any specific field.
     """
@@ -718,7 +719,7 @@ class Model(ABC, Generic[D]):
         cls,
         field,
         pattern,
-        query_cls: type[FieldQuery] = MatchQuery,
+        query_cls: FieldQueryType = MatchQuery,
     ) -> FieldQuery:
         """Get a `FieldQuery` for this model."""
         return query_cls(field, pattern, field in cls._fields)
@@ -727,7 +728,7 @@ class Model(ABC, Generic[D]):
     def all_fields_query(
         cls: type[Model],
         pats: Mapping,
-        query_cls: type[FieldQuery] = MatchQuery,
+        query_cls: FieldQueryType = MatchQuery,
     ):
         """Get a query that matches many fields with different patterns.
 

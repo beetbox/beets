@@ -25,7 +25,7 @@ from . import Model, query
 if TYPE_CHECKING:
     from collections.abc import Collection, Sequence
 
-    from .query import Sort
+    from .query import FieldQueryType, Sort
 
 PARSE_QUERY_PART_REGEX = re.compile(
     # Non-capturing optional segment for the keyword.
@@ -41,10 +41,10 @@ PARSE_QUERY_PART_REGEX = re.compile(
 
 def parse_query_part(
     part: str,
-    query_classes: dict[str, type[query.FieldQuery]] = {},
+    query_classes: dict[str, FieldQueryType] = {},
     prefixes: dict = {},
     default_class: type[query.SubstringQuery] = query.SubstringQuery,
-) -> tuple[str | None, str, type[query.FieldQuery], bool]:
+) -> tuple[str | None, str, FieldQueryType, bool]:
     """Parse a single *query part*, which is a chunk of a complete query
     string representing a single criterion.
 
@@ -133,7 +133,7 @@ def construct_query_part(
 
     # Use `model_cls` to build up a map from field (or query) names to
     # `Query` classes.
-    query_classes: dict[str, type[query.FieldQuery]] = {}
+    query_classes: dict[str, FieldQueryType] = {}
     for k, t in itertools.chain(
         model_cls._fields.items(), model_cls._types.items()
     ):
