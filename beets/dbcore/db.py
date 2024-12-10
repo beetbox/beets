@@ -55,6 +55,9 @@ else:
     D = TypeVar("D", bound="Database")
 
 
+FlexAttrs = dict[str, str]
+
+
 class DBAccessError(Exception):
     """The SQLite database became inaccessible.
 
@@ -729,7 +732,7 @@ class Model(ABC, Generic[D]):
     @classmethod
     def all_fields_query(
         cls: type[Model],
-        pats: Mapping,
+        pats: Mapping[str, str],
         query_cls: FieldQueryType = MatchQuery,
     ):
         """Get a query that matches many fields with different patterns.
@@ -841,9 +844,9 @@ class Results(Generic[AnyModel]):
             # Objects are pre-sorted (i.e., by the database).
             return self._get_objects()
 
-    def _get_indexed_flex_attrs(self) -> Mapping:
+    def _get_indexed_flex_attrs(self) -> dict[int, FlexAttrs]:
         """Index flexible attributes by the entity id they belong to"""
-        flex_values: dict[int, dict[str, Any]] = {}
+        flex_values: dict[int, FlexAttrs] = {}
         for row in self.flex_rows:
             if row["entity_id"] not in flex_values:
                 flex_values[row["entity_id"]] = {}
@@ -852,7 +855,9 @@ class Results(Generic[AnyModel]):
 
         return flex_values
 
-    def _make_model(self, row, flex_values: dict = {}) -> AnyModel:
+    def _make_model(
+        self, row: sqlite3.Row, flex_values: FlexAttrs = {}
+    ) -> AnyModel:
         """Create a Model object for the given row"""
         cols = dict(row)
         values = {k: v for (k, v) in cols.items() if not k[:4] == "flex"}
@@ -961,7 +966,9 @@ class Transaction:
             self._mutated = False
             self.db._db_lock.release()
 
-    def query(self, statement: str, subvals: Sequence[SQLiteType] = ()) -> list:
+    def query(
+        self, statement: str, subvals: Sequence[SQLiteType] = ()
+    ) -> list[sqlite3.Row]:
         """Execute an SQL statement with substitution values and return
         a list of rows from the database.
         """
@@ -1129,7 +1136,7 @@ class Database:
                 conn.close()
 
     @contextlib.contextmanager
-    def _tx_stack(self) -> Generator[list]:
+    def _tx_stack(self) -> Generator[list[Transaction]]:
         """A context manager providing access to the current thread's
         transaction stack. The context manager synchronizes access to
         the stack map. Transactions should never migrate across threads.
