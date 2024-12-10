@@ -47,6 +47,10 @@ from .query import (
 if TYPE_CHECKING:
     from types import TracebackType
 
+    D = TypeVar("D", bound="Database", default=Any)
+else:
+    D = TypeVar("D", bound="Database")
+
 
 class DBAccessError(Exception):
     """The SQLite database became inaccessible.
@@ -236,7 +240,7 @@ class LazyConvertDict:
 # Abstract base for model classes.
 
 
-class Model(ABC):
+class Model(ABC, Generic[D]):
     """An abstract object representing an object in the database. Model
     objects act like dictionaries (i.e., they allow subscript access like
     ``obj['field']``). The same field set is available via attribute
@@ -306,7 +310,7 @@ class Model(ABC):
     """
 
     @cached_classproperty
-    def _relation(cls) -> type[Model]:
+    def _relation(cls):
         """The model that this model is closely related to."""
         return cls
 
@@ -347,7 +351,7 @@ class Model(ABC):
 
     # Basic operation.
 
-    def __init__(self, db: Database | None = None, **values):
+    def __init__(self, db: D | None = None, **values):
         """Create a new object with an optional Database association and
         initial field values.
         """
@@ -363,7 +367,7 @@ class Model(ABC):
     @classmethod
     def _awaken(
         cls: type[AnyModel],
-        db: Database | None = None,
+        db: D | None = None,
         fixed_values: dict[str, Any] = {},
         flex_values: dict[str, Any] = {},
     ) -> AnyModel:
@@ -393,7 +397,7 @@ class Model(ABC):
         if self._db:
             self._revision = self._db.revision
 
-    def _check_db(self, need_id: bool = True) -> Database:
+    def _check_db(self, need_id: bool = True) -> D:
         """Ensure that this object is associated with a database row: it
         has a reference to a database (`_db`) and an id. A ValueError
         exception is raised otherwise.
@@ -637,7 +641,7 @@ class Model(ABC):
                 f"DELETE FROM {self._flex_table} WHERE entity_id=?", (self.id,)
             )
 
-    def add(self, db: Database | None = None):
+    def add(self, db: D | None = None):
         """Add the object to the library database. This object must be
         associated with a database; you can provide one via the `db`
         parameter or use the currently associated database.
@@ -749,8 +753,8 @@ class Results(Generic[AnyModel]):
     def __init__(
         self,
         model_class: type[AnyModel],
-        rows: list[Mapping],
-        db: Database,
+        rows: list[sqlite3.Row],
+        db: D,
         flex_rows,
         query: Query | None = None,
         sort=None,

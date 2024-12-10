@@ -381,7 +381,7 @@ class WriteError(FileOperationError):
 # Item and Album model classes.
 
 
-class LibModel(dbcore.Model):
+class LibModel(dbcore.Model["Library"]):
     """Shared concrete functionality for Items and Albums."""
 
     # Config key that specifies how an instance should be formatted.
@@ -1074,9 +1074,9 @@ class Item(LibModel):
         The path is returned as a bytestring. ``basedir`` can override the
         library's base directory for the destination.
         """
-        self._check_db()
-        basedir = basedir or self._db.directory
-        path_formats = path_formats or self._db.path_formats
+        db = self._check_db()
+        basedir = basedir or db.directory
+        path_formats = path_formats or db.path_formats
 
         # Use a path format based on a query, falling back on the
         # default.
@@ -1117,11 +1117,11 @@ class Item(LibModel):
         maxlen = beets.config["max_filename_length"].get(int)
         if not maxlen:
             # When zero, try to determine from filesystem.
-            maxlen = util.max_filename_length(self._db.directory)
+            maxlen = util.max_filename_length(db.directory)
 
         lib_path_str, fallback = util.legalize_path(
             subpath,
-            self._db.replacements,
+            db.replacements,
             maxlen,
             os.path.splitext(self.path)[1],
         )
@@ -1604,7 +1604,8 @@ class Library(dbcore.Database):
         self.path_formats = path_formats
         self.replacements = replacements
 
-        self._memotable = {}  # Used for template substitution performance.
+        # Used for template substitution performance.
+        self._memotable: dict[tuple[str, ...], str] = {}
 
     # Adding objects to the database.
 
