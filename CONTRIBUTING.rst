@@ -118,10 +118,10 @@ command. Instead, you can activate the virtual environment in your shell with::
 
     $ poetry shell
 
-You should see ``(beets-py38)`` prefix in your shell prompt. Now you can run
+You should see ``(beets-py3.9)`` prefix in your shell prompt. Now you can run
 commands directly, for example::
 
-    $ (beets-py38) pytest
+    $ (beets-py3.9) pytest
 
 Additionally, `poethepoet`_ task runner assists us with the most common
 operations. Formatting, linting, testing are defined as ``poe`` tasks in

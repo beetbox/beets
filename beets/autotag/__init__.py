@@ -14,7 +14,8 @@
 
 """Facilities for automatically determining files' correct metadata."""
 
-from typing import Mapping, Sequence, Union
+from collections.abc import Mapping, Sequence
+from typing import Union
 
 from beets import config, logging
 from beets.library import Album, Item

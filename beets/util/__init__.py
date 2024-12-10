@@ -33,15 +33,13 @@ from enum import Enum
 from importlib import import_module
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
+from re import Pattern
 from typing import (
     TYPE_CHECKING,
     Any,
     AnyStr,
     Callable,
-    Iterator,
     NamedTuple,
-    Pattern,
-    Sequence,
     TypeVar,
     Union,
 )
@@ -51,6 +49,7 @@ from unidecode import unidecode
 from beets.util import hidden
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
     from logging import Logger
 
 if sys.version_info >= (3, 10):
