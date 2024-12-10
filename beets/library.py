@@ -295,47 +295,6 @@ class DurationType(types.Float):
                 return self.null
 
 
-# Library-specific sort types.
-
-
-class SmartArtistSort(dbcore.query.Sort):
-    """Sort by artist (either album artist or track artist),
-    prioritizing the sort field over the raw field.
-    """
-
-    def __init__(self, model_cls, ascending=True, case_insensitive=True):
-        self.album = model_cls is Album
-        self.ascending = ascending
-        self.case_insensitive = case_insensitive
-
-    def order_clause(self):
-        order = "ASC" if self.ascending else "DESC"
-        field = "albumartist" if self.album else "artist"
-        collate = "COLLATE NOCASE" if self.case_insensitive else ""
-
-        return f"COALESCE(NULLIF({field}_sort, ''), {field}) {collate} {order}"
-
-    def sort(self, objs):
-        if self.album:
-
-            def field(a):
-                return a.albumartist_sort or a.albumartist
-
-        else:
-
-            def field(i):
-                return i.artist_sort or i.artist
-
-        if self.case_insensitive:
-
-            def key(x):
-                return field(x).lower()
-
-        else:
-            key = field
-        return sorted(objs, key=key, reverse=not self.ascending)
-
-
 # Special path format key.
 PF_KEY_DEFAULT = "default"
 
@@ -632,7 +591,7 @@ class Item(LibModel):
 
     _formatter = FormattedItemMapping
 
-    _sorts = {"artist": SmartArtistSort}
+    _sorts = {"artist": dbcore.query.SmartArtistSort}
 
     _queries = {"singleton": SingletonQuery}
 
@@ -1205,8 +1164,8 @@ class Album(LibModel):
     }
 
     _sorts = {
-        "albumartist": SmartArtistSort,
-        "artist": SmartArtistSort,
+        "albumartist": dbcore.query.SmartArtistSort,
+        "artist": dbcore.query.SmartArtistSort,
     }
 
     # List of keys that are set on an album's items.

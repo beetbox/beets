@@ -1066,3 +1066,23 @@ class NullSort(Sort):
 
     def __hash__(self) -> int:
         return 0
+
+
+class SmartArtistSort(FieldSort):
+    """Sort by artist (either album artist or track artist),
+    prioritizing the sort field over the raw field.
+    """
+
+    def order_clause(self):
+        order = "ASC" if self.ascending else "DESC"
+        collate = "COLLATE NOCASE" if self.case_insensitive else ""
+        field = self.field
+
+        return f"COALESCE(NULLIF({field}_sort, ''), {field}) {collate} {order}"
+
+    def sort(self, objs: list[AnyModel]) -> list[AnyModel]:
+        def key(o):
+            val = o[f"{self.field}_sort"] or o[self.field]
+            return val.lower() if self.case_insensitive else val
+
+        return sorted(objs, key=key, reverse=not self.ascending)

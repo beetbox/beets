@@ -38,6 +38,7 @@ from .query import (
     AndQuery,
     FieldQuery,
     FieldQueryType,
+    FieldSort,
     MatchQuery,
     NullSort,
     Query,
@@ -294,7 +295,7 @@ class Model(ABC, Generic[D]):
     """Optional Types for non-fixed (i.e., flexible and computed) fields.
     """
 
-    _sorts: dict[str, type[Sort]] = {}
+    _sorts: dict[str, type[FieldSort]] = {}
     """Optional named sort criteria. The keys are strings and the values
     are subclasses of `Sort`.
     """
