@@ -18,11 +18,17 @@ from __future__ import annotations
 
 import typing
 from abc import ABC
-from typing import Any, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 from beets.util import str2bool
 
-from .query import BooleanQuery, FieldQuery, NumericQuery, SubstringQuery
+from .query import (
+    BooleanQuery,
+    FieldQueryType,
+    NumericQuery,
+    SQLiteType,
+    SubstringQuery,
+)
 
 
 class ModelType(typing.Protocol):
@@ -37,8 +43,12 @@ class ModelType(typing.Protocol):
 # Generic type variables, used for the value type T and null type N (if
 # nullable, else T and N are set to the same type for the concrete subclasses
 # of Type).
-N = TypeVar("N")
-T = TypeVar("T", bound=ModelType)
+if TYPE_CHECKING:
+    N = TypeVar("N", default=Any)
+    T = TypeVar("T", bound=ModelType, default=Any)
+else:
+    N = TypeVar("N")
+    T = TypeVar("T", bound=ModelType)
 
 
 class Type(ABC, Generic[T, N]):
@@ -51,7 +61,7 @@ class Type(ABC, Generic[T, N]):
     """The SQLite column type for the value.
     """
 
-    query: type[FieldQuery] = SubstringQuery
+    query: FieldQueryType = SubstringQuery
     """The `Query` subclass to be used when querying the field.
     """
 
@@ -107,10 +117,7 @@ class Type(ABC, Generic[T, N]):
             # `self.model_type(value)`
             return cast(T, value)
 
-    def from_sql(
-        self,
-        sql_value: None | int | float | str | bytes,
-    ) -> T | N:
+    def from_sql(self, sql_value: SQLiteType) -> T | N:
         """Receives the value stored in the SQL backend and return the
         value to be stored in the model.
 
@@ -131,7 +138,7 @@ class Type(ABC, Generic[T, N]):
         else:
             return self.normalize(sql_value)
 
-    def to_sql(self, model_value: Any) -> None | int | float | str | bytes:
+    def to_sql(self, model_value: Any) -> SQLiteType:
         """Convert a value as stored in the model object to a value used
         by the database adapter.
         """
@@ -234,7 +241,7 @@ class BaseFloat(Type[float, N]):
     """
 
     sql = "REAL"
-    query: type[FieldQuery[Any]] = NumericQuery
+    query: FieldQueryType = NumericQuery
     model_type = float
 
     def __init__(self, digits: int = 1):

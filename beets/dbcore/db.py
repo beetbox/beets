@@ -37,6 +37,8 @@ from . import types
 from .query import (
     AndQuery,
     FieldQuery,
+    FieldQueryType,
+    FieldSort,
     MatchQuery,
     NullSort,
     Query,
@@ -46,6 +48,15 @@ from .query import (
 
 if TYPE_CHECKING:
     from types import TracebackType
+
+    from .query import SQLiteType
+
+    D = TypeVar("D", bound="Database", default=Any)
+else:
+    D = TypeVar("D", bound="Database")
+
+
+FlexAttrs = dict[str, str]
 
 
 class DBAccessError(Exception):
@@ -236,7 +247,7 @@ class LazyConvertDict:
 # Abstract base for model classes.
 
 
-class Model(ABC):
+class Model(ABC, Generic[D]):
     """An abstract object representing an object in the database. Model
     objects act like dictionaries (i.e., they allow subscript access like
     ``obj['field']``). The same field set is available via attribute
@@ -284,12 +295,12 @@ class Model(ABC):
     """Optional Types for non-fixed (i.e., flexible and computed) fields.
     """
 
-    _sorts: dict[str, type[Sort]] = {}
+    _sorts: dict[str, type[FieldSort]] = {}
     """Optional named sort criteria. The keys are strings and the values
     are subclasses of `Sort`.
     """
 
-    _queries: dict[str, type[FieldQuery]] = {}
+    _queries: dict[str, FieldQueryType] = {}
     """Named queries that use a field-like `name:value` syntax but which
     do not relate to any specific field.
     """
@@ -306,7 +317,7 @@ class Model(ABC):
     """
 
     @cached_classproperty
-    def _relation(cls) -> type[Model]:
+    def _relation(cls):
         """The model that this model is closely related to."""
         return cls
 
@@ -347,7 +358,7 @@ class Model(ABC):
 
     # Basic operation.
 
-    def __init__(self, db: Database | None = None, **values):
+    def __init__(self, db: D | None = None, **values):
         """Create a new object with an optional Database association and
         initial field values.
         """
@@ -363,7 +374,7 @@ class Model(ABC):
     @classmethod
     def _awaken(
         cls: type[AnyModel],
-        db: Database | None = None,
+        db: D | None = None,
         fixed_values: dict[str, Any] = {},
         flex_values: dict[str, Any] = {},
     ) -> AnyModel:
@@ -393,7 +404,7 @@ class Model(ABC):
         if self._db:
             self._revision = self._db.revision
 
-    def _check_db(self, need_id: bool = True) -> Database:
+    def _check_db(self, need_id: bool = True) -> D:
         """Ensure that this object is associated with a database row: it
         has a reference to a database (`_db`) and an id. A ValueError
         exception is raised otherwise.
@@ -574,7 +585,7 @@ class Model(ABC):
 
         # Build assignments for query.
         assignments = []
-        subvars = []
+        subvars: list[SQLiteType] = []
         for key in fields:
             if key != "id" and key in self._dirty:
                 self._dirty.remove(key)
@@ -637,7 +648,7 @@ class Model(ABC):
                 f"DELETE FROM {self._flex_table} WHERE entity_id=?", (self.id,)
             )
 
-    def add(self, db: Database | None = None):
+    def add(self, db: D | None = None):
         """Add the object to the library database. This object must be
         associated with a database; you can provide one via the `db`
         parameter or use the currently associated database.
@@ -714,7 +725,7 @@ class Model(ABC):
         cls,
         field,
         pattern,
-        query_cls: type[FieldQuery] = MatchQuery,
+        query_cls: FieldQueryType = MatchQuery,
     ) -> FieldQuery:
         """Get a `FieldQuery` for this model."""
         return query_cls(field, pattern, field in cls._fields)
@@ -722,8 +733,8 @@ class Model(ABC):
     @classmethod
     def all_fields_query(
         cls: type[Model],
-        pats: Mapping,
-        query_cls: type[FieldQuery] = MatchQuery,
+        pats: Mapping[str, str],
+        query_cls: FieldQueryType = MatchQuery,
     ):
         """Get a query that matches many fields with different patterns.
 
@@ -749,8 +760,8 @@ class Results(Generic[AnyModel]):
     def __init__(
         self,
         model_class: type[AnyModel],
-        rows: list[Mapping],
-        db: Database,
+        rows: list[sqlite3.Row],
+        db: D,
         flex_rows,
         query: Query | None = None,
         sort=None,
@@ -834,9 +845,9 @@ class Results(Generic[AnyModel]):
             # Objects are pre-sorted (i.e., by the database).
             return self._get_objects()
 
-    def _get_indexed_flex_attrs(self) -> Mapping:
+    def _get_indexed_flex_attrs(self) -> dict[int, FlexAttrs]:
         """Index flexible attributes by the entity id they belong to"""
-        flex_values: dict[int, dict[str, Any]] = {}
+        flex_values: dict[int, FlexAttrs] = {}
         for row in self.flex_rows:
             if row["entity_id"] not in flex_values:
                 flex_values[row["entity_id"]] = {}
@@ -845,7 +856,9 @@ class Results(Generic[AnyModel]):
 
         return flex_values
 
-    def _make_model(self, row, flex_values: dict = {}) -> AnyModel:
+    def _make_model(
+        self, row: sqlite3.Row, flex_values: FlexAttrs = {}
+    ) -> AnyModel:
         """Create a Model object for the given row"""
         cols = dict(row)
         values = {k: v for (k, v) in cols.items() if not k[:4] == "flex"}
@@ -954,14 +967,16 @@ class Transaction:
             self._mutated = False
             self.db._db_lock.release()
 
-    def query(self, statement: str, subvals: Sequence = ()) -> list:
+    def query(
+        self, statement: str, subvals: Sequence[SQLiteType] = ()
+    ) -> list[sqlite3.Row]:
         """Execute an SQL statement with substitution values and return
         a list of rows from the database.
         """
         cursor = self.db._connection().execute(statement, subvals)
         return cursor.fetchall()
 
-    def mutate(self, statement: str, subvals: Sequence = ()) -> Any:
+    def mutate(self, statement: str, subvals: Sequence[SQLiteType] = ()) -> Any:
         """Execute an SQL statement with substitution values and return
         the row ID of the last affected row.
         """
@@ -1122,7 +1137,7 @@ class Database:
                 conn.close()
 
     @contextlib.contextmanager
-    def _tx_stack(self) -> Generator[list]:
+    def _tx_stack(self) -> Generator[list[Transaction]]:
         """A context manager providing access to the current thread's
         transaction stack. The context manager synchronizes access to
         the stack map. Transactions should never migrate across threads.

@@ -19,7 +19,7 @@ from __future__ import annotations
 import re
 import unicodedata
 from abc import ABC, abstractmethod
-from collections.abc import Collection, Iterator, MutableSequence, Sequence
+from collections.abc import Iterator, MutableSequence, Sequence
 from datetime import datetime, timedelta
 from functools import reduce
 from operator import mul, or_
@@ -30,6 +30,11 @@ from beets import util
 
 if TYPE_CHECKING:
     from beets.dbcore import Model
+    from beets.dbcore.db import AnyModel
+
+    P = TypeVar("P", default=Any)
+else:
+    P = TypeVar("P")
 
 
 class ParsingError(ValueError):
@@ -107,9 +112,9 @@ class Query(ABC):
         return hash(type(self))
 
 
-P = TypeVar("P")
-SQLiteType = Union[str, bytes, float, int, memoryview]
+SQLiteType = Union[str, bytes, float, int, memoryview, None]
 AnySQLiteType = TypeVar("AnySQLiteType", bound=SQLiteType)
+FieldQueryType = type["FieldQuery"]
 
 
 class FieldQuery(Query, Generic[P]):
@@ -289,7 +294,7 @@ class RegexpQuery(StringFieldQuery[Pattern[str]]):
         return unicodedata.normalize("NFC", s)
 
     @classmethod
-    def string_match(cls, pattern: Pattern, value: str) -> bool:
+    def string_match(cls, pattern: Pattern[str], value: str) -> bool:
         return pattern.search(cls._normalize(value)) is not None
 
 
@@ -451,7 +456,7 @@ class CollectionQuery(Query):
         """Return a set with field names that this query operates on."""
         return reduce(or_, (sq.field_names for sq in self.subqueries))
 
-    def __init__(self, subqueries: Sequence = ()):
+    def __init__(self, subqueries: Sequence[Query] = ()):
         self.subqueries = subqueries
 
     # Act like a sequence.
@@ -462,7 +467,7 @@ class CollectionQuery(Query):
     def __getitem__(self, key):
         return self.subqueries[key]
 
-    def __iter__(self) -> Iterator:
+    def __iter__(self) -> Iterator[Query]:
         return iter(self.subqueries)
 
     def __contains__(self, subq) -> bool:
@@ -476,7 +481,7 @@ class CollectionQuery(Query):
         all subqueries with the string joiner (padded by spaces).
         """
         clause_parts = []
-        subvals = []
+        subvals: list[SQLiteType] = []
         for subq in self.subqueries:
             subq_clause, subq_subvals = subq.clause()
             if not subq_clause:
@@ -511,7 +516,7 @@ class AnyFieldQuery(CollectionQuery):
         """Return a set with field names that this query operates on."""
         return set(self.fields)
 
-    def __init__(self, pattern, fields, cls: type[FieldQuery]):
+    def __init__(self, pattern, fields, cls: FieldQueryType):
         self.pattern = pattern
         self.fields = fields
         self.query_class = cls
@@ -549,7 +554,7 @@ class MutableCollectionQuery(CollectionQuery):
     query is initialized.
     """
 
-    subqueries: MutableSequence
+    subqueries: MutableSequence[Query]
 
     def __setitem__(self, key, value):
         self.subqueries[key] = value
@@ -894,7 +899,7 @@ class Sort:
         """
         return None
 
-    def sort(self, items: list) -> list:
+    def sort(self, items: list[AnyModel]) -> list[AnyModel]:
         """Sort the list of objects and return a list."""
         return sorted(items)
 
@@ -988,7 +993,7 @@ class FieldSort(Sort):
         self.ascending = ascending
         self.case_insensitive = case_insensitive
 
-    def sort(self, objs: Collection):
+    def sort(self, objs: list[AnyModel]) -> list[AnyModel]:
         # TODO: Conversion and null-detection here. In Python 3,
         # comparisons with None fail. We should also support flexible
         # attributes with different types without falling over.
@@ -1047,7 +1052,7 @@ class SlowFieldSort(FieldSort):
 class NullSort(Sort):
     """No sorting. Leave results unsorted."""
 
-    def sort(self, items: list) -> list:
+    def sort(self, items: list[AnyModel]) -> list[AnyModel]:
         return items
 
     def __nonzero__(self) -> bool:
@@ -1061,3 +1066,23 @@ class NullSort(Sort):
 
     def __hash__(self) -> int:
         return 0
+
+
+class SmartArtistSort(FieldSort):
+    """Sort by artist (either album artist or track artist),
+    prioritizing the sort field over the raw field.
+    """
+
+    def order_clause(self):
+        order = "ASC" if self.ascending else "DESC"
+        collate = "COLLATE NOCASE" if self.case_insensitive else ""
+        field = self.field
+
+        return f"COALESCE(NULLIF({field}_sort, ''), {field}) {collate} {order}"
+
+    def sort(self, objs: list[AnyModel]) -> list[AnyModel]:
+        def key(o):
+            val = o[f"{self.field}_sort"] or o[self.field]
+            return val.lower() if self.case_insensitive else val
+
+        return sorted(objs, key=key, reverse=not self.ascending)
