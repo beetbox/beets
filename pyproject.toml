@@ -26,7 +26,14 @@ packages = [
     { include = "beets" },
     { include = "beetsplug" },
 ]
-include = ["test", "man/**/*"] # extra files to include in the sdist
+include = [ # extra files to include in the sdist
+    "docs",
+    "extra",
+    "man/**/*",
+    "test/*.py",
+    "test/rsrc/**/*",
+]
+exclude = ["docs/_build", "docs/modd.conf", "docs/**/*.css"]
 
 [tool.poetry.urls]
 Changelog = "https://github.com/beetbox/beets/blob/master/docs/changelog.rst"
