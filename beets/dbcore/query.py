@@ -19,7 +19,7 @@ from __future__ import annotations
 import re
 import unicodedata
 from abc import ABC, abstractmethod
-from collections.abc import Collection, Iterator, MutableSequence, Sequence
+from collections.abc import Iterator, MutableSequence, Sequence
 from datetime import datetime, timedelta
 from functools import reduce
 from operator import mul, or_
@@ -294,7 +294,7 @@ class RegexpQuery(StringFieldQuery[Pattern[str]]):
         return unicodedata.normalize("NFC", s)
 
     @classmethod
-    def string_match(cls, pattern: Pattern, value: str) -> bool:
+    def string_match(cls, pattern: Pattern[str], value: str) -> bool:
         return pattern.search(cls._normalize(value)) is not None
 
 
@@ -456,7 +456,7 @@ class CollectionQuery(Query):
         """Return a set with field names that this query operates on."""
         return reduce(or_, (sq.field_names for sq in self.subqueries))
 
-    def __init__(self, subqueries: Sequence = ()):
+    def __init__(self, subqueries: Sequence[Query] = ()):
         self.subqueries = subqueries
 
     # Act like a sequence.
@@ -467,7 +467,7 @@ class CollectionQuery(Query):
     def __getitem__(self, key):
         return self.subqueries[key]
 
-    def __iter__(self) -> Iterator:
+    def __iter__(self) -> Iterator[Query]:
         return iter(self.subqueries)
 
     def __contains__(self, subq) -> bool:
@@ -554,7 +554,7 @@ class MutableCollectionQuery(CollectionQuery):
     query is initialized.
     """
 
-    subqueries: MutableSequence
+    subqueries: MutableSequence[Query]
 
     def __setitem__(self, key, value):
         self.subqueries[key] = value
@@ -899,7 +899,7 @@ class Sort:
         """
         return None
 
-    def sort(self, items: list) -> list:
+    def sort(self, items: list[AnyModel]) -> list[AnyModel]:
         """Sort the list of objects and return a list."""
         return sorted(items)
 
@@ -993,7 +993,7 @@ class FieldSort(Sort):
         self.ascending = ascending
         self.case_insensitive = case_insensitive
 
-    def sort(self, objs: Collection):
+    def sort(self, objs: list[AnyModel]) -> list[AnyModel]:
         # TODO: Conversion and null-detection here. In Python 3,
         # comparisons with None fail. We should also support flexible
         # attributes with different types without falling over.
@@ -1052,7 +1052,7 @@ class SlowFieldSort(FieldSort):
 class NullSort(Sort):
     """No sorting. Leave results unsorted."""
 
-    def sort(self, items: list) -> list:
+    def sort(self, items: list[AnyModel]) -> list[AnyModel]:
         return items
 
     def __nonzero__(self) -> bool:
