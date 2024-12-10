@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import typing
 from abc import ABC
-from typing import Any, Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 from beets.util import str2bool
 
@@ -43,8 +43,12 @@ class ModelType(typing.Protocol):
 # Generic type variables, used for the value type T and null type N (if
 # nullable, else T and N are set to the same type for the concrete subclasses
 # of Type).
-N = TypeVar("N")
-T = TypeVar("T", bound=ModelType)
+if TYPE_CHECKING:
+    N = TypeVar("N", default=Any)
+    T = TypeVar("T", bound=ModelType, default=Any)
+else:
+    N = TypeVar("N")
+    T = TypeVar("T", bound=ModelType)
 
 
 class Type(ABC, Generic[T, N]):
