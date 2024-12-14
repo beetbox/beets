@@ -146,6 +146,43 @@ def apply_album_metadata(album_info: AlbumInfo, album: Album):
     _apply_metadata(album_info, album)
 
 
+def ensure_consistent_list_fields(i: Item) -> None:
+    """Synchronise single and list values for the list fields that we use.
+
+    That is, ensure the same value in the single field and the first element
+    in the list.
+
+    For context, the value we set as, say, ``mb_artistid`` is simply ignored:
+    Under the current :class:`MediaFile` implementation, fields ``albumtype``,
+    ``mb_artistid`` and ``mb_albumartistid`` are mapped to the first element of
+    ``albumtypes``, ``mb_artistids`` and ``mb_albumartistids`` respectively.
+
+    This means setting ``mb_artistid`` has no effect. However, beets
+    functionality still assumes that ``mb_artistid`` is independent and stores
+    its value in the database. If ``mb_artistid`` != ``mb_artistids[0]``,
+    ``beet write`` command thinks that ``mb_artistid`` is modified and tries to
+    update the field in the file. Of course nothing happens, so the same diff
+    is shown every time the command is run.
+
+    We can avoid this issue by ensuring that ``mb_artistid`` has the same value
+    as ``mb_artistids[0]``, and that's what this function does.
+    """
+    if aid := i.mb_artistid:
+        i.mb_artistids = list(dict.fromkeys([aid, *i.mb_artistids]))
+    elif aids := i.mb_artistids:
+        i.mb_artistid = aids[0]
+
+    if aaid := i.mb_albumartistid:
+        i.mb_albumartistids = list(dict.fromkeys([aaid, *i.mb_albumartistids]))
+    elif aaids := i.mb_albumartistids:
+        i.mb_albumartistid = aaids[0]
+
+    if atype := i.albumtype:
+        i.albumtypes = list(dict.fromkeys([atype, *i.albumtypes]))
+    elif atypes := i.albumtypes:
+        i.albumtype = atypes[0]
+
+
 def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
     """Set the items' metadata to match an AlbumInfo object using a
     mapping from Items to TrackInfo objects.
@@ -249,6 +286,8 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
         item.mb_albumartistid = album_info.artist_id
         item.mb_albumartistids = album_info.artists_ids
         item.mb_releasegroupid = album_info.releasegroup_id
+
+        ensure_consistent_list_fields(item)
 
         # Compilation flag.
         item.comp = album_info.va
