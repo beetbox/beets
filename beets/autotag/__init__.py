@@ -21,6 +21,8 @@ from beets import config, logging
 from beets.library import Album, Item, LibModel
 
 # Parts of external interface.
+from beets.util import unique_list
+
 from .hooks import AlbumInfo, AlbumMatch, Distance, TrackInfo, TrackMatch
 from .match import (
     Proposal,
@@ -143,24 +145,22 @@ def correct_list_fields(m: LibModel) -> None:
     Note: :class:`Album` model does not have ``mb_artistids`` and
     ``mb_albumartistids`` fields therefore we need to check for their presence.
     """
-    if atype := m.albumtype:
-        m.albumtypes = list(dict.fromkeys([atype, *m.albumtypes]))
-    elif atypes := m.albumtypes:
-        m.albumtype = atypes[0]
+
+    def ensure_first_value(single_field: str, list_field: str) -> None:
+        """Ensure the first ``list_field`` item is equal to ``single_field``."""
+        single_val, list_val = getattr(m, single_field), getattr(m, list_field)
+        if single_val:
+            setattr(m, list_field, unique_list([single_val, *list_val]))
+        elif list_val:
+            setattr(m, single_field, list_val[0])
+
+    ensure_first_value("albumtype", "albumtypes")
 
     if hasattr(m, "mb_artistids"):
-        if aid := m.mb_artistid:
-            m.mb_artistids = list(dict.fromkeys([aid, *m.mb_artistids]))
-        elif aids := m.mb_artistids:
-            m.mb_artistid = aids[0]
+        ensure_first_value("mb_artistid", "mb_artistids")
 
     if hasattr(m, "mb_albumartistids"):
-        if aaid := m.mb_albumartistid:
-            m.mb_albumartistids = list(
-                dict.fromkeys([aaid, *m.mb_albumartistids])
-            )
-        elif aaids := m.mb_albumartistids:
-            m.mb_albumartistid = aaids[0]
+        ensure_first_value("mb_albumartistid", "mb_albumartistids")
 
 
 def apply_item_metadata(item: Item, track_info: TrackInfo):

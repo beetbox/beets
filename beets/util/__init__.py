@@ -39,6 +39,7 @@ from typing import (
     Any,
     AnyStr,
     Callable,
+    Iterable,
     NamedTuple,
     TypeVar,
     Union,
@@ -1126,3 +1127,8 @@ def get_temp_filename(
 
     _, filename = tempfile.mkstemp(dir=tempdir, prefix=prefix, suffix=suffix)
     return bytestring_path(filename)
+
+
+def unique_list(elements: Iterable[T]) -> list[T]:
+    """Return a list with unique elements in the original order."""
+    return list(dict.fromkeys(elements))
