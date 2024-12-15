@@ -123,9 +123,7 @@ class MBSyncPlugin(BeetsPlugin):
             items = list(a.items())
 
             if not items:
-                self._log.info(
-                    "Skipping empty album: {0}", album_formatted
-                )
+                self._log.info("Skipping empty album: {0}", album_formatted)
                 continue
 
             # Do we have a valid MusicBrainz album ID?
