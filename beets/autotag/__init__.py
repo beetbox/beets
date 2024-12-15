@@ -18,9 +18,11 @@ from collections.abc import Mapping, Sequence
 from typing import Union
 
 from beets import config, logging
-from beets.library import Album, Item
+from beets.library import Album, Item, LibModel
 
 # Parts of external interface.
+from beets.util import unique_list
+
 from .hooks import AlbumInfo, AlbumMatch, Distance, TrackInfo, TrackMatch
 from .match import (
     Proposal,
@@ -119,6 +121,48 @@ def _apply_metadata(
         db_obj[field] = value
 
 
+def correct_list_fields(m: LibModel) -> None:
+    """Synchronise single and list values for the list fields that we use.
+
+    That is, ensure the same value in the single field and the first element
+    in the list.
+
+    For context, the value we set as, say, ``mb_artistid`` is simply ignored:
+    Under the current :class:`MediaFile` implementation, fields ``albumtype``,
+    ``mb_artistid`` and ``mb_albumartistid`` are mapped to the first element of
+    ``albumtypes``, ``mb_artistids`` and ``mb_albumartistids`` respectively.
+
+    This means setting ``mb_artistid`` has no effect. However, beets
+    functionality still assumes that ``mb_artistid`` is independent and stores
+    its value in the database. If ``mb_artistid`` != ``mb_artistids[0]``,
+    ``beet write`` command thinks that ``mb_artistid`` is modified and tries to
+    update the field in the file. Of course nothing happens, so the same diff
+    is shown every time the command is run.
+
+    We can avoid this issue by ensuring that ``mb_artistid`` has the same value
+    as ``mb_artistids[0]``, and that's what this function does.
+
+    Note: :class:`Album` model does not have ``mb_artistids`` and
+    ``mb_albumartistids`` fields therefore we need to check for their presence.
+    """
+
+    def ensure_first_value(single_field: str, list_field: str) -> None:
+        """Ensure the first ``list_field`` item is equal to ``single_field``."""
+        single_val, list_val = getattr(m, single_field), getattr(m, list_field)
+        if single_val:
+            setattr(m, list_field, unique_list([single_val, *list_val]))
+        elif list_val:
+            setattr(m, single_field, list_val[0])
+
+    ensure_first_value("albumtype", "albumtypes")
+
+    if hasattr(m, "mb_artistids"):
+        ensure_first_value("mb_artistid", "mb_artistids")
+
+    if hasattr(m, "mb_albumartistids"):
+        ensure_first_value("mb_albumartistid", "mb_albumartistids")
+
+
 def apply_item_metadata(item: Item, track_info: TrackInfo):
     """Set an item's metadata from its matched TrackInfo object."""
     item.artist = track_info.artist
@@ -136,6 +180,7 @@ def apply_item_metadata(item: Item, track_info: TrackInfo):
         item.mb_artistids = track_info.artists_ids
 
     _apply_metadata(track_info, item)
+    correct_list_fields(item)
 
     # At the moment, the other metadata is left intact (including album
     # and track number). Perhaps these should be emptied?
@@ -144,6 +189,7 @@ def apply_item_metadata(item: Item, track_info: TrackInfo):
 def apply_album_metadata(album_info: AlbumInfo, album: Album):
     """Set the album's metadata to match the AlbumInfo object."""
     _apply_metadata(album_info, album)
+    correct_list_fields(album)
 
 
 def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
@@ -267,3 +313,5 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
             item,
             nullable_fields=config["overwrite_null"]["track"].as_str_seq(),
         )
+
+        correct_list_fields(item)
