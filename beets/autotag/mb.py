@@ -19,8 +19,9 @@ from __future__ import annotations
 import re
 import traceback
 from collections import Counter
+from collections.abc import Iterator, Sequence
 from itertools import product
-from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, cast
+from typing import Any, cast
 from urllib.parse import urljoin
 
 import musicbrainzngs
@@ -131,7 +132,7 @@ def configure():
     )
 
 
-def _preferred_alias(aliases: List):
+def _preferred_alias(aliases: list):
     """Given an list of alias structures for an artist credit, select
     and return the user's preferred alias alias or None if no matching
     alias is found.
@@ -166,7 +167,7 @@ def _preferred_alias(aliases: List):
         return matches[0]
 
 
-def _preferred_release_event(release: Dict[str, Any]) -> Tuple[str, str]:
+def _preferred_release_event(release: dict[str, Any]) -> tuple[str, str]:
     """Given a release, select and return the user's preferred release
     event as a tuple of (country, release_date). Fall back to the
     default release event if a preferred event is not found.
@@ -186,8 +187,8 @@ def _preferred_release_event(release: Dict[str, Any]) -> Tuple[str, str]:
 
 
 def _multi_artist_credit(
-    credit: List[Dict], include_join_phrase: bool
-) -> Tuple[List[str], List[str], List[str]]:
+    credit: list[dict], include_join_phrase: bool
+) -> tuple[list[str], list[str], list[str]]:
     """Given a list representing an ``artist-credit`` block, accumulate
     data into a triple of joined artist name lists: canonical, sort, and
     credit.
@@ -234,7 +235,7 @@ def _multi_artist_credit(
     )
 
 
-def _flatten_artist_credit(credit: List[Dict]) -> Tuple[str, str, str]:
+def _flatten_artist_credit(credit: list[dict]) -> tuple[str, str, str]:
     """Given a list representing an ``artist-credit`` block, flatten the
     data into a triple of joined artist name strings: canonical, sort, and
     credit.
@@ -249,12 +250,12 @@ def _flatten_artist_credit(credit: List[Dict]) -> Tuple[str, str, str]:
     )
 
 
-def _artist_ids(credit: List[Dict]) -> List[str]:
+def _artist_ids(credit: list[dict]) -> list[str]:
     """
     Given a list representing an ``artist-credit``,
     return a list of artist IDs
     """
-    artist_ids: List[str] = []
+    artist_ids: list[str] = []
     for el in credit:
         if isinstance(el, dict):
             artist_ids.append(el["artist"]["id"])
@@ -276,11 +277,11 @@ def _get_related_artist_names(relations, relation_type):
 
 
 def track_info(
-    recording: Dict,
-    index: Optional[int] = None,
-    medium: Optional[int] = None,
-    medium_index: Optional[int] = None,
-    medium_total: Optional[int] = None,
+    recording: dict,
+    index: int | None = None,
+    medium: int | None = None,
+    medium_index: int | None = None,
+    medium_total: int | None = None,
 ) -> beets.autotag.hooks.TrackInfo:
     """Translates a MusicBrainz recording result dictionary into a beets
     ``TrackInfo`` object. Three parameters are optional and are used
@@ -400,7 +401,7 @@ def _set_date_str(
                 setattr(info, key, date_num)
 
 
-def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
+def album_info(release: dict) -> beets.autotag.hooks.AlbumInfo:
     """Takes a MusicBrainz release result dictionary and returns a beets
     AlbumInfo object containing the interesting data about that release.
     """
@@ -661,8 +662,8 @@ def album_info(release: Dict) -> beets.autotag.hooks.AlbumInfo:
 def match_album(
     artist: str,
     album: str,
-    tracks: Optional[int] = None,
-    extra_tags: Optional[Dict[str, Any]] = None,
+    tracks: int | None = None,
+    extra_tags: dict[str, Any] | None = None,
 ) -> Iterator[beets.autotag.hooks.AlbumInfo]:
     """Searches for a single album ("release" in MusicBrainz parlance)
     and returns an iterator over AlbumInfo objects. May raise a
@@ -739,7 +740,7 @@ def match_track(
         yield track_info(recording)
 
 
-def _parse_id(s: str) -> Optional[str]:
+def _parse_id(s: str) -> str | None:
     """Search for a MusicBrainz ID in the given string and return it. If
     no ID can be found, return None.
     """
@@ -756,8 +757,8 @@ def _is_translation(r):
 
 
 def _find_actual_release_from_pseudo_release(
-    pseudo_rel: Dict,
-) -> Optional[Dict]:
+    pseudo_rel: dict,
+) -> dict | None:
     try:
         relations = pseudo_rel["release"]["release-relation-list"]
     except KeyError:
@@ -776,7 +777,7 @@ def _find_actual_release_from_pseudo_release(
 
 def _merge_pseudo_and_actual_album(
     pseudo: beets.autotag.hooks.AlbumInfo, actual: beets.autotag.hooks.AlbumInfo
-) -> Optional[beets.autotag.hooks.AlbumInfo]:
+) -> beets.autotag.hooks.AlbumInfo | None:
     """
     Merges a pseudo release with its actual release.
 
@@ -814,7 +815,7 @@ def _merge_pseudo_and_actual_album(
     return merged
 
 
-def album_for_id(releaseid: str) -> Optional[beets.autotag.hooks.AlbumInfo]:
+def album_for_id(releaseid: str) -> beets.autotag.hooks.AlbumInfo | None:
     """Fetches an album by its MusicBrainz ID and returns an AlbumInfo
     object or None if the album is not found. May raise a
     MusicBrainzAPIError.
@@ -852,7 +853,7 @@ def album_for_id(releaseid: str) -> Optional[beets.autotag.hooks.AlbumInfo]:
         return release
 
 
-def track_for_id(releaseid: str) -> Optional[beets.autotag.hooks.TrackInfo]:
+def track_for_id(releaseid: str) -> beets.autotag.hooks.TrackInfo | None:
     """Fetches a track by its MusicBrainz ID. Returns a TrackInfo object
     or None if no track is found. May raise a MusicBrainzAPIError.
     """

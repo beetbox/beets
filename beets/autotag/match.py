@@ -20,20 +20,9 @@ from __future__ import annotations
 
 import datetime
 import re
+from collections.abc import Iterable, Sequence
 from enum import IntEnum
-from typing import (
-    Any,
-    Dict,
-    Iterable,
-    List,
-    NamedTuple,
-    Optional,
-    Sequence,
-    Tuple,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar, Union, cast
 
 from munkres import Munkres
 
@@ -46,8 +35,10 @@ from beets.autotag import (
     TrackMatch,
     hooks,
 )
-from beets.library import Item
 from beets.util import plurality
+
+if TYPE_CHECKING:
+    from beets.library import Item
 
 # Artist signals that indicate "various artists". These are used at the
 # album level to determine whether a given release is likely a VA
@@ -88,7 +79,7 @@ class Proposal(NamedTuple):
 
 def current_metadata(
     items: Iterable[Item],
-) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+) -> tuple[dict[str, Any], dict[str, Any]]:
     """Extract the likely current metadata for an album given a list of its
     items. Return two dictionaries:
      - The most common value for each field.
@@ -127,7 +118,7 @@ def current_metadata(
 def assign_items(
     items: Sequence[Item],
     tracks: Sequence[TrackInfo],
-) -> Tuple[Dict[Item, TrackInfo], List[Item], List[TrackInfo]]:
+) -> tuple[dict[Item, TrackInfo], list[Item], list[TrackInfo]]:
     """Given a list of Items and a list of TrackInfo objects, find the
     best mapping between them. Returns a mapping from Items to TrackInfo
     objects, a set of extra Items, and a set of extra TrackInfo
@@ -135,7 +126,7 @@ def assign_items(
     of objects of the two types.
     """
     # Construct the cost matrix.
-    costs: List[List[Distance]] = []
+    costs: list[list[Distance]] = []
     for item in items:
         row = []
         for track in tracks:
@@ -208,6 +199,10 @@ def track_distance(
     if item.mb_trackid:
         dist.add_expr("track_id", item.mb_trackid != track_info.track_id)
 
+    # Penalize mismatching disc numbers.
+    if track_info.medium and item.disc:
+        dist.add_expr("medium", item.disc != track_info.medium)
+
     # Plugins.
     dist.update(plugins.track_distance(item, track_info))
 
@@ -217,7 +212,7 @@ def track_distance(
 def distance(
     items: Sequence[Item],
     album_info: AlbumInfo,
-    mapping: Dict[Item, TrackInfo],
+    mapping: dict[Item, TrackInfo],
 ) -> Distance:
     """Determines how "significant" an album metadata change would be.
     Returns a Distance object. `album_info` is an AlbumInfo object
@@ -421,7 +416,7 @@ def _sort_candidates(candidates: Iterable[AnyMatch]) -> Sequence[AnyMatch]:
 
 def _add_candidate(
     items: Sequence[Item],
-    results: Dict[Any, AlbumMatch],
+    results: dict[Any, AlbumMatch],
     info: AlbumInfo,
 ):
     """Given a candidate AlbumInfo object, attempt to add the candidate
@@ -473,10 +468,10 @@ def _add_candidate(
 
 def tag_album(
     items,
-    search_artist: Optional[str] = None,
-    search_album: Optional[str] = None,
-    search_ids: List[str] = [],
-) -> Tuple[str, str, Proposal]:
+    search_artist: str | None = None,
+    search_album: str | None = None,
+    search_ids: list[str] = [],
+) -> tuple[str, str, Proposal]:
     """Return a tuple of the current artist name, the current album
     name, and a `Proposal` containing `AlbumMatch` candidates.
 
@@ -501,7 +496,7 @@ def tag_album(
     log.debug("Tagging {0} - {1}", cur_artist, cur_album)
 
     # The output result, keys are the MB album ID.
-    candidates: Dict[Any, AlbumMatch] = {}
+    candidates: dict[Any, AlbumMatch] = {}
 
     # Search by explicit ID.
     if search_ids:
@@ -565,9 +560,9 @@ def tag_album(
 
 def tag_item(
     item,
-    search_artist: Optional[str] = None,
-    search_title: Optional[str] = None,
-    search_ids: Optional[List[str]] = None,
+    search_artist: str | None = None,
+    search_title: str | None = None,
+    search_ids: list[str] | None = None,
 ) -> Proposal:
     """Find metadata for a single track. Return a `Proposal` consisting
     of `TrackMatch` objects.
@@ -580,7 +575,7 @@ def tag_item(
     # Holds candidates found so far: keys are MBIDs; values are
     # (distance, TrackInfo) pairs.
     candidates = {}
-    rec: Optional[Recommendation] = None
+    rec: Recommendation | None = None
 
     # First, try matching by MusicBrainz ID.
     trackids = search_ids or [t for t in [item.mb_trackid] if t]

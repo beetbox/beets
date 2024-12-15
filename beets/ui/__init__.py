@@ -27,7 +27,7 @@ import sys
 import textwrap
 import traceback
 from difflib import SequenceMatcher
-from typing import Any, Callable, List
+from typing import Any, Callable
 
 import confuse
 
@@ -1450,7 +1450,7 @@ class Subcommand:
     invoked by a SubcommandOptionParser.
     """
 
-    func: Callable[[library.Library, optparse.Values, List[str]], Any]
+    func: Callable[[library.Library, optparse.Values, list[str]], Any]
 
     def __init__(self, name, parser=None, help="", aliases=(), hide=False):
         """Creates a new subcommand. name is the primary way to invoke
@@ -1858,6 +1858,14 @@ def main(args=None):
     """Run the main command-line interface for beets. Includes top-level
     exception handlers that print friendly error messages.
     """
+    if "AppData\\Local\\Microsoft\\WindowsApps" in sys.exec_prefix:
+        log.error(
+            "error: beets is unable to use the Microsoft Store version of "
+            "Python. Please install Python from https://python.org.\n"
+            "error: More details can be found here "
+            "https://beets.readthedocs.io/en/stable/guides/main.html"
+        )
+        sys.exit(1)
     try:
         _raw_main(args)
     except UserError as exc:

@@ -33,15 +33,14 @@ from enum import Enum
 from importlib import import_module
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
+from re import Pattern
 from typing import (
     TYPE_CHECKING,
     Any,
     AnyStr,
     Callable,
-    Iterator,
+    Iterable,
     NamedTuple,
-    Pattern,
-    Sequence,
     TypeVar,
     Union,
 )
@@ -51,6 +50,7 @@ from unidecode import unidecode
 from beets.util import hidden
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
     from logging import Logger
 
 if sys.version_info >= (3, 10):
@@ -1127,3 +1127,8 @@ def get_temp_filename(
 
     _, filename = tempfile.mkstemp(dir=tempdir, prefix=prefix, suffix=suffix)
     return bytestring_path(filename)
+
+
+def unique_list(elements: Iterable[T]) -> list[T]:
+    """Return a list with unique elements in the original order."""
+    return list(dict.fromkeys(elements))

@@ -14,7 +14,7 @@
 
 """Tests for the 'albumtypes' plugin."""
 
-from typing import Sequence, Tuple
+from collections.abc import Sequence
 
 from beets.autotag.mb import VARIOUS_ARTISTS_ID
 from beets.test.helper import PluginTestCase
@@ -91,7 +91,7 @@ class AlbumTypesPluginTest(PluginTestCase):
 
     def _set_config(
         self,
-        types: Sequence[Tuple[str, str]],
+        types: Sequence[tuple[str, str]],
         ignore_va: Sequence[str],
         bracket: str,
     ):
