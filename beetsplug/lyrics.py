@@ -27,8 +27,8 @@ from dataclasses import dataclass
 from functools import cached_property, partial, total_ordering
 from html import unescape
 from http import HTTPStatus
-from typing import TYPE_CHECKING, ClassVar, Iterable, Iterator, NamedTuple
-from urllib.parse import quote, urlencode, urlparse
+from typing import TYPE_CHECKING, Iterable, Iterator, NamedTuple
+from urllib.parse import quote, quote_plus, urlencode, urlparse
 
 import langdetect
 import requests
@@ -399,22 +399,7 @@ class LRCLib(Backend):
         return None
 
 
-class DirectBackend(Backend):
-    """A backend for fetching lyrics directly."""
-
-    URL_TEMPLATE: ClassVar[str]  #: May include formatting placeholders
-
-    @classmethod
-    def encode(cls, text: str) -> str:
-        """Encode the string for inclusion in a URL."""
-        raise NotImplementedError
-
-    @classmethod
-    def build_url(cls, *args: str) -> str:
-        return cls.URL_TEMPLATE.format(*map(cls.encode, args))
-
-
-class MusiXmatch(DirectBackend):
+class MusiXmatch(Backend):
     URL_TEMPLATE = "https://www.musixmatch.com/lyrics/{}/{}"
 
     REPLACEMENTS = {
@@ -432,6 +417,10 @@ class MusiXmatch(DirectBackend):
             text = re.sub(old, new, text)
 
         return quote(unidecode(text))
+
+    @classmethod
+    def build_url(cls, *args: str) -> str:
+        return cls.URL_TEMPLATE.format(*map(cls.encode, args))
 
     def fetch(self, artist: str, title: str, *_) -> tuple[str, str] | None:
         url = self.build_url(artist, title)
@@ -608,26 +597,25 @@ class Genius(SearchBackend):
         return None
 
 
-class Tekstowo(SoupMixin, DirectBackend):
+class Tekstowo(SearchBackend):
     """Fetch lyrics from Tekstowo.pl."""
 
-    URL_TEMPLATE = "https://www.tekstowo.pl/piosenka,{},{}.html"
+    BASE_URL = "https://www.tekstowo.pl"
+    SEARCH_URL = BASE_URL + "/szukaj,{}.html"
 
-    non_alpha_to_underscore = partial(re.compile(r"\W").sub, "_")
+    def build_url(self, artist, title):
+        artistitle = f"{artist.title()} {title.title()}"
 
-    @classmethod
-    def encode(cls, text: str) -> str:
-        return cls.non_alpha_to_underscore(unidecode(text.lower()))
+        return self.SEARCH_URL.format(quote_plus(unidecode(artistitle)))
 
-    def fetch(self, artist: str, title: str, *_) -> tuple[str, str] | None:
-        url = self.build_url(artist, title)
-        # We are expecting to receive a 404 since we are guessing the URL.
-        # Thus suppress the error so that it does not end up in the logs.
-        with suppress(NotFoundError):
-            if lyrics := self.scrape(self.fetch_text(url)):
-                return lyrics, url
-
-        return None
+    def search(self, artist: str, title: str) -> Iterable[SearchResult]:
+        if html := self.fetch_text(self.build_url(title, artist)):
+            soup = self.get_soup(html)
+            for tag in soup.select("div[class=flex-group] > a[title*=' - ']"):
+                artist, title = str(tag["title"]).split(" - ", 1)
+                yield SearchResult(
+                    artist, title, f"{self.BASE_URL}{tag['href']}"
+                )
 
         return None
 
