@@ -332,7 +332,7 @@ class LRCLyrics:
         )
 
     @cached_property
-    def dist(self) -> tuple[float, bool]:
+    def dist(self) -> tuple[bool, float]:
         """Distance/score of the given lyrics item.
 
         Return a tuple with the following values:
@@ -342,7 +342,7 @@ class LRCLyrics:
         Best lyrics match is the one that has the closest duration to
         ``target_duration`` and has synced lyrics available.
         """
-        return self.duration_dist, not self.synced
+        return not self.synced, self.duration_dist
 
     def get_text(self, want_synced: bool) -> str:
         if self.instrumental:
@@ -381,8 +381,11 @@ class LRCLib(Backend):
     ) -> Iterator[list[LRCLibItem]]:
         """Yield lyrics candidates for the given song data.
 
-        Firstly, attempt to GET lyrics directly, and then search the API if
-        lyrics are not found or the duration does not match.
+        I found that the ``/get`` endpoint sometimes returns inaccurate or
+        unsynced lyrics, while ``search`` yields more suitable candidates.
+        Therefore, we prioritize the latter and rank the results using our own
+        algorithm. If the search does not give suitable lyrics, we fall back to
+        the ``/get`` endpoint.
 
         Return an iterator over lists of candidates.
         """
@@ -391,10 +394,10 @@ class LRCLib(Backend):
         if album:
             get_params["album_name"] = album
 
+        yield self.fetch_json(self.SEARCH_URL, params=base_params)
+
         with suppress(NotFoundError):
             yield [self.fetch_json(self.GET_URL, params=get_params)]
-
-        yield self.fetch_json(self.SEARCH_URL, params=base_params)
 
     @classmethod
     def pick_best_match(cls, lyrics: Iterable[LRCLyrics]) -> LRCLyrics | None:
