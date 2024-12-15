@@ -414,8 +414,23 @@ class TestLRCLibLyrics(LyricsBackendTest):
                     ),
                     lyrics_match(syncedLyrics="synced", plainLyrics="plain 2"),
                 ],
-                "plain with closer duration",
-                id="prefer closer duration",
+                "synced",
+                id="prefer synced lyrics even if plain duration is closer",
+            ),
+            pytest.param(
+                [
+                    lyrics_match(
+                        duration=ITEM_DURATION,
+                        syncedLyrics=None,
+                        plainLyrics="valid plain",
+                    ),
+                    lyrics_match(
+                        duration=1,
+                        syncedLyrics="synced with invalid duration",
+                    ),
+                ],
+                "valid plain",
+                id="ignore synced with invalid duration",
             ),
             pytest.param(
                 [lyrics_match(syncedLyrics=None), lyrics_match()],
