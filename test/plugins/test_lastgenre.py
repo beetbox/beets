@@ -164,6 +164,7 @@ class LastGenrePluginTest(BeetsTestCase):
         assert res == ["pop"]
 
     def test_get_genre(self):
+        """All possible (genre, label) pairs"""
         mock_genres = {"track": "1", "album": "2", "artist": "3"}
 
         def mock_fetch_track_genre(self, obj=None):
@@ -183,27 +184,53 @@ class LastGenrePluginTest(BeetsTestCase):
         item = _common.item()
         item.genre = mock_genres["track"]
 
-        config["lastgenre"] = {"force": False}
+        # The default setting
+        config["lastgenre"] = {"force": False, "keep_allowed": True}
         res = self.plugin._get_genre(item)
-        assert res == (item.genre, "keep")
+        assert res == (item.genre, "keep allowed")
 
-        config["lastgenre"] = {"force": True, "source": "track"}
+        # Not forcing and keeping any existing
+        config["lastgenre"] = {"force": False, "keep_allowed": False}
+        res = self.plugin._get_genre(item)
+        assert res == (item.genre, "keep any")
+
+        # Track
+        config["lastgenre"] = {"force": True, "keep_allowed": False, "source": "track"}
         res = self.plugin._get_genre(item)
         assert res == (mock_genres["track"], "track")
 
-        config["lastgenre"] = {"source": "album"}
+        config["lastgenre"] = {"force": True, "keep_allowed": True, "source": "track"}
         res = self.plugin._get_genre(item)
+        assert res == (mock_genres["track"], "keep + track")
+        print("res after track check:", res)
+
+        # Album
+        config["lastgenre"] = {"source": "album", "keep_allowed": False}
+        res = self.plugin._get_genre(item)
+        print("res is:", res)
+        print("mock_genres is:", mock_genres["album"])
         assert res == (mock_genres["album"], "album")
 
-        config["lastgenre"] = {"source": "artist"}
+        config["lastgenre"] = {"source": "album", "keep_allowed": True}
+        res = self.plugin._get_genre(item)
+        assert res == (mock_genres["album"], "keep + album")
+
+        # Artist
+        config["lastgenre"] = {"source": "artist", "keep_allowed": False}
         res = self.plugin._get_genre(item)
         assert res == (mock_genres["artist"], "artist")
 
+        config["lastgenre"] = {"source": "artist", "keep_allowed": True}
+        res = self.plugin._get_genre(item)
+        assert res == (mock_genres["artist"], "keep + artist")
+
+        # Original
         mock_genres["artist"] = None
         res = self.plugin._get_genre(item)
         assert res == (item.genre, "original")
 
-        config["lastgenre"] = {"fallback": "rap"}
+        # Fallback
+        config["lastgenre"] = {"fallback": "rap", "keep_allowed": False}
         item.genre = None
         res = self.plugin._get_genre(item)
         assert res == (config["lastgenre"]["fallback"].get(), "fallback")
