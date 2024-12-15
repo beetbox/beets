@@ -18,7 +18,7 @@ from collections.abc import Mapping, Sequence
 from typing import Union
 
 from beets import config, logging
-from beets.library import Album, Item
+from beets.library import Album, Item, LibModel
 
 # Parts of external interface.
 from .hooks import AlbumInfo, AlbumMatch, Distance, TrackInfo, TrackMatch
@@ -119,34 +119,7 @@ def _apply_metadata(
         db_obj[field] = value
 
 
-def apply_item_metadata(item: Item, track_info: TrackInfo):
-    """Set an item's metadata from its matched TrackInfo object."""
-    item.artist = track_info.artist
-    item.artists = track_info.artists
-    item.artist_sort = track_info.artist_sort
-    item.artists_sort = track_info.artists_sort
-    item.artist_credit = track_info.artist_credit
-    item.artists_credit = track_info.artists_credit
-    item.title = track_info.title
-    item.mb_trackid = track_info.track_id
-    item.mb_releasetrackid = track_info.release_track_id
-    if track_info.artist_id:
-        item.mb_artistid = track_info.artist_id
-    if track_info.artists_ids:
-        item.mb_artistids = track_info.artists_ids
-
-    _apply_metadata(track_info, item)
-
-    # At the moment, the other metadata is left intact (including album
-    # and track number). Perhaps these should be emptied?
-
-
-def apply_album_metadata(album_info: AlbumInfo, album: Album):
-    """Set the album's metadata to match the AlbumInfo object."""
-    _apply_metadata(album_info, album)
-
-
-def ensure_consistent_list_fields(i: Item) -> None:
+def correct_list_fields(m: LibModel) -> None:
     """Synchronise single and list values for the list fields that we use.
 
     That is, ensure the same value in the single field and the first element
@@ -166,21 +139,57 @@ def ensure_consistent_list_fields(i: Item) -> None:
 
     We can avoid this issue by ensuring that ``mb_artistid`` has the same value
     as ``mb_artistids[0]``, and that's what this function does.
+
+    Note: :class:`Album` model does not have ``mb_artistids`` and
+    ``mb_albumartistids`` fields therefore we need to check for their presence.
     """
-    if aid := i.mb_artistid:
-        i.mb_artistids = list(dict.fromkeys([aid, *i.mb_artistids]))
-    elif aids := i.mb_artistids:
-        i.mb_artistid = aids[0]
+    if atype := m.albumtype:
+        m.albumtypes = list(dict.fromkeys([atype, *m.albumtypes]))
+    elif atypes := m.albumtypes:
+        m.albumtype = atypes[0]
 
-    if aaid := i.mb_albumartistid:
-        i.mb_albumartistids = list(dict.fromkeys([aaid, *i.mb_albumartistids]))
-    elif aaids := i.mb_albumartistids:
-        i.mb_albumartistid = aaids[0]
+    if hasattr(m, "mb_artistids"):
+        if aid := m.mb_artistid:
+            m.mb_artistids = list(dict.fromkeys([aid, *m.mb_artistids]))
+        elif aids := m.mb_artistids:
+            m.mb_artistid = aids[0]
 
-    if atype := i.albumtype:
-        i.albumtypes = list(dict.fromkeys([atype, *i.albumtypes]))
-    elif atypes := i.albumtypes:
-        i.albumtype = atypes[0]
+    if hasattr(m, "mb_albumartistids"):
+        if aaid := m.mb_albumartistid:
+            m.mb_albumartistids = list(
+                dict.fromkeys([aaid, *m.mb_albumartistids])
+            )
+        elif aaids := m.mb_albumartistids:
+            m.mb_albumartistid = aaids[0]
+
+
+def apply_item_metadata(item: Item, track_info: TrackInfo):
+    """Set an item's metadata from its matched TrackInfo object."""
+    item.artist = track_info.artist
+    item.artists = track_info.artists
+    item.artist_sort = track_info.artist_sort
+    item.artists_sort = track_info.artists_sort
+    item.artist_credit = track_info.artist_credit
+    item.artists_credit = track_info.artists_credit
+    item.title = track_info.title
+    item.mb_trackid = track_info.track_id
+    item.mb_releasetrackid = track_info.release_track_id
+    if track_info.artist_id:
+        item.mb_artistid = track_info.artist_id
+    if track_info.artists_ids:
+        item.mb_artistids = track_info.artists_ids
+
+    _apply_metadata(track_info, item)
+    correct_list_fields(item)
+
+    # At the moment, the other metadata is left intact (including album
+    # and track number). Perhaps these should be emptied?
+
+
+def apply_album_metadata(album_info: AlbumInfo, album: Album):
+    """Set the album's metadata to match the AlbumInfo object."""
+    _apply_metadata(album_info, album)
+    correct_list_fields(album)
 
 
 def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
@@ -287,8 +296,6 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
         item.mb_albumartistids = album_info.artists_ids
         item.mb_releasegroupid = album_info.releasegroup_id
 
-        ensure_consistent_list_fields(item)
-
         # Compilation flag.
         item.comp = album_info.va
 
@@ -306,3 +313,5 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
             item,
             nullable_fields=config["overwrite_null"]["track"].as_str_seq(),
         )
+
+        correct_list_fields(item)
