@@ -20,12 +20,7 @@ import unittest
 import pytest
 
 from beets import autotag, config
-from beets.autotag import (
-    AlbumInfo,
-    TrackInfo,
-    ensure_consistent_list_fields,
-    match,
-)
+from beets.autotag import AlbumInfo, TrackInfo, correct_list_fields, match
 from beets.autotag.hooks import Distance, string_dist
 from beets.library import Item
 from beets.test.helper import BeetsTestCase
@@ -1067,13 +1062,14 @@ class StringDistanceTest(unittest.TestCase):
         ("1", ["2", "1"]),
     ],
 )
-def test_ensure_consistent_list_fields(
+def test_correct_list_fields(
     single_field, list_field, single_value, list_value
 ):
+    """Ensure that the first value in a list field matches the single field."""
     data = {single_field: single_value, list_field: list_value}
     item = Item(**data)
 
-    ensure_consistent_list_fields(item)
+    correct_list_fields(item)
 
     single_val, list_val = item[single_field], item[list_field]
     assert (not single_val and not list_val) or single_val == list_val[0]
