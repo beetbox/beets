@@ -107,6 +107,9 @@ Other configurations available under ``discogs:`` are:
 - **separator**: How to join multiple genre and style values from Discogs into a string.
   Default: ``", "``
 
+- **max_track_count**: Limits the number of tracks fetched from Discogs. This can be useful if you want to avoid fetching large releases.
+  Default: ``None``
+
 
 Troubleshooting
 ---------------
