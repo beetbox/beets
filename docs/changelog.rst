@@ -13,6 +13,9 @@ New features:
 
 Bug fixes:
 
+* :doc:`plugins/discogs`: Add ``max_track_count`` configuration option to limit
+  the maximum number of tracks that can be imported in a single album.
+  :bug:`5207`
 * :doc:`plugins/lyrics`: LRCLib will fallback to plain lyrics if synced lyrics
   are not found and `synced` flag is set to `yes`.
 * Synchronise files included in the source distribution with what we used to

@@ -75,6 +75,7 @@ class DiscogsPlugin(BeetsPlugin):
                 "separator": ", ",
                 "index_tracks": False,
                 "append_style_genre": False,
+                "max_track_count": 100,  # Add a configuration option for max track count
             }
         )
         self.config["apikey"].redact = True
@@ -405,6 +406,7 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.warning("Release does not contain the required fields")
             return None
 
+
         artist, artist_id = MetadataSourcePlugin.get_artist(
             [a.data for a in result.artists], join_key="join"
         )
@@ -415,6 +417,16 @@ class DiscogsPlugin(BeetsPlugin):
         # information and leave us with skeleton `Artist` objects that will
         # each make an API call just to get the same data back.
         tracks = self.get_tracks(result.data["tracklist"])
+
+        # Check if the release has too many tracks
+        max_track_count = self.config["max_track_count"].get(int)
+        if len(tracks) > max_track_count:
+            self._log.warning(
+                "Skipping release with too many tracks: {0} (track count: {1})",
+                result.data["title"],
+                len(tracks),
+            )
+            return None
 
         # Extract information for the optional AlbumInfo fields, if possible.
         va = result.data["artists"][0].get("name", "").lower() == "various"
