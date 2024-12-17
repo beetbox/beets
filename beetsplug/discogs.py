@@ -75,7 +75,7 @@ class DiscogsPlugin(BeetsPlugin):
                 "separator": ", ",
                 "index_tracks": False,
                 "append_style_genre": False,
-                "max_track_count": 100,  # Add a configuration option for max track count
+                "max_track_count": 100,  # Add a configuration option
             }
         )
         self.config["apikey"].redact = True
