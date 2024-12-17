@@ -406,7 +406,6 @@ class DiscogsPlugin(BeetsPlugin):
             self._log.warning("Release does not contain the required fields")
             return None
 
-
         artist, artist_id = MetadataSourcePlugin.get_artist(
             [a.data for a in result.artists], join_key="join"
         )
