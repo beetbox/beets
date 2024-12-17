@@ -108,7 +108,7 @@ Other configurations available under ``discogs:`` are:
   Default: ``", "``
 
 - **max_track_count**: Limits the number of tracks fetched from Discogs. This can be useful if you want to avoid fetching large releases.
-  Default: ``None``
+  Default: ``100``
 
 
 Troubleshooting
