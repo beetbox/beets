@@ -26,11 +26,11 @@ packages = [
     { include = "beetsplug" },
 ]
 include = [ # extra files to include in the sdist
-    "docs",
-    "extra",
-    "man/**/*",
-    "test/*.py",
-    "test/rsrc/**/*",
+    { path = "docs", format = "sdist" },
+    { path = "extra", format = "sdist" },
+    { path = "man/**/*", format = "sdist" },
+    { path = "test/*.py", format = "sdist" },
+    { path = "test/rsrc/**/*", format = "sdist" },
 ]
 exclude = ["docs/_build", "docs/modd.conf", "docs/**/*.css"]
 
