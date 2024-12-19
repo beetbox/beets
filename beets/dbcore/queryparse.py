@@ -25,7 +25,9 @@ from . import Model, query
 if TYPE_CHECKING:
     from collections.abc import Collection, Sequence
 
-    from .query import Sort
+    from .query import FieldQueryType, Sort
+
+    Prefixes = dict[str, FieldQueryType]
 
 PARSE_QUERY_PART_REGEX = re.compile(
     # Non-capturing optional segment for the keyword.
@@ -41,10 +43,10 @@ PARSE_QUERY_PART_REGEX = re.compile(
 
 def parse_query_part(
     part: str,
-    query_classes: dict[str, type[query.FieldQuery]] = {},
-    prefixes: dict = {},
+    query_classes: dict[str, FieldQueryType] = {},
+    prefixes: Prefixes = {},
     default_class: type[query.SubstringQuery] = query.SubstringQuery,
-) -> tuple[str | None, str, type[query.FieldQuery], bool]:
+) -> tuple[str | None, str, FieldQueryType, bool]:
     """Parse a single *query part*, which is a chunk of a complete query
     string representing a single criterion.
 
@@ -111,7 +113,7 @@ def parse_query_part(
 
 def construct_query_part(
     model_cls: type[Model],
-    prefixes: dict,
+    prefixes: Prefixes,
     query_part: str,
 ) -> query.Query:
     """Parse a *query part* string and return a :class:`Query` object.
@@ -133,7 +135,7 @@ def construct_query_part(
 
     # Use `model_cls` to build up a map from field (or query) names to
     # `Query` classes.
-    query_classes: dict[str, type[query.FieldQuery]] = {}
+    query_classes: dict[str, FieldQueryType] = {}
     for k, t in itertools.chain(
         model_cls._fields.items(), model_cls._types.items()
     ):
@@ -179,7 +181,7 @@ def construct_query_part(
 def query_from_strings(
     query_cls: type[query.CollectionQuery],
     model_cls: type[Model],
-    prefixes: dict,
+    prefixes: Prefixes,
     query_parts: Collection[str],
 ) -> query.Query:
     """Creates a collection query of type `query_cls` from a list of
@@ -213,16 +215,16 @@ def construct_sort_part(
     assert direction in ("+", "-"), "part must end with + or -"
     is_ascending = direction == "+"
 
-    if field in model_cls._sorts:
-        sort = model_cls._sorts[field](
-            model_cls, is_ascending, case_insensitive
-        )
+    if sort_cls := model_cls._sorts.get(field):
+        if isinstance(sort_cls, query.SmartArtistSort):
+            field = "albumartist" if model_cls.__name__ == "Album" else "artist"
     elif field in model_cls._fields:
-        sort = query.FixedFieldSort(field, is_ascending, case_insensitive)
+        sort_cls = query.FixedFieldSort
     else:
         # Flexible or computed.
-        sort = query.SlowFieldSort(field, is_ascending, case_insensitive)
-    return sort
+        sort_cls = query.SlowFieldSort
+
+    return sort_cls(field, is_ascending, case_insensitive)
 
 
 def sort_from_strings(
@@ -247,7 +249,7 @@ def sort_from_strings(
 def parse_sorted_query(
     model_cls: type[Model],
     parts: list[str],
-    prefixes: dict = {},
+    prefixes: Prefixes = {},
     case_insensitive: bool = True,
 ) -> tuple[query.Query, Sort]:
     """Given a list of strings, create the `Query` and `Sort` that they
