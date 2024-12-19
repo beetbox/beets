@@ -295,47 +295,6 @@ class DurationType(types.Float):
                 return self.null
 
 
-# Library-specific sort types.
-
-
-class SmartArtistSort(dbcore.query.Sort):
-    """Sort by artist (either album artist or track artist),
-    prioritizing the sort field over the raw field.
-    """
-
-    def __init__(self, model_cls, ascending=True, case_insensitive=True):
-        self.album = model_cls is Album
-        self.ascending = ascending
-        self.case_insensitive = case_insensitive
-
-    def order_clause(self):
-        order = "ASC" if self.ascending else "DESC"
-        field = "albumartist" if self.album else "artist"
-        collate = "COLLATE NOCASE" if self.case_insensitive else ""
-
-        return f"COALESCE(NULLIF({field}_sort, ''), {field}) {collate} {order}"
-
-    def sort(self, objs):
-        if self.album:
-
-            def field(a):
-                return a.albumartist_sort or a.albumartist
-
-        else:
-
-            def field(i):
-                return i.artist_sort or i.artist
-
-        if self.case_insensitive:
-
-            def key(x):
-                return field(x).lower()
-
-        else:
-            key = field
-        return sorted(objs, key=key, reverse=not self.ascending)
-
-
 # Special path format key.
 PF_KEY_DEFAULT = "default"
 
@@ -381,7 +340,7 @@ class WriteError(FileOperationError):
 # Item and Album model classes.
 
 
-class LibModel(dbcore.Model):
+class LibModel(dbcore.Model["Library"]):
     """Shared concrete functionality for Items and Albums."""
 
     # Config key that specifies how an instance should be formatted.
@@ -632,7 +591,7 @@ class Item(LibModel):
 
     _formatter = FormattedItemMapping
 
-    _sorts = {"artist": SmartArtistSort}
+    _sorts = {"artist": dbcore.query.SmartArtistSort}
 
     _queries = {"singleton": SingletonQuery}
 
@@ -1078,10 +1037,10 @@ class Item(LibModel):
         instead of encoded as a bytestring. basedir can override the library's
         base directory for the destination.
         """
-        self._check_db()
+        db = self._check_db()
         platform = platform or sys.platform
-        basedir = basedir or self._db.directory
-        path_formats = path_formats or self._db.path_formats
+        basedir = basedir or db.directory
+        path_formats = path_formats or db.path_formats
         if replacements is None:
             replacements = self._db.replacements
 
@@ -1124,7 +1083,7 @@ class Item(LibModel):
         maxlen = beets.config["max_filename_length"].get(int)
         if not maxlen:
             # When zero, try to determine from filesystem.
-            maxlen = util.max_filename_length(self._db.directory)
+            maxlen = util.max_filename_length(db.directory)
 
         subpath, fellback = util.legalize_path(
             subpath,
@@ -1212,8 +1171,8 @@ class Album(LibModel):
     }
 
     _sorts = {
-        "albumartist": SmartArtistSort,
-        "artist": SmartArtistSort,
+        "albumartist": dbcore.query.SmartArtistSort,
+        "artist": dbcore.query.SmartArtistSort,
     }
 
     # List of keys that are set on an album's items.
@@ -1611,7 +1570,8 @@ class Library(dbcore.Database):
         self.path_formats = path_formats
         self.replacements = replacements
 
-        self._memotable = {}  # Used for template substitution performance.
+        # Used for template substitution performance.
+        self._memotable: dict[tuple[str, ...], str] = {}
 
     # Adding objects to the database.
 
