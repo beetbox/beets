@@ -533,8 +533,13 @@ def move(path: bytes, dest: bytes, replace: bool = False):
         finally:
             tmp.close()
 
-        # Copy file metadata
-        shutil.copystat(syspath(path), tmp.name)
+        try:
+            # Copy file metadata
+            shutil.copystat(syspath(path), tmp.name)
+        except OSError:
+            # Ignore errors because it doesn't matter too much.  We may be on a
+            # filesystem that doesn't support this.
+            pass
 
         # Move the copied file into place.
         try:
