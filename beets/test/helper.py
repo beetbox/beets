@@ -33,8 +33,9 @@ import os.path
 import shutil
 import subprocess
 import sys
+import typing
 import unittest
-from contextlib import contextmanager
+from contextlib import AbstractContextManager, contextmanager
 from enum import Enum
 from functools import cached_property
 from io import StringIO
@@ -60,6 +61,8 @@ from beets.util import (
     clean_module_tempdir,
     syspath,
 )
+
+from .fixtures import setup_config, setup_library
 
 
 class LogCapture(logging.Handler):
@@ -166,8 +169,18 @@ class TestHelper(_common.Assertions):
     """
 
     db_on_disk: ClassVar[bool] = False
+    contexts: list[AbstractContextManager[Any]]
 
     # TODO automate teardown through hook registration
+
+    ContextValue = typing.TypeVar("ContextValue")
+
+    def setup_context(
+        self, manager: AbstractContextManager[ContextValue]
+    ) -> ContextValue:
+        value = manager.__enter__()
+        self.contexts.append(manager)
+        return value
 
     def setup_beets(self):
         """Setup pristine global configuration and library for testing.
@@ -191,46 +204,44 @@ class TestHelper(_common.Assertions):
 
         Make sure you call ``teardown_beets()`` afterwards.
         """
+
+        self.contexts = []
+
+        # Set up the basic configuration with a HOME directory.
         self.create_temp_dir()
-        temp_dir_str = os.fsdecode(self.temp_dir)
-        self.env_patcher = patch.dict(
-            "os.environ",
-            {
-                "BEETSDIR": temp_dir_str,
-                "HOME": temp_dir_str,  # used by Confuse to create directories.
-            },
+        temp_dir = Path(os.fsdecode(self.temp_dir))
+        self.libdir = temp_dir / "libdir"
+        self.libdir.mkdir(exist_ok=True)
+
+        self.setup_context(
+            patch.dict(
+                "os.environ",
+                {
+                    "BEETSDIR": str(temp_dir),
+                    "HOME": str(temp_dir),
+                },
+            )
         )
-        self.env_patcher.start()
 
-        self.config = beets.config
-        self.config.sources = []
-        self.config.read(user=False, defaults=True)
-
-        self.config["plugins"] = []
-        self.config["verbose"] = 1
-        self.config["ui"]["color"] = False
-        self.config["threaded"] = False
-
-        self.libdir = os.path.join(self.temp_dir, b"libdir")
-        os.mkdir(syspath(self.libdir))
-        self.config["directory"] = os.fsdecode(self.libdir)
+        self.config = self.setup_context(setup_config(self.libdir))
 
         if self.db_on_disk:
-            dbpath = util.bytestring_path(self.config["library"].as_filename())
+            db_loc = self.config["library"].as_filename()
         else:
-            dbpath = ":memory:"
-        self.lib = Library(dbpath, self.libdir)
+            db_loc = None
+
+        self.lib = self.setup_context(setup_library(self.libdir, db_loc))
+
+        self.libdir = bytes(self.libdir)
 
         # Initialize, but don't install, a DummyIO.
         self.io = _common.DummyIO()
 
     def teardown_beets(self):
-        self.env_patcher.stop()
         self.io.restore()
-        self.lib._close()
+        while len(self.contexts) != 0:
+            self.contexts.pop().__exit__(None, None, None)
         self.remove_temp_dir()
-        beets.config.clear()
-        beets.config._materialized = False
 
     # Library fixtures methods
 
