@@ -667,7 +667,10 @@ class Model(ABC, Generic[D]):
             for key in self:
                 if self[key] is not None:
                     self._dirty.add(key)
-            self.store()
+            # Call specifically the `store` "at the database level"
+            # rather than `self.store()`, so that we don't trigger side effects
+            # (e.g. sending events) in subclasses' definitions of `store`.
+            Model.store(self)
 
     # Formatting and templating.
 
