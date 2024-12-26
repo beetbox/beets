@@ -83,6 +83,9 @@ Bug fixes:
   lyrics.
   :bug:`5583`
 * ImageMagick 7.1.1-44 is now supported.
+* Fix an issue where calling `Library.add` would cause the `database_change`
+  event to be sent twice, not once.
+  :bug:`5560`
 
 For packagers:
 
