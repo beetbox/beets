@@ -1,9 +1,9 @@
 import os
 
 import beets
+import beets.logging as blog
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, capture_log
-import beets.logging as blog
 
 
 class DatabaseChangeTestBase(BeetsTestCase):
