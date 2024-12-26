@@ -3,6 +3,7 @@ import os
 import beets
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, capture_log
+import beets.logging as blog
 
 
 class DatabaseChangeTestBase(BeetsTestCase):
@@ -18,6 +19,7 @@ class DatabaseChangeTestBase(BeetsTestCase):
         self.item.album = "a"
         self.item.title = "b"
 
+        blog.getLogger("beets").set_global_level(blog.DEBUG)
         with capture_log() as logs:
             self.lib.add(self.item)
 

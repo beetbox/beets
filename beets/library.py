@@ -360,18 +360,18 @@ class LibModel(dbcore.Model["Library"]):
         funcs.update(plugins.template_funcs())
         return funcs
 
-    def store(self, fields=None, notify=True):
+    def store(self, fields=None):
         super().store(fields)
-        if notify:
-            plugins.send("database_change", lib=self._db, model=self)
+        plugins.send("database_change", lib=self._db, model=self)
 
     def remove(self):
         super().remove()
         plugins.send("database_change", lib=self._db, model=self)
 
     def add(self, lib=None):
+        # super().add() calls self.store(), which sends `database_change`,
+        # so don't do it here
         super().add(lib)
-        plugins.send("database_change", lib=self._db, model=self)
 
     def __format__(self, spec):
         if not spec:
@@ -1493,7 +1493,7 @@ class Album(LibModel):
 
         plugins.send("art_set", album=self)
 
-    def store(self, fields=None, inherit=True, notify=True):
+    def store(self, fields=None, inherit=True):
         """Update the database with the album information.
 
         `fields` represents the fields to be stored. If not specified,
