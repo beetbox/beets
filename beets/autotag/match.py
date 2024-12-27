@@ -22,9 +22,11 @@ import datetime
 import re
 from collections.abc import Iterable, Sequence
 from enum import IntEnum
-from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar, Union, cast
+from functools import cache
+from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar, cast
 
-from munkres import Munkres
+import lap
+import numpy as np
 
 from beets import config, logging, plugins
 from beets.autotag import (
@@ -126,21 +128,15 @@ def assign_items(
     of objects of the two types.
     """
     # Construct the cost matrix.
-    costs: list[list[Distance]] = []
-    for item in items:
-        row = []
-        for track in tracks:
-            row.append(track_distance(item, track))
-        costs.append(row)
-
+    costs = [[float(track_distance(i, t)) for t in tracks] for i in items]
     # Find a minimum-cost bipartite matching.
     log.debug("Computing track assignment...")
-    matching = Munkres().compute(costs)
+    cost, _, assigned_idxs = lap.lapjv(np.array(costs), extend_cost=True)
     log.debug("...done.")
 
     # Produce the output matching.
-    mapping = {items[i]: tracks[j] for (i, j) in matching}
-    extra_items = list(set(items) - set(mapping.keys()))
+    mapping = {items[i]: tracks[t] for (t, i) in enumerate(assigned_idxs)}
+    extra_items = list(set(items) - mapping.keys())
     extra_items.sort(key=lambda i: (i.disc, i.track, i.title))
     extra_tracks = list(set(tracks) - set(mapping.values()))
     extra_tracks.sort(key=lambda t: (t.index, t.title))
@@ -154,6 +150,18 @@ def track_index_changed(item: Item, track_info: TrackInfo) -> bool:
     return item.track not in (track_info.medium_index, track_info.index)
 
 
+@cache
+def get_track_length_grace() -> float:
+    """Get cached grace period for track length matching."""
+    return config["match"]["track_length_grace"].as_number()
+
+
+@cache
+def get_track_length_max() -> float:
+    """Get cached maximum track length for track length matching."""
+    return config["match"]["track_length_max"].as_number()
+
+
 def track_distance(
     item: Item,
     track_info: TrackInfo,
@@ -162,23 +170,17 @@ def track_distance(
     """Determines the significance of a track metadata change. Returns a
     Distance object. `incl_artist` indicates that a distance component should
     be included for the track artist (i.e., for various-artist releases).
+
+    ``track_length_grace`` and ``track_length_max`` configuration options are
+    cached because this function is called many times during the matching
+    process and their access comes with a performance overhead.
     """
     dist = hooks.Distance()
 
     # Length.
-    if track_info.length:
-        item_length = cast(float, item.length)
-        track_length_grace = cast(
-            Union[float, int],
-            config["match"]["track_length_grace"].as_number(),
-        )
-        track_length_max = cast(
-            Union[float, int],
-            config["match"]["track_length_max"].as_number(),
-        )
-
-        diff = abs(item_length - track_info.length) - track_length_grace
-        dist.add_ratio("track_length", diff, track_length_max)
+    if info_length := track_info.length:
+        diff = abs(item.length - info_length) - get_track_length_grace()
+        dist.add_ratio("track_length", diff, get_track_length_max())
 
     # Title.
     dist.add_string("track_title", item.title, track_info.title)
