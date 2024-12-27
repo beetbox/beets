@@ -27,6 +27,9 @@ Bug fixes:
   :bug:`5265`
   :bug:`5371`
   :bug:`4715`
+* :ref:`import-cmd`: Fix ``MemoryError`` and improve performance tagging large
+  albums by replacing ``munkres`` library with ``lap.lapjv``.
+  :bug:`5207`
 
 For packagers:
 
