@@ -4,6 +4,9 @@ body {
 
 #header {
     position: fixed;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
     left: 0;
     right: 0;
     top: 0;
@@ -29,6 +32,10 @@ body {
     color: white;
     margin: 0.35em;
     float: left;
+}
+#player {
+    display: flex;
+    align-items: center;
 }
 
 #entities {
@@ -137,8 +144,9 @@ body {
 
 
 #player {
+    display: flex;
     float: left;
-    width: 150px;
+    /* width: 150px; */
     height: 36px;
 }
 #player .play, #player .pause, #player .disabled {

@@ -21,7 +21,8 @@ $.fn.player = function(debug) {
     var playBtn = $('.play', this);
     var pauseBtn = $('.pause', this);
     var disabledInd = $('.disabled', this);
-    var timesEl = $('.times', this);
+    var nowPlayingEl = $('.nowPlaying', this);
+    var nowPlayingNameEl = $('.nowPlayingName', this);
     var curTimeEl = $('.currentTime', this);
     var totalTimeEl  = $('.totalTime', this);
     var sliderPlayedEl = $('.slider .played', this);
@@ -58,17 +59,17 @@ $.fn.player = function(debug) {
             playBtn.hide();
             pauseBtn.hide();
             disabledInd.show();
-            timesEl.hide();
+            nowPlayingEl.hide();
         } else if (audio.paused) {
             playBtn.show();
             pauseBtn.hide();
             disabledInd.hide();
-            timesEl.show();
+            nowPlayingEl.show();
         } else {
             playBtn.hide();
             pauseBtn.show();
             disabledInd.hide();
-            timesEl.show();
+            nowPlayingEl.show();
         }
     }
     var showTimes = function() {
@@ -191,10 +192,11 @@ var ItemEntryView = Backbone.View.extend({
     },
     setPlaying: function(val) {
         this.playing = val;
-        if (val)
+        if (val) {
             this.$('.playing').show();
-        else
+        } else {
             this.$('.playing').hide();
+        }
     }
 });
 //Holds Title, Artist, Album etc.
@@ -275,6 +277,7 @@ var AppView = Backbone.View.extend({
         $('#player audio').get(0).play().then(() => {
             this.updateMediaSession(item);
         });
+        $('#player .nowPlayingName').html(item.get('title'));
 
         if (this.playingItem != null) {
             this.playingItem.entryView.setPlaying(false);
