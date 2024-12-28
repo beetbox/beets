@@ -229,6 +229,7 @@ var AppView = Backbone.View.extend({
     },
     querySubmit: function(ev) {
         ev.preventDefault();
+        $('#results').html('<li>Loading...</li>')
         router.navigate('item/query/' + encodeURIComponent($('#query').val()), true);
     },
     initialize: function() {
