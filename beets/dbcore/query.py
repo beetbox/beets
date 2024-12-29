@@ -1006,7 +1006,7 @@ class FieldSort(Sort):
                     field_val = obj._types[self.field].null
             # If not, or the null value is None, fall back to using an empty string.
             if field_val is None:
-                field_val = ''
+                field_val = ""
             if self.case_insensitive and isinstance(field_val, str):
                 field_val = field_val.lower()
             return field_val
