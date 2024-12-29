@@ -166,7 +166,6 @@ var albumCoverLoader = new IntersectionObserver(loadAlbumCovers);
 var BeetsRouter = Backbone.Router.extend({
     routes: {
         "item/query/:query": "itemQuery",
-        "albums": "albumView",
     },
     itemQuery: function(query) {
         var queryURL = query.split(/\s+/).map(encodeURIComponent).join('/');
@@ -177,16 +176,6 @@ var BeetsRouter = Backbone.Router.extend({
             );
             var results = new Items(models);
             app.showItems(results);
-        });
-    },
-    albumView: function() {
-        $.getJSON('album?random', function(data) {
-            var models = _.map(
-                data['albums'],
-                function(d) { return new Album(d); }
-            );
-            var results = new Albums(models);
-            app.showAlbums(results);
         });
     },
 });
@@ -281,6 +270,7 @@ var AppView = Backbone.View.extend({
     el: $('body'),
     events: {
         'submit #queryForm': 'querySubmit',
+        'click .browseAlbums': 'showAlbums',
     },
     querySubmit: function(ev) {
         ev.preventDefault();
@@ -312,16 +302,23 @@ var AppView = Backbone.View.extend({
             $('#results').append(view.render().el);
         });
     },
-    showAlbums: function(albums) {
-        $('#main-detail').hide();
-        $('#extra-detail').hide();
-        $('#cover-grid').empty().show();
-        albums.each(function(album) {
-            var view = new AlbumCoverView({model: album});
-            album.entryView = view;
-            var el = view.render().el;
-            $('#cover-grid').append(el);
-            albumCoverLoader.observe(el);
+    showAlbums: function() {
+        $.getJSON('album?random', function(data) {
+            var models = _.map(
+                data['albums'],
+                function(d) { return new Album(d); }
+            );
+            var albums = new Albums(models);
+            $('#main-detail').hide();
+            $('#extra-detail').hide();
+            $('#cover-grid').empty().show();
+            albums.each(function(album) {
+                var view = new AlbumCoverView({model: album});
+                album.entryView = view;
+                var el = view.render().el;
+                $('#cover-grid').append(el);
+                albumCoverLoader.observe(el);
+            });
         });
     },
     selectItem: function(view) {

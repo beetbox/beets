@@ -57,21 +57,17 @@ body {
 #album-browser {
     margin: 0.35em;
 }
-#album-browser a {
+#album-browser .browseAlbums {
     color: white;
     font-size: 1.5em;
     text-decoration: none;
+    -webkit-appearance: none;
+    font-family: Helvetica, Arial, sans-serif;
+    background: none;
+    border: none;
+    cursor: pointer;
 }
-#album-browser a:link {
-    color: white;
-}
-#album-browser a:visited {
-    color: white;
-}
-#album-browser a:hover {
-    color: lightseagreen;
-}
-#album-browser a:selected {
+#album-browser .browseAlbums:hover {
     color: lightseagreen;
 }
 
@@ -125,7 +121,7 @@ body {
     list-style: none;
     padding: 4px 8px;
     margin: 0;
-    cursor: default;
+    cursor: pointer;
 }
 #entities ul li.selected {
     background: #7abcff;
