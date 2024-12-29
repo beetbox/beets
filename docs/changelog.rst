@@ -30,6 +30,9 @@ Bug fixes:
 * :ref:`import-cmd`: Fix ``MemoryError`` and improve performance tagging large
   albums by replacing ``munkres`` library with ``lap.lapjv``.
   :bug:`5207`
+* :ref:`query-sort`: Fix a bug that would raise an exception when sorting on
+  a non-string field that is not populated in all items.
+  :bug:`5512`
 
 For packagers:
 
