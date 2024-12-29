@@ -14,6 +14,8 @@
 
 """Tests for the 'bucket' plugin."""
 
+from datetime import datetime
+
 import pytest
 
 from beets import config, ui
@@ -51,7 +53,8 @@ class BucketPluginTest(BeetsTestCase):
         year."""
         self._setup_config(bucket_year=["1950", "1970"])
         assert self.plugin._tmpl_bucket("2014") == "1970"
-        assert self.plugin._tmpl_bucket("2025") == "2025"
+        next_year = datetime.now().year + 1
+        assert self.plugin._tmpl_bucket(str(next_year)) == str(next_year)
 
     def test_year_two_years(self):
         """Buckets can be named with the 'from-to' syntax."""
