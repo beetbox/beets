@@ -379,7 +379,7 @@ def get_album(id):
 @resource_list("albums")
 def all_albums():
     albums = list(g.lib.albums())
-    if 'random' in request.args:
+    if "random" in request.args:
         random.shuffle(albums)
     return albums
 
@@ -394,15 +394,15 @@ def album_query(queries):
 def album_art(album_id):
     album = g.lib.get_album(album_id)
     if album and album.artpath:
-        if 'b64' in request.args:
+        if "b64" in request.args:
             stream = BytesIO()
-            with open(album.artpath, 'rb') as art_file:
+            with open(album.artpath, "rb") as art_file:
                 data = base64.b64encode(art_file.read())
                 stream.write(data)
                 stream.seek(0)
             return flask.send_file(
                 stream,
-                mimetype=f'{mimetypes.guess_type(util.syspath(album.artpath))};base64'
+                mimetype=f"{mimetypes.guess_type(util.syspath(album.artpath))};base64",
             )
         else:
             return flask.send_file(album.artpath.decode())
