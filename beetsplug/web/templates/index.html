@@ -94,5 +94,23 @@
                 <% } %>
             </dl>
         </script>
+
+        <!--
+            Use a single-cell table for album covers so that we can easily display
+            alt text nicely centered vertically. It's pretty likely that at least
+            some of the album covers won't load so alt text should look nice.
+        -->
+        <script type="text/template" id="album-cover-template">
+            <tr>
+                <td>
+                    <img
+                        src=""
+                        data-id="<%= id %>"
+                        alt="<%= altText %>"
+                        title="<%= altText %>"
+                    />
+                </td>
+            </tr>
+        </script>
     </body>
 </html>

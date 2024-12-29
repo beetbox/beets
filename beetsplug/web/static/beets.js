@@ -139,12 +139,43 @@ $.fn.disableSelection = function() {
             });
 };
 
+var loadAlbumCovers = function(entries, observer) {
+    entries.map(function(entry) {
+        if (entry.isIntersecting) {
+            var $targetImg = $(entry.target).find("img");
+            var albumID = $targetImg.data("id");
+            $.ajax({
+                url: 'album/' + albumID + '/art?b64',
+                dataType: 'text',
+            }).done(
+                function(data) {
+                    // encode data as base64 using btoa
+                    console.log('data for ' + albumID);
+                    $targetImg.attr('src', 'data:image/jpeg;base64,' + data);
+                }
+            ).fail(
+                function(jqxhr, status, error) {
+                    // var altText = $targetImg.attr('alt');
+                    console.log(entry.target);
+                    console.log("failed to load album " + albumID + " " + status);
+                    console.log(jqxhr);
+                    // $targetImg.replaceWith($('<div>').text(altText));
+                }
+            );
+            observer.unobserve(entry.target);
+        }
+    })
+}
+
 $(function() {
+
+var albumCoverLoader = new IntersectionObserver(loadAlbumCovers);
 
 // Routes.
 var BeetsRouter = Backbone.Router.extend({
     routes: {
         "item/query/:query": "itemQuery",
+        "albums": "albumView",
     },
     itemQuery: function(query) {
         var queryURL = query.split(/\s+/).map(encodeURIComponent).join('/');
@@ -156,7 +187,17 @@ var BeetsRouter = Backbone.Router.extend({
             var results = new Items(models);
             app.showItems(results);
         });
-    }
+    },
+    albumView: function() {
+        $.getJSON('album?random', function(data) {
+            var models = _.map(
+                data['albums'],
+                function(d) { return new Album(d); }
+            );
+            var results = new Albums(models);
+            app.showAlbums(results);
+        });
+    },
 });
 var router = new BeetsRouter();
 
@@ -166,6 +207,28 @@ var Item = Backbone.Model.extend({
 });
 var Items = Backbone.Collection.extend({
     model: Item
+});
+
+var Album = Backbone.Model.extend({});
+var Albums = Backbone.Collection.extend({
+    model: Album
+});
+
+
+// Album cover view.
+var AlbumCoverView = Backbone.View.extend({
+    tagName: "table",
+    className: "albumCover",
+    template: _.template($('#album-cover-template').html()),
+    render: function() {
+        var altText = [
+            (this.model.get('albumartist') || 'Unknown Artist'),
+            (this.model.get('album') || 'Unknown Album'),
+        ].join('\n');
+        $(this.el).html(this.template({altText: altText, ...this.model.toJSON()}));
+        console.log(this.el);
+        return this;
+    },
 });
 
 // Item views.
@@ -259,17 +322,32 @@ var AppView = Backbone.View.extend({
             $('#results').append(view.render().el);
         });
     },
+    showAlbums: function(albums) {
+        $('#main-detail').hide();
+        $('#extra-detail').hide();
+        $('#cover-grid').empty().show();
+        albums.each(function(album) {
+            var view = new AlbumCoverView({model: album});
+            album.entryView = view;
+            var el = view.render().el;
+            $('#cover-grid').append(el);
+            albumCoverLoader.observe(el);
+        });
+    },
     selectItem: function(view) {
         // Mark row as selected.
         $('#results li').removeClass("selected");
         $(view.el).addClass("selected");
 
+        // Hide album covers.
+        $('#cover-grid').hide();
+
         // Show main and extra detail.
         var mainDetailView = new ItemMainDetailView({model: view.model});
-        $('#main-detail').empty().append(mainDetailView.render().el);
+        $('#main-detail').empty().append(mainDetailView.render().el).show();
 
         var extraDetailView = new ItemExtraDetailView({model: view.model});
-        $('#extra-detail').empty().append(extraDetailView.render().el);
+        $('#extra-detail').empty().append(extraDetailView.render().el).show();
     },
     playItem: function(item) {
         var url = 'item/' + item.get('id') + '/file';
