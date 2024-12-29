@@ -408,7 +408,7 @@ class LibModel(dbcore.Model["Library"]):
 
     @classmethod
     def any_writable_field_query(
-        cls, query_class: Type[dbcore.FieldQuery], pattern: str
+        cls, query_class: FieldQueryType, pattern: str
     ) -> dbcore.OrQuery:
         return dbcore.OrQuery(
             [
