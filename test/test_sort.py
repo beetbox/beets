@@ -16,7 +16,8 @@
 
 import beets.library
 from beets import config, dbcore
-from beets.library import Album
+from beets.dbcore import types
+from beets.library import Album, Item
 from beets.test import _common
 from beets.test.helper import BeetsTestCase
 
@@ -471,6 +472,10 @@ class CaseSensitivityTest(DummyDataTestCase, BeetsTestCase):
 class NonExistingFieldTest(DummyDataTestCase):
     """Test sorting by non-existing fields"""
 
+    def tearDown(self):
+        super().tearDown()
+        Item._types = {}
+
     def test_non_existing_fields_not_fail(self):
         qs = ["foo+", "foo-", "--", "-+", "+-", "++", "-foo-", "-foo+", "---"]
 
@@ -499,11 +504,29 @@ class NonExistingFieldTest(DummyDataTestCase):
 
     def test_field_present_in_some_items(self):
         """Test ordering by a field not present on all items."""
-        # append 'foo' to two to items (1,2)
+        # append 'foo' to two items (1,2)
         items = self.lib.items("id+")
         ids = [i.id for i in items]
         items[1].foo = "bar1"
         items[2].foo = "bar2"
+        items[1].store()
+        items[2].store()
+
+        results_asc = list(self.lib.items("foo+ id+"))
+        # items without field first
+        assert [i.id for i in results_asc] == [ids[0], ids[3], ids[1], ids[2]]
+        results_desc = list(self.lib.items("foo- id+"))
+        # items without field last
+        assert [i.id for i in results_desc] == [ids[2], ids[1], ids[0], ids[3]]
+
+    def test_int_field_present_in_some_items(self):
+        """Test ordering by a field not present on all items."""
+        # append int-valued 'foo' to two items (1,2)
+        Item._types = {"foo": types.Integer()}
+        items = self.lib.items("id+")
+        ids = [i.id for i in items]
+        items[1].foo = 1
+        items[2].foo = 2
         items[1].store()
         items[2].store()
 
