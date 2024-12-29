@@ -17,28 +17,49 @@
     </head>
     <body>
         <div id="header">
-            <h1>beets</h1>
-            <div id="player">
-                <audio></audio>
-                <button class="disabled">&#9654;</button>
-                <button class="play">&#9654;</button>
-                <button class="pause" style="letter-spacing: 1px;">&#10073;&#10073;</button>
+            <div class="headerLeft">
+                <h1>beets</h1>
+                <div id="player">
+                    <audio></audio>
 
-                <span class="nowPlaying">
-                    <span class="nowPlayingName"></span>
-                    <span class="currentTime"></span>
-                </span>
+                    <button class="disabled">&#9654;</button>
+                    <button class="play">&#9654;</button>
+                    <button class="pause" style="letter-spacing: 1px;">&#10073;&#10073;</button>
+
+                    <span class="nowPlaying">
+                        <span class="nowPlayingName"></span>
+                        <span class="currentTime"></span>
+                    </span>
+                </div>
+            </div>
+            <div class="headerRight">
+                <div id="album-browser">
+                    <a href="?#albums">&#x25A6;</a>
+                </div>
             </div>
         </div>
-        <div id="entities">
-            <form id="queryForm">
-                <input type="search" id="query" placeholder="Query">
-            </form>
-            <ul id="results">
-            </ul>
+
+        <div id="content">
+            <div id="entities">
+                <form id="queryForm">
+                    <input type="search" id="query" placeholder="Query">
+                </form>
+                <ul id="results">
+                </ul>
+            </div>
+
+            <div id="details">
+                <div id="main-detail">
+                </div>
+
+                <div id="extra-detail">
+                </div>
+
+                <div id="cover-grid">
+                </div>
+            </div>
         </div>
-        <div id="main-detail"></div>
-        <div id="extra-detail"></div>
+
         <!-- Templates. -->
         <script type="text/template" id="item-entry-template">
             <% if (artist) { %><%= artist %><% } %>
