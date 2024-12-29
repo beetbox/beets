@@ -150,16 +150,7 @@ var loadAlbumCovers = function(entries, observer) {
             }).done(
                 function(data) {
                     // encode data as base64 using btoa
-                    console.log('data for ' + albumID);
                     $targetImg.attr('src', 'data:image/jpeg;base64,' + data);
-                }
-            ).fail(
-                function(jqxhr, status, error) {
-                    // var altText = $targetImg.attr('alt');
-                    console.log(entry.target);
-                    console.log("failed to load album " + albumID + " " + status);
-                    console.log(jqxhr);
-                    // $targetImg.replaceWith($('<div>').text(altText));
                 }
             );
             observer.unobserve(entry.target);
@@ -226,7 +217,6 @@ var AlbumCoverView = Backbone.View.extend({
             (this.model.get('album') || 'Unknown Album'),
         ].join('\n');
         $(this.el).html(this.template({altText: altText, ...this.model.toJSON()}));
-        console.log(this.el);
         return this;
     },
 });
