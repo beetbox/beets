@@ -15,10 +15,11 @@
 """Various tests for querying the library database."""
 
 from mock import patch
+
 import beets.library
 from beets import config, dbcore
 from beets.dbcore import types
-from beets.library import Album, Item
+from beets.library import Album
 from beets.test import _common
 from beets.test.helper import BeetsTestCase
 
@@ -502,7 +503,6 @@ class NonExistingFieldTest(DummyDataTestCase):
     def test_field_present_in_some_items(self):
         """Test ordering by a (string) field not present on all items."""
         # append 'foo' to two items (1,2)
-        items = self.lib.items("id+")
         lower_foo_item, higher_foo_item, *items_without_foo = self.lib.items(
             "id+"
         )
