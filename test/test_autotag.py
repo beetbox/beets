@@ -551,7 +551,7 @@ class AssignmentTest(unittest.TestCase):
     def test_order_works_with_missing_tracks(self):
         items = []
         items.append(self.item("one", 1))
-        items.append(self.item("three", 3))
+        items.append(self.item("two", 2))
         trackinfo = []
         trackinfo.append(TrackInfo(title="one"))
         trackinfo.append(TrackInfo(title="two"))
@@ -560,8 +560,8 @@ class AssignmentTest(unittest.TestCase):
             items, trackinfo
         )
         assert extra_items == []
-        assert extra_tracks == [trackinfo[1]]
-        assert mapping == {items[0]: trackinfo[0], items[1]: trackinfo[2]}
+        assert extra_tracks == [trackinfo[2]]
+        assert mapping == {items[0]: trackinfo[0], items[1]: trackinfo[1]}
 
     def test_order_works_with_extra_tracks(self):
         items = []
