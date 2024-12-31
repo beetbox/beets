@@ -503,7 +503,9 @@ class NonExistingFieldTest(DummyDataTestCase):
         """Test ordering by a (string) field not present on all items."""
         # append 'foo' to two items (1,2)
         items = self.lib.items("id+")
-        lower_foo_item, higher_foo_item, *items_without_foo = self.lib.items("id+")
+        lower_foo_item, higher_foo_item, *items_without_foo = self.lib.items(
+            "id+"
+        )
         lower_foo_item.foo, higher_foo_item.foo = "bar1", "bar2"
         lower_foo_item.store()
         higher_foo_item.store()
@@ -513,7 +515,7 @@ class NonExistingFieldTest(DummyDataTestCase):
             # items without field first
             *[i.id for i in items_without_foo],
             lower_foo_item.id,
-            higher_foo_item.id
+            higher_foo_item.id,
         ]
 
         results_desc = list(self.lib.items("foo- id+"))
@@ -521,14 +523,16 @@ class NonExistingFieldTest(DummyDataTestCase):
             higher_foo_item.id,
             lower_foo_item.id,
             # items without field last
-            *[i.id for i in items_without_foo]
+            *[i.id for i in items_without_foo],
         ]
 
     @patch("beets.library.Item._types", {"myint": types.Integer()})
     def test_int_field_present_in_some_items(self):
         """Test ordering by an int-type field not present on all items."""
         # append int-valued 'myint' to two items (1,2)
-        lower_myint_item, higher_myint_item, *items_without_myint = self.lib.items("id+")
+        lower_myint_item, higher_myint_item, *items_without_myint = (
+            self.lib.items("id+")
+        )
         lower_myint_item.myint, higher_myint_item.myint = 1, 2
         lower_myint_item.store()
         higher_myint_item.store()
@@ -538,7 +542,7 @@ class NonExistingFieldTest(DummyDataTestCase):
             # items without field first
             *[i.id for i in items_without_myint],
             lower_myint_item.id,
-            higher_myint_item.id
+            higher_myint_item.id,
         ]
 
         results_desc = list(self.lib.items("myint- id+"))
@@ -546,7 +550,7 @@ class NonExistingFieldTest(DummyDataTestCase):
             higher_myint_item.id,
             lower_myint_item.id,
             # items without field last
-            *[i.id for i in items_without_myint]
+            *[i.id for i in items_without_myint],
         ]
 
     def test_negation_interaction(self):
