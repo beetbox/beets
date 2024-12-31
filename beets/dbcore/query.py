@@ -1000,13 +1000,13 @@ class FieldSort(Sort):
 
         def key(obj: Model) -> Any:
             field_val = obj.get(self.field, None)
-            # If the field is typed, use its null value.
             if field_val is None:
-                if self.field in obj._types:
+                if _type := obj._types.get(self.field):
+                    # If the field is typed, use its null value.
                     field_val = obj._types[self.field].null
-            # If not, or the null value is None, fall back to using an empty string.
-            if field_val is None:
-                field_val = ""
+                else:
+                    # If not, fall back to using an empty string.
+                    field_val = ""
             if self.case_insensitive and isinstance(field_val, str):
                 field_val = field_val.lower()
             return field_val
