@@ -23,7 +23,7 @@ from beets import autotag, config
 from beets.autotag import AlbumInfo, TrackInfo, correct_list_fields, match
 from beets.autotag.hooks import Distance, string_dist
 from beets.library import Item
-from beets.test.helper import BeetsTestCase
+from beets.test.helper import BeetsTestCase, ConfigMixin
 from beets.util import plurality
 
 
@@ -498,10 +498,15 @@ class AlbumDistanceTest(BeetsTestCase):
         assert dist == 0
 
 
-class TestAssignment:
+class TestAssignment(ConfigMixin):
     A = "one"
     B = "two"
     C = "three"
+
+    @pytest.fixture(autouse=True)
+    def _setup_config(self):
+        self.config["match"]["track_length_grace"] = 10
+        self.config["match"]["track_length_max"] = 30
 
     @pytest.mark.parametrize(
         # 'expected' is a tuple of expected (mapping, extra_items, extra_tracks)
