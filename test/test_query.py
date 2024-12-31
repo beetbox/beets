@@ -19,9 +19,9 @@ import sys
 import unittest
 from contextlib import contextmanager
 from functools import partial
-from mock import patch
 
 import pytest
+from mock import patch
 
 import beets.library
 from beets import dbcore, util
@@ -31,7 +31,6 @@ from beets.dbcore.query import (
     NoneQuery,
     ParsingError,
 )
-from beets.library import Item
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, ItemInDBTestCase
 from beets.util import syspath
