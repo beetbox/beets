@@ -500,39 +500,54 @@ class NonExistingFieldTest(DummyDataTestCase):
             assert r1.id == r2.id
 
     def test_field_present_in_some_items(self):
-        """Test ordering by a field not present on all items."""
+        """Test ordering by a (string) field not present on all items."""
         # append 'foo' to two items (1,2)
         items = self.lib.items("id+")
-        ids = [i.id for i in items]
-        items[1].foo = "bar1"
-        items[2].foo = "bar2"
-        items[1].store()
-        items[2].store()
+        lower_foo_item, higher_foo_item, *items_without_foo = self.lib.items("id+")
+        lower_foo_item.foo, higher_foo_item.foo = "bar1", "bar2"
+        lower_foo_item.store()
+        higher_foo_item.store()
 
         results_asc = list(self.lib.items("foo+ id+"))
-        # items without field first
-        assert [i.id for i in results_asc] == [ids[0], ids[3], ids[1], ids[2]]
-        results_desc = list(self.lib.items("foo- id+"))
-        # items without field last
-        assert [i.id for i in results_desc] == [ids[2], ids[1], ids[0], ids[3]]
+        assert [i.id for i in results_asc] == [
+            # items without field first
+            *[i.id for i in items_without_foo],
+            lower_foo_item.id,
+            higher_foo_item.id
+        ]
 
-    @patch("beets.library.Item._types", {"foo": types.Integer()})
+        results_desc = list(self.lib.items("foo- id+"))
+        assert [i.id for i in results_desc] == [
+            higher_foo_item.id,
+            lower_foo_item.id,
+            # items without field last
+            *[i.id for i in items_without_foo]
+        ]
+
+    @patch("beets.library.Item._types", {"myint": types.Integer()})
     def test_int_field_present_in_some_items(self):
-        """Test ordering by a field not present on all items."""
-        # append int-valued 'foo' to two items (1,2)
-        items = self.lib.items("id+")
-        ids = [i.id for i in items]
-        items[1].foo = 1
-        items[2].foo = 2
-        items[1].store()
-        items[2].store()
+        """Test ordering by an int-type field not present on all items."""
+        # append int-valued 'myint' to two items (1,2)
+        lower_myint_item, higher_myint_item, *items_without_myint = self.lib.items("id+")
+        lower_myint_item.myint, higher_myint_item.myint = 1, 2
+        lower_myint_item.store()
+        higher_myint_item.store()
 
-        results_asc = list(self.lib.items("foo+ id+"))
-        # items without field first
-        assert [i.id for i in results_asc] == [ids[0], ids[3], ids[1], ids[2]]
-        results_desc = list(self.lib.items("foo- id+"))
-        # items without field last
-        assert [i.id for i in results_desc] == [ids[2], ids[1], ids[0], ids[3]]
+        results_asc = list(self.lib.items("myint+ id+"))
+        assert [i.id for i in results_asc] == [
+            # items without field first
+            *[i.id for i in items_without_myint],
+            lower_myint_item.id,
+            higher_myint_item.id
+        ]
+
+        results_desc = list(self.lib.items("myint- id+"))
+        assert [i.id for i in results_desc] == [
+            higher_myint_item.id,
+            lower_myint_item.id,
+            # items without field last
+            *[i.id for i in items_without_myint]
+        ]
 
     def test_negation_interaction(self):
         """Test the handling of negation and sorting together.
