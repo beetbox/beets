@@ -14,6 +14,7 @@
 
 """Various tests for querying the library database."""
 
+from mock import patch
 import beets.library
 from beets import config, dbcore
 from beets.dbcore import types
@@ -472,10 +473,6 @@ class CaseSensitivityTest(DummyDataTestCase, BeetsTestCase):
 class NonExistingFieldTest(DummyDataTestCase):
     """Test sorting by non-existing fields"""
 
-    def tearDown(self):
-        super().tearDown()
-        Item._types = {}
-
     def test_non_existing_fields_not_fail(self):
         qs = ["foo+", "foo-", "--", "-+", "+-", "++", "-foo-", "-foo+", "---"]
 
@@ -519,10 +516,10 @@ class NonExistingFieldTest(DummyDataTestCase):
         # items without field last
         assert [i.id for i in results_desc] == [ids[2], ids[1], ids[0], ids[3]]
 
+    @patch("beets.library.Item._types", {"foo": types.Integer()})
     def test_int_field_present_in_some_items(self):
         """Test ordering by a field not present on all items."""
         # append int-valued 'foo' to two items (1,2)
-        Item._types = {"foo": types.Integer()}
         items = self.lib.items("id+")
         ids = [i.id for i in items]
         items[1].foo = 1

@@ -19,6 +19,7 @@ import sys
 import unittest
 from contextlib import contextmanager
 from functools import partial
+from mock import patch
 
 import pytest
 
@@ -715,10 +716,6 @@ class PathQueryTest(ItemInDBTestCase, AssertsMixin):
 
 
 class IntQueryTest(BeetsTestCase):
-    def tearDown(self):
-        super().tearDown()
-        Item._types = {}
-
     def test_exact_value_match(self):
         item = self.add_item(bpm=120)
         matched = self.lib.items("bpm:120").get()
@@ -732,14 +729,14 @@ class IntQueryTest(BeetsTestCase):
         assert 1 == len(matched)
         assert item.id == matched.get().id
 
+    @patch("beets.library.Item._types", {"myint": types.Integer()})
     def test_flex_range_match(self):
-        Item._types = {"myint": types.Integer()}
         item = self.add_item(myint=2)
         matched = self.lib.items("myint:2").get()
         assert item.id == matched.id
 
+    @patch("beets.library.Item._types", {"myint": types.Integer()})
     def test_flex_dont_match_missing(self):
-        Item._types = {"myint": types.Integer()}
         self.add_item()
         matched = self.lib.items("myint:2").get()
         assert matched is None
@@ -750,15 +747,8 @@ class IntQueryTest(BeetsTestCase):
         assert matched is None
 
 
+@patch("beets.library.Item._types", {"flexbool": types.Boolean()})
 class BoolQueryTest(BeetsTestCase, AssertsMixin):
-    def setUp(self):
-        super().setUp()
-        Item._types = {"flexbool": types.Boolean()}
-
-    def tearDown(self):
-        super().tearDown()
-        Item._types = {}
-
     def test_parse_true(self):
         item_true = self.add_item(comp=True)
         item_false = self.add_item(comp=False)
