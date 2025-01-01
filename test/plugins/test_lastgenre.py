@@ -16,6 +16,8 @@
 
 from unittest.mock import Mock
 
+import pytest
+
 from beets import config
 from beets.test import _common
 from beets.test.helper import BeetsTestCase
@@ -163,78 +165,6 @@ class LastGenrePluginTest(BeetsTestCase):
         res = plugin._tags_for(MockPylastObj(), min_weight=50)
         assert res == ["pop"]
 
-    def test_get_genre(self):
-        """All possible (genre, label) pairs"""
-        mock_genres = {"track": "1", "album": "2", "artist": "3"}
-
-        def mock_fetch_track_genre(self, obj=None):
-            return mock_genres["track"]
-
-        def mock_fetch_album_genre(self, obj):
-            return mock_genres["album"]
-
-        def mock_fetch_artist_genre(self, obj):
-            return mock_genres["artist"]
-
-        lastgenre.LastGenrePlugin.fetch_track_genre = mock_fetch_track_genre
-        lastgenre.LastGenrePlugin.fetch_album_genre = mock_fetch_album_genre
-        lastgenre.LastGenrePlugin.fetch_artist_genre = mock_fetch_artist_genre
-
-        self._setup_config(whitelist=False)
-        item = _common.item()
-        item.genre = mock_genres["track"]
-
-        # The default setting
-        config["lastgenre"] = {"force": False, "keep_allowed": True}
-        res = self.plugin._get_genre(item)
-        assert res == (item.genre, "keep allowed")
-
-        # Not forcing and keeping any existing
-        config["lastgenre"] = {"force": False, "keep_allowed": False}
-        res = self.plugin._get_genre(item)
-        assert res == (item.genre, "keep any")
-
-        # Track
-        config["lastgenre"] = {"force": True, "keep_allowed": False, "source": "track"}
-        res = self.plugin._get_genre(item)
-        assert res == (mock_genres["track"], "track")
-
-        config["lastgenre"] = {"force": True, "keep_allowed": True, "source": "track"}
-        res = self.plugin._get_genre(item)
-        assert res == (mock_genres["track"], "keep + track")
-        print("res after track check:", res)
-
-        # Album
-        config["lastgenre"] = {"source": "album", "keep_allowed": False}
-        res = self.plugin._get_genre(item)
-        print("res is:", res)
-        print("mock_genres is:", mock_genres["album"])
-        assert res == (mock_genres["album"], "album")
-
-        config["lastgenre"] = {"source": "album", "keep_allowed": True}
-        res = self.plugin._get_genre(item)
-        assert res == (mock_genres["album"], "keep + album")
-
-        # Artist
-        config["lastgenre"] = {"source": "artist", "keep_allowed": False}
-        res = self.plugin._get_genre(item)
-        assert res == (mock_genres["artist"], "artist")
-
-        config["lastgenre"] = {"source": "artist", "keep_allowed": True}
-        res = self.plugin._get_genre(item)
-        assert res == (mock_genres["artist"], "keep + artist")
-
-        # Original
-        mock_genres["artist"] = None
-        res = self.plugin._get_genre(item)
-        assert res == (item.genre, "original")
-
-        # Fallback
-        config["lastgenre"] = {"fallback": "rap", "keep_allowed": False}
-        item.genre = None
-        res = self.plugin._get_genre(item)
-        assert res == (config["lastgenre"]["fallback"].get(), "fallback")
-
     def test_sort_by_depth(self):
         self._setup_config(canonical=True)
         # Normal case.
@@ -245,3 +175,251 @@ class LastGenrePluginTest(BeetsTestCase):
         tags = ("electronic", "ambient", "chillout")
         res = self.plugin._sort_by_depth(tags)
         assert res == ["ambient", "electronic"]
+
+
+@pytest.mark.parametrize(
+    "config_values, item_genre, mock_genres, expected_result",
+    [
+        # 0 - default setting. keep whitelisted exisiting, new for empty tags.
+        # (see "Case 4" comment in plugin)
+        (
+            {
+                "force": False,
+                "keep_allowed": True,
+                "source": "album",  # means album or artist genre
+                "whitelist": True,
+            },
+            "allowed genre",
+            {
+                "album": "another allowed genre",
+            },
+            ("allowed genre", "keep allowed"),
+        ),
+        # 1 - default setting when whitelisted+unknown genre existing
+        (
+            {
+                "force": False,
+                "keep_allowed": True,
+                "source": "album",
+                "whitelist": True,
+            },
+            "unknown genre, allowed genre",
+            {
+                "album": "another allowed genre",
+            },
+            ("allowed genre", "keep allowed"),
+        ),
+        # 2 - default setting when only unknown genre existing
+        # clears existing but does not add new genre. Not desired but expected.
+        (
+            {
+                "force": False,
+                "keep_allowed": True,
+                "source": "album",
+                "whitelist": True,
+            },
+            "unknown genre",
+            {
+                "album": "another allowed genre",
+            },
+            ("", "keep allowed"),
+        ),
+        # 3 - default setting on empty tag
+        (
+            {
+                "force": False,
+                "keep_allowed": True,
+                "source": "album",
+                "whitelist": True,
+            },
+            "",
+            {
+                "album": "another allowed genre",
+            },
+            ("another allowed genre", "album"),
+        ),
+        # 4 - force and keep whitelisted
+        # (see "Case 3" comment in plugin)
+        (
+            {
+                "force": True,
+                "keep_allowed": True,
+                "source": "album",
+                "whitelist": True,
+            },
+            "allowed genre, unknown genre",
+            {
+                "album": "another allowed genre",
+            },
+            ("allowed genre, another allowed genre", "keep + album"),
+        ),
+        # 5 - force and keep whitelisted. artist genre
+        (
+            {
+                "force": True,
+                "keep_allowed": True,
+                "source": "artist",  # means artist genre (only)
+                "whitelist": True,
+            },
+            "allowed genre, unknown genre",
+            {
+                "artist": "another allowed genre",
+            },
+            ("allowed genre, another allowed genre", "keep + artist"),
+        ),
+        # 6 - force and keep whitelisted. track genre
+        (
+            {
+                "force": True,
+                "keep_allowed": True,
+                "source": "track",  # means track or album or artist genre
+                "whitelist": True,
+            },
+            "allowed genre, unknown genre",
+            {
+                "track": "another allowed genre",
+            },
+            ("allowed genre, another allowed genre", "keep + track"),
+        ),
+        # 7 - force and don't keep, overwrites any preexisting
+        # (see "Case 1" comment in plugin)
+        (
+            {
+                "force": True,
+                "keep_allowed": False,
+                "source": "album",
+                "whitelist": True,
+            },
+            "allowed genre, unknown genre",
+            {
+                "album": "another allowed genre",
+            },
+            ("another allowed genre", "album"),
+        ),
+        # 8 - don't force, don't keep allowed - on empty tag
+        # empty tag gets new genres
+        # (see "Case 2" comment in plugin)
+        (
+            {
+                "force": False,
+                "keep_allowed": False,
+                "source": "album",
+                "whitelist": True,
+            },
+            "",
+            {
+                "album": "another allowed genre, allowed genre",
+            },
+            ("another allowed genre, allowed genre", "album"),
+        ),
+        # 9 - don't force, don't keep allowed - on pre-populated tag
+        # keeps any preexisting genres
+        # (see "Case 2" comment in plugin)
+        (
+            {
+                "force": False,
+                "keep_allowed": False,
+                "source": "album",
+                "whitelist": True,
+            },
+            "any genre",
+            {
+                "album": "another allowed genre",
+            },
+            ("any genre", "keep any"),
+        ),
+        # 10 - fallback to next stages until found
+        (
+            {
+                "force": True,
+                "keep_allowed": True,
+                "source": "track",
+                "whitelist": True,
+            },
+            "unknown genre",
+            {
+                "track": None,
+                "album": None,
+                "artist": "allowed genre",
+            },
+            ("allowed genre", "artist"),
+        ),
+        # 11 - fallback to fallback when nothing found
+        (
+            {
+                "force": True,
+                "keep_allowed": True,
+                "source": "track",
+                "whitelist": True,
+                "fallback": "fallback genre",
+            },
+            "unknown genre",
+            {
+                "track": None,
+                "album": None,
+                "artist": None,
+            },
+            ("fallback genre", "fallback"),
+        ),
+        # 12 - fallback to allowed pre-existing when nothing found
+        # runs through _format_tag already, thus capitalized; This happens
+        # later for fetched genres!
+        (
+            {
+                "force": True,
+                "keep_allowed": True,
+                "source": "album",
+                "whitelist": True,
+            },
+            "allowed genre",
+            {
+                "album": None,
+                "artist": None,
+            },
+            ("Allowed Genre", "original"),
+        ),
+    ],
+)
+def test_get_genre(config_values, item_genre, mock_genres, expected_result):
+    """Test _get_genre with various configurations."""
+
+    def mock_fetch_track_genre(self, obj=None):
+        return mock_genres["track"]
+
+    def mock_fetch_album_genre(self, obj):
+        return mock_genres["album"]
+
+    def mock_fetch_artist_genre(self, obj):
+        return mock_genres["artist"]
+
+    # Mock the last.fm fetchers. When whitelist enabled, we can assume only
+    # whitelisted genres get returned, the plugin's _resolve_genre method
+    # ensures it.
+    lastgenre.LastGenrePlugin.fetch_track_genre = mock_fetch_track_genre
+    lastgenre.LastGenrePlugin.fetch_album_genre = mock_fetch_album_genre
+    lastgenre.LastGenrePlugin.fetch_artist_genre = mock_fetch_artist_genre
+
+    # Initialize plugin instance and item
+    plugin = lastgenre.LastGenrePlugin()
+    item = _common.item()
+    item.genre = item_genre
+
+    # Configure
+    config["lastgenre"] = config_values
+
+    # Mock the whitelist instance variable
+    plugin.whitelist = (
+        set(
+            [
+                "allowed genre",
+                "also allowed genre",
+                "another allowed genre",
+            ]
+        )
+        if config_values.get("whitelist")
+        else set([])
+    )
+
+    # Run
+    res = plugin._get_genre(item)
+    assert res == expected_result
