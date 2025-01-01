@@ -89,7 +89,7 @@ New features:
 
 Bug fixes:
 
-* Add empty album check in ``mbsync``.
+* :doc:`plugins/mbsync`: Skip empty albums.
 * :doc:`plugins/ftintitle`: The detection of a "feat. X" part in a song title does not produce any false
   positives caused by words like "and" or "with" anymore. :bug:`5441`
 * :doc:`plugins/ftintitle`: The detection of a "feat. X" part now also matches such parts if they are in
