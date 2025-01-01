@@ -985,7 +985,7 @@ class FieldSort(Sort):
 
     def __init__(
         self,
-        field,
+        field: str,
         ascending: bool = True,
         case_insensitive: bool = True,
     ):
@@ -999,7 +999,14 @@ class FieldSort(Sort):
         # attributes with different types without falling over.
 
         def key(obj: Model) -> Any:
-            field_val = obj.get(self.field, "")
+            field_val = obj.get(self.field, None)
+            if field_val is None:
+                if _type := obj._types.get(self.field):
+                    # If the field is typed, use its null value.
+                    field_val = obj._types[self.field].null
+                else:
+                    # If not, fall back to using an empty string.
+                    field_val = ""
             if self.case_insensitive and isinstance(field_val, str):
                 field_val = field_val.lower()
             return field_val

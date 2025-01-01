@@ -101,6 +101,7 @@ ruff = ">=0.6.4"
 [tool.poetry.group.typing.dependencies]
 mypy = "*"
 types-beautifulsoup4 = "*"
+types-mock = "*"
 types-Flask-Cors = "*"
 types-Pillow = "*"
 types-PyYAML = "*"
