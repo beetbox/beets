@@ -349,7 +349,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return separator.join(combined_genres), f"keep + {log_label}"
         elif new_genres:
             return new_genres, log_label
-        return "", log_label
+        return None, log_label
 
     def _get_genre(self, obj):
         """Get the final genre string for an Album or Item object
