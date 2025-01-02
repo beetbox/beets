@@ -399,16 +399,18 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Track genre (for Items only).
         if isinstance(obj, library.Item) and "track" in self.sources:
             new_genres = self.fetch_track_genre(obj)
-            return self._combine_and_label_genres(
-                new_genres, keep_genres, separator, "track"
-            )
+            if new_genres:
+                return self._combine_and_label_genres(
+                    new_genres, keep_genres, separator, "track"
+                )
 
         # Album genre.
         if "album" in self.sources:
             new_genres = self.fetch_album_genre(obj)
-            return self._combine_and_label_genres(
-                new_genres, keep_genres, separator, "album"
-            )
+            if new_genres:
+                return self._combine_and_label_genres(
+                    new_genres, keep_genres, separator, "album"
+                )
 
         # Artist (or album artist) genre.
         if "artist" in self.sources:
@@ -431,9 +433,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 if item_genres:
                     new_genres, _ = plurality(item_genres)
 
-            return self._combine_and_label_genres(
-                new_genres, keep_genres, separator, "artist"
-            )
+            if new_genres:
+                return self._combine_and_label_genres(
+                    new_genres, keep_genres, separator, "artist"
+                )
 
         # Filter the existing genre.
         if obj.genre:
