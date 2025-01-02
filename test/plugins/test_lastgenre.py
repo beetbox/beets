@@ -378,6 +378,21 @@ class LastGenrePluginTest(BeetsTestCase):
             },
             ("Allowed Genre", "original"),
         ),
+        # 13 - test with a null charachter as separator
+        (
+            {
+                "force": True,
+                "keep_allowed": True,
+                "source": "album",
+                "whitelist": True,
+                "separator": "\u0000"
+            },
+            "allowed genre",
+            {
+                "album": "another allowed genre",
+            },
+            ("allowed genre\u0000another allowed genre", "keep + album"),
+        ),
     ],
 )
 def test_get_genre(config_values, item_genre, mock_genres, expected_result):
