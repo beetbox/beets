@@ -318,7 +318,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return item_genre
         return []
 
-    def _dedup_genres(self, genres, whitelist_only=True):
+    def _dedup_genres(self, genres, whitelist_only=False):
         """Return a list of deduplicated genres. Depending on the
         whitelist_only option, gives filtered or unfiltered results."""
         if whitelist_only:
