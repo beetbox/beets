@@ -190,6 +190,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """Given a list of strings, return a genre by joining them into a
         single string and (optionally) canonicalizing each.
         """
+        self._log.debug(
+            f"_resolve_genres received: {tags}",
+        )
         if not tags:
             return None
 
@@ -228,6 +231,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
         tags = [self._format_tag(x) for x in tags if self._is_allowed(x)]
+        self._log.debug(
+            f"_resolve_genres (canonicalized and whitelist filtered): {tags}",
+        )
 
         return (
             self.config["separator"]
@@ -245,7 +251,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         can be found. Ex. 'Electronic, House, Dance'
         """
         min_weight = self.config["min_weight"].get(int)
-        return self._resolve_genres(self._tags_for(lastfm_obj, min_weight))
+        resolved = self._resolve_genres(self._tags_for(lastfm_obj, min_weight))
+        self._log.debug(f"fetch_genre returns (whitelist checked): {resolved}")
+        return resolved
 
     def _is_allowed(self, genre):
         """Determine whether the genre is present in the whitelist,
@@ -267,13 +275,16 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         rough ASCII equivalents in order to return better results from the
         Last.fm database.
         """
+        self._log.debug(
+            f"_last_lookup receives: " f"{entity}, {method.__name__}, {args}"
+        )
         # Shortcut if we're missing metadata.
         if any(not s for s in args):
             return None
 
         key = "{}.{}".format(entity, "-".join(str(a) for a in args))
         if key in self._genre_cache:
-            return self._genre_cache[key]
+            result = self._genre_cache[key]
         else:
             args_replaced = []
             for arg in args:
@@ -283,7 +294,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
             genre = self.fetch_genre(method(*args_replaced))
             self._genre_cache[key] = genre
-            return genre
+            result = genre
+        self._log.debug(f"_last_lookup returns: {result}")
+        return result
 
     def fetch_album_genre(self, obj):
         """Return the album genre for this Item or Album."""
