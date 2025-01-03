@@ -256,8 +256,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return resolved
 
     def _is_allowed(self, genre):
-        """Determine whether the genre is present in the whitelist,
-        returning a boolean.
+        """Returns True if the genre is in the whitelist or the whitelist
+        feature is disabled.
         """
         if genre is None:
             return False
