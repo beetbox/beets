@@ -180,180 +180,134 @@ class LastGenrePluginTest(BeetsTestCase):
 @pytest.mark.parametrize(
     "config_values, item_genre, mock_genres, expected_result",
     [
-        # 0 - default setting. keep whitelisted exisiting, new for empty tags.
-        # (see "Case 4" comment in plugin)
+        # 0 - force and keep whitelisted
         (
             {
-                "force": False,
-                "keep_allowed": True,
+                "force": True,
+                "keep_existing": True,
                 "source": "album",  # means album or artist genre
                 "whitelist": True,
+                "canonical": False,
+                "prefer_specific": False,
+                "count": 10,
             },
-            "allowed genre",
+            "Blues",
             {
-                "album": "another allowed genre",
+                "album": "Jazz",
             },
-            ("allowed genre", "keep allowed"),
+            ("Blues, Jazz", "keep + album"),
         ),
-        # 1 - default setting when whitelisted+unknown genre existing
+        # 1 - force and keep whitelisted, unknown original
         (
             {
-                "force": False,
-                "keep_allowed": True,
+                "force": True,
+                "keep_existing": True,
                 "source": "album",
                 "whitelist": True,
+                "canonical": False,
+                "prefer_specific": False,
             },
-            "unknown genre, allowed genre",
+            "original unknown, Blues",
             {
-                "album": "another allowed genre",
+                "album": "Jazz",
             },
-            ("allowed genre", "keep allowed"),
+            ("Blues, Jazz", "keep + album"),
         ),
-        # 2 - default setting when only unknown genre existing
-        # clears existing but does not add new genre. Not desired but expected.
+        # 2 - force and keep whitelisted on empty tag
         (
             {
-                "force": False,
-                "keep_allowed": True,
+                "force": True,
+                "keep_existing": True,
                 "source": "album",
                 "whitelist": True,
-            },
-            "unknown genre",
-            {
-                "album": "another allowed genre",
-            },
-            ("", "keep allowed"),
-        ),
-        # 3 - default setting on empty tag
-        (
-            {
-                "force": False,
-                "keep_allowed": True,
-                "source": "album",
-                "whitelist": True,
+                "canonical": False,
+                "prefer_specific": False,
             },
             "",
             {
-                "album": "another allowed genre",
+                "album": "Jazz",
             },
-            ("another allowed genre", "album"),
+            ("Jazz", "album"),
         ),
-        # 4 - force and keep whitelisted
-        # (see "Case 3" comment in plugin)
+        # 3 force and keep, artist configured
         (
             {
                 "force": True,
-                "keep_allowed": True,
-                "source": "album",
+                "keep_existing": True,
+                "source": "artist",  # means artist genre, original or fallback
                 "whitelist": True,
+                "canonical": False,
+                "prefer_specific": False,
             },
-            "allowed genre, unknown genre",
+            "original unknown, Blues",
             {
-                "album": "another allowed genre",
+                "album": "Jazz",
+                "artist": "Pop",
             },
-            ("allowed genre, another allowed genre", "keep + album"),
+            ("Blues, Pop", "keep + artist"),
         ),
-        # 5 - force and keep whitelisted. artist genre
-        (
-            {
-                "force": True,
-                "keep_allowed": True,
-                "source": "artist",  # means artist genre (only)
-                "whitelist": True,
-            },
-            "allowed genre, unknown genre",
-            {
-                "artist": "another allowed genre",
-            },
-            ("allowed genre, another allowed genre", "keep + artist"),
-        ),
-        # 6 - force and keep whitelisted. track genre
-        (
-            {
-                "force": True,
-                "keep_allowed": True,
-                "source": "track",  # means track or album or artist genre
-                "whitelist": True,
-            },
-            "allowed genre, unknown genre",
-            {
-                "track": "another allowed genre",
-            },
-            ("allowed genre, another allowed genre", "keep + track"),
-        ),
-        # 7 - force and don't keep, overwrites any preexisting
-        # (see "Case 1" comment in plugin)
-        (
-            {
-                "force": True,
-                "keep_allowed": False,
-                "source": "album",
-                "whitelist": True,
-            },
-            "allowed genre, unknown genre",
-            {
-                "album": "another allowed genre",
-            },
-            ("another allowed genre", "album"),
-        ),
-        # 8 - don't force, don't keep allowed - on empty tag
-        # empty tag gets new genres
-        # (see "Case 2" comment in plugin)
+        # 4 - don't force, disabled whitelist
         (
             {
                 "force": False,
-                "keep_allowed": False,
+                "keep_existing": False,
                 "source": "album",
-                "whitelist": True,
-            },
-            "",
-            {
-                "album": "another allowed genre, allowed genre",
-            },
-            ("another allowed genre, allowed genre", "album"),
-        ),
-        # 9 - don't force, don't keep allowed - on pre-populated tag
-        # keeps any preexisting genres
-        # (see "Case 2" comment in plugin)
-        (
-            {
-                "force": False,
-                "keep_allowed": False,
-                "source": "album",
-                "whitelist": True,
+                "whitelist": False,
+                "canonical": False,
+                "prefer_specific": False,
             },
             "any genre",
             {
-                "album": "another allowed genre",
+                "album": "Jazz",
             },
-            ("any genre", "keep any"),
+            ("any genre", "keep"),
         ),
-        # 10 - fallback to next stages until found
+        # 5 - don't force, disabled whitelist, empty
+        (
+            {
+                "force": False,
+                "keep_existing": False,
+                "source": "album",
+                "whitelist": False,
+                "canonical": False,
+                "prefer_specific": False,
+            },
+            "",
+            {
+                "album": "Jazz",
+            },
+            ("Jazz", "album"),
+        ),
+        # 6 - fallback to next stages until found
         (
             {
                 "force": True,
-                "keep_allowed": True,
-                "source": "track",
-                "whitelist": True,
+                "keep_existing": True,
+                "source": "track",  # means track,album,artist,...
+                "whitelist": False,
+                "canonical": False,
+                "prefer_specific": False,
             },
             "unknown genre",
             {
                 "track": None,
                 "album": None,
-                "artist": "allowed genre",
+                "artist": "Jazz",
             },
-            ("allowed genre", "artist"),
+            ("Unknown Genre, Jazz", "keep + artist"),
         ),
-        # 11 - fallback to fallback when nothing found
+        # 7 - fallback to fallback when nothing found
         (
             {
                 "force": True,
-                "keep_allowed": True,
+                "keep_existing": True,
                 "source": "track",
                 "whitelist": True,
                 "fallback": "fallback genre",
+                "canonical": False,
+                "prefer_specific": False,
             },
-            "unknown genre",
+            "original unknown",
             {
                 "track": None,
                 "album": None,
@@ -361,37 +315,39 @@ class LastGenrePluginTest(BeetsTestCase):
             },
             ("fallback genre", "fallback"),
         ),
-        # 12 - fallback to allowed pre-existing when nothing found
-        # runs through _format_tag already, thus capitalized; This happens
-        # later for fetched genres!
+        # 8 - null charachter as separator
         (
             {
                 "force": True,
-                "keep_allowed": True,
+                "keep_existing": True,
                 "source": "album",
                 "whitelist": True,
+                "separator": "\u0000",
+                "canonical": False,
+                "prefer_specific": False,
             },
-            "allowed genre",
+            "Blues",
             {
-                "album": None,
-                "artist": None,
+                "album": "Jazz",
             },
-            ("Allowed Genre", "original"),
+            ("Blues\u0000Jazz", "keep + album"),
         ),
-        # 13 - test with a null charachter as separator
+        # 9 - limit a lot of results to just 3
         (
             {
                 "force": True,
-                "keep_allowed": True,
+                "keep_existing": True,
                 "source": "album",
                 "whitelist": True,
-                "separator": "\u0000"
+                "count": 3,
+                "canonical": False,
+                "prefer_specific": False,
             },
-            "allowed genre",
+            "original unknown, Blues, Rock, Folk, Metal",
             {
-                "album": "another allowed genre",
+                "album": "Jazz",
             },
-            ("allowed genre\u0000another allowed genre", "keep + album"),
+            ("Blues, Rock, Metal", "keep + album"),
         ),
     ],
 )
@@ -421,19 +377,6 @@ def test_get_genre(config_values, item_genre, mock_genres, expected_result):
 
     # Configure
     config["lastgenre"] = config_values
-
-    # Mock the whitelist instance variable
-    plugin.whitelist = (
-        set(
-            [
-                "allowed genre",
-                "also allowed genre",
-                "another allowed genre",
-            ]
-        )
-        if config_values.get("whitelist")
-        else set([])
-    )
 
     # Run
     res = plugin._get_genre(item)
