@@ -113,19 +113,24 @@ popular, which is often the most generic (in this case ``folk``). By setting
 
 Handling pre-populated tags
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The ``force`` and ``keep_allowed`` options control how pre-existing genres are
-handled. By default, the plugin fetches new genres for empty tags only
-(``force: no``), and keeps whitelisted genres in pre-populated tags
-(``keep_allowed: yes``).
+The ``force``, ``keep_existing`` and ``whitelist`` options control how
+pre-existing genres are handled.
 
-To write new genres to empty tags and keep *any* pre-existing tag content
-as-is, set ``force: no`` and ``keep_allowed: no``.
+By default, the plugin *combines* newly fetched last.fm genres with whitelisted
+pre-existing ones (``force: yes`` and ``keep_existing: yes``).
+
+To write new genres to empty tags only and keep pre-populated tags untouched,
+set ``force: no``.
 
 To *overwrite* any content of pre-populated tags, set ``force: yes`` and
-``keep_allowed: no``.
+``keep_existing: no``.
 
-To *combine* newly fetched last.fm genres with whitelisted pre-existing genres,
-set ``force: yes`` and ``keep_allowed: yes``.
+To *combine* newly fetched last.fm genres with any pre-existing ones, set
+``force: yes``, ``keep_existing: yes`` but also disable the whitelist
+(``whitelist: False``).
+
+Any combinations including ``force: no`` and ``keep_existing: yes`` is invalid
+(since _not forcing_ means not touching existing tags anyway).
 
 Configuration
 -------------
@@ -144,14 +149,13 @@ configuration file. The available options are:
 - **fallback**: A string if to use a fallback genre when no genre is found.
   You can use the empty string ``''`` to reset the genre.
   Default: None.
-- **force**: By default, lastgenre will fetch new genres for empty tags and
-  leave pre-existing content in place. When changing this option to ``yes``
-  also adjust the ``keep_allowed`` option to your preference (see `Handling
-  pre-populated tags`_).
+- **force**: By default, lastgenre will fetch new genres for empty as well as
+  pre-populated tags.  Adjust the ``keep_existing`` option to combine existing
+  and new genres. (see `Handling pre-populated tags`_).
   Default: ``no``.
-- **keep_allowed**: By default, whitelisted genres remain in pre-populated
-  tags. When changing this optio to ``yes``, also ajdust the ``force``
-  option to your preference (see `Handling pre-populated tags`_).
+- **keep_existing**: By default, genres remain in pre-populated tags. Depending
+  If a whitelist is in place, existing genres get a cleanup. Only valid in
+  combination with an active ``force`` option.
   Default: ``yes``.
 - **min_weight**: Minimum popularity factor below which genres are discarded.
   Default: 10.
