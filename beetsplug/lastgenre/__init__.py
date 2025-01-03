@@ -102,16 +102,27 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "fallback": None,
                 "canonical": False,
                 "source": "album",
-                "force": False,
-                "keep_allowed": True,
+                "force": True,
+                "keep_existing": True,
                 "auto": True,
                 "separator": ", ",
                 "prefer_specific": False,
                 "title_case": True,
             }
         )
-
+        self.config_validation()
         self.setup()
+
+    def config_validation(self):
+        """Quits plugin when invalid configurations are detected."""
+        keep_existing = self.config["keep_existing"].get()
+        force = self.config["force"].get()
+
+        if keep_existing and not force:
+            raise ui.UserError(
+                "Invalid lastgenre plugin configuration (enable force with "
+                "keep_existing!)"
+            )
 
     def setup(self):
         """Setup plugin from config options"""
@@ -360,7 +371,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             split_genres = new_genres.split(separator)
             combined_genres = deduplicate(keep_genres + split_genres)
             return separator.join(combined_genres), f"keep + {log_label}"
-        elif new_genres:
+        if new_genres:
             return new_genres, log_label
         return None, log_label
 
@@ -389,38 +400,33 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         separator = self.config["separator"].get()
         keep_genres = []
 
+        genres = self._get_existing_genres(obj, separator)
+        if genres and not self.config["force"]:
+            # Without force we don't touch pre-populated tags and return early
+            # with the original contents. We format back to string tough.
+            keep_genres = self._dedup_genres(genres)
+            return separator.join(keep_genres), "keep"
+
         if self.config["force"]:
-            genres = self._get_existing_genres(obj, separator)
-            # Case 3 - Keep WHITELISTED. Combine with new.
-            # Case 1 - Keep None. Overwrite all.
-            if self.config["keep_allowed"]:
+            # Simply forcing doesn't keep any.
+            keep_genres = []
+            # keep_existing remembers, according to the whitelist setting,
+            # any or just allowed genres.
+            if self.config["keep_existing"] and self.config["whitelist"]:
                 keep_genres = self._dedup_genres(genres, whitelist_only=True)
-            else:
-                keep_genres = None
-        else:
-            genres = self._get_existing_genres(obj, separator)
-            # Case 4 - Keep WHITELISTED. Handle empty.
-            # Case 2 - Keep ANY. Handle empty.
-            if genres and self.config["keep_allowed"]:
-                keep_genres = self._dedup_genres(genres, whitelist_only=True)
-                return separator.join(keep_genres), "keep allowed"
-            elif genres and not self.config["keep_allowed"]:
+            elif self.config["keep_existing"]:
                 keep_genres = self._dedup_genres(genres)
-                return separator.join(keep_genres), "keep any"
-            # else: Move on, genre tag is empty.
 
         # Track genre (for Items only).
         if isinstance(obj, library.Item) and "track" in self.sources:
-            new_genres = self.fetch_track_genre(obj)
-            if new_genres:
+            if new_genres := self.fetch_track_genre(obj):
                 return self._combine_and_label_genres(
                     new_genres, keep_genres, separator, "track"
                 )
 
         # Album genre.
         if "album" in self.sources:
-            new_genres = self.fetch_album_genre(obj)
-            if new_genres:
+            if new_genres := self.fetch_album_genre(obj):
                 return self._combine_and_label_genres(
                     new_genres, keep_genres, separator, "album"
                 )
@@ -451,17 +457,16 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     new_genres, keep_genres, separator, "artist"
                 )
 
-        # Filter the existing genre.
+        # Didn't find anything, leave original
         if obj.genre:
-            result = self._resolve_genres([obj.genre])
-            if result:
-                return result, "original"
+            if result := self._resolve_genres([obj.genre]):
+                return result, "original, fallback"
 
-        # Fallback string.
-        fallback = self.config["fallback"].get()
-        if fallback:
+        # No original, return fallback string
+        if fallback := self.config["fallback"].get():
             return fallback, "fallback"
 
+        # No fallback configured
         return None, None
 
     # Beets plugin hooks and CLI.
@@ -477,17 +482,17 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         )
         lastgenre_cmd.parser.add_option(
             "-k",
-            "--keep-allowed",
-            dest="keep_allowed",
+            "--keep-existing",
+            dest="keep_existing",
             action="store_true",
-            help="keep already present genres when whitelisted",
+            help="keep already present genres",
         )
         lastgenre_cmd.parser.add_option(
             "-K",
-            "--keep-any",
-            dest="keep_allowed",
+            "--keep-none",
+            dest="keep_existing",
             action="store_false",
-            help="keep any already present genres",
+            help="don't keep already present genres",
         )
         lastgenre_cmd.parser.add_option(
             "-s",
