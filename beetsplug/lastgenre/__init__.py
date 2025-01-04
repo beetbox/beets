@@ -370,8 +370,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if new_genres and keep_genres:
             split_genres = new_genres.split(separator)
             combined_genres = deduplicate(keep_genres + split_genres)
-            return separator.join(combined_genres), f"keep + {log_label}"
+            # If we combine old and new, run through _resolve_genres (again).
+            resolved_genres = self._resolve_genres(combined_genres)
+            return resolved_genres, f"keep + {log_label}"
         if new_genres:
+            # New genres ran through _resolve_genres already.
             return new_genres, log_label
         return None, log_label
 
