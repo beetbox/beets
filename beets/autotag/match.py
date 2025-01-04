@@ -127,15 +127,21 @@ def assign_items(
     objects. These "extra" objects occur when there is an unequal number
     of objects of the two types.
     """
+    log.debug("Computing track assignment...")
     # Construct the cost matrix.
     costs = [[float(track_distance(i, t)) for t in tracks] for i in items]
-    # Find a minimum-cost bipartite matching.
-    log.debug("Computing track assignment...")
-    cost, _, assigned_idxs = lap.lapjv(np.array(costs), extend_cost=True)
+    # Assign items to tracks
+    _, _, assigned_item_idxs = lap.lapjv(np.array(costs), extend_cost=True)
     log.debug("...done.")
 
-    # Produce the output matching.
-    mapping = {items[i]: tracks[t] for (t, i) in enumerate(assigned_idxs)}
+    # Each item in `assigned_item_idxs` list corresponds to a track in the
+    # `tracks` list. Each value is either an index into the assigned item in
+    # `items` list, or -1 if that track has no match.
+    mapping = {
+        items[iidx]: t
+        for iidx, t in zip(assigned_item_idxs, tracks)
+        if iidx != -1
+    }
     extra_items = list(set(items) - mapping.keys())
     extra_items.sort(key=lambda i: (i.disc, i.track, i.title))
     extra_tracks = list(set(tracks) - set(mapping.values()))
