@@ -193,7 +193,7 @@ class LastGenrePluginTest(BeetsTestCase):
             },
             "Blues",
             {
-                "album": "Jazz",
+                "album": ["Jazz"],
             },
             ("Blues, Jazz", "keep + album"),
         ),
@@ -209,7 +209,7 @@ class LastGenrePluginTest(BeetsTestCase):
             },
             "original unknown, Blues",
             {
-                "album": "Jazz",
+                "album": ["Jazz"],
             },
             ("Blues, Jazz", "keep + album"),
         ),
@@ -225,7 +225,7 @@ class LastGenrePluginTest(BeetsTestCase):
             },
             "",
             {
-                "album": "Jazz",
+                "album": ["Jazz"],
             },
             ("Jazz", "album"),
         ),
@@ -241,8 +241,8 @@ class LastGenrePluginTest(BeetsTestCase):
             },
             "original unknown, Blues",
             {
-                "album": "Jazz",
-                "artist": "Pop",
+                "album": ["Jazz"],
+                "artist": ["Pop"],
             },
             ("Blues, Pop", "keep + artist"),
         ),
@@ -258,7 +258,7 @@ class LastGenrePluginTest(BeetsTestCase):
             },
             "any genre",
             {
-                "album": "Jazz",
+                "album": ["Jazz"],
             },
             ("any genre", "keep"),
         ),
@@ -274,7 +274,7 @@ class LastGenrePluginTest(BeetsTestCase):
             },
             "",
             {
-                "album": "Jazz",
+                "album": ["Jazz"],
             },
             ("Jazz", "album"),
         ),
@@ -292,7 +292,7 @@ class LastGenrePluginTest(BeetsTestCase):
             {
                 "track": None,
                 "album": None,
-                "artist": "Jazz",
+                "artist": ["Jazz"],
             },
             ("Unknown Genre, Jazz", "keep + artist"),
         ),
@@ -328,7 +328,7 @@ class LastGenrePluginTest(BeetsTestCase):
             },
             "Blues",
             {
-                "album": "Jazz",
+                "album": ["Jazz"],
             },
             ("Blues\u0000Jazz", "keep + album"),
         ),
@@ -345,7 +345,7 @@ class LastGenrePluginTest(BeetsTestCase):
             },
             "original unknown, Blues, Rock, Folk, Metal",
             {
-                "album": "Jazz",
+                "album": ["Jazz"],
             },
             ("Blues, Rock, Metal", "keep + album"),
         ),
