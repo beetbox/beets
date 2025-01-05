@@ -276,14 +276,19 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return fetched
 
     def _is_allowed(self, genre):
-        """Returns True if the genre is in the whitelist or the whitelist
-        feature is disabled.
+        """Returns True if genre in whitelist or whitelist disabled.
         """
+        allowed = False
         if genre is None:
-            return False
-        if not self.whitelist or genre.lower() in self.whitelist:
-            return True
-        return False
+            allowed = False
+            self._log.debug(f"Genre '{genre}' forbidden. Genre NONE.")
+        elif not self.whitelist:
+            allowed = True
+            self._log.debug(f"Genre '{genre}' allowed. Whitelist OFF.")
+        elif genre.lower() in self.whitelist:
+            allowed = True
+            self._log.debug(f"Genre '{genre}' allowed. FOUND in whitelist.")
+        return allowed
 
     # Cached last.fm entity lookups.
 
