@@ -179,6 +179,20 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     # More canonicalization and general helpers.
 
+    def _to_delimited_genre_string(self, tags):
+        """Reduce tags list to configured count, format and return as delimited
+        string."""
+        separator = self.config["separator"].as_str()
+        count = self.config["count"].get(int)
+        self._log.debug(f"Reducing {tags} to configured count {count}")
+
+        genre_string = separator.join(
+            self._format_tag(tag) for tag in tags[: min(count, len(tags))]
+        )
+
+        self._log.debug(f"Reduced and formatted tags to {genre_string}")
+        return genre_string
+
     def _get_depth(self, tag):
         """Find the depth of a tag in the genres tree."""
         depth = None
@@ -198,8 +212,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return [p[1] for p in depth_tag_pairs]
 
     def _resolve_genres(self, tags):
-        """Given a list of strings, return a genre by joining them into a
-        single string and (optionally) canonicalizing each.
+        """Given a list of genre strings, filters, sorts and canonicalizes.
         """
         self._log.debug(
             f"_resolve_genres received: {tags}",
@@ -241,16 +254,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
-        tags = [self._format_tag(x) for x in tags if self._is_allowed(x)]
+        tags = [x for x in tags if self._is_allowed(x)]
         self._log.debug(
             f"_resolve_genres (canonicalized and whitelist filtered): {tags}",
         )
 
-        return (
-            self.config["separator"]
-            .as_str()
-            .join(tags[: self.config["count"].get(int)])
-        )
+        return tags
 
     def _format_tag(self, tag):
         if self.config["title_case"]:
@@ -262,9 +271,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         can be found. Ex. 'Electronic, House, Dance'
         """
         min_weight = self.config["min_weight"].get(int)
-        resolved = self._resolve_genres(self._tags_for(lastfm_obj, min_weight))
-        self._log.debug(f"fetch_genre returns (whitelist checked): {resolved}")
-        return resolved
+        fetched = self._tags_for(lastfm_obj, min_weight)
+        self._log.debug(f"fetch_genre returns (whitelist checked): {fetched}")
+        return fetched
 
     def _is_allowed(self, genre):
         """Returns True if the genre is in the whitelist or the whitelist
@@ -351,31 +360,31 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return deduplicate([g for g in genres])
 
     def _combine_and_label_genres(
-        self, new_genres: str, keep_genres: list, separator: str, log_label: str
+        self, new_genres: list, keep_genres: list, log_label: str
     ) -> tuple:
         """Combines genres and returns them with a logging label.
 
         Parameters:
-            new_genres (str): The new genre string result to process.
+            new_genres (list): The new genre result to process.
             keep_genres (list): Existing genres to combine with new ones
-            separator (str): Separator used to split and join genre strings.
             log_label (str): A label (like "track", "album") we possibly
                 combine with a prefix. For example resulting in something like
                 "keep + track" or just "track".
 
         Returns:
-            tuple: A tuple containing the combined genre string and the "logging
-            label".
+            tuple: A tuple containing the combined genre string and the
+            'logging label'.
         """
+        self._log.debug(f"_combine got type new_genres: {new_genres}")
         if new_genres and keep_genres:
-            split_genres = new_genres.split(separator)
-            combined_genres = deduplicate(keep_genres + split_genres)
-            # If we combine old and new, run through _resolve_genres (again).
+            combined_genres = deduplicate(keep_genres + new_genres)
             resolved_genres = self._resolve_genres(combined_genres)
-            return resolved_genres, f"keep + {log_label}"
+            reduced_genres = self._to_delimited_genre_string(resolved_genres)
+            return reduced_genres, f"keep + {log_label}"
         if new_genres:
-            # New genres ran through _resolve_genres already.
-            return new_genres, log_label
+            resolved_genres = self._resolve_genres(new_genres)
+            reduced_genres = self._to_delimited_genre_string(resolved_genres)
+            return reduced_genres, log_label
         return None, log_label
 
     def _get_genre(self, obj):
@@ -424,14 +433,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if isinstance(obj, library.Item) and "track" in self.sources:
             if new_genres := self.fetch_track_genre(obj):
                 return self._combine_and_label_genres(
-                    new_genres, keep_genres, separator, "track"
+                    new_genres, keep_genres, "track"
                 )
 
         # Album genre.
         if "album" in self.sources:
             if new_genres := self.fetch_album_genre(obj):
                 return self._combine_and_label_genres(
-                    new_genres, keep_genres, separator, "album"
+                    new_genres, keep_genres, "album"
                 )
 
         # Artist (or album artist) genre.
@@ -457,13 +466,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
             if new_genres:
                 return self._combine_and_label_genres(
-                    new_genres, keep_genres, separator, "artist"
+                    new_genres, keep_genres, "artist"
                 )
 
         # Didn't find anything, leave original
         if obj.genre:
-            if result := self._resolve_genres([obj.genre]):
-                return result, "original, fallback"
+            return obj.genre, "original fallback"
 
         # No original, return fallback string
         if fallback := self.config["fallback"].get():
@@ -630,4 +638,5 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Get strings from tags.
         res = [el.item.get_name().lower() for el in res]
 
+        self._log.debug(f"_tags_for result is: {res}")
         return res
