@@ -296,7 +296,7 @@ class LastGenrePluginTest(BeetsTestCase):
             },
             ("Unknown Genre, Jazz", "keep + artist"),
         ),
-        # 7 - fallback to fallback when nothing found
+        # 7 - fallback to original when nothing found
         (
             {
                 "force": True,
@@ -313,9 +313,28 @@ class LastGenrePluginTest(BeetsTestCase):
                 "album": None,
                 "artist": None,
             },
+            ("original unknown", "original fallback"),
+        ),
+        # 8 - fallback to fallback if no original
+        (
+            {
+                "force": True,
+                "keep_existing": True,
+                "source": "track",
+                "whitelist": True,
+                "fallback": "fallback genre",
+                "canonical": False,
+                "prefer_specific": False,
+            },
+            "",
+            {
+                "track": None,
+                "album": None,
+                "artist": None,
+            },
             ("fallback genre", "fallback"),
         ),
-        # 8 - null charachter as separator
+        # 9 - null charachter as separator
         (
             {
                 "force": True,
@@ -332,7 +351,7 @@ class LastGenrePluginTest(BeetsTestCase):
             },
             ("Blues\u0000Jazz", "keep + album"),
         ),
-        # 9 - limit a lot of results to just 3
+        # 10 - limit a lot of results to just 3
         (
             {
                 "force": True,
