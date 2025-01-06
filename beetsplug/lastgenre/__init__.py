@@ -381,15 +381,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             'logging label'.
         """
         self._log.debug(f"_combine got type new_genres: {new_genres}")
+        combined = deduplicate(keep_genres + new_genres)
+        resolved = self._resolve_genres(combined)
+        reduced = self._to_delimited_genre_string(resolved)
+
         if new_genres and keep_genres:
-            combined_genres = deduplicate(keep_genres + new_genres)
-            resolved_genres = self._resolve_genres(combined_genres)
-            reduced_genres = self._to_delimited_genre_string(resolved_genres)
-            return reduced_genres, f"keep + {log_label}"
+            return reduced, f"keep + {log_label}"
         if new_genres:
-            resolved_genres = self._resolve_genres(new_genres)
-            reduced_genres = self._to_delimited_genre_string(resolved_genres)
-            return reduced_genres, log_label
+            return reduced, log_label
         return None, log_label
 
     def _get_genre(self, obj):
