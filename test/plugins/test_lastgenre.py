@@ -351,22 +351,23 @@ class LastGenrePluginTest(BeetsTestCase):
             },
             ("Blues\u0000Jazz", "keep + album"),
         ),
-        # 10 - limit a lot of results to just 3
+        # 10 - limit a lot of results
         (
             {
                 "force": True,
                 "keep_existing": True,
                 "source": "album",
                 "whitelist": True,
-                "count": 3,
+                "count": 5,
                 "canonical": False,
                 "prefer_specific": False,
+                "separator": ", ",
             },
             "original unknown, Blues, Rock, Folk, Metal",
             {
-                "album": ["Jazz"],
+                "album": ["Jazz", "Bebop", "Hardbop"],
             },
-            ("Blues, Rock, Metal", "keep + album"),
+            ("Blues, Rock, Metal, Jazz, Bebop", "keep + album"),
         ),
     ],
 )
