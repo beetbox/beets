@@ -358,11 +358,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     def _dedup_genres(self, genres, whitelist_only=False):
         """Return a list of deduplicated genres. Depending on the
-        whitelist_only option, gives filtered or unfiltered results."""
+        whitelist_only option, gives filtered or unfiltered results.
+        Makes sure genres are handled all lower case."""
         if whitelist_only:
-            return deduplicate([g for g in genres if self._is_allowed(g)])
-        else:
-            return deduplicate([g for g in genres])
+            return deduplicate(
+                [g.lower() for g in genres if self._is_allowed(g)]
+            )
+        return deduplicate([g.lower() for g in genres])
 
     def _combine_and_label_genres(
         self, new_genres: list, keep_genres: list, log_label: str
