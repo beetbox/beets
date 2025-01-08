@@ -134,6 +134,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Read the whitelist file if enabled.
         self.whitelist = set()
         wl_filename = self.config["whitelist"].get()
+        self._log.debug(f"The whitelist config setting is '{wl_filename}'")
         if wl_filename in (True, ""):  # Indicates the default whitelist.
             wl_filename = WHITELIST
         if wl_filename:
@@ -143,6 +144,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     line = line.decode("utf-8").strip().lower()
                     if line and not line.startswith("#"):
                         self.whitelist.add(line)
+        self._log.debug(
+            f"The self.whitelist property after file parsing is '{self.whitelist}'"
+        )
 
         # Read the genres tree for canonicalization if enabled.
         self.c14n_branches = []
