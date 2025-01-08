@@ -212,8 +212,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return [p[1] for p in depth_tag_pairs]
 
     def _resolve_genres(self, tags):
-        """Given a list of genre strings, filters, sorts and canonicalizes.
-        """
+        """Given a list of genre strings, filters, sorts and canonicalizes."""
         self._log.debug(
             f"_resolve_genres received: {tags}",
         )
@@ -276,8 +275,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return fetched
 
     def _is_allowed(self, genre):
-        """Returns True if genre in whitelist or whitelist disabled.
-        """
+        """Returns True if genre in whitelist or whitelist disabled."""
         allowed = False
         if genre is None:
             allowed = False
