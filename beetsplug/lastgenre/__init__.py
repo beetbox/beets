@@ -204,6 +204,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             if tag in value:
                 depth = value.index(tag)
                 break
+        self._log.debug("_get_depth returns depth:{}", depth)
         return depth
 
     def _sort_by_depth(self, tags):
@@ -213,6 +214,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         depth_tag_pairs = [(self._get_depth(t), t) for t in tags]
         depth_tag_pairs = [e for e in depth_tag_pairs if e[0] is not None]
         depth_tag_pairs.sort(reverse=True)
+        self._log.debug(
+            "_sort_by_depth sorted depth_tag_paris: {}", depth_tag_pairs
+        )
         return [p[1] for p in depth_tag_pairs]
 
     def _resolve_genres(self, tags):
