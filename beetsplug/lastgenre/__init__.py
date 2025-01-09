@@ -364,7 +364,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             tuple: A tuple containing the combined genre string and the
             'logging label'.
         """
-        self._log.debug(f"_combine got type new_genres: {new_genres}")
+        self._log.debug(f"fetched last.fm tags: {new_genres}")
         combined = deduplicate(keep_genres + new_genres)
         resolved = self._resolve_genres(combined)
         reduced = self._to_delimited_genre_string(resolved)
