@@ -134,7 +134,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Read the whitelist file if enabled.
         self.whitelist = set()
         wl_filename = self.config["whitelist"].get()
-        self._log.debug(f"The whitelist config setting is '{wl_filename}'")
         if wl_filename in (True, ""):  # Indicates the default whitelist.
             wl_filename = WHITELIST
         if wl_filename:
@@ -144,9 +143,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     line = line.decode("utf-8").strip().lower()
                     if line and not line.startswith("#"):
                         self.whitelist.add(line)
-        self._log.debug(
-            "The self.whitelist property after file parsing is '{0}'", self.whitelist
-        )
 
         # Read the genres tree for canonicalization if enabled.
         self.c14n_branches = []
@@ -188,13 +184,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         string."""
         separator = self.config["separator"].as_str()
         count = self.config["count"].get(int)
-        self._log.debug(f"Reducing {tags} to configured count {count}")
 
         genre_string = separator.join(
             self._format_tag(tag) for tag in tags[: min(count, len(tags))]
         )
 
-        self._log.debug(f"Reduced and formatted tags to {genre_string}")
         return genre_string
 
     def _get_depth(self, tag):
@@ -204,7 +198,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             if tag in value:
                 depth = value.index(tag)
                 break
-        self._log.debug("_get_depth returns depth:{0}", depth)
         return depth
 
     def _sort_by_depth(self, tags):
@@ -214,16 +207,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         depth_tag_pairs = [(self._get_depth(t), t) for t in tags]
         depth_tag_pairs = [e for e in depth_tag_pairs if e[0] is not None]
         depth_tag_pairs.sort(reverse=True)
-        self._log.debug(
-            "_sort_by_depth sorted depth_tag_paris: {0}", depth_tag_pairs
-        )
         return [p[1] for p in depth_tag_pairs]
 
     def _resolve_genres(self, tags):
         """Given a list of genre strings, filters, sorts and canonicalizes."""
-        self._log.debug(
-            f"_resolve_genres received: {tags}",
-        )
         if not tags:
             return None
 
@@ -262,9 +249,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
         tags = [x for x in tags if self._is_allowed(x)]
-        self._log.debug(
-            f"_resolve_genres (canonicalized and whitelist filtered): {tags}",
-        )
 
         return tags
 
@@ -279,7 +263,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
         min_weight = self.config["min_weight"].get(int)
         fetched = self._tags_for(lastfm_obj, min_weight)
-        self._log.debug(f"fetch_genre returns (whitelist checked): {fetched}")
         return fetched
 
     def _is_allowed(self, genre):
@@ -287,13 +270,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         allowed = False
         if genre is None:
             allowed = False
-            self._log.debug(f"Genre '{genre}' forbidden. Genre NONE.")
         elif not self.whitelist:
             allowed = True
-            self._log.debug(f"Genre '{genre}' allowed. Whitelist OFF.")
         elif genre.lower() in self.whitelist:
             allowed = True
-            self._log.debug(f"Genre '{genre}' allowed. FOUND in whitelist.")
         return allowed
 
     # Cached last.fm entity lookups.
@@ -306,9 +286,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         rough ASCII equivalents in order to return better results from the
         Last.fm database.
         """
-        self._log.debug(
-            f"_last_lookup receives: " f"{entity}, {method.__name__}, {args}"
-        )
         # Shortcut if we're missing metadata.
         if any(not s for s in args):
             return None
@@ -326,7 +303,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             genre = self.fetch_genre(method(*args_replaced))
             self._genre_cache[key] = genre
             result = genre
-        self._log.debug(f"_last_lookup returns: {result}")
         return result
 
     def fetch_album_genre(self, obj):
@@ -656,5 +632,4 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Get strings from tags.
         res = [el.item.get_name().lower() for el in res]
 
-        self._log.debug(f"_tags_for result is: {res}")
         return res
