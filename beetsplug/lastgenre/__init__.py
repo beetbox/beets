@@ -145,7 +145,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     if line and not line.startswith("#"):
                         self.whitelist.add(line)
         self._log.debug(
-            f"The self.whitelist property after file parsing is '{self.whitelist}'"
+            "The self.whitelist property after file parsing is '{0}'", self.whitelist
         )
 
         # Read the genres tree for canonicalization if enabled.
@@ -204,7 +204,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             if tag in value:
                 depth = value.index(tag)
                 break
-        self._log.debug("_get_depth returns depth:{}", depth)
+        self._log.debug("_get_depth returns depth:{0}", depth)
         return depth
 
     def _sort_by_depth(self, tags):
@@ -215,7 +215,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         depth_tag_pairs = [e for e in depth_tag_pairs if e[0] is not None]
         depth_tag_pairs.sort(reverse=True)
         self._log.debug(
-            "_sort_by_depth sorted depth_tag_paris: {}", depth_tag_pairs
+            "_sort_by_depth sorted depth_tag_paris: {0}", depth_tag_pairs
         )
         return [p[1] for p in depth_tag_pairs]
 
