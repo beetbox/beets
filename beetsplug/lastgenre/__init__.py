@@ -472,9 +472,15 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     if not item_genre:
                         item_genre = self.fetch_artist_genre(item)
                     if item_genre:
-                        item_genres.append(item_genre)
+                        item_genres += item_genre
                 if item_genres:
-                    new_genres, _ = plurality(item_genres)
+                    most_popular, rank = plurality(item_genres)
+                    new_genres = [most_popular]
+                    self._log.debug(
+                        'Most popular track genre "{}" ({}) for VA album.',
+                        most_popular,
+                        rank,
+                    )
 
             if new_genres:
                 return self._combine_and_label_genres(
