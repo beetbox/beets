@@ -454,12 +454,20 @@ class GeniusScrapeLyricsFromHtmlTest(GeniusBaseTest):
         self.plugin = lyrics.LyricsPlugin()
 
     def test_no_lyrics_div(self):
-        """Ensure we don't crash when the scraping the html for a genius page
-        doesn't contain <div class="lyrics"></div>
+        """Ensure we return None when the html for a genius page
+        doesn't contain a div with lyrics
         """
         # https://github.com/beetbox/beets/issues/3535
-        # expected return value None
         url = "https://genius.com/sample"
+        mock = MockFetchUrl()
+        assert genius._scrape_lyrics_from_html(mock(url)) is None
+
+    def test_empty_lyrics_div(self):
+        """Ensure we return None when the html for a genius page
+        contains a lyrics div with no text in it
+        """
+        # https://github.com/beetbox/beets/issues/5583
+        url = "https://genius.com/beethovengraphicalscore"
         mock = MockFetchUrl()
         assert genius._scrape_lyrics_from_html(mock(url)) is None
 

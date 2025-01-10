@@ -445,9 +445,12 @@ class Genius(Backend):
         for lyrics_div in lyrics_divs:
             self.replace_br(lyrics_div)
             lyrics += lyrics_div.get_text() + "\n\n"
-        while lyrics[-1] == "\n":
-            lyrics = lyrics[:-1]
-        return lyrics
+        # We can end up with an empty string here if there was no text in the
+        # lyrics divs: for classical pieces, for example, there is sometimes
+        # just a series of images representing pages of the score.
+        # In that case, safe to say there are no lyrics (or if there are,
+        # we can't retrieve them).
+        return lyrics.rstrip() or None
 
     def _try_extracting_lyrics_from_non_data_lyrics_container(self, soup):
         """Extract lyrics from a div without attribute data-lyrics-container
