@@ -225,7 +225,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     parents = [
                         x
                         for x in find_parents(tag, self.c14n_branches)
-                        if self._is_allowed(x)
+                        if self._is_valid(x)
                     ]
                 else:
                     parents = [find_parents(tag, self.c14n_branches)[-1]]
@@ -248,7 +248,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
-        return [x for x in tags if self._is_allowed(x)]
+        return [x for x in tags if self._is_valid(x)]
 
     def fetch_genre(self, lastfm_obj):
         """Return the genre for a pylast entity or None if no suitable genre
@@ -257,16 +257,15 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         min_weight = self.config["min_weight"].get(int)
         return self._tags_for(lastfm_obj, min_weight)
 
-    def _is_allowed(self, genre):
-        """Returns True if genre in whitelist or whitelist disabled."""
-        allowed = False
-        if genre is None:
-            allowed = False
-        elif not self.whitelist:
-            allowed = True
-        elif genre.lower() in self.whitelist:
-            allowed = True
-        return allowed
+    def _is_valid(self, genre) -> bool:
+        """Check if the genre is valid.
+
+        Depending on the whitelist property, valid means a genre is in the
+        whitelist or any genre is allowed.
+        """
+        if genre and (not self.whitelist or genre.lower() in self.whitelist):
+            return True
+        return False
 
     # Cached last.fm entity lookups.
 
@@ -336,7 +335,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         Makes sure genres are handled all lower case."""
         if whitelist_only:
             return deduplicate(
-                [g.lower() for g in genres if self._is_allowed(g)]
+                [g.lower() for g in genres if self._is_valid(g)]
             )
         return deduplicate([g.lower() for g in genres])
 
