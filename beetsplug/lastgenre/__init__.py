@@ -183,13 +183,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """Reduce tags list to configured count, format and return as delimited
         string."""
         separator = self.config["separator"].as_str()
-        count = self.config["count"].get(int)
+        max_count = self.config["count"].get(int)
 
-        genre_string = separator.join(
-            self._format_tag(tag) for tag in tags[: min(count, len(tags))]
-        )
+        genres = tags[:max_count]
+        if self.config["title_case"]:
+            genres = [g.title() for g in genres]
 
-        return genre_string
+        return separator.join(genres)
 
     def _get_depth(self, tag):
         """Find the depth of a tag in the genres tree."""
@@ -251,11 +251,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         tags = [x for x in tags if self._is_allowed(x)]
 
         return tags
-
-    def _format_tag(self, tag):
-        if self.config["title_case"]:
-            return tag.title()
-        return tag
 
     def fetch_genre(self, lastfm_obj):
         """Return the genre for a pylast entity or None if no suitable genre
