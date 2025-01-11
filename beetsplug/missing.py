@@ -19,7 +19,7 @@ from collections import defaultdict
 from collections.abc import Iterator
 
 import musicbrainzngs
-from musicbrainzngs.musicbrainz import MusicBrainzError
+from musicbrainzngs.musicbrainz import VALID_RELEASE_TYPES, MusicBrainzError
 
 from beets import config, metadata_plugins
 from beets.dbcore import types
@@ -100,6 +100,7 @@ class MissingPlugin(BeetsPlugin):
                 "count": False,
                 "total": False,
                 "album": False,
+                "release_type": ["album"],
             }
         )
 
@@ -127,6 +128,15 @@ class MissingPlugin(BeetsPlugin):
             action="store_true",
             help="show missing albums for artist instead of tracks",
         )
+        self._command.parser.add_option(
+            "--release-type",
+            dest="release_type",
+            action="append",
+            help=(
+                "select release types for missing albums for artist "
+                f"from ({', '.join(VALID_RELEASE_TYPES)})"
+            ),
+        )
         self._command.parser.add_format_option()
 
     def commands(self):
@@ -151,7 +161,7 @@ class MissingPlugin(BeetsPlugin):
         fmt = config["format_album" if count else "format_item"].get()
 
         if total:
-            print(sum([_missing_count(a) for a in albums]))
+            self._log.info(str(sum([_missing_count(a) for a in albums])))
             return
 
         # Default format string for count mode.
@@ -161,11 +171,11 @@ class MissingPlugin(BeetsPlugin):
         for album in albums:
             if count:
                 if _missing_count(album):
-                    print_(format(album, fmt))
+                    self._log.info(format(album, fmt))
 
             else:
                 for item in self._missing(album):
-                    print_(format(item, fmt))
+                    self._log.info(format(item, fmt))
 
     def _missing_albums(self, lib: Library, query: list[str]) -> None:
         """Print a listing of albums missing from each artist in the library
@@ -186,10 +196,15 @@ class MissingPlugin(BeetsPlugin):
             album_ids_by_artist[artist].add(album)
 
         total_missing = 0
+        release_type = self.config["release_type"].get() or ["album"]
         calculating_total = self.config["total"].get()
         for (artist, artist_id), album_ids in album_ids_by_artist.items():
             try:
-                resp = musicbrainzngs.browse_release_groups(artist=artist_id)
+                resp = musicbrainzngs.browse_release_groups(
+                    artist=artist_id,
+                    release_type=release_type,
+                )
+                release_groups = resp["release-group-list"]
             except MusicBrainzError as err:
                 self._log.info(
                     "Couldn't fetch info for artist '{}' ({}) - '{}'",
