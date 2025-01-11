@@ -113,7 +113,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self.config_validation()
         self.setup()
 
-    def config_validation(self):
+    def config_validation(self) -> None:
         """Quits plugin when invalid configurations are detected."""
         keep_existing = self.config["keep_existing"].get()
         force = self.config["force"].get()
@@ -179,7 +179,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     # More canonicalization and general helpers.
 
-    def _to_delimited_genre_string(self, tags):
+    def _to_delimited_genre_string(self, tags: list[str]) -> str:
         """Reduce tags list to configured count, format and return as delimited
         string."""
         separator = self.config["separator"].as_str()
