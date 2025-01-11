@@ -248,17 +248,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
-        tags = [x for x in tags if self._is_allowed(x)]
-
-        return tags
+        return [x for x in tags if self._is_allowed(x)]
 
     def fetch_genre(self, lastfm_obj):
         """Return the genre for a pylast entity or None if no suitable genre
         can be found. Ex. 'Electronic, House, Dance'
         """
         min_weight = self.config["min_weight"].get(int)
-        fetched = self._tags_for(lastfm_obj, min_weight)
-        return fetched
+        return self._tags_for(lastfm_obj, min_weight)
 
     def _is_allowed(self, genre):
         """Returns True if genre in whitelist or whitelist disabled."""
