@@ -14,13 +14,13 @@
 
 """An AURA server using Flask."""
 
-
 import os
 import re
 import sys
+from collections.abc import Mapping
 from dataclasses import dataclass
 from mimetypes import guess_type
-from typing import ClassVar, Mapping, Type
+from typing import ClassVar
 
 from flask import (
     Blueprint,
@@ -128,7 +128,7 @@ ARTIST_ATTR_MAP = {
 class AURADocument:
     """Base class for building AURA documents."""
 
-    model_cls: ClassVar[Type[LibModel]]
+    model_cls: ClassVar[type[LibModel]]
 
     lib: Library
     args: Mapping[str, str]
@@ -154,7 +154,7 @@ class AURADocument:
         return make_response(document, status)
 
     @classmethod
-    def get_attribute_converter(cls, beets_attr: str) -> Type[SQLiteType]:
+    def get_attribute_converter(cls, beets_attr: str) -> type[SQLiteType]:
         """Work out what data type an attribute should be for beets.
 
         Args:
@@ -375,7 +375,7 @@ class TrackDocument(AURADocument):
         return self.lib.items(query, sort)
 
     @classmethod
-    def get_attribute_converter(cls, beets_attr: str) -> Type[SQLiteType]:
+    def get_attribute_converter(cls, beets_attr: str) -> type[SQLiteType]:
         """Work out what data type an attribute should be for beets.
 
         Args:

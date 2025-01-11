@@ -12,8 +12,7 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Send the results of a query to the configured music player as a playlist.
-"""
+"""Send the results of a query to the configured music player as a playlist."""
 
 import shlex
 import subprocess
@@ -197,7 +196,7 @@ class PlayPlugin(BeetsPlugin):
         filename = get_temp_filename(__name__, suffix=".m3u")
         with open(filename, "wb") as m3u:
             if utf8_bom:
-                m3u.write(b"\xEF\xBB\xBF")
+                m3u.write(b"\xef\xbb\xbf")
 
             for item in paths_list:
                 m3u.write(item + b"\n")

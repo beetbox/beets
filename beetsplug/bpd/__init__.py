@@ -17,7 +17,6 @@ Beets library. Attempts to implement a compatible protocol to allow
 use of the wide range of MPD clients.
 """
 
-
 import inspect
 import math
 import random
@@ -27,7 +26,6 @@ import sys
 import time
 import traceback
 from string import Template
-from typing import List
 
 from mediafile import MediaFile
 
@@ -168,13 +166,13 @@ def cast_arg(t, val):
             raise ArgumentTypeError()
 
 
-class BPDClose(Exception):
+class BPDCloseError(Exception):
     """Raised by a command invocation to indicate that the connection
     should be closed.
     """
 
 
-class BPDIdle(Exception):
+class BPDIdleError(Exception):
     """Raised by a command to indicate the client wants to enter the idle state
     and should be notified when a relevant event happens.
     """
@@ -349,7 +347,7 @@ class BaseServer:
         for system in subsystems:
             if system not in SUBSYSTEMS:
                 raise BPDError(ERROR_ARG, f"Unrecognised idle event: {system}")
-        raise BPDIdle(subsystems)  # put the connection into idle mode
+        raise BPDIdleError(subsystems)  # put the connection into idle mode
 
     def cmd_kill(self, conn):
         """Exits the server process."""
@@ -357,7 +355,7 @@ class BaseServer:
 
     def cmd_close(self, conn):
         """Closes the connection."""
-        raise BPDClose()
+        raise BPDCloseError()
 
     def cmd_password(self, conn, password):
         """Attempts password authentication."""
@@ -739,13 +737,13 @@ class BaseServer:
 
     # Additions to the MPD protocol.
 
-    def cmd_crash_TypeError(self, conn):  # noqa: N802
+    def cmd_crash(self, conn):
         """Deliberately trigger a TypeError for testing purposes.
         We want to test that the server properly responds with ERROR_SYSTEM
         without crashing, and that this is not treated as ERROR_ARG (since it
         is caused by a programming error, not a protocol error).
         """
-        "a" + 2
+        raise TypeError
 
 
 class Connection:
@@ -773,8 +771,8 @@ class Connection:
         if isinstance(lines, str):
             lines = [lines]
         out = NEWLINE.join(lines) + NEWLINE
-        for l in out.split(NEWLINE)[:-1]:
-            self.debug(l, kind=">")
+        for line in out.split(NEWLINE)[:-1]:
+            self.debug(line, kind=">")
         if isinstance(out, str):
             out = out.encode("utf-8")
         return self.sock.sendall(out)
@@ -853,8 +851,8 @@ class MPDConnection(Connection):
                 self.disconnect()  # Client sent a blank line.
                 break
             line = line.decode("utf8")  # MPD protocol uses UTF-8.
-            for l in line.split(NEWLINE):
-                self.debug(l, kind="<")
+            for line in line.split(NEWLINE):
+                self.debug(line, kind="<")
 
             if self.idle_subscriptions:
                 # The connection is in idle mode.
@@ -888,12 +886,12 @@ class MPDConnection(Connection):
                 # Ordinary command.
                 try:
                     yield bluelet.call(self.do_command(Command(line)))
-                except BPDClose:
+                except BPDCloseError:
                     # Command indicates that the conn should close.
                     self.sock.close()
                     self.disconnect()  # Client explicitly closed.
                     return
-                except BPDIdle as e:
+                except BPDIdleError as e:
                     self.idle_subscriptions = e.subsystems
                     self.debug(
                         "awaiting: {}".format(" ".join(e.subsystems)), kind="z"
@@ -922,8 +920,8 @@ class ControlConnection(Connection):
             if not line:
                 break  # Client sent a blank line.
             line = line.decode("utf8")  # Protocol uses UTF-8.
-            for l in line.split(NEWLINE):
-                self.debug(l, kind="<")
+            for line in line.split(NEWLINE):
+                self.debug(line, kind="<")
             command = Command(line)
             try:
                 func = command.delegate("ctrl_", self)
@@ -1046,12 +1044,12 @@ class Command:
             e.cmd_name = self.name
             raise e
 
-        except BPDClose:
+        except BPDCloseError:
             # An indication that the connection should close. Send
             # it on the Connection.
             raise
 
-        except BPDIdle:
+        except BPDIdleError:
             raise
 
         except Exception:
@@ -1060,7 +1058,7 @@ class Command:
             raise BPDError(ERROR_SYSTEM, "server error", self.name)
 
 
-class CommandList(List[Command]):
+class CommandList(list[Command]):
     """A list of commands issued by the client for processing by the
     server. May be verbose, in which case the response is delimited, or
     not. Should be a list of `Command` objects.

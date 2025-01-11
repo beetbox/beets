@@ -21,6 +21,7 @@ and has been edited to remove some questionable entries.
 The scraper script used is available here:
 https://gist.github.com/1241307
 """
+
 import codecs
 import os
 import traceback
@@ -408,9 +409,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 for album in lib.albums(ui.decargs(args)):
                     album.genre, src = self._get_genre(album)
                     self._log.info(
-                        "genre for album {0} ({1}): {0.genre}", album, src
+                        'genre for album "{0.album}" ({1}): {0.genre}',
+                        album,
+                        src,
                     )
-                    album.store()
+                    if "track" in self.sources:
+                        album.store(inherit=False)
+                    else:
+                        album.store()
 
                     for item in album.items():
                         # If we're using track-level sources, also look up each
@@ -419,7 +425,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                             item.genre, src = self._get_genre(item)
                             item.store()
                             self._log.info(
-                                "genre for track {0} ({1}): {0.genre}",
+                                'genre for track "{0.title}" ({1}): {0.genre}',
                                 item,
                                 src,
                             )
@@ -431,10 +437,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 # an album
                 for item in lib.items(ui.decargs(args)):
                     item.genre, src = self._get_genre(item)
-                    self._log.debug(
-                        "added last.fm item genre ({0}): {1}", src, item.genre
-                    )
                     item.store()
+                    self._log.info(
+                        "genre for track {0.title} ({1}): {0.genre}", item, src
+                    )
 
         lastgenre_cmd.func = lastgenre_func
         return [lastgenre_cmd]
@@ -445,23 +451,32 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             album = task.album
             album.genre, src = self._get_genre(album)
             self._log.debug(
-                "added last.fm album genre ({0}): {1}", src, album.genre
+                'genre for album "{0.album}" ({1}): {0.genre}', album, src
             )
-            album.store()
 
+            # If we're using track-level sources, store the album genre only,
+            # then also look up individual track genres.
             if "track" in self.sources:
+                album.store(inherit=False)
                 for item in album.items():
                     item.genre, src = self._get_genre(item)
                     self._log.debug(
-                        "added last.fm item genre ({0}): {1}", src, item.genre
+                        'genre for track "{0.title}" ({1}): {0.genre}',
+                        item,
+                        src,
                     )
                     item.store()
+            # Store the album genre and inherit to tracks.
+            else:
+                album.store()
 
         else:
             item = task.item
             item.genre, src = self._get_genre(item)
             self._log.debug(
-                "added last.fm item genre ({0}): {1}", src, item.genre
+                'genre for track "{0.title}" ({1}): {0.genre}',
+                item,
+                src,
             )
             item.store()
 

@@ -542,6 +542,9 @@ Specifying types has several advantages:
 
 * User input for flexible fields may be validated and converted.
 
+* Items missing the given field can use an appropriate null value for
+  querying and sorting purposes.
+
 
 .. _plugin-logging:
 
