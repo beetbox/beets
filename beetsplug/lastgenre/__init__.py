@@ -30,7 +30,7 @@ import pylast
 import yaml
 
 from beets import config, library, plugins, ui
-from beets.util import normpath, plurality
+from beets.util import normpath, plurality, unique_list
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
 
@@ -45,14 +45,7 @@ REPLACE = {
 }
 
 
-def deduplicate(seq):
-    """Remove duplicates from sequence while preserving order."""
-    seen = set()
-    return [x for x in seq if x not in seen and not seen.add(x)]
-
-
 # Canonicalization tree processing.
-
 
 def flatten_tree(elem, path, branches):
     """Flatten nested lists/dictionaries into lists of strings
@@ -240,7 +233,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     break
             tags = tags_all
 
-        tags = deduplicate(tags)
+        tags = unique_list(tags)
 
         # Sort the tags by specificity.
         if self.config["prefer_specific"]:
@@ -334,10 +327,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         whitelist_only option, gives filtered or unfiltered results.
         Makes sure genres are handled all lower case."""
         if whitelist_only:
-            return deduplicate(
+            return unique_list(
                 [g.lower() for g in genres if self._is_valid(g)]
             )
-        return deduplicate([g.lower() for g in genres])
+        return unique_list([g.lower() for g in genres])
 
     def _combine_and_label_genres(
         self, new_genres: list, keep_genres: list, log_label: str
@@ -356,7 +349,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             'logging label'.
         """
         self._log.debug(f"fetched last.fm tags: {new_genres}")
-        combined = deduplicate(keep_genres + new_genres)
+        combined = unique_list(keep_genres + new_genres)
         resolved = self._resolve_genres(combined)
         reduced = self._to_delimited_genre_string(resolved)
 
