@@ -440,7 +440,7 @@ class ImportTest(ImportTestCase):
         self.prepare_album_for_import(1)
         self.setup_importer()
         self.matcher = AutotagStub().install()
-        self.matcher.matching = AutotagStub.GOOD
+        self.matcher.matching = AutotagStub.IDENT
 
     def tearDown(self):
         super().tearDown()
