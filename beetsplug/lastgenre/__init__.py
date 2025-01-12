@@ -47,6 +47,7 @@ REPLACE = {
 
 # Canonicalization tree processing.
 
+
 def flatten_tree(elem, path, branches):
     """Flatten nested lists/dictionaries into lists of strings
     (branches).
@@ -266,29 +267,28 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def _last_lookup(self, entity, method, *args):
         """Get a genre based on the named entity using the callable `method`
         whose arguments are given in the sequence `args`. The genre lookup
-        is cached based on the entity name and the arguments. Before the
-        lookup, each argument is has some Unicode characters replaced with
-        rough ASCII equivalents in order to return better results from the
+        is cached based on the entity name and the arguments.
+
+        Before the lookup, each argument has some Unicode characters replaced
+        with rough ASCII equivalents in order to return better results from the
         Last.fm database.
         """
         # Shortcut if we're missing metadata.
         if any(not s for s in args):
             return None
 
-        key = "{}.{}".format(entity, "-".join(str(a) for a in args))
-        if key in self._genre_cache:
-            result = self._genre_cache[key]
-        else:
-            args_replaced = []
-            for arg in args:
-                for k, v in REPLACE.items():
-                    arg = arg.replace(k, v)
-                args_replaced.append(arg)
+        key = f"{entity}.{'-'.join(str(a) for a in args)}"
 
-            genre = self.fetch_genre(method(*args_replaced))
-            self._genre_cache[key] = genre
-            result = genre
-        return result
+        if key in self._genre_cache:
+            return self._genre_cache[key]
+
+        args_replaced = [
+            "".join(arg.replace(k, v) for k, v in REPLACE.items())
+            for arg in args
+        ]
+        self._genre_cache[key] = self.fetch_genre(method(*args_replaced))
+
+        return self._genre_cache[key]
 
     def fetch_album_genre(self, obj):
         """Return the album genre for this Item or Album."""
