@@ -46,6 +46,8 @@ class Ref(NamedTuple):
         Each line has the following structure:
         <id>    [optional title : ] <relative-url-path>
 
+        See the output of
+            python -m sphinx.ext.intersphinx docs/_build/html/objects.inv
         """
         if len(line_parts := line.split(" ", 1)) == 1:
             return cls(line, None, None)
@@ -82,10 +84,11 @@ def get_refs() -> dict[str, Ref]:
     with redirect_stdout(captured_output):
         intersphinx.inspect_main([str(objects_filepath)])
 
+    lines = captured_output.getvalue().replace("\t", "    ").splitlines()
     return {
         r.id: r
-        for ln in captured_output.getvalue().split("\n")
-        if ln.startswith("\t") and (r := Ref.from_line(ln.strip()))
+        for ln in lines
+        if ln.startswith("    ") and (r := Ref.from_line(ln.strip()))
     }
 
 
