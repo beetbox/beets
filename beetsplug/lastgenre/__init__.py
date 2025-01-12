@@ -203,7 +203,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return [p[1] for p in depth_tag_pairs]
 
     def _resolve_genres(self, tags):
-        """Given a list of genre strings, filters, sorts and canonicalizes."""
+        """Given a list of genre strings, filters, dedups, sorts and
+        canonicalizes."""
         if not tags:
             return None
 
@@ -349,7 +350,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             'logging label'.
         """
         self._log.debug(f"fetched last.fm tags: {new_genres}")
-        combined = unique_list(keep_genres + new_genres)
+        combined = keep_genres + new_genres
         resolved = self._resolve_genres(combined)
         reduced = self._to_delimited_genre_string(resolved)
 
