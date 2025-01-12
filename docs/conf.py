@@ -5,7 +5,7 @@ AUTHOR = "Adrian Sampson"
 extensions = ["sphinx.ext.autodoc", "sphinx.ext.extlinks"]
 
 exclude_patterns = ["_build"]
-source_suffix = ".rst"
+source_suffix = {".rst": "restructuredtext"}
 master_doc = "index"
 
 project = "beets"
@@ -66,7 +66,7 @@ html_theme_options = {
     "logo": {
         "text": "beets",
     },
-    "pygment_light_style": "bw",
+    "pygments_light_style": "bw",
 }
 html_title = "beets"
 html_logo = "_static/beets_logo_nobg.png"
