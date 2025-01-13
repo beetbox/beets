@@ -135,8 +135,7 @@ def create_rst_replacements() -> list[Replacement]:
 
 
 MD_REPLACEMENTS: list[Replacement] = [
-    (r"^  (- )", r"\1"),  # remove indent from top-level bullet points
-    (r"^ +(  - )", r"\1"),  # adjust nested bullet points indent
+    (r"<span[^>]+>([^<]+)</span>", r"_\1"),  # remove a couple of wild span refs
     (r"^(\w[^\n]{,80}):(?=\n\n[^ ])", r"### \1"),  # format section headers
     (r"^(\w[^\n]{81,}):(?=\n\n[^ ])", r"**\1**"),  # and bolden too long ones
     (r"### [^\n]+\n+(?=### )", ""),  # remove empty sections
