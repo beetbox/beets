@@ -333,34 +333,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             )
         return unique_list([g.lower() for g in genres])
 
-    def _combine_and_label_genres(
-        self, new_genres: list, keep_genres: list, log_label: str
-    ) -> tuple:
-        """Combines genres and returns them with a logging label.
-
-        Parameters:
-            new_genres (list): The new genre result to process.
-            keep_genres (list): Existing genres to combine with new ones
-            log_label (str): A label (like "track", "album") we possibly
-                combine with a prefix. For example resulting in something like
-                "keep + track" or just "track".
-
-        Returns:
-            tuple: A tuple containing the combined genre string and the
-            'logging label'.
-        """
-        self._log.debug(f"fetched last.fm tags: {new_genres}")
-        combined = keep_genres + new_genres
+    def _combine_genres(self, old: list[str], new: list[str]) -> str | None:
+        """Combine old and new genres."""
+        self._log.debug(f"fetched last.fm tags: {new}")
+        combined = old + new
         resolved = self._resolve_genres(combined)
-        reduced = self._to_delimited_genre_string(resolved)
+        return self._to_delimited_genre_string(resolved) or None
 
-        if new_genres and keep_genres:
-            return reduced, f"keep + {log_label}"
-        if new_genres:
-            return reduced, log_label
-        return None, log_label
-
-    def _get_genre(self, obj):
+    def _get_genre(self, obj) -> str | None:
         """Get the final genre string for an Album or Item object
 
         `self.sources` specifies allowed genre sources, prioritized as follows:
@@ -387,41 +367,37 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         genres = self._get_existing_genres(obj, separator)
         if genres and not self.config["force"]:
-            # Without force we don't touch pre-populated tags and return early
-            # with the original contents. We deduplicate and format back to
-            # string though.
+            # Without force pre-populated tags are deduplicated and returned.
             keep_genres = self._dedup_genres(genres)
             return separator.join(keep_genres), "keep"
 
         if self.config["force"]:
-            # Simply forcing doesn't keep any.
+            # Force doesn't keep any unless keep_existing is set.
+            # Whitelist validation is handled in _resolve_genres.
             keep_genres = []
-            # Remember existing genres if required. Whitelist validation is
-            # handled later in _resolve_genres.
             if self.config["keep_existing"]:
                 keep_genres = [g.lower() for g in genres]
 
-        # Track genre (for Items only).
-        if isinstance(obj, library.Item) and "track" in self.sources:
-            if new_genres := self.fetch_track_genre(obj):
-                return self._combine_and_label_genres(
-                    new_genres, keep_genres, "track"
-                )
-
-        # Album genre.
-        if "album" in self.sources:
-            if new_genres := self.fetch_album_genre(obj):
-                return self._combine_and_label_genres(
-                    new_genres, keep_genres, "album"
-                )
-
-        # Artist (or album artist) genre.
-        if "artist" in self.sources:
+        # Run through stages: track, album, artist,
+        # album artist, or most popular track genre.
+        if (
+            isinstance(obj, library.Item)
+            and "track" in self.sources
+            and (new_genres := self.fetch_track_genre(obj))
+        ):
+            label = "track"
+        elif "album" in self.sources and (
+            new_genres := self.fetch_album_genre(obj)
+        ):
+            label = "album"
+        elif "artist" in self.sources:
             new_genres = None
             if isinstance(obj, library.Item):
                 new_genres = self.fetch_artist_genre(obj)
+                label = "artist"
             elif obj.albumartist != config["va_name"].as_str():
                 new_genres = self.fetch_album_artist_genre(obj)
+                label = "album artist"
             else:
                 # For "Various Artists", pick the most popular track genre.
                 item_genres = []
@@ -436,26 +412,28 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 if item_genres:
                     most_popular, rank = plurality(item_genres)
                     new_genres = [most_popular]
+                    label = "most popular track"
                     self._log.debug(
                         'Most popular track genre "{}" ({}) for VA album.',
                         most_popular,
                         rank,
                     )
 
-            if new_genres:
-                return self._combine_and_label_genres(
-                    new_genres, keep_genres, "artist"
-                )
+        # Return with a combined or freshly fetched genre list.
+        if new_genres:
+            if keep_genres:
+                label = f"keep + {label}"
+            return self._combine_genres(keep_genres, new_genres), label
 
-        # Didn't find anything, leave original
+        # Nothing found, leave original.
         if obj.genre:
             return obj.genre, "original fallback"
 
-        # No original, return fallback string
+        # No original, return fallback string.
         if fallback := self.config["fallback"].get():
             return fallback, "fallback"
 
-        # No fallback configured
+        # No fallback configured.
         return None, None
 
     # Beets plugin hooks and CLI.
