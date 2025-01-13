@@ -388,19 +388,18 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         genres = self._get_existing_genres(obj, separator)
         if genres and not self.config["force"]:
             # Without force we don't touch pre-populated tags and return early
-            # with the original contents. We format back to string tough.
+            # with the original contents. We deduplicate and format back to
+            # string though.
             keep_genres = self._dedup_genres(genres)
             return separator.join(keep_genres), "keep"
 
         if self.config["force"]:
             # Simply forcing doesn't keep any.
             keep_genres = []
-            # keep_existing remembers, according to the whitelist setting,
-            # any or just allowed genres.
-            if self.config["keep_existing"] and self.config["whitelist"]:
-                keep_genres = self._dedup_genres(genres, whitelist_only=True)
-            elif self.config["keep_existing"]:
-                keep_genres = self._dedup_genres(genres)
+            # Remember existing genres if required. Whitelist validation is
+            # handled later in _resolve_genres.
+            if self.config["keep_existing"]:
+                keep_genres = [g.lower() for g in genres]
 
         # Track genre (for Items only).
         if isinstance(obj, library.Item) and "track" in self.sources:
