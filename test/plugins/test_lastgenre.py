@@ -260,7 +260,7 @@ class LastGenrePluginTest(BeetsTestCase):
             {
                 "album": ["Jazz"],
             },
-            ("any genre", "keep"),
+            ("Any Genre", "keep"),
         ),
         # 5 - don't force, disabled whitelist, empty
         (

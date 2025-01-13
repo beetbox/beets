@@ -25,11 +25,13 @@ https://gist.github.com/1241307
 import codecs
 import os
 import traceback
+from typing import Tuple, Union
 
 import pylast
 import yaml
 
 from beets import config, library, plugins, ui
+from beets.library import Album, Item
 from beets.util import normpath, plurality, unique_list
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
@@ -159,16 +161,16 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             flatten_tree(genres_tree, [], self.c14n_branches)
 
     @property
-    def sources(self):
+    def sources(self) -> Tuple[str, ...]:  # type: ignore
         """A tuple of allowed genre sources. May contain 'track',
         'album', or 'artist.'
         """
         source = self.config["source"].as_choice(("track", "album", "artist"))
         if source == "track":
             return "track", "album", "artist"
-        elif source == "album":
+        if source == "album":
             return "album", "artist"
-        elif source == "artist":
+        if source == "artist":
             return ("artist",)
 
     # More canonicalization and general helpers.
@@ -203,7 +205,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         depth_tag_pairs.sort(reverse=True)
         return [p[1] for p in depth_tag_pairs]
 
-    def _resolve_genres(self, tags) -> list:
+    def _resolve_genres(self, tags: list[str]) -> list[str]:
         """Given a list of genre strings, filters, dedups, sorts and
         canonicalizes."""
         if not tags:
@@ -252,7 +254,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         min_weight = self.config["min_weight"].get(int)
         return self._tags_for(lastfm_obj, min_weight)
 
-    def _is_valid(self, genre) -> bool:
+    def _is_valid(self, genre: str) -> bool:
         """Check if the genre is valid.
 
         Depending on the whitelist property, valid means a genre is in the
@@ -312,8 +314,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     # Main processing: _get_genre() and helpers.
 
-    def _get_existing_genres(self, obj, separator):
+    def _get_existing_genres(self, obj: Union[Album, Item]) -> list[str]:
         """Return a list of genres for this Item or Album."""
+        separator = self.config["separator"].get()
         if isinstance(obj, library.Item):
             item_genre = obj.get("genre", with_album=False).split(separator)
         else:
@@ -323,24 +326,33 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return item_genre
         return []
 
-    def _dedup_genres(self, genres, whitelist_only=False):
-        """Return a list of deduplicated genres. Depending on the
-        whitelist_only option, gives filtered or unfiltered results.
-        Makes sure genres are handled all lower case."""
-        if whitelist_only:
-            return unique_list(
-                [g.lower() for g in genres if self._is_valid(g)]
-            )
-        return unique_list([g.lower() for g in genres])
+    def _polish_existing_genres(self, genres: list[str]) -> str:
+        """Return a separator delimited string of deduplicated and formatted
+        genres. Depending on the whitelist setting, gives filtered or
+        unfiltered results."""
+        separator = self.config["separator"].as_str()
+        # Ensure querying the config setting, self.whitelist seems to be still
+        # instanatiated in _get_genre pytest!?!
+        whitelist = self.config["whitelist"].get()
+        valid_genres = unique_list(
+            [g.lower() for g in genres if not whitelist or self._is_valid(g)]
+        )
+        if self.config["title_case"]:
+            valid_genres = [g.title() for g in valid_genres]
+        return separator.join(valid_genres)
 
-    def _combine_genres(self, old: list[str], new: list[str]) -> str | None:
+    def _combine_genres(
+        self, old: list[str], new: list[str]
+    ) -> Union[str, None]:
         """Combine old and new genres."""
         self._log.debug(f"fetched last.fm tags: {new}")
         combined = old + new
         resolved = self._resolve_genres(combined)
         return self._to_delimited_genre_string(resolved) or None
 
-    def _get_genre(self, obj) -> str | None:
+    def _get_genre(
+        self, obj: Union[Album, Item]
+    ) -> tuple[Union[str, None], ...]:
         """Get the final genre string for an Album or Item object
 
         `self.sources` specifies allowed genre sources, prioritized as follows:
@@ -361,20 +373,16 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 genres, while "artist" means only new last.fm genres are
                 included.
         """
-
-        separator = self.config["separator"].get()
         keep_genres = []
 
-        genres = self._get_existing_genres(obj, separator)
+        genres = self._get_existing_genres(obj)
         if genres and not self.config["force"]:
             # Without force pre-populated tags are deduplicated and returned.
-            keep_genres = self._dedup_genres(genres)
-            return separator.join(keep_genres), "keep"
+            return self._polish_existing_genres(genres), "keep"
 
         if self.config["force"]:
             # Force doesn't keep any unless keep_existing is set.
             # Whitelist validation is handled in _resolve_genres.
-            keep_genres = []
             if self.config["keep_existing"]:
                 keep_genres = [g.lower() for g in genres]
 
