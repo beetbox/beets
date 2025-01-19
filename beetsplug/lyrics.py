@@ -158,10 +158,20 @@ def search_pairs(item):
         # Remove any featuring artists from the artists name
         rf"(.*?) {plugins.feat_tokens()}"
     ]
-    artists = generate_alternatives(artist, patterns)
+
+    # Skip various artists
+    artists = []
+    lower_artist = artist.lower()
+    if "various" not in lower_artist:
+        artists.extend(generate_alternatives(artist, patterns))
     # Use the artist_sort as fallback only if it differs from artist to avoid
     # repeated remote requests with the same search terms
-    if artist_sort and artist.lower() != artist_sort.lower():
+    artist_sort_lower = artist_sort.lower()
+    if (
+        artist_sort
+        and lower_artist != artist_sort_lower
+        and "various" not in artist_sort_lower
+    ):
         artists.append(artist_sort)
 
     patterns = [
@@ -180,8 +190,8 @@ def search_pairs(item):
     multi_titles = []
     for title in titles:
         multi_titles.append([title])
-        if "/" in title:
-            multi_titles.append([x.strip() for x in title.split("/")])
+        if " / " in title:
+            multi_titles.append([x.strip() for x in title.split(" / ")])
 
     return itertools.product(artists, multi_titles)
 
