@@ -74,6 +74,8 @@ Bug fixes:
 For packagers:
 
 * The minimum supported Python version is now 3.9.
+* External plugin developers: ``beetsplug/__init__.py`` file can be removed
+  from your plugin as beets now uses native/implicit namespace package setup.
 
 Other changes:
 
