@@ -41,6 +41,13 @@ Bug fixes:
 * Fix ambiguous column name ``sqlite3.OperationalError`` that occured in album
   queries that filtered album track titles, for example ``beet list -a keyword
   title:foo``.
+* :doc:`plugins/lyrics`: Rewrite lyrics tests using pytest to provide isolated
+  configuration for each test case. This fixes the issue where some tests
+  failed because they read developers' local lyrics configuration.
+  :bug:`5133`
+* :doc:`plugins/lyrics`: Do not attempt to search for lyrics if either the
+  artist or title is missing and ignore ``artist_sort`` value if it is empty.
+  :bug:`2635`
 
 For packagers:
 
