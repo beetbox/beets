@@ -26,11 +26,18 @@ import struct
 import unicodedata
 import warnings
 from functools import partial
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 from urllib.parse import quote, urlencode
 
 import requests
 from unidecode import unidecode
+
+import beets
+from beets import plugins, ui
+
+if TYPE_CHECKING:
+    from beets.importer import ImportTask
+    from beets.library import Item
 
 try:
     import bs4
@@ -46,10 +53,6 @@ try:
     HAS_LANGDETECT = True
 except ImportError:
     HAS_LANGDETECT = False
-
-
-import beets
-from beets import plugins, ui
 
 DIV_RE = re.compile(r"<(/?)div>?", re.I)
 COMMENT_RE = re.compile(r"<!--.*-->", re.S)
@@ -152,7 +155,13 @@ def search_pairs(item):
                 alternatives.append(match.group(1))
         return alternatives
 
-    title, artist, artist_sort = item.title, item.artist, item.artist_sort
+    title, artist, artist_sort = (
+        item.title.strip(),
+        item.artist.strip(),
+        item.artist_sort.strip(),
+    )
+    if not title or not artist:
+        return ()
 
     patterns = [
         # Remove any featuring artists from the artists name
@@ -161,7 +170,7 @@ def search_pairs(item):
     artists = generate_alternatives(artist, patterns)
     # Use the artist_sort as fallback only if it differs from artist to avoid
     # repeated remote requests with the same search terms
-    if artist != artist_sort:
+    if artist_sort and artist.lower() != artist_sort.lower():
         artists.append(artist_sort)
 
     patterns = [
@@ -222,7 +231,7 @@ class Backend:
         self._log = log
         self.config = config
 
-    def fetch_url(self, url):
+    def fetch_url(self, url, **kwargs):
         """Retrieve the content at a given URL, or return None if the source
         is unreachable.
         """
@@ -240,6 +249,7 @@ class Backend:
                         "User-Agent": USER_AGENT,
                     },
                     timeout=10,
+                    **kwargs,
                 )
         except requests.RequestException as exc:
             self._log.debug("lyrics request failed: {0}", exc)
@@ -250,20 +260,27 @@ class Backend:
             self._log.debug("failed to fetch: {0} ({1})", url, r.status_code)
             return None
 
-    def fetch(self, artist, title, album=None, length=None):
-        raise NotImplementedError()
+    def fetch(
+        self, artist: str, title: str, album: str, length: int
+    ) -> str | None:
+        raise NotImplementedError
 
 
 class LRCLib(Backend):
     base_url = "https://lrclib.net/api/get"
 
-    def fetch(self, artist, title, album=None, length=None):
-        params = {
+    def fetch(
+        self, artist: str, title: str, album: str, length: int
+    ) -> str | None:
+        params: dict[str, str | int] = {
             "artist_name": artist,
             "track_name": title,
-            "album_name": album,
-            "duration": length,
         }
+        if album:
+            params["album_name"] = album
+
+        if length:
+            params["duration"] = length
 
         try:
             response = requests.get(
@@ -316,7 +333,7 @@ class MusiXmatch(DirectBackend):
 
         return quote(unidecode(text))
 
-    def fetch(self, artist, title, album=None, length=None):
+    def fetch(self, artist: str, title: str, *_) -> str | None:
         url = self.build_url(artist, title)
 
         html = self.fetch_url(url)
@@ -364,7 +381,7 @@ class Genius(Backend):
             "User-Agent": USER_AGENT,
         }
 
-    def fetch(self, artist, title, album=None, length=None):
+    def fetch(self, artist: str, title: str, *_) -> str | None:
         """Fetch lyrics from genius.com
 
         Because genius doesn't allow accessing lyrics via the api,
@@ -495,7 +512,7 @@ class Tekstowo(DirectBackend):
     def encode(cls, text: str) -> str:
         return cls.non_alpha_to_underscore(unidecode(text.lower()))
 
-    def fetch(self, artist, title, album=None, length=None):
+    def fetch(self, artist: str, title: str, *_) -> str | None:
         if html := self.fetch_url(self.build_url(artist, title)):
             return self.extract_lyrics(html)
 
@@ -536,6 +553,8 @@ def _scrape_strip_cruft(html, plain_text_out=False):
     html = BREAK_RE.sub("\n", html)  # <br> eats up surrounding '\n'.
     html = re.sub(r"(?s)<(script).*?</\1>", "", html)  # Strip script tags.
     html = re.sub("\u2005", " ", html)  # replace unicode with regular space
+    html = re.sub("<aside .+?</aside>", "", html)  # remove Google Ads tags
+    html = re.sub(r"</?(em|strong)[^>]*>", "", html)  # remove italics / bold
 
     if plain_text_out:  # Strip remaining HTML tags
         html = COMMENT_RE.sub("", html)
@@ -586,11 +605,7 @@ class Google(Backend):
     """Fetch lyrics from Google search results."""
 
     REQUIRES_BS = True
-
-    def __init__(self, config, log):
-        super().__init__(config, log)
-        self.api_key = config["google_API_key"].as_str()
-        self.engine_id = config["google_engine_ID"].as_str()
+    SEARCH_URL = "https://www.googleapis.com/customsearch/v1"
 
     def is_lyrics(self, text, artist=None):
         """Determine whether the text seems to be valid lyrics."""
@@ -667,15 +682,14 @@ class Google(Backend):
         ratio = difflib.SequenceMatcher(None, song_title, title).ratio()
         return ratio >= typo_ratio
 
-    def fetch(self, artist, title, album=None, length=None):
-        query = f"{artist} {title}"
-        url = "https://www.googleapis.com/customsearch/v1?key=%s&cx=%s&q=%s" % (
-            self.api_key,
-            self.engine_id,
-            quote(query.encode("utf-8")),
-        )
+    def fetch(self, artist: str, title: str, *_) -> str | None:
+        params = {
+            "key": self.config["google_API_key"].as_str(),
+            "cx": self.config["google_engine_ID"].as_str(),
+            "q": f"{artist} {title}",
+        }
 
-        data = self.fetch_url(url)
+        data = self.fetch_url(self.SEARCH_URL, params=params)
         if not data:
             self._log.debug("google backend returned no data")
             return None
@@ -877,10 +891,7 @@ class LyricsPlugin(plugins.BeetsPlugin):
             for item in items:
                 if not opts.local_only and not self.config["local"]:
                     self.fetch_item_lyrics(
-                        lib,
-                        item,
-                        write,
-                        opts.force_refetch or self.config["force"],
+                        item, write, opts.force_refetch or self.config["force"]
                     )
                 if item.lyrics:
                     if opts.printlyr:
@@ -966,15 +977,13 @@ class LyricsPlugin(plugins.BeetsPlugin):
             with open(conffile, "w") as output:
                 output.write(REST_CONF_TEMPLATE)
 
-    def imported(self, session, task):
+    def imported(self, _, task: ImportTask) -> None:
         """Import hook for fetching lyrics automatically."""
         if self.config["auto"]:
             for item in task.imported_items():
-                self.fetch_item_lyrics(
-                    session.lib, item, False, self.config["force"]
-                )
+                self.fetch_item_lyrics(item, False, self.config["force"])
 
-    def fetch_item_lyrics(self, lib, item, write, force):
+    def fetch_item_lyrics(self, item: Item, write: bool, force: bool) -> None:
         """Fetch and store lyrics for a single item. If ``write``, then the
         lyrics will also be written to the file itself.
         """
@@ -983,18 +992,17 @@ class LyricsPlugin(plugins.BeetsPlugin):
             self._log.info("lyrics already present: {0}", item)
             return
 
-        lyrics = None
-        album = item.album
-        length = round(item.length)
+        lyrics_matches = []
+        album, length = item.album, round(item.length)
         for artist, titles in search_pairs(item):
-            lyrics = [
-                self.get_lyrics(artist, title, album=album, length=length)
+            lyrics_matches = [
+                self.get_lyrics(artist, title, album, length)
                 for title in titles
             ]
-            if any(lyrics):
+            if any(lyrics_matches):
                 break
 
-        lyrics = "\n\n---\n\n".join(filter(None, lyrics))
+        lyrics = "\n\n---\n\n".join(filter(None, lyrics_matches))
 
         if lyrics:
             self._log.info("fetched lyrics: {0}", item)
@@ -1019,17 +1027,19 @@ class LyricsPlugin(plugins.BeetsPlugin):
             item.try_write()
         item.store()
 
-    def get_lyrics(self, artist, title, album=None, length=None):
+    def get_lyrics(self, artist: str, title: str, *args) -> str | None:
         """Fetch lyrics, trying each source in turn. Return a string or
         None if no lyrics were found.
         """
         for backend in self.backends:
-            lyrics = backend.fetch(artist, title, album=album, length=length)
+            lyrics = backend.fetch(artist, title, *args)
             if lyrics:
                 self._log.debug(
                     "got lyrics from backend: {0}", backend.__class__.__name__
                 )
                 return _scrape_strip_cruft(lyrics, True)
+
+        return None
 
     def append_translation(self, text, to_lang):
         from xml.etree import ElementTree
