@@ -374,11 +374,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 included.
         """
         keep_genres = []
+        separator = self.config["separator"].as_str()
 
         genres = self._get_existing_genres(obj)
         if genres and not self.config["force"]:
-            # Without force pre-populated tags are deduplicated and returned.
-            return self._polish_existing_genres(genres), "keep"
+            # Without force pre-populated tags are returned as-is.
+            return separator.join(genres), "keep"
 
         if self.config["force"]:
             # Force doesn't keep any unless keep_existing is set.
