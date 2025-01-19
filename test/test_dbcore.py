@@ -23,6 +23,7 @@ from tempfile import mkstemp
 import pytest
 
 from beets import dbcore
+from beets.library import LibModel
 from beets.test import _common
 
 # Fixture: concrete database and model classes. For migration tests, we
@@ -44,7 +45,7 @@ class QueryFixture(dbcore.query.FieldQuery):
         return True
 
 
-class ModelFixture1(dbcore.Model):
+class ModelFixture1(LibModel):
     _table = "test"
     _flex_table = "testflex"
     _fields = {
@@ -587,7 +588,7 @@ class QueryFromStringsTest(unittest.TestCase):
         q = self.qfs(["foo", "bar:baz"])
         assert isinstance(q, dbcore.query.AndQuery)
         assert len(q.subqueries) == 2
-        assert isinstance(q.subqueries[0], dbcore.query.AnyFieldQuery)
+        assert isinstance(q.subqueries[0], dbcore.query.OrQuery)
         assert isinstance(q.subqueries[1], dbcore.query.SubstringQuery)
 
     def test_parse_fixed_type_query(self):

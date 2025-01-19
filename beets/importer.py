@@ -707,9 +707,7 @@ class ImportTask(BaseImportTask):
         # use a temporary Album object to generate any computed fields.
         tmp_album = library.Album(lib, **info)
         keys = config["import"]["duplicate_keys"]["album"].as_str_seq()
-        dup_query = library.Album.all_fields_query(
-            {key: tmp_album.get(key) for key in keys}
-        )
+        dup_query = tmp_album.duplicates_query(keys)
 
         # Don't count albums with the same files as duplicates.
         task_paths = {i.path for i in self.items if i}
@@ -1025,9 +1023,7 @@ class SingletonImportTask(ImportTask):
         # temporary `Item` object to generate any computed fields.
         tmp_item = library.Item(lib, **info)
         keys = config["import"]["duplicate_keys"]["item"].as_str_seq()
-        dup_query = library.Album.all_fields_query(
-            {key: tmp_item.get(key) for key in keys}
-        )
+        dup_query = tmp_item.duplicates_query(keys)
 
         found_items = []
         for other_item in lib.items(dup_query):
