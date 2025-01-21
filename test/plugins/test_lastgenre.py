@@ -195,7 +195,7 @@ class LastGenrePluginTest(BeetsTestCase):
             {
                 "album": ["Jazz"],
             },
-            ("Blues, Jazz", "keep + album"),
+            ("Blues, Jazz", "keep + album, whitelist"),
         ),
         # 1 - force and keep whitelisted, unknown original
         (
@@ -211,7 +211,7 @@ class LastGenrePluginTest(BeetsTestCase):
             {
                 "album": ["Jazz"],
             },
-            ("Blues, Jazz", "keep + album"),
+            ("Blues, Jazz", "keep + album, whitelist"),
         ),
         # 2 - force and keep whitelisted on empty tag
         (
@@ -227,7 +227,7 @@ class LastGenrePluginTest(BeetsTestCase):
             {
                 "album": ["Jazz"],
             },
-            ("Jazz", "album"),
+            ("Jazz", "album, whitelist"),
         ),
         # 3 force and keep, artist configured
         (
@@ -244,7 +244,7 @@ class LastGenrePluginTest(BeetsTestCase):
                 "album": ["Jazz"],
                 "artist": ["Pop"],
             },
-            ("Blues, Pop", "keep + artist"),
+            ("Blues, Pop", "keep + artist, whitelist"),
         ),
         # 4 - don't force, disabled whitelist
         (
@@ -260,7 +260,7 @@ class LastGenrePluginTest(BeetsTestCase):
             {
                 "album": ["Jazz"],
             },
-            ("Any Genre", "keep"),
+            ("any genre", "keep any, no-force"),
         ),
         # 5 - don't force, disabled whitelist, empty
         (
@@ -276,7 +276,7 @@ class LastGenrePluginTest(BeetsTestCase):
             {
                 "album": ["Jazz"],
             },
-            ("Jazz", "album"),
+            ("Jazz", "album, any"),
         ),
         # 6 - fallback to next stages until found
         (
@@ -294,7 +294,7 @@ class LastGenrePluginTest(BeetsTestCase):
                 "album": None,
                 "artist": ["Jazz"],
             },
-            ("Unknown Genre, Jazz", "keep + artist"),
+            ("Unknown Genre, Jazz", "keep + artist, any"),
         ),
         # 7 - fallback to original when nothing found
         (
@@ -349,7 +349,7 @@ class LastGenrePluginTest(BeetsTestCase):
             {
                 "album": ["Jazz"],
             },
-            ("Blues\u0000Jazz", "keep + album"),
+            ("Blues\u0000Jazz", "keep + album, whitelist"),
         ),
         # 10 - limit a lot of results
         (
@@ -367,7 +367,7 @@ class LastGenrePluginTest(BeetsTestCase):
             {
                 "album": ["Jazz", "Bebop", "Hardbop"],
             },
-            ("Blues, Rock, Metal, Jazz, Bebop", "keep + album"),
+            ("Blues, Rock, Metal, Jazz, Bebop", "keep + album, whitelist"),
         ),
     ],
 )
