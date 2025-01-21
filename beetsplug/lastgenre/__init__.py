@@ -303,7 +303,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         else:
             genre_str = obj.get("genre")
 
-        return genre_str.split(self.config["separator"].get())
+        return [
+            g.lower() for g in genre_str.split(self.config["separator"].get())
+        ]
 
     def _combine_genres(
         self, old: list[str], new: list[str]
@@ -344,11 +346,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return obj.get("genre"), "keep, no-force"
 
         if self.config["force"]:
-            genres = self._get_existing_genres(obj)
             # Force doesn't keep any unless keep_existing is set.
             # Whitelist validation is handled in _resolve_genres.
             if self.config["keep_existing"]:
-                keep_genres = [g.lower() for g in genres]
+                keep_genres = self._get_existing_genres(obj)
 
         # Run through stages: track, album, artist,
         # album artist, or most popular track genre.
