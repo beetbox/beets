@@ -390,13 +390,13 @@ def test_get_genre(config_values, item_genre, mock_genres, expected_result):
     lastgenre.LastGenrePlugin.fetch_album_genre = mock_fetch_album_genre
     lastgenre.LastGenrePlugin.fetch_artist_genre = mock_fetch_artist_genre
 
+    # Configure
+    config["lastgenre"] = config_values
+
     # Initialize plugin instance and item
     plugin = lastgenre.LastGenrePlugin()
     item = _common.item()
     item.genre = item_genre
-
-    # Configure
-    config["lastgenre"] = config_values
 
     # Run
     res = plugin._get_genre(item)
