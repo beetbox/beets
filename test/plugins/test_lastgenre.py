@@ -276,7 +276,7 @@ class LastGenrePluginTest(BeetsTestCase):
             {
                 "album": ["Jazz"],
             },
-            ("Jazz", "album, any"),
+            ("Jazz", "keep any, no-force"),
         ),
         # 6 - fallback to next stages until found
         (
