@@ -369,6 +369,22 @@ class LastGenrePluginTest(BeetsTestCase):
             },
             ("Blues, Rock, Metal, Jazz, Bebop", "keep + album, whitelist"),
         ),
+        # 11 - force off does not rely on configured separator
+        (
+            {
+                "force": False,
+                "keep_existing": False,
+                "source": "album",
+                "whitelist": True,
+                "count": 2,
+                "separator": ", ",
+            },
+            "not ; configured | separator",
+            {
+                "album": ["Jazz", "Bebop"],
+            },
+            ("not ; configured | separator", "keep any, no-force"),
+        ),
     ],
 )
 def test_get_genre(config_values, item_genre, mock_genres, expected_result):
