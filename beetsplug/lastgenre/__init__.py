@@ -98,27 +98,15 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "fallback": None,
                 "canonical": False,
                 "source": "album",
-                "force": True,
-                "keep_existing": True,
+                "force": False,
+                "keep_existing": False,
                 "auto": True,
                 "separator": ", ",
                 "prefer_specific": False,
                 "title_case": True,
             }
         )
-        self.config_validation()
         self.setup()
-
-    def config_validation(self) -> None:
-        """Quits plugin when invalid configurations are detected."""
-        keep_existing = self.config["keep_existing"].get()
-        force = self.config["force"].get()
-
-        if keep_existing and not force:
-            raise ui.UserError(
-                "Invalid lastgenre plugin configuration (enable force with "
-                "keep_existing!)"
-            )
 
     def setup(self):
         """Setup plugin from config options"""
