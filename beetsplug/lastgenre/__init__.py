@@ -160,6 +160,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return "album", "artist"
         if source == "artist":
             return ("artist",)
+        return tuple()
 
     # More canonicalization and general helpers.
 
