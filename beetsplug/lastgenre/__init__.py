@@ -335,6 +335,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         indicates that existing genres were combined with new last.fm genres,
         while "artist" means only new last.fm genres are included.
         """
+        keep_genres = []
 
         if not self.config["force"]:
             # Without force pre-populated tags are returned as-is.
@@ -344,7 +345,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         if self.config["force"]:
             genres = self._get_existing_genres(obj)
-            keep_genres = []
             # Force doesn't keep any unless keep_existing is set.
             # Whitelist validation is handled in _resolve_genres.
             if self.config["keep_existing"]:
@@ -357,19 +357,23 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             and "track" in self.sources
             and (new_genres := self.fetch_track_genre(obj))
         ):
-            label = "track"
+            label = "track, whitelist" if self.whitelist else "track, any"
         elif "album" in self.sources and (
             new_genres := self.fetch_album_genre(obj)
         ):
-            label = "album"
+            label = "album, whitelist" if self.whitelist else "album, any"
         elif "artist" in self.sources:
             new_genres = None
             if isinstance(obj, library.Item):
                 new_genres = self.fetch_artist_genre(obj)
-                label = "artist"
+                label = "artist, whitelist" if self.whitelist else "artist, any"
             elif obj.albumartist != config["va_name"].as_str():
                 new_genres = self.fetch_album_artist_genre(obj)
-                label = "album artist"
+                label = (
+                    "album artist, whitelist"
+                    if self.whitelist
+                    else "album artist, any"
+                )
             else:
                 # For "Various Artists", pick the most popular track genre.
                 item_genres = []
@@ -384,7 +388,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 if item_genres:
                     most_popular, rank = plurality(item_genres)
                     new_genres = [most_popular]
-                    label = "most popular track"
+                    label = (
+                        "most popular track, whitelist"
+                        if self.whitelist
+                        else "most popular track, any"
+                    )
                     self._log.debug(
                         'Most popular track genre "{}" ({}) for VA album.',
                         most_popular,
