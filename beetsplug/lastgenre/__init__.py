@@ -304,21 +304,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         return genre_str.split(self.config["separator"].get())
 
-    def _polish_existing_genres(self, genres: list[str]) -> str:
-        """Return a separator delimited string of deduplicated and formatted
-        genres. Depending on the whitelist setting, gives filtered or
-        unfiltered results."""
-        separator = self.config["separator"].as_str()
-        # Ensure querying the config setting, self.whitelist seems to be still
-        # instanatiated in _get_genre pytest!?!
-        whitelist = self.config["whitelist"].get()
-        valid_genres = unique_list(
-            [g.lower() for g in genres if not whitelist or self._is_valid(g)]
-        )
-        if self.config["title_case"]:
-            valid_genres = [g.title() for g in valid_genres]
-        return separator.join(valid_genres)
-
     def _combine_genres(
         self, old: list[str], new: list[str]
     ) -> Union[str, None]:
