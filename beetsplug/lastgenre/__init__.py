@@ -334,15 +334,16 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         indicates that existing genres were combined with new last.fm genres,
         while "artist" means only new last.fm genres are included.
         """
-        keep_genres = []
-        separator = self.config["separator"].as_str()
 
-        genres = self._get_existing_genres(obj)
-        if genres and not self.config["force"]:
+        if not self.config["force"]:
             # Without force pre-populated tags are returned as-is.
-            return separator.join(genres), "keep"
+            if isinstance(obj, library.Item):
+                return obj.get("genre", with_album=False), "keep, no-force"
+            return obj.get("genre"), "keep, no-force"
 
         if self.config["force"]:
+            genres = self._get_existing_genres(obj)
+            keep_genres = []
             # Force doesn't keep any unless keep_existing is set.
             # Whitelist validation is handled in _resolve_genres.
             if self.config["keep_existing"]:
