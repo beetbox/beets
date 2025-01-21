@@ -340,14 +340,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
         keep_genres = []
 
-        if not self.config["force"]:
+        genres = self._get_existing_genres(obj)
+        if genres and not self.config["force"]:
             # Without force pre-populated tags are returned as-is.
             if isinstance(obj, library.Item):
                 return obj.get("genre", with_album=False), "keep any, no-force"
             return obj.get("genre"), "keep any, no-force"
 
         if self.config["force"]:
-            genres = self._get_existing_genres(obj)
             # Force doesn't keep any unless keep_existing is set.
             # Whitelist validation is handled in _resolve_genres.
             if self.config["keep_existing"]:
