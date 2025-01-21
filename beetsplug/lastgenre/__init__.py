@@ -194,8 +194,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return [p[1] for p in depth_tag_pairs]
 
     def _resolve_genres(self, tags: list[str]) -> list[str]:
-        """Given a list of genre strings, filters, dedups, sorts and
-        canonicalizes."""
+        """Filter, deduplicate, sort and canonicalize the given genres."""
         if not tags:
             return []
 
