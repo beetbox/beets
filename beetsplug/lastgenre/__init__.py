@@ -331,25 +331,23 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     def _get_genre(
         self, obj: Union[Album, Item]
     ) -> tuple[Union[str, None], ...]:
-        """Get the final genre string for an Album or Item object
+        """Get the final genre string for an Album or Item object.
 
-        `self.sources` specifies allowed genre sources, prioritized as follows:
+        `self.sources` specifies allowed genre sources (track, ablum, artist).
+        Together with several fallback scenarious, the following stages are run
+        through:
             - track (for Items only)
             - album
-            - artist
-            - original
-            - fallback
+            - artist, albumartist or (for Various Artists albums) the "most
+              popular track genre" is used.
+            - original fallback
+            - fallback (configured value)
             - None
 
-        Parameters:
-            obj: Either an Album or Item object.
-
-         Returns:
-             tuple: A `(genre, label)` pair, where `label` is a string used for
-                logging that describes the result. For example, "keep + artist"
-                indicates that existing genres were combined with new last.fm
-                genres, while "artist" means only new last.fm genres are
-                included.
+        A `(genre, label)` pair is returned, where `label` is a string used for
+        logging that describes the result. For example, "keep + artist"
+        indicates that existing genres were combined with new last.fm genres,
+        while "artist" means only new last.fm genres are included.
         """
         keep_genres = []
         separator = self.config["separator"].as_str()
