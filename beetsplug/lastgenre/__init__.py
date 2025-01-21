@@ -280,15 +280,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return None
 
         key = f"{entity}.{'-'.join(str(a) for a in args)}"
-
-        if key in self._genre_cache:
-            return self._genre_cache[key]
-
-        args_replaced = [
-            "".join(arg.replace(k, v) for k, v in REPLACE.items())
-            for arg in args
-        ]
-        self._genre_cache[key] = self.fetch_genre(method(*args_replaced))
+        if key not in self._genre_cache:
+            args = [a.replace("\u2010", "-") for a in args]
+            self._genre_cache[key] = self.fetch_genre(method(*args))
 
         return self._genre_cache[key]
 
