@@ -25,7 +25,7 @@ https://gist.github.com/1241307
 import codecs
 import os
 import traceback
-from typing import Tuple, Union
+from typing import Union
 
 import pylast
 import yaml
@@ -149,7 +149,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             flatten_tree(genres_tree, [], self.c14n_branches)
 
     @property
-    def sources(self) -> Tuple[str, ...]:  # type: ignore
+    def sources(self) -> tuple[str, ...]:
         """A tuple of allowed genre sources. May contain 'track',
         'album', or 'artist.'
         """
