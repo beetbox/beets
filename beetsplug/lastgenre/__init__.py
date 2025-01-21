@@ -298,12 +298,15 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     def _get_existing_genres(self, obj: Union[Album, Item]) -> list[str]:
         """Return a list of genres for this Item or Album."""
+        separator = self.config["separator"].get()
         if isinstance(obj, library.Item):
-            genre_str = obj.get("genre", with_album=False)
+            item_genre = obj.get("genre", with_album=False).split(separator)
         else:
-            genre_str = obj.get("genre")
+            item_genre = obj.get("genre").split(separator)
 
-        return genre_str.split(self.config["separator"].get())
+        if any(item_genre):
+            return item_genre
+        return []
 
     def _combine_genres(
         self, old: list[str], new: list[str]
