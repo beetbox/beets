@@ -338,8 +338,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         indicates that existing genres were combined with new last.fm genres,
         while "artist" means only new last.fm genres are included.
         """
-
+        keep_genres = []
+        label = ""
         genres = self._get_existing_genres(obj)
+
         if genres and not self.config["force"]:
             # Without force pre-populated tags are returned as-is.
             if isinstance(obj, library.Item):
