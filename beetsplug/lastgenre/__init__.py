@@ -431,14 +431,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             "--keep-existing",
             dest="keep_existing",
             action="store_true",
-            help="keep already present genres",
+            help="combine existing genres with new ones",
         )
         lastgenre_cmd.parser.add_option(
             "-K",
-            "--keep-none",
+            "--no-keep-existing",
             dest="keep_existing",
             action="store_false",
-            help="don't keep already present genres",
+            help="don't combine existing genres with new ones",
         )
         lastgenre_cmd.parser.add_option(
             "-s",
@@ -459,7 +459,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             "--albums",
             action="store_true",
             dest="album",
-            help="match albums instead of items",
+            help="match albums instead of items (default)",
         )
         lastgenre_cmd.parser.set_defaults(album=True)
 
