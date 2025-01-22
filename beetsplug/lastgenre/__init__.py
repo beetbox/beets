@@ -338,7 +338,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         indicates that existing genres were combined with new last.fm genres,
         while "artist" means only new last.fm genres are included.
         """
-        keep_genres = []
 
         genres = self._get_existing_genres(obj)
         if genres and not self.config["force"]:
@@ -360,23 +359,19 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             and "track" in self.sources
             and (new_genres := self.fetch_track_genre(obj))
         ):
-            label = "track, whitelist" if self.whitelist else "track, any"
+            label = "track"
         elif "album" in self.sources and (
             new_genres := self.fetch_album_genre(obj)
         ):
-            label = "album, whitelist" if self.whitelist else "album, any"
+            label = "album"
         elif "artist" in self.sources:
             new_genres = None
             if isinstance(obj, library.Item):
                 new_genres = self.fetch_artist_genre(obj)
-                label = "artist, whitelist" if self.whitelist else "artist, any"
+                label = "artist"
             elif obj.albumartist != config["va_name"].as_str():
                 new_genres = self.fetch_album_artist_genre(obj)
-                label = (
-                    "album artist, whitelist"
-                    if self.whitelist
-                    else "album artist, any"
-                )
+                label = "album artist"
             else:
                 # For "Various Artists", pick the most popular track genre.
                 item_genres = []
@@ -391,11 +386,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 if item_genres:
                     most_popular, rank = plurality(item_genres)
                     new_genres = [most_popular]
-                    label = (
-                        "most popular track, whitelist"
-                        if self.whitelist
-                        else "most popular track, any"
-                    )
+                    label = "most popular track"
                     self._log.debug(
                         'Most popular track genre "{}" ({}) for VA album.',
                         most_popular,
