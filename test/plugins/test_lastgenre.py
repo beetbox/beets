@@ -262,7 +262,7 @@ class LastGenrePluginTest(BeetsTestCase):
             },
             ("any genre", "keep any, no-force"),
         ),
-        # 5 - don't force, disabled whitelist, empty
+        # 5 - don't force and empty is regular last.fm fetch; no whitelist too
         (
             {
                 "force": False,
@@ -274,9 +274,9 @@ class LastGenrePluginTest(BeetsTestCase):
             },
             "",
             {
-                "album": ["Jazz"],
+                "album": ["Jazzin"],
             },
-            ("Jazz", "keep any, no-force"),
+            ("Jazzin", "album, any"),
         ),
         # 6 - fallback to next stages until found
         (
