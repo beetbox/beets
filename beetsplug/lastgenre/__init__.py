@@ -424,7 +424,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             "--force",
             dest="force",
             action="store_true",
-            help="re-download genre when already present",
+            help="overwrite already present genres",
+        )
+        lastgenre_cmd.parser.add_option(
+            "-F",
+            "--no-force",
+            dest="force",
+            action="store_false",
+            help="don't overwrite already present genres",
         )
         lastgenre_cmd.parser.add_option(
             "-k",
