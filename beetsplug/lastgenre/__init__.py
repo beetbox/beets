@@ -424,28 +424,28 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             "--force",
             dest="force",
             action="store_true",
-            help="overwrite already present genres",
+            help="modify existing genres",
         )
         lastgenre_cmd.parser.add_option(
             "-F",
             "--no-force",
             dest="force",
             action="store_false",
-            help="don't overwrite already present genres",
+            help="don't modify existing genres",
         )
         lastgenre_cmd.parser.add_option(
             "-k",
             "--keep-existing",
             dest="keep_existing",
             action="store_true",
-            help="combine existing genres with new ones",
+            help="combine with existing genres when modifying",
         )
         lastgenre_cmd.parser.add_option(
             "-K",
             "--no-keep-existing",
             dest="keep_existing",
             action="store_false",
-            help="don't combine existing genres with new ones",
+            help="don't combine with existing genres when modifying",
         )
         lastgenre_cmd.parser.add_option(
             "-s",
