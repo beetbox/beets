@@ -259,9 +259,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         whose arguments are given in the sequence `args`. The genre lookup
         is cached based on the entity name and the arguments.
 
-        Before the lookup, each argument has some Unicode characters replaced
-        with rough ASCII equivalents in order to return better results from the
-        Last.fm database.
+        Before the lookup, each argument has the "-" Unicode character replaced
+        with its rough ASCII equivalents in order to return better results from
+        the Last.fm database.
         """
         # Shortcut if we're missing metadata.
         if any(not s for s in args):
@@ -322,21 +322,21 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     ) -> tuple[Union[str, None], ...]:
         """Get the final genre string for an Album or Item object.
 
-        `self.sources` specifies allowed genre sources (track, ablum, artist).
-        Together with several fallback scenarious, the following stages are run
-        through:
+        `self.sources` specifies allowed genre sources. Starting with the first
+        source in this tuple, the following stages run through until a genre is
+        found or no options are left:
             - track (for Items only)
             - album
-            - artist, albumartist or (for Various Artists albums) the "most
-              popular track genre" is used.
+            - artist, albumartist or "most popular track genre" (for VA-albums)
             - original fallback
-            - fallback (configured value)
+            - configured fallback
             - None
 
         A `(genre, label)` pair is returned, where `label` is a string used for
-        logging that describes the result. For example, "keep + artist"
-        indicates that existing genres were combined with new last.fm genres,
-        while "artist" means only new last.fm genres are included.
+        logging. For example, "keep + artist, whitelist" indicates that existing
+        genres were combined with new last.fm genres and whitelist filtering was
+        applied, while "artist, any" means only new last.fm genres are included
+        and the whitelist feature was disabled.
         """
         keep_genres = []
         label = ""
