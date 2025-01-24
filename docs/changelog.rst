@@ -55,6 +55,10 @@ Bug fixes:
   ``lrclib`` over other sources since it returns reliable results quicker than
   others.
   :bug:`5102`
+* :doc:`plugins/lastgenre`: The new configuration option, ``keep_existing``,
+  provides more fine-grained control over how pre-populated genre tags are
+  handled. The ``force`` option now behaves in a more conventional manner.
+  :bug:`4982`
 
 For packagers:
 
