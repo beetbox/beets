@@ -199,11 +199,9 @@ here, including the directory and file naming scheme. See
 
 .. _YAML: https://yaml.org/
 
-To check that your config file is set up correctly run ``beet version``. This should return your 
-beets version, Python version, and a list of installed plugins. If no plugins are displayed, but 
-there are plugins listed in your config file go back to the steps above to set up the config 
-file properly before importing your music library. You can also run ``beet config`` which will 
-display more in-depth details about each enabled plugin.
+To check that you've set up your configuration how you want it, you can type
+``beet version`` to see a list of enabled plugins or ``beet config`` to get a
+complete listing of your current configuration.
 
 
 Importing Your Library
