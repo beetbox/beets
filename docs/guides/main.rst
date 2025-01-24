@@ -199,6 +199,11 @@ here, including the directory and file naming scheme. See
 
 .. _YAML: https://yaml.org/
 
+To check that you've set up your configuration how you want it, you can type
+``beet version`` to see a list of enabled plugins or ``beet config`` to get a
+complete listing of your current configuration.
+
+
 Importing Your Library
 ----------------------
 
