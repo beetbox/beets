@@ -11,6 +11,15 @@ been dropped.
 
 New features:
 
+* :doc:`plugins/lastgenre`: The new configuration option, ``keep_existing``,
+  provides more fine-grained control over how pre-populated genre tags are
+  handled. The ``force`` option now behaves in a more conventional manner.
+  :bug:`4982`
+* :doc:`plugins/lyrics`: Add new configuration option ``dist_thresh`` to
+  control the maximum allowed distance between the lyrics search result and the
+  tagged item's artist and title. This is useful for preventing false positives
+  when fetching lyrics.
+
 Bug fixes:
 
 * :doc:`plugins/lyrics`: LRCLib will fallback to plain lyrics if synced lyrics
@@ -55,10 +64,12 @@ Bug fixes:
   ``lrclib`` over other sources since it returns reliable results quicker than
   others.
   :bug:`5102`
-* :doc:`plugins/lastgenre`: The new configuration option, ``keep_existing``,
-  provides more fine-grained control over how pre-populated genre tags are
-  handled. The ``force`` option now behaves in a more conventional manner.
-  :bug:`4982`
+* :doc:`plugins/lyrics`: Fix the issue with ``genius`` backend not being able
+  to match lyrics when there is a slight variation in the artist name.
+  :bug:`4791`
+* :doc:`plugins/lyrics`: Fix plugin crash when ``genius`` backend returns empty
+  lyrics.
+  :bug:`5583`
 
 For packagers:
 
