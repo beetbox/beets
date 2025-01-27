@@ -37,6 +37,7 @@ class TestLyricsUtils:
     @pytest.mark.parametrize(
         "artist, title",
         [
+            ("Various Artists", "Title"),
             ("Artist", ""),
             ("", "Title"),
             (" ", ""),
@@ -81,7 +82,7 @@ class TestLyricsUtils:
     @pytest.mark.parametrize(
         "title, expected_extra_titles",
         [
-            ("1/2", ["1", "2"]),
+            ("1/2", []),
             ("1 / 2", ["1", "2"]),
             ("Song (live)", ["Song"]),
             ("Song (live) (new)", ["Song"]),
@@ -102,47 +103,6 @@ class TestLyricsUtils:
         assert list(actual_titles) == [title, *expected_extra_titles]
 
     @pytest.mark.parametrize(
-        "initial_lyrics, expected",
-        [
-            ("Verse\nLyrics credit in the last line", "Verse"),
-            ("Lyrics credit in the first line\nVerse", "Verse"),
-            (
-                """Verse
-                Lyrics mentioned somewhere in the middle
-                Verse""",
-                """Verse
-                Lyrics mentioned somewhere in the middle
-                Verse""",
-            ),
-        ],
-    )
-    def test_remove_credits(self, initial_lyrics, expected):
-        assert lyrics.remove_credits(initial_lyrics) == expected
-
-    @pytest.mark.parametrize(
-        "initial_text, expected",
-        [
-            (
-                """<!--lyrics below-->
-                  &nbsp;one
-                  <br class='myclass'>
-                  two  !
-                  <br><br \\>
-                  <blink>four</blink>""",
-                "one\ntwo !\n\nfour",
-            ),
-            ("foo<script>bar</script>baz", "foobaz"),
-            ("foo<!--<bar>-->qux", "fooqux"),
-        ],
-    )
-    def test_scrape_strip_cruft(self, initial_text, expected):
-        assert lyrics._scrape_strip_cruft(initial_text, True) == expected
-
-    def test_scrape_merge_paragraphs(self):
-        text = "one</p>   <p class='myclass'>two</p><p>three"
-        assert lyrics._scrape_merge_paragraphs(text) == "one\ntwo\nthree"
-
-    @pytest.mark.parametrize(
         "text, expected",
         [
             ("test", "test"),
@@ -161,12 +121,67 @@ class TestLyricsUtils:
         assert lyrics.slug(text) == expected
 
 
+class TestHtml:
+    def test_scrape_strip_cruft(self):
+        initial = """<!--lyrics below-->
+                  &nbsp;one
+                  <br class='myclass'>
+                  two  !
+                  <br><br \\>
+                  <blink>four</blink>"""
+        expected = "<!--lyrics below-->\none\ntwo !\n\n<blink>four</blink>"
+
+        assert lyrics.Html.normalize_space(initial) == expected
+
+    def test_scrape_merge_paragraphs(self):
+        text = "one</p>   <p class='myclass'>two</p><p>three"
+        expected = "one\ntwo\n\nthree"
+
+        assert lyrics.Html.merge_paragraphs(text) == expected
+
+
+class TestSearchBackend:
+    @pytest.fixture
+    def backend(self, dist_thresh):
+        plugin = lyrics.LyricsPlugin()
+        plugin.config.set({"dist_thresh": dist_thresh})
+        return lyrics.SearchBackend(plugin.config, plugin._log)
+
+    @pytest.mark.parametrize(
+        "dist_thresh, target_artist, artist, should_match",
+        [
+            (0.11, "Target Artist", "Target Artist", True),
+            (0.11, "Target Artist", "Target Artis", True),
+            (0.11, "Target Artist", "Target Arti", False),
+            (0.11, "Psychonaut", "Psychonaut (BEL)", True),
+            (0.11, "beets song", "beats song", True),
+            (0.10, "beets song", "beats song", False),
+            (
+                0.11,
+                "Lucid Dreams (Forget Me)",
+                "Lucid Dreams (Remix) ft. Lil Uzi Vert",
+                False,
+            ),
+            (
+                0.12,
+                "Lucid Dreams (Forget Me)",
+                "Lucid Dreams (Remix) ft. Lil Uzi Vert",
+                True,
+            ),
+        ],
+    )
+    def test_check_match(self, backend, target_artist, artist, should_match):
+        result = lyrics.SearchResult(artist, "", "")
+
+        assert backend.check_match(target_artist, "", result) == should_match
+
+
 @pytest.fixture(scope="module")
 def lyrics_root_dir(pytestconfig: pytest.Config):
     return pytestconfig.rootpath / "test" / "rsrc" / "lyrics"
 
 
-class LyricsBackendTest(PluginMixin):
+class LyricsPluginMixin(PluginMixin):
     plugin = "lyrics"
 
     @pytest.fixture
@@ -182,6 +197,42 @@ class LyricsBackendTest(PluginMixin):
 
         return lyrics.LyricsPlugin()
 
+
+class TestLyricsPlugin(LyricsPluginMixin):
+    @pytest.fixture
+    def backend_name(self):
+        """Return lyrics configuration to test."""
+        return "lrclib"
+
+    @pytest.mark.parametrize(
+        "request_kwargs, expected_log_match",
+        [
+            (
+                {"status_code": HTTPStatus.BAD_GATEWAY},
+                r"LRCLib: Request error: 502",
+            ),
+            ({"text": "invalid"}, r"LRCLib: Could not decode.*JSON"),
+        ],
+    )
+    def test_error_handling(
+        self,
+        requests_mock,
+        lyrics_plugin,
+        caplog,
+        request_kwargs,
+        expected_log_match,
+    ):
+        """Errors are logged with the backend name."""
+        requests_mock.get(lyrics.LRCLib.SEARCH_URL, **request_kwargs)
+
+        assert lyrics_plugin.get_lyrics("", "", "", 0.0) is None
+        assert caplog.messages
+        last_log = caplog.messages[-1]
+        assert last_log
+        assert re.search(expected_log_match, last_log, re.I)
+
+
+class LyricsBackendTest(LyricsPluginMixin):
     @pytest.fixture
     def backend(self, lyrics_plugin):
         """Return a lyrics backend instance."""
@@ -229,24 +280,23 @@ class TestLyricsSources(LyricsBackendTest):
 
     def test_backend_source(self, lyrics_plugin, lyrics_page: LyricsPage):
         """Test parsed lyrics from each of the configured lyrics pages."""
-        lyrics = lyrics_plugin.get_lyrics(
+        lyrics_info = lyrics_plugin.get_lyrics(
             lyrics_page.artist, lyrics_page.track_title, "", 186
         )
 
-        assert lyrics
+        assert lyrics_info
+        lyrics, _ = lyrics_info.split("\n\nSource: ")
         assert lyrics == lyrics_page.lyrics
 
 
 class TestGoogleLyrics(LyricsBackendTest):
     """Test scraping heuristics on a fake html page."""
 
-    TITLE = "Beets song"
-
     @pytest.fixture(scope="class")
     def backend_name(self):
         return "google"
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture
     def plugin_config(self):
         return {"google_API_key": "test"}
 
@@ -254,54 +304,59 @@ class TestGoogleLyrics(LyricsBackendTest):
     def file_name(self):
         return "examplecom/beetssong"
 
+    @pytest.fixture
+    def search_item(self, url_title, url):
+        return {"title": url_title, "link": url}
+
+    @pytest.mark.parametrize("plugin_config", [{}])
+    def test_disabled_without_api_key(self, lyrics_plugin):
+        assert not lyrics_plugin.backends
+
     def test_mocked_source_ok(self, backend, lyrics_html):
         """Test that lyrics of the mocked page are correctly scraped"""
-        result = lyrics.scrape_lyrics_from_html(lyrics_html).lower()
+        result = backend.scrape(lyrics_html).lower()
 
         assert result
-        assert backend.is_lyrics(result)
-        assert PHRASE_BY_TITLE[self.TITLE] in result
+        assert PHRASE_BY_TITLE["Beets song"] in result
 
     @pytest.mark.parametrize(
-        "url_title, artist, should_be_candidate",
+        "url_title, expected_artist, expected_title",
         [
-            ("John Doe - beets song Lyrics", "John Doe", True),
-            ("example.com | Beats song by John doe", "John Doe", True),
-            ("example.com | seets bong lyrics by John doe", "John Doe", False),
-            ("foo", "Sun O)))", False),
+            ("Artist - beets song Lyrics", "Artist", "beets song"),
+            ("www.azlyrics.com | Beats song by Artist", "Artist", "Beats song"),
+            ("lyric.com | seets bong lyrics by Artist", "Artist", "seets bong"),
+            ("foo", "", "foo"),
+            ("Artist - Beets Song lyrics | AZLyrics", "Artist", "Beets Song"),
+            ("Letra de Artist - Beets Song", "Artist", "Beets Song"),
+            ("Letra de Artist - Beets ...", "Artist", "Beets"),
+            ("Artist Beets Song", "Artist", "Beets Song"),
+            ("BeetsSong - Artist", "Artist", "BeetsSong"),
+            ("Artist - BeetsSong", "Artist", "BeetsSong"),
+            ("Beets Song", "", "Beets Song"),
+            ("Beets Song Artist", "Artist", "Beets Song"),
+            (
+                "BeetsSong (feat. Other & Another) - Artist",
+                "Artist",
+                "BeetsSong (feat. Other & Another)",
+            ),
+            (
+                (
+                    "Beets song lyrics by Artist - original song full text. "
+                    "Official Beets song lyrics, 2024 version | LyricsMode.com"
+                ),
+                "Artist",
+                "Beets song",
+            ),
         ],
     )
-    def test_is_page_candidate(
-        self, backend, lyrics_html, url_title, artist, should_be_candidate
+    @pytest.mark.parametrize("url", ["http://doesntmatter.com"])
+    def test_make_search_result(
+        self, backend, search_item, expected_artist, expected_title
     ):
-        result = backend.is_page_candidate(
-            "http://www.example.com/lyrics/beetssong",
-            url_title,
-            self.TITLE,
-            artist,
-        )
-        assert bool(result) == should_be_candidate
+        result = backend.make_search_result("Artist", "Beets song", search_item)
 
-    @pytest.mark.parametrize(
-        "lyrics",
-        [
-            "LyricsMania.com - Copyright (c) 2013 - All Rights Reserved",
-            """All material found on this site is property\n
-                     of mywickedsongtext brand""",
-            """
-Lyricsmania staff is working hard for you to add $TITLE lyrics as soon
-as they'll be released by $ARTIST, check back soon!
-In case you have the lyrics to $TITLE and want to send them to us, fill out
-the following form.
-""",
-        ],
-    )
-    def test_bad_lyrics(self, backend, lyrics):
-        assert not backend.is_lyrics(lyrics)
-
-    def test_slugify(self, backend):
-        text = "http://site.com/\xe7afe-au_lait(boisson)"
-        assert backend.slugify(text) == "http://site.com/cafe_au_lait"
+        assert result.artist == expected_artist
+        assert result.title == expected_title
 
 
 class TestGeniusLyrics(LyricsBackendTest):
@@ -312,13 +367,13 @@ class TestGeniusLyrics(LyricsBackendTest):
     @pytest.mark.parametrize(
         "file_name, expected_line_count",
         [
-            ("geniuscom/2pacalleyezonmelyrics", 134),
+            ("geniuscom/2pacalleyezonmelyrics", 131),
             ("geniuscom/Ttngchinchillalyrics", 29),
             ("geniuscom/sample", 0),  # see https://github.com/beetbox/beets/issues/3535
         ],
     )  # fmt: skip
     def test_scrape(self, backend, lyrics_html, expected_line_count):
-        result = backend._scrape_lyrics_from_html(lyrics_html) or ""
+        result = backend.scrape(lyrics_html) or ""
 
         assert len(result.splitlines()) == expected_line_count
 
@@ -339,7 +394,7 @@ class TestTekstowoLyrics(LyricsBackendTest):
         ],
     )
     def test_scrape(self, backend, lyrics_html, expecting_lyrics):
-        assert bool(backend.extract_lyrics(lyrics_html)) == expecting_lyrics
+        assert bool(backend.scrape(lyrics_html)) == expecting_lyrics
 
 
 LYRICS_DURATION = 950
@@ -347,6 +402,7 @@ LYRICS_DURATION = 950
 
 def lyrics_match(**overrides):
     return {
+        "id": 1,
         "instrumental": False,
         "duration": LYRICS_DURATION,
         "syncedLyrics": "synced",
@@ -363,13 +419,9 @@ class TestLRCLibLyrics(LyricsBackendTest):
         return "lrclib"
 
     @pytest.fixture
-    def request_kwargs(self, response_data):
-        return {"json": response_data}
-
-    @pytest.fixture
-    def fetch_lyrics(self, backend, requests_mock, request_kwargs):
+    def fetch_lyrics(self, backend, requests_mock, response_data):
         requests_mock.get(backend.GET_URL, status_code=HTTPStatus.NOT_FOUND)
-        requests_mock.get(backend.SEARCH_URL, **request_kwargs)
+        requests_mock.get(backend.SEARCH_URL, json=response_data)
 
         return partial(backend.fetch, "la", "la", "la", self.ITEM_DURATION)
 
@@ -379,7 +431,9 @@ class TestLRCLibLyrics(LyricsBackendTest):
         [({"synced": True}, "synced"), ({"synced": False}, "plain")],
     )
     def test_synced_config_option(self, fetch_lyrics, expected_lyrics):
-        assert fetch_lyrics() == expected_lyrics
+        lyrics, _ = fetch_lyrics()
+
+        assert lyrics == expected_lyrics
 
     @pytest.mark.parametrize(
         "response_data, expected_lyrics",
@@ -441,20 +495,10 @@ class TestLRCLibLyrics(LyricsBackendTest):
     )
     @pytest.mark.parametrize("plugin_config", [{"synced": True}])
     def test_fetch_lyrics(self, fetch_lyrics, expected_lyrics):
-        assert fetch_lyrics() == expected_lyrics
+        lyrics_info = fetch_lyrics()
+        if lyrics_info is None:
+            assert expected_lyrics is None
+        else:
+            lyrics, _ = fetch_lyrics()
 
-    @pytest.mark.parametrize(
-        "request_kwargs, expected_log_match",
-        [
-            (
-                {"status_code": HTTPStatus.BAD_GATEWAY},
-                r"LRCLib: Request error: 502",
-            ),
-            ({"text": "invalid"}, r"LRCLib: Could not decode.*JSON"),
-        ],
-    )
-    def test_error(self, caplog, fetch_lyrics, expected_log_match):
-        assert fetch_lyrics() is None
-        assert caplog.messages
-        assert (last_log := caplog.messages[-1])
-        assert re.search(expected_log_match, last_log, re.I)
+            assert lyrics == expected_lyrics
