@@ -4,9 +4,9 @@ Writing Plugins
 ---------------
 
 A beets plugin is just a Python module or package inside the ``beetsplug``
-namespace package. (Check out this `Stack Overflow question about namespace
-packages`_ if you haven't heard of them.) So, to make one, create a directory
-called ``beetsplug`` and add either your plugin module::
+namespace package. (Check out `this article`_ and `this Stack Overflow
+question`_ if you haven't heard about namespace packages.) So, to make one,
+create a directory called ``beetsplug`` and add either your plugin module::
 
     beetsplug/
         myawesomeplugin.py
@@ -38,10 +38,9 @@ import ``BeetsPlugin`` from ``beets.plugins`` and subclass it, for example
 Once you have your ``BeetsPlugin`` subclass, there's a variety of things your
 plugin can do. (Read on!)
 
-To use your new plugin, make sure the directory that contains your
-``beetsplug`` directory is in the Python path (using ``PYTHONPATH`` or by
-installing in a `virtualenv`_, for example). Then, add your plugin to beets
-configuration
+To use your new plugin, package your plugin (see how to do this with `poetry`_
+or `setuptools`_, for example) and install it into your ``beets`` virtual
+environment. Then, add your plugin to beets configuration
 
 .. code-block:: yaml
 
@@ -51,8 +50,10 @@ configuration
 
 and you're good to go!
 
-.. _Stack Overflow question about namespace packages: https://stackoverflow.com/a/27586272/9582674
-.. _virtualenv: https://pypi.org/project/virtualenv
+.. _this article: https://realpython.com/python-namespace-package/#setting-up-some-namespace-packages
+.. _this Stack Overflow question: https://stackoverflow.com/a/27586272/9582674
+.. _poetry: https://python-poetry.org/docs/pyproject/#packages
+.. _setuptools: https://setuptools.pypa.io/en/latest/userguide/package_discovery.html#finding-simple-packages
 
 .. _add_subcommands:
 
