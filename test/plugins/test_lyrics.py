@@ -74,7 +74,9 @@ class TestLyricsUtils:
             ("横山克", "Masaru Yokoyama", ["Masaru Yokoyama"]),
         ],
     )
-    def test_search_pairs_artists(self, artist, artist_sort, expected_extra_artists):
+    def test_search_pairs_artists(
+        self, artist, artist_sort, expected_extra_artists
+    ):
         item = Item(artist=artist, artist_sort=artist_sort, title="song")
 
         actual_artists = [a for a, _ in lyrics.search_pairs(item)]
@@ -99,7 +101,9 @@ class TestLyricsUtils:
     def test_search_pairs_titles(self, title, expected_extra_titles):
         item = Item(title=title, artist="A")
 
-        actual_titles = {t: None for _, tit in lyrics.search_pairs(item) for t in tit}
+        actual_titles = {
+            t: None for _, tit in lyrics.search_pairs(item) for t in tit
+        }
 
         assert list(actual_titles) == [title, *expected_extra_titles]
 
@@ -241,7 +245,9 @@ class LyricsBackendTest(LyricsPluginMixin):
 
     @pytest.fixture
     def lyrics_html(self, lyrics_root_dir, file_name):
-        return (lyrics_root_dir / f"{file_name}.txt").read_text(encoding="utf-8")
+        return (lyrics_root_dir / f"{file_name}.txt").read_text(
+            encoding="utf-8"
+        )
 
 
 @pytest.mark.on_lyrics_update
