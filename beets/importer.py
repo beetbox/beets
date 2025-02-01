@@ -378,9 +378,8 @@ class ImportSession:
         """Returns true if the files belonging to this task have already
         been imported in a previous session.
         """
-        state = ImportState()
         if self.is_resuming(toppath) and all(
-            [state.progress_has_element(toppath, p) for p in paths]
+            [ImportState().progress_has_element(toppath, p) for p in paths]
         ):
             return True
         if self.config["incremental"] and tuple(paths) in self.history_dirs:
@@ -427,8 +426,7 @@ class ImportSession:
 
         Determines the return value of `is_resuming(toppath)`.
         """
-        state = ImportState()
-        if self.want_resume and state.progress_has(toppath):
+        if self.want_resume and ImportState().progress_has(toppath):
             # Either accept immediately or prompt for input to decide.
             if self.want_resume is True or self.should_resume(toppath):
                 log.warning(
@@ -438,7 +436,7 @@ class ImportSession:
                 self._is_resuming[normpath(toppath)] = True
             else:
                 # Clear progress; we're starting from the top.
-                state.progress_reset(toppath)
+                ImportState().progress_reset(toppath)
 
 
 # The importer task class.
