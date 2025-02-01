@@ -99,6 +99,8 @@ class ImportState:
 
     def __init__(self, readonly=False, path: Union[PathLike, None] = None):
         self.path = path or config["statefile"].as_filename()
+        self.tagprogress = {}
+        self.taghistory = set()
         self._open()
 
     def __enter__(self):
