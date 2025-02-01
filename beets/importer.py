@@ -14,7 +14,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
 from tempfile import mkdtemp
-from typing import Iterable, Sequence
+from typing import Dict, Iterable, Optional, Sequence, Union
 
 import mediafile
 
@@ -97,7 +97,7 @@ class ImportState:
     taghistory: set
     path: PathLike
 
-    def __init__(self, readonly=False, path: PathLike | None = None):
+    def __init__(self, readonly=False, path: Union[PathLike, None] = None):
         self.path = path or config["statefile"].as_filename()
         self._open()
 
@@ -182,19 +182,19 @@ class ImportSession(ABC):
     """
 
     logger: logging.Logger
-    paths: list[bytes] | None
+    paths: Union[list[bytes], None]
     lib: library.Library
 
-    _is_resuming: dict[bytes, bool]
+    _is_resuming: Dict[bytes, bool]
     _merged_items: set
     _merged_dirs: set
 
     def __init__(
         self,
         lib: library.Library,
-        loghandler: logging.Handler | None,
-        paths: Iterable[PathLike] | None,
-        query: dbcore.Query | None,
+        loghandler: Optional[logging.Handler],
+        paths: Optional[Sequence[PathLike]],
+        query: Optional[dbcore.Query],
     ):
         """Create a session.
 
@@ -223,7 +223,7 @@ class ImportSession(ABC):
         else:
             self.paths = None
 
-    def _setup_logging(self, loghandler: logging.Handler | None):
+    def _setup_logging(self, loghandler: Optional[logging.Handler]):
         logger = logging.getLogger(__name__)
         logger.propagate = False
         if not loghandler:
