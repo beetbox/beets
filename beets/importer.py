@@ -178,7 +178,7 @@ class ImportState:
             state.taghistory.add(tuple(paths))
 
 
-class ImportSession(ABC):
+class ImportSession:
     """Controls an import action. Subclasses should implement methods to
     communicate with the user or otherwise make decisions.
     """
@@ -310,19 +310,15 @@ class ImportSession(ABC):
             elif task.choice_flag is action.SKIP:
                 self.tag_log("skip", paths)
 
-    @abstractmethod
     def should_resume(self, path):
         raise NotImplementedError("Inheriting class must implement `should_resume`")
 
-    @abstractmethod
     def choose_match(self, task):
         raise NotImplementedError("Inheriting class must implement `choose_match`")
 
-    @abstractmethod
     def resolve_duplicate(self, task, found_duplicates):
         raise NotImplementedError("Inheriting class must implement `resolve_duplicate`")
 
-    @abstractmethod
     def choose_item(self, task):
         raise NotImplementedError("Inheriting class must implement `choose_item`")
 
