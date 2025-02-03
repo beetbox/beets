@@ -160,7 +160,7 @@ R = TypeVar("R")
 def stage(
     func: Callable[
         [Unpack[A], T],
-        R,
+        Optional[R],
     ],
 ):
     """Decorate a function to become a simple stage.
@@ -176,7 +176,7 @@ def stage(
     [3, 4, 5]
     """
 
-    def coro(*args: Unpack[A]) -> Generator[Union[R, T, None], T, None]:
+    def coro(*args: Unpack[A]) -> Generator[Union[R, T, None], T, R]:
         task = None
         while True:
             task = yield task
@@ -185,7 +185,7 @@ def stage(
     return coro
 
 
-def mutator_stage(func: Callable[[Unpack[A], T], None]):
+def mutator_stage(func: Callable[[Unpack[A], T], R]):
     """Decorate a function that manipulates items in a coroutine to
     become a simple stage.
 
@@ -200,7 +200,7 @@ def mutator_stage(func: Callable[[Unpack[A], T], None]):
     [{'x': True}, {'a': False, 'x': True}]
     """
 
-    def coro(*args: Unpack[A]) -> Generator[Optional[T], T, None]:
+    def coro(*args: Unpack[A]) -> Generator[Union[T, None], T, None]:
         task = None
         while True:
             task = yield task
