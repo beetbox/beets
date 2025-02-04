@@ -74,22 +74,38 @@ class MusicBrainzAPIError(util.HumanReadableError):
 
 log = logging.getLogger("beets")
 
-RELEASE_INCLUDES = [
-    "artists",
-    "media",
-    "recordings",
-    "release-groups",
-    "labels",
-    "artist-credits",
-    "aliases",
-    "recording-level-rels",
-    "work-rels",
-    "work-level-rels",
-    "artist-rels",
-    "isrcs",
-    "url-rels",
-    "release-rels",
-]
+RELEASE_INCLUDES = list(
+    {
+        "artists",
+        "media",
+        "recordings",
+        "release-groups",
+        "labels",
+        "artist-credits",
+        "aliases",
+        "recording-level-rels",
+        "work-rels",
+        "work-level-rels",
+        "artist-rels",
+        "isrcs",
+        "url-rels",
+        "release-rels",
+        "tags",
+    }
+    & set(musicbrainzngs.VALID_INCLUDES["release"])
+)
+
+TRACK_INCLUDES = list(
+    {
+        "artists",
+        "aliases",
+        "isrcs",
+        "work-level-rels",
+        "artist-rels",
+    }
+    & set(musicbrainzngs.VALID_INCLUDES["recording"])
+)
+
 BROWSE_INCLUDES = [
     "artist-credits",
     "work-rels",
@@ -101,14 +117,6 @@ if "work-level-rels" in musicbrainzngs.VALID_BROWSE_INCLUDES["recording"]:
     BROWSE_INCLUDES.append("work-level-rels")
 BROWSE_CHUNKSIZE = 100
 BROWSE_MAXTRACKS = 500
-TRACK_INCLUDES = ["artists", "aliases", "isrcs"]
-if "work-level-rels" in musicbrainzngs.VALID_INCLUDES["recording"]:
-    TRACK_INCLUDES += ["work-level-rels", "artist-rels"]
-if "tags" in [
-    musicbrainzngs.VALID_INCLUDES["release"],
-    musicbrainzngs.VALID_INCLUDES["release-group"],
-]:
-    RELEASE_INCLUDES += ["tags"]
 
 
 def track_url(trackid: str) -> str:
