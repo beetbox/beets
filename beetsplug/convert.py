@@ -397,9 +397,10 @@ class ConvertPlugin(BeetsPlugin):
             # Delete existing destination files when original files have been
             # modified since the last conversion. NOTE: Only when not using the
             # --keep-new option because I'm not sure what to do in this case.
-            if ((refresh and not keep_new) and
-                (os.path.exists(util.syspath(dest))) and
-                (os.path.getmtime(util.syspath(item.path)) > os.path.getmtime(util.syspath(dest)))):
+            if ((refresh and not keep_new)
+                and (os.path.exists(util.syspath(dest)))
+                and (os.path.getmtime(util.syspath(item.path)) 
+                     > os.path.getmtime(util.syspath(dest)))):
                 if pretend:
                     self._log.info(
                         "rm {0} (original file modified)",
@@ -407,7 +408,8 @@ class ConvertPlugin(BeetsPlugin):
                     )
                 else:
                     self._log.info(
-                        "Removing {0} (original file modified)", util.displayable_path(dest)
+                        "Removing {0} (original file modified)",
+                        util.displayable_path(dest)
                     )
                     util.remove(util.syspath(dest))
 
