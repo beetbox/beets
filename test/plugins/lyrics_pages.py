@@ -456,16 +456,6 @@ lyrics_pages = [
     LyricsPage.make(
         "https://www.musica.com/letras.asp?letra=59862",
         """
-        Lady Madonna, children at your feet
-        Wonder how you manage to make ends meet
-        Who finds the money when you pay the rent?
-        Did you think that money was heaven sent?
-
-        Friday night arrives without a suitcase
-        Sunday morning creeping like a nun
-        Monday's child has learned to tie his bootlace
-        See how they run
-
         Lady Madonna, baby at your breast
         Wonders how you manage to feed the rest
 
