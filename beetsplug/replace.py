@@ -9,9 +9,9 @@ class ReplacePlugin(BeetsPlugin):
         return [cmd]
     def run(self, lib, opts, args):
         newFilePath = args[-1]
-        title = args[:-1]
+        itemQuery = args[:-1]
 
-        song = lib.items(title)[0]
+        song = lib.items(itemQuery)[0]
         song.write(newFilePath)
         originalFilePath = song.path.decode()
 
