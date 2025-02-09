@@ -115,8 +115,10 @@ class ImportState:
     taghistory: set[tuple[PathBytes, ...]]
     path: PathBytes
 
-    def __init__(self, readonly=False, path: Optional[PathBytes] = None):
-        self.path = path or cast(PathBytes, config["statefile"].as_filename())
+    def __init__(self, readonly=False, path: PathBytes | None = None):
+        self.path = path or os.fsencode(
+            cast(str, config["statefile"].as_filename())
+        )
         self.tagprogress = {}
         self.taghistory = set()
         self._open()
@@ -202,7 +204,7 @@ class ImportSession:
     """
 
     logger: logging.Logger
-    paths: Optional[list[bytes]] = None
+    paths: list[bytes] | None = None
     lib: library.Library
 
     _is_resuming: dict[bytes, bool]
@@ -212,9 +214,9 @@ class ImportSession:
     def __init__(
         self,
         lib: library.Library,
-        loghandler: Optional[logging.Handler],
-        paths: Optional[Sequence[PathBytes]],
-        query: Optional[dbcore.Query],
+        loghandler: logging.Handler | None,
+        paths: Sequence[PathBytes] | None,
+        query: dbcore.Query | None,
     ):
         """Create a session.
 
@@ -241,7 +243,7 @@ class ImportSession:
         if paths is not None:
             self.paths = list(map(normpath, paths))
 
-    def _setup_logging(self, loghandler: Optional[logging.Handler]):
+    def _setup_logging(self, loghandler: logging.Handler | None):
         logger = logging.getLogger(__name__)
         logger.propagate = False
         if not loghandler:
@@ -474,15 +476,15 @@ class BaseImportTask:
     Tasks flow through the importer pipeline. Each stage can update
     them."""
 
-    toppath: Optional[PathBytes]
+    toppath: PathBytes | None
     paths: list[PathBytes]
     items: list[library.Item]
 
     def __init__(
         self,
-        toppath: Optional[PathBytes],
-        paths: Optional[Iterable[PathBytes]],
-        items: Optional[Iterable[library.Item]],
+        toppath: PathBytes | None,
+        paths: Iterable[PathBytes] | None,
+        items: Iterable[library.Item] | None,
     ):
         """Create a task. The primary fields that define a task are:
 
@@ -537,12 +539,12 @@ class ImportTask(BaseImportTask):
       system.
     """
 
-    choice_flag: Optional[action] = None
+    choice_flag: action | None = None
     match: autotag.AlbumMatch | autotag.TrackMatch | None = None
 
     # Keep track of the current task item
-    cur_album: Optional[str] = None
-    cur_artist: Optional[str] = None
+    cur_album: str | None = None
+    cur_artist: str | None = None
     candidates: Sequence[autotag.AlbumMatch | autotag.TrackMatch] = []
 
     def __init__(self, toppath, paths, items):
@@ -834,7 +836,7 @@ class ImportTask(BaseImportTask):
         self,
         operation: Optional[MoveOperation] = None,
         write=False,
-        session: Optional[ImportSession] = None,
+        session: ImportSession | None = None,
     ):
         """Copy, move, link, hardlink or reflink (depending on `operation`)
         the files as well as write metadata.
@@ -1054,7 +1056,7 @@ class ImportTask(BaseImportTask):
 class SingletonImportTask(ImportTask):
     """ImportTask for a single track that is not associated to an album."""
 
-    def __init__(self, toppath: Optional[PathBytes], item: library.Item):
+    def __init__(self, toppath: PathBytes | None, item: library.Item):
         super().__init__(toppath, [item.path], [item])
         self.item = item
         self.is_album = False
@@ -1362,7 +1364,7 @@ class ImportTaskFactory:
         else:
             yield self.sentinel()
 
-    def _create(self, task: Optional[ImportTask]):
+    def _create(self, task: ImportTask | None):
         """Handle a new task to be emitted by the factory.
 
         Emit the `import_task_created` event and increment the
@@ -1438,7 +1440,7 @@ class ImportTaskFactory:
         else:
             return None
 
-    def sentinel(self, paths: Optional[Iterable[PathBytes]] = None):
+    def sentinel(self, paths: Iterable[PathBytes] | None = None):
         """Return a `SentinelImportTask` indicating the end of a
         top-level directory import.
         """
