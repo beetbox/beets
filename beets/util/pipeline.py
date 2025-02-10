@@ -30,6 +30,7 @@ up a bottleneck stage by dividing its work among multiple threads.
 To do so, pass an iterable of coroutines to the Pipeline constructor
 in place of any single coroutine.
 """
+
 from __future__ import annotations
 
 import queue
@@ -153,10 +154,10 @@ def multiple(messages):
     return MultiMessage(messages)
 
 
-# Arguments of the function (omitting the task)
-Args = TypeVarTuple("Args")
-# Task as an additional argument to the function
-Task = TypeVar("Task")
+A = TypeVarTuple("A")  # Arguments of a function (omitting the task)
+T = TypeVar("T")  # Type of the task
+# Normally these are concatenated i.e. (*args, task)
+
 # Return type of the function (should normally be task but sadly
 # we cant enforce this with the current stage functions without
 # a refactor)
@@ -165,7 +166,7 @@ R = TypeVar("R")
 
 def stage(
     func: Callable[
-        [Unpack[Args], Task],
+        [Unpack[A], T],
         R | None,
     ],
 ):
@@ -182,8 +183,8 @@ def stage(
     [3, 4, 5]
     """
 
-    def coro(*args: Unpack[Args]) -> Generator[R | Task | None, Task, None]:
-        task: R | Task | None = None
+    def coro(*args: Unpack[A]) -> Generator[R | T | None, T, None]:
+        task: R | T | None = None
         while True:
             task = yield task
             task = func(*(args + (task,)))
@@ -191,7 +192,7 @@ def stage(
     return coro
 
 
-def mutator_stage(func: Callable[[Unpack[Args], Task], R]):
+def mutator_stage(func: Callable[[Unpack[A], T], R]):
     """Decorate a function that manipulates items in a coroutine to
     become a simple stage.
 
@@ -206,7 +207,7 @@ def mutator_stage(func: Callable[[Unpack[Args], Task], R]):
     [{'x': True}, {'a': False, 'x': True}]
     """
 
-    def coro(*args: Unpack[Args]) -> Generator[Task | None, Task, None]:
+    def coro(*args: Unpack[A]) -> Generator[T | None, T, None]:
         task = None
         while True:
             task = yield task
@@ -425,7 +426,9 @@ class Pipeline:
         for i in range(1, queue_count):
             for coro in self.stages[i]:
                 threads.append(
-                    MiddlePipelineThread(coro, queues[i - 1], queues[i], threads)
+                    MiddlePipelineThread(
+                        coro, queues[i - 1], queues[i], threads
+                    )
                 )
 
         # Last stage.
