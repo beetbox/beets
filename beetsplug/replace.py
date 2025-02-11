@@ -22,14 +22,22 @@ class ReplacePlugin(BeetsPlugin):
         index = int(input("Which song would you like to replace? "))
         song = itemList[index-1]
 
-        originalFilePath = song.path.decode()
+        print(f"{newFilePath} -> {song.destination().decode()}")
+        decision = input("Are you sure you want to replace this track? Yes/No: ")
 
-        originalFileBase, originalFileExt = os.path.splitext(originalFilePath)
-        newFileBase, newFileExt = os.path.splitext(newFilePath)
-        dest = originalFileBase + newFileExt
-        destEncoded = dest.encode()
-        os.rename(newFilePath, dest)
-        if newFileExt != originalFileExt:
-            os.remove(originalFilePath)
-        song.path = destEncoded
-        song.store()
+        if decision == "Yes" or decision == "yes" or decision == "y" or decision == "Y":
+            song.write(newFilePath)
+            originalFilePath = song.path.decode()
+ 
+            originalFileBase, originalFileExt = os.path.splitext(originalFilePath)
+            newFileBase, newFileExt = os.path.splitext(newFilePath)
+            dest = originalFileBase + newFileExt
+            destEncoded = dest.encode()
+            os.rename(newFilePath, dest)
+            if newFileExt != originalFileExt:
+                os.remove(originalFilePath)
+            song.path = destEncoded
+            song.store()
+        else:
+            print("Not doing anything. Exiting!")
+            exit()
