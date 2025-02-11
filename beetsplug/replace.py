@@ -11,8 +11,17 @@ class ReplacePlugin(BeetsPlugin):
         newFilePath = args[-1]
         itemQuery = args[:-1]
 
-        song = lib.items(itemQuery)[0]
-        song.write(newFilePath)
+        itemList = []
+        i = 0
+        items = lib.items(itemQuery)
+        for item in items:
+            i += 1
+            itemList.append(item)
+            print(f"{i}. {item}")
+
+        index = int(input("Which song would you like to replace? "))
+        song = itemList[index-1]
+
         originalFilePath = song.path.decode()
 
         originalFileBase, originalFileExt = os.path.splitext(originalFilePath)
