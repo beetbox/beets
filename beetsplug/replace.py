@@ -19,7 +19,17 @@ class ReplacePlugin(BeetsPlugin):
             itemList.append(item)
             print(f"{i}. {item}")
 
-        index = int(input("Which song would you like to replace? "))
+        if i == 0:
+            print(f"No song found for this query.")
+            exit()
+
+        while True:
+            try:
+                index = int(input(f"Which song would you like to replace? [1-{len(itemList)}]: "))
+                break
+            except ValueError:
+                print("Please type in a number.")
+
         song = itemList[index-1]
 
         print(f"{newFilePath} -> {song.destination().decode()}")
