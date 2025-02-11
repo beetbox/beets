@@ -26,7 +26,10 @@ class ReplacePlugin(BeetsPlugin):
         decision = input("Are you sure you want to replace this track? Yes/No: ")
 
         if decision == "Yes" or decision == "yes" or decision == "y" or decision == "Y":
-            song.write(newFilePath)
+            if not song.try_write(newFilePath):
+                print("Not a supported file.")
+                exit()
+
             originalFilePath = song.path.decode()
  
             originalFileBase, originalFileExt = os.path.splitext(originalFilePath)
