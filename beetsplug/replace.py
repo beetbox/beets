@@ -11,7 +11,7 @@ class ReplacePlugin(BeetsPlugin):
         newFilePath = args[-1]
         itemQuery = args[:-1]
 
-        if not os.isfile(newFilePath):
+        if not os.path.isfile(newFilePath):
             print("Input path is not a file.")
             exit()
 
