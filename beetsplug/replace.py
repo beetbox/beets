@@ -23,7 +23,7 @@ class ReplacePlugin(BeetsPlugin):
             itemList.append(item)
             print(f"{i}. {item}")
 
-        if i == 0:
+        if len(itemList) == 0:
             print(f"No song found for this query.")
             exit()
 
@@ -39,22 +39,26 @@ class ReplacePlugin(BeetsPlugin):
         print(f"{newFilePath} -> {song.destination().decode()}")
         decision = input("Are you sure you want to replace this track? Yes/No: ")
 
-        if decision in ("yes", "Yes", "y", "Y"):
-            if not song.try_write(newFilePath):
-                print("Not a supported file.")
-                exit()
-
-            originalFilePath = song.path.decode()
- 
-            originalFileBase, originalFileExt = os.path.splitext(originalFilePath)
-            newFileBase, newFileExt = os.path.splitext(newFilePath)
-            dest = originalFileBase + newFileExt
-            destEncoded = dest.encode()
-            os.rename(newFilePath, dest)
-            if newFileExt != originalFileExt:
-                os.remove(originalFilePath)
-            song.path = destEncoded
-            song.store()
-        else:
+        if decision not in ("yes", "Yes", "y", "Y"):
             print("Not doing anything. Exiting!")
             exit()
+
+        if not song.try_write(newFilePath):
+            print("Not a supported file.")
+            exit()
+
+        originalFilePath = song.path.decode()
+
+        originalFileBase, originalFileExt = os.path.splitext(originalFilePath)
+        newFileBase, newFileExt = os.path.splitext(newFilePath)
+
+        dest = originalFileBase + newFileExt
+        destEncoded = dest.encode()
+        
+        os.rename(newFilePath, dest)
+
+        if newFileExt != originalFileExt:
+            os.remove(originalFilePath)
+
+        song.path = destEncoded
+        song.store()
