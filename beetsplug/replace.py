@@ -13,15 +13,16 @@ class ReplacePlugin(BeetsPlugin):
         newFilePath = args[-1]
         itemQuery = args[:-1]
 
+        if not os.path.isfile(newFilePath):
+            print("Input path is not a file.")
+            sys.exit()
+
         try:
             f = mediafile.MediaFile(newFilePath)
         except mediafile.FileTypeError as fte:
             print("This file type is not supported. Error: ", fte)
             sys.exit()
 
-        if not os.path.isfile(newFilePath):
-            print("Input path is not a file.")
-            sys.exit()
 
         itemList = []
         i = 0
