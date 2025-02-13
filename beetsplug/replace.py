@@ -2,6 +2,7 @@ from beets.plugins import BeetsPlugin
 from beets import ui
 import mediafile
 import os
+import sys
 
 class ReplacePlugin(BeetsPlugin):
     def commands(self):
@@ -16,11 +17,11 @@ class ReplacePlugin(BeetsPlugin):
             f = mediafile.MediaFile(newFilePath)
         except mediafile.FileTypeError as fte:
             print("This file type is not supported. Error: ", fte)
-            exit()
+            sys.exit()
 
         if not os.path.isfile(newFilePath):
             print("Input path is not a file.")
-            exit()
+            sys.exit()
 
         itemList = []
         i = 0
@@ -32,7 +33,7 @@ class ReplacePlugin(BeetsPlugin):
 
         if len(itemList) == 0:
             print(f"No song found for this query.")
-            exit()
+            sys.exit()
 
         while True:
             try:
@@ -48,7 +49,7 @@ class ReplacePlugin(BeetsPlugin):
 
         if decision not in ("yes", "Yes", "y", "Y"):
             print("Not doing anything. Exiting!")
-            exit()
+            sys.exit()
 
         originalFilePath = song.path.decode()
 
