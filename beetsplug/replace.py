@@ -23,13 +23,8 @@ class ReplacePlugin(BeetsPlugin):
             print("This file type is not supported. Error:", fte)
             sys.exit()
 
-
-        itemList = []
-        i = 0
-        items = lib.items(itemQuery)
-        for item in items:
-            i += 1
-            itemList.append(item)
+        itemList = list(lib.items(itemQuery))
+        for i, item in enumerate(itemList):
             print(f"{i}. {item}")
 
         if len(itemList) == 0:
