@@ -40,7 +40,7 @@ class ReplacePlugin(BeetsPlugin):
 
         song = itemList[index-1]
 
-        print(f"{newFilePath} -> {song.destination().decode()}")
+        print(f"\n{newFilePath} -> {song.destination().decode()}")
         decision = input("Are you sure you want to replace this track? Yes/No: ")
 
         if decision not in ("yes", "Yes", "y", "Y"):
