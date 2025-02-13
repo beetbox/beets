@@ -1,5 +1,6 @@
 from beets.plugins import BeetsPlugin
 from beets import ui
+import mediafile
 import os
 
 class ReplacePlugin(BeetsPlugin):
@@ -10,6 +11,12 @@ class ReplacePlugin(BeetsPlugin):
     def run(self, lib, opts, args):
         newFilePath = args[-1]
         itemQuery = args[:-1]
+
+        try:
+            f = mediafile.MediaFile(newFilePath)
+        except mediafile.FileTypeError as fte:
+            print("This file type is not supported. Error: ", fte)
+            exit()
 
         if not os.path.isfile(newFilePath):
             print("Input path is not a file.")
@@ -41,10 +48,6 @@ class ReplacePlugin(BeetsPlugin):
 
         if decision not in ("yes", "Yes", "y", "Y"):
             print("Not doing anything. Exiting!")
-            exit()
-
-        if not song.try_write(newFilePath):
-            print("Not a supported file.")
             exit()
 
         originalFilePath = song.path.decode()
