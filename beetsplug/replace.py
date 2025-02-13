@@ -20,7 +20,7 @@ class ReplacePlugin(BeetsPlugin):
         try:
             f = mediafile.MediaFile(newFilePath)
         except mediafile.FileTypeError as fte:
-            print("This file type is not supported. Error: ", fte)
+            print("This file type is not supported. Error:", fte)
             sys.exit()
 
 
