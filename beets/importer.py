@@ -202,7 +202,7 @@ class ImportSession:
     """
 
     logger: logging.Logger
-    paths: list[bytes] | None = None
+    paths: list[PathBytes]
     lib: library.Library
 
     _is_resuming: dict[bytes, bool]
@@ -226,7 +226,7 @@ class ImportSession:
             A logging handler to use for the session's logger. If None, a
             NullHandler will be used.
         paths : os.PathLike or None
-            The paths to be imported. If None, no paths are specified.
+            The paths to be imported.
         query : dbcore.Query or None
             A query to filter items for import. If None, no query is applied.
         """
@@ -238,8 +238,7 @@ class ImportSession:
         self._merged_dirs = set()
 
         # Normalize the paths.
-        if paths is not None:
-            self.paths = list(map(normpath, paths))
+        self.paths = list(map(normpath, paths or []))
 
     def _setup_logging(self, loghandler: logging.Handler | None):
         logger = logging.getLogger(__name__)
@@ -329,9 +328,7 @@ class ImportSession:
                 self.tag_log("skip", paths)
 
     def should_resume(self, path: PathBytes):
-        raise NotImplementedError(
-            "Inheriting class must implement `should_resume`"
-        )
+        raise NotImplementedError
 
     def choose_match(self, task: ImportTask):
         raise NotImplementedError(
@@ -637,10 +634,6 @@ class ImportTask(BaseImportTask):
 
     def apply_metadata(self):
         """Copy metadata from match info to the items."""
-        assert isinstance(
-            self.match, autotag.AlbumMatch
-        ), "apply_metadata() only works for albums"
-
         if config["import"]["from_scratch"]:
             for item in self.match.mapping:
                 item.clear()
@@ -1073,7 +1066,6 @@ class SingletonImportTask(ImportTask):
             return dict(self.item)
         elif self.choice_flag is action.APPLY and self.match:
             return self.match.info.copy()
-        assert False
 
     def imported_items(self):
         return [self.item]
@@ -1179,7 +1171,7 @@ class SentinelImportTask(ImportTask):
             ImportState().progress_reset(self.toppath)
         elif self.toppath:
             # "Directory progress" sentinel for singletons
-            ImportState().progress_add(self.toppath, *self.paths)
+            super().save_progress()
 
     @property
     def skip(self) -> bool:
@@ -1272,16 +1264,11 @@ class ArchiveImportTask(SentinelImportTask):
         """
         assert self.toppath is not None, "toppath must be set"
 
-        handler_class = None
-        for path_test, handler_class in self.handlers():
+         for path_test, handler_class in self.handlers():
             if path_test(os.fsdecode(self.toppath)):
                 break
-
-        if handler_class is None:
-            raise ValueError(
-                "No handler found for archive: {0}".format(self.toppath)
-            )
-
+         else:
+            raise ValueError(f"No handler found for archive: {self.toppath}")
         extract_to = mkdtemp()
         archive = handler_class(os.fsdecode(self.toppath), mode="r")
         try:
