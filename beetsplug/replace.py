@@ -25,17 +25,14 @@ class ReplacePlugin(BeetsPlugin):
 
         itemList = list(lib.items(itemQuery))
 
-        if len(itemList) == 0:
-            print(f"No song found for this query.")
+        if not itemList:
+            print(f"Error: No matching songs found.")
             sys.exit()
         
         song = self.select_song(itemList)
 
-        print(f"\n{newFilePath} -> {song.destination().decode()}")
-        decision = input("Are you sure you want to replace this track? Yes/No: ")
-
-        if decision not in ("yes", "Yes", "y", "Y"):
-            print("Not doing anything. Exiting!")
+        if not self.confirm_replacement(newFilePath, song):
+            print("Aborting replacement.")
             sys.exit()
 
         originalFilePath = song.path.decode()
@@ -66,3 +63,8 @@ class ReplacePlugin(BeetsPlugin):
                 print(f"Invalid choice. Please enter a number between 1 and {len(items)}.")
             except ValueError:
                 print("Invalid input. Please type in a number.")
+
+    def confirm_replacement(self, newFilePath, song):
+        print(f"\nReplacing: {newFilePath} -> {song.destination().decode()}")
+        decision = input("Are you sure you want to replace this track? (yes/no): ").strip().casefold()
+        return decision in {"yes", "y"}
