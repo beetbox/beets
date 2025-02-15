@@ -38,6 +38,7 @@ class ReplacePlugin(BeetsPlugin):
         self.replace_file(newFilePath, song)
 
     def select_song(self, items):
+        print("Matching songs:")
         for i, item in enumerate(items):
             print(f"{i+1}. {item}")
 
