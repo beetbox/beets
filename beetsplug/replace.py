@@ -24,21 +24,12 @@ class ReplacePlugin(BeetsPlugin):
             sys.exit()
 
         itemList = list(lib.items(itemQuery))
-        for i, item in enumerate(itemList):
-            print(f"{i+1}. {item}")
 
         if len(itemList) == 0:
             print(f"No song found for this query.")
             sys.exit()
-
-        while True:
-            try:
-                index = int(input(f"Which song would you like to replace? [1-{len(itemList)}]: "))
-                break
-            except ValueError:
-                print("Please type in a number.")
-
-        song = itemList[index-1]
+        
+        song = self.select_song(itemList)
 
         print(f"\n{newFilePath} -> {song.destination().decode()}")
         decision = input("Are you sure you want to replace this track? Yes/No: ")
@@ -62,3 +53,16 @@ class ReplacePlugin(BeetsPlugin):
 
         song.path = destEncoded
         song.store()
+
+    def select_song(self, items):
+        for i, item in enumerate(items):
+            print(f"{i+1}. {item}")
+
+        while True:
+            try:
+                index = int(input(f"Which song would you like to replace? [1-{len(items)}]: "))
+                if 1 <= index <= len(items):
+                    return items[index - 1]
+                print(f"Invalid choice. Please enter a number between 1 and {len(items)}.")
+            except ValueError:
+                print("Invalid input. Please type in a number.")
