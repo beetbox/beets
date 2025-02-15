@@ -1405,16 +1405,12 @@ class ImportTaskFactory:
         `dirs` is a list of parent directories used to record already
         imported albums.
         """
-        if not paths:
-            return None
 
         if dirs is None:
             dirs = list({os.path.dirname(p) for p in paths})
 
         if self.session.already_imported(self.toppath, dirs):
-            log.debug(
-                "Skipping previously-imported path: {0}", displayable_path(dirs)
-            )
+            log.debug("Skipping previously-imported path: {0}", displayable_path(dirs))
             self.skipped += 1
             return None
 
@@ -1422,7 +1418,7 @@ class ImportTaskFactory:
             item for item in map(self.read_item, paths) if item
         ]
 
-        if items:
+        if len(items) > 0:
             return ImportTask(self.toppath, dirs, items)
         else:
             return None
@@ -1511,9 +1507,6 @@ def read_tasks(session: ImportSession):
     import, yields single-item tasks instead.
     """
     skipped = 0
-    if session.paths is None:
-        log.warning("No path specified in session.")
-        return
 
     for toppath in session.paths:
         # Check whether we need to resume the import.
