@@ -228,7 +228,7 @@ class ImportSession:
         paths : os.PathLike or None
             The paths to be imported.
         query : dbcore.Query or None
-            A query to filter items for import. If None, no query is applied.
+            A query to filter items for import.
         """
         self.lib = lib
         self.logger = self._setup_logging(loghandler)
@@ -331,19 +331,13 @@ class ImportSession:
         raise NotImplementedError
 
     def choose_match(self, task: ImportTask):
-        raise NotImplementedError(
-            "Inheriting class must implement `choose_match`"
-        )
+        raise NotImplementedError
 
     def resolve_duplicate(self, task: ImportTask, found_duplicates):
-        raise NotImplementedError(
-            "Inheriting class must implement `resolve_duplicate`"
-        )
-
+        raise NotImplementedError
+        
     def choose_item(self, task: ImportTask):
-        raise NotImplementedError(
-            "Inheriting class must implement `choose_item`"
-        )
+        raise NotImplementedError
 
     def run(self):
         """Run the import task."""
