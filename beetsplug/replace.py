@@ -35,21 +35,7 @@ class ReplacePlugin(BeetsPlugin):
             print("Aborting replacement.")
             sys.exit()
 
-        originalFilePath = song.path.decode()
-
-        originalFileBase, originalFileExt = os.path.splitext(originalFilePath)
-        newFileBase, newFileExt = os.path.splitext(newFilePath)
-
-        dest = originalFileBase + newFileExt
-        destEncoded = dest.encode()
-        
-        os.rename(newFilePath, dest)
-
-        if newFileExt != originalFileExt:
-            os.remove(originalFilePath)
-
-        song.path = destEncoded
-        song.store()
+        self.replace_file(newFilePath, song)
 
     def select_song(self, items):
         for i, item in enumerate(items):
@@ -68,3 +54,24 @@ class ReplacePlugin(BeetsPlugin):
         print(f"\nReplacing: {newFilePath} -> {song.destination().decode()}")
         decision = input("Are you sure you want to replace this track? (yes/no): ").strip().casefold()
         return decision in {"yes", "y"}
+
+    def replace_file(self, newFilePath, song):
+        originalFilePath = song.path.decode()
+        originalFileBase, originalFileExt = os.path.splitext(originalFilePath)
+        newFileBase, newFileExt = os.path.splitext(newFilePath)
+
+        dest = originalFileBase + newFileExt
+        
+        try:
+            os.rename(newFilePath, dest)
+        except OSError as e:
+            print(f"Error renaming file: {e}")
+            sys.exit()
+
+        if newFileExt != originalFileExt:
+            os.remove(originalFilePath)
+
+        song.path = dest.encode()
+        song.store()
+
+        print("Replacement successful.")
