@@ -25,7 +25,7 @@ class ReplacePlugin(BeetsPlugin):
 
         itemList = list(lib.items(itemQuery))
         for i, item in enumerate(itemList):
-            print(f"{i}. {item}")
+            print(f"{i+1}. {item}")
 
         if len(itemList) == 0:
             print(f"No song found for this query.")
