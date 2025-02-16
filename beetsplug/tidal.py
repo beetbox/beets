@@ -12,6 +12,8 @@ from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.importer import ImportSession, ImportTask
 from beets.library import Library
 from beets.plugins import BeetsPlugin
+import os.path
+from beets.util import bytestring_path, displayable_path, normpath, syspath
 
 """ TidalPlugin is a TIDAL source for the autotagger """
 
@@ -35,6 +37,7 @@ class TidalPlugin(BeetsPlugin):
                 "synced_lyrics": True,
                 "overwrite_lyrics": True,
                 "tokenfile": "tidal_token.json",
+                "write_sidecar": False # Write lyrics to LRC file
             }
         )
 
@@ -534,6 +537,64 @@ class TidalPlugin(BeetsPlugin):
         # Pick best one, aka the first one with lyrics
         return tracks[0].lyrics
 
+    def _process_item(self, item):
+            # Fetch lyrics if enabled
+            if self.config["lyrics"]:
+                # Don't overwrite lyrics
+                if not self.config["overwrite_lyrics"] and item.lyrics:
+                    self._log.info(
+                        "Not fetching lyrics because item already has them"
+                    )
+                    return
+
+                self._log.debug(
+                    "Fetching lyrics during import... this may fail"
+                )
+                # Use tidal_track_id if defined, aka the metadata came from us
+                if item.get("tidal_track_id", None):
+                    self._log.debug(
+                        f"Using tidal_track_id of {item.tidal_track_id} to fetch lyrics!"
+                    )
+                    try:
+                        track = self.sess.track(track)
+                    except exceptions.ObjectNotFound:
+                        self._log.warn(
+                            "tidal_track_id is defined but the API returned not found"
+                        )
+                        return
+
+                    item.lyrics = self._get_lyrics(track)
+                else:
+                    self._log.debug(
+                        "tidal_track_id is undefined... searching"
+                    )
+                    item.lyrics = self._search_lyrics(item)
+
+                # Write out item if global write is enabled
+                if ui.should_write():
+                    self._log.debug(
+                        "Global write is enabled... writing lyrics"
+                    )
+                    item.try_write()
+
+                # Write out lyrics to sidecar file if enabled
+                if self.config["write_sidecar"] and item.lyrics:
+                    self._log.debug("write_sidecar is enabled and we have lyrics... writing sidecar files")
+
+                    # Do tons of os.path operations to get the sidecar path
+                    filepath, filename = os.path.split(syspath(item.path))
+                    basename, ext = os.path.splitext(filename)
+                    sidecar_file = f"{basename}.lrc"
+                    sidecar_path = os.path.join(filepath, sidecar_file)
+
+                    self._log.debug(f"Saving lyrics to sidecar file {sidecar_path}")
+
+                    # Save lyrics
+                    with open(sidecar_path, "w") as file:
+                        file.write(item.lyrics)
+
+                item.store()
+
     def stage(self, session: ImportSession, task: ImportTask):
         self._log.debug("Running import stage for TidalPlugin!")
 
@@ -546,43 +607,4 @@ class TidalPlugin(BeetsPlugin):
         if self.config["auto"]:
             self._log.debug("Processing ImportTask as auto is True!")
             for item in task.imported_items():
-                # Fetch lyrics if enabled
-                if self.config["lyrics"]:
-                    # Don't overwrite lyrics
-                    if not self.config["overwrite_lyrics"] and item.lyrics:
-                        self._log.info(
-                            "Not fetching lyrics because item already has them"
-                        )
-                        break
-
-                    self._log.debug(
-                        "Fetching lyrics during import... this may fail"
-                    )
-                    # Use tidal_track_id if defined, aka the metadata came from us
-                    if item.get("tidal_track_id", None):
-                        self._log.debug(
-                            f"Using tidal_track_id of {item.tidal_track_id} to fetch lyrics!"
-                        )
-                        try:
-                            track = self.sess.track(track)
-                        except exceptions.ObjectNotFound:
-                            self._log.warn(
-                                "tidal_track_id is defined but the API returned not found"
-                            )
-                            break
-
-                        item.lyrics = self._get_lyrics(track)
-                    else:
-                        self._log.debug(
-                            "tidal_track_id is undefined... searching"
-                        )
-                        item.lyrics = self._search_lyrics(item)
-
-                    # Write out item if global write is enabled
-                    if ui.should_write():
-                        self._log.debug(
-                            "Global write is enabled... writing lyrics"
-                        )
-                        item.try_write()
-
-                    item.store()
+                self._process_item(item)
