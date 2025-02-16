@@ -589,6 +589,9 @@ class TidalPlugin(BeetsPlugin):
 
     def stage(self, session: ImportSession, task: ImportTask):
         self._log.debug("Running import stage for TidalPlugin!")
+        if not self.config["auto"]:
+            self._log.debug("Not processing further due to auto being False")
+            return
 
         if not self._load_session():
             self._log.info(
@@ -596,7 +599,5 @@ class TidalPlugin(BeetsPlugin):
             )
             return
 
-        if self.config["auto"]:
-            self._log.debug("Processing ImportTask as auto is True!")
-            for item in task.imported_items():
-                self._process_item(item)
+        for item in task.imported_items():
+            self._process_item(item)
