@@ -7,7 +7,7 @@ from datetime import datetime
 import backoff
 import cachetools
 import confuse
-from tidalapi import *
+import tidalapi
 
 from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
@@ -87,7 +87,7 @@ class TidalPlugin(BeetsPlugin):
         self._log.debug(
             f"Attempting to load session state from {self.sessfile}!"
         )
-        self.sess = session.Session()
+        self.sess = tidalapi.session.Session()
 
         # Attempt to load OAuth data from token file
         try:
@@ -157,7 +157,7 @@ class TidalPlugin(BeetsPlugin):
 
         :raises ui.UserError: Raised when login fails
         """
-        self.sess = session.Session()
+        self.sess = tidalapi.session.Session()
         login, future = self.sess.login_oauth()
         ui.print_(
             f"Open the following URL to complete login: https://{login.verification_uri_complete}"
@@ -247,7 +247,7 @@ class TidalPlugin(BeetsPlugin):
 
         try:
             album = self.sess.album(tidal_album_id)
-        except exceptions.ObjectNotFound:
+        except tidalapi.exceptions.ObjectNotFound:
             self._log.debug(f"No album for ID {tidal_album_id}")
             return None
 
@@ -293,7 +293,7 @@ class TidalPlugin(BeetsPlugin):
 
         try:
             track = self.sess.track(tidal_track_id, with_album=True)
-        except exceptions.ObjectNotFound:
+        except tidalapi.exceptions.ObjectNotFound:
             self._log.debug(f"No track for ID {tidal_track_id}")
             return None
 
@@ -319,7 +319,7 @@ class TidalPlugin(BeetsPlugin):
                         self.sess.album(item.tidal_album_id)
                     )
                     candidates.append(album)
-                except exceptions.ObjectNotFound:
+                except tidalapi.exceptions.ObjectNotFound:
                     self._log.debug(
                         f"No album found for ID {item.tidal_album_id}"
                     )
@@ -458,7 +458,7 @@ class TidalPlugin(BeetsPlugin):
         :rtype: list
         """
         self._log.debug(f"_search_track query {query}")
-        results = self._tidal_search(query, [Track], limit, offset)
+        results = self._tidal_search(query, [tidalapi.Track], limit, offset)
 
         candidates = []
 
@@ -485,7 +485,7 @@ class TidalPlugin(BeetsPlugin):
         :rtype: list
         """
         self._log.debug(f"_search_album query {query}")
-        results = self._tidal_search(query, [Album], limit, offset)
+        results = self._tidal_search(query, [tidalapi.Album], limit, offset)
         candidates = []
 
         # top_hit is the most relevant to our query, add that first.
@@ -505,7 +505,7 @@ class TidalPlugin(BeetsPlugin):
     )
     @backoff.on_exception(
         backoff.expo,
-        exceptions.TooManyRequests,
+        tidalapi.exceptions.TooManyRequests,
         max_tries=rate_limit_retries,
         on_backoff=backoff_handler,
         factor=2,
@@ -538,7 +538,7 @@ class TidalPlugin(BeetsPlugin):
     # the metadata API
     @backoff.on_exception(
         backoff.expo,
-        exceptions.TooManyRequests,
+        tidalapi.exceptions.TooManyRequests,
         max_tries=rate_limit_retries,
         on_backoff=backoff_handler,
         base=5,
@@ -563,7 +563,7 @@ class TidalPlugin(BeetsPlugin):
         # Grab lyrics
         try:
             lyrics = track.lyrics()
-        except exceptions.MetadataNotAvailable:
+        except tidalapi.exceptions.MetadataNotAvailable:
             self._log.info(f"Lyrics not available for track {track.id}")
             return None
 
@@ -651,7 +651,7 @@ class TidalPlugin(BeetsPlugin):
             track.lyrics = self._get_lyrics(track)
 
         # Filter out tracks with no lyrics
-        tracks = [x for x in tracks if x.lyrics != None]
+        tracks = [x for x in tracks if x.lyrics is not None]
 
         if not tracks:
             self._log.info(f"No results found for {item.title}")
@@ -685,8 +685,8 @@ class TidalPlugin(BeetsPlugin):
                     f"Using tidal_track_id of {item.tidal_track_id} to fetch lyrics!"
                 )
                 try:
-                    track = self.sess.track(track)
-                except exceptions.ObjectNotFound:
+                    track = self.sess.track(item.tidal_track_id)
+                except tidalapi.exceptions.ObjectNotFound:
                     self._log.warn(
                         "tidal_track_id is defined but the API returned not found"
                     )
