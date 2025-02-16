@@ -87,9 +87,9 @@ class TidalPlugin(BeetsPlugin):
         try:
             with open(self.sessfile) as file:
                 sess_data = json.load(file)
-        except OSError:
+        except (OSError, json.JSONDecodeError):
             # Error occured, most likely token file does not exist.
-            self._log.debug("Session state file does not exist")
+            self._log.debug("Session state file does not exist or is corrupt")
             if fatal:
                 raise ui.UserError("Please login to TIDAL using `beets tidal --login`")
             else:
