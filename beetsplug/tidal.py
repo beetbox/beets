@@ -7,18 +7,26 @@ import backoff
 import confuse
 from tidalapi import *
 
-from beets import ui
+from beets import ui, logging
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.importer import ImportSession, ImportTask
 from beets.library import Library
 from beets.plugins import BeetsPlugin
 import os.path
 from beets.util import bytestring_path, displayable_path, normpath, syspath, remove
+import cachetools
 
-""" TidalPlugin is a TIDAL source for the autotagger """
-
+def backoff_handler(details):
+    """ Handler for rate limiting backoff """
+    TidalPlugin.logger.debug("Rate limited! Cooling off for {wait:0.1f} seconds after calling function {target.__name__} {tries} times".format(**details))
 
 class TidalPlugin(BeetsPlugin):
+    """ TidalPlugin is a TIDAL source for the autotagger """
+
+    # The built-in beets logger is an instance variable, so to access it
+    # in the backoff_handler, we have to assign it to a static variable.
+    logger = None
+
     data_source = "tidal"
     track_share_regex = r"(tidal.com\/browse\/track\/)([0-9]*)(\?u)"  # Format: https://tidal.com/browse/track/221182395?u
     album_share_regex = r"(tidal.com\/browse\/album\/)([0-9]*)(\?u)"  # Format: https://tidal.com/browse/album/221182592?u
@@ -27,15 +35,22 @@ class TidalPlugin(BeetsPlugin):
 
     def __init__(self):
         super().__init__()
+        TidalPlugin.logger = self._log
         self.import_stages = [self.stage]
 
         # Import config
+        # The lyrics search limit is much smaller than the metadata search limit
+        # as the current implementation is very API-heavy and TIDAL heavily
+        # rate limits the lyrics API so increasing the limit causes 
+        # an __exponential__ increase in API calls.
         self.config.add(
             {
                 "auto": True,
                 "lyrics": True,
                 "synced_lyrics": True,
                 "overwrite_lyrics": True,
+                "metadata_search_limit": 25, # Search limit when querying API for metadata
+                "lyrics_search_limit": 10, # Search limit when querying API for lyrics
                 "tokenfile": "tidal_token.json",
                 "write_sidecar": False # Write lyrics to LRC file
             }
@@ -48,9 +63,8 @@ class TidalPlugin(BeetsPlugin):
         # tidalapi.session.Session object we throw around to execute API calls with
         self.sess = None
 
-    """ Loads a TIDAL session from a JSON file to the class singleton """
-
-    def _load_session(self):
+    def _load_session(self, fatal=False):
+        """ Loads a TIDAL session from a JSON file to the class singleton """
         if self.sess:
             self._log.debug(
                 "Not attempting to load session state as we already have a session!"
@@ -69,7 +83,10 @@ class TidalPlugin(BeetsPlugin):
         except OSError:
             # Error occured, most likely token file does not exist.
             self._log.debug("Session state file does not exist")
-            return False
+            if fatal:
+                raise ui.UserError("Please login to TIDAL using `beets tidal --login`")
+            else:
+                return False
         else:
             # Got some JSON data from the file
             # Let's load the data into a session and check for validity.
@@ -93,13 +110,15 @@ class TidalPlugin(BeetsPlugin):
 
                     remove(bytestring_path(self.sessfile), soft=True)
 
-                return False
+                if fatal:
+                    raise ui.UserError("Please login to TIDAL using `beets tidal --login`")
+                else:
+                    return False
 
             return True
 
-    """ Saves a TIDAL session to a JSON file """
-
     def _save_session(self, sess):
+        """ Saves a TIDAL session to a JSON file """
         self._log.debug(f"Saving session state to {self.sessfile}!")
         with open(self.sessfile, "w") as file:
             json.dump(
@@ -112,18 +131,17 @@ class TidalPlugin(BeetsPlugin):
                 file,
             )
 
-    """ Creates a session to use with the TIDAL API """
-
     def _login(self):
+        """ Creates a session to use with the TIDAL API """
         self.sess = session.Session()
         login, future = self.sess.login_oauth()
-        print(
+        ui.print_(
             f"Open the following URL to complete login: https://{login.verification_uri_complete}"
         )
-        print(f"The link expires in {int(login.expires_in)} seconds!")
+        ui.print_(f"The link expires in {int(login.expires_in)} seconds!")
 
         if not future.result():
-            self._log.error("Login failure! See above output for more info.")
+            raise ui.UserError("Login failure! See above output for more info.")
 
         self._save_session(self.sess)
 
@@ -165,9 +183,8 @@ class TidalPlugin(BeetsPlugin):
         cmd.func = self.cmd_main
         return [cmd]
 
-    """ Return TIDAL metadata for a specific TIDAL Album ID """
-
     def album_for_id(self, album_id):
+        """ Return TIDAL metadata for a specific TIDAL Album ID """
         # Check for session
         self._log.debug(f"Running album_for_id with track {album_id}!")
         if not self._load_session():
@@ -206,9 +223,8 @@ class TidalPlugin(BeetsPlugin):
 
         return self._album_to_albuminfo(album)
 
-    """ Return TIDAL metadata for a specific TIDAL Track ID """
-
     def track_for_id(self, track_id):
+        """ Return TIDAL metadata for a specific TIDAL Track ID """
         # Check for session
         self._log.debug(f"Running track_for_id with track {track_id}!")
         if not self._load_session():
@@ -247,9 +263,8 @@ class TidalPlugin(BeetsPlugin):
 
         return self._track_to_trackinfo(track, track.album)
 
-    """ Returns TIDAL metadata candidates for a specific set of items, typically an album """
-
     def candidates(self, items, artist, album, va_likely, extra_tags):
+        """ Returns TIDAL metadata candidates for a specific set of items, typically an album """
         if not self._load_session():
             self._log.info(
                 "Skipping candidates because we have no session! Please login."
@@ -289,9 +304,8 @@ class TidalPlugin(BeetsPlugin):
 
         return candidates
 
-    """ Returns TIDAL metadata candidates for a specific item """
-
     def item_candidates(self, item, artist, album):
+        """ Returns TIDAL metadata candidates for a specific item """
         if not self._load_session():
             self._log.info(
                 "Skipping item_candidates because we have no session! Please login."
@@ -301,17 +315,16 @@ class TidalPlugin(BeetsPlugin):
         self._log.debug(f"Searching TIDAL for {item}!")
 
         if item.title:
-            return self._search_track(item.title)
+            return self._search_track(item.title, limit=self.config["metadata_search_limit"].as_number())
         elif item.album:
-            return self._search_track(item.album, limit=25)
+            return self._search_track(item.album, limit=self.config["metadata_search_limit"].as_number())
         elif item.artist:
-            return self._search_track(item.artist, limit=50)
+            return self._search_track(item.artist, limit=self.config["metadata_search_limit"].as_number())
 
         return []
 
-    """ Converts a TIDAL album to a beets AlbumInfo """
-
     def _album_to_albuminfo(self, album):
+        """ Converts a TIDAL album to a beets AlbumInfo """
         tracks = []
 
         # Process tracks
@@ -345,9 +358,8 @@ class TidalPlugin(BeetsPlugin):
 
         return albuminfo
 
-    """ Converts a TIDAL track to a beets TrackInfo """
-
     def _track_to_trackinfo(self, track, album=None):
+        """ Converts a TIDAL track to a beets TrackInfo """
         trackinfo = TrackInfo(
             title=track.name,
             track_id=track.id,
@@ -374,29 +386,25 @@ class TidalPlugin(BeetsPlugin):
 
         return trackinfo
 
-    """ Searches TIDAL for tracks matching the query """
-
     def _search_track(self, query, limit=10, offset=0):
+        """ Searches TIDAL for tracks matching the query """
         self._log.debug(f"_search_track query {query}")
         results = self._tidal_search(query, [Track], limit, offset)
 
         candidates = []
-
+        
         # top_hit is the most relevant to our query, add that first.
         if results["top_hit"]:
-            album = self.sess.album(results["top_hit"].album.id)
-            candidates = [self._track_to_trackinfo(results["top_hit"], album)]
+            candidates.append(results["top_hit"])
 
         for result in results["tracks"]:
-            album = self.sess.album(result.album.id)
-            candidates.append(self._track_to_trackinfo(result, album))
+            candidates.append(result)
 
         self._log.debug(f"_search_track found {len(candidates)} results")
         return candidates
 
-    """ Searches TIDAL for albums matching the query """
-
     def _search_album(self, query, limit=10, offset=0):
+        """ Searches TIDAL for albums matching the query """
         self._log.debug(f"_search_album query {query}")
         results = self._tidal_search(query, [Album], limit, offset)
         candidates = []
@@ -411,12 +419,14 @@ class TidalPlugin(BeetsPlugin):
         self._log.debug(f"_search_album found {len(candidates)} results")
         return candidates
 
-    """ Simple wrapper for TIDAL search to check for session and to implement rate limiting """
-
+    @cachetools.cached(cache=cachetools.LFUCache(maxsize=4096), key = lambda self, query, *args, **kwargs: query, info=True)
     @backoff.on_exception(
-        backoff.expo, exceptions.TooManyRequests, max_tries=rate_limit_retries
+        backoff.expo, exceptions.TooManyRequests, max_tries=rate_limit_retries,
+        on_backoff=backoff_handler, factor = 2
     )
-    def _tidal_search(self, *args, **kwargs):
+    def _tidal_search(self, query, *args, **kwargs):
+        """ Simple wrapper for TIDAL search to check for session and to implement rate limiting """
+        #raise exceptions.TooManyRequests("test")
         if not self._load_session():
             self.log.debug(
                 "Cannot perform search with no session... please login."
@@ -425,14 +435,17 @@ class TidalPlugin(BeetsPlugin):
             # We only use these three keys, even though the API returns more
             return {"albums": [], "tracks": [], "top_hit": None}
 
-        return self.sess.search(*args, **kwargs)
+        return self.sess.search(query, *args, **kwargs)
 
-    """ Grabs lyrics from a TIDAL track """
-
+    @cachetools.cached(cache=cachetools.LFUCache(maxsize=4096), key = lambda self, track: track.id, info=True)
+    # _get_lyrics has a much higher factor as it is much more rate limited by TIDAL than
+    # the metadata API
     @backoff.on_exception(
-        backoff.expo, exceptions.TooManyRequests, max_tries=rate_limit_retries
+        backoff.expo, exceptions.TooManyRequests, max_tries=rate_limit_retries,
+        on_backoff=backoff_handler, base = 5, factor = 3
     )
     def _get_lyrics(self, track):
+        """ Grabs lyrics from a TIDAL track """
         if not self._load_session():
             self._log.debug(
                 "Cannot grab lyrics with no session... please login."
@@ -463,9 +476,8 @@ class TidalPlugin(BeetsPlugin):
         else:
             return lyrics.text
 
-    """ Searches for lyrics using a non-TIDAL metadata source """
-
     def _search_lyrics(self, item, limit=10):
+        """ Searches for lyrics using a non-TIDAL metadata source """
         if not self._load_session():
             self._log.debug(
                 "Cannot grab lyrics with no session... please login."
@@ -483,17 +495,17 @@ class TidalPlugin(BeetsPlugin):
         if item.title:
             query.append(item.title)
             trackids = [x.tidal_track_id for x in tracks]
-            tracks += self._search_track(" ".join(query), limit=limit)
+            tracks += self._search_track(" ".join(query), limit=self.config["metadata_search_limit"].as_number())
 
         # Search using title + artist
         if item.artist:
             query.append(item.artist)
-            tracks += self._search_track(" ".join(query), limit=limit)
+            tracks += self._search_track(" ".join(query), limit=self.config["metadata_search_limit"].as_number())
 
         # Search using title + artist + album
         if item.album:
             query.append(item.album)
-            tracks += self._search_track(" ".join(query), limit=limit)
+            tracks += self._search_track(" ".join(query), limit=self.config["metadata_search_limit"].as_number())
 
         # Reverse list so the more specific result is first
         tracks = reversed(tracks)
@@ -502,22 +514,20 @@ class TidalPlugin(BeetsPlugin):
         trackids = []
         newtracks = []
         for track in tracks:
-            if track.tidal_track_id in trackids:
+            if track.id in trackids:
                 self._log.debug(
-                    f"Removing duplicate track {track.tidal_track_id}"
+                    f"Removing duplicate track {track.id}"
                 )
                 continue
             else:
-                trackids.append(track.tidal_track_id)
+                trackids.append(track.id)
                 newtracks.append(track)
 
         tracks = newtracks
 
         # Fetch lyrics for tracks
         for track in tracks:
-            track.lyrics = self._get_lyrics(
-                self.sess.track(track.tidal_track_id)
-            )
+            track.lyrics = self._get_lyrics(track)
 
         # Filter out tracks with no lyrics
         tracks = [x for x in tracks if x.lyrics != None]
@@ -530,6 +540,8 @@ class TidalPlugin(BeetsPlugin):
         return tracks[0].lyrics
 
     def _process_item(self, item):
+            """ Processes an item from the import stage """
+
             # Fetch lyrics if enabled
             if self.config["lyrics"]:
                 # Don't overwrite lyrics
@@ -560,7 +572,7 @@ class TidalPlugin(BeetsPlugin):
                     self._log.debug(
                         "tidal_track_id is undefined... searching"
                     )
-                    item.lyrics = self._search_lyrics(item)
+                    item.lyrics = self._search_lyrics(item, limit=self.config["lyrics_search_limit"].as_number())
 
                 # Write out item if global write is enabled
                 if ui.should_write():
@@ -601,3 +613,6 @@ class TidalPlugin(BeetsPlugin):
 
         for item in task.imported_items():
             self._process_item(item)
+
+            self._log.debug(f"_get_lyrics cache: {self._get_lyrics.cache_info()}")
+            self._log.debug(f"_tidal_search cache: {self._tidal_search.cache_info()}")
