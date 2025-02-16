@@ -119,30 +119,6 @@ BROWSE_CHUNKSIZE = 100
 BROWSE_MAXTRACKS = 500
 
 
-def track_url(trackid: str) -> str:
-    return urljoin(BASE_URL, "recording/" + trackid)
-
-
-def album_url(albumid: str) -> str:
-    return urljoin(BASE_URL, "release/" + albumid)
-
-
-def configure():
-    """Set up the python-musicbrainz-ngs module according to settings
-    from the beets configuration. This should be called at startup.
-    """
-    hostname = config["musicbrainz"]["host"].as_str()
-    https = config["musicbrainz"]["https"].get(bool)
-    # Only call set_hostname when a custom server is configured. Since
-    # musicbrainz-ngs connects to musicbrainz.org with HTTPS by default
-    if hostname != "musicbrainz.org":
-        musicbrainzngs.set_hostname(hostname, https)
-    musicbrainzngs.set_rate_limit(
-        config["musicbrainz"]["ratelimit_interval"].as_number(),
-        config["musicbrainz"]["ratelimit"].get(int),
-    )
-
-
 def _preferred_alias(aliases: list):
     """Given an list of alias structures for an artist credit, select
     and return the user's preferred alias alias or None if no matching
@@ -176,25 +152,6 @@ def _preferred_alias(aliases: list):
             continue
 
         return matches[0]
-
-
-def _preferred_release_event(release: dict[str, Any]) -> tuple[str, str]:
-    """Given a release, select and return the user's preferred release
-    event as a tuple of (country, release_date). Fall back to the
-    default release event if a preferred event is not found.
-    """
-    countries = config["match"]["preferred"]["countries"].as_str_seq()
-    countries = cast(Sequence, countries)
-
-    for country in countries:
-        for event in release.get("release-event-list", {}):
-            try:
-                if country in event["area"]["iso-3166-1-code-list"]:
-                    return country, event["date"]
-            except KeyError:
-                pass
-
-    return (cast(str, release.get("country")), cast(str, release.get("date")))
 
 
 def _multi_artist_credit(
@@ -246,6 +203,10 @@ def _multi_artist_credit(
     )
 
 
+def track_url(trackid: str) -> str:
+    return urljoin(BASE_URL, "recording/" + trackid)
+
+
 def _flatten_artist_credit(credit: list[dict]) -> tuple[str, str, str]:
     """Given a list representing an ``artist-credit`` block, flatten the
     data into a triple of joined artist name strings: canonical, sort, and
@@ -285,6 +246,144 @@ def _get_related_artist_names(relations, relation_type):
             related_artists.append(relation["artist"]["name"])
 
     return ", ".join(related_artists)
+
+
+def album_url(albumid: str) -> str:
+    return urljoin(BASE_URL, "release/" + albumid)
+
+
+def _preferred_release_event(release: dict[str, Any]) -> tuple[str, str]:
+    """Given a release, select and return the user's preferred release
+    event as a tuple of (country, release_date). Fall back to the
+    default release event if a preferred event is not found.
+    """
+    countries = config["match"]["preferred"]["countries"].as_str_seq()
+    countries = cast(Sequence, countries)
+
+    for country in countries:
+        for event in release.get("release-event-list", {}):
+            try:
+                if country in event["area"]["iso-3166-1-code-list"]:
+                    return country, event["date"]
+            except KeyError:
+                pass
+
+    return (cast(str, release.get("country")), cast(str, release.get("date")))
+
+
+def _set_date_str(
+    info: beets.autotag.hooks.AlbumInfo,
+    date_str: str,
+    original: bool = False,
+):
+    """Given a (possibly partial) YYYY-MM-DD string and an AlbumInfo
+    object, set the object's release date fields appropriately. If
+    `original`, then set the original_year, etc., fields.
+    """
+    if date_str:
+        date_parts = date_str.split("-")
+        for key in ("year", "month", "day"):
+            if date_parts:
+                date_part = date_parts.pop(0)
+                try:
+                    date_num = int(date_part)
+                except ValueError:
+                    continue
+
+                if original:
+                    key = "original_" + key
+                setattr(info, key, date_num)
+
+
+def _parse_id(s: str) -> str | None:
+    """Search for a MusicBrainz ID in the given string and return it. If
+    no ID can be found, return None.
+    """
+    # Find the first thing that looks like a UUID/MBID.
+    match = re.search("[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}", s)
+    if match is not None:
+        return match.group() if match else None
+    return None
+
+
+def _is_translation(r):
+    _trans_key = "transl-tracklisting"
+    return r["type"] == _trans_key and r["direction"] == "backward"
+
+
+def _find_actual_release_from_pseudo_release(
+    pseudo_rel: dict,
+) -> dict | None:
+    try:
+        relations = pseudo_rel["release"]["release-relation-list"]
+    except KeyError:
+        return None
+
+    # currently we only support trans(liter)ation's
+    translations = [r for r in relations if _is_translation(r)]
+
+    if not translations:
+        return None
+
+    actual_id = translations[0]["target"]
+
+    return musicbrainzngs.get_release_by_id(actual_id, RELEASE_INCLUDES)
+
+
+def _merge_pseudo_and_actual_album(
+    pseudo: beets.autotag.hooks.AlbumInfo, actual: beets.autotag.hooks.AlbumInfo
+) -> beets.autotag.hooks.AlbumInfo | None:
+    """
+    Merges a pseudo release with its actual release.
+
+    This implementation is naive, it doesn't overwrite fields,
+    like status or ids.
+
+    According to the ticket PICARD-145, the main release id should be used.
+    But the ticket has been in limbo since over a decade now.
+    It also suggests the introduction of the tag `musicbrainz_pseudoreleaseid`,
+    but as of this field can't be found in any official Picard docs,
+    hence why we did not implement that for now.
+    """
+    merged = pseudo.copy()
+    from_actual = {
+        k: actual[k]
+        for k in [
+            "media",
+            "mediums",
+            "country",
+            "catalognum",
+            "year",
+            "month",
+            "day",
+            "original_year",
+            "original_month",
+            "original_day",
+            "label",
+            "barcode",
+            "asin",
+            "style",
+            "genre",
+        ]
+    }
+    merged.update(from_actual)
+    return merged
+
+
+def configure():
+    """Set up the python-musicbrainz-ngs module according to settings
+    from the beets configuration. This should be called at startup.
+    """
+    hostname = config["musicbrainz"]["host"].as_str()
+    https = config["musicbrainz"]["https"].get(bool)
+    # Only call set_hostname when a custom server is configured. Since
+    # musicbrainz-ngs connects to musicbrainz.org with HTTPS by default
+    if hostname != "musicbrainz.org":
+        musicbrainzngs.set_hostname(hostname, https)
+    musicbrainzngs.set_rate_limit(
+        config["musicbrainz"]["ratelimit_interval"].as_number(),
+        config["musicbrainz"]["ratelimit"].get(int),
+    )
 
 
 def track_info(
@@ -386,30 +485,6 @@ def track_info(
         info.update(extra_trackdata)
 
     return info
-
-
-def _set_date_str(
-    info: beets.autotag.hooks.AlbumInfo,
-    date_str: str,
-    original: bool = False,
-):
-    """Given a (possibly partial) YYYY-MM-DD string and an AlbumInfo
-    object, set the object's release date fields appropriately. If
-    `original`, then set the original_year, etc., fields.
-    """
-    if date_str:
-        date_parts = date_str.split("-")
-        for key in ("year", "month", "day"):
-            if date_parts:
-                date_part = date_parts.pop(0)
-                try:
-                    date_num = int(date_part)
-                except ValueError:
-                    continue
-
-                if original:
-                    key = "original_" + key
-                setattr(info, key, date_num)
 
 
 def album_info(release: dict) -> beets.autotag.hooks.AlbumInfo:
@@ -749,81 +824,6 @@ def match_track(
         )
     for recording in res["recording-list"]:
         yield track_info(recording)
-
-
-def _parse_id(s: str) -> str | None:
-    """Search for a MusicBrainz ID in the given string and return it. If
-    no ID can be found, return None.
-    """
-    # Find the first thing that looks like a UUID/MBID.
-    match = re.search("[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}", s)
-    if match is not None:
-        return match.group() if match else None
-    return None
-
-
-def _is_translation(r):
-    _trans_key = "transl-tracklisting"
-    return r["type"] == _trans_key and r["direction"] == "backward"
-
-
-def _find_actual_release_from_pseudo_release(
-    pseudo_rel: dict,
-) -> dict | None:
-    try:
-        relations = pseudo_rel["release"]["release-relation-list"]
-    except KeyError:
-        return None
-
-    # currently we only support trans(liter)ation's
-    translations = [r for r in relations if _is_translation(r)]
-
-    if not translations:
-        return None
-
-    actual_id = translations[0]["target"]
-
-    return musicbrainzngs.get_release_by_id(actual_id, RELEASE_INCLUDES)
-
-
-def _merge_pseudo_and_actual_album(
-    pseudo: beets.autotag.hooks.AlbumInfo, actual: beets.autotag.hooks.AlbumInfo
-) -> beets.autotag.hooks.AlbumInfo | None:
-    """
-    Merges a pseudo release with its actual release.
-
-    This implementation is naive, it doesn't overwrite fields,
-    like status or ids.
-
-    According to the ticket PICARD-145, the main release id should be used.
-    But the ticket has been in limbo since over a decade now.
-    It also suggests the introduction of the tag `musicbrainz_pseudoreleaseid`,
-    but as of this field can't be found in any official Picard docs,
-    hence why we did not implement that for now.
-    """
-    merged = pseudo.copy()
-    from_actual = {
-        k: actual[k]
-        for k in [
-            "media",
-            "mediums",
-            "country",
-            "catalognum",
-            "year",
-            "month",
-            "day",
-            "original_year",
-            "original_month",
-            "original_day",
-            "label",
-            "barcode",
-            "asin",
-            "style",
-            "genre",
-        ]
-    }
-    merged.update(from_actual)
-    return merged
 
 
 def album_for_id(releaseid: str) -> beets.autotag.hooks.AlbumInfo | None:
