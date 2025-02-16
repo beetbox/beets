@@ -13,7 +13,7 @@ from beets.importer import ImportSession, ImportTask
 from beets.library import Library
 from beets.plugins import BeetsPlugin
 import os.path
-from beets.util import bytestring_path, displayable_path, normpath, syspath
+from beets.util import bytestring_path, displayable_path, normpath, syspath, remove
 
 """ TidalPlugin is a TIDAL source for the autotagger """
 
@@ -66,14 +66,6 @@ class TidalPlugin(BeetsPlugin):
         try:
             with open(self.sessfile) as file:
                 sess_data = json.load(file)
-
-                # Don't keep trying to ping the API with a cleared session file
-                if not sess_data:
-                    self._log.debug(
-                        "Session state file has been cleared... please login"
-                    )
-
-                    return False
         except OSError:
             # Error occured, most likely token file does not exist.
             self._log.debug("Session state file does not exist")
@@ -99,7 +91,7 @@ class TidalPlugin(BeetsPlugin):
                         "Clearing session state file to avoid unneeded API calls"
                     )
 
-                    json.dump({})
+                    remove(bytestring_path(self.sessfile), soft=True)
 
                 return False
 
