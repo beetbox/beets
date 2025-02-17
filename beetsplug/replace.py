@@ -68,7 +68,7 @@ class ReplacePlugin(BeetsPlugin):
         originalFilePath = Path(song.path.decode())
 
         if not originalFilePath.exists():
-            raise ui.UserError(f"The audio file for this song does not exist")
+            raise ui.UserError(f"The original song file was not found.")
 
         print(f"\nReplacing: {newFilePath} -> {originalFilePath}")
         decision = input("Are you sure you want to replace this track? (y/N): ").strip().casefold()
