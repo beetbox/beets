@@ -333,8 +333,8 @@ def distance(
     return dist
 
 
-def match_by_id(items: Iterable[Item]):
-    """If the items are tagged with a MusicBrainz album ID, returns an
+def match_by_id(items: Iterable[Item]) -> AlbumInfo | None:
+    """If the items are tagged with an external source ID, return an
     AlbumInfo object for the corresponding album. Otherwise, returns
     None.
     """
@@ -354,7 +354,7 @@ def match_by_id(items: Iterable[Item]):
             return None
     # If all album IDs are equal, look up the album.
     log.debug("Searching for discovered album ID: {0}", first)
-    return hooks.album_for_mbid(first)
+    return hooks.album_for_id(first)
 
 
 def _recommendation(
@@ -516,9 +516,8 @@ def tag_album(
     # Use existing metadata or text search.
     else:
         # Try search based on current ID.
-        id_info = match_by_id(items)
-        if id_info:
-            _add_candidate(items, candidates, id_info)
+        if info := match_by_id(items):
+            _add_candidate(items, candidates, info)
             rec = _recommendation(list(candidates.values()))
             log.debug("Album ID match recommendation is {0}", rec)
             if candidates and not config["import"]["timid"]:
@@ -575,17 +574,16 @@ def tag_item(
     """Find metadata for a single track. Return a `Proposal` consisting
     of `TrackMatch` objects.
 
-    `search_artist` and `search_title` may be used
-    to override the current metadata for the purposes of the MusicBrainz
-    title. `search_ids` may be used for restricting the search to a list
-    of metadata backend IDs.
+    `search_artist` and `search_title` may be used to override the item
+    metadata in the search query. `search_ids` may be used for restricting the
+    search to a list of metadata backend IDs.
     """
     # Holds candidates found so far: keys are MBIDs; values are
     # (distance, TrackInfo) pairs.
     candidates = {}
     rec: Recommendation | None = None
 
-    # First, try matching by MusicBrainz ID.
+    # First, try matching by the external source ID.
     trackids = search_ids or [t for t in [item.mb_trackid] if t]
     if trackids:
         for trackid in trackids:
