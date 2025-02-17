@@ -2,6 +2,7 @@ from beets.plugins import BeetsPlugin
 from beets import ui
 import mediafile
 import os
+import shutil
 
 class ReplacePlugin(BeetsPlugin):
     def commands(self):
@@ -63,7 +64,7 @@ class ReplacePlugin(BeetsPlugin):
         dest = originalFileBase + newFileExt
         
         try:
-            os.rename(newFilePath, dest)
+            shutil.move(newFilePath, dest)
         except OSError as e:
             print(f"Error renaming file: {e}")
             return
