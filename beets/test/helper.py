@@ -35,6 +35,7 @@ import subprocess
 import sys
 import unittest
 from contextlib import contextmanager
+from dataclasses import dataclass
 from enum import Enum
 from functools import cached_property
 from io import StringIO
@@ -774,6 +775,7 @@ class TerminalImportMixin(ImportHelper):
         )
 
 
+@dataclass
 class AutotagStub:
     """Stub out MusicBrainz album and track matcher and control what the
     autotagger returns.
@@ -784,11 +786,9 @@ class AutotagStub:
     GOOD = "GOOD"
     BAD = "BAD"
     MISSING = "MISSING"
-    """Generate an album match for all but one track
-    """
+    matching: str
 
     length = 2
-    matching = IDENT
 
     def install(self):
         self.mb_match_album = autotag.mb.match_album
@@ -875,6 +875,15 @@ class AutotagStub:
             data_source="match_source",
             bandcamp_album_id="bc_url",
         )
+
+
+class AutotagImportTestCase(ImportTestCase):
+    matching = AutotagStub.IDENT
+
+    def setUp(self):
+        super().setUp()
+        self.matcher = AutotagStub(self.matching).install()
+        self.addCleanup(self.matcher.restore)
 
 
 class FetchImageHelper:
