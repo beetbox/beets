@@ -2,7 +2,6 @@ from beets.plugins import BeetsPlugin
 from beets import ui
 import mediafile
 import os
-import sys
 
 class ReplacePlugin(BeetsPlugin):
     def commands(self):
@@ -15,25 +14,25 @@ class ReplacePlugin(BeetsPlugin):
 
         if not os.path.isfile(newFilePath):
             print("Input path is not a file.")
-            sys.exit(1)
+            return
 
         try:
             f = mediafile.MediaFile(newFilePath)
         except mediafile.FileTypeError as fte:
             print("This file type is not supported. Error:", fte)
-            sys.exit(1)
+            return
 
         itemList = list(lib.items(itemQuery))
 
         if not itemList:
             print(f"Error: No matching songs found.")
-            sys.exit(1)
+            return
         
         song = self.select_song(itemList)
 
         if not self.confirm_replacement(newFilePath, song):
             print("Aborting replacement.")
-            sys.exit(0)
+            return
 
         self.replace_file(newFilePath, song)
 
@@ -67,7 +66,7 @@ class ReplacePlugin(BeetsPlugin):
             os.rename(newFilePath, dest)
         except OSError as e:
             print(f"Error renaming file: {e}")
-            sys.exit(1)
+            return
 
         if newFileExt != originalFileExt:
             os.remove(originalFilePath)
