@@ -10,6 +10,9 @@ class ReplacePlugin(BeetsPlugin):
         cmd.func = self.run
         return [cmd]
     def run(self, lib, opts, args):
+        if len(args) < 2:
+            raise ui.UserError(f"Usage: beet replace <query> <new_file_path>")
+
         newFilePath = Path(args[-1])
         itemQuery = args[:-1]
 
