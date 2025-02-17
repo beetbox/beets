@@ -1341,10 +1341,7 @@ class ImportTaskFactory:
         # it is finished. This is usually just a SentinelImportTask, but
         # for archive imports, send the archive task instead (to remove
         # the extracted directory).
-        if archive_task:
-            yield archive_task
-        else:
-            yield self.sentinel()
+        yield archive_task or self.sentinel()
 
     def _create(self, task: ImportTask | None):
         """Handle a new task to be emitted by the factory.
