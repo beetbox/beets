@@ -168,23 +168,13 @@ class TidalPlugin(BeetsPlugin):
             raise ui.UserError("Login failure! See above output for more info.")
         else:
             ui.print_("Login successful")
-            
+
         self._save_session(self.sess)
 
     def cmd_main(self, lib: Library, opts: optparse.Values, arg: list):
         if opts.login:
             self._log.debug("Running login routine!")
             self._login()
-        elif opts.dump_sess:
-            self._log.debug(f"Session state file: {self.sessfile}")
-            try:
-                with open(self.sessfile) as file:
-                    sess_data = json.load(file)
-                    print(sess_data)
-            except OSError:
-                self._log.info(
-                    f"Session state file {self.sessfile} does not exist!"
-                )
 
     def commands(self):
         cmd = ui.Subcommand("tidal", help="fetch metadata from TIDAL")
@@ -195,15 +185,6 @@ class TidalPlugin(BeetsPlugin):
             action="store_true",
             default=False,
             help="login to TIDAL",
-        )
-
-        cmd.parser.add_option(
-            "-d",
-            "--dump",
-            dest="dump_sess",
-            action="store_true",
-            default=False,
-            help="dump session state",
         )
 
         cmd.func = self.cmd_main
