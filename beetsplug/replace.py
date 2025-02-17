@@ -35,6 +35,7 @@ class ReplacePlugin(BeetsPlugin):
         self.replace_file(newFilePath, song)
 
     def select_song(self, items):
+        """Present a menu of matching songs and get user selection."""
         print("Matching songs:")
         for i, item in enumerate(items):
             print(f"{i+1}. {item}")
@@ -49,12 +50,14 @@ class ReplacePlugin(BeetsPlugin):
                 print("Invalid input. Please type in a number.")
 
     def confirm_replacement(self, newFilePath, song):
+        """Get user confirmation for the replacement."""
         originalFilePath = Path(song.path.decode())
         print(f"\nReplacing: {newFilePath} -> {originalFilePath}")
         decision = input("Are you sure you want to replace this track? (yes/no): ").strip().casefold()
         return decision in {"yes", "y"}
 
     def replace_file(self, newFilePath, song):
+        """Replace the existing file with the new one."""
         originalFilePath = Path(song.path.decode())
         dest = originalFilePath.with_suffix(newFilePath.suffix)
         
