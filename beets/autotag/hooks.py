@@ -18,17 +18,16 @@ from __future__ import annotations
 
 import re
 from functools import total_ordering
-from typing import TYPE_CHECKING, Any, Callable, NamedTuple, TypeVar
+from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
 
 from jellyfish import levenshtein_distance
 from unidecode import unidecode
 
 from beets import config, logging, plugins
-from beets.autotag import mb
 from beets.util import as_string, cached_classproperty
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Iterator
 
     from beets.library import Item
 
@@ -596,94 +595,21 @@ class TrackMatch(NamedTuple):
 # Aggregation of sources.
 
 
-def album_for_mbid(release_id: str) -> AlbumInfo | None:
-    """Get an AlbumInfo object for a MusicBrainz release ID. Return None
-    if the ID is not found.
-    """
-    try:
-        if album := mb.album_for_id(release_id):
-            plugins.send("albuminfo_received", info=album)
-        return album
-    except mb.MusicBrainzAPIError as exc:
-        exc.log(log)
-        return None
-
-
-def track_for_mbid(recording_id: str) -> TrackInfo | None:
-    """Get a TrackInfo object for a MusicBrainz recording ID. Return None
-    if the ID is not found.
-    """
-    try:
-        if track := mb.track_for_id(recording_id):
-            plugins.send("trackinfo_received", info=track)
-        return track
-    except mb.MusicBrainzAPIError as exc:
-        exc.log(log)
-        return None
-
-
-def album_for_id(_id: str) -> AlbumInfo | None:
+def album_for_id(*args, **kwargs) -> AlbumInfo | None:
     """Get AlbumInfo object for the given ID string."""
-    return album_for_mbid(_id) or plugins.album_for_id(_id)
+    return plugins.album_for_id(*args, **kwargs)
 
 
-def track_for_id(_id: str) -> TrackInfo | None:
+def track_for_id(*args, **kwargs) -> TrackInfo | None:
     """Get TrackInfo object for the given ID string."""
-    return track_for_mbid(_id) or plugins.track_for_id(_id)
-
-
-def invoke_mb(call_func: Callable, *args):
-    try:
-        return call_func(*args)
-    except mb.MusicBrainzAPIError as exc:
-        exc.log(log)
-        return ()
+    return plugins.track_for_id(*args, **kwargs)
 
 
 @plugins.notify_info_yielded("albuminfo_received")
-def album_candidates(
-    items: list[Item],
-    artist: str,
-    album: str,
-    va_likely: bool,
-    extra_tags: dict,
-) -> Iterable[tuple]:
-    """Search for album matches. ``items`` is a list of Item objects
-    that make up the album. ``artist`` and ``album`` are the respective
-    names (strings), which may be derived from the item list or may be
-    entered by the user. ``va_likely`` is a boolean indicating whether
-    the album is likely to be a "various artists" release. ``extra_tags``
-    is an optional dictionary of additional tags used to further
-    constrain the search.
-    """
-
-    if config["musicbrainz"]["enabled"]:
-        # Base candidates if we have album and artist to match.
-        if artist and album:
-            yield from invoke_mb(
-                mb.match_album, artist, album, len(items), extra_tags
-            )
-
-        # Also add VA matches from MusicBrainz where appropriate.
-        if va_likely and album:
-            yield from invoke_mb(
-                mb.match_album, None, album, len(items), extra_tags
-            )
-
-    # Candidates from plugins.
-    yield from plugins.candidates(items, artist, album, va_likely, extra_tags)
+def album_candidates(*args, **kwargs) -> Iterator[AlbumInfo]:
+    yield from plugins.candidates(*args, **kwargs)
 
 
 @plugins.notify_info_yielded("trackinfo_received")
-def item_candidates(item: Item, artist: str, title: str) -> Iterable[tuple]:
-    """Search for item matches. ``item`` is the Item to be matched.
-    ``artist`` and ``title`` are strings and either reflect the item or
-    are specified by the user.
-    """
-
-    # MusicBrainz candidates.
-    if config["musicbrainz"]["enabled"] and artist and title:
-        yield from invoke_mb(mb.match_track, artist, title)
-
-    # Plugin candidates.
-    yield from plugins.item_candidates(item, artist, title)
+def item_candidates(*args, **kwargs) -> Iterator[TrackInfo]:
+    yield from plugins.item_candidates(*args, **kwargs)
