@@ -78,8 +78,11 @@ class ReplacePlugin(BeetsPlugin):
         except Exception as e:
             raise ui.UserError(f"Error replacing file: {e}")
 
-        if newFilePath.suffix != originalFilePath.suffix:
-            originalFilePath.unlink()
+        if newFilePath.suffix != originalFilePath.suffix and originalFilePath.exists():
+            try:
+                originalFilePath.unlink()
+            except Exception as e:
+                raise ui.UserError(f"Could not delete original file: {e}")
 
         song.path = str(dest).encode()
         song.store()
