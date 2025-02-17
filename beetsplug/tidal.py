@@ -36,6 +36,8 @@ class TidalPlugin(BeetsPlugin):
     data_source = "tidal"
     track_share_regex = r"(tidal.com\/browse\/track\/)([0-9]*)(\?u)"  # Format: https://tidal.com/browse/track/221182395?u
     album_share_regex = r"(tidal.com\/browse\/album\/)([0-9]*)(\?u)"  # Format: https://tidal.com/browse/album/221182592?u
+    lrc_timestamp_regex = r"\[(\d{2,})(?:\:)(\d{2,})(?:\.)(\d{2,})\]" # [mm:ss.hs]
+
     # Number of times to retry when we get a TooManyRequests exception, this implements an exponential backoff.
     rate_limit_retries = 16
 
@@ -58,9 +60,10 @@ class TidalPlugin(BeetsPlugin):
                 "auto": True,
                 "lyrics": True,
                 "synced_lyrics": True,
-                "overwrite_lyrics": True,
+                "overwrite_lyrics": False,
                 "metadata_search_limit": 25,  # Search limit when querying API for metadata
                 "lyrics_search_limit": 10,  # Search limit when querying API for lyrics
+                "max_lyrics_time_difference": 5,
                 "tokenfile": "tidal_token.json",
                 "write_sidecar": False,  # Write lyrics to LRC file
             }
@@ -343,7 +346,7 @@ class TidalPlugin(BeetsPlugin):
 
         self._log.debug(f"Searching TIDAL for {item}!")
 
-        return self._search_from_metadata(item) or []
+        return self._search_from_metadata(item, limit=self.config["metadata_search_limit"].as_number()) or []
 
 
     def _album_to_albuminfo(self, album):
@@ -423,13 +426,15 @@ class TidalPlugin(BeetsPlugin):
 
         return trackinfo
 
-    def _search_from_metadata(self, item):
+    def _search_from_metadata(self, item, limit=10):
         """Searches TIDAL for tracks matching the given item.
 
         Currently, this function searches for title, album, and artist.
 
         :param item: Item to search for
         :type item: beets.library.Item
+        :param limit: Maximum number of items to grab per search
+        :type limit: int
         """
         self._log.debug(f"_search_from_metadata running for {item}")
 
@@ -441,7 +446,7 @@ class TidalPlugin(BeetsPlugin):
             query.append(item.title)
             results = self._search_track(
                 " ".join(query),
-                limit=self.config["metadata_search_limit"].as_number(),
+                limit=limit,
             )
             trackids = [x.id for x in results]
             tracks+=results
@@ -451,7 +456,7 @@ class TidalPlugin(BeetsPlugin):
             query.append(item.artist)
             results = self._search_track(
                 " ".join(query),
-                limit=self.config["metadata_search_limit"].as_number(),
+                limit=limit,
             )
             trackids += [x.id for x in results]
             tracks+=results
@@ -462,7 +467,7 @@ class TidalPlugin(BeetsPlugin):
             trackids += [x.id for x in tracks]
             results = self._search_track(
                 " ".join(query),
-                limit=self.config["metadata_search_limit"].as_number(),
+                limit=limit,
             )
             trackids += [x.id for x in results]
             tracks+=results
@@ -599,6 +604,36 @@ class TidalPlugin(BeetsPlugin):
         else:
             return lyrics.text
 
+    def _validate_lyrics(self, lyrics, lib_item, tidal_item):
+        self._log.debug(f"Validating lyrics for {lib_item.title}!")
+
+        if self.config["max_lyrics_time_difference"].as_number() >= 1 and self.config["synced_lyrics"]:
+            regx = re.findall(self.lrc_timestamp_regex, lyrics)
+            if not regx:
+                self._log.debug("Lyrics NOT valid due to regex returning no matches")
+                return False
+
+            if not len(regx[-1]) == 3:
+                self._log.debug("Lyrics NOT valid due to regex groups not having a length of 3 (mm:ss.hs)")
+                return False
+
+            lrc_len = regx[-1]
+            # LRC Format: [mm:ss.hs]
+            lrc_secs = (int(lrc_len[0]) * 60) + int(lrc_len[1]) + (int(lrc_len[2]) / 100)
+            self._log.debug(f"Using LRC timestamp {lrc_secs} seconds and Item timestamp {lib_item.length} for timestamp comparison")
+
+            distance = abs(lib_item.length - lrc_secs)
+            over_distance = abs(self.config["max_lyrics_time_difference"].as_number() - distance)
+            if distance > self.config["max_lyrics_time_difference"].as_number():
+                self._log.debug(f"Lyrics NOT valid due to difference being {lrc_secs}, {over_distance} over maximum")
+                return False
+            else:
+                self._log.debug(f"Distance between lyrics duration and item duration: {distance}")
+        else:
+            self._log.debug("Not using timestamp lyrics validation due to user configuration")
+
+        return True
+
     def _search_lyrics(self, item, limit=10):
         """Searches for lyrics using a non-TIDAL metadata source
 
@@ -619,22 +654,20 @@ class TidalPlugin(BeetsPlugin):
             f"Searching for lyrics from non-TIDAL metadata for {item.title}"
         )
 
-        tracks = self._search_from_metadata(item)
+        tracks = self._search_from_metadata(item, limit = self.config["lyrics_search_limit"].as_number())
 
         # Fetch lyrics for tracks
         lyrics = []
         for track in tracks:
             lyric = self._get_lyrics(track)
-            if lyric:
-                # Only add to list if we actually have lyrics
+            if lyric and self._validate_lyrics(lyric, item, track):
                 lyrics.append(lyric)
-            break
 
-        if not tracks or not lyrics:
+        if not tracks or not (len(lyrics) - lyrics.count(None)):
             self._log.info(f"No results found for {item.title}")
             return None
 
-        # Pick best one, aka the first one with lyrics
+        # Pick best one, aka the track returned
         return lyrics[0]
 
     def _process_item(self, item):
@@ -683,18 +716,19 @@ class TidalPlugin(BeetsPlugin):
         self._log.debug("Running write handler")
         # Write out lyrics to sidecar file if enabled
         if self.config["write_sidecar"] and item.lyrics:
-            self._log.debug(
-                "write_sidecar is enabled and we have lyrics... writing sidecar files"
-            )
-
             # Do tons of os.path operations to get the sidecar path
             filepath, filename = os.path.split(syspath(path))
             basename, ext = os.path.splitext(filename)
             sidecar_file = f"{basename}.lrc"
             sidecar_path = os.path.join(filepath, sidecar_file)
 
-            self._log.debug(f"Saving lyrics to sidecar file {sidecar_path}")
+            # Don't overwrite lyrics if we aren't suppose to
+            if os.path.exists(sidecar_path) and not self.config["overwrite_lyrics"]:
+                self._log.debug("Not writing sidecar file as it already exists and overwrite_lyrics is False")
+                return
 
+            self._log.debug(f"Saving lyrics to sidecar file {sidecar_path}")
+            
             # Save lyrics
             with open(sidecar_path, "w") as file:
                 file.write(item.lyrics)
