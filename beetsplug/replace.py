@@ -1,8 +1,8 @@
 from beets.plugins import BeetsPlugin
 from beets import ui
 import mediafile
-import os
 import shutil
+from pathlib import Path
 
 class ReplacePlugin(BeetsPlugin):
     def commands(self):
@@ -10,14 +10,14 @@ class ReplacePlugin(BeetsPlugin):
         cmd.func = self.run
         return [cmd]
     def run(self, lib, opts, args):
-        newFilePath = args[-1]
+        newFilePath = Path(args[-1])
         itemQuery = args[:-1]
 
-        if not os.path.isfile(newFilePath):
+        if not newFilePath.is_file():
             raise ui.UserError(f"'{newFilePath}' is not a valid file.")
 
         try:
-            f = mediafile.MediaFile(newFilePath)
+            f = mediafile.MediaFile(str(newFilePath))
         except mediafile.FileTypeError as fte:
             raise ui.UserError(fte)
 
@@ -49,26 +49,24 @@ class ReplacePlugin(BeetsPlugin):
                 print("Invalid input. Please type in a number.")
 
     def confirm_replacement(self, newFilePath, song):
-        print(f"\nReplacing: {newFilePath} -> {song.destination().decode()}")
+        originalFilePath = Path(song.path.decode())
+        print(f"\nReplacing: {newFilePath} -> {originalFilePath}")
         decision = input("Are you sure you want to replace this track? (yes/no): ").strip().casefold()
         return decision in {"yes", "y"}
 
     def replace_file(self, newFilePath, song):
-        originalFilePath = song.path.decode()
-        originalFileBase, originalFileExt = os.path.splitext(originalFilePath)
-        newFileBase, newFileExt = os.path.splitext(newFilePath)
-
-        dest = originalFileBase + newFileExt
+        originalFilePath = Path(song.path.decode())
+        dest = originalFilePath.with_suffix(newFilePath.suffix)
         
         try:
             shutil.move(newFilePath, dest)
         except Exception as e:
             raise ui.UserError(f"Error replacing file: {e}")
 
-        if newFileExt != originalFileExt:
-            os.remove(originalFilePath)
+        if newFilePath.suffix != originalFilePath.suffix:
+            originalFilePath.unlink()
 
-        song.path = dest.encode()
+        song.path = str(dest).encode()
         song.store()
 
         print("Replacement successful.")
