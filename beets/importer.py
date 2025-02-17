@@ -1066,9 +1066,6 @@ class SingletonImportTask(ImportTask):
         return [self.item]
 
     def apply_metadata(self):
-        assert isinstance(
-            self.match, autotag.TrackMatch
-        ), "apply_metadata() only works for tracks"
         autotag.apply_item_metadata(self.item, self.match.info)
 
     def _emit_imported(self, lib):
