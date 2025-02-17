@@ -14,8 +14,7 @@
 
 
 from beets.test.helper import (
-    AutotagStub,
-    ImportTestCase,
+    AutotagImportTestCase,
     PluginMixin,
     TerminalImportMixin,
     capture_stdout,
@@ -23,23 +22,18 @@ from beets.test.helper import (
 )
 
 
-class MBSubmitPluginTest(PluginMixin, TerminalImportMixin, ImportTestCase):
+class MBSubmitPluginTest(
+    PluginMixin, TerminalImportMixin, AutotagImportTestCase
+):
     plugin = "mbsubmit"
 
     def setUp(self):
         super().setUp()
         self.prepare_album_for_import(2)
         self.setup_importer()
-        self.matcher = AutotagStub().install()
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
     def test_print_tracks_output(self):
         """Test the output of the "print tracks" choice."""
-        self.matcher.matching = AutotagStub.BAD
-
         with capture_stdout() as output:
             with control_stdin("\n".join(["p", "s"])):
                 # Print tracks; Skip
@@ -55,8 +49,6 @@ class MBSubmitPluginTest(PluginMixin, TerminalImportMixin, ImportTestCase):
 
     def test_print_tracks_output_as_tracks(self):
         """Test the output of the "print tracks" choice, as singletons."""
-        self.matcher.matching = AutotagStub.BAD
-
         with capture_stdout() as output:
             with control_stdin("\n".join(["t", "s", "p", "s"])):
                 # as Tracks; Skip; Print tracks; Skip
