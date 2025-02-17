@@ -25,6 +25,10 @@ class ReplacePlugin(BeetsPlugin):
         
         song = self.select_song(itemList)
 
+        if not song:
+            print("Operation cancelled.")
+            return
+
         if not self.confirm_replacement(newFilePath, song):
             print("Aborting replacement.")
             return
@@ -50,7 +54,9 @@ class ReplacePlugin(BeetsPlugin):
 
         while True:
             try:
-                index = int(input(f"Which song would you like to replace? [1-{len(items)}]: "))
+                index = int(input(f"Which song would you like to replace? [1-{len(items)}] (0 to cancel): "))
+                if index == 0:
+                    return False
                 if 1 <= index <= len(items):
                     return items[index - 1]
                 print(f"Invalid choice. Please enter a number between 1 and {len(items)}.")
