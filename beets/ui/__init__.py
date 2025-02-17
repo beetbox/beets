@@ -32,7 +32,6 @@ from typing import Any, Callable
 import confuse
 
 from beets import config, library, logging, plugins, util
-from beets.autotag import mb
 from beets.dbcore import db
 from beets.dbcore import query as db_query
 from beets.util import as_string
@@ -1664,9 +1663,6 @@ def _setup(options, lib=None):
 
     Returns a list of subcommands, a list of plugins, and a library instance.
     """
-    # Configure the MusicBrainz API.
-    mb.configure()
-
     config = _configure(options)
 
     plugins = _load_plugins(options, config)
