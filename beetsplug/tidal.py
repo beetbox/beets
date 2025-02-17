@@ -42,7 +42,11 @@ class TidalPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
         TidalPlugin.logger = self._log
+
+        # A separate write handler is needed as import stages are ran before any file manipulation is done
+        # Therefore any file writes in the import stage operate on the original file
         self.import_stages = [self.stage]
+        self.register_listener("write", self.write_file)
 
         # Import config
         # The lyrics search limit is much smaller than the metadata search limit
@@ -624,6 +628,7 @@ class TidalPlugin(BeetsPlugin):
             if lyric:
                 # Only add to list if we actually have lyrics
                 lyrics.append(lyric)
+            break
 
         if not tracks or not lyrics:
             self._log.info(f"No results found for {item.title}")
@@ -671,33 +676,31 @@ class TidalPlugin(BeetsPlugin):
                     item, limit=self.config["lyrics_search_limit"].as_number()
                 )
 
-            # Write out item if global write is enabled
-            if ui.should_write():
-                self._log.debug("Global write is enabled... writing lyrics")
-                item.try_write()
-
-            # Write out lyrics to sidecar file if enabled
-            if self.config["write_sidecar"] and item.lyrics:
-                self._log.debug(
-                    "write_sidecar is enabled and we have lyrics... writing sidecar files"
-                )
-
-                # Do tons of os.path operations to get the sidecar path
-                filepath, filename = os.path.split(syspath(item.path))
-                basename, ext = os.path.splitext(filename)
-                sidecar_file = f"{basename}.lrc"
-                sidecar_path = os.path.join(filepath, sidecar_file)
-
-                self._log.debug(f"Saving lyrics to sidecar file {sidecar_path}")
-
-                # Save lyrics
-                with open(sidecar_path, "w") as file:
-                    file.write(item.lyrics)
-
             item.store()
 
+
+    def write_file(self, item, path, tags):
+        self._log.debug("Running write handler")
+        # Write out lyrics to sidecar file if enabled
+        if self.config["write_sidecar"] and item.lyrics:
+            self._log.debug(
+                "write_sidecar is enabled and we have lyrics... writing sidecar files"
+            )
+
+            # Do tons of os.path operations to get the sidecar path
+            filepath, filename = os.path.split(syspath(path))
+            basename, ext = os.path.splitext(filename)
+            sidecar_file = f"{basename}.lrc"
+            sidecar_path = os.path.join(filepath, sidecar_file)
+
+            self._log.debug(f"Saving lyrics to sidecar file {sidecar_path}")
+
+            # Save lyrics
+            with open(sidecar_path, "w") as file:
+                file.write(item.lyrics)
+
     def stage(self, session: ImportSession, task: ImportTask):
-        self._log.debug("Running import stage for TidalPlugin!")
+        self._log.debug("Running import stage")
         if not self.config["auto"]:
             self._log.debug("Not processing further due to auto being False")
             return
