@@ -6,7 +6,7 @@ from pathlib import Path
 
 class ReplacePlugin(BeetsPlugin):
     def commands(self):
-        cmd = ui.Subcommand('replace', help='This command replaces the target audio file, while keeping tags intact')
+        cmd = ui.Subcommand('replace', help='replace audio file while keeping tags')
         cmd.func = self.run
         return [cmd]
     def run(self, lib, opts, args):
