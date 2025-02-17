@@ -166,7 +166,9 @@ class TidalPlugin(BeetsPlugin):
 
         if not future.result():
             raise ui.UserError("Login failure! See above output for more info.")
-
+        else:
+            ui.print_("Login successful")
+            
         self._save_session(self.sess)
 
     def cmd_main(self, lib: Library, opts: optparse.Values, arg: list):
