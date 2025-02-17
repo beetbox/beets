@@ -436,7 +436,7 @@ class ImportSession:
 
         You have to call `ask_resume` first to determine the return value.
         """
-        return self._is_resuming.get(normpath(toppath), False)
+        return self._is_resuming.get(toppath, False)
 
     def ask_resume(self, toppath: PathBytes):
         """If import of `toppath` was aborted in an earlier session, ask
@@ -449,9 +449,9 @@ class ImportSession:
             if self.want_resume is True or self.should_resume(toppath):
                 log.warning(
                     "Resuming interrupted import of {0}",
-                    util.displayable_path(normpath(toppath)),
+                    util.displayable_path(toppath),
                 )
-                self._is_resuming[normpath(toppath)] = True
+                self._is_resuming[toppath] = True
             else:
                 # Clear progress; we're starting from the top.
                 ImportState().progress_reset(toppath)
