@@ -13,13 +13,7 @@ class ReplacePlugin(BeetsPlugin):
         newFilePath = Path(args[-1])
         itemQuery = args[:-1]
 
-        if not newFilePath.is_file():
-            raise ui.UserError(f"'{newFilePath}' is not a valid file.")
-
-        try:
-            f = mediafile.MediaFile(str(newFilePath))
-        except mediafile.FileTypeError as fte:
-            raise ui.UserError(fte)
+        self.file_check(newFilePath)
 
         itemList = list(lib.items(itemQuery))
 
@@ -33,6 +27,17 @@ class ReplacePlugin(BeetsPlugin):
             return
 
         self.replace_file(newFilePath, song)
+
+    def file_check(self, file):
+        """Check if the file exists and is supported"""
+        if not file.is_file():
+            raise ui.UserError(f"'{file}' is not a valid file.")
+
+        try:
+            f = mediafile.MediaFile(str(file))
+        except mediafile.FileTypeError as fte:
+            raise ui.UserError(fte)
+
 
     def select_song(self, items):
         """Present a menu of matching songs and get user selection."""
