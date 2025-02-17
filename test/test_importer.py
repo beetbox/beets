@@ -39,6 +39,7 @@ from beets.test import _common
 from beets.test.helper import (
     NEEDS_REFLINK,
     AsIsImporterMixin,
+    AutotagImportTestCase,
     AutotagStub,
     BeetsTestCase,
     ImportTestCase,
@@ -306,7 +307,7 @@ class ImportPasswordRarTest(ImportZipTest):
         return os.path.join(_common.RSRC, b"password.rar")
 
 
-class ImportSingletonTest(ImportTestCase):
+class ImportSingletonTest(AutotagImportTestCase):
     """Test ``APPLY`` and ``ASIS`` choices for an import session with
     singletons config set to True.
     """
@@ -315,11 +316,6 @@ class ImportSingletonTest(ImportTestCase):
         super().setUp()
         self.prepare_album_for_import(1)
         self.importer = self.setup_singleton_importer()
-        self.matcher = AutotagStub().install()
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
     def test_apply_asis_adds_track(self):
         assert self.lib.items().get() is None
@@ -432,19 +428,13 @@ class ImportSingletonTest(ImportTestCase):
             assert item.disc == disc
 
 
-class ImportTest(ImportTestCase):
+class ImportTest(AutotagImportTestCase):
     """Test APPLY, ASIS and SKIP choices."""
 
     def setUp(self):
         super().setUp()
         self.prepare_album_for_import(1)
         self.setup_importer()
-        self.matcher = AutotagStub().install()
-        self.matcher.matching = AutotagStub.IDENT
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
     def test_apply_asis_adds_album(self):
         assert self.lib.albums().get() is None
@@ -639,18 +629,13 @@ class ImportTest(ImportTestCase):
                 assert item.disc == disc
 
 
-class ImportTracksTest(ImportTestCase):
+class ImportTracksTest(AutotagImportTestCase):
     """Test TRACKS and APPLY choice."""
 
     def setUp(self):
         super().setUp()
         self.prepare_album_for_import(1)
         self.setup_importer()
-        self.matcher = AutotagStub().install()
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
     def test_apply_tracks_adds_singleton_track(self):
         assert self.lib.items().get() is None
@@ -673,18 +658,13 @@ class ImportTracksTest(ImportTestCase):
         self.assert_file_in_lib(b"singletons", b"Applied Track 1.mp3")
 
 
-class ImportCompilationTest(ImportTestCase):
+class ImportCompilationTest(AutotagImportTestCase):
     """Test ASIS import of a folder containing tracks with different artists."""
 
     def setUp(self):
         super().setUp()
         self.prepare_album_for_import(3)
         self.setup_importer()
-        self.matcher = AutotagStub().install()
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
     def test_asis_homogenous_sets_albumartist(self):
         self.importer.add_choice(importer.action.ASIS)
@@ -783,20 +763,15 @@ class ImportCompilationTest(ImportTestCase):
         assert asserted_multi_artists_1
 
 
-class ImportExistingTest(ImportTestCase):
+class ImportExistingTest(AutotagImportTestCase):
     """Test importing files that are already in the library directory."""
 
     def setUp(self):
         super().setUp()
         self.prepare_album_for_import(1)
-        self.matcher = AutotagStub().install()
 
         self.reimporter = self.setup_importer(import_dir=self.libdir)
         self.importer = self.setup_importer()
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
     def test_does_not_duplicate_item(self):
         self.importer.run()
@@ -904,22 +879,18 @@ class ImportExistingTest(ImportTestCase):
         self.assertNotExists(self.import_media[0].path)
 
 
-class GroupAlbumsImportTest(ImportTestCase):
+class GroupAlbumsImportTest(AutotagImportTestCase):
+    matching = AutotagStub.NONE
+
     def setUp(self):
         super().setUp()
         self.prepare_album_for_import(3)
-        self.matcher = AutotagStub().install()
-        self.matcher.matching = AutotagStub.NONE
         self.setup_importer()
 
         # Split tracks into two albums and use both as-is
         self.importer.add_choice(importer.action.ALBUMS)
         self.importer.add_choice(importer.action.ASIS)
         self.importer.add_choice(importer.action.ASIS)
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
     def test_add_album_for_different_artist_and_different_album(self):
         self.import_media[0].artist = "Artist B"
@@ -976,17 +947,13 @@ class GlobalGroupAlbumsImportTest(GroupAlbumsImportTest):
         config["import"]["group_albums"] = True
 
 
-class ChooseCandidateTest(ImportTestCase):
+class ChooseCandidateTest(AutotagImportTestCase):
+    matching = AutotagStub.BAD
+
     def setUp(self):
         super().setUp()
         self.prepare_album_for_import(1)
         self.setup_importer()
-        self.matcher = AutotagStub().install()
-        self.matcher.matching = AutotagStub.BAD
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
     def test_choose_first_candidate(self):
         self.importer.add_choice(1)
@@ -1566,7 +1533,7 @@ class MultiDiscAlbumsInDirTest(BeetsTestCase):
         assert len(items) == 3
 
 
-class ReimportTest(ImportTestCase):
+class ReimportTest(AutotagImportTestCase):
     """Test "re-imports", in which the autotagging machinery is used for
     music that's already in the library.
 
@@ -1574,6 +1541,8 @@ class ReimportTest(ImportTestCase):
     replacing the old data with the new data. We also copy over flexible
     attributes and the added date.
     """
+
+    matching = AutotagStub.GOOD
 
     def setUp(self):
         super().setUp()
@@ -1588,14 +1557,6 @@ class ReimportTest(ImportTestCase):
         item.baz = "qux"
         item.added = 4747.0
         item.store()
-
-        # Set up an import pipeline with a "good" match.
-        self.matcher = AutotagStub().install()
-        self.matcher.matching = AutotagStub.GOOD
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
     def _setup_session(self, singletons=False):
         self.setup_importer(import_dir=self.libdir, singletons=singletons)
@@ -1677,21 +1638,16 @@ class ReimportTest(ImportTestCase):
         assert self._album().data_source == "match_source"
 
 
-class ImportPretendTest(ImportTestCase):
+class ImportPretendTest(AutotagImportTestCase):
     """Test the pretend commandline option"""
 
     def setUp(self):
         super().setUp()
-        self.matcher = AutotagStub().install()
         self.io.install()
 
         self.album_track_path = self.prepare_album_for_import(1)[0]
         self.single_path = self.prepare_track_for_import(2, self.import_path)
         self.album_path = self.album_track_path.parent
-
-    def tearDown(self):
-        super().tearDown()
-        self.matcher.restore()
 
     def __run(self, importer):
         with capture_log() as logs:
