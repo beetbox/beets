@@ -298,10 +298,10 @@ class TidalPlugin(BeetsPlugin):
         for item in items:
             if item.get("tidal_album_id", None):
                 try:
-                    album = self._album_to_albuminfo(
+                    albumi = self._album_to_albuminfo(
                         self.sess.album(item.tidal_album_id)
                     )
-                    candidates.append(album)
+                    candidates.append(albumi)
                 except tidalapi.exceptions.ObjectNotFound:
                     self._log.debug(
                         f"No album found for ID {item.tidal_album_id}"
@@ -310,16 +310,22 @@ class TidalPlugin(BeetsPlugin):
         self._log.debug(
             f"{len(candidates)} Candidates found using tidal_album_id from items!"
         )
-        self._log.debug("Searching for candidates using album + artist search")
+        self._log.debug("Searching for candidates using _search_from_metadata search")
 
-        # Create query
-        query = []
-        if album:
-            query.append(album)
-        if artist:
-            query.append(artist)
+        if va_likely:
+            tracks = self._search_track(album, limit=self.config["metadata_search_limit"].get(int))
+        else:
+            tracks = self._search_track(f"{artist} {album}", limit=self.config["metadata_search_limit"].get(int))
 
-        candidates = candidates + self._search_album(" ".join(query))
+
+        candidates+=[self._album_to_albuminfo(self.sess.album(x.album.id)) for x in tracks if x.album]
+
+        self._log.debug(
+            f"_get_lyrics cache: {self._get_lyrics.cache_info()}"
+        )
+        self._log.debug(
+            f"_tidal_search cache: {self._tidal_search.cache_info()}"
+        )
 
         return candidates
 
@@ -333,23 +339,8 @@ class TidalPlugin(BeetsPlugin):
 
         self._log.debug(f"Searching TIDAL for {item}!")
 
-        if item.title:
-            return self._search_track(
-                item.title,
-                limit=self.config["metadata_search_limit"].as_number(),
-            )
-        elif item.album:
-            return self._search_track(
-                item.album,
-                limit=self.config["metadata_search_limit"].as_number(),
-            )
-        elif item.artist:
-            return self._search_track(
-                item.artist,
-                limit=self.config["metadata_search_limit"].as_number(),
-            )
+        return self._search_from_metadata(item) or []
 
-        return []
 
     def _album_to_albuminfo(self, album):
         """Converts a TIDAL album to a beets AlbumInfo
@@ -428,6 +419,67 @@ class TidalPlugin(BeetsPlugin):
 
         return trackinfo
 
+    def _search_from_metadata(self, item):
+        """Searches TIDAL for tracks matching the given item.
+
+        Currently, this function searches for title, album, and artist.
+
+        :param item: Item to search for
+        :type item: beets.library.Item
+        """
+        self._log.debug(f"_search_from_metadata running for {item}")
+
+        query = []
+        tracks = []
+
+        # Search using title
+        if item.title:
+            query.append(item.title)
+            results = self._search_track(
+                " ".join(query),
+                limit=self.config["metadata_search_limit"].as_number(),
+            )
+            trackids = [x.id for x in results]
+            tracks+=results
+
+        # Search using title + artist
+        if item.artist:
+            query.append(item.artist)
+            results = self._search_track(
+                " ".join(query),
+                limit=self.config["metadata_search_limit"].as_number(),
+            )
+            trackids += [x.id for x in results]
+            tracks+=results
+
+        # Search using title + artist + album
+        if item.album:
+            query.append(item.album)
+            trackids += [x.id for x in tracks]
+            results = self._search_track(
+                " ".join(query),
+                limit=self.config["metadata_search_limit"].as_number(),
+            )
+            trackids += [x.id for x in results]
+            tracks+=results
+
+        # Reverse list so the more specific result is first
+        tracks = reversed(tracks)
+
+        # Remove duplicates
+        trackids = []
+        newtracks = []
+        for track in tracks:
+            if track.id in trackids:
+                self._log.debug(f"Removing duplicate track {track.id}")
+                continue
+            else:
+                trackids.append(track.id)
+                newtracks.append(track)
+
+        tracks = newtracks
+        return tracks
+
     def _search_track(self, query, limit=10, offset=0):
         """Searches TIDAL for tracks matching the query
 
@@ -457,36 +509,6 @@ class TidalPlugin(BeetsPlugin):
             candidates.append(result)
 
         self._log.debug(f"_search_track found {len(candidates)} results")
-        return candidates
-
-    def _search_album(self, query, limit=10, offset=0):
-        """Searches TIDAL for albums matching the query
-
-        :param query: The search string to use
-        :type query: str
-        :param limit: Maximum number of items to return, defaults to 10
-        :type limit: int, optional
-        :param offset: Offset the items to retrieve, defaults to 0
-        :type offset: int, optional
-        :return: A list of tidalapi albums
-        :rtype: list
-        """
-        self._log.debug(f"_search_album query {query}")
-        results = self._tidal_search(query, [tidalapi.Album], limit, offset)
-        candidates = []
-
-        # top_hit is the most relevant to our query, add that first.
-        if results["top_hit"]:
-            candidates = [self._album_to_albuminfo(results["top_hit"])]
-
-        for result in results["albums"]:
-            # Don't add top_hit twice
-            if result.id == results["top_hit"].id:
-                continue
-
-            candidates.append(self._album_to_albuminfo(result))
-
-        self._log.debug(f"_search_album found {len(candidates)} results")
         return candidates
 
     @cachetools.cached(
@@ -593,55 +615,7 @@ class TidalPlugin(BeetsPlugin):
             f"Searching for lyrics from non-TIDAL metadata for {item.title}"
         )
 
-        query = []
-        tracks = []
-
-        # Search using title
-        if item.title:
-            query.append(item.title)
-            results = self._search_track(
-                " ".join(query),
-                limit=self.config["metadata_search_limit"].as_number(),
-            )
-            trackids = [x.id for x in results]
-            tracks+=results
-
-        # Search using title + artist
-        if item.artist:
-            query.append(item.artist)
-            results = self._search_track(
-                " ".join(query),
-                limit=self.config["metadata_search_limit"].as_number(),
-            )
-            trackids += [x.id for x in results]
-            tracks+=results
-
-        # Search using title + artist + album
-        if item.album:
-            query.append(item.album)
-            trackids += [x.id for x in tracks]
-            results = self._search_track(
-                " ".join(query),
-                limit=self.config["metadata_search_limit"].as_number(),
-            )
-            trackids += [x.id for x in results]
-            tracks+=results
-
-        # Reverse list so the more specific result is first
-        tracks = reversed(tracks)
-
-        # Remove duplicates
-        trackids = []
-        newtracks = []
-        for track in tracks:
-            if track.id in trackids:
-                self._log.debug(f"Removing duplicate track {track.id}")
-                continue
-            else:
-                trackids.append(track.id)
-                newtracks.append(track)
-
-        tracks = newtracks
+        tracks = self._search_from_metadata(item)
 
         # Fetch lyrics for tracks
         lyrics = []
