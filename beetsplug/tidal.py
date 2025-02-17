@@ -467,6 +467,10 @@ class TidalPlugin(BeetsPlugin):
             candidates.append(results["top_hit"])
 
         for result in results["tracks"]:
+            # Don't add top_hit twice
+            if result.id == results["top_hit"].id:
+                continue
+
             candidates.append(result)
 
         self._log.debug(f"_search_track found {len(candidates)} results")
@@ -493,6 +497,10 @@ class TidalPlugin(BeetsPlugin):
             candidates = [self._album_to_albuminfo(results["top_hit"])]
 
         for result in results["albums"]:
+            # Don't add top_hit twice
+            if result.id == results["top_hit"].id:
+                continue
+
             candidates.append(self._album_to_albuminfo(result))
 
         self._log.debug(f"_search_album found {len(candidates)} results")
@@ -608,27 +616,33 @@ class TidalPlugin(BeetsPlugin):
         # Search using title
         if item.title:
             query.append(item.title)
-            trackids = [x.tidal_track_id for x in tracks]
-            tracks += self._search_track(
+            results = self._search_track(
                 " ".join(query),
                 limit=self.config["metadata_search_limit"].as_number(),
             )
+            trackids = [x.id for x in results]
+            tracks+=results
 
         # Search using title + artist
         if item.artist:
             query.append(item.artist)
-            tracks += self._search_track(
+            results = self._search_track(
                 " ".join(query),
                 limit=self.config["metadata_search_limit"].as_number(),
             )
+            trackids += [x.id for x in results]
+            tracks+=results
 
         # Search using title + artist + album
         if item.album:
             query.append(item.album)
-            tracks += self._search_track(
+            trackids += [x.id for x in tracks]
+            results = self._search_track(
                 " ".join(query),
                 limit=self.config["metadata_search_limit"].as_number(),
             )
+            trackids += [x.id for x in results]
+            tracks+=results
 
         # Reverse list so the more specific result is first
         tracks = reversed(tracks)
@@ -647,18 +661,19 @@ class TidalPlugin(BeetsPlugin):
         tracks = newtracks
 
         # Fetch lyrics for tracks
+        lyrics = []
         for track in tracks:
-            track.lyrics = self._get_lyrics(track)
+            lyric = self._get_lyrics(track)
+            if lyric:
+                # Only add to list if we actually have lyrics
+                lyrics.append(lyric)
 
-        # Filter out tracks with no lyrics
-        tracks = [x for x in tracks if x.lyrics is not None]
-
-        if not tracks:
+        if not tracks or not lyrics:
             self._log.info(f"No results found for {item.title}")
             return None
 
         # Pick best one, aka the first one with lyrics
-        return tracks[0].lyrics
+        return lyrics[0]
 
     def _process_item(self, item):
         """Processes an item from the import stage
