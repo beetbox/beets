@@ -30,7 +30,7 @@ import musicbrainzngs
 
 import beets
 import beets.autotag.hooks
-from beets import config, logging, plugins, util
+from beets import config, plugins, util
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin
 from beets.util.id_extractors import (
     beatport_id_regex,
@@ -78,8 +78,6 @@ class MusicBrainzAPIError(util.HumanReadableError):
             self._reasonstr(), self.verb, repr(self.query)
         )
 
-
-log = logging.getLogger("beets")
 
 RELEASE_INCLUDES = list(
     {
@@ -387,15 +385,16 @@ class MusicBrainzPlugin(BeetsPlugin):
         """Set up the python-musicbrainz-ngs module according to settings
         from the beets configuration. This should be called at startup.
         """
-        hostname = config["musicbrainz"]["host"].as_str()
-        https = config["musicbrainz"]["https"].get(bool)
+        super().__init__()
+        hostname = self.config["host"].as_str()
+        https = self.config["https"].get(bool)
         # Only call set_hostname when a custom server is configured. Since
         # musicbrainz-ngs connects to musicbrainz.org with HTTPS by default
         if hostname != "musicbrainz.org":
             musicbrainzngs.set_hostname(hostname, https)
         musicbrainzngs.set_rate_limit(
-            config["musicbrainz"]["ratelimit_interval"].as_number(),
-            config["musicbrainz"]["ratelimit"].get(int),
+            self.config["ratelimit_interval"].as_number(),
+            self.config["ratelimit"].get(int),
         )
 
     def track_info(
@@ -524,10 +523,10 @@ class MusicBrainzPlugin(BeetsPlugin):
         # when the release has more than 500 tracks. So we use browse_recordings
         # on chunks of tracks to recover the same information in this case.
         if ntracks > BROWSE_MAXTRACKS:
-            log.debug("Album {} has too many tracks", release["id"])
+            self._log.debug("Album {} has too many tracks", release["id"])
             recording_list = []
             for i in range(0, ntracks, BROWSE_CHUNKSIZE):
-                log.debug("Retrieving tracks starting at {}", i)
+                self._log.debug("Retrieving tracks starting at {}", i)
                 recording_list.extend(
                     musicbrainzngs.browse_recordings(
                         release=release["id"],
@@ -707,7 +706,7 @@ class MusicBrainzPlugin(BeetsPlugin):
             else:
                 info.media = "Media"
 
-        if config["musicbrainz"]["genres"]:
+        if self.config["genres"]:
             sources = [
                 release["release-group"].get("tag-list", []),
                 release.get("tag-list", []),
@@ -722,7 +721,7 @@ class MusicBrainzPlugin(BeetsPlugin):
             )
 
         # We might find links to external sources (Discogs, Bandcamp, ...)
-        external_ids = config["musicbrainz"]["external_ids"].get()
+        external_ids = self.config["external_ids"].get()
         wanted_sources = {
             site for site, wanted in external_ids.items() if wanted
         }
@@ -732,7 +731,7 @@ class MusicBrainzPlugin(BeetsPlugin):
             for source, url in product(wanted_sources, url_rels):
                 if f"{source}.com" in (target := url["target"]):
                     urls[source] = target
-                    log.debug(
+                    self._log.debug(
                         "Found link to {} release via MusicBrainz",
                         source.capitalize(),
                     )
@@ -802,9 +801,11 @@ class MusicBrainzPlugin(BeetsPlugin):
             return
 
         try:
-            log.debug("Searching for MusicBrainz releases with: {!r}", criteria)
+            self._log.debug(
+                "Searching for MusicBrainz releases with: {!r}", criteria
+            )
             res = musicbrainzngs.search_releases(
-                limit=config["musicbrainz"]["searchlimit"].get(int), **criteria
+                limit=self.config["searchlimit"].get(int), **criteria
             )
         except musicbrainzngs.MusicBrainzError as exc:
             raise MusicBrainzAPIError(
@@ -833,7 +834,7 @@ class MusicBrainzPlugin(BeetsPlugin):
 
         try:
             res = musicbrainzngs.search_recordings(
-                limit=config["musicbrainz"]["searchlimit"].get(int), **criteria
+                limit=self.config["searchlimit"].get(int), **criteria
             )
         except musicbrainzngs.MusicBrainzError as exc:
             raise MusicBrainzAPIError(
@@ -849,10 +850,10 @@ class MusicBrainzPlugin(BeetsPlugin):
         object or None if the album is not found. May raise a
         MusicBrainzAPIError.
         """
-        log.debug("Requesting MusicBrainz release {}", album_id)
+        self._log.debug("Requesting MusicBrainz release {}", album_id)
         albumid = _parse_id(album_id)
         if not albumid:
-            log.debug("Invalid MBID ({0}).", album_id)
+            self._log.debug("Invalid MBID ({0}).", album_id)
             return None
         try:
             res = musicbrainzngs.get_release_by_id(albumid, RELEASE_INCLUDES)
@@ -864,7 +865,7 @@ class MusicBrainzPlugin(BeetsPlugin):
                 actual_res = _find_actual_release_from_pseudo_release(res)
 
         except musicbrainzngs.ResponseError:
-            log.debug("Album ID match failed.")
+            self._log.debug("Album ID match failed.")
             return None
         except musicbrainzngs.MusicBrainzError as exc:
             raise MusicBrainzAPIError(
@@ -889,12 +890,12 @@ class MusicBrainzPlugin(BeetsPlugin):
         """
         trackid = _parse_id(track_id)
         if not trackid:
-            log.debug("Invalid MBID ({0}).", track_id)
+            self._log.debug("Invalid MBID ({0}).", track_id)
             return None
         try:
             res = musicbrainzngs.get_recording_by_id(trackid, TRACK_INCLUDES)
         except musicbrainzngs.ResponseError:
-            log.debug("Track ID match failed.")
+            self._log.debug("Track ID match failed.")
             return None
         except musicbrainzngs.MusicBrainzError as exc:
             raise MusicBrainzAPIError(
