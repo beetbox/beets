@@ -17,8 +17,8 @@
 from unittest import mock
 
 from beets import config
-from beets.autotag import mb
 from beets.test.helper import BeetsTestCase
+from beetsplug import musicbrainz
 
 
 class MBAlbumInfoTest(BeetsTestCase):
