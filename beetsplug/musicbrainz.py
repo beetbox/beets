@@ -786,15 +786,16 @@ class MusicBrainzPlugin(BeetsPlugin):
         if track_count := len(items):
             criteria["tracks"] = str(track_count)
 
-        # Additional search cues from existing metadata.
-        if extra_tags:
-            for tag, value in extra_tags.items():
-                key = FIELDS_TO_MB_KEYS[tag]
-                value = str(value).lower().strip()
-                if key == "catno":
-                    value = value.replace(" ", "")
-                if value:
-                    criteria[key] = value
+        if self.config["extra_tags"]:
+            tag_list = self.config["extra_tags"].get()
+            self._log.debug("Additional search terms: {0}", tag_list)
+            for tag, value in tag_list.items():
+                if key := FIELDS_TO_MB_KEYS.get(tag):
+                    value = str(value).lower().strip()
+                    if key == "catno":
+                        value = value.replace(" ", "")
+                    if value:
+                        criteria[key] = value
 
         # Abort if we have no search terms.
         if not any(criteria.values()):
