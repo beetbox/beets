@@ -41,7 +41,7 @@ class ReplacePlugin(BeetsPlugin):
             raise ui.UserError(f"'{file}' is not a valid file.")
 
         try:
-            f = mediafile.MediaFile(str(file))
+           mediafile.MediaFile(str(file))
         except mediafile.FileTypeError as fte:
             raise ui.UserError(fte)
 
@@ -56,7 +56,7 @@ class ReplacePlugin(BeetsPlugin):
             try:
                 index = int(input(f"Which song would you like to replace? [1-{len(items)}] (0 to cancel): "))
                 if index == 0:
-                    return False
+                    return None
                 if 1 <= index <= len(items):
                     return items[index - 1]
                 print(f"Invalid choice. Please enter a number between 1 and {len(items)}.")
