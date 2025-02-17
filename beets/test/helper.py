@@ -49,7 +49,7 @@ from mediafile import Image, MediaFile
 
 import beets
 import beets.plugins
-from beets import autotag, importer, logging, util
+from beets import importer, logging, util
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.importer import ImportSession
 from beets.library import Album, Item, Library
@@ -791,40 +791,37 @@ class AutotagStub:
     length = 2
 
     def install(self):
-        self.mb_match_album = autotag.mb.match_album
-        self.mb_match_track = autotag.mb.match_track
-        self.mb_album_for_id = autotag.mb.album_for_id
-        self.mb_track_for_id = autotag.mb.track_for_id
-
-        autotag.mb.match_album = self.match_album
-        autotag.mb.match_track = self.match_track
-        autotag.mb.album_for_id = self.album_for_id
-        autotag.mb.track_for_id = self.track_for_id
+        self.patchers = [
+            patch("beets.plugins.album_for_id", lambda *_: None),
+            patch("beets.plugins.track_for_id", lambda *_: None),
+            patch("beets.plugins.candidates", self.candidates),
+            patch("beets.plugins.item_candidates", self.item_candidates),
+        ]
+        for p in self.patchers:
+            p.start()
 
         return self
 
     def restore(self):
-        autotag.mb.match_album = self.mb_match_album
-        autotag.mb.match_track = self.mb_match_track
-        autotag.mb.album_for_id = self.mb_album_for_id
-        autotag.mb.track_for_id = self.mb_track_for_id
+        for p in self.patchers:
+            p.stop()
 
-    def match_album(self, albumartist, album, tracks, extra_tags):
+    def candidates(self, items, artist, album, va_likely, extra_tags=None):
         if self.matching == self.IDENT:
-            yield self._make_album_match(albumartist, album, tracks)
+            yield self._make_album_match(artist, album, len(items))
 
         elif self.matching == self.GOOD:
             for i in range(self.length):
-                yield self._make_album_match(albumartist, album, tracks, i)
+                yield self._make_album_match(artist, album, len(items), i)
 
         elif self.matching == self.BAD:
             for i in range(self.length):
-                yield self._make_album_match(albumartist, album, tracks, i + 1)
+                yield self._make_album_match(artist, album, len(items), i + 1)
 
         elif self.matching == self.MISSING:
-            yield self._make_album_match(albumartist, album, tracks, missing=1)
+            yield self._make_album_match(artist, album, len(items), missing=1)
 
-    def match_track(self, artist, title):
+    def item_candidates(self, item, artist, title):
         yield TrackInfo(
             title=title.replace("Tag", "Applied"),
             track_id="trackid",
@@ -833,12 +830,6 @@ class AutotagStub:
             length=1,
             index=0,
         )
-
-    def album_for_id(self, mbid):
-        return None
-
-    def track_for_id(self, mbid):
-        return None
 
     def _make_track_match(self, artist, album, number):
         return TrackInfo(
