@@ -19,9 +19,8 @@ from __future__ import annotations
 import re
 import traceback
 from collections import Counter
-from collections.abc import Sequence
 from itertools import product
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin
 
 import musicbrainzngs
@@ -41,6 +40,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     from beets.library import Item
+
+    from ._typing import JSONDict
 
 VARIOUS_ARTISTS_ID = "89ad4ac3-39f7-470e-963a-56509c546377"
 
@@ -122,7 +123,7 @@ BROWSE_CHUNKSIZE = 100
 BROWSE_MAXTRACKS = 500
 
 
-def _preferred_alias(aliases: list):
+def _preferred_alias(aliases: list[JSONDict]):
     """Given an list of alias structures for an artist credit, select
     and return the user's preferred alias alias or None if no matching
     alias is found.
@@ -131,7 +132,7 @@ def _preferred_alias(aliases: list):
         return
 
     # Only consider aliases that have locales set.
-    aliases = [a for a in aliases if "locale" in a]
+    valid_aliases = [a for a in aliases if "locale" in a]
 
     # Get any ignored alias types and lower case them to prevent case issues
     ignored_alias_types = config["import"]["ignored_alias_types"].as_str_seq()
@@ -142,13 +143,13 @@ def _preferred_alias(aliases: list):
         # Find matching primary aliases for this locale that are not
         # being ignored
         matches = []
-        for a in aliases:
+        for alias in valid_aliases:
             if (
-                a["locale"] == locale
-                and "primary" in a
-                and a.get("type", "").lower() not in ignored_alias_types
+                alias["locale"] == locale
+                and "primary" in alias
+                and alias.get("type", "").lower() not in ignored_alias_types
             ):
-                matches.append(a)
+                matches.append(alias)
 
         # Skip to the next locale if we have no matches
         if not matches:
@@ -158,7 +159,7 @@ def _preferred_alias(aliases: list):
 
 
 def _multi_artist_credit(
-    credit: list[dict], include_join_phrase: bool
+    credit: list[JSONDict], include_join_phrase: bool
 ) -> tuple[list[str], list[str], list[str]]:
     """Given a list representing an ``artist-credit`` block, accumulate
     data into a triple of joined artist name lists: canonical, sort, and
@@ -210,7 +211,7 @@ def track_url(trackid: str) -> str:
     return urljoin(BASE_URL, "recording/" + trackid)
 
 
-def _flatten_artist_credit(credit: list[dict]) -> tuple[str, str, str]:
+def _flatten_artist_credit(credit: list[JSONDict]) -> tuple[str, str, str]:
     """Given a list representing an ``artist-credit`` block, flatten the
     data into a triple of joined artist name strings: canonical, sort, and
     credit.
@@ -225,7 +226,7 @@ def _flatten_artist_credit(credit: list[dict]) -> tuple[str, str, str]:
     )
 
 
-def _artist_ids(credit: list[dict]) -> list[str]:
+def _artist_ids(credit: list[JSONDict]) -> list[str]:
     """
     Given a list representing an ``artist-credit``,
     return a list of artist IDs
@@ -255,13 +256,14 @@ def album_url(albumid: str) -> str:
     return urljoin(BASE_URL, "release/" + albumid)
 
 
-def _preferred_release_event(release: dict[str, Any]) -> tuple[str, str]:
+def _preferred_release_event(
+    release: dict[str, Any],
+) -> tuple[str | None, str | None]:
     """Given a release, select and return the user's preferred release
     event as a tuple of (country, release_date). Fall back to the
     default release event if a preferred event is not found.
     """
     countries = config["match"]["preferred"]["countries"].as_str_seq()
-    countries = cast(Sequence, countries)
 
     for country in countries:
         for event in release.get("release-event-list", {}):
@@ -271,7 +273,7 @@ def _preferred_release_event(release: dict[str, Any]) -> tuple[str, str]:
             except KeyError:
                 pass
 
-    return (cast(str, release.get("country")), cast(str, release.get("date")))
+    return release.get("country"), release.get("date")
 
 
 def _set_date_str(
@@ -315,8 +317,8 @@ def _is_translation(r):
 
 
 def _find_actual_release_from_pseudo_release(
-    pseudo_rel: dict,
-) -> dict | None:
+    pseudo_rel: JSONDict,
+) -> JSONDict | None:
     try:
         relations = pseudo_rel["release"]["release-relation-list"]
     except KeyError:
@@ -394,7 +396,7 @@ class MusicBrainzPlugin(BeetsPlugin):
 
     def track_info(
         self,
-        recording: dict,
+        recording: JSONDict,
         index: int | None = None,
         medium: int | None = None,
         medium_index: int | None = None,
@@ -495,7 +497,7 @@ class MusicBrainzPlugin(BeetsPlugin):
 
         return info
 
-    def album_info(self, release: dict) -> beets.autotag.hooks.AlbumInfo:
+    def album_info(self, release: JSONDict) -> beets.autotag.hooks.AlbumInfo:
         """Takes a MusicBrainz release result dictionary and returns a beets
         AlbumInfo object containing the interesting data about that release.
         """
@@ -672,7 +674,8 @@ class MusicBrainzPlugin(BeetsPlugin):
         if not release_date:
             # Fall back if release-specific date is not available.
             release_date = release_group_date
-        _set_date_str(info, release_date, False)
+        if release_date:
+            _set_date_str(info, release_date, False)
         _set_date_str(info, release_group_date, True)
 
         # Label name.
