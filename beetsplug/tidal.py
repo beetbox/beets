@@ -64,6 +64,7 @@ class TidalPlugin(BeetsPlugin):
                 "metadata_search_limit": 25,  # Search limit when querying API for metadata
                 "lyrics_search_limit": 10,  # Search limit when querying API for lyrics
                 "lyrics_no_duration_valid": False, # If lyrics are valid if the Item or TIDAL Item have no duration
+                "search_max_altartists": 5,
                 "max_lyrics_time_difference": 5, # Good comprimise between incorrect lyrics and rejecting correct ones
                 "tokenfile": "tidal_token.json",
                 "write_sidecar": False,  # Write lyrics to LRC file
@@ -422,9 +423,6 @@ class TidalPlugin(BeetsPlugin):
         if album:
             trackinfo.medium_total = album.num_tracks
 
-        # if self.config["lyrics"]:
-        #    trackinfo.lyrics = self._get_lyrics(track)
-
         return trackinfo
 
     def _search_from_metadata(self, item, limit=10):
@@ -484,10 +482,14 @@ class TidalPlugin(BeetsPlugin):
             tracks+=results
 
         # Search using title + primary artist + alternative artists
-        if item.artists:
-            for artist in item.artists:
-                self._log.debug("Track has alternative artists... adding them to query")
+        maxaltartists = self.config["search_max_altartists"].as_number()
 
+        if item.artists and maxaltartists > 0:
+            self._log.debug("Track has alternative artists... adding them to query")
+            if len(item.artists) > maxaltartists:
+                self._log.debug(f"We have {len(item.artists)} alternative artists with a max of {maxaltartists}")
+                
+            for artist in item.artists[:maxaltartists]:
                 query.append(artist)
                 results = self._search_track(
                     " ".join(query),
