@@ -63,7 +63,8 @@ class TidalPlugin(BeetsPlugin):
                 "overwrite_lyrics": False,
                 "metadata_search_limit": 25,  # Search limit when querying API for metadata
                 "lyrics_search_limit": 10,  # Search limit when querying API for lyrics
-                "max_lyrics_time_difference": 5,
+                "lyrics_no_duration_valid": False, # If lyrics are valid if the Item or TIDAL Item have no duration
+                "max_lyrics_time_difference": 5, # Good comprimise between incorrect lyrics and rejecting correct ones
                 "tokenfile": "tidal_token.json",
                 "write_sidecar": False,  # Write lyrics to LRC file
             }
@@ -429,7 +430,7 @@ class TidalPlugin(BeetsPlugin):
     def _search_from_metadata(self, item, limit=10):
         """Searches TIDAL for tracks matching the given item.
 
-        Currently, this function searches for title, album, and artist.
+        Currently, this function searches for title, album, and artist, and alternative artists.
 
         :param item: Item to search for
         :type item: beets.library.Item
@@ -443,7 +444,7 @@ class TidalPlugin(BeetsPlugin):
 
         # Search using title
         if item.title:
-            query.append(item.title)
+            query = [item.title]
             results = self._search_track(
                 " ".join(query),
                 limit=limit,
@@ -453,7 +454,7 @@ class TidalPlugin(BeetsPlugin):
 
         # Search using title + artist
         if item.artist:
-            query.append(item.artist)
+            query = [item.title, item.artist]
             results = self._search_track(
                 " ".join(query),
                 limit=limit,
@@ -463,7 +464,7 @@ class TidalPlugin(BeetsPlugin):
 
         # Search using title + artist + album
         if item.album:
-            query.append(item.album)
+            query = [item.title, item.artist, item.album]
             trackids += [x.id for x in tracks]
             results = self._search_track(
                 " ".join(query),
@@ -471,6 +472,29 @@ class TidalPlugin(BeetsPlugin):
             )
             trackids += [x.id for x in results]
             tracks+=results
+
+        # Search using title + album
+        if item.album:
+            query = [item.title, item.album]
+            results = self._search_track(
+                " ".join(query),
+                limit=limit,
+            )
+            trackids += [x.id for x in results]
+            tracks+=results
+
+        # Search using title + primary artist + alternative artists
+        if item.artists:
+            for artist in item.artists:
+                self._log.debug("Track has alternative artists... adding them to query")
+
+                query.append(artist)
+                results = self._search_track(
+                    " ".join(query),
+                    limit=limit
+                )
+                trackids += [x.id for x in results]
+                tracks+=results
 
         # Reverse list so the more specific result is first
         tracks = reversed(tracks)
@@ -501,9 +525,22 @@ class TidalPlugin(BeetsPlugin):
         :return: A list of tidalapi Tracks
         :rtype: list
         """
-        self._log.debug(f"_search_track query {query}")
-        results = self._tidal_search(query, [tidalapi.Track], limit, offset)
+        self._log.debug(f"_search_track raw query {query}")
 
+        # Both of the substitutions borrowed from https://github.com/arsaboo/beets-tidal/blob/main/beetsplug/tidal.py
+        # Strip non-word characters from query. Things like "!" and "-" can
+        # cause a query to return no results, even if they match the artist or
+        # album title. Use `re.UNICODE` flag to avoid stripping non-english
+        # word characters.
+        query = re.sub(r'(?u)\W+', ' ', query)
+
+        # Strip medium information from query, Things like "CD1" and "disk 1"
+        # can also negate an otherwise positive result.
+        query = re.sub(r'(?i)\b(CD|disc)\s*\d+', '', query)
+
+        self._log.debug(f"_search_track fixed query {query}")
+
+        results = self._tidal_search(query, [tidalapi.Track], limit, offset)
         candidates = []
 
         # top_hit is the most relevant to our query, add that first.
@@ -540,7 +577,6 @@ class TidalPlugin(BeetsPlugin):
         :return: A dictionary of search results, including top hit
         :rtype: dict
         """
-        # raise exceptions.TooManyRequests("test")
         if not self._load_session():
             self.log.debug(
                 "Cannot perform search with no session... please login."
@@ -606,29 +642,24 @@ class TidalPlugin(BeetsPlugin):
 
     def _validate_lyrics(self, lyrics, lib_item, tidal_item):
         self._log.debug(f"Validating lyrics for {lib_item.title}!")
+        maxdiff = self.config["max_lyrics_time_difference"].as_number()
 
-        if self.config["max_lyrics_time_difference"].as_number() >= 1 and self.config["synced_lyrics"]:
-            regx = re.findall(self.lrc_timestamp_regex, lyrics)
-            if not regx:
-                self._log.debug("Lyrics NOT valid due to regex returning no matches")
+        if maxdiff >= 1:
+            # Validate that both the item and the Tidal metadata have values
+            if not lib_item.length and tidal_item.length == -1:
+                self._log.debug("Not using duration difference to validate lyrics as one or both items don't have a duration!")
+                return bool(self.config["lyrics_no_duration_valid"])
+
+            self._log.debug(f"Using duration difference to validate lyrics")
+            self._log.debug(f"Item duration: {lib_item.length}, Tidal duration: {tidal_item.duration}")
+
+            # Calculate difference
+            difference = abs(lib_item.length - tidal_item.duration)
+            difference_over = abs(maxdiff - difference)
+
+            if difference > maxdiff:
+                self._log.debug(f"Not using lyrics for {lib_item.title} as difference is {difference_over} over the max of {maxdiff}")
                 return False
-
-            if not len(regx[-1]) == 3:
-                self._log.debug("Lyrics NOT valid due to regex groups not having a length of 3 (mm:ss.hs)")
-                return False
-
-            lrc_len = regx[-1]
-            # LRC Format: [mm:ss.hs]
-            lrc_secs = (int(lrc_len[0]) * 60) + int(lrc_len[1]) + (int(lrc_len[2]) / 100)
-            self._log.debug(f"Using LRC timestamp {lrc_secs} seconds and Item timestamp {lib_item.length} for timestamp comparison")
-
-            distance = abs(lib_item.length - lrc_secs)
-            over_distance = abs(self.config["max_lyrics_time_difference"].as_number() - distance)
-            if distance > self.config["max_lyrics_time_difference"].as_number():
-                self._log.debug(f"Lyrics NOT valid due to difference being {lrc_secs}, {over_distance} over maximum")
-                return False
-            else:
-                self._log.debug(f"Distance between lyrics duration and item duration: {distance}")
         else:
             self._log.debug("Not using timestamp lyrics validation due to user configuration")
 
