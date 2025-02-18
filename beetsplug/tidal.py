@@ -77,6 +77,9 @@ class TidalPlugin(BeetsPlugin):
         # tidalapi.session.Session object we throw around to execute API calls with
         self.sess = None
 
+        # Check for session and throw user error if we aren't logged in
+        self._load_session(fatal=True)
+
     def _load_session(self, fatal=False):
         """Loads a TIDAL session from a JSON file to the class singleton
 
@@ -106,7 +109,7 @@ class TidalPlugin(BeetsPlugin):
             self._log.debug("Session state file does not exist or is corrupt")
             if fatal:
                 raise ui.UserError(
-                    "Please login to TIDAL using `beets tidal --login`"
+                    "Please login to TIDAL using `beets tidal --login` or disable tidal plugin"
                 )
             else:
                 return False
@@ -135,7 +138,7 @@ class TidalPlugin(BeetsPlugin):
 
                 if fatal:
                     raise ui.UserError(
-                        "Please login to TIDAL using `beets tidal --login`"
+                        "Please login to TIDAL using `beets tidal --login` or disable tidal plugin"
                     )
                 else:
                     return False
@@ -206,14 +209,6 @@ class TidalPlugin(BeetsPlugin):
         :return: AlbumInfo for the given ID if found, otherwise Nothing.
         :rtype: beets.autotag.hooks.AlbumInfo or None
         """
-        # Check for session
-        self._log.debug(f"Running album_for_id with track {album_id}!")
-        if not self._load_session():
-            self._log.info(
-                "Skipping album_for_id because we have no session! Please login."
-            )
-            return None
-
         # This is just the numerical album ID to use with the TIDAL API
         tidal_album_id = None
 
@@ -252,13 +247,7 @@ class TidalPlugin(BeetsPlugin):
         :return: TrackInfo for the given ID if found, otherwise Nothing.
         :rtype: beets.autotag.hooks.TrackInfo or None
         """
-        # Check for session
         self._log.debug(f"Running track_for_id with track {track_id}!")
-        if not self._load_session():
-            self._log.info(
-                "Skipping track_for_id because we have no session! Please login."
-            )
-            return None
 
         # This is just the numerical track ID to use with the TIDAL API
         tidal_track_id = None
@@ -292,12 +281,6 @@ class TidalPlugin(BeetsPlugin):
 
     def candidates(self, items, artist, album, va_likely, extra_tags):
         """Returns TIDAL metadata candidates for a specific set of items, typically an album"""
-        if not self._load_session():
-            self._log.info(
-                "Skipping candidates because we have no session! Please login."
-            )
-            return []
-
         candidates = []
 
         self._log.debug(
@@ -336,12 +319,6 @@ class TidalPlugin(BeetsPlugin):
 
     def item_candidates(self, item, artist, album):
         """Returns TIDAL metadata candidates for a specific item"""
-        if not self._load_session():
-            self._log.info(
-                "Skipping item_candidates because we have no session! Please login."
-            )
-            return []
-
         self._log.debug(f"Searching TIDAL for {item}!")
 
         return self._search_from_metadata(item, limit=self.config["metadata_search_limit"].as_number()) or []
@@ -534,19 +511,7 @@ class TidalPlugin(BeetsPlugin):
         :rtype: list
         """
 
-        self._log.debug(f"_search_album raw query {query}")
-        # Both of the substitutions borrowed from https://github.com/arsaboo/beets-tidal/blob/main/beetsplug/tidal.py
-        # Strip non-word characters from query. Things like "!" and "-" can
-        # cause a query to return no results, even if they match the artist or
-        # album title. Use `re.UNICODE` flag to avoid stripping non-english
-        # word characters.
-        query = re.sub(r'(?u)\W+', ' ', query)
-
-        # Strip medium information from query, Things like "CD1" and "disk 1"
-        # can also negate an otherwise positive result.
-        query = re.sub(r'(?i)\b(CD|disc)\s*\d+', '', query)
-        self._log.debug(f"_search_album fixed query {query}")
-
+        self._log.debug(f"_search_album query {query}")
         results = self._tidal_search(query, [tidalapi.Album], limit, offset)
 
         candidates = []
@@ -577,19 +542,6 @@ class TidalPlugin(BeetsPlugin):
         :rtype: list
         """
         self._log.debug(f"_search_track raw query {query}")
-
-        # Both of the substitutions borrowed from https://github.com/arsaboo/beets-tidal/blob/main/beetsplug/tidal.py
-        # Strip non-word characters from query. Things like "!" and "-" can
-        # cause a query to return no results, even if they match the artist or
-        # album title. Use `re.UNICODE` flag to avoid stripping non-english
-        # word characters.
-        query = re.sub(r'(?u)\W+', ' ', query)
-
-        # Strip medium information from query, Things like "CD1" and "disk 1"
-        # can also negate an otherwise positive result.
-        query = re.sub(r'(?i)\b(CD|disc)\s*\d+', '', query)
-
-        self._log.debug(f"_search_track fixed query {query}")
 
         results = self._tidal_search(query, [tidalapi.Track], limit, offset)
         candidates = []
@@ -628,14 +580,18 @@ class TidalPlugin(BeetsPlugin):
         :return: A dictionary of search results, including top hit
         :rtype: dict
         """
-        if not self._load_session():
-            self.log.debug(
-                "Cannot perform search with no session... please login."
-            )
+        # Both of the substitutions borrowed from https://github.com/arsaboo/beets-tidal/blob/main/beetsplug/tidal.py
+        # Strip non-word characters from query. Things like "!" and "-" can
+        # cause a query to return no results, even if they match the artist or
+        # album title. Use `re.UNICODE` flag to avoid stripping non-english
+        # word characters.
+        query = re.sub(r'(?u)\W+', ' ', query)
 
-            # We only use these three keys, even though the API returns more
-            return {"albums": [], "tracks": [], "top_hit": None}
+        # Strip medium information from query, Things like "CD1" and "disk 1"
+        # can also negate an otherwise positive result.
+        query = re.sub(r'(?i)\b(CD|disc)\s*\d+', '', query)
 
+        self._log.debug(f"Using query {query} in _tidal_search")
         return self.sess.search(query, *args, **kwargs)
 
     @cachetools.cached(
@@ -661,12 +617,6 @@ class TidalPlugin(BeetsPlugin):
         :return: The lyrics if they are available, otherwise None.
         :rtype: str or None
         """
-        if not self._load_session():
-            self._log.debug(
-                "Cannot grab lyrics with no session... please login."
-            )
-            return None
-
         self._log.debug(f"Grabbing lyrics for track {track.id}")
 
         # Grab lyrics
@@ -739,12 +689,6 @@ class TidalPlugin(BeetsPlugin):
         :return: The lyrics if they are available, otherwise nothing.
         :rtype: str or None
         """
-        if not self._load_session():
-            self._log.debug(
-                "Cannot grab lyrics with no session... please login."
-            )
-            return None
-
         self._log.debug(
             f"Searching for lyrics from non-TIDAL metadata for {item.title}"
         )
@@ -832,12 +776,6 @@ class TidalPlugin(BeetsPlugin):
         self._log.debug("Running import stage")
         if not self.config["auto"]:
             self._log.debug("Not processing further due to auto being False")
-            return
-
-        if not self._load_session():
-            self._log.info(
-                "Skipping import stage because we have no session! Please login."
-            )
             return
 
         for item in task.imported_items():
