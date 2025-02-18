@@ -753,9 +753,7 @@ class TidalPlugin(BeetsPlugin):
             f"Searching for lyrics from non-TIDAL metadata for {item.title}"
         )
 
-        tracks = self._search_from_metadata(
-            item, limit=self.config["lyrics_search_limit"].as_number()
-        )
+        tracks = self._search_from_metadata(item, limit=limit)
 
         # Fetch lyrics for tracks
         lyrics = []
