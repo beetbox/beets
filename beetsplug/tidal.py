@@ -51,6 +51,11 @@ class TidalPlugin(BeetsPlugin):
         self.import_stages = [self.stage]
         self.register_listener("write", self.write_file)
 
+        # This handler runs before import to load our session and to error our
+        # if needed... If this code is put in __init__, then the plugin CLI
+        # cannot run.
+        self.register_listener("import_begin", self.import_begin)
+
         # Import config
         # The lyrics search limit is much smaller than the metadata search limit
         # as the current implementation is very API-heavy and TIDAL heavily
@@ -78,9 +83,6 @@ class TidalPlugin(BeetsPlugin):
 
         # tidalapi.session.Session object we throw around to execute API calls with
         self.sess = None
-
-        # Check for session and throw user error if we aren't logged in
-        self._load_session(fatal=True)
 
     def _load_session(self, fatal=False):
         """Loads a TIDAL session from a JSON file to the class singleton
@@ -838,6 +840,10 @@ class TidalPlugin(BeetsPlugin):
             # Save lyrics
             with open(sidecar_path, "w") as file:
                 file.write(item.lyrics)
+
+    def import_begin(self):
+        # Check for session and throw user error if we aren't logged in
+        self._load_session(fatal=True)
 
     def stage(self, session: ImportSession, task: ImportTask):
         self._log.debug("Running import stage")
