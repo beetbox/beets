@@ -26,11 +26,11 @@ class ReplacePlugin(BeetsPlugin):
         song = self.select_song(itemList)
 
         if not song:
-            print("Operation cancelled.")
+            ui.print_("Operation cancelled.")
             return
 
         if not self.confirm_replacement(newFilePath, song):
-            print("Aborting replacement.")
+            ui.print_("Aborting replacement.")
             return
 
         self.replace_file(newFilePath, song)
@@ -48,9 +48,9 @@ class ReplacePlugin(BeetsPlugin):
 
     def select_song(self, items):
         """Present a menu of matching songs and get user selection."""
-        print("\nMatching songs:")
+        ui.print_("\nMatching songs:")
         for i, item in enumerate(items, 1):
-            print(f"{i}. {item}")
+            ui.print_(f"{i}. {item}")
 
         while True:
             try:
@@ -59,9 +59,9 @@ class ReplacePlugin(BeetsPlugin):
                     return None
                 if 1 <= index <= len(items):
                     return items[index - 1]
-                print(f"Invalid choice. Please enter a number between 1 and {len(items)}.")
+                ui.print_(f"Invalid choice. Please enter a number between 1 and {len(items)}.")
             except ValueError:
-                print("Invalid input. Please type in a number.")
+                ui.print_("Invalid input. Please type in a number.")
 
     def confirm_replacement(self, newFilePath, song):
         """Get user confirmation for the replacement."""
@@ -70,7 +70,7 @@ class ReplacePlugin(BeetsPlugin):
         if not originalFilePath.exists():
             raise ui.UserError(f"The original song file was not found.")
 
-        print(f"\nReplacing: {newFilePath} -> {originalFilePath}")
+        ui.print_(f"\nReplacing: {newFilePath} -> {originalFilePath}")
         decision = input("Are you sure you want to replace this track? (y/N): ").strip().casefold()
         return decision in {"yes", "y"}
 
@@ -93,4 +93,4 @@ class ReplacePlugin(BeetsPlugin):
         song.path = str(dest).encode()
         song.store()
 
-        print("Replacement successful.")
+        ui.print_("Replacement successful.")
