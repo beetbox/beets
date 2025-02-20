@@ -456,6 +456,24 @@ class ConvertPlugin(BeetsPlugin):
                 dest = replace_ext(dest, ext)
             converted = dest
 
+        # Delete existing destination files when original files have been
+        # modified since the last conversion. NOTE: Only when not using the
+        # --keep-new option because I'm not sure what to do in this case.
+        if (
+            (refresh and not keep_new)
+            and (os.path.exists(dest))
+            and (
+                os.path.getmtime(item.path)
+                > os.path.getmtime(dest)
+            )
+        ):
+            self._log.info(
+                "Removing {0} (original file modified)",
+                util.displayable_path(dest),
+            )
+            if not pretend:
+                util.remove(dest)
+
         # Ensure that only one thread tries to create directories at a
         # time. (The existence check is not atomic with the directory
         # creation inside this function.)
