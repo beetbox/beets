@@ -435,17 +435,12 @@ class ConvertPlugin(BeetsPlugin):
                 > os.path.getmtime(util.syspath(dest))
             )
         ):
-            if pretend:
-                self._log.info(
-                    "rm {0} (original file modified)",
-                    util.displayable_path(dest),
-                )
-            else:
-                self._log.info(
-                    "Removing {0} (original file modified)",
-                    util.displayable_path(dest),
-                )
-                util.remove(util.syspath(dest))
+            self._log.info(
+                "Removing {0} (original file modified)",
+                util.displayable_path(dest),
+            )
+            if not pretend:
+                util.remove(dest)
 
         # When keeping the new file in the library, we first move the
         # current (pristine) file to the destination. We'll then copy it
