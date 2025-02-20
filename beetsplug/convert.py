@@ -395,14 +395,16 @@ class ConvertPlugin(BeetsPlugin):
 
             if os.path.exists(dest):
                 # Delete existing destination files when original files have been modified since the last convert run.
-                if refresh and os.path.getmtime(original) > os.path.getmtime(dest):
+                if refresh and os.path.getmtime(original) > os.path.getmtime(
+                    dest
+                ):
                     self._log.info(
                         "Removing {0} (original file modified)",
                         util.displayable_path(dest),
                     )
                     if not pretend:
                         util.remove(dest)
-                else
+                else:
                     self._log.info(
                         "Skipping {0} (target file exists)",
                         util.displayable_path(item.path),
