@@ -393,30 +393,21 @@ class ConvertPlugin(BeetsPlugin):
                 with _fs_lock:
                     util.mkdirall(dest)
 
-            # Delete existing destination files when original files have been
-            # modified since the last conversion. NOTE: Only when not using the
-            # --keep-new option because I'm not sure what to do in this case.
-            if (
-                (refresh and not keep_new)
-                and (os.path.exists(dest))
-                and (
-                    os.path.getmtime(item.path)
-                    > os.path.getmtime(dest)
-                )
-            ):
-                self._log.info(
-                    "Removing {0} (original file modified)",
-                    util.displayable_path(dest),
-                )
-                if not pretend:
-                    util.remove(dest)
-
             if os.path.exists(dest):
-                self._log.info(
-                    "Skipping {0} (target file exists)",
-                    util.displayable_path(item.path),
-                )
-                continue
+                # Delete existing destination files when original files have been modified since the last convert run.
+                if refresh and os.path.getmtime(original) > os.path.getmtime(dest):
+                    self._log.info(
+                        "Removing {0} (original file modified)",
+                        util.displayable_path(dest),
+                    )
+                    if not pretend:
+                        util.remove(dest)
+                else
+                    self._log.info(
+                        "Skipping {0} (target file exists)",
+                        util.displayable_path(item.path),
+                    )
+                    continue
 
             if keep_new:
                 if pretend:
