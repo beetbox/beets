@@ -398,10 +398,10 @@ class ConvertPlugin(BeetsPlugin):
             # --keep-new option because I'm not sure what to do in this case.
             if (
                 (refresh and not keep_new)
-                and (os.path.exists(util.syspath(dest)))
+                and (os.path.exists(dest))
                 and (
-                    os.path.getmtime(util.syspath(item.path))
-                    > os.path.getmtime(util.syspath(dest))
+                    os.path.getmtime(item.path)
+                    > os.path.getmtime(dest)
                 )
             ):
                 self._log.info(
@@ -411,7 +411,7 @@ class ConvertPlugin(BeetsPlugin):
                 if not pretend:
                     util.remove(dest)
 
-            if os.path.exists(util.syspath(dest)):
+            if os.path.exists(dest):
                 self._log.info(
                     "Skipping {0} (target file exists)",
                     util.displayable_path(item.path),
