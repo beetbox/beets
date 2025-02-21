@@ -19,6 +19,8 @@ New features:
   control the maximum allowed distance between the lyrics search result and the
   tagged item's artist and title. This is useful for preventing false positives
   when fetching lyrics.
+* :doc:`plugins/lyrics`: Rewrite lyrics translation functionality to use Azure
+  AI Translator API and add relevant instructions to the documentation.
 
 Bug fixes:
 
@@ -517,6 +519,8 @@ Bug fixes:
   `requests` timeout.
 * Fix cover art resizing logic to support multiple steps of resizing
   :bug:`5151`
+* :doc:`/plugins/convert`: Fix attempt to convert and perform side-effects if
+  library file is not readable.
 
 For plugin developers:
 
