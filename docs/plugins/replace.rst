@@ -1,0 +1,12 @@
+Replace Plugin
+==============
+
+The ``replace`` plugin provides a command that replaces the audio file of a track, while keeping the name and tags intact. It should save some time when you get the wrong version of a song.
+
+Enable the ``replace`` plugin in your configuration (see :ref:`using-plugins`) and then type::
+
+    $ beet replace <query> <path>
+
+The plugin will show you a list of files for you to pick from, and then ask for confirmation.
+
+Consider using the `replaygain` command from the :doc:`query </plugins/replaygain>` plugin, if you usually use it during imports.
