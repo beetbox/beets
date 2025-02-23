@@ -21,6 +21,7 @@ New features:
   when fetching lyrics.
 * :doc:`plugins/lyrics`: Rewrite lyrics translation functionality to use Azure
   AI Translator API and add relevant instructions to the documentation.
+* :doc:`plugins/replace`: Add new plugin.
 
 Bug fixes:
 
