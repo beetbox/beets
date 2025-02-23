@@ -117,6 +117,7 @@ following to your configuration::
    playlist
    plexupdate
    random
+   replace
    replaygain
    rewrite
    scrub
