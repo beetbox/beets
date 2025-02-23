@@ -1,38 +1,39 @@
-from beets import ui
-from beets.test.helper import PluginTestCase
-from beetsplug.replace import ReplacePlugin
-from mediafile import MediaFile
-from pathlib import Path
-import pytest
 import shutil
+from pathlib import Path
+
+import pytest
+from mediafile import MediaFile
+
+from beets import ui
 from beets.test import _common
+from beetsplug.replace import ReplacePlugin
 
 replace = ReplacePlugin()
 
 
 class TestReplace:
     @pytest.fixture(autouse=True)
-    def fake_dir(self, tmp_path):
-        self.fakeDir = tmp_path
+    def _fake_dir(self, tmp_path):
+        self.fake_dir = tmp_path
 
     @pytest.fixture(autouse=True)
-    def fake_file(self, tmp_path):
-        self.fakeFile = tmp_path
+    def _fake_file(self, tmp_path):
+        self.fake_file = tmp_path
 
     def test_path_is_dir(self):
-        fakeDirectory = self.fakeDir / "fakeDir"
-        fakeDirectory.mkdir()
+        fake_directory = self.fake_dir / "fakeDir"
+        fake_directory.mkdir()
         with pytest.raises(ui.UserError):
-            replace.file_check(fakeDirectory)
+            replace.file_check(fake_directory)
 
     def test_path_is_unspported_file(self):
-        fakeFile = self.fakeFile / "fakefile.txt"
-        fakeFile.write_text("test", encoding="utf-8")
+        fake_file = self.fakeFile / "fakefile.txt"
+        fake_file.write_text("test", encoding="utf-8")
         with pytest.raises(ui.UserError):
-            replace.file_check(fakeFile)
+            replace.file_check(fake_file)
 
     def test_path_is_supported_file(self):
-        dest = self.fakeFile / "full.mp3"
+        dest = self.fake_file / "full.mp3"
         src = Path(_common.RSRC.decode()) / "full.mp3"
         shutil.copyfile(src, dest)
 
