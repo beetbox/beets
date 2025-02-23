@@ -3,7 +3,7 @@ from pathlib import Path
 
 import mediafile
 
-from beets import ui
+from beets import ui, util
 from beets.plugins import BeetsPlugin
 
 
@@ -44,10 +44,12 @@ class ReplacePlugin(BeetsPlugin):
     def file_check(self, file):
         """Check if the file exists and is supported"""
         if not file.is_file():
-            raise ui.UserError(f"'{file}' is not a valid file.")
+            raise ui.UserError(
+                f"'{util.displayable_path(file)}' is not a valid file."
+            )
 
         try:
-            mediafile.MediaFile(str(file))
+            mediafile.MediaFile(util.syspath(file))
         except mediafile.FileTypeError as fte:
             raise ui.UserError(fte)
 
@@ -55,7 +57,7 @@ class ReplacePlugin(BeetsPlugin):
         """Present a menu of matching songs and get user selection."""
         ui.print_("\nMatching songs:")
         for i, item in enumerate(items, 1):
-            ui.print_(f"{i}. {item}")
+            ui.print_(f"{i}. {util.displayable_path(item)}")
 
         while True:
             try:
@@ -83,7 +85,10 @@ class ReplacePlugin(BeetsPlugin):
         if not original_file_path.exists():
             raise ui.UserError("The original song file was not found.")
 
-        ui.print_(f"\nReplacing: {new_file_path} -> {original_file_path}")
+        ui.print_(
+            f"\nReplacing: {util.displayable_path(new_file_path)} "
+            f"-> {util.displayable_path(original_file_path)}"
+        )
         decision = (
             input("Are you sure you want to replace this track? (y/N): ")
             .strip()
@@ -97,7 +102,7 @@ class ReplacePlugin(BeetsPlugin):
         dest = original_file_path.with_suffix(new_file_path.suffix)
 
         try:
-            shutil.move(new_file_path, dest)
+            shutil.move(util.syspath(new_file_path), util.syspath(dest))
         except Exception as e:
             raise ui.UserError(f"Error replacing file: {e}")
 
