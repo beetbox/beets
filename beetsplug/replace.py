@@ -1,8 +1,11 @@
-from beets.plugins import BeetsPlugin
-from beets import ui
-import mediafile
 import shutil
 from pathlib import Path
+
+import mediafile
+
+from beets import ui
+from beets.plugins import BeetsPlugin
+
 
 class ReplacePlugin(BeetsPlugin):
     def commands(self):
@@ -11,29 +14,29 @@ class ReplacePlugin(BeetsPlugin):
         return [cmd]
     def run(self, lib, opts, args):
         if len(args) < 2:
-            raise ui.UserError(f"Usage: beet replace <query> <new_file_path>")
+            raise ui.UserError("Usage: beet replace <query> <new_file_path>")
 
-        newFilePath = Path(args[-1])
-        itemQuery = args[:-1]
+        new_file_path = Path(args[-1])
+        item_query = args[:-1]
 
-        self.file_check(newFilePath)
+        self.file_check(new_file_path)
 
-        itemList = list(lib.items(itemQuery))
+        item_list = list(lib.items(item_query))
 
-        if not itemList:
+        if not item_list:
             raise ui.UserError("No matching songs found.")
-        
-        song = self.select_song(itemList)
+
+        song = self.select_song(item_list)
 
         if not song:
             ui.print_("Operation cancelled.")
             return
 
-        if not self.confirm_replacement(newFilePath, song):
+        if not self.confirm_replacement(new_file_path, song):
             ui.print_("Aborting replacement.")
             return
 
-        self.replace_file(newFilePath, song)
+        self.replace_file(new_file_path, song)
 
     def file_check(self, file):
         """Check if the file exists and is supported"""
@@ -54,39 +57,48 @@ class ReplacePlugin(BeetsPlugin):
 
         while True:
             try:
-                index = int(input(f"Which song would you like to replace? [1-{len(items)}] (0 to cancel): "))
+                index = int(input(
+                    f"Which song would you like to replace? "
+                    f"[1-{len(items)}] (0 to cancel): "
+                ))
                 if index == 0:
                     return None
                 if 1 <= index <= len(items):
                     return items[index - 1]
-                ui.print_(f"Invalid choice. Please enter a number between 1 and {len(items)}.")
+                ui.print_(
+                    f"Invalid choice. Please enter a number "
+                    f"between 1 and {len(items)}."
+                )
             except ValueError:
                 ui.print_("Invalid input. Please type in a number.")
 
-    def confirm_replacement(self, newFilePath, song):
+    def confirm_replacement(self, new_file_path, song):
         """Get user confirmation for the replacement."""
-        originalFilePath = Path(song.path.decode())
+        original_file_path = Path(song.path.decode())
 
-        if not originalFilePath.exists():
-            raise ui.UserError(f"The original song file was not found.")
+        if not original_file_path.exists():
+            raise ui.UserError("The original song file was not found.")
 
-        ui.print_(f"\nReplacing: {newFilePath} -> {originalFilePath}")
-        decision = input("Are you sure you want to replace this track? (y/N): ").strip().casefold()
+        ui.print_(f"\nReplacing: {new_file_path} -> {original_file_path}")
+        decision = input(
+            "Are you sure you want to replace this track? (y/N): "
+        ).strip().casefold()
         return decision in {"yes", "y"}
 
-    def replace_file(self, newFilePath, song):
+    def replace_file(self, new_file_path, song):
         """Replace the existing file with the new one."""
-        originalFilePath = Path(song.path.decode())
-        dest = originalFilePath.with_suffix(newFilePath.suffix)
-        
+        original_file_path = Path(song.path.decode())
+        dest = original_file_path.with_suffix(new_file_path.suffix)
+
         try:
-            shutil.move(newFilePath, dest)
+            shutil.move(new_file_path, dest)
         except Exception as e:
             raise ui.UserError(f"Error replacing file: {e}")
 
-        if newFilePath.suffix != originalFilePath.suffix and originalFilePath.exists():
+        if (new_file_path.suffix != original_file_path.suffix
+                and original_file_path.exists()):
             try:
-                originalFilePath.unlink()
+                original_file_path.unlink()
             except Exception as e:
                 raise ui.UserError(f"Could not delete original file: {e}")
 
