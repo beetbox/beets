@@ -9,9 +9,12 @@ from beets.plugins import BeetsPlugin
 
 class ReplacePlugin(BeetsPlugin):
     def commands(self):
-        cmd = ui.Subcommand('replace', help='replace audio file while keeping tags')
+        cmd = ui.Subcommand(
+            "replace", help="replace audio file while keeping tags"
+        )
         cmd.func = self.run
         return [cmd]
+
     def run(self, lib, opts, args):
         if len(args) < 2:
             raise ui.UserError("Usage: beet replace <query> <new_file_path>")
@@ -44,10 +47,9 @@ class ReplacePlugin(BeetsPlugin):
             raise ui.UserError(f"'{file}' is not a valid file.")
 
         try:
-           mediafile.MediaFile(str(file))
+            mediafile.MediaFile(str(file))
         except mediafile.FileTypeError as fte:
             raise ui.UserError(fte)
-
 
     def select_song(self, items):
         """Present a menu of matching songs and get user selection."""
@@ -57,10 +59,12 @@ class ReplacePlugin(BeetsPlugin):
 
         while True:
             try:
-                index = int(input(
-                    f"Which song would you like to replace? "
-                    f"[1-{len(items)}] (0 to cancel): "
-                ))
+                index = int(
+                    input(
+                        f"Which song would you like to replace? "
+                        f"[1-{len(items)}] (0 to cancel): "
+                    )
+                )
                 if index == 0:
                     return None
                 if 1 <= index <= len(items):
@@ -80,9 +84,11 @@ class ReplacePlugin(BeetsPlugin):
             raise ui.UserError("The original song file was not found.")
 
         ui.print_(f"\nReplacing: {new_file_path} -> {original_file_path}")
-        decision = input(
-            "Are you sure you want to replace this track? (y/N): "
-        ).strip().casefold()
+        decision = (
+            input("Are you sure you want to replace this track? (y/N): ")
+            .strip()
+            .casefold()
+        )
         return decision in {"yes", "y"}
 
     def replace_file(self, new_file_path, song):
@@ -95,8 +101,10 @@ class ReplacePlugin(BeetsPlugin):
         except Exception as e:
             raise ui.UserError(f"Error replacing file: {e}")
 
-        if (new_file_path.suffix != original_file_path.suffix
-                and original_file_path.exists()):
+        if (
+            new_file_path.suffix != original_file_path.suffix
+            and original_file_path.exists()
+        ):
             try:
                 original_file_path.unlink()
             except Exception as e:
