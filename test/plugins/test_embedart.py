@@ -285,8 +285,8 @@ class ArtSimilarityTest(unittest.TestCase):
         mock_extract,
         mock_subprocess,
         compare_status=0,
-        compare_stdout="",
-        compare_stderr="",
+        compare_stdout=b"",
+        compare_stderr=b"",
         convert_status=0,
     ):
         mock_extract.return_value = b"extracted_path"
@@ -298,33 +298,33 @@ class ArtSimilarityTest(unittest.TestCase):
         ]
 
     def test_compare_success_similar(self, mock_extract, mock_subprocess):
-        self._mock_popens(mock_extract, mock_subprocess, 0, "10", "err")
+        self._mock_popens(mock_extract, mock_subprocess, 0, b"10", b"err")
         assert self._similarity(20)
 
     def test_compare_success_different(self, mock_extract, mock_subprocess):
-        self._mock_popens(mock_extract, mock_subprocess, 0, "10", "err")
+        self._mock_popens(mock_extract, mock_subprocess, 0, b"10", b"err")
         assert not self._similarity(5)
 
     def test_compare_status1_similar(self, mock_extract, mock_subprocess):
-        self._mock_popens(mock_extract, mock_subprocess, 1, "out", "10")
+        self._mock_popens(mock_extract, mock_subprocess, 1, b"out", b"10")
         assert self._similarity(20)
 
     def test_compare_status1_different(self, mock_extract, mock_subprocess):
-        self._mock_popens(mock_extract, mock_subprocess, 1, "out", "10")
+        self._mock_popens(mock_extract, mock_subprocess, 1, b"out", b"10")
         assert not self._similarity(5)
 
     def test_compare_failed(self, mock_extract, mock_subprocess):
-        self._mock_popens(mock_extract, mock_subprocess, 2, "out", "10")
+        self._mock_popens(mock_extract, mock_subprocess, 2, b"out", b"10")
         assert self._similarity(20) is None
 
     def test_compare_parsing_error(self, mock_extract, mock_subprocess):
-        self._mock_popens(mock_extract, mock_subprocess, 0, "foo", "bar")
+        self._mock_popens(mock_extract, mock_subprocess, 0, b"foo", b"bar")
         assert self._similarity(20) is None
 
     def test_compare_parsing_error_and_failure(
         self, mock_extract, mock_subprocess
     ):
-        self._mock_popens(mock_extract, mock_subprocess, 1, "foo", "bar")
+        self._mock_popens(mock_extract, mock_subprocess, 1, b"foo", b"bar")
         assert self._similarity(20) is None
 
     def test_convert_failure(self, mock_extract, mock_subprocess):
