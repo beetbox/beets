@@ -84,7 +84,7 @@ For packagers:
   from your plugin as beets now uses native/implicit namespace package setup.
 
 Other changes:
-* Database models are now serializable with pickle.
+
 * Release workflow: fix the issue where the new release tag is created for the
   wrong (outdated) commit. Now the tag is created in the same workflow step
   right after committing the version update.
@@ -93,6 +93,7 @@ Other changes:
   improve useability for new developers.
 * :doc:`/plugins/smartplaylist`: URL-encode additional item `fields` within generated
   EXTM3U playlists instead of JSON-encoding them.
+* Database models are now serializable with pickle.
 
 2.2.0 (December 02, 2024)
 -------------------------
