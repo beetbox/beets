@@ -84,7 +84,7 @@ For packagers:
   from your plugin as beets now uses native/implicit namespace package setup.
 
 Other changes:
-
+* Database models are now serializable with pickle.
 * Release workflow: fix the issue where the new release tag is created for the
   wrong (outdated) commit. Now the tag is created in the same workflow step
   right after committing the version update.
