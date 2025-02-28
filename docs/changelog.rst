@@ -24,6 +24,8 @@ New features:
 
 Bug fixes:
 
+* :doc:`plugins/listenbrainz`: Fix rST formatting for URLs of Listenbrainz API Key documentation and config.yaml.
+* :doc:`plugins/listenbrainz`: Fix ``UnboundLocalError`` in cases where 'mbid' is not defined.
 * :doc:`plugins/fetchart`: Fix fetchart bug where a tempfile could not be deleted due to never being
   properly closed.
   :bug:`5521`
