@@ -75,6 +75,7 @@ Bug fixes:
 * :doc:`plugins/lyrics`: Fix plugin crash when ``genius`` backend returns empty
   lyrics.
   :bug:`5583`
+* ImageMagick 7.1.1-44 is now supported.
 
 For packagers:
 
