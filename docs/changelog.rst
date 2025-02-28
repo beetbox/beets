@@ -93,6 +93,7 @@ Other changes:
   improve useability for new developers.
 * :doc:`/plugins/smartplaylist`: URL-encode additional item `fields` within generated
   EXTM3U playlists instead of JSON-encoding them.
+* Database models are now serializable with pickle.
 
 2.2.0 (December 02, 2024)
 -------------------------
