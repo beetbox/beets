@@ -17,6 +17,28 @@ To use the ``musicbrainz`` plugin, enable it in your configuration (see
 Configuration
 -------------
 
+Default
+^^^^^^^
+
+.. code-block:: yaml
+
+    musicbrainz:
+        host: musicbrainz.org
+        https: no
+        ratelimit: 1
+        ratelimit_interval: 1.0
+        searchlimit: 5
+        extra_tags: []
+        genres: no
+        external_ids:
+            discogs: no
+            bandcamp: no
+            spotify: no
+            deezer: no
+            beatport: no
+            tidal: no
+
+
 You can instruct beets to use `your own MusicBrainz database`_ instead of
 the `main server`_. Use the ``host``, ``https`` and ``ratelimit`` options
 under a ``musicbrainz:`` header, like so
