@@ -383,6 +383,24 @@ class MusicBrainzPlugin(BeetsPlugin):
         from the beets configuration. This should be called at startup.
         """
         super().__init__()
+        self.config.add(
+            {
+                "host": "musicbrainz.org",
+                "https": False,
+                "ratelimit": 1,
+                "ratelimit_interval": 1,
+                "searchlimit": 5,
+                "genres": False,
+                "external_ids": {
+                    "discogs": False,
+                    "bandcamp": False,
+                    "spotify": False,
+                    "deezer": False,
+                    "tidal": False,
+                },
+                "extra_tags": {},
+            },
+        )
         hostname = self.config["host"].as_str()
         https = self.config["https"].get(bool)
         # Only call set_hostname when a custom server is configured. Since
