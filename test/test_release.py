@@ -70,7 +70,7 @@ Bug fixes:
 def md_changelog():
     return r"""### New features
 
-- [Substitute Plugin](https://beets.readthedocs.io/en/stable/plugins/substitute.html): Some substitute multi-line change. :bug: (\#5467)
+- [Substitute Plugin](https://beets.readthedocs.io/en/stable/plugins/substitute.html): Some substitute multi-line change. :bug: (#5467)
 - [list](https://beets.readthedocs.io/en/stable/reference/cli.html#list-cmd) Update.
 
 You can do something with this command:
@@ -82,9 +82,9 @@ You can do something with this command:
 - Another fix with its own bullet points using correct indentation:
   - First
   - Second
-- Some fix thanks to @username. :bug: (\#5467)
+- Some fix thanks to @username. :bug: (#5467)
 - Some fix that mentions user @username.
-- Some fix that refers to an issue. :bug: (\#5467)
+- Some fix that refers to an issue. :bug: (#5467)
 - Some fix with its own bullet points using incorrect indentation:
   - First nested bullet point with some text that wraps to the next line
   - Second nested bullet point
@@ -93,7 +93,7 @@ You can do something with this command:
 
 ### Other changes
 
-- Changed `bitesize` label to `good first issue`. Our [contribute](https://github.com/beetbox/beets/contribute) page is now automatically populated with these issues. :bug: (\#4855)
+- Changed `bitesize` label to `good first issue`. Our [contribute](https://github.com/beetbox/beets/contribute) page is now automatically populated with these issues. :bug: (#4855)
 
 # 2.1.0 (November 22, 2024)
 

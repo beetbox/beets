@@ -11,8 +11,22 @@ been dropped.
 
 New features:
 
+* :doc:`plugins/lastgenre`: The new configuration option, ``keep_existing``,
+  provides more fine-grained control over how pre-populated genre tags are
+  handled. The ``force`` option now behaves in a more conventional manner.
+  :bug:`4982`
+* :doc:`plugins/lyrics`: Add new configuration option ``dist_thresh`` to
+  control the maximum allowed distance between the lyrics search result and the
+  tagged item's artist and title. This is useful for preventing false positives
+  when fetching lyrics.
+* :doc:`plugins/lyrics`: Rewrite lyrics translation functionality to use Azure
+  AI Translator API and add relevant instructions to the documentation.
+
 Bug fixes:
 
+* :doc:`plugins/fetchart`: Fix fetchart bug where a tempfile could not be deleted due to never being
+  properly closed.
+  :bug:`5521`
 * :doc:`plugins/lyrics`: LRCLib will fallback to plain lyrics if synced lyrics
   are not found and `synced` flag is set to `yes`.
 * Synchronise files included in the source distribution with what we used to
@@ -33,10 +47,41 @@ Bug fixes:
 * :ref:`query-sort`: Fix a bug that would raise an exception when sorting on
   a non-string field that is not populated in all items.
   :bug:`5512`
+* :doc:`plugins/lastgenre`: Fix track-level genre handling. Now when an album-level
+  genre is set already, single tracks don't fall back to the album's genre and
+  request their own last.fm genre. Also log messages regarding what's been
+  tagged are now more polished.
+  :bug:`5582`
+* Fix ambiguous column name ``sqlite3.OperationalError`` that occured in album
+  queries that filtered album track titles, for example ``beet list -a keyword
+  title:foo``.
+* :doc:`plugins/lyrics`: Rewrite lyrics tests using pytest to provide isolated
+  configuration for each test case. This fixes the issue where some tests
+  failed because they read developers' local lyrics configuration.
+  :bug:`5133`
+* :doc:`plugins/lyrics`: Do not attempt to search for lyrics if either the
+  artist or title is missing and ignore ``artist_sort`` value if it is empty.
+  :bug:`2635`
+* :doc:`plugins/lyrics`: Fix fetching lyrics from ``lrclib`` source. If we
+  cannot find lyrics for a specific album, artist, title combination, the
+  plugin now tries to search for the artist and title and picks the most
+  relevant result. Update the default ``sources`` configuration to prioritize
+  ``lrclib`` over other sources since it returns reliable results quicker than
+  others.
+  :bug:`5102`
+* :doc:`plugins/lyrics`: Fix the issue with ``genius`` backend not being able
+  to match lyrics when there is a slight variation in the artist name.
+  :bug:`4791`
+* :doc:`plugins/lyrics`: Fix plugin crash when ``genius`` backend returns empty
+  lyrics.
+  :bug:`5583`
+* ImageMagick 7.1.1-44 is now supported.
 
 For packagers:
 
 * The minimum supported Python version is now 3.9.
+* External plugin developers: ``beetsplug/__init__.py`` file can be removed
+  from your plugin as beets now uses native/implicit namespace package setup.
 
 Other changes:
 
@@ -44,6 +89,10 @@ Other changes:
   wrong (outdated) commit. Now the tag is created in the same workflow step
   right after committing the version update.
   :bug:`5539`
+* Added some typehints: ImportSession and Pipeline have typehints now. Should
+  improve useability for new developers.
+* :doc:`/plugins/smartplaylist`: URL-encode additional item `fields` within generated
+  EXTM3U playlists instead of JSON-encoding them.
 
 2.2.0 (December 02, 2024)
 -------------------------
@@ -471,6 +520,8 @@ Bug fixes:
   `requests` timeout.
 * Fix cover art resizing logic to support multiple steps of resizing
   :bug:`5151`
+* :doc:`/plugins/convert`: Fix attempt to convert and perform side-effects if
+  library file is not readable.
 
 For plugin developers:
 
