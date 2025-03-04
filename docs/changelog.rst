@@ -12,8 +12,9 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
-- :doc:`plugins/convert`: Add new configuration option `convert.refresh` and
-  command-line option ``--refresh``.
+- :doc:`/plugins/convert`: Add new configuration option `convert.refresh` and
+  command-line option ``--refresh``, allowing to force `convert` operation when
+  original file is newer than existing converted file.
 - :doc:`plugins/lyrics`: Added a ``rest_directory`` configuration option for
   specifying a reStructuredText output directory, semantically equivalent to
   ``-r, --write-rest``. :bug:`2806`
