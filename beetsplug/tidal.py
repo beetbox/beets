@@ -153,6 +153,14 @@ class TidalPlugin(BeetsPlugin):
                 else:
                     return False
 
+            # Resave the session if login succeeded and the token has expired
+            # This means we renewed the token
+            if datetime.now() > datetime.fromisoformat(
+                sess_data["expiry_time"]
+            ):
+                self._log.debug("Resaving session due to token renewal...")
+                self._save_session(self.sess)
+
             return True
 
     def _save_session(self, sess):
