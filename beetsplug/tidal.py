@@ -7,6 +7,7 @@ from datetime import datetime
 import backoff
 import cachetools
 import confuse
+import requests
 import tidalapi
 
 from beets import ui
@@ -46,6 +47,8 @@ class TidalPlugin(BeetsPlugin):
     # and just record label.
     copyright_regex = r"(?!\()(?![Cc])(?!\))(?!©)(?!\s)[\D]+"
 
+    valid_art_res = [80, 160, 320, 640, 1280]
+
     # Number of times to retry when we get a TooManyRequests exception
     rate_limit_retries = 16
 
@@ -82,8 +85,19 @@ class TidalPlugin(BeetsPlugin):
                 "max_lyrics_time_difference": 5,
                 "tokenfile": "tidal_token.json",
                 "write_sidecar": False,
+                "max_art_resolution": 1280,
             }
         )
+
+        # Validate that max_art_resolution is a valid value
+        if self.config["max_art_resolution"].get() not in self.valid_art_res:
+            raise ui.UserError(
+                (
+                    f"Config value max_art_resolution "
+                    f"has to be one of {self.valid_art_res} "
+                    f"and is currently {self.config["max_art_resolution"].as_number()}"
+                )
+            )
 
         self.sessfile = self.config["tokenfile"].get(
             confuse.Filename(in_app_dir=True)
@@ -400,13 +414,12 @@ class TidalPlugin(BeetsPlugin):
         for track in album.tracks(sparse_album=False):
             tracks.append(self._track_to_trackinfo(track, album))
 
+        # Create basic albuminfo with standard fields
         albuminfo = AlbumInfo(
             album=album.name,
             album_id=album.id,
-            tidal_album_id=album.id,
             artist=album.artist.name,
             artist_id=album.artist.id,
-            tidal_artist_id=album.artist.id,
             va=len(album.artists) == 1
             and album.artist.name.lower() == "various artists",
             mediums=album.num_volumes,
@@ -418,8 +431,13 @@ class TidalPlugin(BeetsPlugin):
             artists=[artist.name for artist in album.artists],
             artists_ids=[str(artist.id) for artist in album.artists],
             label=self._parse_copyright(album.copyright),
-            cover_art_url=album.image(1280),
+            cover_art_url=self._grab_art(album),
         )
+
+        # Add TIDAL specific metadata
+        albuminfo.tidal_album_id = album.id
+        albuminfo.tidal_artist_id = album.artist.id
+        albuminfo.tidal_album_popularity = album.popularity  # Range: 0 to 100
 
         # Add release date if we have one
         if album.release_date:
@@ -428,6 +446,49 @@ class TidalPlugin(BeetsPlugin):
             albuminfo.day = album.release_date.day
 
         return albuminfo
+
+    def _grab_art(self, album):
+        """Grabs the highest resolution valid cover art for a given album.
+
+        :param album: TIDAL album to grab art for
+        :type album: tidalapi.media.Album
+        :return: A valid album art URL if found, otherwise None
+        :rtype: str
+        """
+        self._log.debug(f"Grabbing album art for album {album.id}")
+        maxresindx = self.valid_art_res.index(
+            self.config["max_art_resolution"].get()
+        )
+        artres = self.valid_art_res[: maxresindx + 1]
+
+        # The list of art resolutions to use is reversed as the smaller
+        # sized art is more likely to succeed.
+        artres.reverse()
+
+        for res in artres:
+            arturl = album.image(res)
+            if self._validate_art(arturl):
+                self._log.debug(f"Valid art of resolution {res} found")
+                return arturl
+
+        self._log.debug(f"No valid art was found for album {album.id}")
+        return None
+
+    def _validate_art(self, url):
+        """Validates album art by attempting to grab it
+
+        :param url: URL to album art to validate
+        :type url: str
+        """
+        self._log.debug(f"Validating album art URL: {url}")
+        # HTTP HEAD is used here to reduce load on TIDAL servers
+        # and we only really need the HTTP response code anyways.
+        resp = requests.head(url)
+        try:
+            resp.raise_for_status()
+            return True
+        except requests.exceptions.HTTPError:
+            return False
 
     def _parse_copyright(self, copyright):
         """Attempts to extract a record label from a freeform
@@ -447,20 +508,11 @@ class TidalPlugin(BeetsPlugin):
             self._log.warn(
                 (
                     "Copyright regex returned no results but "
-                    "we have a copyright , please make a bug report with `beets -vv`."
+                    "we have a copyright, please make a bug report with `beets -vv`."
                 )
             )
             self._log.debug(f"Copyright: {copyright}")
             return ""
-
-        if len(regx) > 1:
-            self._log.debug(
-                (
-                    "Copyright regex returned more than 1 group, please make "
-                    "a bug report with `beets -vv` if the value ends up being wrong."
-                )
-            )
-            self._log.debug(f"Groups: {regx}")
 
         # The last group, if multiple were found, tends to be the correct one.
         return regx[-1]
@@ -475,10 +527,10 @@ class TidalPlugin(BeetsPlugin):
         :return: A beets TrackInfo created with the provided data
         :rtype: beets.autotag.hooks.TrackInfo
         """
+        # Create basic trackinfo with standard fields
         trackinfo = TrackInfo(
             title=track.name,
             track_id=track.id,
-            tidal_track_id=track.id,
             artist=track.artist.name,
             artist_id=track.artist.id,
             album=track.album.name,
@@ -493,6 +545,12 @@ class TidalPlugin(BeetsPlugin):
             artists_ids=[str(artist.id) for artist in track.artists],
             label=self._parse_copyright(track.copyright),
         )
+
+        # Add TIDAL specific metadata
+        trackinfo.tidal_track_id = track.id
+        trackinfo.tidal_track_popularity = track.popularity  # Range: 0 to 100
+        trackinfo.tidal_artist_id = track.artist.id
+        trackinfo.tidal_album_id = track.album.id
 
         # If we're given an album, add it's data to the track.
         # Tidal does NOT return a lot of info on searches to save on bandwidth.

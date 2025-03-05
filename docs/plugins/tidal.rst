@@ -79,3 +79,13 @@ The available options under the ``tidal:`` section are:
 - **write_sidecar**: Write lyrics to an accompanying LRC file with the track.
   This is useful for certain music players that cannot use embedded lyrics.
   Default: ``False``
+- **max_art_resolution**: Maximum resolution to use when grabbing album art.
+  TIDAL lossy encodes album art, so using this option instead of resizing results in a
+  higher quality art.
+
+  The format of this option is a single number, as all album art returned from TIDAL is in a 1:1
+  aspect ratio.
+  
+  Must be one of: ``80, 160, 320, 640, 1280``
+  
+  Default: ``1280``
