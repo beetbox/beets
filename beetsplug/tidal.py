@@ -222,10 +222,65 @@ class TidalPlugin(BeetsPlugin):
 
         self._save_session(self.sess)
 
+    def _refresh_metadata(self, lib: Library):
+        """Refreshes metadata for TIDAL tagged tracks.
+
+        Currently, this only updates popularity.
+
+        :param lib: beets Library object to work on
+        :type lib: Library
+        """
+        self._log.debug("Refreshing metadata for TIDAL tracks")
+        self._load_session(fatal=True)
+
+        for item in lib.items("tidal_track_id::[0-9]+"):
+            self._log.debug(f"Processing item {item.title}")
+            try:
+                tidaltrack = self.sess.track(item["tidal_track_id"])
+            except tidalapi.exceptions.ObjectNotFound:
+                self._log.warn(
+                    (
+                        f"TIDAL ID exists for track {item.title} "
+                        "yet TIDAL returns no track"
+                    )
+                )
+                continue
+
+            item["tidal_track_popularity"] = tidaltrack.popularity
+            item.try_sync(ui.should_write(), ui.should_move())
+
+        for album in lib.albums("tidal_album_id::[0-9]+"):
+            self._log.debug(f"Processing album {album.album}")
+            try:
+                tidalalbum = self.sess.album(item["tidal_album_id"])
+            except tidalapi.exceptions.ObjectNotFound:
+                self._log.warn(
+                    (
+                        f"TIDAL ID exists for album {album.album} "
+                        " yet TIDAL returns no album"
+                    )
+                )
+                continue
+
+            album["popularity"] = tidalalbum.popularity
+            album.try_sync(ui.should_write(), ui.should_move())
+
     def cmd_main(self, lib: Library, opts: optparse.Values, arg: list):
         if opts.login:
             self._log.debug("Running login routine!")
             self._login()
+        elif opts.fetch:
+            self._log.debug(f"Force fetching lyrics for track ID {opts.fetch}")
+            self._load_session(fatal=True)
+
+            try:
+                track = self.sess.track(opts.fetch)
+            except tidalapi.exceptions.ObjectNotFound:
+                raise ui.UserError(f"Track with ID {opts.fetch} not found")
+
+            ui.print_(self._get_lyrics(track))
+        elif opts.refresh:
+            self._refresh_metadata(lib)
 
     def commands(self):
         cmd = ui.Subcommand("tidal", help="fetch metadata from TIDAL")
@@ -236,6 +291,23 @@ class TidalPlugin(BeetsPlugin):
             action="store_true",
             default=False,
             help="login to TIDAL",
+        )
+
+        cmd.parser.add_option(
+            "-f",
+            "--fetch",
+            dest="fetch",
+            default=None,
+            help="Fetch lyrics",
+        )
+
+        cmd.parser.add_option(
+            "-r",
+            "--refresh",
+            dest="refresh",
+            action="store_true",
+            default=False,
+            help="Refresh metadata for TIDAL tagged tracks",
         )
 
         cmd.func = self.cmd_main
