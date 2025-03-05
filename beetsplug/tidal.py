@@ -51,7 +51,7 @@ class TidalPlugin(BeetsPlugin):
         self.import_stages = [self.stage]
         self.register_listener("write", self.write_file)
 
-        # This handler runs before import to load our session and to error our
+        # This handler runs before import to load our session and to error out
         # if needed... If this code is put in __init__, then the plugin CLI
         # cannot run.
         self.register_listener("import_begin", self.import_begin)
@@ -196,7 +196,7 @@ class TidalPlugin(BeetsPlugin):
         if not future.result():
             raise ui.UserError("Login failure! See above output for more info.")
         else:
-            ui.print_("Login successful")
+            ui.print_("Login successful.")
 
         self._save_session(self.sess)
 
@@ -334,6 +334,7 @@ class TidalPlugin(BeetsPlugin):
                     album, limit=self.config["metadata_search_limit"].get(int)
                 )
             ]
+
         else:
             candidates += [
                 self._album_to_albuminfo(x)
@@ -343,10 +344,24 @@ class TidalPlugin(BeetsPlugin):
                 )
             ]
 
-        self._log.debug(f"_get_lyrics cache: {self._get_lyrics.cache_info()}")
-        self._log.debug(
-            f"_tidal_search cache: {self._tidal_search.cache_info()}"
-        )
+        if len(items) == 1:
+            self._log.debug(
+                "Searching for candidates using _search_from_metadata due to singleton"
+            )
+            for track in self._search_from_metadata(items[0]):
+                # Albums might be optional for tracks,
+                # Let's not break if it isn't defined.
+                if not track.album:
+                    continue
+
+                try:
+                    candidates.append(
+                        self._album_to_albuminfo(
+                            self.sess.album(track.album.id)
+                        )
+                    )
+                except tidalapi.exceptions.ObjectNotFound:
+                    self._log.debug(f"Album ID {track.album.id} not found")
 
         return candidates
 
@@ -354,12 +369,12 @@ class TidalPlugin(BeetsPlugin):
         """Returns TIDAL track candidates for a specific item"""
         self._log.debug(f"Searching TIDAL for {item}!")
 
-        return (
-            self._search_from_metadata(
+        return [
+            self._track_to_trackinfo(x)
+            for x in self._search_from_metadata(
                 item, limit=self.config["metadata_search_limit"].as_number()
             )
-            or []
-        )
+        ]
 
     def _album_to_albuminfo(self, album):
         """Converts a TIDAL album to a beets AlbumInfo
@@ -392,6 +407,10 @@ class TidalPlugin(BeetsPlugin):
             tracks=tracks,
             barcode=album.universal_product_number,
             albumtype=album.type,
+            artists=[artist.name for artist in album.artists],
+            artists_ids=[artist.id for artist in album.artists],
+            label=album.copyright,
+            cover_art_url=album.image(1280),
         )
 
         # Add release date if we have one
@@ -426,6 +445,9 @@ class TidalPlugin(BeetsPlugin):
             data_source=self.data_source,
             data_url=track.share_url,
             isrc=track.isrc,
+            artists=[artist.name for artist in track.artists],
+            artists_ids=[artist.id for artist in track.artists],
+            label=track.copyright,
         )
 
         # If we're given an album, add it's data to the track.
@@ -558,17 +580,13 @@ class TidalPlugin(BeetsPlugin):
         self._log.debug(f"_search_album query {query}")
         results = self._tidal_search(query, [tidalapi.Album], limit, offset)
 
-        candidates = []
-        # top_hit is the most relevant to our query, add that first.
-        if results["top_hit"]:
-            candidates.append(results["top_hit"])
+        candidates = results["albums"]
 
-        for result in results["tracks"]:
-            # Don't add top_hit twice
-            if result.id == results["top_hit"].id:
-                continue
-
-            candidates.append(result)
+        # isinstance call is required here as the top_hit can be any tidalapi type
+        if results["top_hit"] and isinstance(
+            results["top_hit"], tidalapi.album.Album
+        ):
+            candidates.insert(0, results["top_hit"])
 
         self._log.debug(f"_search_album found {len(candidates)} results")
         return candidates
@@ -588,18 +606,13 @@ class TidalPlugin(BeetsPlugin):
         self._log.debug(f"_search_track raw query {query}")
 
         results = self._tidal_search(query, [tidalapi.Track], limit, offset)
-        candidates = []
+        candidates = results["tracks"]
 
-        # top_hit is the most relevant to our query, add that first.
-        if results["top_hit"]:
-            candidates.append(results["top_hit"])
-
-        for result in results["tracks"]:
-            # Don't add top_hit twice
-            if result.id == results["top_hit"].id:
-                continue
-
-            candidates.append(result)
+        # isinstance call is required here as the top_hit can be any tidalapi type
+        if results["top_hit"] and isinstance(
+            results["top_hit"], tidalapi.media.Track
+        ):
+            candidates.insert(0, results["top_hit"])
 
         self._log.debug(f"_search_track found {len(candidates)} results")
         return candidates
