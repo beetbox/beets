@@ -763,19 +763,14 @@ class TidalPlugin(BeetsPlugin):
 
         tracks = self._search_from_metadata(item, limit=limit)
 
-        # Fetch lyrics for tracks
-        lyrics = []
+        # Return lyrics for the first track that has valid lyrics
         for track in tracks:
             lyric = self._get_lyrics(track)
             if lyric and self._validate_lyrics(item, track):
-                lyrics.append(lyric)
+                return lyric
 
-        if not tracks or not (len(lyrics) - lyrics.count(None)):
-            self._log.info(f"No results found for {item.title}")
-            return None
-
-        # Pick best one, aka the track returned
-        return lyrics[0]
+        self._log.info(f"No valid results found for {item.title}")
+        return None
 
     def _process_item(self, item):
         """Processes an item from the import stage
