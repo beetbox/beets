@@ -38,6 +38,14 @@ class TidalPlugin(BeetsPlugin):
     track_share_regex = r"(tidal.com\/browse\/track\/)([0-9]*)(\?u)"  # Format: https://tidal.com/browse/track/221182395?u
     album_share_regex = r"(tidal.com\/browse\/album\/)([0-9]*)(\?u)"  # Format: https://tidal.com/browse/album/221182592?u
 
+    # Grabs record label name from copyright info
+    # Essentially, this just grabs all non-whitespace, non-numerical characters
+    # This is needed as the copyright value is freeform for the distributors
+    # This has been tested with the following formats:
+    # (C) 2020 record label, 2025 record label, © 2020 record label, © record label,
+    # and just record label.
+    copyright_regex = r"(?!\()(?![Cc])(?!\))(?!©)(?!\s)[\D]+"
+
     # Number of times to retry when we get a TooManyRequests exception
     rate_limit_retries = 16
 
@@ -408,8 +416,8 @@ class TidalPlugin(BeetsPlugin):
             barcode=album.universal_product_number,
             albumtype=album.type,
             artists=[artist.name for artist in album.artists],
-            artists_ids=[artist.id for artist in album.artists],
-            label=album.copyright,
+            artists_ids=[str(artist.id) for artist in album.artists],
+            label=self._parse_copyright(album.copyright),
             cover_art_url=album.image(1280),
         )
 
@@ -420,6 +428,42 @@ class TidalPlugin(BeetsPlugin):
             albuminfo.day = album.release_date.day
 
         return albuminfo
+
+    def _parse_copyright(self, copyright):
+        """Attempts to extract a record label from a freeform
+        TIDAL copyright string.
+
+        :param copyright: TIDAL copyright string
+        :type copyright: str
+        :return: Record label if found, otherwise a blank string
+        :rtype: str
+        """
+        # This isn't 100% needed, but it makes calling it easier
+        if not copyright:
+            return ""
+
+        regx = re.findall(self.copyright_regex, copyright)
+        if not regx:
+            self._log.warn(
+                (
+                    "Copyright regex returned no results but "
+                    "we have a copyright , please make a bug report with `beets -vv`."
+                )
+            )
+            self._log.debug(f"Copyright: {copyright}")
+            return ""
+
+        if len(regx) > 1:
+            self._log.debug(
+                (
+                    "Copyright regex returned more than 1 group, please make "
+                    "a bug report with `beets -vv` if the value ends up being wrong."
+                )
+            )
+            self._log.debug(f"Groups: {regx}")
+
+        # The last group, if multiple were found, tends to be the correct one.
+        return regx[-1]
 
     def _track_to_trackinfo(self, track, album=None):
         """Converts a TIDAL track to a beets TrackInfo
@@ -446,8 +490,8 @@ class TidalPlugin(BeetsPlugin):
             data_url=track.share_url,
             isrc=track.isrc,
             artists=[artist.name for artist in track.artists],
-            artists_ids=[artist.id for artist in track.artists],
-            label=track.copyright,
+            artists_ids=[str(artist.id) for artist in track.artists],
+            label=self._parse_copyright(track.copyright),
         )
 
         # If we're given an album, add it's data to the track.
