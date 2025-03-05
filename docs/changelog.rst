@@ -30,6 +30,9 @@ New features:
   :bug:`5829`
 * :doc:`plugins/mbcollection`: When getting the user collections, only consider
   collections of releases, and ignore collections of other entity types.
+* :doc:`plugins/mpdstats`: Add new configuration option,
+  ``played_ratio_threshold``, to allow configuring the percentage the song must
+  be played for it to be counted as played instead of skipped.
 
 Bug fixes:
 
