@@ -1125,13 +1125,8 @@ class Item(LibModel):
                 subpath, beets.config["path_sep_replace"].as_str()
             )
 
-        maxlen = beets.config["max_filename_length"].get(int)
-        if not maxlen:
-            # When zero, try to determine from filesystem.
-            maxlen = util.max_filename_length(db.directory)
-
         lib_path_str, fallback = util.legalize_path(
-            subpath, db.replacements, maxlen, os.path.splitext(self.path)[1]
+            subpath, db.replacements, os.path.splitext(self.path)[1]
         )
         if fallback:
             # Print an error message if legalization fell back to
