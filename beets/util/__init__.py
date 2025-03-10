@@ -800,20 +800,6 @@ def str2bool(value: str) -> bool:
     return value.lower() in ("yes", "1", "true", "t", "y")
 
 
-def as_string(value: Any) -> str:
-    """Convert a value to a Unicode object for matching with a query.
-    None becomes the empty string. Bytestrings are silently decoded.
-    """
-    if value is None:
-        return ""
-    elif isinstance(value, memoryview):
-        return bytes(value).decode("utf-8", "ignore")
-    elif isinstance(value, bytes):
-        return value.decode("utf-8", "ignore")
-    else:
-        return str(value)
-
-
 def plurality(objs: Sequence[T]) -> tuple[T, int]:
     """Given a sequence of hashble objects, returns the object that
     is most common in the set and the its number of appearance. The
