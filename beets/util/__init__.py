@@ -696,22 +696,26 @@ def sanitize_path(path: str, replacements: Replacements | None = None) -> str:
     return os.path.join(*comps)
 
 
-def truncate_path(path: AnyStr) -> AnyStr:
-    """Given a bytestring path or a Unicode path fragment, truncate the
-    components to a legal length. In the last component, the extension
-    is preserved.
+def truncate_str(s: str, length: int) -> str:
+    """Truncate the string to the given byte length.
+
+    If we end up truncating a unicode character in the middle (rendering it invalid),
+    it is removed:
+
+    >>> s = "🎹🎶"  # 8 bytes
+    >>> truncate_str(s, 6)
+    '🎹'
     """
+    return os.fsencode(s)[:length].decode(sys.getfilesystemencoding(), "ignore")
+
+
+def truncate_path(str_path: str) -> str:
+    """Truncate each path part to a legal length preserving the extension."""
     max_length = get_max_filename_length()
-    comps = components(path)
-
-    out = [c[:length] for c in comps]
-    base, ext = os.path.splitext(comps[-1])
-    if ext:
-        # Last component has an extension.
-        base = base[: max_length - len(ext)]
-        out[-1] = base + ext
-
-    return os.path.join(*out)
+    path = Path(str_path)
+    parent_parts = [truncate_str(p, max_length) for p in path.parts[:-1]]
+    stem = truncate_str(path.stem, max_length - len(path.suffix))
+    return str(Path(*parent_parts, stem).with_suffix(path.suffix))
 
 
 def _legalize_stage(

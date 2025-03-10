@@ -175,18 +175,15 @@ class PathConversionTest(BeetsTestCase):
         assert outpath == "C:\\caf\xe9".encode()
 
 
-class PathTruncationTest(BeetsTestCase):
-    def test_truncate_bytestring(self):
-        with _common.platform_posix():
-            p = util.truncate_path(b"abcde/fgh", 4)
-        assert p == b"abcd/fgh"
-
-    def test_truncate_unicode(self):
-        with _common.platform_posix():
-            p = util.truncate_path("abcde/fgh", 4)
-        assert p == "abcd/fgh"
-
-    def test_truncate_preserves_extension(self):
-        with _common.platform_posix():
-            p = util.truncate_path("abcde/fgh.ext", 5)
-        assert p == "abcde/f.ext"
+@patch("beets.util.get_max_filename_length", lambda: 5)
+@pytest.mark.parametrize(
+    "path, expected",
+    [
+        ("abcdeX/fgh", "abcde/fgh"),
+        ("abcde/fXX.ext", "abcde/f.ext"),
+        ("a🎹/a.ext", "a🎹/a.ext"),
+        ("ab🎹/a.ext", "ab/a.ext"),
+    ],
+)
+def test_truncate_path(path, expected):
+    assert util.truncate_path(path) == expected
