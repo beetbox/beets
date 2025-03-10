@@ -369,13 +369,6 @@ def components(path: AnyStr) -> list[AnyStr]:
     return comps
 
 
-def arg_encoding() -> str:
-    """Get the encoding for command-line arguments (and other OS
-    locale-sensitive strings).
-    """
-    return sys.getfilesystemencoding()
-
-
 def bytestring_path(path: PathLike) -> bytes:
     """Given a path, which is either a bytes or a unicode, returns a str
     path (ensuring that we never deal with Unicode pathnames). Path should be
@@ -832,19 +825,6 @@ def plurality(objs: Sequence[T]) -> tuple[T, int]:
     return c.most_common(1)[0]
 
 
-def convert_command_args(args: list[BytesOrStr]) -> list[str]:
-    """Convert command arguments, which may either be `bytes` or `str`
-    objects, to uniformly surrogate-escaped strings."""
-    assert isinstance(args, list)
-
-    def convert(arg) -> str:
-        if isinstance(arg, bytes):
-            return os.fsdecode(arg)
-        return arg
-
-    return [convert(a) for a in args]
-
-
 # stdout and stderr as bytes
 class CommandOutput(NamedTuple):
     stdout: bytes
@@ -869,7 +849,7 @@ def command_output(cmd: list[BytesOrStr], shell: bool = False) -> CommandOutput:
     This replaces `subprocess.check_output` which can have problems if lots of
     output is sent to stderr.
     """
-    converted_cmd = convert_command_args(cmd)
+    converted_cmd = [os.fsdecode(a) for a in cmd]
 
     devnull = subprocess.DEVNULL
 
