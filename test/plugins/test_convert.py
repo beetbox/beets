@@ -147,7 +147,7 @@ class ConvertCommand:
         """Run the `convert` command on a given path."""
         # The path is currently a filesystem bytestring. Convert it to
         # an argument bytestring.
-        path = path.decode(util._fsencoding()).encode(util.arg_encoding())
+        path = os.fsencode(os.fsdecode(path))
 
         args = args + (b"path:" + path,)
         return self.run_command("convert", *args)
