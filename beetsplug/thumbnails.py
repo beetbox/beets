@@ -27,7 +27,6 @@ from pathlib import PurePosixPath
 
 from xdg import BaseDirectory
 
-from beets import util
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs
 from beets.util import bytestring_path, displayable_path, syspath
@@ -288,6 +287,6 @@ class GioURI(URIGetter):
             self.libgio.g_free(uri_ptr)
 
         try:
-            return uri.decode(util._fsencoding())
+            return os.fsdecode(uri)
         except UnicodeDecodeError:
             raise RuntimeError(f"Could not decode filename from GIO: {uri!r}")
