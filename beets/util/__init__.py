@@ -410,11 +410,7 @@ def bytestring_path(path: PathLike) -> bytes:
     ):
         str_path = str_path[len(WINDOWS_MAGIC_PREFIX) :]
 
-    # Try to encode with default encodings, but fall back to utf-8.
-    try:
-        return str_path.encode(_fsencoding())
-    except (UnicodeError, LookupError):
-        return str_path.encode("utf-8")
+    return os.fsencode(str_path)
 
 
 PATH_SEP: bytes = bytestring_path(os.sep)
