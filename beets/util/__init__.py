@@ -30,6 +30,7 @@ import traceback
 from collections import Counter
 from contextlib import suppress
 from enum import Enum
+from functools import cache
 from importlib import import_module
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
@@ -47,6 +48,7 @@ from typing import (
 
 from unidecode import unidecode
 
+import beets
 from beets.util import hidden
 
 if TYPE_CHECKING:
@@ -694,25 +696,26 @@ def sanitize_path(path: str, replacements: Replacements | None = None) -> str:
     return os.path.join(*comps)
 
 
-def truncate_path(path: AnyStr, length: int = MAX_FILENAME_LENGTH) -> AnyStr:
+def truncate_path(path: AnyStr) -> AnyStr:
     """Given a bytestring path or a Unicode path fragment, truncate the
     components to a legal length. In the last component, the extension
     is preserved.
     """
+    max_length = get_max_filename_length()
     comps = components(path)
 
     out = [c[:length] for c in comps]
     base, ext = os.path.splitext(comps[-1])
     if ext:
         # Last component has an extension.
-        base = base[: length - len(ext)]
+        base = base[: max_length - len(ext)]
         out[-1] = base + ext
 
     return os.path.join(*out)
 
 
 def _legalize_stage(
-    path: str, replacements: Replacements | None, length: int, extension: str
+    path: str, replacements: Replacements | None, extension: str
 ) -> tuple[str, bool]:
     """Perform a single round of path legalization steps
     1. sanitation/replacement
@@ -729,13 +732,13 @@ def _legalize_stage(
 
     # Truncate too-long components.
     pre_truncate_path = path
-    path = truncate_path(path, length)
+    path = truncate_path(path)
 
     return path, path != pre_truncate_path
 
 
 def legalize_path(
-    path: str, replacements: Replacements | None, length: int, extension: str
+    path: str, replacements: Replacements | None, extension: str
 ) -> tuple[str, bool]:
     """Given a path-like Unicode string, produce a legal path. Return the path
     and a flag indicating whether some replacements had to be ignored (see
@@ -755,21 +758,21 @@ def legalize_path(
     after it was truncated); the application should probably log some sort of
     warning.
     """
-    args = length, as_string(extension)
+    suffix = as_string(extension)
 
     first_stage, _ = os.path.splitext(
-        _legalize_stage(path, replacements, *args)[0]
+        _legalize_stage(path, replacements, suffix)[0]
     )
 
     # Re-sanitize following truncation (including user replacements).
-    second_stage, truncated = _legalize_stage(first_stage, replacements, *args)
+    second_stage, truncated = _legalize_stage(first_stage, replacements, suffix)
 
     if not truncated:
         return second_stage, False
 
     # If the path was truncated, discard user replacements
     # and run through one last legalization stage.
-    return _legalize_stage(first_stage, None, *args)[0], True
+    return _legalize_stage(first_stage, None, suffix)[0], True
 
 
 def str2bool(value: str) -> bool:
@@ -848,16 +851,21 @@ def command_output(cmd: list[BytesOrStr], shell: bool = False) -> CommandOutput:
     return CommandOutput(stdout, stderr)
 
 
-def max_filename_length(path: BytesOrStr, limit=MAX_FILENAME_LENGTH) -> int:
+@cache
+def get_max_filename_length() -> int:
     """Attempt to determine the maximum filename length for the
     filesystem containing `path`. If the value is greater than `limit`,
     then `limit` is used instead (to prevent errors when a filesystem
     misreports its capacity). If it cannot be determined (e.g., on
     Windows), return `limit`.
     """
+    if length := beets.config["max_filename_length"].get(int):
+        return length
+
+    limit = MAX_FILENAME_LENGTH
     if hasattr(os, "statvfs"):
         try:
-            res = os.statvfs(path)
+            res = os.statvfs(beets.config["directory"].as_str())
         except OSError:
             return limit
         return min(res[9], limit)
