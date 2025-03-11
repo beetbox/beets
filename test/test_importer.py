@@ -277,7 +277,7 @@ class ImportZipTest(AsIsImporterMixin, ImportTestCase):
 
 
 class ImportTarTest(AsIsImporterMixin, ImportTestCase):
-    def create_archive(self):  
+    def create_archive(self):
         (handle, path) = mkstemp(dir=syspath(self.temp_dir))
         path = bytestring_path(path)
         os.close(handle)
