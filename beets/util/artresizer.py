@@ -314,6 +314,11 @@ class IMBackend(LocalBackend):
         else:
             out_str = stdout
 
+        # ImageMagick 7.1.1-44 outputs in a different format.
+        if b"(" in out_str and out_str.endswith(b")"):
+            # Extract diff from "... (diff)".
+            out_str = out_str[out_str.index(b"(") + 1 : -1]
+
         try:
             phash_diff = float(out_str)
         except ValueError:
