@@ -35,7 +35,6 @@ from beets import config, library, logging, plugins, util
 from beets.autotag import mb
 from beets.dbcore import db
 from beets.dbcore import query as db_query
-from beets.util import as_string
 from beets.util.functemplate import template
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
@@ -1480,7 +1479,7 @@ class Subcommand:
     def root_parser(self, root_parser):
         self._root_parser = root_parser
         self.parser.prog = "{} {}".format(
-            as_string(root_parser.get_prog_name()), self.name
+            os.fsdecode(root_parser.get_prog_name()), self.name
         )
 
 
