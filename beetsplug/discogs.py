@@ -29,7 +29,6 @@ from string import ascii_lowercase
 
 import confuse
 from discogs_client import Client, Master, Release
-from discogs_client import __version__ as dc_string
 from discogs_client.exceptions import DiscogsAPIError
 from requests.exceptions import ConnectionError
 from typing_extensions import TypedDict
@@ -64,7 +63,6 @@ class ReleaseFormat(TypedDict):
 class DiscogsPlugin(BeetsPlugin):
     def __init__(self):
         super().__init__()
-        self.check_discogs_client()
         self.config.add(
             {
                 "apikey": API_KEY,
@@ -80,24 +78,7 @@ class DiscogsPlugin(BeetsPlugin):
         self.config["apikey"].redact = True
         self.config["apisecret"].redact = True
         self.config["user_token"].redact = True
-        self.discogs_client = None
-        self.register_listener("import_begin", self.setup)
-
-    def check_discogs_client(self):
-        """Ensure python3-discogs-client version >= 2.3.15"""
-        dc_min_version = [2, 3, 15]
-        dc_version = [int(elem) for elem in dc_string.split(".")]
-        min_len = min(len(dc_version), len(dc_min_version))
-        gt_min = [
-            (elem > elem_min)
-            for elem, elem_min in zip(
-                dc_version[:min_len], dc_min_version[:min_len]
-            )
-        ]
-        if True not in gt_min:
-            self._log.warning(
-                "python3-discogs-client version should be >= 2.3.15"
-            )
+        self.setup()
 
     def setup(self, session=None):
         """Create the `discogs_client` field. Authenticate if necessary."""
@@ -184,8 +165,7 @@ class DiscogsPlugin(BeetsPlugin):
 
         if not album and not artist:
             self._log.debug(
-                "Skipping Discogs query. Files missing album and "
-                "artist tags."
+                "Skipping Discogs query. Files missing album and artist tags."
             )
             return []
 
@@ -259,7 +239,7 @@ class DiscogsPlugin(BeetsPlugin):
 
         if not artist and not title:
             self._log.debug(
-                "Skipping Discogs query. File missing artist and " "title tags."
+                "Skipping Discogs query. File missing artist and title tags."
             )
             return []
 
