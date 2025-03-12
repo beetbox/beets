@@ -110,7 +110,7 @@ class ListenBrainzPlugin(BeetsPlugin):
             if track["track_metadata"].get("release_name") is None:
                 continue
             mbid_mapping = track["track_metadata"].get("mbid_mapping", {})
-            # print(json.dumps(track, indent=4, sort_keys=True))
+            mbid = None
             if mbid_mapping.get("recording_mbid") is None:
                 # search for the track using title and release
                 mbid = self.get_mb_recording_id(track)
