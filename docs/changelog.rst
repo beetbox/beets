@@ -70,6 +70,8 @@ Bug fixes:
 * :doc:`plugins/lyrics`: Fix plugin crash when ``genius`` backend returns empty
   lyrics.
   :bug:`5583`
+* Handle potential OSError when unlinking temporary files in ArtResizer.
+  :bug:`5615`
 
 For packagers:
 
