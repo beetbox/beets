@@ -175,15 +175,83 @@ class PathConversionTest(BeetsTestCase):
         assert outpath == "C:\\caf\xe9".encode()
 
 
-@patch("beets.util.get_max_filename_length", lambda: 5)
-@pytest.mark.parametrize(
-    "path, expected",
-    [
-        ("abcdeX/fgh", "abcde/fgh"),
-        ("abcde/fXX.ext", "abcde/f.ext"),
-        ("a🎹/a.ext", "a🎹/a.ext"),
-        ("ab🎹/a.ext", "ab/a.ext"),
-    ],
-)
-def test_truncate_path(path, expected):
-    assert util.truncate_path(path) == expected
+class TestPathLegalization:
+    @pytest.fixture(autouse=True)
+    def _patch_max_filename_length(self, monkeypatch):
+        monkeypatch.setattr("beets.util.get_max_filename_length", lambda: 5)
+
+    @pytest.mark.parametrize(
+        "path, expected",
+        [
+            ("abcdeX/fgh", "abcde/fgh"),
+            ("abcde/fXX.ext", "abcde/f.ext"),
+            ("a🎹/a.ext", "a🎹/a.ext"),
+            ("ab🎹/a.ext", "ab/a.ext"),
+        ],
+    )
+    def test_truncate(self, path, expected):
+        assert util.truncate_path(path) == expected
+
+    @pytest.mark.parametrize(
+        "pre_trunc_repl, post_trunc_repl, expected",
+        [
+            pytest.param(
+                [],
+                [],
+                ("_abcd", False),
+                id="default",
+            ),
+            pytest.param(
+                [(re.compile(r"abcdX$"), "PRE")],
+                [],
+                (":PRE", False),
+                id="valid path after initial repl",
+            ),
+            pytest.param(
+                [(re.compile(r"abcdX$"), "PRE_LONG")],
+                [],
+                (":PRE_", False),
+                id="too long path after initial repl is truncated",
+            ),
+            pytest.param(
+                [],
+                [(re.compile(r"abcdX$"), "POST")],
+                (":POST", False),
+                id="valid path after post-trunc repl",
+            ),
+            pytest.param(
+                [],
+                [(re.compile(r"abcdX$"), "POST_LONG")],
+                (":POST", False),
+                id="too long path after post-trunc repl is truncated",
+            ),
+            pytest.param(
+                [(re.compile(r"abcdX$"), "PRE")],
+                [(re.compile(r"PRE$"), "POST")],
+                (":POST", False),
+                id="both replacements within filename length limit",
+            ),
+            pytest.param(
+                [(re.compile(r"abcdX$"), "PRE_LONG")],
+                [(re.compile(r"PRE_$"), "POST")],
+                (":POST", False),
+                id="too long initial path is truncated and valid post-trunc repl",
+            ),
+            pytest.param(
+                [(re.compile(r"abcdX$"), "PRE")],
+                [(re.compile(r"PRE$"), "POST_LONG")],
+                (":POST", False),
+                id="valid pre-trunc repl and too long post-trunc path is truncated",
+            ),
+            pytest.param(
+                [(re.compile(r"abcdX$"), "PRE_LONG")],
+                [(re.compile(r"PRE_$"), "POST_LONG")],
+                ("_PRE_", True),
+                id="too long repl both times force default ones to be applied",
+            ),
+        ],
+    )
+    def test_replacements(self, pre_trunc_repl, post_trunc_repl, expected):
+        replacements = pre_trunc_repl + post_trunc_repl
+
+        assert util.legalize_path(":abcdX", replacements, "") == expected

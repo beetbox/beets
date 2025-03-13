@@ -487,37 +487,6 @@ class DestinationTest(BeetsTestCase):
         self.i.path = "foo.mp3"
         assert self.i.destination() == np("base/one/_.mp3")
 
-    def test_legalize_path_one_for_one_replacement(self):
-        # Use a replacement that should always replace the last X in any
-        # path component with a Z.
-        self.lib.replacements = [
-            (re.compile(r"X$"), "Z"),
-        ]
-
-        # Construct an item whose untruncated path ends with a Y but whose
-        # truncated version ends with an X.
-        self.i.title = "X" * 300 + "Y"
-
-        # The final path should reflect the replacement.
-        dest = self.i.destination()
-        assert dest[-2:] == b"XZ"
-
-    def test_legalize_path_one_for_many_replacement(self):
-        # Use a replacement that should always replace the last X in any
-        # path component with four Zs.
-        self.lib.replacements = [
-            (re.compile(r"X$"), "ZZZZ"),
-        ]
-
-        # Construct an item whose untruncated path ends with a Y but whose
-        # truncated version ends with an X.
-        self.i.title = "X" * 300 + "Y"
-
-        # The final path should ignore the user replacement and create a path
-        # of the correct length, containing Xs.
-        dest = self.i.destination()
-        assert dest[-2:] == b"XX"
-
     def test_album_field_query(self):
         self.lib.directory = b"one"
         self.lib.path_formats = [("default", "two"), ("flex:foo", "three")]
