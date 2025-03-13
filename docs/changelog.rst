@@ -21,6 +21,10 @@ New features:
   when fetching lyrics.
 * :doc:`plugins/lyrics`: Rewrite lyrics translation functionality to use Azure
   AI Translator API and add relevant instructions to the documentation.
+* :doc:`plugins/mpdstats`: Add new configuration option, 
+  ``maximum_remaining_seconds_for_track_to_be_considered_played``, to allow
+  configuring the maximum number of seconds remaining on a track for it to be
+  counted as played instead of skipped.
 
 Bug fixes:
 

@@ -58,6 +58,8 @@ configuration file. The available options are:
   Default: ``yes``.
 - **rating_mix**: Tune the way rating is calculated (see below).
   Default: 0.75.
+- **maximum_remaining_seconds_for_track_to_be_considered_played**: Maximum number of seconds remaining in the track for it to be considered played. If remaining time is greater than this value skip count will be incremented instead of play count.
+  Default: 10
 
 A Word on Ratings
 -----------------
