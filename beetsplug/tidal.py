@@ -424,16 +424,19 @@ class TidalPlugin(BeetsPlugin):
         if va_likely:
             candidates += [
                 self._album_to_albuminfo(x)
-                for x in self._search_album(
-                    album, limit=self.config["metadata_search_limit"].get(int)
+                for x in self._tidal_search(
+                    album,
+                    tidalapi.Album,
+                    limit=self.config["metadata_search_limit"].get(int),
                 )
             ]
 
         else:
             candidates += [
                 self._album_to_albuminfo(x)
-                for x in self._search_album(
+                for x in self._tidal_search(
                     f"{artist} {album}",
+                    tidalapi.Album,
                     limit=self.config["metadata_search_limit"].get(int),
                 )
             ]
@@ -650,8 +653,9 @@ class TidalPlugin(BeetsPlugin):
         # Search using title
         if item.title:
             query = [item.title]
-            results = self._search_track(
+            results = self._tidal_search(
                 " ".join(query),
+                tidalapi.Track,
                 limit=limit,
             )
             trackids = [x.id for x in results]
@@ -660,8 +664,9 @@ class TidalPlugin(BeetsPlugin):
         # Search using title + artist
         if item.artist:
             query = [item.title, item.artist]
-            results = self._search_track(
+            results = self._tidal_search(
                 " ".join(query),
+                tidalapi.Track,
                 limit=limit,
             )
             trackids += [x.id for x in results]
@@ -671,8 +676,9 @@ class TidalPlugin(BeetsPlugin):
         if item.album:
             query = [item.title, item.artist, item.album]
             trackids += [x.id for x in tracks]
-            results = self._search_track(
+            results = self._tidal_search(
                 " ".join(query),
+                tidalapi.Track,
                 limit=limit,
             )
             trackids += [x.id for x in results]
@@ -681,8 +687,9 @@ class TidalPlugin(BeetsPlugin):
         # Search using title + album
         if item.album:
             query = [item.title, item.album]
-            results = self._search_track(
+            results = self._tidal_search(
                 " ".join(query),
+                tidalapi.Track,
                 limit=limit,
             )
             trackids += [x.id for x in results]
@@ -705,7 +712,9 @@ class TidalPlugin(BeetsPlugin):
 
             for artist in item.artists[:maxaltartists]:
                 query.append(artist)
-                results = self._search_track(" ".join(query), limit=limit)
+                results = self._tidal_search(
+                    " ".join(query), tidalapi.Track, limit=limit
+                )
                 trackids += [x.id for x in results]
                 tracks += results
 
@@ -713,7 +722,7 @@ class TidalPlugin(BeetsPlugin):
         # Does not exist for singletons (or albums imported using -s)
         if item.album:
             self._log.debug("Searching using album")
-            for album in self._search_album(item.album):
+            for album in self._tidal_search(item.album, tidalapi.Album):
                 self._log.debug(
                     f"Using album {album.name} from {album.artist.name}"
                 )
@@ -738,62 +747,9 @@ class TidalPlugin(BeetsPlugin):
         tracks = newtracks
         return tracks
 
-    def _search_album(self, query, limit=10, offset=0):
-        """Searches TIDAL for albums matching the query
-
-        :param query: The search string to use
-        :type query: str
-        :param limit: Maximum number of items to return, defaults to 10
-        :type limit: int, optional
-        :param offset: Offset the items to retrieve, defaults to 0
-        :type offset: int, optional
-        :return: A list of tidalapi Albums
-        :rtype: list
-        """
-
-        self._log.debug(f"_search_album query {query}")
-        results = self._tidal_search(query, [tidalapi.Album], limit, offset)
-
-        candidates = results["albums"]
-
-        # isinstance call is required here as the top_hit can be any tidalapi type
-        if results["top_hit"] and isinstance(
-            results["top_hit"], tidalapi.album.Album
-        ):
-            candidates.insert(0, results["top_hit"])
-
-        self._log.debug(f"_search_album found {len(candidates)} results")
-        return candidates
-
-    def _search_track(self, query, limit=10, offset=0):
-        """Searches TIDAL for tracks matching the query
-
-        :param query: The search string to use
-        :type query: str
-        :param limit: Maximum number of items to return, defaults to 10
-        :type limit: int, optional
-        :param offset: Offset the items to retrieve, defaults to 0
-        :type offset: int, optional
-        :return: A list of tidalapi Tracks
-        :rtype: list
-        """
-        self._log.debug(f"_search_track raw query {query}")
-
-        results = self._tidal_search(query, [tidalapi.Track], limit, offset)
-        candidates = results["tracks"]
-
-        # isinstance call is required here as the top_hit can be any tidalapi type
-        if results["top_hit"] and isinstance(
-            results["top_hit"], tidalapi.media.Track
-        ):
-            candidates.insert(0, results["top_hit"])
-
-        self._log.debug(f"_search_track found {len(candidates)} results")
-        return candidates
-
     @cachetools.cached(
         cache=cachetools.LFUCache(maxsize=4096),
-        key=lambda self, query, *args, **kwargs: query,
+        key=lambda self, query, rtype, *args, **kwargs: (query, rtype),
         info=True,
     )
     @backoff.on_exception(
@@ -803,14 +759,16 @@ class TidalPlugin(BeetsPlugin):
         on_backoff=backoff_handler,
         factor=2,
     )
-    def _tidal_search(self, query, *args, **kwargs):
+    def _tidal_search(self, query, rtype, *args, **kwargs):
         """Simple wrapper for TIDAL search
         Used to implement rate limiting and query fixing
 
         :param query: The query to use for the search
         :type query: str
-        :return: A dictionary of search results, including top hit
-        :rtype: dict
+        :param rtype: The tidalapi type to search for
+        :type rtype: tidalapi.Track | tidalapi.Album
+        :return: A list of the results, top hit being first
+        :rtype: list
         """
         # Both of the substitutions borrowed from https://github.com/arsaboo/beets-tidal/blob/main/beetsplug/tidal.py
         # Strip non-word characters from query. Things like "!" and "-" can
@@ -823,8 +781,49 @@ class TidalPlugin(BeetsPlugin):
         # can also negate an otherwise positive result.
         query = re.sub(r"(?i)\b(CD|disc)\s*\d+", "", query)
 
-        self._log.debug(f"Using query {query} in _tidal_search")
-        return self.sess.search(query, *args, **kwargs)
+        if not rtype == tidalapi.Track and not tidalapi.Album == rtype:
+            raise ValueError(
+                "Only Track, Album rtypes are supported in _tidal_search"
+            )
+
+        # Execute query
+        self._log.debug(
+            f"Using query {query} in _tidal_search, returning type {rtype}"
+        )
+        results = self.sess.search(query, [rtype], *args, **kwargs)
+
+        returnresults = []
+
+        # Process top_hit
+        # It can not exist and it can also be a completely different type from rtype
+        if results["top_hit"] and isinstance(results["top_hit"], rtype):
+            returnresults.append(results["top_hit"])
+
+            # Strip top_hit from the other results so it is not duplicated
+            if rtype == tidalapi.Track:
+                results["tracks"] = [
+                    x for x in results["tracks"] if x.id != returnresults[0].id
+                ]
+            elif rtype == tidalapi.Album:
+                results["albums"] = [
+                    x for x in results["albums"] if x.id != returnresults[0].id
+                ]
+
+        else:
+            self._log.debug(
+                (
+                    "Not using top_hit as it doesn't exist "
+                    "or is the wrong type"
+                )
+            )
+
+        # Shove the results from the tidalapi call to our list
+        if rtype == tidalapi.Track:
+            returnresults = results["tracks"]
+        elif rtype == tidalapi.Album:
+            returnresults = results["albums"]
+
+        return returnresults
 
     @cachetools.cached(
         cache=cachetools.LFUCache(maxsize=4096),
