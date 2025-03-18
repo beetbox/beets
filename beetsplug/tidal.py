@@ -98,7 +98,7 @@ class TidalPlugin(BeetsPlugin):
                 (
                     f"Config value max_art_resolution "
                     f"has to be one of {self.valid_art_res} "
-                    f"and is currently {self.config["max_art_resolution"].as_number()}"
+                    f"and is currently {self.config['max_art_resolution'].as_number()}"
                 )
             )
 
