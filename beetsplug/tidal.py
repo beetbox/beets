@@ -115,7 +115,7 @@ class TidalPlugin(BeetsPlugin):
         )
 
         # tidalapi.session.Session object we throw around to execute API calls with
-        self.sess: tidalapi.Session | None = None
+        self.sess: tidalapi.Session
 
     def _load_session(self, fatal: bool = False) -> bool:
         """Loads a TIDAL session from a JSON file to the class singleton"""
