@@ -5,6 +5,7 @@ import re
 from collections.abc import Callable
 from datetime import datetime
 from typing import Any
+from __future__ import annotations
 
 import backoff
 import cachetools
@@ -22,6 +23,10 @@ from beets.util import bytestring_path, remove, syspath
 
 def backoff_handler(details: dict[Any, Any]) -> None:
     """Handler for rate limiting backoff"""
+    # Check to make sure the logger is defined before we log
+    # Even though this function should never run before __init__
+    assert TidalPlugin.logger is logging.BeetsLogger
+
     TidalPlugin.logger.debug(
         "Rate limited! Cooling off for {wait:0.1f} seconds \
             after calling function {target.__name__} {tries} times".format(
@@ -35,7 +40,7 @@ class TidalPlugin(BeetsPlugin):
 
     # The built-in beets logger is an instance variable, so to access it
     # in the backoff_handler, we have to assign it to a static variable.
-    logger: logging.BeetsLogger = None
+    logger: logging.BeetsLogger
 
     data_source: str = "tidal"
     track_share_regex: str = r"(tidal.com\/browse\/track\/)([0-9]*)(\?u)"  # Format: https://tidal.com/browse/track/221182395?u
@@ -273,7 +278,7 @@ class TidalPlugin(BeetsPlugin):
 
     def commands(
         self,
-    ) -> list[Callable[[Library, optparse.Values, list[Any]], None]]:
+    ) -> list[ui.Subcommand]:
         cmd = ui.Subcommand("tidal", help="fetch metadata from TIDAL")
         cmd.parser.add_option(
             "-l",
@@ -380,12 +385,12 @@ class TidalPlugin(BeetsPlugin):
 
     def candidates(
         self,
-        items: list[Item],
-        artist: str | None,
-        album: str | None,
-        va_likely: bool,
-        extra_tags: dict[Any, Any],
-    ) -> list[AlbumInfo]:
+        items: Any,
+        artist: Any,
+        album: Any,
+        va_likely: Any,
+        extra_tags: Any = ...,
+    ) -> Any:
         """Returns TIDAL album candidates for a specific set of items"""
         candidates = []
 
