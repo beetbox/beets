@@ -2,7 +2,9 @@ import json
 import optparse
 import os.path
 import re
+from collections.abc import Callable
 from datetime import datetime
+from typing import Any
 
 import backoff
 import cachetools
@@ -10,15 +12,15 @@ import confuse
 import requests
 import tidalapi
 
-from beets import ui
+from beets import logging, ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.importer import ImportSession, ImportTask
-from beets.library import Library
+from beets.library import Item, Library
 from beets.plugins import BeetsPlugin
 from beets.util import bytestring_path, remove, syspath
 
 
-def backoff_handler(details):
+def backoff_handler(details: dict[Any, Any]) -> None:
     """Handler for rate limiting backoff"""
     TidalPlugin.logger.debug(
         "Rate limited! Cooling off for {wait:0.1f} seconds \
@@ -33,11 +35,11 @@ class TidalPlugin(BeetsPlugin):
 
     # The built-in beets logger is an instance variable, so to access it
     # in the backoff_handler, we have to assign it to a static variable.
-    logger = None
+    logger: logging.BeetsLogger = None
 
-    data_source = "tidal"
-    track_share_regex = r"(tidal.com\/browse\/track\/)([0-9]*)(\?u)"  # Format: https://tidal.com/browse/track/221182395?u
-    album_share_regex = r"(tidal.com\/browse\/album\/)([0-9]*)(\?u)"  # Format: https://tidal.com/browse/album/221182592?u
+    data_source: str = "tidal"
+    track_share_regex: str = r"(tidal.com\/browse\/track\/)([0-9]*)(\?u)"  # Format: https://tidal.com/browse/track/221182395?u
+    album_share_regex: str = r"(tidal.com\/browse\/album\/)([0-9]*)(\?u)"  # Format: https://tidal.com/browse/album/221182592?u
 
     # Grabs record label name from copyright info
     # Essentially, this just grabs all non-whitespace, non-numerical characters
@@ -45,14 +47,15 @@ class TidalPlugin(BeetsPlugin):
     # This has been tested with the following formats:
     # (C) 2020 record label, 2025 record label, © 2020 record label, © record label,
     # and just record label.
-    copyright_regex = r"(?!\()(?![Cc])(?!\))(?!©)(?!\s)[\D]+"
+    copyright_regex: str = r"(?!\()(?![Cc])(?!\))(?!©)(?!\s)[\D]+"
 
-    valid_art_res = [80, 160, 320, 640, 1280]
+    # List is NOT sorted in _grab_art, must be lowest to highest
+    valid_art_res: list[int] = [80, 160, 320, 640, 1280]
 
     # Number of times to retry when we get a TooManyRequests exception
-    rate_limit_retries = 16
+    rate_limit_retries: int = 16
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         TidalPlugin.logger = self._log
 
@@ -104,17 +107,10 @@ class TidalPlugin(BeetsPlugin):
         )
 
         # tidalapi.session.Session object we throw around to execute API calls with
-        self.sess = None
+        self.sess: tidalapi.Session | None = None
 
-    def _load_session(self, fatal=False):
-        """Loads a TIDAL session from a JSON file to the class singleton
-
-        :param fatal: Toggles if login failures result in UserError, defaults to False
-        :type fatal: bool, optional
-        :raises ui.UserError: Raised when login fails
-        :return: If the login was successful or not, only if fatal is False.
-        :rtype: bool
-        """
+    def _load_session(self, fatal: bool = False) -> bool:
+        """Loads a TIDAL session from a JSON file to the class singleton"""
         if self.sess:
             self._log.debug(
                 "Not attempting to load session state as we already have a session!"
@@ -185,12 +181,8 @@ class TidalPlugin(BeetsPlugin):
 
             return True
 
-    def _save_session(self, sess):
-        """Saves a TIDAL session to a JSON file
-
-        :param sess: Session to save
-        :type sess: tidalapi.session.Session
-        """
+    def _save_session(self, sess: tidalapi.session.Session) -> None:
+        """Saves a TIDAL session to a JSON file"""
         self._log.debug(f"Saving session state to {self.sessfile}!")
         with open(self.sessfile, "w") as file:
             json.dump(
@@ -203,11 +195,8 @@ class TidalPlugin(BeetsPlugin):
                 file,
             )
 
-    def _login(self):
-        """Creates a session to use with the TIDAL API
-
-        :raises ui.UserError: Raised when login fails
-        """
+    def _login(self) -> None:
+        """Creates a session to use with the TIDAL API"""
         self.sess = tidalapi.session.Session()
         login, future = self.sess.login_oauth()
         ui.print_(
@@ -222,16 +211,13 @@ class TidalPlugin(BeetsPlugin):
 
         self._save_session(self.sess)
 
-    def _refresh_metadata(self, lib: Library):
+    def _refresh_metadata(self, lib: Library) -> None:
         """Refreshes metadata for TIDAL tagged tracks.
 
-        Currently, this only updates popularity.
-
-        :param lib: beets Library object to work on
-        :type lib: Library
-        """
+        Currently, this only updates popularity."""
         self._log.debug("Refreshing metadata for TIDAL tracks")
         self._load_session(fatal=True)
+        assert self.sess is tidalapi.session.Session
 
         for item in lib.items("tidal_track_id::[0-9]+"):
             self._log.debug(f"Processing item {item.title}")
@@ -265,13 +251,16 @@ class TidalPlugin(BeetsPlugin):
             album["popularity"] = tidalalbum.popularity
             album.try_sync(ui.should_write(), ui.should_move())
 
-    def cmd_main(self, lib: Library, opts: optparse.Values, arg: list):
+    def cmd_main(
+        self, lib: Library, opts: optparse.Values, arg: list[Any]
+    ) -> None:
         if opts.login:
             self._log.debug("Running login routine!")
             self._login()
         elif opts.fetch:
             self._log.debug(f"Force fetching lyrics for track ID {opts.fetch}")
             self._load_session(fatal=True)
+            assert self.sess is tidalapi.session.Session
 
             try:
                 track = self.sess.track(opts.fetch)
@@ -282,7 +271,9 @@ class TidalPlugin(BeetsPlugin):
         elif opts.refresh:
             self._refresh_metadata(lib)
 
-    def commands(self):
+    def commands(
+        self,
+    ) -> list[Callable[[Library, optparse.Values, list[Any]], None]]:
         cmd = ui.Subcommand("tidal", help="fetch metadata from TIDAL")
         cmd.parser.add_option(
             "-l",
@@ -313,14 +304,9 @@ class TidalPlugin(BeetsPlugin):
         cmd.func = self.cmd_main
         return [cmd]
 
-    def album_for_id(self, album_id):
-        """Return TIDAL metadata for a specific TIDAL Album ID
-
-        :param album_id: A user provided ID obtained from the tagger prompt
-        :type album_id: str
-        :return: AlbumInfo for the given ID if found, otherwise Nothing.
-        :rtype: beets.autotag.hooks.AlbumInfo or None
-        """
+    def album_for_id(self, album_id: str) -> AlbumInfo | None:
+        """Return TIDAL metadata for a specific TIDAL Album ID"""
+        assert self.sess is tidalapi.session.Session
         # This is just the numerical album ID to use with the TIDAL API
         tidal_album_id = None
 
@@ -354,15 +340,10 @@ class TidalPlugin(BeetsPlugin):
 
         return self._album_to_albuminfo(album)
 
-    def track_for_id(self, track_id):
-        """Return TIDAL metadata for a specific TIDAL Track ID
-
-        :param track_id: A user provided ID obtained from the tagger prompt
-        :type track_id: str
-        :return: TrackInfo for the given ID if found, otherwise Nothing.
-        :rtype: beets.autotag.hooks.TrackInfo or None
-        """
+    def track_for_id(self, track_id: str) -> TrackInfo | None:
+        """Return TIDAL metadata for a specific TIDAL Track ID"""
         self._log.debug(f"Running track_for_id with track {track_id}!")
+        assert self.sess is tidalapi.session.Session
 
         # This is just the numerical track ID to use with the TIDAL API
         tidal_track_id = None
@@ -397,13 +378,21 @@ class TidalPlugin(BeetsPlugin):
 
         return self._track_to_trackinfo(track, track.album)
 
-    def candidates(self, items, artist, album, va_likely, extra_tags):
+    def candidates(
+        self,
+        items: list[Item],
+        artist: str | None,
+        album: str | None,
+        va_likely: bool,
+        extra_tags: dict[Any, Any],
+    ) -> list[AlbumInfo]:
         """Returns TIDAL album candidates for a specific set of items"""
         candidates = []
 
         self._log.debug(
             "Searching for candidates using tidal_album_id from items"
         )
+        assert self.sess is tidalapi.session.Session
         for item in items:
             if item.get("tidal_album_id", None):
                 try:
@@ -462,7 +451,9 @@ class TidalPlugin(BeetsPlugin):
 
         return candidates
 
-    def item_candidates(self, item, artist, album):
+    def item_candidates(
+        self, item: Item, artist: str | None, album: str | None
+    ) -> list[TrackInfo]:
         """Returns TIDAL track candidates for a specific item"""
         self._log.debug(f"Searching TIDAL for {item}!")
 
@@ -473,14 +464,8 @@ class TidalPlugin(BeetsPlugin):
             )
         ]
 
-    def _album_to_albuminfo(self, album):
-        """Converts a TIDAL album to a beets AlbumInfo
-
-        :param album: An album obtained from the TIDAL API
-        :type album: tidalapi.media.Album
-        :return: A beets AlbumInfo type created with the provided data
-        :rtype: beets.autotag.hooks.AlbumInfo
-        """
+    def _album_to_albuminfo(self, album: tidalapi.Album) -> AlbumInfo:
+        """Converts a TIDAL album to a beets AlbumInfo"""
         tracks = []
 
         # Process tracks
@@ -522,14 +507,8 @@ class TidalPlugin(BeetsPlugin):
 
         return albuminfo
 
-    def _grab_art(self, album):
-        """Grabs the highest resolution valid cover art for a given album.
-
-        :param album: TIDAL album to grab art for
-        :type album: tidalapi.media.Album
-        :return: A valid album art URL if found, otherwise None
-        :rtype: str
-        """
+    def _grab_art(self, album: tidalapi.Album) -> str | None:
+        """Grabs the highest resolution valid cover art for a given album."""
         self._log.debug(f"Grabbing album art for album {album.id}")
         maxresindx = self.valid_art_res.index(
             self.config["max_art_resolution"].get()
@@ -541,7 +520,9 @@ class TidalPlugin(BeetsPlugin):
         artres.reverse()
 
         for res in artres:
-            arturl = album.image(res)
+            # tidalapi.Album.image always returns a string if it does not
+            # throw an exception.
+            arturl: str = album.image(res)
             if self._validate_art(arturl):
                 self._log.debug(f"Valid art of resolution {res} found")
                 return arturl
@@ -549,12 +530,8 @@ class TidalPlugin(BeetsPlugin):
         self._log.debug(f"No valid art was found for album {album.id}")
         return None
 
-    def _validate_art(self, url):
-        """Validates album art by attempting to grab it
-
-        :param url: URL to album art to validate
-        :type url: str
-        """
+    def _validate_art(self, url: str) -> bool:
+        """Validates album art by attempting to grab it"""
         self._log.debug(f"Validating album art URL: {url}")
         # HTTP HEAD is used here to reduce load on TIDAL servers
         # and we only really need the HTTP response code anyways.
@@ -565,20 +542,16 @@ class TidalPlugin(BeetsPlugin):
         except requests.exceptions.HTTPError:
             return False
 
-    def _parse_copyright(self, copyright):
+    def _parse_copyright(self, copyright: str) -> str:
         """Attempts to extract a record label from a freeform
-        TIDAL copyright string.
-
-        :param copyright: TIDAL copyright string
-        :type copyright: str
-        :return: Record label if found, otherwise a blank string
-        :rtype: str
-        """
+        TIDAL copyright string."""
         # This isn't 100% needed, but it makes calling it easier
         if not copyright:
             return ""
 
-        regx = re.findall(self.copyright_regex, copyright)
+        # The regex module is typed as list[Any] as it can even be a list of lists
+        # however, the specific regexes that we're using only return strings.
+        regx: list[str] = re.findall(self.copyright_regex, copyright)
         if not regx:
             self._log.warn(
                 (
@@ -592,16 +565,10 @@ class TidalPlugin(BeetsPlugin):
         # The last group, if multiple were found, tends to be the correct one.
         return regx[-1]
 
-    def _track_to_trackinfo(self, track, album=None):
-        """Converts a TIDAL track to a beets TrackInfo
-
-        :param track: A track obtained from the TIDAL API
-        :type track: tidalapi.media.Track
-        :param album: Fills in optional track info, defaults to None
-        :type album: tidalapi.media.Album, optional
-        :return: A beets TrackInfo created with the provided data
-        :rtype: beets.autotag.hooks.TrackInfo
-        """
+    def _track_to_trackinfo(
+        self, track: tidalapi.Track, album: tidalapi.Album | None = None
+    ) -> TrackInfo:
+        """Converts a TIDAL track to a beets TrackInfo"""
         # Create basic trackinfo with standard fields
         trackinfo = TrackInfo(
             title=track.name,
@@ -634,17 +601,13 @@ class TidalPlugin(BeetsPlugin):
 
         return trackinfo
 
-    def _search_from_metadata(self, item, limit=10):
+    def _search_from_metadata(
+        self, item: Item, limit: int = 10
+    ) -> list[tidalapi.Track]:
         """Searches TIDAL for tracks matching the given item.
 
         Currently, this function searches for title, album, artist,
-        alternative artists, and tracks from album results.
-
-        :param item: Item to search for
-        :type item: beets.library.Item
-        :param limit: Maximum number of items to grab per search
-        :type limit: int
-        """
+        alternative artists, and tracks from album results."""
         self._log.debug(f"_search_from_metadata running for {item}")
 
         query = []
@@ -731,7 +694,7 @@ class TidalPlugin(BeetsPlugin):
                     trackids.append(track.id)
 
         # Reverse list so the more specific result is first
-        tracks = reversed(tracks)
+        tracks = list(reversed(tracks))
 
         # Remove duplicates
         trackids = []
@@ -759,17 +722,16 @@ class TidalPlugin(BeetsPlugin):
         on_backoff=backoff_handler,
         factor=2,
     )
-    def _tidal_search(self, query, rtype, *args, **kwargs):
+    def _tidal_search(
+        self,
+        query: str,
+        rtype: tidalapi.Track | tidalapi.Album,
+        *args: list[Any],
+        **kwargs: dict[Any, Any],
+    ) -> tidalapi.Track | tidalapi.Album:
         """Simple wrapper for TIDAL search
-        Used to implement rate limiting and query fixing
-
-        :param query: The query to use for the search
-        :type query: str
-        :param rtype: The tidalapi type to search for
-        :type rtype: tidalapi.Track | tidalapi.Album
-        :return: A list of the results, top hit being first
-        :rtype: list
-        """
+        Used to implement rate limiting and query fixing"""
+        assert self.sess is tidalapi.session.Session
         # Both of the substitutions borrowed from https://github.com/arsaboo/beets-tidal/blob/main/beetsplug/tidal.py
         # Strip non-word characters from query. Things like "!" and "-" can
         # cause a query to return no results, even if they match the artist or
@@ -840,19 +802,13 @@ class TidalPlugin(BeetsPlugin):
         base=5,
         factor=3,
     )
-    def _get_lyrics(self, track):
-        """Obtains lyrics from a TIDAL track
-
-        :param track: The tidalapi track to obtain lyrics for
-        :type track: tidalapi.media.Track
-        :return: The lyrics if they are available, otherwise None.
-        :rtype: str or None
-        """
+    def _get_lyrics(self, track: tidalapi.Track) -> str | None:
+        """Obtains lyrics from a TIDAL track"""
         self._log.debug(f"Grabbing lyrics for track {track.id}")
 
         # Grab lyrics
         try:
-            lyrics = track.lyrics()
+            lyrics: tidalapi.Lyrics = track.lyrics()
         except tidalapi.exceptions.MetadataNotAvailable:
             self._log.info(f"Lyrics not available for track {track.id}")
             return None
@@ -875,19 +831,13 @@ class TidalPlugin(BeetsPlugin):
         else:
             return lyrics.text
 
-    def _validate_lyrics(self, lib_item, tidal_item):
+    def _validate_lyrics(
+        self, lib_item: Item, tidal_item: tidalapi.Track
+    ) -> bool:
         """Validates lyrics retrieved from TIDAL
 
         Currently we just use the difference of length in the TIDAL Item vs
-        the Library item.
-
-        :param lib_item: Item to validate from the Library
-        :type lib_item: beets.library.Item
-        :param tidal_item: Item to validate from TIDAL
-        :type tidal_item: tidalapi.media.Track
-        :return: If the lyrics are valid or not
-        :rtype: bool
-        """
+        the Library item."""
         self._log.debug(f"Validating lyrics for {lib_item.title}!")
         maxdiff = self.config["max_lyrics_time_difference"].as_number()
 
@@ -933,16 +883,8 @@ class TidalPlugin(BeetsPlugin):
         # Nothing above invalidated the lyrics, assuming valid
         return True
 
-    def _search_lyrics(self, item, limit=10):
-        """Searches for lyrics using a non-TIDAL metadata source
-
-        :param item: The library item to search lyrics for
-        :type item: beets.library.Item
-        :param limit: Maximum number of tracks to query for lyrics, defaults to 10
-        :type limit: int, optional
-        :return: The lyrics if they are available, otherwise nothing.
-        :rtype: str or None
-        """
+    def _search_lyrics(self, item: Item, limit: int = 10) -> str | None:
+        """Searches for lyrics using a non-TIDAL metadata source"""
         self._log.debug(
             f"Searching for lyrics from non-TIDAL metadata for {item.title}"
         )
@@ -958,14 +900,11 @@ class TidalPlugin(BeetsPlugin):
         self._log.info(f"No valid results found for {item.title}")
         return None
 
-    def _process_item(self, item):
+    def _process_item(self, item: Item) -> None:
         """Processes an item from the import stage
 
-        This is used to simplify the stage loop.
-
-        :param item: The library item to process
-        :type item: beets.library.Item
-        """
+        This is used to simplify the stage loop."""
+        assert self.sess is tidalapi.session.Session
 
         # Fetch lyrics if enabled
         if self.config["lyrics"]:
@@ -999,7 +938,7 @@ class TidalPlugin(BeetsPlugin):
 
             item.store()
 
-    def write_file(self, item, path, tags):
+    def write_file(self, item: Item, path: str, tags: dict[Any, Any]) -> None:
         self._log.debug("Running write handler")
         # Write out lyrics to sidecar file if enabled
         if self.config["write_sidecar"] and item.lyrics:
@@ -1028,11 +967,12 @@ class TidalPlugin(BeetsPlugin):
             with open(sidecar_path, "w") as file:
                 file.write(item.lyrics)
 
-    def import_begin(self):
+    def import_begin(self) -> None:
         # Check for session and throw user error if we aren't logged in
         self._load_session(fatal=True)
+        assert self.sess is tidalapi.session.Session
 
-    def stage(self, session: ImportSession, task: ImportTask):
+    def stage(self, session: ImportSession, task: ImportTask) -> None:
         self._log.debug("Running import stage")
         if not self.config["auto"]:
             self._log.debug("Not processing further due to auto being False")
