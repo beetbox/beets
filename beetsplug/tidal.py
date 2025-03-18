@@ -119,11 +119,16 @@ class TidalPlugin(BeetsPlugin):
 
     def _load_session(self, fatal: bool = False) -> bool:
         """Loads a TIDAL session from a JSON file to the class singleton"""
-        if self.sess:
+        try:
+            self.sess
             self._log.debug(
                 "Not attempting to load session state as we already have a session!"
             )
             return True
+        except AttributeError:
+            # AttributeError in this case is expected as the variable is not
+            # defined except for the type hinting.
+            pass
 
         self._log.debug(
             f"Attempting to load session state from {self.sessfile}!"
