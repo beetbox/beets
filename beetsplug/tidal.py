@@ -1,11 +1,10 @@
+from __future__ import annotations
+
 import json
-import optparse
 import os.path
 import re
-from collections.abc import Callable
 from datetime import datetime
-from typing import Any
-from __future__ import annotations
+from typing import TYPE_CHECKING, Any
 
 import backoff
 import cachetools
@@ -15,10 +14,14 @@ import tidalapi
 
 from beets import logging, ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
-from beets.importer import ImportSession, ImportTask
-from beets.library import Item, Library
 from beets.plugins import BeetsPlugin
 from beets.util import bytestring_path, remove, syspath
+
+if TYPE_CHECKING:
+    import optparse
+
+    from beets.importer import ImportSession, ImportTask
+    from beets.library import Item, Library
 
 
 def backoff_handler(details: dict[Any, Any]) -> None:
@@ -222,7 +225,7 @@ class TidalPlugin(BeetsPlugin):
         Currently, this only updates popularity."""
         self._log.debug("Refreshing metadata for TIDAL tracks")
         self._load_session(fatal=True)
-        assert self.sess is tidalapi.session.Session
+        assert isinstance(self.sess, tidalapi.session.Session) is True
 
         for item in lib.items("tidal_track_id::[0-9]+"):
             self._log.debug(f"Processing item {item.title}")
@@ -265,7 +268,7 @@ class TidalPlugin(BeetsPlugin):
         elif opts.fetch:
             self._log.debug(f"Force fetching lyrics for track ID {opts.fetch}")
             self._load_session(fatal=True)
-            assert self.sess is tidalapi.session.Session
+            assert isinstance(self.sess, tidalapi.session.Session) is True
 
             try:
                 track = self.sess.track(opts.fetch)
@@ -311,7 +314,7 @@ class TidalPlugin(BeetsPlugin):
 
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
         """Return TIDAL metadata for a specific TIDAL Album ID"""
-        assert self.sess is tidalapi.session.Session
+        assert isinstance(self.sess, tidalapi.session.Session) is True
         # This is just the numerical album ID to use with the TIDAL API
         tidal_album_id = None
 
@@ -348,7 +351,7 @@ class TidalPlugin(BeetsPlugin):
     def track_for_id(self, track_id: str) -> TrackInfo | None:
         """Return TIDAL metadata for a specific TIDAL Track ID"""
         self._log.debug(f"Running track_for_id with track {track_id}!")
-        assert self.sess is tidalapi.session.Session
+        assert isinstance(self.sess, tidalapi.session.Session) is True
 
         # This is just the numerical track ID to use with the TIDAL API
         tidal_track_id = None
@@ -397,7 +400,7 @@ class TidalPlugin(BeetsPlugin):
         self._log.debug(
             "Searching for candidates using tidal_album_id from items"
         )
-        assert self.sess is tidalapi.session.Session
+        assert isinstance(self.sess, tidalapi.session.Session) is True
         for item in items:
             if item.get("tidal_album_id", None):
                 try:
@@ -736,7 +739,7 @@ class TidalPlugin(BeetsPlugin):
     ) -> tidalapi.Track | tidalapi.Album:
         """Simple wrapper for TIDAL search
         Used to implement rate limiting and query fixing"""
-        assert self.sess is tidalapi.session.Session
+        assert isinstance(self.sess, tidalapi.session.Session) is True
         # Both of the substitutions borrowed from https://github.com/arsaboo/beets-tidal/blob/main/beetsplug/tidal.py
         # Strip non-word characters from query. Things like "!" and "-" can
         # cause a query to return no results, even if they match the artist or
@@ -909,7 +912,7 @@ class TidalPlugin(BeetsPlugin):
         """Processes an item from the import stage
 
         This is used to simplify the stage loop."""
-        assert self.sess is tidalapi.session.Session
+        assert isinstance(self.sess, tidalapi.session.Session) is True
 
         # Fetch lyrics if enabled
         if self.config["lyrics"]:
@@ -975,7 +978,7 @@ class TidalPlugin(BeetsPlugin):
     def import_begin(self) -> None:
         # Check for session and throw user error if we aren't logged in
         self._load_session(fatal=True)
-        assert self.sess is tidalapi.session.Session
+        assert isinstance(self.sess, tidalapi.session.Session) is True
 
     def stage(self, session: ImportSession, task: ImportTask) -> None:
         self._log.debug("Running import stage")
