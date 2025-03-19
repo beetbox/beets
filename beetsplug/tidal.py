@@ -28,7 +28,7 @@ def backoff_handler(details: dict[Any, Any]) -> None:
     """Handler for rate limiting backoff"""
     # Check to make sure the logger is defined before we log
     # Even though this function should never run before __init__
-    assert TidalPlugin.logger is logging.BeetsLogger
+    assert isinstance(TidalPlugin.logger, logging.BeetsLogger) is True
 
     TidalPlugin.logger.debug(
         "Rate limited! Cooling off for {wait:0.1f} seconds \
@@ -705,7 +705,7 @@ class TidalPlugin(BeetsPlugin):
                 for track in album.tracks():
                     tracks.append(track)
                     trackids.append(track.id)
-
+                    
         # Reverse list so the more specific result is first
         tracks = list(reversed(tracks))
 
