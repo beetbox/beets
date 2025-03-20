@@ -308,14 +308,11 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Filter out empty strings
         return [g for g in item_genre if g]
 
-    def _combine_genres(
-        self, old: list[str], new: list[str]
-    ) -> Union[str, None]:
+    def _combine_genres(self, old: list[str], new: list[str]) -> list[str]:
         """Combine old and new genres."""
         self._log.debug(f"fetched last.fm tags: {new}")
         combined = old + new
-        resolved = self._resolve_genres(combined)
-        return self._to_delimited_genre_string(resolved) or None
+        return self._resolve_genres(combined)
 
     def _get_genre(
         self, obj: Union[Album, Item]
@@ -399,10 +396,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         if new_genres:
             suffix = "whitelist" if self.whitelist else "any"
             label += f", {suffix}"
-
             if keep_genres:
                 label = f"keep + {label}"
-            return self._combine_genres(keep_genres, new_genres), label
+
+            resolved_genres = self._combine_genres(keep_genres, new_genres)
+            if any(resolved_genres):
+                return self._to_delimited_genre_string(resolved_genres), label
 
         # Nothing found, leave original.
         if obj.genre:
