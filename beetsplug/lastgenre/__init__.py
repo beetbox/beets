@@ -394,13 +394,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Return with a combined or freshly fetched genre list.
         if new_genres:
-            suffix = "whitelist" if self.whitelist else "any"
-            label += f", {suffix}"
-            if keep_genres:
-                label = f"keep + {label}"
-
             resolved_genres = self._combine_genres(keep_genres, new_genres)
             if any(resolved_genres):
+                suffix = "whitelist" if self.whitelist else "any"
+                label += f", {suffix}"
+                if keep_genres:
+                    label = f"keep + {label}"
                 return self._to_delimited_genre_string(resolved_genres), label
 
         # Nothing found, leave original.
