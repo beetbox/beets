@@ -335,7 +335,9 @@ class SmartPlaylistTest(BeetsTestCase):
         type(i).title = PropertyMock(return_value="fake title")
         type(i).length = PropertyMock(return_value=300.123)
         # Set a path which is not equal to the one returned by `item.destination`.
-        type(i).path = PropertyMock(return_value=b"/imported/path/with/dont/move/tagada.mp3")
+        type(i).path = PropertyMock(
+            return_value=b"/imported/path/with/dont/move/tagada.mp3"
+        )
         # Set a path which would be equal to the one returned by `item.destination`.
         type(i).destination = PropertyMock(return_value=lambda: b"/tagada.mp3")
         i.evaluate_template.side_effect = lambda pl, _: pl.replace(
@@ -408,6 +410,7 @@ class SmartPlaylistTest(BeetsTestCase):
             + b"#EXTINF:300,fake artist - fake title\n"
             + b"http://beets:8337/files/imported/path/with/dont/move/tagada.mp3\n"
         )
+
 
 class SmartPlaylistCLITest(PluginTestCase):
     plugin = "smartplaylist"
