@@ -49,6 +49,9 @@ Bug fixes:
 * :ref:`query-sort`: Fix a bug that would raise an exception when sorting on
   a non-string field that is not populated in all items.
   :bug:`5512`
+* Running `beet --config <mypath> config -e` now edits `<mypath>` rather than
+  the default config path.
+  :bug:`5652`
 * :doc:`plugins/lastgenre`: Fix track-level genre handling. Now when an album-level
   genre is set already, single tracks don't fall back to the album's genre and
   request their own last.fm genre. Also log messages regarding what's been
