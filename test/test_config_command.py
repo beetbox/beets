@@ -128,3 +128,15 @@ class ConfigCommandTest(BeetsTestCase):
         with patch("os.execlp") as execlp:
             self.run_command("config", "-e")
         execlp.assert_called_once_with("myeditor", "myeditor", self.config_path)
+
+    def test_edit_config_with_custom_config_path(self):
+        alt_config_path = os.path.join(
+            self.temp_dir.decode(), "alt_config.yaml"
+        )
+        with open(self.config_path, "w") as file:
+            file.write("option: alt value\n")
+
+        os.environ["EDITOR"] = "myeditor"
+        with patch("os.execlp") as execlp:
+            self.run_command("--config", alt_config_path, "config", "-e")
+        execlp.assert_called_once_with("myeditor", "myeditor", alt_config_path)
