@@ -629,7 +629,7 @@ def album_for_id(_id: str) -> AlbumInfo | None:
 
 
 def track_for_id(_id: str) -> TrackInfo | None:
-    """Get AlbumInfo object for the given ID string."""
+    """Get TrackInfo object for the given ID string."""
     return track_for_mbid(_id) or plugins.track_for_id(_id)
 
 
