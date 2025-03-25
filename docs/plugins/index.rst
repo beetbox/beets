@@ -478,6 +478,9 @@ Here are a few of the plugins written by the beets community:
 `beets-ibroadcast`_
    Uploads tracks to the `iBroadcast`_ cloud service.
 
+`beets-id3extract`_
+   Maps arbitrary ID3 tags to beets custom fields.
+
 `beets-importreplace`_
    Lets you perform regex replacements on incoming
    metadata.
@@ -560,6 +563,7 @@ Here are a few of the plugins written by the beets community:
 .. _beets-follow: https://github.com/nolsto/beets-follow
 .. _beets-ibroadcast: https://github.com/ctrueden/beets-ibroadcast
 .. _iBroadcast: https://ibroadcast.com/
+.. _beets-id3extract: https://github.com/bcotton/beets-id3extract
 .. _beets-importreplace: https://github.com/edgars-supe/beets-importreplace
 .. _beets-setlister: https://github.com/tomjaspers/beets-setlister
 .. _beets-noimport: https://gitlab.com/tiago.dias/beets-noimport
