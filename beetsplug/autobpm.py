@@ -21,7 +21,7 @@ import librosa
 import numpy as np
 
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, should_write
+from beets.ui import Subcommand, iprogress_bar, should_write
 
 if TYPE_CHECKING:
     from beets.importer import ImportTask
@@ -56,7 +56,7 @@ class AutoBPMPlugin(BeetsPlugin):
         self.calculate_bpm(task.imported_items())
 
     def calculate_bpm(self, items: list[Item], write: bool = False) -> None:
-        for item in items:
+        for item in iprogress_bar(items, desc="Calculating BPM", unit="items"):
             path = item.filepath
             if bpm := item.bpm:
                 self._log.info("BPM for {} already exists: {}", path, bpm)
