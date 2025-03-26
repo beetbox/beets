@@ -194,9 +194,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         - Removes duplicate entries to ensure only unique genres are retained.
         - Optionally, if the 'prefer_specific' configuration is enabled, the
           list is sorted by the specificity (depth) of the genres.
-        - Finally, the method filters the genres again, ensuring that only valid
-          genres, as determined by the _is_valid method and the whitelist
-          configuration, are returned.
+        - Near the end of this method, genres are filtered again, ensuring that
+          only valid genres, as determined by the _is_valid method and the
+          whitelist configuration.
+        - Finally it is made sure that (if canonicalization hadn't done it
+          already) the list is reduced to the configured count.
+
+        As a final note let's keep in mind that if we have a whitelist, we may
+        have removed all tags, returning an empty list.
         """
         if not tags:
             return []
@@ -235,7 +240,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
-        return [x for x in tags if self._is_valid(x)]
+        valid_tags = [x for x in tags if self._is_valid(x)]
+
+        # Canonicalization handleds reducing to count already, if only whitelist
+        # is configured we reduce to count here
+        if not self.canonicalize:
+            return valid_tags[:self.config["count"].get(int)]
+        return valid_tags
 
     def fetch_genre(self, lastfm_obj):
         """Return the genre for a pylast entity or None if no suitable genre
@@ -298,17 +309,15 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     # Main processing: _get_genre() and helpers.
 
-    def _to_delimited_genre_string(self, tags: list[str]) -> str:
-        """Reduce tags list to configured count, format and return as delimited
-        string."""
-        separator = self.config["separator"].as_str()
-        max_count = self.config["count"].get(int)
-
-        genres = tags[:max_count]
+    def _format_and_stringify(self, tags: list[str]) -> str:
+        """Format to title_case if configured and return as delimited string.
+        """
         if self.config["title_case"]:
-            genres = [g.title() for g in genres]
+            formatted = [tag.title() for tag in tags]
+        else:
+            formatted = tags
 
-        return separator.join(genres)
+        return self.config["separator"].as_str().join(formatted)
 
     def _get_existing_genres(self, obj: Union[Album, Item]) -> list[str]:
         """Return a list of genres for this Item or Album. Empty string genres
@@ -415,7 +424,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 label += f", {suffix}"
                 if keep_genres:
                     label = f"keep + {label}"
-                return self._to_delimited_genre_string(resolved_genres), label
+                if g_string := self._format_and_stringify(resolved_genres):
+                    return g_string, label
 
         # Nothing found, leave original.
         if obj.genre:
