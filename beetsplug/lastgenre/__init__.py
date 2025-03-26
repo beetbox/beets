@@ -197,9 +197,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         - Optionally, if the 'prefer_specific' configuration is enabled, the
           list is sorted by the specificity (depth in the canonicalization tree)
           of the genres.
-        - Finally, the method filters the tag list, ensuring that only valid
-          genres (those that pass the _is_valid method) are returned. If a
-          whitelist is set, only genres in the whitelist are considered valid.
+        - The method then filters the tag list, ensuring that only valid
+          genres (those that pass the _is_valid method) are kept. If a
+          whitelist is set, only genres in the whitelist are considered valid
+          (which may even result in no genres at all being retained).
+        - Finally, the filtered list of genres, limited to
+          the configured count is returned.
         """
         if not tags:
             return []
@@ -238,7 +241,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
-        return [x for x in tags if self._is_valid(x)]
+        valid_tags = [x for x in tags if self._is_valid(x)]
+        return valid_tags[: self.config["count"].get(int)]
 
     def fetch_genre(self, lastfm_obj):
         """Return the genre for a pylast entity or None if no suitable genre
@@ -301,17 +305,14 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     # Main processing: _get_genre() and helpers.
 
-    def _to_delimited_genre_string(self, tags: list[str]) -> str:
-        """Reduce tags list to configured count, format and return as delimited
-        string."""
-        separator = self.config["separator"].as_str()
-        max_count = self.config["count"].get(int)
-
-        genres = tags[:max_count]
+    def _format_and_stringify(self, tags: list[str]) -> str:
+        """Format to title_case if configured and return as delimited string."""
         if self.config["title_case"]:
-            genres = [g.title() for g in genres]
+            formatted = [tag.title() for tag in tags]
+        else:
+            formatted = tags
 
-        return separator.join(genres)
+        return self.config["separator"].as_str().join(formatted)
 
     def _get_existing_genres(self, obj: Union[Album, Item]) -> list[str]:
         """Return a list of genres for this Item or Album. Empty string genres
@@ -325,9 +326,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Filter out empty strings
         return [g for g in item_genre if g]
 
-    def _combine_genres(self, old: list[str], new: list[str]) -> list[str]:
-        """Combine old and new genres."""
+    def _combine_resolve_and_log(
+        self, old: list[str], new: list[str]
+    ) -> list[str]:
+        """Combine old and new genres and process via _resolve_genres."""
         self._log.debug(f"fetched last.fm tags: {new}")
+        self._log.debug(f"existing genres taken into account: {old}")
         combined = old + new
         return self._resolve_genres(combined)
 
@@ -411,13 +415,15 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Return with a combined or freshly fetched genre list.
         if new_genres:
-            resolved_genres = self._combine_genres(keep_genres, new_genres)
-            if any(resolved_genres):
+            resolved_genres = self._combine_resolve_and_log(
+                keep_genres, new_genres
+            )
+            if resolved_genres:
                 suffix = "whitelist" if self.whitelist else "any"
                 label += f", {suffix}"
                 if keep_genres:
                     label = f"keep + {label}"
-                return self._to_delimited_genre_string(resolved_genres), label
+                return self._format_and_stringify(resolved_genres), label
 
         # Nothing found, leave original.
         if obj.genre:

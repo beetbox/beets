@@ -79,16 +79,12 @@ class LastGenrePluginTest(BeetsTestCase):
         self._setup_config(canonical="", whitelist={"rock"})
         assert self.plugin._resolve_genres(["delta blues"]) == []
 
-    def test_to_delimited_string(self):
-        """Keep the n first genres, format them and return a
-        separator-delimited string.
-        """
+    def test_format_and_stringify(self):
+        """Format genres list and return them as a separator-delimited string."""
         self._setup_config(count=2)
         assert (
-            self.plugin._to_delimited_genre_string(
-                ["jazz", "pop", "rock", "blues"]
-            )
-            == "Jazz, Pop"
+            self.plugin._format_and_stringify(["jazz", "pop", "rock", "blues"])
+            == "Jazz, Pop, Rock, Blues"
         )
 
     def test_count_c14n(self):
