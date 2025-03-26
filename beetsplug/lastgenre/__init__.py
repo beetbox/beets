@@ -245,7 +245,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Canonicalization handleds reducing to count already, if only whitelist
         # is configured we reduce to count here
         if not self.canonicalize:
-            return valid_tags[:self.config["count"].get(int)]
+            return valid_tags[: self.config["count"].get(int)]
         return valid_tags
 
     def fetch_genre(self, lastfm_obj):
@@ -310,8 +310,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
     # Main processing: _get_genre() and helpers.
 
     def _format_and_stringify(self, tags: list[str]) -> str:
-        """Format to title_case if configured and return as delimited string.
-        """
+        """Format to title_case if configured and return as delimited string."""
         if self.config["title_case"]:
             formatted = [tag.title() for tag in tags]
         else:
@@ -331,7 +330,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Filter out empty strings
         return [g for g in item_genre if g]
 
-    def _combine_resolve_and_log(self, old: list[str], new: list[str]) -> list[str]:
+    def _combine_resolve_and_log(
+        self, old: list[str], new: list[str]
+    ) -> list[str]:
         """Combine old and new genres and process via _resolve_genres."""
         self._log.debug(f"fetched last.fm tags: {new}")
         self._log.debug(f"existing genres taken into account: {old}")
@@ -418,7 +419,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Return with a combined or freshly fetched genre list.
         if new_genres:
-            resolved_genres = self._combine_resolve_and_log(keep_genres, new_genres)
+            resolved_genres = self._combine_resolve_and_log(
+                keep_genres, new_genres
+            )
             if any(resolved_genres):
                 suffix = "whitelist" if self.whitelist else "any"
                 label += f", {suffix}"

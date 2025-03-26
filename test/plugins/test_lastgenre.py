@@ -80,13 +80,10 @@ class LastGenrePluginTest(BeetsTestCase):
         assert self.plugin._resolve_genres(["delta blues"]) == []
 
     def test_format_and_stringify(self):
-        """Format genres list and return them as a separator-delimited string.
-        """
+        """Format genres list and return them as a separator-delimited string."""
         self._setup_config(count=2)
         assert (
-            self.plugin._format_and_stringify(
-                ["jazz", "pop", "rock", "blues"]
-            )
+            self.plugin._format_and_stringify(["jazz", "pop", "rock", "blues"])
             == "Jazz, Pop, Rock, Blues"
         )
 
