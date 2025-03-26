@@ -12,12 +12,19 @@ Unreleased
 New features
 ~~~~~~~~~~~~
 
+New features
+~~~~~~~~~~~~
+
 - Add native support for multiple genres per album/track. The ``genres`` field
   now stores genres as a list and is written to files as multiple individual
   genre tags (e.g., separate GENRE tags for FLAC/MP3). The
   :doc:`plugins/musicbrainz`, :doc:`plugins/beatport`, :doc:`plugins/discogs`
   and :doc:`plugins/lastgenre` plugins have been updated to populate the
   ``genres`` field as a list.
+- Added progress bars to commands for several plugins, showing how many albums
+  or songs have been changed (blue) and how many were unchanged (white). The
+  progress bar includes how much time has passed and an estimate of how much
+  time is left. :bug:`5711`
 
   **Migration**: Existing libraries with comma-separated, semicolon-separated,
   or slash-separated genre strings (e.g., ``"Rock, Alternative, Indie"``) are
@@ -307,6 +314,12 @@ Other changes
   options. This role provides consistent formatting and creates references
   automatically. Applied it to :doc:`plugins/deezer`, :doc:`plugins/discogs`,
   :doc:`plugins/musicbrainz` and :doc:`plugins/spotify` plugins documentation.
+
+For developers and plugin authors:
+
+- :doc:`dev/plugins/other/progressbars`: Added progress bar helper function -
+  `ui.iprogress_bar`, which can be used by plugin authors to consistently show
+  progress in the terminal for long-running operations. :bug:`5711`
 
 2.5.0 (October 11, 2025)
 ------------------------

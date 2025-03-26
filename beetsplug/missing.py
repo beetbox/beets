@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 import requests
 
-from beets import config, metadata_plugins
+from beets import config, metadata_plugins, ui
 from beets.dbcore import types
 from beets.library import Item
 from beets.plugins import BeetsPlugin
@@ -153,7 +153,6 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         matching query.
         """
         albums = lib.albums(query)
-
         count = self.config["count"].get()
         total = self.config["total"].get()
         fmt = config["format_album" if count else "format_item"].get()
@@ -165,13 +164,13 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
         # Default format string for count mode.
         if count:
             fmt += ": $missing"
-
-        for album in albums:
-            if count:
+            for album in ui.iprogress_bar(
+                albums, desc="Analyzing albums", unit="albums"
+            ):
                 if _missing_count(album):
                     print_(format(album, fmt))
-
-            else:
+        else:
+            for album in albums:
                 for item in self._missing(album):
                     print_(format(item, fmt))
 
@@ -195,7 +194,9 @@ class MissingPlugin(MusicBrainzAPIMixin, BeetsPlugin):
 
         total_missing = 0
         calculating_total = self.config["total"].get()
-        for (artist, artist_id), album_ids in album_ids_by_artist.items():
+        for (artist, artist_id), album_ids in ui.iprogress_bar(
+            album_ids_by_artist.items(), desc="Analyzing artists", unit="artist"
+        ):
             try:
                 resp = self.mb_api.browse_release_groups(artist=artist_id)
             except requests.exceptions.RequestException:
