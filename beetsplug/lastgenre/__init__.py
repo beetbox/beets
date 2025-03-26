@@ -164,18 +164,6 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     # More canonicalization and general helpers.
 
-    def _to_delimited_genre_string(self, tags: list[str]) -> str:
-        """Reduce tags list to configured count, format and return as delimited
-        string."""
-        separator = self.config["separator"].as_str()
-        max_count = self.config["count"].get(int)
-
-        genres = tags[:max_count]
-        if self.config["title_case"]:
-            genres = [g.title() for g in genres]
-
-        return separator.join(genres)
-
     def _get_depth(self, tag):
         """Find the depth of a tag in the genres tree."""
         depth = None
@@ -295,6 +283,18 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         )
 
     # Main processing: _get_genre() and helpers.
+
+    def _to_delimited_genre_string(self, tags: list[str]) -> str:
+        """Reduce tags list to configured count, format and return as delimited
+        string."""
+        separator = self.config["separator"].as_str()
+        max_count = self.config["count"].get(int)
+
+        genres = tags[:max_count]
+        if self.config["title_case"]:
+            genres = [g.title() for g in genres]
+
+        return separator.join(genres)
 
     def _get_existing_genres(self, obj: Union[Album, Item]) -> list[str]:
         """Return a list of genres for this Item or Album. Empty string genres
