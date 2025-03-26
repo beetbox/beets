@@ -71,7 +71,11 @@ class MBSyncPlugin(BeetsPlugin):
         """Retrieve and apply info from the autotagger for items matched by
         query.
         """
-        for item in lib.items(query + ["singleton:true"]):
+        for item in ui.iprogress_bar(
+            lib.items(query + ["singleton:true"]),
+            desc="Syncing singletons",
+            unit="singletons",
+        ):
             if not item.mb_trackid:
                 self._log.info(
                     "Skipping singleton with no mb_trackid: {}", item
@@ -95,8 +99,11 @@ class MBSyncPlugin(BeetsPlugin):
         """Retrieve and apply info from the autotagger for albums matched by
         query and their items.
         """
-        # Process matching albums.
-        for album in lib.albums(query):
+        for album in ui.iprogress_bar(
+            lib.albums(query),
+            desc="Syncing albums",
+            unit="albums",
+        ):
             if not album.mb_albumid:
                 self._log.info("Skipping album with no mb_albumid: {}", album)
                 continue

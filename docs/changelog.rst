@@ -9,6 +9,10 @@ Unreleased
 
 New features:
 
+- Added progress bars for most commands, showing how many albums or songs have 
+  been changed (white), how many were unchanged (blue), and how many errors 
+  there were (red). The progress bar includes how much time has passed and an
+  estimate of how much time is left. :bug:`5711`
 - :doc:`plugins/musicbrainz`: The MusicBrainz autotagger has been moved to a
   separate plugin. The default :ref:`plugins-config` includes ``musicbrainz``,
   but if you've customized your ``plugins`` list in your configuration, you'll

@@ -1511,7 +1511,11 @@ class ReplayGainPlugin(BeetsPlugin):
                     f"Analyzing {len(albums)} albums ~"
                     f" {self.backend_name} backend..."
                 )
-                for album in albums:
+                for album in ui.iprogress_bar(
+                    albums,
+                    desc="Analyzing albums",
+                    unit="albums",
+                ):
                     self.handle_album(album, write, force)
             else:
                 items = lib.items(args)
@@ -1519,13 +1523,14 @@ class ReplayGainPlugin(BeetsPlugin):
                     f"Analyzing {len(items)} tracks ~"
                     f" {self.backend_name} backend..."
                 )
-                for item in items:
+                for item in ui.iprogress_bar(
+                    items,
+                    desc="Analyzing tracks",
+                    unit="tracks",
+                ):
                     self.handle_track(item, write, force)
-
+        finally:
             self.close_pool()
-        except (SystemExit, KeyboardInterrupt):
-            # Silence interrupt exceptions
-            pass
 
     def commands(self) -> list[ui.Subcommand]:
         """Return the "replaygain" ui subcommand."""
