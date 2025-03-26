@@ -79,6 +79,7 @@ soco = { version = "*", optional = true }
 
 pydata-sphinx-theme = { version = "*", optional = true }
 sphinx = { version = "*", optional = true }
+enlighten = "^1.14.1"
 
 [tool.poetry.group.test.dependencies]
 beautifulsoup4 = "*"
