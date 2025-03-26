@@ -9,7 +9,7 @@ like the following in your config.yaml to configure:
 import os
 import stat
 
-from beets import config
+from beets import config, ui
 from beets.plugins import BeetsPlugin
 from beets.util import ancestry, displayable_path, syspath
 
@@ -31,10 +31,13 @@ def check_permissions(path, permission):
     return oct(stat.S_IMODE(os.stat(syspath(path)).st_mode)) == oct(permission)
 
 
-def assert_permissions(path, permission, log):
+def assert_permissions(path, permission, log) -> bool:
     """Check whether the file's permissions are as expected, otherwise,
     log a warning message. Return a boolean indicating the match, like
     `check_permissions`.
+
+    Returns:
+        True if the permissions are as expected, False otherwise.
     """
     if not check_permissions(path, permission):
         log.warning("could not set permissions on {}", displayable_path(path))
@@ -43,6 +46,8 @@ def assert_permissions(path, permission, log):
             permission,
             os.stat(syspath(path)).st_mode & 0o777,
         )
+        return False
+    return True
 
 
 def dirs_in_library(library, item):
@@ -96,27 +101,46 @@ class Permissions(BeetsPlugin):
         file_perm = convert_perm(file_perm)
         dir_perm = convert_perm(dir_perm)
 
-        for path in files:
-            # Changing permissions on the destination file.
-            self._log.debug(
-                "setting file permissions on {}",
-                displayable_path(path),
-            )
-            if not check_permissions(path, file_perm):
-                os.chmod(syspath(path), file_perm)
+        # Change permissions for the files.
+        with ui.changes_and_errors_pbars(
+            total=len(files),
+            desc="Setting permissions",
+            unit="files",
+        ) as (n_changed, n_unchanged, n_errors):
+            for path in files:
+                # Changing permissions on the destination file.
+                self._log.debug(
+                    "setting file permissions on {}",
+                    displayable_path(path),
+                )
+                if not check_permissions(path, file_perm):
+                    os.chmod(syspath(path), file_perm)
+                    n_changed.update()
+                else:
+                    n_unchanged.update()
 
-            # Checks if the destination path has the permissions configured.
-            assert_permissions(path, file_perm, self._log)
+                # Checks if the destination path has the permissions configured.
+                if not assert_permissions(path, file_perm, self._log):
+                    n_errors.update()
 
         # Change permissions for the directories.
-        for path in dirs:
-            # Changing permissions on the destination directory.
-            self._log.debug(
-                "setting directory permissions on {}",
-                displayable_path(path),
-            )
-            if not check_permissions(path, dir_perm):
-                os.chmod(syspath(path), dir_perm)
+        with ui.changes_and_errors_pbars(
+            total=len(dirs),
+            desc="Setting permissions",
+            unit="directories",
+        ) as (n_changed, n_unchanged, n_errors):
+            for path in dirs:
+                # Changing permissions on the destination directory.
+                self._log.debug(
+                    "setting directory permissions on {}",
+                    displayable_path(path),
+                )
+                if not check_permissions(path, dir_perm):
+                    os.chmod(syspath(path), dir_perm)
+                    n_changed.update()
+                else:
+                    n_unchanged.update()
 
-            # Checks if the destination path has the permissions configured.
-            assert_permissions(path, dir_perm, self._log)
+                # Checks if the destination path has the permissions configured.
+                if not assert_permissions(path, dir_perm, self._log):
+                    n_errors.update()

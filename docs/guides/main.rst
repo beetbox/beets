@@ -248,6 +248,15 @@ specified above*. If you want to use your current directory structure, set the
 
 Note that you just need to add ``-A`` for "don't autotag".
 
+As your music is being imported, you will see several progress bars at the
+bottom of your terminal. These will show you the overall progress of the
+import, how much time has passed, and an estimate of how much time is left.
+
+Other commands also track their progress with progress bars, and are color-
+coded to show how many albums or songs in the database have been changed
+(blue), how many items haven't been changed (white), and how many errors there
+were (red).
+
 Adding More Music
 -----------------
 
