@@ -322,9 +322,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # Filter out empty strings
         return [g for g in item_genre if g]
 
-    def _combine_genres(self, old: list[str], new: list[str]) -> list[str]:
-        """Combine old and new genres."""
+    def _combine_resolve_and_log(self, old: list[str], new: list[str]) -> list[str]:
+        """Combine old and new genres and process via _resolve_genres."""
         self._log.debug(f"fetched last.fm tags: {new}")
+        self._log.debug(f"existing genres taken into account: {old}")
         combined = old + new
         return self._resolve_genres(combined)
 
@@ -408,7 +409,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Return with a combined or freshly fetched genre list.
         if new_genres:
-            resolved_genres = self._combine_genres(keep_genres, new_genres)
+            resolved_genres = self._combine_resolve_and_log(keep_genres, new_genres)
             if any(resolved_genres):
                 suffix = "whitelist" if self.whitelist else "any"
                 label += f", {suffix}"
