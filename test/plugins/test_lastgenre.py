@@ -381,6 +381,26 @@ class LastGenrePluginTest(BeetsTestCase):
             },
             ("not ; configured | separator", "keep any, no-force"),
         ),
+        # 12 - fallback to next stage (artist) if no allowed original present
+        # and no album genre were fetched.
+        (
+            {
+                "force": True,
+                "keep_existing": True,
+                "source": "album",
+                "whitelist": True,
+                "fallback": "fallback genre",
+                "canonical": False,
+                "prefer_specific": False,
+            },
+            "not whitelisted original",
+            {
+                "track": None,
+                "album": None,
+                "artist": ["Jazz"],
+            },
+            ("Jazz", "keep + artist, whitelist"),
+        ),
     ],
 )
 def test_get_genre(config_values, item_genre, mock_genres, expected_result):
