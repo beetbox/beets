@@ -292,24 +292,24 @@ class LastGenrePluginTest(BeetsTestCase):
             },
             ("Unknown Genre, Jazz", "keep + artist, any"),
         ),
-        # 7 - fallback to original when nothing found
+        # 7 - fallback to any original when nothing found and whitelist disabled
         (
             {
                 "force": True,
                 "keep_existing": True,
                 "source": "track",
-                "whitelist": True,
+                "whitelist": False,
                 "fallback": "fallback genre",
                 "canonical": False,
                 "prefer_specific": False,
             },
-            "original unknown",
+            "Jazz",
             {
                 "track": None,
                 "album": None,
                 "artist": None,
             },
-            ("original unknown", "original fallback"),
+            ("fallback genre", "fallback"),
         ),
         # 8 - fallback to fallback if no original
         (
@@ -380,6 +380,26 @@ class LastGenrePluginTest(BeetsTestCase):
                 "album": ["Jazz", "Bebop"],
             },
             ("not ; configured | separator", "keep any, no-force"),
+        ),
+        # 12 - fallback to next stage (artist) if no allowed original present
+        # and no album genre were fetched.
+        (
+            {
+                "force": True,
+                "keep_existing": True,
+                "source": "album",
+                "whitelist": True,
+                "fallback": "fallback genre",
+                "canonical": False,
+                "prefer_specific": False,
+            },
+            "not whitelisted original",
+            {
+                "track": None,
+                "album": None,
+                "artist": ["Jazz"],
+            },
+            ("Jazz", "keep + artist, whitelist"),
         ),
     ],
 )
