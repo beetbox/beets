@@ -26,10 +26,12 @@ import struct
 import sys
 import textwrap
 import traceback
+from contextlib import contextmanager
 from difflib import SequenceMatcher
-from typing import Any, Callable
+from typing import Any, Callable, Generator
 
 import confuse
+import enlighten
 
 from beets import config, library, logging, plugins, util
 from beets.autotag import mb
@@ -38,8 +40,10 @@ from beets.dbcore import query as db_query
 from beets.util import as_string
 from beets.util.functemplate import template
 
+is_windows = sys.platform == "win32"
+
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
-if sys.platform == "win32":
+if is_windows:
     try:
         import colorama
     except ImportError:
@@ -1434,6 +1438,97 @@ class CommonOptionsParser(optparse.OptionParser):
         self.add_album_option()
         self.add_path_option()
         self.add_format_option()
+
+
+@contextmanager
+def changes_and_errors_pbars(
+    **kwargs,
+) -> Generator[
+    tuple[enlighten.Counter, enlighten.Counter, enlighten.Counter], None, None
+]:
+    """Construct three progress bars for incremental changes and errors.
+
+    Using this method to construct the three progress bars allows Beets to
+    manage the formatting and coloring of the progress bars, ensuring
+    consistency across the codebase and among plugins.
+
+    Example usage:
+
+    ```python
+    with ui.changes_and_errors_pbars(
+        total=len(items),
+        desc="Updating items",
+        unit="items",
+    ) as (n_changed, n_unchanged, n_errors):
+        for album in lib.albums():
+            try:
+                if update_album(album):
+                    n_changed.update()
+                else:
+                    n_unchanged.update()
+            except Exception:
+                n_errors.update()
+    ```
+
+    Args:
+        kwargs: Keyword arguments to pass to the `enlighten.Counter`
+            constructor.
+
+    Returns:
+        A tuple of three `enlighten.Counter` instances: the first for changed
+        items, the second for unchanged items, and the third for errors.
+    """
+    if "color" in kwargs:
+        del kwargs["color"]
+
+    # Currently disabled when running in Windows. Enlighten does not seem to
+    # handle user inputs in the text area above the progress bar, nor cleaning
+    # up the progress bar from the terminal when the command completes.
+    #
+    # TODO: investigate and resolve these problems, and enable the progress
+    # bars in Windows environments.
+    with enlighten.Manager(enabled=not is_windows) as manager:
+        with manager.counter(**kwargs, color="white") as unchanged:
+            changed = unchanged.add_subcounter("blue")
+            errors = unchanged.add_subcounter("red")
+            yield changed, unchanged, errors
+
+
+def iprogress_bar(sequence, **kwargs):
+    """Construct and manage an `enlighten.Counter` progress bar while iterating.
+
+    Example usage:
+    ```
+    for album in ui.iprogress_bar(
+        lib.albums(), desc="Updating albums", unit="albums"):
+        do_something_to(album)
+    ```
+
+    Args:
+        sequence: An `Iterable` sequence to iterate over. If provided, and the
+            sequence can return its length, then the length will be used as the
+            total for the counter. The counter will be updated for each item
+            in the sequence.
+        kwargs: Additional keyword arguments to pass to the `enlighten.Counter`
+            constructor.
+
+    Yields:
+        The items from the sequence.
+    """
+    if sequence is None:
+        log.error("sequence must not be None")
+        return
+
+    # If sequence is not None, and can return its length, then use that as the total.
+    if "total" not in kwargs and hasattr(sequence, "__len__"):
+        kwargs["total"] = len(sequence)
+
+    # Disabled in windows environments. See above for details
+    with enlighten.Manager(enabled=not is_windows) as manager:
+        with manager.counter(**kwargs) as counter:
+            for item in sequence:
+                counter.update()
+                yield item
 
 
 # Subcommand parsing infrastructure.

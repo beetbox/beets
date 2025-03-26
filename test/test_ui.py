@@ -1642,3 +1642,61 @@ class EncodingTest(BeetsTestCase):
         with patch("sys.stdin") as stdin:
             stdin.encoding = None
             assert ui._in_encoding() == "utf-8"
+
+
+class ProgressBarTest(BeetsTestCase):
+    """Tests for the ui.iprogress_bar progress bar context manager and iterator.
+
+    To avoid mocking the enlighten library, we primarily test that the constructed
+    context manager can be used as intended - as an iterator that yields items from
+    a sequence, or as a constructor for the enlighten.Counter context manager.
+
+    Testing the arguments passed to the enlighten.Counter constructor is not done,
+    but may be an improvement for future work.
+    """
+
+    def test_counter_with_sequence(self):
+        test_sequence = [1, 2, 3]
+        results = []
+
+        for item in ui.iprogress_bar(test_sequence, desc="Test Counter"):
+            results.append(item)
+
+        assert results == test_sequence
+
+    def test_counter_with_sequence_no_length(self):
+        class IterWithoutLen:
+            def __iter__(self):
+                return iter([1, 2, 3])
+
+        sequence = IterWithoutLen()
+        results = []
+
+        for item in ui.iprogress_bar(sequence, desc="No Length Counter"):
+            results.append(item)
+
+        assert results == [1, 2, 3]
+
+    def test_no_crash_when_sequence_is_none(self):
+        for _ in ui.iprogress_bar(None, desc="None"):
+            pytest.fail("Should not have reached an iteration.")
+
+    def test_changes_and_errors_pbars(self):
+        with ui.changes_and_errors_pbars(
+            total=10, desc="Test Changes and Errors Progress Bars"
+        ) as (n_changed, n_unchanged, n_errors):
+            n_changed.update(5)
+            n_unchanged.update(3)
+            n_errors.update(2)
+
+        # The "unchanged" counter is actually a "total" counter, but functions
+        # in the codebase as an "unchanged" counter. Here, though, we expect
+        # its count to be the total, 5 + 3 + 2 = 10.
+        assert n_unchanged.count == 10
+        assert n_unchanged.color == "white"
+
+        assert n_changed.count == 5
+        assert n_changed.color == "blue"
+
+        assert n_errors.count == 2
+        assert n_errors.color == "red"
