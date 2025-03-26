@@ -137,6 +137,7 @@ class BadFiles(BeetsPlugin):
         error_lines = []
 
         if status > 0:
+            success = False
             error_lines.append(
                 f"{ui.colorize('text_error', dpath)}: checker exited with"
                 f" status {status}"
@@ -145,6 +146,7 @@ class BadFiles(BeetsPlugin):
                 error_lines.append(f"  {line}")
 
         elif errors > 0:
+            success = False
             error_lines.append(
                 f"{ui.colorize('text_warning', dpath)}: checker found"
                 f" {status} errors or warnings"
@@ -152,9 +154,10 @@ class BadFiles(BeetsPlugin):
             for line in output:
                 error_lines.append(f"  {line}")
         elif self.verbose:
+            success = True
             error_lines.append(f"{ui.colorize('text_success', dpath)}: ok")
 
-        return error_lines
+        return success, error_lines
 
     def on_import_task_start(self, task, session):
         if not self.config["check_on_import"].get(False):
@@ -163,9 +166,8 @@ class BadFiles(BeetsPlugin):
         checks_failed = []
 
         for item in task.items:
-            error_lines = self.check_item(item)
-            if error_lines:
-                checks_failed.append(error_lines)
+            _, error_lines = self.check_item(item)
+            checks_failed.append(error_lines)
 
         if checks_failed:
             task._badfiles_checks_failed = checks_failed
@@ -200,8 +202,19 @@ class BadFiles(BeetsPlugin):
         self.verbose = opts.verbose
 
         def check_and_print(item):
-            for error_line in self.check_item(item):
-                ui.print_(error_line)
+            with ui.changes_and_errors_pbars(
+                total=len(item),
+                desc="Checking item",
+                unit="items",
+                color="white",
+            ) as (_, n_unchanged, n_errors):
+                success, error_lines = self.check_item(item)
+                if success:
+                    n_unchanged.update()
+                else:
+                    n_errors.update()
+                    for line in error_lines:
+                        ui.print_(line)
 
         par_map(check_and_print, items)
 

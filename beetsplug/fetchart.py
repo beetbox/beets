@@ -1564,7 +1564,12 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         """Fetch album art for each of the albums. This implements the manual
         fetchart CLI command.
         """
-        for album in albums:
+
+        for album in ui.iprogress_bar(
+            albums,
+            desc="Fetching album art",
+            unit="albums",
+        ):
             if (
                 album.artpath
                 and not force
