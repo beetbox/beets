@@ -183,7 +183,24 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         return [p[1] for p in depth_tag_pairs]
 
     def _resolve_genres(self, tags: list[str]) -> list[str]:
-        """Filter, deduplicate, sort and canonicalize the given genres."""
+        """Filter, deduplicate, sort, canonicalize provided genres list.
+
+        - Returns an empty list if the input tags list is empty.
+        - If canonicalization is enabled, it extends the list by incorporating
+          parent genres from the canonicalization tree. When a whitelist is set,
+          only parent tags that pass a validity check (_is_valid) are included;
+          otherwise, it adds the oldest ancestor.
+        - During canonicalization, it stops adding parent tags if the count of
+          tags reaches the configured limit (count).
+        - The tags list is then deduplicated to ensure only unique genres are
+          retained.
+        - Optionally, if the 'prefer_specific' configuration is enabled, the
+          list is sorted by the specificity (depth in the canonicalization tree)
+          of the genres.
+        - Finally, the method filters the tag list, ensuring that only valid
+          genres (those that pass the _is_valid method) are returned. If a
+          whitelist is set, only genres in the whitelist are considered valid.
+        """
         if not tags:
             return []
 
