@@ -18,7 +18,7 @@ import re
 
 import confuse
 from mediafile import MediaFile
-
+import enlighten
 from beets.importer import action
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs, input_yn
@@ -79,8 +79,12 @@ class ZeroPlugin(BeetsPlugin):
                 "Remove fields for all items? (Y/n)", True
             ):
                 return
-            for item in lib.items(decargs(args)):
-                self.process_item(item)
+
+            with enlighten.get_manager() as manager:
+                items = lib.items(decargs(args))
+                with manager.counter(total=len(items), desc="Zeroing fields", unit="items", leave=False) as counter:
+                    for item in counter(items):
+                        self.process_item(item)
 
         zero_command.func = zero_fields
         return [zero_command]

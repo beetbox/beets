@@ -27,7 +27,7 @@ from beets.util import (
     displayable_path,
     subprocess,
 )
-
+import enlighten
 PLUGIN = "duplicates"
 
 
@@ -270,24 +270,26 @@ class DuplicatesPlugin(BeetsPlugin):
         import collections
 
         counts = collections.defaultdict(list)
-        for obj in objs:
-            values = [getattr(obj, k, None) for k in keys]
-            values = [v for v in values if v not in (None, "")]
-            if strict and len(values) < len(keys):
-                self._log.debug(
-                    "some keys {0} on item {1} are null or empty:" " skipping",
-                    keys,
-                    displayable_path(obj.path),
-                )
-            elif not strict and not len(values):
-                self._log.debug(
-                    "all keys {0} on item {1} are null or empty:" " skipping",
-                    keys,
-                    displayable_path(obj.path),
-                )
-            else:
-                key = tuple(values)
-                counts[key].append(obj)
+        with enlighten.get_manager() as manager:
+            with manager.counter(total=len(objs), desc="Finding duplicates", unit="items") as counter:
+                for obj in counter(objs):
+                    values = [getattr(obj, k, None) for k in keys]
+                    values = [v for v in values if v not in (None, "")]
+                    if strict and len(values) < len(keys):
+                        self._log.debug(
+                            "some keys {0} on item {1} are null or empty:" " skipping",
+                            keys,
+                            displayable_path(obj.path),
+                        )
+                    elif not strict and not len(values):
+                        self._log.debug(
+                            "all keys {0} on item {1} are null or empty:" " skipping",
+                            keys,
+                            displayable_path(obj.path),
+                        )
+                    else:
+                        key = tuple(values)
+                        counts[key].append(obj)
 
         return counts
 

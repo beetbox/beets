@@ -39,7 +39,7 @@ from unidecode import unidecode
 import beets
 from beets import plugins, ui
 from beets.autotag.hooks import string_dist
-
+from tqdm import tqdm
 if TYPE_CHECKING:
     from logging import Logger
 
@@ -1046,7 +1046,7 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
             # import_write config value.
             self.config.set(vars(opts))
             items = list(lib.items(args))
-            for item in items:
+            for item in tqdm(items, desc="Fetching lyrics", unit="items"):
                 self.add_item_lyrics(item, ui.should_write())
                 if item.lyrics and opts.print:
                     ui.print_(item.lyrics)
