@@ -18,7 +18,7 @@ import re
 
 from beets import plugins, ui
 from beets.util import displayable_path
-
+import enlighten
 
 def split_on_feat(artist):
     """Given an artist string, split the "main" artist from any artist
@@ -110,11 +110,13 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             keep_in_artist_field = self.config["keep_in_artist"].get(bool)
             write = ui.should_write()
 
-            for item in lib.items(ui.decargs(args)):
-                self.ft_in_title(item, drop_feat, keep_in_artist_field)
-                item.store()
-                if write:
-                    item.try_write()
+            with enlighten.get_manager() as manager:
+                with manager.counter(total=len(lib.items(ui.decargs(args))), desc="Analyzing songs", unit="songs") as counter:
+                    for item in counter(lib.items(ui.decargs(args))):
+                        self.ft_in_title(item, drop_feat, keep_in_artist_field)
+                        item.store()
+                        if write:
+                            item.try_write()
 
         self._command.func = func
         return [self._command]

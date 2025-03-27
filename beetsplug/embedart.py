@@ -25,7 +25,7 @@ from beets.plugins import BeetsPlugin
 from beets.ui import decargs, print_
 from beets.util import bytestring_path, displayable_path, normpath, syspath
 from beets.util.artresizer import ArtResizer
-
+import enlighten
 
 def _confirm(objs, album):
     """Show the list of affected objects (items or albums) and confirm
@@ -121,17 +121,19 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 if not opts.yes and not _confirm(items, not opts.file):
                     return
 
-                for item in items:
-                    art.embed_item(
-                        self._log,
-                        item,
-                        imagepath,
-                        maxwidth,
-                        None,
-                        compare_threshold,
-                        ifempty,
-                        quality=quality,
-                    )
+                with enlighten.get_manager() as manager:
+                    with manager.counter(total=len(items), desc="Embedding artwork", unit="items") as counter:
+                        for item in counter(items):
+                            art.embed_item(
+                                self._log,
+                                item,
+                                imagepath,
+                                maxwidth,
+                                None,
+                                compare_threshold,
+                                ifempty,
+                                quality=quality,
+                            )
             elif opts.url:
                 try:
                     response = requests.get(opts.url, timeout=5)
@@ -156,7 +158,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 if not opts.yes and not _confirm(items, not opts.url):
                     os.remove(tempimg)
                     return
-                for item in items:
+                for item in tqdm(items, desc="Embedding artwork", unit="items"):
                     art.embed_item(
                         self._log,
                         item,
@@ -173,7 +175,7 @@ class EmbedCoverArtPlugin(BeetsPlugin):
                 # Confirm with user.
                 if not opts.yes and not _confirm(albums, not opts.file):
                     return
-                for album in albums:
+                for album in tqdm(albums, desc="Embedding artwork", unit="albums"):
                     art.embed_album(
                         self._log,
                         album,
