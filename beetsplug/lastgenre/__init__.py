@@ -441,11 +441,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     label = f"keep + {label}"
                 return self._format_and_stringify(resolved_genres), label
 
-        # Nothing found, leave original.
-        if obj.genre:
-            return obj.genre, "original fallback"
+        # Nothing found, leave original if configured and valid.
+        if obj.genre and self.config["keep_existing"]:
+            if not self.whitelist or self._is_valid(obj.genre.lower()):
+                return obj.genre, "original fallback"
 
-        # No original, return fallback string.
+        # Return fallback string.
         if fallback := self.config["fallback"].get():
             return fallback, "fallback"
 
