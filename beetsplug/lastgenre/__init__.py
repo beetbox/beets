@@ -439,7 +439,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             return fallback, "fallback"
 
         # No fallback configured.
-        return None, None
+        return None, "fallback unconfigured"
 
     # Beets plugin hooks and CLI.
 
