@@ -422,13 +422,12 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             resolved_genres = self._combine_resolve_and_log(
                 keep_genres, new_genres
             )
-            if any(resolved_genres):
+            if resolved_genres:
                 suffix = "whitelist" if self.whitelist else "any"
                 label += f", {suffix}"
                 if keep_genres:
                     label = f"keep + {label}"
-                if g_string := self._format_and_stringify(resolved_genres):
-                    return g_string, label
+                return self._format_and_stringify(resolved_genres), label
 
         # Nothing found, leave original.
         if obj.genre:
