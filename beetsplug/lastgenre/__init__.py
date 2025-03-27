@@ -428,8 +428,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                     label = f"keep + {label}"
                 return self._format_and_stringify(resolved_genres), label
 
-        # Nothing found, leave original.
-        if obj.genre:
+        # Nothing found, leave original if not forcing.
+        if obj.genre and not self.config["force"]:
             return obj.genre, "original fallback"
 
         # No original, return fallback string.
