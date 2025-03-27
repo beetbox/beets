@@ -4,7 +4,7 @@
 .. image:: https://img.shields.io/codecov/c/github/beetbox/beets.svg
     :target: https://codecov.io/github/beetbox/beets
 
-.. image:: https://github.com/beetbox/beets/workflows/ci/badge.svg?branch=master
+.. image:: https://img.shields.io/github/actions/workflow/status/beetbox/beets/ci.yaml
     :target: https://github.com/beetbox/beets/actions
 
 .. image:: https://repology.org/badge/tiny-repos/beets.svg
