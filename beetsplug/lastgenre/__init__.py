@@ -357,6 +357,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         and the whitelist feature was disabled.
         """
         keep_genres = []
+        new_genres = []
         label = ""
         genres = self._get_existing_genres(obj)
 
@@ -374,17 +375,15 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # Run through stages: track, album, artist,
         # album artist, or most popular track genre.
-        if (
-            isinstance(obj, library.Item)
-            and "track" in self.sources
-            and (new_genres := self.fetch_track_genre(obj))
-        ):
-            label = "track"
-        elif "album" in self.sources and (
-            new_genres := self.fetch_album_genre(obj)
-        ):
-            label = "album"
-        elif "artist" in self.sources:
+        if isinstance(obj, library.Item) and "track" in self.sources:
+            if new_genres := self.fetch_track_genre(obj):
+                label = "track"
+
+        if not new_genres and "album" in self.sources:
+            if new_genres := self.fetch_album_genre(obj):
+                label = "album"
+
+        if not new_genres and "artist" in self.sources:
             new_genres = None
             if isinstance(obj, library.Item):
                 new_genres = self.fetch_artist_genre(obj)
