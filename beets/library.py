@@ -1155,7 +1155,7 @@ class Item(LibModel):
             )
 
         if fragment:
-            return util.as_string(subpath)
+            return os.fsdecode(subpath)
         else:
             return normpath(os.path.join(basedir, subpath))
 
