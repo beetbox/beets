@@ -104,6 +104,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "separator": ", ",
                 "prefer_specific": False,
                 "title_case": True,
+                "extended_debug": False,
             }
         )
         self.setup()
@@ -240,7 +241,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         # c14n only adds allowed genres but we may have had forbidden genres in
         # the original tags list
-        valid_tags = [x for x in tags if self._is_valid(x)]
+        valid_tags = self._filter_valid_genres(tags)
 
         # Canonicalization handleds reducing to count already, if only whitelist
         # is configured we reduce to count here
@@ -254,6 +255,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         """
         min_weight = self.config["min_weight"].get(int)
         return self._tags_for(lastfm_obj, min_weight)
+
+    def _filter_valid_genres(self, genres: list[str]) -> list[str]:
+        """Filter list of genres, only keep valid."""
+        return [x for x in genres if self._is_valid(x)]
 
     def _is_valid(self, genre: str) -> bool:
         """Check if the genre is valid.
@@ -285,26 +290,35 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             args = [a.replace("\u2010", "-") for a in args]
             self._genre_cache[key] = self.fetch_genre(method(*args))
 
-        return self._genre_cache[key]
+        genre = self._genre_cache[key]
+        if self.config["extended_debug"]:
+            self._log.debug(f"last.fm (unfiltered) {entity} tags: {genre}")
+        return genre
 
     def fetch_album_genre(self, obj):
         """Return the album genre for this Item or Album."""
-        return self._last_lookup(
-            "album", LASTFM.get_album, obj.albumartist, obj.album
+        return self._filter_valid_genres(
+            self._last_lookup(
+                "album", LASTFM.get_album, obj.albumartist, obj.album
+            )
         )
 
     def fetch_album_artist_genre(self, obj):
         """Return the album artist genre for this Item or Album."""
-        return self._last_lookup("artist", LASTFM.get_artist, obj.albumartist)
+        return self._filter_valid_genres(
+            self._last_lookup("artist", LASTFM.get_artist, obj.albumartist)
+        )
 
     def fetch_artist_genre(self, item):
         """Returns the track artist genre for this Item."""
-        return self._last_lookup("artist", LASTFM.get_artist, item.artist)
+        return self._filter_valid_genres(
+            self._last_lookup("artist", LASTFM.get_artist, item.artist)
+        )
 
     def fetch_track_genre(self, obj):
         """Returns the track genre for this Item."""
-        return self._last_lookup(
-            "track", LASTFM.get_track, obj.artist, obj.title
+        return self._filter_valid_genres(
+            self._last_lookup("track", LASTFM.get_track, obj.artist, obj.title)
         )
 
     # Main processing: _get_genre() and helpers.
@@ -334,7 +348,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self, old: list[str], new: list[str]
     ) -> list[str]:
         """Combine old and new genres and process via _resolve_genres."""
-        self._log.debug(f"fetched last.fm tags: {new}")
+        self._log.debug(f"valid last.fm tags: {new}")
         self._log.debug(f"existing genres taken into account: {old}")
         combined = old + new
         return self._resolve_genres(combined)
@@ -492,6 +506,13 @@ class LastGenrePlugin(plugins.BeetsPlugin):
             action="store_true",
             dest="album",
             help="match albums instead of items (default)",
+        )
+        lastgenre_cmd.parser.add_option(
+            "-d",
+            "--debug",
+            action="store_true",
+            dest="extended_debug",
+            help="extended last.fm debug logging",
         )
         lastgenre_cmd.parser.set_defaults(album=True)
 
