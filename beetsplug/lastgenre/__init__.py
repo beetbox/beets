@@ -363,9 +363,10 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
         if genres and not self.config["force"]:
             # Without force pre-populated tags are returned as-is.
+            label = "keep any, no-force"
             if isinstance(obj, library.Item):
-                return obj.get("genre", with_album=False), "keep any, no-force"
-            return obj.get("genre"), "keep any, no-force"
+                return obj.get("genre", with_album=False), label
+            return obj.get("genre"), label
 
         if self.config["force"]:
             # Force doesn't keep any unless keep_existing is set.
