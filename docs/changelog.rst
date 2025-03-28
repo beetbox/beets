@@ -78,6 +78,8 @@ Bug fixes:
   lyrics.
   :bug:`5583`
 * ImageMagick 7.1.1-44 is now supported.
+* :ref:`import-cmd`: Fix ability to import from tar files.
+  :bug:`5664`
 
 For packagers:
 
