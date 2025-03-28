@@ -243,7 +243,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # the original tags list
         valid_tags = self._filter_valid_genres(tags)
 
-        # Canonicalization handleds reducing to count already, if only whitelist
+        # Canonicalization handles reducing to count already, if only whitelist
         # is configured we reduce to count here
         if not self.canonicalize:
             return valid_tags[: self.config["count"].get(int)]
