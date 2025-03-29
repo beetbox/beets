@@ -243,11 +243,9 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         # the original tags list
         valid_tags = self._filter_valid_genres(tags)
 
-        # Canonicalization handles reducing to count already, if only whitelist
-        # is configured we reduce to count here
-        if not self.canonicalize:
-            return valid_tags[: self.config["count"].get(int)]
-        return valid_tags
+        # Canonicalization handles reducing to count only if prefer_specific is
+        # not set, the final count reduction is happening here
+        return valid_tags[: self.config["count"].get(int)]
 
     def fetch_genre(self, lastfm_obj):
         """Return the genre for a pylast entity or None if no suitable genre
