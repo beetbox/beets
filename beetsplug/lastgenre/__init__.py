@@ -254,6 +254,8 @@ class LastGenrePlugin(plugins.BeetsPlugin):
 
     def _filter_valid_genres(self, genres: list[str]) -> list[str]:
         """Filter list of genres, only keep valid."""
+        if not genres:
+            return []
         return [x for x in genres if self._is_valid(x)]
 
     def _is_valid(self, genre: str) -> bool:
