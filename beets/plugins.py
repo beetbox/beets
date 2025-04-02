@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 
     from beets.autotag import AlbumInfo, Distance, TrackInfo
     from beets.dbcore import Query
-    from beets.library import Item
+    from beets.library import Item, Library
     from beets.ui import Subcommand
 
 
@@ -536,7 +536,7 @@ def event_handlers():
     """Find all event handlers from plugins as a dictionary mapping
     event names to sequences of callables.
     """
-    all_handlers = defaultdict(list)
+    all_handlers: dict[str, list[Callable]] = defaultdict(list)
     for plugin in find_plugins():
         if plugin.listeners:
             for event, handlers in plugin.listeners.items():
@@ -650,7 +650,9 @@ def notify_info_yielded(event):
     return decorator
 
 
-def get_distance(config, data_source, info) -> Distance:
+def get_distance(
+    config, data_source: str, info: AlbumInfo | TrackInfo
+) -> Distance:
     """Returns the ``data_source`` weight and the maximum source weight
     for albums or individual tracks.
     """
@@ -662,20 +664,17 @@ def get_distance(config, data_source, info) -> Distance:
     return dist
 
 
-def apply_item_changes(lib, item, move, pretend, write):
+def apply_item_changes(
+    lib: Library, item: Item, move: bool, pretend: bool, write: bool
+):
     """Store, move, and write the item according to the arguments.
 
     :param lib: beets library.
-    :type lib: beets.library.Library
     :param item: Item whose changes to apply.
-    :type item: beets.library.Item
     :param move: Move the item if it's in the library.
-    :type move: bool
     :param pretend: Return without moving, writing, or storing the item's
         metadata.
-    :type pretend: bool
     :param write: Write the item's metadata to its media file.
-    :type write: bool
     """
     if pretend:
         return
@@ -703,7 +702,9 @@ class Response(TypedDict):
 
 
 class RegexDict(TypedDict):
-    """A dictionary with regex patterns as keys and match groups as values."""
+    """A dictionary containing a regex pattern and the number of the
+    match group.
+    """
 
     pattern: str
     match_group: int
@@ -712,29 +713,36 @@ class RegexDict(TypedDict):
 R = TypeVar("R", bound=Response)
 
 
-class MetadataSourcePlugin(Generic[R], metaclass=abc.ABCMeta):
+class MetadataSourcePlugin(Generic[R], BeetsPlugin, metaclass=abc.ABCMeta):
     def __init__(self):
         super().__init__()
         self.config.add({"source_weight": 0.5})
 
-    @abc.abstractproperty
-    def id_regex(self):
+    foo: str
+
+    @property
+    @abc.abstractmethod
+    def id_regex(self) -> RegexDict:
         raise NotImplementedError
 
-    @abc.abstractproperty
-    def data_source(self):
+    @property
+    @abc.abstractmethod
+    def data_source(self) -> str:
         raise NotImplementedError
 
-    @abc.abstractproperty
-    def search_url(self):
+    @property
+    @abc.abstractmethod
+    def search_url(self) -> str:
         raise NotImplementedError
 
-    @abc.abstractproperty
-    def album_url(self):
+    @property
+    @abc.abstractmethod
+    def album_url(self) -> str:
         raise NotImplementedError
 
-    @abc.abstractproperty
-    def track_url(self):
+    @property
+    @abc.abstractmethod
+    def track_url(self) -> str:
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -864,12 +872,17 @@ class MetadataSourcePlugin(Generic[R], metaclass=abc.ABCMeta):
 
         return [t for t in tracks if t is not None]
 
-    def album_distance(self, items, album_info, mapping):
+    def album_distance(
+        self,
+        items: list[Item],
+        album_info: AlbumInfo,
+        mapping: dict[Item, TrackInfo],
+    ) -> Distance:
         return get_distance(
             data_source=self.data_source, info=album_info, config=self.config
         )
 
-    def track_distance(self, item, track_info):
+    def track_distance(self, item: Item, info: TrackInfo) -> Distance:
         return get_distance(
-            data_source=self.data_source, info=track_info, config=self.config
+            data_source=self.data_source, info=info, config=self.config
         )
