@@ -36,9 +36,13 @@ from __future__ import annotations
 import queue
 import sys
 from threading import Lock, Thread
-from typing import Callable, Generator
+from typing import Callable, Generator, TypeVar
 
-from typing_extensions import TypeVar, TypeVarTuple, Unpack
+if sys.version_info >= (3, 11):
+    from typing import TypeVarTuple, Unpack
+else:
+    from typing_extensions import TypeVar, TypeVarTuple, Unpack
+
 
 BUBBLE = "__PIPELINE_BUBBLE__"
 POISON = "__PIPELINE_POISON__"
