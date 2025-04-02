@@ -35,12 +35,11 @@ import mediafile
 
 import beets
 from beets import logging
-from beets.autotag import Distance
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from beets.autotag import AlbumInfo, TrackInfo
+    from beets.autotag import AlbumInfo, Distance, TrackInfo
     from beets.dbcore import Query
     from beets.library import Item
     from beets.ui import Subcommand
@@ -177,6 +176,8 @@ class BeetsPlugin:
         """Should return a Distance object to be added to the
         distance for every track comparison.
         """
+        from beets.autotag.hooks import Distance
+
         return Distance()
 
     def album_distance(
@@ -188,6 +189,8 @@ class BeetsPlugin:
         """Should return a Distance object to be added to the
         distance for every album-level comparison.
         """
+        from beets.autotag.hooks import Distance
+
         return Distance()
 
     def candidates(
@@ -651,6 +654,8 @@ def get_distance(config, data_source, info) -> Distance:
     """Returns the ``data_source`` weight and the maximum source weight
     for albums or individual tracks.
     """
+    from beets.autotag.hooks import Distance
+
     dist = Distance()
     if info.data_source == data_source:
         dist.add("source", config["source_weight"].as_number())
