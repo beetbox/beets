@@ -41,8 +41,7 @@ from typing import Callable, Generator, TypeVar
 if sys.version_info >= (3, 11):
     from typing import TypeVarTuple, Unpack
 else:
-    from typing_extensions import TypeVar, TypeVarTuple, Unpack
-
+    from typing_extensions import TypeVarTuple, Unpack
 
 BUBBLE = "__PIPELINE_BUBBLE__"
 POISON = "__PIPELINE_POISON__"
