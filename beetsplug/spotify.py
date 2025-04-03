@@ -400,16 +400,16 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         :param keywords: (Optional) Query keywords to use.
         :return: Query string to be provided to the Search API.
         """
-        query_components = [ 
-            keywords, 
-            " ".join(":".join((k, v)) for k, v in filters.items()), 
-        ] 
-        query = " ".join([q for q in query_components if q]) 
-        if not isinstance(query, str): 
-            query = query.decode("utf8") 
+        query_components = [
+            keywords,
+            " ".join(":".join((k, v)) for k, v in filters.items()),
+        ]
+        query = " ".join([q for q in query_components if q])
+        if not isinstance(query, str):
+            query = query.decode("utf8")
 
         # Only convert to ASCII if the query is entirely Latin-based
-        if query.isascii():  
+        if query.isascii():
             query = unidecode.unidecode(query)
 
         return query
