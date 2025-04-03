@@ -202,6 +202,12 @@ configuration file. The available options are:
   Default: ``yes``.
 - **title_case**: Convert the new tags to TitleCase before saving.
   Default: ``yes``.
+- **extended_debug**: Add additional debug logging messages that show what
+  last.fm tags were fetched for tracks, albums and artists. This is done before
+  any canonicalization and whitelist filtering is applied. It's useful for
+  tuning the plugin's settings and understanding how it works, but it can be
+  quite verbose.
+  Default: ``no``.
 
 Running Manually
 ----------------
