@@ -151,8 +151,7 @@ class SpotifyPluginTest(BeetsTestCase):
 
         # Mock the Spotify 'Search' call
         json_file = os.path.join(
-            _common.RSRC, b"spotify", b"track_request.json"
-        )
+            _common.RSRC, b"spotify", b"track_request.json")
         with open(json_file, "rb") as f:
             response_body = f.read()
 
@@ -176,3 +175,49 @@ class SpotifyPluginTest(BeetsTestCase):
         results = self.spotify._match_library_tracks(self.lib, "Happy")
         assert 1 == len(results)
         assert "6NPVjNh8Jhru9xOmyQigds" == results[0]["id"]
+
+    @responses.activate
+    def test_japanese_track(self):
+        """Ensure non-ASCII characters remain unchanged in search queries"""
+
+        # Path to the mock JSON file for the Japanese track
+        json_file = os.path.join(_common.RSRC, b"spotify", b"japanese_track_request.json")
+
+        # Load the mock JSON response
+        with open(json_file, 'rb') as f:
+            response_body = f.read()
+
+        # Mock Spotify Search API response
+        responses.add(
+            responses.GET,
+            spotify.SpotifyPlugin.search_url,
+            body=response_body,
+            status=200,
+            content_type="application/json"
+        )
+
+        # Create a mock item with Japanese metadata
+        item = Item(
+            mb_trackid="56789",
+            album="盗作",
+            albumartist="ヨルシカ",
+            title="思想犯",
+            length=10
+        )
+        item.add(self.lib)
+
+        # Match library tracks using the Spotify plugin
+        results = self.spotify._match_library_tracks(self.lib, item.title)
+
+        # Assertions to verify results
+        assert 1 == len(results)
+        assert results[0]["name"] == item.title
+        assert results[0]["artists"][0]["name"] == item.albumartist
+        assert results[0]["album"]["name"] == item.album
+
+        # Verify search query parameters
+        params = _params(responses.calls[0].request.url)
+        query = params["q"][0]
+        assert item.title in query
+        assert f"artist:{item.albumartist}" in query
+        assert f"album:{item.album}" in query

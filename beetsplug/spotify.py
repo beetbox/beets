@@ -396,14 +396,19 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         :return: Query string to be provided to the Search API.
         :rtype: str
         """
-        query_components = [
-            keywords,
-            " ".join(":".join((k, v)) for k, v in filters.items()),
-        ]
-        query = " ".join([q for q in query_components if q])
-        if not isinstance(query, str):
-            query = query.decode("utf8")
-        return unidecode.unidecode(query)
+        query_components = [ 
+            keywords, 
+            " ".join(":".join((k, v)) for k, v in filters.items()), 
+        ] 
+        query = " ".join([q for q in query_components if q]) 
+        if not isinstance(query, str): 
+            query = query.decode("utf8") 
+
+        # Only convert to ASCII if the query is entirely Latin-based
+        if query.isascii():  
+            query = unidecode.unidecode(query)
+
+        return query
 
     def _search_api(self, query_type, filters=None, keywords=""):
         """Query the Spotify Search API for the specified ``keywords``,
