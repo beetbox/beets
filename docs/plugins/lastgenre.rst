@@ -153,8 +153,9 @@ make sure any existing genres remain, set ``whitelist: no``).
     force: yes
     keep_existing: yes
 
-If ``force`` is disabled the ``keep_existing`` option is simply ignored (since ``force:
-no`` means `not touching` existing tags anyway).
+.. attention::
+    If ``force`` is disabled the ``keep_existing`` option is simply ignored (since ``force:
+    no`` means `not touching` existing tags anyway).
 
 
 
