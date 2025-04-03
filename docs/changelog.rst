@@ -78,6 +78,7 @@ Bug fixes:
   lyrics.
   :bug:`5583`
 * ImageMagick 7.1.1-44 is now supported.
+* :bug:`5699`: Spotify plugin now properly handles utf-8 characters in searches
 
 For packagers:
 
