@@ -403,7 +403,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         query = " ".join([q for q in query_components if q])
         if not isinstance(query, str):
             query = query.decode("utf8")
-        return unidecode.unidecode(query)
+        return query
 
     def _search_api(self, query_type, filters=None, keywords=""):
         """Query the Spotify Search API for the specified ``keywords``,
