@@ -26,7 +26,6 @@ import webbrowser
 
 import confuse
 import requests
-import unidecode
 
 from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
