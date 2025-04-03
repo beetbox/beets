@@ -151,7 +151,8 @@ class SpotifyPluginTest(BeetsTestCase):
 
         # Mock the Spotify 'Search' call
         json_file = os.path.join(
-            _common.RSRC, b"spotify", b"track_request.json")
+            _common.RSRC, b"spotify", b"track_request.json"
+        )
         with open(json_file, "rb") as f:
             response_body = f.read()
 
@@ -181,10 +182,12 @@ class SpotifyPluginTest(BeetsTestCase):
         """Ensure non-ASCII characters remain unchanged in search queries"""
 
         # Path to the mock JSON file for the Japanese track
-        json_file = os.path.join(_common.RSRC, b"spotify", b"japanese_track_request.json")
+        json_file = os.path.join(
+            _common.RSRC, b"spotify", b"japanese_track_request.json"
+        )
 
         # Load the mock JSON response
-        with open(json_file, 'rb') as f:
+        with open(json_file, "rb") as f:
             response_body = f.read()
 
         # Mock Spotify Search API response
@@ -193,7 +196,7 @@ class SpotifyPluginTest(BeetsTestCase):
             spotify.SpotifyPlugin.search_url,
             body=response_body,
             status=200,
-            content_type="application/json"
+            content_type="application/json",
         )
 
         # Create a mock item with Japanese metadata
@@ -202,7 +205,7 @@ class SpotifyPluginTest(BeetsTestCase):
             album="盗作",
             albumartist="ヨルシカ",
             title="思想犯",
-            length=10
+            length=10,
         )
         item.add(self.lib)
 
