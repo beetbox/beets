@@ -1419,13 +1419,11 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         fetchart CLI command.
         """
 
-        with ui.progress_bar(
+        with ui.changes_and_errors_pbars(
             total=len(albums),
             desc="Fetching album art",
             unit="albums",
-        ) as n_unchanged:
-            n_changed = n_unchanged.add_subcounter("blue")
-
+        ) as (n_changed, n_unchanged, _):
             for album in albums:
                 if (
                     album.artpath

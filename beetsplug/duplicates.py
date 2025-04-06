@@ -271,7 +271,7 @@ class DuplicatesPlugin(BeetsPlugin):
         import collections
 
         counts = collections.defaultdict(list)
-        for obj in ui.progress_bar(
+        for obj in ui.iprogress_bar(
             objs,
             desc="Finding duplicates",
             unit="items",

@@ -1648,14 +1648,11 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
 
         # Walk through the items and pick up their changes.
         affected_albums = set()
-        with ui.progress_bar(
+        with ui.changes_and_errors_pbars(
             total=len(items),
             desc="Updating items",
             unit="items",
-        ) as n_unchanged:
-            n_changed = n_unchanged.add_subcounter("blue")
-            n_errors = n_unchanged.add_subcounter("red")
-
+        ) as (n_changed, n_unchanged, n_errors):
             for item in items:
                 # Item deleted?
                 if not item.path or not os.path.exists(syspath(item.path)):
@@ -1700,10 +1697,6 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
 
                 # Check for and display changes.
                 changed = ui.show_model_changes(item, fields=item_fields)
-                if changed:
-                    n_changed.update()
-                else:
-                    n_unchanged.update()
 
                 # Save changes.
                 if not pretend:
@@ -1720,18 +1713,22 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
                         # which is set in the call to read(), so we don't
                         # check this again in the future.
                         item.store(fields=item_fields)
+                
+                if changed and not pretend:
+                    n_changed.update()
+                else:
+                    n_unchanged.update()
 
         # Skip album changes while pretending.
         if pretend:
             return
 
         # Modify affected albums to reflect changes in their items.
-        with ui.progress_bar(
+        with ui.changes_and_errors_pbars(
             total=len(affected_albums),
             desc="Updating albums",
             unit="albums",
-        ) as n_unchanged:
-            n_changed = n_unchanged.add_subcounter("blue")
+        ) as (n_changed, n_unchanged, _):
             for album_id in affected_albums:
                 if album_id is None:  # Singletons.
                     n_unchanged.update()
@@ -2306,14 +2303,11 @@ def write_items(lib, query, pretend, force):
     """
     items, albums = _do_query(lib, query, False, False)
 
-    with ui.progress_bar(
+    with ui.changes_and_errors_pbars(
         total=len(items),
         desc="Writing tags",
         unit="items",
-    ) as n_unchanged:
-        n_changed = n_unchanged.add_subcounter("blue")
-        n_errors = n_unchanged.add_subcounter("red")
-
+    ) as (n_changed, n_unchanged, n_errors):
         for item in items:
             # Item deleted?
             if not os.path.exists(syspath(item.path)):

@@ -210,19 +210,18 @@ class BadFiles(BeetsPlugin):
         self.verbose = opts.verbose
 
         def check_and_print(item):
-            with ui.progress_bar(
+            with ui.changes_and_errors_pbars(
                 total=len(item),
                 desc="Checking item",
                 unit="items",
                 color="white",
-            ) as n_good:
-                n_bad = n_good.add_subcounter("red")
+            ) as (_, n_unchanged, n_errors):
                 for success, error_line in self.check_item(item):
                     if success:
-                        n_good.update()
+                        n_unchanged.update()
                     else:
+                        n_errors.update()
                         ui.print_(error_line)
-                        n_bad.update()
 
         par_map(check_and_print, items)
 

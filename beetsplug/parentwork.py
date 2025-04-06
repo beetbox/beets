@@ -89,12 +89,11 @@ class ParentWorkPlugin(BeetsPlugin):
             write = ui.should_write()
 
             items = lib.items(ui.decargs(args))
-            with ui.progress_bar(
+            with ui.changes_and_errors_pbars(
                 total=len(items),
                 desc="Identifying parent works",
                 unit="songs",
-            ) as n_unchanged:
-                n_changed = n_unchanged.add_subcounter("green")
+            ) as (n_changed, n_unchanged, _):
                 for item in items:
                     changed = self.find_work(item, force_parent)
                     if changed:

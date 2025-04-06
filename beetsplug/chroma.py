@@ -237,7 +237,7 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         )
 
         def fingerprint_cmd_func(lib, opts, args):
-            for item in ui.progress_bar(
+            for item in ui.iprogress_bar(
                 lib.items(ui.decargs(args)),
                 desc="Fingerprinting items",
                 unit="items",

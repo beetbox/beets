@@ -1046,7 +1046,7 @@ class LyricsPlugin(RequestHandler, plugins.BeetsPlugin):
             # import_write config value.
             self.config.set(vars(opts))
             items = list(lib.items(args))
-            for item in ui.progress_bar(
+            for item in ui.iprogress_bar(
                 items,
                 desc="Fetching lyrics",
                 unit="items",

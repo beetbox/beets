@@ -1685,3 +1685,20 @@ class ProgressBarTest(BeetsTestCase):
     def test_no_crash_when_sequence_is_none(self):
         for _ in ui.iprogress_bar(None, desc="None"):
             pytest.fail("Should not have reached an iteration.")
+
+    def test_changes_and_errors_pbars(self):
+        with ui.changes_and_errors_pbars(
+            total=10, desc="Test Changes and Errors Progress Bars"
+        ) as (n_changed, n_unchanged, n_errors):
+            n_changed.update(5)
+            n_unchanged.update(3)
+            n_errors.update(2)
+
+        assert n_changed.count == 5
+        assert n_changed.color == "blue"
+
+        assert n_unchanged.count == 3
+        assert n_unchanged.color == "white"
+
+        assert n_errors.count == 2
+        assert n_errors.color == "red"

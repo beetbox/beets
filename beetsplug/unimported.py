@@ -59,11 +59,10 @@ class Unimported(BeetsPlugin):
                     and file not in art_files
                 )
 
-            with ui.progress_bar(
+            with ui.changes_and_errors_pbars(
                 desc="Scanning files",
                 unit="files",
-            ) as imported:
-                unimported = imported.add_subcounter("red")
+            ) as (_, n_unchanged, _):
                 for root, _, files in os.walk(lib.directory):
                     if dir_filter(root):
                         for file in files:
@@ -71,9 +70,7 @@ class Unimported(BeetsPlugin):
                                 path = os.path.join(root, file)
                                 if path not in in_library:
                                     unimported_files.add(path)
-                                    imported.update()
-                                else:
-                                    unimported.update()
+                                n_unchanged.update()
 
             for f in unimported_files:
                 print_(util.displayable_path(f))

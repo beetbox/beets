@@ -153,25 +153,22 @@ class MissingPlugin(BeetsPlugin):
 
         # Default format string for count mode.
         total_items = sum(a.albumtotal or 0 for a in albums)
-        with ui.progress_bar(
+        with ui.changes_and_errors_pbars(
             total=len(albums) if count else total_items,
             desc="Analyzing albums",
             unit="albums",
-        ) as n_present:
-            n_missing = n_present.add_subcounter("red")
+        ) as (_, n_unchanged, n_errors):
             if count:
                 fmt += ": $missing"
                 for album in albums:
                     if _missing_count(album):
                         print_(format(album, fmt))
-                        n_missing.update()
-                    else:
-                        n_present.update()
+                        n_unchanged.update()
             else:
                 for album in albums:
                     n_missing = _missing_count(album)
-                    n_missing.update(n_missing)
-                    n_present.update(album.albumtotal - n_missing)
+                    n_errors.update(n_missing)
+                    n_unchanged.update(album.albumtotal - n_missing)
 
                     for item in self._missing(album):
                         print_(format(item, fmt))
@@ -192,13 +189,11 @@ class MissingPlugin(BeetsPlugin):
         total_missing = 0
 
         # build dict mapping artist to list of all albums
-        with ui.progress_bar(
+        with ui.changes_and_errors_pbars(
             total=len(albums_by_artist),
             desc="Analyzing artists",
             unit="artists",
-        ) as n_present:
-            n_missing = n_present.add_subcounter("red")
-
+        ) as (_, n_unchanged, n_errors):
             for artist, albums in albums_by_artist.items():
                 if artist[1] is None or artist[1] == "":
                     albs_no_mbid = ["'" + a["album"] + "'" for a in albums]
@@ -208,7 +203,7 @@ class MissingPlugin(BeetsPlugin):
                         artist[0],
                         ", ".join(albs_no_mbid),
                     )
-                    n_present.update()
+                    n_unchanged.update()
                     continue
 
                 try:
@@ -223,7 +218,7 @@ class MissingPlugin(BeetsPlugin):
                         artist[1],
                         err,
                     )
-                    n_present.update()
+                    n_errors.update()
                     continue
 
                 missing_albums = []
@@ -237,8 +232,8 @@ class MissingPlugin(BeetsPlugin):
                             break
 
                 total_missing += len(missing_albums)
-                n_missing.update(len(missing_albums))
-                n_present.update(len(present_albums))
+                n_errors.update(len(missing_albums))
+                n_unchanged.update(len(present_albums))
 
                 if total:
                     continue
