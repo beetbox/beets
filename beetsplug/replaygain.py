@@ -29,7 +29,6 @@ from dataclasses import dataclass
 from multiprocessing.pool import ThreadPool
 from threading import Event, Thread
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
-import enlighten
 
 from beets import ui
 from beets.plugins import BeetsPlugin
@@ -1539,10 +1538,12 @@ class ReplayGainPlugin(BeetsPlugin):
                         len(albums), self.backend_name
                     )
                 )
-                with enlighten.get_manager() as manager:
-                    with manager.counter(total=float(len(albums)), desc="Analyzing albums", unit="albums", leave=False) as counter:
-                        for album in counter(albums):
-                            self.handle_album(album, write, force)
+                for album in ui.progress_bar(
+                    albums,
+                    desc="Analyzing albums",
+                    unit="albums",
+                ):
+                    self.handle_album(album, write, force)
             else:
                 items = lib.items(ui.decargs(args))
                 self._log.info(
@@ -1550,10 +1551,12 @@ class ReplayGainPlugin(BeetsPlugin):
                         len(items), self.backend_name
                     )
                 )
-                with enlighten.get_manager() as manager:
-                    with manager.counter(total=float(len(items)), desc="Analyzing tracks", unit="tracks", leave=False) as counter:
-                        for item in counter(items):
-                            self.handle_track(item, write, force)
+                for item in ui.progress_bar(
+                    items,
+                    desc="Analyzing tracks",
+                    unit="tracks",
+                ):
+                    self.handle_track(item, write, force)
         finally:
             self.close_pool()
 

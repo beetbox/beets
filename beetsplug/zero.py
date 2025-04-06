@@ -18,7 +18,8 @@ import re
 
 import confuse
 from mediafile import MediaFile
-import enlighten
+
+from beets import ui
 from beets.importer import action
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs, input_yn
@@ -80,11 +81,12 @@ class ZeroPlugin(BeetsPlugin):
             ):
                 return
 
-            with enlighten.get_manager() as manager:
-                items = lib.items(decargs(args))
-                with manager.counter(total=len(items), desc="Zeroing fields", unit="items", leave=False) as counter:
-                    for item in counter(items):
-                        self.process_item(item)
+            for item in ui.progress_bar(
+                lib.items(decargs(args)),
+                desc="Zeroing fields",
+                unit="items",
+            ):
+                self.process_item(item)
 
         zero_command.func = zero_fields
         return [zero_command]

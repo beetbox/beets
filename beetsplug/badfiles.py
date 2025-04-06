@@ -26,7 +26,7 @@ from beets import importer, ui
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand
 from beets.util import displayable_path, par_map
-import enlighten
+
 
 class CheckerCommandError(Exception):
     """Raised when running a checker failed.
@@ -210,15 +210,19 @@ class BadFiles(BeetsPlugin):
         self.verbose = opts.verbose
 
         def check_and_print(item):
-            with enlighten.get_manager() as manager:
-                with manager.counter(total=len(item), desc="Checking item", unit="items", color="white") as successes:
-                    errors = successes.add_subcounter("red")
-                    for success, error_line in self.check_item(item):
-                        if success:
-                            successes.update()
-                        else:
-                            ui.print_(error_line)
-                            errors.update()
+            with ui.progress_bar(
+                total=len(item),
+                desc="Checking item",
+                unit="items",
+                color="white",
+            ) as n_good:
+                n_bad = n_good.add_subcounter("red")
+                for success, error_line in self.check_item(item):
+                    if success:
+                        n_good.update()
+                    else:
+                        ui.print_(error_line)
+                        n_bad.update()
 
         par_map(check_and_print, items)
 

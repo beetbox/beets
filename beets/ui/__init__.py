@@ -30,6 +30,7 @@ from difflib import SequenceMatcher
 from typing import Any, Callable
 
 import confuse
+import enlighten
 
 from beets import config, library, logging, plugins, util
 from beets.autotag import mb
@@ -1434,6 +1435,45 @@ class CommonOptionsParser(optparse.OptionParser):
         self.add_album_option()
         self.add_path_option()
         self.add_format_option()
+
+
+def progress_bar(**kwargs):
+    """Constructs an `enlighten.Counter` that will manage a progress in the terminal.
+
+    Args:
+        kwargs: Keyword arguments to pass to the `enlighten.Counter`
+            constructor.
+    """
+    return enlighten.Counter(**kwargs)
+
+
+def iprogress_bar(sequence, **kwargs):
+    """Construct and manage an `enlighten.Counter` progress bar while iterating.
+
+    Args:
+        sequence: An `Iterable` sequence to iterate over. If provided, and the
+            sequence can return its length, then the length will be used as the
+            total for the counter. The counter will be updated for each item
+            in the sequence.
+        kwargs: Additional keyword arguments to pass to the `enlighten.Counter`
+            constructor.
+
+    Yields:
+        The items from the sequence.
+    """
+    if sequence is None:
+        log.error("sequence must not be None")
+        return
+
+    # If sequence is not None, and can return its length, then use that as the total.
+    if "total" not in kwargs and hasattr(sequence, "__len__"):
+        kwargs["total"] = len(sequence)
+
+    counter = enlighten.Counter(**kwargs)
+    for item in sequence:
+        counter.update()
+        yield item
+    counter.close()
 
 
 # Subcommand parsing infrastructure.

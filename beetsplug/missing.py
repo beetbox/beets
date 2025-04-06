@@ -20,13 +20,13 @@ from collections import defaultdict
 import musicbrainzngs
 from musicbrainzngs.musicbrainz import MusicBrainzError
 
-from beets import config
+from beets import config, ui
 from beets.autotag import hooks
 from beets.dbcore import types
 from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, decargs, print_
-import enlighten
+
 
 def _missing_count(album):
     """Return number of missing items in `album`."""
@@ -151,31 +151,30 @@ class MissingPlugin(BeetsPlugin):
             print(sum([_missing_count(a) for a in albums]))
             return
 
-        with enlighten.get_manager() as manager:
-            # Default format string for count mode.
+        # Default format string for count mode.
+        total_items = sum(a.albumtotal or 0 for a in albums)
+        with ui.progress_bar(
+            total=len(albums) if count else total_items,
+            desc="Analyzing albums",
+            unit="albums",
+        ) as n_present:
+            n_missing = n_present.add_subcounter("red")
             if count:
                 fmt += ": $missing"
-                with manager.counter(total=len(albums), desc="Analyzing albums", unit="albums", color="white") as present:
-                    missing = present.add_subcounter("red")
-                    for album in albums:
-                        if _missing_count(album):
-                            print_(format(album, fmt))
-                            missing.update()
-                        else:
-                            present.update()
+                for album in albums:
+                    if _missing_count(album):
+                        print_(format(album, fmt))
+                        n_missing.update()
+                    else:
+                        n_present.update()
             else:
-                total_items = sum(a.albumtotal or 0 for a in albums)
-                with manager.counter(total=total_items, desc="Analyzing items", unit="items", color="white") as present:
-                    missing = present.add_subcounter("red")
-                    for album in albums:
-                        n_missing = _missing_count(album)
-                        missing.update(n_missing)
+                for album in albums:
+                    n_missing = _missing_count(album)
+                    n_missing.update(n_missing)
+                    n_present.update(album.albumtotal - n_missing)
 
-                        n_present  = a.albumtotal - n_missing
-                        present.update(n_present)
-
-                        for item in self._missing(album):
-                            print_(format(item, fmt))
+                    for item in self._missing(album):
+                        print_(format(item, fmt))
 
     def _missing_albums(self, lib, query):
         """Print a listing of albums missing from each artist in the library
@@ -193,57 +192,61 @@ class MissingPlugin(BeetsPlugin):
         total_missing = 0
 
         # build dict mapping artist to list of all albums
-        with enlighten.get_manager() as manager:
-            with manager.counter(total=len(albums_by_artist), desc="Analyzing artists", unit="artists", color="white") as present:
-                missing = present.add_subcounter("red")
-                skipped = present.add_subcounter("grey")
+        with ui.progress_bar(
+            total=len(albums_by_artist),
+            desc="Analyzing artists",
+            unit="artists",
+        ) as n_present:
+            n_missing = n_present.add_subcounter("red")
 
-                for artist, albums in albums_by_artist.items():
-                    if artist[1] is None or artist[1] == "":
-                        albs_no_mbid = ["'" + a["album"] + "'" for a in albums]
-                        self._log.info(
-                            "No musicbrainz ID for artist '{}' found in album(s) {}; "
-                            "skipping",
-                            artist[0],
-                            ", ".join(albs_no_mbid),
-                        )
-                        skipped.update()
-                        continue
+            for artist, albums in albums_by_artist.items():
+                if artist[1] is None or artist[1] == "":
+                    albs_no_mbid = ["'" + a["album"] + "'" for a in albums]
+                    self._log.info(
+                        "No musicbrainz ID for artist '{}' found in album(s) {}; "
+                        "skipping",
+                        artist[0],
+                        ", ".join(albs_no_mbid),
+                    )
+                    n_present.update()
+                    continue
 
-                    try:
-                        resp = musicbrainzngs.browse_release_groups(artist=artist[1])
-                        release_groups = resp["release-group-list"]
-                    except MusicBrainzError as err:
-                        self._log.info(
-                            "Couldn't fetch info for artist '{}' ({}) - '{}'",
-                            artist[0],
-                            artist[1],
-                            err,
-                        )
-                        skipped.update()
-                        continue
+                try:
+                    resp = musicbrainzngs.browse_release_groups(
+                        artist=artist[1]
+                    )
+                    release_groups = resp["release-group-list"]
+                except MusicBrainzError as err:
+                    self._log.info(
+                        "Couldn't fetch info for artist '{}' ({}) - '{}'",
+                        artist[0],
+                        artist[1],
+                        err,
+                    )
+                    n_present.update()
+                    continue
 
-                    missing_albums = []
-                    present_albums = []
-                    for rg in release_groups:
-                        missing_albums.append(rg)
-                        for alb in albums:
-                            if alb["mb_releasegroupid"] == rg["id"]:
-                                missing_albums.remove(rg)
-                                present_albums.append(rg)
-                                break
+                missing_albums = []
+                present_albums = []
+                for rg in release_groups:
+                    missing_albums.append(rg)
+                    for alb in albums:
+                        if alb["mb_releasegroupid"] == rg["id"]:
+                            missing_albums.remove(rg)
+                            present_albums.append(rg)
+                            break
 
-                    total_missing += len(missing_albums)
-                    missing.update(len(missing_albums))
-                    present.update(len(present_albums))
+                total_missing += len(missing_albums)
+                n_missing.update(len(missing_albums))
+                n_present.update(len(present_albums))
 
-                    if total:
-                        continue
+                if total:
+                    continue
 
-                    missing_titles = {rg["title"] for rg in missing_albums}
+                missing_titles = {rg["title"] for rg in missing_albums}
 
-                    for release_title in missing_titles:
-                        print_("{} - {}".format(artist[0], release_title))
+                for release_title in missing_titles:
+                    print_("{} - {}".format(artist[0], release_title))
 
         if total:
             print(total_missing)

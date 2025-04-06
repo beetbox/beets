@@ -43,7 +43,7 @@ from beets.util import (
     normpath,
     syspath,
 )
-import enlighten
+
 from . import _store_dict
 
 VARIOUS_ARTISTS = "Various Artists"
@@ -1648,114 +1648,121 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
 
         # Walk through the items and pick up their changes.
         affected_albums = set()
-        with enlighten.get_manager() as manager:
-            with manager.counter(total=len(items), desc="Updating items", unit="items", color="white") as n_unchanged:
-                n_changed = n_unchanged.add_subcounter("green")
-                n_deleted = n_unchanged.add_subcounter("blue")
-                n_errors = n_unchanged.add_subcounter("red")
+        with ui.progress_bar(
+            total=len(items),
+            desc="Updating items",
+            unit="items",
+        ) as n_unchanged:
+            n_changed = n_unchanged.add_subcounter("blue")
+            n_errors = n_unchanged.add_subcounter("red")
 
-                for item in items:
-                    # Item deleted?
-                    if not item.path or not os.path.exists(syspath(item.path)):
-                        ui.print_(format(item))
-                        ui.print_(ui.colorize("text_error", "  deleted"))
-                        if not pretend:
-                            item.remove(True)
-                        n_deleted.update()
-                        affected_albums.add(item.album_id)
-                        continue
-
-                    # Did the item change since last checked?
-                    if item.current_mtime() <= item.mtime:
-                        log.debug(
-                            "skipping {0} because mtime is up to date ({1})",
-                            displayable_path(item.path),
-                            item.mtime,
-                        )
-                        n_unchanged.update()
-                        continue
-
-                    # Read new data.
-                    try:
-                        item.read()
-                    except library.ReadError as exc:
-                        log.error(
-                            "error reading {0}: {1}", displayable_path(item.path), exc
-                        )
-                        n_errors.update()
-                        continue
-
-                    # Special-case album artist when it matches track artist. (Hacky
-                    # but necessary for preserving album-level metadata for non-
-                    # autotagged imports.)
-                    if not item.albumartist:
-                        old_item = lib.get_item(item.id)
-                        if old_item.albumartist == old_item.artist == item.artist:
-                            item.albumartist = old_item.albumartist
-                            item._dirty.discard("albumartist")
-
-                    # Check for and display changes.
-                    changed = ui.show_model_changes(item, fields=item_fields)
-                    if changed:
-                        n_changed.update()
-                    else:
-                        n_unchanged.update()
-
-                    # Save changes.
+            for item in items:
+                # Item deleted?
+                if not item.path or not os.path.exists(syspath(item.path)):
+                    ui.print_(format(item))
+                    ui.print_(ui.colorize("text_error", "  deleted"))
                     if not pretend:
-                        if changed:
-                            # Move the item if it's in the library.
-                            if move and lib.directory in ancestry(item.path):
-                                item.move(store=False)
+                        item.remove(True)
+                    n_changed.update()
+                    affected_albums.add(item.album_id)
+                    continue
 
-                            item.store(fields=item_fields)
-                            affected_albums.add(item.album_id)
-                        else:
-                            # The file's mtime was different, but there were no
-                            # changes to the metadata. Store the new mtime,
-                            # which is set in the call to read(), so we don't
-                            # check this again in the future.
-                            item.store(fields=item_fields)
+                # Did the item change since last checked?
+                if item.current_mtime() <= item.mtime:
+                    log.debug(
+                        "skipping {0} because mtime is up to date ({1})",
+                        displayable_path(item.path),
+                        item.mtime,
+                    )
+                    n_unchanged.update()
+                    continue
+
+                # Read new data.
+                try:
+                    item.read()
+                except library.ReadError as exc:
+                    log.error(
+                        "error reading {0}: {1}",
+                        displayable_path(item.path),
+                        exc,
+                    )
+                    n_errors.update()
+                    continue
+
+                # Special-case album artist when it matches track artist. (Hacky
+                # but necessary for preserving album-level metadata for non-
+                # autotagged imports.)
+                if not item.albumartist:
+                    old_item = lib.get_item(item.id)
+                    if old_item.albumartist == old_item.artist == item.artist:
+                        item.albumartist = old_item.albumartist
+                        item._dirty.discard("albumartist")
+
+                # Check for and display changes.
+                changed = ui.show_model_changes(item, fields=item_fields)
+                if changed:
+                    n_changed.update()
+                else:
+                    n_unchanged.update()
+
+                # Save changes.
+                if not pretend:
+                    if changed:
+                        # Move the item if it's in the library.
+                        if move and lib.directory in ancestry(item.path):
+                            item.move(store=False)
+
+                        item.store(fields=item_fields)
+                        affected_albums.add(item.album_id)
+                    else:
+                        # The file's mtime was different, but there were no
+                        # changes to the metadata. Store the new mtime,
+                        # which is set in the call to read(), so we don't
+                        # check this again in the future.
+                        item.store(fields=item_fields)
 
         # Skip album changes while pretending.
         if pretend:
             return
 
         # Modify affected albums to reflect changes in their items.
-        with enlighten.get_manager() as manager:
-            with manager.counter(total=len(affected_albums), desc="Updating albums", unit="albums", color="white") as updated:
-                moved = updated.add_subcounter("blue")
-                skipped = updated.add_subcounter("grey")
-                for album_id in affected_albums:
-                    if album_id is None:  # Singletons.
-                        skipped.update()
-                        continue
-                    album = lib.get_album(album_id)
-                    if not album:  # Empty albums have already been removed.
-                        log.debug("emptied album {0}", album_id)
-                        skipped.update()
-                        continue
-                    first_item = album.items().get()
+        with ui.progress_bar(
+            total=len(affected_albums),
+            desc="Updating albums",
+            unit="albums",
+        ) as n_unchanged:
+            n_changed = n_unchanged.add_subcounter("blue")
+            for album_id in affected_albums:
+                if album_id is None:  # Singletons.
+                    n_unchanged.update()
+                    continue
 
-                    # Update album structure to reflect an item in it.
-                    for key in library.Album.item_keys:
-                        album[key] = first_item[key]
+                album = lib.get_album(album_id)
+                if not album:  # Empty albums have already been removed.
+                    log.debug("emptied album {0}", album_id)
+                    n_unchanged.update()
+                    continue
+
+                first_item = album.items().get()
+
+                # Update album structure to reflect an item in it.
+                for key in library.Album.item_keys:
+                    album[key] = first_item[key]
+                album.store(fields=album_fields)
+                n_changed.update()
+
+                # Move album art (and any inconsistent items).
+                if move and lib.directory in ancestry(first_item.path):
+                    log.debug("moving album {0}", album_id)
+
+                    # Manually moving and storing the album.
+                    items = list(album.items())
+                    for item in items:
+                        item.move(store=False, with_album=False)
+                        item.store(fields=item_fields)
+                    album.move(store=False)
                     album.store(fields=album_fields)
 
-                    # Move album art (and any inconsistent items).
-                    if move and lib.directory in ancestry(first_item.path):
-                        log.debug("moving album {0}", album_id)
-
-                        # Manually moving and storing the album.
-                        items = list(album.items())
-                        for item in items:
-                            item.move(store=False, with_album=False)
-                            item.store(fields=item_fields)
-                        album.move(store=False)
-                        album.store(fields=album_fields)
-                        moved.update()
-                    else:
-                        updated.update()
 
 def update_func(lib, opts, args):
     # Verify that the library folder exists to prevent accidental wipes.
@@ -2299,40 +2306,44 @@ def write_items(lib, query, pretend, force):
     """
     items, albums = _do_query(lib, query, False, False)
 
-    with enlighten.get_manager() as manager:
-        with manager.counter(total=len(items), desc="Writing tags", unit="items", color="white") as n_unchanged:
-            n_changed = n_unchanged.add_subcounter("green")
-            n_missing = n_unchanged.add_subcounter("blue")
-            n_errors = n_unchanged.add_subcounter("red")
+    with ui.progress_bar(
+        total=len(items),
+        desc="Writing tags",
+        unit="items",
+    ) as n_unchanged:
+        n_changed = n_unchanged.add_subcounter("blue")
+        n_errors = n_unchanged.add_subcounter("red")
 
-            for item in items:
-                # Item deleted?
-                if not os.path.exists(syspath(item.path)):
-                    log.info("missing file: {0}", util.displayable_path(item.path))
-                    n_missing.update()
-                    continue
+        for item in items:
+            # Item deleted?
+            if not os.path.exists(syspath(item.path)):
+                log.info("missing file: {0}", util.displayable_path(item.path))
+                n_errors.update()
+                continue
 
-                # Get an Item object reflecting the "clean" (on-disk) state.
-                try:
-                    clean_item = library.Item.from_path(item.path)
-                except library.ReadError as exc:
-                    log.error(
-                        "error reading {0}: {1}", displayable_path(item.path), exc
-                    )
-                    n_errors.update()
-                    continue
-
-                # Check for and display changes.
-                changed = ui.show_model_changes(
-                    item, clean_item, library.Item._media_tag_fields, force
+            # Get an Item object reflecting the "clean" (on-disk) state.
+            try:
+                clean_item = library.Item.from_path(item.path)
+            except library.ReadError as exc:
+                log.error(
+                    "error reading {0}: {1}",
+                    displayable_path(item.path),
+                    exc,
                 )
-                if (changed or force) and not pretend:
-                    # We use `try_sync` here to keep the mtime up to date in the
-                    # database.
-                    item.try_sync(True, False)
-                    n_changed.update()
-                else:
-                    n_unchanged.update()
+                n_errors.update()
+                continue
+
+            # Check for and display changes.
+            changed = ui.show_model_changes(
+                item, clean_item, library.Item._media_tag_fields, force
+            )
+            if (changed or force) and not pretend:
+                # We use `try_sync` here to keep the mtime up to date in the
+                # database.
+                item.try_sync(True, False)
+                n_changed.update()
+            else:
+                n_unchanged.update()
 
 
 def write_func(lib, opts, args):

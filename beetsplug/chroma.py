@@ -25,7 +25,7 @@ import confuse
 
 from beets import config, plugins, ui, util
 from beets.autotag import hooks
-import enlighten
+
 API_KEY = "1vOwZtEn"
 SCORE_THRESH = 0.5
 TRACK_ID_WEIGHT = 10.0
@@ -237,10 +237,12 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         )
 
         def fingerprint_cmd_func(lib, opts, args):
-            with enlighten.get_manager() as manager:
-                with manager.counter(total=len(lib.items(ui.decargs(args))), desc="Fingerprinting items", unit="items") as counter:
-                    for item in counter(lib.items(ui.decargs(args))):
-                        fingerprint_item(self._log, item, write=ui.should_write())
+            for item in ui.progress_bar(
+                lib.items(ui.decargs(args)),
+                desc="Fingerprinting items",
+                unit="items",
+            ):
+                fingerprint_item(self._log, item, write=ui.should_write())
 
         fingerprint_cmd.func = fingerprint_cmd_func
 

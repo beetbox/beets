@@ -19,10 +19,9 @@ List all files in the library folder which are not listed in the
 
 import os
 
-from beets import util
+from beets import ui, util
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, print_
-import enlighten
 
 __author__ = "https://github.com/MrNuggelz"
 
@@ -49,32 +48,32 @@ class Unimported(BeetsPlugin):
 
             def dir_filter(root):
                 # do not traverse if root is a child of an ignored directory
-                return not any(root.startswith(ignored) for ignored in ignore_dirs)
-            
+                return not any(
+                    root.startswith(ignored) for ignored in ignore_dirs
+                )
+
             def file_filter(file):
                 # ignore files with ignored extensions or that are art files
-                return not any(file.endswith(ext) for ext in ignore_exts) and not file in art_files
+                return (
+                    not any(file.endswith(ext) for ext in ignore_exts)
+                    and file not in art_files
+                )
 
-            # First pass to count total files
-            total_files = 0
-            for root, _, files in os.walk(lib.directory):
-                if dir_filter(root):
-                    total_files += sum(1 for file in files if file_filter(file))
-            
-            # Second pass with progress bar
-            with enlighten.get_manager() as manager:
-                with manager.counter(total=total_files, desc="Scanning files", unit="files", color="white") as imported:
-                    unimported = imported.add_subcounter("red")
-                    for root, _, files in os.walk(lib.directory):
-                        if dir_filter(root):
-                            for file in files:
-                                if file_filter(file):
-                                    path = os.path.join(root, file)
-                                    if path not in in_library:
-                                        unimported_files.add(path)
-                                        imported.update()
-                                    else:
-                                        unimported.update()
+            with ui.progress_bar(
+                desc="Scanning files",
+                unit="files",
+            ) as imported:
+                unimported = imported.add_subcounter("red")
+                for root, _, files in os.walk(lib.directory):
+                    if dir_filter(root):
+                        for file in files:
+                            if file_filter(file):
+                                path = os.path.join(root, file)
+                                if path not in in_library:
+                                    unimported_files.add(path)
+                                    imported.update()
+                                else:
+                                    unimported.update()
 
             for f in unimported_files:
                 print_(util.displayable_path(f))

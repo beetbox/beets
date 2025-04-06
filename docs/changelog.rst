@@ -11,6 +11,7 @@ been dropped.
 
 New features:
 
+* Added progress bars for commands that run over albums and/or items.
 * :doc:`plugins/lastgenre`: The new configuration option, ``keep_existing``,
   provides more fine-grained control over how pre-populated genre tags are
   handled. The ``force`` option now behaves in a more conventional manner.

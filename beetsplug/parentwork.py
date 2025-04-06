@@ -17,7 +17,7 @@ and work composition date
 """
 
 import musicbrainzngs
-import enlighten
+
 from beets import ui
 from beets.plugins import BeetsPlugin
 
@@ -88,19 +88,23 @@ class ParentWorkPlugin(BeetsPlugin):
             force_parent = self.config["force"].get(bool)
             write = ui.should_write()
 
-            with enlighten.get_manager() as manager:
-                with manager.counter(total=len(lib.items(ui.decargs(args))), desc="Identifying parent works", unit="songs", color="white") as n_unchanged:
-                    n_changed = n_unchanged.add_subcounter("green")
-                    for item in lib.items(ui.decargs(args)):
-                        changed = self.find_work(item, force_parent)
-                        if changed:
-                            item.store()
-                            n_changed.update()
-                        else:
-                            n_unchanged.update()
-                            
-                        if write:
-                            item.try_write()
+            items = lib.items(ui.decargs(args))
+            with ui.progress_bar(
+                total=len(items),
+                desc="Identifying parent works",
+                unit="songs",
+            ) as n_unchanged:
+                n_changed = n_unchanged.add_subcounter("green")
+                for item in items:
+                    changed = self.find_work(item, force_parent)
+                    if changed:
+                        item.store()
+                        n_changed.update()
+                    else:
+                        n_unchanged.update()
+
+                    if write:
+                        item.try_write()
 
         command = ui.Subcommand(
             "parentwork", help="fetch parent works, composers and dates"

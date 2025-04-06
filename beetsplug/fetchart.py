@@ -26,7 +26,6 @@ from mediafile import image_mime_type
 from beets import config, importer, plugins, ui, util
 from beets.util import bytestring_path, get_temp_filename, sorted_walk, syspath
 from beets.util.artresizer import ArtResizer
-import enlighten
 
 try:
     from bs4 import BeautifulSoup
@@ -1420,35 +1419,37 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         fetchart CLI command.
         """
 
-        with enlighten.get_manager() as manager:
-            with manager.counter(total=len(albums), desc="Fetching album art", unit="albums", color="white") as has_art:
-                found_art = has_art.add_subcounter("green")
-                no_art = has_art.add_subcounter("red")
-                
-                for album in albums:
-                    if (
-                        album.artpath
-                        and not force
-                        and os.path.isfile(syspath(album.artpath))
-                    ):
-                        if not quiet:
-                            message = ui.colorize(
-                                "text_highlight_minor", "has album art"
-                            )
-                            self._log.info("{0}: {1}", album, message)
-                        has_art.update()
-                    else:
-                        # In ordinary invocations, look for images on the
-                        # filesystem. When forcing, however, always go to the Web
-                        # sources.
-                        local_paths = None if force else [album.path]
+        with ui.progress_bar(
+            total=len(albums),
+            desc="Fetching album art",
+            unit="albums",
+        ) as n_unchanged:
+            n_changed = n_unchanged.add_subcounter("blue")
 
-                        candidate = self.art_for_album(album, local_paths)
-                        if candidate:
-                            self._set_art(album, candidate)
-                            message = ui.colorize("text_success", "found album art")
-                            found_art.update()
-                        else:
-                            message = ui.colorize("text_error", "no art found")
-                            no_art.update()
+            for album in albums:
+                if (
+                    album.artpath
+                    and not force
+                    and os.path.isfile(syspath(album.artpath))
+                ):
+                    if not quiet:
+                        message = ui.colorize(
+                            "text_highlight_minor", "has album art"
+                        )
                         self._log.info("{0}: {1}", album, message)
+                    n_changed.update()
+                else:
+                    # In ordinary invocations, look for images on the
+                    # filesystem. When forcing, however, always go to the Web
+                    # sources.
+                    local_paths = None if force else [album.path]
+
+                    candidate = self.art_for_album(album, local_paths)
+                    if candidate:
+                        self._set_art(album, candidate)
+                        message = ui.colorize("text_success", "found album art")
+                        n_changed.update()
+                    else:
+                        message = ui.colorize("text_error", "no art found")
+                        n_unchanged.update()
+                    self._log.info("{0}: {1}", album, message)
