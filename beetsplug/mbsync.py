@@ -76,7 +76,7 @@ class MBSyncPlugin(BeetsPlugin):
         """Retrieve and apply info from the autotagger for items matched by
         query.
         """
-        for item in ui.progress_bar(
+        for item in ui.iprogress_bar(
             lib.items(query + ["singleton:true"]),
             desc="Syncing singletons",
             unit="singletons",
@@ -116,7 +116,7 @@ class MBSyncPlugin(BeetsPlugin):
         """Retrieve and apply info from the autotagger for albums matched by
         query and their items.
         """
-        for a in ui.progress_bar(
+        for a in ui.iprogress_bar(
             lib.albums(query),
             desc="Syncing albums",
             unit="albums",

@@ -110,7 +110,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             keep_in_artist_field = self.config["keep_in_artist"].get(bool)
             write = ui.should_write()
 
-            for item in ui.progress_bar(
+            for item in ui.iprogress_bar(
                 lib.items(ui.decargs(args)),
                 desc="Analyzing songs",
                 unit="songs",

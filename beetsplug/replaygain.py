@@ -1538,7 +1538,7 @@ class ReplayGainPlugin(BeetsPlugin):
                         len(albums), self.backend_name
                     )
                 )
-                for album in ui.progress_bar(
+                for album in ui.iprogress_bar(
                     albums,
                     desc="Analyzing albums",
                     unit="albums",
@@ -1551,7 +1551,7 @@ class ReplayGainPlugin(BeetsPlugin):
                         len(items), self.backend_name
                     )
                 )
-                for item in ui.progress_bar(
+                for item in ui.iprogress_bar(
                     items,
                     desc="Analyzing tracks",
                     unit="tracks",

@@ -81,7 +81,7 @@ class ZeroPlugin(BeetsPlugin):
             ):
                 return
 
-            for item in ui.progress_bar(
+            for item in ui.iprogress_bar(
                 lib.items(decargs(args)),
                 desc="Zeroing fields",
                 unit="items",
