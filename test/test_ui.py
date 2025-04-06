@@ -1694,11 +1694,14 @@ class ProgressBarTest(BeetsTestCase):
             n_unchanged.update(3)
             n_errors.update(2)
 
+        # The "unchanged" counter is actually a "total" counter, but functions
+        # in the codebase as an "unchanged" counter. Here, though, we expect
+        # its count to be the total, 5 + 3 + 2 = 10.
+        assert n_unchanged.count == 10
+        assert n_unchanged.color == "white"
+
         assert n_changed.count == 5
         assert n_changed.color == "blue"
-
-        assert n_unchanged.count == 3
-        assert n_unchanged.color == "white"
 
         assert n_errors.count == 2
         assert n_errors.color == "red"

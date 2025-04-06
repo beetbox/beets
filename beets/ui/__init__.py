@@ -1490,9 +1490,9 @@ def changes_and_errors_pbars(**kwargs) -> Generator[
         del kwargs["color"]
 
     with enlighten.Manager() as manager:
-        changed = manager.counter(**kwargs, color="blue")
-        unchanged = changed.add_subcounter("white")
-        errors = changed.add_subcounter("red")
+        unchanged = manager.counter(**kwargs, color="white")
+        changed = unchanged.add_subcounter("blue")
+        errors = unchanged.add_subcounter("red")
         yield changed, unchanged, errors
 
 
