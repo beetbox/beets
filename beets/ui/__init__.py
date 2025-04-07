@@ -17,7 +17,6 @@ interface. To invoke the CLI, just call beets.ui.main(). The actual
 CLI commands are implemented in the ui.commands module.
 """
 
-from contextlib import contextmanager
 import errno
 import optparse
 import os.path
@@ -27,6 +26,7 @@ import struct
 import sys
 import textwrap
 import traceback
+from contextlib import contextmanager
 from difflib import SequenceMatcher
 from typing import Any, Callable, Generator
 
@@ -1452,8 +1452,11 @@ def progress_bar(**kwargs):
 
 
 @contextmanager
-def changes_and_errors_pbars(**kwargs) -> Generator[
-    tuple[enlighten.Counter, enlighten.Counter, enlighten.Counter], None, None]:
+def changes_and_errors_pbars(
+    **kwargs,
+) -> Generator[
+    tuple[enlighten.Counter, enlighten.Counter, enlighten.Counter], None, None
+]:
     """Construct three progress bars for incremental changes and errors.
 
     Using this method to construct the three progress bars allows Beets to
@@ -1481,7 +1484,7 @@ def changes_and_errors_pbars(**kwargs) -> Generator[
     Args:
         kwargs: Keyword arguments to pass to the `enlighten.Counter`
             constructor.
-    
+
     Returns:
         A tuple of three `enlighten.Counter` instances: the first for changed
         items, the second for unchanged items, and the third for errors.

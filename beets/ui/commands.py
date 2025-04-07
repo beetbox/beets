@@ -1713,7 +1713,7 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
                         # which is set in the call to read(), so we don't
                         # check this again in the future.
                         item.store(fields=item_fields)
-                
+
                 if changed and not pretend:
                     n_changed.update()
                 else:

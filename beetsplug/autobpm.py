@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING
 import librosa
 
 from beets.plugins import BeetsPlugin
-from beets.ui import Subcommand, should_write, iprogress_bar
+from beets.ui import Subcommand, iprogress_bar, should_write
 
 if TYPE_CHECKING:
     from beets.importer import ImportTask
