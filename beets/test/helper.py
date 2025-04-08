@@ -886,20 +886,43 @@ class FetchImageHelper:
     def run(self, *args, **kwargs):
         super().run(*args, **kwargs)
 
-    IMAGEHEADER = {
+    IMAGEHEADER: dict[str, bytes] = {
         "image/jpeg": b"\xff\xd8\xff" + b"\x00" * 3 + b"JFIF",
         "image/png": b"\211PNG\r\n\032\n",
+        "image/gif": b"GIF89a",
+        # dummy type that is definitely not a valid image content type
+        "image/watercolour": b"watercolour",
+        "text/html": (
+            b"<!DOCTYPE html>\n<html>\n<head>\n</head>\n"
+            b"<body>\n</body>\n</html>"
+        ),
     }
 
-    def mock_response(self, url, content_type="image/jpeg", file_type=None):
+    def mock_response(
+        self,
+        url: str,
+        content_type: str = "image/jpeg",
+        file_type: None | str = None,
+    ) -> None:
+        # Potentially return a file of a type that differs from the
+        # server-advertised content type to mimic misbehaving servers.
         if file_type is None:
             file_type = content_type
+
+        try:
+            # imghdr reads 32 bytes
+            header = self.IMAGEHEADER[file_type].ljust(32, b"\x00")
+        except KeyError:
+            # If we can't return a file that looks like real file of the requested
+            # type, better fail the test than returning something else, which might
+            # violate assumption made when writing a test.
+            raise AssertionError(f"Mocking {file_type} responses not supported")
+
         responses.add(
             responses.GET,
             url,
             content_type=content_type,
-            # imghdr reads 32 bytes
-            body=self.IMAGEHEADER.get(file_type, b"").ljust(32, b"\x00"),
+            body=header,
         )
 
 
