@@ -111,10 +111,10 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             write = ui.should_write()
 
             for item in lib.items(ui.decargs(args)):
-                self.ft_in_title(item, drop_feat, keep_in_artist_field)
-                item.store()
-                if write:
-                    item.try_write()
+                if self.ft_in_title(item, drop_feat, keep_in_artist_field):
+                    item.store()
+                    if write:
+                        item.try_write()
 
         self._command.func = func
         return [self._command]
@@ -125,8 +125,8 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         keep_in_artist_field = self.config["keep_in_artist"].get(bool)
 
         for item in task.imported_items():
-            self.ft_in_title(item, drop_feat, keep_in_artist_field)
-            item.store()
+            if self.ft_in_title(item, drop_feat, keep_in_artist_field):
+                item.store()
 
     def update_metadata(self, item, feat_part, drop_feat, keep_in_artist_field):
         """Choose how to add new artists to the title and set the new
@@ -156,9 +156,12 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             self._log.info("title: {0} -> {1}", item.title, new_title)
             item.title = new_title
 
-    def ft_in_title(self, item, drop_feat, keep_in_artist_field):
+    def ft_in_title(self, item, drop_feat, keep_in_artist_field) -> bool:
         """Look for featured artists in the item's artist fields and move
         them to the title.
+
+        Returns:
+            True if the item has been modified. False otherwise.
         """
         artist = item.artist.strip()
         albumartist = item.albumartist.strip()
@@ -180,5 +183,7 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
                 self.update_metadata(
                     item, feat_part, drop_feat, keep_in_artist_field
                 )
+                return True
             else:
                 self._log.info("no featuring artists found")
+        return False
