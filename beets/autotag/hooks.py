@@ -25,7 +25,7 @@ from unidecode import unidecode
 
 from beets import config, logging, plugins
 from beets.autotag import mb
-from beets.util import as_string, cached_classproperty
+from beets.util import cached_classproperty
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
@@ -283,8 +283,8 @@ def _string_dist_basic(str1: str, str2: str) -> float:
     """
     assert isinstance(str1, str)
     assert isinstance(str2, str)
-    str1 = as_string(unidecode(str1))
-    str2 = as_string(unidecode(str2))
+    str1 = unidecode(str1)
+    str2 = unidecode(str2)
     str1 = re.sub(r"[^a-z0-9]", "", str1.lower())
     str2 = re.sub(r"[^a-z0-9]", "", str2.lower())
     if not str1 and not str2:

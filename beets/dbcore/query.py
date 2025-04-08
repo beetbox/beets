@@ -16,6 +16,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import unicodedata
 from abc import ABC, abstractmethod
@@ -216,7 +217,7 @@ class StringFieldQuery(FieldQuery[P]):
         """Determine whether the value matches the pattern. The value
         may have any type.
         """
-        return cls.string_match(pattern, util.as_string(value))
+        return cls.string_match(pattern, os.fsdecode(str(value or "")))
 
     @classmethod
     def string_match(
