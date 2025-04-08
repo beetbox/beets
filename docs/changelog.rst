@@ -91,10 +91,10 @@ Other changes:
   wrong (outdated) commit. Now the tag is created in the same workflow step
   right after committing the version update.
   :bug:`5539`
-* Added some typehints: ImportSession and Pipeline have typehints now. Should
-  improve useability for new developers.
 * :doc:`/plugins/smartplaylist`: URL-encode additional item `fields` within generated
   EXTM3U playlists instead of JSON-encoding them.
+* typehints: `./beets/importer.py` file now has improved typehints. 
+* typehints: `./beets/plugins.py` file now includes typehints. 
 
 2.2.0 (December 02, 2024)
 -------------------------
