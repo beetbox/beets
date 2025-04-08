@@ -26,7 +26,7 @@ Beets works on Python 3.8 or later.
   as described below by running:
   ``apt-get install python-dev python-pip``
 
-* On **Arch Linux**, `beets is in [community] <Arch community_>`_, so just run ``pacman -S
+* On **Arch Linux**, `beets is in [extra] <Arch extra_>`_, so just run ``pacman -S
   beets``. (There's also a bleeding-edge `dev package <AUR_>`_ in the AUR, which will
   probably set your computer on fire.)
 
@@ -56,7 +56,7 @@ Beets works on Python 3.8 or later.
 .. _Debian details: https://tracker.debian.org/pkg/beets
 .. _Ubuntu details: https://launchpad.net/ubuntu/+source/beets
 .. _OpenBSD: http://openports.se/audio/beets
-.. _Arch community: https://www.archlinux.org/packages/community/any/beets/
+.. _Arch extra: https://archlinux.org/packages/extra/any/beets/
 .. _Alpine package: https://pkgs.alpinelinux.org/package/edge/community/x86_64/beets
 .. _NixOS: https://github.com/NixOS/nixpkgs/tree/master/pkgs/tools/audio/beets
 .. _MacPorts: https://www.macports.org
