@@ -87,8 +87,14 @@ Bug fixes:
 For packagers:
 
 * The minimum supported Python version is now 3.9.
-* External plugin developers: ``beetsplug/__init__.py`` file can be removed
+
+For plugin developers:
+
+* ``beetsplug/__init__.py`` file can be removed
   from your plugin as beets now uses native/implicit namespace package setup.
+* The `fetchart` plugins has seen a few changes to function signatures and
+  source registration in the process of introducing typings to the code.
+  Custom art sources might need to be adapted.
 
 Other changes:
 
