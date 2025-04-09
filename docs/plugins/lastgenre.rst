@@ -173,8 +173,9 @@ configuration file. The available options are:
   Default: ``no`` (disabled).
 - **count**: Number of genres to fetch.
   Default: 1
-- **fallback**: A string if to use a fallback genre when no genre is found.
-  You can use the empty string ``''`` to reset the genre.
+- **fallback**: A string to use as a fallback genre when no genre is found `or`
+  the original genre is not desired to be kept (``keep_existing: no``). You can
+  use the empty string ``''`` to reset the genre.
   Default: None.
 - **force**: By default, lastgenre will fetch new genres for empty tags only,
   enable this option to always try to fetch new last.fm genres. Enable the
