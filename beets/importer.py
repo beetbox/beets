@@ -248,6 +248,35 @@ class ImportSession:
         logger.handlers = [loghandler]
         return logger
 
+    def tasks_created(self, _: list[ImportTask]) -> None:
+        """Called when a list of tasks is created.
+
+        Expected to be called when an individual directory or query result is
+        transformed into a list of tasks.
+        """
+        raise NotImplementedError
+
+    def task_candidates_found(self) -> None:
+        """Called when a task has found candidates.
+
+        Expected to be called by an ImportTask when it has found candidates.
+        """
+        raise NotImplementedError
+
+    def task_match_chosen(self) -> None:
+        """Called when a task has chosen a match.
+
+        Expected to be called by an ImportTask when it has chosen a match.
+        """
+        raise NotImplementedError
+
+    def task_finalized(self) -> None:
+        """Called when a task has been finalized.
+
+        Expected to be called by an ImportTask when it has been finalized.
+        """
+        raise NotImplementedError
+
     def set_config(self, config):
         """Set `config` property from global import config and make
         implied changes.
@@ -1077,10 +1106,11 @@ class SingletonImportTask(ImportTask):
         for item in self.imported_items():
             plugins.send("item_imported", lib=lib, item=item)
 
-    def lookup_candidates(self):
+    def lookup_candidates(self, session: ImportSession):
         prop = autotag.tag_item(self.item, search_ids=self.search_ids)
         self.candidates = prop.candidates
         self.rec = prop.recommendation
+        session.task_candidates_found()
 
     def find_duplicates(self, lib):
         """Return a list of items from `lib` that have the same artist
