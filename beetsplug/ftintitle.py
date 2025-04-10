@@ -124,8 +124,9 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
                         return True
                     return False
 
+            ui.print_("Querying database for songs to process...")
             items = lib.items(ui.decargs(args))
-            with ThreadPool() as pool:
+            with ThreadPool(processes = None if ui.threaded() else 1) as pool:
                 self._log.debug("Processing {:d} items in a thread pool.", len(items))
                 updated = 0
                 for update in pool.imap_unordered(operation, items):

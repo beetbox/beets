@@ -211,12 +211,12 @@ class MBSyncPlugin(BeetsPlugin):
                 return operation(a)
     
         # Process matching albums.
-        self._log.debug("Querying database for albums to process.")
+        ui.print_("Querying database for albums to process...")
         albums = lib.albums(query)
 
         self._log.debug("Processing {:d} albums.", len(albums))
         updated = 0
-        with ThreadPool() as pool:
+        with ThreadPool(processes = None if ui.threaded() else 1) as pool:
             for update in pool.imap_unordered(trans_operation, albums):
                 updated += 1 if update else 0
         self._log.debug("Updated {:d} albums.", updated)
