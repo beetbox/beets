@@ -1435,7 +1435,7 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
                             "text_highlight_minor", "has album art"
                         )
                         self._log.info("{0}: {1}", album, message)
-                    n_changed.update()
+                    n_unchanged.update()
                 else:
                     # In ordinary invocations, look for images on the
                     # filesystem. When forcing, however, always go to the Web
