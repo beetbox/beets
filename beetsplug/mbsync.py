@@ -16,7 +16,6 @@
 
 import re
 from collections import defaultdict
-from multiprocessing.pool import ThreadPool
 
 from beets import autotag, library, ui, util
 from beets.autotag import hooks
@@ -108,22 +107,18 @@ class MBSyncPlugin(BeetsPlugin):
                 autotag.apply_item_metadata(item, track_info)
                 apply_item_changes(lib, item, move, pretend, write)
 
-    def albums(self, lib: library.Library, query, move, pretend, write):
+    def albums(self, lib, query, move, pretend, write):
         """Retrieve and apply info from the autotagger for albums matched by
         query and their items.
-        """ 
-        def operation(a: library.Album) -> bool:
-            """Apply MusicBrainz metadata to an album and its items.
-            
-            Returns:
-                True if the album was updated, False otherwise.
-            """
+        """
+        # Process matching albums.
+        for a in lib.albums(query):
             album_formatted = format(a)
             if not a.mb_albumid:
                 self._log.info(
                     "Skipping album with no mb_albumid: {0}", album_formatted
                 )
-                return False
+                continue
 
             items = list(a.items())
 
@@ -133,7 +128,7 @@ class MBSyncPlugin(BeetsPlugin):
                     "Skipping album with invalid mb_albumid: {0}",
                     album_formatted,
                 )
-                return False
+                continue
 
             # Get the MusicBrainz album information.
             album_info = hooks.album_for_mbid(a.mb_albumid)
@@ -143,7 +138,7 @@ class MBSyncPlugin(BeetsPlugin):
                     a.mb_albumid,
                     album_formatted,
                 )
-                return False
+                continue
 
             # Map release track and recording MBIDs to their information.
             # Recordings can appear multiple times on a release, so each MBID
@@ -181,42 +176,29 @@ class MBSyncPlugin(BeetsPlugin):
 
             # Apply.
             self._log.debug("applying changes to {}", album_formatted)
-            autotag.apply_metadata(album_info, mapping)
-            changed = False
-            any_changed_item = items[0]
-            for item in items:
-                item_changed = ui.show_model_changes(item)
-                changed |= item_changed
-                if item_changed:
-                    any_changed_item = item
-                    apply_item_changes(lib, item, move, pretend, write)
-
-            if changed and not pretend:
-                # Update album structure to reflect an item in it.
-                for key in library.Album.item_keys:
-                    a[key] = any_changed_item[key]
-                a.try_sync(write, move)
-                return True
-            
-            return False
-        
-        def trans_operation(a: library.Album) -> bool:
-            """Apply MusicBrainz metadata to an album and its items within a transaction.
-            
-            Returns:
-                True if the album was updated, False otherwise.
-            """
             with lib.transaction():
-                a = lib.get_album(a.id)
-                return operation(a)
-    
-        # Process matching albums.
-        ui.print_("Querying database for albums to process...")
-        albums = lib.albums(query)
+                autotag.apply_metadata(album_info, mapping)
+                changed = False
+                # Find any changed item to apply MusicBrainz changes to album.
+                any_changed_item = items[0]
+                for item in items:
+                    item_changed = ui.show_model_changes(item)
+                    changed |= item_changed
+                    if item_changed:
+                        any_changed_item = item
+                        apply_item_changes(lib, item, move, pretend, write)
 
-        self._log.debug("Processing {:d} albums.", len(albums))
-        updated = 0
-        with ThreadPool(processes = None if ui.threaded() else 1) as pool:
-            for update in pool.imap_unordered(trans_operation, albums):
-                updated += 1 if update else 0
-        self._log.debug("Updated {:d} albums.", updated)
+                if not changed:
+                    # No change to any item.
+                    continue
+
+                if not pretend:
+                    # Update album structure to reflect an item in it.
+                    for key in library.Album.item_keys:
+                        a[key] = any_changed_item[key]
+                    a.store()
+
+                    # Move album art (and any inconsistent items).
+                    if move and lib.directory in util.ancestry(items[0].path):
+                        self._log.debug("moving album {0}", album_formatted)
+                        a.move()
