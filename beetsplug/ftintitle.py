@@ -17,10 +17,7 @@
 import re
 from multiprocessing.pool import ThreadPool
 
-from beets import plugins, ui
-from beets import library
-from beets.library import Library
-from beets.util import displayable_path
+from beets import library, plugins, ui
 
 
 def split_on_feat(artist):
@@ -126,8 +123,10 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
 
             ui.print_("Querying database for songs to process...")
             items = lib.items(ui.decargs(args))
-            with ThreadPool(processes = None if ui.threaded() else 1) as pool:
-                self._log.debug("Processing {:d} items in a thread pool.", len(items))
+            with ThreadPool(processes=None if ui.threaded() else 1) as pool:
+                self._log.debug(
+                    "Processing {:d} items in a thread pool.", len(items)
+                )
                 updated = 0
                 for update in pool.imap_unordered(operation, items):
                     updated += 1 if update else 0
