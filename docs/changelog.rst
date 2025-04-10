@@ -21,6 +21,8 @@ New features:
   when fetching lyrics.
 * :doc:`plugins/lyrics`: Rewrite lyrics translation functionality to use Azure
   AI Translator API and add relevant instructions to the documentation.
+* :doc:`plugins/web`: Show notifications when a track plays. This uses the
+  Media Session API to customize media notifications.
 
 Bug fixes:
 
