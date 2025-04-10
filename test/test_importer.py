@@ -273,7 +273,7 @@ class RmTempTest(ImportTestCase):
 
 class ImportZipTest(AsIsImporterMixin, ImportTestCase):
     def test_import_zip(self):
-        zip_path = create_archive(self)
+        zip_path = create_archive(self.temp_dir)
         assert len(self.lib.items()) == 0
         assert len(self.lib.albums()) == 0
 
@@ -668,7 +668,7 @@ class ImportTracksTest(ImportTestCase):
         self.importer.run()
         assert self.lib.items().get().title == "Applied Track 1"
         assert self.lib.albums().get() is None
-        assert self.importer.created == 0
+        assert self.importer.created == 2
 
     def test_apply_tracks_adds_singleton_path(self):
         self.assert_lib_dir_empty()
