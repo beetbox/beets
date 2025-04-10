@@ -15,9 +15,9 @@
 """Moves "featured" artists to the title from the artist field."""
 
 import re
+from multiprocessing.pool import ThreadPool
 
-from beets import plugins, ui
-from beets.util import displayable_path
+from beets import library, plugins, ui
 
 
 def split_on_feat(artist):
@@ -104,17 +104,33 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             self.import_stages = [self.imported]
 
     def commands(self):
-        def func(lib, opts, args):
+        def func(lib: library.Library, opts, args):
             self.config.set_args(opts)
             drop_feat = self.config["drop"].get(bool)
             keep_in_artist_field = self.config["keep_in_artist"].get(bool)
             write = ui.should_write()
+            move = ui.should_move()
 
-            for item in lib.items(ui.decargs(args)):
-                self.ft_in_title(item, drop_feat, keep_in_artist_field)
-                item.store()
-                if write:
-                    item.try_write()
+            def operation(item: library.Item) -> bool:
+                with lib.transaction():
+                    item = lib.get_item(item.id)
+                    old = item.copy()
+                    if self.ft_in_title(item, drop_feat, keep_in_artist_field):
+                        ui.show_model_changes(item, old=old)
+                        item.try_sync(write, move, with_album=False)
+                        return True
+                    return False
+
+            ui.print_("Querying database for songs to process...")
+            items = lib.items(ui.decargs(args))
+            with ThreadPool(processes=None if ui.threaded() else 1) as pool:
+                self._log.debug(
+                    "Processing {:d} items in a thread pool.", len(items)
+                )
+                updated = 0
+                for update in pool.imap_unordered(operation, items):
+                    updated += 1 if update else 0
+                self._log.debug("Updated {:d} items.", updated)
 
         self._command.func = func
         return [self._command]
@@ -136,11 +152,11 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         """
         # In case the artist is kept, do not update the artist fields.
         if keep_in_artist_field:
-            self._log.info(
+            self._log.debug(
                 "artist: {0} (Not changing due to keep_in_artist)", item.artist
             )
         else:
-            self._log.info("artist: {0} -> {1}", item.artist, item.albumartist)
+            self._log.debug("artist: {0} -> {1}", item.artist, item.albumartist)
             item.artist = item.albumartist
 
         if item.artist_sort:
@@ -153,12 +169,15 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
             feat_format = self.config["format"].as_str()
             new_format = feat_format.format(feat_part)
             new_title = f"{item.title} {new_format}"
-            self._log.info("title: {0} -> {1}", item.title, new_title)
+            self._log.debug("title: {0} -> {1}", item.title, new_title)
             item.title = new_title
 
-    def ft_in_title(self, item, drop_feat, keep_in_artist_field):
+    def ft_in_title(self, item, drop_feat, keep_in_artist_field) -> bool:
         """Look for featured artists in the item's artist fields and move
         them to the title.
+
+        Returns:
+            True if the title was updated, False otherwise.
         """
         artist = item.artist.strip()
         albumartist = item.albumartist.strip()
@@ -168,8 +187,6 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         # that case, we attempt to move the featured artist to the title.
         _, featured = split_on_feat(artist)
         if featured and albumartist != artist and albumartist:
-            self._log.info("{}", displayable_path(item.path))
-
             feat_part = None
 
             # Attempt to find the featured artist.
@@ -180,5 +197,6 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
                 self.update_metadata(
                     item, feat_part, drop_feat, keep_in_artist_field
                 )
-            else:
-                self._log.info("no featuring artists found")
+                return True
+
+        return False

@@ -904,6 +904,8 @@ class Item(LibModel):
         `move` controls whether the path should be updated. In the
         latter case, files are *only* moved when they are inside their
         library's directory (if any).
+        `with_album` controls whether the album should also be updated when the
+        item is moved.
 
         Similar to calling :meth:`write`, :meth:`move`, and :meth:`store`
         (conditionally).
@@ -1713,7 +1715,7 @@ class Library(dbcore.Database):
 
     # Convenience accessors.
 
-    def get_item(self, id):
+    def get_item(self, id: int) -> Item | None:
         """Fetch a :class:`Item` by its ID.
 
         Return `None` if no match is found.

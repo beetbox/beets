@@ -177,6 +177,11 @@ def should_move(move_opt=None):
     )
 
 
+def threaded():
+    """Decide whether to run commands in parallel."""
+    return config["threaded"].get(bool)
+
+
 # Input prompts.
 
 
