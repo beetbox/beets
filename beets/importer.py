@@ -693,7 +693,7 @@ class ImportTask(BaseImportTask):
 
         if not self.skip:
             self._emit_imported(session.lib)
-        
+
         session.task_finalized()
 
     def cleanup(self, copy=False, delete=False, move=False):

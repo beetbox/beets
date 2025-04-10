@@ -16,15 +16,16 @@
 interface.
 """
 
-import enlighten
 import enum
 import os
 import re
-from collections import Counter, defaultdict
+from collections import Counter
 from collections.abc import Sequence
 from itertools import chain
 from platform import python_version
 from typing import Any, NamedTuple
+
+import enlighten
 
 import beets
 from beets import autotag, config, importer, library, logging, plugins, ui, util
@@ -1034,7 +1035,7 @@ def abort_action(session, task):
 
 class ProgressBar(enum.StrEnum):
     """Progress bar types, representing the user-visible import stages.
-    
+
     Closely follows the stages of the `ImportTask` class, with the addition of
     "Reading" to indicate reading the files from disk and constructing the
     ImportTasks.
@@ -1066,6 +1067,7 @@ class ProgressBar(enum.StrEnum):
     Rendering and directly updating the progress bars is handled in
     `TerminalImportSession.render_progress_bars`.
     """
+
     # ImportTasks searching for candidates.
     SEARCHING = "Searching"
 
@@ -1088,11 +1090,18 @@ class TerminalImportSession(importer.ImportSession):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.manager = enlighten.get_manager(total=0, unit="items", autorefresh=True, set_scroll=False, leave=False)
+        self.manager = enlighten.get_manager(
+            total=0, unit="items", autorefresh=True, leave=False
+        )
         self.pbars = {
-            bar_type: self.manager.counter(desc=bar_type, position=3-i)
+            bar_type: self.manager.counter(desc=bar_type, position=3 - i)
             for i, bar_type in enumerate(
-                (ProgressBar.SEARCHING, ProgressBar.MATCHING, ProgressBar.APPLYING))
+                (
+                    ProgressBar.SEARCHING,
+                    ProgressBar.MATCHING,
+                    ProgressBar.APPLYING,
+                )
+            )
         }
 
     def tasks_created(self, tasks: list[importer.ImportTask]):
@@ -1112,7 +1121,9 @@ class TerminalImportSession(importer.ImportSession):
         if pbar.count == pbar.total:
             self.manager.stop()
 
-    def set_choice(self, choice: importer.action | autotag.AlbumMatch | autotag.TrackMatch):
+    def set_choice(
+        self, choice: importer.action | autotag.AlbumMatch | autotag.TrackMatch
+    ):
         """Set the choice for the given task."""
         super().set_choice(choice)
         self.pbars[ProgressBar.MATCHING].update()
