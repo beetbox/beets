@@ -610,7 +610,7 @@ class ImportTask(BaseImportTask):
             return likelies
         elif self.choice_flag is action.APPLY and self.match:
             return self.match.info.copy()
-        assert False
+        raise ValueError("Invalid choice flag; this should never happen.")
 
     def imported_items(self):
         """Return a list of Items that should be added to the library.
@@ -625,7 +625,7 @@ class ImportTask(BaseImportTask):
         ):
             return list(self.match.mapping.keys())
         else:
-            assert False
+            raise ValueError("Invalid choice flag; this should never happen.")
 
     def apply_metadata(self):
         """Copy metadata from match info to the items."""
@@ -693,6 +693,8 @@ class ImportTask(BaseImportTask):
 
         if not self.skip:
             self._emit_imported(session.lib)
+        
+        session.task_finalized()
 
     def cleanup(self, copy=False, delete=False, move=False):
         """Remove and prune imported paths."""
@@ -731,9 +733,10 @@ class ImportTask(BaseImportTask):
         else:
             # The plugins gave us a list of lists of tasks. Flatten it.
             tasks = [t for inner in tasks for t in inner]
+        session.tasks_created(tasks)
         return tasks
 
-    def lookup_candidates(self):
+    def lookup_candidates(self, session: ImportSession):
         """Retrieve and store candidates for this album. User-specified
         candidate IDs are stored in self.search_ids: if present, the
         initial lookup is restricted to only those IDs.
@@ -745,6 +748,7 @@ class ImportTask(BaseImportTask):
         self.cur_album = album
         self.candidates = prop.candidates
         self.rec = prop.recommendation
+        session.task_candidates_found()
 
     def find_duplicates(self, lib: library.Library):
         """Return a list of albums from `lib` with the same artist and
@@ -1017,6 +1021,7 @@ class ImportTask(BaseImportTask):
         choice = session.choose_match(self)
         self.set_choice(choice)
         session.log_choice(self)
+        session.task_match_chosen()
 
     def reload(self):
         """Reload albums and items from the database."""
@@ -1516,7 +1521,7 @@ def read_tasks(session: ImportSession):
         log.info("Skipped {0} paths.", skipped)
 
 
-def query_tasks(session: ImportSession):
+def query_tasks(session: ImportSession) -> Iterable[ImportTask]:
     """A generator that works as a drop-in-replacement for read_tasks.
     Instead of finding files from the filesystem, a query is used to
     match items from the library.
@@ -1564,7 +1569,7 @@ def lookup_candidates(session: ImportSession, task: ImportTask):
     # option. Currently all the IDs are passed onto the tasks directly.
     task.search_ids = session.config["search_ids"].as_str_seq()
 
-    task.lookup_candidates()
+    task.lookup_candidates(session)
 
 
 @pipeline.stage

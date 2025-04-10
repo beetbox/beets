@@ -16,9 +16,11 @@
 interface.
 """
 
+import enlighten
+import enum
 import os
 import re
-from collections import Counter
+from collections import Counter, defaultdict
 from collections.abc import Sequence
 from itertools import chain
 from platform import python_version
@@ -1030,8 +1032,107 @@ def abort_action(session, task):
     raise importer.ImportAbortError()
 
 
+class ProgressBar(enum.StrEnum):
+    """Progress bar types, representing the user-visible import stages.
+    
+    Closely follows the stages of the `ImportTask` class, with the addition of
+    "Reading" to indicate reading the files from disk and constructing the
+    ImportTasks.
+
+    The `IMPORTING` bar tracks the overall progress of the import. It is
+    initialized at the start of`ImportTask.lookup_candidates` and updated at
+    the end of `ImportTask.finalize`.
+
+    The progress bars are managed by tracking which stage the individual
+    ImportTasks are assigned to. For example, if a task is in the 'Matching'
+    stage, and the user has selected a candidate to apply, then the ImportTask
+    will be removed from the 'Matching' stage and added to the 'Applying'
+    stage. When this is done, the 'MATCHING' bar will have its progress updated,
+    and the 'APPLYING' bar's total will be incremented.
+
+    If instead of selecting a candidate, the user skips the album, then the
+    ImportTask is simply removed from the 'Matching' stage and the 'IMPORTING'
+    bar is decremented.
+
+    These assignments are handled in `TerminalImportSession`'s methods, specifically:
+     - `tasks_created`
+     - `task_candidates_found`
+     - `task_match_chosen`
+     - `task_finalized`
+
+    IMPORTING is also handled separately. Its total is incremented in
+    `ImportTask.lookup_candidates` and progress updated in `ImportTask.finalize`.
+
+    Rendering and directly updating the progress bars is handled in
+    `TerminalImportSession.render_progress_bars`.
+    """
+    # ImportTasks searching for candidates.
+    SEARCHING = "Searching"
+
+    # ImportTasks computing distance between candidate and target tracks.
+    # SCORING = "Scoring"
+
+    # Calculating distance between candidate and target tracks.
+    MATCHING = "Matching"
+
+    # Applying metadata, saving to database, and writing to disk.
+    APPLYING = "Applying"
+
+
 class TerminalImportSession(importer.ImportSession):
     """An import session that runs in a terminal."""
+
+    manager: enlighten.Manager
+    pbars: dict[ProgressBar, enlighten.Counter]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.manager = enlighten.get_manager(total=0, unit="items", autorefresh=True, set_scroll=False, leave=False)
+        self.pbars = {
+            bar_type: self.manager.counter(desc=bar_type, position=3-i)
+            for i, bar_type in enumerate(
+                (ProgressBar.SEARCHING, ProgressBar.MATCHING, ProgressBar.APPLYING))
+        }
+
+    def tasks_created(self, tasks: list[importer.ImportTask]):
+        for pbar in self.pbars.values():
+            pbar.total += len(tasks)
+            pbar.refresh()
+
+    def task_candidates_found(self):
+        self.pbars[ProgressBar.SEARCHING].update()
+
+    def task_match_chosen(self):
+        self.pbars[ProgressBar.MATCHING].update()
+
+    def task_finalized(self):
+        pbar = self.pbars[ProgressBar.APPLYING]
+        pbar.update()
+        if pbar.count == pbar.total:
+            self.manager.stop()
+
+    def set_choice(self, choice: importer.action | autotag.AlbumMatch | autotag.TrackMatch):
+        """Set the choice for the given task."""
+        super().set_choice(choice)
+        self.pbars[ProgressBar.MATCHING].update()
+
+    def imported_items(self):
+        """Get the items that have been imported."""
+        items = super().imported_items()
+        if items:
+            for bar_type in ProgressBar:
+                if bar_type != ProgressBar.READING:
+                    unit = "items"
+                    self.pbars[bar_type] = self.manager.counter(
+                        total=len(items), desc=bar_type, unit=unit
+                    )
+        return items
+
+    def lookup_candidates(self):
+        """Lookup candidates for the given task."""
+        self.pbars[ProgressBar.SEARCHING].update()
+        super().lookup_candidates()
 
     def choose_match(self, task):
         """Given an initial autotagging of items, go through an interactive
