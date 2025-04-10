@@ -87,6 +87,7 @@ For packagers:
 
 Other changes:
 
+* Parallelized ``ftintitle`` plugin.
 * Release workflow: fix the issue where the new release tag is created for the
   wrong (outdated) commit. Now the tag is created in the same workflow step
   right after committing the version update.
