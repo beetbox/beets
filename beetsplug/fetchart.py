@@ -1418,27 +1418,36 @@ class FetchArtPlugin(plugins.BeetsPlugin, RequestMixin):
         """Fetch album art for each of the albums. This implements the manual
         fetchart CLI command.
         """
-        for album in albums:
-            if (
-                album.artpath
-                and not force
-                and os.path.isfile(syspath(album.artpath))
-            ):
-                if not quiet:
-                    message = ui.colorize(
-                        "text_highlight_minor", "has album art"
-                    )
-                    self._log.info("{0}: {1}", album, message)
-            else:
-                # In ordinary invocations, look for images on the
-                # filesystem. When forcing, however, always go to the Web
-                # sources.
-                local_paths = None if force else [album.path]
 
-                candidate = self.art_for_album(album, local_paths)
-                if candidate:
-                    self._set_art(album, candidate)
-                    message = ui.colorize("text_success", "found album art")
+        with ui.changes_and_errors_pbars(
+            total=len(albums),
+            desc="Fetching album art",
+            unit="albums",
+        ) as (n_changed, n_unchanged, _):
+            for album in albums:
+                if (
+                    album.artpath
+                    and not force
+                    and os.path.isfile(syspath(album.artpath))
+                ):
+                    if not quiet:
+                        message = ui.colorize(
+                            "text_highlight_minor", "has album art"
+                        )
+                        self._log.info("{0}: {1}", album, message)
+                    n_unchanged.update()
                 else:
-                    message = ui.colorize("text_error", "no art found")
-                self._log.info("{0}: {1}", album, message)
+                    # In ordinary invocations, look for images on the
+                    # filesystem. When forcing, however, always go to the Web
+                    # sources.
+                    local_paths = None if force else [album.path]
+
+                    candidate = self.art_for_album(album, local_paths)
+                    if candidate:
+                        self._set_art(album, candidate)
+                        message = ui.colorize("text_success", "found album art")
+                        n_changed.update()
+                    else:
+                        message = ui.colorize("text_error", "no art found")
+                        n_unchanged.update()
+                    self._log.info("{0}: {1}", album, message)

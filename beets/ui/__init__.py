@@ -26,10 +26,12 @@ import struct
 import sys
 import textwrap
 import traceback
+from contextlib import contextmanager
 from difflib import SequenceMatcher
-from typing import Any, Callable
+from typing import Any, Callable, Generator
 
 import confuse
+import enlighten
 
 from beets import config, library, logging, plugins, util
 from beets.autotag import mb
@@ -1434,6 +1436,96 @@ class CommonOptionsParser(optparse.OptionParser):
         self.add_album_option()
         self.add_path_option()
         self.add_format_option()
+
+
+def progress_bar(**kwargs):
+    """Constructs an `enlighten.Counter` that will manage a progress in the terminal.
+
+    This method should not generally be used directly. Instead, when appropriate,
+    use `iprogress_bar` or `changes_and_errors_pbars` to construct progress bars.
+
+    Args:
+        kwargs: Keyword arguments to pass to the `enlighten.Counter`
+            constructor.
+    """
+    return enlighten.Counter(**kwargs)
+
+
+@contextmanager
+def changes_and_errors_pbars(
+    **kwargs,
+) -> Generator[
+    tuple[enlighten.Counter, enlighten.Counter, enlighten.Counter], None, None
+]:
+    """Construct three progress bars for incremental changes and errors.
+
+    Using this method to construct the three progress bars allows Beets to
+    manage the formatting and coloring of the progress bars, ensuring
+    consistency across the codebase and among plugins.
+
+    Example usage:
+
+    ```python
+    with ui.changes_and_errors_pbars(
+        total=len(items),
+        desc="Updating items",
+        unit="items",
+    ) as (n_changed, n_unchanged, n_errors):
+        for album in lib.albums():
+            try:
+                if update_album(album):
+                    n_changed.update()
+                else:
+                    n_unchanged.update()
+            except Exception:
+                n_errors.update()
+    ```
+
+    Args:
+        kwargs: Keyword arguments to pass to the `enlighten.Counter`
+            constructor.
+
+    Returns:
+        A tuple of three `enlighten.Counter` instances: the first for changed
+        items, the second for unchanged items, and the third for errors.
+    """
+    if "color" in kwargs:
+        del kwargs["color"]
+
+    with enlighten.Manager() as manager:
+        with manager.counter(**kwargs, color="white") as unchanged:
+            changed = unchanged.add_subcounter("blue")
+            errors = unchanged.add_subcounter("red")
+            yield changed, unchanged, errors
+
+
+def iprogress_bar(sequence, **kwargs):
+    """Construct and manage an `enlighten.Counter` progress bar while iterating.
+
+    Args:
+        sequence: An `Iterable` sequence to iterate over. If provided, and the
+            sequence can return its length, then the length will be used as the
+            total for the counter. The counter will be updated for each item
+            in the sequence.
+        kwargs: Additional keyword arguments to pass to the `enlighten.Counter`
+            constructor.
+
+    Yields:
+        The items from the sequence.
+    """
+    if sequence is None:
+        log.error("sequence must not be None")
+        return
+
+    # If sequence is not None, and can return its length, then use that as the total.
+    if "total" not in kwargs and hasattr(sequence, "__len__"):
+        kwargs["total"] = len(sequence)
+
+    with enlighten.Manager() as manager:
+        with manager.counter(**kwargs) as counter:
+            for item in sequence:
+                counter.update()
+                yield item
 
 
 # Subcommand parsing infrastructure.
