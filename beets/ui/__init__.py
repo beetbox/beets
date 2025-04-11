@@ -1493,10 +1493,10 @@ def changes_and_errors_pbars(
         del kwargs["color"]
 
     with enlighten.Manager() as manager:
-        unchanged = manager.counter(**kwargs, color="white")
-        changed = unchanged.add_subcounter("blue")
-        errors = unchanged.add_subcounter("red")
-        yield changed, unchanged, errors
+        with manager.counter(**kwargs, color="white") as unchanged:
+            changed = unchanged.add_subcounter("blue")
+            errors = unchanged.add_subcounter("red")
+            yield changed, unchanged, errors
 
 
 def iprogress_bar(sequence, **kwargs):
@@ -1521,11 +1521,11 @@ def iprogress_bar(sequence, **kwargs):
     if "total" not in kwargs and hasattr(sequence, "__len__"):
         kwargs["total"] = len(sequence)
 
-    counter = enlighten.Counter(**kwargs)
-    for item in sequence:
-        counter.update()
-        yield item
-    counter.close()
+    with enlighten.Manager() as manager:
+        with manager.counter(**kwargs) as counter:
+            for item in sequence:
+                counter.update()
+                yield item
 
 
 # Subcommand parsing infrastructure.
