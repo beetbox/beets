@@ -32,7 +32,7 @@ from unidecode import unidecode
 
 import beets
 
-from ..util import cached_classproperty, functemplate
+from ..util import cached_classproperty, functemplate, parallel
 from . import types
 from .query import (
     FieldQueryType,
@@ -620,6 +620,10 @@ class Model(ABC, Generic[D]):
 
         self.clear_dirty()
 
+    async def astore(self):
+        """Async version of `store`."""
+        return await parallel.submit(self.store)
+
     def load(self):
         """Refresh the object's metadata from the library database.
 
@@ -637,6 +641,10 @@ class Model(ABC, Generic[D]):
         self.update(dict(stored_obj))
         self.clear_dirty()
 
+    async def aload(self):
+        """Async version of `load`."""
+        return await parallel.submit(self.load)
+
     def remove(self):
         """Remove the object's associated rows from the database."""
         db = self._check_db()
@@ -645,6 +653,10 @@ class Model(ABC, Generic[D]):
             tx.mutate(
                 f"DELETE FROM {self._flex_table} WHERE entity_id=?", (self.id,)
             )
+
+    async def aremove(self):
+        """Async version of `remove`."""
+        return await parallel.submit(self.remove)
 
     def add(self, db: D | None = None):
         """Add the object to the library database. This object must be
@@ -668,6 +680,10 @@ class Model(ABC, Generic[D]):
                 if self[key] is not None:
                     self._dirty.add(key)
             self.store()
+
+    async def aadd(self):
+        """Async version of `add`."""
+        return await parallel.submit(self.add)
 
     # Formatting and templating.
 

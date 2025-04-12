@@ -17,10 +17,13 @@ interface. To invoke the CLI, just call beets.ui.main(). The actual
 CLI commands are implemented in the ui.commands module.
 """
 
+import asyncio
 import errno
+import functools
 import optparse
 import os.path
 import re
+import signal
 import sqlite3
 import struct
 import sys
@@ -35,7 +38,7 @@ from beets import config, library, logging, plugins, util
 from beets.autotag import mb
 from beets.dbcore import db
 from beets.dbcore import query as db_query
-from beets.util import as_string
+from beets.util import as_string, parallel
 from beets.util.functemplate import template
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
@@ -1775,7 +1778,7 @@ def _open_library(config):
     return lib
 
 
-def _raw_main(args, lib=None):
+async def _raw_main(args, lib=None):
     """A helper function for `main` without top-level exception
     handling.
     """
@@ -1866,8 +1869,18 @@ def main(args=None):
             "https://beets.readthedocs.io/en/stable/guides/main.html"
         )
         sys.exit(1)
+
+    def ask_stop(loop: asyncio.AbstractEventLoop):
+        loop.stop()
+
     try:
-        _raw_main(args)
+        loop = asyncio.get_event_loop()
+
+        loop.add_signal_handler(signal.SIGINT, functools.partial(ask_stop, loop))
+        loop.add_signal_handler(signal.SIGTERM, functools.partial(ask_stop, loop))
+
+        with parallel.executor():
+            loop.run_until_complete(_raw_main(args))
     except UserError as exc:
         message = exc.args[0] if exc.args else None
         log.error("error: {0}", message)
@@ -1903,3 +1916,5 @@ def main(args=None):
             exc,
         )
         sys.exit(1)
+    finally:
+        loop.close()
