@@ -16,6 +16,7 @@
 interface.
 """
 
+import asyncio
 import os
 import re
 from collections import Counter
@@ -1327,7 +1328,7 @@ def import_files(lib, paths, query):
         config["import"]["resume"] = False
 
     session = TerminalImportSession(lib, loghandler, paths, query)
-    session.run()
+    asyncio.run(session.run())
 
     # Emit event.
     plugins.send("import", lib=lib, paths=paths)

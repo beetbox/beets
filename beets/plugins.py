@@ -20,7 +20,18 @@ import re
 import traceback
 from collections import defaultdict
 from functools import wraps
+from typing import (
+    Callable,
+    Iterable,
+    TypeVar,
+    cast,
+    ParamSpec,
+    TypeAlias,
+    Generic,
+    Any,
+)
 
+from beets.importer import ImportSession, ImportTask
 import mediafile
 
 import beets
@@ -62,6 +73,21 @@ class PluginLogFilter(logging.Filter):
 
 # Managing the plugins themselves.
 
+# Type definitions for plugin-related types
+P = ParamSpec("P")  # For capturing function parameters
+R = TypeVar("R")  # For capturing return type
+
+# Define a generic callable type that can be any function
+PluginMethod = Callable[P, R]
+
+# A plugin import stage function takes an ImportSession and ImportTask and returns None
+PluginImportStage = Callable[[ImportSession, ImportTask], None]
+
+# A wrapped function preserves the signature of the original function
+# T is a TypeVar bound to Callable to represent the specific function type being wrapped
+T = TypeVar("T", bound=Callable)
+WrappedPluginMethod = T  # This means WrappedPluginMethod[PluginImportStage] is a wrapped PluginImportStage
+
 
 class BeetsPlugin:
     """The base class for all beets plugins. Plugins provide
@@ -79,8 +105,8 @@ class BeetsPlugin:
             self.template_fields = {}
         if not self.album_template_fields:
             self.album_template_fields = {}
-        self.early_import_stages = []
-        self.import_stages = []
+        self.early_import_stages: list[PluginImportStage] = []
+        self.import_stages: list[PluginImportStage] = []
 
         self._log = log.getChild(self.name)
         self._log.setLevel(logging.NOTSET)  # Use `beets` logger level.
@@ -93,14 +119,18 @@ class BeetsPlugin:
         """
         return ()
 
-    def _set_stage_log_level(self, stages):
+    def _set_stage_log_level(
+        self, stages: list[PluginImportStage]
+    ) -> list[WrappedPluginMethod[PluginImportStage]]:
         """Adjust all the stages in `stages` to WARNING logging level."""
         return [
             self._set_log_level_and_params(logging.WARNING, stage)
             for stage in stages
         ]
 
-    def get_early_import_stages(self):
+    def get_early_import_stages(
+        self,
+    ) -> list[WrappedPluginMethod[PluginImportStage]]:
         """Return a list of functions that should be called as importer
         pipelines stages early in the pipeline.
 
@@ -110,7 +140,7 @@ class BeetsPlugin:
         """
         return self._set_stage_log_level(self.early_import_stages)
 
-    def get_import_stages(self):
+    def get_import_stages(self) -> list[WrappedPluginMethod[PluginImportStage]]:
         """Return a list of functions that should be called as importer
         pipelines stages.
 
@@ -120,7 +150,9 @@ class BeetsPlugin:
         """
         return self._set_stage_log_level(self.import_stages)
 
-    def _set_log_level_and_params(self, base_log_level, func):
+    def _set_log_level_and_params(
+        self, base_log_level: int, func: T
+    ) -> WrappedPluginMethod[T]:
         """Wrap `func` to temporarily set this plugin's logger level to
         `base_log_level` + config options (and restore it to its previous
         value after the function returns). Also determines which params may not
@@ -204,9 +236,11 @@ class BeetsPlugin:
     _raw_listeners = None
     listeners = None
 
-    def register_listener(self, event, func):
+    def register_listener(self, event: str, func: T) -> None:
         """Add a function as a listener for the specified event."""
-        wrapped_func = self._set_log_level_and_params(logging.WARNING, func)
+        wrapped_func: WrappedPluginMethod[T] = self._set_log_level_and_params(
+            logging.WARNING, func
+        )
 
         cls = self.__class__
         if cls.listeners is None or cls._raw_listeners is None:
@@ -255,7 +289,7 @@ class BeetsPlugin:
 _classes = set()
 
 
-def load_plugins(names=()):
+def load_plugins(names: Iterable[str] = ()) -> None:
     """Imports the modules for a sequence of plugin names. Each name
     must be the name of a Python module under the "beetsplug" namespace
     package in sys.path; the module indicated should contain the
@@ -293,7 +327,7 @@ def load_plugins(names=()):
 _instances = {}
 
 
-def find_plugins():
+def find_plugins() -> list[BeetsPlugin]:
     """Returns a list of BeetsPlugin subclass instances from all
     currently loaded beets plugins. Loads the default plugin set
     first.

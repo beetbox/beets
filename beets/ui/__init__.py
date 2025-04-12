@@ -1876,8 +1876,12 @@ def main(args=None):
     try:
         loop = asyncio.get_event_loop()
 
-        loop.add_signal_handler(signal.SIGINT, functools.partial(ask_stop, loop))
-        loop.add_signal_handler(signal.SIGTERM, functools.partial(ask_stop, loop))
+        loop.add_signal_handler(
+            signal.SIGINT, functools.partial(ask_stop, loop)
+        )
+        loop.add_signal_handler(
+            signal.SIGTERM, functools.partial(ask_stop, loop)
+        )
 
         with parallel.executor():
             loop.run_until_complete(_raw_main(args))

@@ -1,12 +1,13 @@
-from concurrent.futures import Executor, Future
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Executor, Future, ThreadPoolExecutor
 from typing import Iterator
+
 _executor = None
+
 
 def executor() -> Executor:
     """Get the shared Executor.
-    
-    Note that this is a singleton, and the Executor is lazily created. It 
+
+    Note that this is a singleton, and the Executor is lazily created. It
     should be shared across the Beets application and plugins to avoid creating
     unnecessary threads and their associated overhead.
 
@@ -22,9 +23,11 @@ def executor() -> Executor:
         _executor = ThreadPoolExecutor(thread_name_prefix="beets")
     return _executor
 
+
 def submit(fn, *args, **kwargs) -> Future:
     """Submit a function to the shared Executor."""
     return executor().submit(fn, *args, **kwargs)
+
 
 def map(fn, *iterables, timeout=None, chunksize=1) -> Iterator[Future]:
     """Map a function over a number of iterables in the shared Executor."""

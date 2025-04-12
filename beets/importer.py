@@ -18,6 +18,8 @@ autotagging music files.
 
 from __future__ import annotations
 
+import asyncio
+import concurrent.futures
 import itertools
 import os
 import pickle
@@ -29,17 +31,32 @@ from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
 from tempfile import mkdtemp
-from typing import Callable, Iterable, Sequence
+from typing import (
+    Any,
+    AsyncGenerator,
+    Callable,
+    Generator,
+    Iterable,
+    Sequence,
+    TypeVar,
+)
 
 import mediafile
 
-from beets import autotag, config, dbcore, library, logging, plugins, util
+from beets import (
+    autotag,
+    config,
+    dbcore,
+    library,
+    logging,
+    parallel,
+    plugins,
+    util,
+)
 from beets.util import (
     MoveOperation,
     ancestry,
-    displayable_path,
-    normpath,
-    pipeline,
+    async_state_machine as asm,
     sorted_walk,
     syspath,
 )
@@ -240,6 +257,247 @@ class ImportSession:
         # Normalize the paths.
         self.paths = list(map(normpath, paths or []))
 
+        # Task transition functions
+        always = lambda _: True
+        is_choice = lambda choice: lambda t: t.choice_flag == choice
+        import_asis = is_choice(action.ASIS)
+        should_group_new_items = (
+            lambda _: self.config["group_albums"]
+            and not self.config["singletons"]
+        )
+        should_not_group_new_items = lambda t: not should_group_new_items(t)
+        has_duplicates = lambda t: t.find_duplicates(self.lib)
+
+        def identity(t: ImportTask) -> Generator[ImportTask, None, None]:
+            yield t
+
+        # Construct the base graph. Plugin import stages are joined to the graph later.
+        base_graph: asm.Graph[ImportTask] = (
+            (
+                asm.State(
+                    id="ENTRYPOINT",
+                    max_queue_size=2,
+                    handler=entrypoint,
+                ),
+                (
+                    ("FINALIZE", import_asis),
+                    ("GROUP_ALBUMS", should_group_new_items),
+                    ("LOOKUP_CANDIDATES", should_not_group_new_items),
+                ),
+            ),
+            (
+                # Group items in an ImportTask into one or more albums.
+                #
+                # Entrypoint for import tasks when the 'group_albums' config is set.
+                # Return state when the user chooses to 'group' an ImportTask.
+                asm.State(
+                    id="GROUP_ALBUMS",
+                    max_queue_size=2,
+                    handler=group_albums,
+                ),
+                (("LOOKUP_CANDIDATES", always),),
+            ),
+            (
+                # Lookup candidates for an ImportTask.
+                asm.State(
+                    id="LOOKUP_CANDIDATES",
+                    max_queue_size=4,
+                    handler=lookup_candidates,
+                ),
+                (("USER_QUERY", always),),
+            ),
+            (
+                # Ask the user to choose an action for an ImportTask, or automatically
+                # select one for the user.
+                #
+                # Logs the user's choice to the session before yielding the ImportTask.
+                # None of the choice states below need to log the choice again.
+                asm.State(
+                    id="USER_QUERY",
+                    user_interaction=True,
+                    max_queue_size=1,
+                    handler=user_query,
+                ),
+                (
+                    ("GROUP_ALBUMS", is_choice(action.ALBUMS)),
+                    ("CHOICE_TRACKS", is_choice(action.TRACKS)),
+                    ("CHOICE_ASIS", is_choice(action.ASIS)),
+                    ("START_PLUGIN_IMPORT_STAGES", is_choice(action.SKIP)),
+                    ("CHOICE_APPLY", is_choice(action.APPLY)),
+                    # We should never reach this state; we should always transition
+                    # to a more specific state above.
+                    ("ERROR", always),
+                ),
+            ),
+            (
+                # Process items in an ImportTask as tracks. Yields each item as a
+                # new ImportTask.
+                #
+                # Always transitions back to 'LOOKUP_CANDIDATES' to allow the user to
+                # choose what to do with each of the items in the ImportTask.
+                asm.State(
+                    id="CHOICE_TRACKS",
+                    max_queue_size=4,
+                    handler=choice_tracks,
+                ),
+                (("LOOKUP_CANDIDATES", always),),
+            ),
+            (
+                # Apply the user's choice to the ImportTask. If there are duplicates,
+                # we need to resolve them first. If not, then save the item to the library.
+                # and proceed to the plugin stages.
+                asm.State(
+                    id="CHOICE_APPLY",
+                    max_queue_size=4,
+                    handler=choice_apply,
+                ),
+                (
+                    ("RESOLVE_DUPLICATES", has_duplicates),
+                    ("START_PLUGIN_EARLY_IMPORT_STAGES", always),
+                ),
+            ),
+            (
+                # Check the library for duplicates of this ImportTask, and choose what to
+                # do with them. May be an automatic decision based on configuration, or
+                # may require user interaction.
+                asm.State(
+                    id="RESOLVE_DUPLICATES",
+                    user_interaction=True,
+                    max_queue_size=2,
+                    handler=resolve_duplicates,
+                ),
+                (
+                    ("SKIP", is_choice(action.SKIP)),
+                    ("MERGE_DUPLICATES", lambda t: t.should_merge_duplicates),
+                    ("REMOVE_DUPLICATES", lambda t: t.should_remove_duplicates),
+                    ("START_PLUGIN_IMPORT_STAGES", always),
+                ),
+            ),
+            (
+                # Merge this ImportTask with the detected duplicate in the library..
+                asm.State(
+                    id="CHOICE_MERGE_DUPLICATES",
+                    max_queue_size=2,
+                    handler=choice_merge_duplicates,
+                ),
+                (("LOOKUP_CANDIDATES", always),),
+            ),
+            (
+                # Remove the detected duplicate from the library and add this ImportTask
+                # to the library in its place.
+                asm.State(
+                    id="CHOICE_REMOVE_DUPLICATES",
+                    max_queue_size=2,
+                    handler=choice_remove_duplicates,
+                ),
+                (("START_PLUGIN_IMPORT_STAGES", always),),
+            ),
+            # To reflect the control flow of the graph, here is where we would
+            # naturally add the plugins' import stage states. This is done
+            # below, though, as the states and transitions are generated based
+            # on the configured plugins.
+            (
+                # Copy, move, reflink, link, and hardlink files.
+                asm.State(
+                    id="MANIPULATE_FILES",
+                    max_queue_size=4,
+                    handler="_handle_manipulate_files",
+                ),
+                (("FINALIZE", always),),
+            ),
+            (
+                # Finalize the import.
+                asm.State(
+                    id="FINALIZE",
+                    max_queue_size=1,
+                    handler="_handle_finalize",
+                ),
+                tuple(),
+            ),
+            (
+                # General purpose error state. Reachable from any other state.
+                asm.State(
+                    id="ERROR",
+                    max_queue_size=1,
+                    handler="_handle_error",
+                ),
+                tuple(),
+            ),
+        )
+
+        # Initialize the plugin import stage states
+
+        # Thread pool for running plugin import stages in a non-blocking manner.
+        #
+        # We do not know anything about the plugins' import stages. Some involve
+        # blocking I/O, some involve CPU-bound work, and some are nearly trivially
+        # quick. However, none of them are async methods. So, to avoid blocking
+        # the asyncio event loop, we run them in a thread pool.
+        self.plugin_executor = concurrent.futures.ThreadPoolExecutor()
+
+        # Convenience state that transitions to the plugins' early import
+        #
+        # Provides a transition target for the states in the base graph.
+        start_plugin_import_stages_state = asm.State(
+            id="START_PLUGIN_IMPORT_STAGES",
+            max_queue_size=4,
+            handler=identity,
+        )
+        plugin_states = [start_plugin_import_stages_state]
+
+        plugins = plugins.find_plugins()
+        for plugin in plugins:
+            for i, stage_fn in enumerate(plugin.get_early_import_stages()):
+                plugin_states.append(
+                    self._plugin_import_stage_state(
+                        "PLUGIN_IMPORT_EARLY", plugin, i, stage_fn
+                    )
+                )
+        for plugin in plugins:
+            for i, stage_fn in enumerate(plugin.get_import_stages()):
+                plugin_states.append(
+                    self._plugin_import_stage_state(
+                        "PLUGIN_IMPORT", plugin, i, stage_fn
+                    )
+                )
+
+        plugin_transitions = [(state.id, always) for state in plugin_states]
+        plugin_transitions.append(("MANIPULATE_FILES", always))
+
+        # The plugin states list is the same length as the transitions list, but
+        # the first state is the state before the first plugin stage, and the first
+        # transition is to the first plugin stage. The last state is the final plugin
+        # state, and the last transition is to the MANIPULATE_FILES state.
+        #
+        # So, we zip the two lists together to get the plugin graph, with valid
+        # transitions between the states for them to run sequentially.
+        plugins_graph = (
+            (s, (t,)) for s, t in zip(plugin_states, plugin_transitions)
+        )
+
+        # Join the base graph with the plugins graph, and initialize the state machine.
+        self.state_machine = asm.AsyncStateMachine(base_graph + plugins_graph)
+
+    def _plugin_import_stage_state(
+        self,
+        state_id_prefix: str,
+        plugin: plugins.Plugin,
+        i: int,
+        stage_fn: plugins.PluginImportStage,
+    ) -> asm.State:
+        """Wrap a plugin's import stage in a state.
+
+        The state's handler runs the plugin's import stage in a non-blocking
+        manner by submitting a coroutine to the thread pool.
+        """
+        return asm.State(
+            id=f"{state_id_prefix}_{plugin.name}_stage_{i}",
+            max_queue_size=4,
+            handler=plugin_import_stage_handler(
+                self.plugin_executor, plugin, i, stage_fn, self
+            ),
+        )
+
     def _setup_logging(self, loghandler: logging.Handler | None):
         logger = logging.getLogger(__name__)
         logger.propagate = False
@@ -300,6 +558,12 @@ class ImportSession:
 
         self.want_resume = config["resume"].as_choice([True, False, "ask"])
 
+        # Create a copy of the base state machine graph
+        graph = dict(self.graph)
+
+        # Create the state machine
+        self.state_machine = asm.AsyncStateMachine(graph)
+
     def tag_log(self, status, paths: Sequence[PathBytes]):
         """Log a message about a given album to the importer log. The status
         should reflect the reason the album couldn't be tagged.
@@ -339,52 +603,60 @@ class ImportSession:
     def choose_item(self, task: ImportTask):
         raise NotImplementedError
 
-    def run(self):
+    async def initial_tasks(
+        self,
+    ) -> AsyncGenerator[tuple[asm.StateId, ImportTask], None]:
+        if self.query:
+            # Create tasks from query
+            for task in query_tasks(self):
+                yield task
+        else:
+            for task in read_tasks(self):
+                yield task
+
+    async def run(self):
         """Run the import task."""
         self.logger.info("import started {0}", time.asctime())
         self.set_config(config["import"])
 
-        # Set up the pipeline.
-        if self.query is None:
-            stages = [read_tasks(self)]
-        else:
-            stages = [query_tasks(self)]
-
-        # In pretend mode, just log what would otherwise be imported.
-        if self.config["pretend"]:
-            stages += [log_files(self)]
-        else:
-            if self.config["group_albums"] and not self.config["singletons"]:
-                # Split directory tasks into one task for each album.
-                stages += [group_albums(self)]
-
-            # These stages either talk to the user to get a decision or,
-            # in the case of a non-autotagged import, just choose to
-            # import everything as-is. In *both* cases, these stages
-            # also add the music to the library database, so later
-            # stages need to read and write data from there.
-            if self.config["autotag"]:
-                stages += [lookup_candidates(self), user_query(self)]
-            else:
-                stages += [import_asis(self)]
-
-            # Plugin stages.
-            for stage_func in plugins.early_import_stages():
-                stages.append(plugin_stage(self, stage_func))
-            for stage_func in plugins.import_stages():
-                stages.append(plugin_stage(self, stage_func))
-
-            stages += [manipulate_files(self)]
-
-        pl = pipeline.Pipeline(stages)
-
-        # Run the pipeline.
+        # Run the state machine
         plugins.send("import_begin", session=self)
         try:
-            if config["threaded"]:
-                pl.run_parallel(QUEUE_SIZE)
+            initial_tasks = self.initial_tasks()
+            if self.config["pretend"]:
+                # In pretend mode, just log what would otherwise be imported
+                async for task in initial_tasks:
+                    self.logger.info(
+                        "Would import: {0}", displayable_path(task.paths)
+                    )
             else:
-                pl.run_sequential()
+                # Start the state machine
+                self.state_machine.start()
+
+                if self.config["singletons"]:
+                    entrypoint = "SINGLETONS"
+                elif self.config["group_albums"]:
+                    entrypoint = "GROUP_ALBUMS"
+                else:
+                    entrypoint = "LOOKUP_CANDIDATES"
+
+                async def inject():
+                    async for task in initial_tasks:
+                        await self.state_machine.inject(task, entrypoint)
+
+                # Wait for completion
+                await self.state_machine.empty_wait()
+
+                # Collect results
+                async for result in self.state_machine.accumulated("FINALIZE"):
+                    pass
+
+                # Collect errors
+                async for error in self.state_machine.accumulated("ERROR"):
+                    self.logger.error("Error during import: {0}", error)
+
+                # Join the state machine
+                await self.state_machine.join()
         except ImportAbortError:
             # User aborted operation. Silently stop.
             pass
@@ -552,7 +824,7 @@ class ImportTask(BaseImportTask):
 
     def set_choice(
         self, choice: action | autotag.AlbumMatch | autotag.TrackMatch
-    ):
+    ) -> None:
         """Given an AlbumMatch or TrackMatch object or an action constant,
         indicates that an action has been selected for this task.
 
@@ -576,30 +848,30 @@ class ImportTask(BaseImportTask):
             self.choice_flag = action.APPLY  # Implicit choice.
             self.match = choice  # type: ignore[assignment]
 
-    def save_progress(self):
+    def save_progress(self) -> None:
         """Updates the progress state to indicate that this album has
         finished.
         """
         if self.toppath:
             ImportState().progress_add(self.toppath, *self.paths)
 
-    def save_history(self):
+    def save_history(self) -> None:
         """Save the directory in the history for incremental imports."""
         ImportState().history_add(self.paths)
 
     # Logical decisions.
 
     @property
-    def apply(self):
+    def apply(self) -> bool:
         return self.choice_flag == action.APPLY
 
     @property
-    def skip(self):
+    def skip(self) -> bool:
         return self.choice_flag == action.SKIP
 
     # Convenient data.
 
-    def chosen_info(self):
+    def chosen_info(self) -> dict[str, Any]:
         """Return a dictionary of metadata about the current choice.
         May only be called when the choice flag is ASIS or RETAG
         (in which case the data comes from the files' current metadata)
@@ -612,7 +884,7 @@ class ImportTask(BaseImportTask):
             return self.match.info.copy()
         assert False
 
-    def imported_items(self):
+    def imported_items(self) -> list[library.Item]:
         """Return a list of Items that should be added to the library.
 
         If the tasks applies an album match the method only returns the
@@ -625,9 +897,9 @@ class ImportTask(BaseImportTask):
         ):
             return list(self.match.mapping.keys())
         else:
-            assert False
+            raise ValueError(f"Invalid choice flag: {self.choice_flag}")
 
-    def apply_metadata(self):
+    def apply_metadata(self) -> None:
         """Copy metadata from match info to the items."""
         if config["import"]["from_scratch"]:
             for item in self.match.mapping:
@@ -635,13 +907,13 @@ class ImportTask(BaseImportTask):
 
         autotag.apply_metadata(self.match.info, self.match.mapping)
 
-    def duplicate_items(self, lib: library.Library):
+    def duplicate_items(self, lib: library.Library) -> list[library.Item]:
         duplicate_items = []
         for album in self.find_duplicates(lib):
             duplicate_items += album.items()
         return duplicate_items
 
-    def remove_duplicates(self, lib: library.Library):
+    def remove_duplicates(self, lib: library.Library) -> None:
         duplicate_items = self.duplicate_items(lib)
         log.debug("removing {0} old duplicated items", len(duplicate_items))
         for item in duplicate_items:
@@ -653,7 +925,7 @@ class ImportTask(BaseImportTask):
                 util.remove(item.path)
                 util.prune_dirs(os.path.dirname(item.path), lib.directory)
 
-    def set_fields(self, lib: library.Library):
+    def set_fields(self, lib: library.Library) -> None:
         """Sets the fields given at CLI or configuration to the specified
         values, for both the album and all its items.
         """
@@ -674,7 +946,7 @@ class ImportTask(BaseImportTask):
                 item.store()
             self.album.store()
 
-    def finalize(self, session: ImportSession):
+    def finalize(self, session: ImportSession) -> None:
         """Save progress, clean up files, and emit plugin event."""
         # Update progress.
         if session.want_resume:
@@ -694,7 +966,9 @@ class ImportTask(BaseImportTask):
         if not self.skip:
             self._emit_imported(session.lib)
 
-    def cleanup(self, copy=False, delete=False, move=False):
+    def cleanup(
+        self, copy: bool = False, delete: bool = False, move: bool = False
+    ) -> None:
         """Remove and prune imported paths."""
         # Do not delete any files or prune directories when skipping.
         if self.skip:
@@ -716,10 +990,10 @@ class ImportTask(BaseImportTask):
             for old_path in self.old_paths:
                 self.prune(old_path)
 
-    def _emit_imported(self, lib: library.Library):
+    def _emit_imported(self, lib: library.Library) -> None:
         plugins.send("album_imported", lib=lib, album=self.album)
 
-    def handle_created(self, session: ImportSession):
+    def handle_created(self, session: ImportSession) -> list[ImportTask]:
         """Send the `import_task_created` event for this task. Return a list of
         tasks that should continue through the pipeline. By default, this is a
         list containing only the task itself, but plugins can replace the task
@@ -733,7 +1007,7 @@ class ImportTask(BaseImportTask):
             tasks = [t for inner in tasks for t in inner]
         return tasks
 
-    def lookup_candidates(self):
+    def lookup_candidates(self) -> None:
         """Retrieve and store candidates for this album. User-specified
         candidate IDs are stored in self.search_ids: if present, the
         initial lookup is restricted to only those IDs.
@@ -746,7 +1020,7 @@ class ImportTask(BaseImportTask):
         self.candidates = prop.candidates
         self.rec = prop.recommendation
 
-    def find_duplicates(self, lib: library.Library):
+    def find_duplicates(self, lib: library.Library) -> list[library.Album]:
         """Return a list of albums from `lib` with the same artist and
         album name as the task.
         """
@@ -779,7 +1053,7 @@ class ImportTask(BaseImportTask):
 
         return duplicates
 
-    def align_album_level_fields(self):
+    def align_album_level_fields(self) -> None:
         """Make some album fields equal across `self.items`. For the
         RETAG action, we assume that the responsible for returning it
         (ie. a plugin) always ensures that the first item contains
@@ -824,8 +1098,8 @@ class ImportTask(BaseImportTask):
         self,
         session: ImportSession,
         operation: MoveOperation | None = None,
-        write=False,
-    ):
+        write: bool = False,
+    ) -> None:
         """Copy, move, link, hardlink or reflink (depending on `operation`)
         the files as well as write metadata.
 
@@ -868,7 +1142,7 @@ class ImportTask(BaseImportTask):
 
         plugins.send("import_task_files", session=session, task=self)
 
-    def add(self, lib: library.Library):
+    def add(self, lib: library.Library) -> None:
         """Add the items as an album to the library and remove replaced items."""
         self.align_album_level_fields()
         with lib.transaction():
@@ -888,7 +1162,7 @@ class ImportTask(BaseImportTask):
 
             self.reimport_metadata(lib)
 
-    def record_replaced(self, lib: library.Library):
+    def record_replaced(self, lib: library.Library) -> None:
         """Records the replaced items and albums in the `replaced_items`
         and `replaced_albums` dictionaries.
         """
@@ -911,12 +1185,16 @@ class ImportTask(BaseImportTask):
                     replaced_album_ids.add(dup_item.album_id)
                     self.replaced_albums[replaced_album.path] = replaced_album
 
-    def reimport_metadata(self, lib: library.Library):
+    def reimport_metadata(self, _: library.Library) -> None:
         """For reimports, preserves metadata for reimported items and
         albums.
         """
 
-        def _reduce_and_log(new_obj, existing_fields, overwrite_keys):
+        def _reduce_and_log(
+            new_obj: library.Album | library.Item,
+            existing_fields: dict[str, Any],
+            overwrite_keys: list[str],
+        ) -> dict[str, Any]:
             """Some flexible attributes should be overwritten (rather than
             preserved) on reimports; Copies existing_fields, logs and removes
             entries that should not be preserved and returns a dict containing
@@ -994,7 +1272,7 @@ class ImportTask(BaseImportTask):
                 )
                 item.store()
 
-    def remove_replaced(self, lib):
+    def remove_replaced(self, _: library.Library) -> None:
         """Removes all the items from the library that have the same
         path as an item from this task.
         """
@@ -1012,13 +1290,13 @@ class ImportTask(BaseImportTask):
             len(self.imported_items()),
         )
 
-    def choose_match(self, session):
+    def choose_match(self, session: ImportSession) -> None:
         """Ask the session which match should apply and apply it."""
         choice = session.choose_match(self)
         self.set_choice(choice)
         session.log_choice(self)
 
-    def reload(self):
+    def reload(self) -> None:
         """Reload albums and items from the database."""
         for item in self.imported_items():
             item.load()
@@ -1026,7 +1304,7 @@ class ImportTask(BaseImportTask):
 
     # Utilities.
 
-    def prune(self, filename):
+    def prune(self, filename: os.PathLike) -> None:
         """Prune any empty directories above the given file. If this
         task has no `toppath` or the file path provided is not within
         the `toppath`, then this function has no effect. Similarly, if
@@ -1050,7 +1328,7 @@ class SingletonImportTask(ImportTask):
         self.is_album = False
         self.paths = [item.path]
 
-    def chosen_info(self):
+    def chosen_info(self) -> dict[str, Any]:
         """Return a dictionary of metadata about the current choice.
         May only be called when the choice flag is ASIS or RETAG
         (in which case the data comes from the files' current metadata)
@@ -1062,22 +1340,22 @@ class SingletonImportTask(ImportTask):
         elif self.choice_flag is action.APPLY:
             return self.match.info.copy()
 
-    def imported_items(self):
+    def imported_items(self) -> list[library.Item]:
         return [self.item]
 
-    def apply_metadata(self):
+    def apply_metadata(self) -> None:
         autotag.apply_item_metadata(self.item, self.match.info)
 
-    def _emit_imported(self, lib):
+    def _emit_imported(self, lib: library.Library) -> None:
         for item in self.imported_items():
             plugins.send("item_imported", lib=lib, item=item)
 
-    def lookup_candidates(self):
+    def lookup_candidates(self) -> None:
         prop = autotag.tag_item(self.item, search_ids=self.search_ids)
         self.candidates = prop.candidates
         self.rec = prop.recommendation
 
-    def find_duplicates(self, lib):
+    def find_duplicates(self, lib: library.Library) -> list[library.Item]:
         """Return a list of items from `lib` that have the same artist
         and title as the task.
         """
@@ -1100,26 +1378,26 @@ class SingletonImportTask(ImportTask):
 
     duplicate_items = find_duplicates
 
-    def add(self, lib):
+    def add(self, lib: library.Library) -> None:
         with lib.transaction():
             self.record_replaced(lib)
             self.remove_replaced(lib)
             lib.add(self.item)
             self.reimport_metadata(lib)
 
-    def infer_album_fields(self):
+    def infer_album_fields(self) -> None:
         raise NotImplementedError
 
-    def choose_match(self, session: ImportSession):
+    def choose_match(self, session: ImportSession) -> None:
         """Ask the session which match should apply and apply it."""
         choice = session.choose_item(self)
         self.set_choice(choice)
         session.log_choice(self)
 
-    def reload(self):
+    def reload(self) -> None:
         self.item.load()
 
-    def set_fields(self, lib):
+    def set_fields(self, _: library.Library) -> None:
         """Sets the fields given at CLI or configuration to the specified
         values, for the singleton item.
         """
@@ -1154,10 +1432,10 @@ class SentinelImportTask(ImportTask):
         self.is_album = True
         self.choice_flag = None
 
-    def save_history(self):
+    def save_history(self) -> None:
         pass
 
-    def save_progress(self):
+    def save_progress(self) -> None:
         if not self.paths:
             # "Done" sentinel.
             ImportState().progress_reset(self.toppath)
@@ -1169,13 +1447,17 @@ class SentinelImportTask(ImportTask):
     def skip(self) -> bool:
         return True
 
-    def set_choice(self, choice):
+    def set_choice(
+        self, choice: action | autotag.AlbumMatch | autotag.TrackMatch
+    ) -> None:
         raise NotImplementedError
 
-    def cleanup(self, copy=False, delete=False, move=False):
+    def cleanup(
+        self, copy: bool = False, delete: bool = False, move: bool = False
+    ) -> None:
         pass
 
-    def _emit_imported(self, lib):
+    def _emit_imported(self, lib: library.Library) -> None:
         pass
 
 
@@ -1478,21 +1760,10 @@ def _freshen_items(items):
         item.album_id = None
 
 
-def _extend_pipeline(tasks, *stages):
-    # Return pipeline extension for stages with list of tasks
-    if isinstance(tasks, list):
-        task_iter = iter(tasks)
-    else:
-        task_iter = tasks
-
-    ipl = pipeline.Pipeline([task_iter] + list(stages))
-    return pipeline.multiple(ipl.pull())
-
-
 # Full-album pipeline stages.
 
 
-def read_tasks(session: ImportSession):
+def read_tasks(session: ImportSession) -> Generator[ImportTask, None, None]:
     """A generator yielding all the albums (as ImportTask objects) found
     in the user-specified list of paths. In the case of a singleton
     import, yields single-item tasks instead.
@@ -1516,7 +1787,7 @@ def read_tasks(session: ImportSession):
         log.info("Skipped {0} paths.", skipped)
 
 
-def query_tasks(session: ImportSession):
+def query_tasks(session: ImportSession) -> Generator[ImportTask, None, None]:
     """A generator that works as a drop-in-replacement for read_tasks.
     Instead of finding files from the filesystem, a query is used to
     match items from the library.
@@ -1545,18 +1816,25 @@ def query_tasks(session: ImportSession):
                 yield task
 
 
-@pipeline.mutator_stage
-def lookup_candidates(session: ImportSession, task: ImportTask):
-    """A coroutine for performing the initial MusicBrainz lookup for an
-    album. It accepts lists of Items and yields
-    (items, cur_artist, cur_album, candidates, rec) tuples. If no match
-    is found, all of the yielded parameters (except items) are None.
-    """
-    if task.skip:
-        # FIXME This gets duplicated a lot. We need a better
-        # abstraction.
-        return
+def entrypoint(
+    session: ImportSession, task: ImportTask
+) -> Generator[ImportTask, None, None]:
+    """The entrypoint of the importer."""
+    if not session.config["autotag"]:
+        # If autotagging is disabled, we just import the album as is.
+        log.info("{}", displayable_path(task.paths))
+        task.set_choice(action.ASIS)
+        session.log_choice(task, False)
+    yield task
 
+
+def lookup_candidates(
+    session: ImportSession, task: ImportTask
+) -> Generator[ImportTask, None, None]:
+    """Performing the initial MusicBrainz lookup for an album.
+
+    Modifies the task in place.
+    """
     plugins.send("import_task_start", session=session, task=task)
     log.debug("Looking up: {0}", displayable_path(task.paths))
 
@@ -1565,12 +1843,13 @@ def lookup_candidates(session: ImportSession, task: ImportTask):
     task.search_ids = session.config["search_ids"].as_str_seq()
 
     task.lookup_candidates()
+    yield task
 
 
-@pipeline.stage
-def user_query(session: ImportSession, task: ImportTask):
-    """A coroutine for interfacing with the user about the tagging
-    process.
+def user_query(
+    session: ImportSession, task: ImportTask
+) -> Generator[ImportTask, None, None]:
+    """Ask the user what action they would like to take with a task.
 
     The coroutine accepts an ImportTask objects. It uses the
     session's `choose_match` method to determine the `action` for
@@ -1581,132 +1860,30 @@ def user_query(session: ImportSession, task: ImportTask):
     access to the choice via the ``task.choice_flag`` property and may
     choose to change it.
     """
-    if task.skip:
-        return task
-
-    if session.already_merged(task.paths):
-        return pipeline.BUBBLE
-
     # Ask the user for a choice.
     task.choose_match(session)
     plugins.send("import_task_choice", session=session, task=task)
-
-    # As-tracks: transition to singleton workflow.
-    if task.choice_flag is action.TRACKS:
-        # Set up a little pipeline for dealing with the singletons.
-        def emitter(task):
-            for item in task.items:
-                task = SingletonImportTask(task.toppath, item)
-                yield from task.handle_created(session)
-            yield SentinelImportTask(task.toppath, task.paths)
-
-        return _extend_pipeline(
-            emitter(task), lookup_candidates(session), user_query(session)
-        )
-
-    # As albums: group items by albums and create task for each album
-    if task.choice_flag is action.ALBUMS:
-        return _extend_pipeline(
-            [task],
-            group_albums(session),
-            lookup_candidates(session),
-            user_query(session),
-        )
-
-    resolve_duplicates(session, task)
-
-    if task.should_merge_duplicates:
-        # Create a new task for tagging the current items
-        # and duplicates together
-        duplicate_items = task.duplicate_items(session.lib)
-
-        # Duplicates would be reimported so make them look "fresh"
-        _freshen_items(duplicate_items)
-        duplicate_paths = [item.path for item in duplicate_items]
-
-        # Record merged paths in the session so they are not reimported
-        session.mark_merged(duplicate_paths)
-
-        merged_task = ImportTask(
-            None, task.paths + duplicate_paths, task.items + duplicate_items
-        )
-
-        return _extend_pipeline(
-            [merged_task], lookup_candidates(session), user_query(session)
-        )
-
-    apply_choice(session, task)
-    return task
+    session.log_choice(task, False)
+    yield task
 
 
-def resolve_duplicates(session: ImportSession, task: ImportTask):
-    """Check if a task conflicts with items or albums already imported
-    and ask the session to resolve this.
-    """
-    if task.choice_flag in (action.ASIS, action.APPLY, action.RETAG):
-        found_duplicates = task.find_duplicates(session.lib)
-        if found_duplicates:
-            log.debug(
-                "found duplicates: {}".format([o.id for o in found_duplicates])
-            )
-
-            # Get the default action to follow from config.
-            duplicate_action = config["import"]["duplicate_action"].as_choice(
-                {
-                    "skip": "s",
-                    "keep": "k",
-                    "remove": "r",
-                    "merge": "m",
-                    "ask": "a",
-                }
-            )
-            log.debug("default action for duplicates: {0}", duplicate_action)
-
-            if duplicate_action == "s":
-                # Skip new.
-                task.set_choice(action.SKIP)
-            elif duplicate_action == "k":
-                # Keep both. Do nothing; leave the choice intact.
-                pass
-            elif duplicate_action == "r":
-                # Remove old.
-                task.should_remove_duplicates = True
-            elif duplicate_action == "m":
-                # Merge duplicates together
-                task.should_merge_duplicates = True
-            else:
-                # No default action set; ask the session.
-                session.resolve_duplicate(task, found_duplicates)
-
-            session.log_choice(task, True)
+def choice_tracks(
+    session: ImportSession, task: ImportTask
+) -> Generator[ImportTask, None, None]:
+    """The user chose to import the album as singletons."""
+    for item in task.items:
+        task = SingletonImportTask(task.toppath, item)
+        yield from task.handle_created(session)
 
 
-@pipeline.mutator_stage
-def import_asis(session: ImportSession, task: ImportTask):
-    """Select the `action.ASIS` choice for all tasks.
-
-    This stage replaces the initial_lookup and user_query stages
-    when the importer is run without autotagging.
-    """
-    if task.skip:
-        return
-
-    log.info("{}", displayable_path(task.paths))
-    task.set_choice(action.ASIS)
-    apply_choice(session, task)
-
-
-def apply_choice(session: ImportSession, task: ImportTask):
+def choice_apply(
+    session: ImportSession, task: ImportTask
+) -> Generator[ImportTask, None, None]:
     """Apply the task's choice to the Album or Item it contains and add
     it to the library.
     """
-    if task.skip:
-        return
-
-    # Change metadata.
-    if task.apply:
-        task.apply_metadata()
-        plugins.send("import_task_apply", session=session, task=task)
+    task.apply_metadata()
+    plugins.send("import_task_apply", session=session, task=task)
 
     task.add(session.lib)
 
@@ -1718,65 +1895,158 @@ def apply_choice(session: ImportSession, task: ImportTask):
     if config["import"]["set_fields"]:
         task.set_fields(session.lib)
 
+    yield task
 
-@pipeline.mutator_stage
-def plugin_stage(
-    session: ImportSession,
-    func: Callable[[ImportSession, ImportTask], None],
-    task: ImportTask,
-):
-    """A coroutine (pipeline stage) that calls the given function with
-    each non-skipped import task. These stages occur between applying
-    metadata changes and moving/copying/writing files.
+
+def resolve_duplicates(
+    session: ImportSession, task: ImportTask
+) -> Generator[ImportTask, None, None]:
+    """Check if a task conflicts with items or albums already imported
+    and ask the session to resolve this.
     """
-    if task.skip:
+    duplicates = task.find_duplicates(session.lib)
+    if not duplicates:
+        log.debug(
+            "Reached 'resolve_duplicates' stage without duplicates. This should not happen."
+        )
+        yield task
         return
 
-    func(session, task)
+    log.debug("found duplicates: {}".format([o.id for o in duplicates]))
 
-    # Stage may modify DB, so re-load cached item data.
-    # FIXME Importer plugins should not modify the database but instead
-    # the albums and items attached to tasks.
-    task.reload()
+    # Get the default action to follow from config.
+    duplicate_action = config["import"]["duplicate_action"].as_choice(
+        {
+            "skip": "s",
+            "keep": "k",
+            "remove": "r",
+            "merge": "m",
+            "ask": "a",
+        }
+    )
+    log.debug("default action for duplicates: {0}", duplicate_action)
+
+    if duplicate_action == "s":
+        # Skip new.
+        task.set_choice(action.SKIP)
+    elif duplicate_action == "k":
+        # Keep both. Do nothing; leave the choice intact.
+        pass
+    elif duplicate_action == "r":
+        # Remove old.
+        task.should_remove_duplicates = True
+    elif duplicate_action == "m":
+        # Merge duplicates together
+        task.should_merge_duplicates = True
+    else:
+        # No default action set; ask the session.
+        session.resolve_duplicate(task, duplicates)
+
+    session.log_choice(task, True)
+    yield task
 
 
-@pipeline.stage
-def manipulate_files(session: ImportSession, task: ImportTask):
+def choice_merge_duplicates(
+    session: ImportSession, task: ImportTask
+) -> Generator[ImportTask, None, None]:
+    """The user chose to merge duplicates."""
+    # Create a new task for tagging the current items
+    # and duplicates together
+    duplicate_items = task.duplicate_items(session.lib)
+
+    # Duplicates would be reimported so make them look "fresh"
+    _freshen_items(duplicate_items)
+    duplicate_paths = [item.path for item in duplicate_items]
+
+    # Record merged paths in the session so they are not reimported
+    session.mark_merged(duplicate_paths)
+
+    merged_task = ImportTask(
+        None, task.paths + duplicate_paths, task.items + duplicate_items
+    )
+    yield merged_task
+
+
+def choice_remove_duplicates(
+    session: ImportSession, task: ImportTask
+) -> Generator[ImportTask, None, None]:
+    """The user chose to remove duplicates."""
+    task.remove_duplicates(session.lib)
+    yield task
+
+
+def plugin_import_stage_handler(
+    executor: concurrent.futures.Executor,
+    plugin: plugins.BeetsPlugin,
+    stage_i: int,
+    import_stage_fn: plugins.WrappedPluginMethod[plugins.PluginImportStage],
+    session: ImportSession,
+) -> asm.StateTaskHandler[ImportTask]:
+    """Wrap a plugin's import stage in a state handler.
+
+    The handler runs the plugin's import stage and the task's reload operation
+    in a non-blocking manner by submitting a coroutine to the thread pool.
+    """
+    async def handler(task: ImportTask) -> AsyncGenerator[ImportTask, None]:
+        try:
+            await executor.submit(import_stage_fn, session, task)
+            await executor.submit(task.reload)
+            yield task
+        except asyncio.CancelledError:
+            log.debug(
+                "Plugin '%s' import stage %d cancelled", plugin.name, stage_i
+            )
+        except Exception as e:
+            log.exception(
+                "Error running plugin '%s' import stage %d; continuing: %s",
+                plugin.name,
+                stage_i,
+                e,
+                exc_info=True,
+            )
+
+    return handler
+
+
+def manipulate_files(
+    session: ImportSession, task: ImportTask
+) -> Generator[ImportTask, None, None]:
     """A coroutine (pipeline stage) that performs necessary file
     manipulations *after* items have been added to the library and
     finalizes each task.
     """
-    if not task.skip:
-        if task.should_remove_duplicates:
-            task.remove_duplicates(session.lib)
+    if session.config["move"]:
+        operation = MoveOperation.MOVE
+    elif session.config["copy"]:
+        operation = MoveOperation.COPY
+    elif session.config["link"]:
+        operation = MoveOperation.LINK
+    elif session.config["hardlink"]:
+        operation = MoveOperation.HARDLINK
+    elif session.config["reflink"] == "auto":
+        operation = MoveOperation.REFLINK_AUTO
+    elif session.config["reflink"]:
+        operation = MoveOperation.REFLINK
+    else:
+        operation = None
 
-        if session.config["move"]:
-            operation = MoveOperation.MOVE
-        elif session.config["copy"]:
-            operation = MoveOperation.COPY
-        elif session.config["link"]:
-            operation = MoveOperation.LINK
-        elif session.config["hardlink"]:
-            operation = MoveOperation.HARDLINK
-        elif session.config["reflink"] == "auto":
-            operation = MoveOperation.REFLINK_AUTO
-        elif session.config["reflink"]:
-            operation = MoveOperation.REFLINK
-        else:
-            operation = None
+    task.manipulate_files(
+        session=session,
+        operation=operation,
+        write=session.config["write"],
+    )
+    yield task
 
-        task.manipulate_files(
-            session=session,
-            operation=operation,
-            write=session.config["write"],
-        )
 
+def finalize(
+    session: ImportSession, task: ImportTask
+) -> Generator[ImportTask, None, None]:
     # Progress, cleanup, and event.
     task.finalize(session)
+    yield task
 
 
-@pipeline.stage
-def log_files(session: ImportSession, task: ImportTask):
+def log_files(session: ImportSession, task: ImportTask) -> None:
     """A coroutine (pipeline stage) to log each file to be imported."""
     if isinstance(task, SingletonImportTask):
         log.info("Singleton: {0}", displayable_path(task.item["path"]))
@@ -1786,7 +2056,9 @@ def log_files(session: ImportSession, task: ImportTask):
             log.info("  {0}", displayable_path(item["path"]))
 
 
-def group_albums(session: ImportSession):
+def group_albums(
+    session: ImportSession, task: ImportTask
+) -> Generator[ImportTask, None, None]:
     """A pipeline stage that groups the items of each task into albums
     using their metadata.
 
@@ -1797,20 +2069,14 @@ def group_albums(session: ImportSession):
     def group(item):
         return (item.albumartist or item.artist, item.album)
 
-    task = None
-    while True:
-        task = yield task
-        if task.skip:
-            continue
-        tasks = []
-        sorted_items: list[library.Item] = sorted(task.items, key=group)
-        for _, items in itertools.groupby(sorted_items, group):
-            l_items = list(items)
-            task = ImportTask(task.toppath, [i.path for i in l_items], l_items)
-            tasks += task.handle_created(session)
-        tasks.append(SentinelImportTask(task.toppath, task.paths))
-
-        task = pipeline.multiple(tasks)
+    tasks = []
+    sorted_items: list[library.Item] = sorted(task.items, key=group)
+    for _, items in itertools.groupby(sorted_items, group):
+        l_items = list(items)
+        task = ImportTask(task.toppath, [i.path for i in l_items], l_items)
+        tasks += task.handle_created(session)
+    tasks.append(SentinelImportTask(task.toppath, task.paths))
+    yield from tasks
 
 
 MULTIDISC_MARKERS = (rb"dis[ck]", rb"cd")
@@ -1825,19 +2091,29 @@ def is_subdir_of_any_in_list(path, dirs):
     return any(d in ancestors for d in dirs)
 
 
-def albums_in_dir(path: PathBytes):
+def albums_in_dir(
+    path: PathBytes,
+) -> Generator[tuple[list[bytes], list[bytes]], None, None]:
     """Recursively searches the given directory and returns an iterable
     of (paths, items) where paths is a list of directories and items is
     a list of Items that is probably an album. Specifically, any folder
     containing any media files is an album.
     """
-    collapse_pat = collapse_paths = collapse_items = None
+    collapse_pat: re.Pattern | None = None
+    collapse_paths: list[bytes] | None = None
+    collapse_items: list[bytes] | None = None
+
     ignore: list[str] = config["ignore"].as_str_seq()
     ignore_hidden: bool = config["ignore_hidden"].get(bool)
 
     for root, dirs, files in sorted_walk(
         path, ignore=ignore, ignore_hidden=ignore_hidden, logger=log
     ):
+        # For type checking
+        root: bytes = root
+        dirs: Sequence[bytes] = dirs
+        files: Sequence[bytes] = files
+
         items = [os.path.join(root, f) for f in files]
         # If we're currently collapsing the constituent directories in a
         # multi-disc album, check whether we should continue collapsing
