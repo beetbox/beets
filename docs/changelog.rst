@@ -24,7 +24,8 @@ New features:
 
 Bug fixes:
 
-* Fix API call to GIO on big endian architectures (like s390x) in thumbnails plugin.
+* :doc:`plugins/thumbnails`: Fix API call to GIO on big endian architectures
+  (like s390x) in thumbnails plugin.
   :bug:`5708`
 * :doc:`plugins/listenbrainz`: Fix rST formatting for URLs of Listenbrainz API Key documentation and config.yaml.
 * :doc:`plugins/listenbrainz`: Fix ``UnboundLocalError`` in cases where 'mbid' is not defined.
