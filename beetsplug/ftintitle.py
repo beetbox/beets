@@ -188,21 +188,22 @@ class FtInTitlePlugin(plugins.BeetsPlugin):
         # Check whether there is a featured artist on this track and the
         # artist field does not exactly match the album artist field. In
         # that case, we attempt to move the featured artist to the title.
+        if not albumartist or albumartist == artist:
+            return False
+
         _, featured = split_on_feat(artist)
-        if featured and albumartist != artist and albumartist:
-            self._log.info("{}", displayable_path(item.path))
+        if not featured:
+            return False
 
-            feat_part = None
+        self._log.info("{}", displayable_path(item.path))
 
-            # Attempt to find the featured artist.
-            feat_part = find_feat_part(artist, albumartist)
+        # Attempt to find the featured artist.
+        feat_part = find_feat_part(artist, albumartist)
 
-            # If we have a featuring artist, move it to the title.
-            if feat_part:
-                self.update_metadata(
-                    item, feat_part, drop_feat, keep_in_artist_field
-                )
-                return True
-            else:
-                self._log.info("no featuring artists found")
-        return False
+        if not feat_part:
+            self._log.info("no featuring artists found")
+            return False
+
+        # If we have a featuring artist, move it to the title.
+        self.update_metadata(item, feat_part, drop_feat, keep_in_artist_field)
+        return True
