@@ -74,18 +74,15 @@ class MBSyncPlugin(BeetsPlugin):
         query.
         """
         for item in lib.items(query + ["singleton:true"]):
-            item_formatted = format(item)
             if not item.mb_trackid:
                 self._log.info(
-                    "Skipping singleton with no mb_trackid: {0}", item_formatted
+                    "Skipping singleton with no mb_trackid: {}", item
                 )
                 continue
 
             if not (track_info := hooks.track_for_id(item.mb_trackid)):
                 self._log.info(
-                    "Recording ID not found: {0} for track {0}",
-                    item.mb_trackid,
-                    item_formatted,
+                    "Recording ID not found: {0.mb_trackid} for track {0}", item
                 )
                 continue
 
@@ -99,20 +96,14 @@ class MBSyncPlugin(BeetsPlugin):
         query and their items.
         """
         # Process matching albums.
-        for a in lib.albums(query):
-            album_formatted = format(a)
-            if not a.mb_albumid:
-                self._log.info(
-                    "Skipping album with no mb_albumid: {0}", album_formatted
-                )
+        for album in lib.albums(query):
+            if not album.mb_albumid:
+                self._log.info("Skipping album with no mb_albumid: {}", album)
                 continue
 
-            items = list(a.items())
-            if not (album_info := hooks.album_for_id(a.mb_albumid)):
+            if not (album_info := hooks.album_for_id(album.mb_albumid)):
                 self._log.info(
-                    "Release ID {0} not found for album {1}",
-                    a.mb_albumid,
-                    album_formatted,
+                    "Release ID {0.mb_albumid} not found for album {0}", album
                 )
                 continue
 
@@ -129,6 +120,7 @@ class MBSyncPlugin(BeetsPlugin):
             # first, if available, and recording MBIDs otherwise). This should
             # work for albums that have missing or extra tracks.
             mapping = {}
+            items = list(album.items())
             for item in items:
                 if (
                     item.mb_releasetrackid
@@ -151,7 +143,7 @@ class MBSyncPlugin(BeetsPlugin):
                                 break
 
             # Apply.
-            self._log.debug("applying changes to {}", album_formatted)
+            self._log.debug("applying changes to {}", album)
             with lib.transaction():
                 autotag.apply_metadata(album_info, mapping)
                 changed = False
@@ -171,10 +163,10 @@ class MBSyncPlugin(BeetsPlugin):
                 if not pretend:
                     # Update album structure to reflect an item in it.
                     for key in library.Album.item_keys:
-                        a[key] = any_changed_item[key]
-                    a.store()
+                        album[key] = any_changed_item[key]
+                    album.store()
 
                     # Move album art (and any inconsistent items).
                     if move and lib.directory in util.ancestry(items[0].path):
-                        self._log.debug("moving album {0}", album_formatted)
-                        a.move()
+                        self._log.debug("moving album {}", album)
+                        album.move()
