@@ -100,6 +100,8 @@ Other changes:
   improve useability for new developers.
 * :doc:`/plugins/smartplaylist`: URL-encode additional item `fields` within generated
   EXTM3U playlists instead of JSON-encoding them.
+* :doc:`plugins/ftintitle`: Optimize the plugin by avoiding unnecessary writes
+  to the database.
 
 2.2.0 (December 02, 2024)
 -------------------------
