@@ -303,3 +303,26 @@ markers = [
     "integration_test",  # mark a test as an integration test
 ]
 
+[tool.coverage.run]
+data_file = ".reports/coverage/data"
+branch = true
+relative_files = true
+omit = [
+    "beets/test/*",
+    "beetsplug/_typing.py",
+]
+
+[tool.coverage.report]
+precision = 2
+skip_empty = true
+show_missing = true
+exclude_also = [
+    "@atexit\\.register",
+    "if TYPE_CHECKING",
+    "if typing\\.TYPE_CHECKING",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]
+
+[tool.coverage.html]
+show_contexts = true
