@@ -102,6 +102,7 @@ Other changes:
   EXTM3U playlists instead of JSON-encoding them.
 * :doc:`plugins/ftintitle`: Optimize the plugin by avoiding unnecessary writes
   to the database.
+* Database models are now serializable with pickle.
 
 2.2.0 (December 02, 2024)
 -------------------------
