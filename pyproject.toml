@@ -157,7 +157,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pipx-install]
 poethepoet = ">=0.26"
-poetry = ">=1.8"
+poetry = ">=2.0"
 
 [tool.poe.tasks.build]
 help = "Build the package"
