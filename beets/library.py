@@ -131,9 +131,7 @@ class PathQuery(dbcore.FieldQuery[bytes]):
 
         # Test both `sep` and `altsep` (i.e., both slash and backslash on
         # Windows).
-        if not (
-            os.sep in query_part or (os.altsep and os.altsep in query_part)
-        ):
+        if not (os.sep in query_part or (os.altsep and os.altsep in query_part)):
             return False
 
         if cls.force_implicit_query_detection:
@@ -409,17 +407,12 @@ class LibModel(dbcore.Model["Library"]):
     @classmethod
     def any_writable_media_field_query(cls, *args, **kwargs) -> dbcore.OrQuery:
         fields = cls.writable_media_fields
-        return dbcore.OrQuery(
-            [cls.field_query(f, *args, **kwargs) for f in fields]
-        )
+        return dbcore.OrQuery([cls.field_query(f, *args, **kwargs) for f in fields])
 
     def duplicates_query(self, fields: list[str]) -> dbcore.AndQuery:
         """Return a query for entities with same values in the given fields."""
         return dbcore.AndQuery(
-            [
-                self.field_query(f, self.get(f), dbcore.MatchQuery)
-                for f in fields
-            ]
+            [self.field_query(f, self.get(f), dbcore.MatchQuery) for f in fields]
         )
 
 
@@ -454,10 +447,7 @@ class FormattedItemMapping(dbcore.db.FormattedMapping):
             if self.included_keys == self.ALL_KEYS:
                 # Performance note: this triggers a database query.
                 for key in self.album.keys(computed=True):
-                    if (
-                        key in Album.item_keys
-                        or key not in self.item._fields.keys()
-                    ):
+                    if key in Album.item_keys or key not in self.item._fields.keys():
                         album_keys.append(key)
             else:
                 album_keys = self.included_keys
@@ -626,9 +616,7 @@ class Item(LibModel):
     # Any kind of field (fixed, flexible, and computed) may be a media
     # field. Only these fields are read from disk in `read` and written in
     # `write`.
-    _media_fields = set(MediaFile.readable_fields()).intersection(
-        _fields.keys()
-    )
+    _media_fields = set(MediaFile.readable_fields()).intersection(_fields.keys())
 
     # Set of item fields that are backed by *writable* `MediaFile` tag
     # fields.
@@ -641,8 +629,8 @@ class Item(LibModel):
     _sorts = {"artist": dbcore.query.SmartArtistSort}
 
     _queries = {
-	"singleton": SingletonQuery,
-	"art": ArtQuery,
+        "singleton": SingletonQuery,
+        "art": ArtQuery,
     }
 
     _format_config_key = "format_item"
@@ -700,9 +688,7 @@ class Item(LibModel):
 
     def duplicates_query(self, fields: list[str]) -> dbcore.AndQuery:
         """Return a query for entities with same values in the given fields."""
-        return super().duplicates_query(fields) & dbcore.query.NoneQuery(
-            "album_id"
-        )
+        return super().duplicates_query(fields) & dbcore.query.NoneQuery("album_id")
 
     @classmethod
     def from_path(cls, path):
@@ -749,8 +735,7 @@ class Item(LibModel):
         return "{}({})".format(
             type(self).__name__,
             ", ".join(
-                "{}={!r}".format(k, self[k])
-                for k in self.keys(with_album=False)
+                "{}={!r}".format(k, self[k]) for k in self.keys(with_album=False)
             ),
         )
 
@@ -944,19 +929,13 @@ class Item(LibModel):
                 destination=dest,
             )
             util.move(self.path, dest)
-            plugins.send(
-                "item_moved", item=self, source=self.path, destination=dest
-            )
+            plugins.send("item_moved", item=self, source=self.path, destination=dest)
         elif operation == MoveOperation.COPY:
             util.copy(self.path, dest)
-            plugins.send(
-                "item_copied", item=self, source=self.path, destination=dest
-            )
+            plugins.send("item_copied", item=self, source=self.path, destination=dest)
         elif operation == MoveOperation.LINK:
             util.link(self.path, dest)
-            plugins.send(
-                "item_linked", item=self, source=self.path, destination=dest
-            )
+            plugins.send("item_linked", item=self, source=self.path, destination=dest)
         elif operation == MoveOperation.HARDLINK:
             util.hardlink(self.path, dest)
             plugins.send(
@@ -1177,7 +1156,7 @@ class Album(LibModel):
     _fields = {
         "id": types.PRIMARY_ID,
         "artpath": PathType(True),
-	"art": types.BOOLEAN,
+        "art": types.BOOLEAN,
         "added": DateType(),
         "albumartist": types.STRING,
         "albumartist_sort": types.STRING,
@@ -1465,9 +1444,7 @@ class Album(LibModel):
             subpath = util.asciify_path(
                 subpath, beets.config["path_sep_replace"].as_str()
             )
-        subpath = util.sanitize_path(
-            subpath, replacements=self._db.replacements
-        )
+        subpath = util.sanitize_path(subpath, replacements=self._db.replacements)
         subpath = bytestring_path(subpath)
 
         _, ext = os.path.splitext(image)
@@ -1658,7 +1635,6 @@ class Library(dbcore.Database):
         if art is not None:
             album.art = art
 
-
         # Add the album structure and set the items' album_id fields.
         # Store or add the items.
         with self.transaction():
@@ -1669,8 +1645,8 @@ class Library(dbcore.Database):
                     item.add(self)
                 else:
                     item.store()
-        
-        album.store(inherit=False, fields=['art'])
+
+        album.store(inherit=False, fields=["art"])
         return album
 
     # Querying.
@@ -1701,16 +1677,12 @@ class Library(dbcore.Database):
     @staticmethod
     def get_default_album_sort():
         """Get a :class:`Sort` object for albums from the config option."""
-        return dbcore.sort_from_strings(
-            Album, beets.config["sort_album"].as_str_seq()
-        )
+        return dbcore.sort_from_strings(Album, beets.config["sort_album"].as_str_seq())
 
     @staticmethod
     def get_default_item_sort():
         """Get a :class:`Sort` object for items from the config option."""
-        return dbcore.sort_from_strings(
-            Item, beets.config["sort_item"].as_str_seq()
-        )
+        return dbcore.sort_from_strings(Item, beets.config["sort_item"].as_str_seq())
 
     def albums(self, query=None, sort=None) -> Results[Album]:
         """Get :class:`Album` objects matching the query."""

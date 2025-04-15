@@ -123,9 +123,7 @@ class IMBackend(LocalBackend):
             self.identify_cmd = ["magick", "identify"]
             self.compare_cmd = ["magick", "compare"]
 
-    def resize(
-        self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0
-    ):
+    def resize(self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
         """Resize using ImageMagick.
 
         Use the ``magick`` program or ``convert`` on older versions. Return
@@ -269,9 +267,7 @@ class IMBackend(LocalBackend):
             "-",
             "null:",
         ]
-        log.debug(
-            "comparing images with pipeline {} | {}", convert_cmd, compare_cmd
-        )
+        log.debug("comparing images with pipeline {} | {}", convert_cmd, compare_cmd)
         convert_proc = subprocess.Popen(
             convert_cmd,
             stdout=subprocess.PIPE,
@@ -358,9 +354,7 @@ class PILBackend(LocalBackend):
         """
         self.version()
 
-    def resize(
-        self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0
-    ):
+    def resize(self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
         """Resize using Python Imaging Library (PIL).  Return the output path
         of resized image.
         """
@@ -415,9 +409,7 @@ class PILBackend(LocalBackend):
                         optimize=True,
                         progressive=False,
                     )
-                log.warning(
-                    "PIL Failed to resize file to below {0}B", max_filesize
-                )
+                log.warning("PIL Failed to resize file to below {0}B", max_filesize)
                 return path_out
 
             else:
@@ -436,9 +428,7 @@ class PILBackend(LocalBackend):
             im = Image.open(syspath(path_in))
             return im.size
         except OSError as exc:
-            log.error(
-                "PIL could not read file {}: {}", displayable_path(path_in), exc
-            )
+            log.error("PIL could not read file {}: {}", displayable_path(path_in), exc)
             return None
 
     def deinterlace(self, path_in, path_out=None):
@@ -560,9 +550,7 @@ class ArtResizer(metaclass=Shareable):
         else:
             return "WEBPROXY"
 
-    def resize(
-        self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0
-    ):
+    def resize(self, maxwidth, path_in, path_out=None, quality=0, max_filesize=0):
         """Manipulate an image file according to the method, returning a
         new path. For PIL or IMAGEMAGIC methods, resizes the image to a
         temporary file and encodes with the specified quality level.

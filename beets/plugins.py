@@ -103,8 +103,7 @@ class BeetsPlugin:
     def _set_stage_log_level(self, stages):
         """Adjust all the stages in `stages` to WARNING logging level."""
         return [
-            self._set_log_level_and_params(logging.WARNING, stage)
-            for stage in stages
+            self._set_log_level_and_params(logging.WARNING, stage) for stage in stages
         ]
 
     def get_early_import_stages(self):
@@ -393,9 +392,7 @@ def album_distance(items, album_info, mapping):
 def candidates(items, artist, album, va_likely, extra_tags=None):
     """Gets MusicBrainz candidates for an album from each plugin."""
     for plugin in find_plugins():
-        yield from plugin.candidates(
-            items, artist, album, va_likely, extra_tags
-        )
+        yield from plugin.candidates(items, artist, album, va_likely, extra_tags)
 
 
 def item_candidates(item, artist, title):

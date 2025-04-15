@@ -642,9 +642,7 @@ class Model(ABC, Generic[D]):
         db = self._check_db()
         with db.transaction() as tx:
             tx.mutate(f"DELETE FROM {self._table} WHERE id=?", (self.id,))
-            tx.mutate(
-                f"DELETE FROM {self._flex_table} WHERE entity_id=?", (self.id,)
-            )
+            tx.mutate(f"DELETE FROM {self._flex_table} WHERE entity_id=?", (self.id,))
 
     def add(self, db: D | None = None):
         """Add the object to the library database. This object must be
@@ -698,9 +696,7 @@ class Model(ABC, Generic[D]):
         else:
             # Help out mypy
             t = template
-        return t.substitute(
-            self.formatted(for_path=for_path), self._template_funcs()
-        )
+        return t.substitute(self.formatted(for_path=for_path), self._template_funcs())
 
     # Parsing.
 
@@ -836,9 +832,7 @@ class Results(Generic[AnyModel]):
 
         return flex_values
 
-    def _make_model(
-        self, row: sqlite3.Row, flex_values: FlexAttrs = {}
-    ) -> AnyModel:
+    def _make_model(self, row: sqlite3.Row, flex_values: FlexAttrs = {}) -> AnyModel:
         """Create a Model object for the given row"""
         cols = dict(row)
         values = {k: v for (k, v) in cols.items() if not k[:4] == "flex"}
@@ -1003,9 +997,7 @@ class Database:
 
     def __init__(self, path, timeout: float = 5.0):
         if sqlite3.threadsafety == 0:
-            raise RuntimeError(
-                "sqlite3 must be compiled with multi-threading support"
-            )
+            raise RuntimeError("sqlite3 must be compiled with multi-threading support")
 
         self.path = path
         self.timeout = timeout
@@ -1140,9 +1132,7 @@ class Database:
     def load_extension(self, path: str):
         """Load an SQLite extension into all open connections."""
         if not self.supports_extensions:
-            raise ValueError(
-                "this sqlite3 installation does not support extensions"
-            )
+            raise ValueError("this sqlite3 installation does not support extensions")
 
         self._extensions.append(path)
 
@@ -1171,9 +1161,7 @@ class Database:
             columns = []
             for name, typ in fields.items():
                 columns.append(f"{name} {typ.sql}")
-            setup_sql = "CREATE TABLE {} ({});\n".format(
-                table, ", ".join(columns)
-            )
+            setup_sql = "CREATE TABLE {} ({});\n".format(table, ", ".join(columns))
 
         else:
             # Table exists does not match the field set.
@@ -1203,7 +1191,9 @@ class Database:
                     UNIQUE(entity_id, key) ON CONFLICT REPLACE);
                 CREATE INDEX IF NOT EXISTS {0}_by_entity
                     ON {0} (entity_id);
-                """.format(flex_table)
+                """.format(
+                    flex_table
+                )
             )
 
     # Querying.

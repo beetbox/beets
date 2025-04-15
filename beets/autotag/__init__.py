@@ -104,9 +104,7 @@ def _apply_metadata(
     nullable_fields: Sequence[str] = [],
 ):
     """Set the db_obj's metadata to match the info."""
-    special_fields = SPECIAL_FIELDS[
-        "album" if isinstance(info, AlbumInfo) else "track"
-    ]
+    special_fields = SPECIAL_FIELDS["album" if isinstance(info, AlbumInfo) else "track"]
 
     for field, value in info.items():
         # We only overwrite fields that are not already hardcoded.
@@ -225,12 +223,8 @@ def apply_metadata(album_info: AlbumInfo, mapping: Mapping[Item, TrackInfo]):
         # Artist sort and credit names.
         item.artist_sort = track_info.artist_sort or album_info.artist_sort
         item.artists_sort = track_info.artists_sort or album_info.artists_sort
-        item.artist_credit = (
-            track_info.artist_credit or album_info.artist_credit
-        )
-        item.artists_credit = (
-            track_info.artists_credit or album_info.artists_credit
-        )
+        item.artist_credit = track_info.artist_credit or album_info.artist_credit
+        item.artists_credit = track_info.artists_credit or album_info.artists_credit
         item.albumartist_sort = album_info.artist_sort
         item.albumartists_sort = album_info.artists_sort
         item.albumartist_credit = album_info.artist_credit

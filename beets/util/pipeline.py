@@ -429,9 +429,7 @@ class Pipeline:
         for i in range(1, queue_count):
             for coro in self.stages[i]:
                 threads.append(
-                    MiddlePipelineThread(
-                        coro, queues[i - 1], queues[i], threads
-                    )
+                    MiddlePipelineThread(coro, queues[i - 1], queues[i], threads)
                 )
 
         # Last stage.
