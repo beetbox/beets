@@ -1027,23 +1027,23 @@ class Database:
 
     # Primitive access control: connections and transactions.
 
-    def _connection(self) -> Connection:
-        """Get a SQLite connection object to the underlying database.
-        One connection object is created per thread.
-        """
-        thread_id = threading.current_thread().ident
-        # Help the type checker: ident can only be None if the thread has not
-        # been started yet; but since this results from current_thread(), that
-        # can't happen
-        assert thread_id is not None
+    def _connect(self) -> sqlite3.Connection:
+        try:
+            conn = sqlite3.connect(self.path, timeout=self.timeout)
+        except sqlite3.OperationalError as e:
+            if "unable to open database file" in str(e).lower():
+                raise sqlite3.OperationalError(
+                    f"Unable to open the database file at {self.path}. "
+                    f"Check that the directory exists and is writable."
+                ) from e
+            raise
+        return conn
 
-        with self._shared_map_lock:
-            if thread_id in self._connections:
-                return self._connections[thread_id]
-            else:
-                conn = self._create_connection()
-                self._connections[thread_id] = conn
-                return conn
+    def _connection(self) -> sqlite3.Connection:
+        # Legacy support for code that still calls _connection()
+        # Reuse the same logic as _connect
+        return self._connect()
+
 
     def _create_connection(self) -> Connection:
         """Create a SQLite connection to the underlying database.
