@@ -924,7 +924,7 @@ class ConfigTest(TestPluginTestCase):
         with self.write_config_file() as config:
             config.write("library: /xxx/yyy/not/a/real/path")
 
-        with pytest.raises(ui.UserError):
+        with pytest.raises(ui.UserError), control_stdin("n"):
             self.run_command("test", lib=None)
 
     def test_user_config_file(self):
