@@ -28,7 +28,6 @@ from typing import (
     Callable,
     Generic,
     Sequence,
-    Type,
     TypedDict,
     TypeVar,
 )
@@ -37,6 +36,7 @@ import mediafile
 
 import beets
 from beets import logging
+from beets.library import Album, Item, Library
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -45,7 +45,6 @@ if TYPE_CHECKING:
 
     from beets.autotag import AlbumInfo, Distance, TrackInfo
     from beets.dbcore import Query
-    from beets.library import Album, Item, Library
     from beets.ui import Subcommand
 
 
@@ -350,7 +349,6 @@ def load_plugins(names: Sequence[str] = ()):
             )
 
 
-
 _instances: dict[type[BeetsPlugin], BeetsPlugin] = {}
 
 
@@ -466,7 +464,6 @@ def item_candidates(item: Item, artist: str, title: str) -> Iterable[TrackInfo]:
     """Gets MusicBrainz candidates for an item from the plugins."""
     for plugin in find_plugins():
         yield from plugin.item_candidates(item, artist, title)
-
 
 
 def album_for_id(_id: str) -> AlbumInfo | None:
