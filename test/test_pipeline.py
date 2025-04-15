@@ -39,9 +39,14 @@ def _consume(result):
         result.append(i)
 
 
-# A worker that raises an exception.
+# Pipeline stages that raise an exception.
 class PipelineError(Exception):
     pass
+
+
+def _exc_produce(num=5):
+    yield from range(num)
+    raise PipelineError()
 
 
 def _exc_work(num=3):
@@ -51,6 +56,14 @@ def _exc_work(num=3):
         if i == num:
             raise PipelineError()
         i *= 2
+
+
+def _exc_consume(result, num=4):
+    while True:
+        i = yield
+        if i == num:
+            raise PipelineError()
+        result.append(i)
 
 
 # A worker that yields a bubble.
@@ -121,17 +134,32 @@ class ParallelStageTest(unittest.TestCase):
 class ExceptionTest(unittest.TestCase):
     def setUp(self):
         self.result = []
-        self.pl = pipeline.Pipeline(
-            (_produce(), _exc_work(), _consume(self.result))
-        )
+
+    def run_sequential(self, *stages):
+        pl = pipeline.Pipeline(stages)
+        with pytest.raises(PipelineError):
+            pl.run_sequential()
+
+    def run_parallel(self, *stages):
+        pl = pipeline.Pipeline(stages)
+        with pytest.raises(PipelineError):
+            pl.run_parallel()
 
     def test_run_sequential(self):
-        with pytest.raises(PipelineError):
-            self.pl.run_sequential()
+        """Test that exceptions from various stages of the pipeline are
+        properly propagated when running sequentially.
+        """
+        self.run_sequential(_exc_produce(), _work(), _consume(self.result))
+        self.run_sequential(_produce(), _exc_work(), _consume(self.result))
+        self.run_sequential(_produce(), _work(), _exc_consume(self.result))
 
     def test_run_parallel(self):
-        with pytest.raises(PipelineError):
-            self.pl.run_parallel()
+        """Test that exceptions from various stages of the pipeline are
+        properly propagated when running in parallel.
+        """
+        self.run_parallel(_exc_produce(), _work(), _consume(self.result))
+        self.run_parallel(_produce(), _exc_work(), _consume(self.result))
+        self.run_parallel(_produce(), _work(), _exc_consume(self.result))
 
     def test_pull(self):
         pl = pipeline.Pipeline((_produce(), _exc_work()))
