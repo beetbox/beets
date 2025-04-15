@@ -716,6 +716,15 @@ class Model(ABC, Generic[D]):
         """Set the object's key to a value represented by a string."""
         self[key] = self._parse(key, string)
 
+    def __getstate__(self):
+        """Return the state of the object for pickling.
+        Remove the database connection as sqlite connections are not
+        picklable.
+        """
+        state = self.__dict__.copy()
+        state["_db"] = None
+        return state
+
 
 # Database controller and supporting interfaces.
 
