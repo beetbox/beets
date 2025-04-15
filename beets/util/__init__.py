@@ -40,6 +40,7 @@ from typing import (
     Any,
     AnyStr,
     Callable,
+    Generic,
     Iterable,
     NamedTuple,
     TypeVar,
@@ -1039,6 +1040,30 @@ class cached_classproperty:
             self.cache[owner] = self.getter(owner)
 
         return self.cache[owner]
+
+
+T = TypeVar("T")
+
+
+class LazySharedInstance(Generic[T]):
+    """A descriptor that provides access to a lazily-created shared instance of
+    the containing class, while calling the class constructor to construct a
+    new object works as usual.
+    """
+
+    _instance: T | None = None
+
+    def __get__(self, instance: T | None, owner: type[T]) -> T:
+        if instance is not None:
+            raise RuntimeError(
+                "shared instances must be obtained from the class property, "
+                "not an instance"
+            )
+
+        if self._instance is None:
+            self._instance = owner()
+
+        return self._instance
 
 
 def get_module_tempdir(module: str) -> Path:
