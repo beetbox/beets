@@ -421,6 +421,20 @@ class ModelTest(unittest.TestCase):
         with pytest.raises(TypeError, match="must be a string"):
             dbcore.Model._parse(None, 42)
 
+    def test_pickle_dump(self):
+        """Tries to pickle an item. This tests the __getstate__ method
+        of the Model ABC"""
+        import pickle
+
+        model = ModelFixture1(self.db)
+        model.add(self.db)
+        model.field_one = 123
+
+        model.store()
+        assert model._db is not None
+
+        pickle.dumps(model)
+
 
 class FormatTest(unittest.TestCase):
     def test_format_fixed_field_integer(self):

@@ -350,7 +350,8 @@ def load_plugins(names: Sequence[str] = ()):
             )
 
 
-_instances: dict[Type[BeetsPlugin], BeetsPlugin] = {}
+
+_instances: dict[type[BeetsPlugin], BeetsPlugin] = {}
 
 
 def find_plugins() -> list[BeetsPlugin]:
@@ -467,20 +468,31 @@ def item_candidates(item: Item, artist: str, title: str) -> Iterable[TrackInfo]:
         yield from plugin.item_candidates(item, artist, title)
 
 
-def album_for_id(album_id: str) -> Iterable[AlbumInfo]:
-    """Get AlbumInfo objects for a given ID string."""
+
+def album_for_id(_id: str) -> AlbumInfo | None:
+    """Get AlbumInfo object for the given ID string.
+
+    A single ID can yield just a single album, so we return the first match.
+    """
     for plugin in find_plugins():
-        album = plugin.album_for_id(album_id)
-        if album:
-            yield album
+        if info := plugin.album_for_id(_id):
+            send("albuminfo_received", info=info)
+            return info
+
+    return None
 
 
-def track_for_id(track_id: str) -> Iterable[TrackInfo]:
-    """Get TrackInfo objects for a given ID string."""
+def track_for_id(_id: str) -> TrackInfo | None:
+    """Get TrackInfo object for the given ID string.
+
+    A single ID can yield just a single track, so we return the first match.
+    """
     for plugin in find_plugins():
-        track = plugin.track_for_id(track_id)
-        if track:
-            yield track
+        if info := plugin.track_for_id(_id):
+            send("trackinfo_received", info=info)
+            return info
+
+    return None
 
 
 def template_funcs():

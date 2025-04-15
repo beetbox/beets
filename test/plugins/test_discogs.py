@@ -14,6 +14,8 @@
 
 """Tests for discogs plugin."""
 
+from unittest.mock import Mock, patch
+
 import pytest
 
 from beets import config
@@ -23,6 +25,7 @@ from beets.util.id_extractors import extract_discogs_id_regex
 from beetsplug.discogs import DiscogsPlugin
 
 
+@patch("beetsplug.discogs.DiscogsPlugin.setup", Mock())
 class DGAlbumInfoTest(BeetsTestCase):
     def _make_release(self, tracks=None):
         """Returns a Bag that mimics a discogs_client.Release. The list
