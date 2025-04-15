@@ -83,8 +83,9 @@ class PluginLogFilter(logging.Filter):
         return True
 
 
-# Typing for listeners
-CallableWithAnyKwargs = Callable[[None, Any], None]
+# Typing for listeners, we are not too sure about the
+# kwargs and args here, depends on the plugin
+Listener = Callable[..., None]
 
 
 # Managing the plugins themselves.
@@ -99,7 +100,7 @@ class BeetsPlugin:
     name: str
     config: ConfigView
 
-    def __init__(self, name=None):
+    def __init__(self, name: str | None = None):
         """Perform one-time plugin setup."""
 
         self.name = name or self.__module__.split(".")[-1]
@@ -215,7 +216,7 @@ class BeetsPlugin:
         artist: str,
         album: str,
         va_likely: bool,
-        extra_tags=None,
+        extra_tags: dict[str, Any] | None = None,
     ) -> Sequence[AlbumInfo]:
         """Should return a sequence of AlbumInfo objects that match the
         album whose items are provided.
@@ -259,15 +260,15 @@ class BeetsPlugin:
         mediafile.MediaFile.add_field(name, descriptor)
         library.Item._media_fields.add(name)
 
-    _raw_listeners: dict[str, list[Callable[[None, Any], None]]] | None = None
-    listeners: dict[str, list[Callable[[None, Any], None]]] | None = None
+    _raw_listeners: dict[str, list[Listener]] | None = None
+    listeners: dict[str, list[Listener]] | None = None
 
-    def register_listener(self, event: str, func: CallableWithAnyKwargs):
+    def register_listener(self, event: str, func: Listener):
         """Add a function as a listener for the specified event."""
         wrapped_func = self._set_log_level_and_params(logging.WARNING, func)
 
         cls = self.__class__
-        cls = self.__class__
+
         if cls.listeners is None or cls._raw_listeners is None:
             cls._raw_listeners = defaultdict(list)
             cls.listeners = defaultdict(list)
@@ -451,7 +452,7 @@ def candidates(
     artist: str,
     album: str,
     va_likely: bool,
-    extra_tags=None,
+    extra_tags: dict[str, Any] | None = None,
 ) -> Iterable[AlbumInfo]:
     """Gets MusicBrainz candidates for an album from each plugin."""
     for plugin in find_plugins():
@@ -510,9 +511,12 @@ def import_stages():
 
 
 # New-style (lazy) plugin-provided fields.
+F = TypeVar("F", Callable[[Item], str], Callable[[Album], str])
 
 
-def _check_conflicts_and_merge(plugin: BeetsPlugin, plugin_funcs, funcs):
+def _check_conflicts_and_merge(
+    plugin: BeetsPlugin, plugin_funcs: dict[str, F] | None, funcs: dict[str, F]
+):
     """Check the provided template functions for conflicts and merge into funcs.
 
     Raises a `PluginConflictError` if a plugin defines template functions
@@ -528,19 +532,19 @@ def _check_conflicts_and_merge(plugin: BeetsPlugin, plugin_funcs, funcs):
         funcs.update(plugin_funcs)
 
 
-def item_field_getters():
+def item_field_getters() -> dict[str, Callable[[Item], str]]:
     """Get a dictionary mapping field names to unary functions that
     compute the field's value.
     """
-    funcs = {}
+    funcs: dict[str, Callable[[Item], str]] = {}
     for plugin in find_plugins():
         _check_conflicts_and_merge(plugin, plugin.template_fields, funcs)
     return funcs
 
 
-def album_field_getters():
+def album_field_getters() -> dict[str, Callable[[Album], str]]:
     """As above, for album fields."""
-    funcs = {}
+    funcs: dict[str, Callable[[Album], str]] = {}
     for plugin in find_plugins():
         _check_conflicts_and_merge(plugin, plugin.album_template_fields, funcs)
     return funcs
@@ -549,11 +553,11 @@ def album_field_getters():
 # Event dispatch.
 
 
-def event_handlers():
+def event_handlers() -> dict[str, list[Listener]]:
     """Find all event handlers from plugins as a dictionary mapping
     event names to sequences of callables.
     """
-    all_handlers: dict[str, list[Callable]] = defaultdict(list)
+    all_handlers: dict[str, list[Listener]] = defaultdict(list)
     for plugin in find_plugins():
         if plugin.listeners:
             for event, handlers in plugin.listeners.items():
@@ -668,7 +672,7 @@ def notify_info_yielded(event):
 
 
 def get_distance(
-    config, data_source: str, info: AlbumInfo | TrackInfo
+    config: ConfigView, data_source: str, info: AlbumInfo | TrackInfo
 ) -> Distance:
     """Returns the ``data_source`` weight and the maximum source weight
     for albums or individual tracks.
@@ -711,7 +715,7 @@ def apply_item_changes(
 class Response(TypedDict):
     """A dictionary with the response of a plugin API call.
 
-    May be extended by plugins to include additional information, but id
+    May be extended by plugins to include additional information, but `id`
     is required.
     """
 
@@ -734,8 +738,6 @@ class MetadataSourcePlugin(Generic[R], BeetsPlugin, metaclass=abc.ABCMeta):
     def __init__(self):
         super().__init__()
         self.config.add({"source_weight": 0.5})
-
-    foo: str
 
     @property
     @abc.abstractmethod
@@ -853,7 +855,7 @@ class MetadataSourcePlugin(Generic[R], BeetsPlugin, metaclass=abc.ABCMeta):
         artist: str,
         album: str,
         va_likely: bool,
-        extra_tags=None,
+        extra_tags: dict[str, Any] | None = None,
     ) -> Sequence[AlbumInfo]:
         """Returns a list of AlbumInfo objects for Search API results
         matching an ``album`` and ``artist`` (if not various).

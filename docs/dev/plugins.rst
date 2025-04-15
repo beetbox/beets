@@ -367,7 +367,7 @@ Here's an example::
             super().__init__()
             self.template_funcs['initial'] = _tmpl_initial
 
-    def _tmpl_initial(text:str) -> str:
+    def _tmpl_initial(text: str) -> str:
         if text:
             return text[0].upper()
         else:
