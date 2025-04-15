@@ -82,8 +82,6 @@ class PluginLogFilter(logging.Filter):
         return True
 
 
-# Typing for listeners, we are not too sure about the
-# kwargs and args here, depends on the plugin
 Listener = Callable[..., None]
 
 
@@ -521,9 +519,8 @@ def import_stages():
 
 # New-style (lazy) plugin-provided fields.
 
-if (
-    TYPE_CHECKING
-):  # Needed because Item, Album circular introduce circular import
+if TYPE_CHECKING:
+    # Needed because Item, Album circular introduce circular import
     F = TypeVar("F", Callable[[Item], str], Callable[[Album], str])
 
 
@@ -578,7 +575,7 @@ def event_handlers() -> dict[str, list[Listener]]:
     return all_handlers
 
 
-def send(event: str, **arguments: Any):
+def send(event: str, **arguments: Any) -> list[Any]:
     """Send an event to all assigned event listeners.
 
     `event` is the name of  the event to send, all other named arguments
