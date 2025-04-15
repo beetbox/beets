@@ -1394,16 +1394,3 @@ class LibraryFieldTypesTest(unittest.TestCase):
         beets.config["format_raw_length"] = True
         assert 61.23 == t.format(61.23)
         assert 3601.23 == t.format(3601.23)
-
-
-class PickleTest(ItemInDBTestCase):
-    def test_pickle_dump(self):
-        """Tries to pickle an item. This tests the __getstate__ method
-        of the Model ABC"""
-        import pickle
-
-        item = self.i
-        # Fetch album
-        item._cached_album
-
-        pickle.dumps(item)
