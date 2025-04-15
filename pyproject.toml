@@ -1,13 +1,15 @@
-[tool.poetry]
+[project]
 name = "beets"
 version = "2.2.0"
 description = "music tagger and library organizer"
-authors = ["Adrian Sampson <adrian@radbox.org>"]
-maintainers = ["Serene-Arc"]
+authors = [
+    { name = "Adrian Sampson", email = "<adrian@radbox.org>" },
+]
+maintainers = [
+    { name = "Serene-Arc" },
+]
 license = "MIT"
 readme = "README.rst"
-homepage = "https://beets.io/"
-repository = "https://github.com/beetbox/beets"
 documentation = "https://beets.readthedocs.io/en/stable/"
 classifiers = [
     "Topic :: Multimedia :: Sound/Audio",
@@ -19,8 +21,13 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: Implementation :: CPython",
 ]
+requires-python = ">=3.9"
+
+[tool.poetry]
 packages = [
     { include = "beets" },
     { include = "beetsplug" },
@@ -34,9 +41,11 @@ include = [ # extra files to include in the sdist
 ]
 exclude = ["docs/_build", "docs/modd.conf", "docs/**/*.css"]
 
-[tool.poetry.urls]
+[project.urls]
+Homepage = "https://beets.io/"
+Repository = "https://github.com/beetbox/beets"
 Changelog = "https://github.com/beetbox/beets/blob/master/docs/changelog.rst"
-"Bug Tracker" = "https://github.com/beetbox/beets/issues"
+Issues = "https://github.com/beetbox/beets/issues"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4"
@@ -63,7 +72,11 @@ mutagen = { version = ">=1.33", optional = true }
 Pillow = { version = "*", optional = true }
 py7zr = { version = "*", optional = true }
 pyacoustid = { version = "*", optional = true }
-PyGObject = { version = "*", optional = true }
+# Earlier PyGObject fails to build Python 3.9 due to
+# https://gitlab.gnome.org/GNOME/pygobject/-/commit/07cb8d7dfc2fe93c3dd0dc4c4ddb88556de048e0
+# Later versions require libgirepository-2.0-dev, which we currently don't install on CI
+# https://pygobject.gnome.org/changelog.html
+PyGObject = { version = ">=3.33.1,<3.52.0", optional = true }
 pylast = { version = "*", optional = true }
 python-mpd2 = { version = ">=0.4.2", optional = true }
 python3-discogs-client = { version = ">=2.3.15", optional = true }
@@ -148,7 +161,7 @@ sonosupdate = ["soco"]
 thumbnails = ["Pillow", "pyxdg"]
 web = ["flask", "flask-cors"]
 
-[tool.poetry.scripts]
+[project.scripts]
 beet = "beets.ui:main"
 
 [build-system]
