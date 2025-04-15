@@ -26,6 +26,7 @@ import unicodedata
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
+from beets.dbcore.query import ArtQuery
 
 import platformdirs
 from mediafile import MediaFile, UnreadableFileError
@@ -639,7 +640,10 @@ class Item(LibModel):
 
     _sorts = {"artist": dbcore.query.SmartArtistSort}
 
-    _queries = {"singleton": SingletonQuery}
+    _queries = {
+	"singleton": SingletonQuery,
+	"art": ArtQuery,
+    }
 
     _format_config_key = "format_item"
 
@@ -1173,6 +1177,7 @@ class Album(LibModel):
     _fields = {
         "id": types.PRIMARY_ID,
         "artpath": PathType(True),
+	"art": types.BOOLEAN,
         "added": DateType(),
         "albumartist": types.STRING,
         "albumartist_sort": types.STRING,
@@ -1637,7 +1642,7 @@ class Library(dbcore.Database):
         self._memotable = {}
         return obj.id
 
-    def add_album(self, items):
+    def add_album(self, items, art=None):
         """Create a new album consisting of a list of items.
 
         The items are added to the database if they don't yet have an
@@ -1650,6 +1655,9 @@ class Library(dbcore.Database):
         # Create the album structure using metadata from the first item.
         values = {key: items[0][key] for key in Album.item_keys}
         album = Album(self, **values)
+        if art is not None:
+            album.art = art
+
 
         # Add the album structure and set the items' album_id fields.
         # Store or add the items.
@@ -1661,7 +1669,8 @@ class Library(dbcore.Database):
                     item.add(self)
                 else:
                     item.store()
-
+        
+        album.store(inherit=False, fields=['art'])
         return album
 
     # Querying.

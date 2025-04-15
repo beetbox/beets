@@ -30,6 +30,8 @@ from dataclasses import dataclass
 from enum import Enum
 from tempfile import mkdtemp
 from typing import Callable, Iterable, Sequence
+from mediafile import MediaFile
+from beets.util import syspath
 
 import mediafile
 
@@ -875,7 +877,15 @@ class ImportTask(BaseImportTask):
             self.record_replaced(lib)
             self.remove_replaced(lib)
 
-            self.album = lib.add_album(self.imported_items())
+	    # Detect embedded album art across imported items
+            has_art = False
+            for item in self.imported_items():
+                mf = MediaFile(syspath(item.path))
+                if mf.art:
+                    has_art = True
+                    break
+
+            self.album = lib.add_album(self.imported_items(), art=has_art)
             if self.choice_flag == action.APPLY and isinstance(
                 self.match, autotag.AlbumMatch
             ):

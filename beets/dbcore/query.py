@@ -1052,3 +1052,13 @@ class SmartArtistSort(FieldSort):
             return val.lower() if self.case_insensitive else val
 
         return sorted(objs, key=key, reverse=not self.ascending)
+
+
+from beets.dbcore.query import FieldQuery, BooleanQuery
+from beets import util
+
+class ArtQuery(FieldQuery):
+    """Query that matches albums with or without embedded art."""
+    def __new__(cls, field, pattern, *args, **kwargs):
+        val = util.str2bool(pattern)
+        return BooleanQuery(field, val, *args, **kwargs)
