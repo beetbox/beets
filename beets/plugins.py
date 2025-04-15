@@ -36,7 +36,6 @@ import mediafile
 
 import beets
 from beets import logging
-from beets.library import Album, Item, Library
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -45,6 +44,7 @@ if TYPE_CHECKING:
 
     from beets.autotag import AlbumInfo, Distance, TrackInfo
     from beets.dbcore import Query
+    from beets.library import Album, Item, Library
     from beets.ui import Subcommand
 
 
@@ -520,7 +520,11 @@ def import_stages():
 
 
 # New-style (lazy) plugin-provided fields.
-F = TypeVar("F", Callable[[Item], str], Callable[[Album], str])
+
+if (
+    TYPE_CHECKING
+):  # Needed because Item, Album circular introduce circular import
+    F = TypeVar("F", Callable[[Item], str], Callable[[Album], str])
 
 
 def _check_conflicts_and_merge(
