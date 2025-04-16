@@ -265,7 +265,10 @@ class ThumbnailsTest(BeetsTestCase):
         if not gio.available:
             self.skipTest("GIO library not found")
 
-        assert gio.uri("/foo") == "file:///"  # silent fail
+        import ctypes
+
+        with pytest.raises(ctypes.ArgumentError):
+            gio.uri("/foo")
         assert gio.uri(b"/foo") == "file:///foo"
         assert gio.uri(b"/foo!") == "file:///foo!"
         assert (

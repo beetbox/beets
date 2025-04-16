@@ -23,9 +23,14 @@ New features:
   AI Translator API and add relevant instructions to the documentation.
 * :doc:`plugins/web`: Show notifications when a track plays. This uses the
   Media Session API to customize media notifications.
+* :doc:`plugins/missing`: Add support for all metadata sources.
+* :doc:`plugins/mbsync`: Add support for all metadata sorces.
 
 Bug fixes:
 
+* :doc:`plugins/thumbnails`: Fix API call to GIO on big endian architectures
+  (like s390x) in thumbnails plugin.
+  :bug:`5708`
 * :doc:`plugins/listenbrainz`: Fix rST formatting for URLs of Listenbrainz API Key documentation and config.yaml.
 * :doc:`plugins/listenbrainz`: Fix ``UnboundLocalError`` in cases where 'mbid' is not defined.
 * :doc:`plugins/fetchart`: Fix fetchart bug where a tempfile could not be deleted due to never being
@@ -97,6 +102,9 @@ Other changes:
   improve useability for new developers.
 * :doc:`/plugins/smartplaylist`: URL-encode additional item `fields` within generated
   EXTM3U playlists instead of JSON-encoding them.
+* :doc:`plugins/ftintitle`: Optimize the plugin by avoiding unnecessary writes
+  to the database.
+* Database models are now serializable with pickle.
 
 2.2.0 (December 02, 2024)
 -------------------------
