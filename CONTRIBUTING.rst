@@ -252,11 +252,6 @@ There are a few coding conventions we use in beets:
 
    Transaction objects help control concurrent access to the database
    and assist in debugging conflicting accesses.
--  Always use the `future
-   imports <http://docs.python.org/library/__future__.html>`__
-   ``print_function``, ``division``, and ``absolute_import``, but *not*
-   ``unicode_literals``. These help keep your code modern and will help
-   in the eventual move to Python 3.
 -  ``str.format()`` should be used instead of the ``%`` operator
 -  Never ``print`` informational messages; use the
    `logging <http://docs.python.org/library/logging.html>`__ module
