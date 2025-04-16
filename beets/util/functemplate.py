@@ -319,8 +319,7 @@ class Parser:
             special_char_re = re.compile(
                 r"[%s]|\Z"
                 % "".join(
-                    re.escape(c)
-                    for c in self.special_chars + extra_special_chars
+                    re.escape(c) for c in self.special_chars + extra_special_chars
                 )
             )
 
@@ -333,8 +332,7 @@ class Parser:
                 # A non-special character. Skip to the next special
                 # character, treating the interstice as literal text.
                 next_pos = (
-                    special_char_re.search(self.string[self.pos :]).start()
-                    + self.pos
+                    special_char_re.search(self.string[self.pos :]).start() + self.pos
                 )
                 text_parts.append(self.string[self.pos : next_pos])
                 self.pos = next_pos
@@ -417,18 +415,14 @@ class Parser:
                 # Closer found.
                 ident = self.string[self.pos : closer]
                 self.pos = closer + 1
-                self.parts.append(
-                    Symbol(ident, self.string[start_pos : self.pos])
-                )
+                self.parts.append(Symbol(ident, self.string[start_pos : self.pos]))
 
         else:
             # A bare-word symbol.
             ident = self._parse_ident()
             if ident:
                 # Found a real symbol.
-                self.parts.append(
-                    Symbol(ident, self.string[start_pos : self.pos])
-                )
+                self.parts.append(Symbol(ident, self.string[start_pos : self.pos]))
             else:
                 # A standalone $.
                 self.parts.append(SYMBOL_DELIM)
@@ -488,10 +482,7 @@ class Parser:
             expressions.append(Expression(subparser.parts))
             self.pos += subparser.pos
 
-            if (
-                self.pos >= len(self.string)
-                or self.string[self.pos] == GROUP_CLOSE
-            ):
+            if self.pos >= len(self.string) or self.string[self.pos] == GROUP_CLOSE:
                 # Argument list terminated by EOF or closing brace.
                 break
 

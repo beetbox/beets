@@ -138,9 +138,7 @@ def construct_query_part(
     # Use `model_cls` to build up a map from field (or query) names to
     # `Query` classes.
     query_classes: dict[str, FieldQueryType] = {}
-    for k, t in itertools.chain(
-        model_cls._fields.items(), model_cls._types.items()
-    ):
+    for k, t in itertools.chain(model_cls._fields.items(), model_cls._types.items()):
         query_classes[k] = t.query
     query_classes.update(model_cls._queries)  # Non-field queries.
 
@@ -228,9 +226,7 @@ def sort_from_strings(
     else:
         sort = query.MultipleSort()
         for part in sort_parts:
-            sort.add_sort(
-                construct_sort_part(model_cls, part, case_insensitive)
-            )
+            sort.add_sort(construct_sort_part(model_cls, part, case_insensitive))
         return sort
 
 
@@ -259,9 +255,7 @@ def parse_sorted_query(
             # Parse the subquery in to a single AndQuery
             # TODO: Avoid needlessly wrapping AndQueries containing 1 subquery?
             query_parts.append(
-                query_from_strings(
-                    query.AndQuery, model_cls, prefixes, subquery_parts
-                )
+                query_from_strings(query.AndQuery, model_cls, prefixes, subquery_parts)
             )
             del subquery_parts[:]
         else:

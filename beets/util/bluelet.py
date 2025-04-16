@@ -350,15 +350,11 @@ def run(root_coro):
                 try:
                     value = event.fire()
                 except OSError as exc:
-                    if (
-                        isinstance(exc.args, tuple)
-                        and exc.args[0] == errno.EPIPE
-                    ):
+                    if isinstance(exc.args, tuple) and exc.args[0] == errno.EPIPE:
                         # Broken pipe. Remote host disconnected.
                         pass
                     elif (
-                        isinstance(exc.args, tuple)
-                        and exc.args[0] == errno.ECONNRESET
+                        isinstance(exc.args, tuple) and exc.args[0] == errno.ECONNRESET
                     ):
                         # Connection was reset by peer.
                         pass

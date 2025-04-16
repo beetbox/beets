@@ -172,8 +172,7 @@ def should_move(move_opt=None):
     """
     return _bool_fallback(
         move_opt,
-        config["import"]["move"].get(bool)
-        or config["import"]["copy"].get(bool),
+        config["import"]["move"].get(bool) or config["import"]["copy"].get(bool),
     )
 
 
@@ -261,10 +260,7 @@ def input_options(
         # Mark the option's shortcut letter for display.
         if not require and (
             (default is None and not numrange and first)
-            or (
-                isinstance(default, str)
-                and found_letter.lower() == default.lower()
-            )
+            or (isinstance(default, str) and found_letter.lower() == default.lower())
         ):
             # The first option is the default; mark it.
             show_letter = "[%s]" % found_letter.upper()
@@ -319,9 +315,7 @@ def input_options(
         # Start prompt with U+279C: Heavy Round-Tipped Rightwards Arrow
         prompt = colorize("action", "\u279c ")
         line_length = 0
-        for i, (part, length) in enumerate(
-            zip(prompt_parts, prompt_part_lengths)
-        ):
+        for i, (part, length) in enumerate(zip(prompt_parts, prompt_part_lengths)):
             # Add punctuation.
             if i == len(prompt_parts) - 1:
                 part += colorize("action_description", "?")
@@ -854,8 +848,7 @@ def split_into_lines(string, width_tuple):
                 # Colorize each word with pre/post escapes
                 # Reconstruct colored words
                 words += [
-                    m.group("esc") + raw_word + RESET_COLOR
-                    for raw_word in raw_words
+                    m.group("esc") + raw_word + RESET_COLOR for raw_word in raw_words
                 ]
             elif raw_words:
                 # Pretext stops mid-word
@@ -975,26 +968,18 @@ def print_column_layout(
         # Wrap into columns
         if "width" not in left or "width" not in right:
             # If widths have not been defined, set to share space.
-            left["width"] = (
-                max_width - len(indent_str) - color_len(separator)
-            ) // 2
-            right["width"] = (
-                max_width - len(indent_str) - color_len(separator)
-            ) // 2
+            left["width"] = (max_width - len(indent_str) - color_len(separator)) // 2
+            right["width"] = (max_width - len(indent_str) - color_len(separator)) // 2
         # On the first line, account for suffix as well as prefix
         left_width_tuple = (
-            left["width"]
-            - color_len(left["prefix"])
-            - color_len(left["suffix"]),
+            left["width"] - color_len(left["prefix"]) - color_len(left["suffix"]),
             left["width"] - color_len(left["prefix"]),
             left["width"] - color_len(left["prefix"]),
         )
 
         left_split = split_into_lines(left["contents"], left_width_tuple)
         right_width_tuple = (
-            right["width"]
-            - color_len(right["prefix"])
-            - color_len(right["suffix"]),
+            right["width"] - color_len(right["prefix"]) - color_len(right["suffix"]),
             right["width"] - color_len(right["prefix"]),
             right["width"] - color_len(right["prefix"]),
         )
@@ -1056,9 +1041,7 @@ def print_column_layout(
                 right_part_len = 0
 
             # Padding until end of column
-            padding = (
-                right["width"] - color_len(right["prefix"]) - right_part_len
-            )
+            padding = right["width"] - color_len(right["prefix"]) - right_part_len
             # Remove some padding on the first line to display
             # length
             if i == 0:
@@ -1293,9 +1276,7 @@ def _store_dict(option, opt_str, value, parser):
             raise ValueError
     except ValueError:
         raise UserError(
-            "supplied argument `{}' is not of the form `key=value'".format(
-                value
-            )
+            "supplied argument `{}' is not of the form `key=value'".format(value)
         )
 
     option_values[key] = value
@@ -1496,7 +1477,9 @@ class SubcommandsOptionParser(CommonOptionsParser):
         """
         # A more helpful default usage.
         if "usage" not in kwargs:
-            kwargs["usage"] = """
+            kwargs[
+                "usage"
+            ] = """
   %prog COMMAND [ARGS...]
   %prog help COMMAND"""
         kwargs["add_help_option"] = False
@@ -1565,10 +1548,7 @@ class SubcommandsOptionParser(CommonOptionsParser):
             help_line = help_lines[0] if help_lines else ""
             result.append("%*s%s\n" % (indent_first, "", help_line))
             result.extend(
-                [
-                    "%*s%s\n" % (help_position, "", line)
-                    for line in help_lines[1:]
-                ]
+                ["%*s%s\n" % (help_position, "", line) for line in help_lines[1:]]
             )
         formatter.dedent()
 
@@ -1643,17 +1623,13 @@ def _load_plugins(options, config):
 
     # If we were given any plugins on the command line, use those.
     if options.plugins is not None:
-        plugin_list = (
-            options.plugins.split(",") if len(options.plugins) > 0 else []
-        )
+        plugin_list = options.plugins.split(",") if len(options.plugins) > 0 else []
     else:
         plugin_list = config["plugins"].as_str_seq()
 
     # Exclude any plugins that were specified on the command line
     if options.exclude is not None:
-        plugin_list = [
-            p for p in plugin_list if p not in options.exclude.split(",")
-        ]
+        plugin_list = [p for p in plugin_list if p not in options.exclude.split(",")]
 
     plugins.load_plugins(plugin_list)
     return plugins
@@ -1717,9 +1693,7 @@ def _configure(options):
         log.set_global_level(logging.INFO)
 
     if overlay_path:
-        log.debug(
-            "overlaying configuration: {0}", util.displayable_path(overlay_path)
-        )
+        log.debug("overlaying configuration: {0}", util.displayable_path(overlay_path))
 
     config_path = config.user_config_path()
     if os.path.isfile(config_path):
@@ -1832,11 +1806,7 @@ def _raw_main(args, lib=None):
     # Special case for the `config --edit` command: bypass _setup so
     # that an invalid configuration does not prevent the editor from
     # starting.
-    if (
-        subargs
-        and subargs[0] == "config"
-        and ("-e" in subargs or "--edit" in subargs)
-    ):
+    if subargs and subargs[0] == "config" and ("-e" in subargs or "--edit" in subargs):
         from beets.ui.commands import config_edit
 
         return config_edit()
