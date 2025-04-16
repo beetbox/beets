@@ -280,7 +280,7 @@ var AppView = Backbone.View.extend({
     updateMediaSession: function (item) {
       if ("mediaSession" in navigator) {
         const album_id = item.get("album_id");
-        album_art_url = "album/" + album_id + "/art";
+        const album_art_url = "album/" + album_id + "/art";
         navigator.mediaSession.metadata = new MediaMetadata({
           title: item.get("title"),
           artist: item.get("artist"),
