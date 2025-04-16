@@ -661,15 +661,11 @@ def album_candidates(
     if config["musicbrainz"]["enabled"]:
         # Base candidates if we have album and artist to match.
         if artist and album:
-            yield from invoke_mb(
-                mb.match_album, artist, album, len(items), extra_tags
-            )
+            yield from invoke_mb(mb.match_album, artist, album, len(items), extra_tags)
 
         # Also add VA matches from MusicBrainz where appropriate.
         if va_likely and album:
-            yield from invoke_mb(
-                mb.match_album, None, album, len(items), extra_tags
-            )
+            yield from invoke_mb(mb.match_album, None, album, len(items), extra_tags)
 
     # Candidates from plugins.
     yield from plugins.candidates(items, artist, album, va_likely, extra_tags)

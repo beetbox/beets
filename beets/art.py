@@ -63,9 +63,7 @@ def embed_item(
     """Embed an image into the item's media file."""
     # Conditions.
     if compare_threshold:
-        is_similar = check_art_similarity(
-            log, item, imagepath, compare_threshold
-        )
+        is_similar = check_art_similarity(log, item, imagepath, compare_threshold)
         if is_similar is None:
             log.warning("Error while checking art similarity; skipping.")
             return
@@ -148,9 +146,7 @@ def resize_image(log, imagepath, maxwidth, quality):
         maxwidth,
         quality,
     )
-    imagepath = ArtResizer.shared.resize(
-        maxwidth, syspath(imagepath), quality=quality
-    )
+    imagepath = ArtResizer.shared.resize(maxwidth, syspath(imagepath), quality=quality)
     return imagepath
 
 
