@@ -402,7 +402,15 @@ def find_plugins() -> list[BeetsPlugin]:
     for cls in _classes:
         # Only instantiate each plugin class once.
         if cls not in _instances:
-            _instances[cls] = cls()
+            try:
+                _instances[cls] = cls()
+            except Exception:
+                log.error(
+                    "failed to initialize plugin class {}.{}",
+                    cls.__module__,
+                    cls.__qualname__,
+                )
+                raise
         plugins.append(_instances[cls])
     return plugins
 
