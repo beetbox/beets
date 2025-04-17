@@ -281,3 +281,13 @@ ignore-variadic-names = true
 [tool.ruff.lint.pep8-naming]
 classmethod-decorators = ["cached_classproperty"]
 extend-ignore-names = ["assert*", "cached_classproperty"]
+
+[tool.mypy]
+disallow_untyped_decorators = true
+check_untyped_defs = true
+disallow_any_generics = true
+strict_optional = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+warn_return_any = true
+allow_redefinition = true
