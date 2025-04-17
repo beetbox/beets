@@ -273,16 +273,15 @@ def load_plugins(names=()):
 
         try:
             namespace = __import__(modname, None, None)
-        except ImportError as exc:
-            # Again, this is hacky:
-            if exc.args[0].endswith(" " + name):
-                log.warning("** plugin {0} not found", name)
-            else:
-                log.warning(
-                    "** error loading plugin {}:\n{}",
-                    name,
-                    traceback.format_exc(),
-                )
+        except ModuleNotFoundError:
+            log.warning("** plugin {} not found", name)
+            continue
+        except ImportError:
+            log.warning(
+                "** error loading plugin {}:\n{}",
+                name,
+                traceback.format_exc(),
+            )
             continue
 
         for obj in getattr(namespace, name).__dict__.values():
