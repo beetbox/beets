@@ -24,14 +24,10 @@ from typing import (
     Callable,
     Iterable,
     TypeVar,
-    cast,
     ParamSpec,
-    TypeAlias,
     Generic,
-    Any,
 )
 
-from beets.importer import ImportSession, ImportTask
 import mediafile
 
 import beets
@@ -81,12 +77,17 @@ R = TypeVar("R")  # For capturing return type
 PluginMethod = Callable[P, R]
 
 # A plugin import stage function takes an ImportSession and ImportTask and returns None
-PluginImportStage = Callable[[ImportSession, ImportTask], None]
+PluginImportStage = Callable[["ImportSession", "ImportTask"], None]
 
 # A wrapped function preserves the signature of the original function
-# T is a TypeVar bound to Callable to represent the specific function type being wrapped
 T = TypeVar("T", bound=Callable)
-WrappedPluginMethod = T  # This means WrappedPluginMethod[PluginImportStage] is a wrapped PluginImportStage
+
+
+# Create a proper generic type for wrapped plugin methods
+class WrappedPluginMethod(Generic[T]):
+    """A wrapper around a plugin method that preserves its signature."""
+
+    pass
 
 
 class BeetsPlugin:

@@ -2,7 +2,7 @@
 
 import asyncio
 from dataclasses import dataclass, field
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Coroutine, Generator
 
 import pytest
 import pytest_asyncio
@@ -20,7 +20,7 @@ class Task:
     states: list[str] = field(default_factory=list)
 
 
-def handler_for(state: str) -> StateTaskHandler[Task]:
+def async_generator_handler(state: str) -> StateTaskHandler[Task]:
     async def handler(task: Task) -> AsyncGenerator[Task, None]:
         assert isinstance(task, Task)
         task.states.append(state)
@@ -29,12 +29,38 @@ def handler_for(state: str) -> StateTaskHandler[Task]:
     return handler
 
 
+def generator_handler(state: str) -> StateTaskHandler[Task]:
+    def handler(task: Task) -> Generator[Task, None, None]:
+        assert isinstance(task, Task)
+        task.states.append(state)
+        yield task
+
+    return handler
+
+
+def coroutine_handler(state: str) -> StateTaskHandler[Task]:
+    async def handler(task: Task) -> Coroutine[Task, None, None]:
+        assert isinstance(task, Task)
+        task.states.append(state)
+        return task
+
+    return handler
+
+
+def handler_for(state: str) -> StateTaskHandler[Task]:
+    def handler(task: Task) -> Task:
+        assert isinstance(task, Task)
+        task.states.append(state)
+        return task
+
+    return handler
+
+
 @pytest_asyncio.fixture
 async def sm() -> AsyncGenerator[AsyncStateMachine[Task], None]:
     """Create a simple test state machine."""
 
-    def always(_):
-        return True
+    always = lambda _: True
 
     transition_graph = (
         (
@@ -112,6 +138,37 @@ async def test_invalid_transition():
 
     with pytest.raises(ValueError):
         AsyncStateMachine(transition_graph)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "handler",
+    [
+        async_generator_handler("INIT"),  # Async generator
+        generator_handler("INIT"),  # Generator
+        coroutine_handler("INIT"),  # Coroutine
+        handler_for("INIT"),  # Regular function
+    ],
+)
+async def test_handler_types(handler):
+    """Test that handlers can be of different types."""
+    transition_graph = (
+        (
+            State(
+                id="INIT",
+                max_queue_size=1,
+                handler=handler,
+                accumulate=True,
+            ),
+            tuple(),
+        ),
+    )
+
+    async with AsyncStateMachine(transition_graph) as machine:
+        await machine.inject(Task(value=1), "INIT")
+        async for output in machine.accumulated("INIT"):
+            assert output.value == 1
+            assert output.states == ["INIT"]
 
 
 @pytest.mark.asyncio

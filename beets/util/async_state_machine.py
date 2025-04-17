@@ -116,9 +116,17 @@ from __future__ import annotations
 import asyncio
 import collections
 import logging
+from beets import logging
 from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass, field
-from typing import AsyncGenerator, Callable, Generic, TypeVar
+from typing import (
+    AsyncGenerator,
+    Callable,
+    Coroutine,
+    Generator,
+    Generic,
+    TypeVar,
+)
 
 from frozendict import frozendict
 
@@ -127,7 +135,13 @@ T = TypeVar("T")
 log = logging.getLogger("beets")
 
 StateId = str
-StateTaskHandler = Callable[[T], AsyncGenerator[T, None]]
+StateTaskHandler = Callable[
+    [T],
+    AsyncGenerator[T, None]
+    | Generator[T, None, None]
+    | Coroutine[T, None, None]
+    | T,
+]
 
 
 @dataclass(frozen=True)
@@ -414,19 +428,10 @@ class AsyncStateMachine(AbstractAsyncContextManager, Generic[T]):
 
         # Verify that all transitions reference valid state IDs
         for state, transitions in graph:
-            transition_state_ids = collections.Counter(
+            transition_state_ids = set(
                 id for id, _ in transitions
             )
-            nonunique_ids = tuple(
-                id for id, count in transition_state_ids.items() if count > 1
-            )
-            if nonunique_ids:
-                raise ValueError(
-                    "Duplicate transition state IDs found in transitions for state "
-                    f"{state.id}: {nonunique_ids}"
-                )
-
-            for id in transition_state_ids.keys():
+            for id in transition_state_ids:
                 if id not in state_ids:
                     raise ValueError(
                         f"Invalid transition in state {state.id}: "
@@ -446,47 +451,50 @@ class AsyncStateMachine(AbstractAsyncContextManager, Generic[T]):
             A function that wraps the handler function.
         """
 
+        async def transition(trepr: str, ptask: T) -> None:
+            next_state = self._next_state(ptask, self._transitions[state])
+            prepr = str(ptask)
+            if next_state:
+                log.debug(
+                    "{0:s}: {1:s} -> {2:s} -> {3:s}",
+                    state.id,
+                    trepr,
+                    prepr,
+                    next_state.id,
+                )
+                await next_state._queue.put(ptask)
+
+            if state.accumulate:
+                log.debug(
+                    "{0:s}: {1:s} -> {2:s} -> accumulator",
+                    state.id,
+                    trepr,
+                    prepr,
+                )
+                await state._accumulator.put(ptask)
+
+            if not next_state and not state.accumulate:
+                log.debug(
+                    "{0:s}: {1:s} -> {2:s} -> terminal",
+                    state.id,
+                    trepr,
+                    prepr,
+                )
+
         async def wrapped(task: T) -> None:
-            unmodified_task_repr = repr(task)
+            trepr = str(task)
 
-            new_tasks = state.handler(task)
-            if new_tasks:
-                if not isinstance(new_tasks, AsyncGenerator):
-                    raise ValueError(
-                        f"Handler for state {state.id} is not an async generator; "
-                        f"returned: {new_tasks}"
-                    )
-
-                async for new_task in new_tasks:
-                    next_state = self._next_state(
-                        new_task, self._transitions[state]
-                    )
-                    if next_state:
-                        log.debug(
-                            "%s: %s -> %s -> %s",
-                            state.id,
-                            unmodified_task_repr,
-                            new_task,
-                            next_state.id,
-                        )
-                        await next_state._queue.put(new_task)
-
-                    if state.accumulate:
-                        log.debug(
-                            "%s: %s -> %s -> accumulator",
-                            state.id,
-                            unmodified_task_repr,
-                            new_task,
-                        )
-                        await state._accumulator.put(new_task)
-
-                    if not next_state and not state.accumulate:
-                        log.debug(
-                            "%s: %s -> %s -> terminal",
-                            state.id,
-                            unmodified_task_repr,
-                            new_task,
-                        )
+            processed = state.handler(task)
+            if isinstance(processed, AsyncGenerator):
+                async for ptask in processed:
+                    await transition(trepr, ptask)
+            elif isinstance(processed, Generator):
+                for ptask in processed:
+                    await transition(trepr, ptask)
+            elif isinstance(processed, Coroutine):
+                await transition(trepr, await processed)
+            else:
+                await transition(trepr, processed)
 
         return wrapped
 
@@ -521,7 +529,7 @@ class AsyncStateMachine(AbstractAsyncContextManager, Generic[T]):
 
     async def _process_state_queue(self, state: State[T]):
         """Process tasks in this state's queue."""
-        log.debug("%s: starting processor", state.id)
+        log.debug("{0:s}: starting processor", state.id)
         queue = state._queue
         handler = self._decorated_handle_fns[state]
         while True:
@@ -533,14 +541,14 @@ class AsyncStateMachine(AbstractAsyncContextManager, Generic[T]):
             try:
                 await handler(task)
             except asyncio.exceptions.CancelledError:
-                log.debug("%s: task %s cancelled", state.id, task)
+                log.debug("{0:s}: task {1:s} cancelled", state.id, task)
                 return
             except Exception as e:
                 log.exception(
-                    "%s: error processing task %s: %s",
+                    "{0:s}: error processing task {1:s}: {2:s}",
                     state.id,
-                    task,
-                    e,
+                    str(task),
+                    str(e),
                     exc_info=True,
                 )
                 raise
@@ -574,7 +582,7 @@ class AsyncStateMachine(AbstractAsyncContextManager, Generic[T]):
             for state in self._states
             for i in range(self._n_processors(state))
         ]
-        log.debug("Started %d processor tasks", len(self._processor_tasks))
+        log.debug("Started {0:d} processor tasks", len(self._processor_tasks))
 
     async def inject(self, task: T, state_id: StateId) -> None:
         """Inject a task into the state machine, and wait for it to be enqueued.
@@ -588,7 +596,7 @@ class AsyncStateMachine(AbstractAsyncContextManager, Generic[T]):
             task: The task to inject.
             state_id: The state to inject the task into.
         """
-        log.debug("Injector: %s -> %s", task, state_id)
+        log.debug("Injector: {0:s} -> {1:s}", str(task), state_id)
         state = self._states_by_id[state_id]
         await state._queue.put(task)
 
@@ -604,6 +612,10 @@ class AsyncStateMachine(AbstractAsyncContextManager, Generic[T]):
         """
         assert state_id in self._states_by_id, f"State '{state_id}' not found"
         state = self._states_by_id[state_id]
+
+        assert (
+            state.accumulate
+        ), f"State '{state.id}' does not accumulate outputs"
         accumulator = state._accumulator
 
         # Iterate until both the state machine is empty and the accumulator is
@@ -613,7 +625,7 @@ class AsyncStateMachine(AbstractAsyncContextManager, Generic[T]):
             if not accumulator.empty():
                 value = await accumulator.get()
                 accumulator.task_done()
-                log.debug("%s: accumulator -> %s", state.id, value)
+                log.debug("{0:s}: accumulator -> {1:s}", state.id, str(value))
                 yield value
             else:
                 await asyncio.sleep(0.1)
@@ -624,7 +636,7 @@ class AsyncStateMachine(AbstractAsyncContextManager, Generic[T]):
             log.debug("State machine state:")
             for s in self._states:
                 log.debug(
-                    "\t%s\tqueue: %d/%s, accumulator: %d/%s",
+                    "\t{0:s}\tqueue: {1:d}/{2:s}, accumulator: {3:d}/{4:s}",
                     s.id,
                     s._queue.qsize(),
                     s.max_queue_size or "∞",

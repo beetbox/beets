@@ -28,6 +28,7 @@ information or mock the environment.
 
 from __future__ import annotations
 
+import asyncio
 import os
 import os.path
 import shutil
@@ -656,7 +657,7 @@ class AsIsImporterMixin:
 
     def run_asis_importer(self, **kwargs):
         importer = self.setup_importer(autotag=False, **kwargs)
-        importer.run()
+        asyncio.run(importer.run())
         return importer
 
 
