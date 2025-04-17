@@ -11,6 +11,10 @@ been dropped.
 
 New features:
 
+* :doc:`/guides/main`: Added progress bars for most commands, showing how many
+  albums or songs have been changed (white), how many were unchanged (blue),
+  and how many errors there were (red). The progress bar includes how much time
+  has passed and an estimate of how much time is left.
 * :doc:`plugins/lastgenre`: The new configuration option, ``keep_existing``,
   provides more fine-grained control over how pre-populated genre tags are
   handled. The ``force`` option now behaves in a more conventional manner.

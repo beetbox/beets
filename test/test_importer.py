@@ -233,8 +233,8 @@ class NonAutotaggedImportTest(AsIsImporterMixin, ImportTestCase):
             )
 
 
-def create_archive(session):
-    (handle, path) = mkstemp(dir=os.fsdecode(session.temp_dir))
+def create_archive(temp_dir):
+    (handle, path) = mkstemp(dir=os.fsdecode(temp_dir))
     path = bytestring_path(path)
     os.close(handle)
     archive = ZipFile(os.fsdecode(path), mode="w")
@@ -244,30 +244,36 @@ def create_archive(session):
     return path
 
 
-class RmTempTest(BeetsTestCase):
+class RmTempTest(ImportTestCase):
     """Tests that temporarily extracted archives are properly removed
     after usage.
     """
 
     def setUp(self):
         super().setUp()
-        self.want_resume = False
-        self.config["incremental"] = False
+        self.importer = self.setup_importer()
+        self.importer.want_resume = False
+        self.importer.config = {
+            "incremental": False,
+            "copy": False,
+            "delete": False,
+            "move": False,
+        }
         self._old_home = None
 
     def test_rm(self):
-        zip_path = create_archive(self)
+        zip_path = create_archive(self.temp_dir)
         archive_task = importer.ArchiveImportTask(zip_path)
         archive_task.extract()
         tmp_path = archive_task.toppath
         self.assertExists(tmp_path)
-        archive_task.finalize(self)
+        archive_task.finalize(self.importer)
         self.assertNotExists(tmp_path)
 
 
 class ImportZipTest(AsIsImporterMixin, ImportTestCase):
     def test_import_zip(self):
-        zip_path = create_archive(self)
+        zip_path = create_archive(self.temp_dir)
         assert len(self.lib.items()) == 0
         assert len(self.lib.albums()) == 0
 
@@ -662,6 +668,7 @@ class ImportTracksTest(ImportTestCase):
         self.importer.run()
         assert self.lib.items().get().title == "Applied Track 1"
         assert self.lib.albums().get() is None
+        assert self.importer.created == 2
 
     def test_apply_tracks_adds_singleton_path(self):
         self.assert_lib_dir_empty()
@@ -671,6 +678,10 @@ class ImportTracksTest(ImportTestCase):
         self.importer.add_choice(importer.action.APPLY)
         self.importer.run()
         self.assert_file_in_lib(b"singletons", b"Applied Track 1.mp3")
+        assert self.importer.created == 2
+        assert self.importer.candidates_found == 2
+        assert self.importer.match_chosen == 1
+        assert self.importer.finalized == 3
 
 
 class ImportCompilationTest(ImportTestCase):
@@ -1839,6 +1850,7 @@ class ImportMusicBrainzIdTest(ImportTestCase):
     def setUp(self):
         super().setUp()
         self.prepare_album_for_import(1)
+        self.setup_importer()
 
     def test_one_mbid_one_album(self):
         self.setup_importer(
@@ -1895,7 +1907,7 @@ class ImportMusicBrainzIdTest(ImportTestCase):
             "an invalid and discarded id",
         ]
 
-        task.lookup_candidates()
+        task.lookup_candidates(self.importer)
         assert {"VALID_RELEASE_0", "VALID_RELEASE_1"} == {
             c.info.album for c in task.candidates
         }
@@ -1911,7 +1923,7 @@ class ImportMusicBrainzIdTest(ImportTestCase):
             "an invalid and discarded id",
         ]
 
-        task.lookup_candidates()
+        task.lookup_candidates(self.importer)
         assert {"VALID_RECORDING_0", "VALID_RECORDING_1"} == {
             c.info.title for c in task.candidates
         }

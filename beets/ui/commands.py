@@ -16,6 +16,7 @@
 interface.
 """
 
+import enum
 import os
 import re
 from collections import Counter
@@ -23,6 +24,8 @@ from collections.abc import Sequence
 from itertools import chain
 from platform import python_version
 from typing import Any, NamedTuple
+
+import enlighten
 
 import beets
 from beets import autotag, config, importer, library, logging, plugins, ui, util
@@ -1030,8 +1033,114 @@ def abort_action(session, task):
     raise importer.ImportAbortError()
 
 
+class ProgressBar(enum.Enum):
+    """Progress bar types, representing the user-visible import stages.
+
+    Closely follows the stages of the `ImportTask` class, with the addition of
+    "Reading" to indicate reading the files from disk and constructing the
+    ImportTasks.
+
+    The `IMPORTING` bar tracks the overall progress of the import. It is
+    initialized at the start of`ImportTask.lookup_candidates` and updated at
+    the end of `ImportTask.finalize`.
+
+    The progress bars are managed by tracking which stage the individual
+    ImportTasks are assigned to. For example, if a task is in the 'Matching'
+    stage, and the user has selected a candidate to apply, then the ImportTask
+    will be removed from the 'Matching' stage and added to the 'Applying'
+    stage. When this is done, the 'MATCHING' bar will have its progress updated,
+    and the 'APPLYING' bar's total will be incremented.
+
+    If instead of selecting a candidate, the user skips the album, then the
+    ImportTask is simply removed from the 'Matching' stage and the 'IMPORTING'
+    bar is decremented.
+
+    These assignments are handled in `TerminalImportSession`'s methods, specifically:
+     - `tasks_created`
+     - `task_candidates_found`
+     - `task_match_chosen`
+     - `task_finalized`
+
+    IMPORTING is also handled separately. Its total is incremented in
+    `ImportTask.lookup_candidates` and progress updated in `ImportTask.finalize`.
+
+    Rendering and directly updating the progress bars is handled in
+    `TerminalImportSession.render_progress_bars`.
+    """
+
+    # ImportTasks searching for candidates.
+    SEARCHING = "Searching"
+
+    # Calculating distance between candidate and target tracks.
+    MATCHING = "Matching"
+
+    # Applying metadata, saving to database, and writing to disk.
+    APPLYING = "Applying"
+
+
 class TerminalImportSession(importer.ImportSession):
     """An import session that runs in a terminal."""
+
+    manager: enlighten.Manager
+    pbars: dict[ProgressBar, enlighten.Counter]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.manager = enlighten.get_manager(
+            total=0, unit="items", autorefresh=True, leave=False
+        )
+        self.pbars = {
+            bar_type: self.manager.counter(desc=bar_type, position=3 - i)
+            for i, bar_type in enumerate(
+                (
+                    ProgressBar.SEARCHING,
+                    ProgressBar.MATCHING,
+                    ProgressBar.APPLYING,
+                )
+            )
+        }
+
+    def tasks_created(self, tasks: list[importer.ImportTask]):
+        for pbar in self.pbars.values():
+            pbar.total += len(tasks)
+            pbar.refresh()
+
+    def task_candidates_found(self):
+        self.pbars[ProgressBar.SEARCHING].update()
+
+    def task_match_chosen(self):
+        self.pbars[ProgressBar.MATCHING].update()
+
+    def task_finalized(self):
+        pbar = self.pbars[ProgressBar.APPLYING]
+        pbar.update()
+        if pbar.count == pbar.total:
+            self.manager.stop()
+
+    def set_choice(
+        self, choice: importer.action | autotag.AlbumMatch | autotag.TrackMatch
+    ):
+        """Set the choice for the given task."""
+        super().set_choice(choice)
+        self.pbars[ProgressBar.MATCHING].update()
+
+    def imported_items(self):
+        """Get the items that have been imported."""
+        items = super().imported_items()
+        if items:
+            for bar_type in ProgressBar:
+                if bar_type != ProgressBar.READING:
+                    unit = "items"
+                    self.pbars[bar_type] = self.manager.counter(
+                        total=len(items), desc=bar_type, unit=unit
+                    )
+        return items
+
+    def lookup_candidates(self):
+        """Lookup candidates for the given task."""
+        self.pbars[ProgressBar.SEARCHING].update()
+        super().lookup_candidates()
 
     def choose_match(self, task):
         """Given an initial autotagging of items, go through an interactive
@@ -1648,92 +1757,117 @@ def update_items(lib, query, album, move, pretend, fields, exclude_fields=None):
 
         # Walk through the items and pick up their changes.
         affected_albums = set()
-        for item in items:
-            # Item deleted?
-            if not item.path or not os.path.exists(syspath(item.path)):
-                ui.print_(format(item))
-                ui.print_(ui.colorize("text_error", "  deleted"))
-                if not pretend:
-                    item.remove(True)
-                affected_albums.add(item.album_id)
-                continue
-
-            # Did the item change since last checked?
-            if item.current_mtime() <= item.mtime:
-                log.debug(
-                    "skipping {0} because mtime is up to date ({1})",
-                    displayable_path(item.path),
-                    item.mtime,
-                )
-                continue
-
-            # Read new data.
-            try:
-                item.read()
-            except library.ReadError as exc:
-                log.error(
-                    "error reading {0}: {1}", displayable_path(item.path), exc
-                )
-                continue
-
-            # Special-case album artist when it matches track artist. (Hacky
-            # but necessary for preserving album-level metadata for non-
-            # autotagged imports.)
-            if not item.albumartist:
-                old_item = lib.get_item(item.id)
-                if old_item.albumartist == old_item.artist == item.artist:
-                    item.albumartist = old_item.albumartist
-                    item._dirty.discard("albumartist")
-
-            # Check for and display changes.
-            changed = ui.show_model_changes(item, fields=item_fields)
-
-            # Save changes.
-            if not pretend:
-                if changed:
-                    # Move the item if it's in the library.
-                    if move and lib.directory in ancestry(item.path):
-                        item.move(store=False)
-
-                    item.store(fields=item_fields)
+        with ui.changes_and_errors_pbars(
+            total=len(items),
+            desc="Updating items",
+            unit="items",
+        ) as (n_changed, n_unchanged, n_errors):
+            for item in items:
+                # Item deleted?
+                if not item.path or not os.path.exists(syspath(item.path)):
+                    ui.print_(format(item))
+                    ui.print_(ui.colorize("text_error", "  deleted"))
+                    if not pretend:
+                        item.remove(True)
+                    n_changed.update()
                     affected_albums.add(item.album_id)
+                    continue
+
+                # Did the item change since last checked?
+                if item.current_mtime() <= item.mtime:
+                    log.debug(
+                        "skipping {0} because mtime is up to date ({1})",
+                        displayable_path(item.path),
+                        item.mtime,
+                    )
+                    n_unchanged.update()
+                    continue
+
+                # Read new data.
+                try:
+                    item.read()
+                except library.ReadError as exc:
+                    log.error(
+                        "error reading {0}: {1}",
+                        displayable_path(item.path),
+                        exc,
+                    )
+                    n_errors.update()
+                    continue
+
+                # Special-case album artist when it matches track artist. (Hacky
+                # but necessary for preserving album-level metadata for non-
+                # autotagged imports.)
+                if not item.albumartist:
+                    old_item = lib.get_item(item.id)
+                    if old_item.albumartist == old_item.artist == item.artist:
+                        item.albumartist = old_item.albumartist
+                        item._dirty.discard("albumartist")
+
+                # Check for and display changes.
+                changed = ui.show_model_changes(item, fields=item_fields)
+
+                # Save changes.
+                if not pretend:
+                    if changed:
+                        # Move the item if it's in the library.
+                        if move and lib.directory in ancestry(item.path):
+                            item.move(store=False)
+
+                        item.store(fields=item_fields)
+                        affected_albums.add(item.album_id)
+                    else:
+                        # The file's mtime was different, but there were no
+                        # changes to the metadata. Store the new mtime,
+                        # which is set in the call to read(), so we don't
+                        # check this again in the future.
+                        item.store(fields=item_fields)
+
+                if changed and not pretend:
+                    n_changed.update()
                 else:
-                    # The file's mtime was different, but there were no
-                    # changes to the metadata. Store the new mtime,
-                    # which is set in the call to read(), so we don't
-                    # check this again in the future.
-                    item.store(fields=item_fields)
+                    n_unchanged.update()
 
         # Skip album changes while pretending.
         if pretend:
             return
 
         # Modify affected albums to reflect changes in their items.
-        for album_id in affected_albums:
-            if album_id is None:  # Singletons.
-                continue
-            album = lib.get_album(album_id)
-            if not album:  # Empty albums have already been removed.
-                log.debug("emptied album {0}", album_id)
-                continue
-            first_item = album.items().get()
+        with ui.changes_and_errors_pbars(
+            total=len(affected_albums),
+            desc="Updating albums",
+            unit="albums",
+        ) as (n_changed, n_unchanged, _):
+            for album_id in affected_albums:
+                if album_id is None:  # Singletons.
+                    n_unchanged.update()
+                    continue
 
-            # Update album structure to reflect an item in it.
-            for key in library.Album.item_keys:
-                album[key] = first_item[key]
-            album.store(fields=album_fields)
+                album = lib.get_album(album_id)
+                if not album:  # Empty albums have already been removed.
+                    log.debug("emptied album {0}", album_id)
+                    n_unchanged.update()
+                    continue
 
-            # Move album art (and any inconsistent items).
-            if move and lib.directory in ancestry(first_item.path):
-                log.debug("moving album {0}", album_id)
+                first_item = album.items().get()
 
-                # Manually moving and storing the album.
-                items = list(album.items())
-                for item in items:
-                    item.move(store=False, with_album=False)
-                    item.store(fields=item_fields)
-                album.move(store=False)
+                # Update album structure to reflect an item in it.
+                for key in library.Album.item_keys:
+                    album[key] = first_item[key]
                 album.store(fields=album_fields)
+                n_changed.update()
+
+                # Move album art (and any inconsistent items).
+                if move and lib.directory in ancestry(first_item.path):
+                    log.debug("moving album {0}", album_id)
+
+                    # Manually moving and storing the album.
+                    items = list(album.items())
+                    for item in items:
+                        item.move(store=False, with_album=False)
+                        item.store(fields=item_fields)
+                    album.move(store=False)
+                    album.store(fields=album_fields)
 
 
 def update_func(lib, opts, args):
@@ -2278,29 +2412,41 @@ def write_items(lib, query, pretend, force):
     """
     items, albums = _do_query(lib, query, False, False)
 
-    for item in items:
-        # Item deleted?
-        if not os.path.exists(syspath(item.path)):
-            log.info("missing file: {0}", util.displayable_path(item.path))
-            continue
+    with ui.changes_and_errors_pbars(
+        total=len(items),
+        desc="Writing tags",
+        unit="items",
+    ) as (n_changed, n_unchanged, n_errors):
+        for item in items:
+            # Item deleted?
+            if not os.path.exists(syspath(item.path)):
+                log.info("missing file: {0}", util.displayable_path(item.path))
+                n_errors.update()
+                continue
 
-        # Get an Item object reflecting the "clean" (on-disk) state.
-        try:
-            clean_item = library.Item.from_path(item.path)
-        except library.ReadError as exc:
-            log.error(
-                "error reading {0}: {1}", displayable_path(item.path), exc
+            # Get an Item object reflecting the "clean" (on-disk) state.
+            try:
+                clean_item = library.Item.from_path(item.path)
+            except library.ReadError as exc:
+                log.error(
+                    "error reading {0}: {1}",
+                    displayable_path(item.path),
+                    exc,
+                )
+                n_errors.update()
+                continue
+
+            # Check for and display changes.
+            changed = ui.show_model_changes(
+                item, clean_item, library.Item._media_tag_fields, force
             )
-            continue
-
-        # Check for and display changes.
-        changed = ui.show_model_changes(
-            item, clean_item, library.Item._media_tag_fields, force
-        )
-        if (changed or force) and not pretend:
-            # We use `try_sync` here to keep the mtime up to date in the
-            # database.
-            item.try_sync(True, False)
+            if (changed or force) and not pretend:
+                # We use `try_sync` here to keep the mtime up to date in the
+                # database.
+                item.try_sync(True, False)
+                n_changed.update()
+            else:
+                n_unchanged.update()
 
 
 def write_func(lib, opts, args):

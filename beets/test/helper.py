@@ -679,12 +679,29 @@ class ImportSessionFixture(ImportSession):
     remaining albums, the metadata from the autotagger will be applied.
     """
 
+    created: int = 0
+    candidates_found: int = 0
+    match_chosen: int = 0
+    finalized: int = 0
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._choices = []
         self._resolutions = []
 
     default_choice = importer.action.APPLY
+
+    def tasks_created(self, tasks: list[importer.ImportTask]) -> None:
+        self.created += len(tasks)
+
+    def task_candidates_found(self) -> None:
+        self.candidates_found += 1
+
+    def task_match_chosen(self) -> None:
+        self.match_chosen += 1
+
+    def task_finalized(self) -> None:
+        self.finalized += 1
 
     def add_choice(self, choice):
         self._choices.append(choice)
@@ -726,12 +743,29 @@ class ImportSessionFixture(ImportSession):
 
 
 class TerminalImportSessionFixture(TerminalImportSession):
+    created: int = 0
+    candidates_found: int = 0
+    match_chosen: int = 0
+    finalized: int = 0
+
     def __init__(self, *args, **kwargs):
         self.io = kwargs.pop("io")
         super().__init__(*args, **kwargs)
         self._choices = []
 
     default_choice = importer.action.APPLY
+
+    def tasks_created(self, tasks: list[importer.ImportTask]) -> None:
+        self.created += len(tasks)
+
+    def task_candidates_found(self) -> None:
+        self.candidates_found += 1
+
+    def task_match_chosen(self) -> None:
+        self.match_chosen += 1
+
+    def task_finalized(self) -> None:
+        self.finalized += 1
 
     def add_choice(self, choice):
         self._choices.append(choice)
