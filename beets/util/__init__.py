@@ -605,7 +605,9 @@ def hardlink(path: bytes, dest: bytes, replace: bool = False):
     if os.path.exists(syspath(dest)) and not replace:
         raise FilesystemError("file exists", "rename", (path, dest))
     try:
-        os.link(syspath(path), syspath(dest))
+        # This step dereferences any symlinks and converts to an absolute path
+        resolved_origin = Path(syspath(path)).resolve()
+        os.link(resolved_origin, syspath(dest))
     except NotImplementedError:
         raise FilesystemError(
             "OS does not support hard links." "link",
