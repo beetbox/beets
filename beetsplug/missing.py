@@ -197,13 +197,15 @@ class MissingPlugin(BeetsPlugin):
         total_missing = 0
         calculating_total = self.config["total"].get()
         with ui.changes_and_errors_pbars(
-            total=len(albums_by_artist),
+            total=len(album_ids_by_artist),
             desc="Analyzing artists",
             unit="artists",
         ) as (_, n_unchanged, n_errors):
             for (artist, artist_id), album_ids in album_ids_by_artist.items():
                 try:
-                    resp = musicbrainzngs.browse_release_groups(artist=artist_id)
+                    resp = musicbrainzngs.browse_release_groups(
+                        artist=artist_id
+                    )
                 except MusicBrainzError as err:
                     self._log.info(
                         "Couldn't fetch info for artist '{}' ({}) - '{}'",

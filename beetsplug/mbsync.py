@@ -99,12 +99,12 @@ class MBSyncPlugin(BeetsPlugin):
         """Retrieve and apply info from the autotagger for albums matched by
         query and their items.
         """
-        for a in ui.iprogress_bar(
+        for album in ui.iprogress_bar(
             lib.albums(query),
             desc="Syncing albums",
             unit="albums",
         ):
-            if not a.mb_albumid:
+            if not album.mb_albumid:
                 self._log.info("Skipping album with no mb_albumid: {}", album)
                 continue
 
