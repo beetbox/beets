@@ -60,7 +60,7 @@ jobs:
         env:
           LYRICS_UPDATED: ${{ steps.lyrics-update.outputs.any_changed }}
         run: |
-          poetry install --extras=autobpm --extras=lyrics --extras=docs --extras=replaygain --extras=reflink
+          poetry install --extras=autobpm --extras=lyrics --extras=docs --extras=replaygain --extras=reflink --extras=fetchart
           poe docs
           poe test-with-coverage
 
