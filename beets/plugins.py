@@ -44,6 +44,7 @@ if TYPE_CHECKING:
 
     from beets.autotag import AlbumInfo, Distance, TrackInfo
     from beets.dbcore import Query
+    from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Item, Library
     from beets.ui import Subcommand
 
@@ -96,6 +97,8 @@ class BeetsPlugin:
 
     name: str
     config: ConfigView
+    early_import_stages: list[Callable[[ImportSession, ImportTask], None]]
+    import_stages: list[Callable[[ImportSession, ImportTask], None]]
 
     def __init__(self, name: str | None = None):
         """Perform one-time plugin setup."""
@@ -584,7 +587,7 @@ def send(event: str, **arguments: Any) -> list[Any]:
     Return a list of non-None values returned from the handlers.
     """
     log.debug("Sending event: {0}", event)
-    results = []
+    results: list[Any] = []
     for handler in event_handlers()[event]:
         result = handler(**arguments)
         if result is not None:
