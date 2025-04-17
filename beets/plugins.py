@@ -356,32 +356,30 @@ def load_plugins(names: Sequence[str] = ()) -> None:
     """
     for name in names:
         modname = f"{PLUGIN_NAMESPACE}.{name}"
-        try:
-            try:
-                namespace = __import__(modname, None, None)
-            except ImportError as exc:
-                # Again, this is hacky:
-                if exc.args[0].endswith(" " + name):
-                    log.warning("** plugin {0} not found", name)
-                else:
-                    raise
-            else:
-                for obj in getattr(namespace, name).__dict__.values():
-                    if (
-                        isinstance(obj, type)
-                        and issubclass(obj, BeetsPlugin)
-                        and obj != BeetsPlugin
-                        and obj != MetadataSourcePlugin
-                        and obj not in _classes
-                    ):
-                        _classes.add(obj)
 
-        except Exception:
-            log.warning(
-                "** error loading plugin {}:\n{}",
-                name,
-                traceback.format_exc(),
-            )
+        try:
+            namespace = __import__(modname, None, None)
+        except ImportError as exc:
+            # Again, this is hacky:
+            if exc.args[0].endswith(" " + name):
+                log.warning("** plugin {0} not found", name)
+            else:
+                log.warning(
+                    "** error loading plugin {}:\n{}",
+                    name,
+                    traceback.format_exc(),
+                )
+            continue
+
+        for obj in getattr(namespace, name).__dict__.values():
+            if (
+                isinstance(obj, type)
+                and issubclass(obj, BeetsPlugin)
+                and obj != BeetsPlugin
+                and obj != MetadataSourcePlugin
+                and obj not in _classes
+            ):
+                _classes.add(obj)
 
 
 _instances: dict[type[BeetsPlugin], BeetsPlugin] = {}
