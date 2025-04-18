@@ -137,7 +137,7 @@ class BeetsPlugin:
         if not any(isinstance(f, PluginLogFilter) for f in self._log.filters):
             self._log.addFilter(PluginLogFilter(self))
 
-    def commands(self):
+    def commands(self) -> Sequence[Subcommand]:
         """Should return a list of beets.ui.Subcommand objects for
         commands that should be added to beets' CLI.
         """
@@ -304,13 +304,13 @@ class BeetsPlugin:
     album_template_fields: TFuncMap[Album] | None = None
 
     @classmethod
-    def template_func(cls, name: str):
+    def template_func(cls, name: str) -> Callable[[TFunc[str]], TFunc[str]]:
         """Decorator that registers a path template function. The
         function will be invoked as ``%name{}`` from path format
         strings.
         """
 
-        def helper(func):
+        def helper(func: TFunc[str]) -> TFunc[str]:
             if cls.template_funcs is None:
                 cls.template_funcs = {}
             cls.template_funcs[name] = func
@@ -319,14 +319,14 @@ class BeetsPlugin:
         return helper
 
     @classmethod
-    def template_field(cls, name: str):
+    def template_field(cls, name: str) -> Callable[[TFunc[Item]], TFunc[Item]]:
         """Decorator that registers a path template field computation.
         The value will be referenced as ``$name`` from path format
         strings. The function must accept a single parameter, the Item
         being formatted.
         """
 
-        def helper(func):
+        def helper(func: TFunc[Item]) -> TFunc[Item]:
             if cls.template_fields is None:
                 cls.template_fields = {}
             cls.template_fields[name] = func
@@ -338,7 +338,7 @@ class BeetsPlugin:
 _classes: set[type[BeetsPlugin]] = set()
 
 
-def load_plugins(names: Sequence[str] = ()):
+def load_plugins(names: Sequence[str] = ()) -> None:
     """Imports the modules for a sequence of plugin names. Each name
     must be the name of a Python module under the "beetsplug" namespace
     package in sys.path; the module indicated should contain the
@@ -402,7 +402,7 @@ def find_plugins() -> list[BeetsPlugin]:
 
 def commands() -> list[Subcommand]:
     """Returns a list of Subcommand objects from all loaded plugins."""
-    out = []
+    out: list[Subcommand] = []
     for plugin in find_plugins():
         out += plugin.commands()
     return out
@@ -418,10 +418,10 @@ def queries() -> dict[str, type[Query]]:
     return out
 
 
-def types(model_cls):
+def types(model_cls: type[T]) -> dict[str, type[Any]]:
     # Gives us `item_types` and `album_types`
     attr_name = f"{model_cls.__name__.lower()}_types"
-    types = {}
+    types: dict[str, type[Any]] = {}
     for plugin in find_plugins():
         plugin_types = getattr(plugin, attr_name, {})
         for field in plugin_types:
@@ -435,10 +435,10 @@ def types(model_cls):
     return types
 
 
-def named_queries(model_cls):
+def named_queries(model_cls: type[T]) -> dict[str, Query]:
     # Gather `item_queries` and `album_queries` from the plugins.
     attr_name = f"{model_cls.__name__.lower()}_queries"
-    queries = {}
+    queries: dict[str, Query] = {}
     for plugin in find_plugins():
         plugin_queries = getattr(plugin, attr_name, {})
         queries.update(plugin_queries)
@@ -517,28 +517,28 @@ def track_for_id(_id: str) -> TrackInfo | None:
     return None
 
 
-def template_funcs():
+def template_funcs() -> TFuncMap[str]:
     """Get all the template functions declared by plugins as a
     dictionary.
     """
-    funcs = {}
+    funcs: TFuncMap[str] = {}
     for plugin in find_plugins():
         if plugin.template_funcs:
             funcs.update(plugin.template_funcs)
     return funcs
 
 
-def early_import_stages():
+def early_import_stages() -> list[ImportStageFunc]:
     """Get a list of early import stage functions defined by plugins."""
-    stages = []
+    stages: list[ImportStageFunc] = []
     for plugin in find_plugins():
         stages += plugin.get_early_import_stages()
     return stages
 
 
-def import_stages():
+def import_stages() -> list[ImportStageFunc]:
     """Get a list of import stage functions defined by plugins."""
-    stages = []
+    stages: list[ImportStageFunc] = []
     for plugin in find_plugins():
         stages += plugin.get_import_stages()
     return stages
@@ -551,7 +551,7 @@ F = TypeVar("F")
 
 def _check_conflicts_and_merge(
     plugin: BeetsPlugin, plugin_funcs: dict[str, F] | None, funcs: dict[str, F]
-):
+) -> None:
     """Check the provided template functions for conflicts and merge into funcs.
 
     Raises a `PluginConflictError` if a plugin defines template functions
@@ -617,7 +617,7 @@ def send(event: str, **arguments: Any) -> list[Any]:
     return results
 
 
-def feat_tokens(for_artist=True):
+def feat_tokens(for_artist: bool = True) -> str:
     """Return a regular expression that matches phrases like "featuring"
     that separate a main artist or a song title from secondary artists.
     The `for_artist` option determines whether the regex should be
@@ -631,14 +631,16 @@ def feat_tokens(for_artist=True):
     )
 
 
-def sanitize_choices(choices, choices_all):
+def sanitize_choices(
+    choices: Sequence[str], choices_all: Sequence[str]
+) -> list[str]:
     """Clean up a stringlist configuration attribute: keep only choices
     elements present in choices_all, remove duplicate elements, expand '*'
     wildcard while keeping original stringlist order.
     """
-    seen = set()
-    others = [x for x in choices_all if x not in choices]
-    res = []
+    seen: set[str] = set()
+    others: list[str] = [x for x in choices_all if x not in choices]
+    res: list[str] = []
     for s in choices:
         if s not in seen:
             if s in list(choices_all):
@@ -649,7 +651,9 @@ def sanitize_choices(choices, choices_all):
     return res
 
 
-def sanitize_pairs(pairs, pairs_all):
+def sanitize_pairs(
+    pairs: Sequence[tuple[str, str]], pairs_all: Sequence[tuple[str, str]]
+) -> list[tuple[str, str]]:
     """Clean up a single-element mapping configuration attribute as returned
     by Confuse's `Pairs` template: keep only two-element tuples present in
     pairs_all, remove duplicate elements, expand ('str', '*') and ('*', '*')
@@ -665,10 +669,10 @@ def sanitize_pairs(pairs, pairs_all):
     ...     )
     [('foo', 'baz'), ('foo', 'bar'), ('key', 'value'), ('foo', 'foobar')]
     """
-    pairs_all = list(pairs_all)
-    seen = set()
+    pairs_all: list[tuple[str, str]] = list(pairs_all)
+    seen: set[tuple[str, str]] = set()
     others = [x for x in pairs_all if x not in pairs]
-    res = []
+    res: list[tuple[str, str]] = []
     for k, values in pairs:
         for v in values.split():
             x = (k, v)
@@ -687,7 +691,9 @@ def sanitize_pairs(pairs, pairs_all):
     return res
 
 
-def notify_info_yielded(event):
+def notify_info_yielded(
+    event: str,
+) -> Callable[[Callable[P, Iterable[Ret]]], Callable[P, Iterable[Ret]]]:
     """Makes a generator send the event 'event' every time it yields.
     This decorator is supposed to decorate a generator, but any function
     returning an iterable should work.
@@ -695,8 +701,10 @@ def notify_info_yielded(event):
     'send'.
     """
 
-    def decorator(generator):
-        def decorated(*args, **kwargs):
+    def decorator(
+        generator: Callable[P, Iterable[Ret]],
+    ) -> Callable[P, Iterable[Ret]]:
+        def decorated(*args: P.args, **kwargs: P.kwargs) -> Iterable[Ret]:
             for v in generator(*args, **kwargs):
                 send(event, info=v)
                 yield v
@@ -722,7 +730,7 @@ def get_distance(
 
 def apply_item_changes(
     lib: Library, item: Item, move: bool, pretend: bool, write: bool
-):
+) -> None:
     """Store, move, and write the item according to the arguments.
 
     :param lib: beets library.
@@ -800,7 +808,12 @@ class MetadataSourcePlugin(Generic[R], BeetsPlugin, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def _search_api(self, query_type, filters, keywords="") -> Sequence[R]:
+    def _search_api(
+        self,
+        query_type: str,
+        filters: dict[str, str] | None,
+        keywords: str = "",
+    ) -> Sequence[R]:
         raise NotImplementedError
 
     @abc.abstractmethod
