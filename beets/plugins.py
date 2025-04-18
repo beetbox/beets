@@ -22,6 +22,7 @@ import re
 import traceback
 from collections import defaultdict
 from functools import wraps
+from importlib import import_module
 from typing import TYPE_CHECKING
 
 import mediafile
@@ -269,10 +270,8 @@ def load_plugins(names=()):
     BeetsPlugin subclasses desired.
     """
     for name in names:
-        modname = f"{PLUGIN_NAMESPACE}.{name}"
-
         try:
-            namespace = __import__(modname, None, None)
+            mod = import_module(f".{name}", package=PLUGIN_NAMESPACE)
         except ModuleNotFoundError:
             log.warning("** plugin {} not found", name)
             continue
@@ -284,13 +283,8 @@ def load_plugins(names=()):
             )
             continue
 
-        for obj in getattr(namespace, name).__dict__.values():
-            if (
-                isinstance(obj, type)
-                and issubclass(obj, BeetsPlugin)
-                and obj != BeetsPlugin
-                and obj not in _classes
-            ):
+        for _name, obj in inspect.getmembers(mod, inspect.isclass):
+            if issubclass(obj, BeetsPlugin) and obj != BeetsPlugin:
                 _classes.add(obj)
 
 
