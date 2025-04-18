@@ -391,7 +391,6 @@ def find_plugins() -> list[BeetsPlugin]:
         # See https://github.com/beetbox/beets/pull/3810
         return list(_instances.values())
 
-    load_plugins()
     plugins = []
     for cls in _classes:
         # Only instantiate each plugin class once.
