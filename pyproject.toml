@@ -114,6 +114,10 @@ click = ">=8.1.7"
 packaging = ">=24.0"
 tomli = ">=2.0.1"
 
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+
 [tool.poetry.extras]
 # inline comments note required external / non-python dependencies
 absubmit = ["requests"] # extractor binary from https://acousticbrainz.org/download
