@@ -23,6 +23,7 @@ import sys
 import traceback
 from collections import defaultdict
 from functools import wraps
+from importlib import import_module
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -355,10 +356,8 @@ def load_plugins(names: Sequence[str] = ()) -> None:
     BeetsPlugin subclasses desired.
     """
     for name in names:
-        modname = f"{PLUGIN_NAMESPACE}.{name}"
-
         try:
-            namespace = __import__(modname, None, None)
+            mod = import_module(f".{name}", package=PLUGIN_NAMESPACE)
         except ModuleNotFoundError:
             log.warning("** plugin {} not found", name)
             continue
@@ -370,13 +369,11 @@ def load_plugins(names: Sequence[str] = ()) -> None:
             )
             continue
 
-        for obj in getattr(namespace, name).__dict__.values():
+        for _name, obj in inspect.getmembers(mod, inspect.isclass):
             if (
-                isinstance(obj, type)
-                and issubclass(obj, BeetsPlugin)
+                issubclass(obj, BeetsPlugin)
                 and obj != BeetsPlugin
                 and obj != MetadataSourcePlugin
-                and obj not in _classes
             ):
                 _classes.add(obj)
 
