@@ -22,6 +22,7 @@ import re
 import traceback
 from collections import defaultdict
 from functools import wraps
+from importlib import import_module
 from typing import TYPE_CHECKING
 
 import mediafile
@@ -269,32 +270,22 @@ def load_plugins(names=()):
     BeetsPlugin subclasses desired.
     """
     for name in names:
-        modname = f"{PLUGIN_NAMESPACE}.{name}"
         try:
-            try:
-                namespace = __import__(modname, None, None)
-            except ImportError as exc:
-                # Again, this is hacky:
-                if exc.args[0].endswith(" " + name):
-                    log.warning("** plugin {0} not found", name)
-                else:
-                    raise
-            else:
-                for obj in getattr(namespace, name).__dict__.values():
-                    if (
-                        isinstance(obj, type)
-                        and issubclass(obj, BeetsPlugin)
-                        and obj != BeetsPlugin
-                        and obj not in _classes
-                    ):
-                        _classes.add(obj)
-
-        except Exception:
+            mod = import_module(f".{name}", package=PLUGIN_NAMESPACE)
+        except ModuleNotFoundError:
+            log.warning("** plugin {} not found", name)
+            continue
+        except ImportError:
             log.warning(
                 "** error loading plugin {}:\n{}",
                 name,
                 traceback.format_exc(),
             )
+            continue
+
+        for _name, obj in inspect.getmembers(mod, inspect.isclass):
+            if issubclass(obj, BeetsPlugin) and obj != BeetsPlugin:
+                _classes.add(obj)
 
 
 _instances: dict[type[BeetsPlugin], BeetsPlugin] = {}
@@ -310,12 +301,19 @@ def find_plugins():
         # See https://github.com/beetbox/beets/pull/3810
         return list(_instances.values())
 
-    load_plugins()
     plugins = []
     for cls in _classes:
         # Only instantiate each plugin class once.
         if cls not in _instances:
-            _instances[cls] = cls()
+            try:
+                _instances[cls] = cls()
+            except Exception:
+                log.error(
+                    "failed to initialize plugin class {}.{}",
+                    cls.__module__,
+                    cls.__qualname__,
+                )
+                raise
         plugins.append(_instances[cls])
     return plugins
 
