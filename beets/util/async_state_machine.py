@@ -144,6 +144,22 @@ StateTaskHandler = Callable[
 ]
 
 
+class StateQueue(asyncio.Queue[T]):
+    """A queue for a state's tasks.
+
+    This class extends asyncio.Queue to provide a queue for a state's tasks.
+    """
+
+    def __init__(self, *args, id: str, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.id = id
+
+    def __str__(self) -> str:
+        return f"<StateQueue id={self.id}, {super().__str__()}>"
+
+    def __repr__(self) -> str:
+        return f"<StateQueue id={self.id}, {super().__repr__()}>"
+
 @dataclass(frozen=True)
 class State(Generic[T]):
     # The identifier for the state
@@ -196,12 +212,12 @@ class State(Generic[T]):
     def __post_init__(self):
         # Use object.__setattr__ to set the queue since the class is frozen
         object.__setattr__(
-            self, "_queue", asyncio.Queue(maxsize=self.max_queue_size)
+            self, "_queue", StateQueue(id=f"{self.id}-queue", maxsize=self.max_queue_size)
         )
         object.__setattr__(
             self,
             "_accumulator",
-            asyncio.Queue(maxsize=self.max_accumulator_queue_size),
+            StateQueue(id=f"{self.id}-accumulator", maxsize=self.max_accumulator_queue_size),
         )
 
         if self.concurrency > self.max_queue_size:
@@ -428,9 +444,7 @@ class AsyncStateMachine(AbstractAsyncContextManager, Generic[T]):
 
         # Verify that all transitions reference valid state IDs
         for state, transitions in graph:
-            transition_state_ids = set(
-                id for id, _ in transitions
-            )
+            transition_state_ids = set(id for id, _ in transitions)
             for id in transition_state_ids:
                 if id not in state_ids:
                     raise ValueError(

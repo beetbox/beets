@@ -296,7 +296,7 @@ class ImportSession:
                         "Would import: {0}", displayable_path(task.paths)
                     ),
                 ),
-                tuple()
+                tuple(),
             ),
             (
                 # Group items in an ImportTask into one or more albums.
@@ -366,9 +366,7 @@ class ImportSession:
                     max_queue_size=4,
                     handler=lambda t: choice_apply(self, t),
                 ),
-                (
-                    ("SET_FIELDS", always),
-                ),
+                (("SET_FIELDS", always),),
             ),
             (
                 asm.State(
@@ -376,9 +374,7 @@ class ImportSession:
                     max_queue_size=4,
                     handler=lambda t: choice_asis(self, t),
                 ),
-                (
-                    ("SET_FIELDS", always),
-                ),
+                (("SET_FIELDS", always),),
             ),
             (
                 # Set the fields to the configured values.
@@ -662,23 +658,24 @@ class ImportSession:
         # Run the state machine
         plugins.send("import_begin", session=self)
         try:
+
             async def inject():
                 for task in self.initial_tasks():
                     await self.state_machine.inject(task, "ENTRYPOINT")
 
-            async def log_errors():
-                async for error in self.state_machine.accumulated("ERROR"):
-                    self.logger.error("Error during import: {0}", error)
+            # async def log_errors():
+            #     async for error in self.state_machine.accumulated("ERROR"):
+            #         self.logger.error("Error during import: {0}", error)
 
             async with self.state_machine:
                 await inject()
-                await log_errors()
+                # await log_errors()
         except ImportAbortError:
             # User aborted operation. Silently stop.
             pass
 
     def run(self):
-        return asyncio.run(self.arun())
+        asyncio.run(self.arun())
 
     # Incremental and resumed imports
 
@@ -847,7 +844,6 @@ class ImportTask(BaseImportTask):
             return f"AlbumImportTask({self.cur_artist} - {self.cur_album})"
         else:
             return f"ImportTask({self.paths})"
-
 
     def set_choice(
         self, choice: action | autotag.AlbumMatch | autotag.TrackMatch
@@ -1844,9 +1840,8 @@ def query_tasks(session: ImportSession) -> Generator[ImportTask, None, None]:
             task = ImportTask(None, [album.item_dir()], items)
             yield from task.handle_created(session)
 
-def lookup_candidates(
-    session: ImportSession, task: ImportTask
-) -> ImportTask:
+
+def lookup_candidates(session: ImportSession, task: ImportTask) -> ImportTask:
     """Performing the initial MusicBrainz lookup for an album.
 
     Modifies the task in place.
@@ -1861,9 +1856,8 @@ def lookup_candidates(
     task.lookup_candidates()
     return task
 
-def user_query(
-    session: ImportSession, task: ImportTask
-) -> ImportTask:
+
+def user_query(session: ImportSession, task: ImportTask) -> ImportTask:
     """Ask the user what action they would like to take with a task.
 
     The coroutine accepts an ImportTask objects. It uses the
@@ -1881,6 +1875,7 @@ def user_query(
     session.log_choice(task, False)
     return task
 
+
 def choice_tracks(
     session: ImportSession, task: ImportTask
 ) -> Generator[ImportTask, None, None]:
@@ -1888,6 +1883,7 @@ def choice_tracks(
     for item in task.items:
         task = SingletonImportTask(task.toppath, item)
         yield from task.handle_created(session)
+
 
 def choice_asis(session: ImportSession, task: ImportTask) -> ImportTask:
     """Select the `action.ASIS` choice for all tasks.
@@ -1902,9 +1898,8 @@ def choice_asis(session: ImportSession, task: ImportTask) -> ImportTask:
     task.add(session.lib)
     return task
 
-def choice_apply(
-    session: ImportSession, task: ImportTask
-) -> ImportTask:
+
+def choice_apply(session: ImportSession, task: ImportTask) -> ImportTask:
     """Apply the task's choice to the Album or Item it contains and add
     it to the library.
     """
@@ -1913,19 +1908,19 @@ def choice_apply(
     task.add(session.lib)
     return task
 
+
 def set_fields(session: ImportSession, task: ImportTask) -> ImportTask:
     """Set the fields to the configured values.
-    
-    If the user has specified the `set_fields` config option, either in 
+
+    If the user has specified the `set_fields` config option, either in
     their config or via the CLI, we set the fields to the configured values.
     """
     if config["import"]["set_fields"]:
         task.set_fields(session.lib)
     return task
 
-def resolve_duplicates(
-    session: ImportSession, task: ImportTask
-) -> ImportTask:
+
+def resolve_duplicates(session: ImportSession, task: ImportTask) -> ImportTask:
     """Check if a task conflicts with items or albums already imported
     and ask the session to resolve this.
     """
@@ -1969,6 +1964,7 @@ def resolve_duplicates(
     session.log_choice(task, True)
     return task
 
+
 def choice_merge_duplicates(
     session: ImportSession, task: ImportTask
 ) -> ImportTask:
@@ -1989,12 +1985,14 @@ def choice_merge_duplicates(
     )
     return merged_task
 
+
 def choice_remove_duplicates(
     session: ImportSession, task: ImportTask
 ) -> ImportTask:
     """The user chose to remove duplicates."""
     task.remove_duplicates(session.lib)
     return task
+
 
 def plugin_import_stage_handler(
     executor: concurrent.futures.Executor,
@@ -2029,9 +2027,8 @@ def plugin_import_stage_handler(
 
     return handler
 
-def manipulate_files(
-    session: ImportSession, task: ImportTask
-) -> ImportTask:
+
+def manipulate_files(session: ImportSession, task: ImportTask) -> ImportTask:
     """A coroutine (pipeline stage) that performs necessary file
     manipulations *after* items have been added to the library and
     finalizes each task.
@@ -2058,16 +2055,16 @@ def manipulate_files(
     )
     return task
 
-def finalize(
-    session: ImportSession, task: ImportTask
-) -> ImportTask:
+
+def finalize(session: ImportSession, task: ImportTask) -> ImportTask:
     """Finalize a task.
-    
+
     Note that we do not skip skipped tasks here, we want to finalize all tasks.
     """
     # Progress, cleanup, and event.
     task.finalize(session)
     return task
+
 
 def log_files(session: ImportSession, task: ImportTask) -> None:
     """A coroutine (pipeline stage) to log each file to be imported."""
@@ -2077,6 +2074,7 @@ def log_files(session: ImportSession, task: ImportTask) -> None:
         log.info("Album: {0}", displayable_path(task.paths[0]))
         for item in task.items:
             log.info("  {0}", displayable_path(item["path"]))
+
 
 def group_albums(
     session: ImportSession, task: ImportTask
