@@ -246,7 +246,9 @@ class BeetsPlugin:
         """
         return None
 
-    def add_media_field(self, name: str, descriptor: mediafile.MediaField):
+    def add_media_field(
+        self, name: str, descriptor: mediafile.MediaField
+    ) -> None:
         """Add a field that is synchronized between media files and items.
 
         When a media field is added ``item.write()`` will set the name
@@ -263,7 +265,7 @@ class BeetsPlugin:
     _raw_listeners: dict[str, list[Listener]] | None = None
     listeners: dict[str, list[Listener]] | None = None
 
-    def register_listener(self, event: str, func: Listener):
+    def register_listener(self, event: str, func: Listener) -> None:
         """Add a function as a listener for the specified event."""
         wrapped_func = self._set_log_level_and_params(logging.WARNING, func)
 
@@ -338,6 +340,7 @@ def load_plugins(names: Sequence[str] = ()):
                         isinstance(obj, type)
                         and issubclass(obj, BeetsPlugin)
                         and obj != BeetsPlugin
+                        and obj != MetadataSourcePlugin
                         and obj not in _classes
                     ):
                         _classes.add(obj)
