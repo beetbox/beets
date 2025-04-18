@@ -522,9 +522,7 @@ def import_stages():
 
 # New-style (lazy) plugin-provided fields.
 
-if TYPE_CHECKING:
-    # Needed because Item, Album circular introduce circular import
-    F = TypeVar("F", Callable[[Item], str], Callable[[Album], str])
+F = TypeVar("F")
 
 
 def _check_conflicts_and_merge(
