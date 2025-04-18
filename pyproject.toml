@@ -1,13 +1,15 @@
-[tool.poetry]
+[project]
 name = "beets"
 version = "2.2.0"
 description = "music tagger and library organizer"
-authors = ["Adrian Sampson <adrian@radbox.org>"]
-maintainers = ["Serene-Arc"]
+authors = [
+    { name = "Adrian Sampson", email = "<adrian@radbox.org>" },
+]
+maintainers = [
+    { name = "Serene-Arc" },
+]
 license = "MIT"
 readme = "README.rst"
-homepage = "https://beets.io/"
-repository = "https://github.com/beetbox/beets"
 documentation = "https://beets.readthedocs.io/en/stable/"
 classifiers = [
     "Topic :: Multimedia :: Sound/Audio",
@@ -19,8 +21,26 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: Implementation :: CPython",
 ]
+requires-python = ">=3.9,<4"
+dependencies = [
+    "colorama ; sys_platform == 'win32'",
+    "confuse >=1.5.0",
+    "jellyfish",
+    "lap >=0.5.12",
+    "mediafile >=0.12.0",
+    "musicbrainzngs >=0.4",
+    "numpy >=1.24.4",
+    "platformdirs >=3.5.0",
+    "pyyaml",
+    "typing_extensions ; python_version <='3.10'",
+    "unidecode >=1.3.6",
+]
+
+[tool.poetry]
 packages = [
     { include = "beets" },
     { include = "beetsplug" },
@@ -34,98 +54,77 @@ include = [ # extra files to include in the sdist
 ]
 exclude = ["docs/_build", "docs/modd.conf", "docs/**/*.css"]
 
-[tool.poetry.urls]
+[project.urls]
+Homepage = "https://beets.io/"
+Repository = "https://github.com/beetbox/beets"
 Changelog = "https://github.com/beetbox/beets/blob/master/docs/changelog.rst"
-"Bug Tracker" = "https://github.com/beetbox/beets/issues"
+Issues = "https://github.com/beetbox/beets/issues"
 
-[tool.poetry.dependencies]
-python = ">=3.9,<4"
+[dependency-groups]
+dev = [
+    { include-groups = "test,lint,typing" },
+]
+test = [
+    "beautifulsoup4",
+    "codecov >=2.1.13",
+    "flask",
+    "mock",
+    "pylast",
+    "pytest >=6",
+    "pytest-cov",
+    "pytest-flask",
+    "python-mpd2 >=0.4.2",
+    "python3-discogs-client >=2.3.15",
+    "py7zr",
+    "pyxdg",
+    "rarfile",
+    "requests-mock >=1.12.1",
+    "requests_oauthlib",
+    "responses >=0.3.0",
+]
+lint = [
+    "ruff >=0.6.4",
+]
+typing = [
+    "mypy",
+    "types-beautifulsoup4",
+    "types-mock",
+    "types-Flask-Cors",
+    "types-Pillow",
+    "types-PyYAML",
+    "types-requests",
+    "types-urllib3",
+]
+release = [
+    "click >=8.1.7",
+    "packaging >=24.0",
+    "tomli >=2.0.1",
+]
 
-colorama = { version = "*", markers = "sys_platform == 'win32'" }
-confuse = ">=1.5.0"
-jellyfish = "*"
-lap = ">=0.5.12"
-mediafile = ">=0.12.0"
-musicbrainzngs = ">=0.4"
-numpy = ">=1.24.4"
-platformdirs = ">=3.5.0"
-pyyaml = "*"
-typing_extensions = { version = "*", python = "<=3.10" }
-unidecode = ">=1.3.6"
-
-beautifulsoup4 = { version = "*", optional = true }
-dbus-python = { version = "*", optional = true }
-flask = { version = "*", optional = true }
-flask-cors = { version = "*", optional = true }
-langdetect = { version = "*", optional = true }
-librosa = { version = "^0.10.2.post1", optional = true }
-mutagen = { version = ">=1.33", optional = true }
-Pillow = { version = "*", optional = true }
-py7zr = { version = "*", optional = true }
-pyacoustid = { version = "*", optional = true }
-PyGObject = { version = "*", optional = true }
-pylast = { version = "*", optional = true }
-python-mpd2 = { version = ">=0.4.2", optional = true }
-python3-discogs-client = { version = ">=2.3.15", optional = true }
-pyxdg = { version = "*", optional = true }
-rarfile = { version = "*", optional = true }
-reflink = { version = "*", optional = true }
-requests = { version = "*", optional = true }
-resampy = { version = ">=0.4.3", optional = true }
-requests-oauthlib = { version = ">=0.6.1", optional = true }
-soco = { version = "*", optional = true }
-
-pydata-sphinx-theme = { version = "*", optional = true }
-sphinx = { version = "*", optional = true }
-
-[tool.poetry.group.test.dependencies]
-beautifulsoup4 = "*"
-codecov = ">=2.1.13"
-flask = "*"
-mock = "*"
-pylast = "*"
-pytest = "*"
-pytest-cov = "*"
-pytest-flask = "*"
-python-mpd2 = "*"
-python3-discogs-client = ">=2.3.15"
-py7zr = "*"
-pyxdg = "*"
-rarfile = "*"
-requests-mock = ">=1.12.1"
-requests_oauthlib = "*"
-responses = ">=0.3.0"
-
-[tool.poetry.group.lint.dependencies]
-ruff = ">=0.6.4"
-
-[tool.poetry.group.typing.dependencies]
-mypy = "*"
-types-beautifulsoup4 = "*"
-types-mock = "*"
-types-Flask-Cors = "*"
-types-Pillow = "*"
-types-PyYAML = "*"
-types-requests = "*"
-types-urllib3 = "*"
-
-[tool.poetry.group.release.dependencies]
-click = ">=8.1.7"
-packaging = ">=24.0"
-tomli = ">=2.0.1"
-
-[tool.poetry.extras]
+[project.optional-dependencies]
 # inline comments note required external / non-python dependencies
 absubmit = ["requests"] # extractor binary from https://acousticbrainz.org/download
 aura = ["flask", "flask-cors", "Pillow"]
-autobpm = ["librosa", "resampy"]
+autobpm = [
+    "librosa >=0.10.2.post1", #<0.12.0",
+    "resampy >=0.4.3",
+]
 # badfiles # mp3val and flac
-beatport = ["requests-oauthlib"]
-bpd = ["PyGObject"] # python-gi and GStreamer 1.0+
+beatport = [
+    "requests-oauthlib >=0.6.1",
+]
+# Earlier PyGObject fails to build Python 3.9 due to
+# https://gitlab.gnome.org/GNOME/pygobject/-/commit/07cb8d7dfc2fe93c3dd0dc4c4ddb88556de048e0
+# Later versions require libgirepository-2.0-dev, which we currently don't install on CI
+# https://pygobject.gnome.org/changelog.html
+bpd = ["PyGObject >=3.33.1,<3.52.0"] # python-gi and GStreamer 1.0+
 chroma = ["pyacoustid"] # chromaprint or fpcalc
 # convert # ffmpeg
+# FIXME: Should docs rather be a dependency-groups entry?
 docs = ["pydata-sphinx-theme", "sphinx"]
-discogs = ["python3-discogs-client"]
+discogs = [
+    "python3-discogs-client >=2.3.15",
+]
 embedart = ["Pillow"] # ImageMagick
 embyupdate = ["requests"]
 fetchart = ["beautifulsoup4", "langdetect", "Pillow", "requests"]
@@ -137,18 +136,20 @@ lastgenre = ["pylast"]
 lastimport = ["pylast"]
 lyrics = ["beautifulsoup4", "langdetect", "requests"]
 metasync = ["dbus-python"]
-mpdstats = ["python-mpd2"]
+mpdstats = [
+    "python-mpd2 >=0.4.2",
+]
 plexupdate = ["requests"]
 reflink = ["reflink"]
 replaygain = [
-    "PyGObject",
-] # python-gi and GStreamer 1.0+ or mp3gain/aacgain or Python Audio Tools or ffmpeg
-scrub = ["mutagen"]
+    "PyGObject >=3.33.1,<3.52.0", # python-gi and GStreamer 1.0+ or mp3gain/aacgain or Python Audio Tools or ffmpeg
+]
+scrub = ["mutagen >=1.33"]
 sonosupdate = ["soco"]
 thumbnails = ["Pillow", "pyxdg"]
 web = ["flask", "flask-cors"]
 
-[tool.poetry.scripts]
+[project.scripts]
 beet = "beets.ui:main"
 
 [build-system]
@@ -157,7 +158,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pipx-install]
 poethepoet = ">=0.26"
-poetry = ">=1.8"
+poetry = ">=2.0"
 
 [tool.poe.tasks.build]
 help = "Build the package"
@@ -281,3 +282,48 @@ ignore-variadic-names = true
 [tool.ruff.lint.pep8-naming]
 classmethod-decorators = ["cached_classproperty"]
 extend-ignore-names = ["assert*", "cached_classproperty"]
+
+[tool.mypy]
+files = "beets,beetsplug,test,extra,docs"
+allow_any_generics = false
+# FIXME: Would be better to actually type the libraries (if under our control),
+# or write our own stubs. For now, silence errors
+ignore_missing_imports = true
+namespace_packages = true
+explicit_package_bases = true
+
+[tool.pytest.ini_options]
+# do not litter the working directory
+cache_dir = "/tmp/pytest_cache"
+# slightly more verbose output
+console_output_style = "count"
+# show all skipped/failed/xfailed tests in the summary except passed
+addopts = "-ra --strict-config"
+markers = [
+    "on_lyrics_update",  # mark a test to run only after lyrics source code is updated
+    "integration_test",  # mark a test as an integration test
+]
+
+[tool.coverage.run]
+data_file = ".reports/coverage/data"
+branch = true
+relative_files = true
+omit = [
+    "beets/test/*",
+    "beetsplug/_typing.py",
+]
+
+[tool.coverage.report]
+precision = 2
+skip_empty = true
+show_missing = true
+exclude_also = [
+    "@atexit\\.register",
+    "if TYPE_CHECKING",
+    "if typing\\.TYPE_CHECKING",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]
+
+[tool.coverage.html]
+show_contexts = true
