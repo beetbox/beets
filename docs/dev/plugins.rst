@@ -367,7 +367,7 @@ Here's an example::
             super().__init__()
             self.template_funcs['initial'] = _tmpl_initial
 
-    def _tmpl_initial(text):
+    def _tmpl_initial(text: str) -> str:
         if text:
             return text[0].upper()
         else:
@@ -387,7 +387,7 @@ Here's an example that adds a ``$disc_and_track`` field::
             super().__init__()
             self.template_fields['disc_and_track'] = _tmpl_disc_and_track
 
-    def _tmpl_disc_and_track(item):
+    def _tmpl_disc_and_track(item: Item) -> str:
         """Expand to the disc number and track number if this is a
         multi-disc release. Otherwise, just expands to the track
         number.
