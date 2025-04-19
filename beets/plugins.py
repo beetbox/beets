@@ -39,6 +39,12 @@ import mediafile
 import beets
 from beets import logging
 
+if sys.version_info >= (3, 10):
+    from typing import ParamSpec
+else:
+    from typing_extensions import ParamSpec
+
+
 if TYPE_CHECKING:
     from confuse import ConfigView
 
@@ -49,10 +55,14 @@ if TYPE_CHECKING:
     from beets.library import Album, Item, Library
     from beets.ui import Subcommand
 
-if sys.version_info >= (3, 10):
-    from typing import ParamSpec
-else:
-    from typing_extensions import ParamSpec
+    # TYPE_CHECKING guard is needed for any derived type
+    # which uses an import from `beets.library` and `beets.imported`
+    ImportStageFunc = Callable[[ImportSession, ImportTask], None]
+    T = TypeVar("T", Album, Item, str)
+    TFunc = Callable[[T], str]
+    TFuncMap = dict[str, TFunc[T]]
+
+    AnyModel = TypeVar("AnyModel", Album, Item)
 
 
 PLUGIN_NAMESPACE = "beetsplug"
@@ -62,6 +72,11 @@ LASTFM_KEY = "2dc3914abf35f0d9c92d97d8f8e42b43"
 
 # Global logger.
 log = logging.getLogger("beets")
+
+
+P = ParamSpec("P")
+Ret = TypeVar("Ret", bound=Any)
+Listener = Callable[..., None]
 
 
 class PluginConflictError(Exception):
@@ -88,17 +103,6 @@ class PluginLogFilter(logging.Filter):
             record.msg = self.prefix + record.msg
         return True
 
-
-P = ParamSpec("P")
-Ret = TypeVar("Ret", bound=Any)
-
-Listener = Callable[..., None]
-
-if TYPE_CHECKING:
-    ImportStageFunc = Callable[[ImportSession, ImportTask], None]
-    T = TypeVar("T", Album, Item, str)
-    TFunc = Callable[[T], str]
-    TFuncMap = dict[str, TFunc[T]]
 
 # Managing the plugins themselves.
 
@@ -416,10 +420,6 @@ def queries() -> dict[str, type[Query]]:
     for plugin in find_plugins():
         out.update(plugin.queries())
     return out
-
-
-if TYPE_CHECKING:
-    AnyModel = TypeVar("AnyModel", Album, Item)
 
 
 def types(model_cls: type[AnyModel]) -> dict[str, type[SQLiteType]]:
