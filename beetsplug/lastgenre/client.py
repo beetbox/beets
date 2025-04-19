@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 
     from beets.logging import Logger
 
+    from .processing import GenreProcessor
     from .types import GenreCache
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
@@ -45,15 +46,17 @@ PYLAST_EXCEPTIONS = (
 class LastFmClient:
     """Client for fetching genres from Last.fm."""
 
-    def __init__(self, log: Logger, min_weight: int):
+    def __init__(self, log: Logger, min_weight: int, processor: GenreProcessor):
         """Initialize the client.
 
         The min_weight parameter filters tags by their minimum weight.
+        The processor handles genre validation and filtering.
         """
         self._log = log
         self._tunelog = make_tunelog(log)
         self._min_weight = min_weight
         self._genre_cache: GenreCache = {}
+        self.processor = processor
 
     def fetch_genre(
         self, lastfm_obj: pylast.Album | pylast.Artist | pylast.Track
@@ -125,6 +128,22 @@ class LastFmClient:
 
         genre = self._genre_cache[key]
         self._tunelog("last.fm (unfiltered) {} tags: {}", entity, genre)
+
+        # Filter forbidden genres
+        if genre and len(args) >= 1:
+            # For all current lastfm API calls, the first argument is always the artist:
+            # - get_album(artist, album)
+            # - get_artist(artist)
+            # - get_track(artist, title)
+            artist = args[0]
+            filtered_genre = [
+                g for g in genre if not self.processor.is_forbidden(g, artist)
+            ]
+            if filtered_genre != genre:
+                log_filtered = set(genre) - set(filtered_genre)
+                self._tunelog("blacklisted: {}", log_filtered)
+            genre = filtered_genre
+
         return genre
 
     def fetch_album_genre(self, albumartist: str, albumtitle: str) -> list[str]:
