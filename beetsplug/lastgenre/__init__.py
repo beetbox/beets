@@ -25,6 +25,7 @@ https://gist.github.com/1241307
 import codecs
 import os
 import traceback
+from collections import defaultdict
 from typing import Union
 
 import pylast
@@ -32,6 +33,7 @@ import yaml
 
 from beets import config, library, plugins, ui
 from beets.library import Album, Item
+from beets.ui import UserError
 from beets.util import normpath, plurality, unique_list
 
 LASTFM = pylast.LastFMNetwork(api_key=plugins.LASTFM_KEY)
@@ -101,6 +103,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 "prefer_specific": False,
                 "title_case": True,
                 "extended_debug": False,
+                "blacklist": False,
             }
         )
         self.setup()
@@ -113,6 +116,7 @@ class LastGenrePlugin(plugins.BeetsPlugin):
         self._genre_cache = {}
         self.whitelist = self._load_whitelist()
         self.c14n_branches, self.canonicalize = self._load_c14n_tree()
+        self.blacklist = self._load_blacklist()
 
     def _load_whitelist(self):
         whitelist = set()
@@ -146,6 +150,58 @@ class LastGenrePlugin(plugins.BeetsPlugin):
                 genres_tree = yaml.safe_load(f)
             flatten_tree(genres_tree, [], c14n_branches)
         return c14n_branches, canonicalize
+
+    def _load_blacklist(self):
+        """Load the blacklist from a configured file path.
+
+        For maximum compatibility with regex patterns, a custom format is used:
+        - Each section starts with an artist name, followed by a colon.
+        - Subsequent lines are indented (at least one space, typically 4 spaces) and
+          contain a regex pattern to match a genre.
+
+        Eg.:
+          artist name 1:
+              genre pattern 1
+              genre pattern 2
+          artist name 2:
+              genre pattern 3
+
+        Raises:
+            UserError: if the file format is invalid.
+        """
+        blacklist = defaultdict(list)
+        if not (bl_filename := self.config["blacklist"].get()):
+            return blacklist
+        if not os.path.isfile(bl_filename := normpath(bl_filename)):
+            self._log.error("Blacklist file not found: {} .", bl_filename)
+            return blacklist
+
+        self._log.debug("Loading blacklist file {0}", bl_filename)
+        section = None
+        with open(bl_filename, "r", encoding="utf-8") as f:
+            for lineno, line in enumerate(f, 1):
+                line = line.lower()
+                if not line.strip() or line.lstrip().startswith("#"):
+                    continue
+                if not line.startswith(" "):
+                    # Section header
+                    if not line.rstrip().endswith(":"):
+                        raise UserError(
+                            f"Malformed blacklist section header "
+                            f"at line {lineno}: {line}"
+                        )
+                    section = line.rstrip(":\r\n")
+                else:
+                    # Pattern line: must be indented (at least one space)
+                    if section is None:
+                        raise UserError(
+                            f"Blacklist regex pattern line before any section header "
+                            f"at line {lineno}: {line}"
+                        )
+                    blacklist[section].append(line.strip())
+        if self.config["extended_debug"]:
+            self._log.debug("Blacklist: {}", blacklist)
+        return blacklist
 
     @property
     def sources(self) -> tuple[str, ...]:
