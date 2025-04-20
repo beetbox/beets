@@ -84,9 +84,7 @@ def _take_time(iter, secs, album):
     return out
 
 
-def random_objs(
-    objs, album, number=1, time=None, equal_chance=False, random_gen=None
-):
+def random_objs(objs, album, number=1, time=None, equal_chance=False, random_gen=None):
     """Get a random subset of the provided `objs`.
 
     If `number` is provided, produce that many matches. Otherwise, if
