@@ -50,7 +50,7 @@ else:
 
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Iterator
 
     from confuse import ConfigView
 
@@ -346,7 +346,7 @@ class BeetsPlugin:
         return helper
 
 
-_classes: set[type[BeetsPlugin]] = set()
+_instances: dict[type[BeetsPlugin], BeetsPlugin] = {}
 
 
 def load_plugins(names: Sequence[str] = ()) -> None:
@@ -355,6 +355,8 @@ def load_plugins(names: Sequence[str] = ()) -> None:
     package in sys.path; the module indicated should contain the
     BeetsPlugin subclasses desired.
     """
+    classes = set()
+
     for name in names:
         try:
             mod = import_module(f".{name}", package=PLUGIN_NAMESPACE)
@@ -369,43 +371,39 @@ def load_plugins(names: Sequence[str] = ()) -> None:
             )
             continue
 
-        for _name, obj in inspect.getmembers(mod, inspect.isclass):
+        for _name, cls in inspect.getmembers(mod, inspect.isclass):
             if (
-                issubclass(obj, BeetsPlugin)
-                and obj != BeetsPlugin
-                and obj != MetadataSourcePlugin
+                issubclass(cls, BeetsPlugin)
+                and cls != BeetsPlugin
+                and cls != MetadataSourcePlugin
+                and cls not in _instances
             ):
-                _classes.add(obj)
+                classes.add(cls)
+
+    for cls in classes:
+        _register_plugin(cls)
 
 
-_instances: dict[type[BeetsPlugin], BeetsPlugin] = {}
+def _register_plugin(cls: type[BeetsPlugin]) -> None:
+    if cls in _instances:
+        return
+
+    try:
+        _instances[cls] = cls()
+    except Exception:
+        log.error(
+            "failed to initialize plugin class {}.{}",
+            cls.__module__,
+            cls.__qualname__,
+        )
+        raise
 
 
-def find_plugins() -> list[BeetsPlugin]:
-    """Returns a list of BeetsPlugin subclass instances from all
-    currently loaded beets plugins. Loads the default plugin set
-    first.
+def find_plugins() -> Iterator[BeetsPlugin]:
+    """Returns an iterator of BeetsPlugin subclass instances from all
+    currently loaded beets plugins.
     """
-    if _instances:
-        # After the first call, use cached instances for performance reasons.
-        # See https://github.com/beetbox/beets/pull/3810
-        return list(_instances.values())
-
-    plugins = []
-    for cls in _classes:
-        # Only instantiate each plugin class once.
-        if cls not in _instances:
-            try:
-                _instances[cls] = cls()
-            except Exception:
-                log.error(
-                    "failed to initialize plugin class {}.{}",
-                    cls.__module__,
-                    cls.__qualname__,
-                )
-                raise
-        plugins.append(_instances[cls])
-    return plugins
+    yield from _instances.values()
 
 
 # Communication with plugins.
