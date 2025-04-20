@@ -1063,7 +1063,7 @@ class ConfigTest(TestPluginTestCase):
             file.write("plugins: test")
 
         self.run_command("--config", cli_config_path, "plugin", lib=None)
-        assert plugins.find_plugins()[0].is_test_plugin
+        assert next(iter(plugins.find_plugins())).is_test_plugin
         self.unload_plugins()
 
     def test_beetsdir_config(self):
