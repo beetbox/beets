@@ -642,9 +642,7 @@ class Model(ABC, Generic[D]):
         db = self._check_db()
         with db.transaction() as tx:
             tx.mutate(f"DELETE FROM {self._table} WHERE id=?", (self.id,))
-            tx.mutate(
-                f"DELETE FROM {self._flex_table} WHERE entity_id=?", (self.id,)
-            )
+            tx.mutate(f"DELETE FROM {self._flex_table} WHERE entity_id=?", (self.id,))
 
     def add(self, db: D | None = None):
         """Add the object to the library database. This object must be
@@ -698,9 +696,7 @@ class Model(ABC, Generic[D]):
         else:
             # Help out mypy
             t = template
-        return t.substitute(
-            self.formatted(for_path=for_path), self._template_funcs()
-        )
+        return t.substitute(self.formatted(for_path=for_path), self._template_funcs())
 
     # Parsing.
 
@@ -836,9 +832,7 @@ class Results(Generic[AnyModel]):
 
         return flex_values
 
-    def _make_model(
-        self, row: sqlite3.Row, flex_values: FlexAttrs = {}
-    ) -> AnyModel:
+    def _make_model(self, row: sqlite3.Row, flex_values: FlexAttrs = {}) -> AnyModel:
         """Create a Model object for the given row"""
         cols = dict(row)
         values = {k: v for (k, v) in cols.items() if not k[:4] == "flex"}
@@ -1003,9 +997,7 @@ class Database:
 
     def __init__(self, path, timeout: float = 5.0):
         if sqlite3.threadsafety == 0:
-            raise RuntimeError(
-                "sqlite3 must be compiled with multi-threading support"
-            )
+            raise RuntimeError("sqlite3 must be compiled with multi-threading support")
 
         self.path = path
         self.timeout = timeout
@@ -1035,23 +1027,23 @@ class Database:
 
     # Primitive access control: connections and transactions.
 
-    def _connection(self) -> Connection:
-        """Get a SQLite connection object to the underlying database.
-        One connection object is created per thread.
-        """
-        thread_id = threading.current_thread().ident
-        # Help the type checker: ident can only be None if the thread has not
-        # been started yet; but since this results from current_thread(), that
-        # can't happen
-        assert thread_id is not None
+    def _connect(self) -> sqlite3.Connection:
+        try:
+            conn = sqlite3.connect(self.path, timeout=self.timeout)
+        except sqlite3.OperationalError as e:
+            if "unable to open database file" in str(e).lower():
+                raise sqlite3.OperationalError(
+                    f"Unable to open the database file at {self.path}. "
+                    f"Check that the directory exists and is writable."
+                ) from e
+            raise
+        return conn
 
-        with self._shared_map_lock:
-            if thread_id in self._connections:
-                return self._connections[thread_id]
-            else:
-                conn = self._create_connection()
-                self._connections[thread_id] = conn
-                return conn
+    def _connection(self) -> sqlite3.Connection:
+        # Legacy support for code that still calls _connection()
+        # Reuse the same logic as _connect
+        return self._connect()
+
 
     def _create_connection(self) -> Connection:
         """Create a SQLite connection to the underlying database.
@@ -1140,9 +1132,7 @@ class Database:
     def load_extension(self, path: str):
         """Load an SQLite extension into all open connections."""
         if not self.supports_extensions:
-            raise ValueError(
-                "this sqlite3 installation does not support extensions"
-            )
+            raise ValueError("this sqlite3 installation does not support extensions")
 
         self._extensions.append(path)
 
@@ -1171,9 +1161,7 @@ class Database:
             columns = []
             for name, typ in fields.items():
                 columns.append(f"{name} {typ.sql}")
-            setup_sql = "CREATE TABLE {} ({});\n".format(
-                table, ", ".join(columns)
-            )
+            setup_sql = "CREATE TABLE {} ({});\n".format(table, ", ".join(columns))
 
         else:
             # Table exists does not match the field set.
@@ -1203,7 +1191,9 @@ class Database:
                     UNIQUE(entity_id, key) ON CONFLICT REPLACE);
                 CREATE INDEX IF NOT EXISTS {0}_by_entity
                     ON {0} (entity_id);
-                """.format(flex_table)
+                """.format(
+                    flex_table
+                )
             )
 
     # Querying.

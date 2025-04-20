@@ -235,9 +235,7 @@ def sorted_walk(
         for pat in ignore_bytes:
             if fnmatch.fnmatch(base, pat):
                 if logger:
-                    logger.debug(
-                        "ignoring '{}' due to ignore rule '{}'", base, pat
-                    )
+                    logger.debug("ignoring '{}' due to ignore rule '{}'", base, pat)
                 skip = True
                 break
         if skip:
@@ -405,9 +403,7 @@ def bytestring_path(path: PathLike) -> bytes:
     # On Windows, remove the magic prefix added by `syspath`. This makes
     # ``bytestring_path(syspath(X)) == X``, i.e., we can safely
     # round-trip through `syspath`.
-    if os.path.__name__ == "ntpath" and str_path.startswith(
-        WINDOWS_MAGIC_PREFIX
-    ):
+    if os.path.__name__ == "ntpath" and str_path.startswith(WINDOWS_MAGIC_PREFIX):
         str_path = str_path[len(WINDOWS_MAGIC_PREFIX) :]
 
     # Try to encode with default encodings, but fall back to utf-8.
@@ -420,9 +416,7 @@ def bytestring_path(path: PathLike) -> bytes:
 PATH_SEP: bytes = bytestring_path(os.sep)
 
 
-def displayable_path(
-    path: PathLike | Iterable[PathLike], separator: str = "; "
-) -> str:
+def displayable_path(path: PathLike | Iterable[PathLike], separator: str = "; ") -> str:
     """Attempts to decode a bytestring path to a unicode object for the
     purpose of displaying it to the user. If the `path` argument is a
     list or a tuple, the elements are joined with `separator`.
@@ -485,9 +479,7 @@ def remove(path: PathLike, soft: bool = True):
     try:
         os.remove(str_path)
     except OSError as exc:
-        raise FilesystemError(
-            exc, "delete", (str_path,), traceback.format_exc()
-        )
+        raise FilesystemError(exc, "delete", (str_path,), traceback.format_exc())
 
 
 def copy(path: bytes, dest: bytes, replace: bool = False):
@@ -505,9 +497,7 @@ def copy(path: bytes, dest: bytes, replace: bool = False):
     try:
         shutil.copyfile(str_path, str_dest)
     except OSError as exc:
-        raise FilesystemError(
-            exc, "copy", (str_path, str_dest), traceback.format_exc()
-        )
+        raise FilesystemError(exc, "copy", (str_path, str_dest), traceback.format_exc())
 
 
 def move(path: bytes, dest: bytes, replace: bool = False):
@@ -563,9 +553,7 @@ def move(path: bytes, dest: bytes, replace: bool = False):
             tmp_filename = ""
             os.remove(syspath(path))
         except OSError as exc:
-            raise FilesystemError(
-                exc, "move", (path, dest), traceback.format_exc()
-            )
+            raise FilesystemError(exc, "move", (path, dest), traceback.format_exc())
         finally:
             if tmp_filename:
                 os.remove(tmp_filename)
@@ -620,9 +608,7 @@ def hardlink(path: bytes, dest: bytes, replace: bool = False):
                 traceback.format_exc(),
             )
         else:
-            raise FilesystemError(
-                exc, "link", (path, dest), traceback.format_exc()
-            )
+            raise FilesystemError(exc, "link", (path, dest), traceback.format_exc())
 
 
 def reflink(
@@ -952,9 +938,7 @@ def editor_command() -> str:
     in general.
 
     """
-    return (
-        os.environ.get("VISUAL") or os.environ.get("EDITOR") or open_anything()
-    )
+    return os.environ.get("VISUAL") or os.environ.get("EDITOR") or open_anything()
 
 
 def interactive_open(targets: Sequence[str], command: str):
@@ -1057,9 +1041,7 @@ def asciify_path(path: str, sep_replace: str) -> str:
     for index, item in enumerate(path_components):
         path_components[index] = unidecode(item).replace(os.sep, sep_replace)
         if os.altsep:
-            path_components[index] = unidecode(item).replace(
-                os.altsep, sep_replace
-            )
+            path_components[index] = unidecode(item).replace(os.altsep, sep_replace)
     return os.sep.join(path_components)
 
 
@@ -1133,9 +1115,7 @@ def get_temp_filename(
     tempdir = get_module_tempdir(module)
     tempdir.mkdir(parents=True, exist_ok=True)
 
-    descriptor, filename = tempfile.mkstemp(
-        dir=tempdir, prefix=prefix, suffix=suffix
-    )
+    descriptor, filename = tempfile.mkstemp(dir=tempdir, prefix=prefix, suffix=suffix)
     os.close(descriptor)
     return bytestring_path(filename)
 

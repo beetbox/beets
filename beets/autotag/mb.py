@@ -324,9 +324,7 @@ def track_info(
             info.artists,
             info.artists_sort,
             info.artists_credit,
-        ) = _multi_artist_credit(
-            recording["artist-credit"], include_join_phrase=False
-        )
+        ) = _multi_artist_credit(recording["artist-credit"], include_join_phrase=False)
 
         info.artists_ids = _artist_ids(recording["artist-credit"])
         info.artist_id = info.artists_ids[0]
@@ -355,9 +353,7 @@ def track_info(
         if "disambiguation" in work_relation["work"]:
             info.work_disambig = work_relation["work"]["disambiguation"]
 
-        for artist_relation in work_relation["work"].get(
-            "artist-relation-list", ()
-        ):
+        for artist_relation in work_relation["work"].get("artist-relation-list", ()):
             if "type" in artist_relation:
                 type = artist_relation["type"]
                 if type == "lyricist":
@@ -425,9 +421,7 @@ def album_info(release: dict) -> beets.autotag.hooks.AlbumInfo:
         artists_names,
         artists_sort_names,
         artists_credit_names,
-    ) = _multi_artist_credit(
-        release["artist-credit"], include_join_phrase=False
-    )
+    ) = _multi_artist_credit(release["artist-credit"], include_join_phrase=False)
 
     ntracks = sum(len(m["track-list"]) for m in release["medium-list"])
 
@@ -464,10 +458,7 @@ def album_info(release: dict) -> beets.autotag.hooks.AlbumInfo:
             continue
 
         all_tracks = medium["track-list"]
-        if (
-            "data-track-list" in medium
-            and not config["match"]["ignore_data_tracks"]
-        ):
+        if "data-track-list" in medium and not config["match"]["ignore_data_tracks"]:
             all_tracks += medium["data-track-list"]
         track_count = len(all_tracks)
 
@@ -558,9 +549,7 @@ def album_info(release: dict) -> beets.autotag.hooks.AlbumInfo:
 
     # Get the disambiguation strings at the release and release group level.
     if release["release-group"].get("disambiguation"):
-        info.releasegroupdisambig = release["release-group"].get(
-            "disambiguation"
-        )
+        info.releasegroupdisambig = release["release-group"].get("disambiguation")
     if release.get("disambiguation"):
         info.albumdisambig = release.get("disambiguation")
 
@@ -626,8 +615,7 @@ def album_info(release: dict) -> beets.autotag.hooks.AlbumInfo:
             for genreitem in source:
                 genres[genreitem["name"]] += int(genreitem["count"])
         info.genre = "; ".join(
-            genre
-            for genre, _count in sorted(genres.items(), key=lambda g: -g[1])
+            genre for genre, _count in sorted(genres.items(), key=lambda g: -g[1])
         )
 
     # We might find links to external sources (Discogs, Bandcamp, ...)

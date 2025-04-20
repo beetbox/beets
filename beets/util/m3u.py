@@ -47,9 +47,7 @@ class M3UFile:
             with open(syspath(pl_normpath), "rb") as pl_file:
                 raw_contents = pl_file.readlines()
         except OSError as exc:
-            raise FilesystemError(
-                exc, "read", (pl_normpath,), traceback.format_exc()
-            )
+            raise FilesystemError(exc, "read", (pl_normpath,), traceback.format_exc())
 
         self.extm3u = True if raw_contents[0].rstrip() == b"#EXTM3U" else False
         for line in raw_contents[1:]:
@@ -92,6 +90,4 @@ class M3UFile:
                     pl_file.write(line + b"\n")
                 pl_file.write(b"\n")  # Final linefeed to prevent noeol file.
         except OSError as exc:
-            raise FilesystemError(
-                exc, "create", (pl_normpath,), traceback.format_exc()
-            )
+            raise FilesystemError(exc, "create", (pl_normpath,), traceback.format_exc())

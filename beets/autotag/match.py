@@ -138,9 +138,7 @@ def assign_items(
     # `tracks` list. Each value is either an index into the assigned item in
     # `items` list, or -1 if that track has no match.
     mapping = {
-        items[iidx]: t
-        for iidx, t in zip(assigned_item_idxs, tracks)
-        if iidx != -1
+        items[iidx]: t for iidx, t in zip(assigned_item_idxs, tracks) if iidx != -1
     }
     extra_items = list(set(items) - mapping.keys())
     extra_items.sort(key=lambda i: (i.disc, i.track, i.title))
@@ -192,11 +190,7 @@ def track_distance(
     dist.add_string("track_title", item.title, track_info.title)
 
     # Artist. Only check if there is actually an artist in the track data.
-    if (
-        incl_artist
-        and track_info.artist
-        and item.artist.lower() not in VA_ARTISTS
-    ):
+    if incl_artist and track_info.artist and item.artist.lower() not in VA_ARTISTS:
         dist.add_string("track_artist", item.artist, track_info.artist)
 
     # Track index.
@@ -273,9 +267,7 @@ def distance(
         elif album_info.original_year:
             # Prefer matchest closest to the release year.
             diff = abs(likelies["year"] - album_info.year)
-            diff_max = abs(
-                datetime.date.today().year - album_info.original_year
-            )
+            diff_max = abs(datetime.date.today().year - album_info.original_year)
             dist.add_ratio("year", diff, diff_max)
         else:
             # Full penalty when there is no original year.
@@ -297,9 +289,7 @@ def distance(
 
     # Catalog number.
     if likelies["catalognum"] and album_info.catalognum:
-        dist.add_string(
-            "catalognum", likelies["catalognum"], album_info.catalognum
-        )
+        dist.add_string("catalognum", likelies["catalognum"], album_info.catalognum)
 
     # Disambiguation.
     if likelies["albumdisambig"] and album_info.albumdisambig:
@@ -309,9 +299,7 @@ def distance(
 
     # Album ID.
     if likelies["mb_albumid"]:
-        dist.add_equality(
-            "album_id", likelies["mb_albumid"], album_info.album_id
-        )
+        dist.add_equality("album_id", likelies["mb_albumid"], album_info.album_id)
 
     # Tracks.
     dist.tracks = {}
@@ -383,8 +371,7 @@ def _recommendation(
         # Only a single candidate.
         rec = Recommendation.low
     elif (
-        results[1].distance - min_dist
-        >= config["match"]["rec_gap_thresh"].as_number()
+        results[1].distance - min_dist >= config["match"]["rec_gap_thresh"].as_number()
     ):
         # Gap between first two candidates is large.
         rec = Recommendation.low
@@ -432,9 +419,7 @@ def _add_candidate(
     checking the track count, ordering the items, checking for
     duplicates, and calculating the distance.
     """
-    log.debug(
-        "Candidate: {0} - {1} ({2})", info.artist, info.album, info.album_id
-    )
+    log.debug("Candidate: {0} - {1} ({2})", info.artist, info.album, info.album_id)
 
     # Discard albums with zero tracks.
     if not info.tracks:
@@ -447,9 +432,7 @@ def _add_candidate(
         return
 
     # Discard matches without required tags.
-    for req_tag in cast(
-        Sequence[str], config["match"]["required"].as_str_seq()
-    ):
+    for req_tag in cast(Sequence[str], config["match"]["required"].as_str_seq()):
         if getattr(info, req_tag) is None:
             log.debug("Ignored. Missing required tag: {0}", req_tag)
             return
@@ -595,10 +578,7 @@ def tag_item(
                 candidates[info.track_id] = hooks.TrackMatch(dist, info)
                 # If this is a good match, then don't keep searching.
                 rec = _recommendation(_sort_candidates(candidates.values()))
-                if (
-                    rec == Recommendation.strong
-                    and not config["import"]["timid"]
-                ):
+                if rec == Recommendation.strong and not config["import"]["timid"]:
                     log.debug("Track ID match.")
                     return Proposal(_sort_candidates(candidates.values()), rec)
 

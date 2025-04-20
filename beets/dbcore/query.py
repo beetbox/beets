@@ -130,9 +130,7 @@ class FieldQuery(Query, Generic[P]):
 
     @property
     def field(self) -> str:
-        return (
-            f"{self.table}.{self.field_name}" if self.table else self.field_name
-        )
+        return f"{self.table}.{self.field_name}" if self.table else self.field_name
 
     @property
     def field_names(self) -> set[str]:
@@ -235,9 +233,7 @@ class StringQuery(StringFieldQuery[str]):
 
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
         search = (
-            self.pattern.replace("\\", "\\\\")
-            .replace("%", "\\%")
-            .replace("_", "\\_")
+            self.pattern.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         )
         clause = self.field + " like ? escape '\\'"
         subvals = [search]
@@ -253,9 +249,7 @@ class SubstringQuery(StringFieldQuery[str]):
 
     def col_clause(self) -> tuple[str, Sequence[SQLiteType]]:
         pattern = (
-            self.pattern.replace("\\", "\\\\")
-            .replace("%", "\\%")
-            .replace("_", "\\_")
+            self.pattern.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         )
         search = "%" + pattern + "%"
         clause = self.field + " like ? escape '\\'"
@@ -631,9 +625,7 @@ class Period:
         ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"),  # second
     )
     relative_units = {"y": 365, "m": 30, "w": 7, "d": 1}
-    relative_re = (
-        "(?P<sign>[+|-]?)(?P<quantity>[0-9]+)" + "(?P<timespan>[y|m|w|d])"
-    )
+    relative_re = "(?P<sign>[+|-]?)(?P<quantity>[0-9]+)" + "(?P<timespan>[y|m|w|d])"
 
     def __init__(self, date: datetime, precision: str):
         """Create a period with the given date (a `datetime` object) and
@@ -692,18 +684,13 @@ class Period:
             # date.
             multiplier = -1 if sign == "-" else 1
             days = cls.relative_units[timespan]
-            date = (
-                datetime.now()
-                + timedelta(days=int(quantity) * days) * multiplier
-            )
+            date = datetime.now() + timedelta(days=int(quantity) * days) * multiplier
             return cls(date, cls.precisions[5])
 
         # Check for an absolute date.
         date, ordinal = find_date_and_format(string)
         if date is None or ordinal is None:
-            raise InvalidQueryArgumentValueError(
-                string, "a valid date/time string"
-            )
+            raise InvalidQueryArgumentValueError(string, "a valid date/time string")
         precision = cls.precisions[ordinal]
         return cls(date, precision)
 
@@ -839,9 +826,7 @@ class DurationQuery(NumericQuery):
             try:
                 return float(s)
             except ValueError:
-                raise InvalidQueryArgumentValueError(
-                    s, "a M:SS string or a float"
-                )
+                raise InvalidQueryArgumentValueError(s, "a M:SS string or a float")
 
 
 # Sorting.
@@ -1052,3 +1037,15 @@ class SmartArtistSort(FieldSort):
             return val.lower() if self.case_insensitive else val
 
         return sorted(objs, key=key, reverse=not self.ascending)
+
+
+from beets.dbcore.query import FieldQuery, BooleanQuery
+from beets import util
+
+
+class ArtQuery(FieldQuery):
+    """Query that matches albums with or without embedded art."""
+
+    def __new__(cls, field, pattern, *args, **kwargs):
+        val = util.str2bool(pattern)
+        return BooleanQuery(field, val, *args, **kwargs)
