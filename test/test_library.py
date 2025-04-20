@@ -559,8 +559,13 @@ class PathFormattingMixin:
     def _assert_dest(self, dest, i=None):
         if i is None:
             i = self.i
-        with _common.platform_posix():
-            actual = i.destination()
+
+        if os.path.sep != "/":
+            dest = dest.replace(b"/", os.path.sep.encode())
+            dest = b"D:" + dest
+
+        actual = i.destination()
+
         assert actual == dest
 
 

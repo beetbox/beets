@@ -185,6 +185,9 @@ class TestPathLegalization:
         ],
     )
     def test_truncate(self, path, expected):
+        path = path.replace("/", os.path.sep)
+        expected = expected.replace("/", os.path.sep)
+
         assert util.truncate_path(path) == expected
 
     @pytest.mark.parametrize(
