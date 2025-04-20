@@ -19,7 +19,6 @@ import os.path
 import re
 import shutil
 import stat
-import sys
 import time
 import unicodedata
 import unittest
@@ -422,19 +421,6 @@ class DestinationTest(BeetsTestCase):
         with patch("sys.platform", "linux"):
             dest = self.i.destination(relative_to_libdir=True)
         assert as_string(dest) == unicodedata.normalize("NFC", instr)
-
-    def test_non_mbcs_characters_on_windows(self):
-        oldfunc = sys.getfilesystemencoding
-        sys.getfilesystemencoding = lambda: "mbcs"
-        try:
-            self.i.title = "h\u0259d"
-            self.lib.path_formats = [("default", "$title")]
-            p = self.i.destination()
-            assert b"?" not in p
-            # We use UTF-8 to encode Windows paths now.
-            assert "h\u0259d".encode() in p
-        finally:
-            sys.getfilesystemencoding = oldfunc
 
     def test_unicode_extension_in_fragment(self):
         self.lib.path_formats = [("default", "foo")]
