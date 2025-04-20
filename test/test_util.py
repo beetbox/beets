@@ -156,13 +156,8 @@ class PathConversionTest(BeetsTestCase):
         assert path == outpath
 
     def _windows_bytestring_path(self, path):
-        old_gfse = sys.getfilesystemencoding
-        sys.getfilesystemencoding = lambda: "mbcs"
-        try:
-            with _common.platform_windows():
-                return util.bytestring_path(path)
-        finally:
-            sys.getfilesystemencoding = old_gfse
+        with _common.platform_windows():
+            return util.bytestring_path(path)
 
     def test_bytestring_path_windows_encodes_utf8(self):
         path = "caf\xe9"
