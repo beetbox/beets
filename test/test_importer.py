@@ -50,53 +50,6 @@ from beets.test.helper import (
 from beets.util import bytestring_path, displayable_path, syspath
 
 
-class ScrubbedImportTest(AsIsImporterMixin, PluginMixin, ImportTestCase):
-    db_on_disk = True
-    plugin = "scrub"
-
-    def test_tags_not_scrubbed(self):
-        config["plugins"] = ["scrub"]
-        config["scrub"]["auto"] = False
-        config["import"]["write"] = True
-        for mediafile in self.import_media:
-            assert mediafile.artist == "Tag Artist"
-            assert mediafile.album == "Tag Album"
-        self.run_asis_importer()
-        for item in self.lib.items():
-            imported_file = os.path.join(item.path)
-            imported_file = MediaFile(imported_file)
-            assert imported_file.artist == "Tag Artist"
-            assert imported_file.album == "Tag Album"
-
-    def test_tags_restored(self):
-        config["plugins"] = ["scrub"]
-        config["scrub"]["auto"] = True
-        config["import"]["write"] = True
-        for mediafile in self.import_media:
-            assert mediafile.artist == "Tag Artist"
-            assert mediafile.album == "Tag Album"
-        self.run_asis_importer()
-        for item in self.lib.items():
-            imported_file = os.path.join(item.path)
-            imported_file = MediaFile(imported_file)
-            assert imported_file.artist == "Tag Artist"
-            assert imported_file.album == "Tag Album"
-
-    def test_tags_not_restored(self):
-        config["plugins"] = ["scrub"]
-        config["scrub"]["auto"] = True
-        config["import"]["write"] = False
-        for mediafile in self.import_media:
-            assert mediafile.artist == "Tag Artist"
-            assert mediafile.album == "Tag Album"
-        self.run_asis_importer()
-        for item in self.lib.items():
-            imported_file = os.path.join(item.path)
-            imported_file = MediaFile(imported_file)
-            assert imported_file.artist is None
-            assert imported_file.album is None
-
-
 @_common.slow_test()
 class NonAutotaggedImportTest(AsIsImporterMixin, ImportTestCase):
     db_on_disk = True
