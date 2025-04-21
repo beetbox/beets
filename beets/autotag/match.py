@@ -354,7 +354,7 @@ def match_by_id(items: Iterable[Item]) -> AlbumInfo | None:
             return None
     # If all album IDs are equal, look up the album.
     log.debug("Searching for discovered album ID: {0}", first)
-    return hooks.album_for_id(first)
+    return plugins.album_for_id(first)
 
 
 def _recommendation(
@@ -510,7 +510,7 @@ def tag_album(
     if search_ids:
         for search_id in search_ids:
             log.debug("Searching for album ID: {0}", search_id)
-            if info := hooks.album_for_id(search_id):
+            if info := plugins.album_for_id(search_id):
                 _add_candidate(items, candidates, info)
 
     # Use existing metadata or text search.
@@ -553,8 +553,8 @@ def tag_album(
         log.debug("Album might be VA: {0}", va_likely)
 
         # Get the results from the data sources.
-        for matched_candidate in hooks.album_candidates(
-            items, search_artist, search_album, va_likely, extra_tags
+        for matched_candidate in plugins.candidates(
+            items, search_artist, search_album, va_likely
         ):
             _add_candidate(items, candidates, matched_candidate)
 
@@ -588,7 +588,7 @@ def tag_item(
     if trackids:
         for trackid in trackids:
             log.debug("Searching for track ID: {0}", trackid)
-            if info := hooks.track_for_id(trackid):
+            if info := plugins.track_for_id(trackid):
                 dist = track_distance(item, info, incl_artist=True)
                 candidates[info.track_id] = hooks.TrackMatch(dist, info)
                 # If this is a good match, then don't keep searching.
@@ -614,7 +614,9 @@ def tag_item(
     log.debug("Item search terms: {0} - {1}", search_artist, search_title)
 
     # Get and evaluate candidate metadata.
-    for track_info in hooks.item_candidates(item, search_artist, search_title):
+    for track_info in plugins.item_candidates(
+        item, search_artist, search_title
+    ):
         dist = track_distance(item, track_info, incl_artist=True)
         candidates[track_info.track_id] = hooks.TrackMatch(dist, track_info)
 
