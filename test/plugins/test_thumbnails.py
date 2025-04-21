@@ -100,12 +100,10 @@ class ThumbnailsTest(BeetsTestCase):
 
     @patch("beetsplug.thumbnails.ThumbnailsPlugin._check_local_ok", Mock())
     @patch("beetsplug.thumbnails.ArtResizer")
-    @patch("beetsplug.thumbnails.util")
+    @patch("beets.util.syspath", Mock(side_effect=lambda x: x))
     @patch("beetsplug.thumbnails.os")
     @patch("beetsplug.thumbnails.shutil")
-    def test_make_cover_thumbnail(
-        self, mock_shutils, mock_os, mock_util, mock_artresizer
-    ):
+    def test_make_cover_thumbnail(self, mock_shutils, mock_os, mock_artresizer):
         thumbnail_dir = os.path.normpath(b"/thumbnail/dir")
         md5_file = os.path.join(thumbnail_dir, b"md5")
         path_to_art = os.path.normpath(b"/path/to/art")
@@ -116,7 +114,6 @@ class ThumbnailsTest(BeetsTestCase):
         plugin.add_tags = Mock()
 
         album = Mock(artpath=path_to_art)
-        mock_util.syspath.side_effect = lambda x: x
         plugin.thumbnail_file_name = Mock(return_value=b"md5")
         mock_os.path.exists.return_value = False
 

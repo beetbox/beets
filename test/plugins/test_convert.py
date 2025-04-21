@@ -143,18 +143,13 @@ class ConvertCommand:
     in tests.
     """
 
-    def run_convert_path(self, path, *args):
+    def run_convert_path(self, item, *args):
         """Run the `convert` command on a given path."""
-        # The path is currently a filesystem bytestring. Convert it to
-        # an argument bytestring.
-        path = os.fsencode(os.fsdecode(path))
-
-        args = args + (b"path:" + path,)
-        return self.run_command("convert", *args)
+        return self.run_command("convert", *args, f"path:{item.filepath}")
 
     def run_convert(self, *args):
         """Run the `convert` command on `self.item`."""
-        return self.run_convert_path(self.item.path, *args)
+        return self.run_convert_path(self.item, *args)
 
 
 @_common.slow_test()
@@ -320,7 +315,7 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
     def test_transcode_from_lossless(self):
         [item] = self.add_item_fixtures(ext="flac")
         with control_stdin("y"):
-            self.run_convert_path(item.path)
+            self.run_convert_path(item)
         converted = os.path.join(self.convert_dest, b"converted.mp3")
         self.assertFileTag(converted, "mp3")
 
@@ -328,14 +323,14 @@ class NeverConvertLossyFilesTest(ConvertTestCase, ConvertCommand):
         self.config["convert"]["never_convert_lossy_files"] = False
         [item] = self.add_item_fixtures(ext="ogg")
         with control_stdin("y"):
-            self.run_convert_path(item.path)
+            self.run_convert_path(item)
         converted = os.path.join(self.convert_dest, b"converted.mp3")
         self.assertFileTag(converted, "mp3")
 
     def test_transcode_from_lossy_prevented(self):
         [item] = self.add_item_fixtures(ext="ogg")
         with control_stdin("y"):
-            self.run_convert_path(item.path)
+            self.run_convert_path(item)
         converted = os.path.join(self.convert_dest, b"converted.ogg")
         self.assertNoFileTag(converted, "mp3")
 
