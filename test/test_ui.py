@@ -865,6 +865,9 @@ class ConfigTest(TestPluginTestCase):
 
         # Custom BEETSDIR
         self.beetsdir = os.path.join(self.temp_dir, b"beetsdir")
+        self.cli_config_path = os.path.join(
+            os.fsdecode(self.temp_dir), "config.yaml"
+        )
         os.makedirs(syspath(self.beetsdir))
         self.env_patcher = patch(
             "os.environ",
@@ -952,20 +955,18 @@ class ConfigTest(TestPluginTestCase):
         assert repls == [("[xy]", "z"), ("foo", "bar")]
 
     def test_cli_config_option(self):
-        config_path = os.path.join(self.temp_dir, b"config.yaml")
-        with open(config_path, "w") as file:
+        with open(self.cli_config_path, "w") as file:
             file.write("anoption: value")
-        self.run_command("--config", config_path, "test", lib=None)
+        self.run_command("--config", self.cli_config_path, "test", lib=None)
         assert config["anoption"].get() == "value"
 
     def test_cli_config_file_overwrites_user_defaults(self):
         with open(self.user_config_path, "w") as file:
             file.write("anoption: value")
 
-        cli_config_path = os.path.join(self.temp_dir, b"config.yaml")
-        with open(cli_config_path, "w") as file:
+        with open(self.cli_config_path, "w") as file:
             file.write("anoption: cli overwrite")
-        self.run_command("--config", cli_config_path, "test", lib=None)
+        self.run_command("--config", self.cli_config_path, "test", lib=None)
         assert config["anoption"].get() == "cli overwrite"
 
     def test_cli_config_file_overwrites_beetsdir_defaults(self):
@@ -974,10 +975,9 @@ class ConfigTest(TestPluginTestCase):
         with open(env_config_path, "w") as file:
             file.write("anoption: value")
 
-        cli_config_path = os.path.join(self.temp_dir, b"config.yaml")
-        with open(cli_config_path, "w") as file:
+        with open(self.cli_config_path, "w") as file:
             file.write("anoption: cli overwrite")
-        self.run_command("--config", cli_config_path, "test", lib=None)
+        self.run_command("--config", self.cli_config_path, "test", lib=None)
         assert config["anoption"].get() == "cli overwrite"
 
     #    @unittest.skip('Difficult to implement with optparse')
@@ -998,29 +998,27 @@ class ConfigTest(TestPluginTestCase):
     #
     #    @unittest.skip('Difficult to implement with optparse')
     #    def test_multiple_cli_config_overwrite(self):
-    #        cli_config_path = os.path.join(self.temp_dir, b'config.yaml')
     #        cli_overwrite_config_path = os.path.join(self.temp_dir,
     #                                                 b'overwrite_config.yaml')
     #
-    #        with open(cli_config_path, 'w') as file:
+    #        with open(self.cli_config_path, 'w') as file:
     #            file.write('anoption: value')
     #
     #        with open(cli_overwrite_config_path, 'w') as file:
     #            file.write('anoption: overwrite')
     #
-    #        self.run_command('--config', cli_config_path,
+    #        self.run_command('--config', self.cli_config_path,
     #                      '--config', cli_overwrite_config_path, 'test')
     #        assert config['anoption'].get() == 'cli overwrite'
 
     # FIXME: fails on windows
     @unittest.skipIf(sys.platform == "win32", "win32")
     def test_cli_config_paths_resolve_relative_to_user_dir(self):
-        cli_config_path = os.path.join(self.temp_dir, b"config.yaml")
-        with open(cli_config_path, "w") as file:
+        with open(self.cli_config_path, "w") as file:
             file.write("library: beets.db\n")
             file.write("statefile: state")
 
-        self.run_command("--config", cli_config_path, "test", lib=None)
+        self.run_command("--config", self.cli_config_path, "test", lib=None)
         self.assert_equal_path(
             util.bytestring_path(config["library"].as_filename()),
             os.path.join(self.user_config_dir, b"beets.db"),
@@ -1033,12 +1031,11 @@ class ConfigTest(TestPluginTestCase):
     def test_cli_config_paths_resolve_relative_to_beetsdir(self):
         os.environ["BEETSDIR"] = os.fsdecode(self.beetsdir)
 
-        cli_config_path = os.path.join(self.temp_dir, b"config.yaml")
-        with open(cli_config_path, "w") as file:
+        with open(self.cli_config_path, "w") as file:
             file.write("library: beets.db\n")
             file.write("statefile: state")
 
-        self.run_command("--config", cli_config_path, "test", lib=None)
+        self.run_command("--config", self.cli_config_path, "test", lib=None)
         self.assert_equal_path(
             util.bytestring_path(config["library"].as_filename()),
             os.path.join(self.beetsdir, b"beets.db"),
@@ -1057,12 +1054,11 @@ class ConfigTest(TestPluginTestCase):
         )
 
     def test_cli_config_file_loads_plugin_commands(self):
-        cli_config_path = os.path.join(self.temp_dir, b"config.yaml")
-        with open(cli_config_path, "w") as file:
+        with open(self.cli_config_path, "w") as file:
             file.write("pluginpath: %s\n" % _common.PLUGINPATH)
             file.write("plugins: test")
 
-        self.run_command("--config", cli_config_path, "plugin", lib=None)
+        self.run_command("--config", self.cli_config_path, "plugin", lib=None)
         assert plugins.find_plugins()[0].is_test_plugin
         self.unload_plugins()
 
@@ -1483,9 +1479,7 @@ class CommonOptionsParserCliTest(BeetsTestCase):
         assert output == "the album artist\n"
 
     def test_format_option_unicode(self):
-        output = self.run_with_output(
-            b"ls", b"-f", "caf\xe9".encode(util.arg_encoding())
-        )
+        output = self.run_with_output("ls", "-f", "caf\xe9")
         assert output == "caf\xe9\n"
 
     def test_root_format_option(self):
