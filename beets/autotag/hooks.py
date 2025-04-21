@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar
 from jellyfish import levenshtein_distance
 from unidecode import unidecode
 
-from beets import config, logging, plugins
+from beets import config, logging
 from beets.util import as_string, cached_classproperty
 
 if TYPE_CHECKING:
@@ -590,26 +590,3 @@ class AlbumMatch(NamedTuple):
 class TrackMatch(NamedTuple):
     distance: Distance
     info: TrackInfo
-
-
-# Aggregation of sources.
-
-
-def album_for_id(*args, **kwargs) -> AlbumInfo | None:
-    """Get AlbumInfo object for the given ID string."""
-    return plugins.album_for_id(*args, **kwargs)
-
-
-def track_for_id(*args, **kwargs) -> TrackInfo | None:
-    """Get TrackInfo object for the given ID string."""
-    return plugins.track_for_id(*args, **kwargs)
-
-
-@plugins.notify_info_yielded("albuminfo_received")
-def album_candidates(*args, **kwargs) -> Iterator[AlbumInfo]:
-    yield from plugins.candidates(*args, **kwargs)
-
-
-@plugins.notify_info_yielded("trackinfo_received")
-def item_candidates(*args, **kwargs) -> Iterator[TrackInfo]:
-    yield from plugins.item_candidates(*args, **kwargs)
