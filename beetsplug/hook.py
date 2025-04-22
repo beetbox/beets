@@ -17,9 +17,9 @@
 import shlex
 import string
 import subprocess
+import sys
 
 from beets.plugins import BeetsPlugin
-from beets.util import arg_encoding
 
 
 class CodingFormatter(string.Formatter):
@@ -73,7 +73,7 @@ class HookPlugin(BeetsPlugin):
 
             # For backwards compatibility, use a string formatter that decodes
             # bytes (in particular, paths) to unicode strings.
-            formatter = CodingFormatter(arg_encoding())
+            formatter = CodingFormatter(sys.getfilesystemencoding())
             command_pieces = [
                 formatter.format(piece, event=event, **kwargs)
                 for piece in shlex.split(command)
