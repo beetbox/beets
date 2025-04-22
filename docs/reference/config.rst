@@ -58,6 +58,8 @@ directory
 The directory to which files will be copied/moved when adding them to the
 library. Defaults to a folder called ``Music`` in your home directory.
 
+.. _plugins-config:
+
 plugins
 ~~~~~~~
 
