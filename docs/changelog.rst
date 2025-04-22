@@ -36,6 +36,12 @@ been dropped.
 
 New features:
 
+* :doc:`plugins/musicbrainz`: The MusicBrainz autotagger has been moved to
+  a separate plugin. The default :ref:`plugins-config` includes `musicbrainz`,
+  but if you've customized your `plugins` list in your configuration, you'll
+  need to explicitly add `musicbrainz` to continue using this functionality.
+  :bug:`2686`
+  :bug:`4605`
 * :doc:`plugins/lastgenre`: The new configuration option, ``keep_existing``,
   provides more fine-grained control over how pre-populated genre tags are
   handled. The ``force`` option now behaves in a more conventional manner.
