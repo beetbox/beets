@@ -17,6 +17,7 @@
 import os
 import shlex
 
+from beets import ui
 from beets.library import Album, Item
 from beets.plugins import BeetsPlugin
 from beets.ui import Subcommand, UserError, decargs, print_
@@ -270,9 +271,13 @@ class DuplicatesPlugin(BeetsPlugin):
         import collections
 
         counts = collections.defaultdict(list)
-        for obj in objs:
+        for obj in ui.iprogress_bar(
+            objs,
+            desc="Finding duplicates",
+            unit="items",
+        ):
             values = [getattr(obj, k, None) for k in keys]
-            values = [v for v in values if v not in (None, "")]
+            values = list(filter(lambda v: v not in (None, ""), values))
             if strict and len(values) < len(keys):
                 self._log.debug(
                     "some keys {0} on item {1} are null or empty:" " skipping",

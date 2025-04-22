@@ -21,7 +21,7 @@ from collections.abc import Iterator
 import musicbrainzngs
 from musicbrainzngs.musicbrainz import MusicBrainzError
 
-from beets import config
+from beets import config, ui
 from beets.autotag import hooks
 from beets.dbcore import types
 from beets.library import Album, Item, Library
@@ -146,7 +146,6 @@ class MissingPlugin(BeetsPlugin):
         matching query.
         """
         albums = lib.albums(query)
-
         count = self.config["count"].get()
         total = self.config["total"].get()
         fmt = config["format_album" if count else "format_item"].get()
@@ -156,17 +155,26 @@ class MissingPlugin(BeetsPlugin):
             return
 
         # Default format string for count mode.
-        if count:
-            fmt += ": $missing"
-
-        for album in albums:
+        total_items = sum(a.albumtotal or 0 for a in albums)
+        with ui.changes_and_errors_pbars(
+            total=len(albums) if count else total_items,
+            desc="Analyzing albums",
+            unit="albums",
+        ) as (_, n_unchanged, n_errors):
             if count:
-                if _missing_count(album):
-                    print_(format(album, fmt))
-
+                fmt += ": $missing"
+                for album in albums:
+                    if _missing_count(album):
+                        print_(format(album, fmt))
+                        n_unchanged.update()
             else:
-                for item in self._missing(album):
-                    print_(format(item, fmt))
+                for album in albums:
+                    n_missing = _missing_count(album)
+                    n_errors.update(n_missing)
+                    n_unchanged.update(album.albumtotal - n_missing)
+
+                    for item in self._missing(album):
+                        print_(format(item, fmt))
 
     def _missing_albums(self, lib: Library, query: list[str]) -> None:
         """Print a listing of albums missing from each artist in the library
@@ -188,32 +196,41 @@ class MissingPlugin(BeetsPlugin):
 
         total_missing = 0
         calculating_total = self.config["total"].get()
-        for (artist, artist_id), album_ids in album_ids_by_artist.items():
-            try:
-                resp = musicbrainzngs.browse_release_groups(artist=artist_id)
-            except MusicBrainzError as err:
-                self._log.info(
-                    "Couldn't fetch info for artist '{}' ({}) - '{}'",
-                    artist,
-                    artist_id,
-                    err,
-                )
-                continue
+        with ui.changes_and_errors_pbars(
+            total=len(album_ids_by_artist),
+            desc="Analyzing artists",
+            unit="artists",
+        ) as (_, n_unchanged, n_errors):
+            for (artist, artist_id), album_ids in album_ids_by_artist.items():
+                try:
+                    resp = musicbrainzngs.browse_release_groups(
+                        artist=artist_id
+                    )
+                except MusicBrainzError as err:
+                    self._log.info(
+                        "Couldn't fetch info for artist '{}' ({}) - '{}'",
+                        artist,
+                        artist_id,
+                        err,
+                    )
+                    n_errors.update()
+                    continue
 
-            missing_titles = [
-                f"{artist} - {rg['title']}"
-                for rg in resp["release-group-list"]
-                if rg["id"] not in album_ids
-            ]
+                missing_titles = [
+                    f"{artist} - {rg['title']}"
+                    for rg in resp["release-group-list"]
+                    if rg["id"] not in album_ids
+                ]
+
+                if calculating_total:
+                    total_missing += len(missing_titles)
+                else:
+                    for title in missing_titles:
+                        print(title)
+                n_unchanged.update()
 
             if calculating_total:
-                total_missing += len(missing_titles)
-            else:
-                for title in missing_titles:
-                    print(title)
-
-        if calculating_total:
-            print(total_missing)
+                print(total_missing)
 
     def _missing(self, album: Album) -> Iterator[Item]:
         """Query MusicBrainz to determine items missing from `album`."""

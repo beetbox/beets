@@ -88,10 +88,20 @@ class ParentWorkPlugin(BeetsPlugin):
             force_parent = self.config["force"].get(bool)
             write = ui.should_write()
 
-            for item in lib.items(ui.decargs(args)):
-                changed = self.find_work(item, force_parent)
-                if changed:
-                    item.store()
+            items = lib.items(ui.decargs(args))
+            with ui.changes_and_errors_pbars(
+                total=len(items),
+                desc="Identifying parent works",
+                unit="songs",
+            ) as (n_changed, n_unchanged, _):
+                for item in items:
+                    changed = self.find_work(item, force_parent)
+                    if changed:
+                        item.store()
+                        n_changed.update()
+                    else:
+                        n_unchanged.update()
+
                     if write:
                         item.try_write()
 
