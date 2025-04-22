@@ -315,13 +315,8 @@ def item_file(item_id):
         item_path = os.fsdecode(item.path)
 
     base_filename = os.path.basename(item_path)
-    # FIXME: Arguably, this should just use `displayable_path`: The latter
-    # tries `_fsencoding()` first, but then falls back to `utf-8`, too.
     if isinstance(base_filename, bytes):
-        try:
-            unicode_base_filename = base_filename.decode("utf-8")
-        except UnicodeError:
-            unicode_base_filename = util.displayable_path(base_filename)
+        unicode_base_filename = util.displayable_path(base_filename)
     else:
         unicode_base_filename = base_filename
 

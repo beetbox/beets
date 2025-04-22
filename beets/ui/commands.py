@@ -1359,13 +1359,8 @@ def import_func(lib, opts, args):
         # what we need. On Python 3, we need to undo the "helpful"
         # conversion to Unicode strings to get the real bytestring
         # filename.
-        paths = [
-            p.encode(util.arg_encoding(), "surrogateescape") for p in paths
-        ]
-        paths_from_logfiles = [
-            p.encode(util.arg_encoding(), "surrogateescape")
-            for p in paths_from_logfiles
-        ]
+        paths = [os.fsencode(p) for p in paths]
+        paths_from_logfiles = [os.fsencode(p) for p in paths_from_logfiles]
 
         # Check the user-specified directories.
         for path in paths:

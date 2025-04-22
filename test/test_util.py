@@ -97,13 +97,6 @@ class UtilTest(unittest.TestCase):
             p = util.sanitize_path("foo//bar", [(re.compile(r"^$"), "_")])
         assert p == "foo/_/bar"
 
-    @unittest.skipIf(sys.platform == "win32", "win32")
-    def test_convert_command_args_keeps_undecodeable_bytes(self):
-        arg = b"\x82"  # non-ascii bytes
-        cmd_args = util.convert_command_args([arg])
-
-        assert cmd_args[0] == arg.decode(util.arg_encoding(), "surrogateescape")
-
     @patch("beets.util.subprocess.Popen")
     def test_command_output(self, mock_popen):
         def popen_fail(*args, **kwargs):

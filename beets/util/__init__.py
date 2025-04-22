@@ -369,28 +369,6 @@ def components(path: AnyStr) -> list[AnyStr]:
     return comps
 
 
-def arg_encoding() -> str:
-    """Get the encoding for command-line arguments (and other OS
-    locale-sensitive strings).
-    """
-    return sys.getfilesystemencoding()
-
-
-def _fsencoding() -> str:
-    """Get the system's filesystem encoding. On Windows, this is always
-    UTF-8 (not MBCS).
-    """
-    encoding = sys.getfilesystemencoding() or sys.getdefaultencoding()
-    if encoding == "mbcs":
-        # On Windows, a broken encoding known to Python as "MBCS" is
-        # used for the filesystem. However, we only use the Unicode API
-        # for Windows paths, so the encoding is actually immaterial so
-        # we can avoid dealing with this nastiness. We arbitrarily
-        # choose UTF-8.
-        encoding = "utf-8"
-    return encoding
-
-
 def bytestring_path(path: PathLike) -> bytes:
     """Given a path, which is either a bytes or a unicode, returns a str
     path (ensuring that we never deal with Unicode pathnames). Path should be
@@ -410,11 +388,7 @@ def bytestring_path(path: PathLike) -> bytes:
     ):
         str_path = str_path[len(WINDOWS_MAGIC_PREFIX) :]
 
-    # Try to encode with default encodings, but fall back to utf-8.
-    try:
-        return str_path.encode(_fsencoding())
-    except (UnicodeError, LookupError):
-        return str_path.encode("utf-8")
+    return os.fsencode(str_path)
 
 
 PATH_SEP: bytes = bytestring_path(os.sep)
@@ -436,10 +410,7 @@ def displayable_path(
         # A non-string object: just get its unicode representation.
         return str(path)
 
-    try:
-        return path.decode(_fsencoding(), "ignore")
-    except (UnicodeError, LookupError):
-        return path.decode("utf-8", "ignore")
+    return os.fsdecode(path)
 
 
 def syspath(path: PathLike, prefix: bool = True) -> str:
@@ -854,19 +825,6 @@ def plurality(objs: Sequence[T]) -> tuple[T, int]:
     return c.most_common(1)[0]
 
 
-def convert_command_args(args: list[BytesOrStr]) -> list[str]:
-    """Convert command arguments, which may either be `bytes` or `str`
-    objects, to uniformly surrogate-escaped strings."""
-    assert isinstance(args, list)
-
-    def convert(arg) -> str:
-        if isinstance(arg, bytes):
-            return os.fsdecode(arg)
-        return arg
-
-    return [convert(a) for a in args]
-
-
 # stdout and stderr as bytes
 class CommandOutput(NamedTuple):
     stdout: bytes
@@ -891,7 +849,7 @@ def command_output(cmd: list[BytesOrStr], shell: bool = False) -> CommandOutput:
     This replaces `subprocess.check_output` which can have problems if lots of
     output is sent to stderr.
     """
-    converted_cmd = convert_command_args(cmd)
+    converted_cmd = [os.fsdecode(a) for a in cmd]
 
     devnull = subprocess.DEVNULL
 
