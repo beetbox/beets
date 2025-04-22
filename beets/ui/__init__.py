@@ -17,6 +17,8 @@ interface. To invoke the CLI, just call beets.ui.main(). The actual
 CLI commands are implemented in the ui.commands module.
 """
 
+from __future__ import annotations
+
 import errno
 import optparse
 import os.path
@@ -27,7 +29,7 @@ import sys
 import textwrap
 import traceback
 from difflib import SequenceMatcher
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 import confuse
 
@@ -36,6 +38,9 @@ from beets.dbcore import db
 from beets.dbcore import query as db_query
 from beets.util import as_string
 from beets.util.functemplate import template
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 # On Windows platforms, use colorama to support "ANSI" terminal colors.
 if sys.platform == "win32":
@@ -569,7 +574,7 @@ COLOR_NAMES = [
     "text_diff_removed",
     "text_diff_changed",
 ]
-COLORS = None
+COLORS: dict[str, list[str]] | None = None
 
 
 def _colorize(color, text):
@@ -1622,7 +1627,9 @@ optparse.Option.ALWAYS_TYPED_ACTIONS += ("callback",)
 # The main entry point and bootstrapping.
 
 
-def _load_plugins(options, config):
+def _load_plugins(
+    options: optparse.Values, config: confuse.LazyConfig
+) -> ModuleType:
     """Load the plugins specified on the command line or in the configuration."""
     paths = config["pluginpath"].as_str_seq(split=False)
     paths = [util.normpath(p) for p in paths]
@@ -1647,6 +1654,11 @@ def _load_plugins(options, config):
         )
     else:
         plugin_list = config["plugins"].as_str_seq()
+        # TODO: Remove in v2.4 or v3
+        if "musicbrainz" in config and config["musicbrainz"].get().get(
+            "enabled"
+        ):
+            plugin_list.append("musicbrainz")
 
     # Exclude any plugins that were specified on the command line
     if options.exclude is not None:
