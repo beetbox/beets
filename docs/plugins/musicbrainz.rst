@@ -71,6 +71,9 @@ to one request per second.
 enabled
 ~~~~~~~
 
+.. deprecated:: 2.3
+  Add `musicbrainz` to the `plugins` list instead.
+
 This option allows you to disable using MusicBrainz as a metadata source. This applies
 if you use plugins that fetch data from alternative sources and should make the import
 process quicker.
