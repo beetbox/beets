@@ -276,7 +276,7 @@ class ImportZipTest(AsIsImporterMixin, ImportTestCase):
         assert len(self.lib.albums()) == 1
 
 
-class ImportTarTest(ImportZipTest):
+class ImportTarTest(AsIsImporterMixin, ImportTestCase):
     def create_archive(self):
         (handle, path) = mkstemp(dir=syspath(self.temp_dir))
         path = bytestring_path(path)
@@ -287,6 +287,15 @@ class ImportTarTest(ImportZipTest):
         )
         archive.close()
         return path
+
+    def test_import_tar(self):
+        zip_path = self.create_archive()
+        assert len(self.lib.items()) == 0
+        assert len(self.lib.albums()) == 0
+
+        self.run_asis_importer(import_dir=zip_path)
+        assert len(self.lib.items()) == 1
+        assert len(self.lib.albums()) == 1
 
 
 @unittest.skipIf(not has_program("unrar"), "unrar program not found")

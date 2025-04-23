@@ -1225,7 +1225,33 @@ class ArchiveImportTask(SentinelImportTask):
             cls._handlers.append((is_zipfile, ZipFile))
             import tarfile
 
-            cls._handlers.append((tarfile.is_tarfile, tarfile.open))
+            class TarInfo(tarfile.TarInfo):
+                def __init__(self, member):
+                    super().__init__(member.name)
+                    self.name = member.name
+                    self.size = member.size
+                    self.mode = member.mode
+                    self.mtime = member.mtime
+                    self.type = member.type
+                    self.linkname = member.linkname
+                    self.uid = member.uid
+                    self.gid = member.gid
+                    self.uname = member.uname
+                    self.gname = member.gname
+                    self.date_time = time.gmtime(member.mtime)[:6]
+
+                @property
+                def filename(self):
+                    return self.name
+
+            class TarWrapper(tarfile.TarFile):
+                def __init__(self, *args, **kwargs):
+                    super().__init__(*args, **kwargs)
+
+                def infolist(self):
+                    return [TarInfo(m) for m in self.getmembers() if m.isfile()]
+
+            cls._handlers.append((tarfile.is_tarfile, TarWrapper.open))
             try:
                 from rarfile import RarFile, is_rarfile
             except ImportError:
