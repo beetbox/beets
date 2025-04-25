@@ -58,6 +58,7 @@ New features:
   AI Translator API and add relevant instructions to the documentation.
 * :doc:`plugins/missing`: Add support for all metadata sources.
 * :doc:`plugins/mbsync`: Add support for all metadata sorces.
+* :doc:`plugins/web`: Display artist and album as part of the search results.
 
 Bug fixes:
 
