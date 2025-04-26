@@ -12,12 +12,10 @@
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
 
-"""Generates smart playlists based on beets queries.
-"""
+"""Generates smart playlists based on beets queries."""
 
-
-import json
 import os
+from urllib.parse import quote
 from urllib.request import pathname2url
 
 from beets import ui
@@ -329,7 +327,8 @@ class SmartPlaylistPlugin(BeetsPlugin):
                         if extm3u:
                             attr = [(k, entry.item[k]) for k in keys]
                             al = [
-                                f" {a[0]}={json.dumps(str(a[1]))}" for a in attr
+                                f" {key}=\"{quote(str(value), safe='/:')}\""
+                                for key, value in attr
                             ]
                             attrs = "".join(al)
                             comment = "#EXTINF:{}{},{} - {}\n".format(
