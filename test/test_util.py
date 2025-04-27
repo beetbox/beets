@@ -190,66 +190,27 @@ class TestPathLegalization:
 
         assert util.truncate_path(path) == expected
 
-    @pytest.mark.parametrize(
-        "pre_trunc_repl, post_trunc_repl, expected",
-        [
-            pytest.param(
-                [],
-                [],
-                ("_abcd", False),
-                id="default",
-            ),
-            pytest.param(
-                [(re.compile(r"abcdX$"), "PRE")],
-                [],
-                (":PRE", False),
-                id="valid path after initial repl",
-            ),
-            pytest.param(
-                [(re.compile(r"abcdX$"), "PRE_LONG")],
-                [],
-                (":PRE_", False),
-                id="too long path after initial repl is truncated",
-            ),
-            pytest.param(
-                [],
-                [(re.compile(r"abcdX$"), "POST")],
-                (":POST", False),
-                id="valid path after post-trunc repl",
-            ),
-            pytest.param(
-                [],
-                [(re.compile(r"abcdX$"), "POST_LONG")],
-                (":POST", False),
-                id="too long path after post-trunc repl is truncated",
-            ),
-            pytest.param(
-                [(re.compile(r"abcdX$"), "PRE")],
-                [(re.compile(r"PRE$"), "POST")],
-                (":POST", False),
-                id="both replacements within filename length limit",
-            ),
-            pytest.param(
-                [(re.compile(r"abcdX$"), "PRE_LONG")],
-                [(re.compile(r"PRE_$"), "POST")],
-                (":POST", False),
-                id="too long initial path is truncated and valid post-trunc repl",
-            ),
-            pytest.param(
-                [(re.compile(r"abcdX$"), "PRE")],
-                [(re.compile(r"PRE$"), "POST_LONG")],
-                (":POST", False),
-                id="valid pre-trunc repl and too long post-trunc path is truncated",
-            ),
-            pytest.param(
-                [(re.compile(r"abcdX$"), "PRE_LONG")],
-                [(re.compile(r"PRE_$"), "POST_LONG")],
-                ("_PRE_", True),
-                id="too long repl both times force default ones to be applied",
-            ),
-        ],
-    )
-    def test_replacements(self, pre_trunc_repl, post_trunc_repl, expected):
-        replacements = pre_trunc_repl + post_trunc_repl
+    _p = pytest.param
 
-        assert util.legalize_path(":abcdX", replacements, "") == expected
+    @pytest.mark.parametrize(
+        "replacements, expected_path, expected_truncated",
+        [  # [ repl before truncation, repl after truncation   ]
+            _p([                                                  ], "_abcd",  False, id="default"),
+            _p([(r"abcdX$", "1ST"),                               ], ":1ST",   False, id="1st_valid"),
+            _p([(r"abcdX$", "TOO_LONG"),                          ], ":TOO_",  False, id="1st_truncated"),
+            _p([(r"abcdX$", "1ST"),       (r"1ST$",   "2ND")      ], ":2ND",   False, id="both_valid"),
+            _p([(r"abcdX$", "TOO_LONG"),  (r"TOO_$",  "2ND")      ], ":2ND",   False, id="1st_truncated_2nd_valid"),
+            _p([(r"abcdX$", "1ST"),       (r"1ST$",   "TOO_LONG") ], ":TOO_",  False, id="1st_valid_2nd_truncated"),
+            # if the logic truncates the path twice, it ends up applying the default replacements
+            _p([(r"abcdX$", "TOO_LONG"),  (r"TOO_$",  "TOO_LONG") ], "_TOO_",  True,  id="both_truncated_default_repl_applied"),
+        ]
+    )  # fmt: skip
+    def test_replacements(
+        self, replacements, expected_path, expected_truncated
+    ):
+        replacements = [(re.compile(pat), repl) for pat, repl in replacements]
+
+        assert util.legalize_path(":abcdX", replacements, "") == (
+            expected_path,
+            expected_truncated,
+        )
