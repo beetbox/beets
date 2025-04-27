@@ -26,8 +26,7 @@ import sys
 import time
 import traceback
 from string import Template
-
-from mediafile import MediaFile
+from typing import TYPE_CHECKING
 
 import beets
 import beets.ui
@@ -35,6 +34,9 @@ from beets import dbcore, vfs
 from beets.library import Item
 from beets.plugins import BeetsPlugin
 from beets.util import bluelet
+
+if TYPE_CHECKING:
+    from beets.dbcore.query import Query
 
 PROTOCOL_VERSION = "0.16.0"
 BUFSIZE = 1024
@@ -90,8 +92,6 @@ SUBSYSTEMS = [
     "message",
     "partition",
 ]
-
-ITEM_KEYS_WRITABLE = set(MediaFile.fields()).intersection(Item._fields.keys())
 
 
 # Gstreamer import error.
@@ -1399,29 +1399,29 @@ class Server(BaseServer):
                 return test_tag, key
         raise BPDError(ERROR_UNKNOWN, "no such tagtype")
 
-    def _metadata_query(self, query_type, any_query_type, kv):
+    def _metadata_query(self, query_type, kv, allow_any_query: bool = False):
         """Helper function returns a query object that will find items
         according to the library query type provided and the key-value
         pairs specified. The any_query_type is used for queries of
         type "any"; if None, then an error is thrown.
         """
         if kv:  # At least one key-value pair.
-            queries = []
+            queries: list[Query] = []
             # Iterate pairwise over the arguments.
             it = iter(kv)
             for tag, value in zip(it, it):
                 if tag.lower() == "any":
-                    if any_query_type:
+                    if allow_any_query:
                         queries.append(
-                            any_query_type(
-                                value, ITEM_KEYS_WRITABLE, query_type
+                            Item.any_writable_media_field_query(
+                                query_type, value
                             )
                         )
                     else:
                         raise BPDError(ERROR_UNKNOWN, "no such tagtype")
                 else:
                     _, key = self._tagtype_lookup(tag)
-                    queries.append(query_type(key, value))
+                    queries.append(Item.field_query(key, value, query_type))
             return dbcore.query.AndQuery(queries)
         else:  # No key-value pairs.
             return dbcore.query.TrueQuery()
@@ -1429,14 +1429,14 @@ class Server(BaseServer):
     def cmd_search(self, conn, *kv):
         """Perform a substring match for items."""
         query = self._metadata_query(
-            dbcore.query.SubstringQuery, dbcore.query.AnyFieldQuery, kv
+            dbcore.query.SubstringQuery, kv, allow_any_query=True
         )
         for item in self.lib.items(query):
             yield self._item_info(item)
 
     def cmd_find(self, conn, *kv):
         """Perform an exact match for items."""
-        query = self._metadata_query(dbcore.query.MatchQuery, None, kv)
+        query = self._metadata_query(dbcore.query.MatchQuery, kv)
         for item in self.lib.items(query):
             yield self._item_info(item)
 
@@ -1456,7 +1456,7 @@ class Server(BaseServer):
                 raise BPDError(ERROR_ARG, 'should be "Album" for 3 arguments')
         elif len(kv) % 2 != 0:
             raise BPDError(ERROR_ARG, "Incorrect number of filter arguments")
-        query = self._metadata_query(dbcore.query.MatchQuery, None, kv)
+        query = self._metadata_query(dbcore.query.MatchQuery, kv)
 
         clause, subvals = query.clause()
         statement = (
@@ -1484,7 +1484,9 @@ class Server(BaseServer):
         _, key = self._tagtype_lookup(tag)
         songs = 0
         playtime = 0.0
-        for item in self.lib.items(dbcore.query.MatchQuery(key, value)):
+        for item in self.lib.items(
+            Item.field_query(key, value, dbcore.query.MatchQuery)
+        ):
             songs += 1
             playtime += item.length
         yield "songs: " + str(songs)

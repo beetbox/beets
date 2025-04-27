@@ -22,12 +22,13 @@ import tempfile
 import threading
 from string import Template
 
+import mediafile
 from confuse import ConfigTypeError, Optional
 
 from beets import art, config, plugins, ui, util
 from beets.library import Item, parse_query_string
 from beets.plugins import BeetsPlugin
-from beets.util import arg_encoding, par_map
+from beets.util import par_map
 from beets.util.artresizer import ArtResizer
 from beets.util.m3u import M3UFile
 
@@ -283,7 +284,7 @@ class ConvertPlugin(BeetsPlugin):
         if not quiet and not pretend:
             self._log.info("Encoding {0}", util.displayable_path(source))
 
-        command = command.decode(arg_encoding(), "surrogateescape")
+        command = os.fsdecode(command)
         source = os.fsdecode(source)
         dest = os.fsdecode(dest)
 
@@ -297,7 +298,7 @@ class ConvertPlugin(BeetsPlugin):
                     "dest": dest,
                 }
             )
-            encode_cmd.append(args[i].encode(util.arg_encoding()))
+            encode_cmd.append(os.fsdecode(args[i]))
 
         if pretend:
             self._log.info("{0}", " ".join(ui.decargs(args)))
@@ -350,6 +351,15 @@ class ConvertPlugin(BeetsPlugin):
         while True:
             item = yield (item, original, converted)
             dest = item.destination(basedir=dest_dir, path_formats=path_formats)
+
+            # Ensure that desired item is readable before processing it. Needed
+            # to avoid any side-effect of the conversion (linking, keep_new,
+            # refresh) if we already know that it will fail.
+            try:
+                mediafile.MediaFile(util.syspath(item.path))
+            except mediafile.UnreadableFileError as exc:
+                self._log.error("Could not open file to convert: {0}", exc)
+                continue
 
             # When keeping the new file in the library, we first move the
             # current (pristine) file to the destination. We'll then copy it

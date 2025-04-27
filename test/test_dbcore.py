@@ -23,6 +23,7 @@ from tempfile import mkstemp
 import pytest
 
 from beets import dbcore
+from beets.library import LibModel
 from beets.test import _common
 
 # Fixture: concrete database and model classes. For migration tests, we
@@ -44,7 +45,7 @@ class QueryFixture(dbcore.query.FieldQuery):
         return True
 
 
-class ModelFixture1(dbcore.Model):
+class ModelFixture1(LibModel):
     _table = "test"
     _flex_table = "testflex"
     _fields = {
@@ -420,6 +421,20 @@ class ModelTest(unittest.TestCase):
         with pytest.raises(TypeError, match="must be a string"):
             dbcore.Model._parse(None, 42)
 
+    def test_pickle_dump(self):
+        """Tries to pickle an item. This tests the __getstate__ method
+        of the Model ABC"""
+        import pickle
+
+        model = ModelFixture1(self.db)
+        model.add(self.db)
+        model.field_one = 123
+
+        model.store()
+        assert model._db is not None
+
+        pickle.dumps(model)
+
 
 class FormatTest(unittest.TestCase):
     def test_format_fixed_field_integer(self):
@@ -587,7 +602,7 @@ class QueryFromStringsTest(unittest.TestCase):
         q = self.qfs(["foo", "bar:baz"])
         assert isinstance(q, dbcore.query.AndQuery)
         assert len(q.subqueries) == 2
-        assert isinstance(q.subqueries[0], dbcore.query.AnyFieldQuery)
+        assert isinstance(q.subqueries[0], dbcore.query.OrQuery)
         assert isinstance(q.subqueries[1], dbcore.query.SubstringQuery)
 
     def test_parse_fixed_type_query(self):

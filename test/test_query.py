@@ -21,6 +21,7 @@ from contextlib import contextmanager
 from functools import partial
 
 import pytest
+from mock import patch
 
 import beets.library
 from beets import dbcore, util
@@ -30,7 +31,6 @@ from beets.dbcore.query import (
     NoneQuery,
     ParsingError,
 )
-from beets.library import Item
 from beets.test import _common
 from beets.test.helper import BeetsTestCase, ItemInDBTestCase
 from beets.util import syspath
@@ -54,40 +54,6 @@ class AssertsMixin:
     def assertNotInResult(self, item, results):
         result_ids = [i.id for i in results]
         assert item.id not in result_ids
-
-
-class AnyFieldQueryTest(ItemInDBTestCase):
-    def test_no_restriction(self):
-        q = dbcore.query.AnyFieldQuery(
-            "title",
-            beets.library.Item._fields.keys(),
-            dbcore.query.SubstringQuery,
-        )
-        assert self.lib.items(q).get().title == "the title"
-
-    def test_restriction_completeness(self):
-        q = dbcore.query.AnyFieldQuery(
-            "title", ["title"], dbcore.query.SubstringQuery
-        )
-        assert self.lib.items(q).get().title == "the title"
-
-    def test_restriction_soundness(self):
-        q = dbcore.query.AnyFieldQuery(
-            "title", ["artist"], dbcore.query.SubstringQuery
-        )
-        assert self.lib.items(q).get() is None
-
-    def test_eq(self):
-        q1 = dbcore.query.AnyFieldQuery(
-            "foo", ["bar"], dbcore.query.SubstringQuery
-        )
-        q2 = dbcore.query.AnyFieldQuery(
-            "foo", ["bar"], dbcore.query.SubstringQuery
-        )
-        assert q1 == q2
-
-        q2.query_class = None
-        assert q1 != q2
 
 
 # A test case class providing a library with some dummy data and some
@@ -715,10 +681,6 @@ class PathQueryTest(ItemInDBTestCase, AssertsMixin):
 
 
 class IntQueryTest(BeetsTestCase):
-    def tearDown(self):
-        super().tearDown()
-        Item._types = {}
-
     def test_exact_value_match(self):
         item = self.add_item(bpm=120)
         matched = self.lib.items("bpm:120").get()
@@ -732,14 +694,14 @@ class IntQueryTest(BeetsTestCase):
         assert 1 == len(matched)
         assert item.id == matched.get().id
 
+    @patch("beets.library.Item._types", {"myint": types.Integer()})
     def test_flex_range_match(self):
-        Item._types = {"myint": types.Integer()}
         item = self.add_item(myint=2)
         matched = self.lib.items("myint:2").get()
         assert item.id == matched.id
 
+    @patch("beets.library.Item._types", {"myint": types.Integer()})
     def test_flex_dont_match_missing(self):
-        Item._types = {"myint": types.Integer()}
         self.add_item()
         matched = self.lib.items("myint:2").get()
         assert matched is None
@@ -750,15 +712,8 @@ class IntQueryTest(BeetsTestCase):
         assert matched is None
 
 
+@patch("beets.library.Item._types", {"flexbool": types.Boolean()})
 class BoolQueryTest(BeetsTestCase, AssertsMixin):
-    def setUp(self):
-        super().setUp()
-        Item._types = {"flexbool": types.Boolean()}
-
-    def tearDown(self):
-        super().tearDown()
-        Item._types = {}
-
     def test_parse_true(self):
         item_true = self.add_item(comp=True)
         item_false = self.add_item(comp=False)
@@ -965,14 +920,6 @@ class NotQueryTest(DummyDataTestCase):
         self.assert_items_matched(not_results, ["foo bar", "beets 4 eva"])
         self.assertNegationProperties(q)
 
-    def test_type_anyfield(self):
-        q = dbcore.query.AnyFieldQuery(
-            "foo", ["title", "artist", "album"], dbcore.query.SubstringQuery
-        )
-        not_results = self.lib.items(dbcore.query.NotQuery(q))
-        self.assert_items_matched(not_results, ["baz qux"])
-        self.assertNegationProperties(q)
-
     def test_type_boolean(self):
         q = dbcore.query.BooleanQuery("comp", True)
         not_results = self.lib.items(dbcore.query.NotQuery(q))
@@ -1146,7 +1093,14 @@ class RelatedQueriesTest(BeetsTestCase, AssertsMixin):
         results = self.lib.items(q)
         self.assert_items_matched(results, ["Album1 Item1", "Album1 Item2"])
 
-    def test_filter_by_common_field(self):
-        q = "catalognum:ABC Album1"
+    def test_filter_albums_by_common_field(self):
+        # title:Album1 ensures that the items table is joined for the query
+        q = "title:Album1 Album1"
         results = self.lib.albums(q)
         self.assert_albums_matched(results, ["Album1"])
+
+    def test_filter_items_by_common_field(self):
+        # artpath::A ensures that the albums table is joined for the query
+        q = "artpath::A Album1"
+        results = self.lib.items(q)
+        self.assert_items_matched(results, ["Album1 Item1", "Album1 Item2"])
