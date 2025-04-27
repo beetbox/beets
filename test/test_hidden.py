@@ -22,8 +22,8 @@ import tempfile
 import unittest
 
 from beets import util
-from beets.util import hidden
 from beets.util import bytestring_path
+from beets.util import hidden
 
 
 class HiddenFileTest(unittest.TestCase):
