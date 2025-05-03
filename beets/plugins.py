@@ -40,7 +40,7 @@ from beets import logging
 from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
-    from beets.types import EventType
+    from beets.event_types import EventType
 
 if sys.version_info >= (3, 10):
     from typing import ParamSpec
