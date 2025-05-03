@@ -39,6 +39,9 @@ import mediafile
 import beets
 from beets import logging
 
+if TYPE_CHECKING:
+    from beets.event_types import EventType
+
 if sys.version_info >= (3, 10):
     from typing import ParamSpec
 else:
@@ -290,7 +293,7 @@ class BeetsPlugin:
     _raw_listeners: dict[str, list[Listener]] | None = None
     listeners: dict[str, list[Listener]] | None = None
 
-    def register_listener(self, event: str, func: Listener) -> None:
+    def register_listener(self, event: "EventType", func: Listener):
         """Add a function as a listener for the specified event."""
         wrapped_func = self._set_log_level_and_params(logging.WARNING, func)
 
