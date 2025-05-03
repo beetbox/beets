@@ -40,7 +40,7 @@ import beets
 from beets import logging
 
 if TYPE_CHECKING:
-    from beets.types import EventType
+    from beets.event_types import EventType
 
 if sys.version_info >= (3, 10):
     from typing import ParamSpec
