@@ -22,7 +22,7 @@ from beets.test import _common
 from beets.test.helper import BeetsTestCase, capture_log
 
 
-class DatabaseChangeTestBase(BeetsTestCase):
+class DatabaseChangeTest(BeetsTestCase):
     def test_item_added_one_database_change(self):
         self.item = _common.item()
         self.item.path = beets.util.normpath(
