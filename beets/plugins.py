@@ -491,13 +491,14 @@ def notify_info_yielded(event: str) -> Callable[[IterF[P, Ret]], IterF[P, Ret]]:
     'send'.
     """
 
-    def decorator(generator: IterF[P, Ret]) -> IterF[P, Ret]:
-        def decorated(*args: P.args, **kwargs: P.kwargs) -> Iterator[Ret]:
-            for v in generator(*args, **kwargs):
+    def decorator(func: IterF[P, Ret]) -> IterF[P, Ret]:
+        @wraps(func)
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> Iterator[Ret]:
+            for v in func(*args, **kwargs):
                 send(event, info=v)
                 yield v
 
-        return decorated
+        return wrapper
 
     return decorator
 
@@ -694,7 +695,7 @@ def sanitize_pairs(
     ...     )
     [('foo', 'baz'), ('foo', 'bar'), ('key', 'value'), ('foo', 'foobar')]
     """
-    pairs_all: list[tuple[str, str]] = list(pairs_all)
+    pairs_all = list(pairs_all)
     seen: set[tuple[str, str]] = set()
     others = [x for x in pairs_all if x not in pairs]
     res: list[tuple[str, str]] = []
