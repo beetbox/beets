@@ -83,6 +83,7 @@ Bug fixes:
   lyrics.
   :bug:`5583`
 * ImageMagick 7.1.1-44 is now supported.
+* :doc:`plugins/parentwork`: Only output parentwork changes when running in verbose mode.
 
 For packagers:
 
