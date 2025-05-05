@@ -16,7 +16,6 @@
 
 from __future__ import annotations
 
-import re
 import traceback
 from collections import Counter
 from itertools import product
@@ -28,13 +27,8 @@ import musicbrainzngs
 import beets
 import beets.autotag.hooks
 from beets import config, plugins, util
-from beets.plugins import BeetsPlugin, MetadataSourcePlugin
-from beets.util.id_extractors import (
-    beatport_id_regex,
-    deezer_id_regex,
-    extract_discogs_id_regex,
-    spotify_id_regex,
-)
+from beets.plugins import BeetsPlugin
+from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -298,17 +292,6 @@ def _set_date_str(
                 if original:
                     key = "original_" + key
                 setattr(info, key, date_num)
-
-
-def _parse_id(s: str) -> str | None:
-    """Search for a MusicBrainz ID in the given string and return it. If
-    no ID can be found, return None.
-    """
-    # Find the first thing that looks like a UUID/MBID.
-    match = re.search("[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{12}", s)
-    if match is not None:
-        return match.group() if match else None
-    return None
 
 
 def _is_translation(r):
@@ -750,24 +733,10 @@ class MusicBrainzPlugin(BeetsPlugin):
                         source.capitalize(),
                     )
 
-            if "discogs" in urls:
-                info.discogs_albumid = extract_discogs_id_regex(urls["discogs"])
-            if "bandcamp" in urls:
-                info.bandcamp_album_id = urls["bandcamp"]
-            if "spotify" in urls:
-                info.spotify_album_id = MetadataSourcePlugin._get_id(
-                    "album", urls["spotify"], spotify_id_regex
+            for source, url in urls.items():
+                setattr(
+                    info, f"{source}_album_id", extract_release_id(source, url)
                 )
-            if "deezer" in urls:
-                info.deezer_album_id = MetadataSourcePlugin._get_id(
-                    "album", urls["deezer"], deezer_id_regex
-                )
-            if "beatport" in urls:
-                info.beatport_album_id = MetadataSourcePlugin._get_id(
-                    "album", urls["beatport"], beatport_id_regex
-                )
-            if "tidal" in urls:
-                info.tidal_album_id = urls["tidal"].split("/")[-1]
 
         extra_albumdatas = plugins.send("mb_album_extract", data=release)
         for extra_albumdata in extra_albumdatas:
@@ -866,10 +835,10 @@ class MusicBrainzPlugin(BeetsPlugin):
         MusicBrainzAPIError.
         """
         self._log.debug("Requesting MusicBrainz release {}", album_id)
-        albumid = _parse_id(album_id)
-        if not albumid:
+        if not (albumid := extract_release_id("musicbrainz", album_id)):
             self._log.debug("Invalid MBID ({0}).", album_id)
             return None
+
         try:
             res = musicbrainzngs.get_release_by_id(albumid, RELEASE_INCLUDES)
 
@@ -903,10 +872,10 @@ class MusicBrainzPlugin(BeetsPlugin):
         """Fetches a track by its MusicBrainz ID. Returns a TrackInfo object
         or None if no track is found. May raise a MusicBrainzAPIError.
         """
-        trackid = _parse_id(track_id)
-        if not trackid:
+        if not (trackid := extract_release_id("musicbrainz", track_id)):
             self._log.debug("Invalid MBID ({0}).", track_id)
             return None
+
         try:
             res = musicbrainzngs.get_recording_by_id(trackid, TRACK_INCLUDES)
         except musicbrainzngs.ResponseError:
