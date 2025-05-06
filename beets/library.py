@@ -1166,6 +1166,7 @@ class Album(LibModel):
         "albumartists_sort": types.MULTI_VALUE_DSV,
         "albumartists_credit": types.MULTI_VALUE_DSV,
         "album": types.STRING,
+        "artists": types.STRING,
         "genre": types.STRING,
         "style": types.STRING,
         "discogs_albumid": types.INTEGER,

@@ -1104,3 +1104,21 @@ class RelatedQueriesTest(BeetsTestCase, AssertsMixin):
         q = "artpath::A Album1"
         results = self.lib.items(q)
         self.assert_items_matched(results, ["Album1 Item1", "Album1 Item2"])
+
+    def test_album_artists_field_stored_as_plain_string(self):
+        self.album.artists = "Artist1, Artist2"
+        self.album.store()
+        # Re-fetch the album
+        albums = self.lib.albums('album:"Album1"')
+        self.assertEqual(len(albums), 1)
+        album = albums[0]
+        # Check the artists field is a string and not split
+        self.assertIsInstance(album.artists, str)
+        self.assertEqual(album.artists, "Artist1, Artist2")
+
+    def test_query_album_by_single_artist_in_comma_separated_string(self):
+        self.album.artists = "Artist1, Artist2"
+        self.album.store()
+        # This query should match because "Artist1" is a substring of the string
+        results = self.lib.albums('artists:"Artist1"')
+        self.assert_albums_matched(results, ["Album1"])

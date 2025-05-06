@@ -104,6 +104,8 @@ Other changes:
 * :doc:`plugins/ftintitle`: Optimize the plugin by avoiding unnecessary writes
   to the database.
 * Database models are now serializable with pickle.
+* Added support for using artists and albumartists as album level queries. 
+  Makes it more flexible and intuitive for users to query their library. 
 
 2.2.0 (December 02, 2024)
 -------------------------
