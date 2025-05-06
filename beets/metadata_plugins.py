@@ -83,15 +83,12 @@ class MetadataSourcePluginNext(metaclass=abc.ABCMeta):
     TODO: Rename once all plugins are migrated to this interface.
     """
 
-    @abc.abstractmethod
-    @classmethod
-    def data_source(cls) -> str:
-        """The name of the data source for this plugin.
+    data_source: str
+    """The name of the data source for this plugin.
 
-        This is used to identify the source of metadata and should be unique among
-        all source plugins.
-        """
-        raise NotImplementedError
+    This is used to identify the source of metadata and should be unique among
+    all source plugins.
+    """
 
     @classmethod
     def id_key(cls) -> str:
@@ -101,7 +98,7 @@ class MetadataSourcePluginNext(metaclass=abc.ABCMeta):
         and append "_id" to it.
         """
         return (
-            "".join(e for e in cls.data_source() if e.isalnum()).lower() + "_id"
+            "".join(e for e in cls.data_source if e.isalnum()).lower() + "_id"
         )
 
     regex_pattern: re.Pattern[str] | None = None
