@@ -105,17 +105,21 @@ class MetadataSourcePluginNew(metaclass=abc.ABCMeta):
     regex_pattern: re.Pattern[str] | None = None
     # Regex pattern allowed to extract the ID from a URL or other string.
 
-    def to_release_id(self, id_: str) -> str | None:
+    def to_release_id(self, id_: str) -> tuple[str, str] | None:
         """Converts a raw id string (normally an url)
         to a normalized id string variant.
+
+        Returns a tuple of (id, source) to allow plugins to also
+        parse additional sources see musicbrainz plugin for reference..
 
         May return None if the id is not valid.
         """
         if self.regex_pattern is None:
-            return id_
+            return (id_, self.id_key)
 
         if m := self.regex_pattern.search(str(id_)):
-            return m[1]
+            return (m[1], self.id_key)
+
         return None
 
     # --------------------------------- id lookup -------------------------------- #
