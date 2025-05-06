@@ -20,14 +20,14 @@ if TYPE_CHECKING:
     from beets.autotag.hooks import AlbumInfo, Item, TrackInfo
 
 
-def find_metadata_source_plugins() -> list[MetadataSourcePluginNew]:
+def find_metadata_source_plugins() -> list[MetadataSourcePluginNext]:
     """Returns a list of MetadataSourcePluginNew subclass instances from all
     currently loaded beets plugins.
     """
     return [
         plugin
         for plugin in find_plugins()
-        if isinstance(plugin, MetadataSourcePluginNew)
+        if isinstance(plugin, MetadataSourcePluginNext)
     ]
 
 
@@ -73,17 +73,19 @@ def track_for_id(_id: str) -> TrackInfo | None:
     return None
 
 
-class MetadataSourcePluginNew(metaclass=abc.ABCMeta):
+class MetadataSourcePluginNext(metaclass=abc.ABCMeta):
     """A plugin that provides metadata from a specific source.
 
     This base class implements a contract for plugins that provide metadata
     from a specific source. The plugin must implement the methods to search for albums
     and tracks, and to retrieve album and track information by ID.
+
+    TODO: Rename once all plugins are migrated to this interface.
     """
 
-    @property
     @abc.abstractmethod
-    def data_source(self) -> str:
+    @classmethod
+    def data_source(cls) -> str:
         """The name of the data source for this plugin.
 
         This is used to identify the source of metadata and should be unique among
@@ -91,22 +93,23 @@ class MetadataSourcePluginNew(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
-    @property
-    def id_key(self) -> str:
+    @classmethod
+    def id_key(cls) -> str:
         """The key used to identify external IDs in the database.
 
         Will normalize the data source name to alphanumeric and lowercase
         and append "_id" to it.
         """
         return (
-            "".join(e for e in self.data_source if e.isalnum()).lower() + "_id"
+            "".join(e for e in cls.data_source() if e.isalnum()).lower() + "_id"
         )
 
     regex_pattern: re.Pattern[str] | None = None
     # Regex pattern allowed to extract the ID from a URL or other string.
 
-    def to_release_id(self, id_: str) -> tuple[str, str] | None:
-        """Converts a raw id string (normally an url)
+    @classmethod
+    def extract_release_id(cls, url: str) -> tuple[str, str] | None:
+        """Converts a raw id string (typically an url)
         to a normalized id string variant.
 
         Returns a tuple of (id, source) to allow plugins to also
@@ -114,11 +117,11 @@ class MetadataSourcePluginNew(metaclass=abc.ABCMeta):
 
         May return None if the id is not valid.
         """
-        if self.regex_pattern is None:
-            return (id_, self.id_key)
+        if cls.regex_pattern is None:
+            return (url, cls.id_key())
 
-        if m := self.regex_pattern.search(str(id_)):
-            return (m[1], self.id_key)
+        if m := cls.regex_pattern.search(str(url)):
+            return (m[1], cls.id_key())
 
         return None
 
@@ -200,7 +203,7 @@ R = TypeVar("R", bound=Response)
 
 
 class RestApiMetadataSourcePlugin(
-    Generic[R], MetadataSourcePluginNew, metaclass=abc.ABCMeta
+    Generic[R], MetadataSourcePluginNext, metaclass=abc.ABCMeta
 ):
     """A plugin that provides metadata from a REST API.
 
