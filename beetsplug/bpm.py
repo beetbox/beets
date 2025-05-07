@@ -57,7 +57,7 @@ class BPMPlugin(BeetsPlugin):
     def commands(self):
         cmd = ui.Subcommand(
             "bpm",
-            help="determine bpm of a song by pressing " "a key to the rhythm",
+            help="determine bpm of a song by pressing a key to the rhythm",
         )
         cmd.func = self.command
         return [cmd]
@@ -79,7 +79,7 @@ class BPMPlugin(BeetsPlugin):
                 return
 
         self._log.info(
-            "Press Enter {0} times to the rhythm or Ctrl-D " "to exit",
+            "Press Enter {0} times to the rhythm or Ctrl-D to exit",
             self.config["max_strokes"].get(int),
         )
         new_bpm = bpm(self.config["max_strokes"].get(int))

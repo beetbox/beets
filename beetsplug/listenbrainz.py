@@ -180,7 +180,7 @@ class ListenBrainzPlugin(BeetsPlugin):
         )
         for playlist in listenbrainz_playlists:
             self._log.debug(
-                f'Playlist: {playlist["type"]} - {playlist["date"]}'
+                f"Playlist: {playlist['type']} - {playlist['date']}"
             )
         return listenbrainz_playlists
 
