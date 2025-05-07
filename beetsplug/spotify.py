@@ -282,6 +282,42 @@ class SpotifyPlugin(MetadataSourcePluginNext, BeetsPlugin):
 
     # ------------------------------- parsing utils ------------------------------ #
 
+    def _get_track(self, track_data: JSONDict) -> TrackInfo:
+        """Convert a Spotify track object dict to a TrackInfo object.
+
+        :param track_data: Simplified track object
+            (https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-simplified)
+        :type track_data: dict
+        :return: TrackInfo object for track
+        :rtype: beets.autotag.hooks.TrackInfo
+        """
+        artist, artist_id = MetadataSourcePlugin.get_artist(
+            track_data["artists"]
+        )
+
+        # Get album information for spotify tracks
+        try:
+            album = track_data["album"]["name"]
+        except (KeyError, TypeError):
+            album = None
+        return TrackInfo(
+            title=track_data["name"],
+            track_id=track_data["id"],
+            spotify_track_id=track_data["id"],
+            artist=artist,
+            album=album,
+            artist_id=artist_id,
+            spotify_artist_id=artist_id,
+            length=track_data["duration_ms"] / 1000,
+            index=track_data["track_number"],
+            medium=track_data["disc_number"],
+            medium_index=track_data["track_number"],
+            data_source=self.data_source,
+            data_url=track_data["external_urls"]["spotify"],
+        )
+
+    # ---------------------------------------------------------------------------- #
+
     def _handle_response(
         self,
         method: Literal["get", "post", "put", "delete"],
@@ -363,40 +399,6 @@ class SpotifyPlugin(MetadataSourcePluginNext, BeetsPlugin):
             else:
                 self._log.error(f"Request failed. Error: {e}")
                 raise SpotifyAPIError("Request failed.")
-
-    def _get_track(self, track_data: JSONDict) -> TrackInfo:
-        """Convert a Spotify track object dict to a TrackInfo object.
-
-        :param track_data: Simplified track object
-            (https://developer.spotify.com/documentation/web-api/reference/object-model/#track-object-simplified)
-        :type track_data: dict
-        :return: TrackInfo object for track
-        :rtype: beets.autotag.hooks.TrackInfo
-        """
-        artist, artist_id = MetadataSourcePlugin.get_artist(
-            track_data["artists"]
-        )
-
-        # Get album information for spotify tracks
-        try:
-            album = track_data["album"]["name"]
-        except (KeyError, TypeError):
-            album = None
-        return TrackInfo(
-            title=track_data["name"],
-            track_id=track_data["id"],
-            spotify_track_id=track_data["id"],
-            artist=artist,
-            album=album,
-            artist_id=artist_id,
-            spotify_artist_id=artist_id,
-            length=track_data["duration_ms"] / 1000,
-            index=track_data["track_number"],
-            medium=track_data["disc_number"],
-            medium_index=track_data["track_number"],
-            data_source=self.data_source,
-            data_url=track_data["external_urls"]["spotify"],
-        )
 
     @staticmethod
     def _construct_search_query(filters=None, keywords=""):

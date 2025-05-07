@@ -596,10 +596,11 @@ class DiscogsPlugin(BeetsPlugin):
         # Get `disctitle` from Discogs index tracks. Assume that an index track
         # before the first track of each medium is a disc title.
         for track in tracks:
-            disctitle = None
             if track.medium_index == 1:
                 if track.index in index_tracks:
                     disctitle = index_tracks[track.index]
+                else:
+                    disctitle = None
             track.disctitle = disctitle
 
         return tracks
