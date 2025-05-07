@@ -21,7 +21,7 @@ from collections.abc import Iterator
 import musicbrainzngs
 from musicbrainzngs.musicbrainz import MusicBrainzError
 
-from beets import config, metadata_plugins, plugins
+from beets import config, metadata_plugins
 from beets.dbcore import types
 from beets.library import Album, Item, Library
 from beets.plugins import BeetsPlugin

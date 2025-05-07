@@ -16,7 +16,7 @@
 
 from collections import defaultdict
 
-from beets import autotag, library, metadata_plugins, plugins, ui, util
+from beets import autotag, library, metadata_plugins, ui, util
 from beets.plugins import BeetsPlugin, apply_item_changes
 
 

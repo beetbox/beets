@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import collections
 import time
-from typing import TYPE_CHECKING, Iterator, Literal, Sequence
+from typing import TYPE_CHECKING, Literal, Sequence
 
 import requests
 import unidecode
@@ -33,7 +33,7 @@ from beets.metadata_plugins import (
     SearchFilter,
     artists_to_artist_str,
 )
-from beets.plugins import BeetsPlugin, MetadataSourcePlugin
+from beets.plugins import BeetsPlugin
 from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
