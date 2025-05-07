@@ -174,7 +174,7 @@ class EventsTest(PluginImportTestCase):
 
         logs = [line for line in logs if not line.startswith("Sending event:")]
         assert logs == [
-            f'Album: {displayable_path(os.path.join(self.import_dir, b"album"))}',
+            f"Album: {displayable_path(os.path.join(self.import_dir, b'album'))}",
             f"  {displayable_path(self.import_media[0].path)}",
             f"  {displayable_path(self.import_media[1].path)}",
         ]

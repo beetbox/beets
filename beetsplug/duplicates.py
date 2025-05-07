@@ -236,7 +236,7 @@ class DuplicatesPlugin(BeetsPlugin):
         checksum = getattr(item, key, False)
         if not checksum:
             self._log.debug(
-                "key {0} on item {1} not cached:" "computing checksum",
+                "key {0} on item {1} not cached:computing checksum",
                 key,
                 displayable_path(item.path),
             )
@@ -255,7 +255,7 @@ class DuplicatesPlugin(BeetsPlugin):
                 )
         else:
             self._log.debug(
-                "key {0} on item {1} cached:" "not computing checksum",
+                "key {0} on item {1} cached:not computing checksum",
                 key,
                 displayable_path(item.path),
             )
@@ -275,13 +275,13 @@ class DuplicatesPlugin(BeetsPlugin):
             values = [v for v in values if v not in (None, "")]
             if strict and len(values) < len(keys):
                 self._log.debug(
-                    "some keys {0} on item {1} are null or empty:" " skipping",
+                    "some keys {0} on item {1} are null or empty: skipping",
                     keys,
                     displayable_path(obj.path),
                 )
             elif not strict and not len(values):
                 self._log.debug(
-                    "all keys {0} on item {1} are null or empty:" " skipping",
+                    "all keys {0} on item {1} are null or empty: skipping",
                     keys,
                     displayable_path(obj.path),
                 )
