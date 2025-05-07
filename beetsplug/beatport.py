@@ -34,6 +34,7 @@ import beets.ui
 from beets.autotag.hooks import AlbumInfo, Distance, TrackInfo
 from beets.metadata_plugins import MetadataSourcePluginNext
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin, get_distance
+from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
     from beets.importer import ImportSession
@@ -460,11 +461,11 @@ class BeatportPlugin(MetadataSourcePluginNext, BeetsPlugin):
         """
         self._log.debug("Searching for release {0}", album_id)
 
-        if not (release_source := self.extract_release_id(album_id)):
+        if not (release_id := extract_release_id("discogs", album_id)):
             self._log.debug("Not a valid Beatport release ID.")
             return None
 
-        release = self.client.get_release(release_source[0])
+        release = self.client.get_release(release_id)
         if release:
             return self._get_album_info(release)
         return None
@@ -474,6 +475,7 @@ class BeatportPlugin(MetadataSourcePluginNext, BeetsPlugin):
         or None if the track is not a valid Beatport ID or track is not found.
         """
         self._log.debug("Searching for track {0}", track_id)
+        # TODO: move to extractor
         match = re.search(r"(^|beatport\.com/track/.+/)(\d+)$", track_id)
         if not match:
             self._log.debug("Not a valid Beatport track ID.")

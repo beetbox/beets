@@ -25,6 +25,7 @@ import json
 import re
 import time
 import webbrowser
+from typing import TYPE_CHECKING, Iterator, Literal
 
 import confuse
 import requests
@@ -34,7 +35,13 @@ from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.dbcore import types
 from beets.library import DateType
+from beets.metadata_plugins import MetadataSourcePluginNext
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin
+from beets.util.id_extractors import extract_release_id
+
+if TYPE_CHECKING:
+    from ._typing import JSONDict
+
 
 DEFAULT_WAITING_TIME = 5
 
@@ -43,7 +50,7 @@ class SpotifyAPIError(Exception):
     pass
 
 
-class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
+class SpotifyPlugin(MetadataSourcePluginNext, BeetsPlugin):
     data_source = "Spotify"
 
     item_types = {
@@ -106,33 +113,28 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         )
         self.config["client_secret"].redact = True
 
-        self.tokenfile = self.config["tokenfile"].get(
-            confuse.Filename(in_app_dir=True)
-        )  # Path to the JSON file for storing the OAuth access token.
         self.setup()
 
     def setup(self):
         """Retrieve previously saved OAuth token or generate a new one."""
+        c_id: str = self.config["client_id"].as_str()
+        c_secret: str = self.config["client_secret"].as_str()
+
         try:
-            with open(self.tokenfile) as f:
+            with open(self._tokenfile()) as f:
                 token_data = json.load(f)
         except OSError:
-            self._authenticate()
+            self.authenticate(c_id, c_secret)
         else:
             self.access_token = token_data["access_token"]
 
-    def _authenticate(self):
+    def authenticate(self, c_id: str, c_secret: str):
         """Request an access token via the Client Credentials Flow:
         https://developer.spotify.com/documentation/general/guides/authorization-guide/#client-credentials-flow
         """
         headers = {
             "Authorization": "Basic {}".format(
-                base64.b64encode(
-                    ":".join(
-                        self.config[k].as_str()
-                        for k in ("client_id", "client_secret")
-                    ).encode()
-                ).decode()
+                base64.b64encode(":".join([c_id, c_secret]).encode()).decode()
             )
         }
         response = requests.post(
@@ -153,104 +155,42 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         self._log.debug(
             "{} access token: {}", self.data_source, self.access_token
         )
-        with open(self.tokenfile, "w") as f:
+        with open(self._tokenfile(), "w") as f:
             json.dump({"access_token": self.access_token}, f)
 
-    def _handle_response(
-        self, request_type, url, params=None, retry_count=0, max_retries=3
-    ):
-        """Send a request, reauthenticating if necessary.
+    def _tokenfile(self) -> str:
+        """Get the path to the JSON file for storing the OAuth token."""
+        return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
-        :param request_type: Type of :class:`Request` constructor,
-            e.g. ``requests.get``, ``requests.post``, etc.
-        :type request_type: function
-        :param url: URL for the new :class:`Request` object.
-        :type url: str
-        :param params: (optional) list of tuples or bytes to send
-            in the query string for the :class:`Request`.
-        :type params: dict
-        :return: JSON data for the class:`Response <Response>` object.
-        :rtype: dict
-        """
-        try:
-            response = request_type(
-                url,
-                headers={"Authorization": f"Bearer {self.access_token}"},
-                params=params,
-                timeout=10,
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.ReadTimeout:
-            self._log.error("ReadTimeout.")
-            raise SpotifyAPIError("Request timed out.")
-        except requests.exceptions.ConnectionError as e:
-            self._log.error(f"Network error: {e}")
-            raise SpotifyAPIError("Network error.")
-        except requests.exceptions.RequestException as e:
-            if e.response.status_code == 401:
-                self._log.debug(
-                    f"{self.data_source} access token has expired. "
-                    f"Reauthenticating."
-                )
-                self._authenticate()
-                return self._handle_response(request_type, url, params=params)
-            elif e.response.status_code == 404:
-                raise SpotifyAPIError(
-                    f"API Error: {e.response.status_code}\n"
-                    f"URL: {url}\nparams: {params}"
-                )
-            elif e.response.status_code == 429:
-                if retry_count >= max_retries:
-                    raise SpotifyAPIError("Maximum retries reached.")
-                seconds = response.headers.get(
-                    "Retry-After", DEFAULT_WAITING_TIME
-                )
-                self._log.debug(
-                    f"Too many API requests. Retrying after "
-                    f"{seconds} seconds."
-                )
-                time.sleep(int(seconds) + 1)
-                return self._handle_response(
-                    request_type,
-                    url,
-                    params=params,
-                    retry_count=retry_count + 1,
-                )
-            elif e.response.status_code == 503:
-                self._log.error("Service Unavailable.")
-                raise SpotifyAPIError("Service Unavailable.")
-            elif e.response.status_code == 502:
-                self._log.error("Bad Gateway.")
-                raise SpotifyAPIError("Bad Gateway.")
-            elif e.response is not None:
-                raise SpotifyAPIError(
-                    f"{self.data_source} API error:\n{e.response.text}\n"
-                    f"URL:\n{url}\nparams:\n{params}"
-                )
-            else:
-                self._log.error(f"Request failed. Error: {e}")
-                raise SpotifyAPIError("Request failed.")
+    def reset_auth(self):
+        """Redo the auth steps."""
+        self.setup()
+
+    # ---------------------------------- search ---------------------------------- #
+
+    def candidates(self, *args, **kwargs) -> Iterator[AlbumInfo]:
+        # Not used in this plugin.
+        yield from ()
+
+    def item_candidates(self, *args, **kwargs) -> Iterator[TrackInfo]:
+        # Not used in this plugin.
+        yield from ()
+
+    # --------------------------------- id lookup -------------------------------- #
 
     def album_for_id(self, album_id: str) -> AlbumInfo | None:
-        """Fetch an album by its Spotify ID or URL and return an
-        AlbumInfo object or None if the album is not found.
-
-        :param album_id: Spotify ID or URL for the album
-        :type album_id: str
-        :return: AlbumInfo object for album
-        :rtype: beets.autotag.hooks.AlbumInfo or None
-        """
-        if not (spotify_id := self._get_id(album_id)):
+        if not (spotify_album_id := extract_release_id("spotify", album_id)):
             return None
 
         album_data = self._handle_response(
-            requests.get, self.album_url + spotify_id
+            "get", self.album_url + spotify_album_id
         )
         if album_data["name"] == "":
             self._log.debug("Album removed from Spotify: {}", album_id)
             return None
-        artist, artist_id = self.get_artist(album_data["artists"])
+        artist, artist_id = MetadataSourcePlugin.get_artist(
+            album_data["artists"]
+        )
 
         date_parts = [
             int(part) for part in album_data["release_date"].split("-")
@@ -277,9 +217,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         tracks_data = album_data["tracks"]
         tracks_items = tracks_data["items"]
         while tracks_data["next"]:
-            tracks_data = self._handle_response(
-                requests.get, tracks_data["next"]
-            )
+            tracks_data = self._handle_response("get", tracks_data["next"])
             tracks_items.extend(tracks_data["items"])
 
         tracks = []
@@ -294,8 +232,8 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
 
         return AlbumInfo(
             album=album_data["name"],
-            album_id=spotify_id,
-            spotify_album_id=spotify_id,
+            album_id=spotify_album_id,
+            spotify_album_id=spotify_album_id,
             artist=artist,
             artist_id=artist_id,
             spotify_artist_id=artist_id,
@@ -312,7 +250,121 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             data_url=album_data["external_urls"]["spotify"],
         )
 
-    def _get_track(self, track_data):
+    def track_for_id(self, track_id: str) -> None | TrackInfo:
+        if not (spotify_track_id := extract_release_id("spotify", track_id)):
+            self._log.debug("Invalid Spotify ID: {}", track_id)
+            return None
+
+        if not (
+            track_data := self._handle_response(
+                "get", f"{self.track_url}{spotify_track_id}"
+            )
+        ):
+            self._log.debug("Track not found: {}", track_id)
+            return None
+
+        track = self._get_track(track_data)
+
+        # Get album's tracks to set `track.index` (position on the entire
+        # release) and `track.medium_total` (total number of tracks on
+        # the track's disc).
+        album_data = self._handle_response(
+            "get", self.album_url + track_data["album"]["id"]
+        )
+        medium_total = 0
+        for i, track_data in enumerate(album_data["tracks"]["items"], start=1):
+            if track_data["disc_number"] == track.medium:
+                medium_total += 1
+                if track_data["id"] == track.track_id:
+                    track.index = i
+        track.medium_total = medium_total
+        return track
+
+    # ------------------------------- parsing utils ------------------------------ #
+
+    def _handle_response(
+        self,
+        method: Literal["get", "post", "put", "delete"],
+        url,
+        params=None,
+        retry_count=0,
+        max_retries=3,
+    ) -> JSONDict:
+        """Send a request, reauthenticating if necessary.
+
+        :param url: URL for the new :class:`Request` object.
+        :type url: str
+        :param params: (optional) list of tuples or bytes to send
+            in the query string for the :class:`Request`.
+        :type params: dict
+        :return: JSON data for the class:`Response <Response>` object.
+        :rtype: dict
+        """
+        try:
+            response = requests.request(
+                method,
+                url,
+                headers={"Authorization": f"Bearer {self.access_token}"},
+                params=params,
+                timeout=10,
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.ReadTimeout:
+            self._log.error("ReadTimeout.")
+            raise SpotifyAPIError("Request timed out.")
+        except requests.exceptions.ConnectionError as e:
+            self._log.error(f"Network error: {e}")
+            raise SpotifyAPIError("Network error.")
+        except requests.exceptions.RequestException as e:
+            if e.response is None:
+                self._log.error(f"Request failed: {e}")
+                raise SpotifyAPIError("Request failed.")
+            if e.response.status_code == 401:
+                self._log.debug(
+                    f"{self.data_source} access token has expired. "
+                    f"Reauthenticating."
+                )
+                self.reset_auth()
+                return self._handle_response(method, url, params=params)
+            elif e.response.status_code == 404:
+                raise SpotifyAPIError(
+                    f"API Error: {e.response.status_code}\n"
+                    f"URL: {url}\nparams: {params}"
+                )
+            elif e.response.status_code == 429:
+                if retry_count >= max_retries:
+                    raise SpotifyAPIError("Maximum retries reached.")
+                seconds = response.headers.get(
+                    "Retry-After", DEFAULT_WAITING_TIME
+                )
+                self._log.debug(
+                    f"Too many API requests. Retrying after "
+                    f"{seconds} seconds."
+                )
+                time.sleep(int(seconds) + 1)
+                return self._handle_response(
+                    method,
+                    url,
+                    params=params,
+                    retry_count=retry_count + 1,
+                )
+            elif e.response.status_code == 503:
+                self._log.error("Service Unavailable.")
+                raise SpotifyAPIError("Service Unavailable.")
+            elif e.response.status_code == 502:
+                self._log.error("Bad Gateway.")
+                raise SpotifyAPIError("Bad Gateway.")
+            elif e.response is not None:
+                raise SpotifyAPIError(
+                    f"{self.data_source} API error:\n{e.response.text}\n"
+                    f"URL:\n{url}\nparams:\n{params}"
+                )
+            else:
+                self._log.error(f"Request failed. Error: {e}")
+                raise SpotifyAPIError("Request failed.")
+
+    def _get_track(self, track_data: JSONDict) -> TrackInfo:
         """Convert a Spotify track object dict to a TrackInfo object.
 
         :param track_data: Simplified track object
@@ -321,7 +373,9 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         :return: TrackInfo object for track
         :rtype: beets.autotag.hooks.TrackInfo
         """
-        artist, artist_id = self.get_artist(track_data["artists"])
+        artist, artist_id = MetadataSourcePlugin.get_artist(
+            track_data["artists"]
+        )
 
         # Get album information for spotify tracks
         try:
@@ -343,44 +397,6 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
             data_source=self.data_source,
             data_url=track_data["external_urls"]["spotify"],
         )
-
-    def track_for_id(self, track_id=None, track_data=None):
-        """Fetch a track by its Spotify ID or URL and return a
-        TrackInfo object or None if the track is not found.
-
-        :param track_id: (Optional) Spotify ID or URL for the track. Either
-            ``track_id`` or ``track_data`` must be provided.
-        :type track_id: str
-        :param track_data: (Optional) Simplified track object dict. May be
-            provided instead of ``track_id`` to avoid unnecessary API calls.
-        :type track_data: dict
-        :return: TrackInfo object for track
-        :rtype: beets.autotag.hooks.TrackInfo or None
-        """
-        if not track_data:
-            if not (spotify_id := self._get_id(track_id)) or not (
-                track_data := self._handle_response(
-                    requests.get, f"{self.track_url}{spotify_id}"
-                )
-            ):
-                return None
-
-        track = self._get_track(track_data)
-
-        # Get album's tracks to set `track.index` (position on the entire
-        # release) and `track.medium_total` (total number of tracks on
-        # the track's disc).
-        album_data = self._handle_response(
-            requests.get, self.album_url + track_data["album"]["id"]
-        )
-        medium_total = 0
-        for i, track_data in enumerate(album_data["tracks"]["items"], start=1):
-            if track_data["disc_number"] == track.medium:
-                medium_total += 1
-                if track_data["id"] == track.track_id:
-                    track.index = i
-        track.medium_total = medium_total
-        return track
 
     @staticmethod
     def _construct_search_query(filters=None, keywords=""):
@@ -425,7 +441,7 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
         self._log.debug(f"Searching {self.data_source} for '{query}'")
         try:
             response = self._handle_response(
-                requests.get,
+                "get",
                 self.search_url,
                 params={"q": query, "type": query_type},
             )
@@ -686,25 +702,25 @@ class SpotifyPlugin(MetadataSourcePlugin, BeetsPlugin):
     def track_info(self, track_id=None):
         """Fetch a track's popularity and external IDs using its Spotify ID."""
         track_data = self._handle_response(
-            requests.get, self.track_url + track_id
+            "get", self.track_url + (track_id or "")
         )
         self._log.debug(
             "track_popularity: {} and track_isrc: {}",
             track_data.get("popularity"),
-            track_data.get("external_ids").get("isrc"),
+            track_data.get("external_ids", {}).get("isrc"),
         )
         return (
             track_data.get("popularity"),
-            track_data.get("external_ids").get("isrc"),
-            track_data.get("external_ids").get("ean"),
-            track_data.get("external_ids").get("upc"),
+            track_data.get("external_ids", {}).get("isrc"),
+            track_data.get("external_ids", {}).get("ean"),
+            track_data.get("external_ids", {}).get("upc"),
         )
 
     def track_audio_features(self, track_id=None):
         """Fetch track audio features by its Spotify ID."""
         try:
             return self._handle_response(
-                requests.get, self.audio_features_url + track_id
+                "get", self.audio_features_url + (track_id or "")
             )
         except SpotifyAPIError as e:
             self._log.debug("Spotify API error: {}", e)
