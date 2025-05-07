@@ -25,7 +25,7 @@ import json
 import re
 import time
 import webbrowser
-from typing import TYPE_CHECKING, Iterator, Literal, Sequence
+from typing import TYPE_CHECKING, Literal, Sequence
 
 import confuse
 import requests
@@ -39,8 +39,8 @@ from beets.metadata_plugins import (
     IDResponse,
     SearchApiMetadataSourcePluginNext,
     SearchFilter,
+    artists_to_artist_str,
 )
-from beets.plugins import BeetsPlugin, MetadataSourcePlugin
 from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
@@ -54,9 +54,7 @@ class SpotifyAPIError(Exception):
     pass
 
 
-class SpotifyPlugin(SearchApiMetadataSourcePluginNext, BeetsPlugin):
-    data_source = "Spotify"
-
+class SpotifyPlugin(SearchApiMetadataSourcePluginNext):
     item_types = {
         "spotify_track_popularity": types.INTEGER,
         "spotify_acousticness": types.FLOAT,
@@ -99,7 +97,7 @@ class SpotifyPlugin(SearchApiMetadataSourcePluginNext, BeetsPlugin):
     }
 
     def __init__(self):
-        super().__init__()
+        super().__init__(data_source="Spotify")
         self.config.add(
             {
                 "mode": "list",
@@ -185,9 +183,7 @@ class SpotifyPlugin(SearchApiMetadataSourcePluginNext, BeetsPlugin):
         if album_data["name"] == "":
             self._log.debug("Album removed from Spotify: {}", album_id)
             return None
-        artist, artist_id = MetadataSourcePlugin.get_artist(
-            album_data["artists"]
-        )
+        artist, artist_id = artists_to_artist_str(album_data["artists"])
 
         date_parts = [
             int(part) for part in album_data["release_date"].split("-")
@@ -288,9 +284,7 @@ class SpotifyPlugin(SearchApiMetadataSourcePluginNext, BeetsPlugin):
         :return: TrackInfo object for track
         :rtype: beets.autotag.hooks.TrackInfo
         """
-        artist, artist_id = MetadataSourcePlugin.get_artist(
-            track_data["artists"]
-        )
+        artist, artist_id = artists_to_artist_str(track_data["artists"])
 
         # Get album information for spotify tracks
         try:

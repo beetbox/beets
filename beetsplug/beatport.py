@@ -31,9 +31,11 @@ from requests_oauthlib.oauth1_session import (
 
 import beets
 import beets.ui
-from beets.autotag.hooks import AlbumInfo, Distance, TrackInfo
-from beets.metadata_plugins import MetadataSourcePluginNext
-from beets.plugins import BeetsPlugin, MetadataSourcePlugin, get_distance
+from beets.autotag.hooks import AlbumInfo, TrackInfo
+from beets.metadata_plugins import (
+    MetadataSourcePluginNext,
+    artists_to_artist_str,
+)
 from beets.util.id_extractors import extract_release_id
 
 if TYPE_CHECKING:
@@ -325,13 +327,11 @@ class BeatportTrack(BeatportObject):
         )
 
 
-class BeatportPlugin(MetadataSourcePluginNext, BeetsPlugin):
-    data_source = "Beatport"
-
+class BeatportPlugin(MetadataSourcePluginNext):
     _client: BeatportClient | None = None
 
     def __init__(self):
-        super().__init__()
+        super().__init__(data_source="Beatport")
         self.config.add(
             {
                 "apikey": "57713c3906af6f5def151b33601389176b37b429",
@@ -399,29 +399,6 @@ class BeatportPlugin(MetadataSourcePluginNext, BeetsPlugin):
     def _tokenfile(self) -> str:
         """Get the path to the JSON file for storing the OAuth token."""
         return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
-
-    def album_distance(
-        self,
-        items: list[Item],
-        album_info: AlbumInfo,
-        mapping: dict[Item, TrackInfo],
-    ) -> Distance:
-        """Returns the Beatport source weight and the maximum source weight
-        for albums.
-        """
-        return get_distance(
-            data_source=self.data_source, info=album_info, config=self.config
-        )
-
-    def track_distance(self, item: Item, info: TrackInfo) -> Distance:
-        """Returns the Beatport source weight and the maximum source weight
-        for individual tracks.
-        """
-        return get_distance(
-            data_source=self.data_source, info=info, config=self.config
-        )
-
-    regex_pattern = re.compile(r"(?:^|beatport\.com/release/.+/)(\d+)$")
 
     # ---------------------------------- search ---------------------------------- #
 
@@ -560,9 +537,7 @@ class BeatportPlugin(MetadataSourcePluginNext, BeetsPlugin):
         """Returns an artist string (all artists) and an artist_id (the main
         artist) for a list of Beatport release or track artists.
         """
-        return MetadataSourcePlugin.get_artist(
-            artists=artists, id_key=0, name_key=1
-        )
+        return artists_to_artist_str(artists=artists, id_key=0, name_key=1)
 
     def _get_tracks(self, query):
         """Returns a list of TrackInfo objects for a Beatport query."""

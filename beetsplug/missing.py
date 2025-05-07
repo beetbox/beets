@@ -21,7 +21,7 @@ from collections.abc import Iterator
 import musicbrainzngs
 from musicbrainzngs.musicbrainz import MusicBrainzError
 
-from beets import config, plugins
+from beets import config, metadata_plugins, plugins
 from beets.dbcore import types
 from beets.library import Album, Item, Library
 from beets.plugins import BeetsPlugin
@@ -222,7 +222,7 @@ class MissingPlugin(BeetsPlugin):
         item_mbids = {x.mb_trackid for x in album.items()}
         # fetch missing items
         # TODO: Implement caching that without breaking other stuff
-        if album_info := plugins.album_for_id(album.mb_albumid):
+        if album_info := metadata_plugins.album_for_id(album.mb_albumid):
             for track_info in album_info.tracks:
                 if track_info.track_id not in item_mbids:
                     self._log.debug(

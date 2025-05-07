@@ -222,11 +222,13 @@ class AcoustidPlugin(MetadataSourcePluginNext, plugins.BeetsPlugin):
                 yield track
         return
 
-    def album_for_id(self, album_id):
-        raise NotImplementedError("Does not make too much sense")
+    def album_for_id(self, *args, **kwargs):
+        # Lookup by fingerprint ID does not make too much sense.
+        return None
 
-    def track_for_id(self, track_id):
-        raise NotImplementedError("Does not make too much sense")
+    def track_for_id(self, *args, **kwargs):
+        # Lookup by fingerprint ID does not make too much sense.
+        return None
 
     def commands(self):
         submit_cmd = ui.Subcommand(

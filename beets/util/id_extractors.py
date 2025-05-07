@@ -43,6 +43,6 @@ PATTERN_BY_SOURCE = {
 
 
 def extract_release_id(source: str, id_: str) -> str | None:
-    if m := PATTERN_BY_SOURCE[source].search(str(id_)):
+    if m := PATTERN_BY_SOURCE[source.lower()].search(str(id_)):
         return m[1]
     return None

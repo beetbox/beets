@@ -16,7 +16,7 @@
 
 from collections import defaultdict
 
-from beets import autotag, library, plugins, ui, util
+from beets import autotag, library, metadata_plugins, plugins, ui, util
 from beets.plugins import BeetsPlugin, apply_item_changes
 
 
@@ -79,7 +79,9 @@ class MBSyncPlugin(BeetsPlugin):
                 )
                 continue
 
-            if not (track_info := plugins.track_for_id(item.mb_trackid)):
+            if not (
+                track_info := metadata_plugins.track_for_id(item.mb_trackid)
+            ):
                 self._log.info(
                     "Recording ID not found: {0.mb_trackid} for track {0}", item
                 )
@@ -100,7 +102,9 @@ class MBSyncPlugin(BeetsPlugin):
                 self._log.info("Skipping album with no mb_albumid: {}", album)
                 continue
 
-            if not (album_info := plugins.album_for_id(album.mb_albumid)):
+            if not (
+                album_info := metadata_plugins.album_for_id(album.mb_albumid)
+            ):
                 self._log.info(
                     "Release ID {0.mb_albumid} not found for album {0}", album
                 )

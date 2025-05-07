@@ -8,6 +8,7 @@ implemented as plugins.
 from __future__ import annotations
 
 import abc
+import re
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -15,20 +16,19 @@ from typing import (
     Iterator,
     Literal,
     Sequence,
-    TypeGuard,
-    TypeVar,
     TypedDict,
+    TypeVar,
 )
+
 from typing_extensions import NotRequired
 
-from requests import Response
-
-from .plugins import find_plugins, notify_info_yielded, send
+from .plugins import BeetsPlugin, find_plugins, notify_info_yielded, send
 
 if TYPE_CHECKING:
-    import re
+    from confuse import ConfigView
 
-    from beets.autotag.hooks import AlbumInfo, Item, TrackInfo
+    from .autotag import Distance
+    from .autotag.hooks import AlbumInfo, Item, TrackInfo
 
 
 def find_metadata_source_plugins() -> list[MetadataSourcePluginNext]:
@@ -64,7 +64,7 @@ def album_for_id(_id: str) -> AlbumInfo | None:
     A single ID can yield just a single album, so we return the first match.
     """
     for plugin in find_metadata_source_plugins():
-        if info := plugin.album_for_id(_id):
+        if info := plugin.album_for_id(album_id=_id):
             send("albuminfo_received", info=info)
             return info
 
@@ -84,7 +84,21 @@ def track_for_id(_id: str) -> TrackInfo | None:
     return None
 
 
-class MetadataSourcePluginNext(metaclass=abc.ABCMeta):
+def _get_distance(
+    config: ConfigView, data_source: str, info: AlbumInfo | TrackInfo
+) -> Distance:
+    """Returns the ``data_source`` weight and the maximum source weight
+    for albums or individual tracks.
+    """
+    from beets.autotag.hooks import Distance
+
+    dist = Distance()
+    if info.data_source == data_source:
+        dist.add("source", config["source_weight"].as_number())
+    return dist
+
+
+class MetadataSourcePluginNext(BeetsPlugin, metaclass=abc.ABCMeta):
     """A plugin that provides metadata from a specific source.
 
     This base class implements a contract for plugins that provide metadata
@@ -95,43 +109,11 @@ class MetadataSourcePluginNext(metaclass=abc.ABCMeta):
     """
 
     data_source: str
-    """The name of the data source for this plugin.
 
-    This is used to identify the source of metadata and should be unique among
-    all source plugins.
-    """
-
-    @classmethod
-    def id_key(cls) -> str:
-        """The key used to identify external IDs in the database.
-
-        Will normalize the data source name to alphanumeric and lowercase
-        and append "_id" to it.
-        """
-        return (
-            "".join(e for e in cls.data_source if e.isalnum()).lower() + "_id"
-        )
-
-    regex_pattern: re.Pattern[str] | None = None
-    # Regex pattern allowed to extract the ID from a URL or other string.
-
-    @classmethod
-    def extract_release_id(cls, url: str) -> tuple[str, str] | None:
-        """Converts a raw id string (typically an url)
-        to a normalized id string variant.
-
-        Returns a tuple of (id, source) to allow plugins to also
-        parse additional sources see musicbrainz plugin for reference..
-
-        May return None if the id is not valid.
-        """
-        if cls.regex_pattern is None:
-            return (url, cls.id_key())
-
-        if m := cls.regex_pattern.search(str(url)):
-            return (m[1], cls.id_key())
-
-        return None
+    def __init__(self, data_source: str, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.data_source = data_source or self.__class__.__name__
+        self.config.add({"source_weight": 0.5})
 
     # --------------------------------- id lookup -------------------------------- #
 
@@ -210,6 +192,27 @@ class MetadataSourcePluginNext(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
+    # --------------------------------- distances -------------------------------- #
+
+    def album_distance(
+        self,
+        items: list[Item],
+        album_info: AlbumInfo,
+        mapping: dict[Item, TrackInfo],
+    ) -> Distance:
+        return _get_distance(
+            data_source=self.data_source, info=album_info, config=self.config
+        )
+
+    def track_distance(
+        self,
+        item: Item,
+        info: TrackInfo,
+    ) -> Distance:
+        return _get_distance(
+            data_source=self.data_source, info=info, config=self.config
+        )
+
 
 class IDResponse(TypedDict):
     """Response from the API containing an ID."""
@@ -228,11 +231,10 @@ R = TypeVar("R", bound=IDResponse)
 class SearchApiMetadataSourcePluginNext(
     Generic[R], MetadataSourcePluginNext, metaclass=abc.ABCMeta
 ):
-    """A plugin that provides metadata from a specific source using an API.
+    """Helper class to implement a metadata source plugin with an API.
 
-    This base class implements a contract for plugins that provide metadata
-    from a specific source using an API. The plugins must implement an
-    API search method to retrieve album and track information by ID,
+    Plugins using this ABC must implement an API search method to
+    retrieve album and track information by ID,
     i.e. `album_for_id` and `track_for_id`, and a search method to
     perform a search on the API. The search method should return a list
     of identifiers for the requested type (album or track).
@@ -285,3 +287,55 @@ class SearchApiMetadataSourcePluginNext(
         yield from filter(
             None, self.tracks_for_ids([result["id"] for result in results])
         )
+
+
+def artists_to_artist_str(
+    artists,
+    id_key: str | int = "id",
+    name_key: str | int = "name",
+    join_key: str | int | None = None,
+) -> tuple[str, str | None]:
+    """Returns an artist string (all artists) and an artist_id (the main
+    artist) for a list of artist object dicts.
+
+    For each artist, this function moves articles (such as 'a', 'an',
+    and 'the') to the front and strips trailing disambiguation numbers. It
+    returns a tuple containing the comma-separated string of all
+    normalized artists and the ``id`` of the main/first artist.
+    Alternatively a keyword can be used to combine artists together into a
+    single string by passing the join_key argument.
+
+    :param artists: Iterable of artist dicts or lists returned by API.
+    :type artists: list[dict] or list[list]
+    :param id_key: Key or index corresponding to the value of ``id`` for
+        the main/first artist. Defaults to 'id'.
+    :param name_key: Key or index corresponding to values of names
+        to concatenate for the artist string (containing all artists).
+        Defaults to 'name'.
+    :param join_key: Key or index corresponding to a field containing a
+        keyword to use for combining artists into a single string, for
+        example "Feat.", "Vs.", "And" or similar. The default is None
+        which keeps the default behaviour (comma-separated).
+    :return: Normalized artist string.
+    """
+    artist_id = None
+    artist_string = ""
+    artists = list(artists)  # In case a generator was passed.
+    total = len(artists)
+    for idx, artist in enumerate(artists):
+        if not artist_id:
+            artist_id = artist[id_key]
+        name = artist[name_key]
+        # Strip disambiguation number.
+        name = re.sub(r" \(\d+\)$", "", name)
+        # Move articles to the front.
+        name = re.sub(r"^(.*?), (a|an|the)$", r"\2 \1", name, flags=re.I)
+        # Use a join keyword if requested and available.
+        if idx < (total - 1):  # Skip joining on last.
+            if join_key and artist.get(join_key, None):
+                name += f" {artist[join_key]} "
+            else:
+                name += ", "
+        artist_string += name
+
+    return artist_string, artist_id

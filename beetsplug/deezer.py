@@ -31,6 +31,7 @@ from beets.metadata_plugins import (
     IDResponse,
     SearchApiMetadataSourcePluginNext,
     SearchFilter,
+    artists_to_artist_str,
 )
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin
 from beets.util.id_extractors import extract_release_id
@@ -40,8 +41,6 @@ if TYPE_CHECKING:
 
 
 class DeezerPlugin(SearchApiMetadataSourcePluginNext, BeetsPlugin):
-    data_source = "Deezer"
-
     item_types = {
         "deezer_track_rank": types.INTEGER,
         "deezer_track_id": types.INTEGER,
@@ -55,7 +54,7 @@ class DeezerPlugin(SearchApiMetadataSourcePluginNext, BeetsPlugin):
     track_url = "https://api.deezer.com/track/"
 
     def __init__(self):
-        super().__init__()
+        super().__init__("Deezer")
 
     def commands(self):
         """Add beet UI commands to interact with Deezer."""
@@ -84,7 +83,7 @@ class DeezerPlugin(SearchApiMetadataSourcePluginNext, BeetsPlugin):
 
         contributors = album_data.get("contributors")
         if contributors is not None:
-            artist, artist_id = MetadataSourcePlugin.get_artist(contributors)
+            artist, artist_id = artists_to_artist_str(contributors)
         else:
             artist, artist_id = None, None
 
@@ -142,9 +141,7 @@ class DeezerPlugin(SearchApiMetadataSourcePluginNext, BeetsPlugin):
             album_id=deezer_album_id,
             deezer_album_id=deezer_album_id,
             artist=artist,
-            artist_credit=MetadataSourcePlugin.get_artist(
-                [album_data["artist"]]
-            )[0],
+            artist_credit=artists_to_artist_str([album_data["artist"]])[0],
             artist_id=artist_id,
             tracks=tracks,
             albumtype=album_data["record_type"],
@@ -216,7 +213,7 @@ class DeezerPlugin(SearchApiMetadataSourcePluginNext, BeetsPlugin):
 
         :param track_data: Deezer Track object dict
         """
-        artist, artist_id = MetadataSourcePlugin.get_artist(
+        artist, artist_id = artists_to_artist_str(
             track_data.get("contributors", [track_data["artist"]])
         )
         return TrackInfo(
