@@ -26,10 +26,15 @@ import socket
 import time
 import traceback
 from string import ascii_lowercase
+from typing import TYPE_CHECKING, Any, Callable, Iterator
 
 import confuse
 from discogs_client import Client, Master, Release
+from discogs_client.exceptions import (
+    AuthorizationError as DiscogsAuthorizationError,
+)
 from discogs_client.exceptions import DiscogsAPIError
+from discogs_client.exceptions import HTTPError as DiscogsHTTPError
 from requests.exceptions import ConnectionError
 from typing_extensions import TypedDict
 
@@ -39,6 +44,9 @@ from beets import config
 from beets.autotag.hooks import AlbumInfo, TrackInfo, string_dist
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin, get_distance
 from beets.util.id_extractors import extract_release_id
+
+if TYPE_CHECKING:
+    from beets.library import Item
 
 USER_AGENT = f"beets/{beets.__version__} +https://beets.io/"
 API_KEY = "rAzVUQYRaoFjeBjyWuWZ"
@@ -111,7 +119,7 @@ class DiscogsPlugin(BeetsPlugin):
         os.remove(self._tokenfile())
         self.setup()
 
-    def _tokenfile(self):
+    def _tokenfile(self) -> str:
         """Get the path to the JSON file for storing the OAuth token."""
         return self.config["tokenfile"].get(confuse.Filename(in_app_dir=True))
 
@@ -156,49 +164,128 @@ class DiscogsPlugin(BeetsPlugin):
             data_source="Discogs", info=track_info, config=self.config
         )
 
-    def candidates(self, items, artist, album, va_likely, extra_tags=None):
-        """Returns a list of AlbumInfo objects for discogs search results
-        matching an album and artist (if not various).
-        """
-        if not album and not artist:
-            self._log.debug(
-                "Skipping Discogs query. Files missing album and artist tags."
-            )
-            return []
+    # ---------------------------------- search ---------------------------------- #
 
+    def candidates(
+        self,
+        items: list[Item],
+        artist: str,
+        album: str,
+        va_likely: bool,
+        extra_tags: dict[str, Any] | None = None,
+    ) -> Iterator[AlbumInfo]:
         if va_likely:
             query = album
         else:
             query = f"{artist} {album}"
         try:
-            return self.get_albums(query)
+            yield from self.get_albums(query)
+        except DiscogsAuthorizationError as e:
+            self._log.debug("Authorization Error: {0} (query: {1})", e, query)
+            self.reset_auth()
+            yield from self.candidates(
+                items, artist, album, va_likely, extra_tags
+            )
         except DiscogsAPIError as e:
             self._log.debug("API Error: {0} (query: {1})", e, query)
-            if e.status_code == 401:
-                self.reset_auth()
-                return self.candidates(items, artist, album, va_likely)
-            else:
-                return []
+            return
         except CONNECTION_ERRORS:
             self._log.debug("Connection error in album search", exc_info=True)
-            return []
+            return
+
+    def item_candidates(
+        self, item: Item, artist: str, title: str
+    ) -> Iterator[TrackInfo]:
+        query = f"{artist} {title}"
+        try:
+            albums = self.get_albums(query)
+        except DiscogsAuthorizationError as e:
+            self._log.debug("Authorization Error: {0} (query: {1})", e, query)
+            self.reset_auth()
+            yield from self.item_candidates(item, artist, title)
+            return
+        except DiscogsAPIError as e:
+            self._log.debug("API Error: {0} (query: {1})", e, query)
+            return
+        except CONNECTION_ERRORS:
+            self._log.debug("Connection error in track search", exc_info=True)
+            return
+
+        candidates: list[TrackInfo] = []
+        for album_cur in albums:
+            self._log.debug("searching within album {0}", album_cur.album)
+            track_result = self.get_track_from_album_by_title(
+                album_cur, item["title"]
+            )
+            if track_result:
+                candidates.append(track_result)
+                # first 10 results, don't overwhelm with options
+                if len(candidates) >= 10:
+                    break
+
+        yield from candidates
+
+    # --------------------------------- id lookup -------------------------------- #
+
+    def album_for_id(self, album_id: str) -> AlbumInfo | None:
+        """Fetches an album by its Discogs ID and returns an AlbumInfo object
+        or None if the album is not found.
+        """
+        self._log.debug("Searching for release {0}", album_id)
+
+        discogs_id = extract_release_id("discogs", album_id)
+
+        if not discogs_id:
+            return None
+
+        result = Release(self.discogs_client, {"id": discogs_id})
+        # Try to obtain title to verify that we indeed have a valid Release
+        try:
+            getattr(result, "title")
+        except DiscogsAuthorizationError as e:
+            self._log.debug(
+                "Authorization Error: {0} (query: {1})",
+                e,
+                result.data["resource_url"],
+            )
+            self.reset_auth()
+            return self.album_for_id(album_id)
+        except DiscogsHTTPError as e:
+            if e.status_code != 404:
+                self._log.debug(
+                    "API Error: {0} (query: {1})",
+                    e,
+                    result.data["resource_url"],
+                )
+            if e.status_code == 401:
+                self.reset_auth()
+                return self.album_for_id(album_id)
+            return None
+        except CONNECTION_ERRORS:
+            self._log.debug("Connection error in album lookup", exc_info=True)
+            return None
+        return self.get_album_info(result)
+
+    def track_for_id(self, track_id: str) -> TrackInfo | None:
+        raise NotImplementedError
+
+    # ------------------------------- parsing utils ------------------------------ #
 
     def get_track_from_album_by_title(
-        self, album_info, title, dist_threshold=0.3
-    ):
-        def compare_func(track_info):
+        self, album_info: AlbumInfo, title: str, dist_threshold=0.3
+    ) -> None | TrackInfo:
+        def compare_func(track_info) -> bool:
             track_title = getattr(track_info, "title", None)
             dist = string_dist(track_title, title)
-            return track_title and dist < dist_threshold
+            return track_title is not None and dist < dist_threshold
 
         return self.get_track_from_album(album_info, compare_func)
 
-    def get_track_from_album(self, album_info, compare_func):
+    def get_track_from_album(
+        self, album_info: AlbumInfo, compare_func: Callable[[TrackInfo], bool]
+    ) -> None | TrackInfo:
         """Return the first track of the release where `compare_func` returns
         true.
-
-        :return: TrackInfo object.
-        :rtype: beets.autotag.hooks.TrackInfo
         """
         if not album_info:
             return None
@@ -219,79 +306,7 @@ class DiscogsPlugin(BeetsPlugin):
 
         return None
 
-    def item_candidates(self, item, artist, title):
-        """Returns a list of TrackInfo objects for Search API results
-        matching ``title`` and ``artist``.
-        :param item: Singleton item to be matched.
-        :type item: beets.library.Item
-        :param artist: The artist of the track to be matched.
-        :type artist: str
-        :param title: The title of the track to be matched.
-        :type title: str
-        :return: Candidate TrackInfo objects.
-        :rtype: list[beets.autotag.hooks.TrackInfo]
-        """
-        if not artist and not title:
-            self._log.debug(
-                "Skipping Discogs query. File missing artist and title tags."
-            )
-            return []
-
-        query = f"{artist} {title}"
-        try:
-            albums = self.get_albums(query)
-        except DiscogsAPIError as e:
-            self._log.debug("API Error: {0} (query: {1})", e, query)
-            if e.status_code == 401:
-                self.reset_auth()
-                return self.item_candidates(item, artist, title)
-            else:
-                return []
-        except CONNECTION_ERRORS:
-            self._log.debug("Connection error in track search", exc_info=True)
-        candidates = []
-        for album_cur in albums:
-            self._log.debug("searching within album {0}", album_cur.album)
-            track_result = self.get_track_from_album_by_title(
-                album_cur, item["title"]
-            )
-            if track_result:
-                candidates.append(track_result)
-        # first 10 results, don't overwhelm with options
-        return candidates[:10]
-
-    def album_for_id(self, album_id):
-        """Fetches an album by its Discogs ID and returns an AlbumInfo object
-        or None if the album is not found.
-        """
-        self._log.debug("Searching for release {0}", album_id)
-
-        discogs_id = extract_release_id("discogs", album_id)
-
-        if not discogs_id:
-            return None
-
-        result = Release(self.discogs_client, {"id": discogs_id})
-        # Try to obtain title to verify that we indeed have a valid Release
-        try:
-            getattr(result, "title")
-        except DiscogsAPIError as e:
-            if e.status_code != 404:
-                self._log.debug(
-                    "API Error: {0} (query: {1})",
-                    e,
-                    result.data["resource_url"],
-                )
-                if e.status_code == 401:
-                    self.reset_auth()
-                    return self.album_for_id(album_id)
-            return None
-        except CONNECTION_ERRORS:
-            self._log.debug("Connection error in album lookup", exc_info=True)
-            return None
-        return self.get_album_info(result)
-
-    def get_albums(self, query):
+    def get_albums(self, query: str) -> list[AlbumInfo]:
         """Returns a list of AlbumInfo objects for a discogs search query."""
         # Strip non-word characters from query. Things like "!" and "-" can
         # cause a query to return no results, even if they match the artist or
@@ -304,7 +319,6 @@ class DiscogsPlugin(BeetsPlugin):
 
         try:
             releases = self.discogs_client.search(query, type="release").page(1)
-
         except CONNECTION_ERRORS:
             self._log.debug(
                 "Communication error while searching for {0!r}",
@@ -312,11 +326,12 @@ class DiscogsPlugin(BeetsPlugin):
                 exc_info=True,
             )
             return []
+
         return [
             album for album in map(self.get_album_info, releases[:5]) if album
         ]
 
-    def get_master_year(self, master_id):
+    def get_master_year(self, master_id: str) -> int | None:
         """Fetches a master release given its Discogs ID and returns its year
         or None if the master release is not found.
         """
@@ -326,16 +341,16 @@ class DiscogsPlugin(BeetsPlugin):
         try:
             year = result.fetch("year")
             return year
-        except DiscogsAPIError as e:
+        except DiscogsHTTPError as e:
             if e.status_code != 404:
                 self._log.debug(
                     "API Error: {0} (query: {1})",
                     e,
                     result.data["resource_url"],
                 )
-                if e.status_code == 401:
-                    self.reset_auth()
-                    return self.get_master_year(master_id)
+            if e.status_code == 401:
+                self.reset_auth()
+                return self.get_master_year(master_id)
             return None
         except CONNECTION_ERRORS:
             self._log.debug(
@@ -355,7 +370,7 @@ class DiscogsPlugin(BeetsPlugin):
 
         return media, albumtype
 
-    def get_album_info(self, result):
+    def get_album_info(self, result) -> None | AlbumInfo:
         """Returns an AlbumInfo object for a discogs Release object."""
         # Explicitly reload the `Release` fields, as they might not be yet
         # present if the result is from a `discogs_client.search()`.
@@ -419,7 +434,7 @@ class DiscogsPlugin(BeetsPlugin):
 
         # Additional cleanups (various artists name, catalog number, media).
         if va:
-            artist = config["va_name"].as_str()
+            artist: str = config["va_name"].as_str()
         if catalogno == "none":
             catalogno = None
         # Explicitly set the `media` for the tracks, since it is expected by
@@ -487,8 +502,11 @@ class DiscogsPlugin(BeetsPlugin):
         else:
             return None
 
-    def get_tracks(self, tracklist):
-        """Returns a list of TrackInfo objects for a discogs tracklist."""
+    def get_tracks(self, tracklist) -> list[TrackInfo]:
+        """Returns a list of TrackInfo objects for a discogs tracklist.
+
+        FIXME: This needs a look at and type hinting.
+        """
         try:
             clean_tracklist = self.coalesce_tracks(tracklist)
         except Exception as exc:
@@ -578,11 +596,10 @@ class DiscogsPlugin(BeetsPlugin):
         # Get `disctitle` from Discogs index tracks. Assume that an index track
         # before the first track of each medium is a disc title.
         for track in tracks:
+            disctitle = None
             if track.medium_index == 1:
                 if track.index in index_tracks:
                     disctitle = index_tracks[track.index]
-                else:
-                    disctitle = None
             track.disctitle = disctitle
 
         return tracks
@@ -671,7 +688,7 @@ class DiscogsPlugin(BeetsPlugin):
 
         return tracklist
 
-    def get_track_info(self, track, index, divisions):
+    def get_track_info(self, track, index, divisions) -> TrackInfo:
         """Returns a TrackInfo object for a discogs track."""
         title = track["title"]
         if self.config["index_tracks"]:
