@@ -31,6 +31,7 @@ class LastImportPlugin(plugins.BeetsPlugin):
                 "api_key": plugins.LASTFM_KEY,
             }
         )
+        config["lastfm"]["user"].redact = True
         config["lastfm"]["api_key"].redact = True
         self.config.add(
             {

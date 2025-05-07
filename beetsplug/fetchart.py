@@ -566,6 +566,7 @@ class GoogleImages(RemoteArtSource):
             }
         )
         config["google_key"].redact = True
+        config["google_engine"].redact = True
 
     @classmethod
     def available(cls, log, config):
