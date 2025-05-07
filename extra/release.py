@@ -170,7 +170,7 @@ For packagers:
 Other changes:
 
 {new_header}
-{'-' * len(new_header)}
+{"-" * len(new_header)}
 """,
         text,
     )
