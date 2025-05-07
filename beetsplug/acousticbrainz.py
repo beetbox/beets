@@ -286,7 +286,7 @@ class AcousticPlugin(plugins.BeetsPlugin):
                     yield v, subdata[k]
             else:
                 self._log.warning(
-                    "Acousticbrainz did not provide info " "about {}", k
+                    "Acousticbrainz did not provide info about {}", k
                 )
                 self._log.debug(
                     "Data {} could not be mapped to scheme {} "

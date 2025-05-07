@@ -161,7 +161,7 @@ class ThumbnailsPlugin(BeetsPlugin):
                 )
             else:
                 self._log.debug(
-                    "{1}x{1} thumbnail for {0} exists and is " "recent enough",
+                    "{1}x{1} thumbnail for {0} exists and is recent enough",
                     album,
                     size,
                 )

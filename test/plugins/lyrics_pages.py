@@ -605,5 +605,6 @@ lyrics_pages = [
         Children at your feet
         Wonder how you manage to make ends meet
         """,
+        marks=[pytest.mark.xfail(reason="Tekstowo seems to be broken again")],
     ),
 ]

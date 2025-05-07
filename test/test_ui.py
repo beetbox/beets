@@ -1441,7 +1441,7 @@ class CompletionTest(TestPluginTestCase):
         assert tester.returncode == 0
         assert out == b"completion tests passed\n", (
             "test/test_completion.sh did not execute properly. "
-            f'Output:{out.decode("utf-8")}'
+            f"Output:{out.decode('utf-8')}"
         )
 
 
