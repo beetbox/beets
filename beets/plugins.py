@@ -51,10 +51,12 @@ if TYPE_CHECKING:
 
     from beets.autotag import AlbumInfo, Distance, TrackInfo
     from beets.dbcore import Query
-    from beets.dbcore.db import FieldQueryType, SQLiteType
+    from beets.dbcore.db import FieldQueryType
+    from beets.dbcore.types import Type
     from beets.importer import ImportSession, ImportTask
     from beets.library import Album, Item, Library
     from beets.ui import Subcommand
+    from beets.util.id_extractors import RegexDict
 
     # TYPE_CHECKING guard is needed for any derived type
     # which uses an import from `beets.library` and `beets.imported`
@@ -225,7 +227,7 @@ class BeetsPlugin:
 
     def album_distance(
         self,
-        items: list[Item],
+        items: Sequence[Item],
         album_info: AlbumInfo,
         mapping: dict[Item, TrackInfo],
     ) -> Distance:
@@ -430,10 +432,10 @@ def queries() -> dict[str, type[Query]]:
     return out
 
 
-def types(model_cls: type[AnyModel]) -> dict[str, type[SQLiteType]]:
+def types(model_cls: type[AnyModel]) -> dict[str, Type]:
     # Gives us `item_types` and `album_types`
     attr_name = f"{model_cls.__name__.lower()}_types"
-    types: dict[str, type[SQLiteType]] = {}
+    types: dict[str, Type] = {}
     for plugin in find_plugins():
         plugin_types = getattr(plugin, attr_name, {})
         for field in plugin_types:
@@ -470,7 +472,7 @@ def track_distance(item: Item, info: TrackInfo) -> Distance:
 
 
 def album_distance(
-    items: list[Item],
+    items: Sequence[Item],
     album_info: AlbumInfo,
     mapping: dict[Item, TrackInfo],
 ) -> Distance:
@@ -768,15 +770,6 @@ class Response(TypedDict):
     id: str
 
 
-class RegexDict(TypedDict):
-    """A dictionary containing a regex pattern and the number of the
-    match group.
-    """
-
-    pattern: str
-    match_group: int
-
-
 R = TypeVar("R", bound=Response)
 
 
@@ -924,7 +917,7 @@ class MetadataSourcePlugin(Generic[R], BeetsPlugin, metaclass=abc.ABCMeta):
 
     def album_distance(
         self,
-        items: list[Item],
+        items: Sequence[Item],
         album_info: AlbumInfo,
         mapping: dict[Item, TrackInfo],
     ) -> Distance:
