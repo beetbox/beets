@@ -19,12 +19,14 @@ autotagger. Requires the pyacoustid library.
 import re
 from collections import defaultdict
 from functools import cached_property, partial
+from typing import Iterator
 
 import acoustid
 import confuse
 
 from beets import config, plugins, ui, util
-from beets.autotag.hooks import Distance
+from beets.autotag.hooks import AlbumInfo, Distance
+from beets.metadata_plugins import MetadataSourcePluginNext, TrackInfo
 from beetsplug.musicbrainz import MusicBrainzPlugin
 
 API_KEY = "1vOwZtEn"
@@ -168,7 +170,7 @@ def _all_releases(items):
             yield release_id
 
 
-class AcoustidPlugin(plugins.BeetsPlugin):
+class AcoustidPlugin(MetadataSourcePluginNext, plugins.BeetsPlugin):
     def __init__(self):
         super().__init__()
 
@@ -200,28 +202,31 @@ class AcoustidPlugin(plugins.BeetsPlugin):
         dist.add_expr("track_id", info.track_id not in recording_ids)
         return dist
 
-    def candidates(self, items, artist, album, va_likely, extra_tags=None):
-        albums = []
+    def candidates(
+        self, items, artist, album, va_likely, extra_tags=None
+    ) -> Iterator[AlbumInfo]:
         for relid in prefix(_all_releases(items), MAX_RELEASES):
             album = self.mb.album_for_id(relid)
             if album:
-                albums.append(album)
+                yield album
+        return
 
-        self._log.debug("acoustid album candidates: {0}", len(albums))
-        return albums
-
-    def item_candidates(self, item, artist, title):
+    def item_candidates(self, item, artist, title) -> Iterator[TrackInfo]:
         if item.path not in _matches:
-            return []
+            return
 
         recording_ids, _ = _matches[item.path]
-        tracks = []
         for recording_id in prefix(recording_ids, MAX_RECORDINGS):
             track = self.mb.track_for_id(recording_id)
             if track:
-                tracks.append(track)
-        self._log.debug("acoustid item candidates: {0}", len(tracks))
-        return tracks
+                yield track
+        return
+
+    def album_for_id(self, album_id):
+        raise NotImplementedError("Does not make too much sense")
+
+    def track_for_id(self, track_id):
+        raise NotImplementedError("Does not make too much sense")
 
     def commands(self):
         submit_cmd = ui.Subcommand(
