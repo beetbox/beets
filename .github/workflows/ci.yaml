@@ -33,7 +33,7 @@ jobs:
         if: matrix.platform == 'ubuntu-latest'
         run: |
           sudo apt update
-          sudo apt install ffmpeg gobject-introspection libcairo2-dev libgirepository1.0-dev pandoc
+          sudo apt install ffmpeg gobject-introspection libcairo2-dev libgirepository-2.0-dev pandoc
 
       - name: Get changed lyrics files
         id: lyrics-update
