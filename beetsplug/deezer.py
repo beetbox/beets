@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import collections
 import time
-from typing import TYPE_CHECKING, Iterator
+from typing import TYPE_CHECKING, Iterator, Literal, Sequence
 
 import requests
 import unidecode
@@ -27,7 +27,11 @@ from beets import ui
 from beets.autotag import AlbumInfo, TrackInfo
 from beets.dbcore import types
 from beets.library import DateType
-from beets.metadata_plugins import MetadataSourcePluginNext
+from beets.metadata_plugins import (
+    IDResponse,
+    SearchApiMetadataSourcePluginNext,
+    SearchFilter,
+)
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin
 from beets.util.id_extractors import extract_release_id
 
@@ -35,7 +39,7 @@ if TYPE_CHECKING:
     from ._typing import JSONDict
 
 
-class DeezerPlugin(MetadataSourcePluginNext, BeetsPlugin):
+class DeezerPlugin(SearchApiMetadataSourcePluginNext, BeetsPlugin):
     data_source = "Deezer"
 
     item_types = {
@@ -203,14 +207,7 @@ class DeezerPlugin(MetadataSourcePluginNext, BeetsPlugin):
         return track
 
     # ---------------------------------- search ---------------------------------- #
-
-    def candidates(self, *args, **kwargs) -> Iterator[AlbumInfo]:
-        # Not used in this plugin.
-        yield from ()
-
-    def item_candidates(self, *args, **kwargs) -> Iterator[TrackInfo]:
-        # Not used in this plugin.
-        yield from ()
+    # implemented in parent SearchApiMetadataSourcePluginNext
 
     # ------------------------------- parsing utils ------------------------------ #
 
@@ -276,14 +273,18 @@ class DeezerPlugin(MetadataSourcePluginNext, BeetsPlugin):
             query = query.decode("utf8")
         return unidecode.unidecode(query)
 
-    def _search_api(self, query_type, filters=None, keywords=""):
+    def _search_api(
+        self,
+        query_type: Literal["album", "track"],
+        filters: SearchFilter | None = None,
+        keywords="",
+    ) -> None | Sequence[IDResponse]:
         """Query the Deezer Search API for the specified ``keywords``, applying
         the provided ``filters``.
 
-        :param query_type: The Deezer Search API method to use. Valid types
-            are: 'album', 'artist', 'history', 'playlist', 'podcast',
-            'radio', 'track', 'user', and 'track'.
-        :type query_type: str
+        :param query_type: Valid types are: 'album', 'artist', 'history',
+            'playlist', 'podcast', 'radio', 'track', 'user', and 'track'.
+            But only `track` and `album` are used.
         :param filters: (Optional) Field filters to apply.
         :type filters: dict
         :param keywords: (Optional) Query keywords to use.
@@ -310,7 +311,7 @@ class DeezerPlugin(MetadataSourcePluginNext, BeetsPlugin):
                 e,
             )
             return None
-        response_data = response.json().get("data", [])
+        response_data: Sequence[IDResponse] = response.json().get("data", [])
         self._log.debug(
             "Found {} result(s) from {} for '{}'",
             len(response_data),

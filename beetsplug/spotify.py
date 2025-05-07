@@ -25,7 +25,7 @@ import json
 import re
 import time
 import webbrowser
-from typing import TYPE_CHECKING, Iterator, Literal
+from typing import TYPE_CHECKING, Iterator, Literal, Sequence
 
 import confuse
 import requests
@@ -35,7 +35,11 @@ from beets import ui
 from beets.autotag.hooks import AlbumInfo, TrackInfo
 from beets.dbcore import types
 from beets.library import DateType
-from beets.metadata_plugins import MetadataSourcePluginNext
+from beets.metadata_plugins import (
+    IDResponse,
+    SearchApiMetadataSourcePluginNext,
+    SearchFilter,
+)
 from beets.plugins import BeetsPlugin, MetadataSourcePlugin
 from beets.util.id_extractors import extract_release_id
 
@@ -50,7 +54,7 @@ class SpotifyAPIError(Exception):
     pass
 
 
-class SpotifyPlugin(MetadataSourcePluginNext, BeetsPlugin):
+class SpotifyPlugin(SearchApiMetadataSourcePluginNext, BeetsPlugin):
     data_source = "Spotify"
 
     item_types = {
@@ -167,14 +171,7 @@ class SpotifyPlugin(MetadataSourcePluginNext, BeetsPlugin):
         self.setup()
 
     # ---------------------------------- search ---------------------------------- #
-
-    def candidates(self, *args, **kwargs) -> Iterator[AlbumInfo]:
-        # Not used in this plugin.
-        yield from ()
-
-    def item_candidates(self, *args, **kwargs) -> Iterator[TrackInfo]:
-        # Not used in this plugin.
-        yield from ()
+    # implemented in parent SearchApiMetadataSourcePluginNext
 
     # --------------------------------- id lookup -------------------------------- #
 
@@ -422,20 +419,21 @@ class SpotifyPlugin(MetadataSourcePluginNext, BeetsPlugin):
             query = query.decode("utf8")
         return unidecode.unidecode(query)
 
-    def _search_api(self, query_type, filters=None, keywords=""):
+    def _search_api(
+        self,
+        query_type: Literal["album", "track"],
+        filters: SearchFilter | None = None,
+        keywords="",
+    ) -> Sequence[IDResponse] | None:
         """Query the Spotify Search API for the specified ``keywords``,
         applying the provided ``filters``.
 
         :param query_type: Item type to search across. Valid types are:
             'album', 'artist', 'playlist', and 'track'.
-        :type query_type: str
         :param filters: (Optional) Field filters to apply.
-        :type filters: dict
         :param keywords: (Optional) Query keywords to use.
-        :type keywords: str
         :return: JSON data for the class:`Response <Response>` object or None
             if no search results are returned.
-        :rtype: dict or None
         """
         query = self._construct_search_query(keywords=keywords, filters=filters)
         if not query:
@@ -450,7 +448,9 @@ class SpotifyPlugin(MetadataSourcePluginNext, BeetsPlugin):
         except SpotifyAPIError as e:
             self._log.debug("Spotify API error: {}", e)
             return []
-        response_data = response.get(query_type + "s", {}).get("items", [])
+        response_data: Sequence[IDResponse] = response.get(
+            query_type + "s", {}
+        ).get("items", [])
         self._log.debug(
             "Found {} result(s) from {} for '{}'",
             len(response_data),
@@ -571,7 +571,7 @@ class SpotifyPlugin(MetadataSourcePluginNext, BeetsPlugin):
             keywords = item[self.config["track_field"].get()]
 
             # Query the Web API for each track, look for the items' JSON data
-            query_filters = {"artist": artist, "album": album}
+            query_filters: SearchFilter = {"artist": artist, "album": album}
             response_data_tracks = self._search_api(
                 query_type="track", keywords=keywords, filters=query_filters
             )

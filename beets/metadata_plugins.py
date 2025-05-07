@@ -8,7 +8,18 @@ implemented as plugins.
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Any, Generic, Iterator, Sequence, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Generic,
+    Iterator,
+    Literal,
+    Sequence,
+    TypeGuard,
+    TypeVar,
+    TypedDict,
+)
+from typing_extensions import NotRequired
 
 from requests import Response
 
@@ -172,6 +183,8 @@ class MetadataSourcePluginNext(metaclass=abc.ABCMeta):
     ) -> Iterator[AlbumInfo]:
         """Return :py:class:`AlbumInfo` candidates that match the given album.
 
+        Used in the autotag functionality to search for albums.
+
         :param items: List of items in the album
         :param artist: Album artist
         :param album: Album name
@@ -189,6 +202,8 @@ class MetadataSourcePluginNext(metaclass=abc.ABCMeta):
     ) -> Iterator[TrackInfo]:
         """Return :py:class:`TrackInfo` candidates that match the given track.
 
+        Used in the autotag functionality to search for tracks.
+
         :param item: Track item
         :param artist: Track artist
         :param title: Track title
@@ -196,41 +211,77 @@ class MetadataSourcePluginNext(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
-R = TypeVar("R", bound=Response)
+class IDResponse(TypedDict):
+    """Response from the API containing an ID."""
+
+    id: str
 
 
-class RestApiMetadataSourcePlugin(
+class SearchFilter(TypedDict):
+    artist: NotRequired[str]
+    album: NotRequired[str]
+
+
+R = TypeVar("R", bound=IDResponse)
+
+
+class SearchApiMetadataSourcePluginNext(
     Generic[R], MetadataSourcePluginNext, metaclass=abc.ABCMeta
 ):
-    """A plugin that provides metadata from a REST API.
+    """A plugin that provides metadata from a specific source using an API.
 
-    This class is a base for plugins that interact with REST APIs to fetch
-    metadata. It provides a common interface and some utility methods for
-    handling API requests and responses.
-
-    TODO: Needs some documentation
+    This base class implements a contract for plugins that provide metadata
+    from a specific source using an API. The plugins must implement an
+    API search method to retrieve album and track information by ID,
+    i.e. `album_for_id` and `track_for_id`, and a search method to
+    perform a search on the API. The search method should return a list
+    of identifiers for the requested type (album or track).
     """
-
-    @property
-    @abc.abstractmethod
-    def album_url(self) -> str:
-        raise NotImplementedError
-
-    @property
-    @abc.abstractmethod
-    def track_url(self) -> str:
-        raise NotImplementedError
-
-    @property
-    @abc.abstractmethod
-    def search_url(self) -> str:
-        raise NotImplementedError
 
     @abc.abstractmethod
     def _search_api(
         self,
-        query_type: str,
-        filters: dict[str, str] | None,
+        query_type: Literal["album", "track"],
+        filters: SearchFilter | None = None,
         keywords: str = "",
-    ) -> Sequence[R]:
+    ) -> Sequence[R] | None:
+        """Perform a search on the API.
+
+        :param query_type: The type of query to perform.
+        :param filters: A dictionary of filters to apply to the search.
+        :param keywords: Additional keywords to include in the search.
+
+        Should return a list of identifiers for the requested type (album or track).
+        """
         raise NotImplementedError
+
+    def candidates(
+        self,
+        items: list[Item],
+        artist: str,
+        album: str,
+        va_likely: bool,
+        extra_tags: dict[str, Any] | None = None,
+    ) -> Iterator[AlbumInfo]:
+        query_filters: SearchFilter = {"album": album}
+        if not va_likely:
+            query_filters["artist"] = artist
+
+        results = self._search_api("album", query_filters)
+        if not results:
+            return
+
+        yield from filter(
+            None, self.albums_for_ids([result["id"] for result in results])
+        )
+
+    def item_candidates(
+        self, item: Item, artist: str, title: str
+    ) -> Iterator[TrackInfo]:
+        results = self._search_api("track", {"artist": artist}, keywords=title)
+        if not results:
+            return
+
+        yield from filter(
+            None, self.tracks_for_ids([result["id"] for result in results])
+        )
