@@ -604,8 +604,8 @@ def tag_item(
             return Proposal([], Recommendation.none)
 
     # Search terms.
-    if not (search_artist and search_title):
-        search_artist, search_title = item.artist, item.title
+    search_artist = search_artist or item.artist
+    search_title = search_title or item.title
     log.debug("Item search terms: {0} - {1}", search_artist, search_title)
 
     # Get and evaluate candidate metadata.
